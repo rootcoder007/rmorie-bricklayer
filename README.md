@@ -81,7 +81,7 @@ See `docs/quickstart.md` for a 5-minute walkthrough.
 
 `morie-bricklayer` is part of the [morie](https://github.com/) open-source toolkit ecosystem.
 
-- **Author:** Vansh Singh Ruhela — vansh.ruhela@mail.utoronto.ca
+- **Author:** Vansh Singh Ruhela — vsruhela@proton.me
 - **ORCID:** 0009-0004-1750-3592
 - **Licence:** AGPL-3.0-or-later (scripts, framework, templates)
 - **Contributions:** see [CONTRIBUTING.md](CONTRIBUTING.md)

@@ -1,6 +1,8 @@
 # CI for morie-bricklayer: lint the shell scripts and run the canonical
-# build-and-verify smoke test (builds the otis-mrp bundle, then runs the
-# bundle's setup_and_run.R --quick, which auto-installs its R deps).
+# build-and-verify smoke test. The bundle's setup_and_run.R installs its R
+# deps from CRAN source if missing (slow; DHARMa/Hmisc can fail to compile),
+# so we pre-install them here as cached BINARIES via pak — making the smoke
+# test fast and reliable (setup_and_run then finds everything present).
 name: CI
 
 on:
@@ -21,7 +23,6 @@ jobs:
       - name: Run shellcheck (errors only)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y shellcheck
-          # Fail only on genuine errors; style warnings are advisory.
           find . -name '*.sh' -not -path './.git/*' -print0 \
             | xargs -0 -r shellcheck --severity=error
 
@@ -34,6 +35,19 @@ jobs:
       - uses: r-lib/actions/setup-r@2e3959d284a9ed60162f28a0f9891d1150f47f72 # v2
         with:
           use-public-rspm: true
+
+      # Binary installs + automatic system-dependency handling + caching.
+      - uses: r-lib/actions/setup-r-dependencies@2e3959d284a9ed60162f28a0f9891d1150f47f72 # v2
+        with:
+          packages: |
+            any::data.table
+            any::MatchIt
+            any::glmmTMB
+            any::lme4
+            any::DHARMa
+            any::Hmisc
+            any::jsonlite
+            any::digest
 
       - name: Build and verify the otis-mrp bundle
         run: ./tests/test_build_otis.sh
