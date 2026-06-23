@@ -1,0 +1,110 @@
+{
+  "_comment_top": "Pinned provenance for the OTIS A01RCDD public dataset. Used by fetch_otis_csv.sh as the source of truth for what 'the' file is, and by otis_MRP.R schema validation. Refresh this file by running ./fetch_otis_csv.sh --refresh-provenance.",
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-06-23T04:41:40Z",
+  "captured_by": "vansh.ruhela@mail.utoronto.ca (rootcoder-reproducibility/1.0)",
+  "dataset": {
+    "package_slug": "data-on-inmates-in-ontario",
+    "package_uuid": "09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
+    "catalogue_page": "https://data.ontario.ca/dataset/data-on-inmates-in-ontario",
+    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+    "publisher": "Ontario Ministry of the Solicitor General",
+    "source_system": "OTIS (Offender Tracking Information System)",
+    "licence_name": "Open Government Licence – Ontario",
+    "licence_url": "https://www.ontario.ca/page/open-government-licence-ontario",
+    "licence_short": "OGL-Ontario"
+  },
+  "resource": {
+    "name": "Restrictive Confinement – Detailed Dataset",
+    "name_match_pattern": "Restrictive.?Confinement.*Detailed.?Dataset",
+    "format": "CSV",
+    "language": "en",
+    "resource_uuid": "5a0c5804-a055-4031-9743-73f556e43bb4",
+    "filename": "a01_restrictive_confinement_detailed_dataset.csv",
+    "direct_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/5a0c5804-a055-4031-9743-73f556e43bb4/download/a01_restrictive_confinement_detailed_dataset.csv",
+    "size_bytes": 4762368,
+    "sha256": "d0fdaefc19ac4a96ba6f122e1a95c06a5d3e002a1a6aaef9eb4f065c5417f66d",
+    "row_count_data_rows": 76934,
+    "header_row_present": true
+  },
+  "wayback": {
+    "_comment": "Wayback Machine snapshots captured 2026-06-23 06:34-06:37 UTC after disabling VPN. Each URL is the canonical archive.org preservation copy; if the original Ontario portal becomes unreachable or the dataset is changed, the snapshot URL still serves the file as it existed on 2026-06-23.",
+    "captured_at_utc": "2026-06-23T06:37:20Z",
+    "catalogue_page_snapshot": "https://web.archive.org/web/20260623060856/https://data.ontario.ca/dataset/data-on-inmates-in-ontario",
+    "ckan_api_snapshot":       "https://web.archive.org/web/20260623063431/https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+    "resource_page_snapshot":  "https://web.archive.org/web/20260623063554/https://data.ontario.ca/dataset/data-on-inmates-in-ontario/resource/5a0c5804-a055-4031-9743-73f556e43bb4",
+    "csv_snapshot":            "https://web.archive.org/web/20260623063628/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/5a0c5804-a055-4031-9743-73f556e43bb4/download/a01_restrictive_confinement_detailed_dataset.csv",
+    "licence_snapshot":        "https://web.archive.org/web/20260623063638/https://www.ontario.ca/page/open-government-licence-ontario",
+    "data_dictionary_snapshot": "https://web.archive.org/web/20260623063713/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d83fe893-9634-4794-a0c1-c17bf619a95a/download/od-restrictiveconfinement-segregation-deaths-dd20251103.xlsx",
+    "data_update_note_snapshot": "https://web.archive.org/web/20260623063720/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/2c4d1156-3424-4dab-bf01-6c2b982f51d5/download/dataupdatenote.docx"
+  },
+  "schema": {
+    "expected_columns": [
+      "EndFiscalYear",
+      "UniqueIndividual_ID",
+      "Region_AtTimeOfPlacement",
+      "Region_MostRecentPlacement",
+      "Gender",
+      "Age_Category",
+      "MentalHealth_Alert",
+      "SuicideRisk_Alert",
+      "SuicideWatch_Alert",
+      "Number_Of_Placements"
+    ],
+    "expected_dtypes": {
+      "EndFiscalYear": "integer",
+      "UniqueIndividual_ID": "character",
+      "Region_AtTimeOfPlacement": "factor",
+      "Region_MostRecentPlacement": "factor",
+      "Gender": "factor",
+      "Age_Category": "factor",
+      "MentalHealth_Alert": "factor",
+      "SuicideRisk_Alert": "factor",
+      "SuicideWatch_Alert": "factor",
+      "Number_Of_Placements": "integer"
+    },
+    "expected_value_sets": {
+      "EndFiscalYear": [2023, 2024, 2025],
+      "Region_AtTimeOfPlacement": ["Central", "Eastern", "Northern", "Toronto", "Western"],
+      "Region_MostRecentPlacement": ["Central", "Eastern", "Northern", "Toronto", "Western"],
+      "Gender": ["Male", "Female"],
+      "Age_Category": ["18 to 24", "25 to 49", "50+"],
+      "MentalHealth_Alert": ["Yes", "No"],
+      "SuicideRisk_Alert": ["Yes", "No"],
+      "SuicideWatch_Alert": ["Yes", "No"]
+    },
+    "structural_invariants": {
+      "person_year_n_after_aggregation": 65467,
+      "total_placements_sum": 1933327,
+      "min_data_rows": 70000,
+      "max_data_rows": 90000
+    },
+    "synthetic_recipe": {
+      "n_rows": 65000,
+      "seed":   91735246,
+      "row_replication": {
+        "values":  [1, 2, 3, 4],
+        "weights": [0.82, 0.12, 0.04, 0.02]
+      },
+      "columns": {
+        "EndFiscalYear":              { "type": "sample", "values": [2023, 2024, 2025], "weights": [0.33, 0.33, 0.34] },
+        "UniqueIndividual_ID":        { "type": "id_pattern", "pattern": "{year}-{seq:05d}-RC", "year_col": "EndFiscalYear" },
+        "Region_AtTimeOfPlacement":   { "type": "sample", "values": ["Central", "Eastern", "Northern", "Toronto", "Western"], "weights": [0.20, 0.18, 0.10, 0.32, 0.20] },
+        "Region_MostRecentPlacement": { "type": "sample", "values": ["Central", "Eastern", "Northern", "Toronto", "Western"], "weights": [0.20, 0.18, 0.10, 0.32, 0.20] },
+        "Gender":                     { "type": "sample", "values": ["Male", "Female"], "weights": [0.92, 0.08] },
+        "Age_Category":               { "type": "sample", "values": ["18 to 24", "25 to 49", "50+"], "weights": [0.32, 0.55, 0.13] },
+        "MentalHealth_Alert":         { "type": "bernoulli", "p": 0.10, "p_with_baserate": 0.15, "labels": ["Yes", "No"] },
+        "SuicideRisk_Alert":          { "type": "bernoulli", "p": 0.04, "p_with_baserate": 0.12, "labels": ["Yes", "No"] },
+        "SuicideWatch_Alert":         { "type": "bernoulli", "p": 0.02, "p_with_baserate": 0.08, "labels": ["Yes", "No"] },
+        "Number_Of_Placements":       { "type": "poisson", "lambda": 25, "min": 1 }
+      }
+    }
+  },
+  "fallback_chain": [
+    "1. CKAN API package_show by slug → match resource by name pattern",
+    "2. CKAN API package_search → find dataset across renames",
+    "3. resource.direct_url (the URL captured in this file)",
+    "4. wayback.csv_snapshot (when populated)",
+    "5. Manual: download from resource.catalogue_page and pass --rdata <path> to run_otis_mrp.sh"
+  ]
+}

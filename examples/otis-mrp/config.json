@@ -1,0 +1,58 @@
+{
+  "project": {
+    "name":         "otis-mrp",
+    "title":        "OTIS A01RCDD MRP — Alert Complexity and Placement Volatility",
+    "paper_title":  "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data",
+    "author":       "Vansh Singh Ruhela",
+    "contact":      "vansh.ruhela@mail.utoronto.ca",
+    "orcid":        "0009-0004-1750-3592",
+    "affiliation":  "MA candidate, Centre for Criminology and Sociolegal Studies, University of Toronto",
+    "supervisor":   "Prof. Ángela Zorro Medina",
+    "submission":   "August 17, 2026",
+    "licence":      "AGPL-3.0-or-later",
+    "_comment":     "Project metadata. Used to render README/SECURITY/INSTRUCTIONS templates."
+  },
+
+  "analysis": {
+    "r_script":     "analysis.R",
+    "_comment":     "Project's analysis script (sits alongside setup_and_run.R)."
+  },
+
+  "r_packages": [
+    "data.table", "MatchIt", "glmmTMB", "lme4",
+    "DHARMa", "Hmisc", "jsonlite", "digest"
+  ],
+
+  "data": {
+    "default_candidates": [
+      "/Volumes/VSR/rootcoderfiles/OTIS-RC/correctional_stats_report_environment1b.RData"
+    ],
+    "_comment": "Additional file paths to probe before asking the user."
+  },
+
+  "network": {
+    "endpoints": [
+      "https://data.ontario.ca/api/3/action/package_show?id=data-on-inmates-in-ontario",
+      "https://data.ontario.ca/dataset/.../*.csv"
+    ],
+    "_comment": "Listed in the WHERE EVERYTHING WILL GO panel for transparency."
+  },
+
+  "summary": {
+    "what_was_done": [
+      "1. Located the OTIS A01RCDD dataset.",
+      "2. Built the person-year analytical panel.",
+      "3. Computed full-sample and matched-sample descriptives.",
+      "4. Fit the negative-binomial GLMM (glmmTMB nbinom2).",
+      "5. Cross-checked Double Machine Learning estimates (if .RData input).",
+      "6. Wrote every result to its own CSV (numbered 01..07).",
+      "7. Wrote manifest.json with expected vs observed for every claim."
+    ]
+  },
+
+  "expected": {
+    "total_checks": 36,
+    "pass_real":    36,
+    "pass_csv":     28
+  }
+}

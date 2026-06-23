@@ -1,0 +1,136 @@
+## =====================================================================
+## lib_synthetic.R — schema-driven synthetic data generation
+##
+## Part of morie-reprokit. The generic primitives here let you build a
+## synthetic CSV from a schema definition without writing project-
+## specific generator code. Falls back gracefully when the schema is
+## under-specified.
+##
+## Provides:
+##   make_synthetic_csv(schema, out_path, n_rows, seed)
+##   make_synthetic_column(spec, n, base_p)
+##
+## Schema format (from data_provenance.json schema.synthetic_recipe):
+##   {
+##     "n_rows": 75000,                       # target rows
+##     "seed":   91735246,                    # reproducible seed
+##     "columns": {
+##       "EndFiscalYear": {
+##         "type":     "sample",
+##         "values":   [2023, 2024, 2025],
+##         "weights":  [0.33, 0.33, 0.34]     # optional
+##       },
+##       "Gender": {
+##         "type":     "sample",
+##         "values":   ["Male", "Female"],
+##         "weights":  [0.92, 0.08]
+##       },
+##       "MentalHealth_Alert": {
+##         "type":            "bernoulli",
+##         "p":               0.18,
+##         "p_with_baserate": 0.15,           # add row-level latent variation
+##         "labels":          ["Yes", "No"]
+##       },
+##       "Number_Of_Placements": {
+##         "type":   "poisson",
+##         "lambda": 25,
+##         "min":    1
+##       },
+##       "UniqueIndividual_ID": {
+##         "type":    "id_pattern",
+##         "pattern": "{year}-{seq:05d}-RC",
+##         "year_col": "EndFiscalYear"
+##       }
+##     }
+##   }
+##
+## Licence: AGPL-3.0-or-later
+## =====================================================================
+
+make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
+  type <- spec$type %||% "sample"
+  switch(type,
+    sample = {
+      vals <- unlist(spec$values)
+      w    <- if (!is.null(spec$weights)) unlist(spec$weights) else NULL
+      sample(vals, n, replace = TRUE, prob = w)
+    },
+    bernoulli = {
+      p_base <- spec$p %||% 0.1
+      p_extra <- spec$p_with_baserate %||% 0
+      p_per_row <- if (!is.null(base_p)) p_base + p_extra * base_p else p_base
+      labels <- spec$labels %||% c("Yes", "No")
+      ifelse(stats::runif(n) < p_per_row, labels[1], labels[2])
+    },
+    poisson = {
+      lambda <- spec$lambda %||% 1
+      out <- stats::rpois(n, lambda = lambda)
+      mn <- spec$min %||% 0
+      pmax(out, mn)
+    },
+    id_pattern = {
+      pattern <- spec$pattern %||% "id-{seq:05d}"
+      year_col <- spec$year_col %||% NULL
+      if (!is.null(year_col) && year_col %in% names(ctx)) {
+        years <- ctx[[year_col]]
+        seq_per_yr <- ave(seq_along(years), years, FUN = seq_along)
+        ids <- mapply(function(y, s) {
+          out <- gsub("\\{year\\}", as.character(y), pattern)
+          gsub("\\{seq:05d\\}", sprintf("%05d", s), out)
+        }, years, seq_per_yr)
+        return(ids)
+      }
+      seqs <- seq_len(n)
+      gsub("\\{seq:05d\\}", sprintf("%05d", seqs), pattern)
+    },
+    sequence = {
+      from <- spec$from %||% 1L
+      seq.int(from, length.out = n)
+    },
+    stop("Unknown synthetic column type: ", type)
+  )
+}
+
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
+## ----- Main generator -----
+## `schema` is the synthetic_recipe sub-block of provenance.
+## `out_path` is where to write the CSV.
+make_synthetic_csv <- function(schema, out_path,
+                                n_rows = NULL, seed = NULL) {
+  if (is.null(seed)) seed <- schema$seed %||% 91735246L
+  if (is.null(n_rows)) n_rows <- schema$n_rows %||% 50000L
+  set.seed(seed)
+
+  ## Optional: replicate rows per "person" if a multiplier is specified
+  reps_spec <- schema$row_replication
+  if (!is.null(reps_spec)) {
+    n_persons <- n_rows
+    rows_per  <- sample(unlist(reps_spec$values),
+                        n_persons, replace = TRUE,
+                        prob = unlist(reps_spec$weights))
+    expand <- function(x) rep(x, rows_per)
+  } else {
+    expand <- identity
+  }
+
+  ## Latent per-row "baseline propensity" — shared across bernoulli cols
+  base_p <- stats::runif(n_rows, 0, 1)
+
+  ## Generate columns in declaration order; later columns can see ctx
+  out <- list()
+  ctx <- list()
+  for (col_name in names(schema$columns)) {
+    spec <- schema$columns[[col_name]]
+    vals <- make_synthetic_column(spec, n_rows, ctx, base_p)
+    if (!is.null(reps_spec)) {
+      ## Expand non-id columns; ids handled inside id_pattern
+      if ((spec$type %||% "sample") != "id_pattern") vals <- expand(vals)
+    }
+    ctx[[col_name]] <- vals
+    out[[col_name]] <- vals
+  }
+  out_df <- as.data.frame(out, stringsAsFactors = FALSE)
+  utils::write.csv(out_df, out_path, row.names = FALSE)
+  invisible(list(path = out_path, rows = nrow(out_df), seed = seed))
+}
