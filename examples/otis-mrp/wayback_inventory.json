@@ -1,0 +1,225 @@
+{
+  "_comment": "Wayback Machine snapshots of every resource on the data-on-inmates-in-ontario CKAN package, captured 2026-06-23.",
+  "captured_at_utc": "2026-06-23T06:50:00Z",
+  "package_slug": "data-on-inmates-in-ontario",
+  "package_uuid": "09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",
+  "resources": [
+    {
+      "name": "Restrictive Confinement \u2013 Detailed Dataset",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/5a0c5804-a055-4031-9743-73f556e43bb4/download/a01_restrictive_confinement_detailed_dataset.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623063628/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/5a0c5804-a055-4031-9743-73f556e43bb4/download/a01_restrictive_confinement_detailed_dataset.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation \u2013 Detailed Dataset",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/406e6d90-d568-4553-8ca7-bc9f90e133b9/download/b01_segregation_detailed_dataset.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064726/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/406e6d90-d568-4553-8ca7-bc9f90e133b9/download/b01_segregation_detailed_dataset.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation \u2013 Detailed Total Days",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/84161f23-ee75-48b4-97df-3b19b8bbd745/download/b02_segregation_detailed_total_days.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064735/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/84161f23-ee75-48b4-97df-3b19b8bbd745/download/b02_segregation_detailed_total_days.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements - Alerts and Hold Flags by Institution",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/ef45902a-b946-49fe-8c2f-f778e8357e1f/download/b03_segregation_placements_alerts_and_hold_flags_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064744/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/ef45902a-b946-49fe-8c2f-f778e8357e1f/download/b03_segregation_placements_alerts_and_hold_flags_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements - Maximum, Median and Mode Consecutive Durations by Region",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d76d8f65-6318-4a45-b4c7-5b9a2d985408/download/b04_segregation_placements_consecutive_durations_by_region.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065257/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d76d8f65-6318-4a45-b4c7-5b9a2d985408/download/b04_segregation_placements_consecutive_durations_by_region.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements - Distribution of Placements by Duration",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/754e8cde-5c74-4c0a-9782-79767a2b26b0/download/b05_segregation_placements_consecutive_lengths.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065326/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/754e8cde-5c74-4c0a-9782-79767a2b26b0/download/b05_segregation_placements_consecutive_lengths.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements - Reason for Placement by Institution",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/af633c35-2f98-4ca6-8629-02aa8acd237a/download/b06_segregation_placements_reason_for_placement_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065356/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/af633c35-2f98-4ca6-8629-02aa8acd237a/download/b06_segregation_placements_reason_for_placement_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements - Alerts and Hold Flags by Gender",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/38090dad-9f73-4a0b-8a7b-ca2477fc0030/download/b07_segregation_placements_alerts_and_hold_flags_by_gender.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064802/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/38090dad-9f73-4a0b-8a7b-ca2477fc0030/download/b07_segregation_placements_alerts_and_hold_flags_by_gender.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation Placements \u2013 Median and Mode Consecutive Durations by Institution",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/73c77cf2-faeb-4136-a897-ed4d4c19e240/download/b08_segregation_placements_consecutive_durations_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064811/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/73c77cf2-faeb-4136-a897-ed4d4c19e240/download/b08_segregation_placements_consecutive_durations_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation - Number of Placements in Segregation",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/df24e943-d52b-43a8-a10e-a3cc906e26bb/download/b09_individuals_in_segregation_number_of_times_in_segregation.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064820/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/df24e943-d52b-43a8-a10e-a3cc906e26bb/download/b09_individuals_in_segregation_number_of_times_in_segregation.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement - Total Individuals",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/81bc03cc-b3f6-4983-b717-11f85fa90330/download/c01_individuals_in_segregation_and_restrictive_confinement_total_individuals.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065424/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/81bc03cc-b3f6-4983-b717-11f85fa90330/download/c01_individuals_in_segregation_and_restrictive_confinement_total_individuals.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Institution",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/cb4ed82f-c67a-430a-9cb5-5e5698a06ddf/download/c02_individuals_in_segregation_and_restrictive_confinement_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065452/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/cb4ed82f-c67a-430a-9cb5-5e5698a06ddf/download/c02_individuals_in_segregation_and_restrictive_confinement_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Race and Gender",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/0532a199-3a4f-45b4-b79b-6db7920ff7f2/download/c03_individuals_in_segregation_and_restrictive_confinement_race_by_gender.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065521/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/0532a199-3a4f-45b4-b79b-6db7920ff7f2/download/c03_individuals_in_segregation_and_restrictive_confinement_race_by_gender.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Race and Region",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/b38f754f-9141-4ea3-a10c-a071473ed00a/download/c04_individuals_in_segregation_and_restrictive_confinement_race_by_region.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065550/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/b38f754f-9141-4ea3-a10c-a071473ed00a/download/c04_individuals_in_segregation_and_restrictive_confinement_race_by_region.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Religion and Region",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/c899bf66-bd7b-4305-8ccc-ae031e041df8/download/c05_individuals_in_segregation_and_restrictive_confinement_religion_by_region.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065619/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/c899bf66-bd7b-4305-8ccc-ae031e041df8/download/c05_individuals_in_segregation_and_restrictive_confinement_religion_by_region.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Age Category and Region",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/4e4c91e9-ae29-4ab6-864e-bcda896c7882/download/c06_individuals_in_segregation_and_restrictive_confinement_age_category_by_region.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065656/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/4e4c91e9-ae29-4ab6-864e-bcda896c7882/download/c06_individuals_in_segregation_and_restrictive_confinement_age_category_by_region.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement - Alerts and Hold Flags",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/879cf325-a7a7-4d48-bc69-ea050d8a4d4e/download/c07_individuals_in_segregation_and_restrictive_confinement_alerts_and_hold_flags.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065724/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/879cf325-a7a7-4d48-bc69-ea050d8a4d4e/download/c07_individuals_in_segregation_and_restrictive_confinement_alerts_and_hold_flags.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Religion and Gender",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/8fc09ce2-5097-4a94-af29-abcdcd5aa015/download/c08_individuals_in_segregation_and_restrictive_confinement_religion_by_gender.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065757/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/8fc09ce2-5097-4a94-af29-abcdcd5aa015/download/c08_individuals_in_segregation_and_restrictive_confinement_religion_by_gender.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Age Category and Gender",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/0e990da6-5427-453e-91ba-b6f24dee2ef2/download/c09_individuals_in_segregation_and_restrictive_confinement_age_category_by_gender.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065829/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/0e990da6-5427-453e-91ba-b6f24dee2ef2/download/c09_individuals_in_segregation_and_restrictive_confinement_age_category_by_gender.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation and Restrictive Confinement - Maximum, Median and Mode Aggregate Durations by Institution",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/eaf6d52a-210a-48ef-822a-294e9346c45c/download/c10_segregation_and_restrictive_confinement_aggregate_durations_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065857/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/eaf6d52a-210a-48ef-822a-294e9346c45c/download/c10_segregation_and_restrictive_confinement_aggregate_durations_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Individuals in Segregation and Restrictive Confinement by Aggregate Length of Time",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/9c7b74a5-53ad-4ef0-a7a6-97772cd01c55/download/c11_individuals_in_segregation_and_restrictive_confinement_aggregate_lengths.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623065927/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/9c7b74a5-53ad-4ef0-a7a6-97772cd01c55/download/c11_individuals_in_segregation_and_restrictive_confinement_aggregate_lengths.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Segregation and Restrictive Confinement - Maximum, Median and Mode Aggregate Durations by Region",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d7080653-69fc-4f38-8d83-709fe16ae465/download/c12_segregation_and_restrictive_confinement_aggregate_durations_by_region.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070014/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d7080653-69fc-4f38-8d83-709fe16ae465/download/c12_segregation_and_restrictive_confinement_aggregate_durations_by_region.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody \u2013 Detailed Dataset",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/89e3b63f-5679-4fa4-b98a-fdd2dc486f29/download/d01_deaths_in_custody_detailed_dataset.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070111/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/89e3b63f-5679-4fa4-b98a-fdd2dc486f29/download/d01_deaths_in_custody_detailed_dataset.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Gender",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/9de64ab4-0860-499d-8303-014bff5ec412/download/d02_deaths_in_custody_gender.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070140/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/9de64ab4-0860-499d-8303-014bff5ec412/download/d02_deaths_in_custody_gender.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Race",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/3aaec288-2ab9-4850-851d-e40a69517df5/download/d03_deaths_in_custody_race.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070213/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/3aaec288-2ab9-4850-851d-e40a69517df5/download/d03_deaths_in_custody_race.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Religion",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/46437725-4ba6-454b-b4e1-0c05402c84ca/download/d04_deaths_in_custody_religion.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070237/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/46437725-4ba6-454b-b4e1-0c05402c84ca/download/d04_deaths_in_custody_religion.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Age Category",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/45820ef9-e23a-4b4b-800a-c13c99dd5b0a/download/d05_deaths_in_custody_age_category.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623070307/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/45820ef9-e23a-4b4b-800a-c13c99dd5b0a/download/d05_deaths_in_custody_age_category.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Alerts and Medical Cause of Death",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/cc9dd090-25fe-45b1-b6b0-ae3409fa133b/download/d06_deaths_in_custody_cause_of_death_by_alert_by_institution.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064910/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/cc9dd090-25fe-45b1-b6b0-ae3409fa133b/download/d06_deaths_in_custody_cause_of_death_by_alert_by_institution.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Restrictive Confinement, Segregation and Deaths in Custody Data Dictionary",
+      "format": "XLSX",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d83fe893-9634-4794-a0c1-c17bf619a95a/download/od-restrictiveconfinement-segregation-deaths-dd20251103.xlsx",
+      "snapshot_url": "https://web.archive.org/web/20260623063713/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/d83fe893-9634-4794-a0c1-c17bf619a95a/download/od-restrictiveconfinement-segregation-deaths-dd20251103.xlsx",
+      "http_code": 200
+    },
+    {
+      "name": "Deaths in Custody - Alerts and Housing Unit Type",
+      "format": "CSV",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/6bb46038-5f50-4908-8c14-fdf31a4d3d98/download/d07_deaths_in_custody_alerts_by_housing_unit.csv",
+      "snapshot_url": "https://web.archive.org/web/20260623064927/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/6bb46038-5f50-4908-8c14-fdf31a4d3d98/download/d07_deaths_in_custody_alerts_by_housing_unit.csv",
+      "http_code": 200
+    },
+    {
+      "name": "Data Update Note",
+      "format": "DOCX",
+      "live_url": "https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/2c4d1156-3424-4dab-bf01-6c2b982f51d5/download/dataupdatenote.docx",
+      "snapshot_url": "https://web.archive.org/web/20260623063720/https://data.ontario.ca/dataset/09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36/resource/2c4d1156-3424-4dab-bf01-6c2b982f51d5/download/dataupdatenote.docx",
+      "http_code": 200
+    }
+  ]
+}
