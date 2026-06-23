@@ -2,7 +2,7 @@
   "_comment_top": "Pinned provenance for the OTIS A01RCDD public dataset. Used by fetch_otis_csv.sh as the source of truth for what 'the' file is, and by otis_MRP.R schema validation. Refresh this file by running ./fetch_otis_csv.sh --refresh-provenance.",
   "schema_version": "1.0",
   "captured_at_utc": "2026-06-23T04:41:40Z",
-  "captured_by": "vansh.ruhela@mail.utoronto.ca (rootcoder-reproducibility/1.0)",
+  "captured_by": "vsruhela@proton.me (rootcoder-reproducibility/1.0)",
   "dataset": {
     "package_slug": "data-on-inmates-in-ontario",
     "package_uuid": "09f7fc65-d3bb-4ca8-8b84-1cdc3ef73c36",

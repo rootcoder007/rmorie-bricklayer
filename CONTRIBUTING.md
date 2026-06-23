@@ -48,7 +48,7 @@ This must pass before opening a PR. If your change touches `lib_synthetic.R` or 
 
 ## Security issues
 
-Email `vansh.ruhela@mail.utoronto.ca` directly rather than opening a public issue. The framework runs other people's code on reviewers' machines — security bugs are taken seriously.
+Email `vsruhela@proton.me` directly rather than opening a public issue. The framework runs other people's code on reviewers' machines — security bugs are taken seriously.
 
 ## Code of conduct
 
