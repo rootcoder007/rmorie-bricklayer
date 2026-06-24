@@ -1,7 +1,7 @@
-# Build the morie-bricklayer container; publish to GHCR on a tag or manual run.
-#   ghcr.io/rootcoder007/morie-bricklayer:latest   (main + tag)
-#   ghcr.io/rootcoder007/morie-bricklayer:<tag>     (v*.*.* tags)
-#   ghcr.io/rootcoder007/morie-bricklayer:sha-<7>   (every build)
+# Build the rmorie-bricklayer container; publish to GHCR on a tag or manual run.
+#   ghcr.io/rootcoder007/rmorie-bricklayer:latest   (main + tag)
+#   ghcr.io/rootcoder007/rmorie-bricklayer:<tag>     (v*.*.* tags)
+#   ghcr.io/rootcoder007/rmorie-bricklayer:sha-<7>   (every build)
 # Pushes only on a v*.*.* tag or a manual dispatch; plain pushes build-only.
 name: docker-publish
 
@@ -55,7 +55,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/morie-bricklayer
+          images: ghcr.io/${{ github.repository_owner }}/rmorie-bricklayer
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
