@@ -1,4 +1,4 @@
-# R CMD check for the moriebricklayer package, which lives in the bricklayer/
+# R CMD check for the rmoriebricklayer package, which lives in the bricklayer/
 # subdirectory. Installs deps for that subdir, roxygenises (generates NAMESPACE
 # + man), then checks. Node 24 actions (checkout@v5).
 name: r-pkg-check

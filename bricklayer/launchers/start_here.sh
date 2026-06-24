@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# start_here.sh — Linux launcher for any morie-bricklayer bundle.
+# start_here.sh — Linux launcher for any rmorie-bricklayer bundle.
 # Run from a terminal in the bundle folder: ./start_here.sh
 #
 # Requirements:
@@ -14,7 +14,7 @@ cd "$(dirname "$0")"
 
 cat <<'BANNER'
 ==========================================================
-  morie-bricklayer Reproducibility Bundle — Linux Launcher
+  rmorie-bricklayer Reproducibility Bundle — Linux Launcher
 ==========================================================
 BANNER
 

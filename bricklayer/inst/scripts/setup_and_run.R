@@ -2,7 +2,7 @@
 ## setup_and_run.R
 ##
 ## Brick-proof, cross-platform (macOS / Windows / Linux) entrypoint for
-## any morie-bricklayer bundle. Driven entirely by config.json and
+## any rmorie-bricklayer bundle. Driven entirely by config.json and
 ## data_provenance.json — knows nothing about specific datasets.
 ##
 ## What it does:
@@ -23,7 +23,7 @@
 ##   Rscript setup_and_run.R --help
 ##
 ## Licence: AGPL-3.0-or-later
-## Part of morie-bricklayer.
+## Part of rmorie-bricklayer.
 ## =====================================================================
 
 ## ---------- Locate script directory + parse CLI ----------
@@ -84,7 +84,7 @@ REQ_PKGS        <- unlist(cfg$r_packages) %||% c()
 OS_KIND <- detect_os()
 
 cat("==========================================================\n")
-cat("  morie-bricklayer Reproducibility Runner\n")
+cat("  rmorie-bricklayer Reproducibility Runner\n")
 cat("  Project: ", PROJECT_NAME, "\n", sep = "")
 cat("  Author:  ", PROJECT_AUTHOR, "\n", sep = "")
 cat("==========================================================\n")
