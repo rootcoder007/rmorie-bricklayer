@@ -1,4 +1,4 @@
-# CI for morie-bricklayer: lint the shell scripts and run the canonical
+# CI for rmorie-bricklayer: lint the shell scripts and run the canonical
 # build-and-verify smoke test. The bundle's setup_and_run.R installs its R
 # deps from CRAN source if missing (slow; DHARMa/Hmisc can fail to compile),
 # so we pre-install them here as cached BINARIES via pak — making the smoke

@@ -2,7 +2,7 @@
 ## =====================================================================
 ## lib_helpers.R — interactive prompts, OS detection, path helpers
 ##
-## Part of morie-bricklayer. Project-agnostic — no domain knowledge here.
+## Part of rmorie-bricklayer. Project-agnostic — no domain knowledge here.
 ##
 ## Provides:
 ##   say(...)                                Console writer

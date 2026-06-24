@@ -1,6 +1,6 @@
 # Customization
 
-Every configurable point in `morie-bricklayer`, organized by which file controls it.
+Every configurable point in `rmorie-bricklayer`, organized by which file controls it.
 
 ---
 

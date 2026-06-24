@@ -1,4 +1,4 @@
-# Quickstart — your first morie-bricklayer bundle in 5 minutes
+# Quickstart — your first rmorie-bricklayer bundle in 5 minutes
 
 This walks you through creating a shippable reproducibility bundle for **your own** analysis script and dataset.
 
@@ -12,8 +12,8 @@ This walks you through creating a shippable reproducibility bundle for **your ow
 ## 1. Clone the kit
 
 ```bash
-git clone https://github.com/morie-oss/morie-bricklayer.git
-cd morie-bricklayer
+git clone https://github.com/morie-oss/rmorie-bricklayer.git
+cd rmorie-bricklayer
 ```
 
 ## 2. Copy the OTIS MRP example to your own project
