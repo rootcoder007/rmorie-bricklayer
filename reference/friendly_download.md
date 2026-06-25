@@ -25,9 +25,12 @@ friendly_download(url, target_path, attempt_wayback = NULL)
 
 - attempt_wayback:
 
-  Optional Wayback Machine snapshot URL tried as a fallback if the
-  primary download fails. `NULL` (default) or an empty string disables
-  the fallback.
+  Wayback Machine snapshot URL tried as a fallback if the primary
+  download fails. When `NULL` (the default) a snapshot is resolved
+  automatically via
+  [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md);
+  pass an explicit URL to override the lookup, or `""` to disable the
+  fallback entirely.
 
 ## Value
 

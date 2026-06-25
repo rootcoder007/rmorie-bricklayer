@@ -114,6 +114,8 @@ AGPL-3.0-or-later.
   : Validate a Data Frame Against a Provenance Schema
 - [`verify_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_sha256.md)
   : Verify a File's SHA256 Against an Expected Digest
+- [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md)
+  : Resolve a Wayback Machine snapshot URL
 - [`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
   : Write a Manifest to JSON
 - [`write_summary_txt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_summary_txt.md)
