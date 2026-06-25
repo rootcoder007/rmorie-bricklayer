@@ -52,7 +52,7 @@ if (HELP_MODE) {
 
 ## ---------- Source libraries ----------
 LIB_DIR <- script_dir  # libs may be next to setup_and_run.R after bundle build
-for (lib in c("lib_helpers.R", "lib_data_loader.R",
+for (lib in c("lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
               "lib_synthetic.R", "lib_manifest.R")) {
   lib_path <- file.path(LIB_DIR, lib)
   if (!file.exists(lib_path))
