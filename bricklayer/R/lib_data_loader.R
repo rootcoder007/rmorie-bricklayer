@@ -152,6 +152,41 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
   invisible(target_path)
 }
 
+#' Resolve a Wayback Machine snapshot URL
+#'
+#' Queries the Internet Archive availability API
+#' (\code{http://archive.org/wayback/available}) for the closest archived
+#' snapshot of \code{url} and returns a directly-downloadable snapshot URL,
+#' or \code{NULL} if no snapshot exists or the lookup fails. This is the
+#' shared fetch failsafe the wider morie package family relies on: callers
+#' attempt the live source first and fall back to this snapshot when the
+#' source is unreachable.
+#'
+#' @param url The original source URL to look up.
+#' @param timestamp Optional 14-digit \code{YYYYMMDDhhmmss} target; the API
+#'   returns the snapshot closest to it. Defaults to the most recent.
+#' @return A character scalar snapshot URL, or \code{NULL}.
+#' @export
+wayback_snapshot_url <- function(url, timestamp = NULL) {
+  if (!requireNamespace("jsonlite", quietly = TRUE)) {
+    return(NULL)
+  }
+  api <- paste0(
+    "http://archive.org/wayback/available?url=",
+    utils::URLencode(url, reserved = TRUE)
+  )
+  if (!is.null(timestamp) && nzchar(timestamp)) {
+    api <- paste0(api, "&timestamp=", timestamp)
+  }
+  res  <- tryCatch(jsonlite::fromJSON(api), error = function(e) NULL)
+  snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
+  if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
+    return(NULL)
+  }
+  ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs.
+  sub("^http://", "https://", snap$url)
+}
+
 ## ----- friendly_download: wraps utils::download.file with diagnostic
 ## error messages for common academic/corporate network failures.
 ## Returns TRUE on success, FALSE on failure.
@@ -165,9 +200,10 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #'
 #' @param url URL to download.
 #' @param target_path Destination path on disk.
-#' @param attempt_wayback Optional Wayback Machine snapshot URL tried as a
-#'   fallback if the primary download fails. `NULL` (default) or an empty
-#'   string disables the fallback.
+#' @param attempt_wayback Wayback Machine snapshot URL tried as a fallback if
+#'   the primary download fails. When `NULL` (the default) a snapshot is
+#'   resolved automatically via [wayback_snapshot_url()]; pass an explicit URL
+#'   to override the lookup, or `""` to disable the fallback entirely.
 #' @return `TRUE` if either the primary download or the Wayback fallback
 #'   succeeds, otherwise `FALSE`.
 #' @export
@@ -200,6 +236,11 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
     if (grepl("403|forbidden", msg, ignore.case = TRUE))
       cat("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).\n")
     cat("\n")
+    ## Auto-resolve a Wayback snapshot if the caller did not supply one
+    ## (NULL = auto; "" = explicitly disabled).
+    if (is.null(attempt_wayback)) {
+      attempt_wayback <- wayback_snapshot_url(url)
+    }
     if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
       cat("  Trying Wayback Machine fallback snapshot...\n")
       tryCatch({
