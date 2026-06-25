@@ -11,9 +11,10 @@ friendly_download(url, target_path, attempt_wayback = NULL)
 
 \item{target_path}{Destination path on disk.}
 
-\item{attempt_wayback}{Optional Wayback Machine snapshot URL tried as a
-fallback if the primary download fails. \code{NULL} (default) or an empty
-string disables the fallback.}
+\item{attempt_wayback}{Wayback Machine snapshot URL tried as a fallback if
+the primary download fails. When \code{NULL} (the default) a snapshot is
+resolved automatically via \code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}}; pass an explicit URL
+to override the lookup, or \code{""} to disable the fallback entirely.}
 }
 \value{
 \code{TRUE} if either the primary download or the Wayback fallback
