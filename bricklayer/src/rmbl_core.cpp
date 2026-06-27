@@ -1,90 +1,53 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later
  *
- * rmbl_core.c -- the shared C backend for the rmorie ecosystem.
+ * rmbl_core.cpp -- the shared C-ABI backend for the rmorie ecosystem.
  *
- * rmoriebricklayer is the compiled "core": it provides a small set of
- * generic numeric kernels (fast summary stats) and a self-contained
- * SHA-256 (for provenance) as plain C functions with C linkage. These
- * are:
- *   - wrapped as .Call entry points for rmoriebricklayer's own R API, and
- *   - published via R_RegisterCCallable (see init.c) so sibling packages
- *     (rmorie, rmoriedata) can LinkingTo: rmoriebricklayer and call them
- *     through inst/include/rmoriebricklayer.h with zero code duplication.
+ * Single source of truth: the numeric kernels below DELEGATE to
+ * morie::core::* from the vendored morie_core.h, whose canonical copy is
+ * libmorie/morie_core.hpp in the `morie` repository. morie is the origin
+ * of the arithmetic; bricklayer does not reimplement it -- it merely
+ * re-exposes morie's header-only C++ kernels behind a stable C ABI so
+ * sibling R packages can reach one compiled copy via
+ * `LinkingTo: rmoriebricklayer` + R_RegisterCCallable (see init.c). The
+ * Python side of morie binds the same header through nanobind, so R,
+ * Python, and every R sibling compute bit-identical results by
+ * construction.
  *
- * The stats kernels intentionally do NOT drop NA -- NaN/NA propagate, the
- * same contract as the base-R primitives. Call stats::na.omit() first if
- * you want NA handling (the R wrappers document this).
+ * SHA-256 (provenance hashing) is bricklayer's own addition -- it is not
+ * part of morie's numeric core -- and lives here unchanged.
+ *
+ * To resync the kernels after an upstream change:
+ *   cp morie/libmorie/morie_core.hpp rmorie-bricklayer/bricklayer/src/morie_core.h
  */
 
+/* R_NO_REMAP: do not expose the unprefixed R API aliases (length, error,
+ * allocVector, ...). R's `length` macro otherwise collides with the
+ * std::locale member that <complex> (pulled in by morie_core.h) drags in.
+ * We use the Rf_-prefixed names throughout, so this is a no-op otherwise. */
+#define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
-#include <math.h>
-#include <string.h>
-#include <stdint.h>
-#include <stddef.h>
+#include <cstring>
+#include <cstdint>
+#include <cstddef>
 
-/* ------------------------------------------------------------------ */
-/* Plain-C kernels (C linkage; these are the registered, linkable API) */
-/* ------------------------------------------------------------------ */
-
-double rmbl_mean(const double *x, R_xlen_t n) {
-    if (n <= 0) return R_NaN;
-    /* two-pass not needed for the mean; long double accumulator for
-     * accuracy on large n. */
-    long double s = 0.0L;
-    for (R_xlen_t i = 0; i < n; i++) s += x[i];
-    return (double) (s / (long double) n);
-}
-
-double rmbl_var(const double *x, R_xlen_t n) {
-    if (n < 2) return R_NaN;             /* sample variance undefined for n<2 */
-    long double m = 0.0L;
-    for (R_xlen_t i = 0; i < n; i++) m += x[i];
-    m /= (long double) n;
-    long double ss = 0.0L;
-    for (R_xlen_t i = 0; i < n; i++) {
-        long double d = (long double) x[i] - m;
-        ss += d * d;
-    }
-    return (double) (ss / (long double) (n - 1)); /* denom n-1, like R var() */
-}
-
-double rmbl_cor_pearson(const double *x, const double *y, R_xlen_t n) {
-    if (n < 2) return R_NaN;
-    long double mx = 0.0L, my = 0.0L;
-    for (R_xlen_t i = 0; i < n; i++) { mx += x[i]; my += y[i]; }
-    mx /= (long double) n; my /= (long double) n;
-    long double sxy = 0.0L, sxx = 0.0L, syy = 0.0L;
-    for (R_xlen_t i = 0; i < n; i++) {
-        long double dx = (long double) x[i] - mx;
-        long double dy = (long double) y[i] - my;
-        sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
-    }
-    long double denom = sqrtl(sxx * syy);
-    if (denom == 0.0L) return R_NaN;     /* zero variance -> undefined */
-    return (double) (sxy / denom);
-}
-
-double rmbl_normal_pdf(double x, double mu, double sigma) {
-    if (sigma <= 0.0) return R_NaN;
-    static const double inv_sqrt_2pi = 0.3989422804014326779399460599343819; /* 1/sqrt(2*pi) */
-    double z = (x - mu) / sigma;
-    return (inv_sqrt_2pi / sigma) * exp(-0.5 * z * z);
-}
+#include "morie_core.h"   /* vendored canonical morie kernels (morie::core) */
 
 /* ------------------------------------------------------------------ */
 /* SHA-256 -- self-contained, public-domain style (FIPS 180-4).        */
-/* Provenance hashing for the ecosystem; verified against the standard */
-/* "abc" test vector in tests/testthat/test-core.R.                    */
+/* bricklayer-specific (not part of morie's numeric core); verified    */
+/* against the standard "abc" vector in tests/testthat/test-core.R.    */
 /* ------------------------------------------------------------------ */
 
-typedef struct {
+namespace {
+
+struct sha256_ctx {
     uint8_t  data[64];
     uint32_t datalen;
     uint64_t bitlen;
     uint32_t state[8];
-} rmbl_sha256_ctx;
+};
 
 #define ROTR(a,b) (((a) >> (b)) | ((a) << (32 - (b))))
 #define CHs(x,y,z)  (((x) & (y)) ^ (~(x) & (z)))
@@ -94,7 +57,7 @@ typedef struct {
 #define SIG0(x) (ROTR(x,7)  ^ ROTR(x,18) ^ ((x) >> 3))
 #define SIG1(x) (ROTR(x,17) ^ ROTR(x,19) ^ ((x) >> 10))
 
-static const uint32_t rmbl_k[64] = {
+const uint32_t kSha[64] = {
     0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
     0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
@@ -105,7 +68,7 @@ static const uint32_t rmbl_k[64] = {
     0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 };
 
-static void rmbl_sha256_transform(rmbl_sha256_ctx *ctx, const uint8_t data[64]) {
+void sha256_transform(sha256_ctx *ctx, const uint8_t data[64]) {
     uint32_t a,b,c,d,e,f,g,h,t1,t2,m[64];
     int i, j;
     for (i = 0, j = 0; i < 16; i++, j += 4)
@@ -118,7 +81,7 @@ static void rmbl_sha256_transform(rmbl_sha256_ctx *ctx, const uint8_t data[64]) 
     e = ctx->state[4]; f = ctx->state[5]; g = ctx->state[6]; h = ctx->state[7];
 
     for (i = 0; i < 64; i++) {
-        t1 = h + EP1(e) + CHs(e,f,g) + rmbl_k[i] + m[i];
+        t1 = h + EP1(e) + CHs(e,f,g) + kSha[i] + m[i];
         t2 = EP0(a) + MAJs(a,b,c);
         h = g; g = f; f = e; e = d + t1; d = c; c = b; b = a; a = t1 + t2;
     }
@@ -127,7 +90,7 @@ static void rmbl_sha256_transform(rmbl_sha256_ctx *ctx, const uint8_t data[64]) 
     ctx->state[4] += e; ctx->state[5] += f; ctx->state[6] += g; ctx->state[7] += h;
 }
 
-static void rmbl_sha256_init(rmbl_sha256_ctx *ctx) {
+void sha256_init(sha256_ctx *ctx) {
     ctx->datalen = 0; ctx->bitlen = 0;
     ctx->state[0] = 0x6a09e667; ctx->state[1] = 0xbb67ae85;
     ctx->state[2] = 0x3c6ef372; ctx->state[3] = 0xa54ff53a;
@@ -135,29 +98,29 @@ static void rmbl_sha256_init(rmbl_sha256_ctx *ctx) {
     ctx->state[6] = 0x1f83d9ab; ctx->state[7] = 0x5be0cd19;
 }
 
-static void rmbl_sha256_update(rmbl_sha256_ctx *ctx, const uint8_t *data, size_t len) {
+void sha256_update(sha256_ctx *ctx, const uint8_t *data, size_t len) {
     for (size_t i = 0; i < len; i++) {
         ctx->data[ctx->datalen] = data[i];
         ctx->datalen++;
         if (ctx->datalen == 64) {
-            rmbl_sha256_transform(ctx, ctx->data);
+            sha256_transform(ctx, ctx->data);
             ctx->bitlen += 512;
             ctx->datalen = 0;
         }
     }
 }
 
-static void rmbl_sha256_final(rmbl_sha256_ctx *ctx, uint8_t hash[32]) {
+void sha256_final(sha256_ctx *ctx, uint8_t hash[32]) {
     uint32_t i = ctx->datalen;
-    ctx->data[i++] = 0x80;                       /* append the '1' bit */
+    ctx->data[i++] = 0x80;
     if (ctx->datalen < 56) {
         while (i < 56) ctx->data[i++] = 0x00;
     } else {
         while (i < 64) ctx->data[i++] = 0x00;
-        rmbl_sha256_transform(ctx, ctx->data);
-        memset(ctx->data, 0, 56);
+        sha256_transform(ctx, ctx->data);
+        std::memset(ctx->data, 0, 56);
     }
-    ctx->bitlen += (uint64_t) ctx->datalen * 8;  /* total message length in bits */
+    ctx->bitlen += (uint64_t) ctx->datalen * 8;
     ctx->data[63] = (uint8_t)(ctx->bitlen);
     ctx->data[62] = (uint8_t)(ctx->bitlen >> 8);
     ctx->data[61] = (uint8_t)(ctx->bitlen >> 16);
@@ -166,9 +129,9 @@ static void rmbl_sha256_final(rmbl_sha256_ctx *ctx, uint8_t hash[32]) {
     ctx->data[58] = (uint8_t)(ctx->bitlen >> 40);
     ctx->data[57] = (uint8_t)(ctx->bitlen >> 48);
     ctx->data[56] = (uint8_t)(ctx->bitlen >> 56);
-    rmbl_sha256_transform(ctx, ctx->data);
+    sha256_transform(ctx, ctx->data);
 
-    for (i = 0; i < 8; i++) {                    /* big-endian digest */
+    for (i = 0; i < 8; i++) {
         hash[i*4]   = (uint8_t)(ctx->state[i] >> 24);
         hash[i*4+1] = (uint8_t)(ctx->state[i] >> 16);
         hash[i*4+2] = (uint8_t)(ctx->state[i] >> 8);
@@ -176,14 +139,42 @@ static void rmbl_sha256_final(rmbl_sha256_ctx *ctx, uint8_t hash[32]) {
     }
 }
 
-/* Public, linkable: hash `len` bytes of `data`, write 64 hex chars + NUL. */
+}  // namespace
+
+/* ------------------------------------------------------------------ */
+/* Public C ABI -- the registered, linkable kernels.                   */
+/* Stats delegate to morie::core (single source of truth); SHA-256 is  */
+/* bricklayer's own. extern "C" so init.c (C) links them unmangled.    */
+/* ------------------------------------------------------------------ */
+
+extern "C" {
+
+double rmbl_mean(const double *x, R_xlen_t n) {
+    return morie::core::mean(x, static_cast<std::size_t>(n));
+}
+
+double rmbl_var(const double *x, R_xlen_t n) {
+    return morie::core::variance(x, static_cast<std::size_t>(n), 1);  // n-1, like R var()
+}
+
+double rmbl_cor_pearson(const double *x, const double *y, R_xlen_t n) {
+    return morie::core::cor_pearson(x, y, static_cast<std::size_t>(n));
+}
+
+double rmbl_normal_pdf(double x, double mu, double sigma) {
+    if (sigma <= 0.0) return R_NaN;
+    double out;
+    morie::core::normal_pdf(&x, 1, mu, sigma, &out);
+    return out;
+}
+
 void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
-    rmbl_sha256_ctx ctx;
+    sha256_ctx ctx;
     uint8_t hash[32];
     static const char hx[] = "0123456789abcdef";
-    rmbl_sha256_init(&ctx);
-    rmbl_sha256_update(&ctx, data, len);
-    rmbl_sha256_final(&ctx, hash);
+    sha256_init(&ctx);
+    sha256_update(&ctx, data, len);
+    sha256_final(&ctx, hash);
     for (int i = 0; i < 32; i++) {
         out[i*2]   = hx[(hash[i] >> 4) & 0xf];
         out[i*2+1] = hx[hash[i] & 0xf];
@@ -191,48 +182,45 @@ void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     out[64] = '\0';
 }
 
-/* ------------------------------------------------------------------ */
-/* .Call wrappers -- rmoriebricklayer's own R-facing API.              */
-/* ------------------------------------------------------------------ */
+/* ---- .Call wrappers: bricklayer's own R-facing API ---- */
 
 SEXP C_rmbl_mean(SEXP x) {
-    x = PROTECT(coerceVector(x, REALSXP));
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean(REAL(x), XLENGTH(x));
     UNPROTECT(1);
-    return ScalarReal(r);
+    return Rf_ScalarReal(r);
 }
 
 SEXP C_rmbl_var(SEXP x) {
-    x = PROTECT(coerceVector(x, REALSXP));
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_var(REAL(x), XLENGTH(x));
     UNPROTECT(1);
-    return ScalarReal(r);
+    return Rf_ScalarReal(r);
 }
 
 SEXP C_rmbl_cor(SEXP x, SEXP y) {
-    x = PROTECT(coerceVector(x, REALSXP));
-    y = PROTECT(coerceVector(y, REALSXP));
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    y = PROTECT(Rf_coerceVector(y, REALSXP));
     if (XLENGTH(x) != XLENGTH(y)) {
         UNPROTECT(2);
         Rf_error("x and y must have the same length");
     }
     double r = rmbl_cor_pearson(REAL(x), REAL(y), XLENGTH(x));
     UNPROTECT(2);
-    return ScalarReal(r);
+    return Rf_ScalarReal(r);
 }
 
 SEXP C_rmbl_normal_pdf(SEXP x, SEXP mu, SEXP sigma) {
-    x = PROTECT(coerceVector(x, REALSXP));
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
     double m = Rf_asReal(mu), s = Rf_asReal(sigma);
     R_xlen_t n = XLENGTH(x);
-    SEXP out = PROTECT(allocVector(REALSXP, n));
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
     double *px = REAL(x), *po = REAL(out);
     for (R_xlen_t i = 0; i < n; i++) po[i] = rmbl_normal_pdf(px[i], m, s);
     UNPROTECT(2);
     return out;
 }
 
-/* Accepts a single CHARSXP string or a RAWSXP; returns a 64-char hex string. */
 SEXP C_rmbl_sha256(SEXP x) {
     const unsigned char *data;
     size_t len;
@@ -242,12 +230,14 @@ SEXP C_rmbl_sha256(SEXP x) {
         len  = (size_t) XLENGTH(x);
     } else if (TYPEOF(x) == STRSXP && XLENGTH(x) >= 1) {
         SEXP s = STRING_ELT(x, 0);
-        if (s == NA_STRING) return ScalarString(NA_STRING);
+        if (s == NA_STRING) return Rf_ScalarString(NA_STRING);
         data = (const unsigned char *) CHAR(s);
-        len  = strlen((const char *) data);
+        len  = std::strlen((const char *) data);
     } else {
         Rf_error("rmbl_sha256 expects a length-1 character vector or a raw vector");
     }
     rmbl_sha256_hex(data, len, out);
-    return mkString(out);
+    return Rf_mkString(out);
 }
+
+}  // extern "C"
