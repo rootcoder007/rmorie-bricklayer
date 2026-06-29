@@ -84,6 +84,11 @@ LICENCE_NAME="$(read_prov dataset.licence_name)"
 LICENCE_URL="$(read_prov dataset.licence_url)"
 RETRIEVED_AT="$(read_prov captured_at_utc)"
 
+# --- Project metadata: work type + supervisor (non-ASCII names OK) ---
+WORK_TYPE="$(read_json project.work_type)"; [[ -z "${WORK_TYPE}" ]] && WORK_TYPE="research paper"
+SUPERVISOR="$(read_json project.supervisor)"
+if [[ -n "${SUPERVISOR}" ]]; then SUPERVISOR_LINE="**Supervisor:** ${SUPERVISOR}"; else SUPERVISOR_LINE=""; fi
+
 # --- Staging area ---
 BUILD_DATE="$(date -u +%Y-%m-%d)"
 BASENAME="${PROJECT}_v${VERSION}"
@@ -120,7 +125,6 @@ cp "${PROJECT_DIR}"/analysis.R             "${STAGE}/"
 render_template() {
   local tmpl="$1" out="$2"
   python3 <<PYEOF
-import sys, re
 tmpl = open("${tmpl}").read()
 subs = {
   "project_title":  "${PROJECT_TITLE}",
@@ -130,6 +134,9 @@ subs = {
   "orcid":          "${ORCID}",
   "affiliation":    "${AFFILIATION}",
   "paper_title":    "${PAPER_TITLE}",
+  "work_type":      "${WORK_TYPE}",
+  "supervisor":     "${SUPERVISOR}",
+  "supervisor_line": "${SUPERVISOR_LINE}",
   "licence":        "${LICENCE}",
   "data_licence":   "${LICENCE_NAME}",
   "licence_name":   "${LICENCE_NAME}",
@@ -153,7 +160,16 @@ subs = {
 }
 for k, v in subs.items():
     tmpl = tmpl.replace("{{" + k + "}}", str(v))
-open("${out}", "w").write(tmpl)
+# Write UTF-8 (preserves accented names); fall back to ASCII transliteration
+# if the destination/locale cannot represent the characters.
+try:
+    with open("${out}", "w", encoding="utf-8") as fh:
+        fh.write(tmpl)
+except UnicodeEncodeError:
+    import unicodedata
+    ascii_tmpl = unicodedata.normalize("NFKD", tmpl).encode("ascii", "ignore").decode("ascii")
+    with open("${out}", "w", encoding="ascii") as fh:
+        fh.write(ascii_tmpl)
 PYEOF
 }
 
