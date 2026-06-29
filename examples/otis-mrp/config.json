@@ -3,11 +3,12 @@
     "name":         "otis-mrp",
     "title":        "OTIS A01RCDD MRP — Alert Complexity and Placement Volatility",
     "paper_title":  "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data",
+    "work_type":    "Major Research Paper",
     "author":       "Vansh Singh Ruhela",
     "contact":      "vsruhela@proton.me",
     "orcid":        "0009-0004-1750-3592",
     "affiliation":  "MA candidate, Centre for Criminology and Sociolegal Studies, University of Toronto",
-    "supervisor":   "",
+    "supervisor":   "Prof. Ángela Zorro Medina",
     "submission":   "August 17, 2026",
     "licence":      "AGPL-3.0-or-later",
     "_comment":     "Project metadata. Used to render README/SECURITY/INSTRUCTIONS templates."
