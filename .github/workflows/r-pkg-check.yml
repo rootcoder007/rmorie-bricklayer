@@ -7,6 +7,9 @@ on:
   push:
     branches: [main]
     paths: ['bricklayer/**', '.github/workflows/r-pkg-check.yml']
+  pull_request:
+    branches: [main]
+    paths: ['bricklayer/**', '.github/workflows/r-pkg-check.yml']
   workflow_dispatch:
 
 permissions:

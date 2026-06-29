@@ -3,11 +3,12 @@
     "name":         "otis-mrp",
     "title":        "OTIS A01RCDD MRP — Alert Complexity and Placement Volatility",
     "paper_title":  "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data",
+    "work_type":    "Major Research Paper",
     "author":       "Vansh Singh Ruhela",
     "contact":      "vsruhela@proton.me",
     "orcid":        "0009-0004-1750-3592",
     "affiliation":  "MA candidate, Centre for Criminology and Sociolegal Studies, University of Toronto",
-    "supervisor":   "",
+    "supervisor":   "Prof. Ángela Zorro Medina",
     "submission":   "August 17, 2026",
     "licence":      "AGPL-3.0-or-later",
     "_comment":     "Project metadata. Used to render README/SECURITY/INSTRUCTIONS templates."
@@ -22,6 +23,11 @@
     "data.table", "MatchIt", "glmmTMB", "lme4",
     "DHARMa", "Hmisc", "jsonlite", "digest"
   ],
+  "r_packages_optional": {
+    "_comment": "Only for the opt-in DML recompute (OTIS_DML_RECOMPUTE=1); NOT needed for the 28 deterministic checks. PREFERRED: install 'rmorie' -> canonical morie_otis_irm_dml runs the recompute in ~10s and reproduces the published effects to <=0.001. FALLBACK (no rmorie): the self-contained DoubleML port uses the packages below and takes ~24 min.",
+    "preferred": ["rmorie"],
+    "fallback": ["DoubleML", "mlr3", "mlr3learners"]
+  },
 
   "data": {
     "default_candidates": [
@@ -53,6 +59,10 @@
   "expected": {
     "total_checks": 36,
     "pass_real":    36,
-    "pass_csv":     28
+    "pass_csv":     28,
+    "_recompute_comment": "With the optional heavy DML recompute (OTIS_DML_RECOMPUTE=1), the 8 DML checks reproduce from public data within +/-0.02 (reference run matched to ~0.00004) and a 37th aggregate confirmation is added -> 37/37.",
+    "pass_csv_recompute":   37,
+    "total_checks_recompute": 37,
+    "dml_recompute_tol":    0.02
   }
 }
