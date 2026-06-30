@@ -1,4 +1,11 @@
 url: https://rootcoder007.github.io/rmorie-bricklayer/
+# The package lives in the bricklayer/ subdirectory of the repo, so the
+# default source links (/blob/main/R/...) 404. Point them at the subdir.
+repo:
+  url:
+    home: https://github.com/rootcoder007/rmorie-bricklayer/
+    source: https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/
+    issue: https://github.com/rootcoder007/rmorie-bricklayer/issues/
 template:
   bootstrap: 5
   includes:
