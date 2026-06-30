@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/DESCRIPTION)
 
 Ruhela V (2026). *rmoriebricklayer: Reproducible Data Bundles with
 Provenance and Fallback*. R package version 0.2.0,
