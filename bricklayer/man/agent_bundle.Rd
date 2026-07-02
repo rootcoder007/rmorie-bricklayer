@@ -14,14 +14,14 @@ agent_bundle(request, model = NULL, backend = "auto")
 \item{backend}{Optional backend override (see \code{rmorie::agent}).}
 }
 \value{
-Character scalar: the agent's output, or a message if the \code{rmorie}
-binary is not installed.
+Character scalar: the agent's output, or a message if the
+\code{rmorie} binary is not installed.
 }
 \description{
 Forwards a bundle-building request to the \code{rmorie} command-line agent
-(optional binary from rmorie-cli), with a rmoriebricklayer-focused preamble.
-The agent can run R and read/write files to help assemble or repair a
-brick-proof bundle. See \code{rmorie::agent} for requirements.
+(optional binary from rmorie-cli), with a rmoriebricklayer-focused
+preamble. The agent can run R and read/write files to help assemble or
+repair a brick-proof bundle. See \code{rmorie::agent} for requirements.
 }
 \examples{
 \dontrun{
