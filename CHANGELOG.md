@@ -8,7 +8,8 @@ Initial public release. Extracted from the OTIS A01RCDD MRP reproducibility bund
 
 ### Added
 
-- Cross-platform brick-proof orchestrator (`setup_and_run.R`) — pure R, no shell dependencies.
+- Compiled C/C++ provenance core (`src/rmbl_core.cpp`, registered via `useDynLib` + `.Call`): SHA-256 hashing and summary statistics (mean, variance, correlation, normal PDF). The authoring package is compiled; the generated bundle stays pure-R for the reviewer.
+- Cross-platform brick-proof orchestrator (`setup_and_run.R`) — pure R, no shell dependencies (this is the *bundle* launcher, not the package).
 - OS launchers — `START_HERE.command` (macOS), `START_HERE.bat` (Windows), `start_here.sh` (Linux). All route to the same orchestrator.
 - Reusable R libraries: `lib_helpers.R`, `lib_data_loader.R`, `lib_synthetic.R`, `lib_manifest.R`.
 - CKAN open-data resolution: `package_show` by slug + name pattern, with `package_search` fallback.
