@@ -2,6 +2,8 @@
 
 ## All functions
 
+- [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  : Agent-assisted reproducibility-bundle help
 - [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
   : Apply Schema Validation, Stopping on Fatal Issues
 - [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)

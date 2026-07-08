@@ -78,9 +78,8 @@ write_manifest_json(man, "manifest.json")
 
 `rmoriebricklayer` is the reproducibility / provenance layer of the
 [MORIE](https://github.com/rootcoder007/morie) ecosystem, alongside
-[rmorie](https://github.com/rootcoder007/rmorie),
-[rmoriedata](https://github.com/rootcoder007/rmoriedata), and
-[rmorielite](https://github.com/rootcoder007/rmorielite).
+[rmorie](https://github.com/rootcoder007/rmorie) and
+[rmoriedata](https://github.com/rootcoder007/rmoriedata).
 
 ## License
 
@@ -90,6 +89,8 @@ AGPL-3.0-or-later.
 
 ## All functions
 
+- [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  : Agent-assisted reproducibility-bundle help
 - [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
   : Apply Schema Validation, Stopping on Fatal Issues
 - [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
