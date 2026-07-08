@@ -15,6 +15,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 - **Schema validation** — every CSV load is validated against a pinned `schema.json`; structural drift produces clear errors not silent failures
 - **Synthetic fallback** — if the reviewer has no internet and no data, the pipeline runs on schema-compliant random data with `SYNTHETIC` watermarks everywhere
 - **Author-side audit** — `verify_bundle.sh` extracts the zip, runs the analysis, parses the manifest, exits non-zero on regression
+- **Compiled provenance core** — the package itself ships a registered C/C++ core (`.Call` via `useDynLib`) for SHA-256 hashing and summary statistics (mean, variance, correlation, normal PDF), so integrity checks stay fast on large bundles. (The *generated bundle* stays pure-R for the reviewer; the compiled core lives in the authoring package.)
 - **Trust transparency** — every bundle ships with a `SECURITY.md` explaining what it does, what it touches, what it never touches, and how to verify its integrity
 
 ---
