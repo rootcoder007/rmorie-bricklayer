@@ -33,12 +33,17 @@
 #' via [record()] and is later serialized with [write_manifest_json()].
 #'
 #' @param meta A named list of run metadata (e.g. `project`, `author`,
-#'   `run_at`, `os`, `r_version`, `synthetic`).
-#' @return A manifest list with elements `meta` and an empty `results`
-#'   list.
+#'   `run_at`, `synthetic`).
+#' @param environment Logical; when `TRUE` (the default) the manifest
+#'   also records the analysis environment via [capture_environment()]
+#'   (R version, platform, OS, UTC timestamp, loaded package versions).
+#' @return A manifest list with elements `meta`, an empty `results`
+#'   list, and (when requested) `environment`.
 #' @export
-make_manifest <- function(meta) {
-  list(meta = meta, results = list())
+make_manifest <- function(meta, environment = TRUE) {
+  m <- list(meta = meta, results = list())
+  if (isTRUE(environment)) m$environment <- capture_environment()
+  m
 }
 
 #' Record a Cross-Check Result in a Manifest
