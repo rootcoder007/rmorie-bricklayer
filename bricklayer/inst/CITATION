@@ -1,0 +1,14 @@
+citHeader(
+  "To cite rmoriebricklayer in publications, please cite the software. ",
+  "It is part of the MORIE ecosystem; see also the 'morie' and 'rmorie' packages."
+)
+
+bibentry(
+  bibtype = "Manual",
+  key     = "ruhela_rmoriebricklayer_2026",
+  title   = "rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback",
+  author  = person("Vansh Singh", "Ruhela",
+                   comment = c(ORCID = "0009-0004-1750-3592")),
+  year    = "2026",
+  url     = "https://github.com/rootcoder007/rmorie-bricklayer"
+)
