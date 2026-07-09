@@ -151,6 +151,11 @@ make_synthetic_csv <- function(schema, out_path,
                                 n_rows = NULL, seed = NULL) {
   if (is.null(seed)) seed <- schema$seed %||% 91735246L
   if (is.null(n_rows)) n_rows <- schema$n_rows %||% 50000L
+  # CRAN policy: restore the caller's RNG state on exit.
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
+  }
   set.seed(seed)
 
   ## Optional: replicate rows per "person" if a multiplier is specified
