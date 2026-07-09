@@ -22,7 +22,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 
 ## Status
 
-**v0.1 — early development.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `examples/otis-mrp/` and runs to **36/36 PASS** in audit on macOS. Cross-platform code paths are written but only macOS has been end-to-end tested. Linux + Windows runs welcome as test reports.
+**v0.1 — early development.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `examples/otis-mrp/` and runs to **37/37 PASS** in audit on macOS. Cross-platform code paths are written but only macOS has been end-to-end tested. Linux + Windows runs welcome as test reports.
 
 ## What you get
 
