@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,19 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="rmoriebricklayer-030">rmoriebricklayer 0.3.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-030"></a></h2>
+<div class="section level3">
+<h3 id="capsule-level-integrity-0-3-0">Capsule-level integrity<a class="anchor" aria-label="anchor" href="#capsule-level-integrity-0-3-0"></a></h3>
+<ul><li>New <code><a href="../reference/verify_capsule.html">verify_capsule()</a></code>: one call re-verifies an entire reproducible data capsule offline — provenance readability, pinned sha256/size/row count, schema validity, script hash, and re-derivation of every stored manifest cross-check from its own numbers.</li>
+<li>New <code><a href="../reference/capture_environment.html">capture_environment()</a></code> records R version, platform, OS, UTC timestamp, and loaded package versions; <code><a href="../reference/make_manifest.html">make_manifest()</a></code> now attaches it by default (<code>environment = FALSE</code> to opt out).</li>
+<li>New <code><a href="../reference/cite_capsule.html">cite_capsule()</a></code> generates a ready-to-paste data citation (text + BibTeX <code>@misc</code>, DOI-aware) from a provenance object.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="portal-coverage-0-3-0">Portal coverage<a class="anchor" aria-label="anchor" href="#portal-coverage-0-3-0"></a></h3>
+<ul><li>New <code><a href="../reference/resolve_via_socrata.html">resolve_via_socrata()</a></code> and <code><a href="../reference/resolve_via_arcgis.html">resolve_via_arcgis()</a></code> extend URL-rot recovery beyond CKAN to the Socrata (Calgary/Chicago/NYC) and ArcGIS FeatureServer (Toronto Police Service) portals the MORIE family fetches from.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.5" id="rmoriebricklayer-025">rmoriebricklayer 0.2.5<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-025"></a></h2>
 <ul><li>

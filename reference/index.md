@@ -8,6 +8,10 @@
   : Apply Schema Validation, Stopping on Fatal Issues
 - [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
   : Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
+- [`capture_environment()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.md)
+  : Capture the Analysis Environment for a Manifest
+- [`cite_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cite_capsule.md)
+  : Generate a Data Citation From Provenance
 - [`core_normal_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.md)
   : Normal density (C backend)
 - [`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
@@ -26,10 +30,14 @@
   : Generate a Synthetic CSV From a Schema Recipe
 - [`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
   : Record a Cross-Check Result in a Manifest
+- [`resolve_via_arcgis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_arcgis.md)
+  : Resolve a Query URL via ArcGIS FeatureServer Metadata
 - [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
   : Resolve a Download URL via CKAN package_show
 - [`resolve_via_ckan_search()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan_search.md)
   : Resolve a Download URL via CKAN package_search
+- [`resolve_via_socrata()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_socrata.md)
+  : Resolve a Download URL via the Socrata Metadata API
 - [`core_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
   [`core_var()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
   [`core_cor()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md)
@@ -40,6 +48,8 @@
   : Transliterate Text to Plain ASCII
 - [`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
   : Validate a Data Frame Against a Provenance Schema
+- [`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+  : Re-Verify an Entire Reproducible Data Capsule
 - [`verify_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_sha256.md)
   : Verify a File's SHA256 Against an Expected Digest
 - [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md)

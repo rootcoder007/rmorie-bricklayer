@@ -9,7 +9,7 @@ and is later serialized with
 ## Usage
 
 ``` r
-make_manifest(meta)
+make_manifest(meta, environment = TRUE)
 ```
 
 ## Arguments
@@ -17,8 +17,16 @@ make_manifest(meta)
 - meta:
 
   A named list of run metadata (e.g. `project`, `author`, `run_at`,
-  `os`, `r_version`, `synthetic`).
+  `synthetic`).
+
+- environment:
+
+  Logical; when `TRUE` (the default) the manifest also records the
+  analysis environment via
+  [`capture_environment()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.md)
+  (R version, platform, OS, UTC timestamp, loaded package versions).
 
 ## Value
 
-A manifest list with elements `meta` and an empty `results` list.
+A manifest list with elements `meta`, an empty `results` list, and (when
+requested) `environment`.

@@ -9,7 +9,7 @@ via record() and is later serialized with write_manifest_json()."><meta name="go
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ via <code><a href="record.html">record()</a></code> and is later serialized with
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_manifest</span><span class="op">(</span><span class="va">meta</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_manifest</span><span class="op">(</span><span class="va">meta</span>, environment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -51,13 +51,19 @@ via <code><a href="record.html">record()</a></code> and is later serialized with
 
 <dl><dt id="arg-meta">meta<a class="anchor" aria-label="anchor" href="#arg-meta"></a></dt>
 <dd><p>A named list of run metadata (e.g. <code>project</code>, <code>author</code>,
-<code>run_at</code>, <code>os</code>, <code>r_version</code>, <code>synthetic</code>).</p></dd>
+<code>run_at</code>, <code>synthetic</code>).</p></dd>
+
+
+<dt id="arg-environment">environment<a class="anchor" aria-label="anchor" href="#arg-environment"></a></dt>
+<dd><p>Logical; when <code>TRUE</code> (the default) the manifest
+also records the analysis environment via <code><a href="capture_environment.html">capture_environment()</a></code>
+(R version, platform, OS, UTC timestamp, loaded package versions).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A manifest list with elements <code>meta</code> and an empty <code>results</code>
-list.</p>
+    <p>A manifest list with elements <code>meta</code>, an empty <code>results</code>
+list, and (when requested) <code>environment</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
