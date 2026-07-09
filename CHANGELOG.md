@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/), and versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-07-09
+
+Capsule integrity API (verify_capsule, capture_environment, cite_capsule), Socrata + ArcGIS resolvers, 0.2.5 synthetic-generator bug fixes.
+
 ## [0.2.4] — 2026-07-09
 
 RNG-state restore in make_synthetic_csv (CRAN policy), cran-comments.md, packaged NEWS.md, capsule-terminology tagline fix.

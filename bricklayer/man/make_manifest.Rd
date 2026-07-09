@@ -4,15 +4,19 @@
 \alias{make_manifest}
 \title{Construct a Reproducibility Manifest}
 \usage{
-make_manifest(meta)
+make_manifest(meta, environment = TRUE)
 }
 \arguments{
 \item{meta}{A named list of run metadata (e.g. \code{project}, \code{author},
-\code{run_at}, \code{os}, \code{r_version}, \code{synthetic}).}
+\code{run_at}, \code{synthetic}).}
+
+\item{environment}{Logical; when \code{TRUE} (the default) the manifest
+also records the analysis environment via \code{\link[=capture_environment]{capture_environment()}}
+(R version, platform, OS, UTC timestamp, loaded package versions).}
 }
 \value{
-A manifest list with elements \code{meta} and an empty \code{results}
-list.
+A manifest list with elements \code{meta}, an empty \code{results}
+list, and (when requested) \code{environment}.
 }
 \description{
 Creates an empty manifest object that accumulates cross-check entries
