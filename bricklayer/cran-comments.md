@@ -37,7 +37,3 @@ submitted separately once this package is on CRAN).
   example that would contact a remote service (`agent_bundle()`) is
   wrapped in `\dontrun{}` because it requires a user-configured LLM
   endpoint and credentials.
-* A related package (`morie` 0.9.4, the Python+R ancestor of this
-  family) was archived in 2026 for writing to `~/.cache`. This
-  package was designed after that lesson: it never touches the user
-  home directory.
