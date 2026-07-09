@@ -20,7 +20,7 @@ supplies project/author/run details.}
 \item{output_dir}{Directory to write \code{SUMMARY.txt} into and to list
 produced files from.}
 
-\item{paths}{A named list of absolute paths to report (e.g. \code{bundle},
+\item{paths}{A named list of absolute paths to report (e.g. \code{capsule},
 \code{input}, \code{results}, \code{analysis_script}, \code{provenance}).}
 
 \item{what_was_done}{Optional character vector of bullet points
