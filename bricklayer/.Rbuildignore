@@ -8,3 +8,4 @@
 ^launchers$
 ^scripts$
 ^templates$
+^cran-comments\.md$
