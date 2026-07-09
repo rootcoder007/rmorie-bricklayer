@@ -20,6 +20,10 @@ submitted separately once this package is on CRAN).
 0 errors | 0 warnings | 1 note
 
 * "New submission" — this is the package's first CRAN submission.
+* The spell-checker flags "CKAN", "SHA", and "Wayback" in the
+  Description; all three are correct technical terms (the CKAN data
+  portal API, SHA-256 checksums, the Internet Archive Wayback
+  Machine).
 
 ## CRAN policy notes
 
