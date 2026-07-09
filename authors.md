@@ -8,16 +8,15 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/DESCRIPTION)
+[`inst/CITATION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/inst/CITATION)
 
 Ruhela V (2026). *rmoriebricklayer: Reproducible Data Capsules with
-Provenance and Fallback*. R package version 0.2.2,
+Provenance and Fallback*.
 <https://github.com/rootcoder007/rmorie-bricklayer>.
 
-    @Manual{,
+    @Manual{ruhela_rmoriebricklayer_2026,
       title = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
       author = {Vansh Singh Ruhela},
       year = {2026},
-      note = {R package version 0.2.2},
       url = {https://github.com/rootcoder007/rmorie-bricklayer},
     }
