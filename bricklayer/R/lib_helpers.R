@@ -82,7 +82,7 @@ ascii_fallback <- function(x, force = FALSE) {
 #' Writes `text` to `path` as UTF-8. If the write raises an encoding error
 #' (for example a destination or locale that cannot represent the
 #' characters), it retries with an ASCII transliteration produced by
-#' [to_ascii()] so bundle generation never fails on a non-ASCII name.
+#' [to_ascii()] so capsule generation never fails on a non-ASCII name.
 #'
 #' @param text A character vector of lines to write.
 #' @param path Destination file path.

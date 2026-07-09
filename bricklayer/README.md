@@ -2,7 +2,7 @@
 
 [![r-universe](https://rootcoder007.r-universe.dev/badges/rmoriebricklayer)](https://rootcoder007.r-universe.dev/rmoriebricklayer)
 
-> Brick-proof, reproducible data bundles for R.
+> Brick-proof, reproducible data capsules for R.
 
 `rmoriebricklayer` resolves open-data sources, records and verifies
 provenance, validates downloaded data against a pinned schema, and falls

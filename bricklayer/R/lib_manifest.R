@@ -124,7 +124,7 @@ summarise_counts <- function(manifest) {
 }
 
 ## ----- SUMMARY.txt -----
-## `paths` is a named list: bundle, input, results, script, provenance
+## `paths` is a named list: capsule, input, results, script, provenance
 ## `what_was_done` is an optional character vector of bullet points
 
 #' Write a Plain-Language Run Summary
@@ -137,7 +137,7 @@ summarise_counts <- function(manifest) {
 #'   supplies project/author/run details.
 #' @param output_dir Directory to write `SUMMARY.txt` into and to list
 #'   produced files from.
-#' @param paths A named list of absolute paths to report (e.g. `bundle`,
+#' @param paths A named list of absolute paths to report (e.g. `capsule`,
 #'   `input`, `results`, `analysis_script`, `provenance`).
 #' @param what_was_done Optional character vector of bullet points
 #'   describing what the run did.
