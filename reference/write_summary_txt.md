@@ -31,7 +31,7 @@ write_summary_txt(
 
 - paths:
 
-  A named list of absolute paths to report (e.g. `bundle`, `input`,
+  A named list of absolute paths to report (e.g. `capsule`, `input`,
   `results`, `analysis_script`, `provenance`).
 
 - what_was_done:
