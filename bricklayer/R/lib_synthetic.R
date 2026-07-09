@@ -81,7 +81,8 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
       p_base <- spec$p %||% 0.1
       p_extra <- spec$p_with_baserate %||% 0
       p_per_row <- if (!is.null(base_p)) p_base + p_extra * base_p else p_base
-      labels <- spec$labels %||% c("Yes", "No")
+      # unlist: schemas parsed from provenance JSON deliver list("Yes","No")
+      labels <- unlist(spec$labels %||% c("Yes", "No"))
       ifelse(stats::runif(n) < p_per_row, labels[1], labels[2])
     },
     poisson = {
@@ -102,8 +103,11 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
         }, years, seq_per_yr)
         return(ids)
       }
-      seqs <- seq_len(n)
-      gsub("\\{seq:05d\\}", sprintf("%05d", seqs), pattern)
+      # vapply: gsub vectorises over x, not replacement -- a bare gsub here
+      # returned a single id regardless of n.
+      vapply(seq_len(n), function(s) {
+        gsub("\\{seq:05d\\}", sprintf("%05d", s), pattern)
+      }, character(1))
     },
     sequence = {
       from <- spec$from %||% 1L
@@ -162,9 +166,12 @@ make_synthetic_csv <- function(schema, out_path,
   reps_spec <- schema$row_replication
   if (!is.null(reps_spec)) {
     n_persons <- n_rows
-    rows_per  <- sample(unlist(reps_spec$values),
-                        n_persons, replace = TRUE,
-                        prob = unlist(reps_spec$weights))
+    # index-sample the values: sample(x) with a scalar integer x would
+    # expand to 1:x (base R gotcha) and break single-value replication.
+    rep_vals <- unlist(reps_spec$values)
+    rows_per <- rep_vals[sample.int(length(rep_vals), n_persons,
+                                    replace = TRUE,
+                                    prob = unlist(reps_spec$weights))]
     expand <- function(x) rep(x, rows_per)
   } else {
     expand <- identity
