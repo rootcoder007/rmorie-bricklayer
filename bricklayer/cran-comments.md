@@ -13,7 +13,8 @@ submitted separately once this package is on CRAN).
 * Local: Debian (aarch64), R 4.5.x — R CMD check --as-cran
 * GitHub Actions: ubuntu-latest (R release + devel), ubuntu-22.04
   (oldrel-1), windows-latest, macos-latest
-* win-builder (R-devel)
+* win-builder R-devel (2026-07-09, this exact 0.3.0 tarball):
+  0 errors | 0 warnings | 1 note (new submission)
 
 ## R CMD check results
 
