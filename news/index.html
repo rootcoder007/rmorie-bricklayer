@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,15 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.5" id="rmoriebricklayer-025">rmoriebricklayer 0.2.5<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-025"></a></h2>
+<ul><li>
+<code>make_synthetic_column("id_pattern")</code> without a <code>year_col</code> now returns all <code>n</code> ids (a vectorised-<code>gsub</code> misuse returned a single id).</li>
+<li>
+<code>bernoulli</code> columns unlist JSON-derived <code>labels</code>, fixing mangled column names from provenance-parsed schemas.</li>
+<li>Single-value <code>row_replication</code> no longer trips base R’s scalar <code><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample()</a></code> expansion.</li>
+<li>Test suite grown from 9 to 43 behavioural tests covering the full export surface (provenance, CKAN guards, Wayback handling, offline <a href="file://" class="uri">file://</a> downloads, sha256, schema validation, manifests, synthetic generation, RNG hygiene).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.4" id="rmoriebricklayer-024">rmoriebricklayer 0.2.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-024"></a></h2>
 <ul><li>
