@@ -1,8 +1,8 @@
 # rmorie-bricklayer
 
-**Brick-proof reproducibility bundles for academic data analysis.**
+**Brick-proof reproducibility capsules for academic data analysis.**
 
-Turn an R analysis script + a public dataset into a polished, cross-platform reproducibility bundle that anyone — your supervisor, a reviewer, a stranger on the internet — can run with one double-click. No bash, no Python, no terminal experience needed beyond installing R itself.
+Turn an R analysis script + a public dataset into a polished, cross-platform reproducibility capsule that anyone — your supervisor, a reviewer, a stranger on the internet — can run with one double-click. No bash, no Python, no terminal experience needed beyond installing R itself.
 
 ---
 
@@ -15,8 +15,8 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 - **Schema validation** — every CSV load is validated against a pinned `schema.json`; structural drift produces clear errors not silent failures
 - **Synthetic fallback** — if the reviewer has no internet and no data, the pipeline runs on schema-compliant random data with `SYNTHETIC` watermarks everywhere
 - **Author-side audit** — `verify_bundle.sh` extracts the zip, runs the analysis, parses the manifest, exits non-zero on regression
-- **Compiled provenance core** — the package itself ships a registered C/C++ core (`.Call` via `useDynLib`) for SHA-256 hashing and summary statistics (mean, variance, correlation, normal PDF), so integrity checks stay fast on large bundles. (The *generated bundle* stays pure-R for the reviewer; the compiled core lives in the authoring package.)
-- **Trust transparency** — every bundle ships with a `SECURITY.md` explaining what it does, what it touches, what it never touches, and how to verify its integrity
+- **Compiled provenance core** — the package itself ships a registered C/C++ core (`.Call` via `useDynLib`) for SHA-256 hashing and summary statistics (mean, variance, correlation, normal PDF), so integrity checks stay fast on large capsules. (The *generated capsule* stays pure-R for the reviewer; the compiled core lives in the authoring package.)
+- **Trust transparency** — every capsule ships with a `SECURITY.md` explaining what it does, what it touches, what it never touches, and how to verify its integrity
 
 ---
 
@@ -27,7 +27,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 ## What you get
 
 ```
-your_bundle/
+your_capsule/
 ├── START_HERE.command          ← macOS double-click
 ├── START_HERE.bat              ← Windows double-click
 ├── start_here.sh               ← Linux double-click
@@ -76,7 +76,7 @@ See `docs/quickstart.md` for a 5-minute walkthrough.
 
 ## Reference example
 
-`examples/otis-mrp/` is a complete, ship-quality bundle for the paper "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data" by Vansh Singh Ruhela (U of T MA, Centre for Criminology and Sociolegal Studies, Aug 2026 submission). It uses Ontario's open OTIS A01RCDD dataset (CC OGL-Ontario) and reproduces all 36 numerical claims in the paper from the public CSV alone.
+`examples/otis-mrp/` is a complete, ship-quality capsule for the paper "Alert Complexity and Placement Volatility in Ontario Restrictive Confinement Data" by Vansh Singh Ruhela (U of T MA, Centre for Criminology and Sociolegal Studies, Aug 2026 submission). It uses Ontario's open OTIS A01RCDD dataset (CC OGL-Ontario) and reproduces all 36 numerical claims in the paper from the public CSV alone.
 
 ## Author & licence
 
@@ -89,4 +89,25 @@ See `docs/quickstart.md` for a 5-minute walkthrough.
 
 ## Acknowledgements
 
-Built up from the OTIS MRP reproducibility bundle developed for the August 2026 MA submission; data from the Ontario Ministry of the Solicitor General under the Open Government Licence – Ontario.
+Built up from the OTIS MRP reproducibility capsule developed for the August 2026 MA submission; data from the Ontario Ministry of the Solicitor General under the Open Government Licence – Ontario.
+
+## Citation
+
+If you use `rmoriebricklayer`, please cite the software. In R:
+
+```r
+citation("rmoriebricklayer")
+toBibtex(citation("rmoriebricklayer"))
+```
+
+BibTeX (the title stays on one line — the plain-text `citation()` output wraps
+the long title at the terminal width, which is only cosmetic):
+
+```bibtex
+@Manual{ruhela_rmoriebricklayer_2026,
+  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+  author = {Vansh Singh Ruhela},
+  year   = {2026},
+  url    = {https://github.com/rootcoder007/rmorie-bricklayer},
+}
+```
