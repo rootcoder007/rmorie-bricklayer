@@ -1,11 +1,12 @@
 Package: rmoriebricklayer
-Title: Reproducible Data Bundles with Provenance and Fallback
-Version: 0.2.1
+Title: Reproducible Data Capsules with Provenance and Fallback
+Version: 0.2.2
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
            comment = c(ORCID = "0009-0004-1750-3592"))
-Description: Tools for building brick-proof, reproducible data bundles.
+Description: Tools for building brick-proof, reproducible, self-contained
+    data capsules.
     Resolves open-data sources through CKAN package_show and
     package_search endpoints, records and verifies provenance with SHA256
     digests and Wayback Machine snapshots, validates downloaded data
