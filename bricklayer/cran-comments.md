@@ -1,4 +1,4 @@
-# cran-comments.md — rmoriebricklayer 0.2.5
+# cran-comments.md — rmoriebricklayer 0.3.0
 
 ## Submission
 
