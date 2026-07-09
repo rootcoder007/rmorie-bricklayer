@@ -81,6 +81,32 @@ write_manifest_json(man, "manifest.json")
 [rmorie](https://github.com/rootcoder007/rmorie) and
 [rmoriedata](https://github.com/rootcoder007/rmoriedata).
 
+## Citation
+
+If you use rmoriebricklayer in your research, please cite the software:
+
+> Ruhela, V. S. (2026). *rmoriebricklayer: Reproducible Data Capsules
+> with Provenance and Fallback.*
+> <https://github.com/rootcoder007/rmorie-bricklayer>
+
+BibTeX (or run `citation("rmoriebricklayer")` after installation for the
+entry stamped with the exact installed version, sourced from
+`inst/CITATION`):
+
+``` bibtex
+@Manual{ruhela_rmoriebricklayer_2026,
+  title  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},
+  author = {Ruhela, Vansh Singh},
+  year   = {2026},
+  url    = {https://github.com/rootcoder007/rmorie-bricklayer}
+}
+```
+
+See
+[`CITATION.cff`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff)
+for the machine-readable metadata GitHub’s “Cite this repository” button
+uses.
+
 ## License
 
 AGPL-3.0-or-later.
