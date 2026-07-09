@@ -1,3 +1,24 @@
+# rmoriebricklayer 0.3.0
+
+## Capsule-level integrity
+
+* New `verify_capsule()`: one call re-verifies an entire reproducible
+  data capsule offline — provenance readability, pinned sha256/size/row
+  count, schema validity, script hash, and re-derivation of every
+  stored manifest cross-check from its own numbers.
+* New `capture_environment()` records R version, platform, OS, UTC
+  timestamp, and loaded package versions; `make_manifest()` now attaches
+  it by default (`environment = FALSE` to opt out).
+* New `cite_capsule()` generates a ready-to-paste data citation (text +
+  BibTeX `@misc`, DOI-aware) from a provenance object.
+
+## Portal coverage
+
+* New `resolve_via_socrata()` and `resolve_via_arcgis()` extend
+  URL-rot recovery beyond CKAN to the Socrata (Calgary/Chicago/NYC) and
+  ArcGIS FeatureServer (Toronto Police Service) portals the MORIE
+  family fetches from.
+
 # rmoriebricklayer 0.2.5
 
 * `make_synthetic_column("id_pattern")` without a `year_col` now returns

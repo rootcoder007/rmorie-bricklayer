@@ -375,3 +375,60 @@ apply_schema_validation <- function(df_raw, provenance) {
   }
   invisible(length(issues) == 0L)
 }
+
+## ----- Socrata + ArcGIS resolvers (same contract as resolve_via_ckan) -----
+
+#' Resolve a Download URL via the Socrata Metadata API
+#'
+#' Verifies that a Socrata dataset still exists by fetching its
+#' `api/views` metadata, then returns the canonical CSV export URL.
+#' Socrata powers the Calgary, Chicago, and NYC open-data portals used
+#' across the MORIE family.
+#'
+#' @param provenance A provenance list as returned by
+#'   [load_provenance()]. Must contain `dataset$socrata_domain` (e.g.
+#'   `"data.cityofchicago.org"`) and `dataset$socrata_id` (the 4x4
+#'   dataset id, e.g. `"ijzp-q8t2"`).
+#' @return The CSV export URL as a character string, or `NULL` if the
+#'   fields are missing, the request fails, or the metadata reports an
+#'   error.
+#' @export
+resolve_via_socrata <- function(provenance) {
+  if (is.null(provenance)) return(NULL)
+  domain <- provenance$dataset$socrata_domain
+  id     <- provenance$dataset$socrata_id
+  if (is.null(domain) || is.null(id)) return(NULL)
+  meta_url <- paste0("https://", domain, "/api/views/", id, ".json")
+  meta <- tryCatch(jsonlite::fromJSON(meta_url), error = function(e) NULL)
+  if (is.null(meta) || is.null(meta$id)) return(NULL)
+  paste0("https://", domain, "/api/views/", id,
+         "/rows.csv?accessType=DOWNLOAD")
+}
+
+#' Resolve a Query URL via ArcGIS FeatureServer Metadata
+#'
+#' Verifies that an ArcGIS FeatureServer layer still exists by fetching
+#' its `f=json` metadata, then returns a paged GeoJSON query URL for the
+#' full layer. ArcGIS FeatureServer layers back the Toronto Police
+#' Service open-data portal used across the MORIE family.
+#'
+#' @param provenance A provenance list as returned by
+#'   [load_provenance()]. Must contain `dataset$arcgis_layer_url`, a
+#'   FeatureServer layer root such as
+#'   `"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"`.
+#' @return The layer query URL (`where=1=1`, all fields, GeoJSON) as a
+#'   character string, or `NULL` if the field is missing, the request
+#'   fails, or the layer metadata reports an error.
+#' @export
+resolve_via_arcgis <- function(provenance) {
+  if (is.null(provenance)) return(NULL)
+  layer <- provenance$dataset$arcgis_layer_url
+  if (is.null(layer)) return(NULL)
+  layer <- sub("/+$", "", layer)
+  meta <- tryCatch(jsonlite::fromJSON(paste0(layer, "?f=json")),
+                   error = function(e) NULL)
+  if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
+    return(NULL)
+  }
+  paste0(layer, "/query?where=1%3D1&outFields=*&f=geojson")
+}
