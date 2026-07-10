@@ -24,3 +24,8 @@ shared fetch failsafe the wider morie package family relies on: callers
 attempt the live source first and fall back to this snapshot when the
 source is unreachable.
 }
+\examples{
+\donttest{
+wayback_snapshot_url("https://www.r-project.org/")
+}
+}

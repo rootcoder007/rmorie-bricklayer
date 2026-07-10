@@ -20,3 +20,8 @@ Writes \code{text} to \code{path} as UTF-8. If the write raises an encoding erro
 characters), it retries with an ASCII transliteration produced by
 \code{\link[=to_ascii]{to_ascii()}} so capsule generation never fails on a non-ASCII name.
 }
+\examples{
+p <- write_text_fallback(c("line one", "line two"),
+                         tempfile(fileext = ".txt"))
+readLines(p)
+}

@@ -40,3 +40,9 @@ Appends one named cross-check entry to a manifest, classifying it as
 \code{PASS}, \code{DIFFER}, or \code{INFO}, printing a formatted line to the console,
 and returning the updated manifest.
 }
+\examples{
+man <- make_manifest(list(project = "demo"), environment = FALSE)
+man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
+              tol = 0.001)
+man$results$mean_matches$status
+}

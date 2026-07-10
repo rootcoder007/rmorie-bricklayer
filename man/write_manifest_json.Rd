@@ -19,3 +19,9 @@ The \code{path}, returned invisibly.
 Serializes a manifest to a pretty-printed JSON file via the jsonlite
 package.
 }
+\examples{
+man <- make_manifest(list(project = "demo"), environment = FALSE)
+man <- record(man, "row_count", observed = 20, expected = 20)
+path <- write_manifest_json(man, tempfile(fileext = ".json"))
+file.exists(path)
+}

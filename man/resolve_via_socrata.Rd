@@ -23,3 +23,12 @@ Verifies that a Socrata dataset still exists by fetching its
 Socrata powers the Calgary, Chicago, and NYC open-data portals used
 across the MORIE family.
 }
+\examples{
+# Missing fields return NULL rather than erroring:
+resolve_via_socrata(list())
+\donttest{
+prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
+                            socrata_id     = "ijzp-q8t2"))
+resolve_via_socrata(prov)
+}
+}

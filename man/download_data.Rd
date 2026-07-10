@@ -23,3 +23,10 @@ The \code{target_path}, returned invisibly.
 Thin wrapper around \code{\link[utils:download.file]{utils::download.file()}} that returns the target
 path invisibly so it composes in pipelines.
 }
+\examples{
+\donttest{
+dest <- download_data("https://cloud.r-project.org/",
+                      tempfile(fileext = ".html"), quiet = TRUE)
+file.exists(dest)
+}
+}

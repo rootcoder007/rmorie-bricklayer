@@ -23,3 +23,13 @@ its \code{f=json} metadata, then returns a paged GeoJSON query URL for the
 full layer. ArcGIS FeatureServer layers back the Toronto Police
 Service open-data portal used across the MORIE family.
 }
+\examples{
+# Missing fields return NULL rather than erroring:
+resolve_via_arcgis(list())
+\donttest{
+prov <- list(dataset = list(arcgis_layer_url = paste0(
+  "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
+  "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0")))
+resolve_via_arcgis(prov)
+}
+}
