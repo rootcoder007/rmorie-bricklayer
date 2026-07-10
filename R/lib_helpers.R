@@ -16,8 +16,6 @@
 #' sha256_file(f)
 #' @export
 sha256_file <- function(path) {
-  if (!requireNamespace("digest", quietly = TRUE))
-    stop("The 'digest' package is required for SHA256 verification.")
   digest::digest(file = path, algo = "sha256")
 }
 
@@ -44,11 +42,13 @@ to_ascii <- function(x) {
     # (e.g. Cyrillic, Greek), not just names like "Angela".
     out <- stringi::stri_trans_general(x, "Any-Latin; Latin-ASCII")
   } else {
+    # nocov start -- runs only when the stringi Suggests is absent
     # Fallback: iconv. //TRANSLIT is good on glibc; on BSD it can leave
     # artifacts, which the final strip below removes.
     out <- iconv(x, to = "ASCII//TRANSLIT")
     na <- is.na(out)
     if (any(na)) out[na] <- iconv(x[na], to = "ASCII", sub = "")
+    # nocov end
   }
   out[is.na(out)] <- ""
   # Guarantee pure 7-bit ASCII regardless of path.
@@ -103,6 +103,6 @@ write_text_fallback <- function(text, path) {
     writeLines(enc2utf8(as.character(text)), con, useBytes = TRUE)
     TRUE
   }, error = function(e) FALSE)
-  if (!ok) writeLines(to_ascii(text), path)
+  if (!ok) writeLines(to_ascii(text), path) # nocov -- encoding-error retry
   invisible(path)
 }

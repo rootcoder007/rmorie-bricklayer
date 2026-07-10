@@ -116,8 +116,6 @@ record <- function(manifest, name, observed, expected,
 #' file.exists(path)
 #' @export
 write_manifest_json <- function(manifest, path) {
-  if (!requireNamespace("jsonlite", quietly = TRUE))
-    stop("The 'jsonlite' package is required.")
   jsonlite::write_json(manifest, path, auto_unbox = TRUE, pretty = TRUE)
   invisible(path)
 }

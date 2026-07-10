@@ -38,3 +38,14 @@ test_that("core stats handle degenerate input the way R's contract implies", {
   expect_true(is.nan(core_cor(c(1, 1, 1), c(2, 3, 4))))  # zero variance
   expect_true(is.nan(core_normal_pdf(0, sd = 0)))        # sd must be > 0
 })
+
+test_that("core_sha256 handles multi-block input (FIPS 180-4 two-block vector)", {
+  expect_equal(
+    core_sha256(paste0("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmn",
+                       "hijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu")),
+    "cf5b16a778af8380036ce59e7b0492370b249b11e8f07a51afac45037afee9d1")
+})
+
+test_that("core_cor rejects length-mismatched input", {
+  expect_error(core_cor(1:3, 1:4), "same length")
+})

@@ -7,7 +7,7 @@ name: rOpenSci pkgcheck
 
 on:
   push:
-    branches: [main, ropensci-prep]
+    branches: [main, ropensci]
     paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
   workflow_dispatch:
 

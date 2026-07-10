@@ -4,7 +4,7 @@ name: r-coverage
 
 on:
   push:
-    branches: [main]
+    branches: [main, ropensci]
     paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
   pull_request:
     branches: [main]

@@ -163,3 +163,22 @@ test_that("resolve_via_arcgis guards missing fields and builds the query URL", {
   )
   expect_null(resolve_via_arcgis(list(dataset = list(arcgis_layer_url = layer))))
 })
+
+test_that("verify_capsule checks a pinned analysis-script hash", {
+  dir <- make_test_capsule()
+  writeLines("x <- 1", file.path(dir, "analysis.R"))
+  m <- jsonlite::fromJSON(file.path(dir, "manifest.json"),
+                          simplifyVector = FALSE)
+  m$meta$script_sha256 <- sha256_file(file.path(dir, "analysis.R"))
+  write_manifest_json(m, file.path(dir, "manifest.json"))
+  out <- verify_capsule(dir, manifest_file = "manifest.json",
+                        script_file = "analysis.R")
+  expect_true("script_sha256" %in% out$checks$check)
+  expect_true(out$checks$ok[out$checks$check == "script_sha256"])
+})
+
+test_that("cite_capsule falls back to the current year without captured_at_utc", {
+  prov <- list(dataset = list(publisher = "P"), resource = list(name = "N"))
+  cit <- cite_capsule(prov)
+  expect_match(cit$bibtex, format(Sys.Date(), "%Y"), fixed = TRUE)
+})
