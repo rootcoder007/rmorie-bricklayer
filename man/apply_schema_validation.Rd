@@ -19,3 +19,9 @@ otherwise. Errors if any fatal issue is present.
 Runs \code{\link[=validate_schema]{validate_schema()}} and acts on the result: fatal issues raise an
 error via \code{\link[=stop]{stop()}}, warning-severity issues emit a \code{\link[=warning]{warning()}}.
 }
+\examples{
+prov <- list(schema = list(expected_columns = "id"))
+apply_schema_validation(data.frame(id = 1), prov)
+# A missing required column is fatal:
+try(apply_schema_validation(data.frame(x = 1), prov))
+}

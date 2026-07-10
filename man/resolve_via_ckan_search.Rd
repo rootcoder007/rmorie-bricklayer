@@ -23,3 +23,17 @@ endpoint, runs a \code{package_search} query (from \code{resource$search_query},
 or derived from the name-match pattern), and returns the URL of the
 first matching resource, preferring CSV format when specified.
 }
+\examples{
+# Missing fields return NULL rather than erroring:
+resolve_via_ckan_search(list())
+\donttest{
+prov <- list(
+  dataset  = list(ckan_api_endpoint = paste0(
+    "https://data.ontario.ca/api/3/action/package_show",
+    "?id=ontario-public-library-statistics")),
+  resource = list(name_match_pattern = "2014",
+                  search_query = "public library statistics")
+)
+resolve_via_ckan_search(prov)
+}
+}

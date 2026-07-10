@@ -16,3 +16,8 @@ The SHA256 digest as a character string.
 Returns the SHA256 digest of a file as a lowercase hex string, using
 the digest package. Used to record and verify data provenance.
 }
+\examples{
+f <- tempfile()
+writeLines("hello capsule", f)
+sha256_file(f)
+}

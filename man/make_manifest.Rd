@@ -22,3 +22,8 @@ list, and (when requested) \code{environment}.
 Creates an empty manifest object that accumulates cross-check entries
 via \code{\link[=record]{record()}} and is later serialized with \code{\link[=write_manifest_json]{write_manifest_json()}}.
 }
+\examples{
+man <- make_manifest(list(project = "demo-study", author = "A. Author"),
+                     environment = FALSE)
+names(man)
+}

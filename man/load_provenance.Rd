@@ -19,3 +19,10 @@ Reads a \code{data_provenance.json} file describing a project's pinned data
 source: the CKAN endpoint, resource name pattern, expected SHA256,
 Wayback snapshot, schema, and synthetic-data recipe.
 }
+\examples{
+prov_file <- tempfile(fileext = ".json")
+writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
+prov <- load_provenance(prov_file)
+prov$dataset$title
+load_provenance(file.path(tempdir(), "no-such-file.json"))  # NULL
+}
