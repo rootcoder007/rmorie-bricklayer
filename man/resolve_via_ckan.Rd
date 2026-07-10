@@ -24,3 +24,16 @@ data.gov.uk, data.gov, and most government open-data portals, so this
 recovers the current download URL even if the underlying resource UUID
 has been replaced.
 }
+\examples{
+# Missing fields return NULL rather than erroring:
+resolve_via_ckan(list())
+\donttest{
+prov <- list(
+  dataset  = list(ckan_api_endpoint = paste0(
+    "https://data.ontario.ca/api/3/action/package_show",
+    "?id=ontario-public-library-statistics")),
+  resource = list(name_match_pattern = "2014")
+)
+resolve_via_ckan(prov)
+}
+}

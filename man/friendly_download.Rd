@@ -26,3 +26,11 @@ guidance for the most common academic and corporate network problems
 (rate limiting, TLS-inspection VPNs, DNS failures, timeouts, HTTP 403).
 Optionally retries from a Wayback Machine snapshot URL.
 }
+\examples{
+\donttest{
+ok <- friendly_download("https://cloud.r-project.org/",
+                        tempfile(fileext = ".html"),
+                        attempt_wayback = "")  # disable the fallback
+ok
+}
+}

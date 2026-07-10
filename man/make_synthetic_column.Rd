@@ -32,3 +32,11 @@ optional per-row base rate), \code{"poisson"} (counts with a floor),
 \code{"id_pattern"} (templated IDs, optionally per-year sequenced), and
 \code{"sequence"} (a running integer sequence).
 }
+\examples{
+spec <- list(type = "sample", values = list("a", "b"),
+             weights = list(0.7, 0.3))
+make_synthetic_column(spec, 5)
+make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
+make_synthetic_column(list(type = "id_pattern",
+                           pattern = "case-{seq:05d}"), 3)
+}

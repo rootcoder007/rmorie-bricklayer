@@ -20,3 +20,9 @@ passed in), and \code{match} (logical; \code{TRUE} if they are identical).
 Computes the SHA256 digest of a file (via the digest package) and
 compares it to the expected value pinned in provenance.
 }
+\examples{
+f <- tempfile()
+writeLines("hello capsule", f)
+chk <- verify_sha256(f, sha256_file(f))
+chk$match
+}
