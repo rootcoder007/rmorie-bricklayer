@@ -68,6 +68,13 @@
 #'   used by the `"bernoulli"` type to add row-level variation.
 #' @return A vector of length `n` for the requested column type. Errors on
 #'   an unknown `type`.
+#' @examples
+#' spec <- list(type = "sample", values = list("a", "b"),
+#'              weights = list(0.7, 0.3))
+#' make_synthetic_column(spec, 5)
+#' make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
+#' make_synthetic_column(list(type = "id_pattern",
+#'                            pattern = "case-{seq:05d}"), 3)
 #' @export
 make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
   type <- spec$type %||% "sample"
@@ -150,6 +157,18 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #'   then 91735246.
 #' @return Invisibly, a list with `path`, `rows` (rows written), and
 #'   `seed` used.
+#' @examples
+#' recipe <- list(
+#'   n_rows = 20, seed = 42,
+#'   columns = list(
+#'     year   = list(type = "sample", values = list(2024, 2025)),
+#'     alert  = list(type = "bernoulli", p = 0.2),
+#'     visits = list(type = "poisson", lambda = 3, min = 1),
+#'     id     = list(type = "id_pattern", pattern = "p-{seq:05d}")
+#'   )
+#' )
+#' res <- make_synthetic_csv(recipe, tempfile(fileext = ".csv"))
+#' res$rows
 #' @export
 make_synthetic_csv <- function(schema, out_path,
                                 n_rows = NULL, seed = NULL) {
