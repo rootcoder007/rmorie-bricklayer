@@ -2,6 +2,11 @@
 
 ## rOpenSci submission preparation
 
+* License wording corrected: the optional `rmorie` CLI that
+  `agent_bundle()` forwards to is AGPL-3.0-or-later (the entire MORIE
+  family is AGPL; an earlier internal comment mislabelled it
+  proprietary).
+
 * Package moved from the `bricklayer/` subdirectory to the repository
   root (required by rOpenSci's review tooling); repo-level extras stay
   as `.Rbuildignore`d siblings.
