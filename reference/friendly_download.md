@@ -36,3 +36,15 @@ friendly_download(url, target_path, attempt_wayback = NULL)
 
 `TRUE` if either the primary download or the Wayback fallback succeeds,
 otherwise `FALSE`.
+
+## Examples
+
+``` r
+# \donttest{
+ok <- friendly_download("https://cloud.r-project.org/",
+                        tempfile(fileext = ".html"),
+                        attempt_wayback = "")  # disable the fallback
+ok
+#> [1] TRUE
+# }
+```

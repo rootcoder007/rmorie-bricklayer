@@ -27,3 +27,13 @@ apply_schema_validation(df_raw, provenance)
 
 Invisibly, `TRUE` if no issues were found and `FALSE` otherwise. Errors
 if any fatal issue is present.
+
+## Examples
+
+``` r
+prov <- list(schema = list(expected_columns = "id"))
+apply_schema_validation(data.frame(id = 1), prov)
+# A missing required column is fatal:
+try(apply_schema_validation(data.frame(x = 1), prov))
+#> Error : Missing required columns: id
+```

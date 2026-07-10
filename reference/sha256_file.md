@@ -18,3 +18,12 @@ sha256_file(path)
 ## Value
 
 The SHA256 digest as a character string.
+
+## Examples
+
+``` r
+f <- tempfile()
+writeLines("hello capsule", f)
+sha256_file(f)
+#> [1] "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02"
+```

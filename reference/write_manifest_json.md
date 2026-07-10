@@ -25,3 +25,14 @@ write_manifest_json(manifest, path)
 ## Value
 
 The `path`, returned invisibly.
+
+## Examples
+
+``` r
+man <- make_manifest(list(project = "demo"), environment = FALSE)
+man <- record(man, "row_count", observed = 20, expected = 20)
+#>   row_count                                    observed = 20.0000      expected = 20.0000      [PASS]
+path <- write_manifest_json(man, tempfile(fileext = ".json"))
+file.exists(path)
+#> [1] TRUE
+```

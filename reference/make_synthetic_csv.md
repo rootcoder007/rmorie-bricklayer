@@ -37,3 +37,20 @@ make_synthetic_csv(schema, out_path, n_rows = NULL, seed = NULL)
 ## Value
 
 Invisibly, a list with `path`, `rows` (rows written), and `seed` used.
+
+## Examples
+
+``` r
+recipe <- list(
+  n_rows = 20, seed = 42,
+  columns = list(
+    year   = list(type = "sample", values = list(2024, 2025)),
+    alert  = list(type = "bernoulli", p = 0.2),
+    visits = list(type = "poisson", lambda = 3, min = 1),
+    id     = list(type = "id_pattern", pattern = "p-{seq:05d}")
+  )
+)
+res <- make_synthetic_csv(recipe, tempfile(fileext = ".csv"))
+res$rows
+#> [1] 20
+```

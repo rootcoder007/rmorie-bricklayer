@@ -27,3 +27,21 @@ resolve_via_ckan(provenance)
 The matched resource URL as a character string, or `NULL` if the
 endpoint is missing, the request fails, CKAN reports failure, or no
 resource name matches.
+
+## Examples
+
+``` r
+# Missing fields return NULL rather than erroring:
+resolve_via_ckan(list())
+#> NULL
+# \donttest{
+prov <- list(
+  dataset  = list(ckan_api_endpoint = paste0(
+    "https://data.ontario.ca/api/3/action/package_show",
+    "?id=ontario-public-library-statistics")),
+  resource = list(name_match_pattern = "2014")
+)
+resolve_via_ckan(prov)
+#> [1] "https://files.ontario.ca/ontario_public_library_statistics_2014_open_data_csv_february_17_2016.csv"
+# }
+```

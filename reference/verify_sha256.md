@@ -23,3 +23,13 @@ verify_sha256(path, expected_sha)
 
 A list with `actual` (computed digest), `expected` (the value passed
 in), and `match` (logical; `TRUE` if they are identical).
+
+## Examples
+
+``` r
+f <- tempfile()
+writeLines("hello capsule", f)
+chk <- verify_sha256(f, sha256_file(f))
+chk$match
+#> [1] TRUE
+```

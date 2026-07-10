@@ -28,3 +28,12 @@ wayback_snapshot_url(url, timestamp = NULL)
 ## Value
 
 A character scalar snapshot URL, or `NULL`.
+
+## Examples
+
+``` r
+# \donttest{
+wayback_snapshot_url("https://www.r-project.org/")
+#> [1] "https://web.archive.org/web/20260709180957/https://www.r-project.org/"
+# }
+```

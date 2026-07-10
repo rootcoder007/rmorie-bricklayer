@@ -30,3 +30,17 @@ validate_schema(df_raw, provenance)
 A named list of issues; each issue is a list with `severity` (`"fatal"`
 or `"warning"`) and a human-readable `message`. A zero-length list means
 the data frame is clean.
+
+## Examples
+
+``` r
+prov <- list(schema = list(
+  expected_columns      = c("id", "year"),
+  structural_invariants = list(min_data_rows = 1),
+  expected_value_sets   = list(year = 2020:2025)
+))
+df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
+issues <- validate_schema(df, prov)
+names(issues)  # flags the out-of-set year value
+#> [1] "unexpected_year"
+```

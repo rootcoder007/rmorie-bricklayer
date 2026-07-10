@@ -27,3 +27,22 @@ resolve_via_ckan_search(provenance)
 
 The matched resource URL as a character string, or `NULL` if no query or
 base URL can be derived, the request fails, or nothing matches.
+
+## Examples
+
+``` r
+# Missing fields return NULL rather than erroring:
+resolve_via_ckan_search(list())
+#> NULL
+# \donttest{
+prov <- list(
+  dataset  = list(ckan_api_endpoint = paste0(
+    "https://data.ontario.ca/api/3/action/package_show",
+    "?id=ontario-public-library-statistics")),
+  resource = list(name_match_pattern = "2014",
+                  search_query = "public library statistics")
+)
+resolve_via_ckan_search(prov)
+#> [1] "https://files.ontario.ca/ontario_public_library_statistics_2014_open_data_csv_february_17_2016.csv"
+# }
+```

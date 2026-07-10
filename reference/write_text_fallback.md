@@ -25,3 +25,12 @@ write_text_fallback(text, path)
 ## Value
 
 Invisibly, `path`.
+
+## Examples
+
+``` r
+p <- write_text_fallback(c("line one", "line two"),
+                         tempfile(fileext = ".txt"))
+readLines(p)
+#> [1] "line one" "line two"
+```

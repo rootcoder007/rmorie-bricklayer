@@ -57,6 +57,14 @@ install.packages(
 )
 ```
 
+Development version from GitHub:
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("rootcoder007/rmorie-bricklayer")
+```
+
 ## Quick example
 
 ``` r
@@ -174,3 +182,9 @@ AGPL-3.0-or-later.
 - [`write_text_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_text_fallback.md)
   : Write Text as UTF-8, Falling Back to ASCII on an Encoding Error
 
+# Articles
+
+### All vignettes
+
+- [Building reproducible data
+  capsules](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md):

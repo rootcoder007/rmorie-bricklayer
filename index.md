@@ -57,6 +57,14 @@ install.packages(
 )
 ```
 
+Development version from GitHub:
+
+``` r
+
+# install.packages("remotes")
+remotes::install_github("rootcoder007/rmorie-bricklayer")
+```
+
 ## Quick example
 
 ``` r

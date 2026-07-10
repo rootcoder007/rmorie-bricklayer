@@ -25,3 +25,17 @@ resolve_via_socrata(provenance)
 
 The CSV export URL as a character string, or `NULL` if the fields are
 missing, the request fails, or the metadata reports an error.
+
+## Examples
+
+``` r
+# Missing fields return NULL rather than erroring:
+resolve_via_socrata(list())
+#> NULL
+# \donttest{
+prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
+                            socrata_id     = "ijzp-q8t2"))
+resolve_via_socrata(prov)
+#> [1] "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
+# }
+```

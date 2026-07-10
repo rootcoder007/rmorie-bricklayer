@@ -26,3 +26,18 @@ resolve_via_arcgis(provenance)
 The layer query URL (`where=1=1`, all fields, GeoJSON) as a character
 string, or `NULL` if the field is missing, the request fails, or the
 layer metadata reports an error.
+
+## Examples
+
+``` r
+# Missing fields return NULL rather than erroring:
+resolve_via_arcgis(list())
+#> NULL
+# \donttest{
+prov <- list(dataset = list(arcgis_layer_url = paste0(
+  "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
+  "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0")))
+resolve_via_arcgis(prov)
+#> [1] "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson"
+# }
+```

@@ -54,3 +54,14 @@ record(
 ## Value
 
 The updated manifest, returned so calls can be chained.
+
+## Examples
+
+``` r
+man <- make_manifest(list(project = "demo"), environment = FALSE)
+man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
+              tol = 0.001)
+#>   mean_matches                                 observed = 1.0001       expected = 1.0000       [PASS]
+man$results$mean_matches$status
+#> [1] "PASS"
+```

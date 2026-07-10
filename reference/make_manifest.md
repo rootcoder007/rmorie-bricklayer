@@ -30,3 +30,12 @@ make_manifest(meta, environment = TRUE)
 
 A manifest list with elements `meta`, an empty `results` list, and (when
 requested) `environment`.
+
+## Examples
+
+``` r
+man <- make_manifest(list(project = "demo-study", author = "A. Author"),
+                     environment = FALSE)
+names(man)
+#> [1] "meta"    "results"
+```

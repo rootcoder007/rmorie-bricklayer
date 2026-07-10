@@ -33,3 +33,14 @@ download_data(url, target_path, mode = "wb", quiet = FALSE)
 ## Value
 
 The `target_path`, returned invisibly.
+
+## Examples
+
+``` r
+# \donttest{
+dest <- download_data("https://cloud.r-project.org/",
+                      tempfile(fileext = ".html"), quiet = TRUE)
+file.exists(dest)
+#> [1] TRUE
+# }
+```

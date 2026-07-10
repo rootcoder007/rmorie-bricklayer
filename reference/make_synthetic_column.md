@@ -40,3 +40,17 @@ make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 
 A vector of length `n` for the requested column type. Errors on an
 unknown `type`.
+
+## Examples
+
+``` r
+spec <- list(type = "sample", values = list("a", "b"),
+             weights = list(0.7, 0.3))
+make_synthetic_column(spec, 5)
+#> [1] "a" "b" "a" "a" "a"
+make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
+#> [1] 3 3 2 4 4
+make_synthetic_column(list(type = "id_pattern",
+                           pattern = "case-{seq:05d}"), 3)
+#> [1] "case-00001" "case-00002" "case-00003"
+```

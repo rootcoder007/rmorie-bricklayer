@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,6 +16,10 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+  </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -32,6 +36,20 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="rmoriebricklayer-031">rmoriebricklayer 0.3.1<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-031"></a></h2>
+<div class="section level3">
+<h3 id="ropensci-submission-preparation-0-3-1">rOpenSci submission preparation<a class="anchor" aria-label="anchor" href="#ropensci-submission-preparation-0-3-1"></a></h3>
+<ul><li><p>License wording corrected: the optional <code>rmorie</code> CLI that <code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> forwards to is AGPL-3.0-or-later (the entire MORIE family is AGPL; an earlier internal comment mislabelled it proprietary).</p></li>
+<li><p>Package moved from the <code>bricklayer/</code> subdirectory to the repository root (required by rOpenSci’s review tooling); repo-level extras stay as <code>.Rbuildignore</code>d siblings.</p></li>
+<li><p>New vignette <code>capsules.Rmd</code> walking the essential flow offline: provenance pin -&gt; schema validation -&gt; SHA256 integrity -&gt; synthetic fallback -&gt; manifest + summary.</p></li>
+<li><p>Every exported function now has runnable <code>@examples</code> (network calls in <code>\donttest</code>; offline NULL-contracts shown runnable).</p></li>
+<li><p>README gained development-version install instructions.</p></li>
+<li><p>New CI: test coverage (covr + Codecov) and rOpenSci <code>pkgcheck</code>.</p></li>
+<li><p>Test coverage raised from 84 percent to 96 percent: offline tests for the CKAN/Socrata/ArcGIS resolver success paths, <code>friendly_download</code> diagnostics and Wayback retry, summary contact/licence blocks, pinned script hashes, and the multi-block SHA-256 path. Dead <code>requireNamespace</code> guards for Imports (<code>digest</code>, <code>jsonlite</code>) removed.</p></li>
+<li><p>Repo-level <code>LICENSE</code> text excluded from the build (<code>License: AGPL-3</code> is the canonical spec; the stray file triggered a check NOTE).</p></li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="rmoriebricklayer-030">rmoriebricklayer 0.3.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-030"></a></h2>
 <div class="section level3">
