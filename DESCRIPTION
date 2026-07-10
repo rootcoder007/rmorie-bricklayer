@@ -28,8 +28,11 @@ Imports:
     stats,
     utils
 Suggests:
+    knitr,
+    rmarkdown,
     stringi,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3

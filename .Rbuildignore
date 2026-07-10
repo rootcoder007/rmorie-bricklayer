@@ -22,3 +22,5 @@
 ^\.serena$
 ^\.DS_Store$
 ^\.gitignore$
+^pkg-site$
+^vignettes/\.gitignore$

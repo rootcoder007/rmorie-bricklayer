@@ -10,6 +10,10 @@
 #'
 #' @param path Path to the file to hash.
 #' @return The SHA256 digest as a character string.
+#' @examples
+#' f <- tempfile()
+#' writeLines("hello capsule", f)
+#' sha256_file(f)
 #' @export
 sha256_file <- function(path) {
   if (!requireNamespace("digest", quietly = TRUE))
@@ -87,6 +91,10 @@ ascii_fallback <- function(x, force = FALSE) {
 #' @param text A character vector of lines to write.
 #' @param path Destination file path.
 #' @return Invisibly, `path`.
+#' @examples
+#' p <- write_text_fallback(c("line one", "line two"),
+#'                          tempfile(fileext = ".txt"))
+#' readLines(p)
 #' @export
 write_text_fallback <- function(text, path) {
   ok <- tryCatch({
