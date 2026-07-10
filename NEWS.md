@@ -1,3 +1,25 @@
+# rmoriebricklayer 0.3.1
+
+## rOpenSci submission preparation
+
+* Package moved from the `bricklayer/` subdirectory to the repository
+  root (required by rOpenSci's review tooling); repo-level extras stay
+  as `.Rbuildignore`d siblings.
+* New vignette `capsules.Rmd` walking the essential flow offline:
+  provenance pin -> schema validation -> SHA256 integrity ->
+  synthetic fallback -> manifest + summary.
+* Every exported function now has runnable `@examples` (network calls
+  in `\donttest`; offline NULL-contracts shown runnable).
+* README gained development-version install instructions.
+* New CI: test coverage (covr + Codecov) and rOpenSci `pkgcheck`.
+* Test coverage raised from 84 percent to 96 percent: offline tests for the
+  CKAN/Socrata/ArcGIS resolver success paths, `friendly_download`
+  diagnostics and Wayback retry, summary contact/licence blocks, pinned
+  script hashes, and the multi-block SHA-256 path. Dead `requireNamespace`
+  guards for Imports (`digest`, `jsonlite`) removed.
+* Repo-level `LICENSE` text excluded from the build (`License: AGPL-3`
+  is the canonical spec; the stray file triggered a check NOTE).
+
 # rmoriebricklayer 0.3.0
 
 ## Capsule-level integrity

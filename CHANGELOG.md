@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. The format follows [Keep a Changelog](https://keepachangelog.com/), and versioning follows [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] — 2026-07-10
+
+rOpenSci submission prep: package at repo root, `capsules.Rmd` vignette,
+examples on all exports, coverage + pkgcheck CI, dev-install docs.
+
 ## [0.3.0] — 2026-07-09
 
 Capsule integrity API (verify_capsule, capture_environment, cite_capsule), Socrata + ArcGIS resolvers, 0.2.5 synthetic-generator bug fixes.

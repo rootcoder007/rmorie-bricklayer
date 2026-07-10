@@ -51,3 +51,19 @@ test_that("write_summary_txt writes a summary containing the recorded counts", {
   expect_match(txt, "PASS")
   expect_match(txt, "DIFFER")
 })
+
+test_that("write_summary_txt includes what-was-done, contact and licence blocks", {
+  m <- make_manifest(list(project = "demo"), environment = FALSE)
+  capture.output(m <- record(m, "chk", observed = 1, expected = 1))
+  out_dir <- file.path(tempdir(), "summary-full-blocks")
+  dir.create(out_dir, showWarnings = FALSE)
+  s <- write_summary_txt(m, out_dir, paths = list(results = out_dir),
+                         what_was_done = "* did the thing",
+                         contact = "maintainer@example.org",
+                         licence = "AGPL-3.0-or-later")
+  txt <- readLines(s)
+  expect_true(any(grepl("WHAT WAS DONE", txt)))
+  expect_true(any(grepl("did the thing", txt, fixed = TRUE)))
+  expect_true(any(grepl("Contact: maintainer@example.org", txt, fixed = TRUE)))
+  expect_true(any(grepl("Licence: AGPL-3.0-or-later", txt, fixed = TRUE)))
+})
