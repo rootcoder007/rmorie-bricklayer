@@ -209,9 +209,6 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #' }
 #' @export
 wayback_snapshot_url <- function(url, timestamp = NULL) {
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    return(NULL)
-  }
   api <- paste0(
     "http://archive.org/wayback/available?url=",
     utils::URLencode(url, reserved = TRUE)
@@ -324,8 +321,6 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #' chk$match
 #' @export
 verify_sha256 <- function(path, expected_sha) {
-  if (!requireNamespace("digest", quietly = TRUE))
-    stop("The 'digest' package is required.")
   actual <- digest::digest(file = path, algo = "sha256")
   list(actual = actual, expected = expected_sha,
        match  = identical(actual, expected_sha))

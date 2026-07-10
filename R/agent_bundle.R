@@ -23,6 +23,7 @@ agent_bundle <- function(request, model = NULL, backend = "auto") {
   if (!nzchar(bin)) {
     return("rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle().")
   }
+  # nocov start -- forwards to the optional proprietary rmorie-cli binary
   preamble <- paste0(
     "You are helping build a brick-proof, reproducible data bundle with ",
     "rmoriebricklayer (cross-platform launchers, CKAN resolution, SHA256 + ",
@@ -32,4 +33,5 @@ agent_bundle <- function(request, model = NULL, backend = "auto") {
   args <- c(args, preamble)
   paste(suppressWarnings(
     system2(bin, args = args, stdout = TRUE, stderr = TRUE)), collapse = "\n")
+  # nocov end
 }
