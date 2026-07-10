@@ -2,12 +2,6 @@
 
 ## rOpenSci submission preparation
 
-* `agent_bundle()` removed: the LLM-agent bridge belongs in `rmorie`
-  (which provides `rmorie::agent()`), not in the provenance layer.
-  rmoriebricklayer now has zero LLM-adjacent surface. (Note: the
-  `rmorie` CLI it forwarded to is AGPL-licensed, as is the whole
-  MORIE family.)
-
 * Package moved from the `bricklayer/` subdirectory to the repository
   root (required by rOpenSci's review tooling); repo-level extras stay
   as `.Rbuildignore`d siblings.

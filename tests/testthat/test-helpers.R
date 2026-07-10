@@ -30,3 +30,13 @@ test_that("write_text_fallback writes a readable file for accented input", {
   expect_gt(file.info(tmp)$size, 0)
 })
 
+test_that("agent_bundle validates its request and reports a missing binary", {
+  expect_error(agent_bundle(""), "nzchar")
+  expect_error(agent_bundle(c("a", "b")), "length")
+
+  # An empty PATH guarantees Sys.which() finds no rmorie binary.
+  old_path <- Sys.getenv("PATH")
+  on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+  Sys.setenv(PATH = tempdir())
+  expect_match(agent_bundle("scaffold demo bundle"), "rmorie CLI not found")
+})

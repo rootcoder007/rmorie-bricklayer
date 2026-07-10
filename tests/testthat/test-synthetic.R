@@ -80,3 +80,9 @@ test_that("core_normal_pdf agrees with stats::dnorm", {
                stats::dnorm(x, 3, 2), tolerance = 1e-12)
 })
 
+test_that("agent_bundle validates input and degrades gracefully without the CLI", {
+  expect_error(agent_bundle(""), "nzchar")
+  expect_error(agent_bundle(c("a", "b")))
+  skip_if(nzchar(Sys.which("rmorie")), "rmorie CLI present; live path not exercised here")
+  expect_match(agent_bundle("scaffold a capsule"), "rmorie CLI not found")
+})
