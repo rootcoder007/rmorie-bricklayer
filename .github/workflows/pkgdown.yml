@@ -2,7 +2,7 @@ name: pkgdown
 on:
   push:
     branches: [main]
-    paths: ['bricklayer/**', '.github/workflows/pkgdown.yml']
+    paths-ignore: ['docs/**', 'dist/**', 'examples/**', 'dev/**']
   workflow_dispatch:
 permissions:
   contents: write
@@ -22,18 +22,17 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          working-directory: bricklayer
           extra-packages: any::pkgdown, any::roxygen2
           needs: website
       - name: Roxygenise
-        run: roxygen2::roxygenise("bricklayer")
+        run: roxygen2::roxygenise()
         shell: Rscript {0}
       - name: Build site
-        run: pkgdown::build_site_github_pages(pkg = "bricklayer", new_process = FALSE, install = TRUE)
+        run: pkgdown::build_site_github_pages(dest_dir = "pkg-site", new_process = FALSE, install = TRUE)
         shell: Rscript {0}
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           clean: false
           branch: gh-pages
-          folder: bricklayer/docs
+          folder: pkg-site

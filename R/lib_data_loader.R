@@ -26,6 +26,12 @@
 #' @return The parsed provenance as a nested list (via
 #'   [jsonlite::fromJSON()] with `simplifyVector = FALSE`), or `NULL` if
 #'   the file does not exist.
+#' @examples
+#' prov_file <- tempfile(fileext = ".json")
+#' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
+#' prov <- load_provenance(prov_file)
+#' prov$dataset$title
+#' load_provenance(file.path(tempdir(), "no-such-file.json"))  # NULL
 #' @export
 load_provenance <- function(path) {
   if (!file.exists(path)) return(NULL)
@@ -52,6 +58,18 @@ load_provenance <- function(path) {
 #' @return The matched resource URL as a character string, or `NULL` if
 #'   the endpoint is missing, the request fails, CKAN reports failure, or
 #'   no resource name matches.
+#' @examples
+#' # Missing fields return NULL rather than erroring:
+#' resolve_via_ckan(list())
+#' \donttest{
+#' prov <- list(
+#'   dataset  = list(ckan_api_endpoint = paste0(
+#'     "https://data.ontario.ca/api/3/action/package_show",
+#'     "?id=ontario-public-library-statistics")),
+#'   resource = list(name_match_pattern = "2014")
+#' )
+#' resolve_via_ckan(prov)
+#' }
 #' @export
 resolve_via_ckan <- function(provenance) {
   if (is.null(provenance)) return(NULL)
@@ -88,6 +106,19 @@ resolve_via_ckan <- function(provenance) {
 #' @return The matched resource URL as a character string, or `NULL` if no
 #'   query or base URL can be derived, the request fails, or nothing
 #'   matches.
+#' @examples
+#' # Missing fields return NULL rather than erroring:
+#' resolve_via_ckan_search(list())
+#' \donttest{
+#' prov <- list(
+#'   dataset  = list(ckan_api_endpoint = paste0(
+#'     "https://data.ontario.ca/api/3/action/package_show",
+#'     "?id=ontario-public-library-statistics")),
+#'   resource = list(name_match_pattern = "2014",
+#'                   search_query = "public library statistics")
+#' )
+#' resolve_via_ckan_search(prov)
+#' }
 #' @export
 resolve_via_ckan_search <- function(provenance) {
   if (is.null(provenance)) return(NULL)
@@ -146,6 +177,12 @@ resolve_via_ckan_search <- function(provenance) {
 #'   `"wb"` (binary) for cross-platform safety.
 #' @param quiet Logical; suppress progress output. Defaults to `FALSE`.
 #' @return The `target_path`, returned invisibly.
+#' @examples
+#' \donttest{
+#' dest <- download_data("https://cloud.r-project.org/",
+#'                       tempfile(fileext = ".html"), quiet = TRUE)
+#' file.exists(dest)
+#' }
 #' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
   utils::download.file(url, target_path, mode = mode, quiet = quiet)
@@ -166,6 +203,10 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #' @param timestamp Optional 14-digit \code{YYYYMMDDhhmmss} target; the API
 #'   returns the snapshot closest to it. Defaults to the most recent.
 #' @return A character scalar snapshot URL, or \code{NULL}.
+#' @examples
+#' \donttest{
+#' wayback_snapshot_url("https://www.r-project.org/")
+#' }
 #' @export
 wayback_snapshot_url <- function(url, timestamp = NULL) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
@@ -206,6 +247,13 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #'   to override the lookup, or `""` to disable the fallback entirely.
 #' @return `TRUE` if either the primary download or the Wayback fallback
 #'   succeeds, otherwise `FALSE`.
+#' @examples
+#' \donttest{
+#' ok <- friendly_download("https://cloud.r-project.org/",
+#'                         tempfile(fileext = ".html"),
+#'                         attempt_wayback = "")  # disable the fallback
+#' ok
+#' }
 #' @export
 friendly_download <- function(url, target_path, attempt_wayback = NULL) {
   result <- tryCatch({
@@ -269,6 +317,11 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #'   string.
 #' @return A list with `actual` (computed digest), `expected` (the value
 #'   passed in), and `match` (logical; `TRUE` if they are identical).
+#' @examples
+#' f <- tempfile()
+#' writeLines("hello capsule", f)
+#' chk <- verify_sha256(f, sha256_file(f))
+#' chk$match
 #' @export
 verify_sha256 <- function(path, expected_sha) {
   if (!requireNamespace("digest", quietly = TRUE))
@@ -302,6 +355,15 @@ verify_sha256 <- function(path, expected_sha) {
 #' @return A named list of issues; each issue is a list with `severity`
 #'   (`"fatal"` or `"warning"`) and a human-readable `message`. A
 #'   zero-length list means the data frame is clean.
+#' @examples
+#' prov <- list(schema = list(
+#'   expected_columns      = c("id", "year"),
+#'   structural_invariants = list(min_data_rows = 1),
+#'   expected_value_sets   = list(year = 2020:2025)
+#' ))
+#' df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
+#' issues <- validate_schema(df, prov)
+#' names(issues)  # flags the out-of-set year value
 #' @export
 validate_schema <- function(df_raw, provenance) {
   issues <- list()
@@ -365,6 +427,11 @@ validate_schema <- function(df_raw, provenance) {
 #' @param provenance A provenance list as returned by [load_provenance()].
 #' @return Invisibly, `TRUE` if no issues were found and `FALSE`
 #'   otherwise. Errors if any fatal issue is present.
+#' @examples
+#' prov <- list(schema = list(expected_columns = "id"))
+#' apply_schema_validation(data.frame(id = 1), prov)
+#' # A missing required column is fatal:
+#' try(apply_schema_validation(data.frame(x = 1), prov))
 #' @export
 apply_schema_validation <- function(df_raw, provenance) {
   issues <- validate_schema(df_raw, provenance)
@@ -392,6 +459,14 @@ apply_schema_validation <- function(df_raw, provenance) {
 #' @return The CSV export URL as a character string, or `NULL` if the
 #'   fields are missing, the request fails, or the metadata reports an
 #'   error.
+#' @examples
+#' # Missing fields return NULL rather than erroring:
+#' resolve_via_socrata(list())
+#' \donttest{
+#' prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
+#'                             socrata_id     = "ijzp-q8t2"))
+#' resolve_via_socrata(prov)
+#' }
 #' @export
 resolve_via_socrata <- function(provenance) {
   if (is.null(provenance)) return(NULL)
@@ -419,6 +494,15 @@ resolve_via_socrata <- function(provenance) {
 #' @return The layer query URL (`where=1=1`, all fields, GeoJSON) as a
 #'   character string, or `NULL` if the field is missing, the request
 #'   fails, or the layer metadata reports an error.
+#' @examples
+#' # Missing fields return NULL rather than erroring:
+#' resolve_via_arcgis(list())
+#' \donttest{
+#' prov <- list(dataset = list(arcgis_layer_url = paste0(
+#'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
+#'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0")))
+#' resolve_via_arcgis(prov)
+#' }
 #' @export
 resolve_via_arcgis <- function(provenance) {
   if (is.null(provenance)) return(NULL)

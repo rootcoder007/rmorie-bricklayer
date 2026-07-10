@@ -39,6 +39,10 @@
 #'   (R version, platform, OS, UTC timestamp, loaded package versions).
 #' @return A manifest list with elements `meta`, an empty `results`
 #'   list, and (when requested) `environment`.
+#' @examples
+#' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
+#'                      environment = FALSE)
+#' names(man)
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
   m <- list(meta = meta, results = list())
@@ -63,6 +67,11 @@ make_manifest <- function(meta, environment = TRUE) {
 #' @param synthetic Logical; if `TRUE` the entry is marked `INFO` because
 #'   comparison against synthetic data is not meaningful.
 #' @return The updated manifest, returned so calls can be chained.
+#' @examples
+#' man <- make_manifest(list(project = "demo"), environment = FALSE)
+#' man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
+#'               tol = 0.001)
+#' man$results$mean_matches$status
 #' @export
 record <- function(manifest, name, observed, expected,
                    tol = 0.0001, group = "general",
@@ -100,6 +109,11 @@ record <- function(manifest, name, observed, expected,
 #'   with [record()].
 #' @param path Destination path for the JSON file.
 #' @return The `path`, returned invisibly.
+#' @examples
+#' man <- make_manifest(list(project = "demo"), environment = FALSE)
+#' man <- record(man, "row_count", observed = 20, expected = 20)
+#' path <- write_manifest_json(man, tempfile(fileext = ".json"))
+#' file.exists(path)
 #' @export
 write_manifest_json <- function(manifest, path) {
   if (!requireNamespace("jsonlite", quietly = TRUE))
@@ -149,6 +163,14 @@ summarise_counts <- function(manifest) {
 #' @param contact Optional contact string appended to the summary.
 #' @param licence Optional licence string appended to the summary.
 #' @return The path to the written `SUMMARY.txt`, returned invisibly.
+#' @examples
+#' man <- make_manifest(list(project = "demo", author = "A. Author"),
+#'                      environment = FALSE)
+#' man <- record(man, "row_count", observed = 20, expected = 20)
+#' out <- file.path(tempdir(), "demo-run")
+#' dir.create(out, showWarnings = FALSE)
+#' s <- write_summary_txt(man, out, paths = list(results = out))
+#' readLines(s)[7:8]
 #' @export
 write_summary_txt <- function(manifest, output_dir, paths,
                               what_was_done = NULL,
