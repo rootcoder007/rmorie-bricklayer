@@ -54,4 +54,4 @@ jobs:
             any::digest
 
       - name: Build and verify the otis-mrp bundle
-        run: ./tests/test_build_otis.sh
+        run: ./dev/test_build_otis.sh
