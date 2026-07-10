@@ -33,6 +33,7 @@ submitted separately once this package is on CRAN).
   `tempfile()`/`tempdir()`.
 * `make_synthetic_csv()` seeds the RNG for reproducibility and
   restores the caller's `.Random.seed` on exit.
-* Network access: the resolver and Wayback examples that contact live
-  open-data portals are wrapped in `\donttest{}`; everything that runs
-  on CRAN is fully offline.
+* Network access: capsule resolution helpers construct URLs; the only
+  example that would contact a remote service (`agent_bundle()`) is
+  wrapped in `\dontrun{}` because it requires a user-configured LLM
+  endpoint and credentials.
