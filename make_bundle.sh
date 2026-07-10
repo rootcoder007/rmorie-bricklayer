@@ -103,17 +103,17 @@ echo "  Stage:     ${STAGE}"
 echo
 
 # --- Copy R libs + setup_and_run.R ---
-cp "${BRICKLAYER_ROOT}/bricklayer/R/lib_helpers.R"     "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/R/lib_data_loader.R" "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/R/lib_synthetic.R"   "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/R/lib_manifest.R"    "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/inst/scripts/lib_interactive.R" "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/inst/scripts/setup_and_run.R"   "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/lib_data_loader.R" "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/lib_synthetic.R"   "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
 
 # --- Copy OS launchers ---
-cp "${BRICKLAYER_ROOT}/bricklayer/launchers/"START_HERE.command "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/launchers/"START_HERE.bat     "${STAGE}/"
-cp "${BRICKLAYER_ROOT}/bricklayer/launchers/"start_here.sh      "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/launchers/"START_HERE.command "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/launchers/"START_HERE.bat     "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/launchers/"start_here.sh      "${STAGE}/"
 
 # --- Copy project-specific files ---
 cp "${PROJECT_DIR}/config.json"            "${STAGE}/"
@@ -173,16 +173,16 @@ except UnicodeEncodeError:
 PYEOF
 }
 
-render_template "${BRICKLAYER_ROOT}/bricklayer/templates/README.md.tmpl"       "${STAGE}/README.md"
-render_template "${BRICKLAYER_ROOT}/bricklayer/templates/SECURITY.md.tmpl"     "${STAGE}/SECURITY.md"
-render_template "${BRICKLAYER_ROOT}/bricklayer/templates/INSTRUCTIONS.txt.tmpl" "${STAGE}/INSTRUCTIONS.txt"
+render_template "${BRICKLAYER_ROOT}/templates/README.md.tmpl"       "${STAGE}/README.md"
+render_template "${BRICKLAYER_ROOT}/templates/SECURITY.md.tmpl"     "${STAGE}/SECURITY.md"
+render_template "${BRICKLAYER_ROOT}/templates/INSTRUCTIONS.txt.tmpl" "${STAGE}/INSTRUCTIONS.txt"
 
 # --- Optionally vendor the data file ---
 if [[ -n "${DATA_PATH}" ]]; then
   [[ ! -f "${DATA_PATH}" ]] && { echo "ERROR: --with-data file not found: ${DATA_PATH}"; exit 4; }
   TARGET_NAME="${FILENAME:-$(basename "${DATA_PATH}")}"
   cp "${DATA_PATH}" "${STAGE}/${TARGET_NAME}"
-  render_template "${BRICKLAYER_ROOT}/bricklayer/templates/DATA_NOTICE.md.tmpl" "${STAGE}/DATA_NOTICE.md"
+  render_template "${BRICKLAYER_ROOT}/templates/DATA_NOTICE.md.tmpl" "${STAGE}/DATA_NOTICE.md"
 fi
 
 # --- Make scripts executable ---
