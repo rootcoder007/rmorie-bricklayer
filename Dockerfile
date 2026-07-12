@@ -1,7 +1,7 @@
 # rmorie-bricklayer — a reproducible R environment with the bundling kit
 # baked in. Uses Posit Public Package Manager binaries (jammy) so the image
 # builds fast and deterministically rather than compiling from source.
-FROM rocker/r-ver:4.4.1
+FROM rocker/r-ver:4.6.1
 
 # System libraries the analysis packages link against at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
