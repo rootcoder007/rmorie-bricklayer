@@ -223,6 +223,17 @@ manifest <- list(
     seed          = CANONICAL_SEED,
     run_at        = format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z"),
     r_version     = R.version.string,
+    ## Exact package versions this run used — the reference numbers were
+    ## produced on specific TMB/glmmTMB versions, and drift here explains
+    ## most convergence/AIC differences reviewers will see.
+    r_package_versions = {
+      pkgs <- c("data.table", "MatchIt", "glmmTMB", "TMB", "lme4",
+                "DHARMa", "Hmisc", "jsonlite", "digest")
+      vers <- lapply(pkgs, function(p)
+        tryCatch(as.character(utils::packageVersion(p)),
+                 error = function(e) NA_character_))
+      stats::setNames(vers, pkgs)
+    },
     input_path    = INPUT_PATH,
     input_mode    = INPUT_MODE,
     synthetic     = SYNTHETIC_MODE,
@@ -231,14 +242,23 @@ manifest <- list(
   results = list()
 )
 
-record <- function(name, observed, expected, tol = 0.0001, group = "general") {
+record <- function(name, observed, expected, tol = 0.0001, group = "general",
+                   force_status = NULL, note = NULL) {
   diff <- if (is.numeric(observed) && is.numeric(expected))
     abs(observed - expected) else NA_real_
   ## In synthetic mode, never report PASS/DIFFER — the comparison is
   ## meaningless because the data is random. Always INFO.
-  status <- if (SYNTHETIC_MODE) "INFO" else
+  ## A numeric NA/NaN observed where a number was expected is NOT the
+  ## deliberate skip path (that passes a character marker): something went
+  ## wrong upstream (e.g. model non-convergence) -> WARN, not INFO.
+  status <- if (!is.null(force_status)) force_status else
+            if (SYNTHETIC_MODE) "INFO" else
             if (!is.na(diff) && diff <= tol) "PASS" else
-            if (!is.na(diff)) "DIFFER" else "INFO"
+            if (!is.na(diff)) "DIFFER" else
+            if (is.numeric(observed) && is.numeric(expected) &&
+                !all(is.finite(observed))) "WARN" else "INFO"
+  if (is.null(note) && identical(status, "WARN") && is.na(diff))
+    note <- "observed value is missing/NaN — check model convergence and run.log"
   manifest$results[[name]] <<- list(
     group    = group,
     observed = observed,
@@ -246,7 +266,7 @@ record <- function(name, observed, expected, tol = 0.0001, group = "general") {
     diff     = diff,
     status   = status,
     tol      = tol,
-    note     = if (SYNTHETIC_MODE) "synthetic data — comparison not meaningful" else NULL
+    note     = if (SYNTHETIC_MODE) "synthetic data — comparison not meaningful" else note
   )
   cat(sprintf("  %-44s observed = %-12s expected = %-12s [%s]\n",
               name,
@@ -445,6 +465,15 @@ record("nb_treat_coef",       nb_coef, 0.291, tol = 0.07, group = "model")
 record("nb_treat_se",         nb_se,   0.052, tol = 0.02, group = "model")
 record("nb_IRR",              nb_irr,  1.337, tol = 0.10, group = "model")
 record("nb_AIC",              nb_aic,  3041.7, tol = 10, group = "model")
+## Canonical-model convergence is a first-class check: newer TMB/glmmTMB
+## versions can report a non-positive-definite Hessian here while the
+## coefficients still match. That is version drift worth flagging loudly.
+nb_converged <- isTRUE(fit_nb$sdr$pdHess)
+record("nb_model_converged", as.integer(nb_converged), 1L, tol = 0,
+       group = "model",
+       force_status = if (nb_converged) NULL else "WARN",
+       note = if (nb_converged) NULL else
+         "glmmTMB reported a non-positive-definite Hessian — likely TMB/glmmTMB version drift; compare r_package_versions in this manifest")
 
 nb_table <- data.table(
   model = "glmmTMB_nbinom2",

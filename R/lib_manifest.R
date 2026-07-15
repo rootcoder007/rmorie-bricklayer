@@ -126,7 +126,7 @@ write_manifest_json <- function(manifest, path) {
 #'
 #' @param manifest A manifest whose `results` entries each carry a
 #'   `status` of `"PASS"`, `"DIFFER"`, or `"INFO"`.
-#' @return A list with integer counts `total`, `pass`, `differ`, and
+#' @return A list with integer counts `total`, `pass`, `differ`, `warn`, and
 #'   `info`.
 #' @keywords internal
 #' @noRd
@@ -136,6 +136,7 @@ summarise_counts <- function(manifest) {
     total  = length(statuses),
     pass   = sum(statuses == "PASS"),
     differ = sum(statuses == "DIFFER"),
+    warn   = sum(statuses == "WARN"),
     info   = sum(statuses == "INFO")
   )
 }
@@ -212,6 +213,7 @@ write_summary_txt <- function(manifest, output_dir, paths,
     sprintf("Total checks: %d", counts$total),
     sprintf("PASS:         %d", counts$pass),
     sprintf("DIFFER:       %d", counts$differ),
+    sprintf("WARN:         %d", counts$warn %||% 0L),
     sprintf("INFO:         %d", counts$info),
     "",
     "----------------------------------------------------------",
@@ -219,6 +221,17 @@ write_summary_txt <- function(manifest, output_dir, paths,
     "----------------------------------------------------------",
     paste0("  ", files)
   )
+  vers <- manifest$meta$r_package_versions
+  if (!is.null(vers) && length(vers) > 0L) {
+    lines <- c(lines, "",
+      "----------------------------------------------------------",
+      "  R PACKAGE VERSIONS USED IN THIS RUN",
+      "  (reference numbers were produced on specific versions;",
+      "   drift here explains most WARN/convergence differences)",
+      "----------------------------------------------------------",
+      sprintf("  %-12s %s", names(vers),
+              vapply(vers, function(v) as.character(v %||% "?"), character(1))))
+  }
   if (!is.null(what_was_done)) {
     lines <- c(lines, "",
       "----------------------------------------------------------",

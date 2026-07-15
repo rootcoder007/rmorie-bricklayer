@@ -158,14 +158,51 @@ if (length(REQ_PKGS) > 0L) {
             paste(basename(stale_locks), collapse = ", "))
         unlink(stale_locks, recursive = TRUE)
       }
-      say("  Installing ", length(missing_pkgs), " package(s). On Linux these ",
-          "compile from source -- this can take 10-30+ minutes on first run.")
+      ## On Linux, prefer Posit Package Manager pre-built binaries when the
+      ## distro is supported: minutes instead of an hour of compiling.
+      repos <- "https://cloud.r-project.org"
+      if (OS_KIND != "macos" && OS_KIND != "windows" &&
+          file.exists("/etc/os-release")) {
+        osr <- readLines("/etc/os-release", warn = FALSE)
+        val <- function(key) {
+          m <- grep(paste0("^", key, "="), osr, value = TRUE)
+          if (length(m) == 0L) return("")
+          gsub("\"", "", sub(paste0("^", key, "="), "", m[1]))
+        }
+        id <- val("ID"); ver <- val("VERSION_ID"); code <- val("VERSION_CODENAME")
+        p3m_dist <- if (id == "ubuntu" && nzchar(code)) code
+          else if (id == "debian" && nzchar(code)) code
+          else if (id %in% c("rhel", "centos", "rocky", "almalinux"))
+            paste0("rhel", sub("\\..*$", "", ver))
+          else if (id == "opensuse-leap")
+            paste0("opensuse", gsub("\\.", "", ver))
+          else NULL
+        if (!is.null(p3m_dist)) {
+          repos <- c(
+            P3M = paste0("https://packagemanager.posit.co/cran/__linux__/",
+                         p3m_dist, "/latest"),
+            CRAN = "https://cloud.r-project.org"
+          )
+          options(HTTPUserAgent = sprintf(
+            "R/%s R (%s)", getRversion(),
+            paste(getRversion(), R.version["platform"],
+                  R.version["arch"], R.version["os"])))
+          say("  Using Posit Package Manager Linux binaries (", p3m_dist,
+              ") -- typically a few minutes instead of an hour of compiling.")
+        } else {
+          say("  No pre-built binaries for this distro (", id,
+              ") -- packages compile from source; expect 10-30+ minutes.")
+        }
+      } else {
+        say("  Installing from CRAN (binary packages on macOS/Windows).")
+      }
+      ncpus <- max(1L, parallel::detectCores() - 1L)
+      say("  Installing ", length(missing_pkgs), " package(s)...")
       for (i in seq_along(missing_pkgs)) {
         say("  [", i, "/", length(missing_pkgs), "] ", missing_pkgs[i],
             " (started ", format(Sys.time(), "%H:%M:%S"), ")...")
-        install.packages(missing_pkgs[i],
-                         repos = "https://cloud.r-project.org",
-                         quiet = TRUE)
+        install.packages(missing_pkgs[i], repos = repos,
+                         Ncpus = ncpus, quiet = TRUE)
       }
       still <- setdiff(REQ_PKGS, rownames(installed.packages()))
       if (length(still) > 0L) {
@@ -408,7 +445,30 @@ if (file.exists(manifest_path)) {
   say(sprintf("  Total:  %d", counts$total))
   say(sprintf("  PASS:   %d", counts$pass))
   say(sprintf("  DIFFER: %d", counts$differ))
+  if (!is.null(counts$warn) && counts$warn > 0L)
+    say(sprintf("  WARN:   %d  (see manifest.json notes -- often package-version drift)",
+                counts$warn))
   say(sprintf("  INFO:   %d", counts$info))
+  ## Version-drift note: if the provenance pins the versions the reference
+  ## numbers were produced on, compare against what this run actually used.
+  pinned <- prov$pinned_r_package_versions
+  used <- m$meta$r_package_versions
+  if (!is.null(pinned) && !is.null(used)) {
+    drift <- character()
+    for (p in names(pinned)) {
+      u <- used[[p]]
+      if (!is.null(u) && !is.na(u) && !identical(as.character(u),
+                                                 as.character(pinned[[p]]))) {
+        drift <- c(drift, sprintf("%s: pinned %s, this run %s",
+                                  p, pinned[[p]], u))
+      }
+    }
+    if (length(drift) > 0L) {
+      say("  NOTE -- R package version drift vs the reference run:")
+      for (d in drift) say("    ", d)
+      say("  Small numeric differences and convergence WARNs are expected under drift.")
+    }
+  }
   ## Drop a SUMMARY.txt
   m$meta$project   <- PROJECT_NAME
   m$meta$author    <- PROJECT_AUTHOR
