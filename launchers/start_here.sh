@@ -40,20 +40,29 @@ if [[ -z "${RSCRIPT}" ]]; then
     echo "    https://cran.r-project.org/"
   fi
   echo
-  read -r -p "Press Enter to close..." _
+  [[ -t 0 ]] && read -r -p "Press Enter to close..." _
   exit 1
 fi
 
 if [[ ! -f "./setup_and_run.R" ]]; then
   echo "ERROR: setup_and_run.R missing from this folder."
-  read -r -p "Press Enter to close..." _
+  [[ -t 0 ]] && read -r -p "Press Enter to close..." _
   exit 2
 fi
 
 echo "Found R at: ${RSCRIPT}"
 echo
-"${RSCRIPT}" setup_and_run.R "$@"
+# Run R as a tracked child and forward TERM/INT to it. Without this, a
+# `timeout N ./start_here.sh | ...` kill leaves Rscript alive holding the
+# pipe open, so the caller sees no output at all.
+"${RSCRIPT}" setup_and_run.R "$@" &
+RPID=$!
+trap 'kill -TERM "${RPID}" 2>/dev/null' TERM INT
+set +e
+wait "${RPID}"
 RC=$?
+set -e
+trap - TERM INT
 
 echo
 echo "=========================================================="
