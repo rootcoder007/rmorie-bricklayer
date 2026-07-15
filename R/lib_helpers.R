@@ -42,17 +42,66 @@ to_ascii <- function(x) {
     # (e.g. Cyrillic, Greek), not just names like "Angela".
     out <- stringi::stri_trans_general(x, "Any-Latin; Latin-ASCII")
   } else {
-    # nocov start -- runs only when the stringi Suggests is absent
-    # Fallback: iconv. //TRANSLIT is good on glibc; on BSD it can leave
-    # artifacts, which the final strip below removes.
-    out <- iconv(x, to = "ASCII//TRANSLIT")
-    na <- is.na(out)
-    if (any(na)) out[na] <- iconv(x[na], to = "ASCII", sub = "")
-    # nocov end
+    out <- .to_ascii_fallback(x)
   }
   out[is.na(out)] <- ""
   # Guarantee pure 7-bit ASCII regardless of path.
   gsub("[^ -~]", "", out)
+}
+
+# Deterministic no-stringi fallback. iconv("ASCII//TRANSLIT") is
+# locale-dependent: under a C locale (glibc) accented characters come back
+# as "?" -- ASCII, so the final strip keeps them. Transliterate the common
+# Latin accents by table first, then let iconv DROP (not "?") the rest.
+.to_ascii_fallback <- function(x) {
+  # Under a C locale UTF-8 bytes arrive unmarked and chartr() errors on
+  # them; declare valid UTF-8 so translation is locale-independent.
+  valid <- !is.na(x) & validUTF8(x)
+  Encoding(x[valid]) <- "UTF-8"
+  from <- paste0(
+    "\u00c0\u00c1\u00c2\u00c3\u00c4\u00c5\u00c7",
+    "\u00c8\u00c9\u00ca\u00cb\u00cc\u00cd\u00ce\u00cf",
+    "\u00d0\u00d1\u00d2\u00d3\u00d4\u00d5\u00d6\u00d8",
+    "\u00d9\u00da\u00db\u00dc\u00dd",
+    "\u00e0\u00e1\u00e2\u00e3\u00e4\u00e5\u00e7",
+    "\u00e8\u00e9\u00ea\u00eb\u00ec\u00ed\u00ee\u00ef",
+    "\u00f0\u00f1\u00f2\u00f3\u00f4\u00f5\u00f6\u00f8",
+    "\u00f9\u00fa\u00fb\u00fc\u00fd\u00ff",
+    "\u0100\u0101\u0104\u0105\u0106\u0107\u010c\u010d",
+    "\u010e\u010f\u0110\u0111\u0112\u0113\u0118\u0119",
+    "\u011a\u011b\u011e\u011f\u0130\u0131\u0141\u0142",
+    "\u0143\u0144\u0147\u0148\u014c\u014d\u0150\u0151",
+    "\u0158\u0159\u015a\u015b\u015e\u015f\u0160\u0161",
+    "\u0164\u0165\u016a\u016b\u016e\u016f\u0170\u0171",
+    "\u0179\u017a\u017b\u017c\u017d\u017e"
+  )
+  to <- paste0(
+    "AAAAAAC",
+    "EEEEIIII",
+    "DNOOOOOO",
+    "UUUUY",
+    "aaaaaac",
+    "eeeeiiii",
+    "dnoooooo",
+    "uuuuyy",
+    "AaAaCcCc",
+    "DdDdEeEe",
+    "EeGgIiLl",
+    "NnNnOoOo",
+    "RrSsSsSs",
+    "TtUuUuUu",
+    "ZzZzZz"
+  )
+  x <- chartr(from, to, x)
+  multi <- list(
+    c("\u00df", "ss"), c("\u00c6", "AE"), c("\u00e6", "ae"),
+    c("\u0152", "OE"), c("\u0153", "oe"), c("\u00de", "Th"),
+    c("\u00fe", "th")
+  )
+  for (pair in multi) {
+    x <- gsub(pair[[1L]], pair[[2L]], x, fixed = TRUE)
+  }
+  iconv(x, to = "ASCII", sub = "")
 }
 
 #' Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
