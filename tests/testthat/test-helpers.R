@@ -40,3 +40,20 @@ test_that("agent_bundle validates its request and reports a missing binary", {
   Sys.setenv(PATH = tempdir())
   expect_match(agent_bundle("scaffold demo bundle"), "rmorie CLI not found")
 })
+
+test_that(".to_ascii_fallback (no-stringi path) transliterates deterministically", {
+  # The iconv("ASCII//TRANSLIT") it replaces gave "?" under a C locale;
+  # the table-driven fallback must not depend on stringi or the locale.
+  expect_equal(rmoriebricklayer:::.to_ascii_fallback(ang), "Angela")
+  expect_equal(
+    rmoriebricklayer:::.to_ascii_fallback("J\u00fcrgen Stra\u00dfe"),
+    "Jurgen Strasse"
+  )
+  expect_equal(
+    rmoriebricklayer:::.to_ascii_fallback("\u0141ukasz \u017bak"),
+    "Lukasz Zak"
+  )
+  out <- rmoriebricklayer:::.to_ascii_fallback("\u0152uvre \u00c6on")
+  expect_equal(out, "OEuvre AEon")
+  expect_false(any(grepl("[^ -~]", out)))
+})
