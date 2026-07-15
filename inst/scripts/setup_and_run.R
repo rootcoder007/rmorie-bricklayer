@@ -37,6 +37,13 @@ setwd(script_dir)
 args <- commandArgs(trailingOnly = TRUE)
 QUICK_MODE <- any(args %in% c("-q", "--quick"))
 HELP_MODE  <- any(args %in% c("-h", "--help"))
+## No terminal on stdin (CI, reviewer harness, piped run): prompts would
+## silently take their defaults anyway, so make that explicit and honest.
+AUTO_QUICK <- FALSE
+if (!QUICK_MODE && !isatty(stdin())) {
+  QUICK_MODE <- TRUE
+  AUTO_QUICK <- TRUE
+}
 DATA_ARG   <- NULL
 if (any(args == "--data")) {
   i <- which(args == "--data")[1]
@@ -91,6 +98,9 @@ cat("==========================================================\n")
 say("OS detected:    ", OS_KIND)
 say("R version:      ", R.version.string)
 say("Mode:           ", if (QUICK_MODE) "quick (non-interactive)" else "interactive")
+if (AUTO_QUICK)
+  say("                (no terminal detected on stdin -- defaults applied automatically;",
+      " pass --data PATH or run from a terminal for the interactive menus)")
 cat("\n")
 
 ## ---------- WHERE EVERYTHING WILL GO panel ----------
@@ -139,10 +149,15 @@ if (length(REQ_PKGS) > 0L) {
   if (length(missing_pkgs) > 0L) {
     say("  Missing: ", paste(missing_pkgs, collapse = ", "))
     if (ask_yn("  Install missing packages now?", "Y", QUICK_MODE)) {
-      say("  Installing (this can take 2-5 minutes on first run)...")
-      install.packages(missing_pkgs,
-                       repos = "https://cloud.r-project.org",
-                       quiet = TRUE)
+      say("  Installing ", length(missing_pkgs), " package(s). On Linux these ",
+          "compile from source -- this can take 10-30+ minutes on first run.")
+      for (i in seq_along(missing_pkgs)) {
+        say("  [", i, "/", length(missing_pkgs), "] ", missing_pkgs[i],
+            " (started ", format(Sys.time(), "%H:%M:%S"), ")...")
+        install.packages(missing_pkgs[i],
+                         repos = "https://cloud.r-project.org",
+                         quiet = TRUE)
+      }
       still <- setdiff(REQ_PKGS, rownames(installed.packages()))
       if (length(still) > 0L) {
         say("ERROR: failed to install: ", paste(still, collapse = ", "))
