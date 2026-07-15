@@ -149,6 +149,15 @@ if (length(REQ_PKGS) > 0L) {
   if (length(missing_pkgs) > 0L) {
     say("  Missing: ", paste(missing_pkgs, collapse = ", "))
     if (ask_yn("  Install missing packages now?", "Y", QUICK_MODE)) {
+      ## A previously interrupted run leaves 00LOCK-* directories that make
+      ## every later install of that package fail instantly and silently.
+      lib1 <- .libPaths()[1]
+      stale_locks <- list.files(lib1, pattern = "^00LOCK", full.names = TRUE)
+      if (length(stale_locks) > 0L) {
+        say("  Removing stale install locks from an interrupted run: ",
+            paste(basename(stale_locks), collapse = ", "))
+        unlink(stale_locks, recursive = TRUE)
+      }
       say("  Installing ", length(missing_pkgs), " package(s). On Linux these ",
           "compile from source -- this can take 10-30+ minutes on first run.")
       for (i in seq_along(missing_pkgs)) {
@@ -161,6 +170,10 @@ if (length(REQ_PKGS) > 0L) {
       still <- setdiff(REQ_PKGS, rownames(installed.packages()))
       if (length(still) > 0L) {
         say("ERROR: failed to install: ", paste(still, collapse = ", "))
+        say("  To see the full compiler error, run this in R and read the output:")
+        say("    install.packages(c(",
+            paste0('"', still, '"', collapse = ", "),
+            "), repos = \"https://cloud.r-project.org\")")
         quit(status = 3)
       }
       say("  ✓ All packages installed.")
@@ -429,10 +442,12 @@ say("Step 5/5: Done.")
 say("  Results folder: ", output_dir)
 say("  Plain-language summary: SUMMARY.txt in that folder.")
 
-if (ask_yn("  Open the results folder now?", "Y", QUICK_MODE)) {
-  if (OS_KIND == "macos") system2("open", shQuote(output_dir))
+## Never in quick mode: unattended runs have no desktop to open, and a
+## headless xdg-open blocks forever, keeping this process alive.
+if (!QUICK_MODE && ask_yn("  Open the results folder now?", "Y")) {
+  if (OS_KIND == "macos") system2("open", shQuote(output_dir), wait = FALSE)
   else if (OS_KIND == "windows") shell.exec(output_dir)
-  else tryCatch(system2("xdg-open", shQuote(output_dir)),
+  else tryCatch(system2("xdg-open", shQuote(output_dir), wait = FALSE),
                 error = function(e) invisible(NULL))
 }
 
