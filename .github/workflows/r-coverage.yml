@@ -50,6 +50,8 @@ jobs:
           files: ./cobertura.xml
           plugins: noop
           disable_search: true
+          slug: rootcoder007/rmorie-bricklayer
+          verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Show testthat output on failure
         if: failure()
