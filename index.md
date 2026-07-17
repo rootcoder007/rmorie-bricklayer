@@ -1,6 +1,8 @@
 # rmoriebricklayer
 
-[![r-universe](https://rootcoder007.r-universe.dev/badges/rmoriebricklayer)](https://rootcoder007.r-universe.dev/rmoriebricklayer)
+Please note that this project is released with a [Contributor Code of
+Conduct](https://rootcoder007.github.io/rmorie-bricklayer/CODE_OF_CONDUCT.md).
+By contributing, you agree to abide by its terms.
 
 > Brick-proof, reproducible data capsules for R.
 
