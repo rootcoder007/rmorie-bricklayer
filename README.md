@@ -9,10 +9,6 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 <!-- badges: end -->
 
-Please note that this project is released with a
-[Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing, you agree to
-abide by its terms.
-
 > Brick-proof, reproducible data capsules for R.
 
 `rmoriebricklayer` resolves open-data sources, records and verifies
@@ -101,3 +97,9 @@ machine-readable metadata GitHub's "Cite this repository" button uses.
 ## License
 
 AGPL-3.0-or-later.
+
+## Code of Conduct
+
+Please note that this project is released with a
+[Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing, you agree to
+abide by its terms.
