@@ -52,7 +52,10 @@ Email `vsruhela@proton.me` directly rather than opening a public issue. The fram
 
 ## Code of conduct
 
-Be kind. This is academic infrastructure. The audience is grad students and reviewers, not seasoned ops engineers. If an error message is unclear, fix the error message.
+This project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md);
+by participating you agree to abide by its terms. In short: be kind. This is
+academic infrastructure. The audience is grad students and reviewers, not
+seasoned ops engineers. If an error message is unclear, fix the error message.
 
 ## Licence
 
