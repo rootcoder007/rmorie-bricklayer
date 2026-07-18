@@ -8,6 +8,8 @@
   : Apply Schema Validation, Stopping on Fatal Issues
 - [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
   : Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
+- [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+  : Fetch a URL to disk with an Internet Archive fallback (C++/libcurl)
 - [`capture_environment()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.md)
   : Capture the Analysis Environment for a Manifest
 - [`cite_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cite_capsule.md)
@@ -54,6 +56,8 @@
   : Verify a File's SHA256 Against an Expected Digest
 - [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md)
   : Resolve a Wayback Machine snapshot URL
+- [`wayback_snapshot_url_native()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url_native.md)
+  : Resolve a Wayback Machine snapshot URL (C++/libcurl)
 - [`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
   : Write a Manifest to JSON
 - [`write_summary_txt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_summary_txt.md)
