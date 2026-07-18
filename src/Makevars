@@ -1,0 +1,3 @@
+# libcurl for rmbl_fetch.cpp (live -> Wayback fallback fetcher).
+PKG_CPPFLAGS = $(shell curl-config --cflags 2>/dev/null)
+PKG_LIBS = $(shell curl-config --libs 2>/dev/null || echo -lcurl)

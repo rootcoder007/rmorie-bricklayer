@@ -21,6 +21,9 @@ extern SEXP C_rmbl_var(SEXP);
 extern SEXP C_rmbl_cor(SEXP, SEXP);
 extern SEXP C_rmbl_normal_pdf(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_sha256(SEXP);
+/* .Call wrappers (defined in rmbl_fetch.cpp) -- libcurl fetch + wayback */
+extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_wayback(SEXP, SEXP);
 
 /* plain-C kernels (defined in rmbl_core.c) -- the cross-package API */
 extern double rmbl_mean(const double *, R_xlen_t);
@@ -28,13 +31,18 @@ extern double rmbl_var(const double *, R_xlen_t);
 extern double rmbl_cor_pearson(const double *, const double *, R_xlen_t);
 extern double rmbl_normal_pdf(double, double, double);
 extern void   rmbl_sha256_hex(const unsigned char *, size_t, char *);
+/* fetch kernels (defined in rmbl_fetch.cpp) -- the cross-package fetch API */
+extern int  rmbl_fetch_with_fallback(const char *, const char *, const char *, int);
+extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"C_rmbl_mean",       (DL_FUNC) &C_rmbl_mean,       1},
-    {"C_rmbl_var",        (DL_FUNC) &C_rmbl_var,        1},
-    {"C_rmbl_cor",        (DL_FUNC) &C_rmbl_cor,        2},
-    {"C_rmbl_normal_pdf", (DL_FUNC) &C_rmbl_normal_pdf, 3},
-    {"C_rmbl_sha256",     (DL_FUNC) &C_rmbl_sha256,     1},
+    {"C_rmbl_mean",           (DL_FUNC) &C_rmbl_mean,           1},
+    {"C_rmbl_var",            (DL_FUNC) &C_rmbl_var,            1},
+    {"C_rmbl_cor",            (DL_FUNC) &C_rmbl_cor,            2},
+    {"C_rmbl_normal_pdf",     (DL_FUNC) &C_rmbl_normal_pdf,     3},
+    {"C_rmbl_sha256",         (DL_FUNC) &C_rmbl_sha256,         1},
+    {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
+    {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        2},
     {NULL, NULL, 0}
 };
 
@@ -49,4 +57,6 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_RegisterCCallable("rmoriebricklayer", "rmbl_cor_pearson", (DL_FUNC) rmbl_cor_pearson);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_normal_pdf",  (DL_FUNC) rmbl_normal_pdf);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_sha256_hex",  (DL_FUNC) rmbl_sha256_hex);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_fetch_with_fallback", (DL_FUNC) rmbl_fetch_with_fallback);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_wayback_snapshot",    (DL_FUNC) rmbl_wayback_snapshot);
 }
