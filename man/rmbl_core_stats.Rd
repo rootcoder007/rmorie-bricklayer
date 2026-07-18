@@ -19,12 +19,12 @@ core_cor(x, y)
 \value{
 \code{core_mean()}, \code{core_var()} and \code{core_cor()} return a length-1
 numeric. \code{core_var()} uses the \code{n - 1} (sample) denominator, matching
-\code{\link[stats:cor]{stats::var()}}.
+\code{\link[stats:var]{stats::var()}}.
 }
 \description{
 Thin R wrappers over the \code{rmoriebricklayer} compiled core -- the same
 kernels that sibling packages reach through \code{LinkingTo: rmoriebricklayer}. NA/NaN values propagate (there is no \code{na.rm}); call
-\code{\link[stats:na.fail]{stats::na.omit()}} first if you need NA handling.
+\code{\link[stats:na.omit]{stats::na.omit()}} first if you need NA handling.
 }
 \examples{
 core_mean(1:10)

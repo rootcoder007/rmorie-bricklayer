@@ -1,0 +1,1 @@
+PKG_LIBS = -lcurl -lssl -lcrypto -lssh2 -lz -lws2_32 -lwldap32 -lbcrypt
