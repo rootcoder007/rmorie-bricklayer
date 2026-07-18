@@ -1,1 +1,6 @@
-PKG_LIBS = -lcurl -lssl -lcrypto -lssh2 -lz -lws2_32 -lwldap32 -lbcrypt
+# Rtools ships libcurl + pkg-config. Use them so the static link picks up
+# curl's full transitive dep chain (ssl, crypto, ssh2, z, ws2_32, ...) in
+# the right order. -DCURL_STATICLIB stops curl.h from marking the API as
+# __declspec(dllimport) (the "undefined reference to __imp_curl_*" errors).
+PKG_CPPFLAGS = -DCURL_STATICLIB $(shell pkg-config --cflags libcurl 2>/dev/null)
+PKG_LIBS = $(shell pkg-config --libs --static libcurl 2>/dev/null)
