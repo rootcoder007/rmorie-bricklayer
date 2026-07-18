@@ -1,3 +1,4 @@
-# libcurl for rmbl_fetch.cpp (live -> Wayback fallback fetcher).
-PKG_CPPFLAGS = $(shell curl-config --cflags 2>/dev/null)
-PKG_LIBS = $(shell curl-config --libs 2>/dev/null || echo -lcurl)
+# Portable Makevars: no GNU-make extensions (CRAN policy). -lcurl resolves
+# once the SystemRequirement libcurl (deb: libcurl4-openssl-dev, rpm:
+# libcurl-devel) is installed; its headers/lib are on the default path.
+PKG_LIBS = -lcurl
