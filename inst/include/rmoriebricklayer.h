@@ -69,6 +69,28 @@ static R_INLINE void rmbl_sha256_hex(const unsigned char *data, size_t len, char
     fn(data, len, out);
 }
 
+/* Download `url` to `path`; on failure fall back to `wayback` (pass "" to
+ * auto-resolve a snapshot). Returns 0 live-ok, 1 wayback-ok, -1 both-failed.
+ * The shared libcurl fetch foundation -- one implementation, every package. */
+static R_INLINE int rmbl_fetch_with_fallback(const char *url, const char *wayback,
+                                             const char *path, int timeout_s) {
+    static int (*fn)(const char *, const char *, const char *, int) = NULL;
+    if (fn == NULL)
+        fn = (int (*)(const char *, const char *, const char *, int))
+             R_GetCCallable("rmoriebricklayer", "rmbl_fetch_with_fallback");
+    return fn(url, wayback, path, timeout_s);
+}
+
+/* Resolve a Wayback snapshot URL for `url` into `out` (cap bytes). Returns
+ * bytes written (0 if none archived). */
+static R_INLINE int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
+    static int (*fn)(const char *, char *, int, int) = NULL;
+    if (fn == NULL)
+        fn = (int (*)(const char *, char *, int, int))
+             R_GetCCallable("rmoriebricklayer", "rmbl_wayback_snapshot");
+    return fn(url, out, cap, timeout_s);
+}
+
 #ifdef __cplusplus
 }
 #endif
