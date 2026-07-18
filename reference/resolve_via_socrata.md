@@ -36,6 +36,7 @@ resolve_via_socrata(list())
 prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
                             socrata_id     = "ijzp-q8t2"))
 resolve_via_socrata(prov)
-#> [1] "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
+#> Warning: cannot open URL 'https://data.cityofchicago.org/api/views/ijzp-q8t2.json': HTTP status was '503 Service Unavailable'
+#> NULL
 # }
 ```
