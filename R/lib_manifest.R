@@ -40,9 +40,16 @@
 #' @return A manifest list with elements `meta`, an empty `results`
 #'   list, and (when requested) `environment`.
 #' @examples
+#' # Minimal manifest, no environment capture.
 #' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
 #'                      environment = FALSE)
-#' names(man)
+#' names(man)          # "meta" "results"
+#' man$meta$project
+#'
+#' # With environment = TRUE it also records R version / platform / packages.
+#' full <- make_manifest(list(project = "demo"), environment = TRUE)
+#' names(full)         # adds "environment"
+#' full$environment$r_version
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
   m <- list(meta = meta, results = list())
@@ -69,9 +76,23 @@ make_manifest <- function(meta, environment = TRUE) {
 #' @return The updated manifest, returned so calls can be chained.
 #' @examples
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
+#'
+#' # Within tolerance -> PASS.
 #' man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
 #'               tol = 0.001)
-#' man$results$mean_matches$status
+#' man$results$mean_matches$status      # "PASS"
+#'
+#' # Outside tolerance -> DIFFER.
+#' man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
+#' man$results$sd_matches$status        # "DIFFER"
+#'
+#' # Synthetic data -> INFO (comparison not meaningful).
+#' man <- record(man, "synthetic_row", observed = 5, expected = 5,
+#'               synthetic = TRUE)
+#' man$results$synthetic_row$status     # "INFO"
+#'
+#' # Calls chain: record() returns the mutated manifest.
+#' length(man$results)                  # 3
 #' @export
 record <- function(manifest, name, observed, expected,
                    tol = 0.0001, group = "general",
@@ -114,6 +135,10 @@ record <- function(manifest, name, observed, expected,
 #' man <- record(man, "row_count", observed = 20, expected = 20)
 #' path <- write_manifest_json(man, tempfile(fileext = ".json"))
 #' file.exists(path)
+#'
+#' # Round-trips back through jsonlite.
+#' back <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+#' back$results$row_count$status        # "PASS"
 #' @export
 write_manifest_json <- function(manifest, path) {
   jsonlite::write_json(manifest, path, auto_unbox = TRUE, pretty = TRUE)

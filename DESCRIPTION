@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.3.1
+Version: 0.3.2
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),

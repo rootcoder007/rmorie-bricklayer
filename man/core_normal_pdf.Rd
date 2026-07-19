@@ -21,5 +21,16 @@ A numeric vector the length of \code{x}. Equivalent to
 Vectorised over \code{x}; \code{mean} and \code{sd} are length-1.
 }
 \examples{
+# Standard normal density at a few quantiles.
 core_normal_pdf(c(-1, 0, 1))
+
+# Peak of the standard normal is 1/sqrt(2*pi) at x = 0.
+core_normal_pdf(0)
+
+# Shift and scale via `mean` and `sd`.
+core_normal_pdf(5, mean = 5, sd = 2)       # peak of N(5, 2)
+core_normal_pdf(c(0, 5, 10), mean = 5, sd = 2)
+
+# Identical to stats::dnorm().
+all.equal(core_normal_pdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 }

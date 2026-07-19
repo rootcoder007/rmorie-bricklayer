@@ -20,5 +20,17 @@ archived snapshot of \code{url}. C++ backend; supersedes the older
 jsonlite-based resolver (kept internally for offline use).
 }
 \examples{
-\dontrun{ wayback_snapshot_url_native("https://www.r-project.org/") }
+# Input is validated before any network call:
+try(wayback_snapshot_url_native(""))     # empty url -> error
+
+\dontrun{
+# Closest archived snapshot of a live page (or NULL if none archived).
+wayback_snapshot_url_native("https://www.r-project.org/")
+
+# A shorter timeout for a quick lookup.
+wayback_snapshot_url_native("https://cloud.r-project.org/", timeout = 10)
+
+# A never-archived URL returns NULL rather than erroring.
+wayback_snapshot_url_native("https://example.invalid/never-archived")
+}
 }

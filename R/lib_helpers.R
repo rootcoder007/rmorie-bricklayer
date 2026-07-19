@@ -14,6 +14,19 @@
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
 #' sha256_file(f)
+#'
+#' # Deterministic: the same bytes always yield the same digest.
+#' identical(sha256_file(f), sha256_file(f))
+#'
+#' # Any change to the file changes the digest (tamper-evidence).
+#' before <- sha256_file(f)
+#' writeLines("hello capsule (edited)", f)
+#' after <- sha256_file(f)
+#' before == after      # FALSE
+#'
+#' # Provenance pin: record a digest, verify it later.
+#' pinned <- sha256_file(f)
+#' stopifnot(sha256_file(f) == pinned)
 #' @export
 sha256_file <- function(path) {
   digest::digest(file = path, algo = "sha256")
@@ -33,7 +46,18 @@ sha256_file <- function(path) {
 #' @return A character vector containing only ASCII characters.
 #' @export
 #' @examples
+#' # Latin accents fold to their nearest ASCII letter.
 #' to_ascii("Prof. \u00c1ngela Zorro Medina")  # "Prof. Angela Zorro Medina"
+#'
+#' # Vectorised over the input.
+#' to_ascii(c("Se\u00e1n", "Zo\u00eb", "na\u00efve"))
+#'
+#' # Non-Latin scripts are romanised when stringi is available.
+#' if (requireNamespace("stringi", quietly = TRUE))
+#'   to_ascii("\u041c\u043e\u0441\u043a\u0432\u0430")  # "Moskva" (Cyrillic)
+#'
+#' # Either way the result is guaranteed pure 7-bit ASCII (never "?").
+#' all(charToRaw(to_ascii("caf\u00e9")) < 128)
 to_ascii <- function(x) {
   x <- as.character(x)
   if (requireNamespace("stringi", quietly = TRUE)) {
@@ -119,8 +143,18 @@ to_ascii <- function(x) {
 #' @return A character vector: `x` where it can be represented, ASCII otherwise.
 #' @export
 #' @examples
-#' ascii_fallback("\u00c1ngela")            # accented name kept (UTF-8)
-#' ascii_fallback("\u00c1ngela", force = TRUE) # "Angela"
+#' # By default valid UTF-8 is preserved (accents kept where supported).
+#' ascii_fallback("\u00c1ngela")               # "\u00c1ngela"
+#'
+#' # force = TRUE always transliterates (for ASCII-only destinations
+#' # such as a package DESCRIPTION).
+#' ascii_fallback("\u00c1ngela", force = TRUE)  # "Angela"
+#'
+#' # Plain ASCII is returned unchanged either way.
+#' ascii_fallback("plain name")
+#'
+#' # Vectorised; each element handled independently.
+#' ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
 ascii_fallback <- function(x, force = FALSE) {
   x <- as.character(x)
   if (isTRUE(force)) return(to_ascii(x))

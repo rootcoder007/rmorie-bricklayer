@@ -30,5 +30,14 @@ prov <- list(
   resource = list(name = "Restrictive Confinement - Detailed Dataset",
                   direct_url = "https://data.ontario.ca/example.csv")
 )
-cat(cite_capsule(prov)$text)
+cit <- cite_capsule(prov)
+
+# Plain-text citation ready to paste.
+cat(cit$text)
+
+# BibTeX @misc entry for LaTeX bibliographies.
+cat(cit$bibtex)
+
+# NULL provenance returns NULL (composes safely).
+cite_capsule(NULL)
 }

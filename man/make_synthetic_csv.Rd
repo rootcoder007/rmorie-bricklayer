@@ -40,6 +40,16 @@ recipe <- list(
     id     = list(type = "id_pattern", pattern = "p-{seq:05d}")
   )
 )
-res <- make_synthetic_csv(recipe, tempfile(fileext = ".csv"))
-res$rows
+out <- tempfile(fileext = ".csv")
+res <- make_synthetic_csv(recipe, out)
+res$rows                         # 20
+res$seed                         # 42 (reproducible)
+
+# The written CSV round-trips and has the declared columns.
+df <- utils::read.csv(out)
+dim(df)
+names(df)
+
+# `n_rows` overrides the recipe's own row count.
+make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
 }
