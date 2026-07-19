@@ -40,6 +40,18 @@ reference:
       - bricklayer_fetch_siu
       - download_data
       - friendly_download
+  - title: SIU report mining
+    desc: >
+      Deterministic, offline parse/resolve core for Ontario Special
+      Investigations Unit director's reports — schema, parser,
+      subject-official resolver.
+    contents:
+      - bricklayer_siu_schema
+      - bricklayer_parse_siu
+      - bricklayer_fetch_parse_siu
+      - bricklayer_siu_text
+      - bricklayer_siu_iso_date
+      - bricklayer_siu_resolve_so
   - title: Portal resolvers
     desc: >
       Turn a dataset identifier on a government open-data portal into a direct
