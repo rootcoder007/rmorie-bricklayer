@@ -7,7 +7,8 @@
 ##
 ## What it does:
 ##   1. Detects OS, loads project config + provenance, sources libs.
-##   2. Auto-installs missing R packages (from config$r_packages).
+##   2. Checks required R packages (never installs; prints the exact
+##      install command for anything missing).
 ##   3. Locates the input data file (probe defaults → menu of options:
 ##      already have it / manual download / auto-download / synthetic).
 ##   4. Runs the project's analysis script as a subprocess.
@@ -32,7 +33,9 @@ script_dir <- (function() {
   fp <- sub("^--file=", "", fa[grep("^--file=", fa)])
   if (length(fp) > 0L) normalizePath(dirname(fp[1])) else getwd()
 })()
-setwd(script_dir)
+## No setwd(): the user's working directory is never changed. Every path
+## below is anchored on script_dir explicitly (CRAN: do not change the
+## user's working directory / options / par without restoring them).
 
 args <- commandArgs(trailingOnly = TRUE)
 QUICK_MODE <- any(args %in% c("-q", "--quick"))
@@ -51,9 +54,9 @@ if (any(args == "--data")) {
 }
 
 if (HELP_MODE) {
-  cat(readLines("setup_and_run.R")[
-      grep("^## USAGE", readLines("setup_and_run.R"))[1] + 0:5],
-      sep = "\n")
+  self <- file.path(script_dir, "setup_and_run.R")
+  lines <- readLines(self)
+  cat(lines[grep("^## USAGE", lines)[1] + 0:5], sep = "\n")
   quit(status = 0)
 }
 
@@ -73,8 +76,11 @@ PROVENANCE_PATH <- file.path(script_dir, "data_provenance.json")
 if (!file.exists(CONFIG_PATH))
   stop("config.json not found at ", CONFIG_PATH)
 if (!requireNamespace("jsonlite", quietly = TRUE)) {
-  install.packages("jsonlite", repos = "https://cloud.r-project.org",
-                   quiet = TRUE)
+  ## This script never installs packages itself (CRAN policy: no
+  ## install.packages() in package code/scripts) -- it tells you the exact
+  ## command instead.
+  stop("The 'jsonlite' package is required. Install it first, then re-run:\n",
+       '  install.packages("jsonlite")', call. = FALSE)
 }
 cfg <- jsonlite::fromJSON(CONFIG_PATH, simplifyVector = FALSE)
 prov <- load_provenance(PROVENANCE_PATH)
@@ -129,7 +135,6 @@ cat("\n  Internet endpoints the script may contact:\n")
 for (url in unlist(cfg$network$endpoints %||% c())) {
   cat("    - ", url, "\n", sep = "")
 }
-cat("    - https://cloud.r-project.org           (CRAN R packages)\n")
 cat("    - https://web.archive.org/web/...       (Wayback fallback, if needed)\n")
 cat("  No telemetry. No third-party services. No personal data leaves your machine.\n")
 cat("----------------------------------------------------------\n\n")
@@ -141,85 +146,26 @@ if (!file.exists(ANALYSIS_R)) {
   quit(status = 2)
 }
 
-## ---------- 2. Auto-install R packages ----------
+## ---------- 2. Check required R packages (this script never installs) ----------
 say("Step 1/5: Checking R packages...")
 if (length(REQ_PKGS) > 0L) {
-  installed <- rownames(installed.packages())
-  missing_pkgs <- setdiff(REQ_PKGS, installed)
+  ## CRAN policy: scripts must not call install.packages() or
+  ## installed.packages(). Availability is probed per package with
+  ## requireNamespace(); anything missing is reported with the exact
+  ## copy-paste install command for the user to run themselves.
+  missing_pkgs <- REQ_PKGS[!vapply(REQ_PKGS, requireNamespace,
+                                   logical(1), quietly = TRUE)]
   if (length(missing_pkgs) > 0L) {
     say("  Missing: ", paste(missing_pkgs, collapse = ", "))
-    if (ask_yn("  Install missing packages now?", "Y", QUICK_MODE)) {
-      ## A previously interrupted run leaves 00LOCK-* directories that make
-      ## every later install of that package fail instantly and silently.
-      lib1 <- .libPaths()[1]
-      stale_locks <- list.files(lib1, pattern = "^00LOCK", full.names = TRUE)
-      if (length(stale_locks) > 0L) {
-        say("  Removing stale install locks from an interrupted run: ",
-            paste(basename(stale_locks), collapse = ", "))
-        unlink(stale_locks, recursive = TRUE)
-      }
-      ## On Linux, prefer Posit Package Manager pre-built binaries when the
-      ## distro is supported: minutes instead of an hour of compiling.
-      repos <- "https://cloud.r-project.org"
-      if (OS_KIND != "macos" && OS_KIND != "windows" &&
-          file.exists("/etc/os-release")) {
-        osr <- readLines("/etc/os-release", warn = FALSE)
-        val <- function(key) {
-          m <- grep(paste0("^", key, "="), osr, value = TRUE)
-          if (length(m) == 0L) return("")
-          gsub("\"", "", sub(paste0("^", key, "="), "", m[1]))
-        }
-        id <- val("ID"); ver <- val("VERSION_ID"); code <- val("VERSION_CODENAME")
-        p3m_dist <- if (id == "ubuntu" && nzchar(code)) code
-          else if (id == "debian" && nzchar(code)) code
-          else if (id %in% c("rhel", "centos", "rocky", "almalinux"))
-            paste0("rhel", sub("\\..*$", "", ver))
-          else if (id == "opensuse-leap")
-            paste0("opensuse", gsub("\\.", "", ver))
-          else NULL
-        if (!is.null(p3m_dist)) {
-          repos <- c(
-            P3M = paste0("https://packagemanager.posit.co/cran/__linux__/",
-                         p3m_dist, "/latest"),
-            CRAN = "https://cloud.r-project.org"
-          )
-          options(HTTPUserAgent = sprintf(
-            "R/%s R (%s)", getRversion(),
-            paste(getRversion(), R.version["platform"],
-                  R.version["arch"], R.version["os"])))
-          say("  Using Posit Package Manager Linux binaries (", p3m_dist,
-              ") -- typically a few minutes instead of an hour of compiling.")
-        } else {
-          say("  No pre-built binaries for this distro (", id,
-              ") -- packages compile from source; expect 10-30+ minutes.")
-        }
-      } else {
-        say("  Installing from CRAN (binary packages on macOS/Windows).")
-      }
-      ncpus <- max(1L, parallel::detectCores() - 1L)
-      say("  Installing ", length(missing_pkgs), " package(s)...")
-      for (i in seq_along(missing_pkgs)) {
-        say("  [", i, "/", length(missing_pkgs), "] ", missing_pkgs[i],
-            " (started ", format(Sys.time(), "%H:%M:%S"), ")...")
-        install.packages(missing_pkgs[i], repos = repos,
-                         Ncpus = ncpus, quiet = TRUE)
-      }
-      still <- setdiff(REQ_PKGS, rownames(installed.packages()))
-      if (length(still) > 0L) {
-        say("ERROR: failed to install: ", paste(still, collapse = ", "))
-        say("  To see the full compiler error, run this in R and read the output:")
-        say("    install.packages(c(",
-            paste0('"', still, '"', collapse = ", "),
-            "), repos = \"https://cloud.r-project.org\")")
-        quit(status = 3)
-      }
-      say("  ✓ All packages installed.")
-    } else {
-      say("  Skipping — analysis may fail if anything is missing.")
-    }
-  } else {
-    say("  ✓ All required packages present.")
+    say("  This script does not install packages itself. Install them in R,")
+    say("  then re-run this script:")
+    say("    install.packages(c(",
+        paste0('"', missing_pkgs, '"', collapse = ", "), "))")
+    say("  Tip (Linux): pre-built binaries from Posit Package Manager")
+    say("  (https://packagemanager.posit.co/) are much faster than source.")
+    quit(status = 3)
   }
+  say("  \u2713 All required packages present.")
 } else {
   say("  (No packages declared in config$r_packages.)")
 }
