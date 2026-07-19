@@ -4,11 +4,16 @@
 \alias{bricklayer_siu_resolve_so}
 \title{Resolve the subject-official count from SIU report text}
 \usage{
-bricklayer_siu_resolve_so(text)
+bricklayer_siu_resolve_so(text, drid = NULL)
 }
 \arguments{
 \item{text}{A length-1 character vector of plain report text (see
 \code{\link[=bricklayer_siu_text]{bricklayer_siu_text()}}).}
+
+\item{drid}{Optional report id. When supplied and the \pkg{rmoriedata}
+corpus is installed, a panel-reviewed report returns its VERIFIED count
+directly (reason \code{"panel-reviewed corpus"}) -- the text rules are never
+consulted for a report whose answer is already established.}
 }
 \value{
 A list with \code{count} (integer, \code{NA} when unresolved) and

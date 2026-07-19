@@ -25,27 +25,105 @@ int count_matches(const std::string& s, const std::regex& re) {
 }  // namespace
 
 std::string strip_boilerplate(const std::string& t) {
+    // Reports mix in UTF-8 non-breaking spaces ("SO\u00A0#1"); \s never
+    // matches them in byte-mode std::regex, so normalize to plain spaces
+    // before any rule runs.
+    std::string norm;
+    norm.reserve(t.size());
+    for (size_t i = 0; i < t.size(); ++i) {
+        if (i + 1 < t.size() && static_cast<unsigned char>(t[i]) == 0xC2 &&
+            static_cast<unsigned char>(t[i + 1]) == 0xA0) {
+            norm += ' ';
+            ++i;
+        } else {
+            norm += t[i];
+        }
+    }
     // The privacy paragraph runs from "this information may include" to the
     // first "affected person" / "evidence". Remove every occurrence.
     static const std::regex kBoiler(
         R"(this information may include[\s\S]*?(?:affected person|evidence)\.?)",
         std::regex::icase);
-    return std::regex_replace(t, kBoiler, " ");
+    std::string out = std::regex_replace(norm, kBoiler, " ");
+    // The witness-officer glossary note ("a witness officer is a police
+    // officer who, in the opinion of the SIU Director, is involved in the
+    // incident under investigation but is not a subject officer...") appears
+    // in most reports and must never feed the zero-SO rule.
+    // Two phrasings across report eras, straight or curly apostrophe:
+    //   "who, in the opinion of the SIU Director, ... not a subject officer"
+    //   "who, in the SIU Director's opinion, ... not a subject officer"
+    static const std::regex kGlossary(
+        "who,?\\s+in the (?:opinion of the SIU Director|"
+        "SIU Director(?:'|\xE2\x80\x99)?s opinion),?"
+        "[\\s\\S]{0,120}?not a subject offic(?:er|ial)[^.]*\\.?",
+        std::regex::icase);
+    return std::regex_replace(out, kGlossary, " ");
 }
 
 SoResolution resolve_subject_officers(const std::string& report_text) {
     const std::string body = strip_boilerplate(report_text);
 
-    // 1. Highest explicit ordinal: "SO #3", "Subject Officer #2", "SO 2".
-    static const std::regex kOrd(
-        R"((?:subject offic(?:er|ial)|SO)\s*#?\s*(\d{1,2})\b)",
-        std::regex::icase);
-    int max_ord = 0;
-    for (auto it = std::sregex_iterator(body.begin(), body.end(), kOrd);
-         it != std::sregex_iterator(); ++it) {
-        max_ord = std::max(max_ord, std::stoi((*it)[1].str()));
+    // Ordinal scanners. "SO" is case-strict with a left word boundary and
+    // "#" is REQUIRED: an icase optional-# variant matched "...also 59..."
+    // and blew counts up.
+    static const std::regex kOrdSo(R"(\bSO\s*#\s*(\d{1,2})\b)");
+    static const std::regex kOrdSpelled(
+        R"(subject offic(?:er|ial)\s*#\s*(\d{1,2})\b)", std::regex::icase);
+    auto max_ordinal = [](const std::string& s) {
+        int mo = 0;
+        for (const auto* re : {&kOrdSo, &kOrdSpelled}) {
+            for (auto it = std::sregex_iterator(s.begin(), s.end(), *re);
+                 it != std::sregex_iterator(); ++it) {
+                mo = std::max(mo, std::stoi((*it)[1].str()));
+            }
+        }
+        return mo;
+    };
+
+    // 0. The Team block under the "Subject Officials"/"Subject Officers"
+    // heading is authoritative: one "SO"/"SO #N" entry per official. The
+    // narrative can mention other forces' officer shorthands ("SO #7 of
+    // YRP"), so the section is scanned FIRST and the whole document is only
+    // a fallback.
+    static const std::regex kSection(R"(Subject Offic(?:er|ial)s\b)");
+    // Terminate the window only at a real heading (line-anchored), never at
+    // a word like "Evidence" inside an entry's prose -- that truncated a
+    // window before "SO #2" once and undercounted.
+    static const std::regex kNextSection(
+        R"(\n\s{0,3}(?:Witness Offic(?:er|ial)s|Civilian Witness(?:es)?|Service Employee Witness|Incident Narrative|Materials [Oo]btained|The Scene|Evidence\n|Nature of Injur))");
+    std::smatch sec;
+    if (std::regex_search(body, sec, kSection)) {
+        std::string window = body.substr(
+            static_cast<size_t>(sec.position(0)) + sec.length(0), 2500);
+        std::smatch nxt;
+        if (std::regex_search(window, nxt, kNextSection)) {
+            window = window.substr(0, static_cast<size_t>(nxt.position(0)));
+        }
+        const int sec_ord = max_ordinal(window);
+        // Un-numbered entries: one interview-status line per official
+        // ("SO Interviewed", "SO Declined interview..."). Prose references
+        // ("the SO declined to...") don't match the tag-then-status shape.
+        static const std::regex kEntry(
+            R"(\bSO\s*(?:#\s*\d{1,2})?\s{0,3}(?:Interviewed|Declined|Did not consent|Not interviewed))");
+        const int entries = count_matches(window, kEntry);
+        // A report can mislabel two officials with the same ordinal
+        // ("SO #1 ... SO #1 ..."), so the entry count can legitimately
+        // exceed the highest ordinal -- take the max of the two signals.
+        const int sec_n = std::max(sec_ord, entries);
+        if (sec_n > 0) {
+            return {sec_n, "section: max(ordinal " + std::to_string(sec_ord) +
+                               ", entries " + std::to_string(entries) + ")"};
+        }
     }
-    if (max_ord > 0) {
+
+    // 1. Document-wide highest ordinal (older reports without a Team
+    // block). A real roster always starts at #1; a lone high ordinal in the
+    // narrative ("SO #7 of YRP") is another force's shorthand -- require
+    // the #1 anchor before trusting the document-wide maximum.
+    static const std::regex kAnchor1(
+        R"(\bSO\s*#\s*1\b|subject offic(?:er|ial)\s*#\s*1\b)");
+    const int max_ord = max_ordinal(body);
+    if (max_ord > 0 && std::regex_search(body, kAnchor1)) {
         return {max_ord, "max ordinal SO #" + std::to_string(max_ord)};
     }
 
@@ -81,14 +159,15 @@ SoResolution resolve_subject_officers(const std::string& report_text) {
     }
 
     // 4. Explicitly ZERO subject officers (witness-officer-only cases).
-    static const std::array<std::regex, 4> kZero = {
+    static const std::array<std::regex, 2> kZero = {
         std::regex(R"(no subject offic(?:er|ial)s?\b)", std::regex::icase),
         std::regex(
             R"((?:did not|not|never)\s+designate[d]?\s+(?:a\s+|any\s+)?subject offic)",
-            std::regex::icase),
-        std::regex(R"(\bundesignated offic(?:er|ial)\b)", std::regex::icase),
-        std::regex(R"(\b(?:is|was)\s+not\s+a\s+subject offic(?:er|ial)\b)",
-                   std::regex::icase)};
+            std::regex::icase)};
+    // NOTE: "undesignated officer" and "is/was not a subject official" were
+    // removed as zero cues -- both match incidental prose (bystander
+    // officers, one-of-several negations) in reports with real subject
+    // officials. Zero needs a direct assertion.
     for (const auto& re : kZero) {
         if (std::regex_search(body, re)) {
             return {0, "zero: witness-officer-only / 'not a subject official'"};
