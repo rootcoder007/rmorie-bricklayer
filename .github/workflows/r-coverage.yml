@@ -32,8 +32,6 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # rmoriedata (Suggests) lives on r-universe, not CRAN
-          extra-repositories: https://rootcoder007.r-universe.dev
           extra-packages: any::covr, any::xml2, any::roxygen2
           cache: 'always'
           cache-version: 1

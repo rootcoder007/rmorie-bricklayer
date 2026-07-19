@@ -4,16 +4,11 @@
 \alias{bricklayer_siu_resolve_so}
 \title{Resolve the subject-official count from SIU report text}
 \usage{
-bricklayer_siu_resolve_so(text, drid = NULL)
+bricklayer_siu_resolve_so(text)
 }
 \arguments{
 \item{text}{A length-1 character vector of plain report text (see
 \code{\link[=bricklayer_siu_text]{bricklayer_siu_text()}}).}
-
-\item{drid}{Optional report id. When supplied and the \pkg{rmoriedata}
-corpus is installed, a panel-reviewed report returns its VERIFIED count
-directly (reason \code{"panel-reviewed corpus"}) -- the text rules are never
-consulted for a report whose answer is already established.}
 }
 \value{
 A list with \code{count} (integer, \code{NA} when unresolved) and
@@ -26,6 +21,13 @@ standard SIU privacy boilerplate is stripped first, then rules apply
 most-specific first: highest \code{SO #N} ordinal; spelled-out plural;
 singular subject official present (1); witness-official-only (0, a real
 answer); otherwise unresolved (\code{NA}).
+}
+\details{
+bricklayer is the foundation layer: this function is the pure
+rule set. Reports already in the panel-reviewed corpus should never be
+re-derived -- use \code{rmorie::morie_siu_resolve_so()}, which returns the
+verified corpus value first and only falls back to these rules for
+unreviewed reports.
 }
 \examples{
 bricklayer_siu_resolve_so(
