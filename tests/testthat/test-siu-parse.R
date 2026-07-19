@@ -47,3 +47,74 @@ test_that("date helper handles both human forms and garbage", {
   expect_equal(bricklayer_siu_iso_date(c("January 5, 2023", "junk")),
                c("2023-01-05", ""))
 })
+
+# -- regression cases from the 2182-report zero-wrong pass ----------------
+
+test_that("glossary note never feeds the zero rule (both era phrasings)", {
+  g1 <- paste("A witness officer is a police officer who, in the opinion of",
+              "the SIU Director, is involved in the incident under",
+              "investigation but is not a subject officer.",
+              "The SO was interviewed.")
+  expect_equal(bricklayer_siu_resolve_so(g1)$count, 1L)
+  g2 <- paste("An official who, in the SIU Director’s opinion, is",
+              "involved in the incident under investigation but is not a",
+              "subject official. The SO declined an interview.")
+  expect_equal(bricklayer_siu_resolve_so(g2)$count, 1L)
+})
+
+test_that("ordinals are case-strict, #-required, and roster-anchored", {
+  # 'also 59' must not read as SO 59
+  r <- bricklayer_siu_resolve_so(
+    "The pursuit also 59 seconds later ended. The SO stopped the car.")
+  expect_equal(r$count, 1L)
+  # lone narrative ordinal without the #1 anchor is another force's shorthand
+  r <- bricklayer_siu_resolve_so(
+    "WO #6 and SO #7 of the neighbouring service stopped a Jeep. The SO was interviewed.")
+  expect_equal(r$count, 1L)
+  # a real roster anchors at #1
+  r <- bricklayer_siu_resolve_so("SO #1 and SO #2 were interviewed.")
+  expect_equal(r$count, 2L)
+})
+
+test_that("team section beats narrative and tolerates mislabelled rosters", {
+  txt <- paste("Subject Officers SO #1 Declined interview.",
+               "SO #1 Declined interview, notes received.",
+               "\nIncident Narrative\nOfficers responded.")
+  expect_equal(bricklayer_siu_resolve_so(txt)$count, 2L)  # 2 status entries
+})
+
+test_that("non-breaking spaces do not blind the scanners", {
+  txt <- paste0("Subject Officers SO #1 Declined interview. SO #2 ",
+                "Declined interview.")
+  expect_equal(bricklayer_siu_resolve_so(txt)$count, 2L)
+})
+
+test_that("plural cue and unresolved paths work", {
+  expect_equal(bricklayer_siu_resolve_so(
+    "The two subject officials responded to the call.")$count, 2L)
+  r <- bricklayer_siu_resolve_so("The report discusses the incident only.")
+  expect_true(is.na(r$count))
+  expect_true(nzchar(r$reason))
+})
+
+test_that("bindings validate their inputs", {
+  expect_error(bricklayer_siu_text(1L))
+  expect_error(bricklayer_siu_resolve_so(NA_character_))
+  expect_error(bricklayer_parse_siu(c("a", "b")))
+  expect_error(bricklayer_siu_iso_date(5))
+})
+
+test_that("fetch_parse_siu fails gracefully when the fetch cannot happen", {
+  # invalid drid errors inside bricklayer_fetch_siu -> message + NULL
+  expect_message(
+    out <- bricklayer_fetch_parse_siu(-1),
+    "could not fetch"
+  )
+  expect_null(out)
+})
+
+test_that("the privacy paragraph never counts as a subject mention", {
+  txt <- paste("This information may include the Subject Officer name(s)",
+               "and other evidence. No subject official was designated.")
+  expect_equal(bricklayer_siu_resolve_so(txt)$count, 0L)
+})
