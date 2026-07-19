@@ -139,6 +139,25 @@ datasets over flaky endpoints.
 - [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
   : Download a File With Diagnostic Error Messages
 
+## SIU report mining
+
+Deterministic, offline parse/resolve core for Ontario Special
+Investigations Unit director’s reports — schema, parser,
+subject-official resolver.
+
+- [`bricklayer_siu_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_schema.md)
+  : The panel-reviewed SIU report field schema
+- [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+  : Parse an SIU director's report into the schema fields
+- [`bricklayer_fetch_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md)
+  : Fetch and parse one SIU director's report
+- [`bricklayer_siu_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.md)
+  : Convert SIU report HTML to plain text
+- [`bricklayer_siu_iso_date()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.md)
+  : Convert a human-readable SIU report date to ISO format
+- [`bricklayer_siu_resolve_so()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.md)
+  : Resolve the subject-official count from SIU report text
+
 ## Portal resolvers
 
 Turn a dataset identifier on a government open-data portal into a direct

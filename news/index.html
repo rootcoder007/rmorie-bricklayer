@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,10 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.5" id="rmoriebricklayer-035">rmoriebricklayer 0.3.5<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-035"></a></h2>
+<ul><li>SIU features now live natively in bricklayer: the deterministic parse/resolve core is part of <code>src/</code> (zero new dependencies, hand-rolled <code>.Call</code> glue like the rest of the backend). New: <code><a href="../reference/bricklayer_parse_siu.html">bricklayer_parse_siu()</a></code> (16 schema fields + language from report HTML or a saved file), <code><a href="../reference/bricklayer_fetch_parse_siu.html">bricklayer_fetch_parse_siu()</a></code> (fetch + parse in one call), <code><a href="../reference/bricklayer_siu_schema.html">bricklayer_siu_schema()</a></code>, <code><a href="../reference/bricklayer_siu_text.html">bricklayer_siu_text()</a></code>, <code><a href="../reference/bricklayer_siu_iso_date.html">bricklayer_siu_iso_date()</a></code>, <code><a href="../reference/bricklayer_siu_resolve_so.html">bricklayer_siu_resolve_so()</a></code> (rule-ordered subject-official count; 0 is a real answer). Synthetic-report fixture + offline tests included.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.4" id="rmoriebricklayer-034">rmoriebricklayer 0.3.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-034"></a></h2>
 <ul><li>CRAN reviewer round (K. Lauseker, 0.3.0): spell out CKAN + SHA-256 and link the CKAN/Wayback web services in DESCRIPTION; agent_bundle example <code>\dontrun</code> -&gt; <code>\donttest</code>; setup_and_run.R no longer calls <code><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd()</a></code>, <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code>, or <code><a href="https://rdrr.io/r/utils/installed.packages.html" class="external-link">installed.packages()</a></code> (checks via <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and prints the install command instead).</li>

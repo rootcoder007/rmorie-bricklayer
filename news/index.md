@@ -1,5 +1,21 @@
 # Changelog
 
+## rmoriebricklayer 0.3.5
+
+- SIU features now live natively in bricklayer: the deterministic
+  parse/resolve core is part of `src/` (zero new dependencies,
+  hand-rolled `.Call` glue like the rest of the backend). New:
+  [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+  (16 schema fields + language from report HTML or a saved file),
+  [`bricklayer_fetch_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md)
+  (fetch + parse in one call),
+  [`bricklayer_siu_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_schema.md),
+  [`bricklayer_siu_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.md),
+  [`bricklayer_siu_iso_date()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.md),
+  [`bricklayer_siu_resolve_so()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.md)
+  (rule-ordered subject-official count; 0 is a real answer).
+  Synthetic-report fixture + offline tests included.
+
 ## rmoriebricklayer 0.3.4
 
 - CRAN reviewer round (K. Lauseker, 0.3.0): spell out CKAN + SHA-256 and
