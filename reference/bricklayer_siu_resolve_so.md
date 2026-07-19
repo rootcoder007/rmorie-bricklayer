@@ -25,6 +25,14 @@ bricklayer_siu_resolve_so(text)
 A list with `count` (integer, `NA` when unresolved) and `reason` (the
 human-readable evidence).
 
+## Details
+
+bricklayer is the foundation layer: this function is the pure rule set.
+Reports already in the panel-reviewed corpus should never be re-derived
+– use `rmorie::morie_siu_resolve_so()`, which returns the verified
+corpus value first and only falls back to these rules for unreviewed
+reports.
+
 ## Examples
 
 ``` r
@@ -34,6 +42,6 @@ bricklayer_siu_resolve_so(
 #> [1] 2
 #> 
 #> $reason
-#> [1] "max ordinal SO #2"
+#> [1] "section: max(ordinal 2, entries 2)"
 #> 
 ```
