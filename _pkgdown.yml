@@ -37,6 +37,7 @@ reference:
       datasets over flaky endpoints.
     contents:
       - bricklayer_fetch
+      - bricklayer_fetch_siu
       - download_data
       - friendly_download
   - title: Portal resolvers
