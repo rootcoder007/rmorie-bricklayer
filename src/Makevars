@@ -1,3 +1,5 @@
+# std::optional/<regex> in the vendored SIU core need C++17.
+CXX_STD = CXX17
 # Portable Makevars: no GNU-make extensions (CRAN policy). -lcurl resolves
 # once the SystemRequirement libcurl (deb: libcurl4-openssl-dev, rpm:
 # libcurl-devel) is installed; its headers/lib are on the default path.
