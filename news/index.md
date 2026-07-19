@@ -1,5 +1,11 @@
 # Changelog
 
+## rmoriebricklayer 0.3.3
+
+- Add `bricklayer_fetch_siu(drid, dest)`: fetch an Ontario SIU
+  director’s report by drid through the live+Wayback engine – the fetch
+  step of the open SIU corpus pipeline.
+
 ## rmoriebricklayer 0.3.2
 
 ### Documentation

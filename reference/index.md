@@ -7,6 +7,8 @@ datasets over flaky endpoints.
 
 - [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
   : Fetch a URL to disk with an Internet Archive fallback (C++/libcurl)
+- [`bricklayer_fetch_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.md)
+  : Fetch an Ontario SIU director's report by drid
 - [`download_data()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/download_data.md)
   : Download a File
 - [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)

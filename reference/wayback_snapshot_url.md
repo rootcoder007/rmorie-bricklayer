@@ -34,7 +34,6 @@ A character scalar snapshot URL, or `NULL`.
 ``` r
 # \donttest{
 wayback_snapshot_url("https://www.r-project.org/")
-#> Warning: cannot open URL 'http://archive.org/wayback/available?url=https%3A%2F%2Fwww.r-project.org%2F': HTTP status was '503 Service Unavailable'
-#> NULL
+#> [1] "https://web.archive.org/web/20260717171813/https://www.r-project.org/"
 # }
 ```
