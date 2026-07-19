@@ -59,9 +59,28 @@ The updated manifest, returned so calls can be chained.
 
 ``` r
 man <- make_manifest(list(project = "demo"), environment = FALSE)
+
+# Within tolerance -> PASS.
 man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
               tol = 0.001)
 #>   mean_matches                                 observed = 1.0001       expected = 1.0000       [PASS]
-man$results$mean_matches$status
+man$results$mean_matches$status      # "PASS"
 #> [1] "PASS"
+
+# Outside tolerance -> DIFFER.
+man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
+#>   sd_matches                                   observed = 2.5000       expected = 2.0000       [DIFFER]
+man$results$sd_matches$status        # "DIFFER"
+#> [1] "DIFFER"
+
+# Synthetic data -> INFO (comparison not meaningful).
+man <- record(man, "synthetic_row", observed = 5, expected = 5,
+              synthetic = TRUE)
+#>   synthetic_row                                observed = 5.0000       expected = 5.0000       [INFO]
+man$results$synthetic_row$status     # "INFO"
+#> [1] "INFO"
+
+# Calls chain: record() returns the mutated manifest.
+length(man$results)                  # 3
+#> [1] 3
 ```

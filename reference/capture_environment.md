@@ -25,7 +25,17 @@ A list with `r_version`, `platform`, `os`, `captured_utc`, and
 ## Examples
 
 ``` r
+# Record specific packages' versions alongside the session facts.
 env <- capture_environment(c("stats", "utils"))
 env$r_version
 #> [1] "4.6.1"
+env$os
+#> [1] "Linux 6.17.0-1020-azure"
+env$packages          # named character vector of versions
+#>   stats   utils 
+#> "4.6.1" "4.6.1" 
+
+# Default captures every currently loaded namespace.
+names(capture_environment())[1:4]
+#> [1] "r_version"    "platform"     "os"           "captured_utc"
 ```

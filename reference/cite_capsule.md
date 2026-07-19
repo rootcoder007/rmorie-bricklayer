@@ -34,6 +34,23 @@ prov <- list(
   resource = list(name = "Restrictive Confinement - Detailed Dataset",
                   direct_url = "https://data.ontario.ca/example.csv")
 )
-cat(cite_capsule(prov)$text)
+cit <- cite_capsule(prov)
+
+# Plain-text citation ready to paste.
+cat(cit$text)
 #> Ontario Ministry of the Solicitor General (2026). Restrictive Confinement - Detailed Dataset [Data set]. https://data.ontario.ca/example.csv Retrieved 2026-06-23. Licence: OGL-Ontario.
+
+# BibTeX @misc entry for LaTeX bibliographies.
+cat(cit$bibtex)
+#> @misc{dataoninmatesinontario2026,
+#>   author = {{Ontario Ministry of the Solicitor General}},
+#>   title = {Restrictive Confinement - Detailed Dataset},
+#>   year = {2026},
+#>   url = {https://data.ontario.ca/example.csv},
+#>   note = {Retrieved 2026-06-23; licence: OGL-Ontario},
+#> }
+
+# NULL provenance returns NULL (composes safely).
+cite_capsule(NULL)
+#> NULL
 ```

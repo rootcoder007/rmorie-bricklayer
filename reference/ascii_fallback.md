@@ -33,8 +33,20 @@ A character vector: `x` where it can be represented, ASCII otherwise.
 ## Examples
 
 ``` r
-ascii_fallback("\u00c1ngela")            # accented name kept (UTF-8)
+# By default valid UTF-8 is preserved (accents kept where supported).
+ascii_fallback("\u00c1ngela")               # "\u00c1ngela"
 #> [1] "Ángela"
-ascii_fallback("\u00c1ngela", force = TRUE) # "Angela"
+
+# force = TRUE always transliterates (for ASCII-only destinations
+# such as a package DESCRIPTION).
+ascii_fallback("\u00c1ngela", force = TRUE)  # "Angela"
 #> [1] "Angela"
+
+# Plain ASCII is returned unchanged either way.
+ascii_fallback("plain name")
+#> [1] "plain name"
+
+# Vectorised; each element handled independently.
+ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
+#> [1] "cafe"   "resume"
 ```

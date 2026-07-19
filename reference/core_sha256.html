@@ -15,7 +15,7 @@ LinkingTo: rmoriebricklayer."><meta name="google-site-verification" content="8OR
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,9 +74,23 @@ per element for character input; length-1 for raw input).</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">core_sha256</span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Hash a character scalar (NIST test vector for "abc").</span></span></span>
+<span class="r-in"><span><span class="fu">core_sha256</span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"</span>
 <span class="r-in"><span><span class="co"># ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Vectorised over character input: one digest per element.</span></span></span>
+<span class="r-in"><span><span class="fu">core_sha256</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"abc"</span>, <span class="st">"def"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [2] "cb8379ac2098aa165029e3938a51da0bcecfc008fd6795f401178647f96c5b34"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Raw input hashes the bytes directly; identical to the character form.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">core_sha256</span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span>, <span class="fu">core_sha256</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="st">"abc"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Fingerprint an arbitrary object via its serialization.</span></span></span>
+<span class="r-in"><span><span class="fu">core_sha256</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1L</span>, b <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "5d31430add6fdb81ad2d63cc9b82953ee454b281238856418d0bb6ca232afbc7"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -19,7 +19,7 @@ instead of erroring where it is not."><meta name="google-site-verification" cont
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,10 +83,22 @@ instead of erroring where it is not.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="st">"\u00c1ngela"</span><span class="op">)</span>            <span class="co"># accented name kept (UTF-8)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># By default valid UTF-8 is preserved (accents kept where supported).</span></span></span>
+<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="st">"\u00c1ngela"</span><span class="op">)</span>               <span class="co"># "\u00c1ngela"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Ángela"</span>
-<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="st">"\u00c1ngela"</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># "Angela"</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># force = TRUE always transliterates (for ASCII-only destinations</span></span></span>
+<span class="r-in"><span><span class="co"># such as a package DESCRIPTION).</span></span></span>
+<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="st">"\u00c1ngela"</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>  <span class="co"># "Angela"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Angela"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Plain ASCII is returned unchanged either way.</span></span></span>
+<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="st">"plain name"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "plain name"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Vectorised; each element handled independently.</span></span></span>
+<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"caf\u00e9"</span>, <span class="st">"resume"</span><span class="op">)</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "cafe"   "resume"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

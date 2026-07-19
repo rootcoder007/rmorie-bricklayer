@@ -35,4 +35,9 @@ man <- record(man, "row_count", observed = 20, expected = 20)
 path <- write_manifest_json(man, tempfile(fileext = ".json"))
 file.exists(path)
 #> [1] TRUE
+
+# Round-trips back through jsonlite.
+back <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+back$results$row_count$status        # "PASS"
+#> [1] "PASS"
 ```

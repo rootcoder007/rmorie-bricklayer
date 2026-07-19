@@ -1,5 +1,18 @@
 # Changelog
 
+## rmoriebricklayer 0.3.2
+
+### Documentation
+
+- Every exported function now carries exhaustive, multiple-example
+  documentation covering each argument, edge cases, and a realistic
+  workflow (previously most had a single one-liner).
+- Version bump ensures the
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+  help topic (added in an earlier 0.3.1 build without a version bump)
+  propagates to the r-universe binary and downstream reverse-dependency
+  checks.
+
 ## rmoriebricklayer 0.3.1
 
 ### rOpenSci submission preparation

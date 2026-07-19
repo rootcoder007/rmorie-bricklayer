@@ -33,10 +33,25 @@ core_cor(x, y)
 ## Examples
 
 ``` r
-core_mean(1:10)
+## core_mean(): sample mean (NA/NaN propagate; no na.rm)
+core_mean(1:10)                 # 5.5
 #> [1] 5.5
+core_mean(c(2.5, 3.5))          # 3
+#> [1] 3
+core_mean(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
+#> [1] NA
+core_mean(stats::na.omit(c(1, 2, NA)))
+#> [1] 1.5
+
+## core_var(): n-1 (sample) variance, matching stats::var()
 core_var(c(2, 4, 4, 4, 5, 5, 7, 9))
 #> [1] 4.571429
-core_cor(1:10, (1:10)^2)
+all.equal(core_var(1:10), stats::var(1:10))   # agrees with base R
+#> [1] TRUE
+
+## core_cor(): Pearson correlation of two equal-length vectors
+core_cor(1:10, (1:10)^2)        # strong positive, near 0.97
 #> [1] 0.9745586
+core_cor(1:10, 10:1)            # perfect negative: -1
+#> [1] -1
 ```

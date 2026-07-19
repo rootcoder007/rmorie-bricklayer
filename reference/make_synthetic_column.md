@@ -44,13 +44,32 @@ unknown `type`.
 ## Examples
 
 ``` r
-spec <- list(type = "sample", values = list("a", "b"),
-             weights = list(0.7, 0.3))
-make_synthetic_column(spec, 5)
-#> [1] "a" "b" "a" "a" "a"
+set.seed(1)
+# "sample": categorical draw, optionally weighted.
+make_synthetic_column(list(type = "sample", values = list("a", "b"),
+                           weights = list(0.7, 0.3)), 5)
+#> [1] "a" "a" "a" "b" "a"
+
+# "bernoulli": two-label draw at probability p.
+make_synthetic_column(list(type = "bernoulli", p = 0.5,
+                           labels = list("Yes", "No")), 5)
+#> [1] "No"  "No"  "No"  "No"  "Yes"
+
+# "poisson": counts with a floor via `min`.
 make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
-#> [1] 3 3 2 4 4
+#> [1] 2 1 4 2 4
+
+# "id_pattern": templated IDs (the {seq:05d} token is zero-padded).
 make_synthetic_column(list(type = "id_pattern",
                            pattern = "case-{seq:05d}"), 3)
 #> [1] "case-00001" "case-00002" "case-00003"
+
+# "sequence": a running integer sequence from `from`.
+make_synthetic_column(list(type = "sequence", from = 100), 4)
+#> [1] 100 101 102 103
+
+# An unknown type errors.
+try(make_synthetic_column(list(type = "nope"), 3))
+#> Error in make_synthetic_column(list(type = "nope"), 3) : 
+#>   Unknown synthetic column type: nope
 ```
