@@ -17,11 +17,26 @@
 #' @return Invisibly, one of \code{"live"}, \code{"wayback"}, or throws on
 #'   total failure.
 #' @examples
+#' # Inputs are validated before any network access:
+#' try(bricklayer_fetch("", tempfile()))          # empty url -> error
+#'
 #' \dontrun{
 #' dst <- tempfile(fileext = ".xlsx")
+#'
+#' # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 #' bricklayer_fetch(
 #'   "https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx",
 #'   dst)
+#'
+#' # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
+#' bricklayer_fetch(
+#'   "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
+#'   wayback = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
+#'   timeout = 60)
+#'
+#' # The return value tells you which source served the file.
+#' status <- bricklayer_fetch("https://cloud.r-project.org/", tempfile())
+#' status   # "live" or "wayback"
 #' }
 #' @export
 bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
@@ -46,7 +61,19 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
 #' @param timeout Request timeout, seconds.
 #' @return The https snapshot URL, or \code{NULL} if none is archived.
 #' @examples
-#' \dontrun{ wayback_snapshot_url_native("https://www.r-project.org/") }
+#' # Input is validated before any network call:
+#' try(wayback_snapshot_url_native(""))     # empty url -> error
+#'
+#' \dontrun{
+#' # Closest archived snapshot of a live page (or NULL if none archived).
+#' wayback_snapshot_url_native("https://www.r-project.org/")
+#'
+#' # A shorter timeout for a quick lookup.
+#' wayback_snapshot_url_native("https://cloud.r-project.org/", timeout = 10)
+#'
+#' # A never-archived URL returns NULL rather than erroring.
+#' wayback_snapshot_url_native("https://example.invalid/never-archived")
+#' }
 #' @export
 wayback_snapshot_url_native <- function(url, timeout = 30L) {
   stopifnot(is.character(url), length(url) == 1L, nzchar(url))

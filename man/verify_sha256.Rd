@@ -23,6 +23,13 @@ compares it to the expected value pinned in provenance.
 \examples{
 f <- tempfile()
 writeLines("hello capsule", f)
+
+# Matching digest -> match TRUE.
 chk <- verify_sha256(f, sha256_file(f))
-chk$match
+chk$match          # TRUE
+
+# A wrong expected digest -> match FALSE, with both values reported.
+bad <- verify_sha256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+bad$match          # FALSE
+bad$actual         # the real digest
 }

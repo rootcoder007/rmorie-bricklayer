@@ -20,6 +20,12 @@ version, platform, operating system, a UTC timestamp, and the
 versions of the requested packages.
 }
 \examples{
+# Record specific packages' versions alongside the session facts.
 env <- capture_environment(c("stats", "utils"))
 env$r_version
+env$os
+env$packages          # named character vector of versions
+
+# Default captures every currently loaded namespace.
+names(capture_environment())[1:4]
 }

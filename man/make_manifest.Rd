@@ -23,7 +23,14 @@ Creates an empty manifest object that accumulates cross-check entries
 via \code{\link[=record]{record()}} and is later serialized with \code{\link[=write_manifest_json]{write_manifest_json()}}.
 }
 \examples{
+# Minimal manifest, no environment capture.
 man <- make_manifest(list(project = "demo-study", author = "A. Author"),
                      environment = FALSE)
-names(man)
+names(man)          # "meta" "results"
+man$meta$project
+
+# With environment = TRUE it also records R version / platform / packages.
+full <- make_manifest(list(project = "demo"), environment = TRUE)
+names(full)         # adds "environment"
+full$environment$r_version
 }
