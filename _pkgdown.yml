@@ -12,8 +12,19 @@ template:
     in_header: |
       <meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI">
 
+navbar:
+  structure:
+    right: [search, universe, github]
+  components:
+    universe:
+      icon: fa-box-open
+      href: https://rootcoder007.r-universe.dev/rmoriebricklayer
+      aria-label: r-universe
+
 home:
   links:
+    - text: Install from r-universe
+      href: https://rootcoder007.r-universe.dev/rmoriebricklayer
     - text: Analysis package (rmorie)
       href: https://github.com/rootcoder007/rmorie
     - text: Data package (rmoriedata)
