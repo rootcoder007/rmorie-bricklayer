@@ -25,3 +25,6 @@
 ^pkg-site$
 ^vignettes/\.gitignore$
 ^LICENSE$
+^data-raw$
+^CODE_OF_CONDUCT\.md$
+^NEWS\.md\.bak$

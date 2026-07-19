@@ -24,8 +24,10 @@ preamble. The agent can run R and read/write files to help assemble or
 repair a brick-proof bundle. See \code{rmorie::agent} for requirements.
 }
 \examples{
-\dontrun{
-# Plain request -> routed to the rmorie CLI agent (auto backend).
+\donttest{
+# Routed to the optional rmorie CLI agent when it is installed; with no
+# binary on PATH each call returns an install hint instantly (no error,
+# no network), so this is safe to execute anywhere.
 agent_bundle("scaffold a bundle for analysis.R using the Toronto CKAN dataset")
 
 # Pin a model, or force a backend (see rmorie::agent for the values).
