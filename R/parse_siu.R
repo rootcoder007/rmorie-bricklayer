@@ -113,27 +113,17 @@ bricklayer_siu_iso_date <- function(x) {
 #'   [bricklayer_siu_text()]).
 #' @return A list with `count` (integer, `NA` when unresolved) and
 #'   `reason` (the human-readable evidence).
+#'
+#' @details bricklayer is the foundation layer: this function is the pure
+#'   rule set. Reports already in the panel-reviewed corpus should never be
+#'   re-derived -- use `rmorie::morie_siu_resolve_so()`, which returns the
+#'   verified corpus value first and only falls back to these rules for
+#'   unreviewed reports.
 #' @examples
 #' bricklayer_siu_resolve_so(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
-#' @param drid Optional report id. When supplied and the \pkg{rmoriedata}
-#'   corpus is installed, a panel-reviewed report returns its VERIFIED count
-#'   directly (reason `"panel-reviewed corpus"`) -- the text rules are never
-#'   consulted for a report whose answer is already established.
 #' @export
-bricklayer_siu_resolve_so <- function(text, drid = NULL) {
-  if (!is.null(drid) && requireNamespace("rmoriedata", quietly = TRUE)) {
-    corpus <- tryCatch(rmoriedata::load_siu_reports(), error = function(e) NULL)
-    if (!is.null(corpus)) {
-      hit <- corpus[corpus$drid == as.character(drid), , drop = FALSE]
-      if (nrow(hit) == 1L) {
-        n <- suppressWarnings(as.integer(hit$number_of_subject_officials))
-        if (!is.na(n)) {
-          return(list(count = n, reason = "panel-reviewed corpus (verified)"))
-        }
-      }
-    }
-  }
+bricklayer_siu_resolve_so <- function(text) {
   stopifnot(is.character(text), length(text) == 1L, !is.na(text))
   .Call(C_rmbl_siu_resolve_so, text)
 }
