@@ -36,9 +36,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="fetch-open-data">Fetch open data<a class="anchor" aria-label="anchor" href="#fetch-open-data"></a></h2>
 
-
+      <div class="section-desc"><p>Resilient downloaders with libcurl + Wayback fallback for pulling public datasets over flaky endpoints.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -47,59 +47,10 @@
 
       <dl><dt>
 
-          <code><a href="agent_bundle.html">agent_bundle()</a></code>
-
-        </dt>
-        <dd>Agent-assisted reproducibility-bundle help</dd>
-
-        <dt>
-
-          <code><a href="apply_schema_validation.html">apply_schema_validation()</a></code>
-
-        </dt>
-        <dd>Apply Schema Validation, Stopping on Fatal Issues</dd>
-
-        <dt>
-
-          <code><a href="ascii_fallback.html">ascii_fallback()</a></code>
-
-        </dt>
-        <dd>Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented</dd>
-
-        <dt>
-
           <code><a href="bricklayer_fetch.html">bricklayer_fetch()</a></code>
 
         </dt>
         <dd>Fetch a URL to disk with an Internet Archive fallback (C++/libcurl)</dd>
-
-        <dt>
-
-          <code><a href="capture_environment.html">capture_environment()</a></code>
-
-        </dt>
-        <dd>Capture the Analysis Environment for a Manifest</dd>
-
-        <dt>
-
-          <code><a href="cite_capsule.html">cite_capsule()</a></code>
-
-        </dt>
-        <dd>Generate a Data Citation From Provenance</dd>
-
-        <dt>
-
-          <code><a href="core_normal_pdf.html">core_normal_pdf()</a></code>
-
-        </dt>
-        <dd>Normal density (C backend)</dd>
-
-        <dt>
-
-          <code><a href="core_sha256.html">core_sha256()</a></code>
-
-        </dt>
-        <dd>SHA-256 hex digest (C backend)</dd>
 
         <dt>
 
@@ -114,50 +65,17 @@
 
         </dt>
         <dd>Download a File With Diagnostic Error Messages</dd>
+      </dl></div><div class="section level2">
+      <h2 id="portal-resolvers">Portal resolvers<a class="anchor" aria-label="anchor" href="#portal-resolvers"></a></h2>
 
-        <dt>
+      <div class="section-desc"><p>Turn a dataset identifier on a government open-data portal into a direct resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.</p></div>
 
-          <code><a href="load_provenance.html">load_provenance()</a></code>
+      <dl></dl></div><div class="section level2">
 
-        </dt>
-        <dd>Load a Pinned Data-Provenance Record</dd>
 
-        <dt>
 
-          <code><a href="make_manifest.html">make_manifest()</a></code>
 
-        </dt>
-        <dd>Construct a Reproducibility Manifest</dd>
-
-        <dt>
-
-          <code><a href="make_synthetic_column.html">make_synthetic_column()</a></code>
-
-        </dt>
-        <dd>Generate One Synthetic Column From a Spec</dd>
-
-        <dt>
-
-          <code><a href="make_synthetic_csv.html">make_synthetic_csv()</a></code>
-
-        </dt>
-        <dd>Generate a Synthetic CSV From a Schema Recipe</dd>
-
-        <dt>
-
-          <code><a href="record.html">record()</a></code>
-
-        </dt>
-        <dd>Record a Cross-Check Result in a Manifest</dd>
-
-        <dt>
-
-          <code><a href="resolve_via_arcgis.html">resolve_via_arcgis()</a></code>
-
-        </dt>
-        <dd>Resolve a Query URL via ArcGIS FeatureServer Metadata</dd>
-
-        <dt>
+      <dl><dt>
 
           <code><a href="resolve_via_ckan.html">resolve_via_ckan()</a></code>
 
@@ -180,45 +98,10 @@
 
         <dt>
 
-          <code><a href="rmbl_core_stats.html">core_mean()</a></code> <code><a href="rmbl_core_stats.html">core_var()</a></code> <code><a href="rmbl_core_stats.html">core_cor()</a></code>
+          <code><a href="resolve_via_arcgis.html">resolve_via_arcgis()</a></code>
 
         </dt>
-        <dd>Fast summary statistics (C backend)</dd>
-
-        <dt>
-
-          <code><a href="sha256_file.html">sha256_file()</a></code>
-
-        </dt>
-        <dd>Compute a File's SHA256 Digest</dd>
-
-        <dt>
-
-          <code><a href="to_ascii.html">to_ascii()</a></code>
-
-        </dt>
-        <dd>Transliterate Text to Plain ASCII</dd>
-
-        <dt>
-
-          <code><a href="validate_schema.html">validate_schema()</a></code>
-
-        </dt>
-        <dd>Validate a Data Frame Against a Provenance Schema</dd>
-
-        <dt>
-
-          <code><a href="verify_capsule.html">verify_capsule()</a></code>
-
-        </dt>
-        <dd>Re-Verify an Entire Reproducible Data Capsule</dd>
-
-        <dt>
-
-          <code><a href="verify_sha256.html">verify_sha256()</a></code>
-
-        </dt>
-        <dd>Verify a File's SHA256 Against an Expected Digest</dd>
+        <dd>Resolve a Query URL via ArcGIS FeatureServer Metadata</dd>
 
         <dt>
 
@@ -233,6 +116,57 @@
 
         </dt>
         <dd>Resolve a Wayback Machine snapshot URL (C++/libcurl)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="provenance-reproducibility-capsules">Provenance &amp; reproducibility capsules<a class="anchor" aria-label="anchor" href="#provenance-reproducibility-capsules"></a></h2>
+
+      <div class="section-desc"><p>Capture the environment, record a citable data-provenance capsule, and verify it later so an analysis reproduces from the same inputs.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="capture_environment.html">capture_environment()</a></code>
+
+        </dt>
+        <dd>Capture the Analysis Environment for a Manifest</dd>
+
+        <dt>
+
+          <code><a href="cite_capsule.html">cite_capsule()</a></code>
+
+        </dt>
+        <dd>Generate a Data Citation From Provenance</dd>
+
+        <dt>
+
+          <code><a href="verify_capsule.html">verify_capsule()</a></code>
+
+        </dt>
+        <dd>Re-Verify an Entire Reproducible Data Capsule</dd>
+
+        <dt>
+
+          <code><a href="load_provenance.html">load_provenance()</a></code>
+
+        </dt>
+        <dd>Load a Pinned Data-Provenance Record</dd>
+
+        <dt>
+
+          <code><a href="record.html">record()</a></code>
+
+        </dt>
+        <dd>Record a Cross-Check Result in a Manifest</dd>
+
+        <dt>
+
+          <code><a href="make_manifest.html">make_manifest()</a></code>
+
+        </dt>
+        <dd>Construct a Reproducibility Manifest</dd>
 
         <dt>
 
@@ -250,12 +184,133 @@
 
         <dt>
 
+          <code><a href="agent_bundle.html">agent_bundle()</a></code>
+
+        </dt>
+        <dd>Agent-assisted reproducibility-bundle help</dd>
+      </dl></div><div class="section level2">
+      <h2 id="integrity-checksums">Integrity &amp; checksums<a class="anchor" aria-label="anchor" href="#integrity-checksums"></a></h2>
+
+      <div class="section-desc"><p>SHA-256 hashing and verification for downloaded files.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="sha256_file.html">sha256_file()</a></code>
+
+        </dt>
+        <dd>Compute a File's SHA256 Digest</dd>
+
+        <dt>
+
+          <code><a href="verify_sha256.html">verify_sha256()</a></code>
+
+        </dt>
+        <dd>Verify a File's SHA256 Against an Expected Digest</dd>
+
+        <dt>
+
+          <code><a href="core_sha256.html">core_sha256()</a></code>
+
+        </dt>
+        <dd>SHA-256 hex digest (C backend)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="schema-validation-synthetic-data">Schema validation &amp; synthetic data<a class="anchor" aria-label="anchor" href="#schema-validation-synthetic-data"></a></h2>
+
+      <div class="section-desc"><p>Validate a data frame against a declared schema, and build typed synthetic columns/CSVs for tests and documentation.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="apply_schema_validation.html">apply_schema_validation()</a></code>
+
+        </dt>
+        <dd>Apply Schema Validation, Stopping on Fatal Issues</dd>
+
+        <dt>
+
+          <code><a href="validate_schema.html">validate_schema()</a></code>
+
+        </dt>
+        <dd>Validate a Data Frame Against a Provenance Schema</dd>
+
+        <dt>
+
+          <code><a href="make_synthetic_column.html">make_synthetic_column()</a></code>
+
+        </dt>
+        <dd>Generate One Synthetic Column From a Spec</dd>
+
+        <dt>
+
+          <code><a href="make_synthetic_csv.html">make_synthetic_csv()</a></code>
+
+        </dt>
+        <dd>Generate a Synthetic CSV From a Schema Recipe</dd>
+      </dl></div><div class="section level2">
+      <h2 id="text-encoding-utilities">Text &amp; encoding utilities<a class="anchor" aria-label="anchor" href="#text-encoding-utilities"></a></h2>
+
+      <div class="section-desc"><p>ASCII transliteration and safe text fallbacks for non-UTF-8 sinks.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="to_ascii.html">to_ascii()</a></code>
+
+        </dt>
+        <dd>Transliterate Text to Plain ASCII</dd>
+
+        <dt>
+
+          <code><a href="ascii_fallback.html">ascii_fallback()</a></code>
+
+        </dt>
+        <dd>Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented</dd>
+
+        <dt>
+
           <code><a href="write_text_fallback.html">write_text_fallback()</a></code>
 
         </dt>
         <dd>Write Text as UTF-8, Falling Back to ASCII on an Encoding Error</dd>
+      </dl></div><div class="section level2">
+      <h2 id="core-numeric-primitives">Core numeric primitives<a class="anchor" aria-label="anchor" href="#core-numeric-primitives"></a></h2>
+
+      <div class="section-desc"><p>Thin R wrappers over the shared compiled morie core (mean, variance, correlation, normal density) that the whole ecosystem links against.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rmbl_core_stats.html">core_mean()</a></code> <code><a href="rmbl_core_stats.html">core_var()</a></code> <code><a href="rmbl_core_stats.html">core_cor()</a></code>
+
+        </dt>
+        <dd>Fast summary statistics (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_normal_pdf.html">core_normal_pdf()</a></code>
+
+        </dt>
+        <dd>Normal density (C backend)</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
