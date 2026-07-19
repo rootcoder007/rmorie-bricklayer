@@ -27,7 +27,17 @@ kernels that sibling packages reach through \code{LinkingTo: rmoriebricklayer}. 
 \code{\link[stats:na.omit]{stats::na.omit()}} first if you need NA handling.
 }
 \examples{
-core_mean(1:10)
+## core_mean(): sample mean (NA/NaN propagate; no na.rm)
+core_mean(1:10)                 # 5.5
+core_mean(c(2.5, 3.5))          # 3
+core_mean(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
+core_mean(stats::na.omit(c(1, 2, NA)))
+
+## core_var(): n-1 (sample) variance, matching stats::var()
 core_var(c(2, 4, 4, 4, 5, 5, 7, 9))
-core_cor(1:10, (1:10)^2)
+all.equal(core_var(1:10), stats::var(1:10))   # agrees with base R
+
+## core_cor(): Pearson correlation of two equal-length vectors
+core_cor(1:10, (1:10)^2)        # strong positive, near 0.97
+core_cor(1:10, 10:1)            # perfect negative: -1
 }

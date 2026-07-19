@@ -317,8 +317,15 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #' @examples
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
+#'
+#' # Matching digest -> match TRUE.
 #' chk <- verify_sha256(f, sha256_file(f))
-#' chk$match
+#' chk$match          # TRUE
+#'
+#' # A wrong expected digest -> match FALSE, with both values reported.
+#' bad <- verify_sha256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+#' bad$match          # FALSE
+#' bad$actual         # the real digest
 #' @export
 verify_sha256 <- function(path, expected_sha) {
   actual <- digest::digest(file = path, algo = "sha256")

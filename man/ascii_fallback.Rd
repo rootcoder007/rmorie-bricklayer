@@ -24,6 +24,16 @@ their accents wherever UTF-8 is supported while degrading gracefully
 instead of erroring where it is not.
 }
 \examples{
-ascii_fallback("\u00c1ngela")            # accented name kept (UTF-8)
-ascii_fallback("\u00c1ngela", force = TRUE) # "Angela"
+# By default valid UTF-8 is preserved (accents kept where supported).
+ascii_fallback("\u00c1ngela")               # "\u00c1ngela"
+
+# force = TRUE always transliterates (for ASCII-only destinations
+# such as a package DESCRIPTION).
+ascii_fallback("\u00c1ngela", force = TRUE)  # "Angela"
+
+# Plain ASCII is returned unchanged either way.
+ascii_fallback("plain name")
+
+# Vectorised; each element handled independently.
+ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
 }

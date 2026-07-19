@@ -20,4 +20,17 @@ the digest package. Used to record and verify data provenance.
 f <- tempfile()
 writeLines("hello capsule", f)
 sha256_file(f)
+
+# Deterministic: the same bytes always yield the same digest.
+identical(sha256_file(f), sha256_file(f))
+
+# Any change to the file changes the digest (tamper-evidence).
+before <- sha256_file(f)
+writeLines("hello capsule (edited)", f)
+after <- sha256_file(f)
+before == after      # FALSE
+
+# Provenance pin: record a digest, verify it later.
+pinned <- sha256_file(f)
+stopifnot(sha256_file(f) == pinned)
 }

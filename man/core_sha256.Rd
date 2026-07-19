@@ -21,6 +21,16 @@ This is the same routine sibling packages use for provenance via
 \code{LinkingTo: rmoriebricklayer}.
 }
 \examples{
+# Hash a character scalar (NIST test vector for "abc").
 core_sha256("abc")
 # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+
+# Vectorised over character input: one digest per element.
+core_sha256(c("abc", "def"))
+
+# Raw input hashes the bytes directly; identical to the character form.
+identical(core_sha256("abc"), core_sha256(charToRaw("abc")))
+
+# Fingerprint an arbitrary object via its serialization.
+core_sha256(serialize(list(a = 1L, b = "x"), NULL))
 }

@@ -143,8 +143,14 @@ verify_capsule <- function(capsule_dir,
 #' @return A list with `r_version`, `platform`, `os`, `captured_utc`,
 #'   and `packages` (a named character vector of versions).
 #' @examples
+#' # Record specific packages' versions alongside the session facts.
 #' env <- capture_environment(c("stats", "utils"))
 #' env$r_version
+#' env$os
+#' env$packages          # named character vector of versions
+#'
+#' # Default captures every currently loaded namespace.
+#' names(capture_environment())[1:4]
 #' @export
 capture_environment <- function(packages = loadedNamespaces()) {
   packages <- sort(unique(packages))
@@ -181,7 +187,16 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #'   resource = list(name = "Restrictive Confinement - Detailed Dataset",
 #'                   direct_url = "https://data.ontario.ca/example.csv")
 #' )
-#' cat(cite_capsule(prov)$text)
+#' cit <- cite_capsule(prov)
+#'
+#' # Plain-text citation ready to paste.
+#' cat(cit$text)
+#'
+#' # BibTeX @misc entry for LaTeX bibliographies.
+#' cat(cit$bibtex)
+#'
+#' # NULL provenance returns NULL (composes safely).
+#' cite_capsule(NULL)
 #' @export
 cite_capsule <- function(provenance) {
   if (is.null(provenance)) return(NULL)

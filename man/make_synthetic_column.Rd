@@ -33,10 +33,25 @@ optional per-row base rate), \code{"poisson"} (counts with a floor),
 \code{"sequence"} (a running integer sequence).
 }
 \examples{
-spec <- list(type = "sample", values = list("a", "b"),
-             weights = list(0.7, 0.3))
-make_synthetic_column(spec, 5)
+set.seed(1)
+# "sample": categorical draw, optionally weighted.
+make_synthetic_column(list(type = "sample", values = list("a", "b"),
+                           weights = list(0.7, 0.3)), 5)
+
+# "bernoulli": two-label draw at probability p.
+make_synthetic_column(list(type = "bernoulli", p = 0.5,
+                           labels = list("Yes", "No")), 5)
+
+# "poisson": counts with a floor via `min`.
 make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
+
+# "id_pattern": templated IDs (the {seq:05d} token is zero-padded).
 make_synthetic_column(list(type = "id_pattern",
                            pattern = "case-{seq:05d}"), 3)
+
+# "sequence": a running integer sequence from `from`.
+make_synthetic_column(list(type = "sequence", from = 100), 4)
+
+# An unknown type errors.
+try(make_synthetic_column(list(type = "nope"), 3))
 }

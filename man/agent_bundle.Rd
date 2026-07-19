@@ -25,6 +25,16 @@ repair a brick-proof bundle. See \code{rmorie::agent} for requirements.
 }
 \examples{
 \dontrun{
+# Plain request -> routed to the rmorie CLI agent (auto backend).
 agent_bundle("scaffold a bundle for analysis.R using the Toronto CKAN dataset")
+
+# Pin a model, or force a backend (see rmorie::agent for the values).
+agent_bundle("repair the SHA256 provenance for my capsule",
+             model = "gpt-4o-mini")
+agent_bundle("add a Wayback fallback to my fetch step", backend = "ollama")
 }
+
+# With no rmorie binary on PATH the call returns an install hint, not an
+# error -- safe to run anywhere:
+if (!nzchar(Sys.which("rmorie"))) agent_bundle("hello")
 }
