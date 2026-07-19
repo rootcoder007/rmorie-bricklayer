@@ -11,3 +11,75 @@ template:
   includes:
     in_header: |
       <meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI">
+
+home:
+  links:
+    - text: Analysis package (rmorie)
+      href: https://github.com/rootcoder007/rmorie
+    - text: Data package (rmoriedata)
+      href: https://github.com/rootcoder007/rmoriedata
+
+reference:
+  - title: Fetch open data
+    desc: >
+      Resilient downloaders with libcurl + Wayback fallback for pulling public
+      datasets over flaky endpoints.
+    contents:
+      - bricklayer_fetch
+      - download_data
+      - friendly_download
+  - title: Portal resolvers
+    desc: >
+      Turn a dataset identifier on a government open-data portal into a direct
+      resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.
+    contents:
+      - resolve_via_ckan
+      - resolve_via_ckan_search
+      - resolve_via_socrata
+      - resolve_via_arcgis
+      - wayback_snapshot_url
+      - wayback_snapshot_url_native
+  - title: Provenance & reproducibility capsules
+    desc: >
+      Capture the environment, record a citable data-provenance capsule, and
+      verify it later so an analysis reproduces from the same inputs.
+    contents:
+      - capture_environment
+      - cite_capsule
+      - verify_capsule
+      - load_provenance
+      - record
+      - make_manifest
+      - write_manifest_json
+      - write_summary_txt
+      - agent_bundle
+  - title: Integrity & checksums
+    desc: SHA-256 hashing and verification for downloaded files.
+    contents:
+      - sha256_file
+      - verify_sha256
+      - core_sha256
+  - title: Schema validation & synthetic data
+    desc: >
+      Validate a data frame against a declared schema, and build typed
+      synthetic columns/CSVs for tests and documentation.
+    contents:
+      - apply_schema_validation
+      - validate_schema
+      - make_synthetic_column
+      - make_synthetic_csv
+  - title: Text & encoding utilities
+    desc: ASCII transliteration and safe text fallbacks for non-UTF-8 sinks.
+    contents:
+      - to_ascii
+      - ascii_fallback
+      - write_text_fallback
+  - title: Core numeric primitives
+    desc: >
+      Thin R wrappers over the shared compiled morie core (mean, variance,
+      correlation, normal density) that the whole ecosystem links against.
+    contents:
+      - core_mean
+      - core_var
+      - core_cor
+      - core_normal_pdf
