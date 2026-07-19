@@ -33,15 +33,20 @@ binary is not installed.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-# Plain request -> routed to the rmorie CLI agent (auto backend).
+# \donttest{
+# Routed to the optional rmorie CLI agent when it is installed; with no
+# binary on PATH each call returns an install hint instantly (no error,
+# no network), so this is safe to execute anywhere.
 agent_bundle("scaffold a bundle for analysis.R using the Toronto CKAN dataset")
+#> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
 
 # Pin a model, or force a backend (see rmorie::agent for the values).
 agent_bundle("repair the SHA256 provenance for my capsule",
              model = "gpt-4o-mini")
+#> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
 agent_bundle("add a Wayback fallback to my fetch step", backend = "ollama")
-} # }
+#> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
+# }
 
 # With no rmorie binary on PATH the call returns an install hint, not an
 # error -- safe to run anywhere:

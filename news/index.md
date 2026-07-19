@@ -1,5 +1,18 @@
 # Changelog
 
+## rmoriebricklayer 0.3.4
+
+- CRAN reviewer round (K. Lauseker, 0.3.0): spell out CKAN + SHA-256 and
+  link the CKAN/Wayback web services in DESCRIPTION; agent_bundle
+  example `\dontrun` -\> `\donttest`; setup_and_run.R no longer calls
+  [`setwd()`](https://rdrr.io/r/base/getwd.html),
+  [`install.packages()`](https://rdrr.io/r/utils/install.packages.html),
+  or
+  [`installed.packages()`](https://rdrr.io/r/utils/installed.packages.html)
+  (checks via
+  [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) and prints
+  the install command instead).
+
 ## rmoriebricklayer 0.3.3
 
 - Add `bricklayer_fetch_siu(drid, dest)`: fetch an Ontario SIU
