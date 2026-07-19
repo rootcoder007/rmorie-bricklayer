@@ -1,3 +1,5 @@
+# std::optional/<regex> in the vendored SIU core need C++17.
+CXX_STD = CXX17
 # Rtools ships libcurl + pkg-config. Use them so the static link picks up
 # curl's full transitive dep chain (ssl, crypto, ssh2, z, ws2_32, ...) in
 # the right order. -DCURL_STATICLIB stops curl.h from marking the API as

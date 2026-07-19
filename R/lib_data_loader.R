@@ -179,9 +179,10 @@ resolve_via_ckan_search <- function(provenance) {
 #' @return The `target_path`, returned invisibly.
 #' @examples
 #' \donttest{
-#' dest <- download_data("https://cloud.r-project.org/",
-#'                       tempfile(fileext = ".html"), quiet = TRUE)
-#' file.exists(dest)
+#' # try(): a live download must fail gracefully on an offline check machine.
+#' dest <- try(download_data("https://cloud.r-project.org/",
+#'                           tempfile(fileext = ".html"), quiet = TRUE))
+#' if (!inherits(dest, "try-error")) file.exists(dest)
 #' }
 #' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
