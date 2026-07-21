@@ -23,7 +23,9 @@ jsonlite-based resolver (kept internally for offline use).
 # Input is validated before any network call:
 try(wayback_snapshot_url_native(""))     # empty url -> error
 
-\dontrun{
+\donttest{
+# Uses the live Wayback service; degrades gracefully offline: any
+# network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wayback_snapshot_url_native("https://www.r-project.org/")
 
