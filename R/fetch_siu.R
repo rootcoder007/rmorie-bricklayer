@@ -21,10 +21,12 @@
 #'   \code{bricklayer_fetch}.
 #' @seealso \code{\link{bricklayer_fetch}}
 #' @examples
-#' \dontrun{
+#' \donttest{
+#' # Downloads from the live SIU web service; try() keeps the example
+#' # graceful when the service (and its Wayback fallback) is unreachable.
 #' # Fetch report drid 648 to a temp file.
 #' dest <- tempfile(fileext = ".html")
-#' bricklayer_fetch_siu(648, dest)
+#' try(bricklayer_fetch_siu(648, dest))
 #' }
 #' @export
 bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"),

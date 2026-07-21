@@ -1,4 +1,4 @@
-# cran-comments.md — rmoriebricklayer 0.3.4
+# cran-comments.md — rmoriebricklayer 0.3.5
 
 ## Resubmission
 
@@ -27,6 +27,17 @@ This is a resubmission addressing every point in the 0.3.0 review
 * **inst/scripts/setup_and_run.R: do not use installed.packages()** —
   replaced with per-package `requireNamespace()` checks.
 
+## No \dontrun{} anywhere
+
+Since 0.3.0 the package gained a compiled 'libcurl' download core; every
+example was re-triaged against the review's \dontrun rule and the
+package now contains zero `\dontrun{}` blocks. Network-touching
+examples (`bricklayer_fetch`, `bricklayer_fetch_siu`,
+`wayback_snapshot_url_native`) are `\donttest{}` and degrade
+gracefully: calls are wrapped in `try()` (or return `NULL` on any
+network failure), so they execute cleanly on machines with or without
+internet access.
+
 ## About the package
 
 Reproducible data capsules with provenance manifests, SHA-256
@@ -41,7 +52,7 @@ once this package is on CRAN).
   R CMD check --as-cran --run-donttest
 * GitHub Actions: ubuntu-latest (R release + devel), ubuntu-22.04
   (oldrel-1), windows-latest, macos-latest
-* win-builder R-devel (0.3.4 tarball): [pending upload]
+* win-builder R-devel (0.3.5 tarball): [pending upload]
 
 ## R CMD check results
 
