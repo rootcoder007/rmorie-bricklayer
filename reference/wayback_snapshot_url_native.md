@@ -31,14 +31,19 @@ The https snapshot URL, or `NULL` if none is archived.
 try(wayback_snapshot_url_native(""))     # empty url -> error
 #> Error in wayback_snapshot_url_native("") : nzchar(url) is not TRUE
 
-if (FALSE) { # \dontrun{
+# \donttest{
+# Uses the live Wayback service; degrades gracefully offline: any
+# network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wayback_snapshot_url_native("https://www.r-project.org/")
+#> [1] "https://web.archive.org/web/20260717171813/https://www.r-project.org/"
 
 # A shorter timeout for a quick lookup.
 wayback_snapshot_url_native("https://cloud.r-project.org/", timeout = 10)
+#> [1] "https://web.archive.org/web/20260630062921/https://cloud.r-project.org/"
 
 # A never-archived URL returns NULL rather than erroring.
 wayback_snapshot_url_native("https://example.invalid/never-archived")
-} # }
+#> NULL
+# }
 ```

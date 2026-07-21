@@ -44,22 +44,26 @@ Invisibly, one of `"live"`, `"wayback"`, or throws on total failure.
 try(bricklayer_fetch("", tempfile()))          # empty url -> error
 #> Error in bricklayer_fetch("", tempfile()) : nzchar(url) is not TRUE
 
-if (FALSE) { # \dontrun{
+# \donttest{
+# Downloads from the live web service; try() keeps the example graceful
+# when neither the live URL nor its Wayback fallback is reachable.
 dst <- tempfile(fileext = ".xlsx")
 
 # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
-bricklayer_fetch(
+try(bricklayer_fetch(
   "https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx",
-  dst)
+  dst))
 
 # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
-bricklayer_fetch(
+try(bricklayer_fetch(
   "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
   wayback = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
-  timeout = 60)
+  timeout = 60))
+#> Error : bricklayer_fetch: both the live URL and its Wayback fallback failed for https://example.org/rotated-file.csv
 
 # The return value tells you which source served the file.
-status <- bricklayer_fetch("https://cloud.r-project.org/", tempfile())
+status <- try(bricklayer_fetch("https://cloud.r-project.org/", tempfile()))
 status   # "live" or "wayback"
-} # }
+#> [1] "live"
+# }
 ```
