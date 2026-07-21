@@ -39,10 +39,12 @@ full director's-report corpus yourself, then audit it with the
 multi-agent panel.
 }
 \examples{
-\dontrun{
+\donttest{
+# Downloads from the live SIU web service; try() keeps the example
+# graceful when the service (and its Wayback fallback) is unreachable.
 # Fetch report drid 648 to a temp file.
 dest <- tempfile(fileext = ".html")
-bricklayer_fetch_siu(648, dest)
+try(bricklayer_fetch_siu(648, dest))
 }
 }
 \seealso{
