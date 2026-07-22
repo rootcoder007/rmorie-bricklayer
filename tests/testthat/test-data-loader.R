@@ -180,7 +180,7 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
     .package = "utils"
   )
   dst <- tempfile(fileext = ".csv")
-  out <- capture.output(
+  out <- capture.output(type = "message", 
     ok <- friendly_download("https://example.org/x.csv", dst,
                             attempt_wayback = paste0("file://", snap))
   )
@@ -199,7 +199,7 @@ test_that("friendly_download covers the failure diagnostics and total failure", 
   )
   # auto-resolution consults wayback_snapshot_url; make it find nothing
   testthat::local_mocked_bindings(wayback_snapshot_url = function(...) NULL)
-  out <- capture.output(
+  out <- capture.output(type = "message", 
     ok <- friendly_download("https://example.org/x.csv", tempfile())
   )
   expect_false(ok)
@@ -214,7 +214,7 @@ test_that("friendly_download reports a failed wayback retry", {
     download.file = function(...) stop("could not resolve host"),
     .package = "utils"
   )
-  out <- capture.output(
+  out <- capture.output(type = "message", 
     ok <- friendly_download("https://example.org/x.csv", tempfile(),
                             attempt_wayback = "file:///nonexistent/nope.csv")
   )
