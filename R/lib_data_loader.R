@@ -259,42 +259,41 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
     TRUE
   }, error = function(e) {
     msg <- conditionMessage(e)
-    cat("\n  ! Download failed.\n")
-    cat("    URL:   ", url, "\n", sep = "")
-    cat("    Error: ", msg, "\n\n", sep = "")
-    cat("  Common causes (in rough order of likelihood):\n")
+    message("  ! Download failed.")
+    message("    URL:   ", url)
+    message("    Error: ", msg, "\n\n")
+    message("  Common causes (in rough order of likelihood):")
     if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
-      cat("    * Rate-limited (HTTP 429). VPNs share IPs across users\n")
-      cat("      and often trip rate limits. Try disabling your VPN.\n")
+      message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
+      message("      and often trip rate limits. Try disabling your VPN.")
     }
     if (grepl("SSL|TLS|certificate|handshake|UNEXPECTED_EOF",
               msg, ignore.case = TRUE)) {
-      cat("    * SSL/TLS handshake failed.\n")
-      cat("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,\n")
-      cat("      Zscaler, NetSkope) break R's HTTPS. Try disabling.\n")
+      message("    * SSL/TLS handshake failed.")
+      message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
+      message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
     }
     if (grepl("could not|unable to resolve|name not|getaddrinfo",
               msg, ignore.case = TRUE))
-      cat("    * DNS lookup failed; check network connectivity.\n")
+      message("    * DNS lookup failed; check network connectivity.")
     if (grepl("timeout|timed out|connection (refused|reset)",
               msg, ignore.case = TRUE))
-      cat("    * Connection timed out / refused (firewall, often institutional).\n")
+      message("    * Connection timed out / refused (firewall, often institutional).")
     if (grepl("403|forbidden", msg, ignore.case = TRUE))
-      cat("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).\n")
-    cat("\n")
+      message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
     ## Auto-resolve a Wayback snapshot if the caller did not supply one
     ## (NULL = auto; "" = explicitly disabled).
     if (is.null(attempt_wayback)) {
       attempt_wayback <- wayback_snapshot_url(url)
     }
     if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
-      cat("  Trying Wayback Machine fallback snapshot...\n")
+      message("  Trying Wayback Machine fallback snapshot...")
       tryCatch({
         utils::download.file(attempt_wayback, target_path, mode = "wb", quiet = FALSE)
-        cat("  [ok] Wayback snapshot retrieved.\n")
+        message("  [ok] Wayback snapshot retrieved.")
         return(TRUE)
       }, error = function(e2) {
-        cat("  ! Wayback fallback also failed: ", conditionMessage(e2), "\n")
+        message("  ! Wayback fallback also failed: ", conditionMessage(e2), "")
         return(FALSE)
       })
     }
