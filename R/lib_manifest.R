@@ -113,11 +113,11 @@ record <- function(manifest, name, observed, expected,
     note     = if (isTRUE(synthetic))
                   "synthetic data -- comparison not meaningful" else NULL
   )
-  cat(sprintf("  %-44s observed = %-12s expected = %-12s [%s]\n",
-              name,
-              if (is.numeric(observed)) sprintf("%.4f", observed) else as.character(observed),
-              if (is.numeric(expected)) sprintf("%.4f", expected) else as.character(expected),
-              status))
+  message(sprintf("  %-44s observed = %-12s expected = %-12s [%s]",
+                  name,
+                  if (is.numeric(observed)) sprintf("%.4f", observed) else as.character(observed),
+                  if (is.numeric(expected)) sprintf("%.4f", expected) else as.character(expected),
+                  status))
   manifest
 }
 
