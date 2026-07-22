@@ -108,20 +108,20 @@ comparison against synthetic data is not meaningful.</p></dd>
 <span class="r-in"><span><span class="co"># Within tolerance -&gt; PASS.</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">record</span><span class="op">(</span><span class="va">man</span>, <span class="st">"mean_matches"</span>, observed <span class="op">=</span> <span class="fl">1.0001</span>, expected <span class="op">=</span> <span class="fl">1</span>,</span></span>
 <span class="r-in"><span>              tol <span class="op">=</span> <span class="fl">0.001</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   mean_matches                                 observed = 1.0001       expected = 1.0000       [PASS]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   mean_matches                                 observed = 1.0001       expected = 1.0000       [PASS]</span>
 <span class="r-in"><span><span class="va">man</span><span class="op">$</span><span class="va">results</span><span class="op">$</span><span class="va">mean_matches</span><span class="op">$</span><span class="va">status</span>      <span class="co"># "PASS"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PASS"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Outside tolerance -&gt; DIFFER.</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">record</span><span class="op">(</span><span class="va">man</span>, <span class="st">"sd_matches"</span>, observed <span class="op">=</span> <span class="fl">2.5</span>, expected <span class="op">=</span> <span class="fl">2.0</span>, tol <span class="op">=</span> <span class="fl">0.01</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sd_matches                                   observed = 2.5000       expected = 2.0000       [DIFFER]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   sd_matches                                   observed = 2.5000       expected = 2.0000       [DIFFER]</span>
 <span class="r-in"><span><span class="va">man</span><span class="op">$</span><span class="va">results</span><span class="op">$</span><span class="va">sd_matches</span><span class="op">$</span><span class="va">status</span>        <span class="co"># "DIFFER"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "DIFFER"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Synthetic data -&gt; INFO (comparison not meaningful).</span></span></span>
 <span class="r-in"><span><span class="va">man</span> <span class="op">&lt;-</span> <span class="fu">record</span><span class="op">(</span><span class="va">man</span>, <span class="st">"synthetic_row"</span>, observed <span class="op">=</span> <span class="fl">5</span>, expected <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>              synthetic <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   synthetic_row                                observed = 5.0000       expected = 5.0000       [INFO]</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   synthetic_row                                observed = 5.0000       expected = 5.0000       [INFO]</span>
 <span class="r-in"><span><span class="va">man</span><span class="op">$</span><span class="va">results</span><span class="op">$</span><span class="va">synthetic_row</span><span class="op">$</span><span class="va">status</span>     <span class="co"># "INFO"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "INFO"</span>
 <span class="r-in"><span></span></span>
