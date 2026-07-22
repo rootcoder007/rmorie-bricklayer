@@ -2,6 +2,14 @@
 
 ## Resubmission
 
+Since the 0.3.4 fixes below, 0.3.5 additionally aligns with the CRAN
+cookbook's code-issues chapter: all informational console output now
+uses message() (17 former cat() sites in the download diagnostics and
+manifest comparison lines), so users can silence it with
+suppressMessages(). RNG state was already saved and restored around
+the one internal set.seed().
+
+
 This is a resubmission addressing every point in the 0.3.0 review
 (thank you, Konstanze Lauseker). Point-by-point:
 
