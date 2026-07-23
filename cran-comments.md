@@ -1,83 +1,13 @@
-# cran-comments.md — rmoriebricklayer 0.3.5
+# cran-comments.md — rmoriebricklayer 0.3.6
 
-## Resubmission
+NOTE: the text below the marker is what gets pasted into the CRAN form's
+comment field. Keep each paragraph on ONE line — the form re-wraps at its
+own width, and pre-wrapped text comes out mangled (seen on the 0.3.5
+submission).
 
-Since the 0.3.4 fixes below, 0.3.5 additionally aligns with the CRAN
-cookbook's code-issues chapter: all informational console output now
-uses message() (17 former cat() sites in the download diagnostics and
-manifest comparison lines), so users can silence it with
-suppressMessages(). RNG state was already saved and restored around
-the one internal set.seed().
+<!-- SUBMISSION COMMENT START -->
+Resubmission. The 0.3.5 manual inspection flagged a possibly-invalid file URI: README.md linked CODE_OF_CONDUCT.md, which is .Rbuildignore'd and so absent from the tarball. 0.3.6 makes that link an absolute URL (and quotes 'Wayback Machine' in DESCRIPTION, flagged by the incoming pretest spell check). No code changes.
 
+Earlier reviewer round (K. Lauseker, 0.3.0) was addressed in 0.3.4: CKAN and SHA-256 spelled out and web services linked in DESCRIPTION; \dontrun -> \donttest; no setwd()/install.packages() calls; informational output uses message() so it can be suppressed; RNG state saved and restored around the one internal set.seed().
+<!-- SUBMISSION COMMENT END -->
 
-This is a resubmission addressing every point in the 0.3.0 review
-(thank you, Konstanze Lauseker). Point-by-point:
-
-* **Explain all acronyms in the Description** — done. The Description
-  now spells out "Comprehensive Knowledge Archive Network ('CKAN')"
-  and "Secure Hash Algorithm 256 ('SHA-256')".
-* **Link the used web services in the Description** — done, with
-  angle-bracket auto-linking: <https://ckan.org/> and
-  <https://web.archive.org/>.
-* **agent_bundle.Rd: replace \dontrun{} with \donttest{}** — done.
-  The example is executable everywhere: when the optional 'rmorie'
-  command-line binary is not on the PATH the function returns an
-  install-hint string immediately (no error, no network), which is
-  the situation on any check machine.
-* **inst/scripts/setup_and_run.R: reset options()/working directory**
-  — the script no longer changes the working directory at all
-  (`setwd()` removed; every path is anchored on the script's own
-  directory), and it no longer sets any option.
-* **inst/scripts/setup_and_run.R: do not install packages** — the
-  auto-install step was removed. The script now only checks
-  availability and prints the exact `install.packages()` command for
-  the user to run themselves.
-* **inst/scripts/setup_and_run.R: do not use installed.packages()** —
-  replaced with per-package `requireNamespace()` checks.
-
-## No \dontrun{} anywhere
-
-Since 0.3.0 the package gained a compiled 'libcurl' download core; every
-example was re-triaged against the review's \dontrun rule and the
-package now contains zero `\dontrun{}` blocks. Network-touching
-examples (`bricklayer_fetch`, `bricklayer_fetch_siu`,
-`wayback_snapshot_url_native`) are `\donttest{}` and degrade
-gracefully: calls are wrapped in `try()` (or return `NULL` on any
-network failure), so they execute cleanly on machines with or without
-internet access.
-
-## About the package
-
-Reproducible data capsules with provenance manifests, SHA-256
-pinning, and Wayback Machine fallback resolution. It is the
-foundation package of the MORIE family (the 'rmorie' and
-'rmoriedata' packages Import it and will be submitted separately
-once this package is on CRAN).
-
-## Test environments
-
-* Local: Fedora 44 (x86_64), R 4.6.1 —
-  R CMD check --as-cran --run-donttest
-* GitHub Actions: ubuntu-latest (R release + devel), ubuntu-22.04
-  (oldrel-1), windows-latest, macos-latest
-* win-builder R-devel (0.3.5 tarball): [pending upload]
-
-## R CMD check results
-
-0 errors | 0 warnings | 2 notes
-
-* "New submission" — unavoidable.
-* Non-portable compiler flags — these come from the local Fedora
-  toolchain's site defaults, not from the package's Makevars.
-
-## CRAN policy notes
-
-* No writes outside `tempdir()`: all file-producing functions take an
-  explicit output path; examples and tests write only under
-  `tempfile()`/`tempdir()`.
-* `make_synthetic_csv()` seeds the RNG for reproducibility and
-  restores the caller's `.Random.seed` on exit.
-* Network access: capsule resolution helpers construct URLs; no
-  example contacts a remote service during check (the `agent_bundle()`
-  `\donttest{}` example returns immediately when the optional binary
-  is absent).

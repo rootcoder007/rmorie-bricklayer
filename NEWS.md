@@ -1,3 +1,9 @@
+# rmoriebricklayer 0.3.6
+
+* CRAN incoming-pretest NOTE cleanup: quote 'Wayback Machine' in
+  DESCRIPTION; README Code-of-Conduct link is now an absolute URL (the
+  file is .Rbuildignore'd, so the relative URI flagged as invalid).
+
 # rmoriebricklayer 0.3.5
 
 * SIU features now live natively in bricklayer: the deterministic parse/resolve core is part of `src/` (zero new dependencies, hand-rolled `.Call` glue like the rest of the backend). New: `bricklayer_parse_siu()` (16 schema fields + language from report HTML or a saved file), `bricklayer_fetch_parse_siu()` (fetch + parse in one call), `bricklayer_siu_schema()`, `bricklayer_siu_text()`, `bricklayer_siu_iso_date()`, `bricklayer_siu_resolve_so()` (rule-ordered subject-official count; 0 is a real answer). Synthetic-report fixture + offline tests included.
