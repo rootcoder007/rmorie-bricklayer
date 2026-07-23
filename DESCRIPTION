@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.3.5
+Version: 0.3.6
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -11,7 +11,7 @@ Description: Tools for building brick-proof, reproducible, self-contained
     Archive Network ('CKAN', <https://ckan.org/>) package_show and
     package_search endpoints, records and verifies provenance with
     Secure Hash Algorithm 256 ('SHA-256') digests and Internet Archive
-    Wayback Machine (<https://web.archive.org/>) snapshots, validates
+    'Wayback Machine' (<https://web.archive.org/>) snapshots, validates
     downloaded data against a pinned schema, and falls back to
     schema-driven synthetic data when the real source is unreachable.
     Run records are captured in a manifest plus a plain-language summary
