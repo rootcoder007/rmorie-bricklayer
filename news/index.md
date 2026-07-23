@@ -1,5 +1,11 @@
 # Changelog
 
+## rmoriebricklayer 0.3.6
+
+- CRAN incoming-pretest NOTE cleanup: quote ‘Wayback Machine’ in
+  DESCRIPTION; README Code-of-Conduct link is now an absolute URL (the
+  file is .Rbuildignore’d, so the relative URI flagged as invalid).
+
 ## rmoriebricklayer 0.3.5
 
 - SIU features now live natively in bricklayer: the deterministic
