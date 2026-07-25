@@ -21,6 +21,7 @@ test_that("resolve_via_ckan returns NULL on absent provenance or endpoint", {
 })
 
 test_that("wayback_snapshot_url upgrades snapshots to https and rejects unavailable", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     fromJSON = function(...) list(archived_snapshots = list(closest = list(
       available = TRUE, url = "http://web.archive.org/web/2024/https://x.csv"
@@ -103,6 +104,7 @@ test_that("apply_schema_validation stops on fatal, warns on warning, TRUE when c
 })
 
 test_that("resolve_via_ckan returns the first name-matched resource URL", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     fromJSON = function(...) list(success = TRUE, result = list(resources = list(
       list(name = "Readme", url = "https://example.org/readme.txt"),
@@ -121,6 +123,7 @@ test_that("resolve_via_ckan returns the first name-matched resource URL", {
 })
 
 test_that("resolve_via_ckan_search matches resources and derives the query", {
+  skip_if_cannot_mock()
   seen_url <- NULL
   testthat::local_mocked_bindings(
     fromJSON = function(url, ...) {
@@ -150,6 +153,7 @@ test_that("resolve_via_ckan_search matches resources and derives the query", {
 })
 
 test_that("wayback_snapshot_url honours an explicit timestamp", {
+  skip_if_cannot_mock()
   seen <- NULL
   testthat::local_mocked_bindings(
     fromJSON = function(url, ...) {
@@ -167,6 +171,7 @@ test_that("wayback_snapshot_url honours an explicit timestamp", {
 })
 
 test_that("friendly_download prints diagnostics and retries from a wayback snapshot", {
+  skip_if_cannot_mock()
   snap <- tempfile(fileext = ".csv")
   writeLines("a,b\n1,2", snap)
   calls <- 0L
@@ -191,6 +196,7 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
 })
 
 test_that("friendly_download covers the failure diagnostics and total failure", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     download.file = function(...) stop(paste(
       "SSL certificate handshake failed; connection timed out;",
@@ -210,6 +216,7 @@ test_that("friendly_download covers the failure diagnostics and total failure", 
 })
 
 test_that("friendly_download reports a failed wayback retry", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     download.file = function(...) stop("could not resolve host"),
     .package = "utils"
@@ -223,6 +230,7 @@ test_that("friendly_download reports a failed wayback retry", {
 })
 
 test_that("resolve_via_socrata returns the canonical CSV export URL", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     fromJSON = function(...) list(id = "ijzp-q8t2"), .package = "jsonlite")
   prov <- list(dataset = list(socrata_domain = "data.example.org",
@@ -237,6 +245,7 @@ test_that("resolve_via_socrata returns the canonical CSV export URL", {
 })
 
 test_that("resolve_via_arcgis returns a paged GeoJSON query URL, trimming slashes", {
+  skip_if_cannot_mock()
   testthat::local_mocked_bindings(
     fromJSON = function(...) list(name = "Layer0"), .package = "jsonlite")
   prov <- list(dataset = list(
