@@ -1,5 +1,12 @@
 # Changelog
 
+## rmoriebricklayer 0.3.7
+
+- Test-only change: local_mocked_bindings() tests are guarded so they
+  skip cleanly under a bare testthat::test_dir() (they need the package
+  namespace, which devtools::test() and R CMD check provide). No
+  user-facing change.
+
 ## rmoriebricklayer 0.3.6
 
 - CRAN incoming-pretest NOTE cleanup: quote ‘Wayback Machine’ in
@@ -93,7 +100,7 @@
 
 - New
   [`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md):
-  one call re-verifies an entire reproducible data capsule offline —
+  one call re-verifies an entire reproducible data capsule offline:
   provenance readability, pinned sha256/size/row count, schema validity,
   script hash, and re-derivation of every stored manifest cross-check
   from its own numbers.

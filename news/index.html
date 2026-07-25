@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,10 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.7" id="rmoriebricklayer-037">rmoriebricklayer 0.3.7<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-037"></a></h2>
+<ul><li>Test-only change: local_mocked_bindings() tests are guarded so they skip cleanly under a bare testthat::test_dir() (they need the package namespace, which devtools::test() and R CMD check provide). No user-facing change.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.6" id="rmoriebricklayer-036">rmoriebricklayer 0.3.6<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-036"></a></h2>
 <ul><li>CRAN incoming-pretest NOTE cleanup: quote ‘Wayback Machine’ in DESCRIPTION; README Code-of-Conduct link is now an absolute URL (the file is .Rbuildignore’d, so the relative URI flagged as invalid).</li>
@@ -79,7 +83,7 @@
 <h2 class="pkg-version" data-toc-text="0.3.0" id="rmoriebricklayer-030">rmoriebricklayer 0.3.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-030"></a></h2>
 <div class="section level3">
 <h3 id="capsule-level-integrity-0-3-0">Capsule-level integrity<a class="anchor" aria-label="anchor" href="#capsule-level-integrity-0-3-0"></a></h3>
-<ul><li>New <code><a href="../reference/verify_capsule.html">verify_capsule()</a></code>: one call re-verifies an entire reproducible data capsule offline — provenance readability, pinned sha256/size/row count, schema validity, script hash, and re-derivation of every stored manifest cross-check from its own numbers.</li>
+<ul><li>New <code><a href="../reference/verify_capsule.html">verify_capsule()</a></code>: one call re-verifies an entire reproducible data capsule offline: provenance readability, pinned sha256/size/row count, schema validity, script hash, and re-derivation of every stored manifest cross-check from its own numbers.</li>
 <li>New <code><a href="../reference/capture_environment.html">capture_environment()</a></code> records R version, platform, OS, UTC timestamp, and loaded package versions; <code><a href="../reference/make_manifest.html">make_manifest()</a></code> now attaches it by default (<code>environment = FALSE</code> to opt out).</li>
 <li>New <code><a href="../reference/cite_capsule.html">cite_capsule()</a></code> generates a ready-to-paste data citation (text + BibTeX <code>@misc</code>, DOI-aware) from a provenance object.</li>
 </ul></div>
