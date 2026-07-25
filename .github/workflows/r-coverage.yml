@@ -24,6 +24,11 @@ jobs:
     timeout-minutes: 45
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # pak queries 5 Bioconductor repos by default; this package needs
+      # none of them, and when bioconductor.org is slow the resolver logs
+      # "unable to access index for repository .../bioc" on every leg.
+      # Documented pak knob (pak NEWS: use_bioconductor / PKG_USE_BIOCONDUCTOR).
+      PKG_USE_BIOCONDUCTOR: "false"
     steps:
       - uses: actions/checkout@v7
       - uses: r-lib/actions/setup-r@v2
