@@ -52,3 +52,4 @@ PUSH_TO_GITHUB.md
 .serena/
 pkg-site/
 *.tar.gz
+cran-comments.md
