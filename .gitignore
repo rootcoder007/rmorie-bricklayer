@@ -51,3 +51,4 @@ PUSH_TO_GITHUB.md
 # local Serena scope — never commit
 .serena/
 pkg-site/
+*.tar.gz
