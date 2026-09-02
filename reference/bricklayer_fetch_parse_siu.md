@@ -34,6 +34,6 @@ fails.
 # \donttest{
 f <- try(bricklayer_fetch_parse_siu(648), silent = TRUE)
 if (is.character(f)) f[["police_service"]]
-#> [1] "Peel Regional Police"
+#> [1] ""
 # }
 ```
