@@ -24,11 +24,13 @@ test_that("pure-R SHA-256 matches the compiled core across block boundaries", {
 test_that("sha256_file uses the pure-R digest when the compiled core is absent", {
   p <- tempfile(); writeBin(charToRaw("abc"), p)
   expect_identical(sha256_file(p), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
-  # simulate a standalone bundle: source the two lib files into a bare env
+  # simulate a standalone bundle: source the file into a bare env. The
+  # sources sit next to the tests only in a source checkout, not in an
+  # installed package (R CMD check), so skip there.
+  src <- testthat::test_path("..", "..", "R", "sha256_native.R")
+  skip_if(!file.exists(src), "package sources not present (installed package)")
   e <- new.env(parent = baseenv())
-  sys.source(system.file("R", "sha256_native.R", package = "rmoriebricklayer", mustWork = FALSE) %||%
-               file.path(testthat::test_path("..", ".."), "R", "sha256_native.R"), envir = e)
-  skip_if(!exists(".rmbl_sha256_hex", envir = e), "sha256_native.R not sourceable in this layout")
+  sys.source(src, envir = e)
   expect_identical(e$.rmbl_sha256_hex(charToRaw("abc")),
                    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
 })
