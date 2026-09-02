@@ -77,6 +77,11 @@ reference:
       - write_manifest_json
       - write_summary_txt
       - agent_bundle
+  - title: JSON (native codec)
+    desc: jsonlite's mapping in base R, byte-for-byte; no jsonlite at run time.
+    contents:
+      - bricklayer_json_from_json
+      - bricklayer_json_to_json
   - title: Integrity & checksums
     desc: SHA-256 hashing and verification for downloaded files.
     contents:

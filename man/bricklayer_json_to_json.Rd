@@ -2,21 +2,43 @@
 % Please edit documentation in R/json_native.R
 \name{bricklayer_json_to_json}
 \alias{bricklayer_json_to_json}
-\title{Serialise an R object to JSON}
+\title{Encode an R object as JSON (jsonlite's toJSON, natively)}
 \usage{
-bricklayer_json_to_json(x, pretty = FALSE, ...)
+bricklayer_json_to_json(
+  x,
+  dataframe = c("rows", "columns", "values"),
+  matrix = c("rowmajor", "columnmajor"),
+  Date = c("ISO8601", "epoch"),
+  POSIXt = c("string", "ISO8601", "epoch", "mongo"),
+  factor = c("string", "integer"),
+  complex = c("string", "list"),
+  raw = c("base64", "hex", "mongo", "int", "js"),
+  null = c("list", "null"),
+  na = c("null", "string"),
+  auto_unbox = FALSE,
+  digits = 4,
+  pretty = FALSE,
+  force = FALSE,
+  ...
+)
 }
 \arguments{
-\item{x}{object to serialise.}
+\item{x}{the object to encode.}
 
-\item{pretty}{FALSE, TRUE, or an indent width.}
-
-\item{...}{jsonlite's toJSON options: dataframe, matrix, Date, POSIXt,
-factor, complex, raw, null, na, auto_unbox, digits, force.}
+\item{dataframe, matrix, Date, POSIXt, factor, complex, raw, null, na, auto_unbox, digits, pretty, force, ...}{as in jsonlite.}
 }
 \value{
-a length-one character vector of JSON.
+a length-one character vector of class \code{json}.
 }
 \description{
-Serialise an R object to JSON
+Every option of jsonlite's \code{toJSON()} with the same default and the same
+bytes out: \code{dataframe}, \code{matrix}, \code{Date}, \code{POSIXt}, \code{factor}, \code{complex},
+\code{raw}, \code{null}, \code{na}, \code{auto_unbox}, \code{digits} (\code{I(n)} for significant
+digits, \code{NA} for 15), \code{pretty} (TRUE = 2 spaces, or a width), \code{force},
+plus \code{rownames}, \code{keep_vec_names}, \code{json_verbatim}, \code{always_decimal},
+\code{time_format}, \code{UTC}, \code{no_dots}, \code{hms}.
+}
+\examples{
+bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
+bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 }

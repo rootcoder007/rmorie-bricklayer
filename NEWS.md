@@ -1,3 +1,21 @@
+# rmoriebricklayer 0.3.9
+
+* The native JSON codec is now jsonlite's complete mapping: every `toJSON()`
+  option (dataframe/matrix/Date/POSIXt/factor/complex/raw/null/na/digits/
+  pretty/force plus rownames, keep_vec_names, json_verbatim, always_decimal,
+  time_format, UTC, no_dots), the same number formatting (`num_to_char` /
+  `modp_dtoa2` rules), `fromJSON()` simplification (record lists, matrices,
+  arrays, `$date`, `_row`, `"NA"` strings), prettify/minify (yajl layout),
+  validate, serializeJSON/unserializeJSON, base64, ndjson streaming and
+  rbind_pages. A parity test pins all of it to jsonlite byte-for-byte when
+  jsonlite is installed (1,742 cases, 0 differences).
+* Standalone capsule bundles: `make_bundle.sh` now ships `json_native.R`
+  and a pure-R SHA-256 (`sha256_native.R`), `setup_and_run.R` no longer
+  requires jsonlite, and `sha256_file()` falls back to the pure-R digest
+  when the compiled core is not loaded. This fixes the 0.3.8 CI failure of
+  the otis-mrp bundle (`bricklayer_json_from_json` not found).
+* pkgdown index and examples for the two exported codec functions.
+
 # rmoriebricklayer 0.3.8
 
 * No more runtime dependence on 'digest' or 'jsonlite': Imports is now
