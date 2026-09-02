@@ -123,8 +123,8 @@ record <- function(manifest, name, observed, expected,
 
 #' Write a Manifest to JSON
 #'
-#' Serializes a manifest to a pretty-printed JSON file via the jsonlite
-#' package.
+#' Serializes a manifest to a pretty-printed JSON file with the native
+#' JSON codec ([bricklayer_json_to_json()]); no jsonlite needed.
 #'
 #' @param manifest A manifest as returned by [make_manifest()] / built up
 #'   with [record()].
@@ -137,11 +137,13 @@ record <- function(manifest, name, observed, expected,
 #' file.exists(path)
 #'
 #' # Round-trips back through jsonlite.
-#' back <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+#' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 #' back$results$row_count$status        # "PASS"
 #' @export
 write_manifest_json <- function(manifest, path) {
-  jsonlite::write_json(manifest, path, auto_unbox = TRUE, pretty = TRUE)
+  writeLines(bricklayer_json_to_json(manifest, auto_unbox = TRUE,
+                                     pretty = TRUE, na = "null", null = "null"),
+             path, useBytes = TRUE)
   invisible(path)
 }
 

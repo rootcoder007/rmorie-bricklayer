@@ -29,7 +29,9 @@
 #' stopifnot(sha256_file(f) == pinned)
 #' @export
 sha256_file <- function(path) {
-  digest::digest(file = path, algo = "sha256")
+  # the compiled SHA-256 core over the file bytes; identical output to
+  # digest::digest(file = path, algo = "sha256")
+  core_sha256(readBin(path, "raw", n = file.info(path)$size))
 }
 
 ## ----------------- Unicode-safe text with ASCII fallback -----------------
@@ -188,4 +190,22 @@ write_text_fallback <- function(text, path) {
   }, error = function(e) FALSE)
   if (!ok) writeLines(to_ascii(text), path) # nocov -- encoding-error retry
   invisible(path)
+}
+
+# Read JSON from a local path or an http(s) URL with the native codec.
+# URLs go through the compiled fetch core (with its Wayback fallback);
+# `simplify = FALSE` returns plain nested lists (jsonlite's
+# simplifyVector = FALSE), `simplify = TRUE` gives jsonlite's default
+# simplification. Errors propagate so callers' tryCatch() still applies.
+#' @noRd
+.rmbl_read_json <- function(x, simplify = TRUE) {
+  if (length(x) == 1L && grepl("^https?://", x)) {
+    dest <- tempfile(fileext = ".json")
+    on.exit(unlink(dest), add = TRUE)
+    bricklayer_fetch(x, dest)
+    x <- dest
+  }
+  txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
+    paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
+  bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify))
 }

@@ -58,6 +58,7 @@ test_that("verify_capsule catches tampered data and stale manifests", {
   expect_false(ck$ok[ck$check == "data_row_count"])
 
   # Stale manifest: stored status contradicts its own numbers.
+  testthat::skip_if_not_installed("jsonlite")
   m2 <- jsonlite::fromJSON(file.path(dir, "manifest.json"),
                            simplifyVector = FALSE)
   m2$results$mean_value$status <- "DIFFER"
@@ -124,8 +125,7 @@ test_that("resolve_via_socrata guards missing fields and builds the export URL",
   expect_null(resolve_via_socrata(list(dataset = list())))
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(id = "ijzp-q8t2"),
-    .package = "jsonlite"
+    .rmbl_read_json = function(...) list(id = "ijzp-q8t2")
   )
   url <- resolve_via_socrata(list(dataset = list(
     socrata_domain = "data.cityofchicago.org", socrata_id = "ijzp-q8t2"
@@ -136,7 +136,7 @@ test_that("resolve_via_socrata guards missing fields and builds the export URL",
   )
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) stop("404"), .package = "jsonlite"
+    .rmbl_read_json = function(...) stop("404")
   )
   expect_null(resolve_via_socrata(list(dataset = list(
     socrata_domain = "x.org", socrata_id = "dead-beef"
@@ -148,8 +148,7 @@ test_that("resolve_via_arcgis guards missing fields and builds the query URL", {
   expect_null(resolve_via_arcgis(list(dataset = list())))
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(name = "Assault_Open_Data"),
-    .package = "jsonlite"
+    .rmbl_read_json = function(...) list(name = "Assault_Open_Data")
   )
   layer <- "https://services.arcgis.com/X/arcgis/rest/services/Assault_Open_Data/FeatureServer/0"
   expect_identical(
@@ -158,8 +157,7 @@ test_that("resolve_via_arcgis guards missing fields and builds the query URL", {
   )
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(error = list(code = 400)),
-    .package = "jsonlite"
+    .rmbl_read_json = function(...) list(error = list(code = 400))
   )
   expect_null(resolve_via_arcgis(list(dataset = list(arcgis_layer_url = layer))))
 })
