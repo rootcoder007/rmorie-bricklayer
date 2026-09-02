@@ -81,7 +81,7 @@ jsonlite-based resolver (kept internally for offline use).</p>
 <span class="r-in"><span><span class="co"># network failure returns NULL rather than erroring.</span></span></span>
 <span class="r-in"><span><span class="co"># Closest archived snapshot of a live page (or NULL if none archived).</span></span></span>
 <span class="r-in"><span><span class="fu">wayback_snapshot_url_native</span><span class="op">(</span><span class="st">"https://www.r-project.org/"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://web.archive.org/web/20260902071110/https://www.r-project.org/"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A shorter timeout for a quick lookup.</span></span></span>
 <span class="r-in"><span><span class="fu">wayback_snapshot_url_native</span><span class="op">(</span><span class="st">"https://cloud.r-project.org/"</span>, timeout <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
