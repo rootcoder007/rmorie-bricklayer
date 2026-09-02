@@ -376,7 +376,7 @@ bricklayer_json_base64url_dec <- function(input) {
       str <- vapply(x, bricklayer_json_base64_enc, character(1))
       return(.rmbl_json_as(str, o, collapse, na, oldna, auto_unbox, indent))
     }
-    return(.rmbl_json_as(as.list(x), o, collapse, na, oldna, auto_unbox, indent))
+    return(.rmbl_json_as(unclass(as.list(x)), o, collapse, na, oldna, auto_unbox, indent))
   }
   if (is.null(x)) return(if (identical(o$null, "null")) "null" else "{}")
   # an S3 class none of the branches above know: jsonlite's ANY method tries
@@ -1091,8 +1091,10 @@ bricklayer_json_validate <- function(txt) {
   stack <- character(0)
   bad <- function(msg) stop(sprintf("%s at character %d", msg, i), call. = FALSE)
   emit <- function(t) out <<- c(out, t)
+  need_sep <- FALSE
   sep <- function() {
     if (state == "map_key" || state == "in_array") {
+      if (need_sep) bad("expected ',' between values")
       emit(",")
       if (pretty) emit("\n")
     } else if (state == "map_val") {
@@ -1104,6 +1106,7 @@ bricklayer_json_validate <- function(txt) {
   atom_done <- function() {
     state <<- switch(state, start = "complete", map_start = "map_val", map_key = "map_val",
                      array_start = "in_array", map_val = "map_key", state)
+    need_sep <<- state %in% c("in_array", "map_key")
   }
   skip_ws <- function() while (i <= n && (ch[i] == " " || ch[i] == "\t" || ch[i] == "\n" || ch[i] == "\r")) i <<- i + 1L
   read_string <- function() {
@@ -1197,6 +1200,7 @@ bricklayer_json_validate <- function(txt) {
     }
     if (c0 == ",") {
       if (!(state %in% c("in_array", "map_key"))) bad("unexpected ','")
+      need_sep <- FALSE
       i <- i + 1L
       skip_ws()
       if (i > n || ch[i] %in% c("]", "}")) bad("trailing comma")
@@ -1212,6 +1216,7 @@ bricklayer_json_validate <- function(txt) {
       if (state %in% c("map_start", "map_key")) {
         # key
         if (state == "map_key") {
+          if (need_sep) bad("expected ',' between members")
           emit(",")
           if (pretty) emit("\n")
         }
@@ -1462,7 +1467,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     return(do.call(methods::new, c(Class = obj$value$class, data)))
   }
   vals <- obj$value
-  data <- switch(mode,
+  newdata <- list(.Data = switch(mode,
     environment = new.env(parent = emptyenv()),
     namespace = getNamespace(obj$value$name),
     externalptr = NULL,
@@ -1473,14 +1478,15 @@ bricklayer_json_rbind_pages <- function(pages) {
     character = as.character(.rmbl_json_list_to_vec(vals)),
     complex = as.complex(.rmbl_json_list_to_vec(vals)),
     list = , pairlist = , closure = lapply(vals, .rmbl_json_unpack),
-    symbol = , name = as.name(unlist(vals)),
+    symbol = , name = if (identical(unlist(vals), "")) quote(expr = ) else as.name(unlist(vals)),
     expression = parse(text = unlist(vals)),
     language = as.call(parse(text = unlist(vals)))[[1L]],
     special = , builtin = unserialize(bricklayer_json_base64_dec(vals)),
-    stop("Switch falling through for encode.mode: ", mode, call. = FALSE))
-  if (identical(data, substitute())) return(substitute())
+    stop("Switch falling through for encode.mode: ", mode, call. = FALSE)))
+  # a missing formal comes back as the empty symbol; it must not be evaluated
+  if (identical(newdata[[1L]], substitute())) return(substitute())
   attrs <- lapply(obj$attributes, .rmbl_json_unpack)
-  output <- do.call("structure", c(list(.Data = data), attrs), quote = TRUE)
+  output <- do.call("structure", c(newdata, attrs), quote = TRUE)
   if (mode == "closure") {
     f <- as.function(output)
     environment(f) <- globalenv()
@@ -1511,32 +1517,3 @@ bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
 #' @noRd
 bricklayer_json_unserialize <- function(txt) .rmbl_json_unpack(.rmbl_json_parse(txt))
 
-# ================================================================ route
-
-#' jsonlite's JSON mapping, natively
-#'
-#' @param x the value or JSON text the route acts on.
-#' @param route one of to_json, from_json, prettify, minify, validate,
-#'   flatten, serialize, unserialize, base64_enc, base64_dec.
-#' @param ... options for the chosen route.
-#' @return a list with route, result and method.
-#' @noRd
-morie_jsonlt <- function(x = NULL, route = "to_json", ...) {
-  routes <- c("to_json", "from_json", "prettify", "minify", "validate", "flatten",
-              "serialize", "unserialize", "base64_enc", "base64_dec")
-  if (!(length(route) == 1L && route %in% routes))
-    stop(sprintf("jsonlt: route = %s; expected one of %s", route, paste(routes, collapse = ", ")), call. = FALSE)
-  dots <- list(...)
-  res <- switch(route,
-    to_json = do.call(bricklayer_json_to_json, c(list(x), dots)),
-    from_json = do.call(bricklayer_json_from_json, c(list(x), dots)),
-    prettify = bricklayer_json_prettify(x, if (is.null(dots$indent)) 4 else dots$indent),
-    minify = bricklayer_json_minify(x),
-    validate = bricklayer_json_validate(x),
-    flatten = bricklayer_json_flatten(x, if (is.null(dots$recursive)) TRUE else dots$recursive),
-    serialize = do.call(bricklayer_json_serialize, c(list(x), dots)),
-    unserialize = bricklayer_json_unserialize(x),
-    base64_enc = bricklayer_json_base64_enc(x),
-    base64_dec = bricklayer_json_base64_dec(x))
-  list(route = route, result = res, method = "jsonlite 2.0.0 mapping (Ooms 2014), RFC 8259")
-}
