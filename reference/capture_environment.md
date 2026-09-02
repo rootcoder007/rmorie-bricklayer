@@ -30,7 +30,7 @@ env <- capture_environment(c("stats", "utils"))
 env$r_version
 #> [1] "4.6.1"
 env$os
-#> [1] "Linux 6.17.0-1020-azure"
+#> [1] "Linux 6.17.0-1022-azure"
 env$packages          # named character vector of versions
 #>   stats   utils 
 #> "4.6.1" "4.6.1" 

@@ -2,6 +2,8 @@
 
 ## rmoriebricklayer 0.3.7
 
+CRAN release: 2026-08-05
+
 - Test-only change: local_mocked_bindings() tests are guarded so they
   skip cleanly under a bare testthat::test_dir() (they need the package
   namespace, which devtools::test() and R CMD check provide). No
