@@ -75,6 +75,15 @@ verify it later so an analysis reproduces from the same inputs.
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   : Agent-assisted reproducibility-bundle help
 
+## JSON (native codec)
+
+jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.
+
+- [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+  : Parse JSON into R objects (jsonlite's fromJSON, natively)
+- [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
+  : Encode an R object as JSON (jsonlite's toJSON, natively)
+
 ## Integrity & checksums
 
 SHA-256 hashing and verification for downloaded files.

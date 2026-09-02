@@ -19,11 +19,15 @@ agent_bundle(request, model = NULL, backend = "auto")
 
 - model:
 
-  Optional model id (see `rmorie::agent`).
+  Optional model id, e.g. `"minimax-m3:cloud"` for an Ollama server or
+  `"claude-sonnet-5"` for Anthropic; defaults to `$RMORIE_AGENT_MODEL`
+  or the CLI's auto-pick.
 
 - backend:
 
-  Optional backend override (see `rmorie::agent`).
+  `"auto"` (default), `"ollama"` (server from
+  `$RMORIE_AGENT_OLLAMA_URL`) or `"anthropic"`
+  (`$RMORIE_AGENT_API_KEY`).
 
 ## Value
 
@@ -40,11 +44,15 @@ binary is not installed.
 agent_bundle("scaffold a bundle for analysis.R using the Toronto CKAN dataset")
 #> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
 
-# Pin a model, or force a backend (see rmorie::agent for the values).
-agent_bundle("repair the SHA256 provenance for my capsule",
-             model = "gpt-4o-mini")
+# Free local/cloud route: an Ollama server (RMORIE_AGENT_OLLAMA_URL, default
+# http://localhost:11434) serving the model the MORIE stack uses.
+agent_bundle("add a Wayback fallback to my fetch step",
+             backend = "ollama", model = "minimax-m3:cloud")
 #> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
-agent_bundle("add a Wayback fallback to my fetch step", backend = "ollama")
+
+# Anthropic route (needs RMORIE_AGENT_API_KEY); the CLI's default model.
+agent_bundle("repair the SHA256 provenance for my capsule",
+             backend = "anthropic", model = "claude-sonnet-5")
 #> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."
 # }
 

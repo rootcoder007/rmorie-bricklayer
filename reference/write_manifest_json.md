@@ -1,7 +1,9 @@
 # Write a Manifest to JSON
 
-Serializes a manifest to a pretty-printed JSON file via the jsonlite
-package.
+Serializes a manifest to a pretty-printed JSON file with the native JSON
+codec
+([`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md));
+no jsonlite needed.
 
 ## Usage
 
@@ -37,7 +39,7 @@ file.exists(path)
 #> [1] TRUE
 
 # Round-trips back through jsonlite.
-back <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 back$results$row_count$status        # "PASS"
 #> [1] "PASS"
 ```

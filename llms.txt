@@ -46,6 +46,16 @@ back to schema-driven synthetic data when the real source is unreachable
 
 ## Installation
 
+Released version from
+[CRAN](https://CRAN.R-project.org/package=rmoriebricklayer):
+
+``` r
+
+install.packages("rmoriebricklayer")
+```
+
+Latest build from r-universe (tracks `main` ahead of CRAN):
+
 ``` r
 
 install.packages(
@@ -199,6 +209,15 @@ verify it later so an analysis reproduces from the same inputs.
   : Write a Plain-Language Run Summary
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   : Agent-assisted reproducibility-bundle help
+
+## JSON (native codec)
+
+jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.
+
+- [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+  : Parse JSON into R objects (jsonlite's fromJSON, natively)
+- [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
+  : Encode an R object as JSON (jsonlite's toJSON, natively)
 
 ## Integrity & checksums
 

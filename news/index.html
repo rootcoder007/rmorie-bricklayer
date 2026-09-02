@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,17 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.9" id="rmoriebricklayer-039">rmoriebricklayer 0.3.9<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-039"></a></h2>
+<ul><li>The native JSON codec is now jsonlite’s complete mapping: every <code>toJSON()</code> option (dataframe/matrix/Date/POSIXt/factor/complex/raw/null/na/digits/ pretty/force plus rownames, keep_vec_names, json_verbatim, always_decimal, time_format, UTC, no_dots), the same number formatting (<code>num_to_char</code> / <code>modp_dtoa2</code> rules), <code>fromJSON()</code> simplification (record lists, matrices, arrays, <code>$date</code>, <code>_row</code>, <code>"NA"</code> strings), prettify/minify (yajl layout), validate, serializeJSON/unserializeJSON, base64, ndjson streaming and rbind_pages. A parity test pins all of it to jsonlite byte-for-byte when jsonlite is installed (1,742 cases, 0 differences).</li>
+<li>Standalone capsule bundles: <code>make_bundle.sh</code> now ships <code>json_native.R</code> and a pure-R SHA-256 (<code>sha256_native.R</code>), <code>setup_and_run.R</code> no longer requires jsonlite, and <code><a href="../reference/sha256_file.html">sha256_file()</a></code> falls back to the pure-R digest when the compiled core is not loaded. This fixes the 0.3.8 CI failure of the otis-mrp bundle (<code>bricklayer_json_from_json</code> not found).</li>
+<li>pkgdown index and examples for the two exported codec functions.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.8" id="rmoriebricklayer-038">rmoriebricklayer 0.3.8<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-038"></a></h2>
+<ul><li>No more runtime dependence on ‘digest’ or ‘jsonlite’: Imports is now base R only (<code>stats</code>, <code>utils</code>). <code><a href="../reference/sha256_file.html">sha256_file()</a></code> hashes through the compiled SHA-256 core that already backed <code><a href="../reference/core_sha256.html">core_sha256()</a></code>; every JSON read (CKAN, Socrata, ArcGIS, Wayback metadata, local manifests) and the manifest writer go through a new pure-R, jsonlite-compatible codec exported as <code><a href="../reference/bricklayer_json_from_json.html">bricklayer_json_from_json()</a></code> / <code><a href="../reference/bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code> (same simplification rules and encoder options as jsonlite). Both old packages move to Suggests and are only used by the cross-check tests, which pin the native codec and hash to their output when installed.</li>
+<li>Remote JSON endpoints are fetched with <code><a href="../reference/bricklayer_fetch.html">bricklayer_fetch()</a></code> (the compiled fetch core with its Wayback fallback) instead of jsonlite’s URL reader.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.7" id="rmoriebricklayer-037">rmoriebricklayer 0.3.7<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-037"></a></h2><p class="text-muted">CRAN release: 2026-08-05</p>
 <ul><li>Test-only change: local_mocked_bindings() tests are guarded so they skip cleanly under a bare testthat::test_dir() (they need the package namespace, which devtools::test() and R CMD check provide). No user-facing change.</li>

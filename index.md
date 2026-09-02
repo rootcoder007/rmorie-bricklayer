@@ -46,6 +46,16 @@ back to schema-driven synthetic data when the real source is unreachable
 
 ## Installation
 
+Released version from
+[CRAN](https://CRAN.R-project.org/package=rmoriebricklayer):
+
+``` r
+
+install.packages("rmoriebricklayer")
+```
+
+Latest build from r-universe (tracks `main` ahead of CRAN):
+
 ``` r
 
 install.packages(

@@ -13,7 +13,7 @@ repair a brick-proof bundle. See rmorie::agent for requirements."><meta name="go
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,11 +65,15 @@ repair a brick-proof bundle. See <code>rmorie::agent</code> for requirements.</p
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>Optional model id (see <code>rmorie::agent</code>).</p></dd>
+<dd><p>Optional model id, e.g. <code>"minimax-m3:cloud"</code> for an
+Ollama server or <code>"claude-sonnet-5"</code> for Anthropic; defaults to
+<code>$RMORIE_AGENT_MODEL</code> or the CLI's auto-pick.</p></dd>
 
 
 <dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
-<dd><p>Optional backend override (see <code>rmorie::agent</code>).</p></dd>
+<dd><p><code>"auto"</code> (default), <code>"ollama"</code> (server from
+<code>$RMORIE_AGENT_OLLAMA_URL</code>) or <code>"anthropic"</code>
+(<code>$RMORIE_AGENT_API_KEY</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -87,11 +91,15 @@ repair a brick-proof bundle. See <code>rmorie::agent</code> for requirements.</p
 <span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"scaffold a bundle for analysis.R using the Toronto CKAN dataset"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Pin a model, or force a backend (see rmorie::agent for the values).</span></span></span>
-<span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"repair the SHA256 provenance for my capsule"</span>,</span></span>
-<span class="r-in"><span>             model <span class="op">=</span> <span class="st">"gpt-4o-mini"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Free local/cloud route: an Ollama server (RMORIE_AGENT_OLLAMA_URL, default</span></span></span>
+<span class="r-in"><span><span class="co"># http://localhost:11434) serving the model the MORIE stack uses.</span></span></span>
+<span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"add a Wayback fallback to my fetch step"</span>,</span></span>
+<span class="r-in"><span>             backend <span class="op">=</span> <span class="st">"ollama"</span>, model <span class="op">=</span> <span class="st">"minimax-m3:cloud"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."</span>
-<span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"add a Wayback fallback to my fetch step"</span>, backend <span class="op">=</span> <span class="st">"ollama"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Anthropic route (needs RMORIE_AGENT_API_KEY); the CLI's default model.</span></span></span>
+<span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"repair the SHA256 provenance for my capsule"</span>,</span></span>
+<span class="r-in"><span>             backend <span class="op">=</span> <span class="st">"anthropic"</span>, model <span class="op">=</span> <span class="st">"claude-sonnet-5"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "rmorie CLI not found on PATH. Install rmorie-cli to use agent_bundle()."</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
