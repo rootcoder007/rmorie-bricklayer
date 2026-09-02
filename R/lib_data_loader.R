@@ -35,7 +35,7 @@
 #' @export
 load_provenance <- function(path) {
   if (!file.exists(path)) return(NULL)
-  jsonlite::fromJSON(path, simplifyVector = FALSE)
+  .rmbl_read_json(path, simplify = FALSE)
 }
 
 ## ----- CKAN package_show by slug + name match -----
@@ -79,7 +79,7 @@ resolve_via_ckan <- function(provenance) {
     return(NULL)
   api_url <- ds$ckan_api_endpoint
   if (is.null(api_url) || !nzchar(api_url)) return(NULL)
-  resp <- tryCatch(jsonlite::fromJSON(api_url, simplifyVector = FALSE),
+  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
                    error = function(e) NULL)
   if (is.null(resp) || !isTRUE(resp$success)) return(NULL)
   pat <- res$name_match_pattern
@@ -135,7 +135,7 @@ resolve_via_ckan_search <- function(provenance) {
   if (!nzchar(base)) return(NULL)
   api_url <- sprintf("%s/api/3/action/package_search?q=%s",
                      base, utils::URLencode(q, reserved = TRUE))
-  resp <- tryCatch(jsonlite::fromJSON(api_url, simplifyVector = FALSE),
+  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
                    error = function(e) NULL)
   if (is.null(resp)) return(NULL)
   pat <- res$name_match_pattern
@@ -217,7 +217,7 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   if (!is.null(timestamp) && nzchar(timestamp)) {
     api <- paste0(api, "&timestamp=", timestamp)
   }
-  res  <- tryCatch(jsonlite::fromJSON(api), error = function(e) NULL)
+  res  <- tryCatch(.rmbl_read_json(api), error = function(e) NULL)
   snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
   if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
@@ -328,7 +328,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #' bad$actual         # the real digest
 #' @export
 verify_sha256 <- function(path, expected_sha) {
-  actual <- digest::digest(file = path, algo = "sha256")
+  actual <- sha256_file(path)
   list(actual = actual, expected = expected_sha,
        match  = identical(actual, expected_sha))
 }
@@ -476,7 +476,7 @@ resolve_via_socrata <- function(provenance) {
   id     <- provenance$dataset$socrata_id
   if (is.null(domain) || is.null(id)) return(NULL)
   meta_url <- paste0("https://", domain, "/api/views/", id, ".json")
-  meta <- tryCatch(jsonlite::fromJSON(meta_url), error = function(e) NULL)
+  meta <- tryCatch(.rmbl_read_json(meta_url), error = function(e) NULL)
   if (is.null(meta) || is.null(meta$id)) return(NULL)
   paste0("https://", domain, "/api/views/", id,
          "/rows.csv?accessType=DOWNLOAD")
@@ -511,7 +511,7 @@ resolve_via_arcgis <- function(provenance) {
   layer <- provenance$dataset$arcgis_layer_url
   if (is.null(layer)) return(NULL)
   layer <- sub("/+$", "", layer)
-  meta <- tryCatch(jsonlite::fromJSON(paste0(layer, "?f=json")),
+  meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json")),
                    error = function(e) NULL)
   if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
     return(NULL)

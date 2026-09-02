@@ -23,17 +23,15 @@ test_that("resolve_via_ckan returns NULL on absent provenance or endpoint", {
 test_that("wayback_snapshot_url upgrades snapshots to https and rejects unavailable", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(archived_snapshots = list(closest = list(
+    .rmbl_read_json = function(...) list(archived_snapshots = list(closest = list(
       available = TRUE, url = "http://web.archive.org/web/2024/https://x.csv"
-    ))),
-    .package = "jsonlite"
+    )))
   )
   out <- wayback_snapshot_url("https://example.org/x.csv")
   expect_match(out, "^https://web\\.archive\\.org/")
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(archived_snapshots = list()),
-    .package = "jsonlite"
+    .rmbl_read_json = function(...) list(archived_snapshots = list())
   )
   expect_null(wayback_snapshot_url("https://example.org/x.csv"))
 })
@@ -106,11 +104,10 @@ test_that("apply_schema_validation stops on fatal, warns on warning, TRUE when c
 test_that("resolve_via_ckan returns the first name-matched resource URL", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(success = TRUE, result = list(resources = list(
+    .rmbl_read_json = function(...) list(success = TRUE, result = list(resources = list(
       list(name = "Readme", url = "https://example.org/readme.txt"),
       list(name = "Data 2014", url = "https://example.org/2014.csv")
-    ))),
-    .package = "jsonlite"
+    )))
   )
   prov <- list(
     dataset  = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
@@ -126,14 +123,13 @@ test_that("resolve_via_ckan_search matches resources and derives the query", {
   skip_if_cannot_mock()
   seen_url <- NULL
   testthat::local_mocked_bindings(
-    fromJSON = function(url, ...) {
+    .rmbl_read_json = function(url, ...) {
       seen_url <<- url
       list(result = list(results = list(list(resources = list(
         list(name = "Data 2014", format = "XLSX", url = "https://example.org/s.xlsx"),
         list(name = "Data 2014", format = "CSV",  url = "https://example.org/s.csv")
       )))))
-    },
-    .package = "jsonlite"
+    }
   )
   prov <- list(
     dataset  = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
@@ -156,13 +152,12 @@ test_that("wayback_snapshot_url honours an explicit timestamp", {
   skip_if_cannot_mock()
   seen <- NULL
   testthat::local_mocked_bindings(
-    fromJSON = function(url, ...) {
+    .rmbl_read_json = function(url, ...) {
       seen <<- url
       list(archived_snapshots = list(closest = list(
         available = TRUE,
         url = "http://web.archive.org/web/20240101/https://x.csv")))
-    },
-    .package = "jsonlite"
+    }
   )
   out <- wayback_snapshot_url("https://example.org/x.csv",
                               timestamp = "20240101000000")
@@ -232,7 +227,7 @@ test_that("friendly_download reports a failed wayback retry", {
 test_that("resolve_via_socrata returns the canonical CSV export URL", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(id = "ijzp-q8t2"), .package = "jsonlite")
+    .rmbl_read_json = function(...) list(id = "ijzp-q8t2"))
   prov <- list(dataset = list(socrata_domain = "data.example.org",
                               socrata_id     = "ijzp-q8t2"))
   expect_identical(
@@ -240,14 +235,14 @@ test_that("resolve_via_socrata returns the canonical CSV export URL", {
     "https://data.example.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD")
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) stop("network down"), .package = "jsonlite")
+    .rmbl_read_json = function(...) stop("network down"))
   expect_null(resolve_via_socrata(prov))
 })
 
 test_that("resolve_via_arcgis returns a paged GeoJSON query URL, trimming slashes", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(name = "Layer0"), .package = "jsonlite")
+    .rmbl_read_json = function(...) list(name = "Layer0"))
   prov <- list(dataset = list(
     arcgis_layer_url = "https://svc.example.org/FeatureServer/0///"))
   expect_identical(
@@ -255,7 +250,7 @@ test_that("resolve_via_arcgis returns a paged GeoJSON query URL, trimming slashe
     "https://svc.example.org/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson")
 
   testthat::local_mocked_bindings(
-    fromJSON = function(...) list(error = list(code = 400)), .package = "jsonlite")
+    .rmbl_read_json = function(...) list(error = list(code = 400)))
   expect_null(resolve_via_arcgis(prov))
 })
 

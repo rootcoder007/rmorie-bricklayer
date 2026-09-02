@@ -16,8 +16,8 @@ with \code{\link[=record]{record()}}.}
 The \code{path}, returned invisibly.
 }
 \description{
-Serializes a manifest to a pretty-printed JSON file via the jsonlite
-package.
+Serializes a manifest to a pretty-printed JSON file with the native
+JSON codec (\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}); no jsonlite needed.
 }
 \examples{
 man <- make_manifest(list(project = "demo"), environment = FALSE)
@@ -26,6 +26,6 @@ path <- write_manifest_json(man, tempfile(fileext = ".json"))
 file.exists(path)
 
 # Round-trips back through jsonlite.
-back <- jsonlite::fromJSON(path, simplifyVector = FALSE)
+back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 back$results$row_count$status        # "PASS"
 }

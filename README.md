@@ -1,6 +1,7 @@
 # rmoriebricklayer
 
 <!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/rmoriebricklayer)](https://CRAN.R-project.org/package=rmoriebricklayer)
 [![R-CMD-check](https://github.com/rootcoder007/rmorie-bricklayer/actions/workflows/r-pkg-check.yml/badge.svg)](https://github.com/rootcoder007/rmorie-bricklayer/actions/workflows/r-pkg-check.yml)
 [![Codecov test coverage](https://codecov.io/gh/rootcoder007/rmorie-bricklayer/graph/badge.svg)](https://app.codecov.io/gh/rootcoder007/rmorie-bricklayer)
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
@@ -34,6 +35,14 @@ so any analysis result can be traced back to its exact inputs.
   pipeline still runs end-to-end.
 
 ## Installation
+
+Released version from [CRAN](https://CRAN.R-project.org/package=rmoriebricklayer):
+
+```r
+install.packages("rmoriebricklayer")
+```
+
+Latest build from r-universe (tracks `main` ahead of CRAN):
 
 ```r
 install.packages(

@@ -1,3 +1,18 @@
+# rmoriebricklayer 0.3.8
+
+* No more runtime dependence on 'digest' or 'jsonlite': Imports is now
+  base R only (`stats`, `utils`). `sha256_file()` hashes through the
+  compiled SHA-256 core that already backed `core_sha256()`; every JSON
+  read (CKAN, Socrata, ArcGIS, Wayback metadata, local manifests) and the
+  manifest writer go through a new pure-R, jsonlite-compatible codec
+  exported as `bricklayer_json_from_json()` / `bricklayer_json_to_json()`
+  (same simplification rules and encoder options as jsonlite). Both old
+  packages move to Suggests and are only used by the cross-check tests,
+  which pin the native codec and hash to their output when installed.
+* Remote JSON endpoints are fetched with `bricklayer_fetch()` (the
+  compiled fetch core with its Wayback fallback) instead of jsonlite's
+  URL reader.
+
 # rmoriebricklayer 0.3.7
 
 * Test-only change: local_mocked_bindings() tests are guarded so they skip
