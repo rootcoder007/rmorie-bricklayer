@@ -2,7 +2,7 @@
 % Please edit documentation in R/json_native.R
 \name{bricklayer_json_from_json}
 \alias{bricklayer_json_from_json}
-\title{Parse JSON into R objects}
+\title{Parse JSON into R objects (jsonlite's fromJSON, natively)}
 \usage{
 bricklayer_json_from_json(
   txt,
@@ -10,22 +10,19 @@ bricklayer_json_from_json(
   simplifyDataFrame = simplifyVector,
   simplifyMatrix = simplifyVector,
   flatten = FALSE,
+  bigint_as_char = FALSE,
   simplify = NULL,
   ...
 )
 }
 \arguments{
-\item{txt}{JSON text, or a path to a file holding it.}
+\item{txt}{JSON text, a file path, or an http(s) URL.}
 
-\item{simplifyVector}{collapse a flat array to an atomic vector.}
+\item{simplifyVector, simplifyDataFrame, simplifyMatrix, flatten}{as in jsonlite.}
 
-\item{simplifyDataFrame}{collapse an array of objects to a data.frame.}
+\item{bigint_as_char}{integers beyond 2^53 come back as strings.}
 
-\item{simplifyMatrix}{collapse an array of equal-length arrays to a matrix.}
-
-\item{flatten}{expand nested data.frame columns to outer.inner columns.}
-
-\item{simplify}{FALSE turns all three simplifications off.}
+\item{simplify}{legacy: \code{FALSE} turns every simplification off.}
 
 \item{...}{ignored, for call compatibility.}
 }
@@ -33,5 +30,9 @@ bricklayer_json_from_json(
 an R object.
 }
 \description{
-Parse JSON into R objects
+Parse JSON into R objects (jsonlite's fromJSON, natively)
+}
+\examples{
+bricklayer_json_from_json('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
+bricklayer_json_from_json('[[1,2],[3,4]]')
 }

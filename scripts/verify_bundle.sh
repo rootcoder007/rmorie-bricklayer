@@ -30,7 +30,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "${BUNDLE_ZIP}" ]]; then
-  BUNDLE_ZIP="$(ls -1t "${SCRIPT_DIR}"/*_v*.zip 2>/dev/null | grep -v with_data | head -1 || true)"
+  BUNDLE_ZIP=""
+  for cand in "${SCRIPT_DIR}"/*_v*.zip; do
+    [[ -e "${cand}" ]] || continue
+    [[ "${cand}" == *with_data* ]] && continue
+    if [[ -z "${BUNDLE_ZIP}" || "${cand}" -nt "${BUNDLE_ZIP}" ]]; then BUNDLE_ZIP="${cand}"; fi
+  done
 fi
 if [[ -z "${BUNDLE_ZIP}" || ! -f "${BUNDLE_ZIP}" ]]; then
   echo "ERROR: no bundle zip found." >&2
@@ -59,9 +64,7 @@ echo "      Extracted to: ${EXTRACTED}"
 echo
 
 echo "[2/4] Verifying executable bits..."
-for f in setup_and_run.R; do
-  [[ -f "${EXTRACTED}/${f}" ]] && echo "      ✓ ${f} present"
-done
+[[ -f "${EXTRACTED}/setup_and_run.R" ]] && echo "      ✓ setup_and_run.R present"
 for f in START_HERE.command start_here.sh; do
   if [[ -f "${EXTRACTED}/${f}" && ! -x "${EXTRACTED}/${f}" ]]; then
     echo "      ! ${f} is not executable in the zip"
