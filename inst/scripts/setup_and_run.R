@@ -62,7 +62,8 @@ if (HELP_MODE) {
 
 ## ---------- Source libraries ----------
 LIB_DIR <- script_dir  # libs may be next to setup_and_run.R after bundle build
-for (lib in c("lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
+for (lib in c("json_native.R", "sha256_native.R",
+              "lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
               "lib_synthetic.R", "lib_manifest.R")) {
   lib_path <- file.path(LIB_DIR, lib)
   if (!file.exists(lib_path))
@@ -75,14 +76,8 @@ CONFIG_PATH     <- file.path(script_dir, "config.json")
 PROVENANCE_PATH <- file.path(script_dir, "data_provenance.json")
 if (!file.exists(CONFIG_PATH))
   stop("config.json not found at ", CONFIG_PATH)
-if (!requireNamespace("jsonlite", quietly = TRUE)) {
-  ## This script never installs packages itself (CRAN policy: no
-  ## install.packages() in package code/scripts) -- it tells you the exact
-  ## command instead.
-  stop("The 'jsonlite' package is required. Install it first, then re-run:\n",
-       '  install.packages("jsonlite")', call. = FALSE)
-}
-cfg <- jsonlite::fromJSON(CONFIG_PATH, simplifyVector = FALSE)
+# the bundled native codec (json_native.R): no jsonlite needed
+cfg <- bricklayer_json_from_json(CONFIG_PATH, simplifyVector = FALSE)
 prov <- load_provenance(PROVENANCE_PATH)
 
 PROJECT_NAME    <- cfg$project$name         %||% "bricklayer-project"
@@ -386,7 +381,7 @@ hr()
 say("Step 4/5: Results summary")
 manifest_path <- file.path(output_dir, "manifest.json")
 if (file.exists(manifest_path)) {
-  m <- jsonlite::fromJSON(manifest_path, simplifyVector = FALSE)
+  m <- bricklayer_json_from_json(manifest_path, simplifyVector = FALSE)
   counts <- summarise_counts(m)
   say(sprintf("  Total:  %d", counts$total))
   say(sprintf("  PASS:   %d", counts$pass))

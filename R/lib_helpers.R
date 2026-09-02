@@ -29,9 +29,12 @@
 #' stopifnot(sha256_file(f) == pinned)
 #' @export
 sha256_file <- function(path) {
-  # the compiled SHA-256 core over the file bytes; identical output to
-  # digest::digest(file = path, algo = "sha256")
-  core_sha256(readBin(path, "raw", n = file.info(path)$size))
+  bytes <- readBin(path, "raw", n = file.info(path)$size)
+  # inside the package: the compiled SHA-256 core (identical output to
+  # digest::digest(file = path, algo = "sha256")); sourced standalone in a
+  # capsule bundle: the pure-R FIPS 180-4 implementation from sha256_native.R
+  if (exists("core_sha256", mode = "function")) return(core_sha256(bytes))
+  .rmbl_sha256_hex(bytes)
 }
 
 ## ----------------- Unicode-safe text with ASCII fallback -----------------

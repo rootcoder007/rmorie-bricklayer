@@ -147,7 +147,15 @@ if (INPUT_MODE == "rdata") {
 
   if (file.exists(provenance_path)) {
     cat("      Using schema from: ", provenance_path, "\n")
-    prov <- jsonlite::fromJSON(provenance_path)
+    ## analysis.R runs as its own R process: load the bundled native codec
+    ## (json_native.R sits next to this script); jsonlite only as a fallback.
+    if (!exists("bricklayer_json_from_json", mode = "function")) {
+      codec <- file.path(script_dir, "json_native.R")
+      if (file.exists(codec)) source(codec) else if (!requireNamespace("jsonlite", quietly = TRUE))
+        stop("json_native.R not found next to analysis.R and jsonlite is not installed", call. = FALSE)
+    }
+    prov <- if (exists("bricklayer_json_from_json", mode = "function"))
+      bricklayer_json_from_json(provenance_path) else jsonlite::fromJSON(provenance_path)
     if (!is.null(prov$schema$expected_columns))
       expected_cols <- prov$schema$expected_columns
     if (!is.null(prov$schema$expected_value_sets))
