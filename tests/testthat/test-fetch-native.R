@@ -78,3 +78,23 @@ test_that("wayback_snapshot_url_native resolves a real snapshot", {
   # NULL is legal (service hiccup) but a hit must be a web.archive.org URL.
   if (!is.null(u)) expect_match(u, "web\\.archive\\.org")
 })
+
+test_that("bricklayer_fetch_siu builds the SIU report URL and forwards options", {
+  seen <- list()
+  testthat::local_mocked_bindings(
+    bricklayer_fetch = function(url, dest, wayback = "", timeout = 120L) {
+      seen <<- list(url = url, dest = dest, wayback = wayback, timeout = timeout)
+      invisible(dest)
+    })
+  d <- tempfile(fileext = ".html")
+  bricklayer_fetch_siu(648, d)
+  expect_identical(seen$url, "https://www.siu.on.ca/en/directors_report_details.php?drid=648")
+  expect_identical(seen$dest, d)
+  expect_identical(seen$wayback, "")
+  expect_identical(seen$timeout, 120L)
+  bricklayer_fetch_siu("12", d, lang = "fr", wayback = "20240101", timeout = 30L)
+  expect_identical(seen$url, "https://www.siu.on.ca/fr/directors_report_details.php?drid=12")
+  expect_identical(seen$wayback, "20240101")
+  expect_identical(seen$timeout, 30L)
+  expect_error(bricklayer_fetch_siu(1, d, lang = "de"))
+})
