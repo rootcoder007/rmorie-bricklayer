@@ -12,8 +12,9 @@ test_that("agent_bundle() shell-quotes the request, backend and model", {
   bin <- file.path(dir, "rmorie")
   writeLines(c("#!/bin/sh", "printf '%s\\n' \"$@\""), bin)
   Sys.chmod(bin, "0755")
-  withr::local_envvar(PATH = paste(dir, Sys.getenv("PATH"),
-                                   sep = .Platform$path.sep))
+  old_path <- Sys.getenv("PATH")
+  on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+  Sys.setenv(PATH = paste(dir, old_path, sep = .Platform$path.sep))
   out <- agent_bundle("fix the SHA256 (and the Wayback fallback) for it's manifest",
                       backend = "ollama", model = "minimax-m3:cloud")
   lines <- strsplit(out, "\n", fixed = TRUE)[[1]]
