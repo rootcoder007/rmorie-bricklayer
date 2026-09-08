@@ -23,9 +23,9 @@
 #' Wayback snapshot, schema, and synthetic-data recipe.
 #'
 #' @param path Path to the provenance JSON file.
-#' @return The parsed provenance as a nested list (via
-#'   [jsonlite::fromJSON()] with `simplifyVector = FALSE`), or `NULL` if
-#'   the file does not exist.
+#' @return The parsed provenance as a nested list, read with the
+#'   package's own JSON codec ([bricklayer_json_from_json()],
+#'   unsimplified), or `NULL` if the file does not exist.
 #' @examples
 #' prov_file <- tempfile(fileext = ".json")
 #' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
@@ -306,8 +306,9 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 
 #' Verify a File's SHA256 Against an Expected Digest
 #'
-#' Computes the SHA256 digest of a file (via the digest package) and
-#' compares it to the expected value pinned in provenance.
+#' Computes the SHA256 digest of a file with the package's own
+#' compiled SHA-256 core and compares it to the expected value pinned
+#' in provenance.
 #'
 #' @param path Path to the file to hash.
 #' @param expected_sha The expected SHA256 digest, as a lowercase hex
