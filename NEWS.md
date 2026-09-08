@@ -1,3 +1,24 @@
+# rmoriebricklayer 0.3.10
+
+Documentation only; no code changes.
+
+The manual still credited 'jsonlite' and 'digest' for work the package
+now does itself, which had been true before 0.3.8 moved both to Suggests
+behind a native JSON codec and a compiled SHA-256 core:
+
+* `load_provenance()` said it parsed via `jsonlite::fromJSON()`, and
+  linked to it; it reads with `bricklayer_json_from_json()`.
+* `verify_capsule()`'s example called `jsonlite::write_json()` -- a
+  Suggests package used unconditionally in an example. It now writes with
+  `bricklayer_json_to_json()`.
+* `sha256_file()` and `verify_sha256()` said they hashed "via the digest
+  package"; they use the compiled core, or the bundled pure-R FIPS 180-4
+  implementation when a capsule is sourced standalone.
+* `wayback_snapshot_url_native()` described the R-level resolver it
+  supersedes as "jsonlite-based"; that resolver parses natively too.
+* `write_manifest_json()`'s example said it round-tripped through
+  'jsonlite'.
+
 # rmoriebricklayer 0.3.9
 
 * The native JSON codec is now jsonlite's complete mapping: every `toJSON()`

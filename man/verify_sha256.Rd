@@ -17,8 +17,9 @@ A list with \code{actual} (computed digest), \code{expected} (the value
 passed in), and \code{match} (logical; \code{TRUE} if they are identical).
 }
 \description{
-Computes the SHA256 digest of a file (via the digest package) and
-compares it to the expected value pinned in provenance.
+Computes the SHA256 digest of a file with the package's own
+compiled SHA-256 core and compares it to the expected value pinned
+in provenance.
 }
 \examples{
 f <- tempfile()

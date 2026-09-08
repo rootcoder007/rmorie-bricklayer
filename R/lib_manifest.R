@@ -136,7 +136,7 @@ record <- function(manifest, name, observed, expected,
 #' path <- write_manifest_json(man, tempfile(fileext = ".json"))
 #' file.exists(path)
 #'
-#' # Round-trips back through jsonlite.
+#' # Round-trips back through the package's own codec.
 #' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 #' back$results$row_count$status        # "PASS"
 #' @export
