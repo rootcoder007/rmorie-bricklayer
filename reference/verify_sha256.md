@@ -1,7 +1,7 @@
 # Verify a File's SHA256 Against an Expected Digest
 
-Computes the SHA256 digest of a file (via the digest package) and
-compares it to the expected value pinned in provenance.
+Computes the SHA256 digest of a file with the package's own compiled
+SHA-256 core and compares it to the expected value pinned in provenance.
 
 ## Usage
 

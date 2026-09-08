@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,22 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.9" id="rmoriebricklayer-039">rmoriebricklayer 0.3.9<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-039"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.10" id="rmoriebricklayer-0310">rmoriebricklayer 0.3.10<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0310"></a></h2>
+<p>Documentation only; no code changes.</p>
+<p>The manual still credited ‘jsonlite’ and ‘digest’ for work the package now does itself, which had been true before 0.3.8 moved both to Suggests behind a native JSON codec and a compiled SHA-256 core:</p>
+<ul><li>
+<code><a href="../reference/load_provenance.html">load_provenance()</a></code> said it parsed via <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">jsonlite::fromJSON()</a></code>, and linked to it; it reads with <code><a href="../reference/bricklayer_json_from_json.html">bricklayer_json_from_json()</a></code>.</li>
+<li>
+<code><a href="../reference/verify_capsule.html">verify_capsule()</a></code>’s example called <code><a href="https://jeroen.r-universe.dev/jsonlite/reference/read_json.html" class="external-link">jsonlite::write_json()</a></code> – a Suggests package used unconditionally in an example. It now writes with <code><a href="../reference/bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>.</li>
+<li>
+<code><a href="../reference/sha256_file.html">sha256_file()</a></code> and <code><a href="../reference/verify_sha256.html">verify_sha256()</a></code> said they hashed “via the digest package”; they use the compiled core, or the bundled pure-R FIPS 180-4 implementation when a capsule is sourced standalone.</li>
+<li>
+<code><a href="../reference/wayback_snapshot_url_native.html">wayback_snapshot_url_native()</a></code> described the R-level resolver it supersedes as “jsonlite-based”; that resolver parses natively too.</li>
+<li>
+<code><a href="../reference/write_manifest_json.html">write_manifest_json()</a></code>‘s example said it round-tripped through ’jsonlite’.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.9" id="rmoriebricklayer-039">rmoriebricklayer 0.3.9<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-039"></a></h2><p class="text-muted">CRAN release: 2026-09-08</p>
 <ul><li>The native JSON codec is now jsonlite’s complete mapping: every <code>toJSON()</code> option (dataframe/matrix/Date/POSIXt/factor/complex/raw/null/na/digits/ pretty/force plus rownames, keep_vec_names, json_verbatim, always_decimal, time_format, UTC, no_dots), the same number formatting (<code>num_to_char</code> / <code>modp_dtoa2</code> rules), <code>fromJSON()</code> simplification (record lists, matrices, arrays, <code>$date</code>, <code>_row</code>, <code>"NA"</code> strings), prettify/minify (yajl layout), validate, serializeJSON/unserializeJSON, base64, ndjson streaming and rbind_pages. A parity test pins all of it to jsonlite byte-for-byte when jsonlite is installed (1,742 cases, 0 differences).</li>
 <li>Standalone capsule bundles: <code>make_bundle.sh</code> now ships <code>json_native.R</code> and a pure-R SHA-256 (<code>sha256_native.R</code>), <code>setup_and_run.R</code> no longer requires jsonlite, and <code><a href="../reference/sha256_file.html">sha256_file()</a></code> falls back to the pure-R digest when the compiled core is not loaded. This fixes the 0.3.8 CI failure of the otis-mrp bundle (<code>bricklayer_json_from_json</code> not found).</li>
 <li>pkgdown index and examples for the two exported codec functions.</li>

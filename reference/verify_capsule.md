@@ -65,8 +65,8 @@ dir.create(dir, showWarnings = FALSE)
 write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
 prov <- list(resource = list(filename = "d.csv",
                              sha256 = sha256_file(file.path(dir, "d.csv"))))
-jsonlite::write_json(prov, file.path(dir, "data_provenance.json"),
-                     auto_unbox = TRUE)
+writeLines(bricklayer_json_to_json(prov, auto_unbox = TRUE),
+           file.path(dir, "data_provenance.json"))
 verify_capsule(dir)$ok
 #> [1] TRUE
 ```

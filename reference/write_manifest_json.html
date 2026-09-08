@@ -9,7 +9,7 @@ JSON codec (bricklayer_json_to_json()); no jsonlite needed."><meta name="google-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,7 +77,7 @@ with <code><a href="record.html">record()</a></code>.</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Round-trips back through jsonlite.</span></span></span>
+<span class="r-in"><span><span class="co"># Round-trips back through the package's own codec.</span></span></span>
 <span class="r-in"><span><span class="va">back</span> <span class="op">&lt;-</span> <span class="fu"><a href="bricklayer_json_from_json.html">bricklayer_json_from_json</a></span><span class="op">(</span><span class="va">path</span>, simplifyVector <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">back</span><span class="op">$</span><span class="va">results</span><span class="op">$</span><span class="va">row_count</span><span class="op">$</span><span class="va">status</span>        <span class="co"># "PASS"</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PASS"</span>
