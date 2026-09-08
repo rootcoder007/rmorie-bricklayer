@@ -10,9 +10,9 @@ load_provenance(path)
 \item{path}{Path to the provenance JSON file.}
 }
 \value{
-The parsed provenance as a nested list (via
-\code{\link[jsonlite:fromJSON]{jsonlite::fromJSON()}} with \code{simplifyVector = FALSE}), or \code{NULL} if
-the file does not exist.
+The parsed provenance as a nested list, read with the
+package's own JSON codec (\code{\link[=bricklayer_json_from_json]{bricklayer_json_from_json()}},
+unsimplified), or \code{NULL} if the file does not exist.
 }
 \description{
 Reads a \code{data_provenance.json} file describing a project's pinned data

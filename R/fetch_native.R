@@ -57,7 +57,8 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
 #'
 #' Queries the Internet Archive \dQuote{available} API for the closest
 #' archived snapshot of \code{url}. C++ backend; supersedes the older
-#' jsonlite-based resolver (kept internally for offline use).
+#' R-level resolver \code{\link{wayback_snapshot_url}}, which is kept
+#' for the pure-R path and now parses with the package's own JSON codec.
 #'
 #' @param url URL to resolve.
 #' @param timeout Request timeout, seconds.

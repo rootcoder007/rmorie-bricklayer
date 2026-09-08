@@ -25,7 +25,7 @@ man <- record(man, "row_count", observed = 20, expected = 20)
 path <- write_manifest_json(man, tempfile(fileext = ".json"))
 file.exists(path)
 
-# Round-trips back through jsonlite.
+# Round-trips back through the package's own codec.
 back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 back$results$row_count$status        # "PASS"
 }
