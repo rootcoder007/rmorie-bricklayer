@@ -1,3 +1,19 @@
+# rmoriebricklayer 0.3.11
+
+Test fix; no code changes.
+
+`test-json-branches.R` asserted one platform's spelling of a
+full-precision double. With `digits = NULL` the encoder calls
+`sprintf("%.17g", ...)`, which asks the C library for 17 significant
+digits and lets it choose how to print them: x86 gives
+`9.9999999999999995e-21` for `1e-20`, Windows arm64 gives `1e-20`. Both
+are the same double and both round trip, but the hard-coded expectation
+failed the arm64 builds on r-universe.
+
+The test now asserts the contract the option actually promises -- full
+precision that survives a round trip -- and carries an anchor that fails
+if the round trip stops being exact.
+
 # rmoriebricklayer 0.3.10
 
 Documentation only; no code changes.
