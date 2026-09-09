@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,12 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.11" id="rmoriebricklayer-0311">rmoriebricklayer 0.3.11<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0311"></a></h2>
+<p>Test fix; no code changes.</p>
+<p><code>test-json-branches.R</code> asserted one platform’s spelling of a full-precision double. With <code>digits = NULL</code> the encoder calls <code>sprintf("%.17g", ...)</code>, which asks the C library for 17 significant digits and lets it choose how to print them: x86 gives <code>9.9999999999999995e-21</code> for <code>1e-20</code>, Windows arm64 gives <code>1e-20</code>. Both are the same double and both round trip, but the hard-coded expectation failed the arm64 builds on r-universe.</p>
+<p>The test now asserts the contract the option actually promises – full precision that survives a round trip – and carries an anchor that fails if the round trip stops being exact.</p>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.10" id="rmoriebricklayer-0310">rmoriebricklayer 0.3.10<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0310"></a></h2>
 <p>Documentation only; no code changes.</p>
