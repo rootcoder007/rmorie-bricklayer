@@ -165,6 +165,13 @@ capture_environment <- function(packages = loadedNamespaces()) {
     platform     = R.version$platform,
     os           = paste(Sys.info()[["sysname"]], Sys.info()[["release"]]),
     captured_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    # Without the generator's identity a stochastic result cannot be
+    # reproduced even on the same machine: R has changed its default
+    # sample() algorithm before, and a recorded seed means nothing
+    # without the kind it was fed to.
+    rng_kind     = paste(RNGkind(), collapse = ","),
+    rng_seeded   = exists(".Random.seed", envir = globalenv(),
+                          inherits = FALSE),
     packages     = vapply(packages, function(p) {
       tryCatch(as.character(utils::packageVersion(p)),
                error = function(e) NA_character_)

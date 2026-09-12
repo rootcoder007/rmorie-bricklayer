@@ -4,7 +4,7 @@
 \alias{write_manifest_json}
 \title{Write a Manifest to JSON}
 \usage{
-write_manifest_json(manifest, path)
+write_manifest_json(manifest, path, canonical = FALSE)
 }
 \arguments{
 \item{manifest}{A manifest as returned by
@@ -12,6 +12,11 @@ write_manifest_json(manifest, path)
 \code{\link[=record]{record()}}.}
 
 \item{path}{Destination path for the JSON file.}
+
+\item{canonical}{Write the canonical form rather than
+the pretty-printed one: one line, keys sorted, which is what
+\code{\link[=manifest_digest]{manifest_digest()}} hashes. Use it when
+the file itself has to be byte-stable rather than read by a person.}
 }
 \value{
 The \code{path}, returned invisibly.

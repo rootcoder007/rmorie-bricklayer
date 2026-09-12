@@ -139,6 +139,10 @@ record <- function(manifest, name, observed, expected,
 #' [make_manifest()] / built up with
 #' [record()].
 #' @param path Destination path for the JSON file.
+#' @param canonical Write the canonical form rather than
+#' the pretty-printed one: one line, keys sorted, which is what
+#' [manifest_digest()] hashes. Use it when
+#' the file itself has to be byte-stable rather than read by a person.
 #' @return The `path`, returned invisibly.
 #' @examples
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
@@ -150,11 +154,77 @@ record <- function(manifest, name, observed, expected,
 #' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 #' back$results$row_count$status        # "PASS"
 #' @export
-write_manifest_json <- function(manifest, path) {
+write_manifest_json <- function(manifest, path, canonical = FALSE) {
+  if (isTRUE(canonical)) {
+    writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
+    return(invisible(path))
+  }
   writeLines(bricklayer_json_to_json(manifest, auto_unbox = TRUE,
-                                     pretty = TRUE, na = "null", null = "null"),
+                                     pretty = TRUE, na = "null",
+                                     null = "null",
+                                     digits = I(17)),
              path, useBytes = TRUE)
   invisible(path)
+}
+
+#' The canonical serialisation of a manifest, and its digest
+#'
+#' `manifest_canonical()` renders a manifest as one line of JSON with
+#' every object's keys in sorted order and every number at full double
+#' precision. `manifest_digest()` is the SHA-256 of those bytes.
+#'
+#' Why this is needed. Two manifests that record the same thing can easily
+#' differ as bytes: R lists keep insertion order, so building `meta`
+#' before `results` or the other way round gives different JSON, and a
+#' signature over the JSON would then depend on the order a script happened
+#' to assemble the list. Sorting the keys removes that. The precision
+#' matters for a different reason: the default JSON writer emits four
+#' significant digits, which is right for a human-readable report and wrong
+#' for a record something will later be checked against, because `1/3`
+#' comes back as `0.3333` and no recomputation can match it.
+#'
+#' Sign [manifest_digest()], not the pretty
+#' JSON. The digest is stable across the assembly order, across
+#' `pretty`, and across a round trip through a file.
+#'
+#' @param manifest A manifest, as from
+#' [make_manifest()].
+#' @return `manifest_canonical()` a length-1 character vector;
+#' `manifest_digest()` 64 hex characters.
+#' @seealso
+#' [make_manifest()],
+#' [write_manifest_json()],
+#' [capsule_attest()].
+#' @examples
+#' a <- make_manifest(list(b = 2, a = 1), environment = FALSE)
+#' b <- make_manifest(list(a = 1, b = 2), environment = FALSE)
+#' # the same content in a different order has the same digest
+#' identical(manifest_digest(a), manifest_digest(b))
+#'
+#' # full precision, so a recorded number can be checked later
+#' m <- make_manifest(list(x = 1/3), environment = FALSE)
+#' grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
+#' @export
+manifest_canonical <- function(manifest) {
+  bricklayer_json_to_json(.rmbl_sort_keys(manifest), auto_unbox = TRUE,
+                          pretty = FALSE, na = "null", null = "null",
+                          digits = I(17))
+}
+
+#' @rdname manifest_canonical
+#' @export
+manifest_digest <- function(manifest) {
+  core_sha256(charToRaw(manifest_canonical(manifest)))
+}
+
+# Recursively order the names of every list, leaving unnamed lists (JSON
+# arrays, where order is content) alone.
+.rmbl_sort_keys <- function(x) {
+  if (!is.list(x)) return(x)
+  x <- lapply(x, .rmbl_sort_keys)
+  nm <- names(x)
+  if (is.null(nm) || any(!nzchar(nm))) return(x)
+  x[order(nm, method = "radix")]
 }
 
 #' Summarise Manifest Result Counts

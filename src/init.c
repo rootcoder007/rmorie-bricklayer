@@ -77,6 +77,10 @@ extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mgf1(SEXP, SEXP, SEXP);
 
+/* rmbl_asn1.cpp: DER parsing and the RSA operation, for RFC 3161 */
+extern SEXP C_rmbl_der_parse(SEXP);
+extern SEXP C_rmbl_rsa_recover(SEXP, SEXP, SEXP);
+
 /* rmbl_mlkem.cpp: FIPS 203 key encapsulation */
 extern SEXP C_rmbl_mlkem_sizes(SEXP);
 extern SEXP C_rmbl_mlkem_keygen(SEXP, SEXP);
@@ -239,6 +243,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
     {"C_rmbl_hmac_shax",         (DL_FUNC) &C_rmbl_hmac_shax,         3},
     {"C_rmbl_mgf1",              (DL_FUNC) &C_rmbl_mgf1,              3},
+    {"C_rmbl_der_parse",         (DL_FUNC) &C_rmbl_der_parse,         1},
+    {"C_rmbl_rsa_recover",       (DL_FUNC) &C_rmbl_rsa_recover,       3},
     {"C_rmbl_mlkem_sizes",       (DL_FUNC) &C_rmbl_mlkem_sizes,       1},
     {"C_rmbl_mlkem_keygen",      (DL_FUNC) &C_rmbl_mlkem_keygen,      2},
     {"C_rmbl_mlkem_encaps",      (DL_FUNC) &C_rmbl_mlkem_encaps,      3},
