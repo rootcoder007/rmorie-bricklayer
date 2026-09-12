@@ -17,6 +17,12 @@ provenance, validates downloaded data against a pinned schema, and falls
 back to schema-driven synthetic data when the real source is unreachable —
 so any analysis result can be traced back to its exact inputs.
 
+A checksum answers one question: are these the same bytes? The package
+exists because that is rarely the question that matters. A re-released
+extract can be statistically identical and differ byte-for-byte; a column
+can keep its name, type and row count while having been silently rescaled;
+and a digest anyone can recompute says nothing about who produced the data.
+
 ## What it does
 
 - **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
@@ -28,11 +34,36 @@ so any analysis result can be traced back to its exact inputs.
 - **Integrity** — `sha256_file()` / `verify_sha256()` hash and verify
   downloads; `download_data()` / `friendly_download()` fetch with a Wayback
   Machine fallback.
-- **Schema validation** — `validate_schema()` / `apply_schema_validation()`
-  check data against a pinned schema.
+- **Schema validation** — `infer_schema()` derives a pinnable schema from
+  data you trust; `validate_schema()` checks names, types, ranges, value
+  sets and missingness against it; `rule()` and the `rule_*()` library
+  express the project-specific checks a generic schema cannot.
+- **Drift detection** — `capsule_drift()` asks whether the *data* moved,
+  not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity,
+  population stability index, Jensen-Shannon divergence and a Benford
+  first-digit screen.
+- **Signed provenance** — `capsule_sign()` authenticates a manifest with a
+  keyed digest or a post-quantum hash-based signature; `merkle_root()` pins
+  a capsule chunk by chunk so a mismatch names which chunk moved; and
+  `chain_append()` links manifests so the run *history* is tamper-evident,
+  not only each run.
+- **Description** — `profile_columns()`, `frequency_table()`,
+  `correlation_table()`, `mahalanobis_outliers()`, `missingness_map()` and
+  `mcar_test()` (Little's test, with the EM estimator it requires) describe
+  a capsule before you trust it.
+- **Capsules larger than memory** — exact block-wise moment accumulation,
+  reservoir sampling, and HyperLogLog distinct counts, all in one pass.
 - **Synthetic fallback** — `make_synthetic_column()` / `make_synthetic_csv()`
   generate schema-driven stand-ins when the real source is down, so a
   pipeline still runs end-to-end.
+
+Every primitive with a published test vector is checked against it:
+SHA-512 (FIPS 180-4), HMAC-SHA-256 (RFC 4231), PBKDF2-HMAC-SHA256,
+BLAKE2b (RFC 7693) and CRC-32 (ITU V.42). The statistics are anchored on
+base R. The one exception is the XMSS signature scheme, which has no
+offline known-answer vectors and is verified against its security
+properties instead — it follows the RFC 8391 construction but is not
+claimed to be byte-compatible with other implementations.
 
 ## Installation
 
@@ -74,6 +105,22 @@ man  <- make_manifest(project = "my-study")
 record(man, "input", path)                      # trace the input
 write_manifest_json(man, "manifest.json")
 ```
+
+Then ask whether the data itself moved, and sign the answer:
+
+```r
+# Did the distribution change, not just the bytes?
+capsule_drift(reference_extract, fresh_fetch)
+
+# Authenticate the manifest so a verifier knows who produced it.
+key <- pqc_keygen()                              # post-quantum, hash-based
+sig <- capsule_sign(core_sha256(readLines("manifest.json")), key)
+capsule_verify(core_sha256(readLines("manifest.json")), sig,
+               signing_public_key(key))
+```
+
+See `vignette("drift")` for the distributional checks and
+`vignette("provenance")` for signing, Merkle pinning and manifest chains.
 
 ## Part of the MORIE family
 

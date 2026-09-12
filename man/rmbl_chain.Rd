@@ -95,11 +95,13 @@ key <- pqc_keygen(height = 2)
 sig <- capsule_sign(chain_seal(ch), key)
 capsule_verify(chain_seal(ch), sig, signing_public_key(key))
 
-# The seal of a tampered chain does not match, whether an entry was
-# deleted from the middle or dropped from the end.
-capsule_verify(chain_seal(dropped), sig, signing_public_key(key))
+# Truncating the chain still seals, but to a different value, so the
+# signature no longer verifies.
+truncated <- ch
+truncated$entries[[3]] <- NULL
+capsule_verify(chain_seal(truncated), sig, signing_public_key(key))
 
-# A broken chain has no seal to offer.
+# A chain whose links disagree has no seal to present at all.
 chain_seal(dropped)
 }
 \seealso{

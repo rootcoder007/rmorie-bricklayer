@@ -124,6 +124,9 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
 
 #' @export
 print.bricklayer_outliers <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("row", "distance", "p_value", "outlier"))) {
+    return(invisible(x))
+  }
   g <- .rmbl_glyphs()
   n_out <- sum(x$outlier, na.rm = TRUE)
   cat(.rmbl_rule(paste0("Mahalanobis outliers (",
@@ -215,6 +218,9 @@ missing_runs <- function(data, min_run = 2L) {
 
 #' @export
 print.bricklayer_runs <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("column", "start", "end", "length"))) {
+    return(invisible(x))
+  }
   cat(.rmbl_rule("Runs of consecutive missing values"), "\n")
   if (nrow(x) == 0L) {
     cat("  (none)\n")
@@ -264,7 +270,7 @@ missingness_map <- function(data, height = 20L, width = 12L) {
   }
   n <- nrow(data)
   shades <- if (.rmbl_unicode_ok()) {
-    c(" ", "░", "▒", "▓", "█")
+    c(" ", "\u2591", "\u2592", "\u2593", "\u2588")
   } else {
     c(" ", ".", "-", "+", "#")
   }

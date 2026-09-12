@@ -94,6 +94,10 @@ missingness_pattern <- function(data, max_patterns = 20L) {
 
 #' @export
 print.bricklayer_missingness <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("pattern", "n_rows", "pct_rows", "n_missing",
+                            "columns"))) {
+    return(invisible(x))
+  }
   cat(.rmbl_rule("Missingness patterns"), "\n")
   cols <- attr(x, "columns")
   cat("  columns, in pattern order: ", paste(cols, collapse = ", "),
@@ -195,6 +199,9 @@ top_correlations <- function(data, n = 10L, method = c("spearman",
 
 #' @export
 print.bricklayer_correlations <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "abs_correlation"))) {
+    return(invisible(x))
+  }
   cat(.rmbl_rule(paste0("Top correlations (", attr(x, "method"), ")")), "\n")
   if (nrow(x) == 0L) {
     cat("  (none above the threshold)\n")

@@ -11,7 +11,7 @@ core_sd(x, ddof = 1L)
 core_dist(a, b)
 }
 \arguments{
-\item{x, y, a, b}{Numeric vectors (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
+\item{x, a, b}{Numeric vectors (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
 
 \item{ddof}{Denominator degrees of freedom. The default \code{1} gives the
 sample standard deviation, matching \code{\link[stats:sd]{stats::sd()}}; \code{0} gives the

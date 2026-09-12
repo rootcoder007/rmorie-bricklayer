@@ -16,15 +16,15 @@
   rng <- range(x)
   if (!is.finite(rng[1L]) || rng[1L] == rng[2L]) {
     # no spread to show: one full bar says "all the same value"
-    ticks <- if (.rmbl_unicode_ok()) "█" else "#"
+    ticks <- if (.rmbl_unicode_ok()) "\u2588" else "#"
     return(paste0(strrep(" ", bins %/% 2L), ticks,
                   strrep(" ", bins - bins %/% 2L - 1L)))
   }
   breaks <- seq(rng[1L], rng[2L], length.out = bins + 1L)
   counts <- graphics::hist(x, breaks = breaks, plot = FALSE)$counts
   levels <- if (.rmbl_unicode_ok()) {
-    c("▁", "▂", "▃", "▄", "▅", "▆",
-      "▇", "█")
+    c("\u2581", "\u2582", "\u2583", "\u2584", "\u2585", "\u2586",
+      "\u2587", "\u2588")
   } else {
     c(".", ":", "-", "=", "#")
   }
@@ -166,6 +166,9 @@ frequency_table <- function(data, column = NULL, max_levels = 25L,
 
 #' @export
 print.bricklayer_freq <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("value", "n", "pct", "pct_valid"))) {
+    return(invisible(x))
+  }
   cat(.rmbl_rule("Frequency table"), "\n")
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   if (nrow(df) == 0L) {
@@ -254,6 +257,9 @@ correlation_table <- function(data, method = c("spearman", "pearson"),
 
 #' @export
 print.bricklayer_cortable <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("x", "y", "correlation", "n_pairs"))) {
+    return(invisible(x))
+  }
   cat(.rmbl_rule(paste0("Correlations (", attr(x, "method"), ")")), "\n")
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "method") <- NULL

@@ -24,7 +24,7 @@
 #' NA/NaN propagate -- there is no `na.rm`. Call [stats::na.omit()] first
 #' if you need NA handling.
 #'
-#' @param x,y,a,b Numeric vectors (coerced with [as.numeric()]).
+#' @param x,a,b Numeric vectors (coerced with [as.numeric()]).
 #' @param ddof Denominator degrees of freedom. The default `1` gives the
 #'   sample standard deviation, matching [stats::sd()]; `0` gives the
 #'   population figure.
