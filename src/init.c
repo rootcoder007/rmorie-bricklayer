@@ -46,6 +46,13 @@ extern SEXP C_rmbl_first_digit_counts(SEXP);
 /* .Call wrappers (rmbl_digest.cpp) -- provenance digests */
 extern SEXP C_rmbl_sha512(SEXP);
 extern SEXP C_rmbl_crc32(SEXP);
+/* rmbl_series.cpp: concentration and short-series trend */
+extern SEXP C_rmbl_gini(SEXP);
+extern SEXP C_rmbl_lorenz(SEXP);
+extern SEXP C_rmbl_top_share(SEXP, SEXP);
+extern SEXP C_rmbl_mann_kendall(SEXP);
+extern SEXP C_rmbl_theil_sen(SEXP, SEXP);
+extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 extern SEXP C_rmbl_hmac_sha256(SEXP, SEXP);
 extern SEXP C_rmbl_digest_equal(SEXP, SEXP);
 extern SEXP C_rmbl_merkle_root(SEXP);
@@ -167,6 +174,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_first_digit_counts",(DL_FUNC) &C_rmbl_first_digit_counts, 1},
     {"C_rmbl_sha512",            (DL_FUNC) &C_rmbl_sha512,            1},
     {"C_rmbl_crc32",             (DL_FUNC) &C_rmbl_crc32,             1},
+    {"C_rmbl_gini",              (DL_FUNC) &C_rmbl_gini,              1},
+    {"C_rmbl_lorenz",            (DL_FUNC) &C_rmbl_lorenz,            1},
+    {"C_rmbl_top_share",         (DL_FUNC) &C_rmbl_top_share,         2},
+    {"C_rmbl_mann_kendall",      (DL_FUNC) &C_rmbl_mann_kendall,      1},
+    {"C_rmbl_theil_sen",         (DL_FUNC) &C_rmbl_theil_sen,         2},
+    {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
     {"C_rmbl_hmac_sha256",       (DL_FUNC) &C_rmbl_hmac_sha256,       2},
     {"C_rmbl_digest_equal",      (DL_FUNC) &C_rmbl_digest_equal,      2},
     {"C_rmbl_merkle_root",       (DL_FUNC) &C_rmbl_merkle_root,       1},

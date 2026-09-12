@@ -73,8 +73,11 @@ PROBE
     done
     OQS_RPATH=""
     OK=no
+    # first without an rpath, then with one -- the plain build is
+    # preferred when it runs, since an rpath bakes a path into the
+    # shared object
     for extra in "" "${RPATHS}"; do
-      if [ "${OK}" = "no" ] && [ "${extra}" = "" -o -n "${extra}" ]; then
+      if [ "${OK}" = "no" ]; then
         if ${CC} conftest_oqs.c ${OQS_C} ${OQS_L} ${extra} \
              -o conftest_oqs >/dev/null 2>&1; then
           if ./conftest_oqs >/dev/null 2>&1; then

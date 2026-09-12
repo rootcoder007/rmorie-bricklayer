@@ -1,0 +1,163 @@
+---
+title: "Year-over-year change, and the three ways it goes wrong"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Year-over-year change, and the three ways it goes wrong}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+A year-over-year percent change is the most-quoted number in open-data
+reporting and the least qualified. `yoy()` computes it, and refuses to
+compute it in the three cases where the figure would describe something
+other than the data.
+
+## The data
+
+Ontario's inmate data is published one row per placement, by fiscal year
+and by group. A realistic shape:
+
+```{r}
+seg <- data.frame(
+  EndFiscalYear = rep(2019:2023, each = 2),
+  Gender = rep(c("Female", "Male"), 5),
+  Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
+)
+```
+
+Segregation placements rising is bad news, so the direction is declared.
+That affects colour and the verdict column, never the arithmetic.
+
+```{r}
+y <- yoy(seg,
+  value = Number_Of_Placements,
+  period = EndFiscalYear,
+  by = "Gender",
+  direction = "lower_is_better"
+)
+y
+```
+
+The interval is exact. Conditional on the two periods' total, the current
+count is binomial, so the ratio of the two has a Clopper-Pearson
+interval, which is the same construction `stats::poisson.test()` uses:
+
+```{r}
+stats::poisson.test(c(331, 268), c(1, 1))$conf.int
+```
+
+## The first failure: matching on row order
+
+With a year missing, comparing row *i* with row *i - 1* compares 2023
+with 2021 and labels it a one-year change. Matching on the period's own
+value cannot do that:
+
+```{r}
+gap <- data.frame(year = c(2019, 2020, 2022, 2023), n = c(100, 120, 140, 150))
+yoy(gap, value = n, period = year)
+```
+
+2021 appears as a row with no value, and 2022 has no comparison period
+rather than a quietly three-year one.
+
+## The second failure: a percent off a small base
+
+Two placements becoming twenty is a 900% rise and also nothing at all.
+The number describes how small the denominator was:
+
+```{r}
+tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
+yoy(tiny, value = n, period = year)
+```
+
+The change of `+18` is still reported, and so is the direction: those are
+facts. Only the percent is withheld, with the reason attached. Lower the
+gate if the small base is the point:
+
+```{r}
+as.data.frame(yoy(tiny, value = n, period = year, min_base = 0))$pct_change
+```
+
+## The third failure: a percent of a percent
+
+If a rate moves from 4% to 5% that is one percentage point. Calling it
+25% answers a different question:
+
+```{r}
+rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
+yoy(rate, value = share, period = year, units = "percent")
+```
+
+The column is named `points`, and no count interval is offered, because
+these are not counts.
+
+## Seasonal series
+
+A monthly series compares with the same month a year earlier. The lag
+follows the series' own frequency, so January is never put against
+December:
+
+```{r}
+m <- stats::ts(c(10:21, 20:31), start = c(2021, 1), frequency = 12)
+head(as.data.frame(yoy(m, min_base = 0))[12:14, c("period", "value",
+                                                  "previous", "change")], 3)
+```
+
+## Across the span
+
+```{r}
+yoy_summary(y)
+```
+
+`cagr_pct` is the compound rate per period: applying it across the span
+returns `total_pct` exactly.
+
+## Output
+
+The same object writes to six formats. The format follows the file name.
+
+```{r}
+dir <- tempdir()
+for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
+  f <- file.path(dir, paste0("placements.", ext))
+  yoy_write(y, f, title = "Placements by gender")
+  cat(sprintf("%-5s %6d bytes\n", ext, file.size(f)))
+}
+```
+
+The delimited writers lead with the settings as comments, and carry the
+`flag` column, so a withheld percentage stays marked as withheld
+wherever it lands:
+
+```{r}
+cat(yoy_csv(y, NULL, digits = 1L))
+```
+
+Markdown, for a report:
+
+```{r}
+cat(yoy_markdown(yoy(gap, value = n, period = year), NULL))
+```
+
+The HTML is a single self-contained file: it makes no network request, so
+the page renders later exactly as it rendered when the capsule was
+sealed. It defines its palette as custom properties and carries a dark
+variant. The PDF is drawn on R's own device and paginates rather than
+truncating, so neither needs a package beyond base R.
+
+```{r}
+yoy_palettes()
+```
+
+`"safe"` is a blue/orange pair that survives both common forms of colour
+blindness; `"mono"` emits no colour at all, for print.
+
+```{r, include = FALSE}
+unlink(file.path(dir, paste0("placements.",
+                             c("csv", "tsv", "json", "md", "html", "pdf"))))
+```
