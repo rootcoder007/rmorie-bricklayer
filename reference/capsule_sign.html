@@ -85,7 +85,13 @@ key and ignored).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>bricklayer_signature</code>: <code>scheme</code>,
 <code>signature</code>, and for XMSS also <code>auth</code>, <code>index</code>,
-<code>root</code>, <code>height</code> and <code>key_state</code>.</p>
+<code>root</code>, <code>height</code>, <code>key_state</code>, <code>randomizer</code> (the
+per-signature <code>R</code> of RFC 8391, which a verifier needs and which
+therefore travels with the signature) and <code>wire</code> – the signature
+in the RFC's own byte order, <code>index || R || WOTS || auth</code>,
+hex-encoded. <code>wire</code> is byte-identical to what the XMSS reference
+implementation produces from the same key material, so it can be handed
+to another implementation as bytes.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

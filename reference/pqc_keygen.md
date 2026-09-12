@@ -8,7 +8,7 @@ algorithm breaks.
 ## Usage
 
 ``` r
-pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
+pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL, sk_prf = NULL)
 ```
 
 ## Arguments
@@ -17,10 +17,12 @@ pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
 
   Tree height, 1 to 16 (default 10, i.e. 1024 signatures).
 
-- sk_seed, pub_seed:
+- sk_seed, pub_seed, sk_prf:
 
-  64-character hex seeds (32 bytes each). Omit them and seeds are drawn
-  from the operating system's CSPRNG via
+  64-character hex seeds (32 bytes each) – the three secrets RFC 8391's
+  private key carries. `sk_seed` derives the WOTS+ chains, `pub_seed`
+  masks the hashes, and `sk_prf` keys the per-signature randomiser. Omit
+  them and they are drawn from the operating system's CSPRNG via
   [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md),
   which fails rather than falling back to R's reproducible generator.
   Supply them ONLY to reproduce a key deterministically in a test – a
@@ -29,8 +31,8 @@ pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
 ## Value
 
 A list of class `bricklayer_signing_key`: `root` (the public
-verification value), `pub_seed`, `sk_seed` (SECRET), `height`,
-`next_index`, `capacity`, and `scheme`.
+verification value), `pub_seed`, `sk_seed` (SECRET), `sk_prf` (SECRET),
+`height`, `next_index`, `capacity`, and `scheme`.
 
 ## A height-`h` key signs exactly `2^h` messages
 
@@ -46,6 +48,14 @@ Key generation walks all `2^height` leaves, so cost doubles with each
 unit of height. The default 10 gives 1024 signatures and takes a moment;
 heights above about 14 are slow enough to be worth avoiding unless the
 key really must last that long.
+
+## Key format
+
+A key made before the RFC 8391 conformance work carries no `sk_prf` and
+cannot sign;
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+raises rather than producing a signature no other implementation could
+read. Generate a new one.
 
 ## See also
 

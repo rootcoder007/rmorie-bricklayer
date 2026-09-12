@@ -34,7 +34,13 @@ capsule_sign(message, key, scheme = NULL)
 ## Value
 
 A list of class `bricklayer_signature`: `scheme`, `signature`, and for
-XMSS also `auth`, `index`, `root`, `height` and `key_state`.
+XMSS also `auth`, `index`, `root`, `height`, `key_state`, `randomizer`
+(the per-signature `R` of RFC 8391, which a verifier needs and which
+therefore travels with the signature) and `wire` – the signature in the
+RFC's own byte order, `index || R || WOTS || auth`, hex-encoded. `wire`
+is byte-identical to what the XMSS reference implementation produces
+from the same key material, so it can be handed to another
+implementation as bytes.
 
 ## Details
 

@@ -140,7 +140,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3</span></span>
+<span><span class="co">#&gt;   root       ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -153,7 +153,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3</span></span>
+<span><span class="co">#&gt;   root    ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -313,14 +313,20 @@ SHA-512 against FIPS 180-4, HMAC-SHA-256 against RFC 4231, PBKDF2
 against the published vectors, BLAKE2b against RFC 7693, CRC-32 against
 the ITU V.42 check value.</p>
 <p>The XMSS signature scheme is the exception. No official RFC 8391
-known-answer vectors were available offline when it was written, so it
-is verified against its security properties instead – a genuine
+known-answer vectors ship with the RFC itself, which carries only XDR
+formats. The check is instead made against the <strong>reference
+implementation</strong>: the whole 2500-byte signature for
+XMSS-SHA2_10_256 – index, randomiser, WOTS+ signature and authentication
+path – is byte-identical to what
+<code>github.com/XMSS/xmss-reference</code> produces from the same key
+material, and those vectors are embedded in the test suite so the check
+needs no network. A signature written here can therefore be handed to
+another XMSS implementation as bytes.</p>
+<p>It is verified against its security properties as well: a genuine
 signature verifies, and every tampering of the message, the signature,
-the authentication path, the leaf index or the key fails. It follows the
-RFC’s construction, but it is <strong>not</strong> claimed to be
-byte-compatible with other XMSS implementations, and it is not
-certified. Within this ecosystem the same package signs and verifies,
-which is the use case it is built for.</p>
+the authentication path, the leaf index or the key fails. The scheme is
+not <em>certified</em>, which is a statement about process rather than
+about the bytes.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

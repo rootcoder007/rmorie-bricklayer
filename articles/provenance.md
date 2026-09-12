@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3
+#>   root       ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3
+#>   root    ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -306,11 +306,17 @@ against the published vectors, BLAKE2b against RFC 7693, CRC-32 against
 the ITU V.42 check value.
 
 The XMSS signature scheme is the exception. No official RFC 8391
-known-answer vectors were available offline when it was written, so it
-is verified against its security properties instead – a genuine
+known-answer vectors ship with the RFC itself, which carries only XDR
+formats. The check is instead made against the **reference
+implementation**: the whole 2500-byte signature for XMSS-SHA2_10_256 –
+index, randomiser, WOTS+ signature and authentication path – is
+byte-identical to what `github.com/XMSS/xmss-reference` produces from
+the same key material, and those vectors are embedded in the test suite
+so the check needs no network. A signature written here can therefore be
+handed to another XMSS implementation as bytes.
+
+It is verified against its security properties as well: a genuine
 signature verifies, and every tampering of the message, the signature,
-the authentication path, the leaf index or the key fails. It follows the
-RFC’s construction, but it is **not** claimed to be byte-compatible with
-other XMSS implementations, and it is not certified. Within this
-ecosystem the same package signs and verifies, which is the use case it
-is built for.
+the authentication path, the leaf index or the key fails. The scheme is
+not *certified*, which is a statement about process rather than about
+the bytes.
