@@ -5,4 +5,7 @@ CXX_STD = CXX17
 # the right order. -DCURL_STATICLIB stops curl.h from marking the API as
 # __declspec(dllimport) (the "undefined reference to __imp_curl_*" errors).
 PKG_CPPFLAGS = -DCURL_STATICLIB $(shell pkg-config --cflags libcurl 2>/dev/null)
-PKG_LIBS = $(shell pkg-config --libs --static libcurl 2>/dev/null)
+# -ladvapi32 for RtlGenRandom (SystemFunction036), the Windows CSPRNG
+# that random_bytes() reads. Without it a signing key has no unguessable
+# source of bytes on Windows.
+PKG_LIBS = $(shell pkg-config --libs --static libcurl 2>/dev/null) -ladvapi32

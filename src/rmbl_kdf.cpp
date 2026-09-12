@@ -19,6 +19,23 @@
  *     construction), and produces any digest length from 1 to 64 bytes.
  */
 
+#if defined(_WIN32)
+/* Before the R headers: windows.h and R both define TRUE/FALSE, and
+ * windows.h additionally defines ERROR, which R_ext uses as an enum
+ * name. Including it first and then dropping the offending macros is
+ * the order that compiles cleanly. */
+#include <windows.h>
+/* RtlGenRandom, the Windows CSPRNG. advapi32 exports it as
+ * SystemFunction036 with no public header, so it is declared here --
+ * the documented way to reach it, and it avoids pulling in bcrypt for a
+ * handful of bytes. */
+extern "C" BOOLEAN NTAPI SystemFunction036(PVOID buffer, ULONG length);
+#undef ERROR
+#undef TRUE
+#undef FALSE
+#undef length
+#endif
+
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
@@ -235,7 +252,18 @@ void rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
  * back to something guessable. */
 int rmbl_os_random(unsigned char *out, size_t n) {
 #if defined(_WIN32)
-    return -1;   /* the R layer uses the Windows API instead */
+    /* ULONG is 32-bit, so a very large request has to be filled in
+     * chunks rather than truncated. */
+    size_t done = 0;
+    while (done < n) {
+        const size_t want = (n - done > 0x10000000u) ? 0x10000000u
+                                                     : (n - done);
+        if (!SystemFunction036(out + done, static_cast<ULONG>(want))) {
+            return -1;
+        }
+        done += want;
+    }
+    return 0;
 #else
     FILE *f = std::fopen("/dev/urandom", "rb");
     if (f == NULL) return -1;

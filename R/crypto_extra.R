@@ -7,7 +7,8 @@
 #' Cryptographically strong random bytes
 #'
 #' Reads the operating system's own random source -- `/dev/urandom` on
-#' Unix and macOS -- rather than R's Mersenne Twister.
+#' Unix and macOS, `RtlGenRandom` on Windows -- rather than R's Mersenne
+#' Twister.
 #'
 #' This distinction matters for anything that becomes a key.
 #' [set.seed()] makes R's generator reproducible BY DESIGN, and its state
