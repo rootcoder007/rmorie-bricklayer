@@ -7,19 +7,21 @@
 fiscal_year_label(end_year, sep = "/", short = TRUE)
 }
 \arguments{
-\item{end_year}{The fiscal year's end year, as a number or a string.}
+\item{end_year}{The fiscal year's end year, as a number
+or a string.}
 
 \item{sep}{Separator between the two years.}
 
-\item{short}{Whether to abbreviate the second year to two digits.}
+\item{short}{Whether to abbreviate the second year to two
+digits.}
 }
 \value{
 A character vector of labels.
 }
 \description{
-Ontario's inmate data keys on the fiscal year's END year, so 2023 is
-the fiscal year running from April 2022 to March 2023. This renders
-that as \code{"2022/23"}.
+Ontario's inmate data keys on the fiscal year's END year, so 2023 is the
+fiscal year running from April 2022 to March 2023. This renders that as
+\code{"2022/23"}.
 }
 \examples{
 fiscal_year_label(2019:2023)

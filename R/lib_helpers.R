@@ -5,11 +5,10 @@
 
 #' Compute a File's SHA256 Digest
 #'
-#' Returns the SHA256 digest of a file as a lowercase hex string,
-#' computed by the package's own compiled SHA-256 core (or, when the
-#' file is sourced standalone inside a capsule bundle, by the pure-R
-#' FIPS 180-4 implementation it ships). Used to record and verify data
-#' provenance.
+#' Returns the SHA256 digest of a file as a lowercase hex string, computed
+#' by the package's own compiled SHA-256 core (or, when the file is sourced
+#' standalone inside a capsule bundle, by the pure-R FIPS 180-4
+#' implementation it ships). Used to record and verify data provenance.
 #'
 #' @param path Path to the file to hash.
 #' @return The SHA256 digest as a character string.
@@ -45,10 +44,11 @@ sha256_file <- function(path) {
 #' Transliterate Text to Plain ASCII
 #'
 #' Converts a character vector to plain 7-bit ASCII, transliterating
-#' accented or non-Latin characters to their nearest ASCII equivalent
-#' (for example, an accented capital A becomes a plain "A"). Falls back to dropping
-#' any character that has no transliteration. This is the deterministic
-#' "fallback" used by [ascii_fallback()].
+#' accented or non-Latin characters to their nearest ASCII equivalent (for
+#' example, an accented capital A becomes a plain "A"). Falls back to
+#' dropping any character that has no transliteration. This is the
+#' deterministic "fallback" used by
+#' [ascii_fallback()].
 #'
 #' @param x A character vector.
 #' @return A character vector containing only ASCII characters.
@@ -138,17 +138,20 @@ to_ascii <- function(x) {
 
 #' Use Text As-Is, Falling Back to ASCII When It Cannot Be Represented
 #'
-#' Returns `x` unchanged when it is valid, well-formed text (so legitimate
-#' UTF-8 such as an accented name is preserved), and only transliterates to
-#' plain ASCII via [to_ascii()] when the text is not valid UTF-8 (an
-#' encoding error) or when `force = TRUE` (for ASCII-only destinations such
-#' as a package `DESCRIPTION`). This lets author and supervisor names keep
-#' their accents wherever UTF-8 is supported while degrading gracefully
-#' instead of erroring where it is not.
+#' Returns `x` unchanged when it is valid, well-formed text (so
+#' legitimate UTF-8 such as an accented name is preserved), and only
+#' transliterates to plain ASCII via [to_ascii()]
+#' when the text is not valid UTF-8 (an encoding error) or when
+#' `force = TRUE` (for ASCII-only destinations such as a package
+#' `DESCRIPTION`) . This lets author and supervisor names keep their
+#' accents wherever UTF-8 is supported while degrading gracefully instead
+#' of erroring where it is not.
 #'
 #' @param x A character vector.
-#' @param force Logical; always transliterate to ASCII (default `FALSE`).
-#' @return A character vector: `x` where it can be represented, ASCII otherwise.
+#' @param force Logical; always transliterate to ASCII
+#' (default `FALSE`) .
+#' @return A character vector: `x` where it can be represented, ASCII
+#' otherwise.
 #' @export
 #' @examples
 #' # By default valid UTF-8 is preserved (accents kept where supported).
@@ -174,10 +177,11 @@ ascii_fallback <- function(x, force = FALSE) {
 
 #' Write Text as UTF-8, Falling Back to ASCII on an Encoding Error
 #'
-#' Writes `text` to `path` as UTF-8. If the write raises an encoding error
-#' (for example a destination or locale that cannot represent the
-#' characters), it retries with an ASCII transliteration produced by
-#' [to_ascii()] so capsule generation never fails on a non-ASCII name.
+#' Writes `text` to `path` as UTF-8. If the write raises an
+#' encoding error (for example a destination or locale that cannot
+#' represent the characters), it retries with an ASCII transliteration
+#' produced by [to_ascii()] so capsule generation
+#' never fails on a non-ASCII name.
 #'
 #' @param text A character vector of lines to write.
 #' @param path Destination file path.

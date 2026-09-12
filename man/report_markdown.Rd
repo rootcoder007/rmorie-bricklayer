@@ -9,8 +9,8 @@ report_markdown(report, path = NULL, title = "Capsule report")
 \arguments{
 \item{report}{A \code{bricklayer_report}.}
 
-\item{path}{Optional file to write. Without one the lines are
-returned.}
+\item{path}{Optional file to write. Without one the lines
+are returned.}
 
 \item{title}{Heading for the document.}
 }
@@ -18,9 +18,9 @@ returned.}
 The Markdown lines, invisibly when written to a file.
 }
 \description{
-Renders a \code{\link[=capsule_report]{capsule_report()}} as Markdown, so the assessment can travel
-with the capsule instead of living in a console someone has since
-closed.
+Renders a \code{\link[=capsule_report]{capsule_report()}} as Markdown,
+so the assessment can travel with the capsule instead of living in a
+console someone has since closed.
 }
 \examples{
 set.seed(1)

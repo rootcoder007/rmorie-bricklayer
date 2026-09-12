@@ -11,8 +11,9 @@ bricklayer_fetch(url, dest, wayback = "", timeout = 120L)
 
 \item{dest}{Destination file path.}
 
-\item{wayback}{Optional explicit Wayback snapshot URL. \code{""}
-(default) auto-resolves one via \code{\link{wayback_snapshot_url}}.}
+\item{wayback}{Optional explicit Wayback snapshot URL.
+\code{""} (default) auto-resolves one via
+\code{\link{wayback_snapshot_url}}.}
 
 \item{timeout}{Per-request timeout, seconds.}
 }
@@ -39,7 +40,8 @@ dst <- tempfile(fileext = ".xlsx")
 
 # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 try(bricklayer_fetch(
-  "https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx",
+  paste0("https://www.cihi.ca/sites/default/files/document/",
+         "hospital-beds-2024-2025-data-tables-en.xlsx"),
   dst))
 
 # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.

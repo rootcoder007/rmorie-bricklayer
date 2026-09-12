@@ -17,30 +17,33 @@ trend_test(
 \arguments{
 \item{y}{The series, in period order, or a data frame.}
 
-\item{x}{The periods. Defaults to the position, which is right for an
-evenly spaced series.}
+\item{x}{The periods. Defaults to the position, which is right
+for an evenly spaced series.}
 
-\item{value, period}{Column names, when \code{y} is a data frame.}
+\item{value, period}{Column names, when \code{y} is a
+data frame.}
 
-\item{exact}{Whether to compute the exact null distribution of
-Mann-Kendall's S by enumeration. Feasible and used by default up to
-\code{n = 8} (40,320 orderings); above that the normal approximation with
-the tie and continuity corrections is used.}
+\item{exact}{Whether to compute the exact null distribution
+of Mann-Kendall's S by enumeration. Feasible and used by default up to
+\code{n = 8} (40,320 orderings); above that the normal approximation
+with the tie and continuity corrections is used.}
 
-\item{alternative}{\code{"two.sided"}, \code{"increasing"} or \code{"decreasing"}.}
+\item{alternative}{\code{"two.sided"},
+\code{"increasing"} or \code{"decreasing"}.}
 
-\item{conf_level}{Confidence level for the slope interval.}
+\item{conf_level}{Confidence level for the slope
+interval.}
 }
 \value{
-A list with \code{S}, \code{tau}, \code{p_value}, \code{slope} (Theil-Sen),
-\code{intercept}, \code{slope_lower}/\code{slope_upper} (the distribution-free
-interval), \code{n} and \code{method}.
+A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
+(Theil-Sen), \code{intercept}, \code{slope_lower} / \code{slope_upper}
+(the distribution-free interval), \code{n} and \code{method}.
 }
 \description{
 The Mann-Kendall rank test for monotone trend with the Theil-Sen
-median-of-slopes estimator: no distributional assumption, resistant to
-a single aberrant period, and meaningful at the series lengths an
-annual administrative extract actually has.
+median-of-slopes estimator: no distributional assumption, resistant to a
+single aberrant period, and meaningful at the series lengths an annual
+administrative extract actually has.
 }
 \details{
 Kendall's tau here is S over the number of comparable pairs, so it is
@@ -48,8 +51,8 @@ the rank correlation between the value and the period.
 
 The slope interval is the standard rank-based one: the pairwise slopes
 are sorted and the interval runs between the order statistics that
-Mann-Kendall's variance places at the chosen level, so it is
-consistent with the test rather than derived from a different model.
+Mann-Kendall's variance places at the chosen level, so it is consistent
+with the test rather than derived from a different model.
 }
 \examples{
 # Five years of placements.
@@ -73,11 +76,12 @@ Kendall's tau. \emph{Journal of the American Statistical Association}
 63(324), 1379-1389, for the median-of-slopes estimator and the
 distribution-free interval.
 
-Wilcox, R. R. \emph{Modern Statistics for the Social and Behavioral
-Sciences: A Practical Introduction} treats Theil-Sen among the
-regression methods that carry no normality assumption, which is the
-reason for preferring it on a series this short.
+Wilcox, R. R. \emph{Modern Statistics for the Social and Behavioral Sciences:
+A Practical Introduction} treats Theil-Sen among the regression methods
+that carry no normality assumption, which is the reason for preferring
+it on a series this short.
 }
 \seealso{
-\code{\link[=step_change]{step_change()}}, \code{\link[=count_trend]{count_trend()}}
+\code{\link[=step_change]{step_change()}},
+\code{\link[=count_trend]{count_trend()}}
 }

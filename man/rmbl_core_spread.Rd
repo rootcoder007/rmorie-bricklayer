@@ -11,23 +11,26 @@ core_sd(x, ddof = 1L)
 core_dist(a, b)
 }
 \arguments{
-\item{x, a, b}{Numeric vectors (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
+\item{x, a, b}{Numeric vectors (coerced with
+\code{\link[=as.numeric]{as.numeric()}}) .}
 
-\item{ddof}{Denominator degrees of freedom. The default \code{1} gives the
-sample standard deviation, matching \code{\link[stats:sd]{stats::sd()}}; \code{0} gives the
-population figure.}
+\item{ddof}{Denominator degrees of freedom. The default
+\code{1} gives the sample standard deviation, matching
+\code{\link[stats:sd]{stats::sd()}}; \code{0} gives the population
+figure.}
 }
 \value{
 A length-1 numeric.
 }
 \description{
-\code{core_sd()} is the square root of the variance computed by the shared
-core; \code{core_dist()} is the Euclidean distance between two equal-length
-vectors.
+\code{core_sd()} is the square root of the variance computed by the
+shared core; \code{core_dist()} is the Euclidean distance between two
+equal-length vectors.
 }
 \details{
-NA/NaN propagate -- there is no \code{na.rm}. Call \code{\link[stats:na.omit]{stats::na.omit()}} first
-if you need NA handling.
+NA/NaN propagate -- there is no \code{na.rm}. Call
+\code{\link[stats:na.omit]{stats::na.omit()}} first if you need NA
+handling.
 }
 \examples{
 # Sample standard deviation, matching stats::sd().
@@ -43,6 +46,6 @@ core_dist(c(0, 0), c(3, 4))     # 5
 core_dist(1:5, 1:5)             # 0 -- a point is zero from itself
 }
 \seealso{
-\code{\link[=core_moments]{core_moments()}} for the mean, variance, skewness and
-kurtosis in a single pass.
+\code{\link[=core_moments]{core_moments()}} for the mean, variance,
+skewness and kurtosis in a single pass.
 }

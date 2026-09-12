@@ -15,9 +15,9 @@ per element for character input; length-1 for raw input).
 }
 \description{
 Hashes character or raw input with the self-contained SHA-256 in the
-\code{rmoriebricklayer} core. For a character vector each element is hashed
-as its UTF-8/native bytes; for a raw vector the raw bytes are hashed.
-This is the same routine sibling packages use for provenance via
+\code{rmoriebricklayer} core. For a character vector each element is
+hashed as its UTF-8/native bytes; for a raw vector the raw bytes are
+hashed. This is the same routine sibling packages use for provenance via
 \code{LinkingTo: rmoriebricklayer}.
 }
 \examples{

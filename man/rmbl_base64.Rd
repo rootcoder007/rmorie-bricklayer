@@ -17,13 +17,13 @@ bricklayer_json_base64url_enc(input)
 bricklayer_json_base64url_dec(input)
 }
 \arguments{
-\item{input}{For the encoders, a raw vector or a character vector
-(joined with newlines first). For the decoders, base64 text or its
-raw bytes.}
+\item{input}{For the encoders, a raw vector or a character
+vector (joined with newlines first). For the decoders, base64 text or
+its raw bytes.}
 }
 \value{
-The encoders return a length-1 character vector
-(\code{NA_character_} for \code{NULL} input); the decoders return a raw
+The encoders return a length-1 character vector (
+\code{NA_character_} for \code{NULL} input); the decoders return a raw
 vector.
 }
 \description{
@@ -33,17 +33,17 @@ embed binary content in a text manifest wherever this package runs.
 }
 \details{
 \code{bricklayer_json_base64_enc()} breaks its output into 72-character
-lines, matching jsonlite's encoder; the decoder ignores line breaks
-and any other character outside the alphabet, so either form round
-trips.
+lines, matching jsonlite's encoder; the decoder ignores line breaks and
+any other character outside the alphabet, so either form round trips.
 
-The URL-safe variant substitutes \code{-} and \verb{_} for \code{+} and \code{/} and
-drops the \code{=} padding, which is what makes it safe in a URL path, a
-query string or a filename.
+The URL-safe variant substitutes \code{-} and \verb{_} for \code{+} and
+\code{/} and drops the \code{=} padding, which is what makes it safe in
+a URL path, a query string or a filename.
 
-Base64 is an ENCODING, not encryption or a digest: it hides nothing
-and anyone can reverse it. Use \code{\link[=core_sha256]{core_sha256()}} to pin content and
-\code{\link[=core_hmac_sha256]{core_hmac_sha256()}} to authenticate it.
+Base64 is an ENCODING, not encryption or a digest: it hides nothing and
+anyone can reverse it. Use \code{\link[=core_sha256]{core_sha256()}} to
+pin content and \code{\link[=core_hmac_sha256]{core_hmac_sha256()}} to
+authenticate it.
 }
 \examples{
 # Round trip through the standard alphabet.
@@ -73,5 +73,6 @@ grepl("\n", long)
 rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
 }
 \seealso{
-\code{\link[=json_gzip_encode]{json_gzip_encode()}}, which composes this with gzip.
+\code{\link[=json_gzip_encode]{json_gzip_encode()}}, which composes this
+with gzip.
 }

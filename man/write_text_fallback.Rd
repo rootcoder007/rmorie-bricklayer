@@ -15,10 +15,11 @@ write_text_fallback(text, path)
 Invisibly, \code{path}.
 }
 \description{
-Writes \code{text} to \code{path} as UTF-8. If the write raises an encoding error
-(for example a destination or locale that cannot represent the
-characters), it retries with an ASCII transliteration produced by
-\code{\link[=to_ascii]{to_ascii()}} so capsule generation never fails on a non-ASCII name.
+Writes \code{text} to \code{path} as UTF-8. If the write raises an
+encoding error (for example a destination or locale that cannot
+represent the characters), it retries with an ASCII transliteration
+produced by \code{\link[=to_ascii]{to_ascii()}} so capsule generation
+never fails on a non-ASCII name.
 }
 \examples{
 p <- write_text_fallback(c("line one", "line two"),

@@ -11,7 +11,8 @@ core_normal_logpdf(x, mean = 0, sd = 1)
 
 \item{mean}{Distribution mean (length-1, default 0).}
 
-\item{sd}{Distribution standard deviation (length-1, default 1, > 0).}
+\item{sd}{Distribution standard deviation (length-1, default
+1, > 0).}
 }
 \value{
 A numeric vector the length of \code{x}. Equivalent to

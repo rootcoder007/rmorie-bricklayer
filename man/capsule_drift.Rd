@@ -18,49 +18,52 @@ capsule_drift(
 
 \item{current}{Data frame just fetched.}
 
-\item{alpha}{Significance level for the \code{drifted} flag (default 0.01;
-deliberately stricter than 0.05 because a wide table runs many
-tests).}
+\item{alpha}{Significance level for the \code{drifted} flag
+(default 0.01; deliberately stricter than 0.05 because a wide table runs
+many tests).}
 
-\item{psi_threshold}{PSI above which a numeric column is flagged even
-when its p-value is not significant (default 0.25, the conventional
-"material shift" line).}
+\item{psi_threshold}{PSI above which a numeric
+column is flagged even when its p-value is not significant (default
+0.25, the conventional "material shift" line).}
 
-\item{psi_min_n}{Minimum size BOTH samples must reach before
-\code{psi_threshold} is allowed to flag a column on its own (default
-1000). The PSI bands are large-sample heuristics with no calibrated
-null distribution: on a few hundred rows, binning noise alone
-routinely pushes the index past 0.25, so applying the threshold
-there manufactures drift. Below this size the flag rests on the
-Kolmogorov-Smirnov p-value, which is calibrated, and the PSI is
-still reported as an effect size.}
+\item{psi_min_n}{Minimum size BOTH samples must reach
+before \code{psi_threshold} is allowed to flag a column on its own
+(default 1000). The PSI bands are large-sample heuristics with no
+calibrated null distribution: on a few hundred rows, binning noise alone
+routinely pushes the index past 0.25, so applying the threshold there
+manufactures drift. Below this size the flag rests on the
+Kolmogorov-Smirnov p-value, which is calibrated, and the PSI is still
+reported as an effect size.}
 
-\item{bins}{Bins passed to \code{\link[=drift_psi]{drift_psi()}} (default 10).}
+\item{bins}{Bins passed to
+\code{\link[=drift_psi]{drift_psi()}} (default 10).}
 }
 \value{
-A list of class \code{bricklayer_drift}: \code{columns} (a data frame,
-one row per shared column, with \code{column}, \code{type}, \code{statistic},
-\code{p_value}, \code{psi}, \code{js_divergence} and \code{drifted}), \code{added},
-\code{removed}, \code{n_reference}, \code{n_current}, \code{alpha}, and \code{any_drift}.
+A list of class \code{bricklayer_drift}: \code{columns} (a data
+frame, one row per shared column, with \code{column}, \code{type},
+\code{statistic}, \code{p_value}, \code{psi}, \code{js_divergence} and
+\code{drifted}) , \code{added}, \code{removed}, \code{n_reference},
+\code{n_current}, \code{alpha}, and \code{any_drift}.
 }
 \description{
-Runs the appropriate drift test on every shared column and collects
-the verdicts in one report: \code{\link[=drift_ks]{drift_ks()}} plus \code{\link[=drift_psi]{drift_psi()}} for a
-numeric column, \code{\link[=drift_homogeneity]{drift_homogeneity()}} for a categorical one. Columns
-that appeared or vanished are listed separately, since no test applies
-to them.
+Runs the appropriate drift test on every shared column and collects the
+verdicts in one report: \code{\link[=drift_ks]{drift_ks()}} plus
+\code{\link[=drift_psi]{drift_psi()}} for a numeric column,
+\code{\link[=drift_homogeneity]{drift_homogeneity()}} for a categorical
+one. Columns that appeared or vanished are listed separately, since no
+test applies to them.
 }
 \details{
 The categorical test is the two-sample homogeneity test, NOT
-\code{\link[=drift_chisq]{drift_chisq()}}'s goodness-of-fit against a known distribution: the
-reference here is itself a finite sample, and ignoring its sampling
-error would report drift too readily.
+\code{\link[=drift_chisq]{drift_chisq()}} 's goodness-of-fit against a
+known distribution: the reference here is itself a finite sample, and
+ignoring its sampling error would report drift too readily.
 
 This is the check that a byte-level digest cannot make. A re-released
 extract legitimately has a different SHA-256 while being the same data
-statistically; conversely a column can keep its name, type and row
-count while having been silently rescaled. \code{capsule_drift()} asks
-whether the DATA moved.
+statistically; conversely a column can keep its name, type and row count
+while having been silently rescaled. \code{capsule_drift()} asks whether
+the DATA moved.
 }
 \examples{
 set.seed(5)
@@ -94,6 +97,6 @@ capsule_drift(ref, same)$columns$psi
 capsule_drift(ref, same[, c("value", "grade")])$removed
 }
 \seealso{
-\code{\link[=validate_schema]{validate_schema()}} for the structural check, which this
-complements rather than replaces.
+\code{\link[=validate_schema]{validate_schema()}} for the structural
+check, which this complements rather than replaces.
 }

@@ -16,32 +16,33 @@ band_sensitivity(
 \method{print}{rmbl_band_sensitivity}(x, ...)
 }
 \arguments{
-\item{bands}{A data frame from \code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
+\item{bands}{A data frame from
+\code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
 
 \item{counts}{How many units fall in each band.}
 
-\item{statistic}{A function of a numeric vector of per-unit values.
-Defaults to \code{\link[=gini]{gini()}}.}
+\item{statistic}{A function of a numeric vector of
+per-unit values. Defaults to \code{\link[=gini]{gini()}}.}
 
 \item{caps}{Caps to try for the open top band. Defaults to a
 geometric sweep from the band's lower bound to twenty times it.}
 
-\item{rule}{Passed to \code{\link[=band_values]{band_values()}}.}
+\item{rule}{Passed to
+\code{\link[=band_values]{band_values()}}.}
 
 \item{x}{An \code{rmbl_band_sensitivity} object.}
 
 \item{...}{Ignored.}
 }
 \value{
-A data frame of \code{cap} and \code{value}, with the span and the
-relative span attached as attributes and printed by
-\code{print()}.
+A data frame of \code{cap} and \code{value}, with the span and
+the relative span attached as attributes and printed by \code{print()}.
 }
 \description{
 Recomputes a statistic across a range of assumed caps for the open top
 band and reports how far the answer moves. Everything derived from
-banded data carries this dependence; the only question is whether it
-was measured.
+banded data carries this dependence; the only question is whether it was
+measured.
 }
 \examples{
 b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))

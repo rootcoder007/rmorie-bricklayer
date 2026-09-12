@@ -11,28 +11,28 @@ count_trend(y, x = NULL, offset = NULL, conf_level = 0.95)
 
 \item{x}{Periods. Defaults to the position.}
 
-\item{offset}{Exposure for each period -- a population, a number of
-admissions, a number of days. The trend is then in the rate rather
-than in the count.}
+\item{offset}{Exposure for each period -- a population, a
+number of admissions, a number of days. The trend is then in the rate
+rather than in the count.}
 
 \item{conf_level}{Confidence level for the rate ratio.}
 }
 \value{
 A list with \code{rate_ratio} (per period), its interval,
-\code{p_value}, the fitted values, the dispersion, and \code{overdispersed}.
+\code{p_value}, the fitted values, the dispersion, and
+\code{overdispersed}.
 }
 \description{
-Fits a Poisson log-linear trend by iteratively reweighted least
-squares and reports the multiplicative change per period, which is
-what a count series' trend actually is. An offset carries the
-denominator when the exposure varies.
+Fits a Poisson log-linear trend by iteratively reweighted least squares
+and reports the multiplicative change per period, which is what a count
+series' trend actually is. An offset carries the denominator when the
+exposure varies.
 }
 \details{
-The dispersion is reported because a Poisson fit assumes it is one.
-When it is well above one the interval is too narrow, and the
-quasi-Poisson interval -- which scales the standard error by the
-square root of the dispersion -- is returned instead, with
-\code{overdispersed} set.
+The dispersion is reported because a Poisson fit assumes it is one. When
+it is well above one the interval is too narrow, and the quasi-Poisson
+interval -- which scales the standard error by the square root of the
+dispersion -- is returned instead, with \code{overdispersed} set.
 }
 \examples{
 # A count falling by about 15\% a year.
@@ -43,4 +43,12 @@ round(fit$rate_ratio, 3)
 
 # With a varying denominator the trend is in the rate.
 count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
+}
+\references{
+Bilder, C. R. and Loughin, T. M. \emph{Analysis of Categorical Data with
+R}, 2nd edn. Chapman and Hall/CRC, on the quasi-likelihood treatment of
+an overdispersed Poisson fit: the variance is scaled by an estimated
+dispersion, which widens the interval while leaving the point estimate
+alone. That is the behaviour reported here through \code{dispersion} and
+\code{overdispersed}.
 }

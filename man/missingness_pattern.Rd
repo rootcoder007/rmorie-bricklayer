@@ -9,27 +9,29 @@ missingness_pattern(data, max_patterns = 20L)
 \arguments{
 \item{data}{A data frame.}
 
-\item{max_patterns}{Maximum patterns to return, most frequent first
-(default 20).}
+\item{max_patterns}{Maximum patterns to return, most
+frequent first (default 20).}
 }
 \value{
 A data frame of class \code{bricklayer_missingness}, one row per
-pattern: \code{pattern} (a string of \code{.} for present and \code{X} for
-missing, in column order), \code{n_rows}, \code{pct_rows}, \code{n_missing}
-(columns missing in that pattern), and \code{columns} (their names).
-Carries the column order as the \code{"columns"} attribute.
+pattern: \code{pattern} (a string of \code{.} for present and \code{X}
+for missing, in column order), \code{n_rows}, \code{pct_rows},
+\code{n_missing} (columns missing in that pattern), and \code{columns}
+(their names). Carries the column order as the \code{"columns"}
+attribute.
 }
 \description{
-Counts the distinct PATTERNS of missingness across rows, rather than
-the per-column rates \code{\link[=profile_columns]{profile_columns()}} reports.
+Counts the distinct PATTERNS of missingness across rows, rather than the
+per-column rates \code{\link[=profile_columns]{profile_columns()}}
+reports.
 }
 \details{
 The distinction decides what to do about the gaps. Two columns each 30\%
 missing at random need different handling from two columns 30\% missing
 in THE SAME rows -- the second is one structural gap (a join that
 failed, a form section nobody filled in) and often means those rows
-should be dropped or modelled separately, while the first does not.
-A per-column rate cannot tell the two apart; this can.
+should be dropped or modelled separately, while the first does not. A
+per-column rate cannot tell the two apart; this can.
 }
 \examples{
 # Two columns missing in the SAME rows: one structural gap.
@@ -52,5 +54,6 @@ missingness_pattern(scattered)
 missingness_pattern(data.frame(x = 1:3, y = 4:6))
 }
 \seealso{
-\code{\link[=profile_columns]{profile_columns()}} for per-column rates.
+\code{\link[=profile_columns]{profile_columns()}} for
+per-column rates.
 }

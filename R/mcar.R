@@ -101,14 +101,14 @@
 
 #' Little's test for data missing completely at random
 #'
-#' Tests the MCAR assumption: that whether a value is missing is
-#' unrelated to any value in the data, observed or not.
+#' Tests the MCAR assumption: that whether a value is missing is unrelated
+#' to any value in the data, observed or not.
 #'
 #' The assumption matters because it is what licenses the easy options.
 #' Dropping incomplete rows is unbiased under MCAR and biased otherwise;
-#' mean imputation understates variance under MCAR and distorts the
-#' centre as well otherwise. A small p-value here says the easy options
-#' are not available.
+#' mean imputation understates variance under MCAR and distorts the centre
+#' as well otherwise. A small p-value here says the easy options are not
+#' available.
 #'
 #' # How it works
 #'
@@ -124,47 +124,51 @@
 #' The overall \eqn{\hat\mu} and \eqn{\hat\Sigma} are the
 #' MAXIMUM-LIKELIHOOD estimates under multivariate normality WITH the
 #' missing data, obtained by expectation-maximisation -- not the
-#' complete-case estimates, which would already embed the bias the test
-#' is looking for.
+#' complete-case estimates, which would already embed the bias the test is
+#' looking for.
 #'
 #' # What it cannot do
 #'
-#' A large p-value is NOT evidence that the data are MCAR; it is a
-#' failure to detect a departure, and the test has little power on small
-#' samples or with many patterns. The test also assumes multivariate
-#' normality, so on markedly non-normal columns a rejection may be
-#' telling you about the distribution rather than the missingness.
+#' A large p-value is NOT evidence that the data are MCAR; it is a failure
+#' to detect a departure, and the test has little power on small samples or
+#' with many patterns. The test also assumes multivariate normality, so on
+#' markedly non-normal columns a rejection may be telling you about the
+#' distribution rather than the missingness.
 #'
 #' Neither this test nor any other can distinguish missing-at-random from
 #' missing-NOT-at-random, because that distinction depends on the values
-#' that were never observed. Only knowledge of how the data were
-#' collected settles it.
+#' that were never observed. Only knowledge of how the data were collected
+#' settles it.
 #'
-#' Collinear or constant columns are refused rather than worked around:
-#' the likelihood is degenerate there, and the EM step's eigenvalue floor
-#' would otherwise return a statistic governed by that floor instead of
-#' by the data.
+#' Collinear or constant columns are refused rather than worked around: the
+#' likelihood is degenerate there, and the EM step's eigenvalue floor would
+#' otherwise return a statistic governed by that floor instead of by the
+#' data.
 #'
-#' @param data A data frame or numeric matrix. Non-numeric columns are
-#'   dropped with a warning, since the statistic is defined on moments.
+#' @param data A data frame or numeric matrix. Non-numeric
+#' columns are dropped with a warning, since the statistic is defined on
+#' moments.
 #' @param max_iter Maximum EM iterations (default 500).
-#' @param tol Convergence tolerance on the largest parameter change
-#'   (default 1e-7).
-#' @return A list of class `bricklayer_mcar`: `statistic`, `df`,
-#'   `p_value`, `n_patterns`, `n_used`, `n_vars`, `iterations`,
-#'   `mu`, `sigma`, and `note` (a caveat when the test is degenerate).
-#'   With complete data `df` is 0 and `p_value` is `NA` -- there is
-#'   nothing to test.
+#' @param tol Convergence tolerance on the largest parameter
+#' change (default 1e-7).
+#' @return A list of class `bricklayer_mcar`: `statistic`,
+#' `df`, `p_value`, `n_patterns`, `n_used`,
+#' `n_vars`, `iterations`, `mu`, `sigma`, and
+#' `note` (a caveat when the test is degenerate). With complete data
+#' `df` is 0 and `p_value` is `NA` -- there is nothing to
+#' test.
 #' @references Little RJA (1988). A test of missing completely at random
-#'   for multivariate data with missing values. *Journal of the American
-#'   Statistical Association* 83(404), 1198--1202.
+#' for multivariate data with missing values. *Journal of the American
+#' Statistical Association* 83(404), 1198--1202.
 #'   \doi{10.1080/01621459.1988.10478722}
 #'
-#'   Dempster AP, Laird NM, Rubin DB (1977). Maximum likelihood from
-#'   incomplete data via the EM algorithm. *Journal of the Royal
-#'   Statistical Society B* 39(1), 1--38.
-#' @seealso [missingness_pattern()] for the patterns themselves,
-#'   [missingness_summary()] for the rates.
+#' Dempster AP, Laird NM, Rubin DB (1977). Maximum likelihood from
+#' incomplete data via the EM algorithm. *Journal of the Royal Statistical
+#' Society B* 39(1), 1--38.
+#' @seealso
+#' [missingness_pattern()] for the
+#' patterns themselves,
+#' [missingness_summary()] for the rates.
 #' @examples
 #' set.seed(1)
 #' n <- 300

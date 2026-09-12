@@ -10,7 +10,7 @@ drift_ks(x, y)
 \item{x, y}{Numeric vectors, the reference and the new sample.}
 }
 \value{
-A named length-3 numeric: \code{statistic} (the KS \eqn{D}),
+A named length-3 numeric: \code{statistic} (the KS \eqn{D}) ,
 \code{p_value}, and \code{n_eff} (the harmonic-style effective size
 \eqn{n_xn_y/(n_x+n_y)}).
 }
@@ -22,12 +22,12 @@ either sample, which is what makes it the right first test on a column
 whose distribution was never specified.
 }
 \details{
-The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1}
-e^{-2k^2t^2}} with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate
-for moderate samples and conservative for small ones; for an exact
-small-sample p-value use \code{\link[stats:ks.test]{stats::ks.test()}}. Ties are handled by
-comparing the two EDFs at each distinct value, so tied data does not
-produce a warning the way \code{ks.test()} does.
+The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1} e^{-2k^2t^2}}
+with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate for moderate
+samples and conservative for small ones; for an exact small-sample
+p-value use \code{\link[stats:ks.test]{stats::ks.test()}}. Ties are
+handled by comparing the two EDFs at each distinct value, so tied data
+does not produce a warning the way \code{ks.test()} does.
 }
 \examples{
 set.seed(1)
@@ -51,5 +51,7 @@ all.equal(drift_ks(a, b)[["statistic"]],
 drift_ks(ref, ref)[["statistic"]]
 }
 \seealso{
-\code{\link[=drift_psi]{drift_psi()}}, \code{\link[=drift_chisq]{drift_chisq()}}, \code{\link[=capsule_drift]{capsule_drift()}}
+\code{\link[=drift_psi]{drift_psi()}},
+\code{\link[=drift_chisq]{drift_chisq()}},
+\code{\link[=capsule_drift]{capsule_drift()}}
 }

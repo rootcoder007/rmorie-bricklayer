@@ -6,41 +6,45 @@
 #' Multivariate outliers by Mahalanobis distance
 #'
 #' Ranks rows by how far they sit from the centre of the data ONCE THE
-#' CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check
-#' cannot do: a row can be unremarkable on every variable separately and
-#' still be impossible jointly -- a person 1.5 m tall weighing 140 kg is
-#' inside both marginal ranges and outside the cloud.
+#' CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
+#' do: a row can be unremarkable on every variable separately and still be
+#' impossible jointly -- a person 1.5 m tall weighing 140 kg is inside both
+#' marginal ranges and outside the cloud.
 #'
-#' Under multivariate normality the squared distance is chi-square on `p`
-#' degrees of freedom, which gives the p-value and the cut-off.
+#' Under multivariate normality the squared distance is chi-square on
+#' `p` degrees of freedom, which gives the p-value and the cut-off.
 #'
-#' `robust = TRUE` centres on the coordinate-wise median and scales by a
-#' MAD-based covariance instead of the mean and sample covariance. This
+#' `robust = TRUE` centres on the coordinate-wise median and scales by
+#' a MAD-based covariance instead of the mean and sample covariance. This
 #' matters more than it sounds: outliers inflate the very covariance used
 #' to judge them, so with several of them the classical distance hides
 #' exactly the rows it is meant to find (the masking effect).
 #'
-#' Exactly collinear columns are refused rather than repaired: the
-#' distance is undefined there, and flooring the covariance's eigenvalues
-#' to make it invertible would return numbers governed by the floor
-#' rather than by the data. Drop the redundant column first --
+#' Exactly collinear columns are refused rather than repaired: the distance
+#' is undefined there, and flooring the covariance's eigenvalues to make it
+#' invertible would return numbers governed by the floor rather than by the
+#' data. Drop the redundant column first --
 #' [top_correlations()] will identify it.
 #'
-#' @param data A data frame or numeric matrix; non-numeric columns are
-#'   dropped. Rows with any missing value are skipped, and reported as
-#'   `NA`.
-#' @param alpha Significance level for the `outlier` flag (default
-#'   0.001, deliberately strict: at 0.05 one row in twenty is flagged by
-#'   construction).
-#' @param robust Use the median/MAD centre and scale (default `TRUE`).
-#' @return A data frame of class `bricklayer_outliers` with `row`,
-#'   `distance` (the square root of the squared Mahalanobis distance),
-#'   `p_value` and `outlier`, ordered by descending distance.
+#' @param data A data frame or numeric matrix; non-numeric
+#' columns are dropped. Rows with any missing value are skipped, and
+#' reported as `NA`.
+#' @param alpha Significance level for the `outlier` flag
+#' (default 0.001, deliberately strict: at 0.05 one row in twenty is
+#' flagged by construction).
+#' @param robust Use the median/MAD centre and scale (default
+#' `TRUE`) .
+#' @return A data frame of class `bricklayer_outliers` with
+#' `row`, `distance` (the square root of the squared Mahalanobis
+#' distance), `p_value` and `outlier`, ordered by descending
+#' distance.
 #' @references Mahalanobis PC (1936). On the generalised distance in
-#'   statistics. *Proceedings of the National Institute of Sciences of
-#'   India* 2(1), 49--55.
-#' @seealso [core_tukey_fences()] for the per-column version,
-#'   [rule_within_n_mads()] to turn it into a validation rule.
+#' statistics. *Proceedings of the National Institute of Sciences of
+#' India* 2(1), 49--55.
+#' @seealso
+#' [core_tukey_fences()] for the per-column
+#' version, [rule_within_n_mads()] to turn
+#' it into a validation rule.
 #' @examples
 #' set.seed(1)
 #' n <- 200
@@ -176,24 +180,26 @@ print.bricklayer_outliers <- function(x, ...) {
 
 #' Runs of consecutive missing values
 #'
-#' Finds the maximal stretches of consecutive `NA` in each column, with
-#' where each begins and how long it is.
+#' Finds the maximal stretches of consecutive `NA` in each column,
+#' with where each begins and how long it is.
 #'
-#' Row order carries meaning in a capsule far more often than people
-#' allow for -- a time series, an ordered export, a paginated download --
-#' and a long unbroken run of missingness means something different from
-#' the same count scattered about. A run says an instrument was down, a
-#' page failed to fetch, or a period was never collected; scattered gaps
-#' say individual records failed. The rate cannot distinguish them.
+#' Row order carries meaning in a capsule far more often than people allow
+#' for -- a time series, an ordered export, a paginated download -- and a
+#' long unbroken run of missingness means something different from the same
+#' count scattered about. A run says an instrument was down, a page failed
+#' to fetch, or a period was never collected; scattered gaps say individual
+#' records failed. The rate cannot distinguish them.
 #'
 #' @param data A data frame.
-#' @param min_run Report only runs at least this long (default 2, since
-#'   a run of 1 is an isolated gap).
+#' @param min_run Report only runs at least this long
+#' (default 2, since a run of 1 is an isolated gap).
 #' @return A data frame of class `bricklayer_runs` with `column`,
-#'   `start`, `end` and `length`, longest first. Zero rows when there
-#'   are no qualifying runs.
-#' @seealso [missingness_pattern()] for which columns are missing
-#'   together, [missingness_summary()] for the rates.
+#' `start`, `end` and `length`, longest first. Zero rows
+#' when there are no qualifying runs.
+#' @seealso
+#' [missingness_pattern()] for which
+#' columns are missing together,
+#' [missingness_summary()] for the rates.
 #' @examples
 #' # One long outage and two isolated gaps, with the same total count.
 #' df <- data.frame(
@@ -258,23 +264,26 @@ print.bricklayer_runs <- function(x, ...) {
 
 #' Text map of where the missing values are
 #'
-#' Draws the missingness of a whole table as a grid, one character per
-#' cell block -- a console counterpart of `visdat::vis_miss()` that needs
+#' Draws the missingness of a whole table as a grid, one character per cell
+#' block -- a console counterpart of `visdat::vis_miss()` that needs
 #' no graphics device, so it works over SSH, in a log, and inside a
 #' capsule's plain-text summary.
 #'
 #' Rows are binned so the map fits `height` lines; a block is drawn at
 #' the shade its missing proportion falls in. Seeing the table at once is
 #' the point: a diagonal band, a block of rows, or a single ragged column
-#' are all instantly recognisable shapes that a column of percentages
-#' is not.
+#' are all instantly recognisable shapes that a column of percentages is
+#' not.
 #'
 #' @param data A data frame.
 #' @param height Maximum rows in the map (default 20).
-#' @param width Maximum characters per column label (default 12).
+#' @param width Maximum characters per column label (default
+#' 12).
 #' @return A character vector of the map's lines, invisibly; printed as a
-#'   side effect.
-#' @seealso [missingness_pattern()], [missing_runs()]
+#' side effect.
+#' @seealso
+#' [missingness_pattern()],
+#' [missing_runs()]
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(

@@ -8,17 +8,19 @@
 
 #' Label a period without changing it
 #'
-#' Attaches display labels to a change table. The arithmetic already ran
-#' on the period's value, so a label can only affect what is printed:
+#' Attaches display labels to a change table. The arithmetic already ran on
+#' the period's value, so a label can only affect what is printed:
 #' relabelling cannot move a number.
 #'
-#' @param x An `rmbl_yoy` object from [yoy()].
-#' @param labels Either a function applied to the period column, or a
-#'   character vector the same length as the number of distinct periods,
-#'   or a named character vector mapping a period (as a string) to its
-#'   label.
-#' @return The object, with a `period_label` column and the labels used
-#'   by `print()`, [yoy_html()], [yoy_pdf()] and the delimited writers.
+#' @param x An `rmbl_yoy` object from
+#' [yoy()].
+#' @param labels Either a function applied to the period
+#' column, or a character vector the same length as the number of distinct
+#' periods, or a named character vector mapping a period (as a string) to
+#' its label.
+#' @return The object, with a `period_label` column and the labels
+#' used by `print()`, [yoy_html()],
+#' [yoy_pdf()] and the delimited writers.
 #' @seealso [fiscal_year_label()]
 #' @examples
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
@@ -68,13 +70,15 @@ yoy_label <- function(x, labels) {
 
 #' Name a fiscal year by the years it spans
 #'
-#' Ontario's inmate data keys on the fiscal year's END year, so 2023 is
-#' the fiscal year running from April 2022 to March 2023. This renders
-#' that as `"2022/23"`.
+#' Ontario's inmate data keys on the fiscal year's END year, so 2023 is the
+#' fiscal year running from April 2022 to March 2023. This renders that as
+#' `"2022/23"`.
 #'
-#' @param end_year The fiscal year's end year, as a number or a string.
+#' @param end_year The fiscal year's end year, as a number
+#' or a string.
 #' @param sep Separator between the two years.
-#' @param short Whether to abbreviate the second year to two digits.
+#' @param short Whether to abbreviate the second year to two
+#' digits.
 #' @return A character vector of labels.
 #' @examples
 #' fiscal_year_label(2019:2023)

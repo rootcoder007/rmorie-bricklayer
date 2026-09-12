@@ -13,28 +13,31 @@ drop_constant(data, na_as_value = FALSE)
 \arguments{
 \item{data}{A data frame.}
 
-\item{which}{\code{"rows"}, \code{"cols"}, or both (the default).}
+\item{which}{\code{"rows"}, \code{"cols"}, or both (the
+default).}
 
-\item{na_as_value}{Treat \code{NA} as a distinct value, so a column of
-\code{NA}s plus one real value counts as two (default \code{FALSE}).}
+\item{na_as_value}{Treat \code{NA} as a distinct
+value, so a column of \code{NA} s plus one real value counts as two
+(default \code{FALSE}) .}
 }
 \value{
-The data frame, with the offending rows or columns removed.
-The names of what was dropped are attached as the \code{"dropped"}
+The data frame, with the offending rows or columns removed. The
+names of what was dropped are attached as the \code{"dropped"}
 attribute.
 }
 \description{
 \code{drop_empty()} removes rows or columns that are entirely missing.
-\code{drop_constant()} removes columns that hold a single distinct value.
-The counterparts of \code{janitor::remove_empty()} and
+\code{drop_constant()} removes columns that hold a single distinct
+value. The counterparts of \code{janitor::remove_empty()} and
 \code{janitor::remove_constant()}.
 }
 \details{
-A constant column carries no information and breaks anything that
-scales by variance, so it is worth removing -- but it is also a
-FINDING. A column that was informative in the pinned capsule and is
-constant in a fresh fetch means the source changed, so check
-\code{\link[=capsule_drift]{capsule_drift()}} before deleting it and moving on.
+A constant column carries no information and breaks anything that scales
+by variance, so it is worth removing -- but it is also a FINDING. A
+column that was informative in the pinned capsule and is constant in a
+fresh fetch means the source changed, so check
+\code{\link[=capsule_drift]{capsule_drift()}} before deleting it and
+moving on.
 }
 \examples{
 df <- data.frame(
@@ -59,6 +62,6 @@ ncol(drop_constant(x))
 ncol(drop_constant(x, na_as_value = TRUE))
 }
 \seealso{
-\code{\link[=profile_columns]{profile_columns()}}, which reports \code{n_distinct} without
-removing anything.
+\code{\link[=profile_columns]{profile_columns()}}, which reports
+\code{n_distinct} without removing anything.
 }

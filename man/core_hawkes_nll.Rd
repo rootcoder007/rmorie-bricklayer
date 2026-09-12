@@ -12,42 +12,45 @@ core_hawkes_nll(
 )
 }
 \arguments{
-\item{times}{Sorted numeric vector of event times in \verb{[0, horizon]}.}
+\item{times}{Sorted numeric vector of event times in
+\verb{[0, horizon]}.}
 
-\item{horizon}{End of the observation window (length-1, > 0).}
+\item{horizon}{End of the observation window (length-1, >
+0).}
 
-\item{kernel}{One of \code{"exponential"}, \code{"weibull"}, \code{"lomax"},
-\code{"gamma"}.}
+\item{kernel}{One of \code{"exponential"},
+\code{"weibull"}, \code{"lomax"}, \code{"gamma"}.}
 
-\item{par}{Numeric parameter vector, as described above: length 3 for
-\code{"exponential"}, length 4 for the others.}
+\item{par}{Numeric parameter vector, as described above:
+length 3 for \code{"exponential"}, length 4 for the others.}
 }
 \value{
 A length-1 numeric: the negative log-likelihood, to be
-MINIMISED. A parameter set outside the core's feasible region
-returns the sentinel \code{1e12} rather than erroring, so the value can
-be handed straight to \code{\link[stats:optim]{stats::optim()}} without the optimiser
-walking off the domain.
+MINIMISED. A parameter set outside the core's feasible region returns
+the sentinel \code{1e12} rather than erroring, so the value can be
+handed straight to \code{\link[stats:optim]{stats::optim()}} without the
+optimiser walking off the domain.
 }
 \description{
-The negative log-likelihood of a univariate self-exciting Hawkes
-process with constant baseline on \verb{[0, horizon]}, for the event times
+The negative log-likelihood of a univariate self-exciting Hawkes process
+with constant baseline on \verb{[0, horizon]}, for the event times
 \code{times}. A Hawkes process is the natural model for arrivals that
 trigger further arrivals -- repeat calls to a service, aftershocks,
 retweet cascades, revisions to an open-data release.
 }
 \details{
-Four triggering kernels are available. \code{"exponential"} is memoryless
-and evaluates by an O(n) recursion; the other three are not, so they
-cost O(n^2).
+Four triggering kernels are available. \code{"exponential"} is
+memoryless and evaluates by an O(n) recursion; the other three are not,
+so they cost O(n^2).
 
 Parameters are passed on the scales the kernel is defined on:
-\code{par = c(a0, eta, ...)} where \code{a0} is the LOG baseline intensity
-(\eqn{\nu = e^{a0}}) and \code{eta} the branching ratio in (0, 1) -- the
-expected number of children per event, so the process is stationary
-only for \code{eta < 1}. The remaining entries are the kernel's own shape
-parameters: \code{beta} (exponential), \verb{alpha, lambda} (Weibull),
-\verb{alpha, c} (Lomax), \verb{alpha, beta} (gamma).
+\code{par = c(a0, eta, ...)} where \code{a0} is the LOG baseline
+intensity ( \eqn{\nu = e^{a0}}) and \code{eta} the branching ratio in
+(0, 1) -- the expected number of children per event, so the process is
+stationary only for \code{eta < 1}. The remaining entries are the
+kernel's own shape parameters: \code{beta} (exponential),
+\verb{alpha, lambda} (Weibull), \verb{alpha, c} (Lomax),
+\verb{alpha, beta} (gamma).
 }
 \examples{
 set.seed(4)
@@ -69,7 +72,7 @@ core_hawkes_nll(times, 10, "exponential", c(-0.5, 1.5, 1.2)) == 1e12
 core_hawkes_nll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
 }
 \references{
-Hawkes AG (1971). Spectra of some self-exciting and
-mutually exciting point processes. \emph{Biometrika} 58(1), 83--90.
+Hawkes AG (1971). Spectra of some self-exciting and mutually
+exciting point processes. \emph{Biometrika} 58(1), 83--90.
 \doi{10.1093/biomet/58.1.83}
 }

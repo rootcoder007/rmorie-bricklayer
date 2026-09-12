@@ -17,8 +17,9 @@ merkle_proof(chunks, index)
 merkle_verify(leaf, proof, root)
 }
 \arguments{
-\item{chunks}{Character vector of chunk contents, in order. Use
-\code{\link[=chunk_file]{chunk_file()}} to produce it from a file.}
+\item{chunks}{Character vector of chunk contents, in
+order. Use \code{\link[=chunk_file]{chunk_file()}} to produce it from a
+file.}
 
 \item{index}{1-based index of the chunk to prove.}
 
@@ -30,22 +31,22 @@ merkle_verify(leaf, proof, root)
 }
 \value{
 \code{merkle_root()} a length-1 character vector (64 hex
-characters), or \code{NA} for no chunks. \code{merkle_leaves()} a character
-vector of per-chunk digests. \code{merkle_proof()} a list with
-\code{sibling} (character) and \code{side} (\code{"left"}/\code{"right"}).
-\code{merkle_verify()} a length-1 logical.
+characters), or \code{NA} for no chunks. \code{merkle_leaves()} a
+character vector of per-chunk digests. \code{merkle_proof()} a list with
+\code{sibling} (character) and \code{side} ( \code{"left"} /
+\code{"right"}) . \code{merkle_verify()} a length-1 logical.
 }
 \description{
 A single SHA-256 over a whole file tells you it changed. A Merkle tree
-over its chunks tells you WHICH chunk changed, and proves that one
-chunk belongs to the pinned file without re-reading the rest of it.
+over its chunks tells you WHICH chunk changed, and proves that one chunk
+belongs to the pinned file without re-reading the rest of it.
 }
 \details{
 \code{merkle_root()} reduces the chunks to one root digest.
 \code{merkle_leaves()} returns the per-chunk digests the root is built
 from, so two capsules can be diffed chunk by chunk.
-\code{merkle_proof()} returns the sibling digests on the path from one leaf
-to the root, and \code{merkle_verify()} replays that path.
+\code{merkle_proof()} returns the sibling digests on the path from one
+leaf to the root, and \code{merkle_verify()} replays that path.
 
 An unpaired node at an odd level is PROMOTED unchanged rather than
 hashed against a duplicate of itself. Duplicating it would let two

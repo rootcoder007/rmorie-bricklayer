@@ -16,16 +16,17 @@ rather than \code{integer} because values above \code{2^31 - 1} are not
 representable as an R integer.
 }
 \description{
-The CRC-32 of ITU V.42 and zip (reflected polynomial \code{0xEDB88320}).
+The CRC-32 of ITU V.42 and zip (reflected polynomial \code{0xEDB88320})
+.
 }
 \details{
 A CRC is NOT a cryptographic digest: it detects accidental corruption
 -- a truncated download, a flipped bit on disk -- but anyone can
 construct a different input with the same value, so it must never be
-used where \code{\link[=core_sha256]{core_sha256()}} is meant. It is here because it is far
-cheaper than SHA-256 over gigabyte-scale capsule members, which makes
-it the right first pass when the question is only "did this file
-arrive intact".
+used where \code{\link[=core_sha256]{core_sha256()}} is meant. It is
+here because it is far cheaper than SHA-256 over gigabyte-scale capsule
+members, which makes it the right first pass when the question is only
+"did this file arrive intact".
 }
 \examples{
 # The standard check value: CRC-32("123456789") is 0xCBF43926.
@@ -42,6 +43,6 @@ core_crc32(c("brick", "brack"))
 core_crc32(charToRaw("123456789"))
 }
 \seealso{
-\code{\link[=core_sha256]{core_sha256()}} for integrity against tampering rather than
-accident.
+\code{\link[=core_sha256]{core_sha256()}} for integrity against
+tampering rather than accident.
 }

@@ -6,28 +6,33 @@
 
 #' Re-Verify an Entire Reproducible Data Capsule
 #'
-#' Runs the full custody chain over a capsule directory in one call:
-#' the provenance manifest is readable, the pinned data file exists and
-#' matches its recorded `sha256` (and `size_bytes` / row count where
-#' recorded), the schema still validates, a recorded analysis script
-#' still matches its pinned hash, and every numeric cross-check stored
-#' in a results manifest still reproduces its recorded `PASS`/`DIFFER`
-#' status from its own `observed`/`expected`/`tol` fields.
+#' Runs the full custody chain over a capsule directory in one call: the
+#' provenance manifest is readable, the pinned data file exists and matches
+#' its recorded `sha256` (and `size_bytes` / row count where
+#' recorded), the schema still validates, a recorded analysis script still
+#' matches its pinned hash, and every numeric cross-check stored in a
+#' results manifest still reproduces its recorded `PASS` /
+#' `DIFFER` status from its own `observed` / `expected` /
+#' `tol` fields.
 #'
 #' Entirely offline: nothing is downloaded and nothing is written.
 #'
 #' @param capsule_dir Directory containing the capsule.
-#' @param provenance_file Provenance JSON filename inside `capsule_dir`
-#'   (default `"data_provenance.json"`).
-#' @param data_file Data filename inside `capsule_dir`. Defaults to the
-#'   provenance's `resource$filename`.
-#' @param manifest_file Optional results-manifest JSON (as written by
-#'   [write_manifest_json()]) inside `capsule_dir`; checked when present.
-#' @param script_file Optional analysis-script filename inside
-#'   `capsule_dir`; compared against the manifest's recorded
-#'   `meta$script_sha256` when both are present.
+#' @param provenance_file Provenance JSON filename
+#' inside `capsule_dir` (default `"data_provenance.json"`) .
+#' @param data_file Data filename inside
+#' `capsule_dir`. Defaults to the provenance's
+#' `resource$filename`.
+#' @param manifest_file Optional results-manifest JSON
+#' (as written by
+#' [write_manifest_json()]) inside
+#' `capsule_dir`; checked when present.
+#' @param script_file Optional analysis-script filename
+#' inside `capsule_dir`; compared against the manifest's recorded
+#' `meta$script_sha256` when both are present.
 #' @return A list with `ok` (logical scalar: every check passed) and
-#'   `checks` (data.frame with columns `check`, `ok`, `detail`).
+#' `checks` (data.frame with columns `check`, `ok`,
+#' `detail`) .
 #' @examples
 #' dir <- file.path(tempdir(), "capsule-example")
 #' dir.create(dir, showWarnings = FALSE)
@@ -134,14 +139,15 @@ verify_capsule <- function(capsule_dir,
 
 #' Capture the Analysis Environment for a Manifest
 #'
-#' Records the facts a replicator needs to rebuild the session: R
-#' version, platform, operating system, a UTC timestamp, and the
-#' versions of the requested packages.
+#' Records the facts a replicator needs to rebuild the session: R version,
+#' platform, operating system, a UTC timestamp, and the versions of the
+#' requested packages.
 #'
-#' @param packages Character vector of package names to record.
-#'   Defaults to every currently loaded namespace.
-#' @return A list with `r_version`, `platform`, `os`, `captured_utc`,
-#'   and `packages` (a named character vector of versions).
+#' @param packages Character vector of package names to
+#' record. Defaults to every currently loaded namespace.
+#' @return A list with `r_version`, `platform`, `os`,
+#' `captured_utc`, and `packages` (a named character vector of
+#' versions).
 #' @examples
 #' # Record specific packages' versions alongside the session facts.
 #' env <- capture_environment(c("stats", "utils"))
@@ -169,15 +175,15 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #' Generate a Data Citation From Provenance
 #'
 #' Builds a ready-to-paste data citation (plain text and BibTeX
-#' `@misc`) from a provenance object's `dataset` and `resource` blocks,
-#' using publisher, resource name, source system, retrieval date,
-#' license, the pinned URL, and a DOI when one is recorded
-#' (`dataset$doi`).
+#' `@misc`) from a provenance object's `dataset` and
+#' `resource` blocks, using publisher, resource name, source system,
+#' retrieval date, license, the pinned URL, and a DOI when one is recorded
+#' ( `dataset$doi`) .
 #'
 #' @param provenance A provenance list as returned by
-#'   [load_provenance()].
-#' @return A list with `text` and `bibtex` character scalars, or `NULL`
-#'   if `provenance` is `NULL`.
+#' [load_provenance()].
+#' @return A list with `text` and `bibtex` character scalars, or
+#' `NULL` if `provenance` is `NULL`.
 #' @examples
 #' prov <- list(
 #'   captured_at_utc = "2026-06-23T04:41:40Z",

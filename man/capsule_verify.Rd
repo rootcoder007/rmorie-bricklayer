@@ -7,24 +7,27 @@
 capsule_verify(message, signature, key)
 }
 \arguments{
-\item{message}{The message the signature is claimed to cover.}
+\item{message}{The message the signature is claimed to
+cover.}
 
-\item{signature}{A \code{bricklayer_signature} from \code{\link[=capsule_sign]{capsule_sign()}}.}
+\item{signature}{A \code{bricklayer_signature} from
+\code{\link[=capsule_sign]{capsule_sign()}}.}
 
-\item{key}{The shared secret for \code{"hmac"}, a public key (or full
-signing key) for XMSS, or an \code{\link[=oqs_keygen]{oqs_keygen()}} key or its
-\code{\link[=oqs_public_key]{oqs_public_key()}} for a standardised scheme. A signature is not
-verified against a key of a different scheme.}
+\item{key}{The shared secret for \code{"hmac"}, a public key
+(or full signing key) for XMSS, or an
+\code{\link[=oqs_keygen]{oqs_keygen()}} key or its
+\code{\link[=oqs_public_key]{oqs_public_key()}} for a standardised
+scheme. A signature is not verified against a key of a different scheme.}
 }
 \value{
 A length-1 logical.
 }
 \description{
-Checks \code{signature} against \code{message}. For \code{"hmac"} the comparison is
-constant-time. For XMSS the Winternitz chains are walked to their ends
-and the authentication path replayed to the Merkle root; the digest is
-bound to both the leaf index and the root, so a signature cannot be
-replayed at another index or under another key.
+Checks \code{signature} against \code{message}. For \code{"hmac"} the
+comparison is constant-time. For XMSS the Winternitz chains are walked
+to their ends and the authentication path replayed to the Merkle root;
+the digest is bound to both the leaf index and the root, so a signature
+cannot be replayed at another index or under another key.
 }
 \details{
 Returns \code{FALSE} rather than erroring on a malformed or truncated

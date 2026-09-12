@@ -10,12 +10,13 @@
 #' full director's-report corpus yourself, then audit it with the
 #' multi-agent panel.
 #'
-#' @param drid Director's-report id -- the \code{drid=} query parameter
-#'   (integer or integer-like scalar).
+#' @param drid Director's-report id -- the \code{drid=} query
+#' parameter (integer or integer-like scalar).
 #' @param dest Destination file path for the fetched HTML.
 #' @param lang \code{"en"} (default) or \code{"fr"}.
-#' @param wayback Optional explicit Wayback snapshot URL (passed through
-#'   to \code{bricklayer_fetch}); \code{""} lets it discover one.
+#' @param wayback Optional explicit Wayback snapshot URL
+#' (passed through to \code{bricklayer_fetch}) ; \code{""} lets it discover
+#' one.
 #' @param timeout Request timeout in seconds. Default 120.
 #' @return \code{"live"} or \code{"wayback"} (invisibly), as
 #'   \code{bricklayer_fetch}.

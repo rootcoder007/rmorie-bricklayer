@@ -15,13 +15,16 @@ json_gzip_decode(txt, raw = FALSE, ...)
 
 \item{raw}{Return (or accept) gzip bytes instead of base64.}
 
-\item{...}{Passed to \code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}.}
+\item{...}{Passed to
+\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}.}
 
-\item{txt}{Base64 string (or raw vector) from \code{json_gzip_encode()}.}
+\item{txt}{Base64 string (or raw vector) from
+\code{json_gzip_encode()}.}
 }
 \value{
 \code{json_gzip_encode()} a length-1 character vector, or a raw
-vector when \code{raw = TRUE}. \code{json_gzip_decode()} the decoded object.
+vector when \code{raw = TRUE}. \code{json_gzip_decode()} the decoded
+object.
 }
 \description{
 \code{json_gzip_encode()} serialises to JSON, compresses with gzip and
@@ -30,14 +33,16 @@ document, a header, or a text column. \code{json_gzip_decode()} reverses
 all three steps.
 }
 \details{
-JSON is highly compressible because every record repeats the key
-names, so this is usually a large saving on anything record-shaped --
-but it is opaque. Use it for payloads that travel, and plain
-\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}} for anything a person is meant to read or
-a \verb{git diff} is meant to show.
+JSON is highly compressible because every record repeats the key names,
+so this is usually a large saving on anything record-shaped -- but it is
+opaque. Use it for payloads that travel, and plain
+\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}} for
+anything a person is meant to read or a \verb{git diff} is meant to
+show.
 
-\code{raw = TRUE} skips the base64 step and returns the gzip bytes, which
-is what to use when writing to a file rather than embedding in text.
+\code{raw = TRUE} skips the base64 step and returns the gzip bytes,
+which is what to use when writing to a file rather than embedding in
+text.
 }
 \examples{
 x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
@@ -58,5 +63,6 @@ identical(json_gzip_decode(bytes, raw = TRUE)$rows$id, 1:50)
 }
 \seealso{
 \code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}},
-\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}} for a lossless but uncompressed form.
+\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}}
+for a lossless but uncompressed form.
 }

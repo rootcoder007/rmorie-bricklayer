@@ -9,17 +9,17 @@ verify_sha256(path, expected_sha)
 \arguments{
 \item{path}{Path to the file to hash.}
 
-\item{expected_sha}{The expected SHA256 digest, as a lowercase hex
-string.}
+\item{expected_sha}{The expected SHA256 digest, as a
+lowercase hex string.}
 }
 \value{
-A list with \code{actual} (computed digest), \code{expected} (the value
-passed in), and \code{match} (logical; \code{TRUE} if they are identical).
+A list with \code{actual} (computed digest), \code{expected}
+(the value passed in), and \code{match} (logical; \code{TRUE} if they
+are identical).
 }
 \description{
-Computes the SHA256 digest of a file with the package's own
-compiled SHA-256 core and compares it to the expected value pinned
-in provenance.
+Computes the SHA256 digest of a file with the package's own compiled
+SHA-256 core and compares it to the expected value pinned in provenance.
 }
 \examples{
 f <- tempfile()
@@ -30,7 +30,7 @@ chk <- verify_sha256(f, sha256_file(f))
 chk$match          # TRUE
 
 # A wrong expected digest -> match FALSE, with both values reported.
-bad <- verify_sha256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+bad <- verify_sha256(f, strrep("0", 64L))
 bad$match          # FALSE
 bad$actual         # the real digest
 }

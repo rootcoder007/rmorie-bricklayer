@@ -25,18 +25,46 @@ bricklayer_json_to_json(
 \arguments{
 \item{x}{the object to encode.}
 
-\item{dataframe, matrix, Date, POSIXt, factor, complex, raw, null, na, auto_unbox, digits, pretty, force, ...}{as in jsonlite.}
+\item{dataframe}{As in jsonlite.}
+
+\item{matrix}{As in jsonlite.}
+
+\item{Date}{As in jsonlite.}
+
+\item{POSIXt}{As in jsonlite.}
+
+\item{factor}{As in jsonlite.}
+
+\item{complex}{As in jsonlite.}
+
+\item{raw}{As in jsonlite.}
+
+\item{null}{As in jsonlite.}
+
+\item{na}{As in jsonlite.}
+
+\item{auto_unbox}{As in jsonlite.}
+
+\item{digits}{As in jsonlite.}
+
+\item{pretty}{As in jsonlite.}
+
+\item{force}{As in jsonlite.}
+
+\item{...}{As in jsonlite.}
 }
 \value{
 a length-one character vector of class \code{json}.
 }
 \description{
-Every option of jsonlite's \code{toJSON()} with the same default and the same
-bytes out: \code{dataframe}, \code{matrix}, \code{Date}, \code{POSIXt}, \code{factor}, \code{complex},
-\code{raw}, \code{null}, \code{na}, \code{auto_unbox}, \code{digits} (\code{I(n)} for significant
-digits, \code{NA} for 15), \code{pretty} (TRUE = 2 spaces, or a width), \code{force},
-plus \code{rownames}, \code{keep_vec_names}, \code{json_verbatim}, \code{always_decimal},
-\code{time_format}, \code{UTC}, \code{no_dots}, \code{hms}.
+Every option of jsonlite's \code{toJSON()} with the same default and the
+same bytes out: \code{dataframe}, \code{matrix}, \code{Date},
+\code{POSIXt}, \code{factor}, \code{complex}, \code{raw}, \code{null},
+\code{na}, \code{auto_unbox}, \code{digits} ( \code{I(n)} for
+significant digits, \code{NA} for 15), \code{pretty} (TRUE = 2 spaces,
+or a width), \code{force}, plus \code{rownames}, \code{keep_vec_names},
+\code{json_verbatim}, \code{always_decimal}, \code{time_format},
+\code{UTC}, \code{no_dots}, \code{hms}.
 }
 \examples{
 bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)

@@ -11,25 +11,27 @@ top_correlations(data, n = 10L, method = c("spearman", "pearson"), min_abs = 0)
 
 \item{n}{Number of pairs to return (default 10).}
 
-\item{method}{\code{"spearman"} (default) or \code{"pearson"}.}
+\item{method}{\code{"spearman"} (default) or
+\code{"pearson"}.}
 
-\item{min_abs}{Report only pairs whose absolute correlation reaches
-this (default 0).}
+\item{min_abs}{Report only pairs whose absolute
+correlation reaches this (default 0).}
 }
 \value{
-A data frame of class \code{bricklayer_correlations} with \code{x}, \code{y},
-\code{correlation} and \code{abs_correlation}, strongest first.
+A data frame of class \code{bricklayer_correlations} with
+\code{x}, \code{y}, \code{correlation} and \code{abs_correlation},
+strongest first.
 }
 \description{
-Ranks the numeric column pairs by the strength of their association,
-so a wide table's structure can be read without squinting at a
-correlation matrix.
+Ranks the numeric column pairs by the strength of their association, so
+a wide table's structure can be read without squinting at a correlation
+matrix.
 }
 \details{
 Spearman is the default deliberately. Pearson measures LINEAR
 association only, so it understates a relationship that is perfectly
-monotone but curved, and a single outlier can manufacture or destroy
-it. On data you have not yet inspected -- which is the situation this
+monotone but curved, and a single outlier can manufacture or destroy it.
+On data you have not yet inspected -- which is the situation this
 function is for -- the rank correlation is the safer question to ask.
 }
 \examples{
@@ -56,5 +58,6 @@ tp[tp$x == "a" & tp$y == "d", "correlation"]
 top_correlations(df, min_abs = 0.5)
 }
 \seealso{
-\code{\link[=core_cor_spearman]{core_cor_spearman()}}, \code{\link[=core_cov]{core_cov()}}
+\code{\link[=core_cor_spearman]{core_cor_spearman()}},
+\code{\link[=core_cov]{core_cov()}}
 }

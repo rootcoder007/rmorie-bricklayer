@@ -10,29 +10,31 @@
 #' Concentration of a total across units
 #'
 #' @param x Non-negative values, one per unit.
-#' @param na.rm Whether to drop missing values. They are dropped either
-#'   way; this argument exists so the call reads the same as base R's.
-#' @return `gini()` a single number in `[0, 1]`, `NA` when the total is
-#'   zero. `lorenz()` a data frame of cumulative population and value
-#'   shares, including the origin. `top_share()` a data frame of the
-#'   requested fractions, the share each holds, and how many units that
-#'   was.
+#' @param na.rm Whether to drop missing values. They are
+#' dropped either way; this argument exists so the call reads the same as
+#' base R's.
+#' @return `gini()` a single number in `[0, 1]`, `NA` when
+#' the total is zero. `lorenz()` a data frame of cumulative population
+#' and value shares, including the origin. `top_share()` a data frame
+#' of the requested fractions, the share each holds, and how many units
+#' that was.
 #' @details
 #' Gini is the mean absolute difference between pairs of units over twice
-#' the mean, which is also twice the area between the Lorenz curve and
-#' the diagonal. Zero is a perfectly even spread; the maximum for `n`
+#' the mean, which is also twice the area between the Lorenz curve and the
+#' diagonal. Zero is a perfectly even spread; the maximum for `n`
 #' units is `1 - 1/n`, not 1, so a Gini near 1 requires many units as
 #' well as an uneven spread.
 #' @references
-#' Hedderich, J. and Sachs, L. (2020). *Applied Statistics: Methods
-#' Using R*. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117,
-#' gives the construction used here: the units are placed at equal
-#' intervals on the horizontal axis and the cumulated, ascendingly
-#' ordered shares of the total on the vertical one, so that the curve is
-#' the diagonal exactly when p percent of the units account for p
-#' percent of the total, and sags further the greater the
-#' concentration.
-#' @seealso [hill_tail_index()], [band_sensitivity()]
+#' Hedderich, J. and Sachs, L. (2020). *Applied Statistics: Methods Using
+#' R*. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117, gives the
+#' construction used here: the units are placed at equal intervals on the
+#' horizontal axis and the cumulated, ascendingly ordered shares of the
+#' total on the vertical one, so that the curve is the diagonal exactly
+#' when p percent of the units account for p percent of the total, and sags
+#' further the greater the concentration.
+#' @seealso
+#' [hill_tail_index()],
+#' [band_sensitivity()]
 #' @examples
 #' # Ten units holding one each: no concentration.
 #' gini(rep(1, 10))
@@ -63,8 +65,8 @@ lorenz <- function(x, na.rm = TRUE) {
   data.frame(population = r$population, value = r$value)
 }
 
-#' @param fractions Fractions of the units, largest first, to report the
-#'   share of.
+#' @param fractions Fractions of the units, largest first,
+#' to report the share of.
 #' @rdname concentration
 #' @export
 top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
@@ -91,44 +93,44 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 #' Tail index of a heavy-tailed count
 #'
 #' The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
-#' power law above a threshold. An exponent near 2 or below means the
-#' mean is barely defined and the observed maximum is not informative
-#' about the next one, which is the substantive point when a few units
-#' dominate a total.
+#' power law above a threshold. An exponent near 2 or below means the mean
+#' is barely defined and the observed maximum is not informative about the
+#' next one, which is the substantive point when a few units dominate a
+#' total.
 #'
 #' @param x Positive values, one per unit.
-#' @param x_min Threshold above which the power law is fitted. A power
-#'   law is a statement about the tail, so a threshold is required; the
-#'   default takes the value that leaves at least 50 observations, or the
-#'   minimum if the data are smaller than that.
-#' @param discrete Whether the quantity is integer-valued. A count is,
-#'   and then the likelihood maximised is the zeta distribution's, whose
-#'   normalising constant is a Hurwitz zeta.
-#' @param approx For discrete data, whether to use the closed-form
-#'   continuity-corrected estimator instead of maximising the exact
-#'   likelihood. It is much faster and much worse: the correction is an
-#'   asymptotic approximation in `x_min`, and at `x_min = 1` -- where
-#'   administrative counts start -- it returns about 2.0 from data
-#'   generated with an exponent of 2.5. Off by default for that reason.
-#' @param min_tail Fewest tail observations for which an estimate is
-#'   reported at all. Below it there is nothing to estimate from and
-#'   `alpha` is `NA`.
-#' @return A list with `alpha`, its standard error, `x_min`, `n_tail`,
-#'   `ks` and `reliable`. `ks` is the Kolmogorov-Smirnov distance
-#'   between the fitted tail and the data: a large value means the tail
-#'   is not a power law, whatever `alpha` came out as. `reliable` is
-#'   `FALSE` when fewer than 50 observations lie in the tail, which is
-#'   the sample size Clauset, Shalizi and Newman give as the point below
-#'   which the estimate should not be leaned on -- it is reported rather
-#'   than enforced, because the right response to a short tail is a
-#'   wider interval, not a refusal.
+#' @param x_min Threshold above which the power law is fitted.
+#' A power law is a statement about the tail, so a threshold is required;
+#' the default takes the value that leaves at least 50 observations, or the
+#' minimum if the data are smaller than that.
+#' @param discrete Whether the quantity is integer-valued.
+#' A count is, and then the likelihood maximised is the zeta
+#' distribution's, whose normalising constant is a Hurwitz zeta.
+#' @param approx For discrete data, whether to use the
+#' closed-form continuity-corrected estimator instead of maximising the
+#' exact likelihood. It is much faster and much worse: the correction is an
+#' asymptotic approximation in `x_min`, and at `x_min = 1` --
+#' where administrative counts start -- it returns about 2.0 from data
+#' generated with an exponent of 2.5. Off by default for that reason.
+#' @param min_tail Fewest tail observations for which an
+#' estimate is reported at all. Below it there is nothing to estimate from
+#' and `alpha` is `NA`.
+#' @return A list with `alpha`, its standard error, `x_min`,
+#' `n_tail`, `ks` and `reliable`. `ks` is the
+#' Kolmogorov-Smirnov distance between the fitted tail and the data: a
+#' large value means the tail is not a power law, whatever `alpha`
+#' came out as. `reliable` is `FALSE` when fewer than 50
+#' observations lie in the tail, which is the sample size Clauset, Shalizi
+#' and Newman give as the point below which the estimate should not be
+#' leaned on -- it is reported rather than enforced, because the right
+#' response to a short tail is a wider interval, not a refusal.
 #' @references
 #' Clauset, A., Shalizi, C. R. and Newman, M. E. J. (2009). Power-law
 #' distributions in empirical data. *SIAM Review* 51(4), 661-703. The
 #' estimator and its threshold guidance are theirs; the continuity
 #' correction they give in closed form is an asymptotic approximation in
-#' `x_min`, which is why the exact likelihood is maximised here instead.
-#' (Not in the local corpus; cited from the published paper.)
+#' `x_min`, which is why the exact likelihood is maximised here
+#' instead. (Not in the local corpus; cited from the published paper.)
 #' @examples
 #' # A continuous Pareto tail with exponent 2.5.
 #' set.seed(1)
@@ -246,13 +248,23 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 
 #' Hurwitz zeta function
 #'
-#' `zeta(s, q) = sum over k >= 0 of (q + k)^-s`, by Euler-Maclaurin. It
-#' is the normalising constant of the discrete power law truncated below
-#' at `q`, which is why it is here; `zeta(s, 1)` is the Riemann zeta.
+#' `zeta(s, q) = sum over k >= 0 of (q + k)^-s`, by Euler-Maclaurin.
+#' It is the normalising constant of the discrete power law truncated below
+#' at `q`, which is why it is here; `zeta(s, 1)` is the Riemann
+#' zeta.
 #'
-#' @param s Exponent, which must exceed 1 for the series to converge.
+#' @param s Exponent, which must exceed 1 for the series to
+#' converge.
 #' @param q Lower limit, which must be positive.
 #' @return A numeric vector the length of `s`.
+#' @references
+#' The Euler-Maclaurin expansion used here -- direct terms to `q + N`,
+#' then the integral tail, then the Bernoulli-number corrections -- is the
+#' standard evaluation; see Abramowitz, M. and Stegun, I. A.
+#' *Handbook of Mathematical Functions*, Sec. 23.2. (Not in the local
+#' corpus; cited from the published reference. The implementation is
+#' checked against `pi^2/6`, `pi^4/90`, Apery's constant and the
+#' shift identity, which is stronger evidence than the citation.)
 #' @examples
 #' # The Riemann zeta at even integers has a closed form.
 #' c(hurwitz_zeta(2), pi^2 / 6)
@@ -318,21 +330,21 @@ hurwitz_zeta <- function(s, q = 1) {
 #' the small-expected-count condition reported rather than assumed away.
 #'
 #' @param tbl A table or matrix of counts.
-#' @param bias_correct Whether to apply Bergsma's correction, which
-#'   removes most of V's upward bias in a sparse table. Worth having:
-#'   uncorrected V on a sparse table reports association that is an
-#'   artefact of the table's size.
-#' @param min_expected Expected count below which the chi-square
-#'   approximation is unreliable. Reported, not enforced.
-#' @return A list with `v`, `chisq`, `df`, `p_value`, `n`,
-#'   `min_expected`, and `cells_below`, the number of cells whose
-#'   expected count falls under the threshold. When any does, `p_value`
-#'   comes from a Monte Carlo permutation instead of the chi-square
-#'   approximation, and `method` says which was used.
+#' @param bias_correct Whether to apply Bergsma's
+#' correction, which removes most of V's upward bias in a sparse table.
+#' Worth having: uncorrected V on a sparse table reports association that
+#' is an artefact of the table's size.
+#' @param min_expected Expected count below which the
+#' chi-square approximation is unreliable. Reported, not enforced.
+#' @return A list with `v`, `chisq`, `df`, `p_value`,
+#' `n`, `min_expected`, and `cells_below`, the number of
+#' cells whose expected count falls under the threshold. When any does,
+#' `p_value` comes from a Monte Carlo permutation instead of the
+#' chi-square approximation, and `method` says which was used.
 #' @references
-#' Bergsma, W. (2013). A bias-correction for Cramer's V and
-#' Tschuprow's T. *Journal of the Korean Statistical Society* 42(3),
-#' 323-328. (Not in the local corpus; cited from the published paper.)
+#' Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
+#' *Journal of the Korean Statistical Society* 42(3), 323-328. (Not in
+#' the local corpus; cited from the published paper.)
 #' @examples
 #' tbl <- rbind(c(120, 80), c(40, 160))
 #' cramers_v(tbl)

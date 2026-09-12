@@ -42,42 +42,46 @@ rule_col_count(n, severity = c("warning", "fatal"))
 \arguments{
 \item{column}{Column the rule applies to.}
 
-\item{set}{Allowed values (\code{rule_in_set}).}
+\item{set}{Allowed values ( \code{rule_in_set}) .}
 
-\item{na_pass}{Treat \code{NA} as passing (default \code{TRUE}; see above).}
+\item{na_pass}{Treat \code{NA} as passing (default
+\code{TRUE}; see above).}
 
-\item{severity}{\code{"warning"} (default) or \code{"fatal"}.}
+\item{severity}{\code{"warning"} (default) or
+\code{"fatal"}.}
 
-\item{lo, hi}{Inclusive bounds (\code{rule_between}).}
+\item{lo, hi}{Inclusive bounds ( \code{rule_between}) .}
 
-\item{pattern}{Regular expression the values must match
-(\code{rule_regex}).}
+\item{pattern}{Regular expression the values must match (
+\code{rule_regex}) .}
 
-\item{strictly}{Require a strict increase rather than non-decreasing
-(\code{rule_increasing}).}
+\item{strictly}{Require a strict increase rather than
+non-decreasing ( \code{rule_increasing}) .}
 
-\item{n}{Multiplier for \code{rule_within_n_mads}, or the expected count
-for \code{rule_col_count}.}
+\item{n}{Multiplier for \code{rule_within_n_mads}, or the
+expected count for \code{rule_col_count}.}
 
-\item{columns}{Columns that jointly must be unique
-(\code{rule_distinct_rows}), or \code{NULL} for all of them.}
+\item{columns}{Columns that jointly must be unique (
+\code{rule_distinct_rows}) , or \code{NULL} for all of them.}
 }
 \value{
 A \code{\link[=rule]{rule()}} object.
 }
 \description{
 Constructors for the checks most schemas need, each returning a
-\code{\link[=rule]{rule()}} that \code{\link[=validate_rules]{validate_rules()}} evaluates. Use \code{\link[=rule]{rule()}} directly for
-anything not covered here.
+\code{\link[=rule]{rule()}} that
+\code{\link[=validate_rules]{validate_rules()}} evaluates. Use
+\code{\link[=rule]{rule()}} directly for anything not covered here.
 }
 \details{
 \code{NA} handling is explicit and per-rule, because the right answer
-differs. \code{rule_not_null()} exists precisely to fail on \code{NA}. The
-value rules (\code{rule_in_set}, \code{rule_between}, \code{rule_regex},
-\code{rule_within_n_mads}) treat \code{NA} as PASSING by default, so that a
-column's missingness is reported once by \code{rule_not_null()} or
-\code{max_missing_fraction} rather than again by every other rule; set
-\code{na_pass = FALSE} to make them fail on it instead.
+differs. \code{rule_not_null()} exists precisely to fail on \code{NA}.
+The value rules ( \code{rule_in_set}, \code{rule_between},
+\code{rule_regex}, \code{rule_within_n_mads}) treat \code{NA} as PASSING
+by default, so that a column's missingness is reported once by
+\code{rule_not_null()} or \code{max_missing_fraction} rather than again
+by every other rule; set \code{na_pass = FALSE} to make them fail on it
+instead.
 }
 \examples{
 df <- data.frame(
@@ -119,7 +123,8 @@ validate_rules(df, rule_col_count(5))
 validate_rules(df, rule_complete_rows())
 }
 \seealso{
-\code{\link[=rule]{rule()}} for an arbitrary predicate, \code{\link[=validate_rules]{validate_rules()}} to
-evaluate them, \code{\link[=infer_schema]{infer_schema()}} for the structural checks that need
-no rules at all.
+\code{\link[=rule]{rule()}} for an arbitrary predicate,
+\code{\link[=validate_rules]{validate_rules()}} to evaluate them,
+\code{\link[=infer_schema]{infer_schema()}} for the structural checks
+that need no rules at all.
 }

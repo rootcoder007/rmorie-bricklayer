@@ -17,33 +17,35 @@ summary_merge(a, b)
 summary_stats(acc)
 }
 \arguments{
-\item{x}{Numeric vector: the first block, or \code{NULL} for an empty
-accumulator.}
+\item{x}{Numeric vector: the first block, or \code{NULL} for an
+empty accumulator.}
 
 \item{acc, a, b}{Accumulators from \code{online_summary()}.}
 }
 \value{
-\code{online_summary()}, \code{summary_update()} and \code{summary_merge()}
-return an object of class \code{bricklayer_online}; \code{summary_stats()}
-returns a named numeric with \code{n}, \code{mean}, \code{variance}, \code{sd},
-\code{skewness} and \code{kurtosis}.
+\code{online_summary()}, \code{summary_update()} and
+\code{summary_merge()} return an object of class
+\code{bricklayer_online}; \code{summary_stats()} returns a named numeric
+with \code{n}, \code{mean}, \code{variance}, \code{sd}, \code{skewness}
+and \code{kurtosis}.
 }
 \description{
-An accumulator for the mean, variance, skewness and kurtosis of a
-column that does not fit in memory. Feed it blocks with
-\code{\link[=summary_update]{summary_update()}} and read the result with \code{\link[=summary_stats]{summary_stats()}}.
+An accumulator for the mean, variance, skewness and kurtosis of a column
+that does not fit in memory. Feed it blocks with
+\code{\link[=summary_update]{summary_update()}} and read the result with
+\code{\link[=summary_stats]{summary_stats()}}.
 }
 \details{
-The merge is EXACT, not approximate: it uses Chan, Golub and
-LeVeque's parallel combination of central sums, extended to the third
-and fourth moments by Terriberry, so accumulating a column in blocks
-gives the same answer as \code{\link[=core_moments]{core_moments()}} over the whole column at
-once. That is what makes it usable for a capsule member of any size:
-memory stays constant in the number of blocks.
+The merge is EXACT, not approximate: it uses Chan, Golub and LeVeque's
+parallel combination of central sums, extended to the third and fourth
+moments by Terriberry, so accumulating a column in blocks gives the same
+answer as \code{\link[=core_moments]{core_moments()}} over the whole
+column at once. That is what makes it usable for a capsule member of any
+size: memory stays constant in the number of blocks.
 
-The object is a plain list and is copied on assignment like any other
-R value, so \code{update} returns the new accumulator and you must keep it:
-\code{acc <- summary_update(acc, block)}.
+The object is a plain list and is copied on assignment like any other R
+value, so \code{update} returns the new accumulator and you must keep
+it: \code{acc <- summary_update(acc, block)}.
 }
 \examples{
 set.seed(1)
@@ -76,5 +78,6 @@ computing the sample variance: analysis and recommendations.
 \doi{10.1080/00031305.1983.10483115}
 }
 \seealso{
-\code{\link[=core_moments]{core_moments()}} for the single-pass batch version.
+\code{\link[=core_moments]{core_moments()}} for the single-pass
+batch version.
 }

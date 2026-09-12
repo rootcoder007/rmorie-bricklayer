@@ -9,8 +9,8 @@ core_weighted(x, w)
 \arguments{
 \item{x}{Numeric vector of observations.}
 
-\item{w}{Numeric vector of non-negative weights, the same length as
-\code{x}.}
+\item{w}{Numeric vector of non-negative weights, the same
+length as \code{x}.}
 }
 \value{
 A named length-2 numeric: \code{mean} and \code{variance}.

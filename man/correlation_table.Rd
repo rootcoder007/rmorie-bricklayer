@@ -9,21 +9,23 @@ correlation_table(data, method = c("spearman", "pearson"), min_pairs = 3L)
 \arguments{
 \item{data}{A data frame; non-numeric columns are ignored.}
 
-\item{method}{\code{"spearman"} (default) or \code{"pearson"}. See
-\code{\link[=top_correlations]{top_correlations()}} for why the rank correlation is the default.}
+\item{method}{\code{"spearman"} (default) or
+\code{"pearson"}. See
+\code{\link[=top_correlations]{top_correlations()}} for why the rank
+correlation is the default.}
 
-\item{min_pairs}{Minimum complete pairs required before a correlation
-is computed (default 3). Below it the pair is \code{NA} rather than a
-number computed from almost nothing.}
+\item{min_pairs}{Minimum complete pairs required before
+a correlation is computed (default 3). Below it the pair is \code{NA}
+rather than a number computed from almost nothing.}
 }
 \value{
-A data frame of class \code{bricklayer_cortable} with \code{x}, \code{y},
-\code{correlation} and \code{n_pairs}.
+A data frame of class \code{bricklayer_cortable} with \code{x},
+\code{y}, \code{correlation} and \code{n_pairs}.
 }
 \description{
-Every numeric pair's correlation in long form -- one row per pair,
-which is easier to sort, filter and join than a matrix. The
-counterpart of \code{corrr::correlate()}.
+Every numeric pair's correlation in long form -- one row per pair, which
+is easier to sort, filter and join than a matrix. The counterpart of
+\code{corrr::correlate()}.
 }
 \examples{
 set.seed(1)
@@ -43,6 +45,6 @@ thin$a[1:99] <- NA
 correlation_table(thin)$correlation
 }
 \seealso{
-\code{\link[=top_correlations]{top_correlations()}} for just the strongest,
-\code{\link[=core_cov]{core_cov()}} for the matrix form.
+\code{\link[=top_correlations]{top_correlations()}} for just the
+strongest, \code{\link[=core_cov]{core_cov()}} for the matrix form.
 }

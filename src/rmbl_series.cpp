@@ -73,6 +73,43 @@ bool collect(SEXP x, std::vector<double> &out, bool *saw_negative) {
     return true;
 }
 
+/* Scalar Hurwitz zeta, shared by the .Call entry point and the
+ * plain-C kernel below so the two cannot drift apart. */
+double hurwitz_zeta_scalar(double s, double q) {
+    /* B_2j / (2j)!, written as the quotient of the two so each entry
+     * can be read against a table rather than trusted as a decimal */
+    static const double bfac[6] = {
+        (1.0 / 6.0) / 2.0,              /* B2  =  1/6     , 2!  */
+        (-1.0 / 30.0) / 24.0,           /* B4  = -1/30    , 4!  */
+        (1.0 / 42.0) / 720.0,           /* B6  =  1/42    , 6!  */
+        (-1.0 / 30.0) / 40320.0,        /* B8  = -1/30    , 8!  */
+        (5.0 / 66.0) / 3628800.0,       /* B10 =  5/66    , 10! */
+        (-691.0 / 2730.0) / 479001600.0 /* B12 = -691/2730, 12! */
+    };
+    const int N = 16;
+
+        
+        if (ISNAN(s) || s <= 1.0 || q <= 0.0) {
+            return NA_REAL;
+        }
+        long double acc = 0.0L;
+        for (int k = 0; k < N; ++k) {
+            acc += std::pow(static_cast<long double>(q + k), -s);
+        }
+        const long double a = static_cast<long double>(q + N);
+        acc += std::pow(a, 1.0L - s) / (s - 1.0L);
+        acc += 0.5L * std::pow(a, -s);
+        /* sum_j coef_j * (s)_{2j-1} * a^{-s-2j+1} */
+        long double poch = s;             /* (s)_1 */
+        for (int j = 1; j <= 6; ++j) {
+            acc += bfac[j - 1] * poch *
+                   std::pow(a, -s - 2.0L * j + 1.0L);
+            /* advance (s)_{2j-1} to (s)_{2j+1} */
+            poch *= (s + 2.0L * j - 1.0L) * (s + 2.0L * j);
+        }
+        return static_cast<double>(acc);
+}
+
 }  // namespace
 
 extern "C" {
@@ -315,39 +352,8 @@ SEXP C_rmbl_hurwitz_zeta(SEXP s_, SEXP q_) {
     const double *sv = REAL(s_);
     const double q = Rf_asReal(q_);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
-    /* B_2j / (2j)!, written as the quotient of the two so each entry
-     * can be read against a table rather than trusted as a decimal */
-    static const double bfac[6] = {
-        (1.0 / 6.0) / 2.0,              /* B2  =  1/6     , 2!  */
-        (-1.0 / 30.0) / 24.0,           /* B4  = -1/30    , 4!  */
-        (1.0 / 42.0) / 720.0,           /* B6  =  1/42    , 6!  */
-        (-1.0 / 30.0) / 40320.0,        /* B8  = -1/30    , 8!  */
-        (5.0 / 66.0) / 3628800.0,       /* B10 =  5/66    , 10! */
-        (-691.0 / 2730.0) / 479001600.0 /* B12 = -691/2730, 12! */
-    };
-    const int N = 16;
     for (R_xlen_t i = 0; i < n; ++i) {
-        const double s = sv[i];
-        if (ISNAN(s) || s <= 1.0 || q <= 0.0) {
-            REAL(out)[i] = NA_REAL;
-            continue;
-        }
-        long double acc = 0.0L;
-        for (int k = 0; k < N; ++k) {
-            acc += std::pow(static_cast<long double>(q + k), -s);
-        }
-        const long double a = static_cast<long double>(q + N);
-        acc += std::pow(a, 1.0L - s) / (s - 1.0L);
-        acc += 0.5L * std::pow(a, -s);
-        /* sum_j coef_j * (s)_{2j-1} * a^{-s-2j+1} */
-        long double poch = s;             /* (s)_1 */
-        for (int j = 1; j <= 6; ++j) {
-            acc += bfac[j - 1] * poch *
-                   std::pow(a, -s - 2.0L * j + 1.0L);
-            /* advance (s)_{2j-1} to (s)_{2j+1} */
-            poch *= (s + 2.0L * j - 1.0L) * (s + 2.0L * j);
-        }
-        REAL(out)[i] = static_cast<double>(acc);
+        REAL(out)[i] = hurwitz_zeta_scalar(sv[i], q);
     }
     UNPROTECT(1);
     return out;
@@ -461,6 +467,162 @@ SEXP C_rmbl_morans_i(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
     Rf_setAttrib(out, R_NamesSymbol, nm);
     UNPROTECT(3);
     return out;
+}
+
+}  // extern "C"
+
+/* ---------------------------------------------------------------------
+ * Plain-C kernels, published with R_RegisterCCallable so a sibling
+ * package can reach them through `LinkingTo: rmoriebricklayer` without
+ * going back through R. Same numbers as the .Call entry points above,
+ * because they are the same code.
+ * ------------------------------------------------------------------ */
+
+extern "C" {
+
+/* Gini. Returns NA_REAL when the total is zero -- there is no
+ * distribution of nothing to be unequal about -- and when any value is
+ * negative, since a share of a total has no meaning then. */
+double rmbl_gini(const double *x, R_xlen_t n) {
+    std::vector<double> v;
+    v.reserve(static_cast<size_t>(n));
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (ISNAN(x[i]) || !R_FINITE(x[i])) continue;
+        if (x[i] < 0) return NA_REAL;
+        v.push_back(x[i]);
+    }
+    return gini_sorted(v);
+}
+
+/* Share of the total held by the largest ceil(frac * n) units, and how
+ * many units that was (written through `units` when non-NULL). */
+double rmbl_top_share(const double *x, R_xlen_t n, double frac,
+                      R_xlen_t *units) {
+    if (units != NULL) *units = 0;
+    if (ISNAN(frac) || frac < 0 || frac > 1) return NA_REAL;
+    std::vector<double> v;
+    v.reserve(static_cast<size_t>(n));
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (ISNAN(x[i]) || !R_FINITE(x[i])) continue;
+        if (x[i] < 0) return NA_REAL;
+        v.push_back(x[i]);
+    }
+    const size_t m = v.size();
+    if (m == 0) return NA_REAL;
+    std::sort(v.begin(), v.end(), [](double a, double b) { return a > b; });
+    long double total = 0.0L;
+    for (size_t i = 0; i < m; ++i) total += v[i];
+    if (total <= 0.0L) return NA_REAL;
+    size_t k = static_cast<size_t>(
+        std::ceil(frac * static_cast<double>(m) - 1e-9));
+    if (k > m) k = m;
+    long double run = 0.0L;
+    for (size_t i = 0; i < k; ++i) run += v[i];
+    if (units != NULL) *units = static_cast<R_xlen_t>(k);
+    return static_cast<double>(run / total);
+}
+
+/* Lorenz curve into caller-supplied buffers of length n + 1, including
+ * the origin. Returns the number of points written, or 0 on refusal. */
+R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n, double *population,
+                     double *value) {
+    std::vector<double> v;
+    v.reserve(static_cast<size_t>(n));
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (ISNAN(x[i]) || !R_FINITE(x[i])) continue;
+        if (x[i] < 0) return 0;
+        v.push_back(x[i]);
+    }
+    const size_t m = v.size();
+    std::sort(v.begin(), v.end());
+    long double total = 0.0L;
+    for (size_t i = 0; i < m; ++i) total += v[i];
+    population[0] = 0.0;
+    value[0] = 0.0;
+    long double run = 0.0L;
+    for (size_t i = 0; i < m; ++i) {
+        run += v[i];
+        population[i + 1] = static_cast<double>(i + 1) /
+                            static_cast<double>(m);
+        value[i + 1] = total > 0.0L
+            ? static_cast<double>(run / total) : NA_REAL;
+    }
+    return static_cast<R_xlen_t>(m) + 1;
+}
+
+/* Mann-Kendall S and its tie-corrected variance. */
+void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
+                       double *var, R_xlen_t *used) {
+    std::vector<double> v;
+    v.reserve(static_cast<size_t>(n));
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (!ISNAN(y[i]) && R_FINITE(y[i])) v.push_back(y[i]);
+    }
+    const R_xlen_t m = static_cast<R_xlen_t>(v.size());
+    if (used != NULL) *used = m;
+    if (m < 2) { *S = NA_REAL; *var = NA_REAL; return; }
+    double s = 0.0;
+    for (R_xlen_t i = 0; i + 1 < m; ++i) {
+        for (R_xlen_t j = i + 1; j < m; ++j) {
+            const double d = v[static_cast<size_t>(j)] -
+                             v[static_cast<size_t>(i)];
+            if (d > 0) s += 1.0; else if (d < 0) s -= 1.0;
+        }
+    }
+    std::vector<double> sorted(v);
+    std::sort(sorted.begin(), sorted.end());
+    long double tiesum = 0.0L;
+    R_xlen_t i = 0;
+    while (i < m) {
+        R_xlen_t j = i;
+        while (j + 1 < m &&
+               sorted[static_cast<size_t>(j + 1)] ==
+                 sorted[static_cast<size_t>(i)]) ++j;
+        const long double t = static_cast<long double>(j - i + 1);
+        if (t > 1.0L) tiesum += t * (t - 1.0L) * (2.0L * t + 5.0L);
+        i = j + 1;
+    }
+    const long double nn = static_cast<long double>(m);
+    *S = s;
+    *var = static_cast<double>(
+        (nn * (nn - 1.0L) * (2.0L * nn + 5.0L) - tiesum) / 18.0L);
+}
+
+/* Hurwitz zeta, the normalising constant of the discrete power law. */
+double rmbl_hurwitz_zeta(double s, double q) {
+    return hurwitz_zeta_scalar(s, q);
+}
+
+/* Theil-Sen slope and intercept. */
+void rmbl_theil_sen(const double *x, const double *y, R_xlen_t n,
+                    double *slope, double *intercept) {
+    std::vector<double> xs;
+    std::vector<double> ys;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (ISNAN(x[i]) || ISNAN(y[i]) ||
+            !R_FINITE(x[i]) || !R_FINITE(y[i])) continue;
+        xs.push_back(x[i]);
+        ys.push_back(y[i]);
+    }
+    const size_t m = xs.size();
+    std::vector<double> slopes;
+    for (size_t i = 0; i + 1 < m; ++i) {
+        for (size_t j = i + 1; j < m; ++j) {
+            const double dx = xs[j] - xs[i];
+            if (dx == 0.0) continue;
+            slopes.push_back((ys[j] - ys[i]) / dx);
+        }
+    }
+    if (slopes.empty()) { *slope = NA_REAL; *intercept = NA_REAL; return; }
+    std::sort(slopes.begin(), slopes.end());
+    const size_t k = slopes.size();
+    *slope = (k % 2 == 1) ? slopes[k / 2]
+                          : 0.5 * (slopes[k / 2 - 1] + slopes[k / 2]);
+    std::vector<double> resid(m);
+    for (size_t i = 0; i < m; ++i) resid[i] = ys[i] - *slope * xs[i];
+    std::sort(resid.begin(), resid.end());
+    *intercept = (m % 2 == 1) ? resid[m / 2]
+                              : 0.5 * (resid[m / 2 - 1] + resid[m / 2]);
 }
 
 }  // extern "C"

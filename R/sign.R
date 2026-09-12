@@ -16,16 +16,19 @@
 #' Available post-quantum signature backends
 #'
 #' Reports which signature backends this build of the package can use.
-#' `"xmss-sha256"` is always present -- it needs nothing but the bundled
-#' SHA-256. `"liboqs"` appears only when the Open Quantum Safe library
-#' was found at configure time, which additionally enables the
-#' standardised lattice and hash-based schemes (ML-DSA / FIPS 204,
-#' SLH-DSA / FIPS 205) through that library rather than through any
-#' hand-written implementation here.
+#' `"xmss-sha256"` is always present -- it needs nothing but the
+#' bundled SHA-256. `"liboqs"` appears only when the Open Quantum Safe
+#' library was found at configure time, which additionally enables the
+#' standardised lattice and hash-based schemes (ML-DSA / FIPS 204, SLH-DSA
+#' / FIPS 205) through that library rather than through any hand-written
+#' implementation here.
 #'
-#' @return A character vector of scheme names. `"xmss-sha256"` is always
-#'   first; any standardised schemes this build of liboqs enabled follow.
-#' @seealso [pqc_keygen()], which takes any of these as its `scheme`.
+#' @return A character vector of scheme names. `"xmss-sha256"` is
+#' always first; any standardised schemes this build of liboqs enabled
+#' follow.
+#' @seealso
+#' [pqc_keygen()], which takes any of these as its
+#' `scheme`.
 #' @examples
 #' pqc_backends()
 #'
@@ -43,24 +46,28 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' ML-DSA (FIPS 204) or SLH-DSA (FIPS 205) -- **through liboqs**.
 #'
 #' bricklayer implements no lattice arithmetic of its own. These keys and
-#' signatures are produced entirely by the Open Quantum Safe library,
-#' which is tested and maintained for the purpose; a hand-written NTT and
+#' signatures are produced entirely by the Open Quantum Safe library, which
+#' is tested and maintained for the purpose; a hand-written NTT and
 #' rejection sampler here would be a worse outcome than deferring. The
-#' trade-off is that the scheme is available only where liboqs was found
-#' at build time, which [pqc_backends()] reports.
+#' trade-off is that the scheme is available only where liboqs was found at
+#' build time, which [pqc_backends()] reports.
 #'
-#' Unlike [pqc_keygen()]'s hash-based key, these are STATELESS: a key
-#' signs any number of messages, with no index to track.
+#' Unlike [pqc_keygen()] 's hash-based key, these
+#' are STATELESS: a key signs any number of messages, with no index to
+#' track.
 #'
-#' @param scheme Scheme name, as reported by [pqc_backends()]. The
-#'   default `"ML-DSA-65"` is the FIPS 204 middle security level.
-#' @return A list of class `bricklayer_oqs_key`: `public`, `secret`
-#'   (both hex), and `scheme`.
+#' @param scheme Scheme name, as reported by
+#' [pqc_backends()]. The default
+#' `"ML-DSA-65"` is the FIPS 204 middle security level.
+#' @return A list of class `bricklayer_oqs_key`: `public`,
+#' `secret` (both hex), and `scheme`.
 #' @references National Institute of Standards and Technology (2024).
-#'   Module-Lattice-Based Digital Signature Standard. FIPS 204.
+#' Module-Lattice-Based Digital Signature Standard. FIPS 204.
 #'   \doi{10.6028/NIST.FIPS.204}
-#' @seealso [pqc_keygen()] for the dependency-free hash-based key,
-#'   [capsule_sign()] which accepts either.
+#' @seealso
+#' [pqc_keygen()] for the dependency-free
+#' hash-based key, [capsule_sign()] which
+#' accepts either.
 #' @examples
 #' # Only where the build found liboqs.
 #' if ("ML-DSA-65" %in% pqc_backends()) {
@@ -154,30 +161,33 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #'
 #' # A height-`h` key signs exactly `2^h` messages
 #'
-#' Each signature consumes one leaf, and **signing two different
-#' messages with the same leaf index breaks the scheme outright** --
-#' between two signatures at one index an adversary can forge a third
-#' message. [capsule_sign()] therefore tracks `next_index` and refuses
-#' to reuse one. Do not hand-edit that field, and do not copy a key to
-#' two machines that sign independently.
+#' Each signature consumes one leaf, and **signing two different messages
+#' with the same leaf index breaks the scheme outright** -- between two
+#' signatures at one index an adversary can forge a third message.
+#' [capsule_sign()] therefore tracks
+#' `next_index` and refuses to reuse one. Do not hand-edit that field,
+#' and do not copy a key to two machines that sign independently.
 #'
-#' Key generation walks all `2^height` leaves, so cost doubles with each
-#' unit of height. The default 10 gives 1024 signatures and takes a
+#' Key generation walks all `2^height` leaves, so cost doubles with
+#' each unit of height. The default 10 gives 1024 signatures and takes a
 #' moment; heights above about 14 are slow enough to be worth avoiding
 #' unless the key really must last that long.
 #'
 #' @param height Tree height, 1 to 16 (default 10, i.e. 1024
-#'   signatures).
-#' @param sk_seed,pub_seed 64-character hex seeds (32 bytes each). Omit
-#'   them and seeds are drawn from the operating system's CSPRNG via
-#'   [random_bytes()], which fails rather than falling back to R's
-#'   reproducible generator. Supply them ONLY to reproduce a key
-#'   deterministically in a test -- a seed you can guess is a key you can
-#'   forge.
-#' @return A list of class `bricklayer_signing_key`: `root` (the public
-#'   verification value), `pub_seed`, `sk_seed` (SECRET), `height`,
-#'   `next_index`, `capacity`, and `scheme`.
-#' @seealso [capsule_sign()], [capsule_verify()], [signing_public_key()]
+#' signatures).
+#' @param sk_seed,pub_seed 64-character hex seeds
+#' (32 bytes each). Omit them and seeds are drawn from the operating
+#' system's CSPRNG via [random_bytes()], which
+#' fails rather than falling back to R's reproducible generator. Supply
+#' them ONLY to reproduce a key deterministically in a test -- a seed you
+#' can guess is a key you can forge.
+#' @return A list of class `bricklayer_signing_key`: `root` (the
+#' public verification value), `pub_seed`, `sk_seed` (SECRET),
+#' `height`, `next_index`, `capacity`, and `scheme`.
+#' @seealso
+#' [capsule_sign()],
+#' [capsule_verify()],
+#' [signing_public_key()]
 #' @examples
 #' # A small key, to keep the example quick.
 #' key <- pqc_keygen(height = 3)
@@ -214,11 +224,13 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL) {
 #' Public half of a signing key
 #'
 #' Strips the secret seed, leaving only what a verifier needs. Publish
-#' this; never the object returned by [pqc_keygen()].
+#' this; never the object returned by
+#' [pqc_keygen()].
 #'
-#' @param key A `bricklayer_signing_key` from [pqc_keygen()].
-#' @return A list of class `bricklayer_public_key`: `root`, `pub_seed`,
-#'   `height`, `scheme`.
+#' @param key A `bricklayer_signing_key` from
+#' [pqc_keygen()].
+#' @return A list of class `bricklayer_public_key`: `root`,
+#' `pub_seed`, `height`, `scheme`.
 #' @examples
 #' key <- pqc_keygen(height = 2)
 #' pub <- signing_public_key(key)
@@ -243,36 +255,41 @@ signing_public_key <- function(key) {
 #' Sign a capsule manifest
 #'
 #' Authenticates `message` -- normally a manifest digest, or the whole
-#' manifest text -- so a verifier can tell that it came from the holder
-#' of the key and has not been altered since.
+#' manifest text -- so a verifier can tell that it came from the holder of
+#' the key and has not been altered since.
 #'
-#' With `scheme = "hmac"` the `key` is a shared secret string and the
-#' result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify can
-#' also sign.
+#' With `scheme = "hmac"` the `key` is a shared secret string and
+#' the result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify
+#' can also sign.
 #'
-#' With `scheme = "xmss"` the `key` is a [pqc_keygen()] object and the
-#' result is a post-quantum one-time signature under the key's Merkle
-#' root. Asymmetric: a verifier holding only the public root cannot
-#' forge.
+#' With `scheme = "xmss"` the `key` is a
+#' [pqc_keygen()] object and the result is a
+#' post-quantum one-time signature under the key's Merkle root. Asymmetric:
+#' a verifier holding only the public root cannot forge.
 #'
 #' # The returned key state must be carried forward
 #'
-#' An XMSS signature consumes a leaf. The returned object therefore
-#' carries `key_state`, the key with `next_index` advanced, and
+#' An XMSS signature consumes a leaf. The returned object therefore carries
+#' `key_state`, the key with `next_index` advanced, and
 #' **subsequent signing must use that** -- reusing an index breaks the
 #' scheme. Passing an exhausted key is an error, not a silent wrap-around.
 #'
-#' @param message Length-1 character vector (or raw vector) to sign.
-#' @param key A shared secret (character/raw) for `"hmac"`, a
-#'   `bricklayer_signing_key` from [pqc_keygen()] for `"xmss"`, or a
-#'   `bricklayer_oqs_key` from [oqs_keygen()] for a standardised scheme
-#'   (in which case `scheme` is taken from the key and ignored).
-#' @param scheme `"xmss"` (post-quantum, asymmetric) or `"hmac"`
-#'   (symmetric). Inferred from `key` when not given.
+#' @param message Length-1 character vector (or raw vector)
+#' to sign.
+#' @param key A shared secret (character/raw) for `"hmac"`,
+#' a `bricklayer_signing_key` from
+#' [pqc_keygen()] for `"xmss"`, or a
+#' `bricklayer_oqs_key` from [oqs_keygen()]
+#' for a standardised scheme (in which case `scheme` is taken from the
+#' key and ignored).
+#' @param scheme `"xmss"` (post-quantum, asymmetric) or
+#' `"hmac"` (symmetric). Inferred from `key` when not given.
 #' @return A list of class `bricklayer_signature`: `scheme`,
-#'   `signature`, and for XMSS also `auth`, `index`, `root`, `height`
-#'   and `key_state`.
-#' @seealso [capsule_verify()], [core_hmac_sha256()]
+#' `signature`, and for XMSS also `auth`, `index`,
+#' `root`, `height` and `key_state`.
+#' @seealso
+#' [capsule_verify()],
+#' [core_hmac_sha256()]
 #' @examples
 #' # Symmetric: one shared secret.
 #' sig <- capsule_sign("sha256:abc123", key = "shared-secret",
@@ -353,22 +370,25 @@ capsule_sign <- function(message, key, scheme = NULL) {
 
 #' Verify a capsule manifest signature
 #'
-#' Checks `signature` against `message`. For `"hmac"` the comparison is
-#' constant-time. For XMSS the Winternitz chains are walked to their ends
-#' and the authentication path replayed to the Merkle root; the digest is
-#' bound to both the leaf index and the root, so a signature cannot be
-#' replayed at another index or under another key.
+#' Checks `signature` against `message`. For `"hmac"` the
+#' comparison is constant-time. For XMSS the Winternitz chains are walked
+#' to their ends and the authentication path replayed to the Merkle root;
+#' the digest is bound to both the leaf index and the root, so a signature
+#' cannot be replayed at another index or under another key.
 #'
 #' Returns `FALSE` rather than erroring on a malformed or truncated
 #' signature: a verifier must treat unparseable input as "not verified",
 #' never as an exception to be caught and ignored.
 #'
-#' @param message The message the signature is claimed to cover.
-#' @param signature A `bricklayer_signature` from [capsule_sign()].
-#' @param key The shared secret for `"hmac"`, a public key (or full
-#'   signing key) for XMSS, or an [oqs_keygen()] key or its
-#'   [oqs_public_key()] for a standardised scheme. A signature is not
-#'   verified against a key of a different scheme.
+#' @param message The message the signature is claimed to
+#' cover.
+#' @param signature A `bricklayer_signature` from
+#' [capsule_sign()].
+#' @param key The shared secret for `"hmac"`, a public key
+#' (or full signing key) for XMSS, or an
+#' [oqs_keygen()] key or its
+#' [oqs_public_key()] for a standardised
+#' scheme. A signature is not verified against a key of a different scheme.
 #' @return A length-1 logical.
 #' @examples
 #' key <- pqc_keygen(height = 2)

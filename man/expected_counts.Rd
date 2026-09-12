@@ -9,24 +9,26 @@ expected_counts(counts, population, area, strata = NULL)
 \arguments{
 \item{counts}{Observed counts.}
 
-\item{population}{Population at risk, the same length as \code{counts}.}
+\item{population}{Population at risk, the same length
+as \code{counts}.}
 
 \item{area}{Area label for each row.}
 
-\item{strata}{Optional stratum label for each row -- an age band, a
-gender, or their interaction. With strata the standardisation is
-indirect in the usual sense: the overall stratum-specific rates are
-applied to each area's own stratum populations.}
+\item{strata}{Optional stratum label for each row -- an
+age band, a gender, or their interaction. With strata the
+standardisation is indirect in the usual sense: the overall
+stratum-specific rates are applied to each area's own stratum
+populations.}
 }
 \value{
-A data frame with one row per area: \code{observed}, \code{population}
-and \code{expected}.
+A data frame with one row per area: \code{observed},
+\code{population} and \code{expected}.
 }
 \description{
 The count each area would have if it experienced the overall rate in
 every stratum, given its own composition. Comparing observed against
-this rather than against a raw rate removes the part of the
-difference that is explained by who the area holds.
+this rather than against a raw rate removes the part of the difference
+that is explained by who the area holds.
 }
 \details{
 Without strata the expected count is just the area's population times
@@ -51,18 +53,18 @@ expected_counts(d$n, d$pop, d$region)
 expected_counts(d$n, d$pop, d$region, strata = d$age)
 }
 \references{
-Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal
-Health Modeling}. Chapman and Hall/CRC. Chapter 1 sets out the
-convention used here: the expected counts come from applying the
-overall population rate to each area, and the standardised incidence
-ratio is the ratio of count to expected.
+Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+Modeling}. Chapman and Hall/CRC. Chapter 1 sets out the convention used
+here: the expected counts come from applying the overall population rate
+to each area, and the standardised incidence ratio is the ratio of count
+to expected.
 
-Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods
-Using R}. Springer, on the distinction between indirect
-standardisation, which applies the reference's stratum-specific rates
-to the study population, and direct standardisation, which does the
-reverse.
+Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using
+R}. Springer, on the distinction between indirect standardisation, which
+applies the reference's stratum-specific rates to the study population,
+and direct standardisation, which does the reverse.
 }
 \seealso{
-\code{\link[=sir]{sir()}}, \code{\link[=eb_rates]{eb_rates()}}, \code{\link[=funnel_limits]{funnel_limits()}}
+\code{\link[=sir]{sir()}}, \code{\link[=eb_rates]{eb_rates()}},
+\code{\link[=funnel_limits]{funnel_limits()}}
 }

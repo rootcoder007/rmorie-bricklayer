@@ -7,20 +7,22 @@
 yoy_label(x, labels)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from
+\code{\link[=yoy]{yoy()}}.}
 
-\item{labels}{Either a function applied to the period column, or a
-character vector the same length as the number of distinct periods,
-or a named character vector mapping a period (as a string) to its
-label.}
+\item{labels}{Either a function applied to the period
+column, or a character vector the same length as the number of distinct
+periods, or a named character vector mapping a period (as a string) to
+its label.}
 }
 \value{
-The object, with a \code{period_label} column and the labels used
-by \code{print()}, \code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}} and the delimited writers.
+The object, with a \code{period_label} column and the labels
+used by \code{print()}, \code{\link[=yoy_html]{yoy_html()}},
+\code{\link[=yoy_pdf]{yoy_pdf()}} and the delimited writers.
 }
 \description{
-Attaches display labels to a change table. The arithmetic already ran
-on the period's value, so a label can only affect what is printed:
+Attaches display labels to a change table. The arithmetic already ran on
+the period's value, so a label can only affect what is printed:
 relabelling cannot move a number.
 }
 \examples{

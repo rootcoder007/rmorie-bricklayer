@@ -7,15 +7,17 @@
 environment_diff(a, b)
 }
 \arguments{
-\item{a, b}{Environment records from \code{\link[=capture_environment]{capture_environment()}}, or whole
+\item{a, b}{Environment records from
+\code{\link[=capture_environment]{capture_environment()}}, or whole
 manifests containing an \code{environment} element.}
 }
 \value{
-A list of class \code{bricklayer_env_diff}: \code{identical} (logical),
-\code{r_version} (a length-2 character vector when they differ, else
-\code{NULL}), \code{platform} (likewise), and \code{packages} (a data frame of
-\code{package}, \code{a}, \code{b}, \code{change}, where \code{change} is \code{"added"},
-\code{"removed"} or \code{"changed"}).
+A list of class \code{bricklayer_env_diff}: \code{identical}
+(logical), \code{r_version} (a length-2 character vector when they
+differ, else \code{NULL}) , \code{platform} (likewise), and
+\code{packages} (a data frame of \code{package}, \code{a}, \code{b},
+\code{change}, where \code{change} is \code{"added"}, \code{"removed"}
+or \code{"changed"}) .
 }
 \description{
 Reports what changed between the environment captured by one run and
@@ -47,5 +49,6 @@ m <- make_manifest(list(run = "demo"))
 environment_diff(m, m)$identical
 }
 \seealso{
-\code{\link[=capture_environment]{capture_environment()}}, \code{\link[=make_manifest]{make_manifest()}}
+\code{\link[=capture_environment]{capture_environment()}},
+\code{\link[=make_manifest]{make_manifest()}}
 }

@@ -14,10 +14,11 @@ A character vector containing only ASCII characters.
 }
 \description{
 Converts a character vector to plain 7-bit ASCII, transliterating
-accented or non-Latin characters to their nearest ASCII equivalent
-(for example, an accented capital A becomes a plain "A"). Falls back to dropping
-any character that has no transliteration. This is the deterministic
-"fallback" used by \code{\link[=ascii_fallback]{ascii_fallback()}}.
+accented or non-Latin characters to their nearest ASCII equivalent (for
+example, an accented capital A becomes a plain "A"). Falls back to
+dropping any character that has no transliteration. This is the
+deterministic "fallback" used by
+\code{\link[=ascii_fallback]{ascii_fallback()}}.
 }
 \examples{
 # Latin accents fold to their nearest ASCII letter.

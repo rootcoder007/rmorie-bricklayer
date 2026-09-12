@@ -13,8 +13,8 @@ reservoir_sample(x, k, seed = 42L)
 \arguments{
 \item{n}{Length of the stream.}
 
-\item{k}{Sample size. Values above the stream length give the whole
-stream.}
+\item{k}{Sample size. Values above the stream length give the
+whole stream.}
 
 \item{seed}{Seed for the core's generator (default 42).}
 
@@ -22,24 +22,25 @@ stream.}
 }
 \value{
 \code{reservoir_indices()} a sorted numeric vector of 1-based
-positions; \code{reservoir_sample()} the corresponding elements of \code{x}.
+positions; \code{reservoir_sample()} the corresponding elements of
+\code{x}.
 }
 \description{
-Vitter's Algorithm R: draws \code{k} items from a stream, each item equally
-likely to be retained, in a single pass and using memory proportional
-to \code{k} rather than to the stream's length. Use it to take a fair
-sample of a capsule member you cannot hold, or whose length you do not
-know in advance.
+Vitter's Algorithm R: draws \code{k} items from a stream, each item
+equally likely to be retained, in a single pass and using memory
+proportional to \code{k} rather than to the stream's length. Use it to
+take a fair sample of a capsule member you cannot hold, or whose length
+you do not know in advance.
 }
 \details{
 \code{reservoir_indices()} returns the retained positions, so the same
 sample can be applied to a file read line by line.
 \code{reservoir_sample()} applies it to a vector in memory.
 
-The stream is sampled with the core's own generator seeded by \code{seed},
-not R's, so the sample is reproducible and R's random stream is left
-alone -- a capsule whose sample changed between runs would not be
-reproducible.
+The stream is sampled with the core's own generator seeded by
+\code{seed}, not R's, so the sample is reproducible and R's random
+stream is left alone -- a capsule whose sample changed between runs
+would not be reproducible.
 }
 \examples{
 # A reproducible sample of 5 from 1000.

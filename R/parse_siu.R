@@ -8,11 +8,12 @@
 #' The panel-reviewed SIU report field schema
 #'
 #' The sixteen fields extracted from every Special Investigations Unit
-#' director's report. Count-type fields (`is_count = TRUE`) count distinct
-#' entities and zero is a real answer -- a witness-official-only
+#' director's report. Count-type fields ( `is_count = TRUE`) count
+#' distinct entities and zero is a real answer -- a witness-official-only
 #' investigation has zero subject officials.
 #'
-#' @return A data.frame with columns `name`, `is_count`, and `description`.
+#' @return A data.frame with columns `name`, `is_count`, and
+#' `description`.
 #' @examples
 #' bricklayer_siu_schema()
 #' @export
@@ -33,13 +34,16 @@ bricklayer_siu_text <- function(html) {
 
 #' Parse an SIU director's report into the schema fields
 #'
-#' Deterministic, offline extraction of every [bricklayer_siu_schema()]
-#' field (plus `_language`) from report HTML. Fields the report does not
+#' Deterministic, offline extraction of every
+#' [bricklayer_siu_schema()] field
+#' (plus `_language`) from report HTML. Fields the report does not
 #' state come back as `""`.
 #'
-#' @param html A length-1 character vector of raw report HTML, or the path
-#'   to a saved report file (e.g. from [bricklayer_fetch_siu()]).
-#' @return A named character vector: the 16 schema fields plus `_language`.
+#' @param html A length-1 character vector of raw report HTML,
+#' or the path to a saved report file (e.g. from
+#' [bricklayer_fetch_siu()]) .
+#' @return A named character vector: the 16 schema fields plus
+#' `_language`.
 #' @examples
 #' f <- bricklayer_parse_siu(system.file("extdata",
 #'                                       "siu_synthetic_report.html",
@@ -57,14 +61,16 @@ bricklayer_parse_siu <- function(html) {
 
 #' Fetch and parse one SIU director's report
 #'
-#' Convenience: [bricklayer_fetch_siu()] then [bricklayer_parse_siu()].
-#' Fails gracefully -- returns `NULL` with a message when the report cannot
+#' Convenience: [bricklayer_fetch_siu()]
+#' then [bricklayer_parse_siu()]. Fails
+#' gracefully -- returns `NULL` with a message when the report cannot
 #' be retrieved.
 #'
-#' @param drid Director's-report id (the `drid=` query parameter).
+#' @param drid Director's-report id (the `drid=` query
+#' parameter).
 #' @param lang `"en"` (default) or `"fr"`.
-#' @return A named character vector of parsed fields, or `NULL` when the
-#'   fetch fails.
+#' @return A named character vector of parsed fields, or `NULL` when
+#' the fetch fails.
 #' @examples
 #' \donttest{
 #' f <- try(bricklayer_fetch_parse_siu(648), silent = TRUE)
@@ -86,11 +92,11 @@ bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
 
 #' Convert a human-readable SIU report date to ISO format
 #'
-#' `"January 5, 2023"` (or `"January 5 2023"`) becomes `"2023-01-05"`;
-#' unparseable input becomes `""`.
+#' `"January 5, 2023"` (or `"January 5 2023"`) becomes
+#' `"2023-01-05"`; unparseable input becomes `""`.
 #'
 #' @param x A character vector of human-readable dates.
-#' @return A character vector of `YYYY-MM-DD` strings (or `""`).
+#' @return A character vector of `YYYY-MM-DD` strings (or `""`) .
 #' @examples
 #' bricklayer_siu_iso_date(c("January 5, 2023", "not a date"))
 #' @export
@@ -107,18 +113,18 @@ bricklayer_siu_iso_date <- function(x) {
 #' standard SIU privacy boilerplate is stripped first, then rules apply
 #' most-specific first: highest `SO #N` ordinal; spelled-out plural;
 #' singular subject official present (1); witness-official-only (0, a real
-#' answer); otherwise unresolved (`NA`).
+#' answer); otherwise unresolved ( `NA`) .
 #'
-#' @param text A length-1 character vector of plain report text (see
-#'   [bricklayer_siu_text()]).
-#' @return A list with `count` (integer, `NA` when unresolved) and
-#'   `reason` (the human-readable evidence).
+#' @param text A length-1 character vector of plain report text
+#' (see [bricklayer_siu_text()]) .
+#' @return A list with `count` (integer, `NA` when unresolved)
+#' and `reason` (the human-readable evidence).
 #'
 #' @details bricklayer is the foundation layer: this function is the pure
-#'   rule set. Reports already in the panel-reviewed corpus should never be
-#'   re-derived -- use `rmorie::morie_siu_resolve_so()`, which returns the
-#'   verified corpus value first and only falls back to these rules for
-#'   unreviewed reports.
+#' rule set. Reports already in the panel-reviewed corpus should never be
+#' re-derived -- use `rmorie::morie_siu_resolve_so()`, which returns
+#' the verified corpus value first and only falls back to these rules for
+#' unreviewed reports.
 #' @examples
 #' bricklayer_siu_resolve_so(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")

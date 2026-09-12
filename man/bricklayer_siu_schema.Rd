@@ -7,12 +7,13 @@
 bricklayer_siu_schema()
 }
 \value{
-A data.frame with columns \code{name}, \code{is_count}, and \code{description}.
+A data.frame with columns \code{name}, \code{is_count}, and
+\code{description}.
 }
 \description{
 The sixteen fields extracted from every Special Investigations Unit
-director's report. Count-type fields (\code{is_count = TRUE}) count distinct
-entities and zero is a real answer -- a witness-official-only
+director's report. Count-type fields ( \code{is_count = TRUE}) count
+distinct entities and zero is a real answer -- a witness-official-only
 investigation has zero subject officials.
 }
 \examples{

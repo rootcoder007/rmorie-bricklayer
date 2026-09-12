@@ -10,17 +10,17 @@ pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
 \item{height}{Tree height, 1 to 16 (default 10, i.e. 1024
 signatures).}
 
-\item{sk_seed, pub_seed}{64-character hex seeds (32 bytes each). Omit
-them and seeds are drawn from the operating system's CSPRNG via
-\code{\link[=random_bytes]{random_bytes()}}, which fails rather than falling back to R's
-reproducible generator. Supply them ONLY to reproduce a key
-deterministically in a test -- a seed you can guess is a key you can
-forge.}
+\item{sk_seed, pub_seed}{64-character hex seeds
+(32 bytes each). Omit them and seeds are drawn from the operating
+system's CSPRNG via \code{\link[=random_bytes]{random_bytes()}}, which
+fails rather than falling back to R's reproducible generator. Supply
+them ONLY to reproduce a key deterministically in a test -- a seed you
+can guess is a key you can forge.}
 }
 \value{
-A list of class \code{bricklayer_signing_key}: \code{root} (the public
-verification value), \code{pub_seed}, \code{sk_seed} (SECRET), \code{height},
-\code{next_index}, \code{capacity}, and \code{scheme}.
+A list of class \code{bricklayer_signing_key}: \code{root} (the
+public verification value), \code{pub_seed}, \code{sk_seed} (SECRET),
+\code{height}, \code{next_index}, \code{capacity}, and \code{scheme}.
 }
 \description{
 Builds an XMSS key pair: a Merkle tree over \code{2^height} Winternitz
@@ -29,15 +29,15 @@ SHA-256 alone -- no lattice assumption, no elliptic curve, nothing
 Shor's algorithm breaks.
 }
 \section{A height-\code{h} key signs exactly \code{2^h} messages}{
-Each signature consumes one leaf, and \strong{signing two different
-messages with the same leaf index breaks the scheme outright} --
-between two signatures at one index an adversary can forge a third
-message. \code{\link[=capsule_sign]{capsule_sign()}} therefore tracks \code{next_index} and refuses
-to reuse one. Do not hand-edit that field, and do not copy a key to
-two machines that sign independently.
+Each signature consumes one leaf, and \strong{signing two different messages
+with the same leaf index breaks the scheme outright} -- between two
+signatures at one index an adversary can forge a third message.
+\code{\link[=capsule_sign]{capsule_sign()}} therefore tracks
+\code{next_index} and refuses to reuse one. Do not hand-edit that field,
+and do not copy a key to two machines that sign independently.
 
-Key generation walks all \code{2^height} leaves, so cost doubles with each
-unit of height. The default 10 gives 1024 signatures and takes a
+Key generation walks all \code{2^height} leaves, so cost doubles with
+each unit of height. The default 10 gives 1024 signatures and takes a
 moment; heights above about 14 are slow enough to be worth avoiding
 unless the key really must last that long.
 }
@@ -58,5 +58,7 @@ s2 <- paste(rep("22", 32), collapse = "")
 identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
 }
 \seealso{
-\code{\link[=capsule_sign]{capsule_sign()}}, \code{\link[=capsule_verify]{capsule_verify()}}, \code{\link[=signing_public_key]{signing_public_key()}}
+\code{\link[=capsule_sign]{capsule_sign()}},
+\code{\link[=capsule_verify]{capsule_verify()}},
+\code{\link[=signing_public_key]{signing_public_key()}}
 }

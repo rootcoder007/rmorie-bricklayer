@@ -14,16 +14,19 @@ core_midranks(x)
 \item{x, y}{Numeric vectors of the same length.}
 }
 \value{
-\code{core_cor_spearman()} a length-1 numeric in [-1, 1];
+\code{core_cor_spearman()} a length-1 numeric in \ [-1, 1];
 \code{core_midranks()} a numeric vector the length of \code{x}.
+
+[-1, 1]: R:-1,\%201\%5C
 }
 \description{
 \code{core_cor_spearman()} is Spearman's rho: the Pearson correlation of
 the ranks, so it measures monotone association rather than linear
-association and is unaffected by any order-preserving transformation
-of either variable. \code{core_midranks()} exposes the ranks themselves;
+association and is unaffected by any order-preserving transformation of
+either variable. \code{core_midranks()} exposes the ranks themselves;
 tied values share the average of the ranks they span, which is what
-makes the result agree with \code{\link[stats:cor]{stats::cor()}} on tied data.
+makes the result agree with \code{\link[stats:cor]{stats::cor()}} on
+tied data.
 }
 \examples{
 x <- c(1, 2, 3, 4, 5)

@@ -19,25 +19,25 @@ A data frame with the raw \code{sir}, the shrunk \code{eb}, the
 the overall rate), and the fitted prior's \code{nu} and \code{alpha}.
 }
 \description{
-A small area's rate is mostly noise, so ranking areas by their raw
-rates puts the smallest areas at both ends of the table by
-construction. This borrows strength across areas: each rate is pulled
-toward the overall one by an amount that depends on how little
-information the area carries.
+A small area's rate is mostly noise, so ranking areas by their raw rates
+puts the smallest areas at both ends of the table by construction. This
+borrows strength across areas: each rate is pulled toward the overall
+one by an amount that depends on how little information the area
+carries.
 }
 \details{
 The Clayton-Kaldor construction: the area-specific relative risks are
 taken to come from a gamma prior, whose two parameters are estimated
-from the observed and expected counts by the method of moments, and
-the posterior mean \code{(O + nu) / (E + alpha)} is reported. Where the
-expected count is large the data dominate and the estimate barely
-moves; where it is small the prior does, which is the intended
-behaviour and not a defect.
+from the observed and expected counts by the method of moments, and the
+posterior mean \code{(O + nu) / (E + alpha)} is reported. Where the
+expected count is large the data dominate and the estimate barely moves;
+where it is small the prior does, which is the intended behaviour and
+not a defect.
 
-When the between-area variance estimate comes out at or below zero
-there is no evidence of any real variation between areas, and every
-estimate collapses to the overall rate. That is reported through
-\code{shrinkage} rather than hidden.
+When the between-area variance estimate comes out at or below zero there
+is no evidence of any real variation between areas, and every estimate
+collapses to the overall rate. That is reported through \code{shrinkage}
+rather than hidden.
 }
 \examples{
 # Three areas, one of them tiny. The tiny area's raw ratio is
@@ -50,10 +50,10 @@ Clayton, D. and Kaldor, J. (1987). Empirical Bayes estimates of
 age-standardized relative risks for use in disease mapping.
 \emph{Biometrics} 43(3), 671-681.
 
-Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal
-Health Modeling}. Chapman and Hall/CRC, which cites Clayton and
-Kaldor as the empirical-Bayes approximation in the development of
-Bayesian disease mapping.
+Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+Modeling}. Chapman and Hall/CRC, which cites Clayton and Kaldor as the
+empirical-Bayes approximation in the development of Bayesian disease
+mapping.
 }
 \seealso{
 \code{\link[=sir]{sir()}}, \code{\link[=funnel_limits]{funnel_limits()}}
