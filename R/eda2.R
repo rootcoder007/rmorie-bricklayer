@@ -20,6 +20,12 @@
 #' to judge them, so with several of them the classical distance hides
 #' exactly the rows it is meant to find (the masking effect).
 #'
+#' Exactly collinear columns are refused rather than repaired: the
+#' distance is undefined there, and flooring the covariance's eigenvalues
+#' to make it invertible would return numbers governed by the floor
+#' rather than by the data. Drop the redundant column first --
+#' [top_correlations()] will identify it.
+#'
 #' @param data A data frame or numeric matrix; non-numeric columns are
 #'   dropped. Rows with any missing value are skipped, and reported as
 #'   `NA`.
@@ -55,6 +61,11 @@
 #' # The classical version can be fooled by the outliers it should find.
 #' mahalanobis_outliers(df, robust = FALSE)$distance[1] <
 #'   mahalanobis_outliers(df, robust = TRUE)$distance[1]
+#'
+#' # A duplicated column has no distance defined, and is refused.
+#' dup <- df
+#' dup$height2 <- dup$height
+#' try(mahalanobis_outliers(dup))
 #' @export
 mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   if (is.matrix(data)) data <- as.data.frame(data)
@@ -96,10 +107,23 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
     Z <- sweep(Xc, 2L, centre, "-")
     S <- core_cov(Z)
   }
+  # Check the rank BEFORE repairing the covariance. .rmbl_make_pd floors
+  # the eigenvalues, which would make an exactly singular S invertible
+  # and hand back distances that are an artifact of the floor rather
+  # than a property of the data. Collinear columns have no Mahalanobis
+  # distance, and saying so beats inventing one.
+  ev <- tryCatch(eigen(S, symmetric = TRUE, only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (is.null(ev) ||
+      min(ev) <= 1e-8 * max(abs(ev), .Machine$double.eps)) {
+    stop("the columns are collinear, so no Mahalanobis distance is ",
+         "defined. Drop the redundant column(s) -- drop_constant() and ",
+         "top_correlations() will find them.", call. = FALSE)
+  }
   S <- .rmbl_make_pd(S, 1e-8)
   S_inv <- tryCatch(solve(S), error = function(e) NULL)
   if (is.null(S_inv)) {
-    stop("the columns are collinear, so no Mahalanobis distance is defined",
+    stop("the covariance of the supplied columns could not be inverted",
          call. = FALSE)
   }
   d2 <- rowSums((Z %*% S_inv) * Z)

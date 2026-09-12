@@ -23,14 +23,127 @@
 #' SLH-DSA / FIPS 205) through that library rather than through any
 #' hand-written implementation here.
 #'
-#' @return A character vector of backend names.
+#' @return A character vector of scheme names. `"xmss-sha256"` is always
+#'   first; any standardised schemes this build of liboqs enabled follow.
+#' @seealso [pqc_keygen()], which takes any of these as its `scheme`.
 #' @examples
 #' pqc_backends()
 #'
 #' # The dependency-free backend is always available.
 #' "xmss-sha256" %in% pqc_backends()
+#'
+#' # Whether a lattice scheme is available depends on the build.
+#' "ML-DSA-65" %in% pqc_backends()
 #' @export
 pqc_backends <- function() .Call(C_rmbl_pqc_backends)
+
+#' Generate a standardised post-quantum signing key
+#'
+#' Generates a key for one of the NIST-standardised signature schemes --
+#' ML-DSA (FIPS 204) or SLH-DSA (FIPS 205) -- **through liboqs**.
+#'
+#' bricklayer implements no lattice arithmetic of its own. These keys and
+#' signatures are produced entirely by the Open Quantum Safe library,
+#' which is tested and maintained for the purpose; a hand-written NTT and
+#' rejection sampler here would be a worse outcome than deferring. The
+#' trade-off is that the scheme is available only where liboqs was found
+#' at build time, which [pqc_backends()] reports.
+#'
+#' Unlike [pqc_keygen()]'s hash-based key, these are STATELESS: a key
+#' signs any number of messages, with no index to track.
+#'
+#' @param scheme Scheme name, as reported by [pqc_backends()]. The
+#'   default `"ML-DSA-65"` is the FIPS 204 middle security level.
+#' @return A list of class `bricklayer_oqs_key`: `public`, `secret`
+#'   (both hex), and `scheme`.
+#' @references National Institute of Standards and Technology (2024).
+#'   Module-Lattice-Based Digital Signature Standard. FIPS 204.
+#'   \doi{10.6028/NIST.FIPS.204}
+#' @seealso [pqc_keygen()] for the dependency-free hash-based key,
+#'   [capsule_sign()] which accepts either.
+#' @examples
+#' # Only where the build found liboqs.
+#' if ("ML-DSA-65" %in% pqc_backends()) {
+#'   key <- oqs_keygen("ML-DSA-65")
+#'   key$scheme
+#'
+#'   sig <- capsule_sign("a manifest digest", key)
+#'   capsule_verify("a manifest digest", sig, oqs_public_key(key))
+#'   capsule_verify("an edited digest", sig, oqs_public_key(key))
+#'
+#'   # Stateless: the same key signs again with no index to advance.
+#'   sig2 <- capsule_sign("a second digest", key)
+#'   capsule_verify("a second digest", sig2, oqs_public_key(key))
+#' }
+#' @export
+oqs_keygen <- function(scheme = "ML-DSA-65") {
+  scheme <- as.character(scheme)[1L]
+  if (is.na(scheme) || !nzchar(scheme)) {
+    stop("`scheme` must be a non-empty string", call. = FALSE)
+  }
+  res <- .Call(C_rmbl_oqs_keygen, scheme)
+  if (is.null(res)) {
+    stop(sprintf(paste0("scheme '%s' is not available in this build. ",
+                        "pqc_backends() reports: %s. The standardised ",
+                        "schemes need liboqs at build time; the bundled ",
+                        "xmss-sha256 scheme needs nothing and is always ",
+                        "available via pqc_keygen()."),
+                 scheme, paste(pqc_backends(), collapse = ", ")),
+         call. = FALSE)
+  }
+  out <- list(public = res$public, secret = res$secret,
+              scheme = res$scheme)
+  class(out) <- c("bricklayer_oqs_key", "list")
+  out
+}
+
+#' @rdname oqs_keygen
+#' @param key A key from `oqs_keygen()`.
+#' @export
+oqs_public_key <- function(key) {
+  if (!inherits(key, "bricklayer_oqs_key")) {
+    stop("`key` must come from oqs_keygen()", call. = FALSE)
+  }
+  out <- list(public = key$public, scheme = key$scheme)
+  class(out) <- c("bricklayer_oqs_public_key", "list")
+  out
+}
+
+#' @export
+format.bricklayer_oqs_key <- function(x, ...) {
+  c(.rmbl_rule("Signing key (standardised, via liboqs)"),
+    .rmbl_kv(list(scheme = x$scheme,
+                  "public key" = sprintf("%s... (%d bytes)",
+                                         substring(x$public, 1L, 32L),
+                                         nchar(x$public) %/% 2L),
+                  secret = "<withheld>",
+                  state = "stateless: signs any number of messages")),
+    .rmbl_rule())
+}
+
+#' @rdname rmbl_print_methods
+#' @export
+print.bricklayer_oqs_key <- function(x, ...) {
+  cat(format(x), sep = "\n")
+  invisible(x)
+}
+
+#' @export
+format.bricklayer_oqs_public_key <- function(x, ...) {
+  c(.rmbl_rule("Public verification key (standardised)"),
+    .rmbl_kv(list(scheme = x$scheme,
+                  "public key" = sprintf("%s... (%d bytes)",
+                                         substring(x$public, 1L, 32L),
+                                         nchar(x$public) %/% 2L))),
+    .rmbl_rule())
+}
+
+#' @rdname rmbl_print_methods
+#' @export
+print.bricklayer_oqs_public_key <- function(x, ...) {
+  cat(format(x), sep = "\n")
+  invisible(x)
+}
 
 #' Generate a post-quantum signing key for capsule provenance
 #'
@@ -150,8 +263,10 @@ signing_public_key <- function(key) {
 #' scheme. Passing an exhausted key is an error, not a silent wrap-around.
 #'
 #' @param message Length-1 character vector (or raw vector) to sign.
-#' @param key A shared secret (character/raw) for `"hmac"`, or a
-#'   `bricklayer_signing_key` for `"xmss"`.
+#' @param key A shared secret (character/raw) for `"hmac"`, a
+#'   `bricklayer_signing_key` from [pqc_keygen()] for `"xmss"`, or a
+#'   `bricklayer_oqs_key` from [oqs_keygen()] for a standardised scheme
+#'   (in which case `scheme` is taken from the key and ignored).
 #' @param scheme `"xmss"` (post-quantum, asymmetric) or `"hmac"`
 #'   (symmetric). Inferred from `key` when not given.
 #' @return A list of class `bricklayer_signature`: `scheme`,
@@ -180,6 +295,22 @@ signing_public_key <- function(key) {
 #' capsule_verify("manifest-1", s2, signing_public_key(key))
 #' @export
 capsule_sign <- function(message, key, scheme = NULL) {
+  if (inherits(key, "bricklayer_oqs_key")) {
+    if (!is.raw(message)) {
+      message <- as.character(message)
+      if (length(message) != 1L || is.na(message)) {
+        stop("`message` must be a length-1 character vector or a raw vector",
+             call. = FALSE)
+      }
+    }
+    sg <- .Call(C_rmbl_oqs_sign, key$scheme, key$secret, message)
+    if (is.null(sg)) {
+      stop(sprintf("signing with '%s' failed", key$scheme), call. = FALSE)
+    }
+    out <- list(scheme = key$scheme, signature = sg)
+    class(out) <- c("bricklayer_signature", "list")
+    return(out)
+  }
   if (is.null(scheme)) {
     scheme <- if (inherits(key, "bricklayer_signing_key")) "xmss" else "hmac"
   }
@@ -234,8 +365,10 @@ capsule_sign <- function(message, key, scheme = NULL) {
 #'
 #' @param message The message the signature is claimed to cover.
 #' @param signature A `bricklayer_signature` from [capsule_sign()].
-#' @param key The shared secret for `"hmac"`, or a public key (or full
-#'   signing key) for XMSS.
+#' @param key The shared secret for `"hmac"`, a public key (or full
+#'   signing key) for XMSS, or an [oqs_keygen()] key or its
+#'   [oqs_public_key()] for a standardised scheme. A signature is not
+#'   verified against a key of a different scheme.
 #' @return A length-1 logical.
 #' @examples
 #' key <- pqc_keygen(height = 2)
@@ -259,6 +392,19 @@ capsule_verify <- function(message, signature, key) {
   if (!inherits(signature, "bricklayer_signature")) {
     stop("`signature` must come from capsule_sign()", call. = FALSE)
   }
+  if (inherits(key, c("bricklayer_oqs_key",
+                      "bricklayer_oqs_public_key"))) {
+    if (!identical(signature$scheme, key$scheme)) return(FALSE)
+    if (!is.raw(message)) {
+      message <- as.character(message)
+      if (length(message) != 1L || is.na(message)) {
+        stop("`message` must be a length-1 character vector or a raw vector",
+             call. = FALSE)
+      }
+    }
+    return(.Call(C_rmbl_oqs_verify, key$scheme, key$public, message,
+                 signature$signature))
+  }
   if (identical(signature$scheme, "hmac")) {
     return(core_digest_equal(core_hmac_sha256(key, message),
                              signature$signature))
@@ -267,6 +413,11 @@ capsule_verify <- function(message, signature, key) {
     stop("verifying an XMSS signature needs a key from pqc_keygen() or ",
          "signing_public_key()", call. = FALSE)
   }
+  # Reject a cross-scheme presentation explicitly. Without this the
+  # rejection would still happen, but only incidentally, because the
+  # other scheme's signature is the wrong length -- and an incidental
+  # check is one that a future change can remove without noticing.
+  if (!identical(signature$scheme, key$scheme)) return(FALSE)
   if (!is.raw(message)) {
     message <- as.character(message)
     if (length(message) != 1L || is.na(message)) {

@@ -38,6 +38,12 @@ MAD-based covariance instead of the mean and sample covariance. This
 matters more than it sounds: outliers inflate the very covariance used
 to judge them, so with several of them the classical distance hides
 exactly the rows it is meant to find (the masking effect).
+
+Exactly collinear columns are refused rather than repaired: the
+distance is undefined there, and flooring the covariance's eigenvalues
+to make it invertible would return numbers governed by the floor
+rather than by the data. Drop the redundant column first --
+\code{\link[=top_correlations]{top_correlations()}} will identify it.
 }
 \examples{
 set.seed(1)
@@ -59,6 +65,11 @@ range(df$weight)
 # The classical version can be fooled by the outliers it should find.
 mahalanobis_outliers(df, robust = FALSE)$distance[1] <
   mahalanobis_outliers(df, robust = TRUE)$distance[1]
+
+# A duplicated column has no distance defined, and is refused.
+dup <- df
+dup$height2 <- dup$height
+try(mahalanobis_outliers(dup))
 }
 \references{
 Mahalanobis PC (1936). On the generalised distance in

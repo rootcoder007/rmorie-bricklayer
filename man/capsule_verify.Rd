@@ -11,8 +11,10 @@ capsule_verify(message, signature, key)
 
 \item{signature}{A \code{bricklayer_signature} from \code{\link[=capsule_sign]{capsule_sign()}}.}
 
-\item{key}{The shared secret for \code{"hmac"}, or a public key (or full
-signing key) for XMSS.}
+\item{key}{The shared secret for \code{"hmac"}, a public key (or full
+signing key) for XMSS, or an \code{\link[=oqs_keygen]{oqs_keygen()}} key or its
+\code{\link[=oqs_public_key]{oqs_public_key()}} for a standardised scheme. A signature is not
+verified against a key of a different scheme.}
 }
 \value{
 A length-1 logical.

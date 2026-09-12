@@ -9,8 +9,10 @@ capsule_sign(message, key, scheme = NULL)
 \arguments{
 \item{message}{Length-1 character vector (or raw vector) to sign.}
 
-\item{key}{A shared secret (character/raw) for \code{"hmac"}, or a
-\code{bricklayer_signing_key} for \code{"xmss"}.}
+\item{key}{A shared secret (character/raw) for \code{"hmac"}, a
+\code{bricklayer_signing_key} from \code{\link[=pqc_keygen]{pqc_keygen()}} for \code{"xmss"}, or a
+\code{bricklayer_oqs_key} from \code{\link[=oqs_keygen]{oqs_keygen()}} for a standardised scheme
+(in which case \code{scheme} is taken from the key and ignored).}
 
 \item{scheme}{\code{"xmss"} (post-quantum, asymmetric) or \code{"hmac"}
 (symmetric). Inferred from \code{key} when not given.}

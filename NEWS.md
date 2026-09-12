@@ -56,11 +56,21 @@ recompute the digest.
 
 On post-quantum choices: SHA-2 and HMAC are already adequate against a
 quantum adversary, since Grover only halves the exponent. Signatures are
-the part Shor breaks, so that is the part replaced. A lattice scheme
-(ML-DSA / FIPS 204) is deliberately **not** hand-rolled here -- an
+the part Shor breaks, so that is the part replaced.
+
+A lattice scheme is deliberately **not** hand-rolled here -- an
 uncertified hand-written NTT and rejection sampler would be a worse
-outcome than no lattice signature -- and where a standardised one is
-wanted, the build defers to liboqs when it is present.
+outcome than no lattice signature. Instead, `./configure` looks for
+liboqs, and where it is found `oqs_keygen()` exposes the standardised
+schemes -- ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) -- computed entirely
+by that library. `pqc_backends()` reports what the build actually
+enabled, checked per scheme, since liboqs is configurable. Absence is
+not an error: the package builds without it, and the bundled hash-based
+scheme needs nothing.
+
+Unlike the hash-based key, the standardised keys are STATELESS -- one key
+signs any number of messages, with no leaf index to track. A signature
+is never verified against a key of a different scheme.
 
 A height-`h` signing key signs exactly `2^h` messages. Signing twice at
 one index breaks the scheme outright, so `capsule_sign()` tracks the

@@ -277,6 +277,12 @@ format.bricklayer_signature <- function(x, ...) {
   pairs <- list(scheme = x$scheme)
   if (identical(x$scheme, "hmac")) {
     pairs$tag <- x$signature
+  } else if (is.null(x$auth)) {
+    # a standardised scheme: no authentication path and no leaf index
+    pairs$signature <- sprintf("%s... (%d bytes)",
+                               substring(x$signature, 1L, 32L),
+                               nchar(x$signature) %/% 2L)
+    pairs$state <- "stateless"
   } else {
     pairs$index <- x$index
     pairs$root <- x$root

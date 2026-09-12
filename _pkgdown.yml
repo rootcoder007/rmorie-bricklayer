@@ -158,6 +158,7 @@ reference:
       - capsule_verify
       - pqc_keygen
       - signing_public_key
+      - oqs_keygen
       - pqc_backends
       - rmbl_chain
       - rmbl_merkle

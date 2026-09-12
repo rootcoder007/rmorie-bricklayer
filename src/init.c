@@ -56,6 +56,9 @@ extern SEXP C_rmbl_xmss_keygen(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_pqc_backends(void);
+extern SEXP C_rmbl_oqs_keygen(SEXP);
+extern SEXP C_rmbl_oqs_sign(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_oqs_verify(SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_sketch.cpp) -- one-pass sketches */
 extern SEXP C_rmbl_moments_acc(SEXP);
 extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
@@ -173,6 +176,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         5},
     {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       7},
     {"C_rmbl_pqc_backends",      (DL_FUNC) &C_rmbl_pqc_backends,      0},
+    {"C_rmbl_oqs_keygen",        (DL_FUNC) &C_rmbl_oqs_keygen,        1},
+    {"C_rmbl_oqs_sign",          (DL_FUNC) &C_rmbl_oqs_sign,          3},
+    {"C_rmbl_oqs_verify",        (DL_FUNC) &C_rmbl_oqs_verify,        4},
     {"C_rmbl_moments_acc",       (DL_FUNC) &C_rmbl_moments_acc,       1},
     {"C_rmbl_moments_merge",     (DL_FUNC) &C_rmbl_moments_merge,     2},
     {"C_rmbl_reservoir",         (DL_FUNC) &C_rmbl_reservoir,         3},
