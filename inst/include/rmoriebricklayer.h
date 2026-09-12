@@ -354,6 +354,28 @@ static R_INLINE int rmbl_digest_equal(const char *a, const char *b,
     return fn(a, b, n);
 }
 
+
+/* One-pass moment accumulation and exact merging: (n, mean, M2, M3, M4)
+   with M_k the k-th central SUM. Accumulate per block, merge the blocks,
+   and the result matches a single batch pass. */
+static R_INLINE void rmbl_moments_acc(const double *x, R_xlen_t n,
+                                      double *out) {
+    static void (*fn)(const double *, R_xlen_t, double *) = NULL;
+    if (fn == NULL)
+        fn = (void (*)(const double *, R_xlen_t, double *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_moments_acc");
+    fn(x, n, out);
+}
+
+static R_INLINE void rmbl_moments_merge(const double *a, const double *b,
+                                        double *out) {
+    static void (*fn)(const double *, const double *, double *) = NULL;
+    if (fn == NULL)
+        fn = (void (*)(const double *, const double *, double *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_moments_merge");
+    fn(a, b, out);
+}
+
 #ifdef __cplusplus
 }
 #endif
