@@ -173,6 +173,40 @@ output, so a key drawn from it is guessable.
   bytes -- a MAC without the HMAC construction.
 * `digest_object()` fingerprints an arbitrary R object.
 
+## Behaviour changes worth knowing about
+
+Three functions now REFUSE input they previously computed through. In
+each case the old answer was a number produced by an internal guard
+rather than by the data, which is worse than an error because it looks
+like a result.
+
+* `mahalanobis_outliers()` and `mcar_test()` reject exactly collinear or
+  constant columns. Both repair a singular covariance by flooring its
+  eigenvalues so the algorithm can proceed; with a duplicated column
+  that floor, not the data, determined the answer. `mcar_test()` checks
+  the complete-case covariance where it can, because two identical
+  columns with different missingness leave the pairwise covariance only
+  nearly singular.
+* `capsule_verify()` rejects a signature presented with a key of a
+  different scheme explicitly. It already failed, but incidentally, on a
+  length mismatch.
+
+## SIU parser fixes
+
+Four defects in the report parser, each of which produced a wrong field
+rather than an error:
+
+* statute sections with a decimal were dropped, so `Section 320.13,
+  Criminal Code` -- the ordinary dangerous-driving citation -- never
+  reached `relevant_legislation`;
+* the director's name and the police service both reached back across a
+  line break, so the real signature block `Dated at Toronto.\n\nAlex
+  Morrow\nDirector` yielded `"Toronto. Alex Morrow"`, and a force named
+  once just under a heading picked the heading up with it;
+* only `&amp;`, `&nbsp;` and one smart quote were decoded, so `&lt;`,
+  `&gt;`, `&quot;`, `&apos;`, the remaining quotes and the dashes
+  survived into the extracted text.
+
 ## Verification
 
 Everything with a published test vector is checked against it: SHA-512
@@ -188,7 +222,13 @@ available offline, so it is verified against its security properties
 instead -- a valid signature verifies, and every tampering of the
 message, signature, authentication path, index or key fails. It is not
 claimed to be byte-compatible with other XMSS implementations and must
-not be treated as certified.
+not be treated as certified. The standardised schemes carry no such
+caveat, because they are liboqs's implementation rather than one of
+ours; what is tested here is the binding, including that ML-DSA-65
+produces the key and signature sizes FIPS 204 specifies.
+
+The suite is 3,291 assertions at 97.1% coverage, and
+`R CMD check --as-cran` is clean.
 
 # rmoriebricklayer 0.3.11
 
