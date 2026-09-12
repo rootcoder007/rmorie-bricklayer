@@ -145,6 +145,215 @@ construction where a single misplaced field changes every output.
 pqc_backends()
 ```
 
+## Signing something a verifier can check
+
+`capsule_sign()` signs a string, which proves the string was signed and
+leaves three things implicit: which key, which scheme, which bytes. A
+verifier handed a directory still has to be told all three, and a check
+that depends on being told what to check is a formality.
+
+`capsule_attest()` records them inside the signed payload.
+
+```{r}
+m <- make_manifest(list(dataset = "otis", rows = 1200L),
+                   environment = FALSE)
+key <- fips_keygen("ML-DSA-65")
+att <- capsule_attest(m, key, note = "counts as published")
+capsule_check_attestation(att, m)
+```
+
+The check needs the attestation and the manifest, nothing else. Change
+either -- or edit the note, which is covered by the signature because it
+is part of the digest -- and it fails:
+
+```{r}
+m2 <- m
+m2$meta$rows <- 1201L
+capsule_check_attestation(att, m2)$ok
+```
+
+What it does not establish is that the key belongs to whoever you think:
+an attestation is only as good as the channel the public key arrived on.
+Pass `key_expected` when you know which key should have signed.
+
+## The number in the manifest is the number
+
+A manifest is meant to be checked against later. That only works if it
+records what actually happened, at the precision it happened:
+
+```{r}
+one_third <- make_manifest(list(x = 1 / 3), environment = FALSE)
+back <- bricklayer_json_from_json(manifest_canonical(one_third))
+identical(back$meta$x, 1 / 3)
+```
+
+Sign `manifest_digest()` rather than the pretty JSON. R lists keep
+insertion order, so building `meta` before `results` or the other way
+round gives different bytes for the same content; the canonical form
+sorts the keys, so the digest depends on what the manifest says and not
+on how a script assembled it.
+
+```{r}
+identical(
+  manifest_digest(make_manifest(list(a = 1, b = 2), environment = FALSE)),
+  manifest_digest(make_manifest(list(b = 2, a = 1), environment = FALSE)))
+```
+
+## Whether the finding survives
+
+Everything above is about the record being intact. None of it says the
+number means anything: a capsule can be signed, hashed, chained and
+reproduced byte for byte while reporting an artefact. That is a separate
+question and it needs controls that can fail.
+
+```{r}
+set.seed(1)
+d <- data.frame(x = rnorm(200))
+d$y <- 0.8 * d$x + rnorm(200)
+capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x",
+                n = 199, seed = 42)
+```
+
+Four controls, each for a different way of being wrong: permuting the
+exposure destroys the association, so the statistic should fall to its
+null; a column of noise cannot matter, so the statistic should not move;
+a placebo exposure should show nothing; and random subsets should agree.
+
+They can fail, which is the point. A constant fails the permutation test
+and nothing else, because everything else about a constant is perfectly
+stable:
+
+```{r}
+capsule_falsify(d, function(z) 0.5, treatment = "x", n = 199,
+                seed = 42)$controls[, c("control", "passed")]
+```
+
+Note what the permutation control reports alongside its p-value: the
+smallest p-value the design could have produced. With 199 permutations
+that floor is 0.005, and with 19 it is 0.05 -- so a p of 0.05 from 19
+permutations is not weak evidence, it is no evidence at all.
+
+## Re-deriving the numbers, not just checking them
+
+`verify_capsule()` reads a manifest and confirms it is consistent with
+itself. That catches an edited manifest and cannot catch one that was
+wrong when it was written, because a manifest written from the wrong
+data is perfectly consistent too.
+
+```{r}
+d <- data.frame(x = 1:10)
+man <- make_manifest(list(dataset = "demo"), environment = FALSE)
+man <- record(man, "mean_x", observed = mean(d$x), expected = 5.5)
+man <- record(man, "n", observed = nrow(d), expected = 10)
+
+manifest_recompute(man, d, list(mean_x = function(z) mean(z$x),
+                                n = function(z) nrow(z)))
+```
+
+Recompute only some of them and the rest are reported as unchecked
+rather than passed over, which is the difference between a clean bill of
+health and a partial one:
+
+```{r}
+manifest_recompute(man, d, list(n = function(z) nrow(z)))
+```
+
+For anything stochastic, record the generator state rather than the
+seed. `set.seed(1)` reproduces a run only if everything before it does
+too -- one extra draw anywhere upstream shifts every later value:
+
+```{r}
+set.seed(1)
+m2 <- manifest_record_seed(make_manifest(list(a = 1),
+                                         environment = FALSE))
+first <- runif(3)
+invisible(runif(1000))          # any amount of other work
+manifest_restore_seed(m2)
+identical(runif(3), first)
+```
+
+## Saying in advance what you will report
+
+The falsification controls above are worth much more when the statistics
+were named before the data was looked at. A declaration makes the two
+ways of departing from a plan visible, and they are different failures:
+
+```{r}
+plan <- prereg_declare(c(
+  ate = "use of force is higher in the exposed division",
+  n_rows = "the extract has the row count the source publishes"))
+
+# a declared outcome that was not reported
+prereg_check(plan, "n_rows")
+
+# statistics reported that were never declared
+prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
+```
+
+That second case is why a nominal p-value needs correcting. Run the
+permutation control over several statistics and the smallest is not the
+finding:
+
+```{r}
+falsify_family(c(ate = 0.02, by_year = 0.3, by_precinct = 0.4,
+                 by_shift = 0.6, by_month = 0.7), method = "holm")
+```
+
+And for the confounder nobody measured, the E-value says how strong it
+would have to be to explain the result away -- with both the exposure
+and the outcome:
+
+```{r}
+evalue_rr(2, lo = 1.4, hi = 2.9)
+```
+
+## One file to hand someone
+
+A bundle carries a digest of every file, the manifest digest, and an
+attestation over both. The file digests are inside the signature, which
+is the point: a list of hashes that is not itself signed can be
+rewritten to match whatever the files now say.
+
+```{r}
+dir <- tempfile()
+dir.create(dir)
+write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
+          row.names = FALSE)
+b <- capsule_bundle(dir, man, key, note = "as published")
+capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
+```
+
+Files sitting in the directory that the bundle does not mention are
+reported as well: a signed list of what should be there says nothing
+about what else was put beside it.
+
+```{r}
+unlink(dir, recursive = TRUE)
+```
+
+## When, not just in what order
+
+The chain proves the order of a sequence of manifests. It does not prove
+that any of them existed at a particular time -- the whole chain can be
+built in an afternoon and dated however one likes. An RFC 3161
+timestamp token from a third party supplies the date, and
+`timestamp_verify()` checks three separate things: that the token is
+about these bytes, what time it asserts, and that the authority's
+signature holds.
+
+```{r eval=FALSE}
+res <- timestamp_verify("response.tsr", data = "manifest.json")
+res$time
+res$checks
+```
+
+What it does not check, and this is the difference between it and a
+browser's padlock: whether the certificate should be trusted. There is
+no chain building, no validity dates, no revocation and no check of the
+timeStamping key usage. Pass the certificate you have independently
+decided to trust, and read a pass as "this key said so" rather than
+"this is true".
+
 ## Pinning chunk by chunk
 
 A single digest over a file tells you it changed. A Merkle tree over its

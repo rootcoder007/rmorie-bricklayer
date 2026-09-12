@@ -85,6 +85,10 @@ reference:
       - load_provenance
       - record
       - make_manifest
+      - manifest_canonical
+      - manifest_recompute
+      - manifest_record_seed
+      - capture_dependencies
       - write_manifest_json
       - write_summary_txt
       - agent_bundle
@@ -157,6 +161,13 @@ reference:
       trees to pin a capsule chunk by chunk, and hash chains to make the run
       history itself tamper-evident.
     contents:
+      - capsule_attest
+      - capsule_bundle
+      - capsule_falsify
+      - prereg_declare
+      - falsify_family
+      - evalue_rr
+      - timestamp_verify
       - capsule_sign
       - capsule_verify
       - pqc_keygen

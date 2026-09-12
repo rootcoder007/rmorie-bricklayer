@@ -1,3 +1,117 @@
+# rmoriebricklayer 0.4.4
+
+## From "the record is intact" to "the record is right"
+
+`verify_capsule()` checks a manifest against itself, which catches an
+edited manifest and cannot catch one that was wrong when it was written.
+
+* `manifest_recompute()` re-runs named statistics against the data and
+  compares each to what was recorded. Results that were recorded but
+  NOT recomputed are reported as `unchecked`: an analysis that recorded
+  twenty statistics and re-derives three has seventeen it has not, and a
+  report that quietly omitted them would read as a clean bill of health.
+* `manifest_record_seed()` and `manifest_restore_seed()` record and
+  replay the generator's full state. `set.seed()` is reproducible only
+  if everything before it is too -- one extra draw upstream shifts
+  every later value -- so the state is what gets recorded, and the kind
+  beside it, because a seed replayed under a different kind gives
+  different numbers silently.
+* `capture_dependencies()` records where each package came from: the
+  library, the repository, and for a remote install its URL and commit.
+  Two installations can report the same version and differ.
+
+## Falsification, and what comes before and after it
+
+* `prereg_declare()` and `prereg_check()` -- declare the statistics an
+  analysis intends to report, and compare that against what it did.
+  The two departures are reported separately because they are different
+  failures: a declared statistic that was not reported is outcome
+  switching, and a reported statistic that was not declared is an
+  addition. Both are invisible without a declaration made in advance.
+* `falsify_family()` -- corrects a family of permutation p-values by
+  Holm, Benjamini-Hochberg or Bonferroni, and names those sitting at
+  the permutation floor, where more permutations would be needed to say
+  anything more. Running the control over twenty statistics and
+  reporting the one under 0.05 is not a finding.
+* `evalue_rr()` -- the E-value of VanderWeele and Ding: how strong an
+  unmeasured confounder would have to be, with both the exposure and
+  the outcome, to explain the result away.
+
+## Distribution and time
+
+* `capsule_bundle()`, `capsule_bundle_read()` and
+  `capsule_bundle_verify()` -- one signed artifact holding a digest of
+  every file, the manifest digest and an attestation over both. The file
+  digests are inside the signature: a list of hashes that is not itself
+  signed can be rewritten to match whatever the files now say. Files
+  present but unlisted are reported too.
+* `timestamp_verify()` and `timestamp_info()` -- RFC 3161 timestamp
+  tokens, verified natively. The message imprint is checked against the
+  data, the genTime is reported, and the authority's RSA signature over
+  the signed attributes is verified, which meant implementing DER
+  parsing and a bignum modular exponentiation (`C_rmbl_der_parse`,
+  `C_rmbl_rsa_recover`). A hash chain proves the order of a sequence of
+  manifests and not that any of them existed at a given time; this
+  supplies the date.
+
+  What it does NOT do, stated plainly because it is the difference
+  between this and a browser's padlock: validate the certificate. No
+  chain building, no validity dates, no revocation, no check of the
+  timeStamping key usage. Pass the certificate you have decided to
+  trust, and read a pass as "this key said so".
+
+# rmoriebricklayer 0.4.3
+
+## A manifest can now reproduce its own numbers
+
+`write_manifest_json()` wrote doubles at four significant digits, so a
+manifest recording `1/3` said `0.3333` and no later recomputation could
+match what was written. Every number is now written at full double
+precision and round-trips exactly, denormals and `.Machine$double.xmax`
+included. A provenance record that cannot reproduce its own numbers is
+the one failure mode the whole capsule apparatus exists to prevent, and
+this was it.
+
+* `manifest_canonical()` and `manifest_digest()` -- one line of JSON
+  with every object's keys sorted, and its SHA-256. R lists keep
+  insertion order, so the same manifest assembled in a different order
+  used to serialise to different bytes, which made a signature over the
+  JSON depend on the order a script happened to build a list in. Sign
+  the digest.
+* `capture_environment()` now records `rng_kind` and whether a seed was
+  in force. Without the generator's identity a stochastic result cannot
+  be reproduced even on the same machine: R has changed its default
+  `sample()` algorithm before, and a recorded seed means nothing without
+  the kind it was fed to.
+
+## Attestation: a signature a third party can actually check
+
+`capsule_attest()` and `capsule_check_attestation()`. A bare signature
+leaves three things implicit -- which key, which scheme, which bytes --
+and a verifier who has to be told them out of band cannot check anything
+they were not already given. An attestation records the scheme, the
+public key, the context, the pre-hash, the manifest digest and a note
+from the signer, all inside the signed payload, so the check is
+`capsule_check_attestation(attestation, manifest)` and nothing else.
+Editing any field afterwards is detected, including the note.
+
+## Falsification: controls that can fail
+
+`capsule_falsify()` runs four negative controls against a statistic and
+reports whether it behaved: a permutation test that destroys the
+association on purpose, a random common cause that cannot matter, a
+placebo exposure, and subset stability. Reproducibility is a property of
+a pipeline, not of a claim -- a capsule can be signed, hashed, chained
+and reproduced byte for byte while reporting a number that means
+nothing.
+
+The permutation control reports the smallest p-value its design could
+have produced, because a reader who does not know that 19 permutations
+floor at 0.05 will over-read a p of 0.05. The controls are demonstrated
+failing as well as passing: a constant statistic fails the permutation
+test, noise fails it, and a statistic that reads the injected noise
+column fails the random-common-cause control.
+
 # rmoriebricklayer 0.4.2
 
 ## The rest of the NIST post-quantum standards
