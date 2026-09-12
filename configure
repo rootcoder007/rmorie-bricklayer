@@ -45,9 +45,20 @@ fi
 # program built with them has actually RUN. Linking is not enough: a
 # library found through an explicit -L that the runtime loader does not
 # search links cleanly and then fails at dyn.load, which installs a
-# package that cannot be loaded at all. So probe, and if the binary
-# links but will not run, retry with an rpath for each -L directory the
-# flags name before giving up on the library.
+# package that cannot be loaded at all.
+#
+# When the probe will not run, liboqs is DROPPED rather than propped up
+# with -Wl,-rpath. An rpath would work on the build machine and bake its
+# absolute path into the shared object, which is non-portable and is
+# what CRAN's policy on PKG_LIBS flags is about. The same decision is
+# taken in rmorie's configure, and the cost is small: ML-DSA and SLH-DSA
+# are reported as unavailable by pqc_backends(), while the bundled XMSS
+# signature has no system dependency and is unaffected.
+#
+# Note that the probe inherits the build shell's LD_LIBRARY_PATH. If
+# liboqs is loadable only because that variable is set during the build,
+# the probe passes and the resulting object needs the variable set
+# forever after. Build in a clean environment.
 if [ "${HAVE_OQS}" != "no" ]; then
   CC=`"${R_HOME}/bin/R" CMD config CC 2>/dev/null`
   if [ -z "${CC}" ]; then
@@ -63,38 +74,20 @@ int main(void) {
     return 0;
 }
 PROBE
-    # the rpath candidate is every -L directory in the proposed libs
-    RPATHS=""
-    for tok in ${OQS_L}; do
-      case "${tok}" in
-        -L*) d=`echo "${tok}" | sed -e 's|^-L||'`
-             if [ -n "${d}" ]; then RPATHS="${RPATHS} -Wl,-rpath,${d}"; fi ;;
-      esac
-    done
-    OQS_RPATH=""
     OK=no
-    # first without an rpath, then with one -- the plain build is
-    # preferred when it runs, since an rpath bakes a path into the
-    # shared object
-    for extra in "" "${RPATHS}"; do
-      if [ "${OK}" = "no" ]; then
-        if ${CC} conftest_oqs.c ${OQS_C} ${OQS_L} ${extra} \
-             -o conftest_oqs >/dev/null 2>&1; then
-          if ./conftest_oqs >/dev/null 2>&1; then
-            OK=yes
-            OQS_RPATH="${extra}"
-          fi
-        fi
+    if ${CC} conftest_oqs.c ${OQS_C} ${OQS_L} -o conftest_oqs \
+         >/dev/null 2>&1; then
+      if ./conftest_oqs >/dev/null 2>&1; then
+        OK=yes
+      else
+        echo "configure: liboqs links but its probe will not run"
       fi
-    done
+    fi
     rm -f conftest_oqs.c conftest_oqs conftest_oqs.o
     if [ "${OK}" = "yes" ]; then
-      if [ -n "${OQS_RPATH}" ]; then
-        echo "configure: liboqs needs a runtime path; adding${OQS_RPATH}"
-      fi
       echo "configure: liboqs compiles, links and runs -- enabling it"
       PKG_CFLAGS="${PKG_CFLAGS} -DHAVE_LIBOQS ${OQS_C}"
-      PKG_LIBS="${PKG_LIBS} ${OQS_L}${OQS_RPATH}"
+      PKG_LIBS="${PKG_LIBS} ${OQS_L}"
       HAVE_OQS=yes
     else
       HAVE_OQS=no
