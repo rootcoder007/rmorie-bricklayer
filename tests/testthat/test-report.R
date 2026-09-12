@@ -243,3 +243,95 @@ test_that("capsule_report refuses input it cannot assess", {
   expect_false(any(capsule_report(big, max_rows_outliers = 10L)$findings$check
                    == "outliers"))
 })
+
+test_that("the report notices heavy missingness and a Benford departure", {
+  set.seed(11)
+  n <- 400
+  # over half of one column missing, which is a warning rather than a
+  # note: an estimate from the remainder is not an estimate of the same
+  # population
+  d <- data.frame(v = stats::rnorm(n), mostly_gone = stats::rnorm(n))
+  d$mostly_gone[1:260] <- NA
+  r <- capsule_report(d)
+  expect_true(any(r$findings$check == "missing" &
+                    grepl("over half", r$findings$detail)))
+  expect_equal(r$verdict, "warn")
+
+  # a numeric column spanning orders of magnitude whose leading digits
+  # are uniform: the Benford screen fires, as a NOTE, and says so
+  # The leading digit is uniform while the MAGNITUDE still spans six
+  # orders, which is what the screen is looking for: a narrow-range
+  # column is skipped regardless, because Benford's law does not apply
+  # there.
+  b <- data.frame(
+    normal_scale = 10^stats::runif(n, 0, 6),
+    fabricated = sample(1:9, n, TRUE) * 10^sample(0:5, n, TRUE)
+  )
+  expect_gt(max(b$fabricated) / min(b$fabricated), 1000)
+  rb <- capsule_report(b)
+  ben <- rb$findings[rb$findings$check == "benford", ]
+  expect_equal(nrow(ben), 1L)
+  expect_equal(ben$subject, "fabricated")
+  expect_equal(ben$severity, "note")
+  expect_match(ben$detail, "screen, not a verdict")
+  # the honestly-scaled column is not flagged
+  expect_false("normal_scale" %in% ben$subject)
+  # a narrow-range column is never screened at all, since Benford's law
+  # does not apply there
+  narrow <- capsule_report(data.frame(v = stats::runif(n, 10, 11)))
+  expect_false(any(narrow$findings$check == "benford"))
+})
+
+test_that("a note-only report renders as such", {
+  set.seed(12)
+  ref <- ref_frame(150, seed = 12)
+  dup <- ref
+  dup$score2 <- dup$score          # collinear: a note, nothing worse
+  r <- capsule_report(dup, reference = ref)
+  expect_equal(r$verdict, "note")
+  expect_equal(sum(r$findings$severity %in% c("fatal", "warn")), 0L)
+  txt <- paste(format(r), collapse = "
+")
+  expect_match(txt, "notes only")
+  expect_match(txt, "nothing blocking")
+  expect_output(print(r), "notes only")
+  # and in Markdown
+  expect_match(paste(report_markdown(r), collapse = "
+"), "Notes only")
+})
+
+test_that("a column that cannot be compared is reported as untestable", {
+  set.seed(13)
+  ref <- ref_frame(150, seed = 13)
+  # the column exists on both sides but is entirely missing on one, so
+  # no test applies -- which is a different statement from "no drift"
+  cur <- ref
+  cur$score <- NA_real_
+  r <- capsule_report(cur, reference = ref)
+  untest <- r$findings[grepl("not testable", r$findings$detail), ]
+  expect_gte(nrow(untest), 1L)
+  expect_equal(untest$check[1], "drift")
+  expect_equal(untest$severity[1], "note")
+  # and it is NOT reported as having drifted, which would be a claim the
+  # data does not support
+  drifted <- r$findings[r$findings$check == "drift" &
+                          r$findings$severity == "warn", ]
+  expect_false("score" %in% drifted$subject)
+})
+
+test_that("outliers are reported with the worst row named", {
+  set.seed(14)
+  n <- 300
+  d <- data.frame(a = stats::rnorm(n))
+  d$b <- d$a * 0.5 + stats::rnorm(n, 0, 2)
+  # a row that is ordinary on each margin and impossible jointly
+  d[7, ] <- list(a = -3, b = 12)
+  r <- capsule_report(d)
+  out <- r$findings[r$findings$check == "outliers", ]
+  expect_equal(nrow(out), 1L)
+  expect_equal(out$severity, "note")
+  expect_match(out$detail, "jointly improbable")
+  expect_match(out$detail, "row 7")
+  expect_match(out$subject, "row")
+})
+
