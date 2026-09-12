@@ -168,6 +168,16 @@ double rmbl_normal_pdf(double x, double mu, double sigma) {
     return out;
 }
 
+/* Raw 32-byte digest. rmbl_digest.cpp (HMAC, Merkle) calls this so the
+ * package has exactly one SHA-256 compression function. */
+void rmbl_sha256_raw(const unsigned char *data, size_t len,
+                     unsigned char out[32]) {
+    sha256_ctx ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, data, len);
+    sha256_final(&ctx, (uint8_t *) out);
+}
+
 void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     sha256_ctx ctx;
     uint8_t hash[32];
@@ -182,7 +192,153 @@ void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     out[64] = '\0';
 }
 
+/* The vendored morie kernels below were already compiled into this
+ * package but had no binding, so no caller could reach them. They
+ * delegate unchanged -- the arithmetic still has a single home in
+ * morie_core.h. */
+
+double rmbl_sd(const double *x, R_xlen_t n, int ddof) {
+    return morie::core::stddev(x, static_cast<std::size_t>(n), ddof);
+}
+
+double rmbl_euclid_dist(const double *a, const double *b, R_xlen_t n) {
+    return morie::core::euclid_dist(a, b, static_cast<std::size_t>(n));
+}
+
+double rmbl_normal_logpdf(double x, double mu, double sigma) {
+    if (sigma <= 0.0) return R_NaN;
+    double out;
+    morie::core::normal_logpdf(&x, 1, mu, sigma, &out);
+    return out;
+}
+
+void rmbl_ipw_weights(const double *treat, const double *propensity,
+                      R_xlen_t n, double trim_lo, double trim_hi,
+                      double *out) {
+    morie::core::trimmed_ipw_weights(treat, propensity,
+                                     static_cast<std::size_t>(n),
+                                     trim_lo, trim_hi, out);
+}
+
+void rmbl_bootstrap_mean(const double *x, R_xlen_t n, R_xlen_t B,
+                         unsigned long long seed, double *out) {
+    morie::core::bootstrap_mean(x, static_cast<std::size_t>(n),
+                                static_cast<std::size_t>(B), seed, out);
+}
+
+double rmbl_gamma_cdf(double shape, double x) {
+    return morie::core::gamma_cdf_regularized(shape, x);
+}
+
+/* Hawkes negative log-likelihood, constant baseline. kernel: 0 =
+ * exponential (O(n) recursion), 1 = Weibull, 2 = Lomax, 3 = gamma.
+ * `par` is (a0, eta, p1[, p2]); the exponential takes one kernel
+ * parameter and the rest take two. An infeasible parameter set returns
+ * morie's sentinel (1e12) rather than erroring. */
+double rmbl_hawkes_nll(const double *t, R_xlen_t n, double T, int kernel,
+                       const double *par, R_xlen_t npar) {
+    const std::size_t nn = static_cast<std::size_t>(n);
+    if (kernel == 0) {
+        if (npar < 3) return R_NaN;
+        return morie::core::hawkes_ll_exp_const(t, nn, T, par[0], par[1],
+                                                par[2]);
+    }
+    if (npar < 4) return R_NaN;
+    if (kernel == 1) {
+        return morie::core::hawkes_ll_weibull_const(t, nn, T, par[0], par[1],
+                                                    par[2], par[3]);
+    }
+    if (kernel == 2) {
+        return morie::core::hawkes_ll_lomax_const(t, nn, T, par[0], par[1],
+                                                  par[2], par[3]);
+    }
+    if (kernel == 3) {
+        return morie::core::hawkes_ll_gamma_const(t, nn, T, par[0], par[1],
+                                                  par[2], par[3]);
+    }
+    return R_NaN;
+}
+
 /* ---- .Call wrappers: bricklayer's own R-facing API ---- */
+
+SEXP C_rmbl_sd(SEXP x, SEXP ddof) {
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    double r = rmbl_sd(REAL(x), XLENGTH(x), Rf_asInteger(ddof));
+    UNPROTECT(1);
+    return Rf_ScalarReal(r);
+}
+
+SEXP C_rmbl_euclid(SEXP a, SEXP b) {
+    a = PROTECT(Rf_coerceVector(a, REALSXP));
+    b = PROTECT(Rf_coerceVector(b, REALSXP));
+    if (XLENGTH(a) != XLENGTH(b)) {
+        UNPROTECT(2);
+        Rf_error("a and b must have the same length");
+    }
+    double r = rmbl_euclid_dist(REAL(a), REAL(b), XLENGTH(a));
+    UNPROTECT(2);
+    return Rf_ScalarReal(r);
+}
+
+SEXP C_rmbl_normal_logpdf(SEXP x, SEXP mu, SEXP sigma) {
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    double m = Rf_asReal(mu), s = Rf_asReal(sigma);
+    R_xlen_t n = XLENGTH(x);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    double *px = REAL(x), *po = REAL(out);
+    for (R_xlen_t i = 0; i < n; i++) po[i] = rmbl_normal_logpdf(px[i], m, s);
+    UNPROTECT(2);
+    return out;
+}
+
+SEXP C_rmbl_ipw(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
+    treat = PROTECT(Rf_coerceVector(treat, REALSXP));
+    propensity = PROTECT(Rf_coerceVector(propensity, REALSXP));
+    R_xlen_t n = XLENGTH(treat);
+    if (XLENGTH(propensity) != n) {
+        UNPROTECT(2);
+        Rf_error("`treat` and `propensity` must have the same length");
+    }
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    rmbl_ipw_weights(REAL(treat), REAL(propensity), n, Rf_asReal(trim_lo),
+                     Rf_asReal(trim_hi), REAL(out));
+    UNPROTECT(3);
+    return out;
+}
+
+SEXP C_rmbl_bootstrap_mean(SEXP x, SEXP B, SEXP seed) {
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    R_xlen_t nb = (R_xlen_t) Rf_asReal(B);
+    if (nb < 1) {
+        UNPROTECT(1);
+        Rf_error("`B` must be at least 1");
+    }
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, nb));
+    rmbl_bootstrap_mean(REAL(x), XLENGTH(x), nb,
+                        (unsigned long long) Rf_asReal(seed), REAL(out));
+    UNPROTECT(2);
+    return out;
+}
+
+SEXP C_rmbl_gamma_cdf(SEXP shape, SEXP x) {
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    double a = Rf_asReal(shape);
+    R_xlen_t n = XLENGTH(x);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    for (R_xlen_t i = 0; i < n; i++) REAL(out)[i] = rmbl_gamma_cdf(a, REAL(x)[i]);
+    UNPROTECT(2);
+    return out;
+}
+
+SEXP C_rmbl_hawkes_nll(SEXP t, SEXP T, SEXP kernel, SEXP par) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    par = PROTECT(Rf_coerceVector(par, REALSXP));
+    double r = rmbl_hawkes_nll(REAL(t), XLENGTH(t), Rf_asReal(T),
+                               Rf_asInteger(kernel), REAL(par), XLENGTH(par));
+    UNPROTECT(2);
+    return Rf_ScalarReal(r);
+}
+
 
 SEXP C_rmbl_mean(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));

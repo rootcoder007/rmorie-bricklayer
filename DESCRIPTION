@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.3.11
+Version: 0.4.0
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -15,11 +15,21 @@ Description: Tools for building brick-proof, reproducible, self-contained
     downloaded data against a pinned schema, and falls back to
     schema-driven synthetic data when the real source is unreachable.
     Run records are captured in a manifest plus a plain-language summary
-    so any result can be traced back to its inputs. Also ships a small
-    compiled C core (fast summary statistics and a self-contained
-    'SHA-256') that sibling packages in the 'rmorie' ecosystem reach
-    through 'LinkingTo' for a single, shared numeric and
-    provenance-hashing backend.
+    so any result can be traced back to its inputs. Distributional drift
+    between a pinned capsule and a fresh fetch is tested with
+    Kolmogorov-Smirnov, chi-square, population stability index,
+    Jensen-Shannon divergence and Benford first-digit screens, because a
+    re-released extract can be statistically identical yet differ
+    byte-for-byte, and a column can keep its name and type while having
+    been silently rescaled. Manifests can be authenticated rather than
+    merely checksummed, with keyed digests ('HMAC-SHA-256', RFC 2104) or
+    post-quantum hash-based signatures (the Winternitz-plus-Merkle
+    construction of RFC 8391), and pinned chunk-wise through a Merkle
+    tree so a mismatch identifies which part of a capsule moved. Also
+    ships a compiled C++ core (summary, robust and rank statistics,
+    'SHA-256', 'SHA-512' and 'CRC-32') that sibling packages in the
+    'rmorie' ecosystem reach through 'LinkingTo' for a single, shared
+    numeric and provenance-hashing backend.
 License: AGPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
