@@ -38,6 +38,8 @@ articles:
       - describe
       - drift
       - provenance
+      - yoy
+      - tables
 
 reference:
   - title: Fetch open data
@@ -186,6 +188,71 @@ reference:
       - rule
       - validate_rules
       - rmbl_rule_library
+  - title: Period-over-period change
+    desc: >
+      Year-over-year change matched on the period's own value rather than on
+      row order, so a missing year is a gap instead of a quietly multi-year
+      comparison. A percent off a small base is withheld with its reason; a
+      percentage is reported in percentage points; a ratio of counts carries
+      the exact conditional-binomial interval. The same object renders to
+      HTML, PDF, CSV, TSV, JSON or Markdown.
+    contents:
+      - yoy
+      - yoy_summary
+      - yoy_label
+      - fiscal_year_label
+      - yoy_render
+      - yoy_write
+      - yoy_delim
+      - yoy_palettes
+  - title: Banded categories
+    desc: >
+      Published categories are intervals -- "2 to 5", "50+" -- and anything
+      computed from them rests on where inside each band the mass sits and on
+      where the open top band ends. These parse to bounds, make the
+      representative-value rule explicit, and measure how far a result moves
+      as the open band's assumed cap varies.
+    contents:
+      - parse_bands
+      - band_values
+      - expand_bands
+      - band_sensitivity
+  - title: Concentration and association
+    desc: >
+      Whether a few units account for most of a total, and how strongly two
+      categorical variables move together. Gini is twice the area under its
+      own Lorenz curve, and has a ceiling of 1 - 1/n rather than 1. The tail
+      index maximises the exact discrete likelihood, the closed-form
+      continuity correction being badly biased at the small thresholds
+      administrative counts start from.
+    contents:
+      - concentration
+      - hill_tail_index
+      - hurwitz_zeta
+      - cramers_v
+  - title: Trend in a short series
+    desc: >
+      An annual extract is five to ten points, which supports a rank test and
+      a resistant slope but not a model with an autocorrelation structure.
+      The step test takes its p-value from the permutation distribution of the
+      maximum over splits, not from the best split's own test.
+    contents:
+      - trend_test
+      - step_change
+      - count_trend
+  - title: Region-coded counts
+    desc: >
+      A region is an areal unit with a population, not a coordinate. Indirect
+      standardisation removes the part of a difference explained by who the
+      area holds; empirical Bayes stops a small area's noise from ranking it
+      to the top or bottom; a funnel plot shows the reader the same thing
+      directly.
+    contents:
+      - expected_counts
+      - sir
+      - eb_rates
+      - funnel_limits
+      - morans_i
   - title: Describe a capsule
     desc: >
       The summaries worth reading before trusting a capsule: what every column
