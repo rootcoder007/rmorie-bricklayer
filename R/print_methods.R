@@ -303,7 +303,13 @@ summary.bricklayer_benford <- function(object, ...) {
 #' @param quantiles Quantile probabilities to include for numeric
 #'   columns (default the quartiles).
 #' @return A data frame of class `bricklayer_profile`, one row per
-#'   column.
+#'   column: the type, the missing count and share, the number of
+#'   distinct values, and for a numeric column the counts of zero,
+#'   negative and infinite values, the classical and robust centre and
+#'   spread, the range, the skewness, the count outside the Tukey
+#'   fences, and an [inline_hist()] sketch of its distribution. A
+#'   categorical column reports its most common value in `top`
+#'   instead.
 #' @seealso [capsule_drift()] to compare two of these, [core_moments()]
 #'   for the underlying kernel.
 #' @examples
@@ -321,6 +327,14 @@ summary.bricklayer_benford <- function(object, ...) {
 #' # `skewed`, which is the outlier announcing itself.
 #' p <- profile_columns(df)
 #' p[p$column %in% c("clean", "skewed"), c("column", "mean", "median")]
+#'
+#' # The histogram column shows shape no summary number carries.
+#' p[, c("column", "hist")]
+#'
+#' # Zeros, negatives and infinities are counted separately, because
+#' # each breaks a different downstream computation (a log, a square
+#' # root, an average).
+#' p[, c("column", "n_zero", "n_negative", "n_infinite")]
 #' @export
 profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
@@ -337,28 +351,35 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
     if (is.numeric(v)) {
       ok <- v[!is.na(v)]
       if (length(ok) == 0L) {
-        return(cbind(base, n_distinct = 0L, mean = NA_real_, sd = NA_real_,
+        return(cbind(base, n_distinct = 0L, n_zero = NA_integer_,
+                     n_negative = NA_integer_, n_infinite = NA_integer_,
+                     mean = NA_real_, sd = NA_real_,
                      median = NA_real_, mad = NA_real_, min = NA_real_,
                      max = NA_real_, skewness = NA_real_,
-                     n_outliers = NA_integer_, top = NA_character_,
-                     stringsAsFactors = FALSE))
+                     n_outliers = NA_integer_, hist = NA_character_,
+                     top = NA_character_, stringsAsFactors = FALSE))
       }
       m <- core_moments(ok)
       f <- core_tukey_fences(ok)
       cbind(base, n_distinct = length(unique(ok)),
+            n_zero = sum(ok == 0), n_negative = sum(ok < 0),
+            n_infinite = sum(is.infinite(v)),
             mean = m[["mean"]], sd = sqrt(m[["variance"]]),
             median = core_median(ok), mad = core_mad(ok),
             min = min(ok), max = max(ok), skewness = m[["skewness"]],
             n_outliers = sum(ok < f[["lower"]] | ok > f[["upper"]]),
-            top = NA_character_, stringsAsFactors = FALSE)
+            hist = .rmbl_sparkline(ok), top = NA_character_,
+            stringsAsFactors = FALSE)
     } else {
       ok <- as.character(v[!is.na(v)])
       top <- if (length(ok)) names(sort(table(ok), decreasing = TRUE))[1L] else
         NA_character_
-      cbind(base, n_distinct = length(unique(ok)), mean = NA_real_,
-            sd = NA_real_, median = NA_real_, mad = NA_real_,
-            min = NA_real_, max = NA_real_, skewness = NA_real_,
-            n_outliers = NA_integer_, top = top, stringsAsFactors = FALSE)
+      cbind(base, n_distinct = length(unique(ok)), n_zero = NA_integer_,
+            n_negative = NA_integer_, n_infinite = NA_integer_,
+            mean = NA_real_, sd = NA_real_, median = NA_real_,
+            mad = NA_real_, min = NA_real_, max = NA_real_,
+            skewness = NA_real_, n_outliers = NA_integer_,
+            hist = NA_character_, top = top, stringsAsFactors = FALSE)
     }
   })
   out <- do.call(rbind, rows)
@@ -390,6 +411,10 @@ print.bricklayer_profile <- function(x, ...) {
     ifelse(is.na(v), NA_character_, formatC(v, format = "g", digits = 4))
   })
   df[is.na(df)] <- .rmbl_glyphs()$dash
+  # the histogram is a drawing, not a value: keep it last and unpadded
+  if ("hist" %in% names(df)) {
+    df <- df[, c(setdiff(names(df), "hist"), "hist"), drop = FALSE]
+  }
   print(df, row.names = FALSE)
   cat(.rmbl_rule(), "\n")
   invisible(x)

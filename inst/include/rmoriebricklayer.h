@@ -376,6 +376,46 @@ static R_INLINE void rmbl_moments_merge(const double *a, const double *b,
     fn(a, b, out);
 }
 
+
+/* BLAKE2b: keyed or unkeyed, any digest length 1..64. Returns 0 on
+   success. */
+static R_INLINE int rmbl_blake2b(const unsigned char *msg, size_t msglen,
+                                 const unsigned char *key, size_t keylen,
+                                 int outlen, unsigned char *out) {
+    static int (*fn)(const unsigned char *, size_t, const unsigned char *,
+                     size_t, int, unsigned char *) = NULL;
+    if (fn == NULL)
+        fn = (int (*)(const unsigned char *, size_t, const unsigned char *,
+                      size_t, int, unsigned char *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_blake2b");
+    return fn(msg, msglen, key, keylen, outlen, out);
+}
+
+static R_INLINE void rmbl_pbkdf2_sha256(const unsigned char *pass,
+                                        size_t passlen,
+                                        const unsigned char *salt,
+                                        size_t saltlen, int iterations,
+                                        int dklen, unsigned char *out) {
+    static void (*fn)(const unsigned char *, size_t, const unsigned char *,
+                      size_t, int, int, unsigned char *) = NULL;
+    if (fn == NULL)
+        fn = (void (*)(const unsigned char *, size_t, const unsigned char *,
+                       size_t, int, int, unsigned char *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_pbkdf2_sha256");
+    fn(pass, passlen, salt, saltlen, iterations, dklen, out);
+}
+
+/* Operating-system CSPRNG. Returns 0 on success; a non-zero return MUST
+   be treated as fatal, never as a reason to fall back to a weaker
+   source. */
+static R_INLINE int rmbl_os_random(unsigned char *out, size_t n) {
+    static int (*fn)(unsigned char *, size_t) = NULL;
+    if (fn == NULL)
+        fn = (int (*)(unsigned char *, size_t))
+             R_GetCCallable("rmoriebricklayer", "rmbl_os_random");
+    return fn(out, n);
+}
+
 #ifdef __cplusplus
 }
 #endif
