@@ -2,34 +2,35 @@
 % Please edit documentation in R/sign.R
 \name{pqc_backends}
 \alias{pqc_backends}
-\title{Available post-quantum signature backends}
+\title{Available post-quantum signature schemes}
 \usage{
 pqc_backends()
 }
 \value{
-A character vector of scheme names. \code{"xmss-sha256"} is
-always first; any standardised schemes this build of liboqs enabled
-follow.
+A character vector of scheme names, \code{"xmss-sha256"} first.
 }
 \description{
-Reports which signature backends this build of the package can use.
-\code{"xmss-sha256"} is always present -- it needs nothing but the
-bundled SHA-256. \code{"liboqs"} appears only when the Open Quantum Safe
-library was found at configure time, which additionally enables the
-standardised lattice and hash-based schemes (ML-DSA / FIPS 204, SLH-DSA
-/ FIPS 205) through that library rather than through any hand-written
-implementation here.
+Reports the signature schemes this package implements. The list is
+fixed, not probed: all of them are implemented in the package's own C++
+and none depends on a system library, so a scheme available on one
+machine is available on every machine.
+}
+\details{
+\code{"xmss-sha256"} is the stateful hash-based scheme of
+\code{\link[=pqc_keygen]{pqc_keygen()}}. The rest are the NIST
+standards, taken with \code{\link[=fips_keygen]{fips_keygen()}}: ML-DSA
+(FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at all
+twelve -- six over SHAKE and six over SHA-2, which are different schemes
+and not merely different code paths.
 }
 \examples{
 pqc_backends()
 
-# The dependency-free backend is always available.
-"xmss-sha256" \%in\% pqc_backends()
-
-# Whether a lattice scheme is available depends on the build.
-"ML-DSA-65" \%in\% pqc_backends()
+# Every scheme is present in every build.
+all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") \%in\%
+    pqc_backends())
 }
 \seealso{
-\code{\link[=pqc_keygen]{pqc_keygen()}}, which takes any of these as its
-\code{scheme}.
+\code{\link[=fips_keygen]{fips_keygen()}} for the standardised schemes,
+\code{\link[=pqc_keygen]{pqc_keygen()}} for the stateful one.
 }

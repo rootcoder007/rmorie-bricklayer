@@ -3,61 +3,33 @@
 \name{oqs_keygen}
 \alias{oqs_keygen}
 \alias{oqs_public_key}
-\title{Generate a standardised post-quantum signing key}
+\title{Generate a standardised post-quantum signing key (deprecated name)}
 \usage{
 oqs_keygen(scheme = "ML-DSA-65")
 
 oqs_public_key(key)
 }
 \arguments{
-\item{scheme}{Scheme name, as reported by
-\code{\link[=pqc_backends]{pqc_backends()}}. The default
-\code{"ML-DSA-65"} is the FIPS 204 middle security level.}
+\item{scheme}{Scheme name; see
+\code{\link[=fips_keygen]{fips_keygen()}}.}
 
 \item{key}{A key from \code{oqs_keygen()}.}
 }
 \value{
-A list of class \code{bricklayer_oqs_key}: \code{public},
-\code{secret} (both hex), and \code{scheme}.
+As \code{\link[=fips_keygen]{fips_keygen()}} and
+\code{\link[=fips_public_key]{fips_public_key()}}.
 }
 \description{
-Generates a key for one of the NIST-standardised signature schemes --
-ML-DSA (FIPS 204) or SLH-DSA (FIPS 205) -- \strong{through liboqs}.
-}
-\details{
-bricklayer implements no lattice arithmetic of its own. These keys and
-signatures are produced entirely by the Open Quantum Safe library, which
-is tested and maintained for the purpose; a hand-written NTT and
-rejection sampler here would be a worse outcome than deferring. The
-trade-off is that the scheme is available only where liboqs was found at
-build time, which \code{\link[=pqc_backends]{pqc_backends()}} reports.
-
-Unlike \code{\link[=pqc_keygen]{pqc_keygen()}} 's hash-based key, these
-are STATELESS: a key signs any number of messages, with no index to
-track.
+Kept so code written against the liboqs-backed version keeps working.
+The schemes are no longer reached through liboqs -- they are implemented
+in this package -- and the name no longer describes anything, so use
+\code{\link[=fips_keygen]{fips_keygen()}} instead.
 }
 \examples{
-# Only where the build found liboqs.
-if ("ML-DSA-65" \%in\% pqc_backends()) {
-  key <- oqs_keygen("ML-DSA-65")
-  key$scheme
-
-  sig <- capsule_sign("a manifest digest", key)
-  capsule_verify("a manifest digest", sig, oqs_public_key(key))
-  capsule_verify("an edited digest", sig, oqs_public_key(key))
-
-  # Stateless: the same key signs again with no index to advance.
-  sig2 <- capsule_sign("a second digest", key)
-  capsule_verify("a second digest", sig2, oqs_public_key(key))
-}
-}
-\references{
-National Institute of Standards and Technology (2024).
-Module-Lattice-Based Digital Signature Standard. FIPS 204.
-\doi{10.6028/NIST.FIPS.204}
+# Deprecated: use fips_keygen().
+key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
+key$scheme
 }
 \seealso{
-\code{\link[=pqc_keygen]{pqc_keygen()}} for the dependency-free
-hash-based key, \code{\link[=capsule_sign]{capsule_sign()}} which
-accepts either.
+\code{\link[=fips_keygen]{fips_keygen()}}.
 }

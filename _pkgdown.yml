@@ -161,6 +161,9 @@ reference:
       - capsule_verify
       - pqc_keygen
       - signing_public_key
+      - fips_keygen
+      - fips_key
+      - fips_sizes
       - oqs_keygen
       - pqc_backends
       - rmbl_chain

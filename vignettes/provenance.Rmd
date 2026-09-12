@@ -127,11 +127,19 @@ k <- capsule_sign("two", k)$key_state
 capsule_sign("three", k)
 ```
 
-On lattices: a standardised lattice signature (ML-DSA, FIPS 204) is
-deliberately *not* hand-written here. An uncertified NTT, SHAKE and
-rejection sampler would be a worse outcome than no lattice signature at
-all. `pqc_backends()` reports what this build can use; where liboqs was
-found at configure time it appears alongside the built-in scheme.
+On the standardised schemes: ML-DSA (FIPS 204) and SLH-DSA (FIPS 205)
+are implemented here too, at every parameter set both standards define
+-- three for ML-DSA, twelve for SLH-DSA -- with no system dependency, so
+the list `pqc_backends()` reports is the same on every machine.
+`fips_keygen()` takes any of them, `fips_key()` wraps key material that
+came from elsewhere, and both are stateless: one key signs any number of
+messages.
+
+What makes that defensible is the cross-check rather than care. In
+deterministic mode this package and OpenSSL 3.5 produce the same bytes
+for every parameter set, which is a test a subtly wrong implementation
+cannot pass: it would have to be wrong in exactly the same way, in a
+construction where a single misplaced field changes every output.
 
 ```{r}
 pqc_backends()
