@@ -8,14 +8,14 @@ resolve_via_socrata(provenance)
 }
 \arguments{
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}. Must contain \code{dataset$socrata_domain} (e.g.
-\code{"data.cityofchicago.org"}) and \code{dataset$socrata_id} (the 4x4
-dataset id, e.g. \code{"ijzp-q8t2"}).}
+\code{\link[=load_provenance]{load_provenance()}}. Must contain
+\code{dataset$socrata_domain} (e.g. \code{"data.cityofchicago.org"}) and
+\code{dataset$socrata_id} (the 4x4 dataset id, e.g. \code{"ijzp-q8t2"})
+.}
 }
 \value{
 The CSV export URL as a character string, or \code{NULL} if the
-fields are missing, the request fails, or the metadata reports an
-error.
+fields are missing, the request fails, or the metadata reports an error.
 }
 \description{
 Verifies that a Socrata dataset still exists by fetching its

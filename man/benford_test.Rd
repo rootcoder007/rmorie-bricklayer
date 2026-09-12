@@ -10,8 +10,8 @@ benford_test(x)
 \item{x}{Numeric vector.}
 }
 \value{
-A list of class \code{bricklayer_benford}: \code{counts} (observed
-digit frequencies 1--9), \code{expected}, \code{proportion},
+A list of class \code{bricklayer_benford}: \code{counts}
+(observed digit frequencies 1--9), \code{expected}, \code{proportion},
 \code{statistic}, \code{df}, \code{p_value}, and \code{n}.
 }
 \description{
@@ -19,15 +19,14 @@ Compares the distribution of leading significant digits in \code{x} with
 Benford's law, \eqn{P(d) = \log_{10}(1 + 1/d)}. Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
-typically do not. That makes it a cheap screen for a numeric column
-that arrived looking plausible but is not the measurement it claims to
-be.
+typically do not. That makes it a cheap screen for a numeric column that
+arrived looking plausible but is not the measurement it claims to be.
 }
 \details{
-It is a SCREEN, not a verdict. Columns with a narrow range, a unit
-floor or ceiling, or an assigned-identifier structure (postcodes, year
-fields, prices ending in 99) legitimately violate Benford's law. Treat
-a small p-value as a reason to look, never as evidence of fabrication.
+It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication.
 
 Zeros and non-finite values have no leading significant digit and are
 excluded; the sign is ignored.

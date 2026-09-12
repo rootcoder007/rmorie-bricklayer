@@ -11,23 +11,26 @@ step_change(y, x = NULL, min_segment = 2L, n_perm = 9999L, seed = 1L)
 
 \item{x}{The periods. Used only for labelling the break.}
 
-\item{min_segment}{Fewest periods either side of the break.}
+\item{min_segment}{Fewest periods either side of the
+break.}
 
-\item{n_perm}{Permutations for the null distribution. The exact
-enumeration is used instead when the series is short enough for it.}
+\item{n_perm}{Permutations for the null distribution. The
+exact enumeration is used instead when the series is short enough for
+it.}
 
-\item{seed}{Seed for the permutations, so the p-value is reproducible.}
+\item{seed}{Seed for the permutations, so the p-value is
+reproducible.}
 }
 \value{
 A list with \code{break_after} (the period the series changes
-after), \code{index}, \code{before}, \code{after}, \code{difference}, \code{statistic},
-\code{p_value}, \code{n_perm} and \code{method}.
+after), \code{index}, \code{before}, \code{after}, \code{difference},
+\code{statistic}, \code{p_value}, \code{n_perm} and \code{method}.
 }
 \description{
 Scans every admissible split of the series, reports the one with the
 largest mean difference, and gives it a p-value from the permutation
-distribution of the MAXIMUM over splits -- not from the best split's
-own test, which is the standard way to find a change point in noise.
+distribution of the MAXIMUM over splits -- not from the best split's own
+test, which is the standard way to find a change point in noise.
 }
 \examples{
 # A clear step down after the third period.
@@ -36,4 +39,13 @@ step_change(c(100, 104, 98, 60, 63, 58))
 # Pure noise: the best split is still found, and is not significant.
 set.seed(2)
 step_change(stats::rnorm(12))$p_value
+}
+\references{
+The permutation distribution of the maximum over splits, rather than the
+chosen split's own test, is what makes this a test of whether there is a
+break rather than a way of locating the largest wobble. See any
+treatment of the change-point problem, e.g. Coles, S. \emph{An Introduction
+to Statistical Modeling of Extreme Values} (Springer), which discusses
+change-point detection alongside the threshold choices that raise the
+same multiple-comparison issue.
 }

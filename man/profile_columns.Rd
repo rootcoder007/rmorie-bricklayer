@@ -9,18 +9,17 @@ profile_columns(data, quantiles = c(0.25, 0.5, 0.75))
 \arguments{
 \item{data}{A data frame.}
 
-\item{quantiles}{Quantile probabilities to include for numeric
-columns (default the quartiles).}
+\item{quantiles}{Quantile probabilities to include for
+numeric columns (default the quartiles).}
 }
 \value{
 A data frame of class \code{bricklayer_profile}, one row per
-column: the type, the missing count and share, the number of
-distinct values, and for a numeric column the counts of zero,
-negative and infinite values, the classical and robust centre and
-spread, the range, the skewness, the count outside the Tukey
-fences, and an \code{\link[=inline_hist]{inline_hist()}} sketch of its distribution. A
-categorical column reports its most common value in \code{top}
-instead.
+column: the type, the missing count and share, the number of distinct
+values, and for a numeric column the counts of zero, negative and
+infinite values, the classical and robust centre and spread, the range,
+the skewness, the count outside the Tukey fences, and an
+\code{\link[=inline_hist]{inline_hist()}} sketch of its distribution. A
+categorical column reports its most common value in \code{top} instead.
 }
 \description{
 One row per column: type, missingness, and the summaries that suit the
@@ -31,8 +30,8 @@ distinct levels plus the most common one for a categorical column.
 \details{
 Reporting the classical and robust centres side by side is the point:
 where they disagree, the column has outliers or a heavy tail, and the
-mean is not describing it. That is visible in one glance here and in
-no single number.
+mean is not describing it. That is visible in one glance here and in no
+single number.
 }
 \examples{
 set.seed(9)
@@ -59,6 +58,6 @@ p[, c("column", "hist")]
 p[, c("column", "n_zero", "n_negative", "n_infinite")]
 }
 \seealso{
-\code{\link[=capsule_drift]{capsule_drift()}} to compare two of these, \code{\link[=core_moments]{core_moments()}}
-for the underlying kernel.
+\code{\link[=capsule_drift]{capsule_drift()}} to compare two of these,
+\code{\link[=core_moments]{core_moments()}} for the underlying kernel.
 }

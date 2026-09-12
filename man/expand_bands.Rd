@@ -7,11 +7,13 @@
 expand_bands(bands, counts, ...)
 }
 \arguments{
-\item{bands}{A data frame from \code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
+\item{bands}{A data frame from
+\code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
 
 \item{counts}{How many units fall in each band.}
 
-\item{...}{Passed to \code{\link[=band_values]{band_values()}}.}
+\item{...}{Passed to
+\code{\link[=band_values]{band_values()}}.}
 }
 \value{
 A numeric vector with one entry per unit.

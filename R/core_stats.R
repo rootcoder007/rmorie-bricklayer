@@ -17,20 +17,24 @@
 
 #' Standard deviation and Euclidean distance (C backend)
 #'
-#' `core_sd()` is the square root of the variance computed by the shared
-#' core; `core_dist()` is the Euclidean distance between two equal-length
-#' vectors.
+#' `core_sd()` is the square root of the variance computed by the
+#' shared core; `core_dist()` is the Euclidean distance between two
+#' equal-length vectors.
 #'
-#' NA/NaN propagate -- there is no `na.rm`. Call [stats::na.omit()] first
-#' if you need NA handling.
+#' NA/NaN propagate -- there is no `na.rm`. Call
+#' [stats::na.omit()] first if you need NA
+#' handling.
 #'
-#' @param x,a,b Numeric vectors (coerced with [as.numeric()]).
-#' @param ddof Denominator degrees of freedom. The default `1` gives the
-#'   sample standard deviation, matching [stats::sd()]; `0` gives the
-#'   population figure.
+#' @param x,a,b Numeric vectors (coerced with
+#' [as.numeric()]) .
+#' @param ddof Denominator degrees of freedom. The default
+#' `1` gives the sample standard deviation, matching
+#' [stats::sd()]; `0` gives the population
+#' figure.
 #' @return A length-1 numeric.
-#' @seealso [core_moments()] for the mean, variance, skewness and
-#'   kurtosis in a single pass.
+#' @seealso
+#' [core_moments()] for the mean, variance,
+#' skewness and kurtosis in a single pass.
 #' @examples
 #' # Sample standard deviation, matching stats::sd().
 #' core_sd(c(2, 4, 4, 4, 5, 5, 7, 9))
@@ -68,9 +72,10 @@ core_dist <- function(a, b) {
 #'
 #' @param x Numeric vector of quantiles.
 #' @param mean Distribution mean (length-1, default 0).
-#' @param sd Distribution standard deviation (length-1, default 1, > 0).
+#' @param sd Distribution standard deviation (length-1, default
+#' 1, > 0).
 #' @return A numeric vector the length of `x`. Equivalent to
-#'   `stats::dnorm(x, mean, sd, log = TRUE)`.
+#' `stats::dnorm(x, mean, sd, log = TRUE)`.
 #' @examples
 #' core_normal_logpdf(c(-1, 0, 1))
 #'
@@ -88,25 +93,27 @@ core_normal_logpdf <- function(x, mean = 0, sd = 1) {
 
 #' Mean, variance, skewness and kurtosis in one pass (C backend)
 #'
-#' A single streaming pass (Welford's recurrence, extended to the third
-#' and fourth central moments) over `x`. One pass matters for capsule
+#' A single streaming pass (Welford's recurrence, extended to the third and
+#' fourth central moments) over `x`. One pass matters for capsule
 #' members large enough that reading the column twice is the expensive
 #' part.
 #'
-#' The variance uses the `n - 1` denominator, matching [stats::var()].
-#' The shape statistics use the *sample moment* definitions
+#' The variance uses the `n - 1` denominator, matching
+#' [stats::var()]. The shape statistics use the
+#' *sample moment* definitions
 #' \eqn{m_3 / m_2^{3/2}} and \eqn{m_4 / m_2^2 - 3}, with \eqn{m_k} the
 #' k-th central moment divided by `n` -- so kurtosis is reported as
 #' EXCESS kurtosis and a normal sample sits near zero, not near three.
 #'
-#' @param x Numeric vector (coerced with [as.numeric()]).
-#' @return A named length-4 numeric: `mean`, `variance`, `skewness`,
-#'   `kurtosis`. `skewness` needs at least 3 observations and `kurtosis`
-#'   at least 4; both are `NaN` below that, as is everything if `x`
-#'   contains NA/NaN.
+#' @param x Numeric vector (coerced with
+#' [as.numeric()]) .
+#' @return A named length-4 numeric: `mean`, `variance`,
+#' `skewness`, `kurtosis`. `skewness` needs at least 3
+#' observations and `kurtosis` at least 4; both are `NaN` below
+#' that, as is everything if `x` contains NA/NaN.
 #' @references Welford BP (1962). Note on a method for calculating
-#'   corrected sums of squares and products. *Technometrics* 4(3),
-#'   419--420. \doi{10.1080/00401706.1962.10490022}
+#' corrected sums of squares and products. *Technometrics* 4(3),
+#' 419--420. \doi{10.1080/00401706.1962.10490022}
 #' @examples
 #' core_moments(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
@@ -127,34 +134,36 @@ core_moments <- function(x) .Call(C_rmbl_moments, as.numeric(x))
 
 #' Quantiles, median and robust spread (C backend)
 #'
-#' `core_quantile()` is the type-7 quantile, which is R's default, so it
-#' agrees with `stats::quantile(x, probs, type = 7)`. `core_median()` is
-#' the 50% point. `core_mad()` is the median absolute deviation, scaled
-#' by `constant` so that it estimates the standard deviation of a normal
-#' sample. `core_iqr()` is the interquartile range and
-#' `core_tukey_fences()` the outlier fences drawn at `k` IQRs beyond the
-#' quartiles.
+#' `core_quantile()` is the type-7 quantile, which is R's default, so
+#' it agrees with `stats::quantile(x, probs, type = 7)`.
+#' `core_median()` is the 50% point. `core_mad()` is the median
+#' absolute deviation, scaled by `constant` so that it estimates the
+#' standard deviation of a normal sample. `core_iqr()` is the
+#' interquartile range and `core_tukey_fences()` the outlier fences
+#' drawn at `k` IQRs beyond the quartiles.
 #'
-#' These are the robust counterparts of [core_moments()]: a single
-#' corrupted row can move a mean or a variance arbitrarily far, but moves
-#' a median or a MAD hardly at all -- which is what you want when
-#' deciding whether a freshly fetched column is still the column a
-#' capsule was pinned against.
+#' These are the robust counterparts of
+#' [core_moments()]: a single corrupted row can
+#' move a mean or a variance arbitrarily far, but moves a median or a MAD
+#' hardly at all -- which is what you want when deciding whether a freshly
+#' fetched column is still the column a capsule was pinned against.
 #'
-#' @param x Numeric vector (coerced with [as.numeric()]).
-#' @param probs Numeric vector of probabilities in \[0, 1\].
-#' @param constant Scale factor for `core_mad()`. The default `1.4826`
-#'   makes the MAD consistent for the standard deviation under
-#'   normality, and is the same rounded value [stats::mad()] uses, so the
-#'   two agree exactly. The unrounded consistency constant is
-#'   `1 / qnorm(3/4)` = 1.4826022185...; pass it explicitly if you want
-#'   the extra digits, or `1` for the unscaled median deviation.
-#' @param k Fence width in IQRs (default 1.5, Tukey's convention; 3 is
-#'   the usual "far out" cutoff).
+#' @param x Numeric vector (coerced with
+#' [as.numeric()]) .
+#' @param probs Numeric vector of probabilities in \ [0, 1\].
+#' @param constant Scale factor for `core_mad()`. The
+#' default `1.4826` makes the MAD consistent for the standard
+#' deviation under normality, and is the same rounded value
+#' [stats::mad()] uses, so the two agree exactly.
+#' The unrounded consistency constant is `1 / qnorm(3/4)` =
+#' 1.4826022185...; pass it explicitly if you want the extra digits, or
+#' `1` for the unscaled median deviation.
+#' @param k Fence width in IQRs (default 1.5, Tukey's convention;
+#' 3 is the usual "far out" cutoff).
 #' @return `core_quantile()` returns a numeric vector the length of
-#'   `probs`; `core_median()`, `core_mad()` and `core_iqr()` a length-1
-#'   numeric; `core_tukey_fences()` a named length-2 numeric (`lower`,
-#'   `upper`).
+#' `probs`; `core_median()`, `core_mad()` and
+#' `core_iqr()` a length-1 numeric; `core_tukey_fences()` a named
+#' length-2 numeric ( `lower`, `upper`) .
 #' @examples
 #' x <- c(2, 4, 4, 4, 5, 5, 7, 9)
 #' core_quantile(x, c(0.25, 0.5, 0.75))
@@ -218,17 +227,18 @@ core_tukey_fences <- function(x, k = 1.5) {
 
 #' Trimmed and winsorized means (C backend)
 #'
-#' Two ways to stop a handful of extreme rows dominating a column's
-#' centre. `core_trimmed_mean()` DISCARDS the `floor(n * trim)` largest
+#' Two ways to stop a handful of extreme rows dominating a column's centre.
+#' `core_trimmed_mean()` DISCARDS the `floor(n * trim)` largest
 #' and smallest values, matching `mean(x, trim = )`.
 #' `core_winsorized_mean()` instead PULLS THEM IN to the most extreme
 #' surviving values, so every observation still contributes weight --
-#' usually the better choice when the extremes are real measurements
-#' rather than errors.
+#' usually the better choice when the extremes are real measurements rather
+#' than errors.
 #'
-#' @param x Numeric vector (coerced with [as.numeric()]).
-#' @param trim Proportion trimmed from *each* end, in \[0, 0.5\]. At
-#'   `0.5` both reduce to the median.
+#' @param x Numeric vector (coerced with
+#' [as.numeric()]) .
+#' @param trim Proportion trimmed from *each* end, in \
+#' [0, 0.5\]. At `0.5` both reduce to the median.
 #' @return A length-1 numeric.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
@@ -264,8 +274,8 @@ core_winsorized_mean <- function(x, trim = 0.1) {
 #' [stats::var()].
 #'
 #' @param x Numeric vector of observations.
-#' @param w Numeric vector of non-negative weights, the same length as
-#'   `x`.
+#' @param w Numeric vector of non-negative weights, the same
+#' length as `x`.
 #' @return A named length-2 numeric: `mean` and `variance`.
 #' @examples
 #' x <- c(10, 20, 30, 40)
@@ -299,14 +309,15 @@ core_weighted <- function(x, w) {
 #'
 #' `core_cor_spearman()` is Spearman's rho: the Pearson correlation of
 #' the ranks, so it measures monotone association rather than linear
-#' association and is unaffected by any order-preserving transformation
-#' of either variable. `core_midranks()` exposes the ranks themselves;
+#' association and is unaffected by any order-preserving transformation of
+#' either variable. `core_midranks()` exposes the ranks themselves;
 #' tied values share the average of the ranks they span, which is what
-#' makes the result agree with [stats::cor()] on tied data.
+#' makes the result agree with [stats::cor()] on
+#' tied data.
 #'
 #' @param x,y Numeric vectors of the same length.
-#' @return `core_cor_spearman()` a length-1 numeric in \[-1, 1\];
-#'   `core_midranks()` a numeric vector the length of `x`.
+#' @return `core_cor_spearman()` a length-1 numeric in \ [-1, 1\];
+#' `core_midranks()` a numeric vector the length of `x`.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5)
 #' y <- c(2, 4, 9, 16, 25)
@@ -344,11 +355,11 @@ core_midranks <- function(x) .Call(C_rmbl_midranks, as.numeric(x))
 #' Covariance matrix of a numeric matrix (C backend)
 #'
 #' Column covariances with the `n - 1` denominator, matching
-#' [stats::cov()]. Column names are carried through to both dimensions of
-#' the result.
+#' [stats::cov()]. Column names are carried through
+#' to both dimensions of the result.
 #'
-#' @param x A numeric matrix or data frame of numeric columns (rows =
-#'   observations, columns = variables).
+#' @param x A numeric matrix or data frame of numeric columns
+#' (rows = observations, columns = variables).
 #' @return A symmetric `ncol(x)` by `ncol(x)` numeric matrix.
 #' @examples
 #' X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
@@ -380,11 +391,12 @@ core_cov <- function(x) {
 
 #' Bootstrap replicate means (C backend)
 #'
-#' `B` resamples of `x`, drawn with replacement and each the same length
-#' as `x`, with the mean of every resample returned. The resampling uses
-#' the core's own 64-bit Mersenne Twister seeded by `seed`, NOT R's RNG,
-#' so a given `seed` reproduces the same replicates in every binding of
-#' the core and R's own random stream is left untouched.
+#' `B` resamples of `x`, drawn with replacement and each the same
+#' length as `x`, with the mean of every resample returned. The
+#' resampling uses the core's own 64-bit Mersenne Twister seeded by
+#' `seed`, NOT R's RNG, so a given `seed` reproduces the same
+#' replicates in every binding of the core and R's own random stream is
+#' left untouched.
 #'
 #' @param x Numeric vector to resample.
 #' @param B Number of bootstrap replicates (default 1000).
@@ -420,18 +432,18 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 
 #' Trimmed inverse-probability weights (C backend)
 #'
-#' The inverse-probability-of-treatment weights \eqn{1/e} for the
-#' treated and \eqn{1/(1-e)} for the untreated, with the propensity score
-#' clamped into `[trim_lo, trim_hi]` FIRST. Clamping matters: an
-#' untrimmed score near 0 or 1 produces a weight large enough for one
-#' observation to dominate the entire estimate.
+#' The inverse-probability-of-treatment weights \eqn{1/e} for the treated
+#' and \eqn{1/(1-e)} for the untreated, with the propensity score clamped
+#' into `[trim_lo, trim_hi]` FIRST. Clamping matters: an untrimmed
+#' score near 0 or 1 produces a weight large enough for one observation to
+#' dominate the entire estimate.
 #'
-#' @param treat Numeric or logical treatment indicator; `1`/`TRUE` is
-#'   treated.
-#' @param propensity Numeric vector of propensity scores, the same length
-#'   as `treat`.
-#' @param trim_lo,trim_hi Clamp bounds for the score (defaults 0.01 and
-#'   0.99).
+#' @param treat Numeric or logical treatment indicator;
+#' `1` / `TRUE` is treated.
+#' @param propensity Numeric vector of propensity scores,
+#' the same length as `treat`.
+#' @param trim_lo,trim_hi Clamp bounds for the score
+#' (defaults 0.01 and 0.99).
 #' @return A numeric vector of weights the length of `treat`.
 #' @examples
 #' treat <- c(1, 0, 1, 0)
@@ -467,14 +479,16 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 
 #' Regularized incomplete gamma function (C backend)
 #'
-#' The lower regularized incomplete gamma function \eqn{P(a, x)}, which
-#' is the CDF of a Gamma distribution with shape `a` and unit rate.
-#' Exposed because it is the building block of the chi-square tail used
-#' by [drift_chisq()] and [benford_test()].
+#' The lower regularized incomplete gamma function \eqn{P(a, x)}, which is
+#' the CDF of a Gamma distribution with shape `a` and unit rate.
+#' Exposed because it is the building block of the chi-square tail used by
+#' [drift_chisq()] and
+#' [benford_test()].
 #'
 #' @param shape Shape parameter \eqn{a} (length-1, > 0).
 #' @param x Numeric vector of quantiles (>= 0).
-#' @return A numeric vector the length of `x`, each entry in \[0, 1\].
+#' @return A numeric vector the length of `x`, each entry in \
+#' [0, 1\].
 #' @examples
 #' core_gamma_cdf(3.5, c(0.5, 1, 4, 12))
 #'
@@ -498,37 +512,40 @@ core_gamma_cdf <- function(shape, x) {
 
 #' Hawkes-process negative log-likelihood (C backend)
 #'
-#' The negative log-likelihood of a univariate self-exciting Hawkes
-#' process with constant baseline on `[0, horizon]`, for the event times
+#' The negative log-likelihood of a univariate self-exciting Hawkes process
+#' with constant baseline on `[0, horizon]`, for the event times
 #' `times`. A Hawkes process is the natural model for arrivals that
 #' trigger further arrivals -- repeat calls to a service, aftershocks,
 #' retweet cascades, revisions to an open-data release.
 #'
-#' Four triggering kernels are available. `"exponential"` is memoryless
-#' and evaluates by an O(n) recursion; the other three are not, so they
-#' cost O(n^2).
+#' Four triggering kernels are available. `"exponential"` is
+#' memoryless and evaluates by an O(n) recursion; the other three are not,
+#' so they cost O(n^2).
 #'
 #' Parameters are passed on the scales the kernel is defined on:
-#' `par = c(a0, eta, ...)` where `a0` is the LOG baseline intensity
-#' (\eqn{\nu = e^{a0}}) and `eta` the branching ratio in (0, 1) -- the
-#' expected number of children per event, so the process is stationary
-#' only for `eta < 1`. The remaining entries are the kernel's own shape
-#' parameters: `beta` (exponential), `alpha, lambda` (Weibull),
-#' `alpha, c` (Lomax), `alpha, beta` (gamma).
+#' `par = c(a0, eta, ...)` where `a0` is the LOG baseline
+#' intensity ( \eqn{\nu = e^{a0}}) and `eta` the branching ratio in
+#' (0, 1) -- the expected number of children per event, so the process is
+#' stationary only for `eta < 1`. The remaining entries are the
+#' kernel's own shape parameters: `beta` (exponential),
+#' `alpha, lambda` (Weibull), `alpha, c` (Lomax),
+#' `alpha, beta` (gamma).
 #'
-#' @param times Sorted numeric vector of event times in `[0, horizon]`.
-#' @param horizon End of the observation window (length-1, > 0).
-#' @param kernel One of `"exponential"`, `"weibull"`, `"lomax"`,
-#'   `"gamma"`.
-#' @param par Numeric parameter vector, as described above: length 3 for
-#'   `"exponential"`, length 4 for the others.
+#' @param times Sorted numeric vector of event times in
+#' `[0, horizon]`.
+#' @param horizon End of the observation window (length-1, >
+#' 0).
+#' @param kernel One of `"exponential"`,
+#' `"weibull"`, `"lomax"`, `"gamma"`.
+#' @param par Numeric parameter vector, as described above:
+#' length 3 for `"exponential"`, length 4 for the others.
 #' @return A length-1 numeric: the negative log-likelihood, to be
-#'   MINIMISED. A parameter set outside the core's feasible region
-#'   returns the sentinel `1e12` rather than erroring, so the value can
-#'   be handed straight to [stats::optim()] without the optimiser
-#'   walking off the domain.
-#' @references Hawkes AG (1971). Spectra of some self-exciting and
-#'   mutually exciting point processes. *Biometrika* 58(1), 83--90.
+#' MINIMISED. A parameter set outside the core's feasible region returns
+#' the sentinel `1e12` rather than erroring, so the value can be
+#' handed straight to [stats::optim()] without the
+#' optimiser walking off the domain.
+#' @references Hawkes AG (1971). Spectra of some self-exciting and mutually
+#' exciting point processes. *Biometrika* 58(1), 83--90.
 #'   \doi{10.1093/biomet/58.1.83}
 #' @examples
 #' set.seed(4)

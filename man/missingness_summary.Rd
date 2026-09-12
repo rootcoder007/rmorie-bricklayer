@@ -10,9 +10,10 @@ missingness_summary(data)
 \item{data}{A data frame.}
 }
 \value{
-A named numeric vector: \code{n_rows}, \code{n_cols}, \code{n_missing},
-\code{pct_missing}, \code{n_complete_rows}, \code{pct_complete_rows},
-\code{n_cols_any_missing}, \code{n_cols_all_missing}.
+A named numeric vector: \code{n_rows}, \code{n_cols},
+\code{n_missing}, \code{pct_missing}, \code{n_complete_rows},
+\code{pct_complete_rows}, \code{n_cols_any_missing},
+\code{n_cols_all_missing}.
 }
 \description{
 The scalar summaries of missingness: how much of the table is missing,
@@ -26,6 +27,7 @@ missingness_summary(df)
 missingness_summary(data.frame(x = 1:3, y = 4:6))
 }
 \seealso{
-\code{\link[=missingness_pattern]{missingness_pattern()}} for which columns are missing
-together, \code{\link[=profile_columns]{profile_columns()}} for per-column rates.
+\code{\link[=missingness_pattern]{missingness_pattern()}} for which
+columns are missing together,
+\code{\link[=profile_columns]{profile_columns()}} for per-column rates.
 }

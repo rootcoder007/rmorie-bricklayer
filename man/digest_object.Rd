@@ -9,14 +9,14 @@ digest_object(x, algo = c("sha256", "sha512", "blake2b", "crc32"), key = NULL)
 \arguments{
 \item{x}{Any R object.}
 
-\item{algo}{\code{"sha256"} (default), \code{"sha512"}, \code{"blake2b"} or
-\code{"crc32"}.}
+\item{algo}{\code{"sha256"} (default), \code{"sha512"},
+\code{"blake2b"} or \code{"crc32"}.}
 
-\item{key}{Optional key, for \code{"blake2b"} only: gives a keyed
-fingerprint that only a key holder can reproduce.}
+\item{key}{Optional key, for \code{"blake2b"} only: gives a
+keyed fingerprint that only a key holder can reproduce.}
 }
 \value{
-A length-1 character vector (or numeric for \code{"crc32"}).
+A length-1 character vector (or numeric for \code{"crc32"}) .
 }
 \description{
 Fingerprints any R object by hashing its serialization, so a list, a
@@ -25,9 +25,9 @@ counterpart of \code{digest::digest()}, computed with this package's own
 hashes.
 }
 \details{
-Serialization is pinned to version 2 with XDR byte order, so the
-digest is the same on a big-endian machine as on a little-endian one.
-Two objects that are \code{identical()} produce the same digest; two that
+Serialization is pinned to version 2 with XDR byte order, so the digest
+is the same on a big-endian machine as on a little-endian one. Two
+objects that are \code{identical()} produce the same digest; two that
 merely print the same need not, because attributes are part of the
 serialization.
 }
@@ -50,6 +50,8 @@ digest_object(mtcars, algo = "blake2b", key = "secret")
 digest_object(data.frame(x = 1:3))
 }
 \seealso{
-\code{\link[=core_sha256]{core_sha256()}} for hashing text or bytes directly,
-\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}} for a readable lossless form.
+\code{\link[=core_sha256]{core_sha256()}} for hashing text or bytes
+directly,
+\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}}
+for a readable lossless form.
 }

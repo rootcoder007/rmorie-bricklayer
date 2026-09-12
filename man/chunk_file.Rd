@@ -9,19 +9,20 @@ chunk_file(path, chunk_bytes = 1048576L)
 \arguments{
 \item{path}{Path to an existing file.}
 
-\item{chunk_bytes}{Chunk size in bytes (default 1048576, i.e. 1 MiB).}
+\item{chunk_bytes}{Chunk size in bytes (default
+1048576, i.e. 1 MiB).}
 }
 \value{
 A list of raw vectors, in file order. A zero-length file gives
-an empty list. Chunks are returned as bytes rather than strings
-because a file is bytes: an R string cannot hold a zero byte, so a
-character chunk could not represent an arbitrary binary file at all.
+an empty list. Chunks are returned as bytes rather than strings because
+a file is bytes: an R string cannot hold a zero byte, so a character
+chunk could not represent an arbitrary binary file at all.
 }
 \description{
-Reads \code{path} as bytes and returns them as chunk strings suitable for
-\code{\link[=merkle_root]{merkle_root()}} and friends. The default 1 MiB chunk is a compromise:
-smaller chunks localise a change more precisely but make the tree and
-its proofs larger.
+Reads \code{path} as bytes and returns them as chunk strings suitable
+for \code{\link[=merkle_root]{merkle_root()}} and friends. The default 1
+MiB chunk is a compromise: smaller chunks localise a change more
+precisely but make the tree and its proofs larger.
 }
 \examples{
 p <- tempfile()
@@ -41,5 +42,6 @@ identical(unlist(ch), readBin(p, "raw", file.size(p)))
 unlink(p)
 }
 \seealso{
-\code{\link[=merkle_root]{merkle_root()}}, \code{\link[=sha512_file]{sha512_file()}}
+\code{\link[=merkle_root]{merkle_root()}},
+\code{\link[=sha512_file]{sha512_file()}}
 }

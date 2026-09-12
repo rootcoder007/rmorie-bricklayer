@@ -8,7 +8,8 @@ yoy_palettes()
 }
 \value{
 A character vector of palette names accepted by
-\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}} and \code{print()}.
+\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}}
+and \code{print()}.
 }
 \description{
 Colour palettes for change tables

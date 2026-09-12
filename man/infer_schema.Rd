@@ -9,37 +9,40 @@ infer_schema(data, slack = 0.1, max_levels = 50L)
 \arguments{
 \item{data}{A data frame to learn from.}
 
-\item{slack}{Fractional headroom added to row counts, numeric ranges
-and missingness rates (default 0.1, i.e. 10\%). \code{0} pins exactly to
-what was observed, which will reject almost any re-release.}
+\item{slack}{Fractional headroom added to row counts,
+numeric ranges and missingness rates (default 0.1, i.e. 10\%). \code{0}
+pins exactly to what was observed, which will reject almost any
+re-release.}
 
-\item{max_levels}{Maximum distinct values for a categorical column to
-have its value set recorded (default 50). Above this the column is
-treated as free text and no value set is pinned.}
+\item{max_levels}{Maximum distinct values for a
+categorical column to have its value set recorded (default 50). Above
+this the column is treated as free text and no value set is pinned.}
 }
 \value{
 A list with \code{expected_columns}, \code{expected_types},
-\code{structural_invariants}, \code{expected_value_sets}, \code{numeric_ranges} and
-\code{max_missing_fraction}, of class \code{bricklayer_schema}. Wrap it as
-\verb{list(schema = <this>)} to hand to \code{\link[=validate_schema]{validate_schema()}}.
+\code{structural_invariants}, \code{expected_value_sets},
+\code{numeric_ranges} and \code{max_missing_fraction}, of class
+\code{bricklayer_schema}. Wrap it as \verb{list(schema = <this>)} to
+hand to \code{\link[=validate_schema]{validate_schema()}}.
 }
 \description{
-Derives the schema \code{\link[=validate_schema]{validate_schema()}} consumes from data you already
-trust, so a capsule can be pinned without writing one by hand.
+Derives the schema \code{\link[=validate_schema]{validate_schema()}}
+consumes from data you already trust, so a capsule can be pinned without
+writing one by hand.
 }
 \details{
-What it records: the column names and their types, row-count bounds
-with \code{slack} either side, the observed value set for every
-low-cardinality categorical column, the observed range of every
-numeric column widened by \code{slack}, and the observed missingness rate
-per column with headroom.
+What it records: the column names and their types, row-count bounds with
+\code{slack} either side, the observed value set for every
+low-cardinality categorical column, the observed range of every numeric
+column widened by \code{slack}, and the observed missingness rate per
+column with headroom.
 }
 \section{This is a starting point, not an oracle}{
-An inferred schema describes ONE extract. It cannot know that a
-category which happens not to occur is nonetheless legal, or that a
-range is a physical bound rather than an accident of this sample.
-Read what it produces and edit it before committing -- the value is in
-not starting from a blank file, not in trusting the output blindly.
+An inferred schema describes ONE extract. It cannot know that a category
+which happens not to occur is nonetheless legal, or that a range is a
+physical bound rather than an accident of this sample. Read what it
+produces and edit it before committing -- the value is in not starting
+from a blank file, not in trusting the output blindly.
 }
 
 \examples{
@@ -68,6 +71,7 @@ bad <- df; bad$grade[1] <- "z"
 length(validate_schema(bad, list(schema = sch))) > 0
 }
 \seealso{
-\code{\link[=validate_schema]{validate_schema()}}, \code{\link[=capsule_drift]{capsule_drift()}} for the
-distributional check the schema cannot make.
+\code{\link[=validate_schema]{validate_schema()}},
+\code{\link[=capsule_drift]{capsule_drift()}} for the distributional
+check the schema cannot make.
 }

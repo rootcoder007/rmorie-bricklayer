@@ -10,13 +10,14 @@ load_provenance(path)
 \item{path}{Path to the provenance JSON file.}
 }
 \value{
-The parsed provenance as a nested list, read with the
-package's own JSON codec (\code{\link[=bricklayer_json_from_json]{bricklayer_json_from_json()}},
+The parsed provenance as a nested list, read with the package's
+own JSON codec (
+\code{\link[=bricklayer_json_from_json]{bricklayer_json_from_json()}},
 unsimplified), or \code{NULL} if the file does not exist.
 }
 \description{
-Reads a \code{data_provenance.json} file describing a project's pinned data
-source: the CKAN endpoint, resource name pattern, expected SHA256,
+Reads a \code{data_provenance.json} file describing a project's pinned
+data source: the CKAN endpoint, resource name pattern, expected SHA256,
 Wayback snapshot, schema, and synthetic-data recipe.
 }
 \examples{

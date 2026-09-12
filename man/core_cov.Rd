@@ -7,16 +7,16 @@
 core_cov(x)
 }
 \arguments{
-\item{x}{A numeric matrix or data frame of numeric columns (rows =
-observations, columns = variables).}
+\item{x}{A numeric matrix or data frame of numeric columns
+(rows = observations, columns = variables).}
 }
 \value{
 A symmetric \code{ncol(x)} by \code{ncol(x)} numeric matrix.
 }
 \description{
 Column covariances with the \code{n - 1} denominator, matching
-\code{\link[stats:cov]{stats::cov()}}. Column names are carried through to both dimensions of
-the result.
+\code{\link[stats:cov]{stats::cov()}}. Column names are carried through
+to both dimensions of the result.
 }
 \examples{
 X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))

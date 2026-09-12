@@ -7,17 +7,18 @@
 capture_environment(packages = loadedNamespaces())
 }
 \arguments{
-\item{packages}{Character vector of package names to record.
-Defaults to every currently loaded namespace.}
+\item{packages}{Character vector of package names to
+record. Defaults to every currently loaded namespace.}
 }
 \value{
-A list with \code{r_version}, \code{platform}, \code{os}, \code{captured_utc},
-and \code{packages} (a named character vector of versions).
+A list with \code{r_version}, \code{platform}, \code{os},
+\code{captured_utc}, and \code{packages} (a named character vector of
+versions).
 }
 \description{
-Records the facts a replicator needs to rebuild the session: R
-version, platform, operating system, a UTC timestamp, and the
-versions of the requested packages.
+Records the facts a replicator needs to rebuild the session: R version,
+platform, operating system, a UTC timestamp, and the versions of the
+requested packages.
 }
 \examples{
 # Record specific packages' versions alongside the session facts.

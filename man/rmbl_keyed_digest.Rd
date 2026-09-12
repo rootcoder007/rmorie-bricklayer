@@ -11,36 +11,37 @@ core_hmac_sha256(key, message)
 core_digest_equal(a, b)
 }
 \arguments{
-\item{key}{Secret key, as a length-1 character vector or a raw vector.
-Keys longer than the 64-byte block are hashed down first, per RFC
-2104. Use at least 32 bytes of real entropy; against a quantum
+\item{key}{Secret key, as a length-1 character vector or a
+raw vector. Keys longer than the 64-byte block are hashed down first,
+per RFC 2104. Use at least 32 bytes of real entropy; against a quantum
 adversary Grover halves the effective key strength, so a 256-bit key
 retains a 128-bit margin.}
 
-\item{message}{Message to authenticate, as a length-1 character vector
-or a raw vector.}
+\item{message}{Message to authenticate, as a length-1
+character vector or a raw vector.}
 
 \item{a, b}{Digests to compare, as length-1 character vectors.}
 }
 \value{
-\code{core_hmac_sha256()} a length-1 character vector: 64 lowercase
-hex characters. \code{core_digest_equal()} a length-1 logical; \code{FALSE}
-when the two differ in length.
+\code{core_hmac_sha256()} a length-1 character vector: 64
+lowercase hex characters. \code{core_digest_equal()} a length-1 logical;
+\code{FALSE} when the two differ in length.
 }
 \description{
 \code{core_hmac_sha256()} is HMAC-SHA-256 (RFC 2104): a digest computed
-under a secret key. The difference from a plain \code{\link[=core_sha256]{core_sha256()}} is
-AUTHENTICATION -- anyone can recompute a SHA-256 and so anyone can
-forge one after editing a manifest, but only a holder of the key can
-produce a matching HMAC. This is what makes \code{\link[=capsule_sign]{capsule_sign()}}'s
+under a secret key. The difference from a plain
+\code{\link[=core_sha256]{core_sha256()}} is AUTHENTICATION -- anyone
+can recompute a SHA-256 and so anyone can forge one after editing a
+manifest, but only a holder of the key can produce a matching HMAC. This
+is what makes \code{\link[=capsule_sign]{capsule_sign()}} 's
 \code{"hmac"} scheme meaningful.
 }
 \details{
 \code{core_digest_equal()} compares two digests in constant time. Use it
-instead of \code{==} whenever the comparison is against a value an attacker
-supplied: a short-circuiting comparison leaks, through its own timing,
-how many leading characters were correct, which is enough to recover a
-tag byte by byte.
+instead of \code{==} whenever the comparison is against a value an
+attacker supplied: a short-circuiting comparison leaks, through its own
+timing, how many leading characters were correct, which is enough to
+recover a tag byte by byte.
 }
 \examples{
 # RFC 4231 test case 2.

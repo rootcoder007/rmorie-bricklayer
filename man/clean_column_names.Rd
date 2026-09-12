@@ -13,11 +13,12 @@ clean_column_names(
 \arguments{
 \item{data}{A data frame, or a character vector of names.}
 
-\item{case}{\code{"snake"} (default), \code{"lower_camel"}, \code{"upper_camel"},
-\code{"screaming_snake"}, or \code{"none"} to normalise separators only.}
+\item{case}{\code{"snake"} (default), \code{"lower_camel"},
+\code{"upper_camel"}, \code{"screaming_snake"}, or \code{"none"} to
+normalise separators only.}
 
-\item{sep}{Separator for \code{"snake"} and \code{"screaming_snake"}
-(default \code{"_"}).}
+\item{sep}{Separator for \code{"snake"} and
+\code{"screaming_snake"} (default \code{"_"}) .}
 }
 \value{
 The data frame with new names (and an \code{"original_names"}
@@ -30,15 +31,16 @@ duplicates disambiguated with a numeric suffix. The counterpart of
 \code{janitor::clean_names()}.
 }
 \details{
-Open-data extracts arrive with names like \code{"Total  Population (2021)"}
-and \code{"\% change"}, which need backticks everywhere and break silently
-when a re-release renames \code{"\% change"} to \code{"\%  change"}. Normalising
-once at ingestion makes the schema stable against that.
+Open-data extracts arrive with names like
+\code{"Total Population (2021)"} and \code{"\% change"}, which need
+backticks everywhere and break silently when a re-release renames
+\code{"\% change"} to \code{"\% change"}. Normalising once at ingestion
+makes the schema stable against that.
 
-Record the mapping in the capsule manifest. Cleaning names changes
-what a downstream script must refer to, so an unrecorded cleaning is
-itself a reproducibility hazard -- the returned object carries the
-original names in its \code{"original_names"} attribute for exactly that.
+Record the mapping in the capsule manifest. Cleaning names changes what
+a downstream script must refer to, so an unrecorded cleaning is itself a
+reproducibility hazard -- the returned object carries the original names
+in its \code{"original_names"} attribute for exactly that.
 }
 \examples{
 clean_column_names(c("Total  Population (2021)", "\% change",

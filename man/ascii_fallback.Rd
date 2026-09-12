@@ -9,19 +9,22 @@ ascii_fallback(x, force = FALSE)
 \arguments{
 \item{x}{A character vector.}
 
-\item{force}{Logical; always transliterate to ASCII (default \code{FALSE}).}
+\item{force}{Logical; always transliterate to ASCII
+(default \code{FALSE}) .}
 }
 \value{
-A character vector: \code{x} where it can be represented, ASCII otherwise.
+A character vector: \code{x} where it can be represented, ASCII
+otherwise.
 }
 \description{
-Returns \code{x} unchanged when it is valid, well-formed text (so legitimate
-UTF-8 such as an accented name is preserved), and only transliterates to
-plain ASCII via \code{\link[=to_ascii]{to_ascii()}} when the text is not valid UTF-8 (an
-encoding error) or when \code{force = TRUE} (for ASCII-only destinations such
-as a package \code{DESCRIPTION}). This lets author and supervisor names keep
-their accents wherever UTF-8 is supported while degrading gracefully
-instead of erroring where it is not.
+Returns \code{x} unchanged when it is valid, well-formed text (so
+legitimate UTF-8 such as an accented name is preserved), and only
+transliterates to plain ASCII via \code{\link[=to_ascii]{to_ascii()}}
+when the text is not valid UTF-8 (an encoding error) or when
+\code{force = TRUE} (for ASCII-only destinations such as a package
+\code{DESCRIPTION}) . This lets author and supervisor names keep their
+accents wherever UTF-8 is supported while degrading gracefully instead
+of erroring where it is not.
 }
 \examples{
 # By default valid UTF-8 is preserved (accents kept where supported).

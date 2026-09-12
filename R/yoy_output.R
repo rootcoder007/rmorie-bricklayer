@@ -23,7 +23,8 @@
 #' Colour palettes for change tables
 #'
 #' @return A character vector of palette names accepted by
-#'   [yoy_html()], [yoy_pdf()] and `print()`.
+#' [yoy_html()], [yoy_pdf()]
+#' and `print()`.
 #' @examples
 #' yoy_palettes()
 #' @export
@@ -70,16 +71,17 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 
 #' @param x An `rmbl_yoy` object.
 #' @param digits Digits for the percent column.
-#' @param palette One of [yoy_palettes()].
-#' @param color Whether to emit ANSI colour. Defaults to colour only when
-#'   writing to a terminal that has it, so a redirected or captured
-#'   output stays plain text.
+#' @param palette One of
+#' [yoy_palettes()].
+#' @param color Whether to emit ANSI colour. Defaults to
+#' colour only when writing to a terminal that has it, so a redirected or
+#' captured output stays plain text.
 #' @param n Maximum rows to print.
 #' @param ... Ignored.
 #' @rdname yoy
 #' @export
 print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
-                           color = NULL, n = 30L, ...) {
+                           color = NULL, n = 30, ...) {
   m <- .yoy_meta(x)
   if (is.null(m) || !nrow(x)) {
     cat("<rmbl_yoy: no periods>\n")
@@ -181,8 +183,8 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' @param object An `rmbl_yoy` object.
 #' @param ... Ignored.
 #' @return A data frame with one row per group giving the first and last
-#'   period, the total change across the span, the compound annual growth
-#'   rate, and how many periods moved each way.
+#' period, the total change across the span, the compound annual growth
+#' rate, and how many periods moved each way.
 #' @examples
 #' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 #' yoy_summary(yoy(d, value = "n", period = "year"))

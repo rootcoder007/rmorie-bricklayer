@@ -9,19 +9,23 @@
 
 #' Render a change table to HTML or PDF
 #'
-#' @param x An `rmbl_yoy` object from [yoy()].
-#' @param file Output path. `yoy_html()` writes a single self-contained
-#'   HTML file with no external requests; `yoy_pdf()` writes a PDF using
-#'   R's own device, so neither needs a package beyond base R.
+#' @param x An `rmbl_yoy` object from
+#' [yoy()].
+#' @param file Output path. `yoy_html()` writes a single
+#' self-contained HTML file with no external requests; `yoy_pdf()`
+#' writes a PDF using R's own device, so neither needs a package beyond
+#' base R.
 #' @param title Heading for the page.
-#' @param subtitle Optional line under the heading. Defaults to the
-#'   table's own settings -- lag, units, interval and base gate -- so the
-#'   reader can see what the percentages mean.
-#' @param palette One of [yoy_palettes()].
+#' @param subtitle Optional line under the heading.
+#' Defaults to the table's own settings -- lag, units, interval and base
+#' gate -- so the reader can see what the percentages mean.
+#' @param palette One of
+#' [yoy_palettes()].
 #' @param digits Digits for the percent column.
-#' @param bars Whether to draw an in-cell bar proportional to the change,
-#'   scaled to the largest absolute change in the table.
-#' @param interval Whether to show the exact interval column for counts.
+#' @param bars Whether to draw an in-cell bar proportional to
+#' the change, scaled to the largest absolute change in the table.
+#' @param interval Whether to show the exact interval
+#' column for counts.
 #' @param notes Optional character vector of footnotes.
 #' @param width,height PDF page size in inches.
 #' @param ... Ignored.

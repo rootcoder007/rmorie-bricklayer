@@ -13,33 +13,35 @@ band_values(
 )
 }
 \arguments{
-\item{bands}{A data frame from \code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
+\item{bands}{A data frame from
+\code{\link[=parse_bands]{parse_bands()}}, or labels to parse.}
 
-\item{rule}{How to place a value inside a closed band. \code{"midpoint"}
-is the arithmetic mean of the bounds. \code{"lower"} and \code{"upper"} give
-the conservative and generous readings, which together bracket
-whatever the truth is. \code{"geometric"} suits a quantity whose
-distribution inside the band is closer to log-uniform than uniform,
-which is usual for counts and durations.}
+\item{rule}{How to place a value inside a closed band.
+\code{"midpoint"} is the arithmetic mean of the bounds. \code{"lower"}
+and \code{"upper"} give the conservative and generous readings, which
+together bracket whatever the truth is. \code{"geometric"} suits a
+quantity whose distribution inside the band is closer to log-uniform
+than uniform, which is usual for counts and durations.}
 
-\item{open_upper_cap}{Upper bound to assume for an open top band. The
-default multiplies the band's lower bound by \code{open_upper_factor},
-which is an assumption and is flagged as one.}
+\item{open_upper_cap}{Upper bound to assume for an
+open top band. The default multiplies the band's lower bound by
+\code{open_upper_factor}, which is an assumption and is flagged as one.}
 
-\item{open_upper_factor}{Multiplier used when no cap is given.}
+\item{open_upper_factor}{Multiplier used when no
+cap is given.}
 
-\item{open_lower_floor}{Lower bound to assume for an open bottom
-band. Defaults to zero.}
+\item{open_lower_floor}{Lower bound to assume
+for an open bottom band. Defaults to zero.}
 }
 \value{
-The band table with a \code{value} column and an \code{assumed} column
-marking the rows whose value rests on the open-band assumption.
+The band table with a \code{value} column and an \code{assumed}
+column marking the rows whose value rests on the open-band assumption.
 }
 \description{
 Turns bounds into the single number per band that a calculation needs,
 under a stated rule. The open band is the whole difficulty: it has no
-midpoint, so a cap has to be supplied or assumed, and the assumption
-is recorded in the result rather than absorbed into it.
+midpoint, so a cap has to be supplied or assumed, and the assumption is
+recorded in the result rather than absorbed into it.
 }
 \examples{
 b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))

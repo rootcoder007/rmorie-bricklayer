@@ -11,17 +11,20 @@ download_data(url, target_path, mode = "wb", quiet = FALSE)
 
 \item{target_path}{Destination path on disk.}
 
-\item{mode}{Write mode passed to \code{\link[utils:download.file]{utils::download.file()}}; defaults to
+\item{mode}{Write mode passed to
+\code{\link[utils:download.file]{utils::download.file()}}; defaults to
 \code{"wb"} (binary) for cross-platform safety.}
 
-\item{quiet}{Logical; suppress progress output. Defaults to \code{FALSE}.}
+\item{quiet}{Logical; suppress progress output. Defaults to
+\code{FALSE}.}
 }
 \value{
 The \code{target_path}, returned invisibly.
 }
 \description{
-Thin wrapper around \code{\link[utils:download.file]{utils::download.file()}} that returns the target
-path invisibly so it composes in pipelines.
+Thin wrapper around
+\code{\link[utils:download.file]{utils::download.file()}} that returns
+the target path invisibly so it composes in pipelines.
 }
 \examples{
 \donttest{

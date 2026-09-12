@@ -9,33 +9,34 @@ morans_i(x, neighbours, style = c("W", "B"), n_perm = 9999L)
 \arguments{
 \item{x}{The variable, one value per area.}
 
-\item{neighbours}{Either a list with one integer vector of neighbour
-indices per area, or a square weight matrix.}
+\item{neighbours}{Either a list with one integer
+vector of neighbour indices per area, or a square weight matrix.}
 
-\item{style}{\code{"W"} row-standardises the weights, so each area's
-neighbours carry a total weight of one; \code{"B"} leaves them binary.
-Row standardisation is the usual choice, and stops an area with
-many neighbours from dominating.}
+\item{style}{\code{"W"} row-standardises the weights, so
+each area's neighbours carry a total weight of one; \code{"B"} leaves
+them binary. Row standardisation is the usual choice, and stops an area
+with many neighbours from dominating.}
 
 \item{n_perm}{Permutations for the null distribution.}
 }
 \value{
-A list with \code{I}, its expectation under the null
-(\code{-1/(n-1)}, which is not zero), the permutation mean and standard
-deviation, a \code{z} score, \code{p_value}, and \code{W}, the total weight.
+A list with \code{I}, its expectation under the null (
+\code{-1/(n-1)}, which is not zero), the permutation mean and standard
+deviation, a \code{z} score, \code{p_value}, and \code{W}, the total
+weight.
 }
 \description{
 Spatial autocorrelation for an areal variable, with a permutation
 p-value. A neighbour list is required and is not invented: an
-administrative extract keyed on a region ships no geometry, and
-guessing adjacency would make the answer a property of the guess.
+administrative extract keyed on a region ships no geometry, and guessing
+adjacency would make the answer a property of the guess.
 }
 \details{
 The expectation of I under the null is \code{-1/(n - 1)}, not zero, so a
 small negative I is what independence looks like in a small set of
-areas. The p-value comes from permuting the values over the areas,
-which needs no distributional assumption -- and with a handful of
-regions no distributional assumption is safe.
+areas. The p-value comes from permuting the values over the areas, which
+needs no distributional assumption -- and with a handful of regions no
+distributional assumption is safe.
 }
 \examples{
 # Six areas in a line, each adjacent to the next.
@@ -51,4 +52,12 @@ morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]
 
 # And the null expectation is not zero.
 -1 / (6 - 1)
+}
+\references{
+Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.
+\emph{Biometrika} 37(1/2), 17-23. (Not in the local corpus; cited from the
+published paper. The corpus does carry applied uses of the statistic,
+including Laniyonu (2017) on policing practices in gentrifying
+neighbourhoods, where it is used exactly as here -- to establish that
+areal residuals are spatially dependent.)
 }

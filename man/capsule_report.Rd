@@ -19,44 +19,50 @@ capsule_report(
 \arguments{
 \item{data}{The data frame to assess.}
 
-\item{reference}{Optional data frame the capsule was pinned against.
-Supplying it enables the drift comparison, which is the check a
-digest cannot make.}
+\item{reference}{Optional data frame the capsule was
+pinned against. Supplying it enables the drift comparison, which is the
+check a digest cannot make.}
 
-\item{schema}{Optional schema from \code{\link[=infer_schema]{infer_schema()}}, or a provenance
-list containing one. Supplying it enables the structural check.}
+\item{schema}{Optional schema from
+\code{\link[=infer_schema]{infer_schema()}}, or a provenance list
+containing one. Supplying it enables the structural check.}
 
-\item{rules}{Optional list of \code{\link[=rule]{rule()}} objects.}
+\item{rules}{Optional list of \code{\link[=rule]{rule()}}
+objects.}
 
-\item{chunks}{Optional character vector of capsule chunks (see
-\code{\link[=chunk_file]{chunk_file()}}) to pin with a Merkle root.}
+\item{chunks}{Optional character vector of capsule chunks
+(see \code{\link[=chunk_file]{chunk_file()}}) to pin with a Merkle root.}
 
-\item{signature, key}{Optional signature and verifying key, as from
-\code{\link[=capsule_sign]{capsule_sign()}}, checked against the data's own digest.}
+\item{signature, key}{Optional signature and
+verifying key, as from \code{\link[=capsule_sign]{capsule_sign()}},
+checked against the data's own digest.}
 
-\item{alpha}{Significance level passed to \code{\link[=capsule_drift]{capsule_drift()}}.}
+\item{alpha}{Significance level passed to
+\code{\link[=capsule_drift]{capsule_drift()}}.}
 
-\item{max_rows_outliers}{Skip the outlier scan above this many rows
-(default 20000), since it factors a covariance per call.}
+\item{max_rows_outliers}{Skip the outlier scan
+above this many rows (default 20000), since it factors a covariance per
+call.}
 }
 \value{
-A list of class \code{bricklayer_report}: \code{findings} (a data frame
-of \code{severity}, \code{check}, \code{subject}, \code{detail}), \code{verdict}
-(\code{"fatal"}, \code{"warn"}, \code{"note"} or \code{"clean"}), \code{profile},
-\code{missingness}, \code{drift}, \code{digest}, and \code{n_rows}/\code{n_cols}.
+A list of class \code{bricklayer_report}: \code{findings} (a
+data frame of \code{severity}, \code{check}, \code{subject},
+\code{detail}) , \code{verdict} ( \code{"fatal"}, \code{"warn"},
+\code{"note"} or \code{"clean"}) , \code{profile}, \code{missingness},
+\code{drift}, \code{digest}, and \code{n_rows} / \code{n_cols}.
 }
 \description{
 Runs the checks this package provides over one data frame and collects
 the findings into a single report: the structural schema check, the
-distributional comparison against a reference, the missingness
-picture, the multivariate outliers, a Benford screen on the wide
-numeric columns, and the integrity digests.
+distributional comparison against a reference, the missingness picture,
+the multivariate outliers, a Benford screen on the wide numeric columns,
+and the integrity digests.
 }
 \details{
 Nothing here is new arithmetic. The value is that the answers arrive
-together and ordered by severity, because the failure mode this is
-built against is a person running one check, seeing it pass, and
-concluding the data is fine.
+together and ordered by severity, because the failure mode this is built
+against is a person running one check, seeing it pass, and concluding
+the data is fine.
 }
 \section{What "severity" means}{
 \itemize{
@@ -69,8 +75,9 @@ Benford departure, a constant column.
 
 A clean report is not proof the data is correct. It means these
 particular checks found nothing, and every one of them has a stated
-blind spot -- see \code{\link[=capsule_drift]{capsule_drift()}} on statistical power and
-\code{\link[=benford_test]{benford_test()}} on why a departure is a screen rather than a verdict.
+blind spot -- see \code{\link[=capsule_drift]{capsule_drift()}} on
+statistical power and \code{\link[=benford_test]{benford_test()}} on why
+a departure is a screen rather than a verdict.
 }
 
 \examples{
@@ -101,6 +108,8 @@ capsule_report(bad[, c("id", "score")], reference = ref,
                schema = infer_schema(ref))$verdict
 }
 \seealso{
-\code{\link[=capsule_drift]{capsule_drift()}}, \code{\link[=profile_columns]{profile_columns()}}, \code{\link[=validate_schema]{validate_schema()}},
+\code{\link[=capsule_drift]{capsule_drift()}},
+\code{\link[=profile_columns]{profile_columns()}},
+\code{\link[=validate_schema]{validate_schema()}},
 \code{\link[=report_markdown]{report_markdown()}} to write it out.
 }

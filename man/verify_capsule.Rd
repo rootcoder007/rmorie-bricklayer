@@ -15,31 +15,36 @@ verify_capsule(
 \arguments{
 \item{capsule_dir}{Directory containing the capsule.}
 
-\item{provenance_file}{Provenance JSON filename inside \code{capsule_dir}
-(default \code{"data_provenance.json"}).}
+\item{provenance_file}{Provenance JSON filename
+inside \code{capsule_dir} (default \code{"data_provenance.json"}) .}
 
-\item{data_file}{Data filename inside \code{capsule_dir}. Defaults to the
-provenance's \code{resource$filename}.}
+\item{data_file}{Data filename inside
+\code{capsule_dir}. Defaults to the provenance's
+\code{resource$filename}.}
 
-\item{manifest_file}{Optional results-manifest JSON (as written by
-\code{\link[=write_manifest_json]{write_manifest_json()}}) inside \code{capsule_dir}; checked when present.}
+\item{manifest_file}{Optional results-manifest JSON
+(as written by
+\code{\link[=write_manifest_json]{write_manifest_json()}}) inside
+\code{capsule_dir}; checked when present.}
 
-\item{script_file}{Optional analysis-script filename inside
-\code{capsule_dir}; compared against the manifest's recorded
+\item{script_file}{Optional analysis-script filename
+inside \code{capsule_dir}; compared against the manifest's recorded
 \code{meta$script_sha256} when both are present.}
 }
 \value{
 A list with \code{ok} (logical scalar: every check passed) and
-\code{checks} (data.frame with columns \code{check}, \code{ok}, \code{detail}).
+\code{checks} (data.frame with columns \code{check}, \code{ok},
+\code{detail}) .
 }
 \description{
-Runs the full custody chain over a capsule directory in one call:
-the provenance manifest is readable, the pinned data file exists and
-matches its recorded \code{sha256} (and \code{size_bytes} / row count where
-recorded), the schema still validates, a recorded analysis script
-still matches its pinned hash, and every numeric cross-check stored
-in a results manifest still reproduces its recorded \code{PASS}/\code{DIFFER}
-status from its own \code{observed}/\code{expected}/\code{tol} fields.
+Runs the full custody chain over a capsule directory in one call: the
+provenance manifest is readable, the pinned data file exists and matches
+its recorded \code{sha256} (and \code{size_bytes} / row count where
+recorded), the schema still validates, a recorded analysis script still
+matches its pinned hash, and every numeric cross-check stored in a
+results manifest still reproduces its recorded \code{PASS} /
+\code{DIFFER} status from its own \code{observed} / \code{expected} /
+\code{tol} fields.
 }
 \details{
 Entirely offline: nothing is downloaded and nothing is written.

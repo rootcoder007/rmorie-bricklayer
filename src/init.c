@@ -54,6 +54,15 @@ extern SEXP C_rmbl_mann_kendall(SEXP);
 extern SEXP C_rmbl_theil_sen(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 extern SEXP C_rmbl_morans_i(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+/* rmbl_series.cpp plain-C kernels, for LinkingTo consumers */
+extern double   rmbl_gini(const double *, R_xlen_t);
+extern double   rmbl_top_share(const double *, R_xlen_t, double, R_xlen_t *);
+extern R_xlen_t rmbl_lorenz(const double *, R_xlen_t, double *, double *);
+extern void     rmbl_mann_kendall(const double *, R_xlen_t, double *,
+                                  double *, R_xlen_t *);
+extern void     rmbl_theil_sen(const double *, const double *, R_xlen_t,
+                               double *, double *);
+extern double   rmbl_hurwitz_zeta(double, double);
 extern SEXP C_rmbl_hmac_sha256(SEXP, SEXP);
 extern SEXP C_rmbl_digest_equal(SEXP, SEXP);
 extern SEXP C_rmbl_merkle_root(SEXP);
@@ -211,6 +220,12 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_forceSymbols(dll, TRUE);
 
     /* Publish the linkable kernels for sibling packages. */
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_gini",       (DL_FUNC) rmbl_gini);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_top_share",  (DL_FUNC) rmbl_top_share);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_lorenz",     (DL_FUNC) rmbl_lorenz);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_mann_kendall", (DL_FUNC) rmbl_mann_kendall);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_theil_sen",  (DL_FUNC) rmbl_theil_sen);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_hurwitz_zeta", (DL_FUNC) rmbl_hurwitz_zeta);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_mean",        (DL_FUNC) rmbl_mean);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_var",         (DL_FUNC) rmbl_var);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_cor_pearson", (DL_FUNC) rmbl_cor_pearson);

@@ -20,41 +20,45 @@ core_iqr(x)
 core_tukey_fences(x, k = 1.5)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
+\item{x}{Numeric vector (coerced with
+\code{\link[=as.numeric]{as.numeric()}}) .}
 
-\item{probs}{Numeric vector of probabilities in [0, 1].}
+\item{probs}{Numeric vector of probabilities in \ [0, 1].
 
-\item{constant}{Scale factor for \code{core_mad()}. The default \code{1.4826}
-makes the MAD consistent for the standard deviation under
-normality, and is the same rounded value \code{\link[stats:mad]{stats::mad()}} uses, so the
-two agree exactly. The unrounded consistency constant is
-\code{1 / qnorm(3/4)} = 1.4826022185...; pass it explicitly if you want
-the extra digits, or \code{1} for the unscaled median deviation.}
+[0, 1]: R:0,\%201\%5C}
 
-\item{k}{Fence width in IQRs (default 1.5, Tukey's convention; 3 is
-the usual "far out" cutoff).}
+\item{constant}{Scale factor for \code{core_mad()}. The
+default \code{1.4826} makes the MAD consistent for the standard
+deviation under normality, and is the same rounded value
+\code{\link[stats:mad]{stats::mad()}} uses, so the two agree exactly.
+The unrounded consistency constant is \code{1 / qnorm(3/4)} =
+1.4826022185...; pass it explicitly if you want the extra digits, or
+\code{1} for the unscaled median deviation.}
+
+\item{k}{Fence width in IQRs (default 1.5, Tukey's convention;
+3 is the usual "far out" cutoff).}
 }
 \value{
 \code{core_quantile()} returns a numeric vector the length of
-\code{probs}; \code{core_median()}, \code{core_mad()} and \code{core_iqr()} a length-1
-numeric; \code{core_tukey_fences()} a named length-2 numeric (\code{lower},
-\code{upper}).
+\code{probs}; \code{core_median()}, \code{core_mad()} and
+\code{core_iqr()} a length-1 numeric; \code{core_tukey_fences()} a named
+length-2 numeric ( \code{lower}, \code{upper}) .
 }
 \description{
-\code{core_quantile()} is the type-7 quantile, which is R's default, so it
-agrees with \code{stats::quantile(x, probs, type = 7)}. \code{core_median()} is
-the 50\% point. \code{core_mad()} is the median absolute deviation, scaled
-by \code{constant} so that it estimates the standard deviation of a normal
-sample. \code{core_iqr()} is the interquartile range and
-\code{core_tukey_fences()} the outlier fences drawn at \code{k} IQRs beyond the
-quartiles.
+\code{core_quantile()} is the type-7 quantile, which is R's default, so
+it agrees with \code{stats::quantile(x, probs, type = 7)}.
+\code{core_median()} is the 50\% point. \code{core_mad()} is the median
+absolute deviation, scaled by \code{constant} so that it estimates the
+standard deviation of a normal sample. \code{core_iqr()} is the
+interquartile range and \code{core_tukey_fences()} the outlier fences
+drawn at \code{k} IQRs beyond the quartiles.
 }
 \details{
-These are the robust counterparts of \code{\link[=core_moments]{core_moments()}}: a single
-corrupted row can move a mean or a variance arbitrarily far, but moves
-a median or a MAD hardly at all -- which is what you want when
-deciding whether a freshly fetched column is still the column a
-capsule was pinned against.
+These are the robust counterparts of
+\code{\link[=core_moments]{core_moments()}}: a single corrupted row can
+move a mean or a variance arbitrarily far, but moves a median or a MAD
+hardly at all -- which is what you want when deciding whether a freshly
+fetched column is still the column a capsule was pinned against.
 }
 \examples{
 x <- c(2, 4, 4, 4, 5, 5, 7, 9)

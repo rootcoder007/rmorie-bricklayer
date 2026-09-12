@@ -14,11 +14,12 @@ A character vector of 128-character lowercase hex digests (one
 per element for character input; length-1 for raw input).
 }
 \description{
-Hashes character or raw input with the self-contained SHA-512
-(FIPS 180-4) in the compiled core. Use it over \code{\link[=core_sha256]{core_sha256()}} when a
-pin has to outlive the capsule by decades: the wider digest leaves
-more margin, including against a quantum adversary, for whom Grover's
-algorithm halves the effective preimage exponent.
+Hashes character or raw input with the self-contained SHA-512 (FIPS
+180-4) in the compiled core. Use it over
+\code{\link[=core_sha256]{core_sha256()}} when a pin has to outlive the
+capsule by decades: the wider digest leaves more margin, including
+against a quantum adversary, for whom Grover's algorithm halves the
+effective preimage exponent.
 }
 \examples{
 # FIPS 180-4 test vector for "abc".
@@ -35,5 +36,7 @@ identical(core_sha512("abc"), core_sha512(charToRaw("abc")))
 c(sha256 = nchar(core_sha256("abc")), sha512 = nchar(core_sha512("abc")))
 }
 \seealso{
-\code{\link[=core_sha256]{core_sha256()}}, \code{\link[=core_crc32]{core_crc32()}}, \code{\link[=sha512_file]{sha512_file()}}
+\code{\link[=core_sha256]{core_sha256()}},
+\code{\link[=core_crc32]{core_crc32()}},
+\code{\link[=sha512_file]{sha512_file()}}
 }

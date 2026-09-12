@@ -7,13 +7,13 @@
 resolve_via_ckan(provenance)
 }
 \arguments{
-\item{provenance}{A provenance list as returned by \code{\link[=load_provenance]{load_provenance()}}.
-Must contain \code{dataset$ckan_api_endpoint} and
-\code{resource$name_match_pattern}.}
+\item{provenance}{A provenance list as returned by
+\code{\link[=load_provenance]{load_provenance()}}. Must contain
+\code{dataset$ckan_api_endpoint} and \code{resource$name_match_pattern}.}
 }
 \value{
-The matched resource URL as a character string, or \code{NULL} if
-the endpoint is missing, the request fails, CKAN reports failure, or
+The matched resource URL as a character string, or \code{NULL}
+if the endpoint is missing, the request fails, CKAN reports failure, or
 no resource name matches.
 }
 \description{

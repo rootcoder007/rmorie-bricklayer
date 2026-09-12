@@ -11,11 +11,12 @@
 #'
 #' @param url Live source URL.
 #' @param dest Destination file path.
-#' @param wayback Optional explicit Wayback snapshot URL. \code{""}
-#'   (default) auto-resolves one via \code{\link{wayback_snapshot_url}}.
+#' @param wayback Optional explicit Wayback snapshot URL.
+#' \code{""} (default) auto-resolves one via
+#' \code{\link{wayback_snapshot_url}}.
 #' @param timeout Per-request timeout, seconds.
 #' @return Invisibly, one of \code{"live"}, \code{"wayback"}, or throws on
-#'   total failure.
+#' total failure.
 #' @examples
 #' # Inputs are validated before any network access:
 #' try(bricklayer_fetch("", tempfile()))          # empty url -> error
@@ -27,7 +28,8 @@
 #'
 #' # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 #' try(bricklayer_fetch(
-#'   "https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx",
+#'   paste0("https://www.cihi.ca/sites/default/files/document/",
+#'          "hospital-beds-2024-2025-data-tables-en.xlsx"),
 #'   dst))
 #'
 #' # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
@@ -57,8 +59,8 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
 #'
 #' Queries the Internet Archive \dQuote{available} API for the closest
 #' archived snapshot of \code{url}. C++ backend; supersedes the older
-#' R-level resolver \code{\link{wayback_snapshot_url}}, which is kept
-#' for the pure-R path and now parses with the package's own JSON codec.
+#' R-level resolver \code{\link{wayback_snapshot_url}}, which is kept for
+#' the pure-R path and now parses with the package's own JSON codec.
 #'
 #' @param url URL to resolve.
 #' @param timeout Request timeout, seconds.

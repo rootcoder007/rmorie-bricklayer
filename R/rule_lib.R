@@ -9,34 +9,40 @@
 #' Ready-made validation rules
 #'
 #' Constructors for the checks most schemas need, each returning a
-#' [rule()] that [validate_rules()] evaluates. Use [rule()] directly for
-#' anything not covered here.
+#' [rule()] that
+#' [validate_rules()] evaluates. Use
+#' [rule()] directly for anything not covered here.
 #'
 #' `NA` handling is explicit and per-rule, because the right answer
-#' differs. `rule_not_null()` exists precisely to fail on `NA`. The
-#' value rules (`rule_in_set`, `rule_between`, `rule_regex`,
-#' `rule_within_n_mads`) treat `NA` as PASSING by default, so that a
-#' column's missingness is reported once by `rule_not_null()` or
-#' `max_missing_fraction` rather than again by every other rule; set
-#' `na_pass = FALSE` to make them fail on it instead.
+#' differs. `rule_not_null()` exists precisely to fail on `NA`.
+#' The value rules ( `rule_in_set`, `rule_between`,
+#' `rule_regex`, `rule_within_n_mads`) treat `NA` as PASSING
+#' by default, so that a column's missingness is reported once by
+#' `rule_not_null()` or `max_missing_fraction` rather than again
+#' by every other rule; set `na_pass = FALSE` to make them fail on it
+#' instead.
 #'
 #' @param column Column the rule applies to.
-#' @param set Allowed values (`rule_in_set`).
-#' @param lo,hi Inclusive bounds (`rule_between`).
-#' @param pattern Regular expression the values must match
-#'   (`rule_regex`).
-#' @param n Multiplier for `rule_within_n_mads`, or the expected count
-#'   for `rule_col_count`.
-#' @param columns Columns that jointly must be unique
-#'   (`rule_distinct_rows`), or `NULL` for all of them.
-#' @param strictly Require a strict increase rather than non-decreasing
-#'   (`rule_increasing`).
-#' @param na_pass Treat `NA` as passing (default `TRUE`; see above).
-#' @param severity `"warning"` (default) or `"fatal"`.
+#' @param set Allowed values ( `rule_in_set`) .
+#' @param lo,hi Inclusive bounds ( `rule_between`) .
+#' @param pattern Regular expression the values must match (
+#' `rule_regex`) .
+#' @param n Multiplier for `rule_within_n_mads`, or the
+#' expected count for `rule_col_count`.
+#' @param columns Columns that jointly must be unique (
+#' `rule_distinct_rows`) , or `NULL` for all of them.
+#' @param strictly Require a strict increase rather than
+#' non-decreasing ( `rule_increasing`) .
+#' @param na_pass Treat `NA` as passing (default
+#' `TRUE`; see above).
+#' @param severity `"warning"` (default) or
+#' `"fatal"`.
 #' @return A [rule()] object.
-#' @seealso [rule()] for an arbitrary predicate, [validate_rules()] to
-#'   evaluate them, [infer_schema()] for the structural checks that need
-#'   no rules at all.
+#' @seealso
+#' [rule()] for an arbitrary predicate,
+#' [validate_rules()] to evaluate them,
+#' [infer_schema()] for the structural checks
+#' that need no rules at all.
 #' @examples
 #' df <- data.frame(
 #'   id = c(1, 2, 2),
@@ -237,21 +243,24 @@ rule_col_count <- function(n, severity = c("warning", "fatal")) {
 
 #' Duplicated rows, with their groups
 #'
-#' Returns the rows that share a combination of `columns` with at least
-#' one other row, grouped so the duplicates sit together. The counterpart
-#' of `janitor::get_dupes()`.
+#' Returns the rows that share a combination of `columns` with at
+#' least one other row, grouped so the duplicates sit together. The
+#' counterpart of `janitor::get_dupes()`.
 #'
-#' `rule_distinct_rows()` tells you THAT there are duplicates, which is
-#' what a validation gate needs. This shows you WHICH, which is what
+#' `rule_distinct_rows()` tells you THAT there are duplicates, which
+#' is what a validation gate needs. This shows you WHICH, which is what
 #' fixing them needs -- and a duplicate is usually a join that fanned out
-#' or a re-release appended rather than replaced, both of which are
-#' visible only once the offending rows are in front of you.
+#' or a re-release appended rather than replaced, both of which are visible
+#' only once the offending rows are in front of you.
 #'
 #' @param data A data frame.
-#' @param columns Columns defining a duplicate (default: all of them).
+#' @param columns Columns defining a duplicate (default: all
+#' of them).
 #' @return The duplicated rows, ordered by group, with a `dupe_count`
-#'   column giving each group's size. Zero rows when there are none.
-#' @seealso [rule_distinct_rows()], [rule_unique()]
+#' column giving each group's size. Zero rows when there are none.
+#' @seealso
+#' [rule_distinct_rows()],
+#' [rule_unique()]
 #' @examples
 #' df <- data.frame(id = c(1, 2, 2, 3, 3, 3),
 #'                  value = c("a", "b", "b", "c", "d", "c"),
@@ -300,11 +309,14 @@ duplicate_rows <- function(data, columns = NULL) {
 #' how many rows are complete, and how many columns are wholly present.
 #'
 #' @param data A data frame.
-#' @return A named numeric vector: `n_rows`, `n_cols`, `n_missing`,
-#'   `pct_missing`, `n_complete_rows`, `pct_complete_rows`,
-#'   `n_cols_any_missing`, `n_cols_all_missing`.
-#' @seealso [missingness_pattern()] for which columns are missing
-#'   together, [profile_columns()] for per-column rates.
+#' @return A named numeric vector: `n_rows`, `n_cols`,
+#' `n_missing`, `pct_missing`, `n_complete_rows`,
+#' `pct_complete_rows`, `n_cols_any_missing`,
+#' `n_cols_all_missing`.
+#' @seealso
+#' [missingness_pattern()] for which
+#' columns are missing together,
+#' [profile_columns()] for per-column rates.
 #' @examples
 #' df <- data.frame(a = c(1, NA, 3), b = c(NA, NA, 3), c = 1:3)
 #' missingness_summary(df)

@@ -7,29 +7,31 @@
 drift_homogeneity(x, y)
 }
 \arguments{
-\item{x, y}{Factor or character vectors (or named count vectors) --
-the reference and the new sample.}
+\item{x, y}{Factor or character vectors (or named count
+vectors) -- the reference and the new sample.}
 }
 \value{
-A named length-3 numeric: \code{statistic}, \code{df}, \code{p_value}.
+A named length-3 numeric: \code{statistic}, \code{df},
+\code{p_value}.
 }
 \description{
 Tests whether two SAMPLES were drawn from the same categorical
-distribution, by Pearson's chi-square on the 2-by-k contingency table
-of their counts.
+distribution, by Pearson's chi-square on the 2-by-k contingency table of
+their counts.
 }
 \section{Why this and not \code{\link[=drift_chisq]{drift_chisq()}}}{
-\code{\link[=drift_chisq]{drift_chisq()}} compares observed counts against a distribution taken
-as KNOWN -- proportions fixed by a specification. When the reference is
-itself a finite sample, that treatment ignores the reference's own
-sampling error, understates the variance of the comparison, and so
-reports drift too readily. A homogeneity test estimates the shared
-distribution from the pooled margins and carries the uncertainty of
-both samples, which is the right test when comparing a pinned extract
-with a fresh fetch. \code{\link[=capsule_drift]{capsule_drift()}} therefore uses this one.
+\code{\link[=drift_chisq]{drift_chisq()}} compares observed counts
+against a distribution taken as KNOWN -- proportions fixed by a
+specification. When the reference is itself a finite sample, that
+treatment ignores the reference's own sampling error, understates the
+variance of the comparison, and so reports drift too readily. A
+homogeneity test estimates the shared distribution from the pooled
+margins and carries the uncertainty of both samples, which is the right
+test when comparing a pinned extract with a fresh fetch.
+\code{\link[=capsule_drift]{capsule_drift()}} therefore uses this one.
 
-Categories present in only one sample are aligned by name and given
-zero counts, so an appearing or vanishing level registers.
+Categories present in only one sample are aligned by name and given zero
+counts, so an appearing or vanishing level registers.
 }
 
 \examples{
@@ -54,6 +56,7 @@ all.equal(drift_homogeneity(a, b)[["statistic"]],
 drift_homogeneity(a, b)[["p_value"]] >= drift_chisq(b, a)[["p_value"]]
 }
 \seealso{
-\code{\link[=drift_chisq]{drift_chisq()}} for a known reference distribution,
-\code{\link[stats:chisq.test]{stats::chisq.test()}} for the full test object.
+\code{\link[=drift_chisq]{drift_chisq()}} for a known reference
+distribution, \code{\link[stats:chisq.test]{stats::chisq.test()}} for
+the full test object.
 }

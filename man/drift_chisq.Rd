@@ -7,21 +7,22 @@
 drift_chisq(observed, expected)
 }
 \arguments{
-\item{observed}{Named numeric vector of counts in the new sample, or a
-factor/character vector to be tabulated.}
+\item{observed}{Named numeric vector of counts in the
+new sample, or a factor/character vector to be tabulated.}
 
-\item{expected}{Named numeric vector of reference counts or
-proportions, or a factor/character vector to be tabulated. Rescaled
+\item{expected}{Named numeric vector of reference counts
+or proportions, or a factor/character vector to be tabulated. Rescaled
 to the total of \code{observed}.}
 }
 \value{
-A named length-3 numeric: \code{statistic}, \code{df}, \code{p_value}.
+A named length-3 numeric: \code{statistic}, \code{df},
+\code{p_value}.
 }
 \description{
 Pearson's chi-square goodness-of-fit statistic comparing observed
-category counts with the proportions a capsule was pinned against.
-Use it where \code{\link[=drift_ks]{drift_ks()}} cannot apply, because the column is a factor
-or a set of codes rather than a number.
+category counts with the proportions a capsule was pinned against. Use
+it where \code{\link[=drift_ks]{drift_ks()}} cannot apply, because the
+column is a factor or a set of codes rather than a number.
 }
 \details{
 Categories present in one argument and not the other are aligned by
@@ -29,11 +30,12 @@ name, so a vanished category registers as a shortfall against its
 expected count.
 
 A category that OCCURS but which the reference gives probability zero
-contradicts the pinned distribution outright, and its chi-square term
-is unbounded; \code{statistic} is then \code{Inf} and \code{p_value} is \code{0}. If a new
-category is a legitimate possibility rather than a contradiction --
-which it usually is when the reference is itself a finite sample --
-use \code{\link[=drift_homogeneity]{drift_homogeneity()}} instead.
+contradicts the pinned distribution outright, and its chi-square term is
+unbounded; \code{statistic} is then \code{Inf} and \code{p_value} is
+\code{0}. If a new category is a legitimate possibility rather than a
+contradiction -- which it usually is when the reference is itself a
+finite sample -- use
+\code{\link[=drift_homogeneity]{drift_homogeneity()}} instead.
 }
 \examples{
 ref <- c(a = 50, b = 30, c = 20)
@@ -60,5 +62,6 @@ drift_chisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
 drift_homogeneity(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
 }
 \seealso{
-\code{\link[stats:chisq.test]{stats::chisq.test()}} for the full test object.
+\code{\link[stats:chisq.test]{stats::chisq.test()}} for the
+full test object.
 }

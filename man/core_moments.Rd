@@ -7,23 +7,25 @@
 core_moments(x)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
+\item{x}{Numeric vector (coerced with
+\code{\link[=as.numeric]{as.numeric()}}) .}
 }
 \value{
-A named length-4 numeric: \code{mean}, \code{variance}, \code{skewness},
-\code{kurtosis}. \code{skewness} needs at least 3 observations and \code{kurtosis}
-at least 4; both are \code{NaN} below that, as is everything if \code{x}
-contains NA/NaN.
+A named length-4 numeric: \code{mean}, \code{variance},
+\code{skewness}, \code{kurtosis}. \code{skewness} needs at least 3
+observations and \code{kurtosis} at least 4; both are \code{NaN} below
+that, as is everything if \code{x} contains NA/NaN.
 }
 \description{
-A single streaming pass (Welford's recurrence, extended to the third
-and fourth central moments) over \code{x}. One pass matters for capsule
+A single streaming pass (Welford's recurrence, extended to the third and
+fourth central moments) over \code{x}. One pass matters for capsule
 members large enough that reading the column twice is the expensive
 part.
 }
 \details{
-The variance uses the \code{n - 1} denominator, matching \code{\link[stats:var]{stats::var()}}.
-The shape statistics use the \emph{sample moment} definitions
+The variance uses the \code{n - 1} denominator, matching
+\code{\link[stats:var]{stats::var()}}. The shape statistics use the
+\emph{sample moment} definitions
 \eqn{m_3 / m_2^{3/2}} and \eqn{m_4 / m_2^2 - 3}, with \eqn{m_k} the
 k-th central moment divided by \code{n} -- so kurtosis is reported as
 EXCESS kurtosis and a normal sample sits near zero, not near three.

@@ -7,20 +7,22 @@
 make_manifest(meta, environment = TRUE)
 }
 \arguments{
-\item{meta}{A named list of run metadata (e.g. \code{project}, \code{author},
-\code{run_at}, \code{synthetic}).}
+\item{meta}{A named list of run metadata (e.g.
+\code{project}, \code{author}, \code{run_at}, \code{synthetic}) .}
 
-\item{environment}{Logical; when \code{TRUE} (the default) the manifest
-also records the analysis environment via \code{\link[=capture_environment]{capture_environment()}}
-(R version, platform, OS, UTC timestamp, loaded package versions).}
+\item{environment}{Logical; when \code{TRUE} (the
+default) the manifest also records the analysis environment via
+\code{\link[=capture_environment]{capture_environment()}} (R version,
+platform, OS, UTC timestamp, loaded package versions).}
 }
 \value{
-A manifest list with elements \code{meta}, an empty \code{results}
-list, and (when requested) \code{environment}.
+A manifest list with elements \code{meta}, an empty
+\code{results} list, and (when requested) \code{environment}.
 }
 \description{
 Creates an empty manifest object that accumulates cross-check entries
-via \code{\link[=record]{record()}} and is later serialized with \code{\link[=write_manifest_json]{write_manifest_json()}}.
+via \code{\link[=record]{record()}} and is later serialized with
+\code{\link[=write_manifest_json]{write_manifest_json()}}.
 }
 \examples{
 # Minimal manifest, no environment capture.

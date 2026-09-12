@@ -7,17 +7,19 @@
 yoy_write(x, file, format = "auto", ...)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from
+\code{\link[=yoy]{yoy()}}.}
 
 \item{file}{Output path.}
 
-\item{format}{Output format. \code{"auto"} reads it from the file
-extension: \code{.html}/\code{.htm}, \code{.pdf}, \code{.csv}, \code{.tsv}/\code{.tab}, \code{.json},
-\code{.md}/\code{.markdown}.}
+\item{format}{Output format. \code{"auto"} reads it from
+the file extension: \code{.html} / \code{.htm}, \code{.pdf},
+\code{.csv}, \code{.tsv} / \code{.tab}, \code{.json}, \code{.md} /
+\code{.markdown}.}
 
-\item{...}{Passed to the format's own writer, so the colour, digit and
-layout options of \code{\link[=yoy_html]{yoy_html()}} and \code{\link[=yoy_pdf]{yoy_pdf()}} are available here
-too.}
+\item{...}{Passed to the format's own writer, so the colour,
+digit and layout options of \code{\link[=yoy_html]{yoy_html()}} and
+\code{\link[=yoy_pdf]{yoy_pdf()}} are available here too.}
 }
 \value{
 The path, invisibly.
@@ -37,5 +39,6 @@ for (ext in c("csv", "tsv", "json", "md", "html")) {
 }
 }
 \seealso{
-\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}}, \code{\link[=yoy_csv]{yoy_csv()}}
+\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}},
+\code{\link[=yoy_csv]{yoy_csv()}}
 }

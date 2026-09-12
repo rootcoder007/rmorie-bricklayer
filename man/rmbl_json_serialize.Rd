@@ -13,32 +13,34 @@ bricklayer_json_unserialize(txt)
 \arguments{
 \item{x}{Object to serialise.}
 
-\item{digits}{Decimal digits retained for doubles (default 8, the
-jsonlite default). Raise it where full precision matters.}
+\item{digits}{Decimal digits retained for doubles (default
+8, the jsonlite default). Raise it where full precision matters.}
 
 \item{pretty}{Indent the output.}
 
-\item{txt}{JSON produced by \code{bricklayer_json_serialize()}.}
+\item{txt}{JSON produced by
+\code{bricklayer_json_serialize()}.}
 }
 \value{
 \code{bricklayer_json_serialize()} returns a length-1 character
-vector of class \code{json}; \code{bricklayer_json_unserialize()} returns the
-original object.
+vector of class \code{json}; \code{bricklayer_json_unserialize()}
+returns the original object.
 }
 \description{
 Writes an R object to JSON with its type and attributes alongside the
 value, so the round trip returns THE SAME OBJECT rather than something
 that merely prints the same. The counterpart of jsonlite's
-\code{serializeJSON()}/\code{unserializeJSON()}, computed by this package's own
-codec with no jsonlite dependency.
+\code{serializeJSON()} / \code{unserializeJSON()}, computed by this
+package's own codec with no jsonlite dependency.
 }
 \details{
-Use this, not \code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}, whenever the JSON has to
-reconstruct the object faithfully. \code{bricklayer_json_to_json()} writes
-the DATA -- which is what an API or a human wants, and which loses
-factor levels, matrix dimensions, classes and every other attribute.
-These two keep them, at the cost of JSON no other tool will
-understand.
+Use this, not
+\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}},
+whenever the JSON has to reconstruct the object faithfully.
+\code{bricklayer_json_to_json()} writes the DATA -- which is what an API
+or a human wants, and which loses factor levels, matrix dimensions,
+classes and every other attribute. These two keep them, at the cost of
+JSON no other tool will understand.
 }
 \examples{
 # A factor survives the round trip with its levels intact.
@@ -61,6 +63,7 @@ identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
 nchar(core_sha256(bricklayer_json_serialize(m)))
 }
 \seealso{
-\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}} for plain data JSON,
-\code{\link[=core_sha256]{core_sha256()}} for fingerprinting the result.
+\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}} for
+plain data JSON, \code{\link[=core_sha256]{core_sha256()}} for
+fingerprinting the result.
 }

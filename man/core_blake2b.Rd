@@ -9,28 +9,28 @@ core_blake2b(x, key = NULL, length = 32L)
 \arguments{
 \item{x}{A character vector or a raw vector.}
 
-\item{key}{Optional key, at most 64 bytes. \code{NULL} (default) gives the
-plain digest.}
+\item{key}{Optional key, at most 64 bytes. \code{NULL}
+(default) gives the plain digest.}
 
-\item{length}{Digest length in bytes, 1 to 64 (default 32, matching
-SHA-256's width).}
+\item{length}{Digest length in bytes, 1 to 64 (default 32,
+matching SHA-256's width).}
 }
 \value{
 A character vector of lowercase hex digests -- one per element
 for character input, length-1 for raw input.
 }
 \description{
-BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256
-in software, that takes a key natively and produces any digest length
-from 1 to 64 bytes.
+BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256 in
+software, that takes a key natively and produces any digest length from
+1 to 64 bytes.
 }
 \details{
 The native key is the interesting part. A keyed BLAKE2b IS a message
 authentication code, with no HMAC wrapper and so no doubled hashing --
 \code{core_blake2b(msg, key = k)} does the job of
-\code{\link[=core_hmac_sha256]{core_hmac_sha256()}} at lower cost. Use SHA-256 or HMAC where
-interoperability with other tools matters; use this where it does not
-and speed does.
+\code{\link[=core_hmac_sha256]{core_hmac_sha256()}} at lower cost. Use
+SHA-256 or HMAC where interoperability with other tools matters; use
+this where it does not and speed does.
 }
 \examples{
 # The RFC 7693 test vector for BLAKE2b-512 of "abc".
@@ -58,5 +58,7 @@ Hash and Message Authentication Code (MAC). RFC 7693.
 \doi{10.17487/RFC7693}
 }
 \seealso{
-\code{\link[=core_sha256]{core_sha256()}}, \code{\link[=core_sha512]{core_sha512()}}, \code{\link[=core_hmac_sha256]{core_hmac_sha256()}}
+\code{\link[=core_sha256]{core_sha256()}},
+\code{\link[=core_sha512]{core_sha512()}},
+\code{\link[=core_hmac_sha256]{core_hmac_sha256()}}
 }

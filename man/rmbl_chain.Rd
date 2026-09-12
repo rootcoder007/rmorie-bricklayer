@@ -20,53 +20,56 @@ chain_seal(chain)
 chain_verify(chain)
 }
 \arguments{
-\item{chain}{A chain from \code{chain_new()} or \code{chain_append()}.}
+\item{chain}{A chain from \code{chain_new()} or
+\code{chain_append()}.}
 
-\item{entry}{Any object to record. It is digested through its own
-deterministic serialization, so lists and data frames are accepted
-as readily as strings.}
+\item{entry}{Any object to record. It is digested through
+its own deterministic serialization, so lists and data frames are
+accepted as readily as strings.}
 
 \item{label}{Optional short character label for the entry.}
 }
 \value{
-\code{chain_new()} and \code{chain_append()} return an object of class
-\code{bricklayer_chain}. \code{chain_verify()} returns a list with \code{valid},
-\code{n}, \code{broken_at} (\code{NA} when intact) and \code{head}. \code{chain_head()}
-returns the head digest. \code{chain_seal()} returns a single digest over
-the verified chain's length and links, or \code{NA} if the chain does not
-verify.
+\code{chain_new()} and \code{chain_append()} return an object of
+class \code{bricklayer_chain}. \code{chain_verify()} returns a list with
+\code{valid}, \code{n}, \code{broken_at} ( \code{NA} when intact) and
+\code{head}. \code{chain_head()} returns the head digest.
+\code{chain_seal()} returns a single digest over the verified chain's
+length and links, or \code{NA} if the chain does not verify.
 }
 \description{
 Each entry records the digest of the entry before it, so the chain's
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-\code{\link[=chain_verify]{chain_verify()}} reports the first index where the break occurs.
+\code{\link[=chain_verify]{chain_verify()}} reports the first index
+where the break occurs.
 }
 \details{
-This is the structure behind an append-only audit log, and it is what
-a per-manifest digest alone cannot give you: individually valid
-manifests say nothing about whether any were removed.
+This is the structure behind an append-only audit log, and it is what a
+per-manifest digest alone cannot give you: individually valid manifests
+say nothing about whether any were removed.
 }
 \section{What the head covers, and what it does not}{
 \code{chain_head()} is the STORED digest of the last entry. Deleting an
-entry from the MIDDLE leaves that value untouched -- the stored
-digests do not change, only the links between them stop agreeing --
-so the head alone will not notice. \code{\link[=chain_verify]{chain_verify()}} will, and names
-the index.
+entry from the MIDDLE leaves that value untouched -- the stored digests
+do not change, only the links between them stop agreeing -- so the head
+alone will not notice. \code{\link[=chain_verify]{chain_verify()}} will,
+and names the index.
 
-Conversely, truncating from the END leaves a perfectly valid prefix
-that \code{\link[=chain_verify]{chain_verify()}} accepts, while the head changes.
+Conversely, truncating from the END leaves a perfectly valid prefix that
+\code{\link[=chain_verify]{chain_verify()}} accepts, while the head
+changes.
 
 The two failures are complementary, which is why \code{chain_seal()}
-exists: it verifies the links AND folds the entry count and every
-link digest into one value, so a single signature over the seal
-detects an edit, a deletion, a reordering, an insertion and a
-truncation alike. Sign the seal, not the head.
+exists: it verifies the links AND folds the entry count and every link
+digest into one value, so a single signature over the seal detects an
+edit, a deletion, a reordering, an insertion and a truncation alike.
+Sign the seal, not the head.
 
 Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
-signature an attacker who rewrites the whole chain leaves it
-internally consistent, because recomputing every link is cheap.
+signature an attacker who rewrites the whole chain leaves it internally
+consistent, because recomputing every link is cheap.
 }
 
 \examples{
@@ -105,6 +108,7 @@ capsule_verify(chain_seal(truncated), sig, signing_public_key(key))
 chain_seal(dropped)
 }
 \seealso{
-\code{\link[=capsule_sign]{capsule_sign()}} to sign the head, \code{\link[=merkle_root]{merkle_root()}} for
-pinning the contents of one capsule rather than a history.
+\code{\link[=capsule_sign]{capsule_sign()}} to sign the head,
+\code{\link[=merkle_root]{merkle_root()}} for pinning the contents of
+one capsule rather than a history.
 }

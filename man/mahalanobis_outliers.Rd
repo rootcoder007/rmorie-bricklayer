@@ -7,42 +7,44 @@
 mahalanobis_outliers(data, alpha = 0.001, robust = TRUE)
 }
 \arguments{
-\item{data}{A data frame or numeric matrix; non-numeric columns are
-dropped. Rows with any missing value are skipped, and reported as
-\code{NA}.}
+\item{data}{A data frame or numeric matrix; non-numeric
+columns are dropped. Rows with any missing value are skipped, and
+reported as \code{NA}.}
 
-\item{alpha}{Significance level for the \code{outlier} flag (default
-0.001, deliberately strict: at 0.05 one row in twenty is flagged by
-construction).}
+\item{alpha}{Significance level for the \code{outlier} flag
+(default 0.001, deliberately strict: at 0.05 one row in twenty is
+flagged by construction).}
 
-\item{robust}{Use the median/MAD centre and scale (default \code{TRUE}).}
+\item{robust}{Use the median/MAD centre and scale (default
+\code{TRUE}) .}
 }
 \value{
-A data frame of class \code{bricklayer_outliers} with \code{row},
-\code{distance} (the square root of the squared Mahalanobis distance),
-\code{p_value} and \code{outlier}, ordered by descending distance.
+A data frame of class \code{bricklayer_outliers} with
+\code{row}, \code{distance} (the square root of the squared Mahalanobis
+distance), \code{p_value} and \code{outlier}, ordered by descending
+distance.
 }
 \description{
 Ranks rows by how far they sit from the centre of the data ONCE THE
-CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check
-cannot do: a row can be unremarkable on every variable separately and
-still be impossible jointly -- a person 1.5 m tall weighing 140 kg is
-inside both marginal ranges and outside the cloud.
+CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
+do: a row can be unremarkable on every variable separately and still be
+impossible jointly -- a person 1.5 m tall weighing 140 kg is inside both
+marginal ranges and outside the cloud.
 }
 \details{
-Under multivariate normality the squared distance is chi-square on \code{p}
-degrees of freedom, which gives the p-value and the cut-off.
+Under multivariate normality the squared distance is chi-square on
+\code{p} degrees of freedom, which gives the p-value and the cut-off.
 
-\code{robust = TRUE} centres on the coordinate-wise median and scales by a
-MAD-based covariance instead of the mean and sample covariance. This
+\code{robust = TRUE} centres on the coordinate-wise median and scales by
+a MAD-based covariance instead of the mean and sample covariance. This
 matters more than it sounds: outliers inflate the very covariance used
 to judge them, so with several of them the classical distance hides
 exactly the rows it is meant to find (the masking effect).
 
-Exactly collinear columns are refused rather than repaired: the
-distance is undefined there, and flooring the covariance's eigenvalues
-to make it invertible would return numbers governed by the floor
-rather than by the data. Drop the redundant column first --
+Exactly collinear columns are refused rather than repaired: the distance
+is undefined there, and flooring the covariance's eigenvalues to make it
+invertible would return numbers governed by the floor rather than by the
+data. Drop the redundant column first --
 \code{\link[=top_correlations]{top_correlations()}} will identify it.
 }
 \examples{
@@ -77,6 +79,7 @@ statistics. \emph{Proceedings of the National Institute of Sciences of
 India} 2(1), 49--55.
 }
 \seealso{
-\code{\link[=core_tukey_fences]{core_tukey_fences()}} for the per-column version,
-\code{\link[=rule_within_n_mads]{rule_within_n_mads()}} to turn it into a validation rule.
+\code{\link[=core_tukey_fences]{core_tukey_fences()}} for the per-column
+version, \code{\link[=rule_within_n_mads]{rule_within_n_mads()}} to turn
+it into a validation rule.
 }

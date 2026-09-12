@@ -9,18 +9,19 @@ frequency_table(data, column = NULL, max_levels = 25L, sort = TRUE)
 \arguments{
 \item{data}{A data frame, or a vector.}
 
-\item{column}{Column name, when \code{data} is a data frame.}
+\item{column}{Column name, when \code{data} is a data
+frame.}
 
-\item{max_levels}{Maximum rows to return, most frequent first
-(default 25). The remainder are folded into one \code{"(other)"} row so
-the percentages still sum to 100.}
+\item{max_levels}{Maximum rows to return, most
+frequent first (default 25). The remainder are folded into one
+\code{"(other)"} row so the percentages still sum to 100.}
 
-\item{sort}{Sort by descending count (default \code{TRUE}); \code{FALSE} keeps
-the natural order of the values.}
+\item{sort}{Sort by descending count (default \code{TRUE}) ;
+\code{FALSE} keeps the natural order of the values.}
 }
 \value{
-A data frame of class \code{bricklayer_freq}: \code{value}, \code{n}, \code{pct},
-\code{pct_valid}.
+A data frame of class \code{bricklayer_freq}: \code{value},
+\code{n}, \code{pct}, \code{pct_valid}.
 }
 \description{
 Counts, percentages, and percentages of the non-missing values, with
@@ -28,9 +29,9 @@ missing counted as its own row. The counterpart of
 \code{janitor::tabyl()}.
 }
 \details{
-Two percentage columns, because both questions get asked and
-conflating them is how missingness gets hidden: \code{pct} is the share of
-ALL rows, \code{pct_valid} the share of rows where the value is present.
+Two percentage columns, because both questions get asked and conflating
+them is how missingness gets hidden: \code{pct} is the share of ALL
+rows, \code{pct_valid} the share of rows where the value is present.
 When a column is 40\% missing those two differ enormously, and only the
 second describes the values that are actually there.
 }
@@ -55,5 +56,6 @@ ft
 sum(ft$pct)
 }
 \seealso{
-\code{\link[=profile_columns]{profile_columns()}} for every column at once.
+\code{\link[=profile_columns]{profile_columns()}} for every
+column at once.
 }

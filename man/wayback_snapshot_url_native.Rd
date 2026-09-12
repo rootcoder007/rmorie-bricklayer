@@ -17,8 +17,8 @@ The https snapshot URL, or \code{NULL} if none is archived.
 \description{
 Queries the Internet Archive \dQuote{available} API for the closest
 archived snapshot of \code{url}. C++ backend; supersedes the older
-R-level resolver \code{\link{wayback_snapshot_url}}, which is kept
-for the pure-R path and now parses with the package's own JSON codec.
+R-level resolver \code{\link{wayback_snapshot_url}}, which is kept for
+the pure-R path and now parses with the package's own JSON codec.
 }
 \examples{
 # Input is validated before any network call:
