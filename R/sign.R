@@ -13,112 +13,324 @@
 #              only a public root and cannot forge. Signs 2^height
 #              messages and NO MORE (see the reuse warning below).
 
-#' Available post-quantum signature backends
+#' Available post-quantum signature schemes
 #'
-#' Reports which signature backends this build of the package can use.
-#' `"xmss-sha256"` is always present -- it needs nothing but the
-#' bundled SHA-256. `"liboqs"` appears only when the Open Quantum Safe
-#' library was found at configure time, which additionally enables the
-#' standardised lattice and hash-based schemes (ML-DSA / FIPS 204, SLH-DSA
-#' / FIPS 205) through that library rather than through any hand-written
-#' implementation here.
+#' Reports the signature schemes this package implements. The list is
+#' fixed, not probed: all of them are implemented in the package's own C++
+#' and none depends on a system library, so a scheme available on one
+#' machine is available on every machine.
 #'
-#' @return A character vector of scheme names. `"xmss-sha256"` is
-#' always first; any standardised schemes this build of liboqs enabled
-#' follow.
+#' `"xmss-sha256"` is the stateful hash-based scheme of
+#' [pqc_keygen()]. The rest are the NIST
+#' standards, taken with [fips_keygen()]: ML-DSA
+#' (FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at all
+#' twelve -- six over SHAKE and six over SHA-2, which are different schemes
+#' and not merely different code paths.
+#'
+#' @return A character vector of scheme names, `"xmss-sha256"` first.
 #' @seealso
-#' [pqc_keygen()], which takes any of these as its
-#' `scheme`.
+#' [fips_keygen()] for the standardised schemes,
+#' [pqc_keygen()] for the stateful one.
 #' @examples
 #' pqc_backends()
 #'
-#' # The dependency-free backend is always available.
-#' "xmss-sha256" %in% pqc_backends()
-#'
-#' # Whether a lattice scheme is available depends on the build.
-#' "ML-DSA-65" %in% pqc_backends()
+#' # Every scheme is present in every build.
+#' all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") %in%
+#'     pqc_backends())
 #' @export
 pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 
 #' Generate a standardised post-quantum signing key
 #'
-#' Generates a key for one of the NIST-standardised signature schemes --
-#' ML-DSA (FIPS 204) or SLH-DSA (FIPS 205) -- **through liboqs**.
-#'
-#' bricklayer implements no lattice arithmetic of its own. These keys and
-#' signatures are produced entirely by the Open Quantum Safe library, which
-#' is tested and maintained for the purpose; a hand-written NTT and
-#' rejection sampler here would be a worse outcome than deferring. The
-#' trade-off is that the scheme is available only where liboqs was found at
-#' build time, which [pqc_backends()] reports.
+#' Generates a key for one of the NIST-standardised signature schemes:
+#' ML-DSA (FIPS 204) or SLH-DSA (FIPS 205). Both are implemented in this
+#' package, natively, with no system dependency;
+#' [pqc_backends()] lists the parameter sets.
 #'
 #' Unlike [pqc_keygen()] 's hash-based key, these
-#' are STATELESS: a key signs any number of messages, with no index to
-#' track.
+#' are STATELESS: one key signs any number of messages, with no index to
+#' track and nothing to persist between signatures.
 #'
-#' @param scheme Scheme name, as reported by
-#' [pqc_backends()]. The default
-#' `"ML-DSA-65"` is the FIPS 204 middle security level.
-#' @return A list of class `bricklayer_oqs_key`: `public`,
+#' Which to pick. ML-DSA is small and fast and rests on a lattice
+#' assumption. SLH-DSA rests on nothing but the hash function, at the cost
+#' of a signature one to two orders of magnitude larger; its `s`
+#' parameter sets have small signatures and slow signing, its `f` sets
+#' the reverse, and its SHAKE and SHA-2 families are equally strong: pick
+#' SHA-2 where a validated SHA-2 implementation is what an auditor will ask
+#' about. `"ML-DSA-65"` is the sensible default.
+#'
+#' @param scheme Scheme name, one of
+#' [pqc_backends()] other than
+#' `"xmss-sha256"`. The default `"ML-DSA-65"` is the FIPS 204
+#' middle security level.
+#' @param seed Optional raw vector of key-generation seed
+#' bytes, of the length [fips_sizes()] reports for
+#' the scheme. Supplying it makes the key reproducible, which is what the
+#' standards' test vectors need; the default draws from the operating
+#' system's CSPRNG.
+#' @return A list of class `bricklayer_fips_key`: `public`,
 #' `secret` (both hex), and `scheme`.
 #' @references National Institute of Standards and Technology (2024).
 #' Module-Lattice-Based Digital Signature Standard. FIPS 204.
 #'   \doi{10.6028/NIST.FIPS.204}
+#'
+#' National Institute of Standards and Technology (2024). Stateless
+#' Hash-Based Digital Signature Standard. FIPS 205.
+#'   \doi{10.6028/NIST.FIPS.205}
 #' @seealso
-#' [pqc_keygen()] for the dependency-free
-#' hash-based key, [capsule_sign()] which
-#' accepts either.
+#' [pqc_keygen()] for the stateful hash-based key,
+#' [capsule_sign()] which accepts either,
+#' [fips_sizes()] for the byte lengths.
 #' @examples
-#' # Only where the build found liboqs.
-#' if ("ML-DSA-65" %in% pqc_backends()) {
-#'   key <- oqs_keygen("ML-DSA-65")
-#'   key$scheme
+#' key <- fips_keygen("ML-DSA-65")
+#' key$scheme
 #'
-#'   sig <- capsule_sign("a manifest digest", key)
-#'   capsule_verify("a manifest digest", sig, oqs_public_key(key))
-#'   capsule_verify("an edited digest", sig, oqs_public_key(key))
+#' sig <- capsule_sign("a manifest digest", key)
+#' capsule_verify("a manifest digest", sig, fips_public_key(key))
 #'
-#'   # Stateless: the same key signs again with no index to advance.
-#'   sig2 <- capsule_sign("a second digest", key)
-#'   capsule_verify("a second digest", sig2, oqs_public_key(key))
-#' }
+#' # A context string binds the signature to its purpose: the same
+#' # message signed for one context does not verify under another.
+#' sig2 <- capsule_sign("a manifest digest", key, context = "release")
+#' capsule_verify("a manifest digest", sig2, key, context = "release")
+#' capsule_verify("a manifest digest", sig2, key, context = "staging")
 #' @export
-oqs_keygen <- function(scheme = "ML-DSA-65") {
+fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
+  scheme <- .rmbl_fips_scheme(scheme)
+  sz <- fips_sizes(scheme)
+  if (is.null(seed)) {
+    seed <- random_bytes(sz[["seed"]])
+  } else if (!is.raw(seed) || length(seed) != sz[["seed"]]) {
+    stop(sprintf("`seed` must be a raw vector of %d bytes for %s",
+                 sz[["seed"]], scheme), call. = FALSE)
+  }
+  res <- .rmbl_fips_keypair(scheme, seed)
+  out <- list(public = .rmbl_hexlify(res$public),
+              secret = .rmbl_hexlify(res$secret),
+              scheme = scheme)
+  class(out) <- c("bricklayer_fips_key", "bricklayer_oqs_key", "list")
+  out
+}
+
+#' @rdname fips_keygen
+#' @param key A key from `fips_keygen()`.
+#' @export
+fips_public_key <- function(key) {
+  if (!inherits(key, "bricklayer_oqs_key")) {
+    stop("`key` must come from fips_keygen()", call. = FALSE)
+  }
+  out <- list(public = key$public, scheme = key$scheme)
+  class(out) <- c("bricklayer_fips_public_key",
+                  "bricklayer_oqs_public_key", "list")
+  out
+}
+
+#' Assemble a standardised key from raw key material
+#'
+#' Wraps key bytes that came from somewhere else -- another implementation,
+#' a key store, a file written by an earlier session -- in the object
+#' [capsule_sign()] and
+#' [capsule_verify()] expect. The lengths are
+#' checked against the parameter set, so material for the wrong scheme is
+#' refused here rather than producing a signature nothing can verify.
+#'
+#' The byte layouts are the standards' own, which is what makes this
+#' interoperable: an ML-DSA secret key is
+#' `rho || K || tr || s1 || s2 || t0` and an SLH-DSA one is
+#' `SK.seed || SK.prf || PK.seed || PK.root`, exactly as FIPS 204 and
+#' FIPS 205 encode them.
+#'
+#' @param scheme Scheme name, as in
+#' [fips_keygen()].
+#' @param public Public key, hex or raw.
+#' @param secret Secret key, hex or raw. Omit for a
+#' verification-only key.
+#' @return A `bricklayer_fips_key` when `secret` is given,
+#' otherwise a `bricklayer_fips_public_key`.
+#' @seealso
+#' [fips_keygen()],
+#' [fips_sizes()].
+#' @examples
+#' key <- fips_keygen("ML-DSA-44")
+#' # the round trip through raw material changes nothing
+#' again <- fips_key("ML-DSA-44", key$public, key$secret)
+#' identical(again$secret, key$secret)
+#'
+#' sig <- capsule_sign("m", again)
+#' capsule_verify("m", sig, fips_key("ML-DSA-44", key$public))
+#'
+#' # material of the wrong length is refused
+#' try(fips_key("ML-DSA-65", key$public, key$secret))
+#' @export
+fips_key <- function(scheme, public, secret = NULL) {
+  scheme <- .rmbl_fips_scheme(scheme)
+  sz <- fips_sizes(scheme)
+  pub <- .rmbl_fips_material(public, sz[["public_key"]], "public", scheme)
+  if (is.null(secret)) {
+    out <- list(public = pub, scheme = scheme)
+    class(out) <- c("bricklayer_fips_public_key",
+                    "bricklayer_oqs_public_key", "list")
+    return(out)
+  }
+  out <- list(public = pub,
+              secret = .rmbl_fips_material(secret, sz[["secret_key"]],
+                                           "secret", scheme),
+              scheme = scheme)
+  class(out) <- c("bricklayer_fips_key", "bricklayer_oqs_key", "list")
+  out
+}
+
+# Key material as hex, whatever it arrived as, with its length checked
+# against the parameter set.
+.rmbl_fips_material <- function(x, n, what, scheme) {
+  hex <- if (is.raw(x)) {
+    .rmbl_hexlify(x)
+  } else {
+    h <- as.character(x)[1L]
+    # not .rmbl_hex_or_null(): that decodes to bytes, and what is wanted
+    # here is the validated STRING, since a key is carried as hex
+    if (is.na(h) || nchar(h) %% 2L != 0L ||
+        !grepl("^[0-9a-fA-F]*$", h)) NULL else tolower(h)
+  }
+  if (is.null(hex) || nchar(hex) %/% 2L != n) {
+    stop(sprintf("`%s` must be %d bytes of key material for %s", what, n,
+                 scheme), call. = FALSE)
+  }
+  hex
+}
+
+#' Byte lengths of a standardised signature scheme
+#'
+#' Reports the sizes fixed by a FIPS 204 or FIPS 205 parameter set, so a
+#' caller never has to hard-code them.
+#'
+#' @param scheme Scheme name, as in
+#' [fips_keygen()].
+#' @return A named integer vector: `public_key`, `secret_key`,
+#' `signature`, `seed` and `opt_rand`, all in bytes.
+#' `opt_rand` is the per-signature randomness the scheme consumes.
+#' @seealso
+#' [fips_keygen()],
+#' [pqc_backends()].
+#' @examples
+#' fips_sizes("ML-DSA-65")
+#' fips_sizes("SLH-DSA-SHAKE-128s")
+#'
+#' # An SLH-DSA signature is far larger than an ML-DSA one at the same
+#' # security level, which is the price of dropping the lattice
+#' # assumption.
+#' fips_sizes("SLH-DSA-SHAKE-128s")[["signature"]] >
+#'   fips_sizes("ML-DSA-44")[["signature"]]
+#' @export
+fips_sizes <- function(scheme) {
+  scheme <- .rmbl_fips_scheme(scheme)
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (!is.na(mode)) {
+    sz <- .Call(C_rmbl_mldsa_sizes, mode)
+    return(c(sz, opt_rand = 32L))
+  }
+  sz <- .Call(C_rmbl_slhdsa_sizes, scheme)
+  # SLH-DSA draws its key from three n-byte seeds and its per-signature
+  # randomness from one, so n follows from the seed length.
+  c(sz, opt_rand = sz[["seed"]] %/% 3L)
+}
+
+# The parameter-set name, validated against what the package implements.
+# A typo must fail here rather than silently selecting a default, since
+# the scheme is baked into every signature the key goes on to produce.
+.rmbl_fips_scheme <- function(scheme) {
   scheme <- as.character(scheme)[1L]
   if (is.na(scheme) || !nzchar(scheme)) {
     stop("`scheme` must be a non-empty string", call. = FALSE)
   }
-  res <- .Call(C_rmbl_oqs_keygen, scheme)
-  if (is.null(res)) {
-    stop(sprintf(paste0("scheme '%s' is not available in this build. ",
-                        "pqc_backends() reports: %s. The standardised ",
-                        "schemes need liboqs at build time; the bundled ",
-                        "xmss-sha256 scheme needs nothing and is always ",
-                        "available via pqc_keygen()."),
-                 scheme, paste(pqc_backends(), collapse = ", ")),
-         call. = FALSE)
+  known <- setdiff(pqc_backends(), "xmss-sha256")
+  if (!scheme %in% known) {
+    stop(sprintf(paste0("unknown scheme '%s'. The standardised schemes ",
+                        "are: %s. For the stateful hash-based scheme ",
+                        "use pqc_keygen()."),
+                 scheme, paste(known, collapse = ", ")), call. = FALSE)
   }
-  out <- list(public = res$public, secret = res$secret,
-              scheme = res$scheme)
-  class(out) <- c("bricklayer_oqs_key", "list")
-  out
+  scheme
+}
+
+# NA for an SLH-DSA set, the FIPS 204 mode number for an ML-DSA one.
+.rmbl_fips_mldsa_mode <- function(scheme) {
+  if (!grepl("^ML-DSA-", scheme)) return(NA_integer_)
+  as.integer(sub("^ML-DSA-", "", scheme))
+}
+
+.rmbl_fips_keypair <- function(scheme, seed) {
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (!is.na(mode)) return(.Call(C_rmbl_mldsa_keypair, mode, seed))
+  .Call(C_rmbl_slhdsa_keypair, scheme, seed)
+}
+
+.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd) {
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (!is.na(mode)) return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd))
+  .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd)
+}
+
+.rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig) {
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (!is.na(mode)) {
+    return(.Call(C_rmbl_mldsa_verify, mode, pk, msg, ctx, sig))
+  }
+  .Call(C_rmbl_slhdsa_verify, scheme, pk, msg, ctx, sig)
+}
+
+# A context string is at most 255 bytes because the FIPS 204 and 205
+# message encodings write its length in one byte.
+.rmbl_fips_context <- function(context) {
+  if (is.null(context)) return(raw(0L))
+  if (is.raw(context)) {
+    ctx <- context
+  } else {
+    context <- as.character(context)
+    if (length(context) != 1L || is.na(context)) {
+      stop("`context` must be a length-1 character vector or a raw vector",
+           call. = FALSE)
+    }
+    ctx <- charToRaw(context)
+  }
+  if (length(ctx) > 255L) {
+    stop("`context` must be at most 255 bytes", call. = FALSE)
+  }
+  ctx
+}
+
+#' Generate a standardised post-quantum signing key (deprecated name)
+#'
+#' Kept so code written against the liboqs-backed version keeps working.
+#' The schemes are no longer reached through liboqs -- they are implemented
+#' in this package -- and the name no longer describes anything, so use
+#' [fips_keygen()] instead.
+#'
+#' @param scheme Scheme name; see
+#' [fips_keygen()].
+#' @param key A key from `oqs_keygen()`.
+#' @return As [fips_keygen()] and
+#' [fips_public_key()].
+#' @seealso [fips_keygen()].
+#' @examples
+#' # Deprecated: use fips_keygen().
+#' key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
+#' key$scheme
+#' @export
+oqs_keygen <- function(scheme = "ML-DSA-65") {
+  .Deprecated("fips_keygen")
+  fips_keygen(scheme)
 }
 
 #' @rdname oqs_keygen
-#' @param key A key from `oqs_keygen()`.
 #' @export
 oqs_public_key <- function(key) {
-  if (!inherits(key, "bricklayer_oqs_key")) {
-    stop("`key` must come from oqs_keygen()", call. = FALSE)
-  }
-  out <- list(public = key$public, scheme = key$scheme)
-  class(out) <- c("bricklayer_oqs_public_key", "list")
-  out
+  .Deprecated("fips_public_key")
+  fips_public_key(key)
 }
 
 #' @export
 format.bricklayer_oqs_key <- function(x, ...) {
-  c(.rmbl_rule("Signing key (standardised, via liboqs)"),
+  c(.rmbl_rule("Signing key (standardised: FIPS 204 / FIPS 205)"),
     .rmbl_kv(list(scheme = x$scheme,
                   "public key" = sprintf("%s... (%d bytes)",
                                          substring(x$public, 1L, 32L),
@@ -294,11 +506,20 @@ signing_public_key <- function(key) {
 #' @param key A shared secret (character/raw) for `"hmac"`,
 #' a `bricklayer_signing_key` from
 #' [pqc_keygen()] for `"xmss"`, or a
-#' `bricklayer_oqs_key` from [oqs_keygen()]
-#' for a standardised scheme (in which case `scheme` is taken from the
-#' key and ignored).
+#' `bricklayer_fips_key` from
+#' [fips_keygen()] for a standardised scheme (in
+#' which case `scheme` is taken from the key and ignored).
 #' @param scheme `"xmss"` (post-quantum, asymmetric) or
 #' `"hmac"` (symmetric). Inferred from `key` when not given.
+#' @param context Optional context string (character or raw,
+#' at most 255 bytes) for the standardised schemes, and ignored by the
+#' others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
+#' a signature made under one context does not verify under another --
+#' which is how the same key is safely used for two purposes.
+#' @param deterministic For the standardised schemes,
+#' use the deterministic variant rather than drawing fresh randomness per
+#' signature. The signature then depends only on the key, message and
+#' context, which is what the standards' test vectors rely on.
 #' @return A list of class `bricklayer_signature`: `scheme`,
 #' `signature`, and for XMSS also `auth`, `index`,
 #' `root`, `height`, `key_state`, `randomizer` (the
@@ -332,20 +553,25 @@ signing_public_key <- function(key) {
 #' # A signature does not transfer to another message.
 #' capsule_verify("manifest-1", s2, signing_public_key(key))
 #' @export
-capsule_sign <- function(message, key, scheme = NULL) {
+capsule_sign <- function(message, key, scheme = NULL, context = NULL,
+                         deterministic = FALSE) {
   if (inherits(key, "bricklayer_oqs_key")) {
-    if (!is.raw(message)) {
-      message <- as.character(message)
-      if (length(message) != 1L || is.na(message)) {
-        stop("`message` must be a length-1 character vector or a raw vector",
-             call. = FALSE)
-      }
+    msg <- .rmbl_sign_message(message)
+    ctx <- .rmbl_fips_context(context)
+    sz <- fips_sizes(key$scheme)
+    # FIPS 204 and 205 both allow either variant. Hedged signing draws
+    # fresh bytes per signature and is the default; the deterministic
+    # variant substitutes a fixed value, which is what the standards'
+    # test vectors use and what makes a signature reproducible.
+    rnd <- if (isTRUE(deterministic)) {
+      .rmbl_fips_fixed_rand(key$scheme, key$public, sz[["opt_rand"]])
+    } else {
+      random_bytes(sz[["opt_rand"]])
     }
-    sg <- .Call(C_rmbl_oqs_sign, key$scheme, key$secret, message)
-    if (is.null(sg)) {
-      stop(sprintf("signing with '%s' failed", key$scheme), call. = FALSE)
-    }
-    out <- list(scheme = key$scheme, signature = sg)
+    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), msg,
+                          ctx, rnd)
+    out <- list(scheme = key$scheme, signature = .rmbl_hexlify(sg),
+                context = ctx)
     class(out) <- c("bricklayer_signature", "list")
     return(out)
   }
@@ -412,10 +638,13 @@ capsule_sign <- function(message, key, scheme = NULL) {
 #' @param signature A `bricklayer_signature` from
 #' [capsule_sign()].
 #' @param key The shared secret for `"hmac"`, a public key
-#' (or full signing key) for XMSS, or an
-#' [oqs_keygen()] key or its
-#' [oqs_public_key()] for a standardised
+#' (or full signing key) for XMSS, or a
+#' [fips_keygen()] key or its
+#' [fips_public_key()] for a standardised
 #' scheme. A signature is not verified against a key of a different scheme.
+#' @param context The context string the signature was made
+#' under, for the standardised schemes. A signature made under a different
+#' context, or under none, does not verify.
 #' @return A length-1 logical.
 #' @examples
 #' key <- pqc_keygen(height = 2)
@@ -435,22 +664,24 @@ capsule_sign <- function(message, key, scheme = NULL) {
 #' trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 #' capsule_verify("pinned-manifest", trunc, pub)
 #' @export
-capsule_verify <- function(message, signature, key) {
+capsule_verify <- function(message, signature, key,
+                           context = NULL) {
   if (!inherits(signature, "bricklayer_signature")) {
     stop("`signature` must come from capsule_sign()", call. = FALSE)
   }
   if (inherits(key, c("bricklayer_oqs_key",
                       "bricklayer_oqs_public_key"))) {
     if (!identical(signature$scheme, key$scheme)) return(FALSE)
-    if (!is.raw(message)) {
-      message <- as.character(message)
-      if (length(message) != 1L || is.na(message)) {
-        stop("`message` must be a length-1 character vector or a raw vector",
-             call. = FALSE)
-      }
-    }
-    return(.Call(C_rmbl_oqs_verify, key$scheme, key$public, message,
-                 signature$signature))
+    msg <- .rmbl_sign_message(message)
+    ctx <- .rmbl_fips_context(context)
+    # A key or signature that is not even hex is "not verified", never
+    # an error: a verifier treats unparseable input as failure. Decoding
+    # it loosely would turn a stray character into a zero byte and hand
+    # the C layer something it never received.
+    pk <- .rmbl_hex_or_null(key$public)
+    sg <- .rmbl_hex_or_null(signature$signature)
+    if (is.null(pk) || is.null(sg)) return(FALSE)
+    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg))
   }
   if (identical(signature$scheme, "hmac")) {
     return(core_digest_equal(core_hmac_sha256(key, message),
@@ -488,6 +719,39 @@ capsule_verify <- function(message, signature, key) {
 # design and its state is recoverable from its output, so a key drawn
 # from it is guessable. random_bytes() fails rather than degrading, which
 # is the behaviour a key needs.
+# Hex bytes, or NULL if the string is not an even-length run of hex
+# digits. as.raw(strtoi(...)) would quietly map a non-hex pair to 00.
+.rmbl_hex_or_null <- function(hex) {
+  hex <- as.character(hex)[1L]
+  if (is.na(hex) || nchar(hex) %% 2L != 0L) return(NULL)
+  if (!grepl("^[0-9a-fA-F]*$", hex)) return(NULL)
+  .rmbl_hex_to_raw(hex)
+}
+
+# A message is either a single string or raw bytes. Anything else is an
+# error rather than a coercion: silently signing the deparsed form of an
+# object would produce a signature nobody can reproduce.
+.rmbl_sign_message <- function(message) {
+  if (is.raw(message)) return(message)
+  message <- as.character(message)
+  if (length(message) != 1L || is.na(message)) {
+    stop("`message` must be a length-1 character vector or a raw vector",
+         call. = FALSE)
+  }
+  charToRaw(message)
+}
+
+# The deterministic variant's substitute for fresh randomness. FIPS 205
+# specifies PK.seed; FIPS 204 specifies 32 zero bytes. Both are fixed
+# per key, which is the whole point: the same message signs identically
+# every time.
+.rmbl_fips_fixed_rand <- function(scheme, public_hex, n) {
+  if (is.na(.rmbl_fips_mldsa_mode(scheme))) {
+    return(.rmbl_hex_to_raw(substring(public_hex, 1L, 2L * n)))
+  }
+  raw(n)
+}
+
 .rmbl_random_seed_hex <- function() {
   paste(format(random_bytes(32L)), collapse = "")
 }

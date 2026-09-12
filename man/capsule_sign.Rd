@@ -4,7 +4,13 @@
 \alias{capsule_sign}
 \title{Sign a capsule manifest}
 \usage{
-capsule_sign(message, key, scheme = NULL)
+capsule_sign(
+  message,
+  key,
+  scheme = NULL,
+  context = NULL,
+  deterministic = FALSE
+)
 }
 \arguments{
 \item{message}{Length-1 character vector (or raw vector)
@@ -13,12 +19,23 @@ to sign.}
 \item{key}{A shared secret (character/raw) for \code{"hmac"},
 a \code{bricklayer_signing_key} from
 \code{\link[=pqc_keygen]{pqc_keygen()}} for \code{"xmss"}, or a
-\code{bricklayer_oqs_key} from \code{\link[=oqs_keygen]{oqs_keygen()}}
-for a standardised scheme (in which case \code{scheme} is taken from the
-key and ignored).}
+\code{bricklayer_fips_key} from
+\code{\link[=fips_keygen]{fips_keygen()}} for a standardised scheme (in
+which case \code{scheme} is taken from the key and ignored).}
 
 \item{scheme}{\code{"xmss"} (post-quantum, asymmetric) or
 \code{"hmac"} (symmetric). Inferred from \code{key} when not given.}
+
+\item{context}{Optional context string (character or raw,
+at most 255 bytes) for the standardised schemes, and ignored by the
+others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
+a signature made under one context does not verify under another --
+which is how the same key is safely used for two purposes.}
+
+\item{deterministic}{For the standardised schemes,
+use the deterministic variant rather than drawing fresh randomness per
+signature. The signature then depends only on the key, message and
+context, which is what the standards' test vectors rely on.}
 }
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},

@@ -104,10 +104,25 @@ reference implementation.** The whole 2500-byte signature for
 XMSS-SHA2_10_256 -- index, randomiser, WOTS+ signature and
 authentication path -- matches it exactly, checked against embedded
 vectors in the test suite so the check needs no network. The
-standardised schemes (ML-DSA, SLH-DSA) are liboqs's implementation
-rather than one of ours; what is tested here is the binding, including
-that ML-DSA-65 produces the key and signature sizes FIPS 204
-specifies.
+**The standardised schemes are byte-identical to OpenSSL.** ML-DSA
+(FIPS 204) at all three parameter sets and SLH-DSA (FIPS 205) at all
+twelve -- six over SHAKE, six over SHA-2 -- are implemented here, with
+no system dependency. Every one of the fifteen is checked against
+OpenSSL 3.5: in deterministic mode the two implementations produce the
+SAME BYTES, over several message and context lengths, and each verifies
+the other's signatures. OpenSSL's keys and the digests of its
+signatures are embedded in the test suite, so the check needs no network
+and no system library.
+
+That cross-check is the claim, not reference parity. This
+implementation matched the pq-crystals and sphincsplus reference code
+byte for byte while disagreeing with the standards in two places -- FIPS
+204 and FIPS 205 both prepend a context domain separator that the
+reference code omits, and FIPS 205 reads the FORS indices most
+significant bit first where SPHINCS+ read them least significant bit
+first. A signature scheme that verifies only its own output passes every
+security-property test there is, so only an independent implementation
+can find that class of bug.
 
 It is also verified against its security properties: a valid signature
 verifies, and every tampering of the message, signature, authentication

@@ -1,0 +1,9 @@
+# std::optional/<regex> in the vendored SIU core need C++17.
+CXX_STD = CXX17
+# Portable: no GNU-make extensions (CRAN policy). -lcurl resolves once the
+# SystemRequirement libcurl (deb: libcurl4-openssl-dev, rpm: libcurl-devel)
+# is installed. There is nothing else to link: the post-quantum schemes
+# -- XMSS, ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) -- are all
+# implemented in this directory, so there is no optional library to
+# detect and no ./configure step.
+PKG_LIBS = -lcurl
