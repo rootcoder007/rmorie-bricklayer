@@ -1131,10 +1131,11 @@ bricklayer_json_validate <- function(txt) {
 
 # ================================================================ text tools
 
-# Tokenizer + yajl-style generator: strings are decoded and re-encoded (so
-# "é" comes out as the character, "\/" as "/"), numbers are copied
-# verbatim, and the beautifier follows yajl_gen exactly (newline after
-# every opener, ",\n" between items, ": " after keys, final newline).
+# Tokenizer + yajl-style generator: strings are decoded and re-encoded
+# (so a "\u00e9" escape comes out as the character it names, and "\/" as
+# "/"), numbers are copied verbatim, and the beautifier follows yajl_gen
+# exactly (newline after every opener, ",\n" between items, ": " after
+# keys, final newline).
 #' @noRd
 .rmbl_json_reformat <- function(txt, pretty, indent_string = "    ") {
   s <- paste(txt, collapse = "\n")
