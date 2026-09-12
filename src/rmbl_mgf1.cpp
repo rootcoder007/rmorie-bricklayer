@@ -27,6 +27,8 @@ extern "C" void rmbl_sha512_raw(const unsigned char *data, size_t len,
                                 unsigned char out[64]);
 extern "C" void rmbl_sha384_raw(const unsigned char *data, size_t len,
                                 unsigned char out[48]);
+extern "C" void rmbl_sha1_raw(const unsigned char *data, size_t len,
+                              unsigned char out[20]);
 
 namespace {
 
@@ -95,6 +97,16 @@ void rmbl_mgf1_shax(int hashlen, unsigned char *out, size_t outlen,
 
 /* Exposed so the RFC 4231 and RFC 8017 vectors can be asserted from the
  * test suite rather than trusted. */
+/* Exposed so the FIPS 180-4 SHA-1 vectors can be asserted. Used only
+ * for OCSP CertID, never for a signature. */
+SEXP C_rmbl_sha1(SEXP x) {
+    if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
+    SEXP out = PROTECT(Rf_allocVector(RAWSXP, 20));
+    rmbl_sha1_raw(RAW(x), static_cast<size_t>(XLENGTH(x)), RAW(out));
+    UNPROTECT(1);
+    return out;
+}
+
 /* Exposed so the FIPS 180-4 SHA-384 vectors can be asserted. */
 SEXP C_rmbl_sha384(SEXP x) {
     if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");

@@ -222,6 +222,74 @@ extern "C" {
 
 /* The state after one 128-byte block, and a resume from it -- the
  * SHA-512 half of what rmbl_sha256_midstate() exists for. */
+/* SHA-1 (FIPS 180-4).
+ *
+ * Present for exactly one purpose: an OCSP CertID identifies a
+ * certificate by the SHA-1 hashes of its issuer's name and public key
+ * (RFC 6960 section 4.1.1), and a responder keyed on anything else
+ * answers "unauthorized". It is NOT used to verify any signature here,
+ * and must not be: SHA-1 collisions are practical.
+ */
+void rmbl_sha1_raw(const unsigned char *data, size_t len,
+                   unsigned char out[20]) {
+    uint32_t h0 = 0x67452301u, h1 = 0xEFCDAB89u, h2 = 0x98BADCFEu;
+    uint32_t h3 = 0x10325476u, h4 = 0xC3D2E1F0u;
+    const uint64_t bits = static_cast<uint64_t>(len) * 8u;
+    /* one buffer for the message plus its padding, processed in blocks */
+    const size_t total = ((len + 9u + 63u) / 64u) * 64u;
+    std::vector<unsigned char> buf(total, 0);
+    if (len > 0) std::memcpy(buf.data(), data, len);
+    buf[len] = 0x80;
+    for (int i = 0; i < 8; ++i) {
+        buf[total - 1 - static_cast<size_t>(i)] =
+            static_cast<unsigned char>(bits >> (8 * i));
+    }
+    for (size_t off = 0; off < total; off += 64) {
+        uint32_t w[80];
+        for (int i = 0; i < 16; ++i) {
+            w[i] = (static_cast<uint32_t>(buf[off + 4 * i]) << 24) |
+                   (static_cast<uint32_t>(buf[off + 4 * i + 1]) << 16) |
+                   (static_cast<uint32_t>(buf[off + 4 * i + 2]) << 8) |
+                   static_cast<uint32_t>(buf[off + 4 * i + 3]);
+        }
+        for (int i = 16; i < 80; ++i) {
+            const uint32_t v = w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16];
+            w[i] = (v << 1) | (v >> 31);
+        }
+        uint32_t a = h0, b = h1, c = h2, d = h3, e = h4;
+        for (int i = 0; i < 80; ++i) {
+            uint32_t f, k;
+            if (i < 20) {
+                f = (b & c) | ((~b) & d);
+                k = 0x5A827999u;
+            } else if (i < 40) {
+                f = b ^ c ^ d;
+                k = 0x6ED9EBA1u;
+            } else if (i < 60) {
+                f = (b & c) | (b & d) | (c & d);
+                k = 0x8F1BBCDCu;
+            } else {
+                f = b ^ c ^ d;
+                k = 0xCA62C1D6u;
+            }
+            const uint32_t t = ((a << 5) | (a >> 27)) + f + e + k + w[i];
+            e = d;
+            d = c;
+            c = (b << 30) | (b >> 2);
+            b = a;
+            a = t;
+        }
+        h0 += a; h1 += b; h2 += c; h3 += d; h4 += e;
+    }
+    const uint32_t hs[5] = {h0, h1, h2, h3, h4};
+    for (int i = 0; i < 5; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            out[4 * i + j] =
+                static_cast<unsigned char>(hs[i] >> (24 - 8 * j));
+        }
+    }
+}
+
 /* SHA-384 (FIPS 180-4): the SHA-512 compression function with a
  * different initial state, truncated to 48 bytes. Needed because
  * ecdsa-with-SHA384 is a certificate signature algorithm in common use,
