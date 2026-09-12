@@ -242,12 +242,16 @@ yoy.ts <- function(x, lag = NULL, ...) {
                           lapply(agg[by], function(z) unique(z))),
                         stringsAsFactors = FALSE)
   }
-  out <- merge(grid, agg, by = c(period, by), all.x = TRUE)
+  # all = TRUE, not all.x: the grid contributes the missing periods and
+  # the data keeps every period it actually has, even one the grid does
+  # not contain.
+  out <- merge(grid, agg, by = c(period, by), all = TRUE)
   out[order(.yoy_order(out, c(period, by))), , drop = FALSE]
 }
 
 # The regular grid a period column implies, or NULL when it has none.
 .yoy_period_grid <- function(p) {
+  if (!is.numeric(p) && !inherits(p, c("Date", "POSIXct"))) return(NULL)
   u <- sort(unique(p))
   if (length(u) < 2L) return(NULL)
   if (inherits(p, "Date")) {
@@ -346,6 +350,13 @@ yoy.ts <- function(x, lag = NULL, ...) {
 
 # Previous value at the period `lag` grid-steps earlier.
 .yoy_previous <- function(p, v, lag) {
+  # A period has to be on a numeric scale for "lag periods earlier" to
+  # mean anything. A character or factor column -- "Q1", "Q2" -- has no
+  # step, and taking diff() of it raised rather than reporting that
+  # there is no comparison to make.
+  if (!is.numeric(p) && !inherits(p, c("Date", "POSIXct"))) {
+    return(rep(NA_real_, length(v)))
+  }
   u <- sort(unique(p))
   if (length(u) < 2L) return(rep(NA_real_, length(v)))
   step <- .yoy_gcd(as.numeric(diff(u)))
