@@ -1,6 +1,8 @@
 #!/bin/sh
-# Remove what ./configure generated, so the source tree goes back to
-# exactly what is in version control.
+# Remove what ./configure generated, and the coverage artifacts a covr
+# run leaves in src/, so the source tree goes back to exactly what is in
+# version control.
 rm -f src/Makevars
 rm -f conftest_oqs conftest_oqs.c conftest_oqs.o
+rm -f src/*.gcda src/*.gcno src/*.gcov
 exit 0
