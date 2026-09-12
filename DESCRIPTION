@@ -52,4 +52,9 @@ BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
-SystemRequirements: libcurl (deb: libcurl4-openssl-dev, rpm: libcurl-devel)
+SystemRequirements: libcurl (deb: libcurl4-openssl-dev, rpm:
+    libcurl-devel). Optionally liboqs (>= 0.8) for the standardised
+    post-quantum signature schemes ML-DSA (FIPS 204) and SLH-DSA (FIPS
+    205); it is detected at configure time and the package builds
+    without it, in which case the bundled hash-based scheme, which has
+    no system dependency, remains available.

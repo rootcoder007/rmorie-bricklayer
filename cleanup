@@ -1,0 +1,6 @@
+#!/bin/sh
+# Remove what ./configure generated, so the source tree goes back to
+# exactly what is in version control.
+rm -f src/Makevars
+rm -f conftest_oqs conftest_oqs.c conftest_oqs.o
+exit 0

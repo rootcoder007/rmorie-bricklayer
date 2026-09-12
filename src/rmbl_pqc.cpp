@@ -61,6 +61,10 @@
 #include <string>
 #include <vector>
 
+#ifdef HAVE_LIBOQS
+#include <oqs/oqs.h>
+#endif
+
 extern "C" void rmbl_sha256_raw(const unsigned char *data, size_t len,
                                 unsigned char out[32]);
 
@@ -533,19 +537,161 @@ SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
 /* package still builds where liboqs is absent (CRAN included).        */
 /* ------------------------------------------------------------------ */
 
+/* The standardised schemes bricklayer exposes when liboqs is present.
+ * Deliberately a short list: ML-DSA-65 is the FIPS 204 middle security
+ * level and the sensible default, ML-DSA-87 for a longer horizon, and
+ * SLH-DSA as a hash-based alternative for anyone who would rather not
+ * rest on a lattice assumption at all. */
+static const char *kOqsSchemes[] = {
+    "ML-DSA-44", "ML-DSA-65", "ML-DSA-87", "SPHINCS+-SHA2-128s-simple"
+};
+static const int kNumOqsSchemes = 4;
+
 SEXP C_rmbl_pqc_backends(void) {
+    SEXP out;
 #ifdef HAVE_LIBOQS
-    SEXP out = PROTECT(Rf_allocVector(STRSXP, 2));
+    /* Report only the schemes this build of liboqs actually enabled --
+     * the library is configurable and a scheme can be compiled out. */
+    int n = 1;
+    for (int i = 0; i < kNumOqsSchemes; ++i) {
+        if (OQS_SIG_alg_is_enabled(kOqsSchemes[i])) ++n;
+    }
+    out = PROTECT(Rf_allocVector(STRSXP, n));
     SET_STRING_ELT(out, 0, Rf_mkChar("xmss-sha256"));
-    SET_STRING_ELT(out, 1, Rf_mkChar("liboqs"));
+    int k = 1;
+    for (int i = 0; i < kNumOqsSchemes; ++i) {
+        if (OQS_SIG_alg_is_enabled(kOqsSchemes[i])) {
+            SET_STRING_ELT(out, k++, Rf_mkChar(kOqsSchemes[i]));
+        }
+    }
     UNPROTECT(1);
     return out;
 #else
-    SEXP out = PROTECT(Rf_allocVector(STRSXP, 1));
+    out = PROTECT(Rf_allocVector(STRSXP, 1));
     SET_STRING_ELT(out, 0, Rf_mkChar("xmss-sha256"));
     UNPROTECT(1);
     return out;
 #endif
 }
+
+/* ------------------------------------------------------------------ */
+/* liboqs-backed keygen / sign / verify.                               */
+/*                                                                     */
+/* These delegate entirely to liboqs. bricklayer does not implement any */
+/* lattice arithmetic: the point of routing through the library is that */
+/* its ML-DSA is the tested, maintained one. Without liboqs each entry  */
+/* point returns NULL or FALSE and the R layer reports the scheme as    */
+/* unavailable -- never a silent fallback to a weaker signature.        */
+/* ------------------------------------------------------------------ */
+
+#ifdef HAVE_LIBOQS
+
+SEXP C_rmbl_oqs_keygen(SEXP alg) {
+    const char *name = CHAR(STRING_ELT(alg, 0));
+    if (!OQS_SIG_alg_is_enabled(name)) return R_NilValue;
+    OQS_SIG *sig = OQS_SIG_new(name);
+    if (sig == NULL) return R_NilValue;
+
+    std::vector<unsigned char> pk(sig->length_public_key);
+    std::vector<unsigned char> sk(sig->length_secret_key);
+    if (OQS_SIG_keypair(sig, pk.data(), sk.data()) != OQS_SUCCESS) {
+        OQS_SIG_free(sig);
+        return R_NilValue;
+    }
+    std::string pkh, skh;
+    hexlify(pk.data(), pk.size(), pkh);
+    hexlify(sk.data(), sk.size(), skh);
+    OQS_SIG_free(sig);
+
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 3));
+    SET_VECTOR_ELT(out, 0, Rf_mkString(pkh.c_str()));
+    SET_VECTOR_ELT(out, 1, Rf_mkString(skh.c_str()));
+    SET_VECTOR_ELT(out, 2, Rf_mkString(name));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("public"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("secret"));
+    SET_STRING_ELT(nm, 2, Rf_mkChar("scheme"));
+    Rf_setAttrib(out, R_NamesSymbol, nm);
+    UNPROTECT(2);
+    return out;
+}
+
+SEXP C_rmbl_oqs_sign(SEXP alg, SEXP sk_hex, SEXP msg) {
+    const char *name = CHAR(STRING_ELT(alg, 0));
+    if (!OQS_SIG_alg_is_enabled(name)) return R_NilValue;
+    OQS_SIG *sig = OQS_SIG_new(name);
+    if (sig == NULL) return R_NilValue;
+
+    std::vector<unsigned char> sk;
+    if (!unhexlify(CHAR(STRING_ELT(sk_hex, 0)), sk) ||
+        sk.size() != sig->length_secret_key) {
+        OQS_SIG_free(sig);
+        Rf_error("the secret key is not a %s key of the expected length",
+                 name);
+    }
+    std::vector<unsigned char> mb;
+    if (TYPEOF(msg) == RAWSXP) {
+        mb.assign(RAW(msg), RAW(msg) + XLENGTH(msg));
+    } else {
+        const char *m = CHAR(STRING_ELT(msg, 0));
+        mb.assign(m, m + std::strlen(m));
+    }
+
+    std::vector<unsigned char> out(sig->length_signature);
+    size_t siglen = 0;
+    const OQS_STATUS rc = OQS_SIG_sign(sig, out.data(), &siglen, mb.data(),
+                                       mb.size(), sk.data());
+    if (rc != OQS_SUCCESS) {
+        OQS_SIG_free(sig);
+        return R_NilValue;
+    }
+    std::string hex;
+    hexlify(out.data(), siglen, hex);
+    OQS_SIG_free(sig);
+    return Rf_mkString(hex.c_str());
+}
+
+SEXP C_rmbl_oqs_verify(SEXP alg, SEXP pk_hex, SEXP msg, SEXP sig_hex) {
+    const char *name = CHAR(STRING_ELT(alg, 0));
+    if (!OQS_SIG_alg_is_enabled(name)) return Rf_ScalarLogical(FALSE);
+    OQS_SIG *sig = OQS_SIG_new(name);
+    if (sig == NULL) return Rf_ScalarLogical(FALSE);
+
+    std::vector<unsigned char> pk, sg;
+    /* A malformed key or signature is "not verified", not an error: a
+     * verifier must treat unparseable input as failure. */
+    if (!unhexlify(CHAR(STRING_ELT(pk_hex, 0)), pk) ||
+        pk.size() != sig->length_public_key ||
+        !unhexlify(CHAR(STRING_ELT(sig_hex, 0)), sg) ||
+        sg.size() == 0 || sg.size() > sig->length_signature) {
+        OQS_SIG_free(sig);
+        return Rf_ScalarLogical(FALSE);
+    }
+    std::vector<unsigned char> mb;
+    if (TYPEOF(msg) == RAWSXP) {
+        mb.assign(RAW(msg), RAW(msg) + XLENGTH(msg));
+    } else {
+        const char *m = CHAR(STRING_ELT(msg, 0));
+        mb.assign(m, m + std::strlen(m));
+    }
+    const OQS_STATUS rc = OQS_SIG_verify(sig, mb.data(), mb.size(),
+                                         sg.data(), sg.size(), pk.data());
+    OQS_SIG_free(sig);
+    return Rf_ScalarLogical(rc == OQS_SUCCESS ? TRUE : FALSE);
+}
+
+#else
+
+SEXP C_rmbl_oqs_keygen(SEXP alg) { (void) alg; return R_NilValue; }
+SEXP C_rmbl_oqs_sign(SEXP alg, SEXP sk_hex, SEXP msg) {
+    (void) alg; (void) sk_hex; (void) msg;
+    return R_NilValue;
+}
+SEXP C_rmbl_oqs_verify(SEXP alg, SEXP pk_hex, SEXP msg, SEXP sig_hex) {
+    (void) alg; (void) pk_hex; (void) msg; (void) sig_hex;
+    return Rf_ScalarLogical(FALSE);
+}
+
+#endif  /* HAVE_LIBOQS */
 
 }  // extern "C"

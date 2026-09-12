@@ -7,7 +7,8 @@
 pqc_backends()
 }
 \value{
-A character vector of backend names.
+A character vector of scheme names. \code{"xmss-sha256"} is always
+first; any standardised schemes this build of liboqs enabled follow.
 }
 \description{
 Reports which signature backends this build of the package can use.
@@ -23,4 +24,10 @@ pqc_backends()
 
 # The dependency-free backend is always available.
 "xmss-sha256" \%in\% pqc_backends()
+
+# Whether a lattice scheme is available depends on the build.
+"ML-DSA-65" \%in\% pqc_backends()
+}
+\seealso{
+\code{\link[=pqc_keygen]{pqc_keygen()}}, which takes any of these as its \code{scheme}.
 }

@@ -1,0 +1,11 @@
+# Generated from Makevars.in by ../configure -- do not edit src/Makevars.
+#
+# std::optional/<regex> in the vendored SIU core need C++17.
+CXX_STD = CXX17
+# Portable: no GNU-make extensions (CRAN policy). -lcurl resolves once the
+# SystemRequirement libcurl (deb: libcurl4-openssl-dev, rpm: libcurl-devel)
+# is installed. -DHAVE_LIBOQS and -loqs are added by ../configure only when
+# liboqs was actually found; without it the package still builds and the
+# bundled XMSS signature is unaffected.
+PKG_CPPFLAGS = @PKG_CFLAGS@
+PKG_LIBS = @PKG_LIBS@
