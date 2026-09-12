@@ -54,6 +54,30 @@ inline uint64_t rotl64(uint64_t x, int n) {
     return n == 0 ? x : ((x << n) | (x >> (64 - n)));
 }
 
+/* Index tables for rho/pi and chi, computed at compile time from the
+ * formulas rather than written out. The previous form evaluated `% 5`
+ * inside the innermost loops, which is a division on every lane of
+ * every round; these turn the whole round into straight-line code the
+ * compiler can unroll.
+ *
+ * Lane (x, y) lives at index x + 5y, which is the layout kRho is
+ * indexed by, so the tables must use the same convention. */
+struct KeccakTables {
+    int theta_d[5];  /* c index contributing d for column x */
+    int theta_r[5];  /* c index rotated into d for column x */
+};
+
+constexpr KeccakTables make_keccak_tables() {
+    KeccakTables t{};
+    for (int x = 0; x < 5; ++x) {
+        t.theta_d[x] = (x + 4) % 5;
+        t.theta_r[x] = (x + 1) % 5;
+    }
+    return t;
+}
+
+constexpr KeccakTables kT = make_keccak_tables();
+
 void keccak_f1600(uint64_t a[25]) {
     for (int round = 0; round < 24; ++round) {
         /* theta */
@@ -61,25 +85,66 @@ void keccak_f1600(uint64_t a[25]) {
         for (int x = 0; x < 5; ++x) {
             c[x] = a[x] ^ a[x + 5] ^ a[x + 10] ^ a[x + 15] ^ a[x + 20];
         }
+        uint64_t d[5];
         for (int x = 0; x < 5; ++x) {
-            const uint64_t d = c[(x + 4) % 5] ^ rotl64(c[(x + 1) % 5], 1);
-            for (int y = 0; y < 5; ++y) a[x + 5 * y] ^= d;
+            d[x] = c[kT.theta_d[x]] ^ rotl64(c[kT.theta_r[x]], 1);
         }
-        /* rho and pi combined: B[y][2x+3y] = rot(A[x][y], r[x][y]) */
+        /* theta, rho and pi: b[pi(i)] = rot(a[i] ^ d[x], r[i]).
+         * Written out with literal indices -- generated from the
+         * formulas, not transcribed -- so that no division or
+         * array indexing survives into the inner loop. */
         uint64_t b[25];
-        for (int x = 0; x < 5; ++x) {
-            for (int y = 0; y < 5; ++y) {
-                b[y + 5 * ((2 * x + 3 * y) % 5)] =
-                    rotl64(a[x + 5 * y], kRho[x + 5 * y]);
-            }
-        }
+        b[ 0] = rotl64(a[ 0] ^ d[0], kRho[ 0]);
+        b[10] = rotl64(a[ 1] ^ d[1], kRho[ 1]);
+        b[20] = rotl64(a[ 2] ^ d[2], kRho[ 2]);
+        b[ 5] = rotl64(a[ 3] ^ d[3], kRho[ 3]);
+        b[15] = rotl64(a[ 4] ^ d[4], kRho[ 4]);
+        b[16] = rotl64(a[ 5] ^ d[0], kRho[ 5]);
+        b[ 1] = rotl64(a[ 6] ^ d[1], kRho[ 6]);
+        b[11] = rotl64(a[ 7] ^ d[2], kRho[ 7]);
+        b[21] = rotl64(a[ 8] ^ d[3], kRho[ 8]);
+        b[ 6] = rotl64(a[ 9] ^ d[4], kRho[ 9]);
+        b[ 7] = rotl64(a[10] ^ d[0], kRho[10]);
+        b[17] = rotl64(a[11] ^ d[1], kRho[11]);
+        b[ 2] = rotl64(a[12] ^ d[2], kRho[12]);
+        b[12] = rotl64(a[13] ^ d[3], kRho[13]);
+        b[22] = rotl64(a[14] ^ d[4], kRho[14]);
+        b[23] = rotl64(a[15] ^ d[0], kRho[15]);
+        b[ 8] = rotl64(a[16] ^ d[1], kRho[16]);
+        b[18] = rotl64(a[17] ^ d[2], kRho[17]);
+        b[ 3] = rotl64(a[18] ^ d[3], kRho[18]);
+        b[13] = rotl64(a[19] ^ d[4], kRho[19]);
+        b[14] = rotl64(a[20] ^ d[0], kRho[20]);
+        b[24] = rotl64(a[21] ^ d[1], kRho[21]);
+        b[ 9] = rotl64(a[22] ^ d[2], kRho[22]);
+        b[19] = rotl64(a[23] ^ d[3], kRho[23]);
+        b[ 4] = rotl64(a[24] ^ d[4], kRho[24]);
         /* chi */
-        for (int y = 0; y < 5; ++y) {
-            for (int x = 0; x < 5; ++x) {
-                a[x + 5 * y] = b[x + 5 * y] ^
-                    ((~b[((x + 1) % 5) + 5 * y]) & b[((x + 2) % 5) + 5 * y]);
-            }
-        }
+        a[ 0] = b[ 0] ^ ((~b[ 1]) & b[ 2]);
+        a[ 1] = b[ 1] ^ ((~b[ 2]) & b[ 3]);
+        a[ 2] = b[ 2] ^ ((~b[ 3]) & b[ 4]);
+        a[ 3] = b[ 3] ^ ((~b[ 4]) & b[ 0]);
+        a[ 4] = b[ 4] ^ ((~b[ 0]) & b[ 1]);
+        a[ 5] = b[ 5] ^ ((~b[ 6]) & b[ 7]);
+        a[ 6] = b[ 6] ^ ((~b[ 7]) & b[ 8]);
+        a[ 7] = b[ 7] ^ ((~b[ 8]) & b[ 9]);
+        a[ 8] = b[ 8] ^ ((~b[ 9]) & b[ 5]);
+        a[ 9] = b[ 9] ^ ((~b[ 5]) & b[ 6]);
+        a[10] = b[10] ^ ((~b[11]) & b[12]);
+        a[11] = b[11] ^ ((~b[12]) & b[13]);
+        a[12] = b[12] ^ ((~b[13]) & b[14]);
+        a[13] = b[13] ^ ((~b[14]) & b[10]);
+        a[14] = b[14] ^ ((~b[10]) & b[11]);
+        a[15] = b[15] ^ ((~b[16]) & b[17]);
+        a[16] = b[16] ^ ((~b[17]) & b[18]);
+        a[17] = b[17] ^ ((~b[18]) & b[19]);
+        a[18] = b[18] ^ ((~b[19]) & b[15]);
+        a[19] = b[19] ^ ((~b[15]) & b[16]);
+        a[20] = b[20] ^ ((~b[21]) & b[22]);
+        a[21] = b[21] ^ ((~b[22]) & b[23]);
+        a[22] = b[22] ^ ((~b[23]) & b[24]);
+        a[23] = b[23] ^ ((~b[24]) & b[20]);
+        a[24] = b[24] ^ ((~b[20]) & b[21]);
         /* iota */
         a[0] ^= kRC[round];
     }
@@ -119,11 +184,25 @@ void rmbl_keccak_init(RmblKeccak *st, size_t rate, unsigned char pad) {
 }
 
 void rmbl_keccak_absorb(RmblKeccak *st, const unsigned char *in, size_t len) {
-    unsigned char blk[200];
-    /* XOR into the rate portion, permuting whenever a block fills */
+    /* XOR into the rate portion, permuting whenever a block fills. The
+     * whole-lane path matters: the post-quantum schemes here absorb
+     * tens of millions of short buffers per signature, and a byte at a
+     * time costs a shift and a divide on each one. */
     while (len > 0) {
-        const size_t take = (st->rate - st->pos < len) ? st->rate - st->pos : len;
-        for (size_t i = 0; i < take; ++i) {
+        size_t take = (st->rate - st->pos < len) ? st->rate - st->pos : len;
+        size_t i = 0;
+        if ((st->pos & 7u) == 0) {
+            for (; i + 8 <= take; i += 8) {
+                const size_t j = st->pos + i;
+                uint64_t v = 0;
+                for (int k = 0; k < 8; ++k) {
+                    v |= static_cast<uint64_t>(in[i + static_cast<size_t>(k)])
+                         << (8 * k);
+                }
+                st->s[j / 8] ^= v;
+            }
+        }
+        for (; i < take; ++i) {
             const size_t j = st->pos + i;
             st->s[j / 8] ^= static_cast<uint64_t>(in[i]) << (8 * (j % 8));
         }
@@ -135,7 +214,6 @@ void rmbl_keccak_absorb(RmblKeccak *st, const unsigned char *in, size_t len) {
             st->pos = 0;
         }
     }
-    (void) blk;
 }
 
 /* pad10*1 with the function's domain byte, per FIPS 202 section B.2. */

@@ -123,6 +123,12 @@ secret in both -- which is the check that catches a wrong compression
 width, since compressing and decompressing with the same wrong width
 round-trips perfectly.
 
+Signing is fast enough to be tested unconditionally: an SLH-DSA `s`
+parameter set signs in about a second, down from seven, after the Keccak
+round was made branch-free, the tweakable hash stopped heap-allocating
+a few million times per signature, and the SHA-2 sets learned to resume
+from a cached midstate.
+
 That cross-check is the claim, not reference parity. This
 implementation matched the pq-crystals and sphincsplus reference code
 byte for byte while disagreeing with the standards in two places -- FIPS

@@ -269,39 +269,44 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
     lapply(parts, function(p) .rmbl_hex_to_raw(p[2L])),
     vapply(parts, `[[`, character(1), 1L))
 
-  res <- timestamp_verify(f$token, f$payload)
+  # Trust is part of the verdict now: without an anchor the signature
+  # still checks but nothing vouches for the certificate, and `ok` says
+  # so rather than passing on a check nobody made.
+  res <- timestamp_verify(f$rsa_token, f$payload, trust = f$ca)
   expect_s3_class(res, "bricklayer_timestamp")
   expect_true(res$ok)
   expect_s3_class(res$time, "POSIXct")
   expect_identical(res$hash_algorithm, "sha256")
-  # the caller's own copy of the certificate works as well as the
-  # embedded one
-  expect_true(timestamp_verify(f$token, f$payload,
-                               certificate = f$certificate)$ok)
+  expect_true(timestamp_verify(f$rsa_token, f$payload,
+                               certificate = f$rsa_cert,
+                               trust = f$ca)$ok)
 
   # the token, the data and the certificate may each arrive as raw
   # bytes, as a DER file, or -- for the certificate -- as PEM, and the
   # PEM path has its own base64 decode to get wrong
-  tk <- tempfile(); writeBin(f$token, tk)
+  tk <- tempfile(); writeBin(f$rsa_token, tk)
   pl <- tempfile(); writeBin(f$payload, pl)
-  der <- tempfile(); writeBin(f$certificate, der)
+  der <- tempfile(); writeBin(f$rsa_cert, der)
   pem <- tempfile()
   writeLines(c("-----BEGIN CERTIFICATE-----",
-               strsplit(bricklayer_json_base64_enc(f$certificate),
+               strsplit(bricklayer_json_base64_enc(f$rsa_cert),
                         "(?<=.{64})", perl = TRUE)[[1]],
                "-----END CERTIFICATE-----"), pem)
-  expect_true(timestamp_verify(tk, pl)$ok)
-  expect_true(timestamp_verify(tk, pl, certificate = der)$ok)
-  expect_true(timestamp_verify(tk, pl, certificate = pem)$ok)
+  expect_true(timestamp_verify(tk, pl, trust = f$ca)$ok)
+  expect_true(timestamp_verify(tk, pl, certificate = der,
+                               trust = f$ca)$ok)
+  expect_true(timestamp_verify(tk, pl, certificate = pem,
+                               trust = f$ca)$ok)
   unlink(c(tk, pl, der, pem))
 
-  info <- timestamp_info(f$token)
+  info <- timestamp_info(f$rsa_token)
   expect_identical(info$hash_algorithm, "sha256")
   expect_true(info$has_certificate)
   expect_identical(info$imprint, core_sha256(f$payload))
 
   # a token is about particular bytes and nothing else
-  bad <- timestamp_verify(f$token, charToRaw("other bytes"))
+  bad <- timestamp_verify(f$rsa_token, charToRaw("other bytes"),
+                          trust = f$ca)
   expect_false(bad$ok)
   expect_false(bad$checks$ok[bad$checks$check == "message_imprint"])
   # and the signature was still fine, which is the point of reporting
@@ -310,27 +315,23 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
 
   # flipping a byte of the TSTInfo breaks what the attributes commit to
   for (off in c(80L, 200L)) {
-    t2 <- f$token
+    t2 <- f$rsa_token
     t2[off] <- as.raw(bitwXor(as.integer(t2[off]), 1L))
-    r <- timestamp_verify(t2, f$payload)
+    r <- timestamp_verify(t2, f$payload, trust = f$ca)
     expect_false(r$ok, info = as.character(off))
     expect_false(r$checks$ok[r$checks$check == "attribute_digest"],
                  info = as.character(off))
   }
   # flipping a byte of the signature breaks the RSA recovery
-  t3 <- f$token
+  t3 <- f$rsa_token
   k <- length(t3) - 40L
   t3[k] <- as.raw(bitwXor(as.integer(t3[k]), 1L))
-  r3 <- timestamp_verify(t3, f$payload)
+  r3 <- timestamp_verify(t3, f$payload, trust = f$ca)
   expect_false(r3$ok)
   expect_false(r3$checks$ok[r3$checks$check == "signature"])
 
-  # a different authority's certificate does not verify it
-  other <- fips_keygen("ML-DSA-44")
-  expect_error(timestamp_verify(f$token, f$payload,
-                                certificate = charToRaw("nonsense")),
-               NA)
-  r4 <- timestamp_verify(f$token, f$payload,
+  # a certificate that is not one
+  r4 <- timestamp_verify(f$rsa_token, f$payload,
                          certificate = charToRaw("nonsense"))
   expect_false(r4$ok)
 
@@ -339,5 +340,4 @@ test_that("an RFC 3161 token verifies, and every tamper is caught", {
   expect_false(timestamp_verify(charToRaw("not der"), f$payload)$ok)
   expect_error(timestamp_verify(42, f$payload), "raw vector")
   expect_output(print(res), "Timestamp token")
-  expect_output(print(res), "trust in the certificate is NOT checked")
 })

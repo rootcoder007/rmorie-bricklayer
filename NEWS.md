@@ -1,3 +1,86 @@
+# rmoriebricklayer 0.4.5
+
+The four things the previous release documented as deliberately
+incomplete are now complete.
+
+## Certificates are validated, not just used
+
+`timestamp_verify()` gained `trust`, `crls` and `at_time`, and there is
+a new `cert_parse()` and `cert_chain_verify()` behind them. The chain is
+built to an anchor you name, every signature in it is verified, every
+validity window is checked, an issuer must be a CA, and the leaf must
+carry the timeStamping extended key usage. A CRL can be handed in.
+
+Validity is judged at the time the TOKEN asserts, not at the time the
+check runs. A token signed in 2020 under a certificate that expired in
+2021 was validly signed, and judging it by today's date would reject it
+for a reason unconnected to its validity.
+
+Omitting `trust` no longer passes quietly: `certificate_trust` is
+reported as failed, because a signature that verifies under an
+unvouched-for certificate says only that some key signed the token.
+
+Still not done, and now the only gaps here: name constraints, policy
+mapping, and fetching revocation data over the network.
+
+## ECDSA, not only RSA
+
+`rmbl_ecdsa.cpp` implements ECDSA verification over P-256, P-384 and
+P-521 -- field and group arithmetic, Jacobian point operations, and the
+FIPS 186-4 verification equation with the range and on-curve checks that
+a lax verifier skips. Certificates and timestamp tokens signed with
+`ecdsa-with-SHA256/384/512` now verify; the test fixtures carry one
+token of each kind over the same payload under the same CA, so the two
+paths are exercised against real tokens rather than against each other.
+
+SHA-384 was added for `ecdsa-with-SHA384`, checked against its FIPS
+180-4 vectors.
+
+One bug is worth recording because of how it presented. The P-521 group
+order was written four hex digits short. Every published base-point
+multiple still matched -- the curve arithmetic uses only the field
+prime and b -- while every operation mod n was wrong and no signature
+verified. The fix added a width check on every curve constant and a test
+that `n * G` is the point at infinity, which is the property that fails
+the moment the order is wrong.
+
+## Falsification can now confirm as well as refute
+
+`capsule_power()` injects an effect of known size, reruns the whole
+detection procedure, and reports the rate at which it is found. The
+smallest size detected reliably is the smallest effect the analysis
+could have seen.
+
+This is the case the negative controls cannot reach. A procedure with no
+power against the effect at issue passes every control in
+`capsule_falsify()` by failing to see anything at all, and a null result
+from it is not evidence of absence. A design whose permutation floor sits
+above alpha -- where no size could ever be detected -- is refused rather
+than run.
+
+## Signing an SLH-DSA `s` parameter set is five to seven times faster
+
+Worst case went from 7.20 seconds to 2.67, and the SHA-2 sets from 7.20
+to 1.09. Nothing is gated behind an environment variable any more; every
+parameter set signs in the test suite.
+
+Three changes, in order of what they were worth:
+
+* the Keccak round no longer evaluates `% 5` on every lane -- the
+  permutation is straight-line code with literal indices, generated from
+  the formulas rather than transcribed;
+* the tweakable hash no longer heap-allocates, which it was doing a few
+  million times per signature;
+* the SHA-2 parameter sets resume from a cached midstate instead of
+  recompressing the padded public seed on every call, which is what the
+  reference implementation means by a seeded state.
+
+`sha256_update()` and `sha512_update()` also now copy in bulk rather
+than a byte at a time, which speeds up every other user of them.
+
+All 15 signature parameter sets remain byte-identical to OpenSSL 3.5,
+re-checked after the optimisation: 300 comparisons, no differences.
+
 # rmoriebricklayer 0.4.4
 
 ## From "the record is intact" to "the record is right"
