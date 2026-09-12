@@ -1,3 +1,48 @@
+# rmoriebricklayer 0.4.1
+
+## The standardised post-quantum schemes are now implemented here
+
+ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) were previously reached through
+liboqs, so which schemes a build offered depended on what happened to be
+installed on the machine that built it -- a poor property for a signature
+format meant to outlive that machine. Both are now implemented in the
+package, on its own Keccak sponge, and the optional system dependency is
+gone along with the `./configure` step that probed for it.
+
+* `fips_keygen()`, `fips_public_key()`, `fips_key()` and `fips_sizes()`
+  are the new entry points. `pqc_backends()` now reports a fixed list --
+  ML-DSA at all three parameter sets and SLH-DSA at all twelve, six over
+  SHAKE and six over SHA-2 -- available in every build. `fips_key()`
+  wraps key material from elsewhere, so a key written by another
+  implementation can be used directly.
+* SHA-512, HMAC and MGF1 gained the pieces the SHA-2 instantiation of
+  FIPS 205 needs. Its address is compressed from 32 bytes to 22 with
+  every field moved, its message randomiser is an HMAC and its digest an
+  MGF1, and its multi-block tweakable hash switches to SHA-512 at
+  192-bit security and above but its single-block one does not -- none of
+  which a test that only signs and verifies would notice.
+* `capsule_sign()` and `capsule_verify()` gained `context`, the context
+  string both standards bind into the message encoding, so one key can
+  be used for two purposes without a signature crossing between them.
+  `capsule_sign()` also gained `deterministic`, selecting the variant
+  whose output depends only on key, message and context.
+* `oqs_keygen()` and `oqs_public_key()` are deprecated in favour of the
+  `fips_*` names and now warn. They still work, and still return the
+  same classes.
+
+Every parameter set is checked against OpenSSL 3.5, which shares no code
+with this package: in deterministic mode the two produce the SAME BYTES,
+over several message and context lengths, and each verifies the other's
+signatures. That cross-check is the conformance claim. Reference
+parity is not: this implementation matched the pq-crystals and
+sphincsplus reference code byte for byte while disagreeing with the
+standards twice over -- FIPS 204 and FIPS 205 both prepend a context
+domain separator the reference code omits, and FIPS 205 reads the FORS
+indices most significant bit first where SPHINCS+ read them least
+significant bit first. Neither is detectable from the inside: a
+signature scheme that verifies only its own output still rejects every
+tampering.
+
 # rmoriebricklayer 0.4.0
 
 The release that makes a capsule answer three questions a checksum

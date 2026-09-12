@@ -209,6 +209,17 @@ void rmbl_sha512_hex(const unsigned char *data, size_t len, char out[129]) {
     hexlify(h, 64, out);
 }
 
+/* The same digest as raw bytes. The SHA-2 instantiation of SLH-DSA
+ * (FIPS 205) truncates it to n, so it needs the bytes rather than the
+ * hex spelling. */
+void rmbl_sha512_raw(const unsigned char *data, size_t len,
+                     unsigned char out[64]) {
+    sha512_ctx c;
+    sha512_init(&c);
+    sha512_update(&c, data, len);
+    sha512_final(&c, out);
+}
+
 uint32_t rmbl_crc32(const unsigned char *data, size_t len) {
     if (!crc32_ready) crc32_init_table();
     uint32_t c = 0xFFFFFFFFu;

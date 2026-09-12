@@ -53,6 +53,31 @@ extern SEXP C_rmbl_top_share(SEXP, SEXP);
 extern SEXP C_rmbl_mann_kendall(SEXP);
 extern SEXP C_rmbl_theil_sen(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
+/* rmbl_keccak.cpp: FIPS 202 */
+extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
+/* rmbl_mldsa_ntt.cpp: FIPS 204 arithmetic */
+extern SEXP C_rmbl_mldsa_zetas(void);
+extern SEXP C_rmbl_mldsa_ntt(SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_reduce(SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sample(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_round(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_pack(SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_unpack(SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sizes(SEXP);
+extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP);
+
+/* rmbl_slhdsa.cpp: FIPS 205 */
+/* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
+ * and exposed so their published vectors can be asserted */
+extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mgf1(SEXP, SEXP, SEXP);
+
+extern SEXP C_rmbl_slhdsa_sizes(SEXP);
+extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_morans_i(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* rmbl_series.cpp plain-C kernels, for LinkingTo consumers */
 extern double   rmbl_gini(const double *, R_xlen_t);
@@ -74,9 +99,6 @@ extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
                                SEXP);
 extern SEXP C_rmbl_pqc_backends(void);
-extern SEXP C_rmbl_oqs_keygen(SEXP);
-extern SEXP C_rmbl_oqs_sign(SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_oqs_verify(SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_sketch.cpp) -- one-pass sketches */
 extern SEXP C_rmbl_moments_acc(SEXP);
 extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
@@ -155,6 +177,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_cor",            (DL_FUNC) &C_rmbl_cor,            2},
     {"C_rmbl_normal_pdf",     (DL_FUNC) &C_rmbl_normal_pdf,     3},
     {"C_rmbl_sha256",         (DL_FUNC) &C_rmbl_sha256,         1},
+    {"C_rmbl_sha512",         (DL_FUNC) &C_rmbl_sha512,         1},
     {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
     {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        2},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
@@ -183,7 +206,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_ks",                (DL_FUNC) &C_rmbl_ks,                2},
     {"C_rmbl_psi",               (DL_FUNC) &C_rmbl_psi,               3},
     {"C_rmbl_first_digit_counts",(DL_FUNC) &C_rmbl_first_digit_counts, 1},
-    {"C_rmbl_sha512",            (DL_FUNC) &C_rmbl_sha512,            1},
     {"C_rmbl_crc32",             (DL_FUNC) &C_rmbl_crc32,             1},
     {"C_rmbl_gini",              (DL_FUNC) &C_rmbl_gini,              1},
     {"C_rmbl_lorenz",            (DL_FUNC) &C_rmbl_lorenz,            1},
@@ -191,6 +213,24 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mann_kendall",      (DL_FUNC) &C_rmbl_mann_kendall,      1},
     {"C_rmbl_theil_sen",         (DL_FUNC) &C_rmbl_theil_sen,         2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
+    {"C_rmbl_shake",             (DL_FUNC) &C_rmbl_shake,             3},
+    {"C_rmbl_mldsa_zetas",       (DL_FUNC) &C_rmbl_mldsa_zetas,       0},
+    {"C_rmbl_mldsa_ntt",         (DL_FUNC) &C_rmbl_mldsa_ntt,         2},
+    {"C_rmbl_mldsa_reduce",      (DL_FUNC) &C_rmbl_mldsa_reduce,      2},
+    {"C_rmbl_mldsa_sample",      (DL_FUNC) &C_rmbl_mldsa_sample,      3},
+    {"C_rmbl_mldsa_round",       (DL_FUNC) &C_rmbl_mldsa_round,       3},
+    {"C_rmbl_mldsa_pack",        (DL_FUNC) &C_rmbl_mldsa_pack,        2},
+    {"C_rmbl_mldsa_unpack",      (DL_FUNC) &C_rmbl_mldsa_unpack,      2},
+    {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
+    {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
+    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        5},
+    {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      5},
+    {"C_rmbl_hmac_shax",         (DL_FUNC) &C_rmbl_hmac_shax,         3},
+    {"C_rmbl_mgf1",              (DL_FUNC) &C_rmbl_mgf1,              3},
+    {"C_rmbl_slhdsa_sizes",     (DL_FUNC) &C_rmbl_slhdsa_sizes,     1},
+    {"C_rmbl_slhdsa_keypair",   (DL_FUNC) &C_rmbl_slhdsa_keypair,   2},
+    {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      5},
+    {"C_rmbl_slhdsa_verify",    (DL_FUNC) &C_rmbl_slhdsa_verify,    5},
     {"C_rmbl_morans_i",          (DL_FUNC) &C_rmbl_morans_i,          7},
     {"C_rmbl_hmac_sha256",       (DL_FUNC) &C_rmbl_hmac_sha256,       2},
     {"C_rmbl_digest_equal",      (DL_FUNC) &C_rmbl_digest_equal,      2},
@@ -201,9 +241,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         6},
     {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       8},
     {"C_rmbl_pqc_backends",      (DL_FUNC) &C_rmbl_pqc_backends,      0},
-    {"C_rmbl_oqs_keygen",        (DL_FUNC) &C_rmbl_oqs_keygen,        1},
-    {"C_rmbl_oqs_sign",          (DL_FUNC) &C_rmbl_oqs_sign,          3},
-    {"C_rmbl_oqs_verify",        (DL_FUNC) &C_rmbl_oqs_verify,        4},
     {"C_rmbl_moments_acc",       (DL_FUNC) &C_rmbl_moments_acc,       1},
     {"C_rmbl_moments_merge",     (DL_FUNC) &C_rmbl_moments_merge,     2},
     {"C_rmbl_reservoir",         (DL_FUNC) &C_rmbl_reservoir,         3},

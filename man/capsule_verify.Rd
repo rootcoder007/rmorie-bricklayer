@@ -4,7 +4,7 @@
 \alias{capsule_verify}
 \title{Verify a capsule manifest signature}
 \usage{
-capsule_verify(message, signature, key)
+capsule_verify(message, signature, key, context = NULL)
 }
 \arguments{
 \item{message}{The message the signature is claimed to
@@ -14,10 +14,14 @@ cover.}
 \code{\link[=capsule_sign]{capsule_sign()}}.}
 
 \item{key}{The shared secret for \code{"hmac"}, a public key
-(or full signing key) for XMSS, or an
-\code{\link[=oqs_keygen]{oqs_keygen()}} key or its
-\code{\link[=oqs_public_key]{oqs_public_key()}} for a standardised
+(or full signing key) for XMSS, or a
+\code{\link[=fips_keygen]{fips_keygen()}} key or its
+\code{\link[=fips_public_key]{fips_public_key()}} for a standardised
 scheme. A signature is not verified against a key of a different scheme.}
+
+\item{context}{The context string the signature was made
+under, for the standardised schemes. A signature made under a different
+context, or under none, does not verify.}
 }
 \value{
 A length-1 logical.
