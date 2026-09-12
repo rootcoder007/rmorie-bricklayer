@@ -15,43 +15,43 @@ hill_tail_index(
 \arguments{
 \item{x}{Positive values, one per unit.}
 
-\item{x_min}{Threshold above which the power law is fitted. A power
-law is a statement about the tail, so a threshold is required; the
-default takes the value that leaves at least 50 observations, or the
+\item{x_min}{Threshold above which the power law is fitted.
+A power law is a statement about the tail, so a threshold is required;
+the default takes the value that leaves at least 50 observations, or the
 minimum if the data are smaller than that.}
 
-\item{discrete}{Whether the quantity is integer-valued. A count is,
-and then the likelihood maximised is the zeta distribution's, whose
-normalising constant is a Hurwitz zeta.}
+\item{discrete}{Whether the quantity is integer-valued.
+A count is, and then the likelihood maximised is the zeta
+distribution's, whose normalising constant is a Hurwitz zeta.}
 
-\item{approx}{For discrete data, whether to use the closed-form
-continuity-corrected estimator instead of maximising the exact
-likelihood. It is much faster and much worse: the correction is an
-asymptotic approximation in \code{x_min}, and at \code{x_min = 1} -- where
-administrative counts start -- it returns about 2.0 from data
+\item{approx}{For discrete data, whether to use the
+closed-form continuity-corrected estimator instead of maximising the
+exact likelihood. It is much faster and much worse: the correction is an
+asymptotic approximation in \code{x_min}, and at \code{x_min = 1} --
+where administrative counts start -- it returns about 2.0 from data
 generated with an exponent of 2.5. Off by default for that reason.}
 
-\item{min_tail}{Fewest tail observations for which an estimate is
-reported at all. Below it there is nothing to estimate from and
-\code{alpha} is \code{NA}.}
+\item{min_tail}{Fewest tail observations for which an
+estimate is reported at all. Below it there is nothing to estimate from
+and \code{alpha} is \code{NA}.}
 }
 \value{
-A list with \code{alpha}, its standard error, \code{x_min}, \code{n_tail},
-\code{ks} and \code{reliable}. \code{ks} is the Kolmogorov-Smirnov distance
-between the fitted tail and the data: a large value means the tail
-is not a power law, whatever \code{alpha} came out as. \code{reliable} is
-\code{FALSE} when fewer than 50 observations lie in the tail, which is
-the sample size Clauset, Shalizi and Newman give as the point below
-which the estimate should not be leaned on -- it is reported rather
-than enforced, because the right response to a short tail is a
-wider interval, not a refusal.
+A list with \code{alpha}, its standard error, \code{x_min},
+\code{n_tail}, \code{ks} and \code{reliable}. \code{ks} is the
+Kolmogorov-Smirnov distance between the fitted tail and the data: a
+large value means the tail is not a power law, whatever \code{alpha}
+came out as. \code{reliable} is \code{FALSE} when fewer than 50
+observations lie in the tail, which is the sample size Clauset, Shalizi
+and Newman give as the point below which the estimate should not be
+leaned on -- it is reported rather than enforced, because the right
+response to a short tail is a wider interval, not a refusal.
 }
 \description{
 The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
-power law above a threshold. An exponent near 2 or below means the
-mean is barely defined and the observed maximum is not informative
-about the next one, which is the substantive point when a few units
-dominate a total.
+power law above a threshold. An exponent near 2 or below means the mean
+is barely defined and the observed maximum is not informative about the
+next one, which is the substantive point when a few units dominate a
+total.
 }
 \examples{
 # A continuous Pareto tail with exponent 2.5.
@@ -82,6 +82,6 @@ Clauset, A., Shalizi, C. R. and Newman, M. E. J. (2009). Power-law
 distributions in empirical data. \emph{SIAM Review} 51(4), 661-703. The
 estimator and its threshold guidance are theirs; the continuity
 correction they give in closed form is an asymptotic approximation in
-\code{x_min}, which is why the exact likelihood is maximised here instead.
-(Not in the local corpus; cited from the published paper.)
+\code{x_min}, which is why the exact likelihood is maximised here
+instead. (Not in the local corpus; cited from the published paper.)
 }

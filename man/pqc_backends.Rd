@@ -7,17 +7,18 @@
 pqc_backends()
 }
 \value{
-A character vector of scheme names. \code{"xmss-sha256"} is always
-first; any standardised schemes this build of liboqs enabled follow.
+A character vector of scheme names. \code{"xmss-sha256"} is
+always first; any standardised schemes this build of liboqs enabled
+follow.
 }
 \description{
 Reports which signature backends this build of the package can use.
-\code{"xmss-sha256"} is always present -- it needs nothing but the bundled
-SHA-256. \code{"liboqs"} appears only when the Open Quantum Safe library
-was found at configure time, which additionally enables the
-standardised lattice and hash-based schemes (ML-DSA / FIPS 204,
-SLH-DSA / FIPS 205) through that library rather than through any
-hand-written implementation here.
+\code{"xmss-sha256"} is always present -- it needs nothing but the
+bundled SHA-256. \code{"liboqs"} appears only when the Open Quantum Safe
+library was found at configure time, which additionally enables the
+standardised lattice and hash-based schemes (ML-DSA / FIPS 204, SLH-DSA
+/ FIPS 205) through that library rather than through any hand-written
+implementation here.
 }
 \examples{
 pqc_backends()
@@ -29,5 +30,6 @@ pqc_backends()
 "ML-DSA-65" \%in\% pqc_backends()
 }
 \seealso{
-\code{\link[=pqc_keygen]{pqc_keygen()}}, which takes any of these as its \code{scheme}.
+\code{\link[=pqc_keygen]{pqc_keygen()}}, which takes any of these as its
+\code{scheme}.
 }

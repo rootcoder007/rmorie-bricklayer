@@ -9,33 +9,38 @@ validate_schema(df_raw, provenance)
 \arguments{
 \item{df_raw}{The data frame to validate.}
 
-\item{provenance}{A provenance list as returned by \code{\link[=load_provenance]{load_provenance()}},
-or \code{list(schema = infer_schema(df))}. The \code{schema} block may contain:
+\item{provenance}{A provenance list as returned by
+\code{\link[=load_provenance]{load_provenance()}}, or
+\code{list(schema = infer_schema(df))}. The \code{schema} block may
+contain:
 \itemize{
 \item \code{expected_columns} -- required column names. A missing one is
 \code{"fatal"}; everything else below is a \code{"warning"}.
 \item \code{structural_invariants} -- \code{min_data_rows} and \code{max_data_rows}.
 \item \code{expected_value_sets} -- a named list of allowed values per column.
 \item \code{expected_types} -- a named character vector of expected classes.
-\code{integer}, \code{numeric} and \code{double} are treated as interchangeable,
-since a re-release legitimately widens one to another.
+\code{integer}, \code{numeric} and \code{double} are treated as
+interchangeable, since a re-release legitimately widens one to another.
 \item \code{numeric_ranges} -- a named list of \code{c(min =, max =)} bounds.
 \item \code{max_missing_fraction} -- a named numeric of per-column ceilings on
 the share of \code{NA}.
 }
 
-\code{\link[=infer_schema]{infer_schema()}} produces all six from data you already trust.}
+\code{\link[=infer_schema]{infer_schema()}} produces all six from data
+you already trust.}
 }
 \value{
-A named list of issues; each issue is a list with \code{severity}
-(\code{"fatal"} or \code{"warning"}) and a human-readable \code{message}. A
-zero-length list means the data frame is clean.
+A named list of issues; each issue is a list with
+\code{severity} ( \code{"fatal"} or \code{"warning"}) and a
+human-readable \code{message}. A zero-length list means the data frame
+is clean.
 }
 \description{
 Checks a raw data frame against the \code{schema} block of a provenance
 object and returns the issues found rather than raising, so the caller
-decides how to react. \code{\link[=apply_schema_validation]{apply_schema_validation()}} is the wrapper that
-turns them into errors and warnings.
+decides how to react.
+\code{\link[=apply_schema_validation]{apply_schema_validation()}} is the
+wrapper that turns them into errors and warnings.
 }
 \details{
 Every schema field is optional and is checked only when present, so a
@@ -43,7 +48,8 @@ schema written for an earlier version keeps working unchanged.
 
 This is the STRUCTURAL check -- names, types, bounds, value sets. It
 cannot tell you that a column kept its name, type and range while its
-distribution moved; \code{\link[=capsule_drift]{capsule_drift()}} answers that.
+distribution moved; \code{\link[=capsule_drift]{capsule_drift()}}
+answers that.
 }
 \examples{
 prov <- list(schema = list(
@@ -70,7 +76,8 @@ validate_schema(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
 length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
 }
 \seealso{
-\code{\link[=infer_schema]{infer_schema()}} to derive a schema, \code{\link[=capsule_drift]{capsule_drift()}} for
-the distributional check, \code{\link[=apply_schema_validation]{apply_schema_validation()}} to raise on
-the issues.
+\code{\link[=infer_schema]{infer_schema()}} to derive a schema,
+\code{\link[=capsule_drift]{capsule_drift()}} for the distributional
+check, \code{\link[=apply_schema_validation]{apply_schema_validation()}}
+to raise on the issues.
 }

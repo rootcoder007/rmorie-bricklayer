@@ -32,9 +32,9 @@
 
 #' Format doubles and integers the way jsonlite's num_to_char() does
 #'
-#' `digits` is decimal places (jsonlite default 4), `I(n)` means n
-#' significant digits, `NA` means 15 significant digits. Non-finite values
-#' become "NA"/"NaN"/"Inf"/"-Inf" strings, null, or NA_character_
+#' `digits` is decimal places (jsonlite default 4), `I(n)` means
+#' n significant digits, `NA` means 15 significant digits. Non-finite
+#' values become "NA"/"NaN"/"Inf"/"-Inf" strings, null, or NA_character_
 #' (dropped later) depending on `na_as_string`.
 #' @noRd
 .rmbl_json_num_to_char <- function(x, digits = 4, na_as_string = NA,
@@ -140,7 +140,8 @@
 
 # ================================================================ strings
 
-#' Escape a character vector as JSON string literals (jsonlite's C_escape_chars)
+#' Escape a character vector as JSON string literals (jsonlite's
+#' C_escape_chars)
 #' @noRd
 .rmbl_json_esc <- function(x) {
   if (!length(x)) return(character(0))
@@ -174,25 +175,27 @@
 #' embed binary content in a text manifest wherever this package runs.
 #'
 #' `bricklayer_json_base64_enc()` breaks its output into 72-character
-#' lines, matching jsonlite's encoder; the decoder ignores line breaks
-#' and any other character outside the alphabet, so either form round
-#' trips.
+#' lines, matching jsonlite's encoder; the decoder ignores line breaks and
+#' any other character outside the alphabet, so either form round trips.
 #'
-#' The URL-safe variant substitutes `-` and `_` for `+` and `/` and
-#' drops the `=` padding, which is what makes it safe in a URL path, a
-#' query string or a filename.
+#' The URL-safe variant substitutes `-` and `_` for `+` and
+#' `/` and drops the `=` padding, which is what makes it safe in
+#' a URL path, a query string or a filename.
 #'
-#' Base64 is an ENCODING, not encryption or a digest: it hides nothing
-#' and anyone can reverse it. Use [core_sha256()] to pin content and
-#' [core_hmac_sha256()] to authenticate it.
+#' Base64 is an ENCODING, not encryption or a digest: it hides nothing and
+#' anyone can reverse it. Use [core_sha256()] to
+#' pin content and [core_hmac_sha256()] to
+#' authenticate it.
 #'
-#' @param input For the encoders, a raw vector or a character vector
-#'   (joined with newlines first). For the decoders, base64 text or its
-#'   raw bytes.
-#' @return The encoders return a length-1 character vector
-#'   (`NA_character_` for `NULL` input); the decoders return a raw
-#'   vector.
-#' @seealso [json_gzip_encode()], which composes this with gzip.
+#' @param input For the encoders, a raw vector or a character
+#' vector (joined with newlines first). For the decoders, base64 text or
+#' its raw bytes.
+#' @return The encoders return a length-1 character vector (
+#' `NA_character_` for `NULL` input); the decoders return a raw
+#' vector.
+#' @seealso
+#' [json_gzip_encode()], which composes this
+#' with gzip.
 #' @examples
 #' # Round trip through the standard alphabet.
 #' b <- bricklayer_json_base64_enc("hello capsule")
@@ -630,15 +633,30 @@ bricklayer_json_base64url_dec <- function(input) {
 
 #' Encode an R object as JSON (jsonlite's toJSON, natively)
 #'
-#' Every option of jsonlite's `toJSON()` with the same default and the same
-#' bytes out: `dataframe`, `matrix`, `Date`, `POSIXt`, `factor`, `complex`,
-#' `raw`, `null`, `na`, `auto_unbox`, `digits` (`I(n)` for significant
-#' digits, `NA` for 15), `pretty` (TRUE = 2 spaces, or a width), `force`,
-#' plus `rownames`, `keep_vec_names`, `json_verbatim`, `always_decimal`,
-#' `time_format`, `UTC`, `no_dots`, `hms`.
+#' Every option of jsonlite's `toJSON()` with the same default and the
+#' same bytes out: `dataframe`, `matrix`, `Date`,
+#' `POSIXt`, `factor`, `complex`, `raw`, `null`,
+#' `na`, `auto_unbox`, `digits` ( `I(n)` for
+#' significant digits, `NA` for 15), `pretty` (TRUE = 2 spaces,
+#' or a width), `force`, plus `rownames`, `keep_vec_names`,
+#' `json_verbatim`, `always_decimal`, `time_format`,
+#' `UTC`, `no_dots`, `hms`.
 #'
 #' @param x the object to encode.
-#' @param dataframe,matrix,Date,POSIXt,factor,complex,raw,null,na,auto_unbox,digits,pretty,force,... as in jsonlite.
+#' @param dataframe As in jsonlite.
+#' @param matrix As in jsonlite.
+#' @param Date As in jsonlite.
+#' @param POSIXt As in jsonlite.
+#' @param factor As in jsonlite.
+#' @param complex As in jsonlite.
+#' @param raw As in jsonlite.
+#' @param null As in jsonlite.
+#' @param na As in jsonlite.
+#' @param auto_unbox As in jsonlite.
+#' @param digits As in jsonlite.
+#' @param pretty As in jsonlite.
+#' @param force As in jsonlite.
+#' @param ... As in jsonlite.
 #' @return a length-one character vector of class `json`.
 #' @examples
 #' bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
@@ -673,9 +691,10 @@ bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"
 
 #' Mark a value as a JSON scalar (jsonlite's unbox)
 #'
-#' @param x an atomic vector of length one, a one-row data.frame, or a
-#'   length-one POSIXt.
-#' @return `x` with class `scalar`, so it is written without brackets.
+#' @param x an atomic vector of length one, a one-row data.frame,
+#' or a length-one POSIXt.
+#' @return `x` with class `scalar`, so it is written without
+#' brackets.
 #' @noRd
 bricklayer_json_unbox <- function(x) {
   if (is.null(x)) return(x)
@@ -1047,8 +1066,10 @@ bricklayer_json_unbox <- function(x) {
 #'
 #' @param txt JSON text, a file path, or an http(s) URL.
 #' @param simplifyVector,simplifyDataFrame,simplifyMatrix,flatten as in jsonlite.
-#' @param bigint_as_char integers beyond 2^53 come back as strings.
-#' @param simplify legacy: `FALSE` turns every simplification off.
+#' @param bigint_as_char integers beyond 2^53 come
+#' back as strings.
+#' @param simplify legacy: `FALSE` turns every
+#' simplification off.
 #' @param ... ignored, for call compatibility.
 #' @return an R object.
 #' @examples
@@ -1095,9 +1116,13 @@ bricklayer_json_parse_json <- function(json, simplifyVector = FALSE, ...) {
 #' Read and write JSON files
 #'
 #' @param path file path.
-#' @param simplifyVector as in jsonlite (`FALSE` by default for files).
-#' @param ... options of [bricklayer_json_from_json()] / [bricklayer_json_to_json()].
-#' @return `read_json`: the parsed object; `write_json`: `path`, invisibly.
+#' @param simplifyVector as in jsonlite (
+#' `FALSE` by default for files).
+#' @param ... options of
+#' [bricklayer_json_from_json()] /
+#' [bricklayer_json_to_json()].
+#' @return `read_json`: the parsed object; `write_json`:
+#' `path`, invisibly.
 #' @noRd
 bricklayer_json_read_json <- function(path, simplifyVector = FALSE, ...) {
   bricklayer_json_from_json(file(path), simplifyVector = simplifyVector, ...)
@@ -1113,7 +1138,8 @@ bricklayer_json_write_json <- function(x, path, ...) {
 #' Validate JSON text
 #'
 #' @param txt character; lines are joined with newlines.
-#' @return `TRUE`, or `FALSE` with attributes `err` and `offset`.
+#' @return `TRUE`, or `FALSE` with attributes `err` and
+#' `offset`.
 #' @noRd
 bricklayer_json_validate <- function(txt) {
   stopifnot(is.character(txt))
@@ -1358,13 +1384,15 @@ bricklayer_json_flatten <- function(x, recursive = TRUE) {
 
 #' Stream newline-delimited JSON (jsonlite's stream_in / stream_out)
 #'
-#' @param con a connection (opened in binary mode if not already open).
-#' @param handler optional function called on each simplified page.
+#' @param con a connection (opened in binary mode if not already
+#' open).
+#' @param handler optional function called on each
+#' simplified page.
 #' @param pagesize records per page.
 #' @param verbose print progress.
 #' @param ... passed to the simplifier / encoder.
 #' @return `stream_in`: a data.frame of all records (or nothing with a
-#'   handler); `stream_out`: invisible.
+#' handler); `stream_out`: invisible.
 #' @noRd
 bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbose = TRUE, ...) {
   if (!inherits(con, "connection")) stop("Argument 'con' must be a connection.", call. = FALSE)
@@ -1416,7 +1444,8 @@ bricklayer_json_stream_in <- function(con, handler = NULL, pagesize = 500, verbo
   if (isTRUE(simplifyDataFrame)) as.data.frame(out) else out
 }
 #' @param x a data.frame to write, one record per line.
-#' @param prefix text prepended to every line (e.g. `""` for RFC 7464).
+#' @param prefix text prepended to every line (e.g.
+#' `" "` for RFC 7464).
 #' @noRd
 bricklayer_json_stream_out <- function(x, con = stdout(), pagesize = 500, verbose = TRUE, prefix = "", ...) {
   if (!inherits(con, "connection")) stop("Argument 'con' must be a connection.", call. = FALSE)
@@ -1456,9 +1485,11 @@ bricklayer_json_stream_out <- function(x, con = stdout(), pagesize = 500, verbos
   substr(rows, 2L, nchar(rows) - 1L)
 }
 
-#' Row-bind a list of data.frames with differing columns (jsonlite's rbind_pages)
+#' Row-bind a list of data.frames with differing columns (jsonlite's
+#' rbind_pages)
 #'
-#' @param pages a list of data.frames (NULL entries are dropped).
+#' @param pages a list of data.frames (NULL entries are
+#' dropped).
 #' @return one data.frame; missing columns are filled with NA.
 #' @noRd
 bricklayer_json_rbind_pages <- function(pages) {
@@ -1559,26 +1590,30 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' Writes an R object to JSON with its type and attributes alongside the
 #' value, so the round trip returns THE SAME OBJECT rather than something
 #' that merely prints the same. The counterpart of jsonlite's
-#' `serializeJSON()`/`unserializeJSON()`, computed by this package's own
-#' codec with no jsonlite dependency.
+#' `serializeJSON()` / `unserializeJSON()`, computed by this
+#' package's own codec with no jsonlite dependency.
 #'
-#' Use this, not [bricklayer_json_to_json()], whenever the JSON has to
-#' reconstruct the object faithfully. `bricklayer_json_to_json()` writes
-#' the DATA -- which is what an API or a human wants, and which loses
-#' factor levels, matrix dimensions, classes and every other attribute.
-#' These two keep them, at the cost of JSON no other tool will
-#' understand.
+#' Use this, not
+#' [bricklayer_json_to_json()],
+#' whenever the JSON has to reconstruct the object faithfully.
+#' `bricklayer_json_to_json()` writes the DATA -- which is what an API
+#' or a human wants, and which loses factor levels, matrix dimensions,
+#' classes and every other attribute. These two keep them, at the cost of
+#' JSON no other tool will understand.
 #'
 #' @param x Object to serialise.
-#' @param digits Decimal digits retained for doubles (default 8, the
-#'   jsonlite default). Raise it where full precision matters.
+#' @param digits Decimal digits retained for doubles (default
+#' 8, the jsonlite default). Raise it where full precision matters.
 #' @param pretty Indent the output.
-#' @param txt JSON produced by `bricklayer_json_serialize()`.
+#' @param txt JSON produced by
+#' `bricklayer_json_serialize()`.
 #' @return `bricklayer_json_serialize()` returns a length-1 character
-#'   vector of class `json`; `bricklayer_json_unserialize()` returns the
-#'   original object.
-#' @seealso [bricklayer_json_to_json()] for plain data JSON,
-#'   [core_sha256()] for fingerprinting the result.
+#' vector of class `json`; `bricklayer_json_unserialize()`
+#' returns the original object.
+#' @seealso
+#' [bricklayer_json_to_json()] for
+#' plain data JSON, [core_sha256()] for
+#' fingerprinting the result.
 #' @examples
 #' # A factor survives the round trip with its levels intact.
 #' f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))

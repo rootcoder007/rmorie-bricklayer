@@ -13,12 +13,12 @@ crc32_file(path, block_bytes = 1048576L)
 \arguments{
 \item{path}{Path to an existing file.}
 
-\item{block_bytes}{Read size in bytes (default 1048576). Affects speed
-only, never the result.}
+\item{block_bytes}{Read size in bytes (default
+1048576). Affects speed only, never the result.}
 }
 \value{
-A length-1 character vector (\code{sha512_file()}) or numeric
-(\code{crc32_file()}).
+A length-1 character vector ( \code{sha512_file()}) or numeric (
+\code{crc32_file()}) .
 }
 \description{
 Streams the file in blocks, so memory use does not grow with the file.

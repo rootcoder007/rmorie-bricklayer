@@ -20,9 +20,11 @@ bricklayer_json_from_json(
 
 \item{simplifyVector, simplifyDataFrame, simplifyMatrix, flatten}{as in jsonlite.}
 
-\item{bigint_as_char}{integers beyond 2^53 come back as strings.}
+\item{bigint_as_char}{integers beyond 2^53 come
+back as strings.}
 
-\item{simplify}{legacy: \code{FALSE} turns every simplification off.}
+\item{simplify}{legacy: \code{FALSE} turns every
+simplification off.}
 
 \item{...}{ignored, for call compatibility.}
 }

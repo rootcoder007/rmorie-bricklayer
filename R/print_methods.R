@@ -120,21 +120,21 @@ format.bricklayer_drift <- function(x, ...) {
 
 #' Printed reports for bricklayer objects
 #'
-#' Human-readable renderings of the objects the package returns. Each
-#' leads with the verdict, then the evidence. `format()` returns the
-#' lines as a character vector so they can be logged or written to a
-#' file; `print()` sends them to the console and returns its argument
+#' Human-readable renderings of the objects the package returns. Each leads
+#' with the verdict, then the evidence. `format()` returns the lines
+#' as a character vector so they can be logged or written to a file;
+#' `print()` sends them to the console and returns its argument
 #' invisibly.
 #'
 #' Box-drawing characters are used only when the session's encoding can
-#' render them; otherwise the same layout is drawn in plain ASCII. Set
-#' the environment variable `RMBL_ASCII_ONLY` to force the ASCII form,
+#' render them; otherwise the same layout is drawn in plain ASCII. Set the
+#' environment variable `RMBL_ASCII_ONLY` to force the ASCII form,
 #' which is what to do when capturing output into a fixed-width log.
 #'
 #' @param x The object to render.
 #' @param ... Ignored, present for S3 consistency.
-#' @return `format()` methods return a character vector; `print()`
-#'   methods return `x` invisibly.
+#' @return `format()` methods return a character vector;
+#' `print()` methods return `x` invisibly.
 #' @examples
 #' set.seed(7)
 #' ref <- data.frame(v = stats::rnorm(200),
@@ -318,22 +318,22 @@ summary.bricklayer_benford <- function(object, ...) {
 #'
 #' Reporting the classical and robust centres side by side is the point:
 #' where they disagree, the column has outliers or a heavy tail, and the
-#' mean is not describing it. That is visible in one glance here and in
-#' no single number.
+#' mean is not describing it. That is visible in one glance here and in no
+#' single number.
 #'
 #' @param data A data frame.
-#' @param quantiles Quantile probabilities to include for numeric
-#'   columns (default the quartiles).
+#' @param quantiles Quantile probabilities to include for
+#' numeric columns (default the quartiles).
 #' @return A data frame of class `bricklayer_profile`, one row per
-#'   column: the type, the missing count and share, the number of
-#'   distinct values, and for a numeric column the counts of zero,
-#'   negative and infinite values, the classical and robust centre and
-#'   spread, the range, the skewness, the count outside the Tukey
-#'   fences, and an [inline_hist()] sketch of its distribution. A
-#'   categorical column reports its most common value in `top`
-#'   instead.
-#' @seealso [capsule_drift()] to compare two of these, [core_moments()]
-#'   for the underlying kernel.
+#' column: the type, the missing count and share, the number of distinct
+#' values, and for a numeric column the counts of zero, negative and
+#' infinite values, the classical and robust centre and spread, the range,
+#' the skewness, the count outside the Tukey fences, and an
+#' [inline_hist()] sketch of its distribution. A
+#' categorical column reports its most common value in `top` instead.
+#' @seealso
+#' [capsule_drift()] to compare two of these,
+#' [core_moments()] for the underlying kernel.
 #' @examples
 #' set.seed(9)
 #' df <- data.frame(

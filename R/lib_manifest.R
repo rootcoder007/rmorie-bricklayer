@@ -18,7 +18,8 @@
 
 #' Null-Coalescing Operator
 #'
-#' Returns `a` unless it is `NULL`, in which case it returns `b`.
+#' Returns `a` unless it is `NULL`, in which case it returns
+#' `b`.
 #'
 #' @param a Left-hand value.
 #' @param b Fallback used when `a` is `NULL`.
@@ -30,15 +31,17 @@
 #' Construct a Reproducibility Manifest
 #'
 #' Creates an empty manifest object that accumulates cross-check entries
-#' via [record()] and is later serialized with [write_manifest_json()].
+#' via [record()] and is later serialized with
+#' [write_manifest_json()].
 #'
-#' @param meta A named list of run metadata (e.g. `project`, `author`,
-#'   `run_at`, `synthetic`).
-#' @param environment Logical; when `TRUE` (the default) the manifest
-#'   also records the analysis environment via [capture_environment()]
-#'   (R version, platform, OS, UTC timestamp, loaded package versions).
-#' @return A manifest list with elements `meta`, an empty `results`
-#'   list, and (when requested) `environment`.
+#' @param meta A named list of run metadata (e.g.
+#' `project`, `author`, `run_at`, `synthetic`) .
+#' @param environment Logical; when `TRUE` (the
+#' default) the manifest also records the analysis environment via
+#' [capture_environment()] (R version,
+#' platform, OS, UTC timestamp, loaded package versions).
+#' @return A manifest list with elements `meta`, an empty
+#' `results` list, and (when requested) `environment`.
 #' @examples
 #' # Minimal manifest, no environment capture.
 #' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
@@ -60,19 +63,23 @@ make_manifest <- function(meta, environment = TRUE) {
 #' Record a Cross-Check Result in a Manifest
 #'
 #' Appends one named cross-check entry to a manifest, classifying it as
-#' `PASS`, `DIFFER`, or `INFO`, printing a formatted line to the console,
-#' and returning the updated manifest.
+#' `PASS`, `DIFFER`, or `INFO`, printing a formatted line to
+#' the console, and returning the updated manifest.
 #'
-#' @param manifest A manifest as returned by [make_manifest()].
-#' @param name Unique name for this cross-check; used as the result key.
-#' @param observed The observed value (numeric or otherwise).
+#' @param manifest A manifest as returned by
+#' [make_manifest()].
+#' @param name Unique name for this cross-check; used as the
+#' result key.
+#' @param observed The observed value (numeric or
+#' otherwise).
 #' @param expected The expected value to compare against.
-#' @param tol Numeric tolerance; a numeric pair within `tol` is `PASS`.
-#'   Defaults to `0.0001`.
-#' @param group Optional grouping label for the entry. Defaults to
-#'   `"general"`.
-#' @param synthetic Logical; if `TRUE` the entry is marked `INFO` because
-#'   comparison against synthetic data is not meaningful.
+#' @param tol Numeric tolerance; a numeric pair within
+#' `tol` is `PASS`. Defaults to `0.0001`.
+#' @param group Optional grouping label for the entry.
+#' Defaults to `"general"`.
+#' @param synthetic Logical; if `TRUE` the entry is
+#' marked `INFO` because comparison against synthetic data is not
+#' meaningful.
 #' @return The updated manifest, returned so calls can be chained.
 #' @examples
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
@@ -123,11 +130,14 @@ record <- function(manifest, name, observed, expected,
 
 #' Write a Manifest to JSON
 #'
-#' Serializes a manifest to a pretty-printed JSON file with the native
-#' JSON codec ([bricklayer_json_to_json()]); no jsonlite needed.
+#' Serializes a manifest to a pretty-printed JSON file with the native JSON
+#' codec (
+#' [bricklayer_json_to_json()]) ; no
+#' jsonlite needed.
 #'
-#' @param manifest A manifest as returned by [make_manifest()] / built up
-#'   with [record()].
+#' @param manifest A manifest as returned by
+#' [make_manifest()] / built up with
+#' [record()].
 #' @param path Destination path for the JSON file.
 #' @return The `path`, returned invisibly.
 #' @examples
@@ -151,10 +161,11 @@ write_manifest_json <- function(manifest, path) {
 #'
 #' Tallies the status of every recorded cross-check in a manifest.
 #'
-#' @param manifest A manifest whose `results` entries each carry a
-#'   `status` of `"PASS"`, `"DIFFER"`, or `"INFO"`.
-#' @return A list with integer counts `total`, `pass`, `differ`, `warn`, and
-#'   `info`.
+#' @param manifest A manifest whose `results` entries
+#' each carry a `status` of `"PASS"`, `"DIFFER"`, or
+#' `"INFO"`.
+#' @return A list with integer counts `total`, `pass`,
+#' `differ`, `warn`, and `info`.
 #' @keywords internal
 #' @noRd
 summarise_counts <- function(manifest) {
@@ -175,19 +186,23 @@ summarise_counts <- function(manifest) {
 #' Write a Plain-Language Run Summary
 #'
 #' Writes a human-readable `SUMMARY.txt` into the output directory,
-#' covering run metadata, the exact absolute paths used, result counts,
-#' the files produced, and optional notes, contact, and licence lines.
+#' covering run metadata, the exact absolute paths used, result counts, the
+#' files produced, and optional notes, contact, and licence lines.
 #'
-#' @param manifest A manifest as returned by [make_manifest()]; its `meta`
-#'   supplies project/author/run details.
-#' @param output_dir Directory to write `SUMMARY.txt` into and to list
-#'   produced files from.
-#' @param paths A named list of absolute paths to report (e.g. `capsule`,
-#'   `input`, `results`, `analysis_script`, `provenance`).
-#' @param what_was_done Optional character vector of bullet points
-#'   describing what the run did.
-#' @param contact Optional contact string appended to the summary.
-#' @param licence Optional licence string appended to the summary.
+#' @param manifest A manifest as returned by
+#' [make_manifest()]; its `meta` supplies
+#' project/author/run details.
+#' @param output_dir Directory to write
+#' `SUMMARY.txt` into and to list produced files from.
+#' @param paths A named list of absolute paths to report (e.g.
+#' `capsule`, `input`, `results`, `analysis_script`,
+#' `provenance`) .
+#' @param what_was_done Optional character vector of
+#' bullet points describing what the run did.
+#' @param contact Optional contact string appended to the
+#' summary.
+#' @param licence Optional licence string appended to the
+#' summary.
 #' @return The path to the written `SUMMARY.txt`, returned invisibly.
 #' @examples
 #' man <- make_manifest(list(project = "demo", author = "A. Author"),

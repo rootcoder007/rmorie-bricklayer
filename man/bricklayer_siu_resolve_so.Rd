@@ -7,12 +7,12 @@
 bricklayer_siu_resolve_so(text)
 }
 \arguments{
-\item{text}{A length-1 character vector of plain report text (see
-\code{\link[=bricklayer_siu_text]{bricklayer_siu_text()}}).}
+\item{text}{A length-1 character vector of plain report text
+(see \code{\link[=bricklayer_siu_text]{bricklayer_siu_text()}}) .}
 }
 \value{
-A list with \code{count} (integer, \code{NA} when unresolved) and
-\code{reason} (the human-readable evidence).
+A list with \code{count} (integer, \code{NA} when unresolved)
+and \code{reason} (the human-readable evidence).
 }
 \description{
 Deterministic, reproducible extraction of the subject-official (SO)
@@ -20,13 +20,13 @@ count for reports where a model panel (or a human) is unsure. The
 standard SIU privacy boilerplate is stripped first, then rules apply
 most-specific first: highest \code{SO #N} ordinal; spelled-out plural;
 singular subject official present (1); witness-official-only (0, a real
-answer); otherwise unresolved (\code{NA}).
+answer); otherwise unresolved ( \code{NA}) .
 }
 \details{
 bricklayer is the foundation layer: this function is the pure
 rule set. Reports already in the panel-reviewed corpus should never be
-re-derived -- use \code{rmorie::morie_siu_resolve_so()}, which returns the
-verified corpus value first and only falls back to these rules for
+re-derived -- use \code{rmorie::morie_siu_resolve_so()}, which returns
+the verified corpus value first and only falls back to these rules for
 unreviewed reports.
 }
 \examples{

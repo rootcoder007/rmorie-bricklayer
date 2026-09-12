@@ -10,11 +10,11 @@ bricklayer_siu_iso_date(x)
 \item{x}{A character vector of human-readable dates.}
 }
 \value{
-A character vector of \code{YYYY-MM-DD} strings (or \code{""}).
+A character vector of \code{YYYY-MM-DD} strings (or \code{""}) .
 }
 \description{
-\code{"January 5, 2023"} (or \code{"January 5 2023"}) becomes \code{"2023-01-05"};
-unparseable input becomes \code{""}.
+\code{"January 5, 2023"} (or \code{"January 5 2023"}) becomes
+\code{"2023-01-05"}; unparseable input becomes \code{""}.
 }
 \examples{
 bricklayer_siu_iso_date(c("January 5, 2023", "not a date"))

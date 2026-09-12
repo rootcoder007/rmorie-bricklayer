@@ -15,30 +15,34 @@ record(
 )
 }
 \arguments{
-\item{manifest}{A manifest as returned by \code{\link[=make_manifest]{make_manifest()}}.}
+\item{manifest}{A manifest as returned by
+\code{\link[=make_manifest]{make_manifest()}}.}
 
-\item{name}{Unique name for this cross-check; used as the result key.}
+\item{name}{Unique name for this cross-check; used as the
+result key.}
 
-\item{observed}{The observed value (numeric or otherwise).}
+\item{observed}{The observed value (numeric or
+otherwise).}
 
 \item{expected}{The expected value to compare against.}
 
-\item{tol}{Numeric tolerance; a numeric pair within \code{tol} is \code{PASS}.
-Defaults to \code{0.0001}.}
+\item{tol}{Numeric tolerance; a numeric pair within
+\code{tol} is \code{PASS}. Defaults to \code{0.0001}.}
 
-\item{group}{Optional grouping label for the entry. Defaults to
-\code{"general"}.}
+\item{group}{Optional grouping label for the entry.
+Defaults to \code{"general"}.}
 
-\item{synthetic}{Logical; if \code{TRUE} the entry is marked \code{INFO} because
-comparison against synthetic data is not meaningful.}
+\item{synthetic}{Logical; if \code{TRUE} the entry is
+marked \code{INFO} because comparison against synthetic data is not
+meaningful.}
 }
 \value{
 The updated manifest, returned so calls can be chained.
 }
 \description{
 Appends one named cross-check entry to a manifest, classifying it as
-\code{PASS}, \code{DIFFER}, or \code{INFO}, printing a formatted line to the console,
-and returning the updated manifest.
+\code{PASS}, \code{DIFFER}, or \code{INFO}, printing a formatted line to
+the console, and returning the updated manifest.
 }
 \examples{
 man <- make_manifest(list(project = "demo"), environment = FALSE)

@@ -7,23 +7,26 @@
 agent_bundle(request, model = NULL, backend = "auto")
 }
 \arguments{
-\item{request}{Character scalar describing the bundle task.}
+\item{request}{Character scalar describing the bundle
+task.}
 
-\item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"} for an
-Ollama server or \code{"claude-sonnet-5"} for Anthropic; defaults to
+\item{model}{Optional model id, e.g.
+\code{"minimax-m3:cloud"} for an Ollama server or
+\code{"claude-sonnet-5"} for Anthropic; defaults to
 \code{$RMORIE_AGENT_MODEL} or the CLI's auto-pick.}
 
-\item{backend}{\code{"auto"} (default), \code{"ollama"} (server from
+\item{backend}{\code{"auto"} (default), \code{"ollama"}
+(server from
 \code{$RMORIE_AGENT_OLLAMA_URL}) or \code{"anthropic"}
-(\code{$RMORIE_AGENT_API_KEY}).}
+( \code{$RMORIE_AGENT_API_KEY}) .}
 }
 \value{
 Character scalar: the agent's output, or a message if the
 \code{rmorie} binary is not installed.
 }
 \description{
-Forwards a bundle-building request to the \code{rmorie} command-line agent
-(optional binary from rmorie-cli), with a rmoriebricklayer-focused
+Forwards a bundle-building request to the \code{rmorie} command-line
+agent (optional binary from rmorie-cli), with a rmoriebricklayer-focused
 preamble. The agent can run R and read/write files to help assemble or
 repair a brick-proof bundle. See \code{rmorie::agent} for requirements.
 }

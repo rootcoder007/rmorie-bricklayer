@@ -11,22 +11,25 @@ core_trimmed_mean(x, trim = 0.1)
 core_winsorized_mean(x, trim = 0.1)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with \code{\link[=as.numeric]{as.numeric()}}).}
+\item{x}{Numeric vector (coerced with
+\code{\link[=as.numeric]{as.numeric()}}) .}
 
-\item{trim}{Proportion trimmed from \emph{each} end, in [0, 0.5]. At
-\code{0.5} both reduce to the median.}
+\item{trim}{Proportion trimmed from \emph{each} end, in \
+[0, 0.5]. At \code{0.5} both reduce to the median.
+
+[0, 0.5]: R:0,\%200.5\%5C}
 }
 \value{
 A length-1 numeric.
 }
 \description{
-Two ways to stop a handful of extreme rows dominating a column's
-centre. \code{core_trimmed_mean()} DISCARDS the \code{floor(n * trim)} largest
+Two ways to stop a handful of extreme rows dominating a column's centre.
+\code{core_trimmed_mean()} DISCARDS the \code{floor(n * trim)} largest
 and smallest values, matching \code{mean(x, trim = )}.
 \code{core_winsorized_mean()} instead PULLS THEM IN to the most extreme
 surviving values, so every observation still contributes weight --
-usually the better choice when the extremes are real measurements
-rather than errors.
+usually the better choice when the extremes are real measurements rather
+than errors.
 }
 \examples{
 x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)

@@ -9,16 +9,20 @@
 
 #' Write a change table to a file, in whatever format the name implies
 #'
-#' @param x An `rmbl_yoy` object from [yoy()].
+#' @param x An `rmbl_yoy` object from
+#' [yoy()].
 #' @param file Output path.
-#' @param format Output format. `"auto"` reads it from the file
-#'   extension: `.html`/`.htm`, `.pdf`, `.csv`, `.tsv`/`.tab`, `.json`,
-#'   `.md`/`.markdown`.
-#' @param ... Passed to the format's own writer, so the colour, digit and
-#'   layout options of [yoy_html()] and [yoy_pdf()] are available here
-#'   too.
+#' @param format Output format. `"auto"` reads it from
+#' the file extension: `.html` / `.htm`, `.pdf`,
+#' `.csv`, `.tsv` / `.tab`, `.json`, `.md` /
+#' `.markdown`.
+#' @param ... Passed to the format's own writer, so the colour,
+#' digit and layout options of [yoy_html()] and
+#' [yoy_pdf()] are available here too.
 #' @return The path, invisibly.
-#' @seealso [yoy_html()], [yoy_pdf()], [yoy_csv()]
+#' @seealso
+#' [yoy_html()], [yoy_pdf()],
+#' [yoy_csv()]
 #' @examples
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 #' y <- yoy(d, value = "n", period = "year")
@@ -66,25 +70,27 @@ yoy_write <- function(x, file, format = "auto", ...) {
 #' inside a field, since a tab-separated field cannot contain one and
 #' writing it would shift every column after it.
 #'
-#' @param x An `rmbl_yoy` object from [yoy()].
-#' @param file Output path, or `NULL` to return the text instead of
-#'   writing it.
-#' @param digits Digits for the percent columns. `NULL`, the default,
-#'   writes them unrounded, which is what a downstream calculation
-#'   wants; give a number for a figure meant to be read.
-#' @param na How to write a missing value. The default empty string is
-#'   what most readers expect; `"NA"` keeps R's own spelling.
-#' @param metadata Whether to lead with comment lines recording the lag,
-#'   units, confidence level, base gate and direction. On by default,
-#'   because a percent column means different things under different
-#'   settings and the file is the only place a later reader can look.
-#'   Markdown and JSON carry the same information structurally.
+#' @param x An `rmbl_yoy` object from
+#' [yoy()].
+#' @param file Output path, or `NULL` to return the text
+#' instead of writing it.
+#' @param digits Digits for the percent columns. `NULL`,
+#' the default, writes them unrounded, which is what a downstream
+#' calculation wants; give a number for a figure meant to be read.
+#' @param na How to write a missing value. The default empty
+#' string is what most readers expect; `"NA"` keeps R's own spelling.
+#' @param metadata Whether to lead with comment lines
+#' recording the lag, units, confidence level, base gate and direction. On
+#' by default, because a percent column means different things under
+#' different settings and the file is the only place a later reader can
+#' look. Markdown and JSON carry the same information structurally.
 #' @param comment Comment prefix for the metadata lines.
-#' @param align Whether to pad the Markdown columns so the source table
-#'   is readable unrendered.
+#' @param align Whether to pad the Markdown columns so the
+#' source table is readable unrendered.
 #' @param pretty Whether to indent the JSON.
 #' @param ... Ignored.
-#' @return The path, invisibly; or the text, when `file` is `NULL`.
+#' @return The path, invisibly; or the text, when `file` is
+#' `NULL`.
 #' @examples
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 #' y <- yoy(d, value = "n", period = "year")

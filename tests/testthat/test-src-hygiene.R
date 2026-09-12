@@ -75,6 +75,37 @@ test_that("no source file carries a non-ASCII byte", {
   }
 })
 
+test_that("no Rd line exceeds 90 characters", {
+  # Roxygen does not re-wrap what it emits, and its markdown expansion is
+  # several times wider than the source: `[stats::ks.test()]` becomes a
+  # 48-character \code{\link[...]{...}}, and \item{name}{ prepends the
+  # parameter name to the first line of every @param. So a source line
+  # that looks comfortable produces an Rd line that is not, and the only
+  # way to keep this true is to check the generated file.
+  #
+  # Wrap the roxygen in R/ narrower to fix a failure here. Take care not
+  # to break inside an inline span -- splitting `n = 8` across two source
+  # lines makes roxygen rejoin it and emit ONE longer line, which is how
+  # an earlier attempt at this made things worse.
+  man <- NULL
+  for (p in c("../../man", "../../../man", "man")) {
+    if (dir.exists(p)) { man <- p; break }
+  }
+  skip_if(is.null(man), "man/ not available from here")
+  files <- list.files(man, pattern = "[.]Rd$", full.names = TRUE)
+  skip_if(!length(files), "no Rd files")
+  long <- character(0)
+  for (f in files) {
+    lines <- readLines(f, warn = FALSE)
+    w <- which(nchar(lines) > 90L)
+    for (i in w) {
+      long <- c(long, sprintf("%s:%d is %d chars", basename(f), i,
+                              nchar(lines[i])))
+    }
+  }
+  expect_equal(long, character(0))
+})
+
 test_that("every C entry point is registered and every registration resolves", {
   d <- src_dir()
   skip_if(is.na(d), "package sources not available from here")

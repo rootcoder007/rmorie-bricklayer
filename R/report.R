@@ -11,48 +11,58 @@
 #'
 #' Runs the checks this package provides over one data frame and collects
 #' the findings into a single report: the structural schema check, the
-#' distributional comparison against a reference, the missingness
-#' picture, the multivariate outliers, a Benford screen on the wide
-#' numeric columns, and the integrity digests.
+#' distributional comparison against a reference, the missingness picture,
+#' the multivariate outliers, a Benford screen on the wide numeric columns,
+#' and the integrity digests.
 #'
 #' Nothing here is new arithmetic. The value is that the answers arrive
-#' together and ordered by severity, because the failure mode this is
-#' built against is a person running one check, seeing it pass, and
-#' concluding the data is fine.
+#' together and ordered by severity, because the failure mode this is built
+#' against is a person running one check, seeing it pass, and concluding
+#' the data is fine.
 #'
 #' # What "severity" means
 #'
 #' * `fatal` -- a required column is missing. Nothing downstream can run.
 #' * `warn` -- something moved: a column drifted, a value left its pinned
-#'   range, missingness rose, a signature did not verify.
+#' range, missingness rose, a signature did not verify.
 #' * `note` -- worth a look but not necessarily wrong: outliers, a
-#'   Benford departure, a constant column.
+#' Benford departure, a constant column.
 #'
 #' A clean report is not proof the data is correct. It means these
 #' particular checks found nothing, and every one of them has a stated
-#' blind spot -- see [capsule_drift()] on statistical power and
-#' [benford_test()] on why a departure is a screen rather than a verdict.
+#' blind spot -- see [capsule_drift()] on
+#' statistical power and [benford_test()] on why
+#' a departure is a screen rather than a verdict.
 #'
 #' @param data The data frame to assess.
-#' @param reference Optional data frame the capsule was pinned against.
-#'   Supplying it enables the drift comparison, which is the check a
-#'   digest cannot make.
-#' @param schema Optional schema from [infer_schema()], or a provenance
-#'   list containing one. Supplying it enables the structural check.
-#' @param rules Optional list of [rule()] objects.
-#' @param chunks Optional character vector of capsule chunks (see
-#'   [chunk_file()]) to pin with a Merkle root.
-#' @param signature,key Optional signature and verifying key, as from
-#'   [capsule_sign()], checked against the data's own digest.
-#' @param alpha Significance level passed to [capsule_drift()].
-#' @param max_rows_outliers Skip the outlier scan above this many rows
-#'   (default 20000), since it factors a covariance per call.
-#' @return A list of class `bricklayer_report`: `findings` (a data frame
-#'   of `severity`, `check`, `subject`, `detail`), `verdict`
-#'   (`"fatal"`, `"warn"`, `"note"` or `"clean"`), `profile`,
-#'   `missingness`, `drift`, `digest`, and `n_rows`/`n_cols`.
-#' @seealso [capsule_drift()], [profile_columns()], [validate_schema()],
-#'   [report_markdown()] to write it out.
+#' @param reference Optional data frame the capsule was
+#' pinned against. Supplying it enables the drift comparison, which is the
+#' check a digest cannot make.
+#' @param schema Optional schema from
+#' [infer_schema()], or a provenance list
+#' containing one. Supplying it enables the structural check.
+#' @param rules Optional list of [rule()]
+#' objects.
+#' @param chunks Optional character vector of capsule chunks
+#' (see [chunk_file()]) to pin with a Merkle root.
+#' @param signature,key Optional signature and
+#' verifying key, as from [capsule_sign()],
+#' checked against the data's own digest.
+#' @param alpha Significance level passed to
+#' [capsule_drift()].
+#' @param max_rows_outliers Skip the outlier scan
+#' above this many rows (default 20000), since it factors a covariance per
+#' call.
+#' @return A list of class `bricklayer_report`: `findings` (a
+#' data frame of `severity`, `check`, `subject`,
+#' `detail`) , `verdict` ( `"fatal"`, `"warn"`,
+#' `"note"` or `"clean"`) , `profile`, `missingness`,
+#' `drift`, `digest`, and `n_rows` / `n_cols`.
+#' @seealso
+#' [capsule_drift()],
+#' [profile_columns()],
+#' [validate_schema()],
+#' [report_markdown()] to write it out.
 #' @examples
 #' set.seed(1)
 #' ref <- data.frame(
@@ -330,13 +340,13 @@ summary.bricklayer_report <- function(object, ...) {
 
 #' Write a capsule report as Markdown
 #'
-#' Renders a [capsule_report()] as Markdown, so the assessment can travel
-#' with the capsule instead of living in a console someone has since
-#' closed.
+#' Renders a [capsule_report()] as Markdown,
+#' so the assessment can travel with the capsule instead of living in a
+#' console someone has since closed.
 #'
 #' @param report A `bricklayer_report`.
-#' @param path Optional file to write. Without one the lines are
-#'   returned.
+#' @param path Optional file to write. Without one the lines
+#' are returned.
 #' @param title Heading for the document.
 #' @return The Markdown lines, invisibly when written to a file.
 #' @seealso [capsule_report()]

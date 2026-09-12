@@ -7,30 +7,32 @@
 make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 }
 \arguments{
-\item{spec}{A list describing the column; recognised fields depend on
-\code{spec$type} (e.g. \code{values}, \code{weights}, \code{p}, \code{p_with_baserate},
-\code{labels}, \code{lambda}, \code{min}, \code{pattern}, \code{year_col}, \code{from}).}
+\item{spec}{A list describing the column; recognised fields
+depend on \code{spec$type} (e.g. \code{values}, \code{weights},
+\code{p}, \code{p_with_baserate}, \code{labels}, \code{lambda},
+\code{min}, \code{pattern}, \code{year_col}, \code{from}) .}
 
 \item{n}{Number of values to generate.}
 
-\item{ctx}{Named list of already-generated columns, letting later
-columns (such as \code{id_pattern} with a \code{year_col}) reference earlier
-ones. Defaults to an empty list.}
+\item{ctx}{Named list of already-generated columns, letting
+later columns (such as \code{id_pattern} with a \code{year_col})
+reference earlier ones. Defaults to an empty list.}
 
-\item{base_p}{Optional numeric vector of per-row latent propensities
-used by the \code{"bernoulli"} type to add row-level variation.}
+\item{base_p}{Optional numeric vector of per-row latent
+propensities used by the \code{"bernoulli"} type to add row-level
+variation.}
 }
 \value{
-A vector of length \code{n} for the requested column type. Errors on
-an unknown \code{type}.
+A vector of length \code{n} for the requested column type.
+Errors on an unknown \code{type}.
 }
 \description{
 Builds a single synthetic data column according to a column spec drawn
-from a provenance synthetic recipe. Supported \code{type}s are \code{"sample"}
-(categorical, optionally weighted), \code{"bernoulli"} (two-label draw with
-optional per-row base rate), \code{"poisson"} (counts with a floor),
-\code{"id_pattern"} (templated IDs, optionally per-year sequenced), and
-\code{"sequence"} (a running integer sequence).
+from a provenance synthetic recipe. Supported \code{type} s are
+\code{"sample"} (categorical, optionally weighted), \code{"bernoulli"}
+(two-label draw with optional per-row base rate), \code{"poisson"}
+(counts with a floor), \code{"id_pattern"} (templated IDs, optionally
+per-year sequenced), and \code{"sequence"} (a running integer sequence).
 }
 \examples{
 set.seed(1)

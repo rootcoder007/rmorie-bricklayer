@@ -7,15 +7,18 @@
 bricklayer_parse_siu(html)
 }
 \arguments{
-\item{html}{A length-1 character vector of raw report HTML, or the path
-to a saved report file (e.g. from \code{\link[=bricklayer_fetch_siu]{bricklayer_fetch_siu()}}).}
+\item{html}{A length-1 character vector of raw report HTML,
+or the path to a saved report file (e.g. from
+\code{\link[=bricklayer_fetch_siu]{bricklayer_fetch_siu()}}) .}
 }
 \value{
-A named character vector: the 16 schema fields plus \verb{_language}.
+A named character vector: the 16 schema fields plus
+\verb{_language}.
 }
 \description{
-Deterministic, offline extraction of every \code{\link[=bricklayer_siu_schema]{bricklayer_siu_schema()}}
-field (plus \verb{_language}) from report HTML. Fields the report does not
+Deterministic, offline extraction of every
+\code{\link[=bricklayer_siu_schema]{bricklayer_siu_schema()}} field
+(plus \verb{_language}) from report HTML. Fields the report does not
 state come back as \code{""}.
 }
 \examples{

@@ -9,15 +9,17 @@ apply_schema_validation(df_raw, provenance)
 \arguments{
 \item{df_raw}{The data frame to validate.}
 
-\item{provenance}{A provenance list as returned by \code{\link[=load_provenance]{load_provenance()}}.}
+\item{provenance}{A provenance list as returned by
+\code{\link[=load_provenance]{load_provenance()}}.}
 }
 \value{
 Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
 otherwise. Errors if any fatal issue is present.
 }
 \description{
-Runs \code{\link[=validate_schema]{validate_schema()}} and acts on the result: fatal issues raise an
-error via \code{\link[=stop]{stop()}}, warning-severity issues emit a \code{\link[=warning]{warning()}}.
+Runs \code{\link[=validate_schema]{validate_schema()}} and acts on the
+result: fatal issues raise an error via \code{\link[=stop]{stop()}},
+warning-severity issues emit a \code{\link[=warning]{warning()}}.
 }
 \examples{
 prov <- list(schema = list(expected_columns = "id"))

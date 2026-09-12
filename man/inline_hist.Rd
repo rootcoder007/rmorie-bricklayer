@@ -17,8 +17,8 @@ A length-1 character vector of \code{bins} characters.
 \description{
 A one-line sketch of a column's distribution, as block characters (or
 ASCII where the console cannot render them). The point is density of
-information: a mean and a standard deviation cannot tell you a column
-is bimodal, and this can, in the width of a table cell.
+information: a mean and a standard deviation cannot tell you a column is
+bimodal, and this can, in the width of a table cell.
 }
 \examples{
 set.seed(1)
@@ -35,5 +35,6 @@ inline_hist(c(stats::rnorm(500, -3), stats::rnorm(500, 3)))
 inline_hist(rep(5, 10))
 }
 \seealso{
-\code{\link[=profile_columns]{profile_columns()}}, which includes one per numeric column.
+\code{\link[=profile_columns]{profile_columns()}}, which includes one
+per numeric column.
 }

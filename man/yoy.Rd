@@ -32,75 +32,78 @@ yoy(x, ...)
 
 \method{yoy}{ts}(x, lag = NULL, ...)
 
-\method{print}{rmbl_yoy}(x, digits = 1L, palette = "diverging", color = NULL, n = 30L, ...)
+\method{print}{rmbl_yoy}(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 }
 \arguments{
 \item{x}{An \code{rmbl_yoy} object.}
 
 \item{...}{Ignored.}
 
-\item{value}{For a data frame, the column holding the measure, as a
-string or a bare name.}
+\item{value}{For a data frame, the column holding the
+measure, as a string or a bare name.}
 
-\item{period}{For a data frame, the column holding the period (a year,
-a \code{Date}, a fiscal-year integer, an ordered factor). For a numeric
-vector, the periods themselves.}
+\item{period}{For a data frame, the column holding the
+period (a year, a \code{Date}, a fiscal-year integer, an ordered
+factor). For a numeric vector, the periods themselves.}
 
-\item{by}{Optional grouping columns, as a character vector. The change
-is computed within each group.}
+\item{by}{Optional grouping columns, as a character vector.
+The change is computed within each group.}
 
 \item{lag}{How many periods back to compare with. \code{1} is
 year-over-year on annual data; for a \code{ts} the default follows the
-series' own frequency, so monthly data compares with the same month
-a year earlier.}
+series' own frequency, so monthly data compares with the same month a
+year earlier.}
 
-\item{fun}{Aggregation applied to \code{value} within a period and group,
-when there is more than one row. Default \code{\link[=sum]{sum()}}, which is what a
-count needs.}
+\item{fun}{Aggregation applied to \code{value} within a
+period and group, when there is more than one row. Default
+\code{\link[=sum]{sum()}}, which is what a count needs.}
 
-\item{units}{What the measure is. \code{"count"} gets the exact rate-ratio
-interval. \code{"continuous"} gets the percent change without one, since
-a single pair of totals carries no information about its own
-variability. \code{"percent"} reports a percentage-POINT change and
-withholds the percent change, which for a percentage is a different
+\item{units}{What the measure is. \code{"count"} gets the
+exact rate-ratio interval. \code{"continuous"} gets the percent change
+without one, since a single pair of totals carries no information about
+its own variability. \code{"percent"} reports a percentage-POINT change
+and withholds the percent change, which for a percentage is a different
 quantity.}
 
-\item{min_base}{Smallest previous-period value for which a percent
-change is reported. Below it the percent is \code{NA} and the reason is
-recorded, rather than a large number that describes the denominator.
-Defaults to 20 for counts and to no gate otherwise.}
+\item{min_base}{Smallest previous-period value for which
+a percent change is reported. Below it the percent is \code{NA} and the
+reason is recorded, rather than a large number that describes the
+denominator. Defaults to 20 for counts and to no gate otherwise.}
 
-\item{conf_level}{Confidence level for the count interval.}
+\item{conf_level}{Confidence level for the count
+interval.}
 
-\item{direction}{Which way is an improvement: \code{"higher_is_better"},
-\code{"lower_is_better"} (segregation days, deaths in custody, use of
-force), or \code{"neutral"}. Affects colour and the \code{verdict} column only,
-never the arithmetic.}
+\item{direction}{Which way is an improvement:
+\code{"higher_is_better"}, \code{"lower_is_better"} (segregation days,
+deaths in custody, use of force), or \code{"neutral"}. Affects colour
+and the \code{verdict} column only, never the arithmetic.}
 
-\item{complete}{Whether to insert the missing periods in the observed
-range so that a gap is visible as a gap instead of closing up.}
+\item{complete}{Whether to insert the missing periods in
+the observed range so that a gap is visible as a gap instead of closing
+up.}
 
 \item{digits}{Digits for the percent column.}
 
-\item{palette}{One of \code{\link[=yoy_palettes]{yoy_palettes()}}.}
+\item{palette}{One of
+\code{\link[=yoy_palettes]{yoy_palettes()}}.}
 
-\item{color}{Whether to emit ANSI colour. Defaults to colour only when
-writing to a terminal that has it, so a redirected or captured
-output stays plain text.}
+\item{color}{Whether to emit ANSI colour. Defaults to
+colour only when writing to a terminal that has it, so a redirected or
+captured output stays plain text.}
 
 \item{n}{Maximum rows to print.}
 }
 \value{
 An \code{rmbl_yoy} object: a data frame with one row per period
-(and group), and columns \code{period}, \code{value}, \code{previous}, \code{change},
-\code{pct_change} (or \code{pp_change} for percentages), \code{pct_lower} and
-\code{pct_upper} for counts, \code{verdict}, and \code{flag} recording why a
-percent was withheld.
+(and group), and columns \code{period}, \code{value}, \code{previous},
+\code{change}, \code{pct_change} (or \code{pp_change} for percentages),
+\code{pct_lower} and \code{pct_upper} for counts, \code{verdict}, and
+\code{flag} recording why a percent was withheld.
 }
 \description{
-Computes the change from one period to the period \code{lag} places before
-it, matched on the period's own value rather than on row order, and
-carries an exact interval for count data.
+Computes the change from one period to the period \code{lag} places
+before it, matched on the period's own value rather than on row order,
+and carries an exact interval for count data.
 }
 \examples{
 seg <- data.frame(
@@ -122,6 +125,16 @@ subset(as.data.frame(y), Gender == "Female")
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
 yoy(rate, value = "share", period = "year", units = "percent")
 }
+\references{
+The exact interval for a ratio of two counts is the conditional-binomial
+(Clopper-Pearson) one, which is the construction
+\code{stats::poisson.test} uses and which this is verified against. On
+the reporting conventions, the Toronto Police Service's \emph{Understanding
+Strip Searches in 2020 Methodological Report} -- in the local corpus
+-- reports year-over-year change on exactly this kind of
+administrative extract, and is the shape this function is built for.
+}
 \seealso{
-\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}}, \code{\link[=yoy_summary]{yoy_summary()}}
+\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}},
+\code{\link[=yoy_summary]{yoy_summary()}}
 }

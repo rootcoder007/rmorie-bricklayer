@@ -15,42 +15,47 @@
 #' Trend in a short series
 #'
 #' The Mann-Kendall rank test for monotone trend with the Theil-Sen
-#' median-of-slopes estimator: no distributional assumption, resistant to
-#' a single aberrant period, and meaningful at the series lengths an
-#' annual administrative extract actually has.
+#' median-of-slopes estimator: no distributional assumption, resistant to a
+#' single aberrant period, and meaningful at the series lengths an annual
+#' administrative extract actually has.
 #'
 #' @param y The series, in period order, or a data frame.
-#' @param x The periods. Defaults to the position, which is right for an
-#'   evenly spaced series.
-#' @param value,period Column names, when `y` is a data frame.
-#' @param exact Whether to compute the exact null distribution of
-#'   Mann-Kendall's S by enumeration. Feasible and used by default up to
-#'   `n = 8` (40,320 orderings); above that the normal approximation with
-#'   the tie and continuity corrections is used.
-#' @param alternative `"two.sided"`, `"increasing"` or `"decreasing"`.
-#' @param conf_level Confidence level for the slope interval.
-#' @return A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen),
-#'   `intercept`, `slope_lower`/`slope_upper` (the distribution-free
-#'   interval), `n` and `method`.
+#' @param x The periods. Defaults to the position, which is right
+#' for an evenly spaced series.
+#' @param value,period Column names, when `y` is a
+#' data frame.
+#' @param exact Whether to compute the exact null distribution
+#' of Mann-Kendall's S by enumeration. Feasible and used by default up to
+#' `n = 8` (40,320 orderings); above that the normal approximation
+#' with the tie and continuity corrections is used.
+#' @param alternative `"two.sided"`,
+#' `"increasing"` or `"decreasing"`.
+#' @param conf_level Confidence level for the slope
+#' interval.
+#' @return A list with `S`, `tau`, `p_value`, `slope`
+#' (Theil-Sen), `intercept`, `slope_lower` / `slope_upper`
+#' (the distribution-free interval), `n` and `method`.
 #' @details
 #' Kendall's tau here is S over the number of comparable pairs, so it is
 #' the rank correlation between the value and the period.
 #'
 #' The slope interval is the standard rank-based one: the pairwise slopes
 #' are sorted and the interval runs between the order statistics that
-#' Mann-Kendall's variance places at the chosen level, so it is
-#' consistent with the test rather than derived from a different model.
+#' Mann-Kendall's variance places at the chosen level, so it is consistent
+#' with the test rather than derived from a different model.
 #' @references
 #' Sen, P. K. (1968). Estimates of the regression coefficient based on
 #' Kendall's tau. *Journal of the American Statistical Association*
 #' 63(324), 1379-1389, for the median-of-slopes estimator and the
 #' distribution-free interval.
 #'
-#' Wilcox, R. R. *Modern Statistics for the Social and Behavioral
-#' Sciences: A Practical Introduction* treats Theil-Sen among the
-#' regression methods that carry no normality assumption, which is the
-#' reason for preferring it on a series this short.
-#' @seealso [step_change()], [count_trend()]
+#' Wilcox, R. R. *Modern Statistics for the Social and Behavioral Sciences:
+#' A Practical Introduction* treats Theil-Sen among the regression methods
+#' that carry no normality assumption, which is the reason for preferring
+#' it on a series this short.
+#' @seealso
+#' [step_change()],
+#' [count_trend()]
 #' @examples
 #' # Five years of placements.
 #' y <- c(402, 377, 190, 268, 331)
@@ -206,18 +211,29 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 #'
 #' Scans every admissible split of the series, reports the one with the
 #' largest mean difference, and gives it a p-value from the permutation
-#' distribution of the MAXIMUM over splits -- not from the best split's
-#' own test, which is the standard way to find a change point in noise.
+#' distribution of the MAXIMUM over splits -- not from the best split's own
+#' test, which is the standard way to find a change point in noise.
 #'
 #' @param y The series, in period order.
 #' @param x The periods. Used only for labelling the break.
-#' @param min_segment Fewest periods either side of the break.
-#' @param n_perm Permutations for the null distribution. The exact
-#'   enumeration is used instead when the series is short enough for it.
-#' @param seed Seed for the permutations, so the p-value is reproducible.
+#' @param min_segment Fewest periods either side of the
+#' break.
+#' @param n_perm Permutations for the null distribution. The
+#' exact enumeration is used instead when the series is short enough for
+#' it.
+#' @param seed Seed for the permutations, so the p-value is
+#' reproducible.
 #' @return A list with `break_after` (the period the series changes
-#'   after), `index`, `before`, `after`, `difference`, `statistic`,
-#'   `p_value`, `n_perm` and `method`.
+#' after), `index`, `before`, `after`, `difference`,
+#' `statistic`, `p_value`, `n_perm` and `method`.
+#' @references
+#' The permutation distribution of the maximum over splits, rather than the
+#' chosen split's own test, is what makes this a test of whether there is a
+#' break rather than a way of locating the largest wobble. See any
+#' treatment of the change-point problem, e.g. Coles, S. *An Introduction
+#' to Statistical Modeling of Extreme Values* (Springer), which discusses
+#' change-point detection alongside the threshold choices that raise the
+#' same multiple-comparison issue.
 #' @examples
 #' # A clear step down after the third period.
 #' step_change(c(100, 104, 98, 60, 63, 58))
@@ -307,25 +323,32 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 
 #' Trend in a count series, as a rate ratio per period
 #'
-#' Fits a Poisson log-linear trend by iteratively reweighted least
-#' squares and reports the multiplicative change per period, which is
-#' what a count series' trend actually is. An offset carries the
-#' denominator when the exposure varies.
+#' Fits a Poisson log-linear trend by iteratively reweighted least squares
+#' and reports the multiplicative change per period, which is what a count
+#' series' trend actually is. An offset carries the denominator when the
+#' exposure varies.
 #'
 #' @param y Counts, in period order.
 #' @param x Periods. Defaults to the position.
-#' @param offset Exposure for each period -- a population, a number of
-#'   admissions, a number of days. The trend is then in the rate rather
-#'   than in the count.
+#' @param offset Exposure for each period -- a population, a
+#' number of admissions, a number of days. The trend is then in the rate
+#' rather than in the count.
 #' @param conf_level Confidence level for the rate ratio.
 #' @return A list with `rate_ratio` (per period), its interval,
-#'   `p_value`, the fitted values, the dispersion, and `overdispersed`.
+#' `p_value`, the fitted values, the dispersion, and
+#' `overdispersed`.
 #' @details
-#' The dispersion is reported because a Poisson fit assumes it is one.
-#' When it is well above one the interval is too narrow, and the
-#' quasi-Poisson interval -- which scales the standard error by the
-#' square root of the dispersion -- is returned instead, with
-#' `overdispersed` set.
+#' The dispersion is reported because a Poisson fit assumes it is one. When
+#' it is well above one the interval is too narrow, and the quasi-Poisson
+#' interval -- which scales the standard error by the square root of the
+#' dispersion -- is returned instead, with `overdispersed` set.
+#' @references
+#' Bilder, C. R. and Loughin, T. M. *Analysis of Categorical Data with
+#' R*, 2nd edn. Chapman and Hall/CRC, on the quasi-likelihood treatment of
+#' an overdispersed Poisson fit: the variance is scaled by an estimated
+#' dispersion, which widens the interval while leaving the point estimate
+#' alone. That is the behaviour reported here through `dispersion` and
+#' `overdispersed`.
 #' @examples
 #' # A count falling by about 15% a year.
 #' set.seed(3)

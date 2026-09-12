@@ -9,20 +9,20 @@ cramers_v(tbl, bias_correct = TRUE, min_expected = 5)
 \arguments{
 \item{tbl}{A table or matrix of counts.}
 
-\item{bias_correct}{Whether to apply Bergsma's correction, which
-removes most of V's upward bias in a sparse table. Worth having:
-uncorrected V on a sparse table reports association that is an
-artefact of the table's size.}
+\item{bias_correct}{Whether to apply Bergsma's
+correction, which removes most of V's upward bias in a sparse table.
+Worth having: uncorrected V on a sparse table reports association that
+is an artefact of the table's size.}
 
-\item{min_expected}{Expected count below which the chi-square
-approximation is unreliable. Reported, not enforced.}
+\item{min_expected}{Expected count below which the
+chi-square approximation is unreliable. Reported, not enforced.}
 }
 \value{
-A list with \code{v}, \code{chisq}, \code{df}, \code{p_value}, \code{n},
-\code{min_expected}, and \code{cells_below}, the number of cells whose
-expected count falls under the threshold. When any does, \code{p_value}
-comes from a Monte Carlo permutation instead of the chi-square
-approximation, and \code{method} says which was used.
+A list with \code{v}, \code{chisq}, \code{df}, \code{p_value},
+\code{n}, \code{min_expected}, and \code{cells_below}, the number of
+cells whose expected count falls under the threshold. When any does,
+\code{p_value} comes from a Monte Carlo permutation instead of the
+chi-square approximation, and \code{method} says which was used.
 }
 \description{
 Cramer's V, with the bias correction of Bergsma (2013) available, and
@@ -41,7 +41,7 @@ c(raw = cramers_v(sparse, bias_correct = FALSE)$v,
   corrected = cramers_v(sparse)$v)
 }
 \references{
-Bergsma, W. (2013). A bias-correction for Cramer's V and
-Tschuprow's T. \emph{Journal of the Korean Statistical Society} 42(3),
-323-328. (Not in the local corpus; cited from the published paper.)
+Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
+\emph{Journal of the Korean Statistical Society} 42(3), 323-328. (Not in
+the local corpus; cited from the published paper.)
 }

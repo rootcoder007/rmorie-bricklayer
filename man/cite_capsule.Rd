@@ -11,15 +11,15 @@ cite_capsule(provenance)
 \code{\link[=load_provenance]{load_provenance()}}.}
 }
 \value{
-A list with \code{text} and \code{bibtex} character scalars, or \code{NULL}
-if \code{provenance} is \code{NULL}.
+A list with \code{text} and \code{bibtex} character scalars, or
+\code{NULL} if \code{provenance} is \code{NULL}.
 }
 \description{
 Builds a ready-to-paste data citation (plain text and BibTeX
-\verb{@misc}) from a provenance object's \code{dataset} and \code{resource} blocks,
-using publisher, resource name, source system, retrieval date,
-license, the pinned URL, and a DOI when one is recorded
-(\code{dataset$doi}).
+\verb{@misc}) from a provenance object's \code{dataset} and
+\code{resource} blocks, using publisher, resource name, source system,
+retrieval date, license, the pinned URL, and a DOI when one is recorded
+( \code{dataset$doi}) .
 }
 \examples{
 prov <- list(

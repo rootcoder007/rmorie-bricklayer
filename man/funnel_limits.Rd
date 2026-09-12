@@ -9,27 +9,27 @@ funnel_limits(expected, target = 1, levels = c(0.95, 0.998))
 \arguments{
 \item{expected}{Expected counts to compute limits at.}
 
-\item{target}{The ratio the limits are centred on. One is the overall
-experience.}
+\item{target}{The ratio the limits are centred on. One is
+the overall experience.}
 
-\item{levels}{Two-sided coverage levels for the limit pairs.}
+\item{levels}{Two-sided coverage levels for the limit
+pairs.}
 }
 \value{
-A data frame of \code{expected}, \code{level}, \code{lower} and \code{upper} on
-the ratio scale.
+A data frame of \code{expected}, \code{level}, \code{lower} and
+\code{upper} on the ratio scale.
 }
 \description{
-The limits within which an area's ratio would fall, given its
-expected count, if it were no different from the overall experience.
-A funnel plot is the alternative to a league table: it shows directly
-that a small area's ratio can wander far from one without meaning
-anything.
+The limits within which an area's ratio would fall, given its expected
+count, if it were no different from the overall experience. A funnel
+plot is the alternative to a league table: it shows directly that a
+small area's ratio can wander far from one without meaning anything.
 }
 \details{
-The limits are exact Poisson quantiles divided by the expected count,
-so they are the discrete counterpart of the usual normal funnel and
-stay correct at the small expected counts where the normal version
-goes below zero.
+The limits are exact Poisson quantiles divided by the expected count, so
+they are the discrete counterpart of the usual normal funnel and stay
+correct at the small expected counts where the normal version goes below
+zero.
 }
 \examples{
 # The funnel narrows as the expected count grows, which is the whole
@@ -39,12 +39,12 @@ funnel_limits(c(2, 20, 200))
 }
 \references{
 \emph{Advanced Statistics in Criminology and Criminal Justice} discusses
-the funnel plot as the display of the relationship between an
-estimate and the sample size behind it.
+the funnel plot as the display of the relationship between an estimate
+and the sample size behind it.
 
-Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal
-Health Modeling}. Chapman and Hall/CRC, on the Poisson counts these
-limits are built from.
+Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+Modeling}. Chapman and Hall/CRC, on the Poisson counts these limits are
+built from.
 }
 \seealso{
 \code{\link[=sir]{sir()}}, \code{\link[=eb_rates]{eb_rates()}}

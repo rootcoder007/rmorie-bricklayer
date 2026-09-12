@@ -201,6 +201,76 @@ static R_INLINE double rmbl_median(const double *x, R_xlen_t n) {
     return fn(x, n);
 }
 
+/* --- concentration and short-series trend (rmbl_series.cpp) --------- */
+
+/* Gini. NA_REAL when the total is zero or any value is negative. */
+static R_INLINE double rmbl_gini(const double *x, R_xlen_t n) {
+    static double (*fn)(const double *, R_xlen_t) = NULL;
+    if (fn == NULL)
+        fn = (double (*)(const double *, R_xlen_t))
+             R_GetCCallable("rmoriebricklayer", "rmbl_gini");
+    return fn(x, n);
+}
+
+/* Share of the total held by the largest ceil(frac * n) units. `units`
+ * receives that count and may be NULL. */
+static R_INLINE double rmbl_top_share(const double *x, R_xlen_t n,
+                                      double frac, R_xlen_t *units) {
+    static double (*fn)(const double *, R_xlen_t, double, R_xlen_t *) = NULL;
+    if (fn == NULL)
+        fn = (double (*)(const double *, R_xlen_t, double, R_xlen_t *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_top_share");
+    return fn(x, n, frac, units);
+}
+
+/* Lorenz curve into buffers of length n + 1 (the origin is included).
+ * Returns the number of points written, 0 on refusal. */
+static R_INLINE R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n,
+                                     double *population, double *value) {
+    static R_xlen_t (*fn)(const double *, R_xlen_t, double *, double *) = NULL;
+    if (fn == NULL)
+        fn = (R_xlen_t (*)(const double *, R_xlen_t, double *, double *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_lorenz");
+    return fn(x, n, population, value);
+}
+
+/* Mann-Kendall S and its tie-corrected variance. `used` receives the
+ * number of finite observations and may be NULL. */
+static R_INLINE void rmbl_mann_kendall(const double *y, R_xlen_t n,
+                                       double *S, double *var,
+                                       R_xlen_t *used) {
+    static void (*fn)(const double *, R_xlen_t, double *, double *,
+                      R_xlen_t *) = NULL;
+    if (fn == NULL)
+        fn = (void (*)(const double *, R_xlen_t, double *, double *,
+                       R_xlen_t *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_mann_kendall");
+    fn(y, n, S, var, used);
+}
+
+/* Theil-Sen median-of-slopes line. */
+static R_INLINE void rmbl_theil_sen(const double *x, const double *y,
+                                    R_xlen_t n, double *slope,
+                                    double *intercept) {
+    static void (*fn)(const double *, const double *, R_xlen_t, double *,
+                      double *) = NULL;
+    if (fn == NULL)
+        fn = (void (*)(const double *, const double *, R_xlen_t, double *,
+                       double *))
+             R_GetCCallable("rmoriebricklayer", "rmbl_theil_sen");
+    fn(x, y, n, slope, intercept);
+}
+
+/* Hurwitz zeta, sum over k >= 0 of (q + k)^-s. NA_REAL unless s > 1 and
+ * q > 0. The normalising constant of the discrete power law. */
+static R_INLINE double rmbl_hurwitz_zeta(double s, double q) {
+    static double (*fn)(double, double) = NULL;
+    if (fn == NULL)
+        fn = (double (*)(double, double))
+             R_GetCCallable("rmoriebricklayer", "rmbl_hurwitz_zeta");
+    return fn(s, q);
+}
+
 static R_INLINE double rmbl_mad(const double *x, R_xlen_t n, double constant) {
     static double (*fn)(const double *, R_xlen_t, double) = NULL;
     if (fn == NULL)

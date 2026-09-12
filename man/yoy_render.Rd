@@ -34,26 +34,30 @@ yoy_pdf(
 )
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from
+\code{\link[=yoy]{yoy()}}.}
 
-\item{file}{Output path. \code{yoy_html()} writes a single self-contained
-HTML file with no external requests; \code{yoy_pdf()} writes a PDF using
-R's own device, so neither needs a package beyond base R.}
+\item{file}{Output path. \code{yoy_html()} writes a single
+self-contained HTML file with no external requests; \code{yoy_pdf()}
+writes a PDF using R's own device, so neither needs a package beyond
+base R.}
 
 \item{title}{Heading for the page.}
 
-\item{subtitle}{Optional line under the heading. Defaults to the
-table's own settings -- lag, units, interval and base gate -- so the
-reader can see what the percentages mean.}
+\item{subtitle}{Optional line under the heading.
+Defaults to the table's own settings -- lag, units, interval and base
+gate -- so the reader can see what the percentages mean.}
 
-\item{palette}{One of \code{\link[=yoy_palettes]{yoy_palettes()}}.}
+\item{palette}{One of
+\code{\link[=yoy_palettes]{yoy_palettes()}}.}
 
 \item{digits}{Digits for the percent column.}
 
-\item{bars}{Whether to draw an in-cell bar proportional to the change,
-scaled to the largest absolute change in the table.}
+\item{bars}{Whether to draw an in-cell bar proportional to
+the change, scaled to the largest absolute change in the table.}
 
-\item{interval}{Whether to show the exact interval column for counts.}
+\item{interval}{Whether to show the exact interval
+column for counts.}
 
 \item{notes}{Optional character vector of footnotes.}
 

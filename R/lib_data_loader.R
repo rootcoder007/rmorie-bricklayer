@@ -18,14 +18,15 @@
 
 #' Load a Pinned Data-Provenance Record
 #'
-#' Reads a `data_provenance.json` file describing a project's pinned data
-#' source: the CKAN endpoint, resource name pattern, expected SHA256,
+#' Reads a `data_provenance.json` file describing a project's pinned
+#' data source: the CKAN endpoint, resource name pattern, expected SHA256,
 #' Wayback snapshot, schema, and synthetic-data recipe.
 #'
 #' @param path Path to the provenance JSON file.
-#' @return The parsed provenance as a nested list, read with the
-#'   package's own JSON codec ([bricklayer_json_from_json()],
-#'   unsimplified), or `NULL` if the file does not exist.
+#' @return The parsed provenance as a nested list, read with the package's
+#' own JSON codec (
+#' [bricklayer_json_from_json()],
+#' unsimplified), or `NULL` if the file does not exist.
 #' @examples
 #' prov_file <- tempfile(fileext = ".json")
 #' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
@@ -52,12 +53,12 @@ load_provenance <- function(path) {
 #' recovers the current download URL even if the underlying resource UUID
 #' has been replaced.
 #'
-#' @param provenance A provenance list as returned by [load_provenance()].
-#'   Must contain `dataset$ckan_api_endpoint` and
-#'   `resource$name_match_pattern`.
-#' @return The matched resource URL as a character string, or `NULL` if
-#'   the endpoint is missing, the request fails, CKAN reports failure, or
-#'   no resource name matches.
+#' @param provenance A provenance list as returned by
+#' [load_provenance()]. Must contain
+#' `dataset$ckan_api_endpoint` and `resource$name_match_pattern`.
+#' @return The matched resource URL as a character string, or `NULL`
+#' if the endpoint is missing, the request fails, CKAN reports failure, or
+#' no resource name matches.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
 #' resolve_via_ckan(list())
@@ -94,18 +95,20 @@ resolve_via_ckan <- function(provenance) {
 
 #' Resolve a Download URL via CKAN package_search
 #'
-#' Fallback for [resolve_via_ckan()] when the dataset slug has changed.
-#' Derives the CKAN portal base URL from the provenance's `package_show`
-#' endpoint, runs a `package_search` query (from `resource$search_query`,
-#' or derived from the name-match pattern), and returns the URL of the
-#' first matching resource, preferring CSV format when specified.
+#' Fallback for [resolve_via_ckan()] when
+#' the dataset slug has changed. Derives the CKAN portal base URL from the
+#' provenance's `package_show` endpoint, runs a `package_search`
+#' query (from `resource$search_query`, or derived from the name-match
+#' pattern), and returns the URL of the first matching resource, preferring
+#' CSV format when specified.
 #'
-#' @param provenance A provenance list as returned by [load_provenance()].
-#'   Uses `resource$search_query`, `resource$name_match_pattern`,
-#'   `resource$format`, and `dataset$ckan_api_endpoint`.
-#' @return The matched resource URL as a character string, or `NULL` if no
-#'   query or base URL can be derived, the request fails, or nothing
-#'   matches.
+#' @param provenance A provenance list as returned by
+#' [load_provenance()]. Uses
+#' `resource$search_query`, `resource$name_match_pattern`,
+#' `resource$format`, and `dataset$ckan_api_endpoint`.
+#' @return The matched resource URL as a character string, or `NULL`
+#' if no query or base URL can be derived, the request fails, or nothing
+#' matches.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
 #' resolve_via_ckan_search(list())
@@ -155,7 +158,8 @@ resolve_via_ckan_search <- function(provenance) {
 
 #' Null-Coalescing Operator
 #'
-#' Returns `a` unless it is `NULL`, in which case it returns `b`.
+#' Returns `a` unless it is `NULL`, in which case it returns
+#' `b`.
 #'
 #' @param a Left-hand value.
 #' @param b Fallback used when `a` is `NULL`.
@@ -168,14 +172,17 @@ resolve_via_ckan_search <- function(provenance) {
 
 #' Download a File
 #'
-#' Thin wrapper around [utils::download.file()] that returns the target
-#' path invisibly so it composes in pipelines.
+#' Thin wrapper around
+#' [utils::download.file()] that returns
+#' the target path invisibly so it composes in pipelines.
 #'
 #' @param url URL to download.
 #' @param target_path Destination path on disk.
-#' @param mode Write mode passed to [utils::download.file()]; defaults to
-#'   `"wb"` (binary) for cross-platform safety.
-#' @param quiet Logical; suppress progress output. Defaults to `FALSE`.
+#' @param mode Write mode passed to
+#' [utils::download.file()]; defaults to
+#' `"wb"` (binary) for cross-platform safety.
+#' @param quiet Logical; suppress progress output. Defaults to
+#' `FALSE`.
 #' @return The `target_path`, returned invisibly.
 #' @examples
 #' \donttest{
@@ -192,8 +199,8 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 
 #' Resolve a Wayback Machine snapshot URL
 #'
-#' Queries the Internet Archive availability API
-#' (\code{http://archive.org/wayback/available}) for the closest archived
+#' Queries the Internet Archive availability API (
+#' \code{http://archive.org/wayback/available}) for the closest archived
 #' snapshot of \code{url} and returns a directly-downloadable snapshot URL,
 #' or \code{NULL} if no snapshot exists or the lookup fails. This is the
 #' shared fetch failsafe the wider morie package family relies on: callers
@@ -201,8 +208,9 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #' source is unreachable.
 #'
 #' @param url The original source URL to look up.
-#' @param timestamp Optional 14-digit \code{YYYYMMDDhhmmss} target; the API
-#'   returns the snapshot closest to it. Defaults to the most recent.
+#' @param timestamp Optional 14-digit
+#' \code{YYYYMMDDhhmmss} target; the API returns the snapshot closest to
+#' it. Defaults to the most recent.
 #' @return A character scalar snapshot URL, or \code{NULL}.
 #' @examples
 #' \donttest{
@@ -232,19 +240,22 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 
 #' Download a File With Diagnostic Error Messages
 #'
-#' Wraps [utils::download.file()] and, on failure, prints plain-language
-#' guidance for the most common academic and corporate network problems
-#' (rate limiting, TLS-inspection VPNs, DNS failures, timeouts, HTTP 403).
-#' Optionally retries from a Wayback Machine snapshot URL.
+#' Wraps [utils::download.file()] and, on
+#' failure, prints plain-language guidance for the most common academic and
+#' corporate network problems (rate limiting, TLS-inspection VPNs, DNS
+#' failures, timeouts, HTTP 403). Optionally retries from a Wayback Machine
+#' snapshot URL.
 #'
 #' @param url URL to download.
 #' @param target_path Destination path on disk.
-#' @param attempt_wayback Wayback Machine snapshot URL tried as a fallback if
-#'   the primary download fails. When `NULL` (the default) a snapshot is
-#'   resolved automatically via [wayback_snapshot_url()]; pass an explicit URL
-#'   to override the lookup, or `""` to disable the fallback entirely.
-#' @return `TRUE` if either the primary download or the Wayback fallback
-#'   succeeds, otherwise `FALSE`.
+#' @param attempt_wayback Wayback Machine snapshot
+#' URL tried as a fallback if the primary download fails. When `NULL`
+#' (the default) a snapshot is resolved automatically via
+#' [wayback_snapshot_url()]; pass an
+#' explicit URL to override the lookup, or `""` to disable the
+#' fallback entirely.
+#' @return `TRUE` if either the primary download or the Wayback
+#' fallback succeeds, otherwise `FALSE`.
 #' @examples
 #' \donttest{
 #' ok <- friendly_download("https://cloud.r-project.org/",
@@ -306,15 +317,15 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 
 #' Verify a File's SHA256 Against an Expected Digest
 #'
-#' Computes the SHA256 digest of a file with the package's own
-#' compiled SHA-256 core and compares it to the expected value pinned
-#' in provenance.
+#' Computes the SHA256 digest of a file with the package's own compiled
+#' SHA-256 core and compares it to the expected value pinned in provenance.
 #'
 #' @param path Path to the file to hash.
-#' @param expected_sha The expected SHA256 digest, as a lowercase hex
-#'   string.
-#' @return A list with `actual` (computed digest), `expected` (the value
-#'   passed in), and `match` (logical; `TRUE` if they are identical).
+#' @param expected_sha The expected SHA256 digest, as a
+#' lowercase hex string.
+#' @return A list with `actual` (computed digest), `expected`
+#' (the value passed in), and `match` (logical; `TRUE` if they
+#' are identical).
 #' @examples
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
@@ -324,7 +335,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #' chk$match          # TRUE
 #'
 #' # A wrong expected digest -> match FALSE, with both values reported.
-#' bad <- verify_sha256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+#' bad <- verify_sha256(f, strrep("0", 64L))
 #' bad$match          # FALSE
 #' bad$actual         # the real digest
 #' @export
@@ -347,37 +358,45 @@ verify_sha256 <- function(path, expected_sha) {
 #'
 #' Checks a raw data frame against the `schema` block of a provenance
 #' object and returns the issues found rather than raising, so the caller
-#' decides how to react. [apply_schema_validation()] is the wrapper that
-#' turns them into errors and warnings.
+#' decides how to react.
+#' [apply_schema_validation()] is the
+#' wrapper that turns them into errors and warnings.
 #'
 #' Every schema field is optional and is checked only when present, so a
 #' schema written for an earlier version keeps working unchanged.
 #'
 #' This is the STRUCTURAL check -- names, types, bounds, value sets. It
 #' cannot tell you that a column kept its name, type and range while its
-#' distribution moved; [capsule_drift()] answers that.
+#' distribution moved; [capsule_drift()]
+#' answers that.
 #'
 #' @param df_raw The data frame to validate.
-#' @param provenance A provenance list as returned by [load_provenance()],
-#'   or `list(schema = infer_schema(df))`. The `schema` block may contain:
+#' @param provenance A provenance list as returned by
+#' [load_provenance()], or
+#' `list(schema = infer_schema(df))`. The `schema` block may
+#' contain:
 #'   * `expected_columns` -- required column names. A missing one is
-#'     `"fatal"`; everything else below is a `"warning"`.
+#' `"fatal"`; everything else below is a `"warning"`.
 #'   * `structural_invariants` -- `min_data_rows` and `max_data_rows`.
 #'   * `expected_value_sets` -- a named list of allowed values per column.
 #'   * `expected_types` -- a named character vector of expected classes.
-#'     `integer`, `numeric` and `double` are treated as interchangeable,
-#'     since a re-release legitimately widens one to another.
+#' `integer`, `numeric` and `double` are treated as
+#' interchangeable, since a re-release legitimately widens one to another.
 #'   * `numeric_ranges` -- a named list of `c(min =, max =)` bounds.
 #'   * `max_missing_fraction` -- a named numeric of per-column ceilings on
-#'     the share of `NA`.
+#' the share of `NA`.
 #'
-#'   [infer_schema()] produces all six from data you already trust.
-#' @return A named list of issues; each issue is a list with `severity`
-#'   (`"fatal"` or `"warning"`) and a human-readable `message`. A
-#'   zero-length list means the data frame is clean.
-#' @seealso [infer_schema()] to derive a schema, [capsule_drift()] for
-#'   the distributional check, [apply_schema_validation()] to raise on
-#'   the issues.
+#' [infer_schema()] produces all six from data
+#' you already trust.
+#' @return A named list of issues; each issue is a list with
+#' `severity` ( `"fatal"` or `"warning"`) and a
+#' human-readable `message`. A zero-length list means the data frame
+#' is clean.
+#' @seealso
+#' [infer_schema()] to derive a schema,
+#' [capsule_drift()] for the distributional
+#' check, [apply_schema_validation()]
+#' to raise on the issues.
 #' @examples
 #' prov <- list(schema = list(
 #'   expected_columns      = c("id", "year"),
@@ -521,13 +540,15 @@ validate_schema <- function(df_raw, provenance) {
 
 #' Apply Schema Validation, Stopping on Fatal Issues
 #'
-#' Runs [validate_schema()] and acts on the result: fatal issues raise an
-#' error via [stop()], warning-severity issues emit a [warning()].
+#' Runs [validate_schema()] and acts on the
+#' result: fatal issues raise an error via [stop()],
+#' warning-severity issues emit a [warning()].
 #'
 #' @param df_raw The data frame to validate.
-#' @param provenance A provenance list as returned by [load_provenance()].
+#' @param provenance A provenance list as returned by
+#' [load_provenance()].
 #' @return Invisibly, `TRUE` if no issues were found and `FALSE`
-#'   otherwise. Errors if any fatal issue is present.
+#' otherwise. Errors if any fatal issue is present.
 #' @examples
 #' prov <- list(schema = list(expected_columns = "id"))
 #' apply_schema_validation(data.frame(id = 1), prov)
@@ -554,12 +575,12 @@ apply_schema_validation <- function(df_raw, provenance) {
 #' across the MORIE family.
 #'
 #' @param provenance A provenance list as returned by
-#'   [load_provenance()]. Must contain `dataset$socrata_domain` (e.g.
-#'   `"data.cityofchicago.org"`) and `dataset$socrata_id` (the 4x4
-#'   dataset id, e.g. `"ijzp-q8t2"`).
+#' [load_provenance()]. Must contain
+#' `dataset$socrata_domain` (e.g. `"data.cityofchicago.org"`) and
+#' `dataset$socrata_id` (the 4x4 dataset id, e.g. `"ijzp-q8t2"`)
+#' .
 #' @return The CSV export URL as a character string, or `NULL` if the
-#'   fields are missing, the request fails, or the metadata reports an
-#'   error.
+#' fields are missing, the request fails, or the metadata reports an error.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
 #' resolve_via_socrata(list())
@@ -583,18 +604,18 @@ resolve_via_socrata <- function(provenance) {
 
 #' Resolve a Query URL via ArcGIS FeatureServer Metadata
 #'
-#' Verifies that an ArcGIS FeatureServer layer still exists by fetching
-#' its `f=json` metadata, then returns a paged GeoJSON query URL for the
-#' full layer. ArcGIS FeatureServer layers back the Toronto Police
-#' Service open-data portal used across the MORIE family.
+#' Verifies that an ArcGIS FeatureServer layer still exists by fetching its
+#' `f=json` metadata, then returns a paged GeoJSON query URL for the
+#' full layer. ArcGIS FeatureServer layers back the Toronto Police Service
+#' open-data portal used across the MORIE family.
 #'
 #' @param provenance A provenance list as returned by
-#'   [load_provenance()]. Must contain `dataset$arcgis_layer_url`, a
-#'   FeatureServer layer root such as
-#'   `"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"`.
-#' @return The layer query URL (`where=1=1`, all fields, GeoJSON) as a
-#'   character string, or `NULL` if the field is missing, the request
-#'   fails, or the layer metadata reports an error.
+#' [load_provenance()]. Must contain
+#' `dataset$arcgis_layer_url`, a FeatureServer layer root such as
+#' `"https://services.arcgis.com/.../Assault_Open_Data/FeatureServer/0"`.
+#' @return The layer query URL ( `where=1=1`, all fields, GeoJSON) as
+#' a character string, or `NULL` if the field is missing, the request
+#' fails, or the layer metadata reports an error.
 #' @examples
 #' # Missing fields return NULL rather than erroring:
 #' resolve_via_arcgis(list())

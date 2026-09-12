@@ -15,28 +15,32 @@
 #' Parse banded category labels into numeric bounds
 #'
 #' Recognises the forms that open-data publishers actually use: a bare
-#' number (`"3"`), a closed range (`"18 to 24"`, `"18-24"`,
-#' `"18 - 24"`), an open upper band (`"50+"`, `"Greater than 15"`,
-#' `"over 15"`, `"more than 15"`, `"65 and over"`), and an open lower
-#' band (`"<18"`, `"under 18"`, `"less than 18"`).
+#' number ( `"3"`) , a closed range ( `"18 to 24"`,
+#' `"18-24"`, `"18 - 24"`) , an open upper band ( `"50+"`,
+#' `"Greater than 15"`, `"over 15"`, `"more than 15"`,
+#' `"65 and over"`) , and an open lower band ( `"<18"`,
+#' `"under 18"`, `"less than 18"`) .
 #'
 #' @param x Character labels.
-#' @param closed_upper For an open upper band, whether the stated number
-#'   is included. `"50+"` includes 50; `"Greater than 15"` does not, so
-#'   its lower bound is 16 for integer data. Controlled per-label by the
-#'   wording, and this argument only settles the ambiguous `"+"` form.
-#' @param integer_scale Whether the quantity is integer-valued, which
-#'   decides whether `"greater than 15"` starts at 16 or just above 15.
-#' @return A data frame with `label`, `lower`, `upper`, `open_lower` and
-#'   `open_upper`. An unparseable label gives `NA` bounds rather than a
-#'   guess.
-#' @seealso [band_values()], [band_sensitivity()]
+#' @param closed_upper For an open upper band, whether
+#' the stated number is included. `"50+"` includes 50;
+#' `"Greater than 15"` does not, so its lower bound is 16 for integer
+#' data. Controlled per-label by the wording, and this argument only
+#' settles the ambiguous `"+"` form.
+#' @param integer_scale Whether the quantity is
+#' integer-valued, which decides whether `"greater than 15"` starts at
+#' 16 or just above 15.
+#' @return A data frame with `label`, `lower`, `upper`,
+#' `open_lower` and `open_upper`. An unparseable label gives
+#' `NA` bounds rather than a guess.
+#' @seealso
+#' [band_values()],
+#' [band_sensitivity()]
 #' @references
 #' The forms recognised here are taken from the categories the Ontario
-#' Ministry of the Solicitor General publishes in its inmate datasets
-#' (the segregation and restrictive-confinement releases), where the
-#' placement-count and age categories are banded and the top band is
-#' open.
+#' Ministry of the Solicitor General publishes in its inmate datasets (the
+#' segregation and restrictive-confinement releases), where the
+#' placement-count and age categories are banded and the top band is open.
 #' @examples
 #' parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #'
@@ -124,24 +128,26 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
 #'
 #' Turns bounds into the single number per band that a calculation needs,
 #' under a stated rule. The open band is the whole difficulty: it has no
-#' midpoint, so a cap has to be supplied or assumed, and the assumption
-#' is recorded in the result rather than absorbed into it.
+#' midpoint, so a cap has to be supplied or assumed, and the assumption is
+#' recorded in the result rather than absorbed into it.
 #'
-#' @param bands A data frame from [parse_bands()], or labels to parse.
-#' @param rule How to place a value inside a closed band. `"midpoint"`
-#'   is the arithmetic mean of the bounds. `"lower"` and `"upper"` give
-#'   the conservative and generous readings, which together bracket
-#'   whatever the truth is. `"geometric"` suits a quantity whose
-#'   distribution inside the band is closer to log-uniform than uniform,
-#'   which is usual for counts and durations.
-#' @param open_upper_cap Upper bound to assume for an open top band. The
-#'   default multiplies the band's lower bound by `open_upper_factor`,
-#'   which is an assumption and is flagged as one.
-#' @param open_upper_factor Multiplier used when no cap is given.
-#' @param open_lower_floor Lower bound to assume for an open bottom
-#'   band. Defaults to zero.
-#' @return The band table with a `value` column and an `assumed` column
-#'   marking the rows whose value rests on the open-band assumption.
+#' @param bands A data frame from
+#' [parse_bands()], or labels to parse.
+#' @param rule How to place a value inside a closed band.
+#' `"midpoint"` is the arithmetic mean of the bounds. `"lower"`
+#' and `"upper"` give the conservative and generous readings, which
+#' together bracket whatever the truth is. `"geometric"` suits a
+#' quantity whose distribution inside the band is closer to log-uniform
+#' than uniform, which is usual for counts and durations.
+#' @param open_upper_cap Upper bound to assume for an
+#' open top band. The default multiplies the band's lower bound by
+#' `open_upper_factor`, which is an assumption and is flagged as one.
+#' @param open_upper_factor Multiplier used when no
+#' cap is given.
+#' @param open_lower_floor Lower bound to assume
+#' for an open bottom band. Defaults to zero.
+#' @return The band table with a `value` column and an `assumed`
+#' column marking the rows whose value rests on the open-band assumption.
 #' @seealso [band_sensitivity()]
 #' @examples
 #' b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
@@ -201,19 +207,20 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
 #'
 #' Recomputes a statistic across a range of assumed caps for the open top
 #' band and reports how far the answer moves. Everything derived from
-#' banded data carries this dependence; the only question is whether it
-#' was measured.
+#' banded data carries this dependence; the only question is whether it was
+#' measured.
 #'
-#' @param bands A data frame from [parse_bands()], or labels to parse.
+#' @param bands A data frame from
+#' [parse_bands()], or labels to parse.
 #' @param counts How many units fall in each band.
-#' @param statistic A function of a numeric vector of per-unit values.
-#'   Defaults to [gini()].
+#' @param statistic A function of a numeric vector of
+#' per-unit values. Defaults to [gini()].
 #' @param caps Caps to try for the open top band. Defaults to a
-#'   geometric sweep from the band's lower bound to twenty times it.
-#' @param rule Passed to [band_values()].
-#' @return A data frame of `cap` and `value`, with the span and the
-#'   relative span attached as attributes and printed by
-#'   `print()`.
+#' geometric sweep from the band's lower bound to twenty times it.
+#' @param rule Passed to
+#' [band_values()].
+#' @return A data frame of `cap` and `value`, with the span and
+#' the relative span attached as attributes and printed by `print()`.
 #' @examples
 #' b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' counts <- c(1200, 430, 110, 38)
@@ -286,9 +293,11 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 
 #' Expand a banded frequency table into per-unit values
 #'
-#' @param bands A data frame from [parse_bands()], or labels to parse.
+#' @param bands A data frame from
+#' [parse_bands()], or labels to parse.
 #' @param counts How many units fall in each band.
-#' @param ... Passed to [band_values()].
+#' @param ... Passed to
+#' [band_values()].
 #' @return A numeric vector with one entry per unit.
 #' @examples
 #' x <- expand_bands(c("1", "2 to 5", "Greater than 5"),

@@ -9,26 +9,27 @@ sir(observed, expected, area = NULL, conf_level = 0.95)
 \arguments{
 \item{observed}{Observed counts.}
 
-\item{expected}{Expected counts, from \code{\link[=expected_counts]{expected_counts()}}.}
+\item{expected}{Expected counts, from
+\code{\link[=expected_counts]{expected_counts()}}.}
 
 \item{area}{Optional labels.}
 
 \item{conf_level}{Confidence level.}
 }
 \value{
-A data frame with \code{observed}, \code{expected}, \code{sir}, \code{lower},
-\code{upper} and \code{excess} -- whether the interval excludes one.
+A data frame with \code{observed}, \code{expected}, \code{sir},
+\code{lower}, \code{upper} and \code{excess} -- whether the interval
+excludes one.
 }
 \description{
-The ratio of observed to expected, with the exact Poisson interval
-for it. A ratio of one is the overall experience; above one is an
-excess.
+The ratio of observed to expected, with the exact Poisson interval for
+it. A ratio of one is the overall experience; above one is an excess.
 }
 \details{
 The interval is the exact Poisson one, from the relation between the
 Poisson and gamma distributions, and so is identical to
-\code{stats::poisson.test}'s. It is the interval to use here because the
-counts that matter are small: a normal approximation on an observed
+\code{stats::poisson.test} 's. It is the interval to use here because
+the counts that matter are small: a normal approximation on an observed
 count of three is not an interval, it is a decoration.
 }
 \examples{
@@ -40,9 +41,10 @@ sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
 sir(3, 5)
 }
 \references{
-Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal
-Health Modeling}. Chapman and Hall/CRC, Chapter 1.
+Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+Modeling}. Chapman and Hall/CRC, Chapter 1.
 }
 \seealso{
-\code{\link[=eb_rates]{eb_rates()}}, \code{\link[=funnel_limits]{funnel_limits()}}
+\code{\link[=eb_rates]{eb_rates()}},
+\code{\link[=funnel_limits]{funnel_limits()}}
 }

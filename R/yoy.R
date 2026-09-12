@@ -23,49 +23,61 @@
 
 #' Year-over-year (and period-over-period) change
 #'
-#' Computes the change from one period to the period `lag` places before
-#' it, matched on the period's own value rather than on row order, and
-#' carries an exact interval for count data.
+#' Computes the change from one period to the period `lag` places
+#' before it, matched on the period's own value rather than on row order,
+#' and carries an exact interval for count data.
 #'
 #' @param x A data frame, a numeric vector, or a `ts`.
-#' @param value For a data frame, the column holding the measure, as a
-#'   string or a bare name.
-#' @param period For a data frame, the column holding the period (a year,
-#'   a `Date`, a fiscal-year integer, an ordered factor). For a numeric
-#'   vector, the periods themselves.
-#' @param by Optional grouping columns, as a character vector. The change
-#'   is computed within each group.
+#' @param value For a data frame, the column holding the
+#' measure, as a string or a bare name.
+#' @param period For a data frame, the column holding the
+#' period (a year, a `Date`, a fiscal-year integer, an ordered
+#' factor). For a numeric vector, the periods themselves.
+#' @param by Optional grouping columns, as a character vector.
+#' The change is computed within each group.
 #' @param lag How many periods back to compare with. `1` is
-#'   year-over-year on annual data; for a `ts` the default follows the
-#'   series' own frequency, so monthly data compares with the same month
-#'   a year earlier.
-#' @param fun Aggregation applied to `value` within a period and group,
-#'   when there is more than one row. Default [sum()], which is what a
-#'   count needs.
-#' @param units What the measure is. `"count"` gets the exact rate-ratio
-#'   interval. `"continuous"` gets the percent change without one, since
-#'   a single pair of totals carries no information about its own
-#'   variability. `"percent"` reports a percentage-POINT change and
-#'   withholds the percent change, which for a percentage is a different
-#'   quantity.
-#' @param min_base Smallest previous-period value for which a percent
-#'   change is reported. Below it the percent is `NA` and the reason is
-#'   recorded, rather than a large number that describes the denominator.
-#'   Defaults to 20 for counts and to no gate otherwise.
-#' @param conf_level Confidence level for the count interval.
-#' @param direction Which way is an improvement: `"higher_is_better"`,
-#'   `"lower_is_better"` (segregation days, deaths in custody, use of
-#'   force), or `"neutral"`. Affects colour and the `verdict` column only,
-#'   never the arithmetic.
-#' @param complete Whether to insert the missing periods in the observed
-#'   range so that a gap is visible as a gap instead of closing up.
+#' year-over-year on annual data; for a `ts` the default follows the
+#' series' own frequency, so monthly data compares with the same month a
+#' year earlier.
+#' @param fun Aggregation applied to `value` within a
+#' period and group, when there is more than one row. Default
+#' [sum()], which is what a count needs.
+#' @param units What the measure is. `"count"` gets the
+#' exact rate-ratio interval. `"continuous"` gets the percent change
+#' without one, since a single pair of totals carries no information about
+#' its own variability. `"percent"` reports a percentage-POINT change
+#' and withholds the percent change, which for a percentage is a different
+#' quantity.
+#' @param min_base Smallest previous-period value for which
+#' a percent change is reported. Below it the percent is `NA` and the
+#' reason is recorded, rather than a large number that describes the
+#' denominator. Defaults to 20 for counts and to no gate otherwise.
+#' @param conf_level Confidence level for the count
+#' interval.
+#' @param direction Which way is an improvement:
+#' `"higher_is_better"`, `"lower_is_better"` (segregation days,
+#' deaths in custody, use of force), or `"neutral"`. Affects colour
+#' and the `verdict` column only, never the arithmetic.
+#' @param complete Whether to insert the missing periods in
+#' the observed range so that a gap is visible as a gap instead of closing
+#' up.
 #' @param ... Passed between methods.
 #' @return An `rmbl_yoy` object: a data frame with one row per period
-#'   (and group), and columns `period`, `value`, `previous`, `change`,
-#'   `pct_change` (or `pp_change` for percentages), `pct_lower` and
-#'   `pct_upper` for counts, `verdict`, and `flag` recording why a
-#'   percent was withheld.
-#' @seealso [yoy_html()], [yoy_pdf()], [yoy_summary()]
+#' (and group), and columns `period`, `value`, `previous`,
+#' `change`, `pct_change` (or `pp_change` for percentages),
+#' `pct_lower` and `pct_upper` for counts, `verdict`, and
+#' `flag` recording why a percent was withheld.
+#' @references
+#' The exact interval for a ratio of two counts is the conditional-binomial
+#' (Clopper-Pearson) one, which is the construction
+#' `stats::poisson.test` uses and which this is verified against. On
+#' the reporting conventions, the Toronto Police Service's *Understanding
+#' Strip Searches in 2020 Methodological Report* -- in the local corpus
+#' -- reports year-over-year change on exactly this kind of
+#' administrative extract, and is the shape this function is built for.
+#' @seealso
+#' [yoy_html()], [yoy_pdf()],
+#' [yoy_summary()]
 #' @examples
 #' seg <- data.frame(
 #'   EndFiscalYear = rep(2019:2023, each = 2),

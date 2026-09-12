@@ -17,23 +17,24 @@ yoy_json(x, file, digits = NULL, pretty = TRUE, ...)
 yoy_markdown(x, file, digits = 1L, align = TRUE, ...)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from
+\code{\link[=yoy]{yoy()}}.}
 
-\item{file}{Output path, or \code{NULL} to return the text instead of
-writing it.}
+\item{file}{Output path, or \code{NULL} to return the text
+instead of writing it.}
 
-\item{digits}{Digits for the percent columns. \code{NULL}, the default,
-writes them unrounded, which is what a downstream calculation
-wants; give a number for a figure meant to be read.}
+\item{digits}{Digits for the percent columns. \code{NULL},
+the default, writes them unrounded, which is what a downstream
+calculation wants; give a number for a figure meant to be read.}
 
-\item{na}{How to write a missing value. The default empty string is
-what most readers expect; \code{"NA"} keeps R's own spelling.}
+\item{na}{How to write a missing value. The default empty
+string is what most readers expect; \code{"NA"} keeps R's own spelling.}
 
-\item{metadata}{Whether to lead with comment lines recording the lag,
-units, confidence level, base gate and direction. On by default,
-because a percent column means different things under different
-settings and the file is the only place a later reader can look.
-Markdown and JSON carry the same information structurally.}
+\item{metadata}{Whether to lead with comment lines
+recording the lag, units, confidence level, base gate and direction. On
+by default, because a percent column means different things under
+different settings and the file is the only place a later reader can
+look. Markdown and JSON carry the same information structurally.}
 
 \item{comment}{Comment prefix for the metadata lines.}
 
@@ -41,11 +42,12 @@ Markdown and JSON carry the same information structurally.}
 
 \item{pretty}{Whether to indent the JSON.}
 
-\item{align}{Whether to pad the Markdown columns so the source table
-is readable unrendered.}
+\item{align}{Whether to pad the Markdown columns so the
+source table is readable unrendered.}
 }
 \value{
-The path, invisibly; or the text, when \code{file} is \code{NULL}.
+The path, invisibly; or the text, when \code{file} is
+\code{NULL}.
 }
 \description{
 \code{yoy_csv()} separates fields with a comma and quotes any field that

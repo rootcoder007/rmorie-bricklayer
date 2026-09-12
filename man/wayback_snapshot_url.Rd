@@ -9,15 +9,16 @@ wayback_snapshot_url(url, timestamp = NULL)
 \arguments{
 \item{url}{The original source URL to look up.}
 
-\item{timestamp}{Optional 14-digit \code{YYYYMMDDhhmmss} target; the API
-returns the snapshot closest to it. Defaults to the most recent.}
+\item{timestamp}{Optional 14-digit
+\code{YYYYMMDDhhmmss} target; the API returns the snapshot closest to
+it. Defaults to the most recent.}
 }
 \value{
 A character scalar snapshot URL, or \code{NULL}.
 }
 \description{
-Queries the Internet Archive availability API
-(\code{http://archive.org/wayback/available}) for the closest archived
+Queries the Internet Archive availability API (
+\code{http://archive.org/wayback/available}) for the closest archived
 snapshot of \code{url} and returns a directly-downloadable snapshot URL,
 or \code{NULL} if no snapshot exists or the lookup fails. This is the
 shared fetch failsafe the wider morie package family relies on: callers

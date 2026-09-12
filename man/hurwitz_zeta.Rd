@@ -7,7 +7,8 @@
 hurwitz_zeta(s, q = 1)
 }
 \arguments{
-\item{s}{Exponent, which must exceed 1 for the series to converge.}
+\item{s}{Exponent, which must exceed 1 for the series to
+converge.}
 
 \item{q}{Lower limit, which must be positive.}
 }
@@ -15,9 +16,10 @@ hurwitz_zeta(s, q = 1)
 A numeric vector the length of \code{s}.
 }
 \description{
-\verb{zeta(s, q) = sum over k >= 0 of (q + k)^-s}, by Euler-Maclaurin. It
-is the normalising constant of the discrete power law truncated below
-at \code{q}, which is why it is here; \code{zeta(s, 1)} is the Riemann zeta.
+\verb{zeta(s, q) = sum over k >= 0 of (q + k)^-s}, by Euler-Maclaurin.
+It is the normalising constant of the discrete power law truncated below
+at \code{q}, which is why it is here; \code{zeta(s, 1)} is the Riemann
+zeta.
 }
 \examples{
 # The Riemann zeta at even integers has a closed form.
@@ -33,4 +35,13 @@ hurwitz_zeta(2.5, 3) - hurwitz_zeta(2.5, 4)
 
 # Outside the domain of convergence there is no value to return.
 hurwitz_zeta(1)
+}
+\references{
+The Euler-Maclaurin expansion used here -- direct terms to \code{q + N},
+then the integral tail, then the Bernoulli-number corrections -- is the
+standard evaluation; see Abramowitz, M. and Stegun, I. A.
+\emph{Handbook of Mathematical Functions}, Sec. 23.2. (Not in the local
+corpus; cited from the published reference. The implementation is
+checked against \code{pi^2/6}, \code{pi^4/90}, Apery's constant and the
+shift identity, which is stronger evidence than the citation.)
 }

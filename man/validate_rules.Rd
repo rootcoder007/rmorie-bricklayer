@@ -9,24 +9,28 @@ validate_rules(data, rules)
 \arguments{
 \item{data}{A data frame.}
 
-\item{rules}{A list of \code{\link[=rule]{rule()}} objects, or a single rule.}
+\item{rules}{A list of \code{\link[=rule]{rule()}} objects,
+or a single rule.}
 }
 \value{
-A named list of issues, each with \code{severity}, \code{message}, and
-for a row-wise rule \code{n_failed} and \code{rows} (the first failing row
-indices). Empty when everything passes.
+A named list of issues, each with \code{severity},
+\code{message}, and for a row-wise rule \code{n_failed} and \code{rows}
+(the first failing row indices). Empty when everything passes.
 }
 \description{
-Evaluates each rule from \code{\link[=rule]{rule()}} and returns the failures in the same
-shape \code{\link[=validate_schema]{validate_schema()}} uses, so the two can be combined and handed
-to \code{\link[=apply_schema_validation]{apply_schema_validation()}} together.
+Evaluates each rule from \code{\link[=rule]{rule()}} and returns the
+failures in the same shape
+\code{\link[=validate_schema]{validate_schema()}} uses, so the two can
+be combined and handed to
+\code{\link[=apply_schema_validation]{apply_schema_validation()}}
+together.
 }
 \details{
-A rule whose column is absent is SKIPPED rather than failed -- a
-missing column is \code{\link[=validate_schema]{validate_schema()}}'s business, and reporting it
-twice buries the real finding. A rule that ERRORS is reported as a
-failure naming the error, never swallowed: a rule that cannot run has
-not passed.
+A rule whose column is absent is SKIPPED rather than failed -- a missing
+column is \code{\link[=validate_schema]{validate_schema()}} 's business,
+and reporting it twice buries the real finding. A rule that ERRORS is
+reported as a failure naming the error, never swallowed: a rule that
+cannot run has not passed.
 }
 \examples{
 df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
@@ -59,5 +63,7 @@ broken <- list(rule("bad", function(v) stop("boom"), column = "age"))
 validate_rules(clean, broken)$bad$message
 }
 \seealso{
-\code{\link[=rule]{rule()}}, \code{\link[=validate_schema]{validate_schema()}}, \code{\link[=apply_schema_validation]{apply_schema_validation()}}
+\code{\link[=rule]{rule()}},
+\code{\link[=validate_schema]{validate_schema()}},
+\code{\link[=apply_schema_validation]{apply_schema_validation()}}
 }

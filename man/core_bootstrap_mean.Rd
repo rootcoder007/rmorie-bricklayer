@@ -17,11 +17,12 @@ core_bootstrap_mean(x, B = 1000L, seed = 42L)
 A numeric vector of length \code{B}: the replicate means.
 }
 \description{
-\code{B} resamples of \code{x}, drawn with replacement and each the same length
-as \code{x}, with the mean of every resample returned. The resampling uses
-the core's own 64-bit Mersenne Twister seeded by \code{seed}, NOT R's RNG,
-so a given \code{seed} reproduces the same replicates in every binding of
-the core and R's own random stream is left untouched.
+\code{B} resamples of \code{x}, drawn with replacement and each the same
+length as \code{x}, with the mean of every resample returned. The
+resampling uses the core's own 64-bit Mersenne Twister seeded by
+\code{seed}, NOT R's RNG, so a given \code{seed} reproduces the same
+replicates in every binding of the core and R's own random stream is
+left untouched.
 }
 \examples{
 set.seed(1)

@@ -7,17 +7,19 @@
 bricklayer_fetch_parse_siu(drid, lang = c("en", "fr"))
 }
 \arguments{
-\item{drid}{Director's-report id (the \verb{drid=} query parameter).}
+\item{drid}{Director's-report id (the \verb{drid=} query
+parameter).}
 
 \item{lang}{\code{"en"} (default) or \code{"fr"}.}
 }
 \value{
-A named character vector of parsed fields, or \code{NULL} when the
-fetch fails.
+A named character vector of parsed fields, or \code{NULL} when
+the fetch fails.
 }
 \description{
-Convenience: \code{\link[=bricklayer_fetch_siu]{bricklayer_fetch_siu()}} then \code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}}.
-Fails gracefully -- returns \code{NULL} with a message when the report cannot
+Convenience: \code{\link[=bricklayer_fetch_siu]{bricklayer_fetch_siu()}}
+then \code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}}. Fails
+gracefully -- returns \code{NULL} with a message when the report cannot
 be retrieved.
 }
 \examples{

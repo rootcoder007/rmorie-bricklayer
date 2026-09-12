@@ -58,20 +58,20 @@
 \item{object}{The object to summarise.}
 }
 \value{
-\code{format()} methods return a character vector; \code{print()}
-methods return \code{x} invisibly.
+\code{format()} methods return a character vector;
+\code{print()} methods return \code{x} invisibly.
 }
 \description{
-Human-readable renderings of the objects the package returns. Each
-leads with the verdict, then the evidence. \code{format()} returns the
-lines as a character vector so they can be logged or written to a
-file; \code{print()} sends them to the console and returns its argument
+Human-readable renderings of the objects the package returns. Each leads
+with the verdict, then the evidence. \code{format()} returns the lines
+as a character vector so they can be logged or written to a file;
+\code{print()} sends them to the console and returns its argument
 invisibly.
 }
 \details{
 Box-drawing characters are used only when the session's encoding can
-render them; otherwise the same layout is drawn in plain ASCII. Set
-the environment variable \code{RMBL_ASCII_ONLY} to force the ASCII form,
+render them; otherwise the same layout is drawn in plain ASCII. Set the
+environment variable \code{RMBL_ASCII_ONLY} to force the ASCII form,
 which is what to do when capturing output into a fixed-width log.
 }
 \examples{

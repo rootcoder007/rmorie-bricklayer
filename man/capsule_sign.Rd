@@ -7,39 +7,42 @@
 capsule_sign(message, key, scheme = NULL)
 }
 \arguments{
-\item{message}{Length-1 character vector (or raw vector) to sign.}
+\item{message}{Length-1 character vector (or raw vector)
+to sign.}
 
-\item{key}{A shared secret (character/raw) for \code{"hmac"}, a
-\code{bricklayer_signing_key} from \code{\link[=pqc_keygen]{pqc_keygen()}} for \code{"xmss"}, or a
-\code{bricklayer_oqs_key} from \code{\link[=oqs_keygen]{oqs_keygen()}} for a standardised scheme
-(in which case \code{scheme} is taken from the key and ignored).}
+\item{key}{A shared secret (character/raw) for \code{"hmac"},
+a \code{bricklayer_signing_key} from
+\code{\link[=pqc_keygen]{pqc_keygen()}} for \code{"xmss"}, or a
+\code{bricklayer_oqs_key} from \code{\link[=oqs_keygen]{oqs_keygen()}}
+for a standardised scheme (in which case \code{scheme} is taken from the
+key and ignored).}
 
-\item{scheme}{\code{"xmss"} (post-quantum, asymmetric) or \code{"hmac"}
-(symmetric). Inferred from \code{key} when not given.}
+\item{scheme}{\code{"xmss"} (post-quantum, asymmetric) or
+\code{"hmac"} (symmetric). Inferred from \code{key} when not given.}
 }
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},
-\code{signature}, and for XMSS also \code{auth}, \code{index}, \code{root}, \code{height}
-and \code{key_state}.
+\code{signature}, and for XMSS also \code{auth}, \code{index},
+\code{root}, \code{height} and \code{key_state}.
 }
 \description{
 Authenticates \code{message} -- normally a manifest digest, or the whole
-manifest text -- so a verifier can tell that it came from the holder
-of the key and has not been altered since.
+manifest text -- so a verifier can tell that it came from the holder of
+the key and has not been altered since.
 }
 \details{
-With \code{scheme = "hmac"} the \code{key} is a shared secret string and the
-result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify can
-also sign.
+With \code{scheme = "hmac"} the \code{key} is a shared secret string and
+the result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify
+can also sign.
 
-With \code{scheme = "xmss"} the \code{key} is a \code{\link[=pqc_keygen]{pqc_keygen()}} object and the
-result is a post-quantum one-time signature under the key's Merkle
-root. Asymmetric: a verifier holding only the public root cannot
-forge.
+With \code{scheme = "xmss"} the \code{key} is a
+\code{\link[=pqc_keygen]{pqc_keygen()}} object and the result is a
+post-quantum one-time signature under the key's Merkle root. Asymmetric:
+a verifier holding only the public root cannot forge.
 }
 \section{The returned key state must be carried forward}{
-An XMSS signature consumes a leaf. The returned object therefore
-carries \code{key_state}, the key with \code{next_index} advanced, and
+An XMSS signature consumes a leaf. The returned object therefore carries
+\code{key_state}, the key with \code{next_index} advanced, and
 \strong{subsequent signing must use that} -- reusing an index breaks the
 scheme. Passing an exhausted key is an error, not a silent wrap-around.
 }
@@ -66,5 +69,6 @@ capsule_verify("manifest-2", s2, signing_public_key(key))
 capsule_verify("manifest-1", s2, signing_public_key(key))
 }
 \seealso{
-\code{\link[=capsule_verify]{capsule_verify()}}, \code{\link[=core_hmac_sha256]{core_hmac_sha256()}}
+\code{\link[=capsule_verify]{capsule_verify()}},
+\code{\link[=core_hmac_sha256]{core_hmac_sha256()}}
 }

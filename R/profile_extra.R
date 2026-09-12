@@ -5,25 +5,28 @@
 
 #' Which columns are missing together
 #'
-#' Counts the distinct PATTERNS of missingness across rows, rather than
-#' the per-column rates [profile_columns()] reports.
+#' Counts the distinct PATTERNS of missingness across rows, rather than the
+#' per-column rates [profile_columns()]
+#' reports.
 #'
 #' The distinction decides what to do about the gaps. Two columns each 30%
 #' missing at random need different handling from two columns 30% missing
 #' in THE SAME rows -- the second is one structural gap (a join that
 #' failed, a form section nobody filled in) and often means those rows
-#' should be dropped or modelled separately, while the first does not.
-#' A per-column rate cannot tell the two apart; this can.
+#' should be dropped or modelled separately, while the first does not. A
+#' per-column rate cannot tell the two apart; this can.
 #'
 #' @param data A data frame.
-#' @param max_patterns Maximum patterns to return, most frequent first
-#'   (default 20).
+#' @param max_patterns Maximum patterns to return, most
+#' frequent first (default 20).
 #' @return A data frame of class `bricklayer_missingness`, one row per
-#'   pattern: `pattern` (a string of `.` for present and `X` for
-#'   missing, in column order), `n_rows`, `pct_rows`, `n_missing`
-#'   (columns missing in that pattern), and `columns` (their names).
-#'   Carries the column order as the `"columns"` attribute.
-#' @seealso [profile_columns()] for per-column rates.
+#' pattern: `pattern` (a string of `.` for present and `X`
+#' for missing, in column order), `n_rows`, `pct_rows`,
+#' `n_missing` (columns missing in that pattern), and `columns`
+#' (their names). Carries the column order as the `"columns"`
+#' attribute.
+#' @seealso [profile_columns()] for
+#' per-column rates.
 #' @examples
 #' # Two columns missing in the SAME rows: one structural gap.
 #' structural <- data.frame(
@@ -112,24 +115,28 @@ print.bricklayer_missingness <- function(x, ...) {
 
 #' Strongest pairwise correlations in a data frame
 #'
-#' Ranks the numeric column pairs by the strength of their association,
-#' so a wide table's structure can be read without squinting at a
-#' correlation matrix.
+#' Ranks the numeric column pairs by the strength of their association, so
+#' a wide table's structure can be read without squinting at a correlation
+#' matrix.
 #'
 #' Spearman is the default deliberately. Pearson measures LINEAR
 #' association only, so it understates a relationship that is perfectly
-#' monotone but curved, and a single outlier can manufacture or destroy
-#' it. On data you have not yet inspected -- which is the situation this
+#' monotone but curved, and a single outlier can manufacture or destroy it.
+#' On data you have not yet inspected -- which is the situation this
 #' function is for -- the rank correlation is the safer question to ask.
 #'
 #' @param data A data frame; non-numeric columns are ignored.
 #' @param n Number of pairs to return (default 10).
-#' @param method `"spearman"` (default) or `"pearson"`.
-#' @param min_abs Report only pairs whose absolute correlation reaches
-#'   this (default 0).
-#' @return A data frame of class `bricklayer_correlations` with `x`, `y`,
-#'   `correlation` and `abs_correlation`, strongest first.
-#' @seealso [core_cor_spearman()], [core_cov()]
+#' @param method `"spearman"` (default) or
+#' `"pearson"`.
+#' @param min_abs Report only pairs whose absolute
+#' correlation reaches this (default 0).
+#' @return A data frame of class `bricklayer_correlations` with
+#' `x`, `y`, `correlation` and `abs_correlation`,
+#' strongest first.
+#' @seealso
+#' [core_cor_spearman()],
+#' [core_cov()]
 #' @examples
 #' set.seed(1)
 #' n <- 200
@@ -238,14 +245,18 @@ print.bricklayer_correlations <- function(x, ...) {
 #' hundred packages does not scale, and the one line that matters -- a
 #' dependency that moved a minor version -- is exactly what gets missed.
 #'
-#' @param a,b Environment records from [capture_environment()], or whole
-#'   manifests containing an `environment` element.
-#' @return A list of class `bricklayer_env_diff`: `identical` (logical),
-#'   `r_version` (a length-2 character vector when they differ, else
-#'   `NULL`), `platform` (likewise), and `packages` (a data frame of
-#'   `package`, `a`, `b`, `change`, where `change` is `"added"`,
-#'   `"removed"` or `"changed"`).
-#' @seealso [capture_environment()], [make_manifest()]
+#' @param a,b Environment records from
+#' [capture_environment()], or whole
+#' manifests containing an `environment` element.
+#' @return A list of class `bricklayer_env_diff`: `identical`
+#' (logical), `r_version` (a length-2 character vector when they
+#' differ, else `NULL`) , `platform` (likewise), and
+#' `packages` (a data frame of `package`, `a`, `b`,
+#' `change`, where `change` is `"added"`, `"removed"`
+#' or `"changed"`) .
+#' @seealso
+#' [capture_environment()],
+#' [make_manifest()]
 #' @examples
 #' a <- capture_environment()
 #' b <- a

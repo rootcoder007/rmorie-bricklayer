@@ -13,46 +13,51 @@
 #' integrity covers the ORDER and COMPLETENESS of the history, not merely
 #' the contents of each manifest. Deleting an entry, inserting one, or
 #' editing one breaks the links from that point onward, and
-#' [chain_verify()] reports the first index where the break occurs.
+#' [chain_verify()] reports the first index
+#' where the break occurs.
 #'
-#' This is the structure behind an append-only audit log, and it is what
-#' a per-manifest digest alone cannot give you: individually valid
-#' manifests say nothing about whether any were removed.
+#' This is the structure behind an append-only audit log, and it is what a
+#' per-manifest digest alone cannot give you: individually valid manifests
+#' say nothing about whether any were removed.
 #'
 #' # What the head covers, and what it does not
 #'
 #' `chain_head()` is the STORED digest of the last entry. Deleting an
-#' entry from the MIDDLE leaves that value untouched -- the stored
-#' digests do not change, only the links between them stop agreeing --
-#' so the head alone will not notice. [chain_verify()] will, and names
-#' the index.
+#' entry from the MIDDLE leaves that value untouched -- the stored digests
+#' do not change, only the links between them stop agreeing -- so the head
+#' alone will not notice. [chain_verify()] will,
+#' and names the index.
 #'
-#' Conversely, truncating from the END leaves a perfectly valid prefix
-#' that [chain_verify()] accepts, while the head changes.
+#' Conversely, truncating from the END leaves a perfectly valid prefix that
+#' [chain_verify()] accepts, while the head
+#' changes.
 #'
 #' The two failures are complementary, which is why `chain_seal()`
-#' exists: it verifies the links AND folds the entry count and every
-#' link digest into one value, so a single signature over the seal
-#' detects an edit, a deletion, a reordering, an insertion and a
-#' truncation alike. Sign the seal, not the head.
+#' exists: it verifies the links AND folds the entry count and every link
+#' digest into one value, so a single signature over the seal detects an
+#' edit, a deletion, a reordering, an insertion and a truncation alike.
+#' Sign the seal, not the head.
 #'
 #' Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
-#' signature an attacker who rewrites the whole chain leaves it
-#' internally consistent, because recomputing every link is cheap.
+#' signature an attacker who rewrites the whole chain leaves it internally
+#' consistent, because recomputing every link is cheap.
 #'
-#' @param chain A chain from `chain_new()` or `chain_append()`.
-#' @param entry Any object to record. It is digested through its own
-#'   deterministic serialization, so lists and data frames are accepted
-#'   as readily as strings.
+#' @param chain A chain from `chain_new()` or
+#' `chain_append()`.
+#' @param entry Any object to record. It is digested through
+#' its own deterministic serialization, so lists and data frames are
+#' accepted as readily as strings.
 #' @param label Optional short character label for the entry.
-#' @return `chain_new()` and `chain_append()` return an object of class
-#'   `bricklayer_chain`. `chain_verify()` returns a list with `valid`,
-#'   `n`, `broken_at` (`NA` when intact) and `head`. `chain_head()`
-#'   returns the head digest. `chain_seal()` returns a single digest over
-#'   the verified chain's length and links, or `NA` if the chain does not
-#'   verify.
-#' @seealso [capsule_sign()] to sign the head, [merkle_root()] for
-#'   pinning the contents of one capsule rather than a history.
+#' @return `chain_new()` and `chain_append()` return an object of
+#' class `bricklayer_chain`. `chain_verify()` returns a list with
+#' `valid`, `n`, `broken_at` ( `NA` when intact) and
+#' `head`. `chain_head()` returns the head digest.
+#' `chain_seal()` returns a single digest over the verified chain's
+#' length and links, or `NA` if the chain does not verify.
+#' @seealso
+#' [capsule_sign()] to sign the head,
+#' [merkle_root()] for pinning the contents of
+#' one capsule rather than a history.
 #' @examples
 #' ch <- chain_new()
 #' ch <- chain_append(ch, "manifest for run 1", label = "run-1")

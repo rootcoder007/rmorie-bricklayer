@@ -14,29 +14,33 @@ write_summary_txt(
 )
 }
 \arguments{
-\item{manifest}{A manifest as returned by \code{\link[=make_manifest]{make_manifest()}}; its \code{meta}
-supplies project/author/run details.}
+\item{manifest}{A manifest as returned by
+\code{\link[=make_manifest]{make_manifest()}}; its \code{meta} supplies
+project/author/run details.}
 
-\item{output_dir}{Directory to write \code{SUMMARY.txt} into and to list
-produced files from.}
+\item{output_dir}{Directory to write
+\code{SUMMARY.txt} into and to list produced files from.}
 
-\item{paths}{A named list of absolute paths to report (e.g. \code{capsule},
-\code{input}, \code{results}, \code{analysis_script}, \code{provenance}).}
+\item{paths}{A named list of absolute paths to report (e.g.
+\code{capsule}, \code{input}, \code{results}, \code{analysis_script},
+\code{provenance}) .}
 
-\item{what_was_done}{Optional character vector of bullet points
-describing what the run did.}
+\item{what_was_done}{Optional character vector of
+bullet points describing what the run did.}
 
-\item{contact}{Optional contact string appended to the summary.}
+\item{contact}{Optional contact string appended to the
+summary.}
 
-\item{licence}{Optional licence string appended to the summary.}
+\item{licence}{Optional licence string appended to the
+summary.}
 }
 \value{
 The path to the written \code{SUMMARY.txt}, returned invisibly.
 }
 \description{
 Writes a human-readable \code{SUMMARY.txt} into the output directory,
-covering run metadata, the exact absolute paths used, result counts,
-the files produced, and optional notes, contact, and licence lines.
+covering run metadata, the exact absolute paths used, result counts, the
+files produced, and optional notes, contact, and licence lines.
 }
 \examples{
 man <- make_manifest(list(project = "demo", author = "A. Author"),

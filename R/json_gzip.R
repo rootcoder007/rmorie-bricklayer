@@ -12,23 +12,30 @@
 #' document, a header, or a text column. `json_gzip_decode()` reverses
 #' all three steps.
 #'
-#' JSON is highly compressible because every record repeats the key
-#' names, so this is usually a large saving on anything record-shaped --
-#' but it is opaque. Use it for payloads that travel, and plain
-#' [bricklayer_json_to_json()] for anything a person is meant to read or
-#' a `git diff` is meant to show.
+#' JSON is highly compressible because every record repeats the key names,
+#' so this is usually a large saving on anything record-shaped -- but it is
+#' opaque. Use it for payloads that travel, and plain
+#' [bricklayer_json_to_json()] for
+#' anything a person is meant to read or a `git diff` is meant to
+#' show.
 #'
-#' `raw = TRUE` skips the base64 step and returns the gzip bytes, which
-#' is what to use when writing to a file rather than embedding in text.
+#' `raw = TRUE` skips the base64 step and returns the gzip bytes,
+#' which is what to use when writing to a file rather than embedding in
+#' text.
 #'
 #' @param x Object to encode.
-#' @param txt Base64 string (or raw vector) from `json_gzip_encode()`.
+#' @param txt Base64 string (or raw vector) from
+#' `json_gzip_encode()`.
 #' @param raw Return (or accept) gzip bytes instead of base64.
-#' @param ... Passed to [bricklayer_json_to_json()].
+#' @param ... Passed to
+#' [bricklayer_json_to_json()].
 #' @return `json_gzip_encode()` a length-1 character vector, or a raw
-#'   vector when `raw = TRUE`. `json_gzip_decode()` the decoded object.
-#' @seealso [bricklayer_json_to_json()],
-#'   [bricklayer_json_serialize()] for a lossless but uncompressed form.
+#' vector when `raw = TRUE`. `json_gzip_decode()` the decoded
+#' object.
+#' @seealso
+#' [bricklayer_json_to_json()],
+#' [bricklayer_json_serialize()]
+#' for a lossless but uncompressed form.
 #' @examples
 #' x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 #'

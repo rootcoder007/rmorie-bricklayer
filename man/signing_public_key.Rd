@@ -7,15 +7,17 @@
 signing_public_key(key)
 }
 \arguments{
-\item{key}{A \code{bricklayer_signing_key} from \code{\link[=pqc_keygen]{pqc_keygen()}}.}
+\item{key}{A \code{bricklayer_signing_key} from
+\code{\link[=pqc_keygen]{pqc_keygen()}}.}
 }
 \value{
-A list of class \code{bricklayer_public_key}: \code{root}, \code{pub_seed},
-\code{height}, \code{scheme}.
+A list of class \code{bricklayer_public_key}: \code{root},
+\code{pub_seed}, \code{height}, \code{scheme}.
 }
 \description{
 Strips the secret seed, leaving only what a verifier needs. Publish
-this; never the object returned by \code{\link[=pqc_keygen]{pqc_keygen()}}.
+this; never the object returned by
+\code{\link[=pqc_keygen]{pqc_keygen()}}.
 }
 \examples{
 key <- pqc_keygen(height = 2)

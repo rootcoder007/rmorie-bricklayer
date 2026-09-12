@@ -13,11 +13,10 @@ sha256_file(path)
 The SHA256 digest as a character string.
 }
 \description{
-Returns the SHA256 digest of a file as a lowercase hex string,
-computed by the package's own compiled SHA-256 core (or, when the
-file is sourced standalone inside a capsule bundle, by the pure-R
-FIPS 180-4 implementation it ships). Used to record and verify data
-provenance.
+Returns the SHA256 digest of a file as a lowercase hex string, computed
+by the package's own compiled SHA-256 core (or, when the file is sourced
+standalone inside a capsule bundle, by the pure-R FIPS 180-4
+implementation it ships). Used to record and verify data provenance.
 }
 \examples{
 f <- tempfile()

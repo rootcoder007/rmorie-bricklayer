@@ -14,19 +14,19 @@ A raw vector of length \code{n}.
 }
 \description{
 Reads the operating system's own random source -- \verb{/dev/urandom} on
-Unix and macOS, \code{RtlGenRandom} on Windows -- rather than R's Mersenne
-Twister.
+Unix and macOS, \code{RtlGenRandom} on Windows -- rather than R's
+Mersenne Twister.
 }
 \details{
 This distinction matters for anything that becomes a key.
-\code{\link[=set.seed]{set.seed()}} makes R's generator reproducible BY DESIGN, and its state
-can be recovered from its output; a key drawn from it is guessable.
-Reading the OS source also leaves R's own random stream untouched, so
-generating a key does not perturb a reproducible analysis.
+\code{\link[=set.seed]{set.seed()}} makes R's generator reproducible BY
+DESIGN, and its state can be recovered from its output; a key drawn from
+it is guessable. Reading the OS source also leaves R's own random stream
+untouched, so generating a key does not perturb a reproducible analysis.
 
-If no OS source can be read the function FAILS rather than falling
-back to a weaker generator, because a silent downgrade in a key is
-worse than an error.
+If no OS source can be read the function FAILS rather than falling back
+to a weaker generator, because a silent downgrade in a key is worse than
+an error.
 }
 \examples{
 random_bytes(8)

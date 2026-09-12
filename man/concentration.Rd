@@ -16,26 +16,27 @@ top_share(x, fractions = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE)
 \arguments{
 \item{x}{Non-negative values, one per unit.}
 
-\item{na.rm}{Whether to drop missing values. They are dropped either
-way; this argument exists so the call reads the same as base R's.}
+\item{na.rm}{Whether to drop missing values. They are
+dropped either way; this argument exists so the call reads the same as
+base R's.}
 
-\item{fractions}{Fractions of the units, largest first, to report the
-share of.}
+\item{fractions}{Fractions of the units, largest first,
+to report the share of.}
 }
 \value{
-\code{gini()} a single number in \verb{[0, 1]}, \code{NA} when the total is
-zero. \code{lorenz()} a data frame of cumulative population and value
-shares, including the origin. \code{top_share()} a data frame of the
-requested fractions, the share each holds, and how many units that
-was.
+\code{gini()} a single number in \verb{[0, 1]}, \code{NA} when
+the total is zero. \code{lorenz()} a data frame of cumulative population
+and value shares, including the origin. \code{top_share()} a data frame
+of the requested fractions, the share each holds, and how many units
+that was.
 }
 \description{
 Concentration of a total across units
 }
 \details{
 Gini is the mean absolute difference between pairs of units over twice
-the mean, which is also twice the area between the Lorenz curve and
-the diagonal. Zero is a perfectly even spread; the maximum for \code{n}
+the mean, which is also twice the area between the Lorenz curve and the
+diagonal. Zero is a perfectly even spread; the maximum for \code{n}
 units is \code{1 - 1/n}, not 1, so a Gini near 1 requires many units as
 well as an uneven spread.
 }
@@ -56,15 +57,15 @@ top_share(placements, c(0.01, 0.05, 0.1))
 head(lorenz(placements))
 }
 \references{
-Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods
-Using R}. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117,
-gives the construction used here: the units are placed at equal
-intervals on the horizontal axis and the cumulated, ascendingly
-ordered shares of the total on the vertical one, so that the curve is
-the diagonal exactly when p percent of the units account for p
-percent of the total, and sags further the greater the
-concentration.
+Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using
+R}. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117, gives the
+construction used here: the units are placed at equal intervals on the
+horizontal axis and the cumulated, ascendingly ordered shares of the
+total on the vertical one, so that the curve is the diagonal exactly
+when p percent of the units account for p percent of the total, and sags
+further the greater the concentration.
 }
 \seealso{
-\code{\link[=hill_tail_index]{hill_tail_index()}}, \code{\link[=band_sensitivity]{band_sensitivity()}}
+\code{\link[=hill_tail_index]{hill_tail_index()}},
+\code{\link[=band_sensitivity]{band_sensitivity()}}
 }

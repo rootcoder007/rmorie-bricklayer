@@ -13,15 +13,16 @@ bricklayer_fetch_siu(
 )
 }
 \arguments{
-\item{drid}{Director's-report id -- the \code{drid=} query parameter
-(integer or integer-like scalar).}
+\item{drid}{Director's-report id -- the \code{drid=} query
+parameter (integer or integer-like scalar).}
 
 \item{dest}{Destination file path for the fetched HTML.}
 
 \item{lang}{\code{"en"} (default) or \code{"fr"}.}
 
-\item{wayback}{Optional explicit Wayback snapshot URL (passed through
-to \code{bricklayer_fetch}); \code{""} lets it discover one.}
+\item{wayback}{Optional explicit Wayback snapshot URL
+(passed through to \code{bricklayer_fetch}) ; \code{""} lets it discover
+one.}
 
 \item{timeout}{Request timeout in seconds. Default 120.}
 }

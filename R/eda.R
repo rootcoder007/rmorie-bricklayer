@@ -38,13 +38,15 @@
 #'
 #' A one-line sketch of a column's distribution, as block characters (or
 #' ASCII where the console cannot render them). The point is density of
-#' information: a mean and a standard deviation cannot tell you a column
-#' is bimodal, and this can, in the width of a table cell.
+#' information: a mean and a standard deviation cannot tell you a column is
+#' bimodal, and this can, in the width of a table cell.
 #'
 #' @param x Numeric vector.
 #' @param bins Number of bins (default 10).
 #' @return A length-1 character vector of `bins` characters.
-#' @seealso [profile_columns()], which includes one per numeric column.
+#' @seealso
+#' [profile_columns()], which includes one
+#' per numeric column.
 #' @examples
 #' set.seed(1)
 #' # A symmetric distribution peaks in the middle.
@@ -73,22 +75,24 @@ inline_hist <- function(x, bins = 10L) {
 #' missing counted as its own row. The counterpart of
 #' `janitor::tabyl()`.
 #'
-#' Two percentage columns, because both questions get asked and
-#' conflating them is how missingness gets hidden: `pct` is the share of
-#' ALL rows, `pct_valid` the share of rows where the value is present.
+#' Two percentage columns, because both questions get asked and conflating
+#' them is how missingness gets hidden: `pct` is the share of ALL
+#' rows, `pct_valid` the share of rows where the value is present.
 #' When a column is 40% missing those two differ enormously, and only the
 #' second describes the values that are actually there.
 #'
 #' @param data A data frame, or a vector.
-#' @param column Column name, when `data` is a data frame.
-#' @param max_levels Maximum rows to return, most frequent first
-#'   (default 25). The remainder are folded into one `"(other)"` row so
-#'   the percentages still sum to 100.
-#' @param sort Sort by descending count (default `TRUE`); `FALSE` keeps
-#'   the natural order of the values.
-#' @return A data frame of class `bricklayer_freq`: `value`, `n`, `pct`,
-#'   `pct_valid`.
-#' @seealso [profile_columns()] for every column at once.
+#' @param column Column name, when `data` is a data
+#' frame.
+#' @param max_levels Maximum rows to return, most
+#' frequent first (default 25). The remainder are folded into one
+#' `"(other)"` row so the percentages still sum to 100.
+#' @param sort Sort by descending count (default `TRUE`) ;
+#' `FALSE` keeps the natural order of the values.
+#' @return A data frame of class `bricklayer_freq`: `value`,
+#' `n`, `pct`, `pct_valid`.
+#' @seealso [profile_columns()] for every
+#' column at once.
 #' @examples
 #' df <- data.frame(grade = c("a", "b", "b", "c", NA, "b"),
 #'                  stringsAsFactors = FALSE)
@@ -191,20 +195,23 @@ print.bricklayer_freq <- function(x, ...) {
 
 #' Full pairwise correlation table
 #'
-#' Every numeric pair's correlation in long form -- one row per pair,
-#' which is easier to sort, filter and join than a matrix. The
-#' counterpart of `corrr::correlate()`.
+#' Every numeric pair's correlation in long form -- one row per pair, which
+#' is easier to sort, filter and join than a matrix. The counterpart of
+#' `corrr::correlate()`.
 #'
 #' @param data A data frame; non-numeric columns are ignored.
-#' @param method `"spearman"` (default) or `"pearson"`. See
-#'   [top_correlations()] for why the rank correlation is the default.
-#' @param min_pairs Minimum complete pairs required before a correlation
-#'   is computed (default 3). Below it the pair is `NA` rather than a
-#'   number computed from almost nothing.
-#' @return A data frame of class `bricklayer_cortable` with `x`, `y`,
-#'   `correlation` and `n_pairs`.
-#' @seealso [top_correlations()] for just the strongest,
-#'   [core_cov()] for the matrix form.
+#' @param method `"spearman"` (default) or
+#' `"pearson"`. See
+#' [top_correlations()] for why the rank
+#' correlation is the default.
+#' @param min_pairs Minimum complete pairs required before
+#' a correlation is computed (default 3). Below it the pair is `NA`
+#' rather than a number computed from almost nothing.
+#' @return A data frame of class `bricklayer_cortable` with `x`,
+#' `y`, `correlation` and `n_pairs`.
+#' @seealso
+#' [top_correlations()] for just the
+#' strongest, [core_cov()] for the matrix form.
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
@@ -273,25 +280,29 @@ print.bricklayer_cortable <- function(x, ...) {
 #' Drop empty or constant columns and rows
 #'
 #' `drop_empty()` removes rows or columns that are entirely missing.
-#' `drop_constant()` removes columns that hold a single distinct value.
-#' The counterparts of `janitor::remove_empty()` and
+#' `drop_constant()` removes columns that hold a single distinct
+#' value. The counterparts of `janitor::remove_empty()` and
 #' `janitor::remove_constant()`.
 #'
-#' A constant column carries no information and breaks anything that
-#' scales by variance, so it is worth removing -- but it is also a
-#' FINDING. A column that was informative in the pinned capsule and is
-#' constant in a fresh fetch means the source changed, so check
-#' [capsule_drift()] before deleting it and moving on.
+#' A constant column carries no information and breaks anything that scales
+#' by variance, so it is worth removing -- but it is also a FINDING. A
+#' column that was informative in the pinned capsule and is constant in a
+#' fresh fetch means the source changed, so check
+#' [capsule_drift()] before deleting it and
+#' moving on.
 #'
 #' @param data A data frame.
-#' @param which `"rows"`, `"cols"`, or both (the default).
-#' @param na_as_value Treat `NA` as a distinct value, so a column of
-#'   `NA`s plus one real value counts as two (default `FALSE`).
-#' @return The data frame, with the offending rows or columns removed.
-#'   The names of what was dropped are attached as the `"dropped"`
-#'   attribute.
-#' @seealso [profile_columns()], which reports `n_distinct` without
-#'   removing anything.
+#' @param which `"rows"`, `"cols"`, or both (the
+#' default).
+#' @param na_as_value Treat `NA` as a distinct
+#' value, so a column of `NA` s plus one real value counts as two
+#' (default `FALSE`) .
+#' @return The data frame, with the offending rows or columns removed. The
+#' names of what was dropped are attached as the `"dropped"`
+#' attribute.
+#' @seealso
+#' [profile_columns()], which reports
+#' `n_distinct` without removing anything.
 #' @examples
 #' df <- data.frame(
 #'   keep = c(1, 2, NA),
@@ -358,23 +369,25 @@ drop_constant <- function(data, na_as_value = FALSE) {
 #' duplicates disambiguated with a numeric suffix. The counterpart of
 #' `janitor::clean_names()`.
 #'
-#' Open-data extracts arrive with names like `"Total  Population (2021)"`
-#' and `"% change"`, which need backticks everywhere and break silently
-#' when a re-release renames `"% change"` to `"%  change"`. Normalising
-#' once at ingestion makes the schema stable against that.
+#' Open-data extracts arrive with names like
+#' `"Total Population (2021)"` and `"% change"`, which need
+#' backticks everywhere and break silently when a re-release renames
+#' `"% change"` to `"% change"`. Normalising once at ingestion
+#' makes the schema stable against that.
 #'
-#' Record the mapping in the capsule manifest. Cleaning names changes
-#' what a downstream script must refer to, so an unrecorded cleaning is
-#' itself a reproducibility hazard -- the returned object carries the
-#' original names in its `"original_names"` attribute for exactly that.
+#' Record the mapping in the capsule manifest. Cleaning names changes what
+#' a downstream script must refer to, so an unrecorded cleaning is itself a
+#' reproducibility hazard -- the returned object carries the original names
+#' in its `"original_names"` attribute for exactly that.
 #'
 #' @param data A data frame, or a character vector of names.
-#' @param case `"snake"` (default), `"lower_camel"`, `"upper_camel"`,
-#'   `"screaming_snake"`, or `"none"` to normalise separators only.
-#' @param sep Separator for `"snake"` and `"screaming_snake"`
-#'   (default `"_"`).
+#' @param case `"snake"` (default), `"lower_camel"`,
+#' `"upper_camel"`, `"screaming_snake"`, or `"none"` to
+#' normalise separators only.
+#' @param sep Separator for `"snake"` and
+#' `"screaming_snake"` (default `"_"`) .
 #' @return The data frame with new names (and an `"original_names"`
-#'   attribute), or the cleaned character vector.
+#' attribute), or the cleaned character vector.
 #' @examples
 #' clean_column_names(c("Total  Population (2021)", "% change",
 #'                      "Ville / City", "dup", "dup"))

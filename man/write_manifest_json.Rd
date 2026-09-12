@@ -7,8 +7,9 @@
 write_manifest_json(manifest, path)
 }
 \arguments{
-\item{manifest}{A manifest as returned by \code{\link[=make_manifest]{make_manifest()}} / built up
-with \code{\link[=record]{record()}}.}
+\item{manifest}{A manifest as returned by
+\code{\link[=make_manifest]{make_manifest()}} / built up with
+\code{\link[=record]{record()}}.}
 
 \item{path}{Destination path for the JSON file.}
 }
@@ -16,8 +17,10 @@ with \code{\link[=record]{record()}}.}
 The \code{path}, returned invisibly.
 }
 \description{
-Serializes a manifest to a pretty-printed JSON file with the native
-JSON codec (\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}); no jsonlite needed.
+Serializes a manifest to a pretty-printed JSON file with the native JSON
+codec (
+\code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}}) ; no
+jsonlite needed.
 }
 \examples{
 man <- make_manifest(list(project = "demo"), environment = FALSE)

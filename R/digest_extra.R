@@ -7,16 +7,20 @@
 
 #' SHA-512 hex digest (C backend)
 #'
-#' Hashes character or raw input with the self-contained SHA-512
-#' (FIPS 180-4) in the compiled core. Use it over [core_sha256()] when a
-#' pin has to outlive the capsule by decades: the wider digest leaves
-#' more margin, including against a quantum adversary, for whom Grover's
-#' algorithm halves the effective preimage exponent.
+#' Hashes character or raw input with the self-contained SHA-512 (FIPS
+#' 180-4) in the compiled core. Use it over
+#' [core_sha256()] when a pin has to outlive the
+#' capsule by decades: the wider digest leaves more margin, including
+#' against a quantum adversary, for whom Grover's algorithm halves the
+#' effective preimage exponent.
 #'
 #' @param x A character vector or a raw vector.
 #' @return A character vector of 128-character lowercase hex digests (one
-#'   per element for character input; length-1 for raw input).
-#' @seealso [core_sha256()], [core_crc32()], [sha512_file()]
+#' per element for character input; length-1 for raw input).
+#' @seealso
+#' [core_sha256()],
+#' [core_crc32()],
+#' [sha512_file()]
 #' @examples
 #' # FIPS 180-4 test vector for "abc".
 #' core_sha512("abc")
@@ -38,23 +42,24 @@ core_sha512 <- function(x) {
 
 #' CRC-32 checksum (C backend)
 #'
-#' The CRC-32 of ITU V.42 and zip (reflected polynomial `0xEDB88320`).
+#' The CRC-32 of ITU V.42 and zip (reflected polynomial `0xEDB88320`)
+#' .
 #'
 #' A CRC is NOT a cryptographic digest: it detects accidental corruption
 #' -- a truncated download, a flipped bit on disk -- but anyone can
 #' construct a different input with the same value, so it must never be
-#' used where [core_sha256()] is meant. It is here because it is far
-#' cheaper than SHA-256 over gigabyte-scale capsule members, which makes
-#' it the right first pass when the question is only "did this file
-#' arrive intact".
+#' used where [core_sha256()] is meant. It is
+#' here because it is far cheaper than SHA-256 over gigabyte-scale capsule
+#' members, which makes it the right first pass when the question is only
+#' "did this file arrive intact".
 #'
 #' @param x A character vector or a raw vector.
 #' @return A numeric vector of unsigned 32-bit checksums (one per element
-#'   for character input; length-1 for raw input). Returned as `double`
-#'   rather than `integer` because values above `2^31 - 1` are not
-#'   representable as an R integer.
-#' @seealso [core_sha256()] for integrity against tampering rather than
-#'   accident.
+#' for character input; length-1 for raw input). Returned as `double`
+#' rather than `integer` because values above `2^31 - 1` are not
+#' representable as an R integer.
+#' @seealso [core_sha256()] for integrity against
+#' tampering rather than accident.
 #' @examples
 #' # The standard check value: CRC-32("123456789") is 0xCBF43926.
 #' core_crc32("123456789")
@@ -77,31 +82,32 @@ core_crc32 <- function(x) {
 #' Keyed digest and constant-time comparison (C backend)
 #'
 #' `core_hmac_sha256()` is HMAC-SHA-256 (RFC 2104): a digest computed
-#' under a secret key. The difference from a plain [core_sha256()] is
-#' AUTHENTICATION -- anyone can recompute a SHA-256 and so anyone can
-#' forge one after editing a manifest, but only a holder of the key can
-#' produce a matching HMAC. This is what makes [capsule_sign()]'s
+#' under a secret key. The difference from a plain
+#' [core_sha256()] is AUTHENTICATION -- anyone
+#' can recompute a SHA-256 and so anyone can forge one after editing a
+#' manifest, but only a holder of the key can produce a matching HMAC. This
+#' is what makes [capsule_sign()] 's
 #' `"hmac"` scheme meaningful.
 #'
 #' `core_digest_equal()` compares two digests in constant time. Use it
-#' instead of `==` whenever the comparison is against a value an attacker
-#' supplied: a short-circuiting comparison leaks, through its own timing,
-#' how many leading characters were correct, which is enough to recover a
-#' tag byte by byte.
+#' instead of `==` whenever the comparison is against a value an
+#' attacker supplied: a short-circuiting comparison leaks, through its own
+#' timing, how many leading characters were correct, which is enough to
+#' recover a tag byte by byte.
 #'
-#' @param key Secret key, as a length-1 character vector or a raw vector.
-#'   Keys longer than the 64-byte block are hashed down first, per RFC
-#'   2104. Use at least 32 bytes of real entropy; against a quantum
-#'   adversary Grover halves the effective key strength, so a 256-bit key
-#'   retains a 128-bit margin.
-#' @param message Message to authenticate, as a length-1 character vector
-#'   or a raw vector.
+#' @param key Secret key, as a length-1 character vector or a
+#' raw vector. Keys longer than the 64-byte block are hashed down first,
+#' per RFC 2104. Use at least 32 bytes of real entropy; against a quantum
+#' adversary Grover halves the effective key strength, so a 256-bit key
+#' retains a 128-bit margin.
+#' @param message Message to authenticate, as a length-1
+#' character vector or a raw vector.
 #' @param a,b Digests to compare, as length-1 character vectors.
-#' @return `core_hmac_sha256()` a length-1 character vector: 64 lowercase
-#'   hex characters. `core_digest_equal()` a length-1 logical; `FALSE`
-#'   when the two differ in length.
+#' @return `core_hmac_sha256()` a length-1 character vector: 64
+#' lowercase hex characters. `core_digest_equal()` a length-1 logical;
+#' `FALSE` when the two differ in length.
 #' @references Krawczyk H, Bellare M, Canetti R (1997). HMAC: Keyed-Hashing
-#'   for Message Authentication. RFC 2104.
+#' for Message Authentication. RFC 2104.
 #'   \doi{10.17487/RFC2104}
 #' @examples
 #' # RFC 4231 test case 2.
@@ -155,14 +161,14 @@ core_digest_equal <- function(a, b) {
 #' Merkle tree over capsule chunks (C backend)
 #'
 #' A single SHA-256 over a whole file tells you it changed. A Merkle tree
-#' over its chunks tells you WHICH chunk changed, and proves that one
-#' chunk belongs to the pinned file without re-reading the rest of it.
+#' over its chunks tells you WHICH chunk changed, and proves that one chunk
+#' belongs to the pinned file without re-reading the rest of it.
 #'
 #' `merkle_root()` reduces the chunks to one root digest.
 #' `merkle_leaves()` returns the per-chunk digests the root is built
 #' from, so two capsules can be diffed chunk by chunk.
-#' `merkle_proof()` returns the sibling digests on the path from one leaf
-#' to the root, and `merkle_verify()` replays that path.
+#' `merkle_proof()` returns the sibling digests on the path from one
+#' leaf to the root, and `merkle_verify()` replays that path.
 #'
 #' An unpaired node at an odd level is PROMOTED unchanged rather than
 #' hashed against a duplicate of itself. Duplicating it would let two
@@ -170,17 +176,18 @@ core_digest_equal <- function(a, b) {
 #' CVE-2012-2459 -- so promotion is a correctness requirement, not a
 #' preference.
 #'
-#' @param chunks Character vector of chunk contents, in order. Use
-#'   [chunk_file()] to produce it from a file.
+#' @param chunks Character vector of chunk contents, in
+#' order. Use [chunk_file()] to produce it from a
+#' file.
 #' @param index 1-based index of the chunk to prove.
 #' @param leaf The chunk whose membership is being verified.
 #' @param proof The list returned by `merkle_proof()`.
 #' @param root The expected root digest.
 #' @return `merkle_root()` a length-1 character vector (64 hex
-#'   characters), or `NA` for no chunks. `merkle_leaves()` a character
-#'   vector of per-chunk digests. `merkle_proof()` a list with
-#'   `sibling` (character) and `side` (`"left"`/`"right"`).
-#'   `merkle_verify()` a length-1 logical.
+#' characters), or `NA` for no chunks. `merkle_leaves()` a
+#' character vector of per-chunk digests. `merkle_proof()` a list with
+#' `sibling` (character) and `side` ( `"left"` /
+#' `"right"`) . `merkle_verify()` a length-1 logical.
 #' @examples
 #' chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 #'
@@ -310,18 +317,21 @@ merkle_verify <- function(leaf, proof, root) {
 
 #' Split a file into fixed-size chunks
 #'
-#' Reads `path` as bytes and returns them as chunk strings suitable for
-#' [merkle_root()] and friends. The default 1 MiB chunk is a compromise:
-#' smaller chunks localise a change more precisely but make the tree and
-#' its proofs larger.
+#' Reads `path` as bytes and returns them as chunk strings suitable
+#' for [merkle_root()] and friends. The default 1
+#' MiB chunk is a compromise: smaller chunks localise a change more
+#' precisely but make the tree and its proofs larger.
 #'
 #' @param path Path to an existing file.
-#' @param chunk_bytes Chunk size in bytes (default 1048576, i.e. 1 MiB).
+#' @param chunk_bytes Chunk size in bytes (default
+#' 1048576, i.e. 1 MiB).
 #' @return A list of raw vectors, in file order. A zero-length file gives
-#'   an empty list. Chunks are returned as bytes rather than strings
-#'   because a file is bytes: an R string cannot hold a zero byte, so a
-#'   character chunk could not represent an arbitrary binary file at all.
-#' @seealso [merkle_root()], [sha512_file()]
+#' an empty list. Chunks are returned as bytes rather than strings because
+#' a file is bytes: an R string cannot hold a zero byte, so a character
+#' chunk could not represent an arbitrary binary file at all.
+#' @seealso
+#' [merkle_root()],
+#' [sha512_file()]
 #' @examples
 #' p <- tempfile()
 #' writeLines(rep("some capsule content", 50), p)
@@ -368,10 +378,10 @@ chunk_file <- function(path, chunk_bytes = 1048576L) {
 #' The SHA-256 counterpart is [sha256_file()].
 #'
 #' @param path Path to an existing file.
-#' @param block_bytes Read size in bytes (default 1048576). Affects speed
-#'   only, never the result.
-#' @return A length-1 character vector (`sha512_file()`) or numeric
-#'   (`crc32_file()`).
+#' @param block_bytes Read size in bytes (default
+#' 1048576). Affects speed only, never the result.
+#' @return A length-1 character vector ( `sha512_file()`) or numeric (
+#' `crc32_file()`) .
 #' @examples
 #' p <- tempfile()
 #' writeLines("capsule payload", p)

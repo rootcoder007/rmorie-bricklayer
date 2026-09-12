@@ -7,24 +7,24 @@
 core_ipw_weights(treat, propensity, trim_lo = 0.01, trim_hi = 0.99)
 }
 \arguments{
-\item{treat}{Numeric or logical treatment indicator; \code{1}/\code{TRUE} is
-treated.}
+\item{treat}{Numeric or logical treatment indicator;
+\code{1} / \code{TRUE} is treated.}
 
-\item{propensity}{Numeric vector of propensity scores, the same length
-as \code{treat}.}
+\item{propensity}{Numeric vector of propensity scores,
+the same length as \code{treat}.}
 
-\item{trim_lo, trim_hi}{Clamp bounds for the score (defaults 0.01 and
-0.99).}
+\item{trim_lo, trim_hi}{Clamp bounds for the score
+(defaults 0.01 and 0.99).}
 }
 \value{
 A numeric vector of weights the length of \code{treat}.
 }
 \description{
-The inverse-probability-of-treatment weights \eqn{1/e} for the
-treated and \eqn{1/(1-e)} for the untreated, with the propensity score
-clamped into \verb{[trim_lo, trim_hi]} FIRST. Clamping matters: an
-untrimmed score near 0 or 1 produces a weight large enough for one
-observation to dominate the entire estimate.
+The inverse-probability-of-treatment weights \eqn{1/e} for the treated
+and \eqn{1/(1-e)} for the untreated, with the propensity score clamped
+into \verb{[trim_lo, trim_hi]} FIRST. Clamping matters: an untrimmed
+score near 0 or 1 produces a weight large enough for one observation to
+dominate the entire estimate.
 }
 \examples{
 treat <- c(1, 0, 1, 0)

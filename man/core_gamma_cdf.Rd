@@ -12,13 +12,17 @@ core_gamma_cdf(shape, x)
 \item{x}{Numeric vector of quantiles (>= 0).}
 }
 \value{
-A numeric vector the length of \code{x}, each entry in [0, 1].
+A numeric vector the length of \code{x}, each entry in \
+[0, 1].
+
+[0, 1]: R:0,\%201\%5C
 }
 \description{
-The lower regularized incomplete gamma function \eqn{P(a, x)}, which
-is the CDF of a Gamma distribution with shape \code{a} and unit rate.
-Exposed because it is the building block of the chi-square tail used
-by \code{\link[=drift_chisq]{drift_chisq()}} and \code{\link[=benford_test]{benford_test()}}.
+The lower regularized incomplete gamma function \eqn{P(a, x)}, which is
+the CDF of a Gamma distribution with shape \code{a} and unit rate.
+Exposed because it is the building block of the chi-square tail used by
+\code{\link[=drift_chisq]{drift_chisq()}} and
+\code{\link[=benford_test]{benford_test()}}.
 }
 \examples{
 core_gamma_cdf(3.5, c(0.5, 1, 4, 12))

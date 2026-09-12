@@ -19,8 +19,8 @@ compared on the rendered value. \code{NA} is skipped.}
 
 \item{p}{Log2 of the register count, 4 to 20 (default 14).}
 
-\item{registers}{Registers from a previous call, to fold another chunk
-into the same sketch.}
+\item{registers}{Registers from a previous call, to
+fold another chunk into the same sketch.}
 
 \item{a, b}{Register sets to merge.}
 }
@@ -30,21 +30,22 @@ into the same sketch.}
 \code{sketch_merge()} the element-wise maximum of two register sets.
 }
 \description{
-HyperLogLog: estimates how many distinct values a column holds using
-a fixed 4-byte register per bucket -- 64 KB at the default \code{p = 14}
+HyperLogLog: estimates how many distinct values a column holds using a
+fixed 4-byte register per bucket -- 64 KB at the default \code{p = 14}
 -- regardless of the column's length or cardinality. Exact counting
-needs memory proportional to the number of distinct values, which is
-the thing you cannot afford on a capsule member of unknown size.
+needs memory proportional to the number of distinct values, which is the
+thing you cannot afford on a capsule member of unknown size.
 }
 \details{
 The estimate carries a relative standard error of about
 \code{1.04 / sqrt(2^p)}, so 0.8\% at the default. It is an ESTIMATE: use
-\code{length(unique(x))} when the column fits in memory and an exact answer
-matters. Below roughly \code{2.5 * 2^p} distinct values the estimator
-switches to linear counting, which is near-exact in that range.
+\code{length(unique(x))} when the column fits in memory and an exact
+answer matters. Below roughly \code{2.5 * 2^p} distinct values the
+estimator switches to linear counting, which is near-exact in that
+range.
 
-Values are hashed with the package's SHA-256, so the sketch is
-identical on every platform and across sessions.
+Values are hashed with the package's SHA-256, so the sketch is identical
+on every platform and across sessions.
 }
 \examples{
 set.seed(1)

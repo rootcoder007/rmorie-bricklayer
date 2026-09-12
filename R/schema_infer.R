@@ -6,36 +6,41 @@
 
 #' Infer a pinnable schema from a data frame
 #'
-#' Derives the schema [validate_schema()] consumes from data you already
-#' trust, so a capsule can be pinned without writing one by hand.
+#' Derives the schema [validate_schema()]
+#' consumes from data you already trust, so a capsule can be pinned without
+#' writing one by hand.
 #'
-#' What it records: the column names and their types, row-count bounds
-#' with `slack` either side, the observed value set for every
-#' low-cardinality categorical column, the observed range of every
-#' numeric column widened by `slack`, and the observed missingness rate
-#' per column with headroom.
+#' What it records: the column names and their types, row-count bounds with
+#' `slack` either side, the observed value set for every
+#' low-cardinality categorical column, the observed range of every numeric
+#' column widened by `slack`, and the observed missingness rate per
+#' column with headroom.
 #'
 #' # This is a starting point, not an oracle
 #'
-#' An inferred schema describes ONE extract. It cannot know that a
-#' category which happens not to occur is nonetheless legal, or that a
-#' range is a physical bound rather than an accident of this sample.
-#' Read what it produces and edit it before committing -- the value is in
-#' not starting from a blank file, not in trusting the output blindly.
+#' An inferred schema describes ONE extract. It cannot know that a category
+#' which happens not to occur is nonetheless legal, or that a range is a
+#' physical bound rather than an accident of this sample. Read what it
+#' produces and edit it before committing -- the value is in not starting
+#' from a blank file, not in trusting the output blindly.
 #'
 #' @param data A data frame to learn from.
-#' @param slack Fractional headroom added to row counts, numeric ranges
-#'   and missingness rates (default 0.1, i.e. 10%). `0` pins exactly to
-#'   what was observed, which will reject almost any re-release.
-#' @param max_levels Maximum distinct values for a categorical column to
-#'   have its value set recorded (default 50). Above this the column is
-#'   treated as free text and no value set is pinned.
+#' @param slack Fractional headroom added to row counts,
+#' numeric ranges and missingness rates (default 0.1, i.e. 10%). `0`
+#' pins exactly to what was observed, which will reject almost any
+#' re-release.
+#' @param max_levels Maximum distinct values for a
+#' categorical column to have its value set recorded (default 50). Above
+#' this the column is treated as free text and no value set is pinned.
 #' @return A list with `expected_columns`, `expected_types`,
-#'   `structural_invariants`, `expected_value_sets`, `numeric_ranges` and
-#'   `max_missing_fraction`, of class `bricklayer_schema`. Wrap it as
-#'   `list(schema = <this>)` to hand to [validate_schema()].
-#' @seealso [validate_schema()], [capsule_drift()] for the
-#'   distributional check the schema cannot make.
+#' `structural_invariants`, `expected_value_sets`,
+#' `numeric_ranges` and `max_missing_fraction`, of class
+#' `bricklayer_schema`. Wrap it as `list(schema = <this>)` to
+#' hand to [validate_schema()].
+#' @seealso
+#' [validate_schema()],
+#' [capsule_drift()] for the distributional
+#' check the schema cannot make.
 #' @examples
 #' set.seed(1)
 #' df <- data.frame(

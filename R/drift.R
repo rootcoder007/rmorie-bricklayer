@@ -17,18 +17,21 @@
 #' either sample, which is what makes it the right first test on a column
 #' whose distribution was never specified.
 #'
-#' The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1}
-#' e^{-2k^2t^2}} with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate
-#' for moderate samples and conservative for small ones; for an exact
-#' small-sample p-value use [stats::ks.test()]. Ties are handled by
-#' comparing the two EDFs at each distinct value, so tied data does not
-#' produce a warning the way `ks.test()` does.
+#' The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1} e^{-2k^2t^2}}
+#' with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate for moderate
+#' samples and conservative for small ones; for an exact small-sample
+#' p-value use [stats::ks.test()]. Ties are
+#' handled by comparing the two EDFs at each distinct value, so tied data
+#' does not produce a warning the way `ks.test()` does.
 #'
 #' @param x,y Numeric vectors, the reference and the new sample.
-#' @return A named length-3 numeric: `statistic` (the KS \eqn{D}),
-#'   `p_value`, and `n_eff` (the harmonic-style effective size
+#' @return A named length-3 numeric: `statistic` (the KS \eqn{D}) ,
+#' `p_value`, and `n_eff` (the harmonic-style effective size
 #'   \eqn{n_xn_y/(n_x+n_y)}).
-#' @seealso [drift_psi()], [drift_chisq()], [capsule_drift()]
+#' @seealso
+#' [drift_psi()],
+#' [drift_chisq()],
+#' [capsule_drift()]
 #' @examples
 #' set.seed(1)
 #' ref <- stats::rnorm(200)
@@ -73,8 +76,8 @@ drift_ks <- function(x, y) {
 #' \eqn{\sum_i (p_i - q_i)\log(p_i/q_i)} -- the symmetrised
 #' Kullback-Leibler divergence of the two discrete distributions. The
 #' conventional reading, from credit-risk monitoring where it originates,
-#' is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above
-#' 0.25 is a material shift.
+#' is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above 0.25
+#' is a material shift.
 #'
 #' The Jensen-Shannon divergence is
 #' \eqn{\tfrac12 KL(p\|m) + \tfrac12 KL(q\|m)} with \eqn{m} the mixture
@@ -86,16 +89,17 @@ drift_ks <- function(x, y) {
 #' \eqn{\log(0)} would otherwise send it to infinity on a single missing
 #' category.
 #'
-#' @param x,y Numeric vectors, the reference and the new sample. Binned
-#'   on the quantiles of `x`, so the reference defines the bins.
+#' @param x,y Numeric vectors, the reference and the new sample.
+#' Binned on the quantiles of `x`, so the reference defines the bins.
 #' @param bins Number of bins (default 10).
-#' @param eps Floor applied to empty bins in the PSI (default 1e-6).
+#' @param eps Floor applied to empty bins in the PSI (default
+#' 1e-6).
 #' @return A named length-2 numeric: `psi` and `js_divergence`.
-#' @references Wu D, Olson DL (2010). Enterprise risk management:
-#'   coping with model risk in a large bank. *Journal of the Operational
-#'   Research Society* 61(2), 179--190. \doi{10.1057/jors.2008.144}
+#' @references Wu D, Olson DL (2010). Enterprise risk management: coping
+#' with model risk in a large bank. *Journal of the Operational Research
+#' Society* 61(2), 179--190. \doi{10.1057/jors.2008.144}
 #'
-#'   Lin J (1991). Divergence measures based on the Shannon entropy.
+#' Lin J (1991). Divergence measures based on the Shannon entropy.
 #'   *IEEE Transactions on Information Theory* 37(1), 145--151.
 #'   \doi{10.1109/18.61115}
 #' @examples
@@ -149,28 +153,31 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' Chi-square test for a categorical column
 #'
 #' Pearson's chi-square goodness-of-fit statistic comparing observed
-#' category counts with the proportions a capsule was pinned against.
-#' Use it where [drift_ks()] cannot apply, because the column is a factor
-#' or a set of codes rather than a number.
+#' category counts with the proportions a capsule was pinned against. Use
+#' it where [drift_ks()] cannot apply, because the
+#' column is a factor or a set of codes rather than a number.
 #'
 #' Categories present in one argument and not the other are aligned by
 #' name, so a vanished category registers as a shortfall against its
 #' expected count.
 #'
 #' A category that OCCURS but which the reference gives probability zero
-#' contradicts the pinned distribution outright, and its chi-square term
-#' is unbounded; `statistic` is then `Inf` and `p_value` is `0`. If a new
-#' category is a legitimate possibility rather than a contradiction --
-#' which it usually is when the reference is itself a finite sample --
-#' use [drift_homogeneity()] instead.
+#' contradicts the pinned distribution outright, and its chi-square term is
+#' unbounded; `statistic` is then `Inf` and `p_value` is
+#' `0`. If a new category is a legitimate possibility rather than a
+#' contradiction -- which it usually is when the reference is itself a
+#' finite sample -- use
+#' [drift_homogeneity()] instead.
 #'
-#' @param observed Named numeric vector of counts in the new sample, or a
-#'   factor/character vector to be tabulated.
-#' @param expected Named numeric vector of reference counts or
-#'   proportions, or a factor/character vector to be tabulated. Rescaled
-#'   to the total of `observed`.
-#' @return A named length-3 numeric: `statistic`, `df`, `p_value`.
-#' @seealso [stats::chisq.test()] for the full test object.
+#' @param observed Named numeric vector of counts in the
+#' new sample, or a factor/character vector to be tabulated.
+#' @param expected Named numeric vector of reference counts
+#' or proportions, or a factor/character vector to be tabulated. Rescaled
+#' to the total of `observed`.
+#' @return A named length-3 numeric: `statistic`, `df`,
+#' `p_value`.
+#' @seealso [stats::chisq.test()] for the
+#' full test object.
 #' @examples
 #' ref <- c(a = 50, b = 30, c = 20)
 #'
@@ -236,28 +243,32 @@ drift_chisq <- function(observed, expected) {
 #' Chi-square test of homogeneity for two categorical samples
 #'
 #' Tests whether two SAMPLES were drawn from the same categorical
-#' distribution, by Pearson's chi-square on the 2-by-k contingency table
-#' of their counts.
+#' distribution, by Pearson's chi-square on the 2-by-k contingency table of
+#' their counts.
 #'
 #' # Why this and not [drift_chisq()]
 #'
-#' [drift_chisq()] compares observed counts against a distribution taken
-#' as KNOWN -- proportions fixed by a specification. When the reference is
-#' itself a finite sample, that treatment ignores the reference's own
-#' sampling error, understates the variance of the comparison, and so
-#' reports drift too readily. A homogeneity test estimates the shared
-#' distribution from the pooled margins and carries the uncertainty of
-#' both samples, which is the right test when comparing a pinned extract
-#' with a fresh fetch. [capsule_drift()] therefore uses this one.
+#' [drift_chisq()] compares observed counts
+#' against a distribution taken as KNOWN -- proportions fixed by a
+#' specification. When the reference is itself a finite sample, that
+#' treatment ignores the reference's own sampling error, understates the
+#' variance of the comparison, and so reports drift too readily. A
+#' homogeneity test estimates the shared distribution from the pooled
+#' margins and carries the uncertainty of both samples, which is the right
+#' test when comparing a pinned extract with a fresh fetch.
+#' [capsule_drift()] therefore uses this one.
 #'
-#' Categories present in only one sample are aligned by name and given
-#' zero counts, so an appearing or vanishing level registers.
+#' Categories present in only one sample are aligned by name and given zero
+#' counts, so an appearing or vanishing level registers.
 #'
-#' @param x,y Factor or character vectors (or named count vectors) --
-#'   the reference and the new sample.
-#' @return A named length-3 numeric: `statistic`, `df`, `p_value`.
-#' @seealso [drift_chisq()] for a known reference distribution,
-#'   [stats::chisq.test()] for the full test object.
+#' @param x,y Factor or character vectors (or named count
+#' vectors) -- the reference and the new sample.
+#' @return A named length-3 numeric: `statistic`, `df`,
+#' `p_value`.
+#' @seealso
+#' [drift_chisq()] for a known reference
+#' distribution, [stats::chisq.test()] for
+#' the full test object.
 #' @examples
 #' set.seed(1)
 #' a <- sample(c("x", "y", "z"), 300, TRUE)
@@ -324,22 +335,21 @@ drift_homogeneity <- function(x, y) {
 #' Benford's law, \eqn{P(d) = \log_{10}(1 + 1/d)}. Naturally occurring
 #' quantities that span several orders of magnitude follow it closely;
 #' figures that were rounded, truncated, capped, re-scaled, or invented
-#' typically do not. That makes it a cheap screen for a numeric column
-#' that arrived looking plausible but is not the measurement it claims to
-#' be.
+#' typically do not. That makes it a cheap screen for a numeric column that
+#' arrived looking plausible but is not the measurement it claims to be.
 #'
-#' It is a SCREEN, not a verdict. Columns with a narrow range, a unit
-#' floor or ceiling, or an assigned-identifier structure (postcodes, year
-#' fields, prices ending in 99) legitimately violate Benford's law. Treat
-#' a small p-value as a reason to look, never as evidence of fabrication.
+#' It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+#' or ceiling, or an assigned-identifier structure (postcodes, year fields,
+#' prices ending in 99) legitimately violate Benford's law. Treat a small
+#' p-value as a reason to look, never as evidence of fabrication.
 #'
 #' Zeros and non-finite values have no leading significant digit and are
 #' excluded; the sign is ignored.
 #'
 #' @param x Numeric vector.
-#' @return A list of class `bricklayer_benford`: `counts` (observed
-#'   digit frequencies 1--9), `expected`, `proportion`,
-#'   `statistic`, `df`, `p_value`, and `n`.
+#' @return A list of class `bricklayer_benford`: `counts`
+#' (observed digit frequencies 1--9), `expected`, `proportion`,
+#' `statistic`, `df`, `p_value`, and `n`.
 #' @references Benford F (1938). The law of anomalous numbers.
 #'   *Proceedings of the American Philosophical Society* 78(4), 551--572.
 #' @examples
@@ -383,46 +393,50 @@ benford_test <- function(x) {
 
 #' Compare a fetched data frame with the one a capsule was pinned against
 #'
-#' Runs the appropriate drift test on every shared column and collects
-#' the verdicts in one report: [drift_ks()] plus [drift_psi()] for a
-#' numeric column, [drift_homogeneity()] for a categorical one. Columns
-#' that appeared or vanished are listed separately, since no test applies
-#' to them.
+#' Runs the appropriate drift test on every shared column and collects the
+#' verdicts in one report: [drift_ks()] plus
+#' [drift_psi()] for a numeric column,
+#' [drift_homogeneity()] for a categorical
+#' one. Columns that appeared or vanished are listed separately, since no
+#' test applies to them.
 #'
 #' The categorical test is the two-sample homogeneity test, NOT
-#' [drift_chisq()]'s goodness-of-fit against a known distribution: the
-#' reference here is itself a finite sample, and ignoring its sampling
-#' error would report drift too readily.
+#' [drift_chisq()] 's goodness-of-fit against a
+#' known distribution: the reference here is itself a finite sample, and
+#' ignoring its sampling error would report drift too readily.
 #'
 #' This is the check that a byte-level digest cannot make. A re-released
 #' extract legitimately has a different SHA-256 while being the same data
-#' statistically; conversely a column can keep its name, type and row
-#' count while having been silently rescaled. `capsule_drift()` asks
-#' whether the DATA moved.
+#' statistically; conversely a column can keep its name, type and row count
+#' while having been silently rescaled. `capsule_drift()` asks whether
+#' the DATA moved.
 #'
 #' @param reference Data frame the capsule was built from.
 #' @param current Data frame just fetched.
-#' @param alpha Significance level for the `drifted` flag (default 0.01;
-#'   deliberately stricter than 0.05 because a wide table runs many
-#'   tests).
-#' @param psi_threshold PSI above which a numeric column is flagged even
-#'   when its p-value is not significant (default 0.25, the conventional
-#'   "material shift" line).
-#' @param psi_min_n Minimum size BOTH samples must reach before
-#'   `psi_threshold` is allowed to flag a column on its own (default
-#'   1000). The PSI bands are large-sample heuristics with no calibrated
-#'   null distribution: on a few hundred rows, binning noise alone
-#'   routinely pushes the index past 0.25, so applying the threshold
-#'   there manufactures drift. Below this size the flag rests on the
-#'   Kolmogorov-Smirnov p-value, which is calibrated, and the PSI is
-#'   still reported as an effect size.
-#' @param bins Bins passed to [drift_psi()] (default 10).
-#' @return A list of class `bricklayer_drift`: `columns` (a data frame,
-#'   one row per shared column, with `column`, `type`, `statistic`,
-#'   `p_value`, `psi`, `js_divergence` and `drifted`), `added`,
-#'   `removed`, `n_reference`, `n_current`, `alpha`, and `any_drift`.
-#' @seealso [validate_schema()] for the structural check, which this
-#'   complements rather than replaces.
+#' @param alpha Significance level for the `drifted` flag
+#' (default 0.01; deliberately stricter than 0.05 because a wide table runs
+#' many tests).
+#' @param psi_threshold PSI above which a numeric
+#' column is flagged even when its p-value is not significant (default
+#' 0.25, the conventional "material shift" line).
+#' @param psi_min_n Minimum size BOTH samples must reach
+#' before `psi_threshold` is allowed to flag a column on its own
+#' (default 1000). The PSI bands are large-sample heuristics with no
+#' calibrated null distribution: on a few hundred rows, binning noise alone
+#' routinely pushes the index past 0.25, so applying the threshold there
+#' manufactures drift. Below this size the flag rests on the
+#' Kolmogorov-Smirnov p-value, which is calibrated, and the PSI is still
+#' reported as an effect size.
+#' @param bins Bins passed to
+#' [drift_psi()] (default 10).
+#' @return A list of class `bricklayer_drift`: `columns` (a data
+#' frame, one row per shared column, with `column`, `type`,
+#' `statistic`, `p_value`, `psi`, `js_divergence` and
+#' `drifted`) , `added`, `removed`, `n_reference`,
+#' `n_current`, `alpha`, and `any_drift`.
+#' @seealso
+#' [validate_schema()] for the structural
+#' check, which this complements rather than replaces.
 #' @examples
 #' set.seed(5)
 #' ref <- data.frame(

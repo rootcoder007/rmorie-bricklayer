@@ -7,12 +7,13 @@
 drift_psi(x, y, bins = 10L, eps = 1e-06)
 }
 \arguments{
-\item{x, y}{Numeric vectors, the reference and the new sample. Binned
-on the quantiles of \code{x}, so the reference defines the bins.}
+\item{x, y}{Numeric vectors, the reference and the new sample.
+Binned on the quantiles of \code{x}, so the reference defines the bins.}
 
 \item{bins}{Number of bins (default 10).}
 
-\item{eps}{Floor applied to empty bins in the PSI (default 1e-6).}
+\item{eps}{Floor applied to empty bins in the PSI (default
+1e-6).}
 }
 \value{
 A named length-2 numeric: \code{psi} and \code{js_divergence}.
@@ -26,8 +27,8 @@ The population stability index is
 \eqn{\sum_i (p_i - q_i)\log(p_i/q_i)} -- the symmetrised
 Kullback-Leibler divergence of the two discrete distributions. The
 conventional reading, from credit-risk monitoring where it originates,
-is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above
-0.25 is a material shift.
+is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above 0.25
+is a material shift.
 
 The Jensen-Shannon divergence is
 \eqn{\tfrac12 KL(p\|m) + \tfrac12 KL(q\|m)} with \eqn{m} the mixture
@@ -57,9 +58,9 @@ drift_psi(ref, ref)
 drift_psi(c(1, 1, 1), c(9, 9, 9))[["js_divergence"]] <= log(2)
 }
 \references{
-Wu D, Olson DL (2010). Enterprise risk management:
-coping with model risk in a large bank. \emph{Journal of the Operational
-Research Society} 61(2), 179--190. \doi{10.1057/jors.2008.144}
+Wu D, Olson DL (2010). Enterprise risk management: coping
+with model risk in a large bank. \emph{Journal of the Operational Research
+Society} 61(2), 179--190. \doi{10.1057/jors.2008.144}
 
 Lin J (1991). Divergence measures based on the Shannon entropy.
 \emph{IEEE Transactions on Information Theory} 37(1), 145--151.

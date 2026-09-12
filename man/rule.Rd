@@ -17,28 +17,30 @@ rule(
 
 \item{expr}{A function, as described above.}
 
-\item{column}{Column the rule applies to, or \code{NULL} for a
-table-level rule.}
+\item{column}{Column the rule applies to, or \code{NULL}
+for a table-level rule.}
 
-\item{severity}{\code{"warning"} (default) or \code{"fatal"}.}
+\item{severity}{\code{"warning"} (default) or
+\code{"fatal"}.}
 
-\item{message}{Human-readable description of what a failure means.
-Defaults to a generated one naming the rule.}
+\item{message}{Human-readable description of what a
+failure means. Defaults to a generated one naming the rule.}
 }
 \value{
 A list of class \code{bricklayer_rule}.
 }
 \description{
-Builds a rule for \code{\link[=validate_rules]{validate_rules()}}: a predicate over one column, or
-over the whole data frame, with a severity and a message. Rules live
-alongside a schema in a provenance record, which keeps the
-project-specific checks in data rather than scattered through code.
+Builds a rule for \code{\link[=validate_rules]{validate_rules()}}: a
+predicate over one column, or over the whole data frame, with a severity
+and a message. Rules live alongside a schema in a provenance record,
+which keeps the project-specific checks in data rather than scattered
+through code.
 }
 \details{
-\code{expr} is a function. Given \code{column}, it receives that column and must
-return a logical vector the same length (TRUE = the row passes) or a
-single logical for a whole-column property. Given no \code{column}, it
-receives the whole data frame and must return a single logical.
+\code{expr} is a function. Given \code{column}, it receives that column
+and must return a logical vector the same length (TRUE = the row passes)
+or a single logical for a whole-column property. Given no \code{column},
+it receives the whole data frame and must return a single logical.
 }
 \examples{
 # A column predicate, applied row-wise.
@@ -52,6 +54,7 @@ rule("id_unique", function(v) !anyDuplicated(v), column = "id",
 rule("dates_ordered", function(df) all(df$start <= df$end))
 }
 \seealso{
-\code{\link[=validate_rules]{validate_rules()}}, \code{\link[=validate_schema]{validate_schema()}} for the structural
+\code{\link[=validate_rules]{validate_rules()}},
+\code{\link[=validate_schema]{validate_schema()}} for the structural
 checks that need no rules.
 }
