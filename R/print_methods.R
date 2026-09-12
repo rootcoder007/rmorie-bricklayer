@@ -19,9 +19,9 @@
 
 .rmbl_glyphs <- function() {
   if (.rmbl_unicode_ok()) {
-    list(h = "─", tl = "┌", tr = "┐", bl = "└",
-         br = "┘", v = "│", ok = "✓", bad = "✗",
-         warn = "!", dash = "–")
+    list(h = "\u2500", tl = "\u250c", tr = "\u2510", bl = "\u2514",
+         br = "\u2518", v = "\u2502", ok = "\u2713", bad = "\u2717",
+         warn = "!", dash = "\u2013")
   } else {
     list(h = "-", tl = "+", tr = "+", bl = "+", br = "+", v = "|",
          ok = "OK", bad = "X", warn = "!", dash = "-")
@@ -49,6 +49,22 @@
 .rmbl_fmt_p <- function(p) {
   ifelse(is.na(p), "NA",
          ifelse(p < 2e-16, "<2e-16", formatC(p, format = "g", digits = 3)))
+}
+
+# A classed data frame keeps its class when columns are subset away, so
+# `result[, c("a", "b")]` still dispatches to the custom print method
+# with the columns that method needs now missing. Fall back to a plain
+# data-frame print rather than erroring on the user's subset.
+.rmbl_needs_cols <- function(x, cols) {
+  if (all(cols %in% names(x))) return(FALSE)
+  df <- x
+  class(df) <- "data.frame"
+  for (a in setdiff(names(attributes(df)),
+                    c("names", "row.names", "class"))) {
+    attr(df, a) <- NULL
+  }
+  print(df)
+  TRUE
 }
 
 #' @export
@@ -404,6 +420,7 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
 
 #' @export
 print.bricklayer_profile <- function(x, ...) {
+  if (.rmbl_needs_cols(x, c("column", "type"))) return(invisible(x))
   cat(.rmbl_rule("Column profile"), "\n")
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   num <- vapply(df, is.numeric, logical(1))

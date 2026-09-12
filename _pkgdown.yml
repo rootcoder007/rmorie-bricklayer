@@ -30,6 +30,14 @@ home:
     - text: Data package (rmoriedata)
       href: https://github.com/rootcoder007/rmoriedata
 
+articles:
+  - title: Guides
+    navbar: ~
+    contents:
+      - capsules
+      - drift
+      - provenance
+
 reference:
   - title: Fetch open data
     desc: >
@@ -82,6 +90,9 @@ reference:
     contents:
       - bricklayer_json_from_json
       - bricklayer_json_to_json
+      - rmbl_json_serialize
+      - rmbl_json_gzip
+      - rmbl_base64
   - title: Integrity & checksums
     desc: SHA-256 hashing and verification for downloaded files.
     contents:
@@ -105,10 +116,111 @@ reference:
       - write_text_fallback
   - title: Core numeric primitives
     desc: >
-      Thin R wrappers over the shared compiled morie core (mean, variance,
-      correlation, normal density) that the whole ecosystem links against.
+      Thin R wrappers over the shared compiled core that the whole ecosystem
+      links against via `LinkingTo: rmoriebricklayer`, so every sibling
+      package computes with one copy of the arithmetic.
     contents:
-      - core_mean
-      - core_var
-      - core_cor
+      - rmbl_core_stats
       - core_normal_pdf
+      - core_normal_logpdf
+      - rmbl_core_spread
+      - core_moments
+      - rmbl_core_robust
+      - rmbl_core_trimmed
+      - core_weighted
+      - rmbl_core_rank
+      - core_cov
+      - core_bootstrap_mean
+      - core_ipw_weights
+      - core_gamma_cdf
+      - core_hawkes_nll
+  - title: Distributional drift
+    desc: >
+      Whether a freshly fetched column is still the column the capsule was
+      pinned against. A byte digest cannot answer this: a re-release can be
+      statistically identical yet differ byte-for-byte, and a column can keep
+      its name and type while having been silently rescaled.
+    contents:
+      - capsule_drift
+      - drift_ks
+      - drift_psi
+      - drift_chisq
+      - drift_homogeneity
+      - benford_test
+  - title: Signed provenance
+    desc: >
+      Authenticated rather than merely checksummed. Keyed digests for a shared
+      secret, post-quantum hash-based signatures for a public verifier, Merkle
+      trees to pin a capsule chunk by chunk, and hash chains to make the run
+      history itself tamper-evident.
+    contents:
+      - capsule_sign
+      - capsule_verify
+      - pqc_keygen
+      - signing_public_key
+      - pqc_backends
+      - rmbl_chain
+      - rmbl_merkle
+      - chunk_file
+  - title: Digests and keys
+    desc: >
+      The hashes and key-derivation the provenance layer is built on, each
+      verified against its published test vectors.
+    contents:
+      - core_sha512
+      - core_crc32
+      - core_blake2b
+      - rmbl_keyed_digest
+      - rmbl_file_digest
+      - digest_object
+      - random_bytes
+      - derive_key
+  - title: Schema and rules
+    desc: >
+      Derive a pinnable schema from data you already trust, then declare the
+      project-specific checks a generic schema cannot express.
+    contents:
+      - infer_schema
+      - rule
+      - validate_rules
+      - rmbl_rule_library
+  - title: Describe a capsule
+    desc: >
+      The summaries worth reading before trusting a capsule: what every column
+      looks like, where the gaps are, which values dominate, and which rows do
+      not belong.
+    contents:
+      - profile_columns
+      - inline_hist
+      - frequency_table
+      - correlation_table
+      - top_correlations
+      - mahalanobis_outliers
+      - duplicate_rows
+      - rmbl_drop
+      - clean_column_names
+      - environment_diff
+  - title: Missingness
+    desc: >
+      Not just how much is missing, but the shape of it -- which columns go
+      together, whether the gaps are contiguous, and whether the missingness
+      is related to the data (in which case dropping incomplete rows is
+      biased).
+    contents:
+      - missingness_summary
+      - missingness_pattern
+      - missing_runs
+      - missingness_map
+      - mcar_test
+  - title: Large capsules
+    desc: >
+      One-pass algorithms for members bigger than memory: exact block-wise
+      moments, uniform sampling of a stream, and fixed-memory distinct counts.
+    contents:
+      - rmbl_online
+      - rmbl_reservoir
+      - rmbl_distinct
+  - title: Output
+    desc: Printed reports for the objects the package returns.
+    contents:
+      - rmbl_print_methods
