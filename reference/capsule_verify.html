@@ -74,8 +74,10 @@ replayed at another index or under another key.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>The shared secret for <code>"hmac"</code>, or a public key (or full
-signing key) for XMSS.</p></dd>
+<dd><p>The shared secret for <code>"hmac"</code>, a public key (or full
+signing key) for XMSS, or an <code><a href="oqs_keygen.html">oqs_keygen()</a></code> key or its
+<code><a href="oqs_keygen.html">oqs_public_key()</a></code> for a standardised scheme. A signature is not
+verified against a key of a different scheme.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -64,7 +64,9 @@
 <code><a href="../reference/rmbl_merkle.html">merkle_root()</a></code> and friends pin a capsule chunk by chunk, so a mismatch names <em>which</em> chunk moved rather than only that the file did.</li>
 <li>
 <code><a href="../reference/rmbl_chain.html">chain_new()</a></code> / <code><a href="../reference/rmbl_chain.html">chain_append()</a></code> link each manifest to the digest of the one before, making the run history tamper-evident. <code><a href="../reference/rmbl_chain.html">chain_seal()</a></code> is the value to sign: the head alone misses a deletion from the middle and the links alone miss a truncation from the end.</li>
-</ul><p>On post-quantum choices: SHA-2 and HMAC are already adequate against a quantum adversary, since Grover only halves the exponent. Signatures are the part Shor breaks, so that is the part replaced. A lattice scheme (ML-DSA / FIPS 204) is deliberately <strong>not</strong> hand-rolled here – an uncertified hand-written NTT and rejection sampler would be a worse outcome than no lattice signature – and where a standardised one is wanted, the build defers to liboqs when it is present.</p>
+</ul><p>On post-quantum choices: SHA-2 and HMAC are already adequate against a quantum adversary, since Grover only halves the exponent. Signatures are the part Shor breaks, so that is the part replaced.</p>
+<p>A lattice scheme is deliberately <strong>not</strong> hand-rolled here – an uncertified hand-written NTT and rejection sampler would be a worse outcome than no lattice signature. Instead, <code>./configure</code> looks for liboqs, and where it is found <code><a href="../reference/oqs_keygen.html">oqs_keygen()</a></code> exposes the standardised schemes – ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) – computed entirely by that library. <code><a href="../reference/pqc_backends.html">pqc_backends()</a></code> reports what the build actually enabled, checked per scheme, since liboqs is configurable. Absence is not an error: the package builds without it, and the bundled hash-based scheme needs nothing.</p>
+<p>Unlike the hash-based key, the standardised keys are STATELESS – one key signs any number of messages, with no leaf index to track. A signature is never verified against a key of a different scheme.</p>
 <p>A height-<code>h</code> signing key signs exactly <code>2^h</code> messages. Signing twice at one index breaks the scheme outright, so <code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> tracks the index, returns the advanced key state, and refuses an exhausted key rather than wrapping around.</p>
 </div>
 <div class="section level3">
@@ -126,9 +128,25 @@
 <code><a href="../reference/digest_object.html">digest_object()</a></code> fingerprints an arbitrary R object.</li>
 </ul></div>
 <div class="section level3">
+<h3 id="behaviour-changes-worth-knowing-about-0-4-0">Behaviour changes worth knowing about<a class="anchor" aria-label="anchor" href="#behaviour-changes-worth-knowing-about-0-4-0"></a></h3>
+<p>Three functions now REFUSE input they previously computed through. In each case the old answer was a number produced by an internal guard rather than by the data, which is worse than an error because it looks like a result.</p>
+<ul><li>
+<code><a href="../reference/mahalanobis_outliers.html">mahalanobis_outliers()</a></code> and <code><a href="../reference/mcar_test.html">mcar_test()</a></code> reject exactly collinear or constant columns. Both repair a singular covariance by flooring its eigenvalues so the algorithm can proceed; with a duplicated column that floor, not the data, determined the answer. <code><a href="../reference/mcar_test.html">mcar_test()</a></code> checks the complete-case covariance where it can, because two identical columns with different missingness leave the pairwise covariance only nearly singular.</li>
+<li>
+<code><a href="../reference/capsule_verify.html">capsule_verify()</a></code> rejects a signature presented with a key of a different scheme explicitly. It already failed, but incidentally, on a length mismatch.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="siu-parser-fixes-0-4-0">SIU parser fixes<a class="anchor" aria-label="anchor" href="#siu-parser-fixes-0-4-0"></a></h3>
+<p>Four defects in the report parser, each of which produced a wrong field rather than an error:</p>
+<ul><li>statute sections with a decimal were dropped, so <code>Section 320.13, Criminal Code</code> – the ordinary dangerous-driving citation – never reached <code>relevant_legislation</code>;</li>
+<li>the director’s name and the police service both reached back across a line break, so the real signature block <code>Dated at Toronto.\n\nAlex Morrow\nDirector</code> yielded <code>"Toronto. Alex Morrow"</code>, and a force named once just under a heading picked the heading up with it;</li>
+<li>only <code>&amp;amp;</code>, <code>&amp;nbsp;</code> and one smart quote were decoded, so <code>&amp;lt;</code>, <code>&amp;gt;</code>, <code>&amp;quot;</code>, <code>&amp;apos;</code>, the remaining quotes and the dashes survived into the extracted text.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="verification-0-4-0">Verification<a class="anchor" aria-label="anchor" href="#verification-0-4-0"></a></h3>
 <p>Everything with a published test vector is checked against it: SHA-512 against FIPS 180-4, HMAC-SHA-256 against RFC 4231, PBKDF2-HMAC-SHA256 against the published vectors including the multi-block case, BLAKE2b against RFC 7693, and CRC-32 against the ITU V.42 check value. The statistics are anchored on base R, the Merkle construction on digests recomputed by hand, and the exceedance and reservoir distributions on exhaustive enumeration and simulation respectively.</p>
-<p>The XMSS signature scheme has <strong>no</strong> official known-answer vectors available offline, so it is verified against its security properties instead – a valid signature verifies, and every tampering of the message, signature, authentication path, index or key fails. It is not claimed to be byte-compatible with other XMSS implementations and must not be treated as certified.</p>
+<p>The XMSS signature scheme has <strong>no</strong> official known-answer vectors available offline, so it is verified against its security properties instead – a valid signature verifies, and every tampering of the message, signature, authentication path, index or key fails. It is not claimed to be byte-compatible with other XMSS implementations and must not be treated as certified. The standardised schemes carry no such caveat, because they are liboqs’s implementation rather than one of ours; what is tested here is the binding, including that ML-DSA-65 produces the key and signature sizes FIPS 204 specifies.</p>
+<p>The suite is 3,291 assertions at 97.1% coverage, and <code>R CMD check --as-cran</code> is clean.</p>
 </div>
 </div>
     <div class="section level2">

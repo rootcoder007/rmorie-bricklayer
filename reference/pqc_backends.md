@@ -16,7 +16,13 @@ pqc_backends()
 
 ## Value
 
-A character vector of backend names.
+A character vector of scheme names. `"xmss-sha256"` is always first; any
+standardised schemes this build of liboqs enabled follow.
+
+## See also
+
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
+which takes any of these as its `scheme`.
 
 ## Examples
 
@@ -27,4 +33,8 @@ pqc_backends()
 # The dependency-free backend is always available.
 "xmss-sha256" %in% pqc_backends()
 #> [1] TRUE
+
+# Whether a lattice scheme is available depends on the build.
+"ML-DSA-65" %in% pqc_backends()
+#> [1] FALSE
 ```

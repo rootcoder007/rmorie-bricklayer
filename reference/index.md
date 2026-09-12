@@ -211,6 +211,9 @@ history itself tamper-evident.
   : Generate a post-quantum signing key for capsule provenance
 - [`signing_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signing_public_key.md)
   : Public half of a signing key
+- [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  : Generate a standardised post-quantum signing key
 - [`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
   : Available post-quantum signature backends
 - [`chain_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
@@ -353,4 +356,6 @@ Printed reports for the objects the package returns.
   [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_schema>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   : Printed reports for bricklayer objects

@@ -73,11 +73,23 @@ recompute the digest.
 
 On post-quantum choices: SHA-2 and HMAC are already adequate against a
 quantum adversary, since Grover only halves the exponent. Signatures are
-the part Shor breaks, so that is the part replaced. A lattice scheme
-(ML-DSA / FIPS 204) is deliberately **not** hand-rolled here – an
+the part Shor breaks, so that is the part replaced.
+
+A lattice scheme is deliberately **not** hand-rolled here – an
 uncertified hand-written NTT and rejection sampler would be a worse
-outcome than no lattice signature – and where a standardised one is
-wanted, the build defers to liboqs when it is present.
+outcome than no lattice signature. Instead, `./configure` looks for
+liboqs, and where it is found
+[`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+exposes the standardised schemes – ML-DSA (FIPS 204) and SLH-DSA (FIPS
+205) – computed entirely by that library.
+[`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
+reports what the build actually enabled, checked per scheme, since
+liboqs is configurable. Absence is not an error: the package builds
+without it, and the bundled hash-based scheme needs nothing.
+
+Unlike the hash-based key, the standardised keys are STATELESS – one key
+signs any number of messages, with no leaf index to track. A signature
+is never verified against a key of a different scheme.
 
 A height-`h` signing key signs exactly `2^h` messages. Signing twice at
 one index breaks the scheme outright, so
@@ -228,6 +240,45 @@ a key drawn from it is guessable.
 - [`digest_object()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.md)
   fingerprints an arbitrary R object.
 
+### Behaviour changes worth knowing about
+
+Three functions now REFUSE input they previously computed through. In
+each case the old answer was a number produced by an internal guard
+rather than by the data, which is worse than an error because it looks
+like a result.
+
+- [`mahalanobis_outliers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md)
+  and
+  [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+  reject exactly collinear or constant columns. Both repair a singular
+  covariance by flooring its eigenvalues so the algorithm can proceed;
+  with a duplicated column that floor, not the data, determined the
+  answer.
+  [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+  checks the complete-case covariance where it can, because two
+  identical columns with different missingness leave the pairwise
+  covariance only nearly singular.
+- [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+  rejects a signature presented with a key of a different scheme
+  explicitly. It already failed, but incidentally, on a length mismatch.
+
+### SIU parser fixes
+
+Four defects in the report parser, each of which produced a wrong field
+rather than an error:
+
+- statute sections with a decimal were dropped, so
+  `Section 320.13, Criminal Code` – the ordinary dangerous-driving
+  citation – never reached `relevant_legislation`;
+- the director’s name and the police service both reached back across a
+  line break, so the real signature block
+  `Dated at Toronto.\n\nAlex Morrow\nDirector` yielded
+  `"Toronto. Alex Morrow"`, and a force named once just under a heading
+  picked the heading up with it;
+- only `&amp;`, `&nbsp;` and one smart quote were decoded, so `&lt;`,
+  `&gt;`, `&quot;`, `&apos;`, the remaining quotes and the dashes
+  survived into the extracted text.
+
 ### Verification
 
 Everything with a published test vector is checked against it: SHA-512
@@ -243,7 +294,13 @@ available offline, so it is verified against its security properties
 instead – a valid signature verifies, and every tampering of the
 message, signature, authentication path, index or key fails. It is not
 claimed to be byte-compatible with other XMSS implementations and must
-not be treated as certified.
+not be treated as certified. The standardised schemes carry no such
+caveat, because they are liboqs’s implementation rather than one of
+ours; what is tested here is the binding, including that ML-DSA-65
+produces the key and signature sizes FIPS 204 specifies.
+
+The suite is 3,291 assertions at 97.1% coverage, and
+`R CMD check --as-cran` is clean.
 
 ## rmoriebricklayer 0.3.11
 

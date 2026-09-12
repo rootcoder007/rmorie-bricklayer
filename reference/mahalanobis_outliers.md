@@ -45,6 +45,13 @@ matters more than it sounds: outliers inflate the very covariance used
 to judge them, so with several of them the classical distance hides
 exactly the rows it is meant to find (the masking effect).
 
+Exactly collinear columns are refused rather than repaired: the distance
+is undefined there, and flooring the covariance's eigenvalues to make it
+invertible would return numbers governed by the floor rather than by the
+data. Drop the redundant column first –
+[`top_correlations()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.md)
+will identify it.
+
 ## References
 
 Mahalanobis PC (1936). On the generalised distance in statistics.
@@ -92,4 +99,10 @@ range(df$weight)
 mahalanobis_outliers(df, robust = FALSE)$distance[1] <
   mahalanobis_outliers(df, robust = TRUE)$distance[1]
 #> [1] FALSE
+
+# A duplicated column has no distance defined, and is refused.
+dup <- df
+dup$height2 <- dup$height
+try(mahalanobis_outliers(dup))
+#> Error : the columns are collinear, so no Mahalanobis distance is defined. Drop the redundant column(s) -- drop_constant() and top_correlations() will find them.
 ```

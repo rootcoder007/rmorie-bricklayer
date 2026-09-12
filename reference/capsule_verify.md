@@ -25,8 +25,13 @@ capsule_verify(message, signature, key)
 
 - key:
 
-  The shared secret for `"hmac"`, or a public key (or full signing key)
-  for XMSS.
+  The shared secret for `"hmac"`, a public key (or full signing key) for
+  XMSS, or an
+  [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  key or its
+  [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  for a standardised scheme. A signature is not verified against a key
+  of a different scheme.
 
 ## Value
 

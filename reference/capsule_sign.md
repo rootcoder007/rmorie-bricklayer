@@ -18,8 +18,13 @@ capsule_sign(message, key, scheme = NULL)
 
 - key:
 
-  A shared secret (character/raw) for `"hmac"`, or a
-  `bricklayer_signing_key` for `"xmss"`.
+  A shared secret (character/raw) for `"hmac"`, a
+  `bricklayer_signing_key` from
+  [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+  for `"xmss"`, or a `bricklayer_oqs_key` from
+  [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  for a standardised scheme (in which case `scheme` is taken from the
+  key and ignored).
 
 - scheme:
 

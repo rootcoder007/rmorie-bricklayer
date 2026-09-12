@@ -64,8 +64,10 @@ of the key and has not been altered since.</p>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>A shared secret (character/raw) for <code>"hmac"</code>, or a
-<code>bricklayer_signing_key</code> for <code>"xmss"</code>.</p></dd>
+<dd><p>A shared secret (character/raw) for <code>"hmac"</code>, a
+<code>bricklayer_signing_key</code> from <code><a href="pqc_keygen.html">pqc_keygen()</a></code> for <code>"xmss"</code>, or a
+<code>bricklayer_oqs_key</code> from <code><a href="oqs_keygen.html">oqs_keygen()</a></code> for a standardised scheme
+(in which case <code>scheme</code> is taken from the key and ignored).</p></dd>
 
 
 <dt id="arg-scheme">scheme<a class="anchor" aria-label="anchor" href="#arg-scheme"></a></dt>

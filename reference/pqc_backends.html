@@ -69,7 +69,12 @@ hand-written implementation here.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector of backend names.</p>
+    <p>A character vector of scheme names. <code>"xmss-sha256"</code> is always
+first; any standardised schemes this build of liboqs enabled follow.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="pqc_keygen.html">pqc_keygen()</a></code>, which takes any of these as its <code>scheme</code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -80,6 +85,10 @@ hand-written implementation here.</p>
 <span class="r-in"><span><span class="co"># The dependency-free backend is always available.</span></span></span>
 <span class="r-in"><span><span class="st">"xmss-sha256"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu">pqc_backends</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Whether a lattice scheme is available depends on the build.</span></span></span>
+<span class="r-in"><span><span class="st">"ML-DSA-65"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu">pqc_backends</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -113,6 +113,10 @@ telling you about the distribution rather than the missingness.</p>
 missing-NOT-at-random, because that distinction depends on the values
 that were never observed. Only knowledge of how the data were
 collected settles it.</p>
+<p>Collinear or constant columns are refused rather than worked around:
+the likelihood is degenerate there, and the EM step's eigenvalue floor
+would otherwise return a statistic governed by that floor instead of
+by the data.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -177,6 +181,12 @@ Statistical Society B</em> 39(1), 1–38.</p>
 <span class="r-in"><span><span class="co"># Complete data has one pattern and nothing to test.</span></span></span>
 <span class="r-in"><span><span class="fu">mcar_test</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>a <span class="op">=</span> <span class="va">x</span>, b <span class="op">=</span> <span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">df</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A duplicated column makes the likelihood degenerate, and is refused.</span></span></span>
+<span class="r-in"><span><span class="va">dup</span> <span class="op">&lt;-</span> <span class="va">mcar</span></span></span>
+<span class="r-in"><span><span class="va">dup</span><span class="op">$</span><span class="va">x2</span> <span class="op">&lt;-</span> <span class="va">dup</span><span class="op">$</span><span class="va">x</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">mcar_test</span><span class="op">(</span><span class="va">dup</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : the columns are collinear (or one is constant), so the multivariate normal likelihood Little's test is built on is degenerate. Drop the redundant column(s) first -- top_correlations() and drop_constant() will find them.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The EM estimates are the ML ones: with no missingness they are the</span></span></span>
 <span class="r-in"><span><span class="co"># column means and the ML (1/n) covariance.</span></span></span>
