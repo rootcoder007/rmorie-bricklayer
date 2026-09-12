@@ -140,6 +140,11 @@
 #' that were never observed. Only knowledge of how the data were
 #' collected settles it.
 #'
+#' Collinear or constant columns are refused rather than worked around:
+#' the likelihood is degenerate there, and the EM step's eigenvalue floor
+#' would otherwise return a statistic governed by that floor instead of
+#' by the data.
+#'
 #' @param data A data frame or numeric matrix. Non-numeric columns are
 #'   dropped with a warning, since the statistic is defined on moments.
 #' @param max_iter Maximum EM iterations (default 500).
@@ -181,6 +186,11 @@
 #' # Complete data has one pattern and nothing to test.
 #' mcar_test(data.frame(a = x, b = y))$df
 #'
+#' # A duplicated column makes the likelihood degenerate, and is refused.
+#' dup <- mcar
+#' dup$x2 <- dup$x
+#' try(mcar_test(dup))
+#'
 #' # The EM estimates are the ML ones: with no missingness they are the
 #' # column means and the ML (1/n) covariance.
 #' fit <- mcar_test(data.frame(a = x, b = y))
@@ -216,6 +226,34 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
   p <- ncol(X)
   if (p < 2L || n < 2L) {
     stop("too few complete columns or rows remain for Little's test",
+         call. = FALSE)
+  }
+
+  # Refuse rank-deficient input rather than computing through it. The EM
+  # step floors the covariance's eigenvalues to keep it invertible, so a
+  # collinear column would not stop the algorithm -- it would quietly
+  # make the statistic a function of that floor instead of the data.
+  # Checked on the COMPLETE-CASE covariance where there are enough
+  # complete rows, and on the pairwise one otherwise. The distinction
+  # matters: two identical columns with different missingness give a
+  # pairwise covariance that is not quite singular, because each cell is
+  # computed on a different subset -- only the complete-case covariance
+  # exposes the duplication exactly.
+  cc <- stats::complete.cases(X)
+  S0 <- if (sum(cc) >= p + 1L) {
+    stats::cov(X[cc, , drop = FALSE])
+  } else {
+    stats::cov(X, use = "pairwise.complete.obs")
+  }
+  S0[!is.finite(S0)] <- 0
+  ev0 <- tryCatch(eigen(S0, symmetric = TRUE, only.values = TRUE)$values,
+                  error = function(e) NULL)
+  if (!is.null(ev0) &&
+      min(ev0) <= 1e-8 * max(abs(ev0), .Machine$double.eps)) {
+    stop("the columns are collinear (or one is constant), so the ",
+         "multivariate normal likelihood Little's test is built on is ",
+         "degenerate. Drop the redundant column(s) first -- ",
+         "top_correlations() and drop_constant() will find them.",
          call. = FALSE)
   }
 
