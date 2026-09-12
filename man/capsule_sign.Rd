@@ -23,7 +23,13 @@ key and ignored).}
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},
 \code{signature}, and for XMSS also \code{auth}, \code{index},
-\code{root}, \code{height} and \code{key_state}.
+\code{root}, \code{height}, \code{key_state}, \code{randomizer} (the
+per-signature \code{R} of RFC 8391, which a verifier needs and which
+therefore travels with the signature) and \code{wire} -- the signature
+in the RFC's own byte order, \code{index || R || WOTS || auth},
+hex-encoded. \code{wire} is byte-identical to what the XMSS reference
+implementation produces from the same key material, so it can be handed
+to another implementation as bytes.
 }
 \description{
 Authenticates \code{message} -- normally a manifest digest, or the whole

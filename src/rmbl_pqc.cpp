@@ -38,12 +38,21 @@
  *
  * INTEROPERABILITY
  * ----------------
- * This follows RFC 8391's construction (parameters n = 32, w = 16,
- * len = 67, SHA-256 as F/PRF/H/H_msg). No official RFC 8391 known-answer
- * vectors were available offline when it was written, so it is verified
- * against its own algebraic and security properties -- a signature
- * verifies, a tampered message does not, a tampered signature does not,
- * a foreign key does not, and the WOTS+ chains compose as specified. It
+ * This implements RFC 8391 (parameters n = 32, w = 16, len = 67,
+ * SHA-256 as F/PRF/H/H_msg, PRF_keygen per NIST SP 800-208) and is
+ * BYTE-COMPATIBLE with the reference implementation: the whole
+ * 2500-byte signature for XMSS-SHA2_10_256 matches what
+ * github.com/XMSS/xmss-reference produces from the same key material,
+ * checked against embedded vectors in tests/testthat/test-xmss-kat.R.
+ *
+ * That check exists because the security-property tests cannot find a
+ * conformance bug. A sound-but-wrong pseudorandom function passes every
+ * one of them, and three such divergences were present until the
+ * reference was compared against: the WOTS+ chain seeds, the message
+ * digest's key, and a missing SK_PRF. It is also verified against those
+ * properties -- a signature verifies, a tampered message does not, a
+ * tampered signature does not, a foreign key does not, and the WOTS+
+ * chains compose as specified. It
  * is NOT claimed to be byte-compatible with other XMSS implementations
  * and must not be used as though it were certified. Within the rmorie
  * ecosystem the same package signs and verifies, which is the use case
@@ -139,9 +148,44 @@ void fn_H(const unsigned char *key, const unsigned char *m64,
     hash_dom(1, key, m64, 2 * kN, out);
 }
 
-void fn_Hmsg(const unsigned char *key, const unsigned char *m, size_t mlen,
-             unsigned char out[32]) {
-    hash_dom(2, key, m, mlen, out);
+/* H_msg as RFC 8391 section 4.1.9 specifies it:
+ *
+ *   SHA-256( toByte(2, 32) || R || root || toByte(idx, n) || M )
+ *
+ * The randomiser R, the tree root and the leaf index are part of the
+ * KEY, not part of the message, and R -- which is PRF(SK_PRF,
+ * toByte(idx, 32)) -- binds the digest to this signature. An earlier
+ * version keyed this with the public seed and pushed idx || root into
+ * the message instead; that is a sound domain-separated hash and is not
+ * the specified one, so the digest signed here could not be reproduced
+ * by any other implementation.
+ */
+void fn_Hmsg_bound(const unsigned char *r, const unsigned char *root,
+                   uint64_t idx, const unsigned char *m, size_t mlen,
+                   unsigned char out[32]) {
+    std::vector<unsigned char> buf(32 + 3 * kN + mlen);
+    to_byte32(2, buf.data());
+    std::memcpy(buf.data() + 32, r, kN);
+    std::memcpy(buf.data() + 32 + kN, root, kN);
+    to_byte32(idx, buf.data() + 32 + 2 * kN);
+    if (mlen > 0) std::memcpy(buf.data() + 32 + 3 * kN, m, mlen);
+    rmbl_sha256_raw(buf.data(), buf.size(), out);
+}
+
+
+/* PRF_keygen -- domain 4, and its message is pub_seed || ADRS, i.e.
+ * n + 32 bytes rather than PRF's 32. NIST SP 800-208 separates this
+ * from PRF so that the value used to expand a secret key can never
+ * collide with one used to mask a hash. */
+void fn_PRFkeygen(const unsigned char *key, const unsigned char *pub_seed,
+                  const unsigned char adrs_bytes[32],
+                  unsigned char out[32]) {
+    std::vector<unsigned char> buf(32 + kN + kN + 32);
+    to_byte32(4, buf.data());
+    std::memcpy(buf.data() + 32, key, kN);
+    std::memcpy(buf.data() + 32 + kN, pub_seed, kN);
+    std::memcpy(buf.data() + 32 + kN + kN, adrs_bytes, 32);
+    rmbl_sha256_raw(buf.data(), buf.size(), out);
 }
 
 void fn_PRF(const unsigned char *key, const unsigned char *m32,
@@ -243,13 +287,26 @@ void wots_digits(const unsigned char *msg32, int *digits) {
 }
 
 /* WOTS+ private chain starts, derived from the secret seed so the key is
- * a single 32-byte secret rather than 67 stored values. */
-void wots_sk(const unsigned char *sk_seed, uint32_t ots_index, int i,
-             unsigned char out[32]) {
-    unsigned char m[32];
-    to_byte32((static_cast<uint64_t>(ots_index) << 32) |
-              static_cast<uint64_t>(i), m);
-    fn_PRF(sk_seed, m, out);
+ * a single 32-byte secret rather than 67 stored values.
+ *
+ * This is RFC 8391's expand_seed as amended by NIST SP 800-208: the
+ * chain seed is PRF_keygen(SK_SEED, PUB_SEED || ADRS) with the OTS and
+ * chain addresses set and the hash and keyAndMask words zeroed. An
+ * earlier version keyed a plain PRF with toByte(ots_index << 32 | i),
+ * which is a sound pseudorandom function and is not the specified one,
+ * so nothing it produced could verify against another implementation.
+ */
+void wots_sk(const unsigned char *sk_seed, const unsigned char *pub_seed,
+             uint32_t ots_index, int i, unsigned char out[32]) {
+    Adrs adrs;
+    adrs.set_type(0);
+    adrs.set_ots(ots_index);
+    adrs.set_chain(static_cast<uint32_t>(i));
+    adrs.set_hash(0);
+    adrs.set_key_and_mask(0);
+    unsigned char ab[32];
+    adrs.bytes(ab);
+    fn_PRFkeygen(sk_seed, pub_seed, ab, out);
 }
 
 void wots_pk(const unsigned char *sk_seed, const unsigned char *pub_seed,
@@ -260,7 +317,7 @@ void wots_pk(const unsigned char *sk_seed, const unsigned char *pub_seed,
     adrs.set_ots(ots_index);
     for (int i = 0; i < kLen; ++i) {
         unsigned char sk[32];
-        wots_sk(sk_seed, ots_index, i, sk);
+        wots_sk(sk_seed, pub_seed, ots_index, i, sk);
         adrs.set_chain(static_cast<uint32_t>(i));
         chain(sk, 0, kW - 1, pub_seed, adrs,
               pk.data() + static_cast<size_t>(i) * kN);
@@ -367,11 +424,15 @@ SEXP C_rmbl_xmss_keygen(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     return Rf_mkString(rh.c_str());
 }
 
-SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height,
-                      SEXP index, SEXP msg) {
-    std::vector<unsigned char> sks, pubs;
+SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
+                      SEXP height, SEXP index, SEXP msg) {
+    std::vector<unsigned char> sks, prfs, pubs;
     if (!unhexlify(CHAR(STRING_ELT(sk_seed_hex, 0)), sks) || sks.size() != kN) {
         Rf_error("`sk_seed` must be 64 hex characters (32 bytes)");
+    }
+    if (!unhexlify(CHAR(STRING_ELT(sk_prf_hex, 0)), prfs) ||
+        prfs.size() != kN) {
+        Rf_error("`sk_prf` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(CHAR(STRING_ELT(pub_seed_hex, 0)), pubs) ||
         pubs.size() != kN) {
@@ -398,14 +459,13 @@ SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height,
     std::vector<unsigned char> auth;
     tree_root(sks.data(), pubs.data(), h, idx, root, &auth);
 
+    /* R = PRF(SK_PRF, toByte(idx, 32)), then the specified binding */
     unsigned char ridx[32];
     to_byte32(idx, ridx);
-    std::vector<unsigned char> bound(kN + kN + mb.size());
-    std::memcpy(bound.data(), ridx, kN);
-    std::memcpy(bound.data() + kN, root, kN);
-    if (!mb.empty()) std::memcpy(bound.data() + 2 * kN, mb.data(), mb.size());
+    unsigned char rnd[32];
+    fn_PRF(prfs.data(), ridx, rnd);
     unsigned char dig[32];
-    fn_Hmsg(pubs.data(), bound.data(), bound.size(), dig);
+    fn_Hmsg_bound(rnd, root, idx, mb.data(), mb.size(), dig);
 
     int digits[kLen];
     wots_digits(dig, digits);
@@ -416,34 +476,54 @@ SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height,
     std::vector<unsigned char> sig(static_cast<size_t>(kLen) * kN);
     for (int i = 0; i < kLen; ++i) {
         unsigned char sk[32];
-        wots_sk(sks.data(), idx, i, sk);
+        wots_sk(sks.data(), pubs.data(), idx, i, sk);
         adrs.set_chain(static_cast<uint32_t>(i));
         chain(sk, 0, digits[i], pubs.data(), adrs,
               sig.data() + static_cast<size_t>(i) * kN);
     }
 
-    std::string sigh, authh, rooth;
+    std::string sigh, authh, rooth, rh, serial;
     hexlify(sig.data(), sig.size(), sigh);
     hexlify(auth.data(), auth.size(), authh);
     hexlify(root, kN, rooth);
+    hexlify(rnd, kN, rh);
 
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+    /* The RFC 8391 wire format, so a signature can be handed to another
+     * implementation as bytes: idx (4, big endian) || R || WOTS sig ||
+     * auth path. For XMSS-SHA2_10_256 that is 4 + 32 + 2144 + 320 =
+     * 2500 bytes. */
+    std::vector<unsigned char> wire;
+    wire.reserve(4 + kN + sig.size() + auth.size());
+    for (int b = 3; b >= 0; --b) {
+        wire.push_back(static_cast<unsigned char>((idx >> (8 * b)) & 0xff));
+    }
+    wire.insert(wire.end(), rnd, rnd + kN);
+    wire.insert(wire.end(), sig.begin(), sig.end());
+    wire.insert(wire.end(), auth.begin(), auth.end());
+    hexlify(wire.data(), wire.size(), serial);
+
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 6));
     SET_VECTOR_ELT(out, 0, Rf_mkString(sigh.c_str()));
     SET_VECTOR_ELT(out, 1, Rf_mkString(authh.c_str()));
     SET_VECTOR_ELT(out, 2, Rf_ScalarInteger(static_cast<int>(idx)));
     SET_VECTOR_ELT(out, 3, Rf_mkString(rooth.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+    SET_VECTOR_ELT(out, 4, Rf_mkString(rh.c_str()));
+    SET_VECTOR_ELT(out, 5, Rf_mkString(serial.c_str()));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 6));
     SET_STRING_ELT(nm, 0, Rf_mkChar("wots"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("auth"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("index"));
     SET_STRING_ELT(nm, 3, Rf_mkChar("root"));
+    SET_STRING_ELT(nm, 4, Rf_mkChar("randomizer"));
+    SET_STRING_ELT(nm, 5, Rf_mkChar("wire"));
     Rf_setAttrib(out, R_NamesSymbol, nm);
     UNPROTECT(2);
     return out;
 }
 
 SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
-                        SEXP index, SEXP msg, SEXP sig_hex, SEXP auth_hex) {
+                        SEXP index, SEXP msg, SEXP sig_hex, SEXP auth_hex,
+                        SEXP r_hex) {
     std::vector<unsigned char> pubs, root, sig, auth;
     if (!unhexlify(CHAR(STRING_ELT(pub_seed_hex, 0)), pubs) ||
         pubs.size() != kN) {
@@ -477,14 +557,13 @@ SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
         mb.assign(s, s + std::strlen(s));
     }
 
-    unsigned char ridx[32];
-    to_byte32(idx, ridx);
-    std::vector<unsigned char> bound(kN + kN + mb.size());
-    std::memcpy(bound.data(), ridx, kN);
-    std::memcpy(bound.data() + kN, root.data(), kN);
-    if (!mb.empty()) std::memcpy(bound.data() + 2 * kN, mb.data(), mb.size());
+    /* The verifier has no SK_PRF, so R travels with the signature. */
+    std::vector<unsigned char> rnd;
+    if (!unhexlify(CHAR(STRING_ELT(r_hex, 0)), rnd) || rnd.size() != kN) {
+        Rf_error("`randomizer` must be 64 hex characters (32 bytes)");
+    }
     unsigned char dig[32];
-    fn_Hmsg(pubs.data(), bound.data(), bound.size(), dig);
+    fn_Hmsg_bound(rnd.data(), root.data(), idx, mb.data(), mb.size(), dig);
 
     int digits[kLen];
     wots_digits(dig, digits);

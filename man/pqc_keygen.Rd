@@ -4,23 +4,27 @@
 \alias{pqc_keygen}
 \title{Generate a post-quantum signing key for capsule provenance}
 \usage{
-pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
+pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL, sk_prf = NULL)
 }
 \arguments{
 \item{height}{Tree height, 1 to 16 (default 10, i.e. 1024
 signatures).}
 
-\item{sk_seed, pub_seed}{64-character hex seeds
-(32 bytes each). Omit them and seeds are drawn from the operating
-system's CSPRNG via \code{\link[=random_bytes]{random_bytes()}}, which
-fails rather than falling back to R's reproducible generator. Supply
-them ONLY to reproduce a key deterministically in a test -- a seed you
-can guess is a key you can forge.}
+\item{sk_seed, pub_seed, sk_prf}{64-character hex seeds
+(32 bytes each) -- the three secrets RFC 8391's private key carries.
+\code{sk_seed} derives the WOTS+ chains, \code{pub_seed} masks the
+hashes, and \code{sk_prf} keys the per-signature randomiser. Omit them
+and they are drawn from the operating system's CSPRNG via
+\code{\link[=random_bytes]{random_bytes()}}, which fails rather than
+falling back to R's reproducible generator. Supply them ONLY to
+reproduce a key deterministically in a test -- a seed you can guess is a
+key you can forge.}
 }
 \value{
 A list of class \code{bricklayer_signing_key}: \code{root} (the
 public verification value), \code{pub_seed}, \code{sk_seed} (SECRET),
-\code{height}, \code{next_index}, \code{capacity}, and \code{scheme}.
+\code{sk_prf} (SECRET), \code{height}, \code{next_index},
+\code{capacity}, and \code{scheme}.
 }
 \description{
 Builds an XMSS key pair: a Merkle tree over \code{2^height} Winternitz
@@ -40,6 +44,13 @@ Key generation walks all \code{2^height} leaves, so cost doubles with
 each unit of height. The default 10 gives 1024 signatures and takes a
 moment; heights above about 14 are slow enough to be worth avoiding
 unless the key really must last that long.
+}
+
+\section{Key format}{
+ A key made before the RFC 8391 conformance work
+carries no \code{sk_prf} and cannot sign;
+\code{\link[=capsule_sign]{capsule_sign()}} raises rather than producing
+a signature no other implementation could read. Generate a new one.
 }
 
 \examples{
