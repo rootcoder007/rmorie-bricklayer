@@ -13,7 +13,7 @@ for the pure-R path and now parses with the package's own JSON codec."><meta nam
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,6 +25,8 @@ for the pure-R path and now parses with the package's own JSON codec."><meta nam
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -84,11 +86,11 @@ for the pure-R path and now parses with the package's own JSON codec.</p>
 <span class="r-in"><span><span class="co"># network failure returns NULL rather than erroring.</span></span></span>
 <span class="r-in"><span><span class="co"># Closest archived snapshot of a live page (or NULL if none archived).</span></span></span>
 <span class="r-in"><span><span class="fu">wayback_snapshot_url_native</span><span class="op">(</span><span class="st">"https://www.r-project.org/"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://web.archive.org/web/20260908173554/https://www.r-project.org/"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://web.archive.org/web/20260910225547/https://www.r-project.org/"</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A shorter timeout for a quick lookup.</span></span></span>
 <span class="r-in"><span><span class="fu">wayback_snapshot_url_native</span><span class="op">(</span><span class="st">"https://cloud.r-project.org/"</span>, timeout <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://web.archive.org/web/20260825170116/https://cloud.r-project.org/"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A never-archived URL returns NULL rather than erroring.</span></span></span>
 <span class="r-in"><span><span class="fu">wayback_snapshot_url_native</span><span class="op">(</span><span class="st">"https://example.invalid/never-archived"</span><span class="op">)</span></span></span>

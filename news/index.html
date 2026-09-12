@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -37,6 +39,98 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="rmoriebricklayer-040">rmoriebricklayer 0.4.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-040"></a></h2>
+<p>The release that makes a capsule answer three questions a checksum cannot: is this still the same <em>data</em>, who <em>says</em> so, and what is actually <em>in</em> it.</p>
+<div class="section level3">
+<h3 id="is-this-still-the-same-data-0-4-0">Is this still the same data?<a class="anchor" aria-label="anchor" href="#is-this-still-the-same-data-0-4-0"></a></h3>
+<p>A SHA-256 tells you the bytes changed. It cannot tell you whether the distribution changed – and those are different questions. A re-released open-data extract legitimately has a different digest while being the same data statistically; conversely a column can keep its name, its type and its row count while having been silently rescaled, and no digest notices.</p>
+<ul><li>
+<code><a href="../reference/capsule_drift.html">capsule_drift()</a></code> tests every shared column between a pinned extract and a fresh fetch, and reports which moved.</li>
+<li>
+<code><a href="../reference/drift_ks.html">drift_ks()</a></code> (two-sample Kolmogorov-Smirnov), <code><a href="../reference/drift_psi.html">drift_psi()</a></code> (population stability index and Jensen-Shannon divergence), <code><a href="../reference/drift_homogeneity.html">drift_homogeneity()</a></code> (two-sample chi-square) and <code><a href="../reference/drift_chisq.html">drift_chisq()</a></code> (goodness-of-fit against a known distribution) are available individually.</li>
+<li>
+<code><a href="../reference/benford_test.html">benford_test()</a></code> screens a numeric column’s leading digits against Benford’s law – a cheap check on figures that were rounded, capped or invented. It is a screen, not a verdict, and says so.</li>
+</ul><p><code><a href="../reference/capsule_drift.html">capsule_drift()</a></code> uses the two-sample homogeneity test for categorical columns, not goodness-of-fit: the reference is itself a finite sample, and treating it as a known distribution ignores its sampling error and reports drift too readily. For the same reason the population stability index is reported as an effect size but only allowed to raise the drift flag once both samples pass <code>psi_min_n</code> – its 0.25 “material shift” band is a large-sample heuristic with no calibrated null, and on a few hundred rows binning noise alone clears it.</p>
+</div>
+<div class="section level3">
+<h3 id="who-says-so-0-4-0">Who says so?<a class="anchor" aria-label="anchor" href="#who-says-so-0-4-0"></a></h3>
+<p>A digest in a manifest proves the data was not corrupted. It proves nothing about who produced it, because anyone who edits the data can recompute the digest.</p>
+<ul><li>
+<code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> / <code><a href="../reference/capsule_verify.html">capsule_verify()</a></code> authenticate a manifest, either with a shared secret (<code>HMAC-SHA-256</code>, RFC 2104) or with a post-quantum, asymmetric, hash-based signature.</li>
+<li>
+<code><a href="../reference/pqc_keygen.html">pqc_keygen()</a></code> builds that signature’s key: a Merkle tree over Winternitz one-time keys, following the RFC 8391 construction over the SHA-256 this package already ships. Its security rests on the hash alone – no lattice assumption, no elliptic curve, nothing Shor’s algorithm breaks, and no new system dependency.</li>
+<li>
+<code><a href="../reference/rmbl_merkle.html">merkle_root()</a></code> and friends pin a capsule chunk by chunk, so a mismatch names <em>which</em> chunk moved rather than only that the file did.</li>
+<li>
+<code><a href="../reference/rmbl_chain.html">chain_new()</a></code> / <code><a href="../reference/rmbl_chain.html">chain_append()</a></code> link each manifest to the digest of the one before, making the run history tamper-evident. <code><a href="../reference/rmbl_chain.html">chain_seal()</a></code> is the value to sign: the head alone misses a deletion from the middle and the links alone miss a truncation from the end.</li>
+</ul><p>On post-quantum choices: SHA-2 and HMAC are already adequate against a quantum adversary, since Grover only halves the exponent. Signatures are the part Shor breaks, so that is the part replaced. A lattice scheme (ML-DSA / FIPS 204) is deliberately <strong>not</strong> hand-rolled here – an uncertified hand-written NTT and rejection sampler would be a worse outcome than no lattice signature – and where a standardised one is wanted, the build defers to liboqs when it is present.</p>
+<p>A height-<code>h</code> signing key signs exactly <code>2^h</code> messages. Signing twice at one index breaks the scheme outright, so <code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> tracks the index, returns the advanced key state, and refuses an exhausted key rather than wrapping around.</p>
+</div>
+<div class="section level3">
+<h3 id="what-is-actually-in-it-0-4-0">What is actually in it?<a class="anchor" aria-label="anchor" href="#what-is-actually-in-it-0-4-0"></a></h3>
+<p>A capsule is only worth pinning if somebody looked at the data first, and the look is the step that gets skipped.</p>
+<ul><li>
+<code><a href="../reference/profile_columns.html">profile_columns()</a></code> describes every column: type, missingness, distinct values, the counts of zero, negative and infinite values, the classical <em>and</em> robust centre and spread side by side (where they disagree, the mean is not describing the column), and an <code><a href="../reference/inline_hist.html">inline_hist()</a></code> sketch that shows bimodality no summary number carries.</li>
+<li>
+<code><a href="../reference/frequency_table.html">frequency_table()</a></code>, <code><a href="../reference/correlation_table.html">correlation_table()</a></code>, <code><a href="../reference/top_correlations.html">top_correlations()</a></code>, <code><a href="../reference/duplicate_rows.html">duplicate_rows()</a></code>, <code><a href="../reference/rmbl_drop.html">drop_empty()</a></code>, <code><a href="../reference/rmbl_drop.html">drop_constant()</a></code> and <code><a href="../reference/clean_column_names.html">clean_column_names()</a></code> cover the rest of a first pass.</li>
+<li>
+<code><a href="../reference/mahalanobis_outliers.html">mahalanobis_outliers()</a></code> finds rows that are unremarkable on every variable separately and impossible jointly. It defaults to a robust centre and scale, because outliers inflate the very covariance used to judge them.</li>
+<li>
+<code><a href="../reference/missingness_summary.html">missingness_summary()</a></code>, <code><a href="../reference/missingness_pattern.html">missingness_pattern()</a></code>, <code><a href="../reference/missing_runs.html">missing_runs()</a></code> and <code><a href="../reference/missingness_map.html">missingness_map()</a></code> describe the <em>shape</em> of the gaps, not just the rate: whether columns are missing together, and whether a gap is one outage or scattered failures.</li>
+<li>
+<code><a href="../reference/mcar_test.html">mcar_test()</a></code> is Little’s test for missing-completely-at-random – the assumption that licenses dropping incomplete rows. It carries an expectation-maximisation estimator, because the maximum-likelihood mean and covariance under missingness have no closed form; on complete data that estimator reproduces the ML estimates exactly.</li>
+<li>
+<code><a href="../reference/environment_diff.html">environment_diff()</a></code> reports what moved between two runs’ captured environments, which is the question a failed reproduction actually raises.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="schemas-and-rules-0-4-0">Schemas and rules<a class="anchor" aria-label="anchor" href="#schemas-and-rules-0-4-0"></a></h3>
+<ul><li>
+<code><a href="../reference/infer_schema.html">infer_schema()</a></code> derives the schema <code><a href="../reference/validate_schema.html">validate_schema()</a></code> consumes from data you already trust, so a capsule need not be pinned on nothing. It describes one extract and should be read and edited, not trusted blindly.</li>
+<li>
+<code><a href="../reference/validate_schema.html">validate_schema()</a></code> gains the checks to match: column types (with integer and double treated as interchangeable), numeric ranges, and per-column missingness ceilings. Every field stays optional, so schemas written for earlier versions are unaffected.</li>
+<li>
+<code><a href="../reference/rule.html">rule()</a></code> and <code><a href="../reference/validate_rules.html">validate_rules()</a></code> express the project-specific checks a generic schema cannot – an age that must be non-negative, two dates that must be ordered – and <code><a href="../reference/rmbl_rule_library.html">rule_in_set()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_between()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_not_null()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_unique()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_regex()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_increasing()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_within_n_mads()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_complete_rows()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_distinct_rows()</a></code> and <code><a href="../reference/rmbl_rule_library.html">rule_col_count()</a></code> supply the common ones ready-made.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="capsules-larger-than-memory-0-4-0">Capsules larger than memory<a class="anchor" aria-label="anchor" href="#capsules-larger-than-memory-0-4-0"></a></h3>
+<ul><li>
+<code><a href="../reference/rmbl_online.html">online_summary()</a></code> accumulates mean, variance, skewness and kurtosis block by block. The merge is <strong>exact</strong> – Chan, Golub and LeVeque’s parallel combination with Terriberry’s higher moments – so a chunked pass agrees with a single batch pass rather than approximating it.</li>
+<li>
+<code><a href="../reference/rmbl_reservoir.html">reservoir_indices()</a></code> / <code><a href="../reference/rmbl_reservoir.html">reservoir_sample()</a></code> take a uniform sample of a stream in one pass (Vitter’s Algorithm R).</li>
+<li>
+<code><a href="../reference/rmbl_distinct.html">distinct_sketch()</a></code> / <code><a href="../reference/rmbl_distinct.html">distinct_count()</a></code> estimate cardinality in fixed memory (HyperLogLog), with the published relative error.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="newly-reachable-0-4-0">Newly reachable<a class="anchor" aria-label="anchor" href="#newly-reachable-0-4-0"></a></h3>
+<p>Several things existed in the package with no way to call them. The compiled core carried kernels that had no binding, and the JSON codec had three internal helpers:</p>
+<ul><li>
+<code><a href="../reference/rmbl_core_spread.html">core_sd()</a></code>, <code><a href="../reference/rmbl_core_spread.html">core_dist()</a></code>, <code><a href="../reference/core_normal_logpdf.html">core_normal_logpdf()</a></code>, <code><a href="../reference/core_bootstrap_mean.html">core_bootstrap_mean()</a></code>, <code><a href="../reference/core_ipw_weights.html">core_ipw_weights()</a></code>, <code><a href="../reference/core_gamma_cdf.html">core_gamma_cdf()</a></code> and <code><a href="../reference/core_hawkes_nll.html">core_hawkes_nll()</a></code> now reach kernels that were already compiled in.</li>
+<li>
+<code><a href="../reference/rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> / <code><a href="../reference/rmbl_json_serialize.html">bricklayer_json_unserialize()</a></code> – lossless JSON that round trips an object rather than only its data – were internal, and left a dangling documentation link.</li>
+<li>The base64 codec (<code><a href="../reference/rmbl_base64.html">bricklayer_json_base64_enc()</a></code> and the URL-safe variant) was internal too.</li>
+<li>
+<code><a href="../reference/rmbl_json_gzip.html">json_gzip_encode()</a></code> / <code><a href="../reference/rmbl_json_gzip.html">json_gzip_decode()</a></code> are new: gzip plus base64, for a payload that travels.</li>
+</ul><p>All of these are published through <code>LinkingTo: rmoriebricklayer</code>, so <code>rmorie</code> and <code>rmoriedata</code> call one compiled copy rather than carrying their own.</p>
+</div>
+<div class="section level3">
+<h3 id="keys-0-4-0">Keys<a class="anchor" aria-label="anchor" href="#keys-0-4-0"></a></h3>
+<p><code><a href="../reference/pqc_keygen.html">pqc_keygen()</a></code>’s seeds previously came from a function that mixed the clock, the process id and R’s Mersenne Twister. <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> makes R’s generator reproducible by design and its state is recoverable from its output, so a key drawn from it is guessable.</p>
+<ul><li>
+<code><a href="../reference/random_bytes.html">random_bytes()</a></code> reads the operating system’s CSPRNG and <strong>fails</strong> rather than falling back to a weaker source.</li>
+<li>
+<code><a href="../reference/derive_key.html">derive_key()</a></code> is PBKDF2-HMAC-SHA256, so a passphrase can stand in for raw key bytes.</li>
+<li>
+<code><a href="../reference/core_blake2b.html">core_blake2b()</a></code> is a natively keyed digest of any width from 1 to 64 bytes – a MAC without the HMAC construction.</li>
+<li>
+<code><a href="../reference/digest_object.html">digest_object()</a></code> fingerprints an arbitrary R object.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="verification-0-4-0">Verification<a class="anchor" aria-label="anchor" href="#verification-0-4-0"></a></h3>
+<p>Everything with a published test vector is checked against it: SHA-512 against FIPS 180-4, HMAC-SHA-256 against RFC 4231, PBKDF2-HMAC-SHA256 against the published vectors including the multi-block case, BLAKE2b against RFC 7693, and CRC-32 against the ITU V.42 check value. The statistics are anchored on base R, the Merkle construction on digests recomputed by hand, and the exceedance and reservoir distributions on exhaustive enumeration and simulation respectively.</p>
+<p>The XMSS signature scheme has <strong>no</strong> official known-answer vectors available offline, so it is verified against its security properties instead – a valid signature verifies, and every tampering of the message, signature, authentication path, index or key fails. It is not claimed to be byte-compatible with other XMSS implementations and must not be treated as certified.</p>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.11" id="rmoriebricklayer-0311">rmoriebricklayer 0.3.11<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0311"></a></h2>
 <p>Test fix; no code changes.</p>

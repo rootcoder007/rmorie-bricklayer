@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Reproducible Data Capsules with Provenance and Fallback">
-<meta name="description" content="Tools for building brick-proof, reproducible, self-contained data capsules. Resolves open-data sources through the Comprehensive Knowledge Archive Network (CKAN, &lt;https://ckan.org/&gt;) package_show and package_search endpoints, records and verifies provenance with Secure Hash Algorithm 256 (SHA-256) digests and Internet Archive Wayback Machine (&lt;https://web.archive.org/&gt;) snapshots, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable. Run records are captured in a manifest plus a plain-language summary so any result can be traced back to its inputs. Also ships a small compiled C core (fast summary statistics and a self-contained SHA-256) that sibling packages in the rmorie ecosystem reach through LinkingTo for a single, shared numeric and provenance-hashing backend.">
-<meta property="og:description" content="Tools for building brick-proof, reproducible, self-contained data capsules. Resolves open-data sources through the Comprehensive Knowledge Archive Network (CKAN, &lt;https://ckan.org/&gt;) package_show and package_search endpoints, records and verifies provenance with Secure Hash Algorithm 256 (SHA-256) digests and Internet Archive Wayback Machine (&lt;https://web.archive.org/&gt;) snapshots, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable. Run records are captured in a manifest plus a plain-language summary so any result can be traced back to its inputs. Also ships a small compiled C core (fast summary statistics and a self-contained SHA-256) that sibling packages in the rmorie ecosystem reach through LinkingTo for a single, shared numeric and provenance-hashing backend.">
+<meta name="description" content="Tools for building brick-proof, reproducible, self-contained data capsules. Resolves open-data sources through the Comprehensive Knowledge Archive Network (CKAN, &lt;https://ckan.org/&gt;) package_show and package_search endpoints, records and verifies provenance with Secure Hash Algorithm 256 (SHA-256) digests and Internet Archive Wayback Machine (&lt;https://web.archive.org/&gt;) snapshots, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable. Run records are captured in a manifest plus a plain-language summary so any result can be traced back to its inputs. Distributional drift between a pinned capsule and a fresh fetch is tested with Kolmogorov-Smirnov, chi-square, population stability index, Jensen-Shannon divergence and Benford first-digit screens, because a re-released extract can be statistically identical yet differ byte-for-byte, and a column can keep its name and type while having been silently rescaled. Manifests can be authenticated rather than merely checksummed, with keyed digests (HMAC-SHA-256, RFC 2104) or post-quantum hash-based signatures (the Winternitz-plus-Merkle construction of RFC 8391), and pinned chunk-wise through a Merkle tree so a mismatch identifies which part of a capsule moved. Also ships a compiled C++ core (summary, robust and rank statistics, SHA-256, SHA-512 and CRC-32) that sibling packages in the rmorie ecosystem reach through LinkingTo for a single, shared numeric and provenance-hashing backend.">
+<meta property="og:description" content="Tools for building brick-proof, reproducible, self-contained data capsules. Resolves open-data sources through the Comprehensive Knowledge Archive Network (CKAN, &lt;https://ckan.org/&gt;) package_show and package_search endpoints, records and verifies provenance with Secure Hash Algorithm 256 (SHA-256) digests and Internet Archive Wayback Machine (&lt;https://web.archive.org/&gt;) snapshots, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable. Run records are captured in a manifest plus a plain-language summary so any result can be traced back to its inputs. Distributional drift between a pinned capsule and a fresh fetch is tested with Kolmogorov-Smirnov, chi-square, population stability index, Jensen-Shannon divergence and Benford first-digit screens, because a re-released extract can be statistically identical yet differ byte-for-byte, and a column can keep its name and type while having been silently rescaled. Manifests can be authenticated rather than merely checksummed, with keyed digests (HMAC-SHA-256, RFC 2104) or post-quantum hash-based signatures (the Winternitz-plus-Merkle construction of RFC 8391), and pinned chunk-wise through a Merkle tree so a mismatch identifies which part of a capsule moved. Also ships a compiled C++ core (summary, robust and rank statistics, SHA-256, SHA-512 and CRC-32) that sibling packages in the rmorie ecosystem reach through LinkingTo for a single, shared numeric and provenance-hashing backend.">
 <meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="articles/provenance.html">Provenance you can verify</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -63,6 +65,7 @@
 <p>Brick-proof, reproducible data capsules for R.</p>
 </blockquote>
 <p><code>rmoriebricklayer</code> resolves open-data sources, records and verifies provenance, validates downloaded data against a pinned schema, and falls back to schema-driven synthetic data when the real source is unreachable — so any analysis result can be traced back to its exact inputs.</p>
+<p>A checksum answers one question: are these the same bytes? The package exists because that is rarely the question that matters. A re-released extract can be statistically identical and differ byte-for-byte; a column can keep its name, type and row count while having been silently rescaled; and a digest anyone can recompute says nothing about who produced the data.</p>
 <div class="section level2">
 <h2 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
 </h2>
@@ -74,10 +77,19 @@
 <li>
 <strong>Integrity</strong> — <code><a href="reference/sha256_file.html">sha256_file()</a></code> / <code><a href="reference/verify_sha256.html">verify_sha256()</a></code> hash and verify downloads; <code><a href="reference/download_data.html">download_data()</a></code> / <code><a href="reference/friendly_download.html">friendly_download()</a></code> fetch with a Wayback Machine fallback.</li>
 <li>
-<strong>Schema validation</strong> — <code><a href="reference/validate_schema.html">validate_schema()</a></code> / <code><a href="reference/apply_schema_validation.html">apply_schema_validation()</a></code> check data against a pinned schema.</li>
+<strong>Schema validation</strong> — <code><a href="reference/infer_schema.html">infer_schema()</a></code> derives a pinnable schema from data you trust; <code><a href="reference/validate_schema.html">validate_schema()</a></code> checks names, types, ranges, value sets and missingness against it; <code><a href="reference/rule.html">rule()</a></code> and the <code>rule_*()</code> library express the project-specific checks a generic schema cannot.</li>
+<li>
+<strong>Drift detection</strong> — <code><a href="reference/capsule_drift.html">capsule_drift()</a></code> asks whether the <em>data</em> moved, not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity, population stability index, Jensen-Shannon divergence and a Benford first-digit screen.</li>
+<li>
+<strong>Signed provenance</strong> — <code><a href="reference/capsule_sign.html">capsule_sign()</a></code> authenticates a manifest with a keyed digest or a post-quantum hash-based signature; <code><a href="reference/rmbl_merkle.html">merkle_root()</a></code> pins a capsule chunk by chunk so a mismatch names which chunk moved; and <code><a href="reference/rmbl_chain.html">chain_append()</a></code> links manifests so the run <em>history</em> is tamper-evident, not only each run.</li>
+<li>
+<strong>Description</strong> — <code><a href="reference/profile_columns.html">profile_columns()</a></code>, <code><a href="reference/frequency_table.html">frequency_table()</a></code>, <code><a href="reference/correlation_table.html">correlation_table()</a></code>, <code><a href="reference/mahalanobis_outliers.html">mahalanobis_outliers()</a></code>, <code><a href="reference/missingness_map.html">missingness_map()</a></code> and <code><a href="reference/mcar_test.html">mcar_test()</a></code> (Little’s test, with the EM estimator it requires) describe a capsule before you trust it.</li>
+<li>
+<strong>Capsules larger than memory</strong> — exact block-wise moment accumulation, reservoir sampling, and HyperLogLog distinct counts, all in one pass.</li>
 <li>
 <strong>Synthetic fallback</strong> — <code><a href="reference/make_synthetic_column.html">make_synthetic_column()</a></code> / <code><a href="reference/make_synthetic_csv.html">make_synthetic_csv()</a></code> generate schema-driven stand-ins when the real source is down, so a pipeline still runs end-to-end.</li>
 </ul>
+<p>Every primitive with a published test vector is checked against it: SHA-512 (FIPS 180-4), HMAC-SHA-256 (RFC 4231), PBKDF2-HMAC-SHA256, BLAKE2b (RFC 7693) and CRC-32 (ITU V.42). The statistics are anchored on base R. The one exception is the XMSS signature scheme, which has no offline known-answer vectors and is verified against its security properties instead — it follows the RFC 8391 construction but is not claimed to be byte-compatible with other implementations.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -112,6 +124,17 @@
 <span><span class="va">man</span>  <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_manifest.html">make_manifest</a></span><span class="op">(</span>project <span class="op">=</span> <span class="st">"my-study"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/record.html">record</a></span><span class="op">(</span><span class="va">man</span>, <span class="st">"input"</span>, <span class="va">path</span><span class="op">)</span>                      <span class="co"># trace the input</span></span>
 <span><span class="fu"><a href="reference/write_manifest_json.html">write_manifest_json</a></span><span class="op">(</span><span class="va">man</span>, <span class="st">"manifest.json"</span><span class="op">)</span></span></code></pre></div>
+<p>Then ask whether the data itself moved, and sign the answer:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Did the distribution change, not just the bytes?</span></span>
+<span><span class="fu"><a href="reference/capsule_drift.html">capsule_drift</a></span><span class="op">(</span><span class="va">reference_extract</span>, <span class="va">fresh_fetch</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Authenticate the manifest so a verifier knows who produced it.</span></span>
+<span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/pqc_keygen.html">pqc_keygen</a></span><span class="op">(</span><span class="op">)</span>                              <span class="co"># post-quantum, hash-based</span></span>
+<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="fu"><a href="reference/core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"manifest.json"</span><span class="op">)</span><span class="op">)</span>, <span class="va">key</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="fu"><a href="reference/core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="st">"manifest.json"</span><span class="op">)</span><span class="op">)</span>, <span class="va">sig</span>,</span>
+<span>               <span class="fu"><a href="reference/signing_public_key.html">signing_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>See <code><a href="articles/drift.html">vignette("drift")</a></code> for the distributional checks and <code><a href="articles/provenance.html">vignette("provenance")</a></code> for signing, Merkle pinning and manifest chains.</p>
 </div>
 <div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>
@@ -126,12 +149,12 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> <a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link uri">https://github.com/rootcoder007/rmorie-bricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">

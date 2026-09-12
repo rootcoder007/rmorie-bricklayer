@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
+    <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -270,6 +272,27 @@
 
         </dt>
         <dd>Encode an R object as JSON (jsonlite's toJSON, natively)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> <code><a href="rmbl_json_serialize.html">bricklayer_json_unserialize()</a></code>
+
+        </dt>
+        <dd>Lossless JSON serialisation of an R object</dd>
+
+        <dt>
+
+          <code><a href="rmbl_json_gzip.html">json_gzip_encode()</a></code> <code><a href="rmbl_json_gzip.html">json_gzip_decode()</a></code>
+
+        </dt>
+        <dd>Compressed, base64-encoded JSON</dd>
+
+        <dt>
+
+          <code><a href="rmbl_base64.html">bricklayer_json_base64_enc()</a></code> <code><a href="rmbl_base64.html">bricklayer_json_base64_dec()</a></code> <code><a href="rmbl_base64.html">bricklayer_json_base64url_enc()</a></code> <code><a href="rmbl_base64.html">bricklayer_json_base64url_dec()</a></code>
+
+        </dt>
+        <dd>Base64 encoding</dd>
       </dl></div><div class="section level2">
       <h2 id="integrity-checksums">Integrity &amp; checksums<a class="anchor" aria-label="anchor" href="#integrity-checksums"></a></h2>
 
@@ -370,7 +393,7 @@
       </dl></div><div class="section level2">
       <h2 id="core-numeric-primitives">Core numeric primitives<a class="anchor" aria-label="anchor" href="#core-numeric-primitives"></a></h2>
 
-      <div class="section-desc"><p>Thin R wrappers over the shared compiled morie core (mean, variance, correlation, normal density) that the whole ecosystem links against.</p></div>
+      <div class="section-desc"><p>Thin R wrappers over the shared compiled core that the whole ecosystem links against via <code>LinkingTo: rmoriebricklayer</code>, so every sibling package computes with one copy of the arithmetic.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -390,6 +413,477 @@
 
         </dt>
         <dd>Normal density (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_normal_logpdf.html">core_normal_logpdf()</a></code>
+
+        </dt>
+        <dd>Normal log-density (C backend)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_core_spread.html">core_sd()</a></code> <code><a href="rmbl_core_spread.html">core_dist()</a></code>
+
+        </dt>
+        <dd>Standard deviation and Euclidean distance (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_moments.html">core_moments()</a></code>
+
+        </dt>
+        <dd>Mean, variance, skewness and kurtosis in one pass (C backend)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_core_robust.html">core_quantile()</a></code> <code><a href="rmbl_core_robust.html">core_median()</a></code> <code><a href="rmbl_core_robust.html">core_mad()</a></code> <code><a href="rmbl_core_robust.html">core_iqr()</a></code> <code><a href="rmbl_core_robust.html">core_tukey_fences()</a></code>
+
+        </dt>
+        <dd>Quantiles, median and robust spread (C backend)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_core_trimmed.html">core_trimmed_mean()</a></code> <code><a href="rmbl_core_trimmed.html">core_winsorized_mean()</a></code>
+
+        </dt>
+        <dd>Trimmed and winsorized means (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_weighted.html">core_weighted()</a></code>
+
+        </dt>
+        <dd>Weighted mean and variance (C backend)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_core_rank.html">core_cor_spearman()</a></code> <code><a href="rmbl_core_rank.html">core_midranks()</a></code>
+
+        </dt>
+        <dd>Rank correlation and midranks (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_cov.html">core_cov()</a></code>
+
+        </dt>
+        <dd>Covariance matrix of a numeric matrix (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_bootstrap_mean.html">core_bootstrap_mean()</a></code>
+
+        </dt>
+        <dd>Bootstrap replicate means (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_ipw_weights.html">core_ipw_weights()</a></code>
+
+        </dt>
+        <dd>Trimmed inverse-probability weights (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_gamma_cdf.html">core_gamma_cdf()</a></code>
+
+        </dt>
+        <dd>Regularized incomplete gamma function (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_hawkes_nll.html">core_hawkes_nll()</a></code>
+
+        </dt>
+        <dd>Hawkes-process negative log-likelihood (C backend)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="distributional-drift">Distributional drift<a class="anchor" aria-label="anchor" href="#distributional-drift"></a></h2>
+
+      <div class="section-desc"><p>Whether a freshly fetched column is still the column the capsule was pinned against. A byte digest cannot answer this: a re-release can be statistically identical yet differ byte-for-byte, and a column can keep its name and type while having been silently rescaled.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="capsule_drift.html">capsule_drift()</a></code>
+
+        </dt>
+        <dd>Compare a fetched data frame with the one a capsule was pinned against</dd>
+
+        <dt>
+
+          <code><a href="drift_ks.html">drift_ks()</a></code>
+
+        </dt>
+        <dd>Two-sample Kolmogorov-Smirnov test (C backend)</dd>
+
+        <dt>
+
+          <code><a href="drift_psi.html">drift_psi()</a></code>
+
+        </dt>
+        <dd>Population stability index and Jensen-Shannon divergence (C backend)</dd>
+
+        <dt>
+
+          <code><a href="drift_chisq.html">drift_chisq()</a></code>
+
+        </dt>
+        <dd>Chi-square test for a categorical column</dd>
+
+        <dt>
+
+          <code><a href="drift_homogeneity.html">drift_homogeneity()</a></code>
+
+        </dt>
+        <dd>Chi-square test of homogeneity for two categorical samples</dd>
+
+        <dt>
+
+          <code><a href="benford_test.html">benford_test()</a></code>
+
+        </dt>
+        <dd>Benford first-digit test</dd>
+      </dl></div><div class="section level2">
+      <h2 id="signed-provenance">Signed provenance<a class="anchor" aria-label="anchor" href="#signed-provenance"></a></h2>
+
+      <div class="section-desc"><p>Authenticated rather than merely checksummed. Keyed digests for a shared secret, post-quantum hash-based signatures for a public verifier, Merkle trees to pin a capsule chunk by chunk, and hash chains to make the run history itself tamper-evident.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="capsule_sign.html">capsule_sign()</a></code>
+
+        </dt>
+        <dd>Sign a capsule manifest</dd>
+
+        <dt>
+
+          <code><a href="capsule_verify.html">capsule_verify()</a></code>
+
+        </dt>
+        <dd>Verify a capsule manifest signature</dd>
+
+        <dt>
+
+          <code><a href="pqc_keygen.html">pqc_keygen()</a></code>
+
+        </dt>
+        <dd>Generate a post-quantum signing key for capsule provenance</dd>
+
+        <dt>
+
+          <code><a href="signing_public_key.html">signing_public_key()</a></code>
+
+        </dt>
+        <dd>Public half of a signing key</dd>
+
+        <dt>
+
+          <code><a href="pqc_backends.html">pqc_backends()</a></code>
+
+        </dt>
+        <dd>Available post-quantum signature backends</dd>
+
+        <dt>
+
+          <code><a href="rmbl_chain.html">chain_new()</a></code> <code><a href="rmbl_chain.html">chain_append()</a></code> <code><a href="rmbl_chain.html">chain_head()</a></code> <code><a href="rmbl_chain.html">chain_seal()</a></code> <code><a href="rmbl_chain.html">chain_verify()</a></code>
+
+        </dt>
+        <dd>Tamper-evident chain of capsule manifests</dd>
+
+        <dt>
+
+          <code><a href="rmbl_merkle.html">merkle_root()</a></code> <code><a href="rmbl_merkle.html">merkle_leaves()</a></code> <code><a href="rmbl_merkle.html">merkle_proof()</a></code> <code><a href="rmbl_merkle.html">merkle_verify()</a></code>
+
+        </dt>
+        <dd>Merkle tree over capsule chunks (C backend)</dd>
+
+        <dt>
+
+          <code><a href="chunk_file.html">chunk_file()</a></code>
+
+        </dt>
+        <dd>Split a file into fixed-size chunks</dd>
+      </dl></div><div class="section level2">
+      <h2 id="digests-and-keys">Digests and keys<a class="anchor" aria-label="anchor" href="#digests-and-keys"></a></h2>
+
+      <div class="section-desc"><p>The hashes and key-derivation the provenance layer is built on, each verified against its published test vectors.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="core_sha512.html">core_sha512()</a></code>
+
+        </dt>
+        <dd>SHA-512 hex digest (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_crc32.html">core_crc32()</a></code>
+
+        </dt>
+        <dd>CRC-32 checksum (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_blake2b.html">core_blake2b()</a></code>
+
+        </dt>
+        <dd>BLAKE2b digest, optionally keyed</dd>
+
+        <dt>
+
+          <code><a href="rmbl_keyed_digest.html">core_hmac_sha256()</a></code> <code><a href="rmbl_keyed_digest.html">core_digest_equal()</a></code>
+
+        </dt>
+        <dd>Keyed digest and constant-time comparison (C backend)</dd>
+
+        <dt>
+
+          <code><a href="rmbl_file_digest.html">sha512_file()</a></code> <code><a href="rmbl_file_digest.html">crc32_file()</a></code>
+
+        </dt>
+        <dd>SHA-512 and CRC-32 of a file</dd>
+
+        <dt>
+
+          <code><a href="digest_object.html">digest_object()</a></code>
+
+        </dt>
+        <dd>Digest an arbitrary R object</dd>
+
+        <dt>
+
+          <code><a href="random_bytes.html">random_bytes()</a></code>
+
+        </dt>
+        <dd>Cryptographically strong random bytes</dd>
+
+        <dt>
+
+          <code><a href="derive_key.html">derive_key()</a></code>
+
+        </dt>
+        <dd>Derive a key from a passphrase</dd>
+      </dl></div><div class="section level2">
+      <h2 id="schema-and-rules">Schema and rules<a class="anchor" aria-label="anchor" href="#schema-and-rules"></a></h2>
+
+      <div class="section-desc"><p>Derive a pinnable schema from data you already trust, then declare the project-specific checks a generic schema cannot express.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="infer_schema.html">infer_schema()</a></code>
+
+        </dt>
+        <dd>Infer a pinnable schema from a data frame</dd>
+
+        <dt>
+
+          <code><a href="rule.html">rule()</a></code>
+
+        </dt>
+        <dd>Declare a validation rule</dd>
+
+        <dt>
+
+          <code><a href="validate_rules.html">validate_rules()</a></code>
+
+        </dt>
+        <dd>Apply declared rules to a data frame</dd>
+
+        <dt>
+
+          <code><a href="rmbl_rule_library.html">rule_in_set()</a></code> <code><a href="rmbl_rule_library.html">rule_between()</a></code> <code><a href="rmbl_rule_library.html">rule_not_null()</a></code> <code><a href="rmbl_rule_library.html">rule_unique()</a></code> <code><a href="rmbl_rule_library.html">rule_regex()</a></code> <code><a href="rmbl_rule_library.html">rule_increasing()</a></code> <code><a href="rmbl_rule_library.html">rule_within_n_mads()</a></code> <code><a href="rmbl_rule_library.html">rule_complete_rows()</a></code> <code><a href="rmbl_rule_library.html">rule_distinct_rows()</a></code> <code><a href="rmbl_rule_library.html">rule_col_count()</a></code>
+
+        </dt>
+        <dd>Ready-made validation rules</dd>
+      </dl></div><div class="section level2">
+      <h2 id="describe-a-capsule">Describe a capsule<a class="anchor" aria-label="anchor" href="#describe-a-capsule"></a></h2>
+
+      <div class="section-desc"><p>The summaries worth reading before trusting a capsule: what every column looks like, where the gaps are, which values dominate, and which rows do not belong.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="profile_columns.html">profile_columns()</a></code>
+
+        </dt>
+        <dd>Column report for a data frame</dd>
+
+        <dt>
+
+          <code><a href="inline_hist.html">inline_hist()</a></code>
+
+        </dt>
+        <dd>Inline histogram for a numeric vector</dd>
+
+        <dt>
+
+          <code><a href="frequency_table.html">frequency_table()</a></code>
+
+        </dt>
+        <dd>Frequency table for one column</dd>
+
+        <dt>
+
+          <code><a href="correlation_table.html">correlation_table()</a></code>
+
+        </dt>
+        <dd>Full pairwise correlation table</dd>
+
+        <dt>
+
+          <code><a href="top_correlations.html">top_correlations()</a></code>
+
+        </dt>
+        <dd>Strongest pairwise correlations in a data frame</dd>
+
+        <dt>
+
+          <code><a href="mahalanobis_outliers.html">mahalanobis_outliers()</a></code>
+
+        </dt>
+        <dd>Multivariate outliers by Mahalanobis distance</dd>
+
+        <dt>
+
+          <code><a href="duplicate_rows.html">duplicate_rows()</a></code>
+
+        </dt>
+        <dd>Duplicated rows, with their groups</dd>
+
+        <dt>
+
+          <code><a href="rmbl_drop.html">drop_empty()</a></code> <code><a href="rmbl_drop.html">drop_constant()</a></code>
+
+        </dt>
+        <dd>Drop empty or constant columns and rows</dd>
+
+        <dt>
+
+          <code><a href="clean_column_names.html">clean_column_names()</a></code>
+
+        </dt>
+        <dd>Tidy the column names of an ingested table</dd>
+
+        <dt>
+
+          <code><a href="environment_diff.html">environment_diff()</a></code>
+
+        </dt>
+        <dd>Compare two captured environments</dd>
+      </dl></div><div class="section level2">
+      <h2 id="missingness">Missingness<a class="anchor" aria-label="anchor" href="#missingness"></a></h2>
+
+      <div class="section-desc"><p>Not just how much is missing, but the shape of it – which columns go together, whether the gaps are contiguous, and whether the missingness is related to the data (in which case dropping incomplete rows is biased).</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="missingness_summary.html">missingness_summary()</a></code>
+
+        </dt>
+        <dd>Missingness in one line per question</dd>
+
+        <dt>
+
+          <code><a href="missingness_pattern.html">missingness_pattern()</a></code>
+
+        </dt>
+        <dd>Which columns are missing together</dd>
+
+        <dt>
+
+          <code><a href="missing_runs.html">missing_runs()</a></code>
+
+        </dt>
+        <dd>Runs of consecutive missing values</dd>
+
+        <dt>
+
+          <code><a href="missingness_map.html">missingness_map()</a></code>
+
+        </dt>
+        <dd>Text map of where the missing values are</dd>
+
+        <dt>
+
+          <code><a href="mcar_test.html">mcar_test()</a></code>
+
+        </dt>
+        <dd>Little's test for data missing completely at random</dd>
+      </dl></div><div class="section level2">
+      <h2 id="large-capsules">Large capsules<a class="anchor" aria-label="anchor" href="#large-capsules"></a></h2>
+
+      <div class="section-desc"><p>One-pass algorithms for members bigger than memory: exact block-wise moments, uniform sampling of a stream, and fixed-memory distinct counts.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rmbl_online.html">online_summary()</a></code> <code><a href="rmbl_online.html">summary_update()</a></code> <code><a href="rmbl_online.html">summary_merge()</a></code> <code><a href="rmbl_online.html">summary_stats()</a></code>
+
+        </dt>
+        <dd>Exact summary statistics accumulated in blocks</dd>
+
+        <dt>
+
+          <code><a href="rmbl_reservoir.html">reservoir_indices()</a></code> <code><a href="rmbl_reservoir.html">reservoir_sample()</a></code>
+
+        </dt>
+        <dd>Uniform sample of a stream in one pass</dd>
+
+        <dt>
+
+          <code><a href="rmbl_distinct.html">distinct_sketch()</a></code> <code><a href="rmbl_distinct.html">distinct_count()</a></code> <code><a href="rmbl_distinct.html">sketch_merge()</a></code>
+
+        </dt>
+        <dd>Distinct-value count in fixed memory</dd>
+      </dl></div><div class="section level2">
+      <h2 id="output">Output<a class="anchor" aria-label="anchor" href="#output"></a></h2>
+
+      <div class="section-desc"><p>Printed reports for the objects the package returns.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Printed reports for bricklayer objects</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
