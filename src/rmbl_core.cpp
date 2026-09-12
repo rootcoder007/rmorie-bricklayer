@@ -99,14 +99,31 @@ void sha256_init(sha256_ctx *ctx) {
 }
 
 void sha256_update(sha256_ctx *ctx, const uint8_t *data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        ctx->data[ctx->datalen] = data[i];
-        ctx->datalen++;
+    /* In bulk. The byte-at-a-time form this replaces cost a bounds test
+     * and a branch per byte, which the post-quantum signature schemes
+     * pay tens of millions of times per signature. */
+    if (ctx->datalen > 0) {
+        const size_t want = 64u - ctx->datalen;
+        const size_t take = (len < want) ? len : want;
+        std::memcpy(ctx->data + ctx->datalen, data, take);
+        ctx->datalen += static_cast<uint32_t>(take);
+        data += take;
+        len -= take;
         if (ctx->datalen == 64) {
             sha256_transform(ctx, ctx->data);
             ctx->bitlen += 512;
             ctx->datalen = 0;
         }
+    }
+    while (len >= 64) {
+        sha256_transform(ctx, data);
+        ctx->bitlen += 512;
+        data += 64;
+        len -= 64;
+    }
+    if (len > 0) {
+        std::memcpy(ctx->data, data, len);
+        ctx->datalen = static_cast<uint32_t>(len);
     }
 }
 
@@ -170,6 +187,37 @@ double rmbl_normal_pdf(double x, double mu, double sigma) {
 
 /* Raw 32-byte digest. rmbl_digest.cpp (HMAC, Merkle) calls this so the
  * package has exactly one SHA-256 compression function. */
+/* The state after absorbing exactly one 64-byte block.
+ *
+ * The SHA-2 instantiation of SLH-DSA (FIPS 205) hashes
+ * PK.seed-padded-to-a-block followed by a short tail, for every one of
+ * millions of calls with the same prefix. Compressing that prefix once
+ * and resuming from the result halves the work, and is what the
+ * reference implementation means by a seeded state. */
+void rmbl_sha256_midstate(const unsigned char block[64],
+                          uint32_t state_out[8]) {
+    sha256_ctx ctx;
+    sha256_init(&ctx);
+    sha256_transform(&ctx, block);
+    std::memcpy(state_out, ctx.state, sizeof ctx.state);
+}
+
+/* Finish a digest that began with `prefix_blocks` blocks already
+ * compressed into `state_in`. The length in the padding must count
+ * those bytes too, or the result is a digest of nothing anyone else
+ * computes. */
+void rmbl_sha256_finish(const uint32_t state_in[8], size_t prefix_blocks,
+                        const unsigned char *tail, size_t taillen,
+                        unsigned char out[32]) {
+    sha256_ctx ctx;
+    sha256_init(&ctx);
+    std::memcpy(ctx.state, state_in, sizeof ctx.state);
+    ctx.bitlen = static_cast<uint64_t>(prefix_blocks) * 512u;
+    ctx.datalen = 0;
+    sha256_update(&ctx, tail, taillen);
+    sha256_final(&ctx, (uint8_t *) out);
+}
+
 void rmbl_sha256_raw(const unsigned char *data, size_t len,
                      unsigned char out[32]) {
     sha256_ctx ctx;

@@ -53,8 +53,10 @@
 #' `observed`, a `controls` data frame (one row per control, with
 #' `passed`) , and `permutation` holding the null distribution.
 #' @seealso
-#' [capsule_attest()] for the other question
-#' -- whether the record is intact, rather than whether the finding
+#' [capsule_power()] for the positive control
+#' -- whether a real effect would have been seen at all;
+#' [capsule_attest()] for the different
+#' question of whether the record is intact rather than whether the finding
 #' survives.
 #' @examples
 #' set.seed(1)

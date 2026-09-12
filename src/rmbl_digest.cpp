@@ -140,15 +140,35 @@ void sha512_init(sha512_ctx *c) {
 }
 
 void sha512_update(sha512_ctx *c, const uint8_t *data, size_t len) {
-    for (size_t i = 0; i < len; ++i) {
-        c->buf[c->buflen++] = data[i];
+    /* In bulk, for the same reason as SHA-256: a branch per byte is
+     * what the hash-based signature schemes cannot afford. */
+    const auto bump = [c]() {
+        const uint64_t before = c->bitlen_lo;
+        c->bitlen_lo += 1024;
+        if (c->bitlen_lo < before) ++c->bitlen_hi;
+    };
+    if (c->buflen > 0) {
+        const size_t want = 128u - c->buflen;
+        const size_t take = (len < want) ? len : want;
+        std::memcpy(c->buf + c->buflen, data, take);
+        c->buflen += take;
+        data += take;
+        len -= take;
         if (c->buflen == 128) {
             sha512_compress(c, c->buf);
-            const uint64_t before = c->bitlen_lo;
-            c->bitlen_lo += 1024;
-            if (c->bitlen_lo < before) ++c->bitlen_hi;
+            bump();
             c->buflen = 0;
         }
+    }
+    while (len >= 128) {
+        sha512_compress(c, data);
+        bump();
+        data += 128;
+        len -= 128;
+    }
+    if (len > 0) {
+        std::memcpy(c->buf, data, len);
+        c->buflen = len;
     }
 }
 
@@ -199,6 +219,53 @@ void crc32_init_table(void) {
 }  // namespace
 
 extern "C" {
+
+/* The state after one 128-byte block, and a resume from it -- the
+ * SHA-512 half of what rmbl_sha256_midstate() exists for. */
+/* SHA-384 (FIPS 180-4): the SHA-512 compression function with a
+ * different initial state, truncated to 48 bytes. Needed because
+ * ecdsa-with-SHA384 is a certificate signature algorithm in common use,
+ * and a verifier that cannot compute the digest cannot check the
+ * signature. */
+void rmbl_sha384_raw(const unsigned char *data, size_t len,
+                     unsigned char out[48]) {
+    sha512_ctx c;
+    sha512_init(&c);
+    /* the SHA-384 initial state */
+    c.h[0] = 0xcbbb9d5dc1059ed8ULL;
+    c.h[1] = 0x629a292a367cd507ULL;
+    c.h[2] = 0x9159015a3070dd17ULL;
+    c.h[3] = 0x152fecd8f70e5939ULL;
+    c.h[4] = 0x67332667ffc00b31ULL;
+    c.h[5] = 0x8eb44a8768581511ULL;
+    c.h[6] = 0xdb0c2e0d64f98fa7ULL;
+    c.h[7] = 0x47b5481dbefa4fa4ULL;
+    unsigned char full[64];
+    sha512_update(&c, data, len);
+    sha512_final(&c, full);
+    std::memcpy(out, full, 48);
+}
+
+void rmbl_sha512_midstate(const unsigned char block[128],
+                          uint64_t state_out[8]) {
+    sha512_ctx c;
+    sha512_init(&c);
+    sha512_compress(&c, block);
+    std::memcpy(state_out, c.h, sizeof c.h);
+}
+
+void rmbl_sha512_finish(const uint64_t state_in[8], size_t prefix_blocks,
+                        const unsigned char *tail, size_t taillen,
+                        unsigned char out[64]) {
+    sha512_ctx c;
+    sha512_init(&c);
+    std::memcpy(c.h, state_in, sizeof c.h);
+    c.bitlen_lo = static_cast<uint64_t>(prefix_blocks) * 1024u;
+    c.bitlen_hi = 0;
+    c.buflen = 0;
+    sha512_update(&c, tail, taillen);
+    sha512_final(&c, out);
+}
 
 void rmbl_sha512_hex(const unsigned char *data, size_t len, char out[129]) {
     sha512_ctx c;

@@ -68,5 +68,13 @@ extern "C" void rmbl_hmac_shax(int, const unsigned char *, size_t,
                                unsigned char *);
 extern "C" void rmbl_mgf1_shax(int, unsigned char *, size_t,
                                const unsigned char *, size_t);
+extern "C" void rmbl_sha256_midstate(const unsigned char[64], uint32_t[8]);
+extern "C" void rmbl_sha256_finish(const uint32_t[8], size_t,
+                                   const unsigned char *, size_t,
+                                   unsigned char[32]);
+extern "C" void rmbl_sha512_midstate(const unsigned char[128], uint64_t[8]);
+extern "C" void rmbl_sha512_finish(const uint64_t[8], size_t,
+                                   const unsigned char *, size_t,
+                                   unsigned char[64]);
 
 #endif

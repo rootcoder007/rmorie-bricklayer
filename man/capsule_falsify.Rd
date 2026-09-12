@@ -81,7 +81,9 @@ fake <- capsule_falsify(d, function(z) 0.5, treatment = "x",
 fake$controls[fake$controls$control == "permutation", "passed"]
 }
 \seealso{
-\code{\link[=capsule_attest]{capsule_attest()}} for the other question
--- whether the record is intact, rather than whether the finding
+\code{\link[=capsule_power]{capsule_power()}} for the positive control
+-- whether a real effect would have been seen at all;
+\code{\link[=capsule_attest]{capsule_attest()}} for the different
+question of whether the record is intact rather than whether the finding
 survives.
 }
