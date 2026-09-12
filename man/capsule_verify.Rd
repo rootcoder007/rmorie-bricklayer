@@ -4,7 +4,7 @@
 \alias{capsule_verify}
 \title{Verify a capsule manifest signature}
 \usage{
-capsule_verify(message, signature, key, context = NULL)
+capsule_verify(message, signature, key, context = NULL, prehash = NULL)
 }
 \arguments{
 \item{message}{The message the signature is claimed to
@@ -22,6 +22,11 @@ scheme. A signature is not verified against a key of a different scheme.}
 \item{context}{The context string the signature was made
 under, for the standardised schemes. A signature made under a different
 context, or under none, does not verify.}
+
+\item{prehash}{The pre-hash the signature was made with.
+Taken from the signature when not given, since
+\code{\link[=capsule_sign]{capsule_sign()}} records it; supply it to
+check a signature that arrived without that field.}
 }
 \value{
 A length-1 logical.

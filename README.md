@@ -114,6 +114,15 @@ the other's signatures. OpenSSL's keys and the digests of its
 signatures are embedded in the test suite, so the check needs no network
 and no system library.
 
+ML-KEM (FIPS 203) is here too, at all three levels, along with the
+pre-hashed variants of both signature standards and ML-DSA's external-mu
+interface. ML-KEM keys generated from the same seed agree with
+OpenSSL's byte for byte, its ciphertexts decapsulate here to the secret
+it reports, and a corrupted ciphertext produces the same rejection
+secret in both -- which is the check that catches a wrong compression
+width, since compressing and decompressing with the same wrong width
+round-trips perfectly.
+
 That cross-check is the claim, not reference parity. This
 implementation matched the pq-crystals and sphincsplus reference code
 byte for byte while disagreeing with the standards in two places -- FIPS

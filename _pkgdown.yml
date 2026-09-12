@@ -163,7 +163,12 @@ reference:
       - signing_public_key
       - fips_keygen
       - fips_key
+      - fips_mu
       - fips_sizes
+      - kem_keygen
+      - kem_sizes
+      - kem_encapsulate
+      - kem_decapsulate
       - oqs_keygen
       - pqc_backends
       - rmbl_chain

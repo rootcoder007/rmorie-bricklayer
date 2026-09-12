@@ -811,30 +811,83 @@ void keypair_from_seed(unsigned char *pk, unsigned char *sk,
  * alone would have shipped something non-interoperable; only the
  * cross-check against the library being replaced caught it.
  */
+/* mu = CRH(tr, M'), where M' is
+ *
+ *   pure:      0x00 || |ctx| || ctx || M
+ *   pre-hashed: 0x01 || |ctx| || ctx || OID(PH) || PH(M)
+ *
+ * The leading byte is the domain separator FIPS 204 section 5.4 adds,
+ * and it is what stops a pre-hashed signature from being presented as a
+ * pure one over the digest bytes.
+ *
+ * `oid` is the DER-encoded object identifier of the pre-hash function,
+ * supplied by the caller because the choice of pre-hash is the caller's
+ * and the standard binds the identifier rather than the output length.
+ */
+void compute_mu(unsigned char mu[64], const unsigned char tr[64],
+                const unsigned char *m, size_t mlen,
+                const unsigned char *ctx, size_t ctxlen,
+                const unsigned char *oid, size_t oidlen) {
+    RmblKeccak st;
+    rmbl_keccak_init(&st, 136, 0x1f);
+    rmbl_keccak_absorb(&st, tr, static_cast<size_t>(kTrBytes));
+    unsigned char pre[2];
+    pre[0] = (oidlen > 0) ? 1 : 0;
+    pre[1] = static_cast<unsigned char>(ctxlen);
+    rmbl_keccak_absorb(&st, pre, 2);
+    if (ctxlen > 0) rmbl_keccak_absorb(&st, ctx, ctxlen);
+    if (oidlen > 0) rmbl_keccak_absorb(&st, oid, oidlen);
+    rmbl_keccak_absorb(&st, m, mlen);
+    rmbl_keccak_finalize(&st);
+    rmbl_keccak_squeeze(&st, mu, static_cast<size_t>(kCrhBytes));
+}
+
+/* tr = H(pk, 64). A verifier holding only the public key needs this to
+ * reach mu, which is why external-mu verification is possible at all. */
+void tr_from_pk(unsigned char tr[64], const unsigned char *pk) {
+    rmbl_shake256(tr, static_cast<size_t>(kTrBytes), pk,
+                  static_cast<size_t>(kPkBytes));
+}
+
+/* Sign a message digest mu that was computed elsewhere -- the
+ * ExternalMu-ML-DSA interface. It exists so a device holding the key
+ * never has to receive the message: everything below this point uses
+ * only mu. */
+void sign_mu(unsigned char *sig, const unsigned char mu[64],
+             const unsigned char rnd[32], const unsigned char *sk);
+
+int verify_mu(const unsigned char *sig, const unsigned char mu[64],
+              const unsigned char *pk);
+
 void sign_internal(unsigned char *sig, const unsigned char *m, size_t mlen,
                    const unsigned char *ctx, size_t ctxlen,
                    const unsigned char rnd[32], const unsigned char *sk) {
-    unsigned char rho[32], tr[64], key[32], mu[64], rhoprime[64];
+    /* only tr is needed up here, and it sits at a fixed offset: the
+     * secret key is rho || K || tr || s1 || s2 || t0 */
+    unsigned char mu[64];
+    compute_mu(mu, sk + 64, m, mlen, ctx, ctxlen, NULL, 0);
+    sign_mu(sig, mu, rnd, sk);
+}
+
+/* The pre-hashed variant, HashML-DSA. Identical below mu. */
+void sign_prehash(unsigned char *sig, const unsigned char *phm, size_t phlen,
+                  const unsigned char *ctx, size_t ctxlen,
+                  const unsigned char *oid, size_t oidlen,
+                  const unsigned char rnd[32], const unsigned char *sk) {
+    unsigned char mu[64];
+    compute_mu(mu, sk + 64, phm, phlen, ctx, ctxlen, oid, oidlen);
+    sign_mu(sig, mu, rnd, sk);
+}
+
+void sign_mu(unsigned char *sig, const unsigned char mu[64],
+             const unsigned char rnd[32], const unsigned char *sk) {
+    unsigned char rho[32], tr[64], key[32], rhoprime[64];
     PolyVecL mat[kK], s1, y, z;
     PolyVecK t0, s2, w1, w0, h;
     int32_t cp[256];
     unpack_sk(rho, tr, key, &t0, &s1, &s2, sk);
 
-    /* mu = CRH(tr, pre, msg); the pre-context is empty here */
     RmblKeccak st;
-    rmbl_keccak_init(&st, 136, 0x1f);
-    rmbl_keccak_absorb(&st, tr, static_cast<size_t>(kTrBytes));
-    {
-        unsigned char pre[2];
-        pre[0] = 0;
-        pre[1] = static_cast<unsigned char>(ctxlen);
-        rmbl_keccak_absorb(&st, pre, 2);
-        if (ctxlen > 0) rmbl_keccak_absorb(&st, ctx, ctxlen);
-    }
-    rmbl_keccak_absorb(&st, m, mlen);
-    rmbl_keccak_finalize(&st);
-    rmbl_keccak_squeeze(&st, mu, static_cast<size_t>(kCrhBytes));
-
     /* rhoprime = CRH(key, rnd, mu) */
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, key, 32);
@@ -899,7 +952,25 @@ void sign_internal(unsigned char *sig, const unsigned char *m, size_t mlen,
 int verify_internal(const unsigned char *sig, const unsigned char *m,
                     size_t mlen, const unsigned char *ctx, size_t ctxlen,
                     const unsigned char *pk) {
-    unsigned char rho[32], mu[64], c[64], c2[64];
+    unsigned char tr[64], mu[64];
+    tr_from_pk(tr, pk);
+    compute_mu(mu, tr, m, mlen, ctx, ctxlen, NULL, 0);
+    return verify_mu(sig, mu, pk);
+}
+
+int verify_prehash(const unsigned char *sig, const unsigned char *phm,
+                   size_t phlen, const unsigned char *ctx, size_t ctxlen,
+                   const unsigned char *oid, size_t oidlen,
+                   const unsigned char *pk) {
+    unsigned char tr[64], mu[64];
+    tr_from_pk(tr, pk);
+    compute_mu(mu, tr, phm, phlen, ctx, ctxlen, oid, oidlen);
+    return verify_mu(sig, mu, pk);
+}
+
+int verify_mu(const unsigned char *sig, const unsigned char mu[64],
+              const unsigned char *pk) {
+    unsigned char rho[32], c[64], c2[64];
     unsigned char buf[kK * kPolyW1Packed];
     PolyVecL mat[kK], z;
     PolyVecK t1, w1, h;
@@ -909,22 +980,7 @@ int verify_internal(const unsigned char *sig, const unsigned char *m,
     if (unpack_sig(c, &z, &h, sig)) return -1;
     if (vecl_chknorm(&z, kGamma1 - kBeta)) return -1;
 
-    rmbl_shake256(mu, static_cast<size_t>(kTrBytes), pk,
-                  static_cast<size_t>(kPkBytes));
     RmblKeccak st;
-    rmbl_keccak_init(&st, 136, 0x1f);
-    rmbl_keccak_absorb(&st, mu, static_cast<size_t>(kTrBytes));
-    {
-        unsigned char pre[2];
-        pre[0] = 0;
-        pre[1] = static_cast<unsigned char>(ctxlen);
-        rmbl_keccak_absorb(&st, pre, 2);
-        if (ctxlen > 0) rmbl_keccak_absorb(&st, ctx, ctxlen);
-    }
-    rmbl_keccak_absorb(&st, m, mlen);
-    rmbl_keccak_finalize(&st);
-    rmbl_keccak_squeeze(&st, mu, static_cast<size_t>(kCrhBytes));
-
     poly_challenge(cp, c);
     matrix_expand(mat, rho);
     vecl_ntt(&z);

@@ -65,8 +65,11 @@ extern SEXP C_rmbl_mldsa_pack(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_unpack(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_verify_mu(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 /* rmbl_slhdsa.cpp: FIPS 205 */
 /* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
@@ -74,10 +77,16 @@ extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mgf1(SEXP, SEXP, SEXP);
 
+/* rmbl_mlkem.cpp: FIPS 203 key encapsulation */
+extern SEXP C_rmbl_mlkem_sizes(SEXP);
+extern SEXP C_rmbl_mlkem_keygen(SEXP, SEXP);
+extern SEXP C_rmbl_mlkem_encaps(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mlkem_decaps(SEXP, SEXP, SEXP);
+
 extern SEXP C_rmbl_slhdsa_sizes(SEXP);
 extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
-extern SEXP C_rmbl_slhdsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_slhdsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_morans_i(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* rmbl_series.cpp plain-C kernels, for LinkingTo consumers */
 extern double   rmbl_gini(const double *, R_xlen_t);
@@ -223,14 +232,21 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mldsa_unpack",      (DL_FUNC) &C_rmbl_mldsa_unpack,      2},
     {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
     {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
-    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        5},
-    {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      5},
+    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        6},
+    {"C_rmbl_mldsa_mu",          (DL_FUNC) &C_rmbl_mldsa_mu,          5},
+    {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     4},
+    {"C_rmbl_mldsa_verify_mu",   (DL_FUNC) &C_rmbl_mldsa_verify_mu,   4},
+    {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
     {"C_rmbl_hmac_shax",         (DL_FUNC) &C_rmbl_hmac_shax,         3},
     {"C_rmbl_mgf1",              (DL_FUNC) &C_rmbl_mgf1,              3},
+    {"C_rmbl_mlkem_sizes",       (DL_FUNC) &C_rmbl_mlkem_sizes,       1},
+    {"C_rmbl_mlkem_keygen",      (DL_FUNC) &C_rmbl_mlkem_keygen,      2},
+    {"C_rmbl_mlkem_encaps",      (DL_FUNC) &C_rmbl_mlkem_encaps,      3},
+    {"C_rmbl_mlkem_decaps",      (DL_FUNC) &C_rmbl_mlkem_decaps,      3},
     {"C_rmbl_slhdsa_sizes",     (DL_FUNC) &C_rmbl_slhdsa_sizes,     1},
     {"C_rmbl_slhdsa_keypair",   (DL_FUNC) &C_rmbl_slhdsa_keypair,   2},
-    {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      5},
-    {"C_rmbl_slhdsa_verify",    (DL_FUNC) &C_rmbl_slhdsa_verify,    5},
+    {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      6},
+    {"C_rmbl_slhdsa_verify",    (DL_FUNC) &C_rmbl_slhdsa_verify,    6},
     {"C_rmbl_morans_i",          (DL_FUNC) &C_rmbl_morans_i,          7},
     {"C_rmbl_hmac_sha256",       (DL_FUNC) &C_rmbl_hmac_sha256,       2},
     {"C_rmbl_digest_equal",      (DL_FUNC) &C_rmbl_digest_equal,      2},

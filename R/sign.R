@@ -198,6 +198,130 @@ fips_key <- function(scheme, public, secret = NULL) {
   hex
 }
 
+#' Sign an ML-DSA message digest computed elsewhere
+#'
+#' The external-mu interface. `fips_mu()` reduces a message to the
+#' 64-byte value mu that is the only thing ML-DSA signing actually
+#' consumes; `fips_sign_mu()` signs that value and
+#' `fips_verify_mu()` checks it.
+#'
+#' The point is that the message need never reach the key. A large file can
+#' be reduced to mu on the machine that holds it and only mu handed to
+#' whatever holds the signing key -- a smartcard, a remote signer, another
+#' process. mu is not a bare digest: it binds the public key (through
+#' `tr = H(pk)`) and the context string, so a mu computed under one
+#' key cannot be signed under another to any useful effect.
+#'
+#' The resulting signature is an ordinary ML-DSA signature.
+#' [capsule_verify()] accepts it, given the
+#' same message and context.
+#'
+#' @param key A key from
+#' [fips_keygen()] or
+#' [fips_key()]. An ML-DSA scheme: SLH-DSA has no
+#' external-mu interface, because its digest depends on per-signature
+#' randomness that the signer chooses.
+#' @param message Length-1 character vector or raw vector.
+#' @param context Optional context string, as in
+#' [capsule_sign()].
+#' @param prehash Pre-hash function, as in
+#' [capsule_sign()].
+#' @param mu The 64 raw bytes from `fips_mu()`.
+#' @param deterministic As in
+#' [capsule_sign()].
+#' @param signature A signature from `fips_sign_mu()`
+#' or [capsule_sign()].
+#' @return `fips_mu()` returns 64 raw bytes; `fips_sign_mu()` a
+#' `bricklayer_signature`; `fips_verify_mu()` a length-1 logical.
+#' @references National Institute of Standards and Technology (2024).
+#' Module-Lattice-Based Digital Signature Standard. FIPS 204.
+#'   \doi{10.6028/NIST.FIPS.204}
+#' @seealso
+#' [capsule_sign()],
+#' [fips_keygen()].
+#' @examples
+#' key <- fips_keygen("ML-DSA-65")
+#' mu <- fips_mu(key, "a manifest digest", context = "release")
+#' length(mu)
+#'
+#' sig <- fips_sign_mu(key, mu)
+#' fips_verify_mu(key, mu, sig)
+#'
+#' # the same signature verifies the ordinary way, from the message
+#' capsule_verify("a manifest digest", sig, key, context = "release")
+#'
+#' # mu is computable from the PUBLIC key alone, which is what lets the
+#' # message stay on the machine that has it
+#' identical(fips_mu(fips_public_key(key), "a manifest digest",
+#'                   context = "release"), mu)
+#' @export
+fips_mu <- function(key, message, context = NULL, prehash = "none") {
+  scheme <- .rmbl_fips_key_scheme(key)
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (is.na(mode)) {
+    stop("external mu is an ML-DSA interface; ", scheme,
+         " has no equivalent", call. = FALSE)
+  }
+  pk <- .rmbl_hex_or_null(key$public)
+  if (is.null(pk)) stop("`key` has no usable public key", call. = FALSE)
+  .Call(C_rmbl_mldsa_mu, mode, pk, .rmbl_sign_message(message),
+        .rmbl_fips_context(context), .rmbl_fips_prehash(prehash))
+}
+
+#' @rdname fips_mu
+#' @export
+fips_sign_mu <- function(key, mu, deterministic = FALSE) {
+  scheme <- .rmbl_fips_key_scheme(key)
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (is.na(mode)) {
+    stop("external mu is an ML-DSA interface; ", scheme,
+         " has no equivalent", call. = FALSE)
+  }
+  if (is.null(key[["secret"]])) {
+    stop("signing needs a key with its secret half", call. = FALSE)
+  }
+  if (!is.raw(mu) || length(mu) != 64L) {
+    stop("`mu` must be 64 raw bytes, as returned by fips_mu()",
+         call. = FALSE)
+  }
+  rnd <- if (isTRUE(deterministic)) raw(32L) else random_bytes(32L)
+  sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
+              mu, rnd)
+  out <- list(scheme = scheme, signature = .rmbl_hexlify(sg))
+  class(out) <- c("bricklayer_signature", "list")
+  out
+}
+
+#' @rdname fips_mu
+#' @export
+fips_verify_mu <- function(key, mu, signature) {
+  scheme <- .rmbl_fips_key_scheme(key)
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (is.na(mode)) {
+    stop("external mu is an ML-DSA interface; ", scheme,
+         " has no equivalent", call. = FALSE)
+  }
+  if (!inherits(signature, "bricklayer_signature")) {
+    stop("`signature` must come from fips_sign_mu() or capsule_sign()",
+         call. = FALSE)
+  }
+  if (!identical(signature$scheme, scheme)) return(FALSE)
+  if (!is.raw(mu) || length(mu) != 64L) return(FALSE)
+  pk <- .rmbl_hex_or_null(key$public)
+  sg <- .rmbl_hex_or_null(signature$signature)
+  if (is.null(pk) || is.null(sg)) return(FALSE)
+  .Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg)
+}
+
+# The scheme a key object names, refusing anything that is not one of
+# ours rather than reaching into an arbitrary list.
+.rmbl_fips_key_scheme <- function(key) {
+  if (!inherits(key, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
+    stop("`key` must come from fips_keygen() or fips_key()", call. = FALSE)
+  }
+  .rmbl_fips_scheme(key$scheme)
+}
+
 #' Byte lengths of a standardised signature scheme
 #'
 #' Reports the sizes fixed by a FIPS 204 or FIPS 205 parameter set, so a
@@ -264,18 +388,30 @@ fips_sizes <- function(scheme) {
   .Call(C_rmbl_slhdsa_keypair, scheme, seed)
 }
 
-.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd) {
-  mode <- .rmbl_fips_mldsa_mode(scheme)
-  if (!is.na(mode)) return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd))
-  .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd)
-}
-
-.rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig) {
+.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none") {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
-    return(.Call(C_rmbl_mldsa_verify, mode, pk, msg, ctx, sig))
+    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash))
   }
-  .Call(C_rmbl_slhdsa_verify, scheme, pk, msg, ctx, sig)
+  .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash)
+}
+
+.rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig,
+                              prehash = "none") {
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (!is.na(mode)) {
+    return(.Call(C_rmbl_mldsa_verify, mode, pk, msg, ctx, sig, prehash))
+  }
+  .Call(C_rmbl_slhdsa_verify, scheme, pk, msg, ctx, sig, prehash)
+}
+
+# The pre-hash name, validated here so a typo cannot be read as "none"
+# and quietly produce a pure signature instead of the requested one.
+.rmbl_fips_prehash <- function(prehash) {
+  if (is.null(prehash)) return("none")
+  prehash <- as.character(prehash)[1L]
+  if (is.na(prehash)) prehash <- "none"
+  match.arg(prehash, c("none", "sha256", "sha512", "shake128", "shake256"))
 }
 
 # A context string is at most 255 bytes because the FIPS 204 and 205
@@ -520,6 +656,13 @@ signing_public_key <- function(key) {
 #' use the deterministic variant rather than drawing fresh randomness per
 #' signature. The signature then depends only on the key, message and
 #' context, which is what the standards' test vectors rely on.
+#' @param prehash For the standardised schemes, sign a
+#' digest of the message rather than the message itself -- HashML-DSA (FIPS
+#' 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
+#' `"none"` (the default, the pure variants), `"sha256"`,
+#' `"sha512"`, `"shake128"` or `"shake256"`. The identifier
+#' of the pre-hash is bound into the signature, so a pre-hashed signature
+#' is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,
 #' `signature`, and for XMSS also `auth`, `index`,
 #' `root`, `height`, `key_state`, `randomizer` (the
@@ -554,7 +697,7 @@ signing_public_key <- function(key) {
 #' capsule_verify("manifest-1", s2, signing_public_key(key))
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
-                         deterministic = FALSE) {
+                         deterministic = FALSE, prehash = "none") {
   if (inherits(key, "bricklayer_oqs_key")) {
     msg <- .rmbl_sign_message(message)
     ctx <- .rmbl_fips_context(context)
@@ -568,10 +711,11 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
     } else {
       random_bytes(sz[["opt_rand"]])
     }
+    ph <- .rmbl_fips_prehash(prehash)
     sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), msg,
-                          ctx, rnd)
+                          ctx, rnd, ph)
     out <- list(scheme = key$scheme, signature = .rmbl_hexlify(sg),
-                context = ctx)
+                context = ctx, prehash = ph)
     class(out) <- c("bricklayer_signature", "list")
     return(out)
   }
@@ -645,6 +789,10 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' @param context The context string the signature was made
 #' under, for the standardised schemes. A signature made under a different
 #' context, or under none, does not verify.
+#' @param prehash The pre-hash the signature was made with.
+#' Taken from the signature when not given, since
+#' [capsule_sign()] records it; supply it to
+#' check a signature that arrived without that field.
 #' @return A length-1 logical.
 #' @examples
 #' key <- pqc_keygen(height = 2)
@@ -664,8 +812,8 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 #' capsule_verify("pinned-manifest", trunc, pub)
 #' @export
-capsule_verify <- function(message, signature, key,
-                           context = NULL) {
+capsule_verify <- function(message, signature, key, context = NULL,
+                           prehash = NULL) {
   if (!inherits(signature, "bricklayer_signature")) {
     stop("`signature` must come from capsule_sign()", call. = FALSE)
   }
@@ -681,7 +829,16 @@ capsule_verify <- function(message, signature, key,
     pk <- .rmbl_hex_or_null(key$public)
     sg <- .rmbl_hex_or_null(signature$signature)
     if (is.null(pk) || is.null(sg)) return(FALSE)
-    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg))
+    # A pre-hashed signature and a pure one over the same message are
+    # different signatures, so which was made has to be stated. It
+    # travels with the signature, and an explicit argument overrides it.
+    ph <- if (is.null(prehash)) {
+      if (is.null(signature[["prehash"]])) "none" else signature$prehash
+    } else {
+      .rmbl_fips_prehash(prehash)
+    }
+    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg,
+                             .rmbl_fips_prehash(ph)))
   }
   if (identical(signature$scheme, "hmac")) {
     return(core_digest_equal(core_hmac_sha256(key, message),
