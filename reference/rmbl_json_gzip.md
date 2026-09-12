@@ -61,12 +61,12 @@ x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 
 enc <- json_gzip_encode(x)
 substring(enc, 1, 40)
-#> [1] "eJxV00tKxUAQBdC9ZPyQ+nR9OlsRB4IOBEFQ1MEj"
+#> [1] "H4sIAAAAAAAA/1XTS0rFQBAF0L1k/JD6dH06WxEH"
 
 # Smaller than the JSON it came from, because the keys repeat.
 c(json = nchar(bricklayer_json_to_json(x)), gzip_b64 = nchar(enc))
 #>     json gzip_b64 
-#>     1245      417 
+#>     1245      433 
 
 # Round trips.
 identical(json_gzip_decode(enc)$rows$id, 1:50)

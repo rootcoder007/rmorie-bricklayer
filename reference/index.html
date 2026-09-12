@@ -22,6 +22,8 @@
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -723,6 +725,219 @@
 
         </dt>
         <dd>Ready-made validation rules</dd>
+      </dl></div><div class="section level2">
+      <h2 id="period-over-period-change">Period-over-period change<a class="anchor" aria-label="anchor" href="#period-over-period-change"></a></h2>
+
+      <div class="section-desc"><p>Year-over-year change matched on the period’s own value rather than on row order, so a missing year is a gap instead of a quietly multi-year comparison. A percent off a small base is withheld with its reason; a percentage is reported in percentage points; a ratio of counts carries the exact conditional-binomial interval. The same object renders to HTML, PDF, CSV, TSV, JSON or Markdown.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="yoy.html">yoy()</a></code> <code><a href="yoy.html">print(<i>&lt;rmbl_yoy&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Year-over-year (and period-over-period) change</dd>
+
+        <dt>
+
+          <code><a href="yoy_summary.html">yoy_summary()</a></code>
+
+        </dt>
+        <dd>Summarise a change table</dd>
+
+        <dt>
+
+          <code><a href="yoy_label.html">yoy_label()</a></code>
+
+        </dt>
+        <dd>Label a period without changing it</dd>
+
+        <dt>
+
+          <code><a href="fiscal_year_label.html">fiscal_year_label()</a></code>
+
+        </dt>
+        <dd>Name a fiscal year by the years it spans</dd>
+
+        <dt>
+
+          <code><a href="yoy_render.html">yoy_html()</a></code> <code><a href="yoy_render.html">yoy_pdf()</a></code>
+
+        </dt>
+        <dd>Render a change table to HTML or PDF</dd>
+
+        <dt>
+
+          <code><a href="yoy_write.html">yoy_write()</a></code>
+
+        </dt>
+        <dd>Write a change table to a file, in whatever format the name implies</dd>
+
+        <dt>
+
+          <code><a href="yoy_delim.html">yoy_csv()</a></code> <code><a href="yoy_delim.html">yoy_tsv()</a></code> <code><a href="yoy_delim.html">yoy_json()</a></code> <code><a href="yoy_delim.html">yoy_markdown()</a></code>
+
+        </dt>
+        <dd>Write a change table as delimited text, JSON or Markdown</dd>
+
+        <dt>
+
+          <code><a href="yoy_palettes.html">yoy_palettes()</a></code>
+
+        </dt>
+        <dd>Colour palettes for change tables</dd>
+      </dl></div><div class="section level2">
+      <h2 id="banded-categories">Banded categories<a class="anchor" aria-label="anchor" href="#banded-categories"></a></h2>
+
+      <div class="section-desc"><p>Published categories are intervals – “2 to 5”, “50+” – and anything computed from them rests on where inside each band the mass sits and on where the open top band ends. These parse to bounds, make the representative-value rule explicit, and measure how far a result moves as the open band’s assumed cap varies.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="parse_bands.html">parse_bands()</a></code>
+
+        </dt>
+        <dd>Parse banded category labels into numeric bounds</dd>
+
+        <dt>
+
+          <code><a href="band_values.html">band_values()</a></code>
+
+        </dt>
+        <dd>Representative values for banded categories</dd>
+
+        <dt>
+
+          <code><a href="expand_bands.html">expand_bands()</a></code>
+
+        </dt>
+        <dd>Expand a banded frequency table into per-unit values</dd>
+
+        <dt>
+
+          <code><a href="band_sensitivity.html">band_sensitivity()</a></code> <code><a href="band_sensitivity.html">print(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code>
+
+        </dt>
+        <dd>How much a result depends on the open band's assumed cap</dd>
+      </dl></div><div class="section level2">
+      <h2 id="concentration-and-association">Concentration and association<a class="anchor" aria-label="anchor" href="#concentration-and-association"></a></h2>
+
+      <div class="section-desc"><p>Whether a few units account for most of a total, and how strongly two categorical variables move together. Gini is twice the area under its own Lorenz curve, and has a ceiling of 1 - 1/n rather than 1. The tail index maximises the exact discrete likelihood, the closed-form continuity correction being badly biased at the small thresholds administrative counts start from.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="concentration.html">gini()</a></code> <code><a href="concentration.html">lorenz()</a></code> <code><a href="concentration.html">top_share()</a></code>
+
+        </dt>
+        <dd>Concentration of a total across units</dd>
+
+        <dt>
+
+          <code><a href="hill_tail_index.html">hill_tail_index()</a></code>
+
+        </dt>
+        <dd>Tail index of a heavy-tailed count</dd>
+
+        <dt>
+
+          <code><a href="hurwitz_zeta.html">hurwitz_zeta()</a></code>
+
+        </dt>
+        <dd>Hurwitz zeta function</dd>
+
+        <dt>
+
+          <code><a href="cramers_v.html">cramers_v()</a></code>
+
+        </dt>
+        <dd>Association in a contingency table</dd>
+      </dl></div><div class="section level2">
+      <h2 id="trend-in-a-short-series">Trend in a short series<a class="anchor" aria-label="anchor" href="#trend-in-a-short-series"></a></h2>
+
+      <div class="section-desc"><p>An annual extract is five to ten points, which supports a rank test and a resistant slope but not a model with an autocorrelation structure. The step test takes its p-value from the permutation distribution of the maximum over splits, not from the best split’s own test.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="trend_test.html">trend_test()</a></code>
+
+        </dt>
+        <dd>Trend in a short series</dd>
+
+        <dt>
+
+          <code><a href="step_change.html">step_change()</a></code>
+
+        </dt>
+        <dd>A single step change, with the scan's own null distribution</dd>
+
+        <dt>
+
+          <code><a href="count_trend.html">count_trend()</a></code>
+
+        </dt>
+        <dd>Trend in a count series, as a rate ratio per period</dd>
+      </dl></div><div class="section level2">
+      <h2 id="region-coded-counts">Region-coded counts<a class="anchor" aria-label="anchor" href="#region-coded-counts"></a></h2>
+
+      <div class="section-desc"><p>A region is an areal unit with a population, not a coordinate. Indirect standardisation removes the part of a difference explained by who the area holds; empirical Bayes stops a small area’s noise from ranking it to the top or bottom; a funnel plot shows the reader the same thing directly.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="expected_counts.html">expected_counts()</a></code>
+
+        </dt>
+        <dd>Expected counts under indirect standardisation</dd>
+
+        <dt>
+
+          <code><a href="sir.html">sir()</a></code>
+
+        </dt>
+        <dd>Standardised incidence ratio, with an exact interval</dd>
+
+        <dt>
+
+          <code><a href="eb_rates.html">eb_rates()</a></code>
+
+        </dt>
+        <dd>Empirical Bayes rates, shrunk toward the overall experience</dd>
+
+        <dt>
+
+          <code><a href="funnel_limits.html">funnel_limits()</a></code>
+
+        </dt>
+        <dd>Funnel-plot control limits</dd>
+
+        <dt>
+
+          <code><a href="morans_i.html">morans_i()</a></code>
+
+        </dt>
+        <dd>Global Moran's I over a neighbour list</dd>
       </dl></div><div class="section level2">
       <h2 id="describe-a-capsule">Describe a capsule<a class="anchor" aria-label="anchor" href="#describe-a-capsule"></a></h2>
 

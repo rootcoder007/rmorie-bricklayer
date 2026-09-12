@@ -478,6 +478,108 @@ project-specific checks a generic schema cannot express.
   [`rule_col_count()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
   : Ready-made validation rules
 
+## Period-over-period change
+
+Year-over-year change matched on the period’s own value rather than on
+row order, so a missing year is a gap instead of a quietly multi-year
+comparison. A percent off a small base is withheld with its reason; a
+percentage is reported in percentage points; a ratio of counts carries
+the exact conditional-binomial interval. The same object renders to
+HTML, PDF, CSV, TSV, JSON or Markdown.
+
+- [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  [`print(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  : Year-over-year (and period-over-period) change
+- [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+  : Summarise a change table
+- [`yoy_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.md)
+  : Label a period without changing it
+- [`fiscal_year_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fiscal_year_label.md)
+  : Name a fiscal year by the years it spans
+- [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  : Render a change table to HTML or PDF
+- [`yoy_write()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.md)
+  : Write a change table to a file, in whatever format the name implies
+- [`yoy_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  [`yoy_tsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  [`yoy_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  [`yoy_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  : Write a change table as delimited text, JSON or Markdown
+- [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md)
+  : Colour palettes for change tables
+
+## Banded categories
+
+Published categories are intervals – “2 to 5”, “50+” – and anything
+computed from them rests on where inside each band the mass sits and on
+where the open top band ends. These parse to bounds, make the
+representative-value rule explicit, and measure how far a result moves
+as the open band’s assumed cap varies.
+
+- [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md)
+  : Parse banded category labels into numeric bounds
+- [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+  : Representative values for banded categories
+- [`expand_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+  : Expand a banded frequency table into per-unit values
+- [`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+  [`print(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+  : How much a result depends on the open band's assumed cap
+
+## Concentration and association
+
+Whether a few units account for most of a total, and how strongly two
+categorical variables move together. Gini is twice the area under its
+own Lorenz curve, and has a ceiling of 1 - 1/n rather than 1. The tail
+index maximises the exact discrete likelihood, the closed-form
+continuity correction being badly biased at the small thresholds
+administrative counts start from.
+
+- [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  [`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  : Concentration of a total across units
+- [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  : Tail index of a heavy-tailed count
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  : Hurwitz zeta function
+- [`cramers_v()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramers_v.md)
+  : Association in a contingency table
+
+## Trend in a short series
+
+An annual extract is five to ten points, which supports a rank test and
+a resistant slope but not a model with an autocorrelation structure. The
+step test takes its p-value from the permutation distribution of the
+maximum over splits, not from the best split’s own test.
+
+- [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+  : Trend in a short series
+- [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md)
+  : A single step change, with the scan's own null distribution
+- [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  : Trend in a count series, as a rate ratio per period
+
+## Region-coded counts
+
+A region is an areal unit with a population, not a coordinate. Indirect
+standardisation removes the part of a difference explained by who the
+area holds; empirical Bayes stops a small area’s noise from ranking it
+to the top or bottom; a funnel plot shows the reader the same thing
+directly.
+
+- [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+  : Expected counts under indirect standardisation
+- [`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+  : Standardised incidence ratio, with an exact interval
+- [`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md)
+  : Empirical Bayes rates, shrunk toward the overall experience
+- [`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
+  : Funnel-plot control limits
+- [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+  : Global Moran's I over a neighbour list
+
 ## Describe a capsule
 
 The summaries worth reading before trusting a capsule: what every column
@@ -581,3 +683,7 @@ Printed reports for the objects the package returns.
   changed?](https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.md):
 - [Provenance you can
   verify](https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.md):
+- [Year-over-year change, and the three ways it goes
+  wrong](https://rootcoder007.github.io/rmorie-bricklayer/articles/yoy.md):
+- [Statistics for a published administrative
+  table](https://rootcoder007.github.io/rmorie-bricklayer/articles/tables.md):

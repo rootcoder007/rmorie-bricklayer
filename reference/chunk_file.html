@@ -28,6 +28,8 @@ its proofs larger."><meta name="google-site-verification" content="8ORzeHrfoPIOr
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -73,8 +75,10 @@ its proofs larger.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector of chunks, in file order. A zero-length
-file gives <code>character(0)</code>.</p>
+    <p>A list of raw vectors, in file order. A zero-length file gives
+an empty list. Chunks are returned as bytes rather than strings
+because a file is bytes: an R string cannot hold a zero byte, so a
+character chunk could not represent an arbitrary binary file at all.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -94,6 +98,10 @@ file gives <code>character(0)</code>.</p>
 <span class="r-in"><span><span class="co"># The chunks reconstruct the file and pin it as a Merkle root.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "c4cb691d88a0dbf1dad9767c19095d54ac6958e6411e06d81dced0dba895c382"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># They are the file's bytes, so they concatenate back to it exactly.</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">readBin</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Editing the file changes exactly one leaf.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span></span>
