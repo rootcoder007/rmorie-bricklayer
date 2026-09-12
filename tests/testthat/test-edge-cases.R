@@ -279,22 +279,30 @@ test_that("the MCAR machinery handles its degenerate cases", {
                                     dead = rep(NA_real_, 20))),
                "too few complete columns")
 
-  # PERFECTLY COLLINEAR columns: the pattern submatrices are singular, so
-  # either the EM cannot produce a usable covariance or the affected
-  # patterns are skipped. Both outcomes are reported, never silently
-  # computed through.
+  # COLLINEAR columns are refused, not worked around. The EM step floors
+  # the covariance's eigenvalues to keep it invertible, so without this
+  # check the statistic would be a function of that floor rather than of
+  # the data -- a number that looks like an answer and is not one.
   set.seed(6)
   coll <- data.frame(a = stats::rnorm(60))
   coll$b <- coll$a            # exactly collinear
   coll$b[1:20] <- NA
-  res <- tryCatch(mcar_test(coll), error = function(e) e)
-  if (inherits(res, "error")) {
-    expect_match(conditionMessage(res), "collinear|did not converge")
-  } else {
-    # a skipped pattern is recorded in the note
-    expect_true(is.finite(res$statistic))
-    if (!is.na(res$note)) expect_match(res$note, "skipped|nothing to test")
-  }
+  expect_error(mcar_test(coll), "collinear")
+  # so is a deterministic linear combination of two other columns
+  lc <- data.frame(x = stats::rnorm(60), y = stats::rnorm(60))
+  lc$z <- lc$x + lc$y
+  lc$z[1:15] <- NA
+  expect_error(mcar_test(lc), "collinear")
+  # and a constant column, which is the rank-one case of the same thing
+  const <- data.frame(a = stats::rnorm(40), b = rep(2, 40))
+  const$a[1:10] <- NA
+  expect_error(mcar_test(const), "collinear|constant")
+  # the message points at the tools that find the culprit
+  expect_error(mcar_test(coll), "top_correlations")
+  # a full-rank frame with the same missingness is fine
+  ok <- data.frame(a = stats::rnorm(60), b = stats::rnorm(60))
+  ok$b[1:20] <- NA
+  expect_true(is.finite(mcar_test(ok)$statistic))
 
   # the positive-definite repair, called directly on an indefinite matrix
   ind <- matrix(c(1, 2, 2, 1), 2, 2)      # eigenvalues 3 and -1
