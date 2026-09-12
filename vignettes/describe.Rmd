@@ -1,0 +1,257 @@
+---
+title: "Look at the data first"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Look at the data first}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+set.seed(1)
+```
+
+A capsule is only worth pinning if somebody looked at the data first.
+Looking is the step that gets skipped, because it is tedious and because
+it is never obviously necessary until afterwards.
+
+This vignette is the short version of looking.
+
+## One command
+
+`capsule_report()` runs the checks this package provides and puts the
+findings in one place, worst first.
+
+```{r}
+reference <- data.frame(
+  id = 1:300,
+  score = stats::runif(300, 0, 10),
+  grade = sample(c("a", "b", "c"), 300, TRUE),
+  stringsAsFactors = FALSE
+)
+
+fresh <- reference
+fresh$score <- stats::runif(300, 0, 10)
+
+capsule_report(fresh, reference = reference,
+               schema = infer_schema(reference))
+```
+
+Now a fetch that went wrong in four different ways at once — a rescaled
+column, a category nobody expected, a column that arrived empty, and one
+that arrived constant:
+
+```{r}
+broken <- fresh
+broken$score <- broken$score * 5
+broken$grade[1:100] <- "z"
+broken$dead <- NA_real_
+broken$flat <- 7
+
+report <- capsule_report(broken, reference = reference,
+                         schema = infer_schema(reference))
+report
+```
+
+```{r}
+report$verdict
+summary(report)
+```
+
+Each problem is reported **once**. An entirely missing column is missing,
+is trivially constant, and makes any covariance singular — reporting all
+three would bury the findings that matter under a single cause.
+
+`report_markdown()` writes the same assessment beside the capsule it
+describes, so it outlives the console.
+
+```{r}
+cat(head(report_markdown(report), 12), sep = "\n")
+```
+
+## Per column
+
+`profile_columns()` is the underlying description. It reports the
+classical and robust centre side by side, which is the cheapest outlier
+detector there is: where a mean and a median disagree, the mean is not
+describing the column.
+
+```{r}
+messy <- data.frame(
+  clean = stats::rnorm(200),
+  bimodal = c(stats::rnorm(100, -3), stats::rnorm(100, 3)),
+  skewed = c(stats::rexp(199), 500),
+  zeros = c(rep(0, 50), stats::runif(150))
+)
+profile_columns(messy)[, c("column", "mean", "median", "sd", "mad")]
+```
+
+The `hist` column carries what no single number can:
+
+```{r}
+profile_columns(messy)[, c("column", "hist")]
+```
+
+`bimodal` is visibly two humps. Its mean and median agree perfectly and
+tell you nothing about that.
+
+## Where the gaps are
+
+The *rate* of missingness is the least interesting thing about it. Two
+frames with identical per-column rates can need completely different
+handling:
+
+```{r}
+structural <- data.frame(
+  id = 1:20,
+  a = c(rep(NA, 6), 7:20),
+  b = c(rep(NA, 6), 7:20)
+)
+scattered <- data.frame(
+  id = 1:20,
+  a = c(rep(NA, 6), 7:20),
+  b = c(1:14, rep(NA, 6))
+)
+
+c(structural = sum(is.na(structural$a)), scattered = sum(is.na(scattered$a)))
+```
+
+```{r}
+missingness_pattern(structural)
+```
+
+```{r}
+missingness_pattern(scattered)
+```
+
+Two patterns against three. In the first, one structural gap took out
+both columns in the same rows — those rows are a different population,
+and often belong dropped or modelled separately. In the second the
+failures are independent.
+
+`missing_runs()` answers a different question again — whether a gap is
+one outage or many failures:
+
+```{r}
+missing_runs(data.frame(
+  outage = c(1, 2, rep(NA, 8), 11:20),
+  sporadic = c(1, NA, 3, NA, 5, NA, 7:20)
+), min_run = 2)
+```
+
+And `missingness_map()` shows the whole table at once, with no graphics
+device, so it works over SSH and inside a plain-text summary:
+
+```{r}
+gappy <- data.frame(
+  complete = 1:100,
+  early = c(rep(NA, 30), 31:100),
+  random = ifelse(stats::runif(100) < 0.3, NA, 1),
+  late = c(1:70, rep(NA, 30))
+)
+missingness_map(gappy, height = 10)
+```
+
+## Is the missingness itself a problem?
+
+Dropping incomplete rows is unbiased **only** if the data are missing
+completely at random. Otherwise the complete cases are a biased sample
+and every downstream estimate inherits the bias.
+
+`mcar_test()` is Little's test for that assumption. It needs
+maximum-likelihood estimates of the mean and covariance *under*
+missingness, which have no closed form, so it carries an EM estimator.
+
+```{r}
+n <- 400
+x <- stats::rnorm(n)
+y <- x + stats::rnorm(n)
+
+# Missing on a coin flip: nothing to find.
+mcar <- data.frame(x = x, y = y)
+mcar$y[sample(n, 120)] <- NA
+mcar_test(mcar)
+```
+
+```{r}
+# Missing whenever x is large: the complete cases are a biased sample,
+# and that is detectable because the pattern's mean of x is shifted.
+mar <- data.frame(x = x, y = y)
+mar$y[x > 0.4] <- NA
+mcar_test(mar)
+```
+
+Read the caveat the second report prints. A large p-value is a failure to
+detect a departure, not evidence of MCAR, and the test has little power
+on small samples. Neither this test nor any other can separate
+missing-at-random from missing-**not**-at-random, because that depends on
+values that were never observed — only knowing how the data were
+collected settles it.
+
+## Rows that do not belong
+
+A row can be unremarkable on every column separately and impossible
+jointly.
+
+```{r}
+people <- data.frame(height_cm = stats::rnorm(300, 170, 10))
+people$weight_kg <- people$height_cm * 0.5 + stats::rnorm(300, 0, 5)
+
+# Inside both marginal ranges, outside the cloud.
+people[1, ] <- list(height_cm = 150, weight_kg = 140)
+
+range(people$height_cm)
+range(people$weight_kg)
+```
+
+```{r}
+head(mahalanobis_outliers(people), 3)
+```
+
+The default is a robust centre and scale, and that default matters more
+than it sounds: outliers inflate the very covariance used to judge them,
+so with several of them the classical distance hides exactly the rows it
+is meant to find.
+
+```{r}
+many <- people
+many[1:8, ] <- list(height_cm = rep(150, 8), weight_kg = rep(140, 8))
+
+c(robust = mahalanobis_outliers(many, robust = TRUE)$distance[1],
+  classical = mahalanobis_outliers(many, robust = FALSE)$distance[1])
+```
+
+## Figures that were not measured
+
+Quantities spanning several orders of magnitude follow Benford's law.
+Figures that were rounded, capped, rescaled or invented usually do not.
+
+```{r}
+benford_test(10^stats::runif(2000, 0, 6))
+```
+
+```{r}
+benford_test(as.numeric(paste0(sample(1:9, 2000, TRUE), "000")))
+```
+
+This is a **screen**, not a verdict. Postcodes, year fields, prices
+ending in 99 and anything with a unit floor all violate Benford's law
+perfectly legitimately. A small p-value is a reason to look.
+
+## What none of this does
+
+Every check here has a blind spot, and a clean report means only that
+these particular checks found nothing:
+
+- the drift tests have little power on small samples;
+- `mcar_test()` assumes multivariate normality, so on markedly
+  non-normal columns a rejection may be telling you about the
+  distribution rather than the missingness;
+- Mahalanobis distance assumes the bulk of the data is elliptical;
+- Benford's law does not apply to most bounded or assigned quantities.
+
+None of them can tell you the data means what you think it means. That
+still requires reading the documentation for the source, which is the
+part `load_provenance()` and the manifest exist to keep attached.
