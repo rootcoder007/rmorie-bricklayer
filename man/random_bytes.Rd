@@ -14,7 +14,8 @@ A raw vector of length \code{n}.
 }
 \description{
 Reads the operating system's own random source -- \verb{/dev/urandom} on
-Unix and macOS -- rather than R's Mersenne Twister.
+Unix and macOS, \code{RtlGenRandom} on Windows -- rather than R's Mersenne
+Twister.
 }
 \details{
 This distinction matters for anything that becomes a key.
