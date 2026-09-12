@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       4e9237c78cb9e4100bd5b065a2928e629aafdd785cc0bab983bc415935b1114c
+#>   root       de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    4e9237c78cb9e4100bd5b065a2928e629aafdd785cc0bab983bc415935b1114c
+#>   root    de42fd0c592901cbd75a70b2eb8f8a2889ab801dea66c8af08906cae580e8ab3
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
