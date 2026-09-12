@@ -171,6 +171,7 @@ reference:
       - timestamp_verify
       - cert_parse
       - cert_chain_verify
+      - revocation_fetch
       - capsule_sign
       - capsule_verify
       - pqc_keygen

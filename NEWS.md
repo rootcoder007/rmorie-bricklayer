@@ -1,3 +1,74 @@
+# rmoriebricklayer 0.4.6
+
+Certificate path validation is now complete: the three things 0.4.5
+listed as still missing are done.
+
+## Name constraints
+
+A CA can be limited to part of the name space, and a verifier that
+ignores the limit treats a CA constrained to one organisation's domains
+as able to issue for any name at all. `cert_chain_verify()` now enforces
+`nameConstraints` for every CA in the path against every certificate
+below it -- not only the leaf, so a constrained CA cannot escape by
+issuing an intermediate.
+
+The matching rules are per type and deliberately not shared: a DNS
+constraint of `example.org` covers `host.example.org` and
+`example.org`; an email constraint of `example.org` covers mailboxes
+whose host is exactly that and NOT its subdomains; a directory name
+constraint matches whole relative distinguished names, so `O=Acme` is
+not satisfied by `O=AcmeCorp`. `pathLenConstraint` is enforced too.
+
+## Certificate policies
+
+`certificatePolicies`, `policyMappings`, `policyConstraints` and
+`inhibitAnyPolicy` are processed as RFC 5280 section 6.1 describes, with
+its three counters. Pass `policies` to `cert_chain_verify()` and the
+path must yield one of them after mapping; omit it and policies are
+still processed, but only reported as a failure where a certificate in
+the path requires an explicit policy. Mapping to or from `anyPolicy` is
+rejected, as the standard requires.
+
+Not done: policy qualifier processing. A user notice attached to a
+policy is parsed past rather than surfaced.
+
+## Revocation can now be fetched
+
+`revocation = "fetch"` retrieves CRLs from the distribution points in
+the certificates and queries any OCSP responder they name. OCSP is
+POSTed as RFC 6960 requires a responder to accept, falling back to the
+optional GET form.
+
+It is opt-in, and that is the design rather than caution. A verifier
+that reaches out during a check stops working offline -- which is where
+an archival capsule is most likely to be verified -- becomes
+non-deterministic, and tells whoever runs the responder which
+certificates are being checked and when. `"supplied"` (the default)
+uses only CRLs handed in; `"none"` skips revocation entirely.
+
+A responder's answer is believed only when its signature verifies under
+a certificate in the path, or one it carries that the path issued. An
+unverifiable "good" is reported as a failure: treating it as a pass
+would be worse than skipping the check, because it would look like the
+check had happened.
+
+## Along the way
+
+* SHA-1, for OCSP CertID only -- RFC 6960 keys a request on the SHA-1
+  of the issuer's name and public key, and a responder given anything
+  else answers "unauthorized". It verifies no signatures here and must
+  not: SHA-1 collisions are practical.
+* `C_rmbl_http_post()`, so OCSP can POST. It is the only thing in the
+  package that sends a body.
+* Every verdict here was cross-checked against `openssl verify` on the
+  same certificates -- it rejects the three name-constrained leaves and
+  the wrong-policy leaf that these tests reject -- and the OCSP request
+  this package builds is byte-identical to `openssl ocsp -reqout`,
+  which checks the DER encoder, the CertID and the SHA-1 at once.
+* Fixed a `logical(0)` trap in policy processing: `is.na(NULL)` is
+  `logical(0)` and `if` on it is an error, so a counter read from a
+  structure that did not carry the field failed instead of defaulting.
+
 # rmoriebricklayer 0.4.5
 
 The four things the previous release documented as deliberately

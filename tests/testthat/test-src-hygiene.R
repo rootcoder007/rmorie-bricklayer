@@ -163,3 +163,38 @@ test_that("every C entry point is registered and every registration resolves", {
     expect_equal(arity, n, info = nm)
   }
 })
+
+test_that("no S3 method for one class is defined in two files", {
+  # This is not hypothetical. R/x509.R once returned
+  # `bricklayer_chain_check`, which R/chain.R had owned since long
+  # before for the hash-chain seal result, and defined its own format
+  # and print for it. Whichever registered last rendered both, so
+  # chain_verify()'s output printed through the certificate formatter
+  # and failed on a field it never had. Nothing in the test suite
+  # noticed; the vignette build did.
+  #
+  # Constructing one class in two files is fine and deliberate --
+  # capsule_sign() and fips_sign_mu() both return a
+  # `bricklayer_signature`. Defining its METHODS twice is the mistake.
+  files <- list.files(file.path(test_path("..", ".."), "R"),
+                      pattern = "[.]R$", full.names = TRUE)
+  skip_if(length(files) == 0L, "not running from a source tree")
+  seen <- list()
+  for (f in files) {
+    txt <- readLines(f, warn = FALSE)
+    hits <- grep("^(format|print|as\\.character)\\.bricklayer_[A-Za-z0-9_]+ *<- *function",
+                 txt, value = TRUE)
+    for (h in hits) {
+      m <- sub(" *<-.*", "", h)
+      seen[[m]] <- unique(c(seen[[m]], basename(f)))
+    }
+  }
+  twice <- seen[vapply(seen, length, integer(1)) > 1L]
+  expect_identical(names(twice), character(0),
+                   info = paste(names(twice), collapse = ", "))
+  # every method is also registered exactly once
+  ns <- readLines(test_path("..", "..", "NAMESPACE"), warn = FALSE)
+  s3 <- grep("^S3method\\(", ns, value = TRUE)
+  expect_identical(anyDuplicated(s3), 0L)
+  expect_gt(length(s3), 20L)
+})

@@ -56,6 +56,47 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
     return (rc == CURLE_OK) ? code : -1;
 }
 
+/* POST bytes to a URL and collect the reply as bytes.
+ *
+ * Exists for OCSP (RFC 6960 appendix A.1.1), which is the one thing
+ * here that has to send a body: a responder identifies the certificate
+ * being asked about from the DER request. The GET form, with the
+ * request base64'd into the path, is optional for responders and many
+ * refuse it, so a verifier limited to GET is a verifier that usually
+ * cannot check revocation at all.
+ */
+long http_post_bytes(const std::string &url, const unsigned char *body,
+                     size_t bodylen, const std::string &content_type,
+                     std::string &out, long timeout_s) {
+    CURL *h = curl_easy_init();
+    if (!h) return -1;
+    out.clear();
+    struct curl_slist *hdr = NULL;
+    const std::string ct = "Content-Type: " + content_type;
+    hdr = curl_slist_append(hdr, ct.c_str());
+    /* libcurl would otherwise announce Expect: 100-continue and wait */
+    hdr = curl_slist_append(hdr, "Expect:");
+    curl_easy_setopt(h, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(h, CURLOPT_POST, 1L);
+    curl_easy_setopt(h, CURLOPT_POSTFIELDS, body);
+    curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE,
+                     static_cast<long>(bodylen));
+    curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr);
+    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
+    curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
+    curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
+    curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_string);
+    curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
+    CURLcode rc = curl_easy_perform(h);
+    long code = -1;
+    if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
+    curl_slist_free_all(hdr);
+    curl_easy_cleanup(h);
+    return (rc == CURLE_OK) ? code : -1;
+}
+
 /* GET a URL straight to a file path. Returns HTTP status, -1 on failure.
  * A 4xx/5xx still writes the error body; callers check the return code. */
 long http_get_file(const std::string &url, const std::string &path, long timeout_s) {
@@ -156,6 +197,40 @@ int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
 }
 
 /* ---- .Call wrappers for bricklayer's own R side ------------------------ */
+
+/* POST raw bytes, return the reply as raw bytes and the HTTP status.
+ * Used only by the OCSP path, which is opt-in. */
+SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
+                      SEXP timeout) {
+    if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
+        Rf_error("`url` must be a single string");
+    }
+    if (TYPEOF(body) != RAWSXP) Rf_error("`body` must be a raw vector");
+    if (TYPEOF(content_type) != STRSXP || XLENGTH(content_type) != 1) {
+        Rf_error("`content_type` must be a single string");
+    }
+    const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
+        ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
+    std::string out;
+    const long code = http_post_bytes(
+        CHAR(STRING_ELT(url, 0)), RAW(body),
+        static_cast<size_t>(XLENGTH(body)),
+        CHAR(STRING_ELT(content_type, 0)), out, tmo);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
+        static_cast<R_xlen_t>(out.size())));
+    if (!out.empty()) {
+        std::memcpy(RAW(raw_out), out.data(), out.size());
+    }
+    SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
+    SET_VECTOR_ELT(res, 1, raw_out);
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
+    Rf_setAttrib(res, R_NamesSymbol, nm);
+    UNPROTECT(3);
+    return res;
+}
 
 SEXP C_rmbl_fetch_fallback(SEXP url, SEXP wayback, SEXP path, SEXP timeout) {
     const char *u = CHAR(STRING_ELT(url, 0));
