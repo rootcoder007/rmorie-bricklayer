@@ -9,7 +9,8 @@ capsule_sign(
   key,
   scheme = NULL,
   context = NULL,
-  deterministic = FALSE
+  deterministic = FALSE,
+  prehash = "none"
 )
 }
 \arguments{
@@ -36,6 +37,14 @@ which is how the same key is safely used for two purposes.}
 use the deterministic variant rather than drawing fresh randomness per
 signature. The signature then depends only on the key, message and
 context, which is what the standards' test vectors rely on.}
+
+\item{prehash}{For the standardised schemes, sign a
+digest of the message rather than the message itself -- HashML-DSA (FIPS
+204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
+\code{"none"} (the default, the pure variants), \code{"sha256"},
+\code{"sha512"}, \code{"shake128"} or \code{"shake256"}. The identifier
+of the pre-hash is bound into the signature, so a pre-hashed signature
+is never interchangeable with a pure one over the same digest.}
 }
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},
