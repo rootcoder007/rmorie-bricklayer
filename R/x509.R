@@ -18,10 +18,15 @@
 #   * the leaf must be allowed to do the job -- timeStamping, for a
 #     timestamp token -- or a certificate issued for something else
 #     entirely would serve;
-#   * revocation, where a list is available.
+#   * name constraints -- a CA limited to one name space must not be
+#     able to issue outside it, directly or through an intermediate;
+#   * the path length a CA permits beneath it;
+#   * certificate policies, with mapping and the explicit-policy,
+#     inhibit-mapping and inhibit-anyPolicy constraints;
+#   * revocation, from CRLs handed in or -- on request -- fetched.
 #
-# What is NOT done: name constraints, policy mapping, and fetching CRLs
-# or OCSP over the network. A CRL has to be handed in.
+# What is NOT done: policy qualifier processing. A user notice attached
+# to a policy is parsed past rather than surfaced.
 
 #' Parse an X.509 certificate
 #'
@@ -86,13 +91,31 @@ cert_parse <- function(certificate) {
     tbs = der[(tbs$start + 1L):(tbs$offset + tbs$length)],
     key = .rmbl_x509_key(spki),
     is_ca = exts$is_ca,
+    path_len = exts$path_len,
     key_usage = exts$key_usage,
     extended_key_usage = exts$eku,
+    subject_rdns = .rmbl_x509_rdns(k[[off + 5L]]),
+    issuer_rdns = .rmbl_x509_rdns(k[[off + 3L]]),
+    san = exts$san,
+    name_constraints = exts$name_constraints,
+    policies = exts$policies,
+    policy_mappings = exts$policy_mappings,
+    require_explicit_policy = exts$require_explicit_policy,
+    inhibit_policy_mapping = exts$inhibit_policy_mapping,
+    inhibit_any_policy = exts$inhibit_any_policy,
     self_signed = identical(issuer, subject),
     der = der
   )
   class(out) <- c("bricklayer_certificate", "list")
   out
+}
+
+# A small non-negative INTEGER's value.
+.rmbl_int_of <- function(v) {
+  if (!length(v)) return(NA_integer_)
+  r <- 0L
+  for (b in as.integer(v)) r <- r * 256L + b
+  r
 }
 
 tbs_alg_oid <- function(alg) {
@@ -152,7 +175,19 @@ print.bricklayer_certificate <- function(x, ...) {
 #' an OID.
 #' @param crls Optional list of CRLs, as raw or paths, to check
 #' the chain against.
-#' @return A list of class `bricklayer_chain_check`: `ok`, the
+#' @param policies Acceptable certificate policy OIDs.
+#' Supplied, the path must yield at least one of them after policy mapping
+#' and the constraints in RFC 5280 section 6.1; omitted, policies are
+#' processed but only reported as a failure when a certificate in the path
+#' requires an explicit policy.
+#' @param revocation `"supplied"` (the default)
+#' checks only the CRLs given in `crls`. `"fetch"` additionally
+#' retrieves CRLs from the distribution points in the certificates and
+#' queries OCSP responders
+#' -- which makes verification depend on the network and discloses to
+#' the responder which certificates are being checked, so it is never the
+#' default. `"none"` skips revocation entirely.
+#' @return A list of class `bricklayer_certpath_check`: `ok`, the
 #' `path` that was built, and a `checks` data frame.
 #' @seealso
 #' [cert_parse()],
@@ -167,7 +202,9 @@ print.bricklayer_certificate <- function(x, ...) {
 #' @export
 cert_chain_verify <- function(leaf, trust, intermediates = list(),
                               at_time = Sys.time(), purpose = NULL,
-                              crls = list()) {
+                              crls = list(), policies = NULL,
+                              revocation = c("supplied", "fetch",
+                                             "none")) {
   as_cert <- function(x) {
     if (inherits(x, "bricklayer_certificate")) x else cert_parse(x)
   }
@@ -186,6 +223,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
          call. = FALSE)
   }
   at_time <- as.POSIXct(at_time, tz = "UTC")
+  revocation <- match.arg(revocation)
 
   checks <- list()
   note_row <- function(check, ok, detail = "") {
@@ -248,6 +286,49 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
              else "the anchor was supplied as trusted, not derived")
   }
 
+  # Name constraints. Each CA in the path constrains everything below
+  # it, so the check runs for every pair, not only for the leaf: a CA
+  # constrained to one name space must not be able to issue an
+  # intermediate that escapes it.
+  if (length(path) > 1L) {
+    for (up in seq(2L, length(path))) {
+      nc <- path[[up]]$name_constraints
+      if (is.null(nc)) next
+      for (down in seq_len(up - 1L)) {
+        probs <- .rmbl_nc_check_one(path[[down]], nc)
+        note_row(sprintf("name constraints [%d under %d]", down, up),
+                 length(probs) == 0L,
+                 if (length(probs)) paste(probs, collapse = "; ") else
+                   "within the permitted name space")
+      }
+    }
+  }
+
+  # pathLenConstraint: how many CAs a CA permits beneath it. Counted in
+  # non-self-issued intermediates, as RFC 5280 counts them.
+  if (length(path) > 2L) {
+    for (up in seq(2L, length(path))) {
+      pl <- .rmbl_na_int(path[[up]]$path_len)
+      if (is.na(pl)) next
+      below <- up - 2L
+      note_row(sprintf("path length [%d]", up), below <= pl,
+               sprintf("permits %d intermediate(s) below it, path has %d",
+                       pl, below))
+    }
+  }
+
+  pol <- .rmbl_policy_tree(path, initial = if (is.null(policies))
+    kAnyPolicy else policies)
+  if (!is.null(policies) || isTRUE(pol$explicit_required)) {
+    note_row("certificate policies", pol$ok,
+             if (pol$ok)
+               sprintf("acceptable: %s",
+                       paste(utils::head(pol$authorities_constrained_to, 4L),
+                             collapse = ", "))
+             else paste(c("no acceptable policy survives the path",
+                          pol$notes), collapse = "; "))
+  }
+
   if (!is.null(purpose)) {
     want <- .rmbl_eku_oid(purpose)
     have <- leaf$extended_key_usage
@@ -258,7 +339,17 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
              else sprintf("leaf permits: %s", paste(have, collapse = ", ")))
   }
 
-  if (length(crls)) {
+  if (identical(revocation, "fetch")) {
+    # Fetching is opt-in and never the default. A verifier that reaches
+    # out during a check stops working offline, and tells whoever runs
+    # the responder which certificates are being checked and when.
+    fetched <- .rmbl_revocation_fetch(path)
+    crls <- c(crls, fetched$crls)
+    for (i in seq_along(fetched$notes)) {
+      note_row(names(fetched$notes)[i], fetched$ok[i], fetched$notes[[i]])
+    }
+  }
+  if (length(crls) && !identical(revocation, "none")) {
     rv <- .rmbl_crl_check(path, crls, at_time)
     for (i in seq_len(nrow(rv))) {
       note_row(rv$check[i], rv$ok[i], rv$detail[i])
@@ -268,13 +359,13 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
   df <- do.call(rbind, checks)
   rownames(df) <- NULL
   out <- list(ok = all(df$ok), path = path, checks = df,
-              at_time = at_time)
-  class(out) <- c("bricklayer_chain_check", "list")
+              at_time = at_time, policies = pol)
+  class(out) <- c("bricklayer_certpath_check", "list")
   out
 }
 
 #' @export
-format.bricklayer_chain_check <- function(x, ...) {
+format.bricklayer_certpath_check <- function(x, ...) {
   c(.rmbl_rule(sprintf("Certificate chain: %s",
                        if (x$ok) "verified" else "NOT verified")),
     sprintf("  %d certificate(s), validity checked at %s",
@@ -289,7 +380,7 @@ format.bricklayer_chain_check <- function(x, ...) {
 
 #' @rdname rmbl_print_methods
 #' @export
-print.bricklayer_chain_check <- function(x, ...) {
+print.bricklayer_certpath_check <- function(x, ...) {
   cat(format(x), sep = "\n")
   invisible(x)
 }
@@ -335,7 +426,13 @@ print.bricklayer_chain_check <- function(x, ...) {
 }
 
 .rmbl_x509_extensions <- function(k) {
-  out <- list(is_ca = FALSE, key_usage = character(0), eku = character(0))
+  out <- list(is_ca = FALSE, path_len = NA_integer_,
+              key_usage = character(0), eku = character(0),
+              san = list(), name_constraints = NULL,
+              policies = character(0), policy_mappings = NULL,
+              require_explicit_policy = NA_integer_,
+              inhibit_policy_mapping = NA_integer_,
+              inhibit_any_policy = NA_integer_)
   ext <- NULL
   for (nd in k) {
     if (identical(nd$class, 2L) && identical(nd$tag, 3)) ext <- nd
@@ -352,12 +449,45 @@ print.bricklayer_chain_check <- function(x, ...) {
       kids <- inner$children
       out$is_ca <- length(kids) >= 1L && identical(kids[[1]]$tag, 1) &&
         length(kids[[1]]$value) >= 1L && kids[[1]]$value[1] != as.raw(0)
+      # pathLenConstraint, when present, caps how many CAs may appear
+      # below this one
+      for (kk in kids) {
+        if (identical(kk$tag, 2)) out$path_len <- .rmbl_int_of(kk$value)
+      }
     } else if (identical(oid, "2.5.29.37")) {
       out$eku <- vapply(inner$children,
                         function(z) .rmbl_oid_string(z$value),
                         character(1))
     } else if (identical(oid, "2.5.29.15")) {
       out$key_usage <- .rmbl_key_usage_bits(inner$value)
+    } else if (identical(oid, "2.5.29.17")) {
+      out$san <- .rmbl_general_names(inner)
+    } else if (identical(oid, "2.5.29.30")) {
+      out$name_constraints <- .rmbl_name_constraints(val)
+    } else if (identical(oid, "2.5.29.32")) {
+      # certificatePolicies: SEQUENCE OF PolicyInformation, whose first
+      # field is the identifier. Qualifiers are not processed.
+      out$policies <- unlist(lapply(inner$children, function(pi) {
+        if (!length(pi$children)) return(NULL)
+        .rmbl_oid_string(pi$children[[1]]$value)
+      }))
+      if (is.null(out$policies)) out$policies <- character(0)
+    } else if (identical(oid, "2.5.29.33")) {
+      out$policy_mappings <- lapply(inner$children, function(m) {
+        if (length(m$children) < 2L) return(NULL)
+        list(issuer = .rmbl_oid_string(m$children[[1]]$value),
+             subject = .rmbl_oid_string(m$children[[2]]$value))
+      })
+      out$policy_mappings <- Filter(Negate(is.null), out$policy_mappings)
+    } else if (identical(oid, "2.5.29.36")) {
+      for (pc in inner$children) {
+        if (!identical(pc$class, 2L)) next
+        v <- .rmbl_int_of(pc$value)
+        if (identical(pc$tag, 0)) out$require_explicit_policy <- v
+        if (identical(pc$tag, 1)) out$inhibit_policy_mapping <- v
+      }
+    } else if (identical(oid, "2.5.29.54")) {
+      out$inhibit_any_policy <- .rmbl_int_of(inner$value)
     }
   }
   out

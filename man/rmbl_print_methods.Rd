@@ -35,7 +35,7 @@
 \alias{print.bricklayer_oqs_public_key}
 \alias{print.bricklayer_timestamp}
 \alias{print.bricklayer_certificate}
-\alias{print.bricklayer_chain_check}
+\alias{print.bricklayer_certpath_check}
 \title{Printed reports for bricklayer objects}
 \usage{
 \method{print}{bricklayer_attestation}(x, ...)
@@ -98,7 +98,7 @@
 
 \method{print}{bricklayer_certificate}(x, ...)
 
-\method{print}{bricklayer_chain_check}(x, ...)
+\method{print}{bricklayer_certpath_check}(x, ...)
 }
 \arguments{
 \item{x}{The object to render.}

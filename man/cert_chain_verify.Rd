@@ -10,7 +10,9 @@ cert_chain_verify(
   intermediates = list(),
   at_time = Sys.time(),
   purpose = NULL,
-  crls = list()
+  crls = list(),
+  policies = NULL,
+  revocation = c("supplied", "fetch", "none")
 )
 }
 \arguments{
@@ -35,9 +37,23 @@ an OID.}
 
 \item{crls}{Optional list of CRLs, as raw or paths, to check
 the chain against.}
+
+\item{policies}{Acceptable certificate policy OIDs.
+Supplied, the path must yield at least one of them after policy mapping
+and the constraints in RFC 5280 section 6.1; omitted, policies are
+processed but only reported as a failure when a certificate in the path
+requires an explicit policy.}
+
+\item{revocation}{\code{"supplied"} (the default)
+checks only the CRLs given in \code{crls}. \code{"fetch"} additionally
+retrieves CRLs from the distribution points in the certificates and
+queries OCSP responders
+-- which makes verification depend on the network and discloses to
+the responder which certificates are being checked, so it is never the
+default. \code{"none"} skips revocation entirely.}
 }
 \value{
-A list of class \code{bricklayer_chain_check}: \code{ok}, the
+A list of class \code{bricklayer_certpath_check}: \code{ok}, the
 \code{path} that was built, and a \code{checks} data frame.
 }
 \description{

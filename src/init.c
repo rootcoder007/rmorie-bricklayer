@@ -74,6 +74,7 @@ extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* rmbl_slhdsa.cpp: FIPS 205 */
 /* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
  * and exposed so their published vectors can be asserted */
+extern SEXP C_rmbl_sha1(SEXP);
 extern SEXP C_rmbl_sha384(SEXP);
 extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mgf1(SEXP, SEXP, SEXP);
@@ -84,6 +85,7 @@ extern SEXP C_rmbl_ec_mul(SEXP, SEXP);
 extern SEXP C_rmbl_ec_order(SEXP);
 
 /* rmbl_asn1.cpp: DER parsing and the RSA operation, for RFC 3161 */
+extern SEXP C_rmbl_http_post(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_der_parse(SEXP);
 extern SEXP C_rmbl_rsa_recover(SEXP, SEXP, SEXP);
 
@@ -247,12 +249,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     4},
     {"C_rmbl_mldsa_verify_mu",   (DL_FUNC) &C_rmbl_mldsa_verify_mu,   4},
     {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
+    {"C_rmbl_sha1",               (DL_FUNC) &C_rmbl_sha1,               1},
     {"C_rmbl_sha384",             (DL_FUNC) &C_rmbl_sha384,             1},
     {"C_rmbl_hmac_shax",         (DL_FUNC) &C_rmbl_hmac_shax,         3},
     {"C_rmbl_mgf1",              (DL_FUNC) &C_rmbl_mgf1,              3},
     {"C_rmbl_ecdsa_verify",       (DL_FUNC) &C_rmbl_ecdsa_verify,       6},
     {"C_rmbl_ec_mul",             (DL_FUNC) &C_rmbl_ec_mul,             2},
     {"C_rmbl_ec_order",           (DL_FUNC) &C_rmbl_ec_order,           1},
+    {"C_rmbl_http_post",          (DL_FUNC) &C_rmbl_http_post,          4},
     {"C_rmbl_der_parse",         (DL_FUNC) &C_rmbl_der_parse,         1},
     {"C_rmbl_rsa_recover",       (DL_FUNC) &C_rmbl_rsa_recover,       3},
     {"C_rmbl_mlkem_sizes",       (DL_FUNC) &C_rmbl_mlkem_sizes,       1},
