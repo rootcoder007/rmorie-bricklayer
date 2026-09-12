@@ -56,14 +56,62 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Synthetic fallback** — `make_synthetic_column()` / `make_synthetic_csv()`
   generate schema-driven stand-ins when the real source is down, so a
   pipeline still runs end-to-end.
+- **Change tables** — `yoy()` computes period-over-period change matched on
+  the period's own value rather than on row order, so a missing year is a
+  gap instead of a quietly multi-year comparison. A percent off a small
+  base is withheld with its reason; a column already in percent is
+  reported in percentage *points*; a ratio of counts carries the exact
+  conditional-binomial interval. `yoy_write()` renders to HTML, PDF, CSV,
+  TSV, JSON or Markdown, format taken from the file name, with nothing
+  outside base R.
+- **Banded categories** — `parse_bands()` reads the interval labels
+  publishers actually use (`"2 to 5"`, `"50+"`, `"under 18"`) and returns
+  bounds; `band_sensitivity()` measures how far a result moves as the open
+  top band's assumed cap varies, which is the dependence every figure
+  computed from banded data carries.
+- **Concentration and tails** — `gini()`, `lorenz()`, `top_share()`, and
+  `hill_tail_index()`, which maximises the exact discrete likelihood
+  because the closed-form continuity correction is badly biased at the
+  small thresholds administrative counts start from.
+- **Short-series trend** — `trend_test()` (Mann-Kendall with Theil-Sen),
+  `step_change()` (permutation scan over splits, not the best split's own
+  test) and `count_trend()` (Poisson rate ratio per period). Meaningful at
+  the five-to-ten annual points an open-data extract actually has.
+- **Region-coded counts** — `expected_counts()` for indirect
+  standardisation, `sir()` with the exact Poisson interval, `eb_rates()`
+  for Clayton-Kaldor shrinkage, `funnel_limits()`, and `morans_i()`.
 
-Every primitive with a published test vector is checked against it:
-SHA-512 (FIPS 180-4), HMAC-SHA-256 (RFC 4231), PBKDF2-HMAC-SHA256,
-BLAKE2b (RFC 7693) and CRC-32 (ITU V.42). The statistics are anchored on
-base R. The one exception is the XMSS signature scheme, which has no
-offline known-answer vectors and is verified against its security
-properties instead — it follows the RFC 8391 construction but is not
-claimed to be byte-compatible with other implementations.
+## Verification
+
+Every hash, keyed hash, checksum, key derivation, base64 and JSON output
+is compared against an **independent implementation** — `digest`,
+`openssl`, `jsonlite` and base R's own inflater — over a length sweep
+crossing each construction's block boundaries, so the digest this package
+records for a set of bytes is the number anybody else would compute for
+them. Published vectors are checked too: SHA-512 (FIPS 180-4),
+HMAC-SHA-256 (RFC 4231), PBKDF2-HMAC-SHA256, BLAKE2b (RFC 7693) and
+CRC-32 (ITU V.42). The statistics are anchored on base R
+(`stats::poisson.test`, `stats::glm`, `stats::cor.test`, `stats::qpois`)
+or on closed forms recomputed by hand.
+
+The compiled kernels are published for `LinkingTo`, and a consumer
+package is built **and run** against `inst/include/rmoriebricklayer.h` as
+part of the test suite — a signature mismatch is a compile error, while a
+misregistered name compiles cleanly and fails only when called.
+
+**The XMSS signature scheme is byte-compatible with the RFC 8391
+reference implementation.** The whole 2500-byte signature for
+XMSS-SHA2_10_256 -- index, randomiser, WOTS+ signature and
+authentication path -- matches it exactly, checked against embedded
+vectors in the test suite so the check needs no network. The
+standardised schemes (ML-DSA, SLH-DSA) are liboqs's implementation
+rather than one of ours; what is tested here is the binding, including
+that ML-DSA-65 produces the key and signature sizes FIPS 204
+specifies.
+
+It is also verified against its security properties: a valid signature
+verifies, and every tampering of the message, signature, authentication
+path, index or key fails.
 
 ## Installation
 

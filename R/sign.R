@@ -175,15 +175,23 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #'
 #' @param height Tree height, 1 to 16 (default 10, i.e. 1024
 #' signatures).
-#' @param sk_seed,pub_seed 64-character hex seeds
-#' (32 bytes each). Omit them and seeds are drawn from the operating
-#' system's CSPRNG via [random_bytes()], which
-#' fails rather than falling back to R's reproducible generator. Supply
-#' them ONLY to reproduce a key deterministically in a test -- a seed you
-#' can guess is a key you can forge.
+#' @param sk_seed,pub_seed,sk_prf 64-character hex seeds
+#' (32 bytes each) -- the three secrets RFC 8391's private key carries.
+#' `sk_seed` derives the WOTS+ chains, `pub_seed` masks the
+#' hashes, and `sk_prf` keys the per-signature randomiser. Omit them
+#' and they are drawn from the operating system's CSPRNG via
+#' [random_bytes()], which fails rather than
+#' falling back to R's reproducible generator. Supply them ONLY to
+#' reproduce a key deterministically in a test -- a seed you can guess is a
+#' key you can forge.
 #' @return A list of class `bricklayer_signing_key`: `root` (the
 #' public verification value), `pub_seed`, `sk_seed` (SECRET),
-#' `height`, `next_index`, `capacity`, and `scheme`.
+#' `sk_prf` (SECRET), `height`, `next_index`,
+#' `capacity`, and `scheme`.
+#' @section Key format: A key made before the RFC 8391 conformance work
+#' carries no `sk_prf` and cannot sign;
+#' [capsule_sign()] raises rather than producing
+#' a signature no other implementation could read. Generate a new one.
 #' @seealso
 #' [capsule_sign()],
 #' [capsule_verify()],
@@ -203,7 +211,8 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' s2 <- paste(rep("22", 32), collapse = "")
 #' identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
 #' @export
-pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL) {
+pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
+                       sk_prf = NULL) {
   height <- as.integer(height)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
@@ -212,8 +221,14 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL) {
     .rmbl_check_seed(sk_seed, "sk_seed")
   pub_seed <- if (is.null(pub_seed)) .rmbl_random_seed_hex() else
     .rmbl_check_seed(pub_seed, "pub_seed")
+  # SK_PRF is the third secret RFC 8391's private key carries. It keys
+  # the per-signature randomiser, and without it the message digest
+  # cannot be the one the RFC specifies.
+  sk_prf <- if (is.null(sk_prf)) .rmbl_random_seed_hex() else
+    .rmbl_check_seed(sk_prf, "sk_prf")
   root <- .Call(C_rmbl_xmss_keygen, sk_seed, pub_seed, height)
   out <- list(root = root, pub_seed = pub_seed, sk_seed = sk_seed,
+              sk_prf = sk_prf,
               height = height, next_index = 0L,
               capacity = bitwShiftL(1L, height),
               scheme = "xmss-sha256")
@@ -286,7 +301,13 @@ signing_public_key <- function(key) {
 #' `"hmac"` (symmetric). Inferred from `key` when not given.
 #' @return A list of class `bricklayer_signature`: `scheme`,
 #' `signature`, and for XMSS also `auth`, `index`,
-#' `root`, `height` and `key_state`.
+#' `root`, `height`, `key_state`, `randomizer` (the
+#' per-signature `R` of RFC 8391, which a verifier needs and which
+#' therefore travels with the signature) and `wire` -- the signature
+#' in the RFC's own byte order, `index || R || WOTS || auth`,
+#' hex-encoded. `wire` is byte-identical to what the XMSS reference
+#' implementation produces from the same key material, so it can be handed
+#' to another implementation as bytes.
 #' @seealso
 #' [capsule_verify()],
 #' [core_hmac_sha256()]
@@ -357,12 +378,18 @@ capsule_sign <- function(message, key, scheme = NULL) {
            call. = FALSE)
     }
   }
-  res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key$pub_seed,
+  if (is.null(key[["sk_prf"]])) {
+    stop(paste0("this signing key predates the RFC 8391 randomiser and ",
+                "cannot produce a conformant signature; generate a new ",
+                "one with pqc_keygen()"), call. = FALSE)
+  }
+  res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
                as.integer(key$height), idx, message)
   advanced <- key
   advanced$next_index <- idx + 1L
   out <- list(scheme = "xmss-sha256", signature = res$wots, auth = res$auth,
               index = idx, root = res$root, height = key$height,
+              randomizer = res$randomizer, wire = res$wire,
               key_state = advanced)
   class(out) <- c("bricklayer_signature", "list")
   out
@@ -445,9 +472,14 @@ capsule_verify <- function(message, signature, key) {
            call. = FALSE)
     }
   }
+  if (is.null(signature[["randomizer"]])) {
+    stop(paste0("this signature carries no RFC 8391 randomiser and cannot ",
+                "be verified; it was produced by an earlier, ",
+                "non-conformant version"), call. = FALSE)
+  }
   .Call(C_rmbl_xmss_verify, key$pub_seed, key$root, as.integer(key$height),
         as.integer(signature$index), message, signature$signature,
-        signature$auth)
+        signature$auth, signature[["randomizer"]])
 }
 
 # 32 seed bytes as hex, from the operating system's CSPRNG.
