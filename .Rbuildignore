@@ -28,3 +28,4 @@
 ^data-raw$
 ^CODE_OF_CONDUCT\.md$
 ^NEWS\.md\.bak$
+^src/.*\\.gc(da|no|ov)$
