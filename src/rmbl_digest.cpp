@@ -286,19 +286,34 @@ std::vector<unsigned char> merkle_reduce(const std::vector<unsigned char> &lvl) 
     return up;
 }
 
-std::vector<unsigned char> leaves_from_strings(SEXP x) {
+/* Level-0 digests from a list of raw vectors. Chunks are BYTES: a chunk
+ * may contain a zero byte, and nothing here goes through a C string, so
+ * the digest of a chunk is the digest of exactly the bytes supplied.
+ * The R layer is responsible for normalising its argument to this shape
+ * (see .rmbl_chunk_bytes), which keeps the byte sequence for a character
+ * chunk identical to what earlier versions hashed. */
+std::vector<unsigned char> leaves_from_chunks(SEXP x) {
     const R_xlen_t n = XLENGTH(x);
     std::vector<unsigned char> lvl;
     lvl.reserve(static_cast<size_t>(n) * 32);
     for (R_xlen_t i = 0; i < n; ++i) {
-        SEXP e = STRING_ELT(x, i);
-        const char *s = CHAR(e);
+        SEXP e = VECTOR_ELT(x, i);
+        if (TYPEOF(e) != RAWSXP) {
+            Rf_error("each chunk must be a raw vector");
+        }
         unsigned char h[32];
-        rmbl_sha256_raw(reinterpret_cast<const unsigned char *>(s),
-                        std::strlen(s), h);
+        rmbl_sha256_raw(RAW(e), static_cast<size_t>(XLENGTH(e)), h);
         lvl.insert(lvl.end(), h, h + 32);
     }
     return lvl;
+}
+
+/* Shared entry guard: the three Merkle entry points all take the same
+ * normalised list of raw chunks. */
+void check_chunk_list(SEXP x) {
+    if (TYPEOF(x) != VECSXP) {
+        Rf_error("`chunks` must be a list of raw vectors");
+    }
 }
 
 }  // namespace
@@ -379,46 +394,41 @@ SEXP C_rmbl_digest_equal(SEXP a, SEXP b) {
 }
 
 SEXP C_rmbl_merkle_root(SEXP x) {
-    x = PROTECT(Rf_coerceVector(x, STRSXP));
-    if (XLENGTH(x) < 1) {
-        UNPROTECT(1);
-        return Rf_ScalarString(NA_STRING);
-    }
-    std::vector<unsigned char> lvl = leaves_from_strings(x);
+    check_chunk_list(x);
+    if (XLENGTH(x) < 1) return Rf_ScalarString(NA_STRING);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x);
     while (lvl.size() > 32) lvl = merkle_reduce(lvl);
     char out[65];
     hexlify(lvl.data(), 32, out);
-    UNPROTECT(1);
     return Rf_mkString(out);
 }
 
 /* Leaf hashes, one per chunk -- the level-0 digests the root is built
  * from, so a caller can see WHICH chunk moved. */
 SEXP C_rmbl_merkle_leaves(SEXP x) {
-    x = PROTECT(Rf_coerceVector(x, STRSXP));
+    check_chunk_list(x);
     const R_xlen_t n = XLENGTH(x);
-    std::vector<unsigned char> lvl = leaves_from_strings(x);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x);
     SEXP res = PROTECT(Rf_allocVector(STRSXP, n));
     char out[65];
     for (R_xlen_t i = 0; i < n; ++i) {
         hexlify(lvl.data() + static_cast<size_t>(i) * 32, 32, out);
         SET_STRING_ELT(res, i, Rf_mkChar(out));
     }
-    UNPROTECT(2);
+    UNPROTECT(1);
     return res;
 }
 
 /* Inclusion proof for leaf `index` (1-based): the sibling digests from
  * the leaf up to the root, with the side each sibling sits on. */
 SEXP C_rmbl_merkle_proof(SEXP x, SEXP index) {
-    x = PROTECT(Rf_coerceVector(x, STRSXP));
+    check_chunk_list(x);
     const R_xlen_t n = XLENGTH(x);
     R_xlen_t pos = static_cast<R_xlen_t>(Rf_asInteger(index)) - 1;
     if (n < 1 || pos < 0 || pos >= n) {
-        UNPROTECT(1);
         Rf_error("`index` must be between 1 and the number of chunks");
     }
-    std::vector<unsigned char> lvl = leaves_from_strings(x);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x);
     std::vector<std::string> sib;
     std::vector<int> side;   /* 0 = sibling on the left, 1 = on the right */
     char out[65];
@@ -456,7 +466,7 @@ SEXP C_rmbl_merkle_proof(SEXP x, SEXP index) {
     SET_STRING_ELT(nm, 0, Rf_mkChar("sibling"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("side"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
-    UNPROTECT(5);
+    UNPROTECT(4);
     return res;
 }
 

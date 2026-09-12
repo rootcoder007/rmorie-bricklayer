@@ -208,26 +208,23 @@ core_digest_equal <- function(a, b) {
 #' @name rmbl_merkle
 #' @export
 merkle_root <- function(chunks) {
-  chunks <- as.character(chunks)
+  chunks <- .rmbl_chunk_bytes(chunks)
   if (length(chunks) == 0L) return(NA_character_)
-  if (anyNA(chunks)) stop("`chunks` must not contain NA", call. = FALSE)
   .Call(C_rmbl_merkle_root, chunks)
 }
 
 #' @rdname rmbl_merkle
 #' @export
 merkle_leaves <- function(chunks) {
-  chunks <- as.character(chunks)
+  chunks <- .rmbl_chunk_bytes(chunks)
   if (length(chunks) == 0L) return(character(0))
-  if (anyNA(chunks)) stop("`chunks` must not contain NA", call. = FALSE)
   .Call(C_rmbl_merkle_leaves, chunks)
 }
 
 #' @rdname rmbl_merkle
 #' @export
 merkle_proof <- function(chunks, index) {
-  chunks <- as.character(chunks)
-  if (anyNA(chunks)) stop("`chunks` must not contain NA", call. = FALSE)
+  chunks <- .rmbl_chunk_bytes(chunks)
   index <- as.integer(index)
   if (length(index) != 1L || is.na(index) || index < 1L ||
       index > length(chunks)) {
@@ -239,14 +236,14 @@ merkle_proof <- function(chunks, index) {
 #' @rdname rmbl_merkle
 #' @export
 merkle_verify <- function(leaf, proof, root) {
-  leaf <- as.character(leaf)
-  if (length(leaf) != 1L || is.na(leaf)) {
-    stop("`leaf` must be a length-1 character vector", call. = FALSE)
+  leaf <- .rmbl_chunk_bytes(leaf)
+  if (length(leaf) != 1L) {
+    stop("`leaf` must be a single chunk", call. = FALSE)
   }
   if (!is.list(proof) || !all(c("sibling", "side") %in% names(proof))) {
     stop("`proof` must be the list returned by merkle_proof()", call. = FALSE)
   }
-  node <- core_sha256(leaf)
+  node <- core_sha256(leaf[[1L]])
   sib <- as.character(proof$sibling)
   side <- as.character(proof$side)
   if (length(sib) != length(side)) {
@@ -262,6 +259,41 @@ merkle_verify <- function(leaf, proof, root) {
     node <- core_sha256(.rmbl_hex_to_raw(pair))
   }
   core_digest_equal(node, as.character(root))
+}
+
+# Normalise a chunk argument to a list of raw vectors.
+#
+# A chunk is a byte sequence, and the Merkle functions used to take it as
+# a character vector measured with strlen. That forbade a zero byte in a
+# chunk and, worse, silently accepted a raw vector by coercing it -- a
+# list of raw vectors deparses, so `merkle_root(list(charToRaw("a")))`
+# hashed the TEXT "as.raw(0x61)" rather than the byte 0x61, and reported
+# a confident digest of the wrong thing.
+#
+# Byte sequences for character input are unchanged, so a root recorded by
+# an earlier version still verifies: charToRaw() yields exactly the bytes
+# CHAR() gave the C layer.
+.rmbl_chunk_bytes <- function(chunks) {
+  if (is.raw(chunks)) return(list(chunks))
+  if (is.character(chunks)) {
+    if (anyNA(chunks)) stop("`chunks` must not contain NA", call. = FALSE)
+    return(lapply(chunks, charToRaw))
+  }
+  if (is.list(chunks)) {
+    return(lapply(seq_along(chunks), function(i) {
+      e <- chunks[[i]]
+      if (is.raw(e)) return(e)
+      if (is.character(e) && length(e) == 1L && !is.na(e)) {
+        return(charToRaw(e))
+      }
+      stop(sprintf(
+        "chunk %d must be a raw vector or a length-1 string", i),
+        call. = FALSE)
+    }))
+  }
+  if (length(chunks) == 0L) return(list())
+  stop("`chunks` must be a character vector, a raw vector, or a list of these",
+       call. = FALSE)
 }
 
 # Hex string to raw. Merkle nodes hash the concatenated BYTES of the two
@@ -285,8 +317,10 @@ merkle_verify <- function(leaf, proof, root) {
 #'
 #' @param path Path to an existing file.
 #' @param chunk_bytes Chunk size in bytes (default 1048576, i.e. 1 MiB).
-#' @return A character vector of chunks, in file order. A zero-length
-#'   file gives `character(0)`.
+#' @return A list of raw vectors, in file order. A zero-length file gives
+#'   an empty list. Chunks are returned as bytes rather than strings
+#'   because a file is bytes: an R string cannot hold a zero byte, so a
+#'   character chunk could not represent an arbitrary binary file at all.
 #' @seealso [merkle_root()], [sha512_file()]
 #' @examples
 #' p <- tempfile()
@@ -298,6 +332,9 @@ merkle_verify <- function(leaf, proof, root) {
 #'
 #' # The chunks reconstruct the file and pin it as a Merkle root.
 #' merkle_root(ch)
+#'
+#' # They are the file's bytes, so they concatenate back to it exactly.
+#' identical(unlist(ch), readBin(p, "raw", file.size(p)))
 #'
 #' # Editing the file changes exactly one leaf.
 #' unlink(p)
@@ -312,14 +349,14 @@ chunk_file <- function(path, chunk_bytes = 1048576L) {
     stop("`chunk_bytes` must be a positive integer", call. = FALSE)
   }
   size <- file.info(path)$size
-  if (is.na(size) || size == 0) return(character(0))
+  if (is.na(size) || size == 0) return(list())
   con <- file(path, "rb")
   on.exit(close(con), add = TRUE)
-  out <- character(0)
+  out <- list()
   repeat {
     bytes <- readBin(con, "raw", n = chunk_bytes)
     if (length(bytes) == 0L) break
-    out <- c(out, rawToChar(bytes))
+    out[[length(out) + 1L]] <- bytes
     if (length(bytes) < chunk_bytes) break
   }
   out

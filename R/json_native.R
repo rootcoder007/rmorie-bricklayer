@@ -238,10 +238,19 @@ bricklayer_json_base64_enc <- function(input) {
                  .RMBL_JSON_B64[v %% 64L + 1L])
   out <- paste(as.vector(chars), collapse = "")
   if (pad) substr(out, nchar(out) - pad + 1L, nchar(out)) <- strrep("=", pad)
-  # jsonlite's encoder breaks lines every 72 characters
-  if (nchar(out) > 72L) {
+  # jsonlite's encoder breaks lines every 72 characters, and the break
+  # TERMINATES each complete input block rather than separating two
+  # lines. The block is 54 INPUT bytes, which is what 72 output
+  # characters encode, and that distinction is visible: 52, 53 and 54
+  # bytes all produce 72 characters, but only 54 bytes fills a block and
+  # so only 54 bytes gets the newline. Wrapping on the output length
+  # instead differs from jsonlite by one byte at those lengths, and a
+  # digest comparison reads that as drift.
+  if (n >= 54L) {
     starts <- seq(1L, nchar(out), by = 72L)
-    out <- paste(substring(out, starts, pmin(starts + 71L, nchar(out))), collapse = "\n")
+    pieces <- substring(out, starts, pmin(starts + 71L, nchar(out)))
+    full <- seq_along(pieces) * 54L <= n
+    out <- paste0(pieces, ifelse(full, "\n", ""), collapse = "")
   }
   out
 }
