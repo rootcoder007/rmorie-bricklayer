@@ -92,7 +92,17 @@ test_that("prettify / minify / base64 / serialize agree with jsonlite", {
                  c(1 + 2i, NA), charToRaw("hi"), c(1, NA, NaN, Inf), NULL, TRUE, c(a = 1L))) {
     theirs <- as.character(jsonlite::serializeJSON(x))
     expect_identical(as.character(bricklayer_json_serialize(x)), theirs)
-    expect_equal(bricklayer_json_unserialize(theirs), jsonlite::unserializeJSON(theirs))
+    # Parity includes the CONDITIONS: a complex vector holding NA warns
+    # "NAs introduced by coercion" in jsonlite too, so suppressing it
+    # here would hide a divergence rather than a nuisance.
+    ours <- withCallingHandlers(
+      bricklayer_json_unserialize(theirs),
+      warning = function(w) {
+        expect_warning(jsonlite::unserializeJSON(theirs),
+                       conditionMessage(w), fixed = TRUE)
+        invokeRestart("muffleWarning")
+      })
+    expect_equal(ours, suppressWarnings(jsonlite::unserializeJSON(theirs)))
     # complex NA round-trips as NA+0i through jsonlite too; compare with its own result
     if (!is.complex(x)) expect_equal(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
   }

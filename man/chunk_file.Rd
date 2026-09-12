@@ -12,8 +12,10 @@ chunk_file(path, chunk_bytes = 1048576L)
 \item{chunk_bytes}{Chunk size in bytes (default 1048576, i.e. 1 MiB).}
 }
 \value{
-A character vector of chunks, in file order. A zero-length
-file gives \code{character(0)}.
+A list of raw vectors, in file order. A zero-length file gives
+an empty list. Chunks are returned as bytes rather than strings
+because a file is bytes: an R string cannot hold a zero byte, so a
+character chunk could not represent an arbitrary binary file at all.
 }
 \description{
 Reads \code{path} as bytes and returns them as chunk strings suitable for
@@ -31,6 +33,9 @@ length(ch)
 
 # The chunks reconstruct the file and pin it as a Merkle root.
 merkle_root(ch)
+
+# They are the file's bytes, so they concatenate back to it exactly.
+identical(unlist(ch), readBin(p, "raw", file.size(p)))
 
 # Editing the file changes exactly one leaf.
 unlink(p)

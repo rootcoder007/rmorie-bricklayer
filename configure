@@ -12,32 +12,49 @@
 
 PKG_CFLAGS=""
 PKG_LIBS="-lcurl"
+OQS_C=""
+OQS_L=""
 
 # 1. an explicit override always wins
 if [ -n "${LIBOQS_CFLAGS}" ] || [ -n "${LIBOQS_LIBS}" ]; then
   echo "configure: using LIBOQS_CFLAGS/LIBOQS_LIBS from the environment"
-  PKG_CFLAGS="${PKG_CFLAGS} -DHAVE_LIBOQS ${LIBOQS_CFLAGS}"
-  PKG_LIBS="${PKG_LIBS} ${LIBOQS_LIBS}"
+  OQS_C="${LIBOQS_CFLAGS}"
+  OQS_L="${LIBOQS_LIBS}"
   HAVE_OQS=yes
 else
   HAVE_OQS=no
   # 2. pkg-config, if it knows about liboqs
-  if [ "${HAVE_OQS}" = "no" ] && command -v pkg-config >/dev/null 2>&1; then
+  if command -v pkg-config >/dev/null 2>&1; then
     if pkg-config --exists liboqs 2>/dev/null; then
+      echo "configure: found liboqs via pkg-config"
       OQS_C=`pkg-config --cflags liboqs 2>/dev/null`
       OQS_L=`pkg-config --libs liboqs 2>/dev/null`
-      echo "configure: found liboqs via pkg-config"
-      PKG_CFLAGS="${PKG_CFLAGS} -DHAVE_LIBOQS ${OQS_C}"
-      PKG_LIBS="${PKG_LIBS} ${OQS_L}"
       HAVE_OQS=yes
     fi
   fi
-  # 3. a plain compile-and-link probe, for a library installed without
-  #    a pkg-config file
+  # 3. a plain link probe, for a library installed without a
+  #    pkg-config file
   if [ "${HAVE_OQS}" = "no" ]; then
-    CC=`"${R_HOME}/bin/R" CMD config CC 2>/dev/null`
-    if [ -n "${CC}" ]; then
-      cat > conftest_oqs.c <<'PROBE'
+    OQS_C=""
+    OQS_L="-loqs"
+    HAVE_OQS=probe
+  fi
+fi
+
+# Whatever route proposed the flags, they are only believed once a
+# program built with them has actually RUN. Linking is not enough: a
+# library found through an explicit -L that the runtime loader does not
+# search links cleanly and then fails at dyn.load, which installs a
+# package that cannot be loaded at all. So probe, and if the binary
+# links but will not run, retry with an rpath for each -L directory the
+# flags name before giving up on the library.
+if [ "${HAVE_OQS}" != "no" ]; then
+  CC=`"${R_HOME}/bin/R" CMD config CC 2>/dev/null`
+  if [ -z "${CC}" ]; then
+    echo "configure: no C compiler reported by R CMD config CC"
+    HAVE_OQS=no
+  else
+    cat > conftest_oqs.c <<'PROBE'
 #include <oqs/oqs.h>
 int main(void) {
     OQS_SIG *s = OQS_SIG_new("ML-DSA-65");
@@ -46,19 +63,44 @@ int main(void) {
     return 0;
 }
 PROBE
-      if ${CC} conftest_oqs.c -loqs -o conftest_oqs >/dev/null 2>&1; then
-        echo "configure: found liboqs by compile probe"
-        PKG_CFLAGS="${PKG_CFLAGS} -DHAVE_LIBOQS"
-        PKG_LIBS="${PKG_LIBS} -loqs"
-        HAVE_OQS=yes
+    # the rpath candidate is every -L directory in the proposed libs
+    RPATHS=""
+    for tok in ${OQS_L}; do
+      case "${tok}" in
+        -L*) d=`echo "${tok}" | sed -e 's|^-L||'`
+             if [ -n "${d}" ]; then RPATHS="${RPATHS} -Wl,-rpath,${d}"; fi ;;
+      esac
+    done
+    OQS_RPATH=""
+    OK=no
+    for extra in "" "${RPATHS}"; do
+      if [ "${OK}" = "no" ] && [ "${extra}" = "" -o -n "${extra}" ]; then
+        if ${CC} conftest_oqs.c ${OQS_C} ${OQS_L} ${extra} \
+             -o conftest_oqs >/dev/null 2>&1; then
+          if ./conftest_oqs >/dev/null 2>&1; then
+            OK=yes
+            OQS_RPATH="${extra}"
+          fi
+        fi
       fi
-      rm -f conftest_oqs.c conftest_oqs conftest_oqs.o
+    done
+    rm -f conftest_oqs.c conftest_oqs conftest_oqs.o
+    if [ "${OK}" = "yes" ]; then
+      if [ -n "${OQS_RPATH}" ]; then
+        echo "configure: liboqs needs a runtime path; adding${OQS_RPATH}"
+      fi
+      echo "configure: liboqs compiles, links and runs -- enabling it"
+      PKG_CFLAGS="${PKG_CFLAGS} -DHAVE_LIBOQS ${OQS_C}"
+      PKG_LIBS="${PKG_LIBS} ${OQS_L}${OQS_RPATH}"
+      HAVE_OQS=yes
+    else
+      HAVE_OQS=no
     fi
   fi
 fi
 
 if [ "${HAVE_OQS}" = "no" ]; then
-  echo "configure: liboqs not found -- building without it."
+  echo "configure: liboqs not usable here -- building without it."
   echo "configure: the bundled XMSS signature is unaffected; ML-DSA and"
   echo "configure: SLH-DSA will be reported as unavailable by pqc_backends()."
 fi

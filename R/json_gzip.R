@@ -49,19 +49,64 @@
 #' @export
 json_gzip_encode <- function(x, raw = FALSE, ...) {
   txt <- bricklayer_json_to_json(x, ...)
-  bytes <- memCompress(charToRaw(as.character(txt)), type = "gzip")
+  bytes <- .rmbl_gzip_member(charToRaw(as.character(txt)))
   if (isTRUE(raw)) return(bytes)
   bricklayer_json_base64_enc(bytes)
+}
+
+# Wrap a deflate stream in a real gzip member (RFC 1952).
+#
+# memCompress(type = "gzip") does NOT produce gzip: it produces a zlib
+# stream (RFC 1950), whose header is 0x78 0x9c rather than gzip's 0x1f
+# 0x8b. R's own memDecompress reads both, so a round trip through this
+# package looked correct while no external tool -- gzip, zcat, a browser
+# decoding Content-Encoding: gzip -- could read the bytes at all.
+#
+# The two formats share the same deflate payload and differ only in the
+# wrapper, so the zlib header (2 bytes) and its Adler-32 trailer (4
+# bytes) come off and the gzip header and trailer go on. MTIME is left
+# at zero so the same input always gives the same bytes: a capsule's
+# digest must not depend on the clock.
+.rmbl_gzip_member <- function(bytes) {
+  z <- memCompress(bytes, type = "gzip")
+  if (length(z) < 6L) stop("compression produced no stream", call. = FALSE)
+  # a zlib stream begins with CMF/FLG, where CMF's low nibble is 8
+  # (deflate); anything else is not the wrapper assumed here
+  if (bitwAnd(as.integer(z[1L]), 0x0f) != 8L) {
+    stop("unexpected compressed-stream header", call. = FALSE)
+  }
+  deflate <- z[3L:(length(z) - 4L)]
+  n <- length(bytes)
+  # Arithmetic, not bit operations: a CRC-32 runs up to 2^32 - 1 and R's
+  # bitwAnd is signed 32-bit, so it returns NA for anything above
+  # 2^31 - 1 -- which silently wrote a zero trailer for half of all
+  # inputs.
+  le32 <- function(v) {
+    v <- as.numeric(v) %% 4294967296
+    as.raw(c(v %% 256, (v %/% 256) %% 256,
+             (v %/% 65536) %% 256, (v %/% 16777216) %% 256))
+  }
+  # CRC-32 of the UNCOMPRESSED data, and its length modulo 2^32
+  hdr <- as.raw(c(0x1f, 0x8b, 0x08, 0x00,
+                  0x00, 0x00, 0x00, 0x00,   # MTIME = 0, for determinism
+                  0x00, 0xff))              # XFL = 0, OS = unknown
+  c(hdr, deflate, le32(core_crc32(bytes)), le32(n))
 }
 
 #' @rdname rmbl_json_gzip
 #' @export
 json_gzip_decode <- function(txt, raw = FALSE, ...) {
-  bytes <- if (isTRUE(raw)) {
-    if (!is.raw(txt)) stop("`txt` must be a raw vector when `raw = TRUE`",
-                           call. = FALSE)
+  # The input's own type settles how to read it: raw is already the gzip
+  # member, character is base64 around one. Trusting the flag instead
+  # meant that handing back what json_gzip_encode(raw = TRUE) returned,
+  # without repeating the flag, ran the bytes through as.character() and
+  # a base64 decode and failed inside the inflater rather than here.
+  bytes <- if (is.raw(txt)) {
     txt
   } else {
+    if (isTRUE(raw)) {
+      stop("`txt` must be a raw vector when `raw = TRUE`", call. = FALSE)
+    }
     bricklayer_json_base64_dec(as.character(txt)[1L])
   }
   json <- rawToChar(memDecompress(bytes, type = "gzip"))

@@ -43,6 +43,7 @@ Suggests:
     digest,
     jsonlite,
     knitr,
+    openssl,
     rmarkdown,
     stringi,
     testthat (>= 3.0.0)
