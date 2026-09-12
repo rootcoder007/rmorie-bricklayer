@@ -19,6 +19,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
@@ -85,6 +86,12 @@
 <li>
 <code><a href="../reference/environment_diff.html">environment_diff()</a></code> reports what moved between two runs’ captured environments, which is the question a failed reproduction actually raises.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="one-command-for-the-whole-assessment-0-4-0">One command for the whole assessment<a class="anchor" aria-label="anchor" href="#one-command-for-the-whole-assessment-0-4-0"></a></h3>
+<p><code><a href="../reference/capsule_report.html">capsule_report()</a></code> runs the checks above over one data frame and collects the findings into a single report, ordered by severity: a missing required column is <code>fatal</code>, a drifted column or an unverified signature is a <code>warn</code>, an outlier or a Benford departure is a <code>note</code>. It exists because the failure mode this package is built against is a person running one check, seeing it pass, and concluding the data is fine.</p>
+<p>Each problem is reported ONCE. An entirely missing column is missing, is trivially constant, and makes any covariance singular; reporting all three would bury the findings that matter under a single cause. The collinearity note therefore fires only for a genuinely duplicated or derived column, which is the case that tells the reader something new.</p>
+<p><code><a href="../reference/report_markdown.html">report_markdown()</a></code> writes the assessment beside the capsule it describes. Both renderings carry the caveat that no finding is proof of correctness.</p>
+</div>
 <div class="section level3">
 <h3 id="schemas-and-rules-0-4-0">Schemas and rules<a class="anchor" aria-label="anchor" href="#schemas-and-rules-0-4-0"></a></h3>
 <ul><li>

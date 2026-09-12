@@ -19,6 +19,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
@@ -725,7 +726,7 @@
       </dl></div><div class="section level2">
       <h2 id="describe-a-capsule">Describe a capsule<a class="anchor" aria-label="anchor" href="#describe-a-capsule"></a></h2>
 
-      <div class="section-desc"><p>The summaries worth reading before trusting a capsule: what every column looks like, where the gaps are, which values dominate, and which rows do not belong.</p></div>
+      <div class="section-desc"><p>The summaries worth reading before trusting a capsule: what every column looks like, where the gaps are, which values dominate, and which rows do not belong. <code><a href="../reference/capsule_report.html">capsule_report()</a></code> runs the lot and orders the findings by severity.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -733,6 +734,20 @@
 
 
       <dl><dt>
+
+          <code><a href="capsule_report.html">capsule_report()</a></code>
+
+        </dt>
+        <dd>Assess a capsule in one call</dd>
+
+        <dt>
+
+          <code><a href="report_markdown.html">report_markdown()</a></code>
+
+        </dt>
+        <dd>Write a capsule report as Markdown</dd>
+
+        <dt>
 
           <code><a href="profile_columns.html">profile_columns()</a></code>
 
@@ -887,7 +902,7 @@
 
       <dl><dt>
 
-          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code>
+          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code>
 
         </dt>
         <dd>Printed reports for bricklayer objects</dd>

@@ -483,7 +483,13 @@ project-specific checks a generic schema cannot express.
 The summaries worth reading before trusting a capsule: what every column
 looks like, where the gaps are, which values dominate, and which rows do
 not belong.
+[`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+runs the lot and orders the findings by severity.
 
+- [`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+  : Assess a capsule in one call
+- [`report_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.md)
+  : Write a capsule report as Markdown
 - [`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)
   : Column report for a data frame
 - [`inline_hist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/inline_hist.md)
@@ -556,6 +562,8 @@ Printed reports for the objects the package returns.
   [`print(`*`<bricklayer_signature>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`summary(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_env_diff>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`summary(`*`<bricklayer_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_schema>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_oqs_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_oqs_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
@@ -567,6 +575,8 @@ Printed reports for the objects the package returns.
 
 - [Building reproducible data
   capsules](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md):
+- [Look at the data
+  first](https://rootcoder007.github.io/rmorie-bricklayer/articles/describe.md):
 - [Has the data
   changed?](https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.md):
 - [Provenance you can

@@ -5,6 +5,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/CONTRIBUTING.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/LICENSE-text.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/describe.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/index.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.html</loc></url>
@@ -26,6 +27,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_schema.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.html</loc></url>
@@ -76,6 +78,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/record.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_arcgis.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan_search.html</loc></url>

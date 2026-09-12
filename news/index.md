@@ -140,6 +140,26 @@ and the look is the step that gets skipped.
   reports what moved between two runs’ captured environments, which is
   the question a failed reproduction actually raises.
 
+### One command for the whole assessment
+
+[`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+runs the checks above over one data frame and collects the findings into
+a single report, ordered by severity: a missing required column is
+`fatal`, a drifted column or an unverified signature is a `warn`, an
+outlier or a Benford departure is a `note`. It exists because the
+failure mode this package is built against is a person running one
+check, seeing it pass, and concluding the data is fine.
+
+Each problem is reported ONCE. An entirely missing column is missing, is
+trivially constant, and makes any covariance singular; reporting all
+three would bury the findings that matter under a single cause. The
+collinearity note therefore fires only for a genuinely duplicated or
+derived column, which is the case that tells the reader something new.
+
+[`report_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.md)
+writes the assessment beside the capsule it describes. Both renderings
+carry the caveat that no finding is proof of correctness.
+
 ### Schemas and rules
 
 - [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)

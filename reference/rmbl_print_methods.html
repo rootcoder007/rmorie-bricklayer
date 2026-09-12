@@ -27,6 +27,7 @@ invisibly."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
   </ul></li>
@@ -44,7 +45,7 @@ invisibly."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Printed reports for bricklayer objects</h1>
-      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/chain.R" class="external-link"><code>R/chain.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/mcar.R" class="external-link"><code>R/mcar.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/print_methods.R" class="external-link"><code>R/print_methods.R</code></a>, and 3 more</small>
+      <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/chain.R" class="external-link"><code>R/chain.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/mcar.R" class="external-link"><code>R/mcar.R</code></a>, <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/R/print_methods.R" class="external-link"><code>R/print_methods.R</code></a>, and 4 more</small>
       <div class="d-none name"><code>rmbl_print_methods.Rd</code></div>
     </div>
 
@@ -87,6 +88,12 @@ invisibly.</p>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_env_diff'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'bricklayer_report'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'bricklayer_schema'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -184,7 +191,7 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-in"><span><span class="va">key</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Signing key (post-quantum) ────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       12c0575745eb8a294e464bc53069318242a50ddd77bbc0da7aca4692bdea9edd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   root       cb0daa42e4bf7243ccfe0b691c1839efa5128d5edaabb5534d593c97d6d0eb2c</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   height     2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   used       0 of 4 signatures</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   remaining  4</span>
@@ -195,8 +202,8 @@ which is what to do when capturing output into a fixed-width log.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Capsule signature ─────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   scheme     xmss-sha256</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   index      0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   root       12c0575745eb8a294e464bc53069318242a50ddd77bbc0da7aca4692bdea9edd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   signature  9cb895efa0322e2d160dacaf02a2ecbf... (2144 bytes)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   root       cb0daa42e4bf7243ccfe0b691c1839efa5128d5edaabb5534d593c97d6d0eb2c</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   signature  adf1f530403d146521e68737b50d6890... (2144 bytes)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   auth path  2 nodes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 </code></pre></div>

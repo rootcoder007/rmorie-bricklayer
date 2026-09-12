@@ -46,7 +46,10 @@ stretches a passphrase into a full-width key with PBKDF2:
 
 ``` r
 
-salt <- paste(format(random_bytes(16)), collapse = "")
+# Fixed here so the vignette is reproducible. For a real key the salt
+# comes from random_bytes(16), which reads the operating system's
+# CSPRNG rather than R's generator.
+salt <- "9f2c41a7d8e05b36"
 key <- derive_key("correct horse battery staple", salt)
 nchar(key)
 #> [1] 64
@@ -82,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       01b71e405b90dc0cea1cf111ad0e104c942f159b91ddbdd78268221ff7f39e6e
+#>   root       ecb91480654fb593b8d93bf4eeee4be33baf2802bb0c0b61de17c945bf401545
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -99,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    01b71e405b90dc0cea1cf111ad0e104c942f159b91ddbdd78268221ff7f39e6e
+#>   root    ecb91480654fb593b8d93bf4eeee4be33baf2802bb0c0b61de17c945bf401545
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```

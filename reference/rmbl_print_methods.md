@@ -40,6 +40,12 @@ summary(object, ...)
 # S3 method for class 'bricklayer_env_diff'
 print(x, ...)
 
+# S3 method for class 'bricklayer_report'
+print(x, ...)
+
+# S3 method for class 'bricklayer_report'
+summary(object, ...)
+
 # S3 method for class 'bricklayer_schema'
 print(x, ...)
 
@@ -135,7 +141,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       12c0575745eb8a294e464bc53069318242a50ddd77bbc0da7aca4692bdea9edd
+#>   root       cb0daa42e4bf7243ccfe0b691c1839efa5128d5edaabb5534d593c97d6d0eb2c
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -146,8 +152,8 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       12c0575745eb8a294e464bc53069318242a50ddd77bbc0da7aca4692bdea9edd
-#>   signature  9cb895efa0322e2d160dacaf02a2ecbf... (2144 bytes)
+#>   root       cb0daa42e4bf7243ccfe0b691c1839efa5128d5edaabb5534d593c97d6d0eb2c
+#>   signature  adf1f530403d146521e68737b50d6890... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 ```
