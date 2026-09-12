@@ -258,16 +258,13 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     }, 0)
     list(cuts = cuts, vals = vals)
   }
+  # `y` is already reduced to its finite values and the statistic is a
+  # weighted squared difference of means, so every split scores a finite
+  # number. There is no inadmissible-scan case left to guard against;
+  # the earlier guard for one could not fire.
   obs <- stat(y)
-  fin <- is.finite(obs$vals)
-  if (!any(fin)) {
-    return(list(break_after = NA, index = NA_integer_, before = NA_real_,
-                after = NA_real_, difference = NA_real_,
-                statistic = NA_real_, p_value = NA_real_,
-                n_perm = 0L, method = "no admissible split"))
-  }
-  best <- obs$cuts[which.max(replace(obs$vals, !fin, -Inf))]
-  tmax <- max(obs$vals[fin])
+  best <- obs$cuts[which.max(obs$vals)]
+  tmax <- max(obs$vals)
   a <- y[seq_len(best)]
   b <- y[(best + 1L):n]
 
@@ -277,10 +274,7 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   nfact <- if (n <= 8L) factorial(n) else Inf
   if (nfact <= n_perm) {
     perms <- .rmbl_permutations(n)
-    null <- apply(perms, 1L, function(p) {
-      v <- stat(y[p])$vals
-      if (any(is.finite(v))) max(v[is.finite(v)]) else NA_real_
-    })
+    null <- apply(perms, 1L, function(p) max(stat(y[p])$vals))
     method <- sprintf("exact over all %d orderings", nrow(perms))
     np <- nrow(perms)
   } else {
@@ -290,10 +284,8 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
       NULL
     }
     set.seed(seed)
-    null <- vapply(seq_len(n_perm), function(i) {
-      v <- stat(sample(y))$vals
-      if (any(is.finite(v))) max(v[is.finite(v)]) else NA_real_
-    }, 0)
+    null <- vapply(seq_len(n_perm),
+                   function(i) max(stat(sample(y))$vals), 0)
     if (is.null(old)) {
       suppressWarnings(rm(".Random.seed", envir = globalenv()))
     } else {
