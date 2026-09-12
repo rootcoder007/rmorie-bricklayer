@@ -56,6 +56,12 @@ extern SEXP C_rmbl_xmss_keygen(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_pqc_backends(void);
+/* .Call wrappers (rmbl_sketch.cpp) -- one-pass sketches */
+extern SEXP C_rmbl_moments_acc(SEXP);
+extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
+extern SEXP C_rmbl_reservoir(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hll_add(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hll_count(SEXP);
 /* .Call wrappers (defined in rmbl_fetch.cpp) -- libcurl fetch + wayback */
 extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP);
@@ -105,6 +111,8 @@ extern void   rmbl_sha512_hex(const unsigned char *, size_t, char *);
 extern void   rmbl_hmac_sha256_hex(const unsigned char *, size_t,
                                    const unsigned char *, size_t, char *);
 extern int    rmbl_digest_equal(const char *, const char *, size_t);
+extern void   rmbl_moments_acc(const double *, R_xlen_t, double *);
+extern void   rmbl_moments_merge(const double *, const double *, double *);
 /* fetch kernels (defined in rmbl_fetch.cpp) -- the cross-package fetch API */
 extern int  rmbl_fetch_with_fallback(const char *, const char *, const char *, int);
 extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
@@ -154,6 +162,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         5},
     {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       7},
     {"C_rmbl_pqc_backends",      (DL_FUNC) &C_rmbl_pqc_backends,      0},
+    {"C_rmbl_moments_acc",       (DL_FUNC) &C_rmbl_moments_acc,       1},
+    {"C_rmbl_moments_merge",     (DL_FUNC) &C_rmbl_moments_merge,     2},
+    {"C_rmbl_reservoir",         (DL_FUNC) &C_rmbl_reservoir,         3},
+    {"C_rmbl_hll_add",           (DL_FUNC) &C_rmbl_hll_add,           3},
+    {"C_rmbl_hll_count",         (DL_FUNC) &C_rmbl_hll_count,         1},
     {NULL, NULL, 0}
 };
 
@@ -199,4 +212,6 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_RegisterCCallable("rmoriebricklayer", "rmbl_sha512_hex",     (DL_FUNC) rmbl_sha512_hex);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_hmac_sha256_hex",(DL_FUNC) rmbl_hmac_sha256_hex);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_digest_equal",   (DL_FUNC) rmbl_digest_equal);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_moments_acc",   (DL_FUNC) rmbl_moments_acc);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_moments_merge", (DL_FUNC) rmbl_moments_merge);
 }

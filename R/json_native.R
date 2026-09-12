@@ -1496,24 +1496,57 @@ bricklayer_json_rbind_pages <- function(pages) {
   output
 }
 
-#' Serialise an R object losslessly (jsonlite's serializeJSON)
+#' Lossless JSON serialisation of an R object
 #'
-#' Type and attributes travel with the value, so the round trip returns the
-#' same object rather than something that merely prints the same.
+#' Writes an R object to JSON with its type and attributes alongside the
+#' value, so the round trip returns THE SAME OBJECT rather than something
+#' that merely prints the same. The counterpart of jsonlite's
+#' `serializeJSON()`/`unserializeJSON()`, computed by this package's own
+#' codec with no jsonlite dependency.
 #'
-#' @param x object to serialise.
-#' @param digits decimal digits for doubles (8, as jsonlite).
-#' @param pretty indent the output.
-#' @return a length-one character vector of class `json`.
-#' @noRd
+#' Use this, not [bricklayer_json_to_json()], whenever the JSON has to
+#' reconstruct the object faithfully. `bricklayer_json_to_json()` writes
+#' the DATA -- which is what an API or a human wants, and which loses
+#' factor levels, matrix dimensions, classes and every other attribute.
+#' These two keep them, at the cost of JSON no other tool will
+#' understand.
+#'
+#' @param x Object to serialise.
+#' @param digits Decimal digits retained for doubles (default 8, the
+#'   jsonlite default). Raise it where full precision matters.
+#' @param pretty Indent the output.
+#' @param txt JSON produced by `bricklayer_json_serialize()`.
+#' @return `bricklayer_json_serialize()` returns a length-1 character
+#'   vector of class `json`; `bricklayer_json_unserialize()` returns the
+#'   original object.
+#' @seealso [bricklayer_json_to_json()] for plain data JSON,
+#'   [core_sha256()] for fingerprinting the result.
+#' @examples
+#' # A factor survives the round trip with its levels intact.
+#' f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
+#' back <- bricklayer_json_unserialize(bricklayer_json_serialize(f))
+#' identical(back, f)
+#'
+#' # So does a matrix, with its dimensions.
+#' m <- matrix(1:6, nrow = 2)
+#' identical(bricklayer_json_unserialize(bricklayer_json_serialize(m)), m)
+#'
+#' # Plain data JSON does not keep either, which is the trade-off.
+#' bricklayer_json_to_json(f)
+#'
+#' # Nested lists, names and NULLs round trip too.
+#' x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
+#' identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+#'
+#' # The serialised form is JSON, so it can be pinned like any other text.
+#' nchar(core_sha256(bricklayer_json_serialize(m)))
+#' @name rmbl_json_serialize
+#' @export
 bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
   bricklayer_json_to_json(.rmbl_json_pack(x), digits = digits, pretty = pretty)
 }
 
-#' Restore an object written by bricklayer_json_serialize
-#'
-#' @param txt JSON produced by [bricklayer_json_serialize()].
-#' @return the original R object.
-#' @noRd
+#' @rdname rmbl_json_serialize
+#' @export
 bricklayer_json_unserialize <- function(txt) .rmbl_json_unpack(.rmbl_json_parse(txt))
 

@@ -346,18 +346,38 @@ verify_sha256 <- function(path, expected_sha) {
 #' Validate a Data Frame Against a Provenance Schema
 #'
 #' Checks a raw data frame against the `schema` block of a provenance
-#' object: required columns, row-count bounds, and allowed categorical
-#' value sets. Returns the issues found rather than raising, so the caller
-#' decides how to react.
+#' object and returns the issues found rather than raising, so the caller
+#' decides how to react. [apply_schema_validation()] is the wrapper that
+#' turns them into errors and warnings.
+#'
+#' Every schema field is optional and is checked only when present, so a
+#' schema written for an earlier version keeps working unchanged.
+#'
+#' This is the STRUCTURAL check -- names, types, bounds, value sets. It
+#' cannot tell you that a column kept its name, type and range while its
+#' distribution moved; [capsule_drift()] answers that.
 #'
 #' @param df_raw The data frame to validate.
-#' @param provenance A provenance list as returned by [load_provenance()].
-#'   The `schema` block may contain `expected_columns`,
-#'   `structural_invariants` (`min_data_rows`, `max_data_rows`), and
-#'   `expected_value_sets` (a named list of allowed values per column).
+#' @param provenance A provenance list as returned by [load_provenance()],
+#'   or `list(schema = infer_schema(df))`. The `schema` block may contain:
+#'   * `expected_columns` -- required column names. A missing one is
+#'     `"fatal"`; everything else below is a `"warning"`.
+#'   * `structural_invariants` -- `min_data_rows` and `max_data_rows`.
+#'   * `expected_value_sets` -- a named list of allowed values per column.
+#'   * `expected_types` -- a named character vector of expected classes.
+#'     `integer`, `numeric` and `double` are treated as interchangeable,
+#'     since a re-release legitimately widens one to another.
+#'   * `numeric_ranges` -- a named list of `c(min =, max =)` bounds.
+#'   * `max_missing_fraction` -- a named numeric of per-column ceilings on
+#'     the share of `NA`.
+#'
+#'   [infer_schema()] produces all six from data you already trust.
 #' @return A named list of issues; each issue is a list with `severity`
 #'   (`"fatal"` or `"warning"`) and a human-readable `message`. A
 #'   zero-length list means the data frame is clean.
+#' @seealso [infer_schema()] to derive a schema, [capsule_drift()] for
+#'   the distributional check, [apply_schema_validation()] to raise on
+#'   the issues.
 #' @examples
 #' prov <- list(schema = list(
 #'   expected_columns      = c("id", "year"),
@@ -367,6 +387,20 @@ verify_sha256 <- function(path, expected_sha) {
 #' df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
 #' issues <- validate_schema(df, prov)
 #' names(issues)  # flags the out-of-set year value
+#'
+#' # A column that silently changed type is caught.
+#' typed <- list(schema = list(expected_types = c(id = "integer")))
+#' validate_schema(data.frame(id = c("1", "2")), typed)[[1]]$message
+#'
+#' # So is a value outside its pinned range, and excess missingness.
+#' ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
+#' validate_schema(data.frame(v = c(0.5, 9)), ranged)[[1]]$message
+#'
+#' gappy <- list(schema = list(max_missing_fraction = c(v = 0.1)))
+#' validate_schema(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
+#'
+#' # A clean frame produces nothing.
+#' length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
 #' @export
 validate_schema <- function(df_raw, provenance) {
   issues <- list()
@@ -399,6 +433,70 @@ validate_schema <- function(df_raw, provenance) {
       message  = sprintf("Row count %d above expected maximum %d",
                         nrow(df_raw), inv$max_data_rows)
     )
+
+  ## --- Column types ---
+  ## A column that silently changed type (a numeric read back as
+  ## character because one row gained a footnote marker) breaks every
+  ## downstream computation while passing a name-only check.
+  if (!is.null(sch$expected_types)) {
+    for (col in names(sch$expected_types)) {
+      if (!col %in% colnames(df_raw)) next
+      want <- sch$expected_types[[col]]
+      got <- class(df_raw[[col]])[1L]
+      ## integer and double are both "numeric" for this purpose; a
+      ## re-release legitimately widens one to the other.
+      numeric_like <- c("integer", "numeric", "double")
+      same <- identical(got, want) ||
+        (got %in% numeric_like && want %in% numeric_like)
+      if (!same) {
+        issues[[paste0("type_", col)]] <- list(
+          severity = "warning",
+          message  = sprintf("Column '%s' is %s, expected %s",
+                             col, got, want)
+        )
+      }
+    }
+  }
+
+  ## --- Numeric ranges ---
+  if (!is.null(sch$numeric_ranges)) {
+    for (col in names(sch$numeric_ranges)) {
+      if (!col %in% colnames(df_raw)) next
+      v <- df_raw[[col]]
+      if (!is.numeric(v)) next
+      ok <- v[!is.na(v)]
+      if (!length(ok)) next
+      rng <- sch$numeric_ranges[[col]]
+      lo <- rng[["min"]]
+      hi <- rng[["max"]]
+      n_out <- sum(ok < lo | ok > hi)
+      if (n_out > 0L) {
+        issues[[paste0("range_", col)]] <- list(
+          severity = "warning",
+          message  = sprintf(
+            "Column '%s' has %d value(s) outside [%s, %s]",
+            col, n_out, format(lo), format(hi))
+        )
+      }
+    }
+  }
+
+  ## --- Missingness ---
+  if (!is.null(sch$max_missing_fraction)) {
+    for (col in names(sch$max_missing_fraction)) {
+      if (!col %in% colnames(df_raw)) next
+      frac <- sum(is.na(df_raw[[col]])) / max(1L, nrow(df_raw))
+      cap <- sch$max_missing_fraction[[col]]
+      if (frac > cap) {
+        issues[[paste0("missing_", col)]] <- list(
+          severity = "warning",
+          message  = sprintf(
+            "Column '%s' is %.1f%% missing, above the expected %.1f%%",
+            col, 100 * frac, 100 * cap)
+        )
+      }
+    }
+  }
 
   ## --- Categorical value sets ---
   if (!is.null(sch$expected_value_sets)) {
