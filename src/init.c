@@ -70,8 +70,9 @@ extern SEXP C_rmbl_merkle_leaves(SEXP);
 extern SEXP C_rmbl_merkle_proof(SEXP, SEXP);
 /* .Call wrappers (rmbl_pqc.cpp) -- post-quantum capsule signatures */
 extern SEXP C_rmbl_xmss_keygen(SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_xmss_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP,
+                               SEXP);
 extern SEXP C_rmbl_pqc_backends(void);
 extern SEXP C_rmbl_oqs_keygen(SEXP);
 extern SEXP C_rmbl_oqs_sign(SEXP, SEXP, SEXP);
@@ -197,8 +198,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_merkle_leaves",     (DL_FUNC) &C_rmbl_merkle_leaves,     1},
     {"C_rmbl_merkle_proof",      (DL_FUNC) &C_rmbl_merkle_proof,      2},
     {"C_rmbl_xmss_keygen",       (DL_FUNC) &C_rmbl_xmss_keygen,       3},
-    {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         5},
-    {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       7},
+    {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         6},
+    {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       8},
     {"C_rmbl_pqc_backends",      (DL_FUNC) &C_rmbl_pqc_backends,      0},
     {"C_rmbl_oqs_keygen",        (DL_FUNC) &C_rmbl_oqs_keygen,        1},
     {"C_rmbl_oqs_sign",          (DL_FUNC) &C_rmbl_oqs_sign,          3},

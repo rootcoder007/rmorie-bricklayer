@@ -144,9 +144,17 @@ test_that("every C entry point is registered and every registration resolves", {
     arity <- suppressWarnings(as.integer(
       sub(".*,\\s*([0-9]+)\\s*\\}.*", "\\1", row[1L])))
     if (is.na(arity)) next
-    decl <- grep(sprintf("extern SEXP %s\\(", nm), ini, value = TRUE)
-    if (!length(decl)) next
-    args <- sub(".*\\(([^)]*)\\).*", "\\1", decl[1L])
+    at <- grep(sprintf("extern SEXP %s\\(", nm), ini)
+    if (!length(at)) next
+    # a long declaration is legitimately wrapped, so join lines until the
+    # closing parenthesis rather than reading only the first
+    decl <- ini[at[1L]]
+    k <- at[1L]
+    while (!grepl(")", decl, fixed = TRUE) && k < length(ini)) {
+      k <- k + 1L
+      decl <- paste(decl, trimws(ini[k]))
+    }
+    args <- sub(".*\\(([^)]*)\\).*", "\\1", decl)
     n <- if (identical(trimws(args), "void") || !nzchar(trimws(args))) {
       0L
     } else {

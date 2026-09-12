@@ -415,12 +415,39 @@ statistics are anchored on base R, the Merkle construction on digests
 recomputed by hand, and the exceedance and reservoir distributions on
 exhaustive enumeration and simulation respectively.
 
-The XMSS signature scheme has **no** official known-answer vectors
-available offline, so it is verified against its security properties
-instead -- a valid signature verifies, and every tampering of the
-message, signature, authentication path, index or key fails. It is not
-claimed to be byte-compatible with other XMSS implementations and must
-not be treated as certified. The standardised schemes carry no such
+The XMSS signature scheme is **byte-compatible with the RFC 8391
+reference implementation**. Getting there required fixing three
+divergences from the specification, none of which the previous
+security-property tests could detect, because a sound-but-wrong
+pseudorandom function passes every one of them:
+
+* the WOTS+ chain seeds came from `PRF(SK_SEED, toByte(i, 32))` rather
+  than `PRF_keygen(SK_SEED, PUB_SEED || ADRS)` (NIST SP 800-208's
+  domain 4);
+* the message digest was keyed with `PUB_SEED`, with the index and root
+  pushed into the message, rather than keyed with
+  `R || root || toByte(idx, n)` as section 4.1.9 requires;
+* there was no `SK_PRF`, so the per-signature randomiser `R` that the
+  RFC binds the digest to did not exist at all.
+
+The whole 2500-byte signature for XMSS-SHA2_10_256 -- index,
+randomiser, WOTS+ signature and authentication path -- now matches the
+reference byte for byte, and the vectors are embedded in the test suite
+so the check needs neither a network nor a C toolchain.
+
+**This changes the key and signature formats.** `pqc_keygen()` now
+generates a third secret (`sk_prf`) and `capsule_sign()` returns
+`randomizer` and `wire` alongside the existing fields. A key made by an
+earlier build cannot sign, and a signature made by one cannot be
+verified; both raise an explicit error rather than failing quietly.
+Nothing is lost in practice, because signing is new in this release and
+was never in a version on CRAN.
+
+It is verified against its security properties as well -- a valid
+signature verifies, and every tampering of the message, signature,
+authentication path, index or key fails -- and it must still not be
+treated as *certified*, which is a statement about process rather than
+about the bytes. The standardised schemes carry no such
 caveat, because they are liboqs's implementation rather than one of
 ours; what is tested here is the binding, including that ML-DSA-65
 produces the key and signature sizes FIPS 204 specifies.
