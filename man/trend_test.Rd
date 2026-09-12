@@ -28,6 +28,8 @@ Mann-Kendall's S by enumeration. Feasible and used by default up to
 the tie and continuity corrections is used.}
 
 \item{alternative}{\code{"two.sided"}, \code{"increasing"} or \code{"decreasing"}.}
+
+\item{conf_level}{Confidence level for the slope interval.}
 }
 \value{
 A list with \code{S}, \code{tau}, \code{p_value}, \code{slope} (Theil-Sen),

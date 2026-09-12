@@ -28,6 +28,7 @@
 #'   `n = 8` (40,320 orderings); above that the normal approximation with
 #'   the tie and continuity corrections is used.
 #' @param alternative `"two.sided"`, `"increasing"` or `"decreasing"`.
+#' @param conf_level Confidence level for the slope interval.
 #' @return A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen),
 #'   `intercept`, `slope_lower`/`slope_upper` (the distribution-free
 #'   interval), `n` and `method`.

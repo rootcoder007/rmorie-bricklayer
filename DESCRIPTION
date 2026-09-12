@@ -30,6 +30,23 @@ Description: Tools for building brick-proof, reproducible, self-contained
     'SHA-256', 'SHA-512' and 'CRC-32') that sibling packages in the
     'rmorie' ecosystem reach through 'LinkingTo' for a single, shared
     numeric and provenance-hashing backend.
+    For the published administrative tables these capsules usually hold,
+    it computes period-over-period change matched on the period rather
+    than the row, with the exact conditional-binomial interval for a
+    ratio of counts and with a percentage-point reading kept distinct
+    from a percent change, rendered to Hypertext Markup Language
+    ('HTML'), Portable Document Format ('PDF'), delimited text,
+    JavaScript Object Notation ('JSON') or Markdown. Interval categories
+    such as "2 to 5" or "50+" are parsed to bounds and the dependence of
+    any derived figure on the open top band is measured rather than
+    assumed. Concentration is summarised by the Gini coefficient, the
+    Lorenz curve and tail-index estimation by exact discrete maximum
+    likelihood; trend in a series of a few periods by the Mann-Kendall
+    test with Theil-Sen slopes, a permutation step-change scan and
+    Poisson rate ratios; and region-coded counts by indirect
+    standardisation, exact standardised incidence ratios, the empirical
+    Bayes shrinkage of Clayton and Kaldor (1987)
+    <doi:10.2307/2532003>, funnel-plot limits and Moran's I.
 License: AGPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
