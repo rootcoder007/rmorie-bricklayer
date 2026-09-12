@@ -101,12 +101,19 @@ test_that("the C-level guards reject malformed arguments", {
                "non-negative")
   # the Merkle proof index
   expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_proof,
-                     c("a", "b"), 5L), "between 1 and")
+                     list(charToRaw("a"), charToRaw("b")), 5L),
+               "between 1 and")
+  # the C layer takes bytes, so it refuses anything that is not a list
+  # of raw vectors rather than coercing it to text and hashing that
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, c("a", "b")),
+               "list of raw vectors")
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list("a")),
+               "must be a raw vector")
 })
 
 test_that("an empty Merkle tree and sketch degrade rather than error", {
-  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root,
-                          character(0))))
+  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list())))
+  expect_true(is.na(merkle_root(character(0))))
   expect_equal(distinct_count(integer(0)), 0)
   expect_length(reservoir_indices(0, 0), 0L)
   # a single-leaf tree needs no proof

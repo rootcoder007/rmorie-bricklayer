@@ -179,8 +179,8 @@ test_that("chunk_file handles a file that is an exact multiple of the block", {
   writeBin(as.raw(rep(65L, 100)), p)
   ch <- chunk_file(p, chunk_bytes = 50L)
   expect_length(ch, 2L)
-  expect_equal(nchar(ch[1]), 50L)
-  expect_equal(paste(ch, collapse = ""), strrep("A", 100))
+  expect_length(ch[[1L]], 50L)
+  expect_identical(unlist(ch), as.raw(rep(65L, 100)))
   # and a block larger than the file
   expect_length(chunk_file(p, chunk_bytes = 1000L), 1L)
   # the digests agree whatever the block size

@@ -190,7 +190,7 @@ test_that("a Merkle proof verifies exactly the chunk it was built for", {
   expect_error(merkle_proof(chunks, 0), "between 1 and")
   expect_error(merkle_proof(chunks, 9), "between 1 and")
   expect_error(merkle_verify("a", list(bad = 1), "x"), "merkle_proof")
-  expect_error(merkle_verify(c("a", "b"), one, "x"), "length-1")
+  expect_error(merkle_verify(c("a", "b"), one, "x"), "a single chunk")
 })
 
 test_that("chunk_file splits a file and pins it", {
@@ -200,14 +200,16 @@ test_that("chunk_file splits a file and pins it", {
 
   ch <- chunk_file(p, chunk_bytes = 100L)
   expect_equal(length(ch), 5L)
-  expect_equal(nchar(ch[1]), 100L)
+  # chunks are bytes, because a file is bytes and an R string cannot
+  # hold a zero one
+  expect_true(all(vapply(ch, is.raw, TRUE)))
+  expect_length(ch[[1L]], 100L)
   # the chunks reconstruct the file exactly
-  expect_equal(paste(ch, collapse = ""),
-               rawToChar(readBin(p, "raw", n = 1e6)))
+  expect_identical(unlist(ch), readBin(p, "raw", n = 1e6))
   # one chunk covering the whole file is the whole file
   expect_equal(length(chunk_file(p, chunk_bytes = 1e6)), 1L)
   expect_equal(merkle_root(chunk_file(p, 1e6)),
-               core_sha256(chunk_file(p, 1e6)))
+               core_sha256(chunk_file(p, 1e6)[[1L]]))
   # editing one chunk's worth of bytes moves exactly one leaf
   before <- merkle_leaves(ch)
   p2 <- tempfile()
@@ -222,7 +224,7 @@ test_that("chunk_file splits a file and pins it", {
   e <- tempfile()
   on.exit(unlink(e), add = TRUE)
   file.create(e)
-  expect_equal(chunk_file(e), character(0))
+  expect_length(chunk_file(e), 0L)
 
   expect_error(chunk_file(tempfile()), "no such file")
   expect_error(chunk_file(p, chunk_bytes = 0), "positive integer")

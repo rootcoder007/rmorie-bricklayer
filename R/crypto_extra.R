@@ -241,9 +241,23 @@ digest_object <- function(x, algo = c("sha256", "sha512", "blake2b",
                                       "crc32"), key = NULL) {
   algo <- match.arg(algo)
   bytes <- serialize(x, NULL, version = 2L, xdr = TRUE)
+  if (!is.null(key)) {
+    # A keyed digest authenticates; an unkeyed one only detects
+    # accidental change. Returning the unkeyed digest because the chosen
+    # algorithm has no keyed form would answer the stronger request with
+    # the weaker guarantee, so refuse instead.
+    if (!algo %in% c("sha256", "blake2b")) {
+      stop(sprintf(
+        "`key` is not supported for algo = \"%s\"; keyed digests are available for \"sha256\" (HMAC-SHA-256) and \"blake2b\"",
+        algo), call. = FALSE)
+    }
+    return(switch(algo,
+      sha256 = core_hmac_sha256(key, bytes),
+      blake2b = core_blake2b(bytes, key = key, length = 32L)))
+  }
   switch(algo,
     sha256 = core_sha256(bytes),
     sha512 = core_sha512(bytes),
     crc32 = core_crc32(bytes),
-    blake2b = core_blake2b(bytes, key = key, length = 32L))
+    blake2b = core_blake2b(bytes, length = 32L))
 }
