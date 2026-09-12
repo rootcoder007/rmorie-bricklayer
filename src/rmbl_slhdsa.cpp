@@ -27,6 +27,7 @@
  */
 
 #include "rmbl_slhdsa_core.h"
+#include "rmbl_prehash.h"
 
 #define SLH_NS rmbl_slhdsa_shake_128s
 #define SLH_N 16
@@ -352,7 +353,7 @@ SEXP C_rmbl_slhdsa_keypair(SEXP set, SEXP seed) {
 }
 
 SEXP C_rmbl_slhdsa_sign(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
-                        SEXP opt_rand) {
+                        SEXP opt_rand, SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         Rf_error("`ctx` must be a raw vector of at most 255 bytes");
@@ -365,15 +366,25 @@ SEXP C_rmbl_slhdsa_sign(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
             Rf_error("`opt_rand` must be a raw vector of %d bytes", S::kN);
         }
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, S::kSigBytes));
-        S::sign(RAW(sig), RAW(msg), static_cast<size_t>(XLENGTH(msg)),
-                RAW(ctx), static_cast<size_t>(XLENGTH(ctx)),
-                RAW(opt_rand), RAW(sk));
+        rmbl_prehash::Result ph;
+        rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
+                            static_cast<size_t>(XLENGTH(msg)), &ph);
+        if (ph.oid_len > 0) {
+            S::sign(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
+                    static_cast<size_t>(XLENGTH(ctx)), RAW(opt_rand),
+                    RAW(sk), ph.oid, ph.oid_len);
+        } else {
+            S::sign(RAW(sig), RAW(msg), static_cast<size_t>(XLENGTH(msg)),
+                    RAW(ctx), static_cast<size_t>(XLENGTH(ctx)),
+                    RAW(opt_rand), RAW(sk), NULL, 0);
+        }
         UNPROTECT(1);
         return sig;
     });
 }
 
-SEXP C_rmbl_slhdsa_verify(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig) {
+SEXP C_rmbl_slhdsa_verify(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
+                          SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         return Rf_ScalarLogical(FALSE);
@@ -386,13 +397,18 @@ SEXP C_rmbl_slhdsa_verify(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig) {
             TYPEOF(sig) != RAWSXP) {
             return Rf_ScalarLogical(FALSE);
         }
-        const int r = S::verify(RAW(sig),
-                                static_cast<size_t>(XLENGTH(sig)),
-                                RAW(msg),
-                                static_cast<size_t>(XLENGTH(msg)),
-                                RAW(ctx),
-                                static_cast<size_t>(XLENGTH(ctx)),
-                                RAW(pk));
+        rmbl_prehash::Result ph;
+        rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
+                            static_cast<size_t>(XLENGTH(msg)), &ph);
+        const int r = ph.oid_len > 0
+            ? S::verify(RAW(sig), static_cast<size_t>(XLENGTH(sig)),
+                        ph.digest, ph.digest_len, RAW(ctx),
+                        static_cast<size_t>(XLENGTH(ctx)), RAW(pk),
+                        ph.oid, ph.oid_len)
+            : S::verify(RAW(sig), static_cast<size_t>(XLENGTH(sig)),
+                        RAW(msg), static_cast<size_t>(XLENGTH(msg)),
+                        RAW(ctx), static_cast<size_t>(XLENGTH(ctx)),
+                        RAW(pk), NULL, 0);
         return Rf_ScalarLogical(r == 0);
     });
 }

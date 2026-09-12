@@ -1,3 +1,37 @@
+# rmoriebricklayer 0.4.2
+
+## The rest of the NIST post-quantum standards
+
+* **ML-KEM (FIPS 203)** at all three levels -- `kem_keygen()`,
+  `kem_encapsulate()`, `kem_decapsulate()`, `kem_sizes()`. A key
+  encapsulation mechanism answers a different question from a
+  signature: not who produced a capsule but what key two parties now
+  share. Decapsulation has no failure path, deliberately: a bad
+  ciphertext yields a shared secret derived from a value held only
+  inside the decapsulation key, so the sender learns nothing from
+  whether it worked. That is the Fujisaki-Okamoto transform's implicit
+  rejection.
+* **HashML-DSA (FIPS 204 section 5.4) and HashSLH-DSA (FIPS 205 section
+  10.2.2)** -- `capsule_sign(prehash = )`, for signing a digest of the
+  message rather than the message. The identifier of the pre-hash is
+  bound into the signature, not merely its output, so a signature over a
+  SHA-256 digest is never interchangeable with one over a SHAKE128
+  digest of the same length.
+* **ExternalMu-ML-DSA** -- `fips_mu()`, `fips_sign_mu()`,
+  `fips_verify_mu()`. A message can be reduced to the 64-byte value that
+  is all ML-DSA signing consumes, and only that handed to whatever holds
+  the key, so a large file never has to cross the boundary the key sits
+  behind. mu binds the public key and the context, so it is not a bare
+  digest.
+
+Every one of these is checked against OpenSSL 3.5, which shares no code
+with this package. ML-KEM keys generated from the same seed agree byte
+for byte at all three levels, its ciphertexts decapsulate here to the
+secret it reports and ours to the secret we report, and a corrupted
+ciphertext produces the same rejection secret in both. The pre-hash and
+external-mu signatures are byte-identical for every parameter set and
+every pre-hash.
+
 # rmoriebricklayer 0.4.1
 
 ## The standardised post-quantum schemes are now implemented here

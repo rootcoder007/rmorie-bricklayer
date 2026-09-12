@@ -20,6 +20,7 @@
  */
 
 #include "rmbl_mldsa_core.h"
+#include "rmbl_prehash.h"
 
 #define MLDSA_NS rmbl_mldsa44
 #define MLDSA_K 4
@@ -179,7 +180,8 @@ SEXP C_rmbl_mldsa_keypair(SEXP mode, SEXP seed) {
     });
 }
 
-SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd) {
+SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
+                       SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         Rf_error("`ctx` must be a raw vector of at most 255 bytes");
@@ -191,17 +193,27 @@ SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd) {
         if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != M::kSkBytes) {
             Rf_error("`sk` must be a raw vector of %d bytes", M::kSkBytes);
         }
+        rmbl_prehash::Result ph;
+        rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
+                            static_cast<size_t>(XLENGTH(msg)), &ph);
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
-        M::sign_internal(RAW(sig), RAW(msg),
-                         static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
-                         static_cast<size_t>(XLENGTH(ctx)), RAW(rnd),
-                         RAW(sk));
+        if (ph.oid_len > 0) {
+            M::sign_prehash(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
+                            static_cast<size_t>(XLENGTH(ctx)), ph.oid,
+                            ph.oid_len, RAW(rnd), RAW(sk));
+        } else {
+            M::sign_internal(RAW(sig), RAW(msg),
+                             static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
+                             static_cast<size_t>(XLENGTH(ctx)), RAW(rnd),
+                             RAW(sk));
+        }
         UNPROTECT(1);
         return sig;
     });
 }
 
-SEXP C_rmbl_mldsa_verify(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig) {
+SEXP C_rmbl_mldsa_verify(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
+                         SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         return Rf_ScalarLogical(FALSE);
@@ -214,15 +226,89 @@ SEXP C_rmbl_mldsa_verify(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig) {
             TYPEOF(sig) != RAWSXP || XLENGTH(sig) != M::kSigBytes) {
             return Rf_ScalarLogical(FALSE);
         }
-        const int r = M::verify_internal(RAW(sig), RAW(msg),
-                                         static_cast<size_t>(XLENGTH(msg)),
-                                         RAW(ctx),
-                                         static_cast<size_t>(XLENGTH(ctx)),
-                                         RAW(pk));
+        rmbl_prehash::Result ph;
+        rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
+                            static_cast<size_t>(XLENGTH(msg)), &ph);
+        const int r = ph.oid_len > 0
+            ? M::verify_prehash(RAW(sig), ph.digest, ph.digest_len,
+                                RAW(ctx),
+                                static_cast<size_t>(XLENGTH(ctx)),
+                                ph.oid, ph.oid_len, RAW(pk))
+            : M::verify_internal(RAW(sig), RAW(msg),
+                                 static_cast<size_t>(XLENGTH(msg)),
+                                 RAW(ctx),
+                                 static_cast<size_t>(XLENGTH(ctx)),
+                                 RAW(pk));
         return Rf_ScalarLogical(r == 0);
     });
 }
 
+
+/* ExternalMu-ML-DSA. mu is the only thing the signer needs, so a device
+ * holding the key never has to see the message -- which is the point:
+ * the message can be streamed past a boundary the key does not cross.
+ * mu still binds the public key (through tr) and the context, so it is
+ * not a bare digest and cannot be moved between keys. */
+SEXP C_rmbl_mldsa_mu(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP prehash) {
+    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
+        Rf_error("`ctx` must be a raw vector of at most 255 bytes");
+    }
+    RMBL_MLDSA_DISPATCH(mldsa_mode(mode), {
+        if (TYPEOF(pk) != RAWSXP || XLENGTH(pk) != M::kPkBytes) {
+            Rf_error("`pk` must be a raw vector of %d bytes", M::kPkBytes);
+        }
+        rmbl_prehash::Result ph;
+        rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
+                            static_cast<size_t>(XLENGTH(msg)), &ph);
+        unsigned char tr[64];
+        M::tr_from_pk(tr, RAW(pk));
+        SEXP out = PROTECT(Rf_allocVector(RAWSXP, 64));
+        if (ph.oid_len > 0) {
+            M::compute_mu(RAW(out), tr, ph.digest, ph.digest_len, RAW(ctx),
+                          static_cast<size_t>(XLENGTH(ctx)), ph.oid,
+                          ph.oid_len);
+        } else {
+            M::compute_mu(RAW(out), tr, RAW(msg),
+                          static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
+                          static_cast<size_t>(XLENGTH(ctx)), NULL, 0);
+        }
+        UNPROTECT(1);
+        return out;
+    });
+}
+
+SEXP C_rmbl_mldsa_sign_mu(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
+    if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
+        Rf_error("`mu` must be a raw vector of 64 bytes");
+    }
+    if (TYPEOF(rnd) != RAWSXP || XLENGTH(rnd) != 32) {
+        Rf_error("`rnd` must be a raw vector of 32 bytes");
+    }
+    RMBL_MLDSA_DISPATCH(mldsa_mode(mode), {
+        if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != M::kSkBytes) {
+            Rf_error("`sk` must be a raw vector of %d bytes", M::kSkBytes);
+        }
+        SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
+        M::sign_mu(RAW(sig), RAW(mu), RAW(rnd), RAW(sk));
+        UNPROTECT(1);
+        return sig;
+    });
+}
+
+SEXP C_rmbl_mldsa_verify_mu(SEXP mode, SEXP pk, SEXP mu, SEXP sig) {
+    if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
+        return Rf_ScalarLogical(FALSE);
+    }
+    RMBL_MLDSA_DISPATCH(mldsa_mode(mode), {
+        if (TYPEOF(pk) != RAWSXP || XLENGTH(pk) != M::kPkBytes ||
+            TYPEOF(sig) != RAWSXP || XLENGTH(sig) != M::kSigBytes) {
+            return Rf_ScalarLogical(FALSE);
+        }
+        const int r = M::verify_mu(RAW(sig), RAW(mu), RAW(pk));
+        return Rf_ScalarLogical(r == 0);
+    });
+}
 
 }  // extern "C"
 
