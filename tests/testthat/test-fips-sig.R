@@ -40,11 +40,11 @@ FIPS_SIZES <- list(
   "SLH-DSA-SHAKE-256f" = c(64L, 128L, 49856L, 96L, 32L)
 )
 
-# Signing an SLH-DSA `s` parameter set takes seconds: the small
-# signature is bought with a tall hypertree. The `f` sets and every
-# ML-DSA set are fast enough to sign unconditionally.
-SLOW_TO_SIGN <- c("SLH-DSA-SHAKE-192s", "SLH-DSA-SHAKE-256s",
-                  "SLH-DSA-SHA2-192s", "SLH-DSA-SHA2-256s")
+# Signing an SLH-DSA `s` parameter set is the slowest thing here -- the
+# small signature is bought with a tall hypertree -- but it is now
+# about a second rather than seven, so every parameter set is signed
+# unconditionally and nothing is gated behind an environment variable.
+SLOW_TO_SIGN <- character(0)
 
 test_that("every standardised scheme is present in every build", {
   b <- pqc_backends()
@@ -251,18 +251,23 @@ test_that("the deprecated liboqs-era names still work", {
   expect_true(capsule_verify("m", sig, pub))
 })
 
-test_that("the slow parameter sets sign and verify too", {
-  skip_if_not(nzchar(Sys.getenv("BRICKLAYER_SLOW_TESTS")),
-              "set BRICKLAYER_SLOW_TESTS to sign with an SLH-DSA s set")
-  vec <- fips_vectors("fips-self-vectors.txt")
-  for (s in SLOW_TO_SIGN) {
+test_that("every parameter set signs in a time a test can afford", {
+  # The gate this replaces existed because an s set took four to seven
+  # seconds. What made that go away was arithmetic, not patience: the
+  # Keccak round no longer divides, the tweakable hash no longer
+  # allocates, and the SHA-2 sets resume from a cached midstate instead
+  # of recompressing the padded seed on every one of millions of calls.
+  # If a change makes signing slow again, this is where it shows.
+  for (s in c("SLH-DSA-SHAKE-192s", "SLH-DSA-SHA2-256s")) {
     sz <- fips_sizes(s)
     key <- fips_keygen(s, seed = as.raw(seq_len(sz[["seed"]]) %% 256L))
-    sig <- capsule_sign("a manifest digest", key, context = "release",
-                        deterministic = TRUE)
-    expect_identical(core_sha256(sig$signature), vec[[s]][3L], info = s)
+    t <- system.time(
+      sig <- capsule_sign("a manifest digest", key, context = "release",
+                          deterministic = TRUE))[["elapsed"]]
+    expect_lt(t, 20)
     expect_true(capsule_verify("a manifest digest", sig,
-                               fips_public_key(key), context = "release"))
+                               fips_public_key(key), context = "release"),
+                info = s)
   }
 })
 

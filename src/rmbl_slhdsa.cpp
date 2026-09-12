@@ -227,6 +227,12 @@
 #define RMBL_STATIC_ASSERT(cond, tag) \
     typedef char rmbl_slh_static_assert_##tag[(cond) ? 1 : -1]
 RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kSigBytes == 7856, sigshake128s);
+/* the stack buffer in thash must hold the widest input any caller
+ * passes, at every parameter set */
+RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_256f::kThashMax >=
+                   32 + 32 + 35 * 32, thashmax256f);
+RMBL_STATIC_ASSERT(rmbl_slhdsa_sha2_256s::kThashMax >=
+                   128 + 22 + 22 * 32, thashmax256s);
 RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kPkBytes == 32, pkshake128s);
 RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128s::kSkBytes == 64, skshake128s);
 RMBL_STATIC_ASSERT(rmbl_slhdsa_shake_128f::kSigBytes == 17088, sigshake128f);

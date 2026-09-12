@@ -32,6 +32,13 @@ const int kSkBytes = 2 * kN + kPkBytes;            /* 64 */
 const int kSigBytes = kN + kForsBytes + kD * kWotsBytes
                       + kFullHeight * kN;          /* 7856 */
 
+/* The largest tweakable-hash input: the padded seed, the address, and
+ * as many n-byte blocks as the widest caller passes -- WOTS+ has
+ * kWotsLen and FORS has kForsTrees. Asserted below rather than
+ * assumed. */
+const int kThashBlocks = (kWotsLen > kForsTrees) ? kWotsLen : kForsTrees;
+const int kThashMax = 128 + 32 + kThashBlocks * kN + 64;
+
 const int kTreeBits = kTreeHeight * (kD - 1);      /* 54 */
 const int kTreeBytesDgst = (kTreeBits + 7) / 8;    /* 7 */
 const int kLeafBits = kTreeHeight;                 /* 9 */
@@ -82,6 +89,23 @@ const int kAddrTypeForsPrf = 6;
 struct Ctx {
     unsigned char pub_seed[kN];
     unsigned char sk_seed[kN];
+#if SLH_SHA2
+    /* PK.seed padded to a compression block is the prefix of every
+     * SHA-2 hash in the scheme. Compressing it once per operation
+     * rather than per call halves the work; prepare() fills these and
+     * everything below assumes it has been called. */
+    uint32_t mid256[8];
+    uint64_t mid512[8];
+    void prepare() {
+        unsigned char block[128];
+        std::memset(block, 0, sizeof block);
+        std::memcpy(block, pub_seed, kN);
+        rmbl_sha256_midstate(block, mid256);
+        if (kShaXOut == 64) rmbl_sha512_midstate(block, mid512);
+    }
+#else
+    void prepare() {}
+#endif
 };
 
 /* A 32-byte address, manipulated bytewise so the field offsets are the
@@ -155,13 +179,12 @@ struct Adrs {
  * the padded buffer, which is what happens here. */
 void prf_addr(unsigned char out[kN], const Ctx &ctx, const Adrs &adrs) {
 #if SLH_SHA2
-    unsigned char buf[64 + kAdrsBytes + kN];
-    std::memset(buf, 0, 64);
-    std::memcpy(buf, ctx.pub_seed, kN);
-    std::memcpy(buf + 64, adrs.a, kAdrsBytes);
-    std::memcpy(buf + 64 + kAdrsBytes, ctx.sk_seed, kN);
+    unsigned char tail[kAdrsBytes + kN];
+    std::memcpy(tail, adrs.a, kAdrsBytes);
+    std::memcpy(tail + kAdrsBytes, ctx.sk_seed, kN);
     unsigned char h[32];
-    rmbl_sha256_raw(buf, sizeof buf, h);
+    /* one block of PK.seed is already in the midstate */
+    rmbl_sha256_finish(ctx.mid256, 1, tail, sizeof tail, h);
     std::memcpy(out, h, kN);
 #else
     unsigned char buf[2 * kN + kAdrsBytes];
@@ -182,30 +205,33 @@ void prf_addr(unsigned char out[kN], const Ctx &ctx, const Adrs &adrs) {
  * round-trip test can see. */
 void thash(unsigned char *out, const unsigned char *in, unsigned int inblocks,
            const Ctx &ctx, const Adrs &adrs) {
+    /* A stack buffer, not a vector. Signing an s parameter set calls
+     * this a few million times, and a heap allocation per call was
+     * costing more than the hashing. The bound is the largest input any
+     * caller passes: the WOTS+ public key, or the FORS roots. */
+    unsigned char buf[kThashMax];
 #if SLH_SHA2
-    const size_t pad = (kShaXOut == 64 && inblocks > 1)
-                       ? 128u : 64u;
-    std::vector<unsigned char> buf(pad + kAdrsBytes
-                                   + static_cast<size_t>(inblocks) * kN, 0);
-    std::memcpy(buf.data(), ctx.pub_seed, kN);
-    std::memcpy(buf.data() + pad, adrs.a, kAdrsBytes);
-    std::memcpy(buf.data() + pad + kAdrsBytes, in,
+    const bool wide = (kShaXOut == 64 && inblocks > 1);
+    const size_t taillen = static_cast<size_t>(kAdrsBytes)
+                           + static_cast<size_t>(inblocks) * kN;
+    std::memcpy(buf, adrs.a, kAdrsBytes);
+    std::memcpy(buf + kAdrsBytes, in,
                 static_cast<size_t>(inblocks) * kN);
     unsigned char h[64];
-    if (pad == 128u) {
-        rmbl_sha512_raw(buf.data(), buf.size(), h);
+    if (wide) {
+        rmbl_sha512_finish(ctx.mid512, 1, buf, taillen, h);
     } else {
-        rmbl_sha256_raw(buf.data(), buf.size(), h);
+        rmbl_sha256_finish(ctx.mid256, 1, buf, taillen, h);
     }
     std::memcpy(out, h, kN);
 #else
-    std::vector<unsigned char> buf(static_cast<size_t>(kN) + kAdrsBytes
-                                   + static_cast<size_t>(inblocks) * kN);
-    std::memcpy(buf.data(), ctx.pub_seed, kN);
-    std::memcpy(buf.data() + kN, adrs.a, kAdrsBytes);
-    std::memcpy(buf.data() + kN + kAdrsBytes, in,
+    const size_t len = static_cast<size_t>(kN) + kAdrsBytes
+                       + static_cast<size_t>(inblocks) * kN;
+    std::memcpy(buf, ctx.pub_seed, kN);
+    std::memcpy(buf + kN, adrs.a, kAdrsBytes);
+    std::memcpy(buf + kN + kAdrsBytes, in,
                 static_cast<size_t>(inblocks) * kN);
-    rmbl_shake256(out, kN, buf.data(), buf.size());
+    rmbl_shake256(out, kN, buf, len);
 #endif
 }
 
@@ -601,7 +627,7 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
 #if SLH_SHA2
     /* HMAC, keyed with SK.prf, over opt_rand || M' */
     std::vector<unsigned char> msg;
-    msg.reserve(static_cast<size_t>(kN) + 2 + ctxlen + mlen);
+    msg.reserve(static_cast<size_t>(kN) + 2 + ctxlen + oidlen + mlen);
     msg.insert(msg.end(), opt_rand, opt_rand + kN);
     msg.push_back(oidlen > 0 ? 1 : 0);
     msg.push_back(static_cast<unsigned char>(ctxlen));
@@ -692,6 +718,7 @@ void seed_keypair(unsigned char *pk, unsigned char *sk,
     Ctx ctx;
     std::memcpy(ctx.pub_seed, pk, kN);
     std::memcpy(ctx.sk_seed, sk, kN);
+    ctx.prepare();
     merkle_gen_root(sk + 3 * kN, ctx);
     std::memcpy(pk + kN, sk + 3 * kN, kN);
 }
@@ -709,6 +736,7 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
     uint32_t idx_leaf;
     std::memcpy(ctx.sk_seed, sk, kN);
     std::memcpy(ctx.pub_seed, pk, kN);
+    ctx.prepare();
 
     gen_message_random(sig, sk_prf, opt_rand, ctxb, ctxlen, m, mlen,
                        oid, oidlen);
@@ -753,6 +781,7 @@ int verify(const unsigned char *sig, size_t siglen, const unsigned char *m,
     uint32_t idx_leaf;
     std::memcpy(ctx.pub_seed, pk, kN);
     std::memset(ctx.sk_seed, 0, kN);   /* a verifier has no secret */
+    ctx.prepare();
 
     const unsigned char *R = sig;
     sig += kN;

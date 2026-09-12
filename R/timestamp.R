@@ -26,17 +26,28 @@
 #' it asserts, and verifies the timestamping authority's signature under a
 #' certificate you supply.
 #'
-#' What a passing check establishes: the holder of the key in
-#' `certificate` signed a statement that the hash of `data`
-#' existed at the reported time. What it does not establish: that the
-#' certificate is one anybody should believe. No chain building, no
-#' validity dates, no revocation, no check of the timeStamping key usage --
-#' so pass the certificate you have independently decided to trust, and
-#' treat a pass as saying "this key said so", not "this is true".
+#' Pass `trust` and the certificate is validated too: the chain is
+#' built to an anchor you name, every signature in it is verified, every
+#' validity window is checked, an issuer must be a CA, and the leaf must
+#' carry the timeStamping extended key usage. Omit `trust` and the
+#' signature is still checked but `certificate_trust` is reported as
+#' failed, because without an anchor a passing signature says only that the
+#' key in the certificate signed the token -- not that anyone should
+#' believe that certificate.
 #'
-#' RSA signatures are verified. A token signed with ECDSA or a post-quantum
-#' algorithm is reported as unverifiable rather than treated as valid,
-#' which is the safe direction for a verifier.
+#' Validity windows are checked at the time the TOKEN asserts, unless
+#' `at_time` says otherwise. A token signed in 2020 under a
+#' certificate that expired in 2021 was validly signed, and judging it by
+#' today's date would reject it for a reason unconnected to its validity.
+#'
+#' RSA and ECDSA over the NIST prime curves P-256, P-384 and P-521 are
+#' verified. Anything else -- a post-quantum signature, a compressed EC
+#' point, an Edwards curve -- is reported as unverifiable rather than
+#' treated as valid, which is the safe direction for a verifier.
+#'
+#' Still not done: name constraints, policy mapping, and fetching
+#' revocation data. A CRL has to be handed in through `crls`; nothing
+#' is retrieved over the network.
 #'
 #' @param token The token: a raw vector, or a path to a
 #' `.tsr` / `.tst` file. A full `TimeStampResp` or a bare
@@ -46,6 +57,14 @@
 #' @param certificate The authority's certificate, DER
 #' or PEM, as raw or a path. Optional: when the token embeds a certificate,
 #' that one is used and the fact is reported.
+#' @param trust Trust anchors for validating that certificate
+#' -- see [cert_chain_verify()]. Without
+#' them the signature is still checked, but nothing vouches for the key
+#' that made it.
+#' @param crls Optional CRLs to check the chain against, as raw
+#' vectors or paths.
+#' @param at_time The time to check certificate validity at.
+#' Defaults to the time the token asserts, which is usually what is wanted.
 #' @return A list of class `bricklayer_timestamp`: `ok`,
 #' `time` (a `POSIXct` in UTC), `serial`, `policy`,
 #' `hash_algorithm`, `signature_algorithm`, and a `checks`
@@ -66,7 +85,9 @@
 #' res$time
 #' }
 #' @export
-timestamp_verify <- function(token, data, certificate = NULL) {
+timestamp_verify <- function(token, data, certificate = NULL,
+                             trust = NULL, crls = list(),
+                             at_time = NULL) {
   token <- .rmbl_as_bytes(token, "token")
   data <- .rmbl_as_bytes(data, "data")
   checks <- list()
@@ -126,6 +147,38 @@ timestamp_verify <- function(token, data, certificate = NULL) {
       note_row("signature", v$ok, v$detail)
       # the signed attributes must themselves commit to the TSTInfo
       note_row("attribute_digest", v$content_ok, v$content_detail)
+    }
+    # Trust. Without an anchor the check above says only that the key in
+    # the certificate signed the token; with one it says a key you chose
+    # to believe vouches for that certificate.
+    if (is.null(trust)) {
+      note_row("certificate_trust", FALSE,
+               paste("no trust anchor given: the key in the certificate",
+                     "signed the token, but nothing vouches for the",
+                     "certificate itself"))
+    } else {
+      # Validity windows are checked at the time the TOKEN asserts, not
+      # now. A token signed in 2020 under a certificate that expired in
+      # 2021 was validly signed, and judging it by today's date would
+      # reject it for a reason unconnected to its validity.
+      when <- if (is.null(at_time)) info$time else at_time
+      ch <- tryCatch(cert_chain_verify(cert, trust = trust,
+                                       at_time = when,
+                                       purpose = "timeStamping",
+                                       crls = crls),
+                     error = function(e) e)
+      if (inherits(ch, "error")) {
+        note_row("certificate_trust", FALSE, conditionMessage(ch))
+      } else {
+        note_row("certificate_trust", ch$ok,
+                 sprintf("%d certificate(s), checked at %s",
+                         length(ch$path),
+                         format(when, "%Y-%m-%d", tz = "UTC")))
+        for (i in seq_len(nrow(ch$checks))) {
+          note_row(paste0("chain:", ch$checks$check[i]),
+                   ch$checks$ok[i], ch$checks$detail[i])
+        }
+      }
     }
   }
   .rmbl_ts_result(checks, info)
@@ -383,16 +436,36 @@ print.bricklayer_timestamp <- function(x, ...) {
   }
 
   sig <- .rmbl_ts_signature(signer)
-  key <- .rmbl_ts_cert_rsa(cert)
-  if (is.null(key)) {
-    stop("the certificate does not carry an RSA public key; only RSA ",
-         "signatures are verified here, and an unverifiable signature ",
-         "is reported as such rather than accepted", call. = FALSE)
+  parsed <- tryCatch(cert_parse(cert), error = function(e) NULL)
+  if (is.null(parsed)) {
+    stop("the certificate could not be parsed", call. = FALSE)
   }
-  em <- .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent)
-  ok <- .rmbl_pkcs1_check(em, dalg, signed_bytes)
-  list(ok = ok$ok, detail = ok$detail, content_ok = content_ok,
-       content_detail = content_detail)
+  key <- parsed$key
+  if (identical(key$type, "RSA")) {
+    em <- .Call(C_rmbl_rsa_recover, sig, key$modulus, key$exponent)
+    ok <- .rmbl_pkcs1_check(em, dalg, signed_bytes)
+    return(list(ok = ok$ok, detail = ok$detail, content_ok = content_ok,
+                content_detail = content_detail))
+  }
+  if (identical(key$type, "EC") && !is.null(key$x)) {
+    rs <- .rmbl_ecdsa_rs(sig)
+    if (is.null(rs)) {
+      return(list(ok = FALSE, detail = "the ECDSA signature is malformed",
+                  content_ok = content_ok,
+                  content_detail = content_detail))
+    }
+    dig <- .rmbl_ts_digest(dalg, signed_bytes)
+    v <- tryCatch(.Call(C_rmbl_ecdsa_verify, key$curve, key$x, key$y,
+                        rs$r, rs$s, dig),
+                  error = function(e) FALSE)
+    return(list(ok = isTRUE(v),
+                detail = sprintf("ECDSA over %s on %s", dalg, key$curve),
+                content_ok = content_ok,
+                content_detail = content_detail))
+  }
+  stop("the certificate carries a ", key$type, " key; RSA and ECDSA over ",
+       "the NIST prime curves are verified here, and anything else is ",
+       "reported as unverifiable rather than accepted", call. = FALSE)
 }
 
 .rmbl_ts_signer_digest <- function(signer) {
