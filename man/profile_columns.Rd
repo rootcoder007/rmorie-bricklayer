@@ -14,7 +14,13 @@ columns (default the quartiles).}
 }
 \value{
 A data frame of class \code{bricklayer_profile}, one row per
-column.
+column: the type, the missing count and share, the number of
+distinct values, and for a numeric column the counts of zero,
+negative and infinite values, the classical and robust centre and
+spread, the range, the skewness, the count outside the Tukey
+fences, and an \code{\link[=inline_hist]{inline_hist()}} sketch of its distribution. A
+categorical column reports its most common value in \code{top}
+instead.
 }
 \description{
 One row per column: type, missingness, and the summaries that suit the
@@ -43,6 +49,14 @@ profile_columns(df)
 # `skewed`, which is the outlier announcing itself.
 p <- profile_columns(df)
 p[p$column \%in\% c("clean", "skewed"), c("column", "mean", "median")]
+
+# The histogram column shows shape no summary number carries.
+p[, c("column", "hist")]
+
+# Zeros, negatives and infinities are counted separately, because
+# each breaks a different downstream computation (a log, a square
+# root, an average).
+p[, c("column", "n_zero", "n_negative", "n_infinite")]
 }
 \seealso{
 \code{\link[=capsule_drift]{capsule_drift()}} to compare two of these, \code{\link[=core_moments]{core_moments()}}

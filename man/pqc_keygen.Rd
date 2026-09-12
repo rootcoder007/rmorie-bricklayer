@@ -11,9 +11,11 @@ pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL)
 signatures).}
 
 \item{sk_seed, pub_seed}{64-character hex seeds (32 bytes each). Omit
-them and cryptographically unpredictable seeds are drawn for you.
-Supply them ONLY to reproduce a key deterministically in a test --
-a seed you can guess is a key you can forge.}
+them and seeds are drawn from the operating system's CSPRNG via
+\code{\link[=random_bytes]{random_bytes()}}, which fails rather than falling back to R's
+reproducible generator. Supply them ONLY to reproduce a key
+deterministically in a test -- a seed you can guess is a key you can
+forge.}
 }
 \value{
 A list of class \code{bricklayer_signing_key}: \code{root} (the public

@@ -56,9 +56,11 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' @param height Tree height, 1 to 16 (default 10, i.e. 1024
 #'   signatures).
 #' @param sk_seed,pub_seed 64-character hex seeds (32 bytes each). Omit
-#'   them and cryptographically unpredictable seeds are drawn for you.
-#'   Supply them ONLY to reproduce a key deterministically in a test --
-#'   a seed you can guess is a key you can forge.
+#'   them and seeds are drawn from the operating system's CSPRNG via
+#'   [random_bytes()], which fails rather than falling back to R's
+#'   reproducible generator. Supply them ONLY to reproduce a key
+#'   deterministically in a test -- a seed you can guess is a key you can
+#'   forge.
 #' @return A list of class `bricklayer_signing_key`: `root` (the public
 #'   verification value), `pub_seed`, `sk_seed` (SECRET), `height`,
 #'   `next_index`, `capacity`, and `scheme`.
@@ -277,22 +279,14 @@ capsule_verify <- function(message, signature, key) {
         signature$auth)
 }
 
-# 32 seed bytes as hex.
+# 32 seed bytes as hex, from the operating system's CSPRNG.
 #
-# Base R exposes no OS entropy primitive, so several independent sources
-# are mixed through SHA-256. That is adequate for a provenance key, and
-# is documented as such in pqc_keygen(): for a key protecting anything of
-# value, generate 32 bytes from a vetted source and pass them in.
+# Deliberately NOT R's generator: set.seed() makes that reproducible by
+# design and its state is recoverable from its output, so a key drawn
+# from it is guessable. random_bytes() fails rather than degrading, which
+# is the behaviour a key needs.
 .rmbl_random_seed_hex <- function() {
-  entropy <- paste(
-    format(Sys.time(), "%Y-%m-%d %H:%M:%OS6"),
-    Sys.getpid(),
-    paste(format(stats::runif(16), digits = 17), collapse = ""),
-    paste(sample.int(.Machine$integer.max, 8L), collapse = "-"),
-    tempfile(),
-    paste(as.numeric(proc.time()), collapse = "-"),
-    sep = "|")
-  core_sha256(entropy)
+  paste(format(random_bytes(32L)), collapse = "")
 }
 
 .rmbl_check_seed <- function(seed, what) {

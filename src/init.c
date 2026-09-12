@@ -62,6 +62,10 @@ extern SEXP C_rmbl_moments_merge(SEXP, SEXP);
 extern SEXP C_rmbl_reservoir(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hll_add(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hll_count(SEXP);
+/* .Call wrappers (rmbl_kdf.cpp) -- BLAKE2b, PBKDF2, OS entropy */
+extern SEXP C_rmbl_blake2b(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_pbkdf2(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_os_random(SEXP);
 /* .Call wrappers (defined in rmbl_fetch.cpp) -- libcurl fetch + wayback */
 extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP);
@@ -113,6 +117,13 @@ extern void   rmbl_hmac_sha256_hex(const unsigned char *, size_t,
 extern int    rmbl_digest_equal(const char *, const char *, size_t);
 extern void   rmbl_moments_acc(const double *, R_xlen_t, double *);
 extern void   rmbl_moments_merge(const double *, const double *, double *);
+extern int    rmbl_blake2b(const unsigned char *, size_t,
+                           const unsigned char *, size_t, int,
+                           unsigned char *);
+extern void   rmbl_pbkdf2_sha256(const unsigned char *, size_t,
+                                 const unsigned char *, size_t, int, int,
+                                 unsigned char *);
+extern int    rmbl_os_random(unsigned char *, size_t);
 /* fetch kernels (defined in rmbl_fetch.cpp) -- the cross-package fetch API */
 extern int  rmbl_fetch_with_fallback(const char *, const char *, const char *, int);
 extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
@@ -167,6 +178,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_reservoir",         (DL_FUNC) &C_rmbl_reservoir,         3},
     {"C_rmbl_hll_add",           (DL_FUNC) &C_rmbl_hll_add,           3},
     {"C_rmbl_hll_count",         (DL_FUNC) &C_rmbl_hll_count,         1},
+    {"C_rmbl_blake2b",           (DL_FUNC) &C_rmbl_blake2b,           3},
+    {"C_rmbl_pbkdf2",            (DL_FUNC) &C_rmbl_pbkdf2,            4},
+    {"C_rmbl_os_random",         (DL_FUNC) &C_rmbl_os_random,         1},
     {NULL, NULL, 0}
 };
 
@@ -214,4 +228,7 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_RegisterCCallable("rmoriebricklayer", "rmbl_digest_equal",   (DL_FUNC) rmbl_digest_equal);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_moments_acc",   (DL_FUNC) rmbl_moments_acc);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_moments_merge", (DL_FUNC) rmbl_moments_merge);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_blake2b",       (DL_FUNC) rmbl_blake2b);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_pbkdf2_sha256", (DL_FUNC) rmbl_pbkdf2_sha256);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_os_random",     (DL_FUNC) rmbl_os_random);
 }
