@@ -14,16 +14,21 @@
  * sort per call.
  */
 
+/* The C++ standard headers come FIRST. R's Rinternals.h defines a macro
+ * named `length`, and libc++'s <locale> -- which <functional> pulls in --
+ * has member functions of that name, so including the R headers first
+ * makes the macro rewrite them and the build fails on macOS with "too
+ * many arguments provided to function-like macro invocation". <functional>
+ * is not needed here either way; std::greater is replaced by a comparator
+ * below. */
+#include <algorithm>
+#include <cmath>
+#include <utility>
+#include <vector>
+
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Random.h>
-
-#include <functional>
-#include <utility>
-
-#include <algorithm>
-#include <cmath>
-#include <vector>
 
 namespace {
 
@@ -130,7 +135,8 @@ SEXP C_rmbl_top_share(SEXP x, SEXP fracs) {
         Rf_error("concentration measures need non-negative values");
     }
     const size_t n = v.size();
-    std::sort(v.begin(), v.end(), std::greater<double>());
+    std::sort(v.begin(), v.end(),
+              [](double a, double b) { return a > b; });
     long double total = 0.0L;
     for (size_t i = 0; i < n; ++i) total += v[i];
     const R_xlen_t m = XLENGTH(fracs);

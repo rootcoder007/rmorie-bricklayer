@@ -542,10 +542,15 @@ SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
  * level and the sensible default, ML-DSA-87 for a longer horizon, and
  * SLH-DSA as a hash-based alternative for anyone who would rather not
  * rest on a lattice assumption at all. */
+#ifdef HAVE_LIBOQS
+/* Inside the guard: without liboqs nothing reads this table, and an
+ * unused-variable warning on every platform is noise that hides a real
+ * one. */
 static const char *kOqsSchemes[] = {
     "ML-DSA-44", "ML-DSA-65", "ML-DSA-87", "SPHINCS+-SHA2-128s-simple"
 };
 static const int kNumOqsSchemes = 4;
+#endif
 
 SEXP C_rmbl_pqc_backends(void) {
     SEXP out;
