@@ -2,7 +2,7 @@
 
 Every option of jsonlite's `toJSON()` with the same default and the same
 bytes out: `dataframe`, `matrix`, `Date`, `POSIXt`, `factor`, `complex`,
-`raw`, `null`, `na`, `auto_unbox`, `digits` (`I(n)` for significant
+`raw`, `null`, `na`, `auto_unbox`, `digits` ( `I(n)` for significant
 digits, `NA` for 15), `pretty` (TRUE = 2 spaces, or a width), `force`,
 plus `rownames`, `keep_vec_names`, `json_verbatim`, `always_decimal`,
 `time_format`, `UTC`, `no_dots`, `hms`.
@@ -35,10 +35,61 @@ bricklayer_json_to_json(
 
   the object to encode.
 
-- dataframe, matrix, Date, POSIXt, factor, complex, raw, null, na,
-  auto_unbox, digits, pretty, force, ...:
+- dataframe:
 
-  as in jsonlite.
+  As in jsonlite.
+
+- matrix:
+
+  As in jsonlite.
+
+- Date:
+
+  As in jsonlite.
+
+- POSIXt:
+
+  As in jsonlite.
+
+- factor:
+
+  As in jsonlite.
+
+- complex:
+
+  As in jsonlite.
+
+- raw:
+
+  As in jsonlite.
+
+- null:
+
+  As in jsonlite.
+
+- na:
+
+  As in jsonlite.
+
+- auto_unbox:
+
+  As in jsonlite.
+
+- digits:
+
+  As in jsonlite.
+
+- pretty:
+
+  As in jsonlite.
+
+- force:
+
+  As in jsonlite.
+
+- ...:
+
+  As in jsonlite.
 
 ## Value
 

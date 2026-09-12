@@ -67,36 +67,38 @@ missing counted as its own row. The counterpart of
 
 
 <dt id="arg-column">column<a class="anchor" aria-label="anchor" href="#arg-column"></a></dt>
-<dd><p>Column name, when <code>data</code> is a data frame.</p></dd>
+<dd><p>Column name, when <code>data</code> is a data
+frame.</p></dd>
 
 
 <dt id="arg-max-levels">max_levels<a class="anchor" aria-label="anchor" href="#arg-max-levels"></a></dt>
-<dd><p>Maximum rows to return, most frequent first
-(default 25). The remainder are folded into one <code>"(other)"</code> row so
-the percentages still sum to 100.</p></dd>
+<dd><p>Maximum rows to return, most
+frequent first (default 25). The remainder are folded into one
+<code>"(other)"</code> row so the percentages still sum to 100.</p></dd>
 
 
 <dt id="arg-sort">sort<a class="anchor" aria-label="anchor" href="#arg-sort"></a></dt>
-<dd><p>Sort by descending count (default <code>TRUE</code>); <code>FALSE</code> keeps
-the natural order of the values.</p></dd>
+<dd><p>Sort by descending count (default <code>TRUE</code>) ;
+<code>FALSE</code> keeps the natural order of the values.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame of class <code>bricklayer_freq</code>: <code>value</code>, <code>n</code>, <code>pct</code>,
-<code>pct_valid</code>.</p>
+    <p>A data frame of class <code>bricklayer_freq</code>: <code>value</code>,
+<code>n</code>, <code>pct</code>, <code>pct_valid</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Two percentage columns, because both questions get asked and
-conflating them is how missingness gets hidden: <code>pct</code> is the share of
-ALL rows, <code>pct_valid</code> the share of rows where the value is present.
+    <p>Two percentage columns, because both questions get asked and conflating
+them is how missingness gets hidden: <code>pct</code> is the share of ALL
+rows, <code>pct_valid</code> the share of rows where the value is present.
 When a column is 40% missing those two differ enormously, and only the
 second describes the values that are actually there.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="profile_columns.html">profile_columns()</a></code> for every column at once.</p></div>
+    <div class="dont-index"><p><code><a href="profile_columns.html">profile_columns()</a></code> for every
+column at once.</p></div>
     </div>
 
     <div class="section level2">

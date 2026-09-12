@@ -28,7 +28,7 @@ clean_column_names(
 
 - sep:
 
-  Separator for `"snake"` and `"screaming_snake"` (default `"_"`).
+  Separator for `"snake"` and `"screaming_snake"` (default `"_"`) .
 
 ## Value
 

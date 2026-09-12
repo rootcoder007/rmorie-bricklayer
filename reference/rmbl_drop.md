@@ -25,8 +25,8 @@ drop_constant(data, na_as_value = FALSE)
 
 - na_as_value:
 
-  Treat `NA` as a distinct value, so a column of `NA`s plus one real
-  value counts as two (default `FALSE`).
+  Treat `NA` as a distinct value, so a column of `NA` s plus one real
+  value counts as two (default `FALSE`) .
 
 ## Value
 

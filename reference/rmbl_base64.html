@@ -69,33 +69,34 @@ embed binary content in a text manifest wherever this package runs.</p>
 
 
 <dl><dt id="arg-input">input<a class="anchor" aria-label="anchor" href="#arg-input"></a></dt>
-<dd><p>For the encoders, a raw vector or a character vector
-(joined with newlines first). For the decoders, base64 text or its
-raw bytes.</p></dd>
+<dd><p>For the encoders, a raw vector or a character
+vector (joined with newlines first). For the decoders, base64 text or
+its raw bytes.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The encoders return a length-1 character vector
-(<code>NA_character_</code> for <code>NULL</code> input); the decoders return a raw
+    <p>The encoders return a length-1 character vector (
+<code>NA_character_</code> for <code>NULL</code> input); the decoders return a raw
 vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>bricklayer_json_base64_enc()</code> breaks its output into 72-character
-lines, matching jsonlite's encoder; the decoder ignores line breaks
-and any other character outside the alphabet, so either form round
-trips.</p>
-<p>The URL-safe variant substitutes <code>-</code> and <code>_</code> for <code>+</code> and <code>/</code> and
-drops the <code>=</code> padding, which is what makes it safe in a URL path, a
-query string or a filename.</p>
-<p>Base64 is an ENCODING, not encryption or a digest: it hides nothing
-and anyone can reverse it. Use <code><a href="core_sha256.html">core_sha256()</a></code> to pin content and
-<code><a href="rmbl_keyed_digest.html">core_hmac_sha256()</a></code> to authenticate it.</p>
+lines, matching jsonlite's encoder; the decoder ignores line breaks and
+any other character outside the alphabet, so either form round trips.</p>
+<p>The URL-safe variant substitutes <code>-</code> and <code>_</code> for <code>+</code> and
+<code>/</code> and drops the <code>=</code> padding, which is what makes it safe in
+a URL path, a query string or a filename.</p>
+<p>Base64 is an ENCODING, not encryption or a digest: it hides nothing and
+anyone can reverse it. Use <code><a href="core_sha256.html">core_sha256()</a></code> to
+pin content and <code><a href="rmbl_keyed_digest.html">core_hmac_sha256()</a></code> to
+authenticate it.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="rmbl_json_gzip.html">json_gzip_encode()</a></code>, which composes this with gzip.</p></div>
+    <div class="dont-index"><p><code><a href="rmbl_json_gzip.html">json_gzip_encode()</a></code>, which composes this
+with gzip.</p></div>
     </div>
 
     <div class="section level2">

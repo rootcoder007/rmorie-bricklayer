@@ -27,7 +27,7 @@ frequency_table(data, column = NULL, max_levels = 25L, sort = TRUE)
 
 - sort:
 
-  Sort by descending count (default `TRUE`); `FALSE` keeps the natural
+  Sort by descending count (default `TRUE`) ; `FALSE` keeps the natural
   order of the values.
 
 ## Value

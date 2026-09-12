@@ -45,10 +45,10 @@ floor for an interactive use; raise it for anything valuable, and record
 the value you used, since verification must repeat it exactly.
 
 PBKDF2 resists brute force by ITERATION only, not by memory. Where a
-memory-hard function is available (`argon2` in sodium, `bcrypt_pbkdf` in
-openssl) prefer it for passwords a human chose. PBKDF2 is here because
-it needs nothing beyond the bundled SHA-256, so it works wherever this
-package works.
+memory-hard function is available ( `argon2` in sodium, `bcrypt_pbkdf`
+in openssl) prefer it for passwords a human chose. PBKDF2 is here
+because it needs nothing beyond the bundled SHA-256, so it works
+wherever this package works.
 
 ## References
 

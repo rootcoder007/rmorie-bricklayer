@@ -51,7 +51,8 @@ dst <- tempfile(fileext = ".xlsx")
 
 # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
 try(bricklayer_fetch(
-  "https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx",
+  paste0("https://www.cihi.ca/sites/default/files/document/",
+         "hospital-beds-2024-2025-data-tables-en.xlsx"),
   dst))
 
 # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.

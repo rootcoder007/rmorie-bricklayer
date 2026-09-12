@@ -18,7 +18,7 @@ make_synthetic_csv(schema, out_path, n_rows = NULL, seed = NULL)
 - schema:
 
   The synthetic recipe (a list with `columns`, and optional `n_rows`,
-  `seed`, and `row_replication`).
+  `seed`, and `row_replication`) .
 
 - out_path:
 

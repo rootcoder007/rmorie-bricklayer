@@ -1,7 +1,7 @@
 # The panel-reviewed SIU report field schema
 
 The sixteen fields extracted from every Special Investigations Unit
-director's report. Count-type fields (`is_count = TRUE`) count distinct
+director's report. Count-type fields ( `is_count = TRUE`) count distinct
 entities and zero is a real answer – a witness-official-only
 investigation has zero subject officials.
 

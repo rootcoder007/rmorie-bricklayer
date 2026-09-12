@@ -5,8 +5,8 @@ provenance manifest is readable, the pinned data file exists and matches
 its recorded `sha256` (and `size_bytes` / row count where recorded), the
 schema still validates, a recorded analysis script still matches its
 pinned hash, and every numeric cross-check stored in a results manifest
-still reproduces its recorded `PASS`/`DIFFER` status from its own
-`observed`/`expected`/`tol` fields.
+still reproduces its recorded `PASS` / `DIFFER` status from its own
+`observed` / `expected` / `tol` fields.
 
 ## Usage
 
@@ -29,7 +29,7 @@ verify_capsule(
 - provenance_file:
 
   Provenance JSON filename inside `capsule_dir` (default
-  `"data_provenance.json"`).
+  `"data_provenance.json"`) .
 
 - data_file:
 
@@ -51,7 +51,7 @@ verify_capsule(
 ## Value
 
 A list with `ok` (logical scalar: every check passed) and `checks`
-(data.frame with columns `check`, `ok`, `detail`).
+(data.frame with columns `check`, `ok`, `detail`) .
 
 ## Details
 

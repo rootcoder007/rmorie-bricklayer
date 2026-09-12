@@ -1,7 +1,7 @@
 # Generate One Synthetic Column From a Spec
 
 Builds a single synthetic data column according to a column spec drawn
-from a provenance synthetic recipe. Supported `type`s are `"sample"`
+from a provenance synthetic recipe. Supported `type` s are `"sample"`
 (categorical, optionally weighted), `"bernoulli"` (two-label draw with
 optional per-row base rate), `"poisson"` (counts with a floor),
 `"id_pattern"` (templated IDs, optionally per-year sequenced), and
@@ -19,7 +19,7 @@ make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 
   A list describing the column; recognised fields depend on `spec$type`
   (e.g. `values`, `weights`, `p`, `p_with_baserate`, `labels`, `lambda`,
-  `min`, `pattern`, `year_col`, `from`).
+  `min`, `pattern`, `year_col`, `from`) .
 
 - n:
 

@@ -27,11 +27,13 @@ core_tukey_fences(x, k = 1.5)
 - x:
 
   Numeric vector (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)).
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
 
 - probs:
 
-  Numeric vector of probabilities in \[0, 1\].
+  Numeric vector of probabilities in \\ \[0, 1\].
+
+  \[0, 1\]: R:0,%201%5C
 
 - constant:
 
@@ -51,7 +53,7 @@ core_tukey_fences(x, k = 1.5)
 
 `core_quantile()` returns a numeric vector the length of `probs`;
 `core_median()`, `core_mad()` and `core_iqr()` a length-1 numeric;
-`core_tukey_fences()` a named length-2 numeric (`lower`, `upper`).
+`core_tukey_fences()` a named length-2 numeric ( `lower`, `upper`) .
 
 ## Details
 

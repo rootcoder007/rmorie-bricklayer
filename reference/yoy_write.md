@@ -21,9 +21,8 @@ yoy_write(x, file, format = "auto", ...)
 
 - format:
 
-  Output format. `"auto"` reads it from the file extension:
-  `.html`/`.htm`, `.pdf`, `.csv`, `.tsv`/`.tab`, `.json`,
-  `.md`/`.markdown`.
+  Output format. `"auto"` reads it from the file extension: `.html` /
+  `.htm`, `.pdf`, `.csv`, `.tsv` / `.tab`, `.json`, `.md` / `.markdown`.
 
 - ...:
 

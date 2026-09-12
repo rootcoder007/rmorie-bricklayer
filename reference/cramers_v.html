@@ -64,30 +64,30 @@ the small-expected-count condition reported rather than assumed away.</p>
 
 
 <dt id="arg-bias-correct">bias_correct<a class="anchor" aria-label="anchor" href="#arg-bias-correct"></a></dt>
-<dd><p>Whether to apply Bergsma's correction, which
-removes most of V's upward bias in a sparse table. Worth having:
-uncorrected V on a sparse table reports association that is an
-artefact of the table's size.</p></dd>
+<dd><p>Whether to apply Bergsma's
+correction, which removes most of V's upward bias in a sparse table.
+Worth having: uncorrected V on a sparse table reports association that
+is an artefact of the table's size.</p></dd>
 
 
 <dt id="arg-min-expected">min_expected<a class="anchor" aria-label="anchor" href="#arg-min-expected"></a></dt>
-<dd><p>Expected count below which the chi-square
-approximation is unreliable. Reported, not enforced.</p></dd>
+<dd><p>Expected count below which the
+chi-square approximation is unreliable. Reported, not enforced.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>v</code>, <code>chisq</code>, <code>df</code>, <code>p_value</code>, <code>n</code>,
-<code>min_expected</code>, and <code>cells_below</code>, the number of cells whose
-expected count falls under the threshold. When any does, <code>p_value</code>
-comes from a Monte Carlo permutation instead of the chi-square
-approximation, and <code>method</code> says which was used.</p>
+    <p>A list with <code>v</code>, <code>chisq</code>, <code>df</code>, <code>p_value</code>,
+<code>n</code>, <code>min_expected</code>, and <code>cells_below</code>, the number of
+cells whose expected count falls under the threshold. When any does,
+<code>p_value</code> comes from a Monte Carlo permutation instead of the
+chi-square approximation, and <code>method</code> says which was used.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Bergsma, W. (2013). A bias-correction for Cramer's V and
-Tschuprow's T. <em>Journal of the Korean Statistical Society</em> 42(3),
-323-328. (Not in the local corpus; cited from the published paper.)</p>
+    <p>Bergsma, W. (2013). A bias-correction for Cramer's V and Tschuprow's T.
+<em>Journal of the Korean Statistical Society</em> 42(3), 323-328. (Not in
+the local corpus; cited from the published paper.)</p>
     </div>
 
     <div class="section level2">

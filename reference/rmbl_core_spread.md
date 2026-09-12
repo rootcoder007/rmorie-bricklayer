@@ -17,7 +17,7 @@ core_dist(a, b)
 - x, a, b:
 
   Numeric vectors (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)).
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
 
 - ddof:
 

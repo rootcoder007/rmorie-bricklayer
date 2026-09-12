@@ -3,7 +3,7 @@
 Builds a ready-to-paste data citation (plain text and BibTeX `@misc`)
 from a provenance object's `dataset` and `resource` blocks, using
 publisher, resource name, source system, retrieval date, license, the
-pinned URL, and a DOI when one is recorded (`dataset$doi`).
+pinned URL, and a DOI when one is recorded ( `dataset$doi`) .
 
 ## Usage
 

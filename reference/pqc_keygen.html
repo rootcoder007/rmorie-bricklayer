@@ -71,36 +71,38 @@ signatures).</p></dd>
 
 
 <dt id="arg-sk-seed-pub-seed">sk_seed, pub_seed<a class="anchor" aria-label="anchor" href="#arg-sk-seed-pub-seed"></a></dt>
-<dd><p>64-character hex seeds (32 bytes each). Omit
-them and seeds are drawn from the operating system's CSPRNG via
-<code><a href="random_bytes.html">random_bytes()</a></code>, which fails rather than falling back to R's
-reproducible generator. Supply them ONLY to reproduce a key
-deterministically in a test – a seed you can guess is a key you can
-forge.</p></dd>
+<dd><p>64-character hex seeds
+(32 bytes each). Omit them and seeds are drawn from the operating
+system's CSPRNG via <code><a href="random_bytes.html">random_bytes()</a></code>, which
+fails rather than falling back to R's reproducible generator. Supply
+them ONLY to reproduce a key deterministically in a test – a seed you
+can guess is a key you can forge.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_signing_key</code>: <code>root</code> (the public
-verification value), <code>pub_seed</code>, <code>sk_seed</code> (SECRET), <code>height</code>,
-<code>next_index</code>, <code>capacity</code>, and <code>scheme</code>.</p>
+    <p>A list of class <code>bricklayer_signing_key</code>: <code>root</code> (the
+public verification value), <code>pub_seed</code>, <code>sk_seed</code> (SECRET),
+<code>height</code>, <code>next_index</code>, <code>capacity</code>, and <code>scheme</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="a-height-h-key-signs-exactly-h-messages">A height-<code>h</code> key signs exactly <code>2^h</code> messages<a class="anchor" aria-label="anchor" href="#a-height-h-key-signs-exactly-h-messages"></a></h2>
-    <p>Each signature consumes one leaf, and <strong>signing two different
-messages with the same leaf index breaks the scheme outright</strong> –
-between two signatures at one index an adversary can forge a third
-message. <code><a href="capsule_sign.html">capsule_sign()</a></code> therefore tracks <code>next_index</code> and refuses
-to reuse one. Do not hand-edit that field, and do not copy a key to
-two machines that sign independently.</p>
-<p>Key generation walks all <code>2^height</code> leaves, so cost doubles with each
-unit of height. The default 10 gives 1024 signatures and takes a
+    <p>Each signature consumes one leaf, and <strong>signing two different messages
+with the same leaf index breaks the scheme outright</strong> – between two
+signatures at one index an adversary can forge a third message.
+<code><a href="capsule_sign.html">capsule_sign()</a></code> therefore tracks
+<code>next_index</code> and refuses to reuse one. Do not hand-edit that field,
+and do not copy a key to two machines that sign independently.</p>
+<p>Key generation walks all <code>2^height</code> leaves, so cost doubles with
+each unit of height. The default 10 gives 1024 signatures and takes a
 moment; heights above about 14 are slow enough to be worth avoiding
 unless the key really must last that long.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="capsule_sign.html">capsule_sign()</a></code>, <code><a href="capsule_verify.html">capsule_verify()</a></code>, <code><a href="signing_public_key.html">signing_public_key()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="capsule_sign.html">capsule_sign()</a></code>,
+<code><a href="capsule_verify.html">capsule_verify()</a></code>,
+<code><a href="signing_public_key.html">signing_public_key()</a></code></p></div>
     </div>
 
     <div class="section level2">

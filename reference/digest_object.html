@@ -70,31 +70,33 @@ hashes.</p>
 
 
 <dt id="arg-algo">algo<a class="anchor" aria-label="anchor" href="#arg-algo"></a></dt>
-<dd><p><code>"sha256"</code> (default), <code>"sha512"</code>, <code>"blake2b"</code> or
-<code>"crc32"</code>.</p></dd>
+<dd><p><code>"sha256"</code> (default), <code>"sha512"</code>,
+<code>"blake2b"</code> or <code>"crc32"</code>.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>Optional key, for <code>"blake2b"</code> only: gives a keyed
-fingerprint that only a key holder can reproduce.</p></dd>
+<dd><p>Optional key, for <code>"blake2b"</code> only: gives a
+keyed fingerprint that only a key holder can reproduce.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A length-1 character vector (or numeric for <code>"crc32"</code>).</p>
+    <p>A length-1 character vector (or numeric for <code>"crc32"</code>) .</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Serialization is pinned to version 2 with XDR byte order, so the
-digest is the same on a big-endian machine as on a little-endian one.
-Two objects that are <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> produce the same digest; two that
+    <p>Serialization is pinned to version 2 with XDR byte order, so the digest
+is the same on a big-endian machine as on a little-endian one. Two
+objects that are <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> produce the same digest; two that
 merely print the same need not, because attributes are part of the
 serialization.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="core_sha256.html">core_sha256()</a></code> for hashing text or bytes directly,
-<code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> for a readable lossless form.</p></div>
+    <div class="dont-index"><p><code><a href="core_sha256.html">core_sha256()</a></code> for hashing text or bytes
+directly,
+<code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code>
+for a readable lossless form.</p></div>
     </div>
 
     <div class="section level2">

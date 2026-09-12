@@ -4,12 +4,12 @@ count for reports where a model panel (or a human) is unsure. The
 standard SIU privacy boilerplate is stripped first, then rules apply
 most-specific first: highest SO #N ordinal; spelled-out plural;
 singular subject official present (1); witness-official-only (0, a real
-answer); otherwise unresolved (NA)."><meta property="og:description" content="Deterministic, reproducible extraction of the subject-official (SO)
+answer); otherwise unresolved ( NA) ."><meta property="og:description" content="Deterministic, reproducible extraction of the subject-official (SO)
 count for reports where a model panel (or a human) is unsure. The
 standard SIU privacy boilerplate is stripped first, then rules apply
 most-specific first: highest SO #N ordinal; spelled-out plural;
 singular subject official present (1); witness-official-only (0, a real
-answer); otherwise unresolved (NA)."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+answer); otherwise unresolved ( NA) ."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -59,7 +59,7 @@ count for reports where a model panel (or a human) is unsure. The
 standard SIU privacy boilerplate is stripped first, then rules apply
 most-specific first: highest <code>SO #N</code> ordinal; spelled-out plural;
 singular subject official present (1); witness-official-only (0, a real
-answer); otherwise unresolved (<code>NA</code>).</p>
+answer); otherwise unresolved ( <code>NA</code>) .</p>
     </div>
 
     <div class="section level2">
@@ -72,21 +72,21 @@ answer); otherwise unresolved (<code>NA</code>).</p>
 
 
 <dl><dt id="arg-text">text<a class="anchor" aria-label="anchor" href="#arg-text"></a></dt>
-<dd><p>A length-1 character vector of plain report text (see
-<code><a href="bricklayer_siu_text.html">bricklayer_siu_text()</a></code>).</p></dd>
+<dd><p>A length-1 character vector of plain report text
+(see <code><a href="bricklayer_siu_text.html">bricklayer_siu_text()</a></code>) .</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>count</code> (integer, <code>NA</code> when unresolved) and
-<code>reason</code> (the human-readable evidence).</p>
+    <p>A list with <code>count</code> (integer, <code>NA</code> when unresolved)
+and <code>reason</code> (the human-readable evidence).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>bricklayer is the foundation layer: this function is the pure
 rule set. Reports already in the panel-reviewed corpus should never be
-re-derived – use <code>rmorie::morie_siu_resolve_so()</code>, which returns the
-verified corpus value first and only falls back to these rules for
+re-derived – use <code>rmorie::morie_siu_resolve_so()</code>, which returns
+the verified corpus value first and only falls back to these rules for
 unreviewed reports.</p>
     </div>
 

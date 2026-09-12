@@ -45,7 +45,7 @@ validate_schema(df_raw, provenance)
 
 ## Value
 
-A named list of issues; each issue is a list with `severity` (`"fatal"`
+A named list of issues; each issue is a list with `severity` ( `"fatal"`
 or `"warning"`) and a human-readable `message`. A zero-length list means
 the data frame is clean.
 

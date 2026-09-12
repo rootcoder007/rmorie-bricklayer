@@ -29,7 +29,7 @@ digest_object(x, algo = c("sha256", "sha512", "blake2b", "crc32"), key = NULL)
 
 ## Value
 
-A length-1 character vector (or numeric for `"crc32"`).
+A length-1 character vector (or numeric for `"crc32"`) .
 
 ## Details
 

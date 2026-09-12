@@ -52,7 +52,7 @@ trend_test(
 ## Value
 
 A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen), `intercept`,
-`slope_lower`/`slope_upper` (the distribution-free interval), `n` and
+`slope_lower` / `slope_upper` (the distribution-free interval), `n` and
 `method`.
 
 ## Details

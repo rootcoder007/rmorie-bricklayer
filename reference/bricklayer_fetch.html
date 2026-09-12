@@ -80,8 +80,9 @@ package's C++ <code>rmbl_fetch_with_fallback</code> kernel (libcurl), which
 
 
 <dt id="arg-wayback">wayback<a class="anchor" aria-label="anchor" href="#arg-wayback"></a></dt>
-<dd><p>Optional explicit Wayback snapshot URL. <code>""</code>
-(default) auto-resolves one via <code><a href="wayback_snapshot_url.html">wayback_snapshot_url</a></code>.</p></dd>
+<dd><p>Optional explicit Wayback snapshot URL.
+<code>""</code> (default) auto-resolves one via
+<code><a href="wayback_snapshot_url.html">wayback_snapshot_url</a></code>.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
@@ -107,7 +108,8 @@ total failure.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Live download; auto-resolves a Wayback snapshot only if the live URL fails.</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="st">"https://www.cihi.ca/sites/default/files/document/hospital-beds-2024-2025-data-tables-en.xlsx"</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://www.cihi.ca/sites/default/files/document/"</span>,</span></span>
+<span class="r-in"><span>         <span class="st">"hospital-beds-2024-2025-data-tables-en.xlsx"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  <span class="va">dst</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.</span></span></span>

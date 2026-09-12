@@ -36,8 +36,8 @@ Empty when everything passes.
 
 A rule whose column is absent is SKIPPED rather than failed – a missing
 column is
-[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)'s
-business, and reporting it twice buries the real finding. A rule that
+[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+'s business, and reporting it twice buries the real finding. A rule that
 ERRORS is reported as a failure naming the error, never swallowed: a
 rule that cannot run has not passed.
 

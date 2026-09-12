@@ -45,7 +45,7 @@ rule_col_count(n, severity = c("warning", "fatal"))
 
 - set:
 
-  Allowed values (`rule_in_set`).
+  Allowed values ( `rule_in_set`) .
 
 - na_pass:
 
@@ -57,16 +57,16 @@ rule_col_count(n, severity = c("warning", "fatal"))
 
 - lo, hi:
 
-  Inclusive bounds (`rule_between`).
+  Inclusive bounds ( `rule_between`) .
 
 - pattern:
 
-  Regular expression the values must match (`rule_regex`).
+  Regular expression the values must match ( `rule_regex`) .
 
 - strictly:
 
-  Require a strict increase rather than non-decreasing
-  (`rule_increasing`).
+  Require a strict increase rather than non-decreasing (
+  `rule_increasing`) .
 
 - n:
 
@@ -75,8 +75,8 @@ rule_col_count(n, severity = c("warning", "fatal"))
 
 - columns:
 
-  Columns that jointly must be unique (`rule_distinct_rows`), or `NULL`
-  for all of them.
+  Columns that jointly must be unique ( `rule_distinct_rows`) , or
+  `NULL` for all of them.
 
 ## Value
 
@@ -88,7 +88,7 @@ object.
 
 `NA` handling is explicit and per-rule, because the right answer
 differs. `rule_not_null()` exists precisely to fail on `NA`. The value
-rules (`rule_in_set`, `rule_between`, `rule_regex`,
+rules ( `rule_in_set`, `rule_between`, `rule_regex`,
 `rule_within_n_mads`) treat `NA` as PASSING by default, so that a
 column's missingness is reported once by `rule_not_null()` or
 `max_missing_fraction` rather than again by every other rule; set

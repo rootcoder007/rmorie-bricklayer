@@ -26,8 +26,8 @@ agent_bundle(request, model = NULL, backend = "auto")
 - backend:
 
   `"auto"` (default), `"ollama"` (server from
-  `$RMORIE_AGENT_OLLAMA_URL`) or `"anthropic"`
-  (`$RMORIE_AGENT_API_KEY`).
+  `$RMORIE_AGENT_OLLAMA_URL`) or `"anthropic"` (
+  `$RMORIE_AGENT_API_KEY`) .
 
 ## Value
 

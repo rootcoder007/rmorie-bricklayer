@@ -40,7 +40,7 @@ chain_verify(chain)
 
 `chain_new()` and `chain_append()` return an object of class
 `bricklayer_chain`. `chain_verify()` returns a list with `valid`, `n`,
-`broken_at` (`NA` when intact) and `head`. `chain_head()` returns the
+`broken_at` ( `NA` when intact) and `head`. `chain_head()` returns the
 head digest. `chain_seal()` returns a single digest over the verified
 chain's length and links, or `NA` if the chain does not verify.
 

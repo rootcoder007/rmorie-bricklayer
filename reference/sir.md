@@ -37,9 +37,9 @@ A data frame with `observed`, `expected`, `sir`, `lower`, `upper` and
 
 The interval is the exact Poisson one, from the relation between the
 Poisson and gamma distributions, and so is identical to
-[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html)'s. It
-is the interval to use here because the counts that matter are small: a
-normal approximation on an observed count of three is not an interval,
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) 's.
+It is the interval to use here because the counts that matter are small:
+a normal approximation on an observed count of three is not an interval,
 it is a decoration.
 
 ## References

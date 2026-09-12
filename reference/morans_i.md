@@ -35,7 +35,7 @@ morans_i(x, neighbours, style = c("W", "B"), n_perm = 9999L)
 
 ## Value
 
-A list with `I`, its expectation under the null (`-1/(n-1)`, which is
+A list with `I`, its expectation under the null ( `-1/(n-1)`, which is
 not zero), the permutation mean and standard deviation, a `z` score,
 `p_value`, and `W`, the total weight.
 
@@ -46,6 +46,15 @@ small negative I is what independence looks like in a small set of
 areas. The p-value comes from permuting the values over the areas, which
 needs no distributional assumption – and with a handful of regions no
 distributional assumption is safe.
+
+## References
+
+Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.
+*Biometrika* 37(1/2), 17-23. (Not in the local corpus; cited from the
+published paper. The corpus does carry applied uses of the statistic,
+including Laniyonu (2017) on policing practices in gentrifying
+neighbourhoods, where it is used exactly as here – to establish that
+areal residuals are spatially dependent.)
 
 ## Examples
 

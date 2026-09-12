@@ -19,8 +19,8 @@ load_provenance(path)
 ## Value
 
 The parsed provenance as a nested list, read with the package's own JSON
-codec
-([`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md),
+codec (
+[`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md),
 unsimplified), or `NULL` if the file does not exist.
 
 ## Examples

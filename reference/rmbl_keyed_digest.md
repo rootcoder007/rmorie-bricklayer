@@ -6,8 +6,8 @@ a secret key. The difference from a plain
 is AUTHENTICATION – anyone can recompute a SHA-256 and so anyone can
 forge one after editing a manifest, but only a holder of the key can
 produce a matching HMAC. This is what makes
-[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)'s
-`"hmac"` scheme meaningful.
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+'s `"hmac"` scheme meaningful.
 
 ## Usage
 

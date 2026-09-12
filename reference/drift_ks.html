@@ -74,22 +74,24 @@ whose distribution was never specified.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named length-3 numeric: <code>statistic</code> (the KS \(D\)),
+    <p>A named length-3 numeric: <code>statistic</code> (the KS \(D\)) ,
 <code>p_value</code>, and <code>n_eff</code> (the harmonic-style effective size
 \(n_xn_y/(n_x+n_y)\)).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The p-value is the ASYMPTOTIC one, \(2\sum_k (-1)^{k-1}
-e^{-2k^2t^2}\) with \(t = \sqrt{n_{\mathrm{eff}}}D\). It is accurate
-for moderate samples and conservative for small ones; for an exact
-small-sample p-value use <code><a href="https://rdrr.io/r/stats/ks.test.html" class="external-link">stats::ks.test()</a></code>. Ties are handled by
-comparing the two EDFs at each distinct value, so tied data does not
-produce a warning the way <code><a href="https://rdrr.io/r/stats/ks.test.html" class="external-link">ks.test()</a></code> does.</p>
+    <p>The p-value is the ASYMPTOTIC one, \(2\sum_k (-1)^{k-1} e^{-2k^2t^2}\)
+with \(t = \sqrt{n_{\mathrm{eff}}}D\). It is accurate for moderate
+samples and conservative for small ones; for an exact small-sample
+p-value use <code><a href="https://rdrr.io/r/stats/ks.test.html" class="external-link">stats::ks.test()</a></code>. Ties are
+handled by comparing the two EDFs at each distinct value, so tied data
+does not produce a warning the way <code><a href="https://rdrr.io/r/stats/ks.test.html" class="external-link">ks.test()</a></code> does.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="drift_psi.html">drift_psi()</a></code>, <code><a href="drift_chisq.html">drift_chisq()</a></code>, <code><a href="capsule_drift.html">capsule_drift()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="drift_psi.html">drift_psi()</a></code>,
+<code><a href="drift_chisq.html">drift_chisq()</a></code>,
+<code><a href="capsule_drift.html">capsule_drift()</a></code></p></div>
     </div>
 
     <div class="section level2">

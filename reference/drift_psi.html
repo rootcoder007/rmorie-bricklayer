@@ -60,8 +60,8 @@ reference one.</p>
 
 
 <dl><dt id="arg-x-y">x, y<a class="anchor" aria-label="anchor" href="#arg-x-y"></a></dt>
-<dd><p>Numeric vectors, the reference and the new sample. Binned
-on the quantiles of <code>x</code>, so the reference defines the bins.</p></dd>
+<dd><p>Numeric vectors, the reference and the new sample.
+Binned on the quantiles of <code>x</code>, so the reference defines the bins.</p></dd>
 
 
 <dt id="arg-bins">bins<a class="anchor" aria-label="anchor" href="#arg-bins"></a></dt>
@@ -69,7 +69,8 @@ on the quantiles of <code>x</code>, so the reference defines the bins.</p></dd>
 
 
 <dt id="arg-eps">eps<a class="anchor" aria-label="anchor" href="#arg-eps"></a></dt>
-<dd><p>Floor applied to empty bins in the PSI (default 1e-6).</p></dd>
+<dd><p>Floor applied to empty bins in the PSI (default
+1e-6).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -82,8 +83,8 @@ on the quantiles of <code>x</code>, so the reference defines the bins.</p></dd>
 \(\sum_i (p_i - q_i)\log(p_i/q_i)\) – the symmetrised
 Kullback-Leibler divergence of the two discrete distributions. The
 conventional reading, from credit-risk monitoring where it originates,
-is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above
-0.25 is a material shift.</p>
+is that below 0.1 is stable, 0.1 to 0.25 warrants a look, and above 0.25
+is a material shift.</p>
 <p>The Jensen-Shannon divergence is
 \(\tfrac12 KL(p\|m) + \tfrac12 KL(q\|m)\) with \(m\) the mixture
 \((p+q)/2\). Unlike PSI it is bounded – by \(\log 2\) in nats –
@@ -95,9 +96,9 @@ category.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Wu D, Olson DL (2010). Enterprise risk management:
-coping with model risk in a large bank. <em>Journal of the Operational
-Research Society</em> 61(2), 179–190. <a href="https://doi.org/10.1057/jors.2008.144" class="external-link">doi:10.1057/jors.2008.144</a></p>
+    <p>Wu D, Olson DL (2010). Enterprise risk management: coping
+with model risk in a large bank. <em>Journal of the Operational Research
+Society</em> 61(2), 179–190. <a href="https://doi.org/10.1057/jors.2008.144" class="external-link">doi:10.1057/jors.2008.144</a></p>
 <p>Lin J (1991). Divergence measures based on the Shannon entropy.
 <em>IEEE Transactions on Information Theory</em> 37(1), 145–151.
 <a href="https://doi.org/10.1109/18.61115" class="external-link">doi:10.1109/18.61115</a></p>

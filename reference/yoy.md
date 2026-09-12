@@ -35,7 +35,7 @@ yoy(x, period = seq_along(x), ...)
 yoy(x, lag = NULL, ...)
 
 # S3 method for class 'rmbl_yoy'
-print(x, digits = 1L, palette = "diverging", color = NULL, n = 30L, ...)
+print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 ```
 
 ## Arguments
@@ -132,6 +132,17 @@ An `rmbl_yoy` object: a data frame with one row per period (and group),
 and columns `period`, `value`, `previous`, `change`, `pct_change` (or
 `pp_change` for percentages), `pct_lower` and `pct_upper` for counts,
 `verdict`, and `flag` recording why a percent was withheld.
+
+## References
+
+The exact interval for a ratio of two counts is the conditional-binomial
+(Clopper-Pearson) one, which is the construction
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) uses
+and which this is verified against. On the reporting conventions, the
+Toronto Police Service's *Understanding Strip Searches in 2020
+Methodological Report* – in the local corpus – reports year-over-year
+change on exactly this kind of administrative extract, and is the shape
+this function is built for.
 
 ## See also
 

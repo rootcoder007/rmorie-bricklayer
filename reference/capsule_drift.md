@@ -64,14 +64,14 @@ capsule_drift(
 
 A list of class `bricklayer_drift`: `columns` (a data frame, one row per
 shared column, with `column`, `type`, `statistic`, `p_value`, `psi`,
-`js_divergence` and `drifted`), `added`, `removed`, `n_reference`,
+`js_divergence` and `drifted`) , `added`, `removed`, `n_reference`,
 `n_current`, `alpha`, and `any_drift`.
 
 ## Details
 
 The categorical test is the two-sample homogeneity test, NOT
-[`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)'s
-goodness-of-fit against a known distribution: the reference here is
+[`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)
+'s goodness-of-fit against a known distribution: the reference here is
 itself a finite sample, and ignoring its sampling error would report
 drift too readily.
 

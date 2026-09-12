@@ -3,15 +3,13 @@
 Benford's law, \(P(d) = \log_{10}(1 + 1/d)\). Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
-typically do not. That makes it a cheap screen for a numeric column
-that arrived looking plausible but is not the measurement it claims to
-be."><meta property="og:description" content="Compares the distribution of leading significant digits in x with
+typically do not. That makes it a cheap screen for a numeric column that
+arrived looking plausible but is not the measurement it claims to be."><meta property="og:description" content="Compares the distribution of leading significant digits in x with
 Benford's law, \(P(d) = \log_{10}(1 + 1/d)\). Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
-typically do not. That makes it a cheap screen for a numeric column
-that arrived looking plausible but is not the measurement it claims to
-be."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+typically do not. That makes it a cheap screen for a numeric column that
+arrived looking plausible but is not the measurement it claims to be."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -60,9 +58,8 @@ be."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD
 Benford's law, \(P(d) = \log_{10}(1 + 1/d)\). Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
-typically do not. That makes it a cheap screen for a numeric column
-that arrived looking plausible but is not the measurement it claims to
-be.</p>
+typically do not. That makes it a cheap screen for a numeric column that
+arrived looking plausible but is not the measurement it claims to be.</p>
     </div>
 
     <div class="section level2">
@@ -80,16 +77,16 @@ be.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_benford</code>: <code>counts</code> (observed
-digit frequencies 1–9), <code>expected</code>, <code>proportion</code>,
+    <p>A list of class <code>bricklayer_benford</code>: <code>counts</code>
+(observed digit frequencies 1–9), <code>expected</code>, <code>proportion</code>,
 <code>statistic</code>, <code>df</code>, <code>p_value</code>, and <code>n</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It is a SCREEN, not a verdict. Columns with a narrow range, a unit
-floor or ceiling, or an assigned-identifier structure (postcodes, year
-fields, prices ending in 99) legitimately violate Benford's law. Treat
-a small p-value as a reason to look, never as evidence of fabrication.</p>
+    <p>It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication.</p>
 <p>Zeros and non-finite values have no leading significant digit and are
 excluded; the sign is ignored.</p>
     </div>

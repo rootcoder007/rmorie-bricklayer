@@ -36,7 +36,7 @@ chk$match          # TRUE
 #> [1] TRUE
 
 # A wrong expected digest -> match FALSE, with both values reported.
-bad <- verify_sha256(f, "0000000000000000000000000000000000000000000000000000000000000000")
+bad <- verify_sha256(f, strrep("0", 64L))
 bad$match          # FALSE
 #> [1] FALSE
 bad$actual         # the real digest

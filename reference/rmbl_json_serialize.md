@@ -3,7 +3,7 @@
 Writes an R object to JSON with its type and attributes alongside the
 value, so the round trip returns THE SAME OBJECT rather than something
 that merely prints the same. The counterpart of jsonlite's
-`serializeJSON()`/`unserializeJSON()`, computed by this package's own
+`serializeJSON()` / `unserializeJSON()`, computed by this package's own
 codec with no jsonlite dependency.
 
 ## Usage

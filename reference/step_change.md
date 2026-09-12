@@ -40,6 +40,16 @@ A list with `break_after` (the period the series changes after),
 `index`, `before`, `after`, `difference`, `statistic`, `p_value`,
 `n_perm` and `method`.
 
+## References
+
+The permutation distribution of the maximum over splits, rather than the
+chosen split's own test, is what makes this a test of whether there is a
+break rather than a way of locating the largest wobble. See any
+treatment of the change-point problem, e.g. Coles, S. *An Introduction
+to Statistical Modeling of Extreme Values* (Springer), which discusses
+change-point detection alongside the threshold choices that raise the
+same multiple-comparison issue.
+
 ## Examples
 
 ``` r

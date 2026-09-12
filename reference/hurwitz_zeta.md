@@ -24,6 +24,16 @@ hurwitz_zeta(s, q = 1)
 
 A numeric vector the length of `s`.
 
+## References
+
+The Euler-Maclaurin expansion used here – direct terms to `q + N`, then
+the integral tail, then the Bernoulli-number corrections – is the
+standard evaluation; see Abramowitz, M. and Stegun, I. A. *Handbook of
+Mathematical Functions*, Sec. 23.2. (Not in the local corpus; cited from
+the published reference. The implementation is checked against `pi^2/6`,
+`pi^4/90`, Apery's constant and the shift identity, which is stronger
+evidence than the citation.)
+
 ## Examples
 
 ``` r

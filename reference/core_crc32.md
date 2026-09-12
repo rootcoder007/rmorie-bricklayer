@@ -1,6 +1,6 @@
 # CRC-32 checksum (C backend)
 
-The CRC-32 of ITU V.42 and zip (reflected polynomial `0xEDB88320`).
+The CRC-32 of ITU V.42 and zip (reflected polynomial `0xEDB88320`) .
 
 ## Usage
 

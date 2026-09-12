@@ -38,7 +38,7 @@ bricklayer_fetch_siu(
 - wayback:
 
   Optional explicit Wayback snapshot URL (passed through to
-  `bricklayer_fetch`); `""` lets it discover one.
+  `bricklayer_fetch`) ; `""` lets it discover one.
 
 - timeout:
 

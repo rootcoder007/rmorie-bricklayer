@@ -299,6 +299,219 @@ rather than an error:
   `&gt;`, `&quot;`, `&apos;`, the remaining quotes and the dashes
   survived into the extracted text.
 
+### Statistics for the tables these capsules hold
+
+An open-data extract from a criminal-justice system has a shape the
+general-purpose toolkits do not assume: a handful of fiscal years,
+counts rather than measurements, categories reported as bands rather
+than values, and a region code with no geometry attached.
+
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+computes period-over-period change and declines it in the three cases
+where the figure would describe something other than the data. Periods
+are matched on their own **value**, not on row position, so a missing
+year is a gap rather than a quietly multi-year comparison. A percent off
+a base below the gate is withheld with its reason recorded – two
+placements becoming twenty is a 900% rise and also nothing at all –
+while the count change and the direction are still reported, those being
+facts. A column already in percent is handled in percentage **points**,
+a percent of a percent being a different quantity. For counts the
+interval is exact: conditional on the two periods’ total the current
+count is binomial, so the ratio has a Clopper-Pearson interval, verified
+identical to
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) on
+every case including both zero boundaries.
+
+- [`yoy_write()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.md)
+  renders to HTML, PDF, CSV, TSV, JSON or Markdown, with the format
+  taken from the file name;
+  [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
+  [`yoy_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md),
+  [`yoy_tsv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md),
+  [`yoy_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  and
+  [`yoy_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  are available individually. Nothing here needs a package beyond base
+  R: the HTML is self-contained and makes no network request, so it
+  renders later as it rendered when the capsule was sealed, and the PDF
+  is drawn on R’s own device and paginates rather than truncating.
+- [`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+  gives the change across the whole span and the compound rate per
+  period.
+  [`yoy_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.md)
+  and
+  [`fiscal_year_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fiscal_year_label.md)
+  render a fiscal year by the years it spans, so an `EndFiscalYear` of
+  2023 prints as `2022/23` rather than naming a calendar year the row is
+  not about.
+- Colour encodes whether a change is an **improvement**, which is not
+  the sign of the change: segregation days rising is bad news and a
+  completion rate rising is not.
+  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md)
+  offers a colour-blind-safe pair and a monochrome option for print.
+
+### Categories published as intervals
+
+[`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md)
+reads the interval labels publishers actually use – `"2 to 5"`, `"50+"`,
+`"Greater than 10"`, `"under 18"`, and the whole dash family – and
+returns **bounds**, distinguishing the inclusive wordings from the
+exclusive ones: `"65 and over"` starts at 65 and `"over 65"` at 66,
+which is a whole unit of the quantity being measured.
+
+- [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+  makes the representative-value rule explicit, and marks the rows whose
+  value rests on an assumption about the open top band, that band having
+  no midpoint to take.
+- [`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+  reports how far a derived statistic moves as the assumed cap varies.
+  Everything computed from banded data carries that dependence; the only
+  question is whether it was measured.
+
+### Concentration, association and heavy tails
+
+- [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+  [`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  and
+  [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  answer whether a few units account for most of a total. Gini is
+  verified both against the mean-absolute-difference definition and
+  against twice the area under its own Lorenz curve. Its maximum for `n`
+  units is `1 - 1/n`, not 1, so the value means different things across
+  ten units and ten thousand.
+- [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  maximises the **exact** discrete likelihood. The closed-form
+  continuity correction usually quoted is an asymptotic approximation in
+  the threshold, and at a threshold of one – where administrative counts
+  start – it returns about 2.0 from data generated with an exponent of
+  2.5. It also reports a goodness-of-fit distance, because an exponent
+  fitted to a tail that is not a power law is a number with no referent.
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  is the normalising constant that needs, computed by Euler-Maclaurin
+  and verified against `pi^2/6`, `pi^4/90`, Apery’s constant and the
+  shift identity.
+- [`cramers_v()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramers_v.md)
+  carries Bergsma’s bias correction, without which a sparse table
+  reports association that is an artefact of its size, and permutes its
+  p-value rather than trusting the chi-square approximation when an
+  expected count is small.
+
+### Trend in a series of a few periods
+
+- [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+  is Mann-Kendall with a Theil-Sen slope: no distributional assumption,
+  resistant to one aberrant period, exact by enumeration up to eight
+  periods, and agreeing with
+  [`stats::cor.test`](https://rdrr.io/r/stats/cor.test.html)’s tau and
+  exact p-values.
+- [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md)
+  scans every admissible split and takes its p-value from the
+  permutation distribution of the **maximum** over splits, not from the
+  best split’s own test – which is how a break is found in any series.
+  It records that six points cannot produce a p-value below
+  `(1 + 72) / (1 + 720)` however clean the step.
+- [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  is a Poisson rate ratio per period, matching
+  [`stats::glm`](https://rdrr.io/r/stats/glm.html) to 1e-8, with an
+  offset for a varying denominator and a widening to quasi-Poisson when
+  the dispersion says the Poisson interval is too narrow.
+
+### Region-coded counts
+
+A region is an areal unit with a population, not a coordinate.
+
+- [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+  does indirect standardisation, removing the part of a difference
+  explained by who the area holds. The expected counts total the
+  observed ones, which is the identity that makes them a standardisation
+  rather than a prediction.
+- [`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+  reports the ratio with the exact Poisson interval, identical to
+  [`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html)’s,
+  including a lower limit of exactly zero at an observed count of zero.
+- [`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md)
+  is the Clayton-Kaldor empirical Bayes shrinkage, which stops a small
+  area’s noise from ranking it to the top or bottom of a league table.
+  Where the between-area variance estimate is not positive there is no
+  evidence of real variation and every estimate collapses to the overall
+  rate, reported through total shrinkage rather than hidden.
+- [`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
+  gives exact Poisson control limits, which stay correct at the small
+  expected counts where a normal funnel’s lower limit goes below zero.
+- [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+  requires a neighbour list and does not invent one, an extract keyed on
+  a region shipping no geometry. Its null expectation is `-1/(n - 1)`,
+  not zero.
+
+Two vignettes cover the lot: *Year-over-year change, and the three ways
+it goes wrong* and *Statistics for a published administrative table*.
+
+### Byte compatibility
+
+Every hash, keyed hash, checksum, key derivation, base64 and JSON output
+is now compared against an **independent** implementation – `digest`,
+`openssl`, `jsonlite` and base R’s own inflater – over a length sweep
+crossing each construction’s block boundaries. Published vectors prove a
+primitive reproduces a handful of documented inputs; they do not prove
+it agrees with the libraries already in a user’s pipeline. SHA-256,
+SHA-512, HMAC-SHA-256, BLAKE2b, PBKDF2 and the JSON writer were already
+exact. Five things were not.
+
+- **Merkle chunks could not hold binary data at all.** Chunks were taken
+  as strings and measured with `strlen`, and
+  [`chunk_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.md)
+  called [`rawToChar()`](https://rdrr.io/r/base/rawConversion.html),
+  which errors on any file containing a zero byte. A raw vector handed
+  in was coerced, so `merkle_root(list(charToRaw("a")))` hashed deparsed
+  text and returned a confident digest of the wrong thing. Chunks are
+  now bytes end to end, and
+  [`chunk_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.md)
+  returns a list of raw vectors. **Roots for character input are
+  unchanged**, so manifests already recorded still verify.
+- **[`json_gzip_encode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
+  did not produce gzip.** `memCompress(type = "gzip")` emits a zlib
+  stream (RFC 1950, header `0x78 0x9c`), not a gzip member (RFC 1952,
+  `0x1f 0x8b`), and `memDecompress` reads both – so the round trip
+  looked correct while no external tool could read bytes the
+  documentation calls “raw gzip bytes, for writing to a file”. Now a
+  real member, with the CRC-32 and length trailer, and MTIME pinned to
+  zero so a capsule digest does not move with the clock.
+- **base64 line-wrapping was off by one byte** at every multiple of 54
+  input bytes. The wrap terminates the 54-byte input block, not the
+  72-character output, and 52, 53 and 54 bytes all encode to 72
+  characters while only 54 fills a block. A field encoded by `jsonlite`
+  and re-encoded here differed, and a digest comparison read that as
+  drift. Now exact over every length from 0 to 400.
+- **[`digest_object()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.md)
+  accepted `key` but wired it only to blake2b**, so a keyed `sha256`,
+  `sha512` or `crc32` silently returned the *unkeyed* digest – an
+  authentication request answered with a checksum. `sha256` now routes
+  to HMAC-SHA-256 and the two algorithms with no keyed form refuse the
+  key.
+- **[`json_gzip_decode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
+  trusted its flag over its input’s type**, so handing back what
+  `json_gzip_encode(raw = TRUE)` returned, without repeating the flag,
+  ran the bytes through a base64 decode and failed inside the inflater.
+
+### Newly reachable through LinkingTo
+
+`gini`, `top_share`, `lorenz`, `mann_kendall`, `theil_sen` and
+`hurwitz_zeta` are published with `R_RegisterCCallable` and shimmed in
+`inst/include/rmoriebricklayer.h`, so a sibling package reaches them
+without going back through R.
+
+A consumer package is now built **and run** against the header as part
+of the suite. The two halves fail independently: a signature mismatch is
+a compile error, while a wrong name in `R_RegisterCCallable` compiles
+perfectly and raises only on first call, `R_GetCCallable` resolving
+lazily. That test immediately earned its place by recording a real
+requirement – **`LinkingTo` alone is not enough**. It puts the header on
+the include path at compile time but does not load the providing
+package, so a consumer needs `Imports: rmoriebricklayer` as well or the
+first kernel call raises “function ‘rmbl_gini’ not provided by package
+‘rmoriebricklayer’”.
+
 ### Verification
 
 Everything with a published test vector is checked against it: SHA-512
@@ -319,7 +532,32 @@ caveat, because they are liboqs’s implementation rather than one of
 ours; what is tested here is the binding, including that ML-DSA-65
 produces the key and signature sizes FIPS 204 specifies.
 
-The suite is 3,291 assertions at 97.1% coverage, and
+Everything added in this release is anchored outside itself. The exact
+count interval is checked against
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html), the
+Poisson trend against [`stats::glm`](https://rdrr.io/r/stats/glm.html),
+Kendall’s tau and its exact p-values against
+[`stats::cor.test`](https://rdrr.io/r/stats/cor.test.html), the funnel
+limits against [`stats::qpois`](https://rdrr.io/r/stats/Poisson.html),
+Gini against its own definition and its own Lorenz curve, the Hurwitz
+zeta against three published constants and a functional identity, and
+the tail-index estimator against samples whose exponent is known by
+construction – the only anchor that can fail, since comparing against
+the closed form would compare against the thing being replaced. The
+statistical methods are grounded in the local corpus where it has them
+(Lawson on standardised incidence ratios and Clayton-Kaldor shrinkage;
+Hedderich and Sachs on the Lorenz construction and the indirect/direct
+distinction); Bergsma and Clauset-Shalizi-Newman are not in it and are
+cited from the published papers, marked as such.
+
+Three source-level invariants are now checked too, because they break
+only on platforms the development host is not: that no R header precedes
+a standard header reaching libc++’s `<locale>` (R’s `length` macro
+otherwise rewrites it, which fails on macOS and is silent on Linux),
+that every C entry point is registered with a matching arity and every
+registration resolves, and that no source file carries a non-ASCII byte.
+
+The suite is 5,300 assertions at 97.6% coverage, and
 `R CMD check --as-cran` is clean.
 
 ## rmoriebricklayer 0.3.11

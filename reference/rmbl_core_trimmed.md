@@ -20,12 +20,14 @@ core_winsorized_mean(x, trim = 0.1)
 - x:
 
   Numeric vector (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)).
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
 
 - trim:
 
-  Proportion trimmed from *each* end, in \[0, 0.5\]. At `0.5` both
+  Proportion trimmed from *each* end, in \\ \[0, 0.5\]. At `0.5` both
   reduce to the median.
+
+  \[0, 0.5\]: R:0,%200.5%5C
 
 ## Value
 

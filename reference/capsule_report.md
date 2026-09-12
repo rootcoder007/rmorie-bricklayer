@@ -71,9 +71,9 @@ capsule_report(
 ## Value
 
 A list of class `bricklayer_report`: `findings` (a data frame of
-`severity`, `check`, `subject`, `detail`), `verdict` (`"fatal"`,
-`"warn"`, `"note"` or `"clean"`), `profile`, `missingness`, `drift`,
-`digest`, and `n_rows`/`n_cols`.
+`severity`, `check`, `subject`, `detail`) , `verdict` ( `"fatal"`,
+`"warn"`, `"note"` or `"clean"`) , `profile`, `missingness`, `drift`,
+`digest`, and `n_rows` / `n_cols`.
 
 ## Details
 

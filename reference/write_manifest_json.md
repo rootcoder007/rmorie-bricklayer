@@ -1,9 +1,9 @@
 # Write a Manifest to JSON
 
 Serializes a manifest to a pretty-printed JSON file with the native JSON
-codec
-([`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md));
-no jsonlite needed.
+codec (
+[`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md))
+; no jsonlite needed.
 
 ## Usage
 

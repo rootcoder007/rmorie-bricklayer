@@ -25,7 +25,7 @@ bricklayer_json_base64url_dec(input)
 
 ## Value
 
-The encoders return a length-1 character vector (`NA_character_` for
+The encoders return a length-1 character vector ( `NA_character_` for
 `NULL` input); the decoders return a raw vector.
 
 ## Details

@@ -43,6 +43,15 @@ it is well above one the interval is too narrow, and the quasi-Poisson
 interval – which scales the standard error by the square root of the
 dispersion – is returned instead, with `overdispersed` set.
 
+## References
+
+Bilder, C. R. and Loughin, T. M. *Analysis of Categorical Data with R*,
+2nd edn. Chapman and Hall/CRC, on the quasi-likelihood treatment of an
+overdispersed Poisson fit: the variance is scaled by an estimated
+dispersion, which widens the interval while leaving the point estimate
+alone. That is the behaviour reported here through `dispersion` and
+`overdispersed`.
+
 ## Examples
 
 ``` r

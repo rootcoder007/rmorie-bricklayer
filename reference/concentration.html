@@ -65,45 +65,46 @@
 
 
 <dt id="arg-na-rm">na.rm<a class="anchor" aria-label="anchor" href="#arg-na-rm"></a></dt>
-<dd><p>Whether to drop missing values. They are dropped either
-way; this argument exists so the call reads the same as base R's.</p></dd>
+<dd><p>Whether to drop missing values. They are
+dropped either way; this argument exists so the call reads the same as
+base R's.</p></dd>
 
 
 <dt id="arg-fractions">fractions<a class="anchor" aria-label="anchor" href="#arg-fractions"></a></dt>
-<dd><p>Fractions of the units, largest first, to report the
-share of.</p></dd>
+<dd><p>Fractions of the units, largest first,
+to report the share of.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>gini()</code> a single number in <code>[0, 1]</code>, <code>NA</code> when the total is
-zero. <code>lorenz()</code> a data frame of cumulative population and value
-shares, including the origin. <code>top_share()</code> a data frame of the
-requested fractions, the share each holds, and how many units that
-was.</p>
+    <p><code>gini()</code> a single number in <code>[0, 1]</code>, <code>NA</code> when
+the total is zero. <code>lorenz()</code> a data frame of cumulative population
+and value shares, including the origin. <code>top_share()</code> a data frame
+of the requested fractions, the share each holds, and how many units
+that was.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Gini is the mean absolute difference between pairs of units over twice
-the mean, which is also twice the area between the Lorenz curve and
-the diagonal. Zero is a perfectly even spread; the maximum for <code>n</code>
+the mean, which is also twice the area between the Lorenz curve and the
+diagonal. Zero is a perfectly even spread; the maximum for <code>n</code>
 units is <code>1 - 1/n</code>, not 1, so a Gini near 1 requires many units as
 well as an uneven spread.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Hedderich, J. and Sachs, L. (2020). <em>Applied Statistics: Methods
-Using R</em>. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117,
-gives the construction used here: the units are placed at equal
-intervals on the horizontal axis and the cumulated, ascendingly
-ordered shares of the total on the vertical one, so that the curve is
-the diagonal exactly when p percent of the units account for p
-percent of the total, and sags further the greater the
-concentration.</p>
+    <p>Hedderich, J. and Sachs, L. (2020). <em>Applied Statistics: Methods Using
+R</em>. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117, gives the
+construction used here: the units are placed at equal intervals on the
+horizontal axis and the cumulated, ascendingly ordered shares of the
+total on the vertical one, so that the curve is the diagonal exactly
+when p percent of the units account for p percent of the total, and sags
+further the greater the concentration.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="hill_tail_index.html">hill_tail_index()</a></code>, <code><a href="band_sensitivity.html">band_sensitivity()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="hill_tail_index.html">hill_tail_index()</a></code>,
+<code><a href="band_sensitivity.html">band_sensitivity()</a></code></p></div>
     </div>
 
     <div class="section level2">

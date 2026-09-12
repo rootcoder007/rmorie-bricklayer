@@ -63,17 +63,19 @@ differs, was added, or disappeared.</p>
 
 
 <dl><dt id="arg-a-b">a, b<a class="anchor" aria-label="anchor" href="#arg-a-b"></a></dt>
-<dd><p>Environment records from <code><a href="capture_environment.html">capture_environment()</a></code>, or whole
+<dd><p>Environment records from
+<code><a href="capture_environment.html">capture_environment()</a></code>, or whole
 manifests containing an <code>environment</code> element.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_env_diff</code>: <code>identical</code> (logical),
-<code>r_version</code> (a length-2 character vector when they differ, else
-<code>NULL</code>), <code>platform</code> (likewise), and <code>packages</code> (a data frame of
-<code>package</code>, <code>a</code>, <code>b</code>, <code>change</code>, where <code>change</code> is <code>"added"</code>,
-<code>"removed"</code> or <code>"changed"</code>).</p>
+    <p>A list of class <code>bricklayer_env_diff</code>: <code>identical</code>
+(logical), <code>r_version</code> (a length-2 character vector when they
+differ, else <code>NULL</code>) , <code>platform</code> (likewise), and
+<code>packages</code> (a data frame of <code>package</code>, <code>a</code>, <code>b</code>,
+<code>change</code>, where <code>change</code> is <code>"added"</code>, <code>"removed"</code>
+or <code>"changed"</code>) .</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -84,7 +86,8 @@ dependency that moved a minor version – is exactly what gets missed.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="capture_environment.html">capture_environment()</a></code>, <code><a href="make_manifest.html">make_manifest()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="capture_environment.html">capture_environment()</a></code>,
+<code><a href="make_manifest.html">make_manifest()</a></code></p></div>
     </div>
 
     <div class="section level2">

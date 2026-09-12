@@ -24,8 +24,10 @@ core_midranks(x)
 
 ## Value
 
-`core_cor_spearman()` a length-1 numeric in \[-1, 1\]; `core_midranks()`
-a numeric vector the length of `x`.
+`core_cor_spearman()` a length-1 numeric in \\ \[-1, 1\];
+`core_midranks()` a numeric vector the length of `x`.
+
+\[-1, 1\]: R:-1,%201%5C
 
 ## Examples
 

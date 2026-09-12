@@ -51,7 +51,7 @@ evaluates by an O(n) recursion; the other three are not, so they cost
 O(n^2).
 
 Parameters are passed on the scales the kernel is defined on:
-`par = c(a0, eta, ...)` where `a0` is the LOG baseline intensity (\\\nu
+`par = c(a0, eta, ...)` where `a0` is the LOG baseline intensity ( \\\nu
 = e^{a0}\\) and `eta` the branching ratio in (0, 1) – the expected
 number of children per event, so the process is stationary only for
 `eta < 1`. The remaining entries are the kernel's own shape parameters:

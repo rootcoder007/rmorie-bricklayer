@@ -21,9 +21,10 @@ environment_diff(a, b)
 ## Value
 
 A list of class `bricklayer_env_diff`: `identical` (logical),
-`r_version` (a length-2 character vector when they differ, else `NULL`),
-`platform` (likewise), and `packages` (a data frame of `package`, `a`,
-`b`, `change`, where `change` is `"added"`, `"removed"` or `"changed"`).
+`r_version` (a length-2 character vector when they differ, else `NULL`)
+, `platform` (likewise), and `packages` (a data frame of `package`, `a`,
+`b`, `change`, where `change` is `"added"`, `"removed"` or `"changed"`)
+.
 
 ## Details
 

@@ -62,8 +62,9 @@ ML-DSA (FIPS 204) or SLH-DSA (FIPS 205) – <strong>through liboqs</strong>.</p>
 
 
 <dl><dt id="arg-scheme">scheme<a class="anchor" aria-label="anchor" href="#arg-scheme"></a></dt>
-<dd><p>Scheme name, as reported by <code><a href="pqc_backends.html">pqc_backends()</a></code>. The
-default <code>"ML-DSA-65"</code> is the FIPS 204 middle security level.</p></dd>
+<dd><p>Scheme name, as reported by
+<code><a href="pqc_backends.html">pqc_backends()</a></code>. The default
+<code>"ML-DSA-65"</code> is the FIPS 204 middle security level.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
@@ -72,19 +73,20 @@ default <code>"ML-DSA-65"</code> is the FIPS 204 middle security level.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_oqs_key</code>: <code>public</code>, <code>secret</code>
-(both hex), and <code>scheme</code>.</p>
+    <p>A list of class <code>bricklayer_oqs_key</code>: <code>public</code>,
+<code>secret</code> (both hex), and <code>scheme</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>bricklayer implements no lattice arithmetic of its own. These keys and
-signatures are produced entirely by the Open Quantum Safe library,
-which is tested and maintained for the purpose; a hand-written NTT and
+signatures are produced entirely by the Open Quantum Safe library, which
+is tested and maintained for the purpose; a hand-written NTT and
 rejection sampler here would be a worse outcome than deferring. The
-trade-off is that the scheme is available only where liboqs was found
-at build time, which <code><a href="pqc_backends.html">pqc_backends()</a></code> reports.</p>
-<p>Unlike <code><a href="pqc_keygen.html">pqc_keygen()</a></code>'s hash-based key, these are STATELESS: a key
-signs any number of messages, with no index to track.</p>
+trade-off is that the scheme is available only where liboqs was found at
+build time, which <code><a href="pqc_backends.html">pqc_backends()</a></code> reports.</p>
+<p>Unlike <code><a href="pqc_keygen.html">pqc_keygen()</a></code> 's hash-based key, these
+are STATELESS: a key signs any number of messages, with no index to
+track.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -94,8 +96,9 @@ Module-Lattice-Based Digital Signature Standard. FIPS 204.
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="pqc_keygen.html">pqc_keygen()</a></code> for the dependency-free hash-based key,
-<code><a href="capsule_sign.html">capsule_sign()</a></code> which accepts either.</p></div>
+    <div class="dont-index"><p><code><a href="pqc_keygen.html">pqc_keygen()</a></code> for the dependency-free
+hash-based key, <code><a href="capsule_sign.html">capsule_sign()</a></code> which
+accepts either.</p></div>
     </div>
 
     <div class="section level2">

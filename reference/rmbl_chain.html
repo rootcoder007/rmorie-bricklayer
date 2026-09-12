@@ -3,11 +3,13 @@
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-chain_verify() reports the first index where the break occurs."><meta property="og:description" content="Each entry records the digest of the entry before it, so the chain's
+chain_verify() reports the first index
+where the break occurs."><meta property="og:description" content="Each entry records the digest of the entry before it, so the chain's
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-chain_verify() reports the first index where the break occurs."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+chain_verify() reports the first index
+where the break occurs."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -56,7 +58,8 @@ chain_verify() reports the first index where the break occurs."><meta name="goog
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-<code>chain_verify()</code> reports the first index where the break occurs.</p>
+<code>chain_verify()</code> reports the first index
+where the break occurs.</p>
     </div>
 
     <div class="section level2">
@@ -77,13 +80,14 @@ editing one breaks the links from that point onward, and
 
 
 <dl><dt id="arg-chain">chain<a class="anchor" aria-label="anchor" href="#arg-chain"></a></dt>
-<dd><p>A chain from <code>chain_new()</code> or <code>chain_append()</code>.</p></dd>
+<dd><p>A chain from <code>chain_new()</code> or
+<code>chain_append()</code>.</p></dd>
 
 
 <dt id="arg-entry">entry<a class="anchor" aria-label="anchor" href="#arg-entry"></a></dt>
-<dd><p>Any object to record. It is digested through its own
-deterministic serialization, so lists and data frames are accepted
-as readily as strings.</p></dd>
+<dd><p>Any object to record. It is digested through
+its own deterministic serialization, so lists and data frames are
+accepted as readily as strings.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -92,41 +96,43 @@ as readily as strings.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>chain_new()</code> and <code>chain_append()</code> return an object of class
-<code>bricklayer_chain</code>. <code>chain_verify()</code> returns a list with <code>valid</code>,
-<code>n</code>, <code>broken_at</code> (<code>NA</code> when intact) and <code>head</code>. <code>chain_head()</code>
-returns the head digest. <code>chain_seal()</code> returns a single digest over
-the verified chain's length and links, or <code>NA</code> if the chain does not
-verify.</p>
+    <p><code>chain_new()</code> and <code>chain_append()</code> return an object of
+class <code>bricklayer_chain</code>. <code>chain_verify()</code> returns a list with
+<code>valid</code>, <code>n</code>, <code>broken_at</code> ( <code>NA</code> when intact) and
+<code>head</code>. <code>chain_head()</code> returns the head digest.
+<code>chain_seal()</code> returns a single digest over the verified chain's
+length and links, or <code>NA</code> if the chain does not verify.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This is the structure behind an append-only audit log, and it is what
-a per-manifest digest alone cannot give you: individually valid
-manifests say nothing about whether any were removed.</p>
+    <p>This is the structure behind an append-only audit log, and it is what a
+per-manifest digest alone cannot give you: individually valid manifests
+say nothing about whether any were removed.</p>
     </div>
     <div class="section level2">
     <h2 id="what-the-head-covers-and-what-it-does-not">What the head covers, and what it does not<a class="anchor" aria-label="anchor" href="#what-the-head-covers-and-what-it-does-not"></a></h2>
     <p><code>chain_head()</code> is the STORED digest of the last entry. Deleting an
-entry from the MIDDLE leaves that value untouched – the stored
-digests do not change, only the links between them stop agreeing –
-so the head alone will not notice. <code>chain_verify()</code> will, and names
-the index.</p>
-<p>Conversely, truncating from the END leaves a perfectly valid prefix
-that <code>chain_verify()</code> accepts, while the head changes.</p>
+entry from the MIDDLE leaves that value untouched – the stored digests
+do not change, only the links between them stop agreeing – so the head
+alone will not notice. <code>chain_verify()</code> will,
+and names the index.</p>
+<p>Conversely, truncating from the END leaves a perfectly valid prefix that
+<code>chain_verify()</code> accepts, while the head
+changes.</p>
 <p>The two failures are complementary, which is why <code>chain_seal()</code>
-exists: it verifies the links AND folds the entry count and every
-link digest into one value, so a single signature over the seal
-detects an edit, a deletion, a reordering, an insertion and a
-truncation alike. Sign the seal, not the head.</p>
+exists: it verifies the links AND folds the entry count and every link
+digest into one value, so a single signature over the seal detects an
+edit, a deletion, a reordering, an insertion and a truncation alike.
+Sign the seal, not the head.</p>
 <p>Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
-signature an attacker who rewrites the whole chain leaves it
-internally consistent, because recomputing every link is cheap.</p>
+signature an attacker who rewrites the whole chain leaves it internally
+consistent, because recomputing every link is cheap.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="capsule_sign.html">capsule_sign()</a></code> to sign the head, <code><a href="rmbl_merkle.html">merkle_root()</a></code> for
-pinning the contents of one capsule rather than a history.</p></div>
+    <div class="dont-index"><p><code><a href="capsule_sign.html">capsule_sign()</a></code> to sign the head,
+<code><a href="rmbl_merkle.html">merkle_root()</a></code> for pinning the contents of
+one capsule rather than a history.</p></div>
     </div>
 
     <div class="section level2">

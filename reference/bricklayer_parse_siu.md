@@ -17,7 +17,8 @@ bricklayer_parse_siu(html)
 
   A length-1 character vector of raw report HTML, or the path to a saved
   report file (e.g. from
-  [`bricklayer_fetch_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.md)).
+  [`bricklayer_fetch_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.md))
+  .
 
 ## Value
 

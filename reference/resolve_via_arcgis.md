@@ -23,7 +23,7 @@ resolve_via_arcgis(provenance)
 
 ## Value
 
-The layer query URL (`where=1=1`, all fields, GeoJSON) as a character
+The layer query URL ( `where=1=1`, all fields, GeoJSON) as a character
 string, or `NULL` if the field is missing, the request fails, or the
 layer metadata reports an error.
 

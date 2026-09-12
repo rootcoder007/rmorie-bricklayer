@@ -26,7 +26,7 @@ mahalanobis_outliers(data, alpha = 0.001, robust = TRUE)
 
 - robust:
 
-  Use the median/MAD centre and scale (default `TRUE`).
+  Use the median/MAD centre and scale (default `TRUE`) .
 
 ## Value
 

@@ -1,10 +1,10 @@
 # Parse banded category labels into numeric bounds
 
 Recognises the forms that open-data publishers actually use: a bare
-number (`"3"`), a closed range (`"18 to 24"`, `"18-24"`, `"18 - 24"`),
-an open upper band (`"50+"`, `"Greater than 15"`, `"over 15"`,
-`"more than 15"`, `"65 and over"`), and an open lower band (`"<18"`,
-`"under 18"`, `"less than 18"`).
+number ( `"3"`) , a closed range ( `"18 to 24"`, `"18-24"`, `"18 - 24"`)
+, an open upper band ( `"50+"`, `"Greater than 15"`, `"over 15"`,
+`"more than 15"`, `"65 and over"`) , and an open lower band ( `"<18"`,
+`"under 18"`, `"less than 18"`) .
 
 ## Usage
 

@@ -16,7 +16,7 @@ core_ipw_weights(treat, propensity, trim_lo = 0.01, trim_hi = 0.99)
 
 - treat:
 
-  Numeric or logical treatment indicator; `1`/`TRUE` is treated.
+  Numeric or logical treatment indicator; `1` / `TRUE` is treated.
 
 - propensity:
 

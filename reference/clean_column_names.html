@@ -74,13 +74,14 @@ duplicates disambiguated with a numeric suffix. The counterpart of
 
 
 <dt id="arg-case">case<a class="anchor" aria-label="anchor" href="#arg-case"></a></dt>
-<dd><p><code>"snake"</code> (default), <code>"lower_camel"</code>, <code>"upper_camel"</code>,
-<code>"screaming_snake"</code>, or <code>"none"</code> to normalise separators only.</p></dd>
+<dd><p><code>"snake"</code> (default), <code>"lower_camel"</code>,
+<code>"upper_camel"</code>, <code>"screaming_snake"</code>, or <code>"none"</code> to
+normalise separators only.</p></dd>
 
 
 <dt id="arg-sep">sep<a class="anchor" aria-label="anchor" href="#arg-sep"></a></dt>
-<dd><p>Separator for <code>"snake"</code> and <code>"screaming_snake"</code>
-(default <code>"_"</code>).</p></dd>
+<dd><p>Separator for <code>"snake"</code> and
+<code>"screaming_snake"</code> (default <code>"_"</code>) .</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -90,14 +91,15 @@ attribute), or the cleaned character vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Open-data extracts arrive with names like <code>"Total  Population (2021)"</code>
-and <code>"% change"</code>, which need backticks everywhere and break silently
-when a re-release renames <code>"% change"</code> to <code>"%  change"</code>. Normalising
-once at ingestion makes the schema stable against that.</p>
-<p>Record the mapping in the capsule manifest. Cleaning names changes
-what a downstream script must refer to, so an unrecorded cleaning is
-itself a reproducibility hazard – the returned object carries the
-original names in its <code>"original_names"</code> attribute for exactly that.</p>
+    <p>Open-data extracts arrive with names like
+<code>"Total Population (2021)"</code> and <code>"% change"</code>, which need
+backticks everywhere and break silently when a re-release renames
+<code>"% change"</code> to <code>"% change"</code>. Normalising once at ingestion
+makes the schema stable against that.</p>
+<p>Record the mapping in the capsule manifest. Cleaning names changes what
+a downstream script must refer to, so an unrecorded cleaning is itself a
+reproducibility hazard – the returned object carries the original names
+in its <code>"original_names"</code> attribute for exactly that.</p>
     </div>
 
     <div class="section level2">

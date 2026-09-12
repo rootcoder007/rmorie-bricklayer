@@ -44,8 +44,8 @@ merkle_verify(leaf, proof, root)
 
 `merkle_root()` a length-1 character vector (64 hex characters), or `NA`
 for no chunks. `merkle_leaves()` a character vector of per-chunk
-digests. `merkle_proof()` a list with `sibling` (character) and `side`
-(`"left"`/`"right"`). `merkle_verify()` a length-1 logical.
+digests. `merkle_proof()` a list with `sibling` (character) and `side` (
+`"left"` / `"right"`) . `merkle_verify()` a length-1 logical.
 
 ## Details
 

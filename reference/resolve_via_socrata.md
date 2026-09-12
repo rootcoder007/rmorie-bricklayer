@@ -19,7 +19,7 @@ resolve_via_socrata(provenance)
   [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md).
   Must contain `dataset$socrata_domain` (e.g.
   `"data.cityofchicago.org"`) and `dataset$socrata_id` (the 4x4 dataset
-  id, e.g. `"ijzp-q8t2"`).
+  id, e.g. `"ijzp-q8t2"`) .
 
 ## Value
 

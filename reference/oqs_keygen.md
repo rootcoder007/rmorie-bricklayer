@@ -40,9 +40,9 @@ build time, which
 reports.
 
 Unlike
-[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)'s
-hash-based key, these are STATELESS: a key signs any number of messages,
-with no index to track.
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+'s hash-based key, these are STATELESS: a key signs any number of
+messages, with no index to track.
 
 ## References
 

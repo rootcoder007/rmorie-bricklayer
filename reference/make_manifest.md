@@ -17,7 +17,7 @@ make_manifest(meta, environment = TRUE)
 - meta:
 
   A named list of run metadata (e.g. `project`, `author`, `run_at`,
-  `synthetic`).
+  `synthetic`) .
 
 - environment:
 

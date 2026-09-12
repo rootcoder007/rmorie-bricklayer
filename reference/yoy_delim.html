@@ -72,31 +72,32 @@ writing it would shift every column after it.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>.</p></dd>
+<dd><p>An <code>rmbl_yoy</code> object from
+<code><a href="yoy.html">yoy()</a></code>.</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
-<dd><p>Output path, or <code>NULL</code> to return the text instead of
-writing it.</p></dd>
+<dd><p>Output path, or <code>NULL</code> to return the text
+instead of writing it.</p></dd>
 
 
 <dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
-<dd><p>Digits for the percent columns. <code>NULL</code>, the default,
-writes them unrounded, which is what a downstream calculation
-wants; give a number for a figure meant to be read.</p></dd>
+<dd><p>Digits for the percent columns. <code>NULL</code>,
+the default, writes them unrounded, which is what a downstream
+calculation wants; give a number for a figure meant to be read.</p></dd>
 
 
 <dt id="arg-na">na<a class="anchor" aria-label="anchor" href="#arg-na"></a></dt>
-<dd><p>How to write a missing value. The default empty string is
-what most readers expect; <code>"NA"</code> keeps R's own spelling.</p></dd>
+<dd><p>How to write a missing value. The default empty
+string is what most readers expect; <code>"NA"</code> keeps R's own spelling.</p></dd>
 
 
 <dt id="arg-metadata">metadata<a class="anchor" aria-label="anchor" href="#arg-metadata"></a></dt>
-<dd><p>Whether to lead with comment lines recording the lag,
-units, confidence level, base gate and direction. On by default,
-because a percent column means different things under different
-settings and the file is the only place a later reader can look.
-Markdown and JSON carry the same information structurally.</p></dd>
+<dd><p>Whether to lead with comment lines
+recording the lag, units, confidence level, base gate and direction. On
+by default, because a percent column means different things under
+different settings and the file is the only place a later reader can
+look. Markdown and JSON carry the same information structurally.</p></dd>
 
 
 <dt id="arg-comment">comment<a class="anchor" aria-label="anchor" href="#arg-comment"></a></dt>
@@ -112,13 +113,14 @@ Markdown and JSON carry the same information structurally.</p></dd>
 
 
 <dt id="arg-align">align<a class="anchor" aria-label="anchor" href="#arg-align"></a></dt>
-<dd><p>Whether to pad the Markdown columns so the source table
-is readable unrendered.</p></dd>
+<dd><p>Whether to pad the Markdown columns so the
+source table is readable unrendered.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The path, invisibly; or the text, when <code>file</code> is <code>NULL</code>.</p>
+    <p>The path, invisibly; or the text, when <code>file</code> is
+<code>NULL</code>.</p>
     </div>
 
     <div class="section level2">

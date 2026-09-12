@@ -76,32 +76,38 @@ all three steps.</p>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to <code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>.</p></dd>
+<dd><p>Passed to
+<code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>.</p></dd>
 
 
 <dt id="arg-txt">txt<a class="anchor" aria-label="anchor" href="#arg-txt"></a></dt>
-<dd><p>Base64 string (or raw vector) from <code>json_gzip_encode()</code>.</p></dd>
+<dd><p>Base64 string (or raw vector) from
+<code>json_gzip_encode()</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>json_gzip_encode()</code> a length-1 character vector, or a raw
-vector when <code>raw = TRUE</code>. <code>json_gzip_decode()</code> the decoded object.</p>
+vector when <code>raw = TRUE</code>. <code>json_gzip_decode()</code> the decoded
+object.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>JSON is highly compressible because every record repeats the key
-names, so this is usually a large saving on anything record-shaped –
-but it is opaque. Use it for payloads that travel, and plain
-<code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code> for anything a person is meant to read or
-a <code>git diff</code> is meant to show.</p>
-<p><code>raw = TRUE</code> skips the base64 step and returns the gzip bytes, which
-is what to use when writing to a file rather than embedding in text.</p>
+    <p>JSON is highly compressible because every record repeats the key names,
+so this is usually a large saving on anything record-shaped – but it is
+opaque. Use it for payloads that travel, and plain
+<code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code> for
+anything a person is meant to read or a <code>git diff</code> is meant to
+show.</p>
+<p><code>raw = TRUE</code> skips the base64 step and returns the gzip bytes,
+which is what to use when writing to a file rather than embedding in
+text.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>,
-<code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> for a lossless but uncompressed form.</p></div>
+<code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code>
+for a lossless but uncompressed form.</p></div>
     </div>
 
     <div class="section level2">

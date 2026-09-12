@@ -3,7 +3,7 @@
 Thin R wrappers over the `rmoriebricklayer` compiled core – the same
 kernels that sibling packages reach through
 `LinkingTo: rmoriebricklayer`. NA/NaN values propagate (there is no
-`na.rm`); call
+`na.rm`) ; call
 [`stats::na.omit()`](https://rdrr.io/r/stats/na.fail.html) first if you
 need NA handling.
 
@@ -22,7 +22,7 @@ core_cor(x, y)
 - x, y:
 
   Numeric vectors (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)).
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
 
 ## Value
 

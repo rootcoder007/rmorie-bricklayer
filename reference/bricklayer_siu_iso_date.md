@@ -17,7 +17,7 @@ bricklayer_siu_iso_date(x)
 
 ## Value
 
-A character vector of `YYYY-MM-DD` strings (or `""`).
+A character vector of `YYYY-MM-DD` strings (or `""`) .
 
 ## Examples
 

@@ -6,9 +6,9 @@ plain ASCII via
 [`to_ascii()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/to_ascii.md)
 when the text is not valid UTF-8 (an encoding error) or when
 `force = TRUE` (for ASCII-only destinations such as a package
-`DESCRIPTION`). This lets author and supervisor names keep their accents
-wherever UTF-8 is supported while degrading gracefully instead of
-erroring where it is not.
+`DESCRIPTION`) . This lets author and supervisor names keep their
+accents wherever UTF-8 is supported while degrading gracefully instead
+of erroring where it is not.
 
 ## Usage
 
@@ -24,7 +24,7 @@ ascii_fallback(x, force = FALSE)
 
 - force:
 
-  Logical; always transliterate to ASCII (default `FALSE`).
+  Logical; always transliterate to ASCII (default `FALSE`) .
 
 ## Value
 

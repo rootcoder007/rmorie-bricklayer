@@ -25,8 +25,8 @@ crc32_file(path, block_bytes = 1048576L)
 
 ## Value
 
-A length-1 character vector (`sha512_file()`) or numeric
-(`crc32_file()`).
+A length-1 character vector ( `sha512_file()`) or numeric (
+`crc32_file()`) .
 
 ## Examples
 

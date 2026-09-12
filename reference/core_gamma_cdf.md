@@ -25,7 +25,9 @@ core_gamma_cdf(shape, x)
 
 ## Value
 
-A numeric vector the length of `x`, each entry in \[0, 1\].
+A numeric vector the length of `x`, each entry in \\ \[0, 1\].
+
+\[0, 1\]: R:0,%201%5C
 
 ## Examples
 

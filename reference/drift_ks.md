@@ -20,7 +20,7 @@ drift_ks(x, y)
 
 ## Value
 
-A named length-3 numeric: `statistic` (the KS \\D\\), `p_value`, and
+A named length-3 numeric: `statistic` (the KS \\D\\) , `p_value`, and
 `n_eff` (the harmonic-style effective size \\n_xn_y/(n_x+n_y)\\).
 
 ## Details

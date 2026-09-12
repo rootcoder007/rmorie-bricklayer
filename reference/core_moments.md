@@ -15,7 +15,7 @@ core_moments(x)
 - x:
 
   Numeric vector (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)).
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
 
 ## Value
 

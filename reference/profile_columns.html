@@ -70,32 +70,31 @@ distinct levels plus the most common one for a categorical column.</p>
 
 
 <dt id="arg-quantiles">quantiles<a class="anchor" aria-label="anchor" href="#arg-quantiles"></a></dt>
-<dd><p>Quantile probabilities to include for numeric
-columns (default the quartiles).</p></dd>
+<dd><p>Quantile probabilities to include for
+numeric columns (default the quartiles).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame of class <code>bricklayer_profile</code>, one row per
-column: the type, the missing count and share, the number of
-distinct values, and for a numeric column the counts of zero,
-negative and infinite values, the classical and robust centre and
-spread, the range, the skewness, the count outside the Tukey
-fences, and an <code><a href="inline_hist.html">inline_hist()</a></code> sketch of its distribution. A
-categorical column reports its most common value in <code>top</code>
-instead.</p>
+column: the type, the missing count and share, the number of distinct
+values, and for a numeric column the counts of zero, negative and
+infinite values, the classical and robust centre and spread, the range,
+the skewness, the count outside the Tukey fences, and an
+<code><a href="inline_hist.html">inline_hist()</a></code> sketch of its distribution. A
+categorical column reports its most common value in <code>top</code> instead.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Reporting the classical and robust centres side by side is the point:
 where they disagree, the column has outliers or a heavy tail, and the
-mean is not describing it. That is visible in one glance here and in
-no single number.</p>
+mean is not describing it. That is visible in one glance here and in no
+single number.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="capsule_drift.html">capsule_drift()</a></code> to compare two of these, <code><a href="core_moments.html">core_moments()</a></code>
-for the underlying kernel.</p></div>
+    <div class="dont-index"><p><code><a href="capsule_drift.html">capsule_drift()</a></code> to compare two of these,
+<code><a href="core_moments.html">core_moments()</a></code> for the underlying kernel.</p></div>
     </div>
 
     <div class="section level2">
