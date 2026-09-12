@@ -16,6 +16,10 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/Random.h>
+
+#include <functional>
+#include <utility>
 
 #include <algorithm>
 #include <cmath>
@@ -340,6 +344,116 @@ SEXP C_rmbl_hurwitz_zeta(SEXP s_, SEXP q_) {
         REAL(out)[i] = static_cast<double>(acc);
     }
     UNPROTECT(1);
+    return out;
+}
+
+/* Global Moran's I over a neighbour list, with a permutation null.
+ *
+ *   I = (n / W) * sum_ij w_ij z_i z_j / sum_i z_i^2,  z = x - mean(x)
+ *
+ * The neighbour list arrives flattened -- `idx` holds the 0-based
+ * neighbours of every area end to end, `start` and `len` say where each
+ * area's block begins and how long it is, and `wts` holds the matching
+ * weights -- because an areal dataset is sparse and a dense n-by-n
+ * matrix is the wrong shape for it.
+ *
+ * The permutation loop is here rather than in R because it is the inner
+ * loop: thousands of reassignments of the values over the areas, each
+ * re-walking the whole neighbour list.
+ */
+SEXP C_rmbl_morans_i(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
+                     SEXP wts_, SEXP nperm_, SEXP seed_) {
+    const R_xlen_t n = XLENGTH(x_);
+    const double *x = REAL(x_);
+    const int *idx = INTEGER(idx_);
+    const int *start = INTEGER(start_);
+    const int *len = INTEGER(len_);
+    const double *wts = REAL(wts_);
+    const R_xlen_t nperm = static_cast<R_xlen_t>(Rf_asInteger(nperm_));
+
+    if (n < 3) Rf_error("Moran's I needs at least three areas");
+
+    long double total = 0.0L;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        if (ISNAN(x[i])) Rf_error("`x` must not contain missing values");
+        total += x[i];
+    }
+    const double mean = static_cast<double>(total / n);
+    std::vector<double> z(static_cast<size_t>(n));
+    long double ss = 0.0L;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        z[static_cast<size_t>(i)] = x[i] - mean;
+        ss += z[static_cast<size_t>(i)] * z[static_cast<size_t>(i)];
+    }
+    long double wsum = 0.0L;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        for (int k = 0; k < len[i]; ++k) wsum += wts[start[i] + k];
+    }
+    if (ss <= 0.0L || wsum <= 0.0L) {
+        SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+        SET_VECTOR_ELT(out, 0, Rf_ScalarReal(NA_REAL));
+        SET_VECTOR_ELT(out, 1, Rf_ScalarReal(NA_REAL));
+        SET_VECTOR_ELT(out, 2, Rf_ScalarReal(static_cast<double>(wsum)));
+        SET_VECTOR_ELT(out, 3, Rf_allocVector(REALSXP, 0));
+        SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+        SET_STRING_ELT(nm, 0, Rf_mkChar("I"));
+        SET_STRING_ELT(nm, 1, Rf_mkChar("cross"));
+        SET_STRING_ELT(nm, 2, Rf_mkChar("W"));
+        SET_STRING_ELT(nm, 3, Rf_mkChar("null"));
+        Rf_setAttrib(out, R_NamesSymbol, nm);
+        UNPROTECT(2);
+        return out;
+    }
+
+    /* the lagged cross-product, sum_ij w_ij z_i z_j */
+    auto cross_of = [&](const std::vector<double> &v) {
+        long double acc = 0.0L;
+        for (R_xlen_t i = 0; i < n; ++i) {
+            const double zi = v[static_cast<size_t>(i)];
+            for (int k = 0; k < len[i]; ++k) {
+                acc += wts[start[i] + k] *
+                       zi * v[static_cast<size_t>(idx[start[i] + k])];
+            }
+        }
+        return acc;
+    };
+    const long double cross = cross_of(z);
+    const double I = static_cast<double>(
+        (static_cast<long double>(n) / wsum) * cross / ss);
+
+    SEXP null = PROTECT(Rf_allocVector(REALSXP, nperm));
+    if (nperm > 0) {
+        /* R's own stream, so set.seed() in the caller governs it and the
+         * p-value is reproducible */
+        GetRNGstate();
+        std::vector<double> p(z);
+        for (R_xlen_t b = 0; b < nperm; ++b) {
+            /* Fisher-Yates over the centred values: the null is that the
+             * values are assigned to areas at random, so the sum of
+             * squares is invariant and only the cross-product moves */
+            for (R_xlen_t i = n - 1; i > 0; --i) {
+                const R_xlen_t j = static_cast<R_xlen_t>(
+                    unif_rand() * static_cast<double>(i + 1));
+                std::swap(p[static_cast<size_t>(i)],
+                          p[static_cast<size_t>(j < 0 ? 0 : j)]);
+            }
+            REAL(null)[b] = static_cast<double>(
+                (static_cast<long double>(n) / wsum) * cross_of(p) / ss);
+        }
+        PutRNGstate();
+    }
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+    SET_VECTOR_ELT(out, 0, Rf_ScalarReal(I));
+    SET_VECTOR_ELT(out, 1, Rf_ScalarReal(static_cast<double>(cross)));
+    SET_VECTOR_ELT(out, 2, Rf_ScalarReal(static_cast<double>(wsum)));
+    SET_VECTOR_ELT(out, 3, null);
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("I"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("cross"));
+    SET_STRING_ELT(nm, 2, Rf_mkChar("W"));
+    SET_STRING_ELT(nm, 3, Rf_mkChar("null"));
+    Rf_setAttrib(out, R_NamesSymbol, nm);
+    UNPROTECT(3);
     return out;
 }
 

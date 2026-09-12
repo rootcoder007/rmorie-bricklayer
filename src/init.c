@@ -53,6 +53,7 @@ extern SEXP C_rmbl_top_share(SEXP, SEXP);
 extern SEXP C_rmbl_mann_kendall(SEXP);
 extern SEXP C_rmbl_theil_sen(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
+extern SEXP C_rmbl_morans_i(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hmac_sha256(SEXP, SEXP);
 extern SEXP C_rmbl_digest_equal(SEXP, SEXP);
 extern SEXP C_rmbl_merkle_root(SEXP);
@@ -180,6 +181,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mann_kendall",      (DL_FUNC) &C_rmbl_mann_kendall,      1},
     {"C_rmbl_theil_sen",         (DL_FUNC) &C_rmbl_theil_sen,         2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
+    {"C_rmbl_morans_i",          (DL_FUNC) &C_rmbl_morans_i,          7},
     {"C_rmbl_hmac_sha256",       (DL_FUNC) &C_rmbl_hmac_sha256,       2},
     {"C_rmbl_digest_equal",      (DL_FUNC) &C_rmbl_digest_equal,      2},
     {"C_rmbl_merkle_root",       (DL_FUNC) &C_rmbl_merkle_root,       1},

@@ -1,0 +1,221 @@
+---
+title: "Statistics for a published administrative table"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Statistics for a published administrative table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+An open-data extract from a criminal-justice system has a particular
+shape: a handful of fiscal years, counts rather than measurements,
+categories reported as bands rather than values, and a region code with
+no geometry attached. The general-purpose toolkits assume none of that.
+This vignette covers the functions that do.
+
+The running example is the shape Ontario's inmate datasets have -- one
+row per placement, keyed on the fiscal year's end year, with banded
+counts and a region.
+
+## Bands
+
+Published categories are intervals. Anything computed from them rests on
+an assumption about where inside each band the mass sits, and on a
+second assumption about where the open top band ends.
+
+```{r}
+bands <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+bands
+```
+
+Note what the bounds say. `"Greater than 10"` starts at 11, because the
+quantity is a count of placements; `"10 or more"` would start at 10. One
+whole placement separates the two readings, and only the label says
+which was meant.
+
+The representative value needs a rule, and the open band needs a cap:
+
+```{r}
+band_values(bands)
+```
+
+The last row is marked `assumed`, because a band with no upper bound has
+no midpoint. Everything downstream inherits that assumption, so measure
+how much it matters:
+
+```{r}
+counts <- c(1200, 430, 110, 38)
+band_sensitivity(bands, counts)
+```
+
+Read the span, not the middle row. A statistic that moves by more than a
+tenth of itself across plausible caps is a property of the assumption as
+much as of the data, and the honest report is the range.
+
+## Concentration
+
+The recurring question is whether a few individuals account for most of
+the total.
+
+```{r}
+placements <- expand_bands(bands, counts, open_upper_cap = 25)
+gini(placements)
+top_share(placements, c(0.01, 0.05, 0.1))
+```
+
+Gini has a ceiling that depends on the number of units: for `n` units the
+maximum is `1 - 1/n`, not 1. A Gini of 0.9 means something different
+across ten units than across ten thousand.
+
+```{r}
+c(ten = 1 - 1 / 10, thousand = 1 - 1 / 1000)
+```
+
+If the tail looks heavy, fit it rather than asserting it -- and read the
+goodness-of-fit distance before the exponent:
+
+```{r}
+fit <- hill_tail_index(placements, x_min = 1)
+c(alpha = round(fit$alpha, 2), ks = round(fit$ks, 3),
+  reliable = fit$reliable)
+```
+
+A large `ks` means the tail is not a power law, whatever `alpha` came out
+as. The estimator maximises the exact discrete likelihood: the
+closed-form continuity correction usually quoted is an asymptotic
+approximation in the threshold, and at a threshold of one -- where counts
+start -- it is badly biased.
+
+## Trend across a handful of years
+
+Five annual points support a rank test and a resistant slope. They do
+not support a model with an autocorrelation structure.
+
+```{r}
+y <- c(402, 377, 190, 268, 331)
+tt <- trend_test(y)
+c(tau = tt$tau, p = round(tt$p_value, 4), slope = tt$slope)
+tt$method
+```
+
+The p-value is exact, by enumerating all 120 orderings. For counts, the
+trend is better expressed as a multiplicative change per year:
+
+```{r}
+ct <- count_trend(y)
+c(rate_ratio = round(ct$rate_ratio, 3),
+  lower = round(ct$lower, 3), upper = round(ct$upper, 3),
+  dispersion = round(ct$dispersion, 2))
+```
+
+The dispersion is reported because a Poisson interval assumes it is one.
+Above 1.5 the interval is widened to the quasi-Poisson one rather than
+being left too narrow.
+
+### Did it change when the policy changed?
+
+```{r}
+sc <- step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+c(after = sc$break_after, before = sc$before, after_mean = sc$after,
+  p = round(sc$p_value, 4))
+```
+
+The p-value comes from the permutation distribution of the **maximum**
+over splits, not from the best split's own test. That distinction is the
+difference between a change-point test and a way of finding a break in
+noise. It also has a consequence worth stating plainly: six points
+cannot produce a p-value below about 0.1, however clean the step, because
+only 72 of the 720 orderings separate three low values from three high
+ones.
+
+```{r}
+(1 + 2 * factorial(3)^2) / (1 + factorial(6))
+```
+
+## Regions
+
+A region code is an areal unit, not a coordinate. Three things go wrong
+with a table of regional counts: the regions hold different numbers of
+people, they hold different *kinds* of people, and a small region's rate
+is mostly noise.
+
+```{r}
+d <- expand.grid(
+  region = c("Central", "Eastern", "Northern", "Toronto", "Western"),
+  age = c("18 to 24", "25 to 49", "50+"),
+  stringsAsFactors = FALSE
+)
+d$pop <- rep(c(4000, 3000, 800, 5000, 2500), 3) *
+  rep(c(0.3, 0.55, 0.15), each = 5)
+set.seed(13)
+rate <- c(Central = 0.006, Eastern = 0.011, Northern = 0.010,
+          Toronto = 0.016, Western = 0.012)
+d$n <- rpois(nrow(d), lambda = d$pop * rate[d$region])
+```
+
+Indirect standardisation handles the second problem: the expected count
+is what each region would have under the overall rate in every age band,
+given its own age composition.
+
+```{r}
+e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+e
+```
+
+The expected counts total the observed ones. That identity is what makes
+them a standardisation rather than a prediction.
+
+```{r}
+c(observed = sum(e$observed), expected = sum(e$expected))
+```
+
+The ratio, with an exact interval -- the counts here are small, and a
+normal approximation on a count of six is a decoration rather than an
+interval:
+
+```{r}
+sir(e$observed, e$expected, e$area)
+```
+
+And the third problem. A league table of rates ranks the small regions to
+both ends by construction, so borrow strength across regions:
+
+```{r}
+eb_rates(e$observed, e$expected, e$area)
+```
+
+`shrinkage` is how far each estimate was pulled toward the overall rate.
+It is governed by the expected count, which is to say by how much
+information the region carries -- not by how extreme its ratio was.
+
+The funnel plot shows the reader the same thing directly: what range a
+region's ratio could take, given its size, if it were no different from
+anywhere else.
+
+```{r}
+funnel_limits(c(5, 20, 50, 200))
+```
+
+### Autocorrelation, if you have a neighbour list
+
+```{r}
+nb <- list(c(2L, 4L), c(1L, 3L), c(2L, 5L), c(1L, 5L), c(3L, 4L))
+set.seed(1)
+mi <- morans_i(e$observed / e$expected, nb, n_perm = 999L)
+c(I = round(mi$I, 3), expectation = round(mi$expectation, 3),
+  p = mi$p_value)
+```
+
+The neighbour list has to be supplied. An extract keyed on a region ships
+no geometry, and a guessed adjacency would make the answer a property of
+the guess. Note too that the null expectation is `-1/(n - 1)`, not zero:
+with five regions, a small negative `I` is what independence looks like.
+
+```{r}
+-1 / (5 - 1)
+```
