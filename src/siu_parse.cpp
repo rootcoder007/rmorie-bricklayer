@@ -93,7 +93,7 @@ std::string detect_police_service(const std::string& text) {
     // to the big-force abbreviations. Boilerplate-safe enough because the
     // most-frequent rule swamps one-off footer mentions.
     static const std::regex pat(
-        R"(((?:[A-Z][A-Za-z'\-]+\s+){1,5}(?:Police Service|Provincial Police|Police|Constabulary)))");
+        R"(((?:[A-Z][A-Za-z'\-]+[ \t]+){1,5}(?:Police Service|Provincial Police|Police|Constabulary)))");
     std::map<std::string, int> counts;
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pat);
          it != std::sregex_iterator(); ++it) {
@@ -220,7 +220,7 @@ std::string detect_legislation(const std::string& text) {
                                          {"Analysis and Director", "News Releases"});
     if (sec.empty()) return "";
     static const std::regex pat(
-        R"(Section\s+\d+(?:\([^)]+\))?,?\s+([A-Z][^\n,]{2,80}?)(?:\s*[-]|\s*$|\n))");
+        R"(Section\s+\d+(?:\.\d+)*(?:\([^)]+\))?,?\s+([A-Z][^\n,]{2,80}?)(?:\s*[-]|\s*$|\n))");
     std::vector<std::string> acts;
     for (auto it = std::sregex_iterator(sec.begin(), sec.end(), pat);
          it != std::sregex_iterator(); ++it) {
@@ -258,7 +258,7 @@ std::string detect_directors_name(const std::string& text) {
     // Signature block: "<Name>\nDirector\nSpecial Investigations Unit" or
     // "<Name>, Director". (The Python parser reads the same block.)
     static const std::regex pat(
-        R"(([A-Z][A-Za-z.'\-]+(?:\s+[A-Z][A-Za-z.'\-]+){1,3})\s*,?\s*\n?\s*Director\b)");
+        R"(([A-Z][A-Za-z'\-]+(?:[ \t]+[A-Z][A-Za-z.'\-]+){1,3})[ \t]*,?[ \t]*\n?[ \t]*Director\b)");
     std::smatch m;
     if (std::regex_search(text, m, pat)) {
         const std::string name = trim(m[1].str());
@@ -319,6 +319,16 @@ std::string html_to_text(const std::string& html) {
     t = std::regex_replace(t, std::regex(R"(&nbsp;)"), " ");
     t = std::regex_replace(t, std::regex(R"(&amp;)"), "&");
     t = std::regex_replace(t, std::regex(R"(&#8217;|&rsquo;)"), "'");
+    t = std::regex_replace(t, std::regex(R"(&#8216;|&lsquo;)"), "'");
+    t = std::regex_replace(t, std::regex(R"(&#8220;|&ldquo;|&#8221;|&rdquo;)"), "\"");
+    t = std::regex_replace(t, std::regex(R"(&quot;)"), "\"");
+    t = std::regex_replace(t, std::regex(R"(&#0?39;|&apos;)"), "'");
+    t = std::regex_replace(t, std::regex(R"(&#8211;|&ndash;)"), "-");
+    t = std::regex_replace(t, std::regex(R"(&#8212;|&mdash;)"), "--");
+    // Angle brackets last: the markup is already gone, so a decoded "<"
+    // cannot be mistaken for a tag by anything downstream.
+    t = std::regex_replace(t, std::regex(R"(&lt;)"), "<");
+    t = std::regex_replace(t, std::regex(R"(&gt;)"), ">");
     // collapse spaces but keep newlines (section slicing needs them)
     t = std::regex_replace(t, std::regex(R"([ \t]+)"), " ");
     t = std::regex_replace(t, std::regex(R"( ?\n ?)"), "\n");
