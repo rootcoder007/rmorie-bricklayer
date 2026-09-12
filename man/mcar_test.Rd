@@ -61,6 +61,11 @@ Neither this test nor any other can distinguish missing-at-random from
 missing-NOT-at-random, because that distinction depends on the values
 that were never observed. Only knowledge of how the data were
 collected settles it.
+
+Collinear or constant columns are refused rather than worked around:
+the likelihood is degenerate there, and the EM step's eigenvalue floor
+would otherwise return a statistic governed by that floor instead of
+by the data.
 }
 
 \examples{
@@ -83,6 +88,11 @@ mcar_test(mar)
 
 # Complete data has one pattern and nothing to test.
 mcar_test(data.frame(a = x, b = y))$df
+
+# A duplicated column makes the likelihood degenerate, and is refused.
+dup <- mcar
+dup$x2 <- dup$x
+try(mcar_test(dup))
 
 # The EM estimates are the ML ones: with no missingness they are the
 # column means and the ML (1/n) covariance.
