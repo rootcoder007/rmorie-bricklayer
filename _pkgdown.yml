@@ -35,6 +35,7 @@ articles:
     navbar: ~
     contents:
       - capsules
+      - describe
       - drift
       - provenance
 
@@ -189,8 +190,11 @@ reference:
     desc: >
       The summaries worth reading before trusting a capsule: what every column
       looks like, where the gaps are, which values dominate, and which rows do
-      not belong.
+      not belong. `capsule_report()` runs the lot and orders the findings by
+      severity.
     contents:
+      - capsule_report
+      - report_markdown
       - profile_columns
       - inline_hist
       - frequency_table
