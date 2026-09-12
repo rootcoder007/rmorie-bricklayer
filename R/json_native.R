@@ -167,11 +167,60 @@
                                "abcdefghijklmnopqrstuvwxyz",
                                "0123456789+/"), "")[[1]]
 
-#' Base64 encode a raw vector or character string
+#' Base64 encoding
 #'
-#' @param input raw vector, or character (joined by newlines first).
-#' @return a base64 string; `NA_character_` for `NULL`.
-#' @noRd
+#' Encodes and decodes base64, in both the standard alphabet and the
+#' URL-safe variant. Computed in R with no dependency, so a capsule can
+#' embed binary content in a text manifest wherever this package runs.
+#'
+#' `bricklayer_json_base64_enc()` breaks its output into 72-character
+#' lines, matching jsonlite's encoder; the decoder ignores line breaks
+#' and any other character outside the alphabet, so either form round
+#' trips.
+#'
+#' The URL-safe variant substitutes `-` and `_` for `+` and `/` and
+#' drops the `=` padding, which is what makes it safe in a URL path, a
+#' query string or a filename.
+#'
+#' Base64 is an ENCODING, not encryption or a digest: it hides nothing
+#' and anyone can reverse it. Use [core_sha256()] to pin content and
+#' [core_hmac_sha256()] to authenticate it.
+#'
+#' @param input For the encoders, a raw vector or a character vector
+#'   (joined with newlines first). For the decoders, base64 text or its
+#'   raw bytes.
+#' @return The encoders return a length-1 character vector
+#'   (`NA_character_` for `NULL` input); the decoders return a raw
+#'   vector.
+#' @seealso [json_gzip_encode()], which composes this with gzip.
+#' @examples
+#' # Round trip through the standard alphabet.
+#' b <- bricklayer_json_base64_enc("hello capsule")
+#' b
+#' rawToChar(bricklayer_json_base64_dec(b))
+#'
+#' # Raw input works the same way.
+#' bricklayer_json_base64_enc(charToRaw("abc"))
+#' bricklayer_json_base64_dec(bricklayer_json_base64_enc(charToRaw("abc")))
+#'
+#' # Padding appears when the length is not a multiple of three.
+#' bricklayer_json_base64_enc("a")
+#' bricklayer_json_base64_enc("ab")
+#' bricklayer_json_base64_enc("abc")
+#'
+#' # The URL-safe variant has no "+", "/" or "=" to escape.
+#' bricklayer_json_base64url_enc(as.raw(c(255, 224, 63)))
+#' bricklayer_json_base64_enc(as.raw(c(255, 224, 63)))
+#' bricklayer_json_base64url_dec(
+#'   bricklayer_json_base64url_enc("path/safe?yes")
+#' )
+#'
+#' # Long input is wrapped, and the decoder ignores the breaks.
+#' long <- bricklayer_json_base64_enc(strrep("x", 200))
+#' grepl("\n", long)
+#' rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
+#' @name rmbl_base64
+#' @export
 bricklayer_json_base64_enc <- function(input) {
   if (is.null(input)) return(NA_character_)
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
@@ -197,11 +246,8 @@ bricklayer_json_base64_enc <- function(input) {
   out
 }
 
-#' Base64 decode to a raw vector
-#'
-#' @param input base64 text (character, joined by newlines) or raw.
-#' @return a raw vector.
-#' @noRd
+#' @rdname rmbl_base64
+#' @export
 bricklayer_json_base64_dec <- function(input) {
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
   stopifnot(is.raw(input))
@@ -228,12 +274,14 @@ bricklayer_json_base64_dec <- function(input) {
   as.raw(out)
 }
 
-#' @noRd
+#' @rdname rmbl_base64
+#' @export
 bricklayer_json_base64url_enc <- function(input) {
   sub("=+$", "", chartr("+/", "-_", bricklayer_json_base64_enc(input)))
 }
 
-#' @noRd
+#' @rdname rmbl_base64
+#' @export
 bricklayer_json_base64url_dec <- function(input) {
   text <- gsub("[\r\n]", "", chartr("-_", "+/", input))[[1]]
   mod <- nchar(text) %% 4L
