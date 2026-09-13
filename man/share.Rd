@@ -29,9 +29,11 @@ instead -- for the case where some of the total is not in the table.}
 \item{conf_level}{Confidence level for the interval.}
 }
 \value{
-A data frame of class \code{rmbl_share} with the grouping columns,
-\code{count}, \code{total}, \code{share}, \code{lower} and \code{upper}, and a \code{share}
-attribute recording the denominator and confidence level.
+A data frame of class \code{rmbl_share}
+with the grouping columns, \code{count}, \code{total},
+\code{share}, \code{lower} and \code{upper}, plus a \code{share}
+attribute recording the denominator and the
+confidence level.
 }
 \description{
 What fraction of a total each count is, with the Wilson interval.
@@ -63,6 +65,6 @@ share(stops, stops, by = "division")$lower
 share(stops, stops, by = "division", total = 10000)
 }
 \seealso{
-\code{\link[=rate]{rate()}} for events per population, \code{\link[=yoy]{yoy()}} for change
-between periods.
+\code{\link[=rate]{rate()}} for events per population,
+\code{\link[=yoy]{yoy()}} for change between periods.
 }

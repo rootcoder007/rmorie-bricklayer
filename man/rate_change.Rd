@@ -47,9 +47,12 @@ this are flagged and their percent change withheld, the way
 \code{\link[=yoy]{yoy()}} withholds a percent change off a tiny base.}
 }
 \value{
-A data frame of class \code{rmbl_rate_change} with the grouping
-columns, \code{period}, \code{count}, \code{population}, \code{rate}, \code{previous_rate},
-\code{rate_ratio}, \code{pct_change}, \code{pct_lower}, \code{pct_upper} and \code{flag}.
+A data frame of class
+\code{rmbl_rate_change} with the grouping
+columns, \code{period}, \code{count}, \code{population},
+\code{rate}, \code{previous_rate}, \code{rate_ratio},
+\code{pct_change}, \code{pct_lower}, \code{pct_upper} and
+\code{flag}.
 }
 \description{
 The change in a rate from one period to the period \code{lag} places
