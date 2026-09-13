@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -231,6 +231,34 @@
 
         </dt>
         <dd>Construct a Reproducibility Manifest</dd>
+
+        <dt>
+
+          <code><a href="manifest_canonical.html">manifest_canonical()</a></code> <code><a href="manifest_canonical.html">manifest_digest()</a></code>
+
+        </dt>
+        <dd>The canonical serialisation of a manifest, and its digest</dd>
+
+        <dt>
+
+          <code><a href="manifest_recompute.html">manifest_recompute()</a></code>
+
+        </dt>
+        <dd>Recompute a manifest's recorded statistics against the data</dd>
+
+        <dt>
+
+          <code><a href="manifest_record_seed.html">manifest_record_seed()</a></code> <code><a href="manifest_record_seed.html">manifest_restore_seed()</a></code>
+
+        </dt>
+        <dd>Record and restore the random number generator state</dd>
+
+        <dt>
+
+          <code><a href="capture_dependencies.html">capture_dependencies()</a></code>
+
+        </dt>
+        <dd>Where each loaded package came from</dd>
 
         <dt>
 
@@ -563,6 +591,83 @@
 
       <dl><dt>
 
+          <code><a href="capsule_attest.html">capsule_attest()</a></code> <code><a href="capsule_attest.html">capsule_check_attestation()</a></code>
+
+        </dt>
+        <dd>Attest a capsule, binding a signature to what it covers</dd>
+
+        <dt>
+
+          <code><a href="capsule_bundle.html">capsule_bundle()</a></code> <code><a href="capsule_bundle.html">capsule_bundle_read()</a></code> <code><a href="capsule_bundle.html">capsule_bundle_verify()</a></code>
+
+        </dt>
+        <dd>Bundle a capsule into one signed artifact</dd>
+
+        <dt>
+
+          <code><a href="capsule_falsify.html">capsule_falsify()</a></code>
+
+        </dt>
+        <dd>Run falsification controls against a statistic</dd>
+
+        <dt>
+
+          <code><a href="capsule_power.html">capsule_power()</a></code>
+
+        </dt>
+        <dd>Detect an injected effect of known size</dd>
+
+        <dt>
+
+          <code><a href="prereg_declare.html">prereg_declare()</a></code> <code><a href="prereg_declare.html">prereg_check()</a></code>
+
+        </dt>
+        <dd>Declare an analysis before running it</dd>
+
+        <dt>
+
+          <code><a href="falsify_family.html">falsify_family()</a></code>
+
+        </dt>
+        <dd>Correct a family of falsification results for multiple testing</dd>
+
+        <dt>
+
+          <code><a href="evalue_rr.html">evalue_rr()</a></code>
+
+        </dt>
+        <dd>How strong would an unmeasured confounder have to be</dd>
+
+        <dt>
+
+          <code><a href="timestamp_verify.html">timestamp_verify()</a></code> <code><a href="timestamp_verify.html">timestamp_info()</a></code>
+
+        </dt>
+        <dd>Verify an RFC 3161 timestamp token</dd>
+
+        <dt>
+
+          <code><a href="cert_parse.html">cert_parse()</a></code>
+
+        </dt>
+        <dd>Parse an X.509 certificate</dd>
+
+        <dt>
+
+          <code><a href="cert_chain_verify.html">cert_chain_verify()</a></code>
+
+        </dt>
+        <dd>Verify a certificate chain</dd>
+
+        <dt>
+
+          <code><a href="revocation_fetch.html">revocation_fetch()</a></code>
+
+        </dt>
+        <dd>Fetch revocation data for a certificate path</dd>
+
+        <dt>
+
           <code><a href="capsule_sign.html">capsule_sign()</a></code>
 
         </dt>
@@ -591,17 +696,73 @@
 
         <dt>
 
-          <code><a href="oqs_keygen.html">oqs_keygen()</a></code> <code><a href="oqs_keygen.html">oqs_public_key()</a></code>
+          <code><a href="fips_keygen.html">fips_keygen()</a></code> <code><a href="fips_keygen.html">fips_public_key()</a></code>
 
         </dt>
         <dd>Generate a standardised post-quantum signing key</dd>
 
         <dt>
 
+          <code><a href="fips_key.html">fips_key()</a></code>
+
+        </dt>
+        <dd>Assemble a standardised key from raw key material</dd>
+
+        <dt>
+
+          <code><a href="fips_mu.html">fips_mu()</a></code> <code><a href="fips_mu.html">fips_sign_mu()</a></code> <code><a href="fips_mu.html">fips_verify_mu()</a></code>
+
+        </dt>
+        <dd>Sign an ML-DSA message digest computed elsewhere</dd>
+
+        <dt>
+
+          <code><a href="fips_sizes.html">fips_sizes()</a></code>
+
+        </dt>
+        <dd>Byte lengths of a standardised signature scheme</dd>
+
+        <dt>
+
+          <code><a href="kem_keygen.html">kem_keygen()</a></code> <code><a href="kem_keygen.html">kem_public_key()</a></code>
+
+        </dt>
+        <dd>Generate an ML-KEM key pair</dd>
+
+        <dt>
+
+          <code><a href="kem_sizes.html">kem_sizes()</a></code>
+
+        </dt>
+        <dd>Byte lengths of an ML-KEM parameter set</dd>
+
+        <dt>
+
+          <code><a href="kem_encapsulate.html">kem_encapsulate()</a></code>
+
+        </dt>
+        <dd>Encapsulate a shared secret under an ML-KEM key</dd>
+
+        <dt>
+
+          <code><a href="kem_decapsulate.html">kem_decapsulate()</a></code>
+
+        </dt>
+        <dd>Recover a shared secret from an ML-KEM ciphertext</dd>
+
+        <dt>
+
+          <code><a href="oqs_keygen.html">oqs_keygen()</a></code> <code><a href="oqs_keygen.html">oqs_public_key()</a></code>
+
+        </dt>
+        <dd>Generate a standardised post-quantum signing key (deprecated name)</dd>
+
+        <dt>
+
           <code><a href="pqc_backends.html">pqc_backends()</a></code>
 
         </dt>
-        <dd>Available post-quantum signature backends</dd>
+        <dd>Available post-quantum signature schemes</dd>
 
         <dt>
 
@@ -1117,7 +1278,7 @@
 
       <dl><dt>
 
-          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code>
+          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_capsule&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsify_family&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_recompute&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_timestamp&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certificate&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certpath_check&gt;</i>)</a></code>
 
         </dt>
         <dd>Printed reports for bricklayer objects</dd>

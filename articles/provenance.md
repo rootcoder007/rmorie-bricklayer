@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad
+#>   root       495ba36966da625137ed5b72d48a52f49d56cf06746ba7617982f6e044fe6ba9
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    ad257038dd2c02ce0d1f6ceb992beb09dd2d210e56639a70ce889312bb069dad
+#>   root    495ba36966da625137ed5b72d48a52f49d56cf06746ba7617982f6e044fe6ba9
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -149,19 +149,319 @@ capsule_sign("three", k)
 #> ! this key is exhausted: a height-1 key signs 2 messages and all of them are used. Generate a new key -- reusing an index would break the signature scheme.
 ```
 
-On lattices: a standardised lattice signature (ML-DSA, FIPS 204) is
-deliberately *not* hand-written here. An uncertified NTT, SHAKE and
-rejection sampler would be a worse outcome than no lattice signature at
-all.
+On the standardised schemes: ML-DSA (FIPS 204) and SLH-DSA (FIPS 205)
+are implemented here too, at every parameter set both standards define –
+three for ML-DSA, twelve for SLH-DSA – with no system dependency, so the
+list
 [`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
-reports what this build can use; where liboqs was found at configure
-time it appears alongside the built-in scheme.
+reports is the same on every machine.
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+takes any of them,
+[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+wraps key material that came from elsewhere, and both are stateless: one
+key signs any number of messages.
+
+What makes that defensible is the cross-check rather than care. In
+deterministic mode this package and OpenSSL 3.5 produce the same bytes
+for every parameter set, which is a test a subtly wrong implementation
+cannot pass: it would have to be wrong in exactly the same way, in a
+construction where a single misplaced field changes every output.
 
 ``` r
 
 pqc_backends()
-#> [1] "xmss-sha256"
+#>  [1] "xmss-sha256"        "ML-DSA-44"          "ML-DSA-65"         
+#>  [4] "ML-DSA-87"          "SLH-DSA-SHA2-128s"  "SLH-DSA-SHA2-128f" 
+#>  [7] "SLH-DSA-SHA2-192s"  "SLH-DSA-SHA2-192f"  "SLH-DSA-SHA2-256s" 
+#> [10] "SLH-DSA-SHA2-256f"  "SLH-DSA-SHAKE-128s" "SLH-DSA-SHAKE-128f"
+#> [13] "SLH-DSA-SHAKE-192s" "SLH-DSA-SHAKE-192f" "SLH-DSA-SHAKE-256s"
+#> [16] "SLH-DSA-SHAKE-256f"
 ```
+
+## Signing something a verifier can check
+
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+signs a string, which proves the string was signed and leaves three
+things implicit: which key, which scheme, which bytes. A verifier handed
+a directory still has to be told all three, and a check that depends on
+being told what to check is a formality.
+
+[`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+records them inside the signed payload.
+
+``` r
+
+m <- make_manifest(list(dataset = "otis", rows = 1200L),
+                   environment = FALSE)
+key <- fips_keygen("ML-DSA-65")
+att <- capsule_attest(m, key, note = "counts as published")
+capsule_check_attestation(att, m)
+#> ── Attestation check: OK ─────────────────────────────────────────
+#>   attestation_complete   ok    
+#>   manifest_digest        ok    efa1b7387f225380245de0b5170999e87ad4044f3e8f
+#>   signature              ok    
+#> ──────────────────────────────────────────────────────────────────
+```
+
+The check needs the attestation and the manifest, nothing else. Change
+either – or edit the note, which is covered by the signature because it
+is part of the digest – and it fails:
+
+``` r
+
+m2 <- m
+m2$meta$rows <- 1201L
+capsule_check_attestation(att, m2)$ok
+#> [1] FALSE
+```
+
+What it does not establish is that the key belongs to whoever you think:
+an attestation is only as good as the channel the public key arrived on.
+Pass `key_expected` when you know which key should have signed.
+
+## The number in the manifest is the number
+
+A manifest is meant to be checked against later. That only works if it
+records what actually happened, at the precision it happened:
+
+``` r
+
+one_third <- make_manifest(list(x = 1 / 3), environment = FALSE)
+back <- bricklayer_json_from_json(manifest_canonical(one_third))
+identical(back$meta$x, 1 / 3)
+#> [1] TRUE
+```
+
+Sign
+[`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+rather than the pretty JSON. R lists keep insertion order, so building
+`meta` before `results` or the other way round gives different bytes for
+the same content; the canonical form sorts the keys, so the digest
+depends on what the manifest says and not on how a script assembled it.
+
+``` r
+
+identical(
+  manifest_digest(make_manifest(list(a = 1, b = 2), environment = FALSE)),
+  manifest_digest(make_manifest(list(b = 2, a = 1), environment = FALSE)))
+#> [1] TRUE
+```
+
+## Whether the finding survives
+
+Everything above is about the record being intact. None of it says the
+number means anything: a capsule can be signed, hashed, chained and
+reproduced byte for byte while reporting an artefact. That is a separate
+question and it needs controls that can fail.
+
+``` r
+
+set.seed(1)
+d <- data.frame(x = rnorm(200))
+d$y <- 0.8 * d$x + rnorm(200)
+capsule_falsify(d, function(z) cor(z$x, z$y), treatment = "x",
+                n = 199, seed = 42)
+#> ── Falsification controls ────────────────────────────────────────
+#>   observed statistic  0.5812737
+#>   permutations        199 (seed 42)
+#> ──────────────────────────────────────────────────────────────────
+#>   permutation            ok    p = 0.005 with 199 usable permutations; 
+#>   placebo                ok    a permuted exposure gives 0.0702711, aga
+#>   random_common_cause    ok    adding a column of noise moved the stati
+#>   subset_stability       ok    the middle 95% of 199 subsets spans [0.5
+#> ──────────────────────────────────────────────────────────────────
+```
+
+Four controls, each for a different way of being wrong: permuting the
+exposure destroys the association, so the statistic should fall to its
+null; a column of noise cannot matter, so the statistic should not move;
+a placebo exposure should show nothing; and random subsets should agree.
+
+They can fail, which is the point. A constant fails the permutation test
+and nothing else, because everything else about a constant is perfectly
+stable:
+
+``` r
+
+capsule_falsify(d, function(z) 0.5, treatment = "x", n = 199,
+                seed = 42)$controls[, c("control", "passed")]
+#>               control passed
+#> 1         permutation  FALSE
+#> 2             placebo   TRUE
+#> 3 random_common_cause   TRUE
+#> 4    subset_stability   TRUE
+```
+
+Note what the permutation control reports alongside its p-value: the
+smallest p-value the design could have produced. With 199 permutations
+that floor is 0.005, and with 19 it is 0.05 – so a p of 0.05 from 19
+permutations is not weak evidence, it is no evidence at all.
+
+## Re-deriving the numbers, not just checking them
+
+[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+reads a manifest and confirms it is consistent with itself. That catches
+an edited manifest and cannot catch one that was wrong when it was
+written, because a manifest written from the wrong data is perfectly
+consistent too.
+
+``` r
+
+d <- data.frame(x = 1:10)
+man <- make_manifest(list(dataset = "demo"), environment = FALSE)
+man <- record(man, "mean_x", observed = mean(d$x), expected = 5.5)
+#>   mean_x                                       observed = 5.5000       expected = 5.5000       [PASS]
+man <- record(man, "n", observed = nrow(d), expected = 10)
+#>   n                                            observed = 10.0000      expected = 10.0000      [PASS]
+
+manifest_recompute(man, d, list(mean_x = function(z) mean(z$x),
+                                n = function(z) nrow(z)))
+#> ── Recomputation: everything checked and matched ─────────────────
+#>   mean_x                   MATCH      |recorded - recomputed| = 0
+#>   n                        MATCH      |recorded - recomputed| = 0
+#> ──────────────────────────────────────────────────────────────────
+```
+
+Recompute only some of them and the rest are reported as unchecked
+rather than passed over, which is the difference between a clean bill of
+health and a partial one:
+
+``` r
+
+manifest_recompute(man, d, list(n = function(z) nrow(z)))
+#> ── Recomputation: see below ──────────────────────────────────────
+#>   n                        MATCH      |recorded - recomputed| = 0
+#> ──────────────────────────────────────────────────────────────────
+#>   1 recorded result(s) NOT recomputed: mean_x
+#> ──────────────────────────────────────────────────────────────────
+```
+
+For anything stochastic, record the generator state rather than the
+seed. `set.seed(1)` reproduces a run only if everything before it does
+too – one extra draw anywhere upstream shifts every later value:
+
+``` r
+
+set.seed(1)
+m2 <- manifest_record_seed(make_manifest(list(a = 1),
+                                         environment = FALSE))
+first <- runif(3)
+invisible(runif(1000))          # any amount of other work
+manifest_restore_seed(m2)
+identical(runif(3), first)
+#> [1] TRUE
+```
+
+## Saying in advance what you will report
+
+The falsification controls above are worth much more when the statistics
+were named before the data was looked at. A declaration makes the two
+ways of departing from a plan visible, and they are different failures:
+
+``` r
+
+plan <- prereg_declare(c(
+  ate = "use of force is higher in the exposed division",
+  n_rows = "the extract has the row count the source publishes"))
+
+# a declared outcome that was not reported
+prereg_check(plan, "n_rows")
+#> ── Against the declaration of 2026-09-13T02:36:00Z: departures below 
+#>   declared but not reported (outcome switching): ate
+#> ──────────────────────────────────────────────────────────────────
+
+# statistics reported that were never declared
+prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
+#> ── Against the declaration of 2026-09-13T02:36:00Z: departures below 
+#>   reported but not declared (2 addition(s)): by_year, by_precinct
+#> ──────────────────────────────────────────────────────────────────
+```
+
+That second case is why a nominal p-value needs correcting. Run the
+permutation control over several statistics and the smallest is not the
+finding:
+
+``` r
+
+falsify_family(c(ate = 0.02, by_year = 0.3, by_precinct = 0.4,
+                 by_shift = 0.6, by_month = 0.7), method = "holm")
+#> ── Family of 5, corrected by holm at alpha 0.05 ──────────────────
+#>   ate                    p 0.02       adjusted 0.1        
+#>   by_year                p 0.3        adjusted 1          
+#>   by_precinct            p 0.4        adjusted 1          
+#>   by_shift               p 0.6        adjusted 1          
+#>   by_month               p 0.7        adjusted 1          
+#> ──────────────────────────────────────────────────────────────────
+```
+
+And for the confounder nobody measured, the E-value says how strong it
+would have to be to explain the result away – with both the exposure and
+the outcome:
+
+``` r
+
+evalue_rr(2, lo = 1.4, hi = 2.9)
+#> evalue_point evalue_limit 
+#>     3.414214     2.148331
+```
+
+## One file to hand someone
+
+A bundle carries a digest of every file, the manifest digest, and an
+attestation over both. The file digests are inside the signature, which
+is the point: a list of hashes that is not itself signed can be
+rewritten to match whatever the files now say.
+
+``` r
+
+dir <- tempfile()
+dir.create(dir)
+write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"),
+          row.names = FALSE)
+b <- capsule_bundle(dir, man, key, note = "as published")
+capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
+#> ── Bundle check: OK ──────────────────────────────────────────────
+#>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
+#>   no_unlisted_files              ok    
+#>   attestation:attestation_comple ok    
+#>   attestation:manifest_digest    ok    7ec9ce5b87041795d4c16405f92493de7d02
+#>   attestation:signature          ok    
+#>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
+#> ──────────────────────────────────────────────────────────────────
+```
+
+Files sitting in the directory that the bundle does not mention are
+reported as well: a signed list of what should be there says nothing
+about what else was put beside it.
+
+``` r
+
+unlink(dir, recursive = TRUE)
+```
+
+## When, not just in what order
+
+The chain proves the order of a sequence of manifests. It does not prove
+that any of them existed at a particular time – the whole chain can be
+built in an afternoon and dated however one likes. An RFC 3161 timestamp
+token from a third party supplies the date, and
+[`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+checks three separate things: that the token is about these bytes, what
+time it asserts, and that the authority’s signature holds.
+
+``` r
+
+res <- timestamp_verify("response.tsr", data = "manifest.json")
+res$time
+res$checks
+```
+
+What it does not check, and this is the difference between it and a
+browser’s padlock: whether the certificate should be trusted. There is
+no chain building, no validity dates, no revocation and no check of the
+timeStamping key usage. Pass the certificate you have independently
+decided to trust, and read a pass as “this key said so” rather than
+“this is true”.
 
 ## Pinning chunk by chunk
 

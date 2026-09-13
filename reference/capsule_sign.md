@@ -7,7 +7,14 @@ the key and has not been altered since.
 ## Usage
 
 ``` r
-capsule_sign(message, key, scheme = NULL)
+capsule_sign(
+  message,
+  key,
+  scheme = NULL,
+  context = NULL,
+  deterministic = FALSE,
+  prehash = "none"
+)
 ```
 
 ## Arguments
@@ -21,8 +28,8 @@ capsule_sign(message, key, scheme = NULL)
   A shared secret (character/raw) for `"hmac"`, a
   `bricklayer_signing_key` from
   [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
-  for `"xmss"`, or a `bricklayer_oqs_key` from
-  [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  for `"xmss"`, or a `bricklayer_fips_key` from
+  [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
   for a standardised scheme (in which case `scheme` is taken from the
   key and ignored).
 
@@ -30,6 +37,31 @@ capsule_sign(message, key, scheme = NULL)
 
   `"xmss"` (post-quantum, asymmetric) or `"hmac"` (symmetric). Inferred
   from `key` when not given.
+
+- context:
+
+  Optional context string (character or raw, at most 255 bytes) for the
+  standardised schemes, and ignored by the others. FIPS 204 and FIPS 205
+  both bind it into the message encoding, so a signature made under one
+  context does not verify under another – which is how the same key is
+  safely used for two purposes.
+
+- deterministic:
+
+  For the standardised schemes, use the deterministic variant rather
+  than drawing fresh randomness per signature. The signature then
+  depends only on the key, message and context, which is what the
+  standards' test vectors rely on.
+
+- prehash:
+
+  For the standardised schemes, sign a digest of the message rather than
+  the message itself – HashML-DSA (FIPS 204 section 5.4) or HashSLH-DSA
+  (FIPS 205 section 10.2.2). One of `"none"` (the default, the pure
+  variants), `"sha256"`, `"sha512"`, `"shake128"` or `"shake256"`. The
+  identifier of the pre-hash is bound into the signature, so a
+  pre-hashed signature is never interchangeable with a pure one over the
+  same digest.
 
 ## Value
 

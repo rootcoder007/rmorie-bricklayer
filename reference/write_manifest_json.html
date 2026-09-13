@@ -13,7 +13,7 @@ jsonlite needed."><meta name="google-site-verification" content="8ORzeHrfoPIOruj
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@ jsonlite needed.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_manifest_json</span><span class="op">(</span><span class="va">manifest</span>, <span class="va">path</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">write_manifest_json</span><span class="op">(</span><span class="va">manifest</span>, <span class="va">path</span>, canonical <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -73,6 +73,13 @@ jsonlite needed.</p>
 
 <dt id="arg-path">path<a class="anchor" aria-label="anchor" href="#arg-path"></a></dt>
 <dd><p>Destination path for the JSON file.</p></dd>
+
+
+<dt id="arg-canonical">canonical<a class="anchor" aria-label="anchor" href="#arg-canonical"></a></dt>
+<dd><p>Write the canonical form rather than
+the pretty-printed one: one line, keys sorted, which is what
+<code><a href="manifest_canonical.html">manifest_digest()</a></code> hashes. Use it when
+the file itself has to be byte-stable rather than read by a person.</p></dd>
 
 </dl></div>
     <div class="section level2">

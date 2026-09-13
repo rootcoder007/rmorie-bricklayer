@@ -10,10 +10,46 @@ and returns its argument invisibly.
 ## Usage
 
 ``` r
+# S3 method for class 'bricklayer_attestation'
+print(x, ...)
+
+# S3 method for class 'bricklayer_attestation_check'
+print(x, ...)
+
+# S3 method for class 'bricklayer_bundle'
+print(x, ...)
+
+# S3 method for class 'bricklayer_bundle_check'
+print(x, ...)
+
 # S3 method for class 'bricklayer_chain'
 print(x, ...)
 
+# S3 method for class 'bricklayer_falsification'
+print(x, ...)
+
+# S3 method for class 'bricklayer_kem_key'
+print(x, ...)
+
+# S3 method for class 'bricklayer_kem_public_key'
+print(x, ...)
+
+# S3 method for class 'bricklayer_kem_capsule'
+print(x, ...)
+
 # S3 method for class 'bricklayer_mcar'
+print(x, ...)
+
+# S3 method for class 'bricklayer_power'
+print(x, ...)
+
+# S3 method for class 'bricklayer_prereg'
+print(x, ...)
+
+# S3 method for class 'bricklayer_prereg_check'
+print(x, ...)
+
+# S3 method for class 'bricklayer_falsify_family'
 print(x, ...)
 
 # S3 method for class 'bricklayer_drift'
@@ -46,6 +82,9 @@ print(x, ...)
 # S3 method for class 'bricklayer_report'
 summary(object, ...)
 
+# S3 method for class 'bricklayer_recompute'
+print(x, ...)
+
 # S3 method for class 'bricklayer_schema'
 print(x, ...)
 
@@ -53,6 +92,15 @@ print(x, ...)
 print(x, ...)
 
 # S3 method for class 'bricklayer_oqs_public_key'
+print(x, ...)
+
+# S3 method for class 'bricklayer_timestamp'
+print(x, ...)
+
+# S3 method for class 'bricklayer_certificate'
+print(x, ...)
+
+# S3 method for class 'bricklayer_certpath_check'
 print(x, ...)
 ```
 
@@ -141,7 +189,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       c17a55b9b26a9fc305c7ba4c028178420333e5285085195b0b4f4ffdecc75c4a
+#>   root       e3d6d8251c1d5381b9bc1eae266a9805bda1bee40f0d46036b40103b209c849b
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -152,8 +200,8 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       c17a55b9b26a9fc305c7ba4c028178420333e5285085195b0b4f4ffdecc75c4a
-#>   signature  c93155695421e8bb426e303d06876722... (2144 bytes)
+#>   root       e3d6d8251c1d5381b9bc1eae266a9805bda1bee40f0d46036b40103b209c849b
+#>   signature  2b365b6bd0bf8abe3406bde555af7170... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 ```

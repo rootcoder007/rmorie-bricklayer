@@ -11,7 +11,7 @@ the key and has not been altered since."><meta name="google-site-verification" c
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,14 @@ the key and has not been altered since.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">capsule_sign</span><span class="op">(</span><span class="va">message</span>, <span class="va">key</span>, scheme <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">capsule_sign</span><span class="op">(</span></span>
+<span>  <span class="va">message</span>,</span>
+<span>  <span class="va">key</span>,</span>
+<span>  scheme <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  deterministic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  prehash <span class="op">=</span> <span class="st">"none"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,14 +78,39 @@ to sign.</p></dd>
 <dd><p>A shared secret (character/raw) for <code>"hmac"</code>,
 a <code>bricklayer_signing_key</code> from
 <code><a href="pqc_keygen.html">pqc_keygen()</a></code> for <code>"xmss"</code>, or a
-<code>bricklayer_oqs_key</code> from <code><a href="oqs_keygen.html">oqs_keygen()</a></code>
-for a standardised scheme (in which case <code>scheme</code> is taken from the
-key and ignored).</p></dd>
+<code>bricklayer_fips_key</code> from
+<code><a href="fips_keygen.html">fips_keygen()</a></code> for a standardised scheme (in
+which case <code>scheme</code> is taken from the key and ignored).</p></dd>
 
 
 <dt id="arg-scheme">scheme<a class="anchor" aria-label="anchor" href="#arg-scheme"></a></dt>
 <dd><p><code>"xmss"</code> (post-quantum, asymmetric) or
 <code>"hmac"</code> (symmetric). Inferred from <code>key</code> when not given.</p></dd>
+
+
+<dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
+<dd><p>Optional context string (character or raw,
+at most 255 bytes) for the standardised schemes, and ignored by the
+others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
+a signature made under one context does not verify under another –
+which is how the same key is safely used for two purposes.</p></dd>
+
+
+<dt id="arg-deterministic">deterministic<a class="anchor" aria-label="anchor" href="#arg-deterministic"></a></dt>
+<dd><p>For the standardised schemes,
+use the deterministic variant rather than drawing fresh randomness per
+signature. The signature then depends only on the key, message and
+context, which is what the standards' test vectors rely on.</p></dd>
+
+
+<dt id="arg-prehash">prehash<a class="anchor" aria-label="anchor" href="#arg-prehash"></a></dt>
+<dd><p>For the standardised schemes, sign a
+digest of the message rather than the message itself – HashML-DSA (FIPS
+204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
+<code>"none"</code> (the default, the pure variants), <code>"sha256"</code>,
+<code>"sha512"</code>, <code>"shake128"</code> or <code>"shake256"</code>. The identifier
+of the pre-hash is bound into the signature, so a pre-hashed signature
+is never interchangeable with a pure one over the same digest.</p></dd>
 
 </dl></div>
     <div class="section level2">

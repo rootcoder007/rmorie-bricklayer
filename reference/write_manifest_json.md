@@ -8,7 +8,7 @@ codec (
 ## Usage
 
 ``` r
-write_manifest_json(manifest, path)
+write_manifest_json(manifest, path, canonical = FALSE)
 ```
 
 ## Arguments
@@ -23,6 +23,14 @@ write_manifest_json(manifest, path)
 - path:
 
   Destination path for the JSON file.
+
+- canonical:
+
+  Write the canonical form rather than the pretty-printed one: one line,
+  keys sorted, which is what
+  [`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  hashes. Use it when the file itself has to be byte-stable rather than
+  read by a person.
 
 ## Value
 

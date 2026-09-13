@@ -15,7 +15,7 @@ cannot be replayed at another index or under another key.'><meta name="google-si
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ cannot be replayed at another index or under another key.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">capsule_verify</span><span class="op">(</span><span class="va">message</span>, <span class="va">signature</span>, <span class="va">key</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">capsule_verify</span><span class="op">(</span><span class="va">message</span>, <span class="va">signature</span>, <span class="va">key</span>, context <span class="op">=</span> <span class="cn">NULL</span>, prehash <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -80,10 +80,23 @@ cover.</p></dd>
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
 <dd><p>The shared secret for <code>"hmac"</code>, a public key
-(or full signing key) for XMSS, or an
-<code><a href="oqs_keygen.html">oqs_keygen()</a></code> key or its
-<code><a href="oqs_keygen.html">oqs_public_key()</a></code> for a standardised
+(or full signing key) for XMSS, or a
+<code><a href="fips_keygen.html">fips_keygen()</a></code> key or its
+<code><a href="fips_keygen.html">fips_public_key()</a></code> for a standardised
 scheme. A signature is not verified against a key of a different scheme.</p></dd>
+
+
+<dt id="arg-context">context<a class="anchor" aria-label="anchor" href="#arg-context"></a></dt>
+<dd><p>The context string the signature was made
+under, for the standardised schemes. A signature made under a different
+context, or under none, does not verify.</p></dd>
+
+
+<dt id="arg-prehash">prehash<a class="anchor" aria-label="anchor" href="#arg-prehash"></a></dt>
+<dd><p>The pre-hash the signature was made with.
+Taken from the signature when not given, since
+<code><a href="capsule_sign.html">capsule_sign()</a></code> records it; supply it to
+check a signature that arrived without that field.</p></dd>
 
 </dl></div>
     <div class="section level2">

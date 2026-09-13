@@ -9,7 +9,7 @@ replayed at another index or under another key.
 ## Usage
 
 ``` r
-capsule_verify(message, signature, key)
+capsule_verify(message, signature, key, context = NULL, prehash = NULL)
 ```
 
 ## Arguments
@@ -26,12 +26,26 @@ capsule_verify(message, signature, key)
 - key:
 
   The shared secret for `"hmac"`, a public key (or full signing key) for
-  XMSS, or an
-  [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  XMSS, or a
+  [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
   key or its
-  [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  [`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
   for a standardised scheme. A signature is not verified against a key
   of a different scheme.
+
+- context:
+
+  The context string the signature was made under, for the standardised
+  schemes. A signature made under a different context, or under none,
+  does not verify.
+
+- prehash:
+
+  The pre-hash the signature was made with. Taken from the signature
+  when not given, since
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+  records it; supply it to check a signature that arrived without that
+  field.
 
 ## Value
 

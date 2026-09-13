@@ -1,5 +1,397 @@
 # Changelog
 
+## rmoriebricklayer 0.4.6
+
+Certificate path validation is now complete: the three things 0.4.5
+listed as still missing are done.
+
+### Name constraints
+
+A CA can be limited to part of the name space, and a verifier that
+ignores the limit treats a CA constrained to one organisation’s domains
+as able to issue for any name at all.
+[`cert_chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.md)
+now enforces `nameConstraints` for every CA in the path against every
+certificate below it – not only the leaf, so a constrained CA cannot
+escape by issuing an intermediate.
+
+The matching rules are per type and deliberately not shared: a DNS
+constraint of `example.org` covers `host.example.org` and `example.org`;
+an email constraint of `example.org` covers mailboxes whose host is
+exactly that and NOT its subdomains; a directory name constraint matches
+whole relative distinguished names, so `O=Acme` is not satisfied by
+`O=AcmeCorp`. `pathLenConstraint` is enforced too.
+
+### Certificate policies
+
+`certificatePolicies`, `policyMappings`, `policyConstraints` and
+`inhibitAnyPolicy` are processed as RFC 5280 section 6.1 describes, with
+its three counters. Pass `policies` to
+[`cert_chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.md)
+and the path must yield one of them after mapping; omit it and policies
+are still processed, but only reported as a failure where a certificate
+in the path requires an explicit policy. Mapping to or from `anyPolicy`
+is rejected, as the standard requires.
+
+Not done: policy qualifier processing. A user notice attached to a
+policy is parsed past rather than surfaced.
+
+### Revocation can now be fetched
+
+`revocation = "fetch"` retrieves CRLs from the distribution points in
+the certificates and queries any OCSP responder they name. OCSP is
+POSTed as RFC 6960 requires a responder to accept, falling back to the
+optional GET form.
+
+It is opt-in, and that is the design rather than caution. A verifier
+that reaches out during a check stops working offline – which is where
+an archival capsule is most likely to be verified – becomes
+non-deterministic, and tells whoever runs the responder which
+certificates are being checked and when. `"supplied"` (the default) uses
+only CRLs handed in; `"none"` skips revocation entirely.
+
+A responder’s answer is believed only when its signature verifies under
+a certificate in the path, or one it carries that the path issued. An
+unverifiable “good” is reported as a failure: treating it as a pass
+would be worse than skipping the check, because it would look like the
+check had happened.
+
+### Along the way
+
+- SHA-1, for OCSP CertID only – RFC 6960 keys a request on the SHA-1 of
+  the issuer’s name and public key, and a responder given anything else
+  answers “unauthorized”. It verifies no signatures here and must not:
+  SHA-1 collisions are practical.
+- `C_rmbl_http_post()`, so OCSP can POST. It is the only thing in the
+  package that sends a body.
+- Every verdict here was cross-checked against `openssl verify` on the
+  same certificates – it rejects the three name-constrained leaves and
+  the wrong-policy leaf that these tests reject – and the OCSP request
+  this package builds is byte-identical to `openssl ocsp -reqout`, which
+  checks the DER encoder, the CertID and the SHA-1 at once.
+- Fixed a `logical(0)` trap in policy processing: `is.na(NULL)` is
+  `logical(0)` and `if` on it is an error, so a counter read from a
+  structure that did not carry the field failed instead of defaulting.
+
+## rmoriebricklayer 0.4.5
+
+The four things the previous release documented as deliberately
+incomplete are now complete.
+
+### Certificates are validated, not just used
+
+[`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+gained `trust`, `crls` and `at_time`, and there is a new
+[`cert_parse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.md)
+and
+[`cert_chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.md)
+behind them. The chain is built to an anchor you name, every signature
+in it is verified, every validity window is checked, an issuer must be a
+CA, and the leaf must carry the timeStamping extended key usage. A CRL
+can be handed in.
+
+Validity is judged at the time the TOKEN asserts, not at the time the
+check runs. A token signed in 2020 under a certificate that expired in
+2021 was validly signed, and judging it by today’s date would reject it
+for a reason unconnected to its validity.
+
+Omitting `trust` no longer passes quietly: `certificate_trust` is
+reported as failed, because a signature that verifies under an
+unvouched-for certificate says only that some key signed the token.
+
+Still not done, and now the only gaps here: name constraints, policy
+mapping, and fetching revocation data over the network.
+
+### ECDSA, not only RSA
+
+`rmbl_ecdsa.cpp` implements ECDSA verification over P-256, P-384 and
+P-521 – field and group arithmetic, Jacobian point operations, and the
+FIPS 186-4 verification equation with the range and on-curve checks that
+a lax verifier skips. Certificates and timestamp tokens signed with
+`ecdsa-with-SHA256/384/512` now verify; the test fixtures carry one
+token of each kind over the same payload under the same CA, so the two
+paths are exercised against real tokens rather than against each other.
+
+SHA-384 was added for `ecdsa-with-SHA384`, checked against its FIPS
+180-4 vectors.
+
+One bug is worth recording because of how it presented. The P-521 group
+order was written four hex digits short. Every published base-point
+multiple still matched – the curve arithmetic uses only the field prime
+and b – while every operation mod n was wrong and no signature verified.
+The fix added a width check on every curve constant and a test that
+`n * G` is the point at infinity, which is the property that fails the
+moment the order is wrong.
+
+### Falsification can now confirm as well as refute
+
+[`capsule_power()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_power.md)
+injects an effect of known size, reruns the whole detection procedure,
+and reports the rate at which it is found. The smallest size detected
+reliably is the smallest effect the analysis could have seen.
+
+This is the case the negative controls cannot reach. A procedure with no
+power against the effect at issue passes every control in
+[`capsule_falsify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md)
+by failing to see anything at all, and a null result from it is not
+evidence of absence. A design whose permutation floor sits above alpha –
+where no size could ever be detected – is refused rather than run.
+
+### Signing an SLH-DSA `s` parameter set is five to seven times faster
+
+Worst case went from 7.20 seconds to 2.67, and the SHA-2 sets from 7.20
+to 1.09. Nothing is gated behind an environment variable any more; every
+parameter set signs in the test suite.
+
+Three changes, in order of what they were worth:
+
+- the Keccak round no longer evaluates `% 5` on every lane – the
+  permutation is straight-line code with literal indices, generated from
+  the formulas rather than transcribed;
+- the tweakable hash no longer heap-allocates, which it was doing a few
+  million times per signature;
+- the SHA-2 parameter sets resume from a cached midstate instead of
+  recompressing the padded public seed on every call, which is what the
+  reference implementation means by a seeded state.
+
+`sha256_update()` and `sha512_update()` also now copy in bulk rather
+than a byte at a time, which speeds up every other user of them.
+
+All 15 signature parameter sets remain byte-identical to OpenSSL 3.5,
+re-checked after the optimisation: 300 comparisons, no differences.
+
+## rmoriebricklayer 0.4.4
+
+### From “the record is intact” to “the record is right”
+
+[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+checks a manifest against itself, which catches an edited manifest and
+cannot catch one that was wrong when it was written.
+
+- [`manifest_recompute()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_recompute.md)
+  re-runs named statistics against the data and compares each to what
+  was recorded. Results that were recorded but NOT recomputed are
+  reported as `unchecked`: an analysis that recorded twenty statistics
+  and re-derives three has seventeen it has not, and a report that
+  quietly omitted them would read as a clean bill of health.
+- [`manifest_record_seed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_record_seed.md)
+  and
+  [`manifest_restore_seed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_record_seed.md)
+  record and replay the generator’s full state.
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) is reproducible
+  only if everything before it is too – one extra draw upstream shifts
+  every later value – so the state is what gets recorded, and the kind
+  beside it, because a seed replayed under a different kind gives
+  different numbers silently.
+- [`capture_dependencies()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_dependencies.md)
+  records where each package came from: the library, the repository, and
+  for a remote install its URL and commit. Two installations can report
+  the same version and differ.
+
+### Falsification, and what comes before and after it
+
+- [`prereg_declare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md)
+  and
+  [`prereg_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.md)
+  – declare the statistics an analysis intends to report, and compare
+  that against what it did. The two departures are reported separately
+  because they are different failures: a declared statistic that was not
+  reported is outcome switching, and a reported statistic that was not
+  declared is an addition. Both are invisible without a declaration made
+  in advance.
+- [`falsify_family()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsify_family.md)
+  – corrects a family of permutation p-values by Holm,
+  Benjamini-Hochberg or Bonferroni, and names those sitting at the
+  permutation floor, where more permutations would be needed to say
+  anything more. Running the control over twenty statistics and
+  reporting the one under 0.05 is not a finding.
+- [`evalue_rr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/evalue_rr.md)
+  – the E-value of VanderWeele and Ding: how strong an unmeasured
+  confounder would have to be, with both the exposure and the outcome,
+  to explain the result away.
+
+### Distribution and time
+
+- [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md),
+  [`capsule_bundle_read()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  and
+  [`capsule_bundle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  – one signed artifact holding a digest of every file, the manifest
+  digest and an attestation over both. The file digests are inside the
+  signature: a list of hashes that is not itself signed can be rewritten
+  to match whatever the files now say. Files present but unlisted are
+  reported too.
+
+- [`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+  and
+  [`timestamp_info()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+  – RFC 3161 timestamp tokens, verified natively. The message imprint is
+  checked against the data, the genTime is reported, and the authority’s
+  RSA signature over the signed attributes is verified, which meant
+  implementing DER parsing and a bignum modular exponentiation
+  (`C_rmbl_der_parse`, `C_rmbl_rsa_recover`). A hash chain proves the
+  order of a sequence of manifests and not that any of them existed at a
+  given time; this supplies the date.
+
+  What it does NOT do, stated plainly because it is the difference
+  between this and a browser’s padlock: validate the certificate. No
+  chain building, no validity dates, no revocation, no check of the
+  timeStamping key usage. Pass the certificate you have decided to
+  trust, and read a pass as “this key said so”.
+
+## rmoriebricklayer 0.4.3
+
+### A manifest can now reproduce its own numbers
+
+[`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
+wrote doubles at four significant digits, so a manifest recording `1/3`
+said `0.3333` and no later recomputation could match what was written.
+Every number is now written at full double precision and round-trips
+exactly, denormals and `.Machine$double.xmax` included. A provenance
+record that cannot reproduce its own numbers is the one failure mode the
+whole capsule apparatus exists to prevent, and this was it.
+
+- [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  and
+  [`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  – one line of JSON with every object’s keys sorted, and its SHA-256. R
+  lists keep insertion order, so the same manifest assembled in a
+  different order used to serialise to different bytes, which made a
+  signature over the JSON depend on the order a script happened to build
+  a list in. Sign the digest.
+- [`capture_environment()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.md)
+  now records `rng_kind` and whether a seed was in force. Without the
+  generator’s identity a stochastic result cannot be reproduced even on
+  the same machine: R has changed its default
+  [`sample()`](https://rdrr.io/r/base/sample.html) algorithm before, and
+  a recorded seed means nothing without the kind it was fed to.
+
+### Attestation: a signature a third party can actually check
+
+[`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+and
+[`capsule_check_attestation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md).
+A bare signature leaves three things implicit – which key, which scheme,
+which bytes – and a verifier who has to be told them out of band cannot
+check anything they were not already given. An attestation records the
+scheme, the public key, the context, the pre-hash, the manifest digest
+and a note from the signer, all inside the signed payload, so the check
+is `capsule_check_attestation(attestation, manifest)` and nothing else.
+Editing any field afterwards is detected, including the note.
+
+### Falsification: controls that can fail
+
+[`capsule_falsify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md)
+runs four negative controls against a statistic and reports whether it
+behaved: a permutation test that destroys the association on purpose, a
+random common cause that cannot matter, a placebo exposure, and subset
+stability. Reproducibility is a property of a pipeline, not of a claim –
+a capsule can be signed, hashed, chained and reproduced byte for byte
+while reporting a number that means nothing.
+
+The permutation control reports the smallest p-value its design could
+have produced, because a reader who does not know that 19 permutations
+floor at 0.05 will over-read a p of 0.05. The controls are demonstrated
+failing as well as passing: a constant statistic fails the permutation
+test, noise fails it, and a statistic that reads the injected noise
+column fails the random-common-cause control.
+
+## rmoriebricklayer 0.4.2
+
+### The rest of the NIST post-quantum standards
+
+- **ML-KEM (FIPS 203)** at all three levels –
+  [`kem_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md),
+  [`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md),
+  [`kem_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_decapsulate.md),
+  [`kem_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_sizes.md).
+  A key encapsulation mechanism answers a different question from a
+  signature: not who produced a capsule but what key two parties now
+  share. Decapsulation has no failure path, deliberately: a bad
+  ciphertext yields a shared secret derived from a value held only
+  inside the decapsulation key, so the sender learns nothing from
+  whether it worked. That is the Fujisaki-Okamoto transform’s implicit
+  rejection.
+- **HashML-DSA (FIPS 204 section 5.4) and HashSLH-DSA (FIPS 205 section
+  10.2.2)** – `capsule_sign(prehash = )`, for signing a digest of the
+  message rather than the message. The identifier of the pre-hash is
+  bound into the signature, not merely its output, so a signature over a
+  SHA-256 digest is never interchangeable with one over a SHAKE128
+  digest of the same length.
+- **ExternalMu-ML-DSA** –
+  [`fips_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md),
+  [`fips_sign_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md),
+  [`fips_verify_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md).
+  A message can be reduced to the 64-byte value that is all ML-DSA
+  signing consumes, and only that handed to whatever holds the key, so a
+  large file never has to cross the boundary the key sits behind. mu
+  binds the public key and the context, so it is not a bare digest.
+
+Every one of these is checked against OpenSSL 3.5, which shares no code
+with this package. ML-KEM keys generated from the same seed agree byte
+for byte at all three levels, its ciphertexts decapsulate here to the
+secret it reports and ours to the secret we report, and a corrupted
+ciphertext produces the same rejection secret in both. The pre-hash and
+external-mu signatures are byte-identical for every parameter set and
+every pre-hash.
+
+## rmoriebricklayer 0.4.1
+
+### The standardised post-quantum schemes are now implemented here
+
+ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) were previously reached through
+liboqs, so which schemes a build offered depended on what happened to be
+installed on the machine that built it – a poor property for a signature
+format meant to outlive that machine. Both are now implemented in the
+package, on its own Keccak sponge, and the optional system dependency is
+gone along with the `./configure` step that probed for it.
+
+- [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md),
+  [`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md),
+  [`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+  and
+  [`fips_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_sizes.md)
+  are the new entry points.
+  [`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
+  now reports a fixed list – ML-DSA at all three parameter sets and
+  SLH-DSA at all twelve, six over SHAKE and six over SHA-2 – available
+  in every build.
+  [`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+  wraps key material from elsewhere, so a key written by another
+  implementation can be used directly.
+- SHA-512, HMAC and MGF1 gained the pieces the SHA-2 instantiation of
+  FIPS 205 needs. Its address is compressed from 32 bytes to 22 with
+  every field moved, its message randomiser is an HMAC and its digest an
+  MGF1, and its multi-block tweakable hash switches to SHA-512 at
+  192-bit security and above but its single-block one does not – none of
+  which a test that only signs and verifies would notice.
+- [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+  and
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+  gained `context`, the context string both standards bind into the
+  message encoding, so one key can be used for two purposes without a
+  signature crossing between them.
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+  also gained `deterministic`, selecting the variant whose output
+  depends only on key, message and context.
+- [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  and
+  [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
+  are deprecated in favour of the `fips_*` names and now warn. They
+  still work, and still return the same classes.
+
+Every parameter set is checked against OpenSSL 3.5, which shares no code
+with this package: in deterministic mode the two produce the SAME BYTES,
+over several message and context lengths, and each verifies the other’s
+signatures. That cross-check is the conformance claim. Reference parity
+is not: this implementation matched the pq-crystals and sphincsplus
+reference code byte for byte while disagreeing with the standards twice
+over – FIPS 204 and FIPS 205 both prepend a context domain separator the
+reference code omits, and FIPS 205 reads the FORS indices most
+significant bit first where SPHINCS+ read them least significant bit
+first. Neither is detectable from the inside: a signature scheme that
+verifies only its own output still rejects every tampering.
+
 ## rmoriebricklayer 0.4.0
 
 The release that makes a capsule answer three questions a checksum

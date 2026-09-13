@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,144 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.6" id="rmoriebricklayer-046">rmoriebricklayer 0.4.6<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-046"></a></h2>
+<p>Certificate path validation is now complete: the three things 0.4.5 listed as still missing are done.</p>
+<div class="section level3">
+<h3 id="name-constraints-0-4-6">Name constraints<a class="anchor" aria-label="anchor" href="#name-constraints-0-4-6"></a></h3>
+<p>A CA can be limited to part of the name space, and a verifier that ignores the limit treats a CA constrained to one organisation’s domains as able to issue for any name at all. <code><a href="../reference/cert_chain_verify.html">cert_chain_verify()</a></code> now enforces <code>nameConstraints</code> for every CA in the path against every certificate below it – not only the leaf, so a constrained CA cannot escape by issuing an intermediate.</p>
+<p>The matching rules are per type and deliberately not shared: a DNS constraint of <code>example.org</code> covers <code>host.example.org</code> and <code>example.org</code>; an email constraint of <code>example.org</code> covers mailboxes whose host is exactly that and NOT its subdomains; a directory name constraint matches whole relative distinguished names, so <code>O=Acme</code> is not satisfied by <code>O=AcmeCorp</code>. <code>pathLenConstraint</code> is enforced too.</p>
+</div>
+<div class="section level3">
+<h3 id="certificate-policies-0-4-6">Certificate policies<a class="anchor" aria-label="anchor" href="#certificate-policies-0-4-6"></a></h3>
+<p><code>certificatePolicies</code>, <code>policyMappings</code>, <code>policyConstraints</code> and <code>inhibitAnyPolicy</code> are processed as RFC 5280 section 6.1 describes, with its three counters. Pass <code>policies</code> to <code><a href="../reference/cert_chain_verify.html">cert_chain_verify()</a></code> and the path must yield one of them after mapping; omit it and policies are still processed, but only reported as a failure where a certificate in the path requires an explicit policy. Mapping to or from <code>anyPolicy</code> is rejected, as the standard requires.</p>
+<p>Not done: policy qualifier processing. A user notice attached to a policy is parsed past rather than surfaced.</p>
+</div>
+<div class="section level3">
+<h3 id="revocation-can-now-be-fetched-0-4-6">Revocation can now be fetched<a class="anchor" aria-label="anchor" href="#revocation-can-now-be-fetched-0-4-6"></a></h3>
+<p><code>revocation = "fetch"</code> retrieves CRLs from the distribution points in the certificates and queries any OCSP responder they name. OCSP is POSTed as RFC 6960 requires a responder to accept, falling back to the optional GET form.</p>
+<p>It is opt-in, and that is the design rather than caution. A verifier that reaches out during a check stops working offline – which is where an archival capsule is most likely to be verified – becomes non-deterministic, and tells whoever runs the responder which certificates are being checked and when. <code>"supplied"</code> (the default) uses only CRLs handed in; <code>"none"</code> skips revocation entirely.</p>
+<p>A responder’s answer is believed only when its signature verifies under a certificate in the path, or one it carries that the path issued. An unverifiable “good” is reported as a failure: treating it as a pass would be worse than skipping the check, because it would look like the check had happened.</p>
+</div>
+<div class="section level3">
+<h3 id="along-the-way-0-4-6">Along the way<a class="anchor" aria-label="anchor" href="#along-the-way-0-4-6"></a></h3>
+<ul><li>SHA-1, for OCSP CertID only – RFC 6960 keys a request on the SHA-1 of the issuer’s name and public key, and a responder given anything else answers “unauthorized”. It verifies no signatures here and must not: SHA-1 collisions are practical.</li>
+<li>
+<code>C_rmbl_http_post()</code>, so OCSP can POST. It is the only thing in the package that sends a body.</li>
+<li>Every verdict here was cross-checked against <code>openssl verify</code> on the same certificates – it rejects the three name-constrained leaves and the wrong-policy leaf that these tests reject – and the OCSP request this package builds is byte-identical to <code>openssl ocsp -reqout</code>, which checks the DER encoder, the CertID and the SHA-1 at once.</li>
+<li>Fixed a <code>logical(0)</code> trap in policy processing: <code>is.na(NULL)</code> is <code>logical(0)</code> and <code>if</code> on it is an error, so a counter read from a structure that did not carry the field failed instead of defaulting.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.5" id="rmoriebricklayer-045">rmoriebricklayer 0.4.5<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-045"></a></h2>
+<p>The four things the previous release documented as deliberately incomplete are now complete.</p>
+<div class="section level3">
+<h3 id="certificates-are-validated-not-just-used-0-4-5">Certificates are validated, not just used<a class="anchor" aria-label="anchor" href="#certificates-are-validated-not-just-used-0-4-5"></a></h3>
+<p><code><a href="../reference/timestamp_verify.html">timestamp_verify()</a></code> gained <code>trust</code>, <code>crls</code> and <code>at_time</code>, and there is a new <code><a href="../reference/cert_parse.html">cert_parse()</a></code> and <code><a href="../reference/cert_chain_verify.html">cert_chain_verify()</a></code> behind them. The chain is built to an anchor you name, every signature in it is verified, every validity window is checked, an issuer must be a CA, and the leaf must carry the timeStamping extended key usage. A CRL can be handed in.</p>
+<p>Validity is judged at the time the TOKEN asserts, not at the time the check runs. A token signed in 2020 under a certificate that expired in 2021 was validly signed, and judging it by today’s date would reject it for a reason unconnected to its validity.</p>
+<p>Omitting <code>trust</code> no longer passes quietly: <code>certificate_trust</code> is reported as failed, because a signature that verifies under an unvouched-for certificate says only that some key signed the token.</p>
+<p>Still not done, and now the only gaps here: name constraints, policy mapping, and fetching revocation data over the network.</p>
+</div>
+<div class="section level3">
+<h3 id="ecdsa-not-only-rsa-0-4-5">ECDSA, not only RSA<a class="anchor" aria-label="anchor" href="#ecdsa-not-only-rsa-0-4-5"></a></h3>
+<p><code>rmbl_ecdsa.cpp</code> implements ECDSA verification over P-256, P-384 and P-521 – field and group arithmetic, Jacobian point operations, and the FIPS 186-4 verification equation with the range and on-curve checks that a lax verifier skips. Certificates and timestamp tokens signed with <code>ecdsa-with-SHA256/384/512</code> now verify; the test fixtures carry one token of each kind over the same payload under the same CA, so the two paths are exercised against real tokens rather than against each other.</p>
+<p>SHA-384 was added for <code>ecdsa-with-SHA384</code>, checked against its FIPS 180-4 vectors.</p>
+<p>One bug is worth recording because of how it presented. The P-521 group order was written four hex digits short. Every published base-point multiple still matched – the curve arithmetic uses only the field prime and b – while every operation mod n was wrong and no signature verified. The fix added a width check on every curve constant and a test that <code>n * G</code> is the point at infinity, which is the property that fails the moment the order is wrong.</p>
+</div>
+<div class="section level3">
+<h3 id="falsification-can-now-confirm-as-well-as-refute-0-4-5">Falsification can now confirm as well as refute<a class="anchor" aria-label="anchor" href="#falsification-can-now-confirm-as-well-as-refute-0-4-5"></a></h3>
+<p><code><a href="../reference/capsule_power.html">capsule_power()</a></code> injects an effect of known size, reruns the whole detection procedure, and reports the rate at which it is found. The smallest size detected reliably is the smallest effect the analysis could have seen.</p>
+<p>This is the case the negative controls cannot reach. A procedure with no power against the effect at issue passes every control in <code><a href="../reference/capsule_falsify.html">capsule_falsify()</a></code> by failing to see anything at all, and a null result from it is not evidence of absence. A design whose permutation floor sits above alpha – where no size could ever be detected – is refused rather than run.</p>
+</div>
+<div class="section level3">
+<h3 id="signing-an-slh-dsa-s-parameter-set-is-five-to-seven-times-faster-0-4-5">Signing an SLH-DSA <code>s</code> parameter set is five to seven times faster<a class="anchor" aria-label="anchor" href="#signing-an-slh-dsa-s-parameter-set-is-five-to-seven-times-faster-0-4-5"></a></h3>
+<p>Worst case went from 7.20 seconds to 2.67, and the SHA-2 sets from 7.20 to 1.09. Nothing is gated behind an environment variable any more; every parameter set signs in the test suite.</p>
+<p>Three changes, in order of what they were worth:</p>
+<ul><li>the Keccak round no longer evaluates <code>% 5</code> on every lane – the permutation is straight-line code with literal indices, generated from the formulas rather than transcribed;</li>
+<li>the tweakable hash no longer heap-allocates, which it was doing a few million times per signature;</li>
+<li>the SHA-2 parameter sets resume from a cached midstate instead of recompressing the padded public seed on every call, which is what the reference implementation means by a seeded state.</li>
+</ul><p><code>sha256_update()</code> and <code>sha512_update()</code> also now copy in bulk rather than a byte at a time, which speeds up every other user of them.</p>
+<p>All 15 signature parameter sets remain byte-identical to OpenSSL 3.5, re-checked after the optimisation: 300 comparisons, no differences.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.4" id="rmoriebricklayer-044">rmoriebricklayer 0.4.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-044"></a></h2>
+<div class="section level3">
+<h3 id="from-the-record-is-intact-to-the-record-is-right-0-4-4">From “the record is intact” to “the record is right”<a class="anchor" aria-label="anchor" href="#from-the-record-is-intact-to-the-record-is-right-0-4-4"></a></h3>
+<p><code><a href="../reference/verify_capsule.html">verify_capsule()</a></code> checks a manifest against itself, which catches an edited manifest and cannot catch one that was wrong when it was written.</p>
+<ul><li>
+<code><a href="../reference/manifest_recompute.html">manifest_recompute()</a></code> re-runs named statistics against the data and compares each to what was recorded. Results that were recorded but NOT recomputed are reported as <code>unchecked</code>: an analysis that recorded twenty statistics and re-derives three has seventeen it has not, and a report that quietly omitted them would read as a clean bill of health.</li>
+<li>
+<code><a href="../reference/manifest_record_seed.html">manifest_record_seed()</a></code> and <code><a href="../reference/manifest_record_seed.html">manifest_restore_seed()</a></code> record and replay the generator’s full state. <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> is reproducible only if everything before it is too – one extra draw upstream shifts every later value – so the state is what gets recorded, and the kind beside it, because a seed replayed under a different kind gives different numbers silently.</li>
+<li>
+<code><a href="../reference/capture_dependencies.html">capture_dependencies()</a></code> records where each package came from: the library, the repository, and for a remote install its URL and commit. Two installations can report the same version and differ.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="falsification-and-what-comes-before-and-after-it-0-4-4">Falsification, and what comes before and after it<a class="anchor" aria-label="anchor" href="#falsification-and-what-comes-before-and-after-it-0-4-4"></a></h3>
+<ul><li>
+<code><a href="../reference/prereg_declare.html">prereg_declare()</a></code> and <code><a href="../reference/prereg_declare.html">prereg_check()</a></code> – declare the statistics an analysis intends to report, and compare that against what it did. The two departures are reported separately because they are different failures: a declared statistic that was not reported is outcome switching, and a reported statistic that was not declared is an addition. Both are invisible without a declaration made in advance.</li>
+<li>
+<code><a href="../reference/falsify_family.html">falsify_family()</a></code> – corrects a family of permutation p-values by Holm, Benjamini-Hochberg or Bonferroni, and names those sitting at the permutation floor, where more permutations would be needed to say anything more. Running the control over twenty statistics and reporting the one under 0.05 is not a finding.</li>
+<li>
+<code><a href="../reference/evalue_rr.html">evalue_rr()</a></code> – the E-value of VanderWeele and Ding: how strong an unmeasured confounder would have to be, with both the exposure and the outcome, to explain the result away.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="distribution-and-time-0-4-4">Distribution and time<a class="anchor" aria-label="anchor" href="#distribution-and-time-0-4-4"></a></h3>
+<ul><li><p><code><a href="../reference/capsule_bundle.html">capsule_bundle()</a></code>, <code><a href="../reference/capsule_bundle.html">capsule_bundle_read()</a></code> and <code><a href="../reference/capsule_bundle.html">capsule_bundle_verify()</a></code> – one signed artifact holding a digest of every file, the manifest digest and an attestation over both. The file digests are inside the signature: a list of hashes that is not itself signed can be rewritten to match whatever the files now say. Files present but unlisted are reported too.</p></li>
+<li>
+<p><code><a href="../reference/timestamp_verify.html">timestamp_verify()</a></code> and <code><a href="../reference/timestamp_verify.html">timestamp_info()</a></code> – RFC 3161 timestamp tokens, verified natively. The message imprint is checked against the data, the genTime is reported, and the authority’s RSA signature over the signed attributes is verified, which meant implementing DER parsing and a bignum modular exponentiation (<code>C_rmbl_der_parse</code>, <code>C_rmbl_rsa_recover</code>). A hash chain proves the order of a sequence of manifests and not that any of them existed at a given time; this supplies the date.</p>
+<p>What it does NOT do, stated plainly because it is the difference between this and a browser’s padlock: validate the certificate. No chain building, no validity dates, no revocation, no check of the timeStamping key usage. Pass the certificate you have decided to trust, and read a pass as “this key said so”.</p>
+</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.3" id="rmoriebricklayer-043">rmoriebricklayer 0.4.3<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-043"></a></h2>
+<div class="section level3">
+<h3 id="a-manifest-can-now-reproduce-its-own-numbers-0-4-3">A manifest can now reproduce its own numbers<a class="anchor" aria-label="anchor" href="#a-manifest-can-now-reproduce-its-own-numbers-0-4-3"></a></h3>
+<p><code><a href="../reference/write_manifest_json.html">write_manifest_json()</a></code> wrote doubles at four significant digits, so a manifest recording <code>1/3</code> said <code>0.3333</code> and no later recomputation could match what was written. Every number is now written at full double precision and round-trips exactly, denormals and <code>.Machine$double.xmax</code> included. A provenance record that cannot reproduce its own numbers is the one failure mode the whole capsule apparatus exists to prevent, and this was it.</p>
+<ul><li>
+<code><a href="../reference/manifest_canonical.html">manifest_canonical()</a></code> and <code><a href="../reference/manifest_canonical.html">manifest_digest()</a></code> – one line of JSON with every object’s keys sorted, and its SHA-256. R lists keep insertion order, so the same manifest assembled in a different order used to serialise to different bytes, which made a signature over the JSON depend on the order a script happened to build a list in. Sign the digest.</li>
+<li>
+<code><a href="../reference/capture_environment.html">capture_environment()</a></code> now records <code>rng_kind</code> and whether a seed was in force. Without the generator’s identity a stochastic result cannot be reproduced even on the same machine: R has changed its default <code><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample()</a></code> algorithm before, and a recorded seed means nothing without the kind it was fed to.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="attestation-a-signature-a-third-party-can-actually-check-0-4-3">Attestation: a signature a third party can actually check<a class="anchor" aria-label="anchor" href="#attestation-a-signature-a-third-party-can-actually-check-0-4-3"></a></h3>
+<p><code><a href="../reference/capsule_attest.html">capsule_attest()</a></code> and <code><a href="../reference/capsule_attest.html">capsule_check_attestation()</a></code>. A bare signature leaves three things implicit – which key, which scheme, which bytes – and a verifier who has to be told them out of band cannot check anything they were not already given. An attestation records the scheme, the public key, the context, the pre-hash, the manifest digest and a note from the signer, all inside the signed payload, so the check is <code>capsule_check_attestation(attestation, manifest)</code> and nothing else. Editing any field afterwards is detected, including the note.</p>
+</div>
+<div class="section level3">
+<h3 id="falsification-controls-that-can-fail-0-4-3">Falsification: controls that can fail<a class="anchor" aria-label="anchor" href="#falsification-controls-that-can-fail-0-4-3"></a></h3>
+<p><code><a href="../reference/capsule_falsify.html">capsule_falsify()</a></code> runs four negative controls against a statistic and reports whether it behaved: a permutation test that destroys the association on purpose, a random common cause that cannot matter, a placebo exposure, and subset stability. Reproducibility is a property of a pipeline, not of a claim – a capsule can be signed, hashed, chained and reproduced byte for byte while reporting a number that means nothing.</p>
+<p>The permutation control reports the smallest p-value its design could have produced, because a reader who does not know that 19 permutations floor at 0.05 will over-read a p of 0.05. The controls are demonstrated failing as well as passing: a constant statistic fails the permutation test, noise fails it, and a statistic that reads the injected noise column fails the random-common-cause control.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.2" id="rmoriebricklayer-042">rmoriebricklayer 0.4.2<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-042"></a></h2>
+<div class="section level3">
+<h3 id="the-rest-of-the-nist-post-quantum-standards-0-4-2">The rest of the NIST post-quantum standards<a class="anchor" aria-label="anchor" href="#the-rest-of-the-nist-post-quantum-standards-0-4-2"></a></h3>
+<ul><li>
+<strong>ML-KEM (FIPS 203)</strong> at all three levels – <code><a href="../reference/kem_keygen.html">kem_keygen()</a></code>, <code><a href="../reference/kem_encapsulate.html">kem_encapsulate()</a></code>, <code><a href="../reference/kem_decapsulate.html">kem_decapsulate()</a></code>, <code><a href="../reference/kem_sizes.html">kem_sizes()</a></code>. A key encapsulation mechanism answers a different question from a signature: not who produced a capsule but what key two parties now share. Decapsulation has no failure path, deliberately: a bad ciphertext yields a shared secret derived from a value held only inside the decapsulation key, so the sender learns nothing from whether it worked. That is the Fujisaki-Okamoto transform’s implicit rejection.</li>
+<li>
+<strong>HashML-DSA (FIPS 204 section 5.4) and HashSLH-DSA (FIPS 205 section 10.2.2)</strong> – <code>capsule_sign(prehash = )</code>, for signing a digest of the message rather than the message. The identifier of the pre-hash is bound into the signature, not merely its output, so a signature over a SHA-256 digest is never interchangeable with one over a SHAKE128 digest of the same length.</li>
+<li>
+<strong>ExternalMu-ML-DSA</strong> – <code><a href="../reference/fips_mu.html">fips_mu()</a></code>, <code><a href="../reference/fips_mu.html">fips_sign_mu()</a></code>, <code><a href="../reference/fips_mu.html">fips_verify_mu()</a></code>. A message can be reduced to the 64-byte value that is all ML-DSA signing consumes, and only that handed to whatever holds the key, so a large file never has to cross the boundary the key sits behind. mu binds the public key and the context, so it is not a bare digest.</li>
+</ul><p>Every one of these is checked against OpenSSL 3.5, which shares no code with this package. ML-KEM keys generated from the same seed agree byte for byte at all three levels, its ciphertexts decapsulate here to the secret it reports and ours to the secret we report, and a corrupted ciphertext produces the same rejection secret in both. The pre-hash and external-mu signatures are byte-identical for every parameter set and every pre-hash.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.1" id="rmoriebricklayer-041">rmoriebricklayer 0.4.1<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-041"></a></h2>
+<div class="section level3">
+<h3 id="the-standardised-post-quantum-schemes-are-now-implemented-here-0-4-1">The standardised post-quantum schemes are now implemented here<a class="anchor" aria-label="anchor" href="#the-standardised-post-quantum-schemes-are-now-implemented-here-0-4-1"></a></h3>
+<p>ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) were previously reached through liboqs, so which schemes a build offered depended on what happened to be installed on the machine that built it – a poor property for a signature format meant to outlive that machine. Both are now implemented in the package, on its own Keccak sponge, and the optional system dependency is gone along with the <code>./configure</code> step that probed for it.</p>
+<ul><li>
+<code><a href="../reference/fips_keygen.html">fips_keygen()</a></code>, <code><a href="../reference/fips_keygen.html">fips_public_key()</a></code>, <code><a href="../reference/fips_key.html">fips_key()</a></code> and <code><a href="../reference/fips_sizes.html">fips_sizes()</a></code> are the new entry points. <code><a href="../reference/pqc_backends.html">pqc_backends()</a></code> now reports a fixed list – ML-DSA at all three parameter sets and SLH-DSA at all twelve, six over SHAKE and six over SHA-2 – available in every build. <code><a href="../reference/fips_key.html">fips_key()</a></code> wraps key material from elsewhere, so a key written by another implementation can be used directly.</li>
+<li>SHA-512, HMAC and MGF1 gained the pieces the SHA-2 instantiation of FIPS 205 needs. Its address is compressed from 32 bytes to 22 with every field moved, its message randomiser is an HMAC and its digest an MGF1, and its multi-block tweakable hash switches to SHA-512 at 192-bit security and above but its single-block one does not – none of which a test that only signs and verifies would notice.</li>
+<li>
+<code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> and <code><a href="../reference/capsule_verify.html">capsule_verify()</a></code> gained <code>context</code>, the context string both standards bind into the message encoding, so one key can be used for two purposes without a signature crossing between them. <code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> also gained <code>deterministic</code>, selecting the variant whose output depends only on key, message and context.</li>
+<li>
+<code><a href="../reference/oqs_keygen.html">oqs_keygen()</a></code> and <code><a href="../reference/oqs_keygen.html">oqs_public_key()</a></code> are deprecated in favour of the <code>fips_*</code> names and now warn. They still work, and still return the same classes.</li>
+</ul><p>Every parameter set is checked against OpenSSL 3.5, which shares no code with this package: in deterministic mode the two produce the SAME BYTES, over several message and context lengths, and each verifies the other’s signatures. That cross-check is the conformance claim. Reference parity is not: this implementation matched the pq-crystals and sphincsplus reference code byte for byte while disagreeing with the standards twice over – FIPS 204 and FIPS 205 both prepend a context domain separator the reference code omits, and FIPS 205 reads the FORS indices most significant bit first where SPHINCS+ read them least significant bit first. Neither is detectable from the inside: a signature scheme that verifies only its own output still rejects every tampering.</p>
+</div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="rmoriebricklayer-040">rmoriebricklayer 0.4.0<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-040"></a></h2>
 <p>The release that makes a capsule answer three questions a checksum cannot: is this still the same <em>data</em>, who <em>says</em> so, and what is actually <em>in</em> it.</p>
