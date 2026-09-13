@@ -454,6 +454,17 @@ void decompose(double v, uint64_t *m, int *e2) {
     *e2 = exp2 - 53;
 }
 
+/* The sign of (num/den - 10^X), computed exactly. */
+int cmp_pow10(const Big &num, const Big &den, int X) {
+    Big a = num, b = den;
+    if (X >= 0) {
+        mul_pow10(b, X);
+    } else {
+        mul_pow10(a, -X);
+    }
+    return cmp(a, b);
+}
+
 /* The seventeen significant digits of |v|, and the decimal exponent X
  * for which |v| ~ d.dddddddddddddddd * 10^X. */
 void digits17(double v, char *out, int *xout) {
@@ -471,29 +482,38 @@ void digits17(double v, char *out, int *xout) {
         shl(den, static_cast<size_t>(-e2));
     }
 
+    /* X is the unique exponent with 10^X <= |v| < 10^(X+1). log10 only
+     * seeds it and the bracket is then closed by exact comparison: a
+     * seed one too high, together with a rounding that carries, yields
+     * a seventeen digit integer that is in range for the WRONG
+     * exponent. That produced 1e-07 where the seventeen digit decimal
+     * of the double nearest 1e-7 is 9.9999999999999995e-08 -- both
+     * round-trip, so only an independent computation catches it. */
     int x = static_cast<int>(std::floor(std::log10(v)));
-    uint64_t q64 = kDigLo;
-    for (int guard = 0; guard < 6; ++guard) {
-        Big a = num, b = den;
-        const int k = (kSig - 1) - x;
-        if (k >= 0) {
-            mul_pow10(a, k);
-        } else {
-            mul_pow10(b, -k);
-        }
-        Big q, r;
-        divmod(a, b, q, r);
-        if (bit_length(q) > 63) { ++x; continue; }
-        uint64_t qq = to_u64(q);
-        Big r2 = r;
-        shl(r2, 1);
-        const int c = cmp(r2, b);
-        if (c > 0 || (c == 0 && (qq & 1ull))) ++qq;
-        if (qq >= kDigHi) { ++x; continue; }
-        if (qq < kDigLo)  { --x; continue; }
-        q64 = qq;
-        break;
+    while (cmp_pow10(num, den, x) < 0) --x;
+    while (cmp_pow10(num, den, x + 1) >= 0) ++x;
+
+    /* |v| * 10^(16-X) now lies in [10^16, 10^17), so the quotient is a
+     * seventeen digit integer and fits in sixty-four bits. */
+    Big a = num, b = den;
+    const int k = (kSig - 1) - x;
+    if (k >= 0) {
+        mul_pow10(a, k);
+    } else {
+        mul_pow10(b, -k);
     }
+    Big q, r;
+    divmod(a, b, q, r);
+    uint64_t q64 = to_u64(q);
+    Big r2 = r;
+    shl(r2, 1);
+    const int c = cmp(r2, b);
+    if (c > 0 || (c == 0 && (q64 & 1ull))) ++q64;
+    if (q64 >= kDigHi) {       /* 9.99..9 carried to 10.0..0 */
+        q64 = kDigLo;
+        ++x;
+    }
+
     for (int i = kSig; i-- > 0;) {
         out[i] = static_cast<char>('0' + static_cast<int>(q64 % 10));
         q64 /= 10;
