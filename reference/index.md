@@ -365,6 +365,26 @@ HTML, PDF, CSV, TSV, JSON or Markdown.
 - [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md)
   : Colour palettes for change tables
 
+## Stock and flow over time
+
+Person-days are one quantity with two denominators. Divided by TIME they
+give the average daily population, a stock: how many are held at once.
+Divided by PEOPLE they give the average length of stay. When stay length
+moves the two can carry opposite signs, so a report quoting one implies
+the wrong direction for the other. After Lakner (1976), A Manual of
+Statistical Sampling Methods for Corrections Planners.
+
+- [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md)
+  : Average daily population
+- [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
+  : Average length of stay
+- [`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+  : Admissions implied by a population and a length of stay
+- [`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+  : Person-days estimated from periodic headcounts
+- [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+  : Stock and flow side by side, with the decomposition
+
 ## Rates, shares and rate change
 
 A count is not comparable across places of different size or years of

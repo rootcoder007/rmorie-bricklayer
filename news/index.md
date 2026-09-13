@@ -2,6 +2,62 @@
 
 ## rmoriebricklayer 0.4.7
 
+### Stock and flow: person-days have two denominators
+
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
+[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md),
+[`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+and
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+implement the measures from Lakner, *A Manual of Statistical Sampling
+Methods for Corrections Planners* (University of Illinois at
+Urbana-Champaign, 1976). One quantity, person-days, carries two
+denominators:
+
+- divided by TIME it gives the average daily population, a **stock**:
+  how many people are held at once. Lakner p.15.
+- divided by PEOPLE it gives the average length of stay. Lakner p.16.
+
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+puts both in one table with the decomposition, because when length of
+stay moves the two can carry **opposite signs** and a report quoting
+either alone states the wrong direction for the other. The print method
+says so explicitly when the signs disagree.
+
+This is not a hypothetical. On Ontario’s segregation data the number of
+people held fell 24.0% between FY2023 and FY2025 while their stays grew
+43.5% longer, so total detention days rose 9.0% and the average daily
+population rose with them. A flow rate falls 27.6% over exactly the
+window in which a stock rate rises 3.9%. The decomposition is exact:
+days are people times length of stay, so `(1 + p) * (1 + l) - 1`
+recovers the change in days.
+
+[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+inverts the identity when two of the three quantities are published and
+the third is not.
+[`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+covers the case where only periodic headcounts exist rather than a
+record per person (Lakner eq 2.7, p.21), with the assumption stated: the
+days counted must not differ systematically from the days missed.
+
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)’s
+documentation carries Lakner’s own caveat (p.16-17), which is easy to
+lose: the period must exceed the longest stay people actually serve, or
+the average is biased DOWNWARD, because the longest stays are the ones
+that fail to finish inside the window.
+
+Nothing about the arithmetic is specific to custody – the same
+relationship governs hospital beds, shelter occupancy and open
+caseloads. It is Little’s law under the names corrections planning uses.
+
+The tests anchor on Lakner’s own worked examples rather than on each
+other: 13,500 days over a year giving 36.986; 12,150 days across 2,700
+people giving 4.5; 25 held daily against 1,750 admissions giving 5.2;
+and counts on 255 days summing to 34,935 giving 50,005 person-days.
+Those are numbers computed by someone else, so they can disagree with
+this code, which is the property a test needs.
+
 ### Rates, shares and rate change
 
 A count is not comparable across places of different size or years of

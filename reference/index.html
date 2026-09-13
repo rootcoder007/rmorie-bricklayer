@@ -952,6 +952,50 @@
         </dt>
         <dd>Colour palettes for change tables</dd>
       </dl></div><div class="section level2">
+      <h2 id="stock-and-flow-over-time">Stock and flow over time<a class="anchor" aria-label="anchor" href="#stock-and-flow-over-time"></a></h2>
+
+      <div class="section-desc"><p>Person-days are one quantity with two denominators. Divided by TIME they give the average daily population, a stock: how many are held at once. Divided by PEOPLE they give the average length of stay. When stay length moves the two can carry opposite signs, so a report quoting one implies the wrong direction for the other. After Lakner (1976), A Manual of Statistical Sampling Methods for Corrections Planners.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="adp.html">adp()</a></code>
+
+        </dt>
+        <dd>Average daily population</dd>
+
+        <dt>
+
+          <code><a href="alos.html">alos()</a></code>
+
+        </dt>
+        <dd>Average length of stay</dd>
+
+        <dt>
+
+          <code><a href="admissions.html">admissions()</a></code>
+
+        </dt>
+        <dd>Admissions implied by a population and a length of stay</dd>
+
+        <dt>
+
+          <code><a href="adp_from_counts.html">adp_from_counts()</a></code>
+
+        </dt>
+        <dd>Person-days estimated from periodic headcounts</dd>
+
+        <dt>
+
+          <code><a href="stock_flow.html">stock_flow()</a></code>
+
+        </dt>
+        <dd>Stock and flow side by side, with the decomposition</dd>
+      </dl></div><div class="section level2">
       <h2 id="rates-shares-and-rate-change">Rates, shares and rate change<a class="anchor" aria-label="anchor" href="#rates-shares-and-rate-change"></a></h2>
 
       <div class="section-desc"><p>A count is not comparable across places of different size or years of different population, and a share of a total is not a rate per population – labelling one as the other is the most common error in a published table, so they are separate functions with separate intervals. Rates carry the exact Poisson interval, shares carry Wilson-s, and the change in a rate conditions on the two counts and corrects for the exposure ratio rather than treating two rates as measured numbers.</p></div>
