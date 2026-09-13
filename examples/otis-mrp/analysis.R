@@ -717,6 +717,326 @@ if (YOY_AVAILABLE) {
 }
 
 
+## --- 3e. Stock and flow, after Lakner (1976) ---------------------------
+##
+## Person-days carry two readings and OTIS has the days, so both are
+## computed here and checked. Lakner, A Manual of Statistical Sampling
+## Methods for Corrections Planners (Univ. of Illinois at
+## Urbana-Champaign, 1976): the average daily population is detention
+## days PER DAY (p.15), the average length of stay is days PER INMATE
+## (p.16), and they are linked by adp = people x alos / t (p.18).
+##
+## This is not gated, unlike the rate tables. There is no denominator
+## choice to argue about: days divided by 365 and days divided by the
+## people who served them are both unambiguous.
+##
+## It matters because the two readings disagree on the direction. The
+## number of people segregated FELL while their stays grew longer, so
+## the average daily population ROSE. A report quoting only the number
+## of people states the wrong sign for how much segregation was used.
+
+.sf_fns <- .otis_pkg_fns(c("adp", "alos", "stock_flow"))
+if (!is.null(.sf_fns)) {
+  adp <- .sf_fns$adp; alos <- .sf_fns$alos; stock_flow <- .sf_fns$stock_flow
+} else {
+  for (.f in c("custody.R")) {
+    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+      .fp <- file.path(.dir, .f)
+      if (file.exists(.fp)) { source(.fp); break }
+    }
+  }
+}
+STOCKFLOW_AVAILABLE <- exists("adp", mode = "function") &&
+  exists("alos", mode = "function") && exists("stock_flow", mode = "function")
+
+if (STOCKFLOW_AVAILABLE && nzchar(.yoy_dir) && dir.exists(.yoy_dir)) {
+  cat("\n[3e/8] Stock and flow for segregation (Lakner 1976)\n")
+  .rdz <- function(f) {
+    d <- utils::read.csv(file.path(.yoy_dir, f), fileEncoding = "UTF-8-BOM",
+                         check.names = TRUE, stringsAsFactors = FALSE)
+    names(d) <- sub("^X\\.U\\.FEFF\\.", "", names(d))
+    for (j in which(vapply(d, is.character, logical(1))))
+      d[[j]] <- trimws(d[[j]])
+    d
+  }
+  .f02 <- "b02_segregation_detailed_total_days.csv"
+  .f01 <- "b01_segregation_detailed_dataset.csv"
+  if (all(file.exists(file.path(.yoy_dir, c(.f02, .f01))))) {
+    b02 <- .rdz(.f02)
+    b01 <- .rdz(.f01)
+
+    ## b02 must be one row per person for TotalAggregatedDays to be
+    ## Lakner's X_i. b01 is NOT: it holds about 2.7 rows per person and
+    ## its NumberConsecutiveDays is a spell length, not an additive
+    ## share of the year. Recorded as a check rather than assumed,
+    ## because summing the wrong one understates detention days by a
+    ## third.
+    .n02 <- length(unique(b02$UniqueIndividual_ID))
+    record("lakner_b02_one_row_per_person", observed = nrow(b02),
+           expected = .n02, tol = 0, group = "stock_flow",
+           note = "b02 must be one row per person for its days to be Lakner's X_i")
+
+    .days <- tapply(b02$TotalAggregatedDays_Segregation, b02$EndFiscalYear,
+                    sum, na.rm = TRUE)
+    .ppl <- tapply(b02$UniqueIndividual_ID, b02$EndFiscalYear,
+                   function(v) length(unique(v)))
+    .ppl1 <- tapply(b01$UniqueIndividual_ID, b01$EndFiscalYear,
+                    function(v) length(unique(v)))
+    .yrs <- names(.days)
+
+    ## the two tables must agree on how many people there were
+    for (y in .yrs)
+      record(paste0("lakner_people_b01_vs_b02_", y),
+             observed = as.numeric(.ppl1[[y]]),
+             expected = as.numeric(.ppl[[y]]), tol = 0, group = "stock_flow")
+
+    ## Lakner's measures, through the package's own functions
+    .ont <- c("2023" = 15495050, "2024" = 16046534, "2025" = 16256538)
+    .have <- .yrs[.yrs %in% names(.ont)]
+    sf <- stock_flow(days = as.numeric(.days[.have]),
+                     people = as.numeric(.ppl[.have]),
+                     period = .have,
+                     exposure = as.numeric(.ont[.have]))
+    print(sf)
+    fwrite(as.data.frame(sf), file.path(OUTPUT_DIR, "12_stock_flow.csv"))
+
+    for (i in seq_along(.have)) {
+      y <- .have[i]
+      record(paste0("lakner_adp_", y),
+             observed = round(sf$adp[i], 2), expected = "descriptive",
+             force_status = "INFO", group = "stock_flow",
+             note = sprintf("average daily segregation population %.1f = %s days / 365",
+                            sf$adp[i], format(sf$days[i], big.mark = ",")))
+      record(paste0("lakner_alos_", y),
+             observed = round(sf$alos[i], 2), expected = "descriptive",
+             force_status = "INFO", group = "stock_flow",
+             note = sprintf("average length of stay %.2f days = %s days / %s people",
+                            sf$alos[i], format(sf$days[i], big.mark = ","),
+                            format(sf$people[i], big.mark = ",")))
+    }
+
+    ## THE CHECK THAT CARRIES THE ARGUMENT. days = people x alos, so the
+    ## change in days must be recovered by the two component changes. If
+    ## it is not, one of the three is wrong.
+    if (length(.have) > 1L) {
+      i <- length(.have)
+      .p <- sf$people_change[i] / 100
+      .l <- sf$alos_change[i] / 100
+      record("lakner_decomposition_exact",
+             observed = round((1 + .p) * (1 + .l) - 1, 10),
+             expected = round(sf$days_change[i] / 100, 10), tol = 1e-9,
+             group = "stock_flow",
+             note = "days = people x length of stay, so the change must multiply out")
+      ## and the finding: the two rates disagree on the sign
+      record("lakner_flow_and_stock_disagree",
+             observed = sign(sf$flow_rate_change[i]) !=
+                        sign(sf$stock_rate_change[i]),
+             expected = TRUE, force_status = "INFO", group = "stock_flow",
+             note = sprintf(paste0("flow rate %+.1f%% against stock rate %+.1f%%: ",
+                                   "people %+.1f%%, stay %+.1f%%, days %+.1f%%. ",
+                                   "Quoting either alone states the wrong sign ",
+                                   "for the other."),
+                            sf$flow_rate_change[i], sf$stock_rate_change[i],
+                            sf$people_change[i], sf$alos_change[i],
+                            sf$days_change[i]))
+      cat(sprintf("      flow %+.1f%% vs stock %+.1f%% -- opposite signs\n",
+                  sf$flow_rate_change[i], sf$stock_rate_change[i]))
+    }
+
+    ## The measurement trap, recorded so it cannot be rediscovered the
+    ## hard way: b01's consecutive days are not additive.
+    .cons <- tapply(b01$NumberConsecutiveDays_Segregation, b01$EndFiscalYear,
+                    sum, na.rm = TRUE)
+    for (y in .yrs)
+      record(paste0("lakner_b01_consecutive_is_not_total_", y),
+             observed = round(as.numeric(.cons[[y]]) / as.numeric(.days[[y]]), 4),
+             expected = "below 1: spell lengths, not additive",
+             force_status = "INFO", group = "stock_flow",
+             note = sprintf(paste0("summing b01 consecutive days gives %s against ",
+                                   "b02's %s aggregated days, %.1f%%. Use b02 for ",
+                                   "detention days."),
+                            format(.cons[[y]], big.mark = ","),
+                            format(.days[[y]], big.mark = ","),
+                            100 * .cons[[y]] / .days[[y]]))
+
+    ## Lakner p.15: a subgroup share of the average daily population is a
+    ## ratio of DAYS, not of headcount. They differ when stays differ.
+    for (y in .have) {
+      d <- b02[b02$EndFiscalYear == y, ]
+      dd <- tapply(d$TotalAggregatedDays_Segregation, d$Gender, sum, na.rm = TRUE)
+      hh <- tapply(d$UniqueIndividual_ID, d$Gender,
+                   function(v) length(unique(v)))
+      for (g in names(dd))
+        record(paste0("lakner_day_share_", tolower(g), "_", y),
+               observed = round(100 * dd[[g]] / sum(dd), 1),
+               expected = round(100 * hh[[g]] / sum(hh), 1), tol = 100,
+               group = "stock_flow",
+               note = sprintf(paste0("%s in %s: %.1f%% of segregation DAYS ",
+                                     "against %.1f%% of people, mean stay %.1f ",
+                                     "days. Lakner p.15 takes the day share."),
+                              g, y, 100 * dd[[g]] / sum(dd),
+                              100 * hh[[g]] / sum(hh), dd[[g]] / hh[[g]]))
+    }
+  } else {
+    record("lakner_stock_flow", observed = "not checked",
+           expected = "b01 and b02", force_status = "INFO",
+           group = "stock_flow",
+           note = "the segregation datasets were not in OTIS_DATASETS_DIR")
+    cat("      skipped: b01/b02 not present\n")
+  }
+} else if (!STOCKFLOW_AVAILABLE) {
+  cat("\n[3e/8] Stock and flow: adp()/alos()/stock_flow() not available\n")
+}
+
+
+## --- 3f. Capacity is MNAR: complete case and bounded sensitivity -------
+##
+## Segregation placements per 100 beds would be the natural measure of
+## institutional load, but Ontario's institutional-locations dataset
+## leaves Operational_Capacity blank for three of the 25 open
+## institutions -- and not a random three. Central East CC, Central
+## North CC and Toronto South DC are among the largest in the province,
+## while the largest capacity actually observed is 944.
+##
+## Missingness that depends on the value itself is MNAR, not MAR.
+## Imputing under MAR would pull all three toward the observed mean of
+## about 236 and understate three regional denominators in a knowable
+## direction, so no single imputed figure is produced. Instead: the
+## regions whose capacity is fully observed get a complete-case
+## estimate, and the rest get a range.
+##
+## Needs the locations file, which is a separate CKAN dataset:
+##   OTIS_LOCATIONS=/path/to/institutional_locations_en.csv
+## Absent it, the checks record as INFO.
+
+.loc_f <- Sys.getenv("OTIS_LOCATIONS", "")
+if (!nzchar(.loc_f)) {
+  for (.cand in c(file.path(SCRIPT_DIR, "institutional_locations_en.csv"),
+                  file.path(getwd(), "institutional_locations_en.csv")))
+    if (file.exists(.cand)) { .loc_f <- .cand; break }
+}
+if (nzchar(.loc_f) && file.exists(.loc_f) && nzchar(.yoy_dir) &&
+    dir.exists(.yoy_dir)) {
+  cat("\n[3f/8] Capacity is MNAR: complete case and bounded sensitivity\n")
+  loc <- utils::read.csv(.loc_f, fileEncoding = "UTF-8-BOM",
+                         check.names = TRUE, stringsAsFactors = FALSE)
+  names(loc) <- trimws(names(loc))
+  for (.c in c("Institution", "Region", "Operating_Status"))
+    loc[[.c]] <- trimws(loc[[.c]])
+  loc$cap <- suppressWarnings(as.numeric(loc$Operational_Capacity))
+  op <- loc[grepl("open", loc$Operating_Status, ignore.case = TRUE), ]
+
+  .b03f <- "b03_segregation_placements_alerts_and_hold_flags_by_institution.csv"
+  if (file.exists(file.path(.yoy_dir, .b03f))) {
+    b03 <- utils::read.csv(file.path(.yoy_dir, .b03f),
+                           fileEncoding = "UTF-8-BOM", check.names = TRUE,
+                           stringsAsFactors = FALSE)
+    names(b03) <- sub("^X\\.U\\.FEFF\\.", "", names(b03))
+    for (j in which(vapply(b03, is.character, logical(1))))
+      b03[[j]] <- trimws(b03[[j]])
+
+    ## Every Alert_Type partitions the same placements across
+    ## Alert_Presence, so one type is taken. Summing across types would
+    ## count each placement six times. Checked, not assumed.
+    .tt <- tapply(b03$Number_SegregationPlacements,
+                  list(b03$Alert_Type, b03$EndFiscalYear), sum, na.rm = TRUE)
+    record("mnar_alert_types_partition_placements",
+           observed = max(apply(.tt, 2, function(c)
+             length(unique(c[!is.na(c)])))),
+           expected = 1, tol = 0, group = "capacity_mnar",
+           note = "each Alert_Type must give the same yearly total, or summing double counts")
+    .at <- sort(unique(b03$Alert_Type))[1]
+    bb <- b03[b03$Alert_Type == .at, ]
+    .num <- tapply(bb$Number_SegregationPlacements,
+                   list(bb$Region_AtTimeOfPlacement, bb$EndFiscalYear),
+                   sum, na.rm = TRUE)
+
+    .obs_max <- max(op$cap, na.rm = TRUE)
+    .miss <- data.frame(
+      region = c("Eastern", "Western", "Toronto"),
+      inst = c("Central East Correctional Centre",
+               "Central North Correctional Centre",
+               "Toronto South Detention Centre"),
+      lower = .obs_max,
+      published = c(1184, 1184, 1650),
+      upper = c(1184 + 122, 1184, 1650 + 320),
+      stringsAsFactors = FALSE)
+    .full <- vapply(split(op, op$Region), function(x) all(!is.na(x$cap)),
+                    logical(1))
+    record("mnar_regions_fully_observed",
+           observed = sum(.full), expected = 2, tol = 0,
+           group = "capacity_mnar",
+           note = paste("fully observed:",
+                        paste(names(.full)[.full], collapse = ", ")))
+    record("mnar_missing_exceed_observed_maximum",
+           observed = sum(.miss$published > .obs_max), expected = 3, tol = 0,
+           group = "capacity_mnar",
+           note = sprintf(paste0("all three unobserved capacities exceed the ",
+                                 "largest observed (%s), which is why this is ",
+                                 "MNAR and not MAR"),
+                          format(.obs_max, big.mark = ",")))
+
+    ## (a) complete case
+    .rows <- list()
+    for (r in names(.full)[.full]) for (y in colnames(.num)) {
+      beds <- sum(op$cap[op$Region == r], na.rm = TRUE)
+      n <- .num[r, y]
+      record(paste0("mnar_complete_case_", tolower(r), "_", y),
+             observed = round(100 * n / beds, 1), expected = "descriptive",
+             force_status = "INFO", group = "capacity_mnar",
+             note = sprintf("%s %s: %s placements per %s beds = %.1f per 100",
+                            r, y, format(n, big.mark = ","),
+                            format(beds, big.mark = ","), 100 * n / beds))
+      .rows[[length(.rows) + 1L]] <- data.frame(
+        analysis = "complete case", region = r, year = y, placements = n,
+        beds_low = beds, beds_pub = beds, beds_high = beds,
+        per100_low = 100 * n / beds, per100_high = 100 * n / beds,
+        stringsAsFactors = FALSE)
+    }
+    ## (b) bounded sensitivity
+    for (r in names(.full)[!.full]) for (y in colnames(.num)) {
+      o <- sum(op$cap[op$Region == r], na.rm = TRUE)
+      m <- .miss[.miss$region == r, ]
+      beds <- c(o + m$lower, o + m$published, o + m$upper)
+      n <- .num[r, y]
+      rr <- 100 * n / beds
+      record(paste0("mnar_sensitivity_", tolower(r), "_", y),
+             observed = sprintf("%.1f to %.1f", min(rr), max(rr)),
+             expected = "a range, not a point", force_status = "INFO",
+             group = "capacity_mnar",
+             note = sprintf(paste0("%s %s: %s placements per %s to %s beds = ",
+                                   "%.1f to %.1f per 100, a factor of %.2f"),
+                            r, y, format(n, big.mark = ","),
+                            format(min(beds), big.mark = ","),
+                            format(max(beds), big.mark = ","),
+                            min(rr), max(rr), max(rr) / min(rr)))
+      .rows[[length(.rows) + 1L]] <- data.frame(
+        analysis = "bounded sensitivity", region = r, year = y,
+        placements = n, beds_low = beds[1], beds_pub = beds[2],
+        beds_high = beds[3], per100_low = min(rr), per100_high = max(rr),
+        stringsAsFactors = FALSE)
+    }
+    .mn <- do.call(rbind, .rows)
+    fwrite(.mn, file.path(OUTPUT_DIR, "13_capacity_mnar.csv"))
+    cat(sprintf("      complete case: %s; sensitivity: %s\n",
+                paste(names(.full)[.full], collapse = ", "),
+                paste(names(.full)[!.full], collapse = ", ")))
+  } else {
+    record("mnar_capacity", observed = "not checked", expected = "b03",
+           force_status = "INFO", group = "capacity_mnar",
+           note = "b03 was not in OTIS_DATASETS_DIR")
+  }
+} else {
+  record("mnar_capacity", observed = "not checked",
+         expected = "institutional_locations_en.csv", force_status = "INFO",
+         group = "capacity_mnar",
+         note = paste("set OTIS_LOCATIONS to Ontario's institutional-locations",
+                      "CSV (data.ontario.ca package",
+                      "3ca4505b-091c-4b04-89e8-c316ffaa0d9e) to run the",
+                      "capacity analyses"))
+}
+
+
 ## --- 4. Full-sample descriptives --------------------------------------
 
 cat("\n[4/8] Full-sample descriptives\n")

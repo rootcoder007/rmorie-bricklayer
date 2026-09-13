@@ -184,15 +184,10 @@ adp_from_counts <- function(counts, t = 365) {
 #' @param days Person-days, one element per period.
 #' @param people Number of people, one element per period.
 #' @param period Optional labels for the periods.
-#' @param t Length of each period in days, one value or one per period.
-#'   Default 365. [period_days()] turns dates into this.
+#' @param t Length of each period in days. Default 365.
 #' @param exposure Optional population to express rates against, one per
 #'   period; for example provincial residents.
 #' @param per Rate denominator when `exposure` is given. Default 100000.
-#' @param baseline What the change columns compare against: `"first"`
-#'   (the default) measures every period against the first, which is
-#'   what a report on a whole window wants; `"previous"` measures each
-#'   period against the one before it, which is what a series wants.
 #'
 #' @return A data frame of class `rmbl_stock_flow`, one row per period:
 #'   `people`, `days`, `alos`, `adp`, and when `exposure` is supplied
@@ -219,9 +214,7 @@ adp_from_counts <- function(counts, t = 365) {
 #'            exposure = c(15495050, 16256538))
 #' @export
 stock_flow <- function(days, people, period = NULL, t = 365,
-                       exposure = NULL, per = 100000,
-                       baseline = c("first", "previous")) {
-  baseline <- match.arg(baseline)
+                       exposure = NULL, per = 100000) {
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   people <- .rmbl_pos_num(people, "people")
   if (length(days) != length(people)) {
@@ -246,26 +239,19 @@ stock_flow <- function(days, people, period = NULL, t = 365,
     out$flow_rate <- per * people / exposure
     out$stock_rate <- per * out$adp / exposure
   }
-  ## The change columns are what make the two signs visible beside each
-  ## other, so which baseline they use is a reporting decision rather
-  ## than a detail: against the first period for a window, against the
-  ## previous one for a series.
-  chg <- if (identical(baseline, "first")) {
-    function(v) 100 * (v / v[1L] - 1)
-  } else {
-    function(v) c(NA_real_, 100 * (v[-1L] / v[-length(v)] - 1))
-  }
-  out$people_change <- chg(out$people)
-  out$alos_change <- chg(out$alos)
-  out$days_change <- chg(out$days)
-  out$adp_change <- chg(out$adp)
+  ## change against the first period, which is what makes the two signs
+  ## visible next to each other
+  first <- function(v) 100 * (v / v[1L] - 1)
+  out$people_change <- first(out$people)
+  out$alos_change <- first(out$alos)
+  out$days_change <- first(out$days)
+  out$adp_change <- first(out$adp)
   if (!is.null(exposure)) {
-    out$flow_rate_change <- chg(out$flow_rate)
-    out$stock_rate_change <- chg(out$stock_rate)
+    out$flow_rate_change <- first(out$flow_rate)
+    out$stock_rate_change <- first(out$stock_rate)
   }
   structure(out, class = c("rmbl_stock_flow", "data.frame"),
-            stock_flow = list(t = t, baseline = baseline,
-                              per = if (is.null(exposure)) NA else per))
+            stock_flow = list(t = t, per = if (is.null(exposure)) NA else per))
 }
 
 #' @export
@@ -277,10 +263,8 @@ print.rmbl_stock_flow <- function(x, ...) {
   print.data.frame(x[, cols, drop = FALSE], row.names = FALSE, ...)
   if (nrow(x) > 1L) {
     i <- nrow(x)
-    base <- attr(x, "stock_flow")$baseline
-    from <- if (identical(base, "previous")) x$period[i - 1L] else x$period[1L]
     cat(sprintf("\n%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%\n",
-                from, x$period[i], x$people_change[i],
+                x$period[1L], x$period[i], x$people_change[i],
                 x$alos_change[i], x$days_change[i]))
     if (has_rate) {
       cat(sprintf("  flow rate %+.1f%%, stock rate %+.1f%%%s\n",
@@ -291,88 +275,4 @@ print.rmbl_stock_flow <- function(x, ...) {
     }
   }
   invisible(x)
-}
-
-#' Period length in days, from dates
-#'
-#' @param from Start of the period: a `Date`, or anything `as.Date()`
-#'   accepts.
-#' @param to End of the period, inclusive.
-#'
-#' @return The number of days in the period, for use as `t`.
-#'
-#' @details
-#' Inclusive of both ends, because a period running from the 1st to the
-#' 31st is thirty-one days of exposure, not thirty. Leap years need no
-#' special handling: the arithmetic is on dates, so 2024 comes out at
-#' 366 and 2023 at 365 without anyone choosing.
-#'
-#' @seealso [adp()]
-#'
-#' @examples
-#' period_days("2024-01-01", "2024-12-31")   # a leap year
-#' period_days("2023-01-01", "2023-12-31")
-#' period_days("2025-04-01", "2026-03-31")   # a fiscal year
-#' @export
-period_days <- function(from, to) {
-  from <- as.Date(from); to <- as.Date(to)
-  if (length(from) != 1L || length(to) != 1L)
-    stop("`from` and `to` must each be a single date", call. = FALSE)
-  if (is.na(from) || is.na(to))
-    stop("`from` and `to` must be dates", call. = FALSE)
-  if (to < from) stop("`to` must not precede `from`", call. = FALSE)
-  as.numeric(to - from) + 1
-}
-
-#' Length of stay with its distribution and interval
-#'
-#' Where [alos()] takes the total days and returns a mean, this takes
-#' one value per person and reports the spread as well, because a mean
-#' stay is a poor summary of a distribution that is usually skewed.
-#'
-#' @param days_per_person Days served, one element per person.
-#' @param conf_level Confidence level for the interval on the mean.
-#'
-#' @return A one-row data frame: `n`, `total_days`, `mean`, `sd`,
-#'   `median`, `iqr`, `max`, `se`, `lower`, `upper`.
-#'
-#' @details
-#' The interval is the ordinary t interval on a mean. It describes
-#' uncertainty about the AVERAGE stay, not the spread of stays, and on a
-#' skewed distribution the median and the interquartile range say more
-#' about a typical stay than the mean does -- which is why they are
-#' returned beside it rather than left to be asked for.
-#'
-#' Lakner's caveat on [alos()] applies here too (1976, p.16-17): a
-#' person still held has an unfinished stay, so a window shorter than
-#' the longest stay biases the mean DOWNWARD.
-#'
-#' @seealso [alos()],
-#'   [adp()],
-#'   [stock_flow()]
-#'
-#' @examples
-#' # a skewed distribution: most stays short, a few long
-#' stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
-#' stay_summary(stays)
-#'
-#' # the mean is pulled well above the median by the long tail
-#' stay_summary(stays)[, c("mean", "median", "max")]
-#' @export
-stay_summary <- function(days_per_person, conf_level = 0.95) {
-  x <- .rmbl_pos_num(days_per_person, "days_per_person", allow_zero = TRUE)
-  conf_level <- as.numeric(conf_level)[1L]
-  if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1)
-    stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
-  n <- length(x)
-  m <- mean(x)
-  s <- if (n > 1L) stats::sd(x) else NA_real_
-  se <- if (n > 1L) s / sqrt(n) else NA_real_
-  tq <- if (n > 1L) stats::qt(1 - (1 - conf_level) / 2, df = n - 1L) else NA_real_
-  q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE, type = 7)
-  data.frame(n = n, total_days = sum(x), mean = m, sd = s, median = q[2],
-             iqr = q[3] - q[1], max = max(x), se = se,
-             lower = if (n > 1L) m - tq * se else NA_real_,
-             upper = if (n > 1L) m + tq * se else NA_real_,
-             stringsAsFactors = FALSE)
 }
