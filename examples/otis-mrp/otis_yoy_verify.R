@@ -488,23 +488,40 @@ otis_rates_table <- function(inp, dimcol, mcol, popkey, ppop) {
 otis_rates_compare <- function(dsdir, published) {
   ppop <- otis_prison_pop(dsdir)
   if (is.null(ppop)) return(NULL)
+  gpop <- otis_prison_pop_gender(dsdir)
   published$ds_slug <- .oyv_slug(published$dataset)
   published$tb_slug <- .oyv_slug(published$table)
   files <- sort(list.files(dsdir, pattern = "\\.csv$", full.names = TRUE))
   out <- list()
+  ## One entry per published shape. Each names the title suffix, the
+  ## recomputation and the cell lookup, so a shape cannot be checked by
+  ## the wrong arithmetic: the suffix decides, and an unrecognised
+  ## suffix is reported rather than guessed at.
+  shapes <- list(
+    list(suffix = ", average daily population",
+         build = function(inp, dmc, mcol, ds)
+           otis_rates_table_adp(inp, dmc, mcol),
+         cell = .oyv_adp_cell, tol = 0.06),
+    list(suffix = ", matched denominator",
+         build = function(inp, dmc, mcol, ds)
+           otis_rates_table_matched(inp, dmc, mcol,
+                                    .oyv_pop_for(mcol, ds), gpop),
+         cell = .oyv_rate_cell, tol = 0.06),
+    list(suffix = "",
+         build = function(inp, dmc, mcol, ds)
+           otis_rates_table(inp, dmc, mcol, .oyv_pop_for(mcol, ds), ppop),
+         cell = .oyv_rate_cell, tol = 0.06))
   for (p in files) {
     ds <- sub("\\.csv$", "", basename(p))
     pub_ds <- published[published$ds_slug == .oyv_slug(ds), , drop = FALSE]
     if (!nrow(pub_ds)) next
     inp <- .oyv_rate_inputs(p)
     if (is.null(inp)) next
-    for (dmc in inp$dims) for (mcol in inp$measures) {
-      tb_slug <- .oyv_slug(paste0(mcol, " by ", dmc))
+    for (dmc in inp$dims) for (mcol in inp$measures) for (sh in shapes) {
+      tb_slug <- .oyv_slug(paste0(mcol, " by ", dmc, sh$suffix))
       want <- pub_ds[pub_ds$tb_slug == tb_slug, , drop = FALSE]
       if (!nrow(want)) next
-      got <- tryCatch(otis_rates_table(inp, dmc, mcol,
-                                       .oyv_pop_for(mcol, ds), ppop),
-                      error = function(e) NULL)
+      got <- tryCatch(sh$build(inp, dmc, mcol, ds), error = function(e) NULL)
       if (is.null(got)) {
         out[[length(out) + 1L]] <- data.frame(dataset = ds, table = tb_slug,
           cells = nrow(want), mismatched = nrow(want),
@@ -515,12 +532,12 @@ otis_rates_compare <- function(dsdir, published) {
       for (k in seq_len(nrow(want))) {
         g <- want$group[k]; col <- want$column[k]
         exp_v <- suppressWarnings(as.numeric(want$value[k]))
-        obs_v <- .oyv_rate_cell(got, g, col)
+        obs_v <- sh$cell(got, g, col)
         ok <- if (is.na(exp_v) && is.na(obs_v)) TRUE else
               if (is.na(exp_v) || is.na(obs_v)) FALSE else
               if (is.infinite(exp_v) || is.infinite(obs_v))
                 identical(exp_v, obs_v) else
-              abs(exp_v - obs_v) <= 0.06
+              abs(exp_v - obs_v) <= sh$tol
         if (!ok) {
           bad <- bad + 1L
           if (is.na(first))
@@ -532,6 +549,21 @@ otis_rates_compare <- function(dsdir, published) {
         cells = nrow(want), mismatched = bad,
         first = if (is.na(first)) "" else first, stringsAsFactors = FALSE)
     }
+  }
+  ## Anything published that no shape claimed is a gap, not a pass.
+  claimed <- if (length(out))
+    paste(vapply(out, function(r) paste(r$dataset, r$table), character(1))) else
+    character(0)
+  allpub <- unique(paste(published$dataset, published$tb_slug))
+  unclaimed <- setdiff(allpub, claimed)
+  for (u in unclaimed) {
+    parts <- strsplit(u, " ", fixed = TRUE)[[1]]
+    out[[length(out) + 1L]] <- data.frame(
+      dataset = parts[1], table = paste(parts[-1], collapse = " "),
+      cells = sum(paste(published$dataset, published$tb_slug) == u),
+      mismatched = sum(paste(published$dataset, published$tb_slug) == u),
+      first = "published but not recomputed: no shape claimed it",
+      stringsAsFactors = FALSE)
   }
   if (!length(out))
     return(data.frame(dataset = character(0), table = character(0),
@@ -577,4 +609,128 @@ otis_headline_rates <- function(dsdir) {
   }
   res <- do.call(rbind, out)
   res[, c("rate", "year", "count", "exposure", "per", "value", "lower", "upper")]
+}
+
+## ---------------------------------------------------------------------
+## The other two table shapes
+##
+## The published set has three, and they are not interchangeable:
+##
+##   plain    -- group count over the WHOLE yearly population. A
+##               contribution to the overall rate, not a rate for the
+##               group.
+##   matched  -- group count over THAT GROUP's population, which c01
+##               provides for gender. A genuine per-capita rate.
+##   adp      -- person-days read as a stock: days over the period
+##               length, with the length of stay and the day-weighted
+##               share beside it. After Lakner (1976).
+##
+## Each gets its own recomputation, because a single one covering all
+## three would have to be told which it was doing, and the thing most
+## worth catching is exactly that confusion.
+
+## c01 broken down by gender, for the matched tables.
+otis_prison_pop_gender <- function(dsdir) {
+  p <- file.path(dsdir,
+    "c01_individuals_in_segregation_and_restrictive_confinement_total_individuals.csv")
+  if (!file.exists(p)) return(NULL)
+  c01 <- .oyv_read_otis(p)
+  key <- function(col)
+    tapply(c01[[col]], list(c01$EndFiscalYear, trimws(c01$Gender)), sum)
+  list(incustody = key("NumberIndividuals_InCustody"),
+       rc = key("NumberIndividuals_RestrictiveConfinement"),
+       seg = key("NumberIndividuals_Segregation"))
+}
+
+## A matched table divides each row by its own group's population, so
+## the denominator varies down the column as well as across it.
+otis_rates_table_matched <- function(inp, dimcol, mcol, popkey, gpop) {
+  d <- inp$d
+  groups <- sort(unique(d[[dimcol]]))
+  groups <- groups[!is.na(groups) & nzchar(as.character(groups))]
+  if (!length(groups)) return(NULL)
+  m <- gpop[[popkey]]
+  agg <- do.call(rbind, lapply(groups, function(g) do.call(rbind,
+    lapply(inp$years, function(y) {
+      s <- d[d[[inp$ycol]] == y & d[[dimcol]] == g, , drop = FALSE]
+      ys <- as.character(y); gs <- trimws(as.character(g))
+      pop <- if (!is.null(m) && ys %in% rownames(m) && gs %in% colnames(m))
+        as.numeric(m[ys, gs]) else NA_real_
+      data.frame(group = as.character(g), year = ys,
+                 n = sum(s[[mcol]], na.rm = TRUE), pop = pop,
+                 ont = if (ys %in% names(OTIS_ONT_POP))
+                   OTIS_ONT_POP[[ys]] else NA_real_,
+                 stringsAsFactors = FALSE)
+    }))))
+  pr <- agg[!is.na(agg$pop) & agg$pop > 0, , drop = FALSE]
+  po <- agg[!is.na(agg$ont) & agg$ont > 0, , drop = FALSE]
+  list(all = agg,
+       prison = if (nrow(pr)) rate(pr, n, pop, by = c("group", "year"),
+                                   per = OTIS_PER_PRISON) else NULL,
+       ont = if (nrow(po)) rate(po, n, ont, by = c("group", "year"),
+                                per = OTIS_PER_ONT) else NULL,
+       change = if (nrow(pr)) rate_change(pr, n, pop, year, by = "group",
+                                          per = OTIS_PER_PRISON) else NULL)
+}
+
+## An ADP table reads person-days as a stock. Computed through the
+## package's own adp() and alos() so the two sides are independent of
+## each other rather than one restating the other.
+OTIS_STOCK_T <- 365
+
+otis_rates_table_adp <- function(inp, dimcol, mcol) {
+  d <- inp$d
+  idcol <- names(d)[grepl("UniqueIndividual_ID", names(d))]
+  if (length(idcol) != 1L) return(NULL)
+  groups <- sort(unique(d[[dimcol]]))
+  groups <- groups[!is.na(groups) & nzchar(as.character(groups))]
+  if (!length(groups)) return(NULL)
+  rows <- list()
+  for (y in inp$years) for (g in groups) {
+    s <- d[d[[inp$ycol]] == y & d[[dimcol]] == g, , drop = FALSE]
+    dsum <- sum(s[[mcol]], na.rm = TRUE)
+    npeople <- length(unique(s[[idcol]]))
+    rows[[length(rows) + 1L]] <- data.frame(
+      group = as.character(g), year = as.character(y),
+      days = dsum, people = npeople,
+      adp = adp(dsum, OTIS_STOCK_T),
+      alos = if (npeople > 0) alos(dsum, npeople) else NA_real_,
+      stringsAsFactors = FALSE)
+  }
+  out <- do.call(rbind, rows)
+  ## shares are per year, so they need the year's totals
+  for (y in unique(out$year)) {
+    i <- out$year == y
+    td <- sum(out$days[i], na.rm = TRUE)
+    tp <- sum(out$people[i], na.rm = TRUE)
+    out$day_share[i] <- if (td > 0) 100 * out$days[i] / td else NA_real_
+    out$head_share[i] <- if (tp > 0) 100 * out$people[i] / tp else NA_real_
+    ont <- if (y %in% names(OTIS_ONT_POP)) OTIS_ONT_POP[[y]] else NA_real_
+    out$adp_per_100k[i] <- OTIS_PER_ONT * out$adp[i] / ont
+  }
+  out
+}
+
+.oyv_adp_cell <- function(got, group, col) {
+  pick <- function(y, vc) {
+    i <- which(got$group == group & got$year == y)
+    if (!length(i)) return(NA_real_)
+    suppressWarnings(as.numeric(got[[vc]][i[1]]))
+  }
+  m <- regmatches(col, regexec(
+    "^(days|adp|day_share|head_share|alos|adp_per_100k)_([0-9]{4})$", col))[[1]]
+  if (length(m) == 3L) return(pick(m[3], m[2]))
+  ## the change columns: people, length of stay and days between years
+  m <- regmatches(col,
+    regexec("^d_(adp|alos|people)_([0-9]{4})_([0-9]{4})$", col))[[1]]
+  if (length(m) == 4L) {
+    a <- m[3]; b <- m[4]
+    v1 <- pick(a, if (m[2] == "adp") "days" else
+                  if (m[2] == "alos") "alos" else "people")
+    v2 <- pick(b, if (m[2] == "adp") "days" else
+                  if (m[2] == "alos") "alos" else "people")
+    if (is.na(v1) || is.na(v2) || v1 == 0) return(NA_real_)
+    return(100 * (v2 / v1 - 1))
+  }
+  NA_real_
 }

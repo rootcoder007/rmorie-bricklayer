@@ -465,16 +465,25 @@ fwrite(orc[, .(unique_individual_id, end_fiscal_year, vm, ac, np,
 }
 
 RATES_AVAILABLE <- FALSE
+## adp() and alos() belong in this list, not further down: section 3c
+## recomputes the published average-daily-population tables and needs
+## them, and 3c runs before the stock-and-flow section does. Loading
+## them there instead left 3c unable to recompute seventeen tables,
+## which it then reported as differing.
 .rate_fns <- .otis_pkg_fns(c("rate", "share", "rate_change"))
 if (!is.null(.rate_fns)) {
   rate        <- .rate_fns$rate
   share       <- .rate_fns$share
   rate_change <- .rate_fns$rate_change
   RATES_AVAILABLE <- TRUE
+}
+.sf_pkg <- .otis_pkg_fns(c("adp", "alos", "stock_flow"))
+if (!is.null(.sf_pkg)) {
+  adp <- .sf_pkg$adp; alos <- .sf_pkg$alos; stock_flow <- .sf_pkg$stock_flow
 } else {
   ## Beside the script is where a bundle puts them; ../../R is the
   ## repository layout, for running this file straight from a checkout.
-  for (.f in c("yoy.R", "rate.R")) {
+  for (.f in c("yoy.R", "rate.R", "custody.R")) {
     for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {
@@ -735,17 +744,8 @@ if (YOY_AVAILABLE) {
 ## the average daily population ROSE. A report quoting only the number
 ## of people states the wrong sign for how much segregation was used.
 
-.sf_fns <- .otis_pkg_fns(c("adp", "alos", "stock_flow"))
-if (!is.null(.sf_fns)) {
-  adp <- .sf_fns$adp; alos <- .sf_fns$alos; stock_flow <- .sf_fns$stock_flow
-} else {
-  for (.f in c("custody.R")) {
-    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
-      .fp <- file.path(.dir, .f)
-      if (file.exists(.fp)) { source(.fp); break }
-    }
-  }
-}
+## Loaded in section 3b with the other measures, because 3c needs them
+## too and runs first.
 STOCKFLOW_AVAILABLE <- exists("adp", mode = "function") &&
   exists("alos", mode = "function") && exists("stock_flow", mode = "function")
 
