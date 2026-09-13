@@ -81,6 +81,57 @@ file contains what its name claims, which catches the province
 reshuffling data behind a URL – an error no comparison against published
 output could catch, because both sides would move together.
 
+### Rate tables, verified against both exposures
+
+The example now also verifies the 108 published rate tables across 24
+OTIS datasets – 15,831 cells, all of them. Each count is expressed
+against two exposures:
+
+- the yearly total of the prison population the dataset covers, per
+  1,000, taken from `c01`, which states all three regime totals
+  directly. Those totals were checked against the detailed datasets
+  rather than trusted: `a01` distinct individuals equal `c01`’s
+  restrictive-confinement total, and `b01` and `b02` distinct
+  individuals equal its segregation total, in every year.
+- Ontario residents at April 1, per 100,000, from Statistics Canada
+  table 17-10-0009-01. Geography position 7 was confirmed as Ontario
+  from the cube metadata rather than assumed.
+
+This is the construction criminology uses for a rate – a count over an
+exposure, which in a count model enters as an offset of log(exposure).
+Intervals are the exact Poisson interval, and change between years is
+the exact conditional interval for a rate ratio corrected for both
+exposures, cross-checked against the two-sample
+[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html).
+
+`otis_headline_rates()` reports the named rates. Over FY2023 to FY2025
+the incarceration rate rose from 216.7 to 267.5 per 100,000 residents
+while the solitary-confinement rate fell from 81.6 to 59.1, and within
+custody solitary use fell from 376.7 to 221.0 per 1,000. The two move in
+opposite directions, which a count alone hides.
+
+The recomputation deliberately does not port the generator’s arithmetic,
+as the year-over-year check does; it goes through
+[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+and
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md),
+whose intervals are anchored to base R. That independence found two
+defects in the generator that a like-for-like port would have reproduced
+silently: the rate-ratio arguments were reversed, giving a +34.4% change
+an interval of -25.9 to -25.3 that did not contain its own estimate, and
+a group with no exposure in a year got an upper limit of `Inf` on a
+change that was simply undefined. Both are now guarded by assertions
+that every rate and every change must lie inside its own interval.
+
+A group row in these tables is a CONTRIBUTION, not a per-capita rate:
+the numerator is that group’s count and the denominator is the whole
+yearly population, so men’s placements over the whole
+restrictive-confinement population is not a rate for men. Where the
+measure counts recurring events rather than people the per-1,000 figure
+can exceed 1,000, for the same reason one person can hold several
+placements. Both facts are stated on every table rather than left for a
+reader to infer.
+
 ### The count model no longer reports a missing AIC
 
 The canonical `glmmTMB` fit returned a non-positive-definite Hessian and
