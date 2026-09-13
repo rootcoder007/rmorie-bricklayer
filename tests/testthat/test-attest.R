@@ -78,19 +78,34 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
   # converter: the boundary between the largest subnormal and the
   # smallest normal, a value whose shortest form rounds the wrong way
   # under naive arithmetic, and the ends of the range.
+  # The expected values arrive as the BYTES of the double, never as a
+  # decimal literal. A literal here would be converted by whatever C
+  # library R was built against -- the very thing under test -- so the
+  # test would compare the platform to itself, pass everywhere, and
+  # prove nothing. It did exactly that: on macOS both sides moved
+  # together and the assertion failed against the correct answer.
+  # These patterns are glibc's, which is correctly rounded, and are
+  # what any conforming converter must produce on every platform.
+  dbl <- function(hex)
+    readBin(as.raw(strtoi(substring(hex, seq(1L, 15L, 2L),
+                                    seq(2L, 16L, 2L)), 16L)),
+            "double", n = 1L, size = 8L, endian = "little")
   cases <- list(
-    "2.2250738585072011e-308" = 2.2250738585072009e-308,
-    "1e23"                    = 1e23,
-    "0.1"                     = 0.1,
-    "0.3"                     = 0.3,
-    "1e-323"                  = 1e-323,
-    "1.7976931348623157e+308" = .Machine$double.xmax,
+    # the largest subnormal, one below the smallest normal
+    "2.2250738585072011e-308" = dbl("ffffffffffff0f00"),
+    "1e23"                    = dbl("f64ae1c7022db544"),
+    "0.1"                     = dbl("9a9999999999b93f"),
+    "0.3"                     = dbl("333333333333d33f"),
+    "1e-323"                  = dbl("0200000000000000"),
+    "1.7976931348623157e+308" = dbl("ffffffffffffef7f"),
+    # thirty significant digits: the naive answer is two ulps high
+    "123456789012345678901234567890" = dbl("3e376cff90eef845"),
+    # these need no rounding, so no platform can disagree about them
     "0"                       = 0,
     "-0"                      = 0,
     "1e400"                   = Inf,
     "-1e400"                  = -Inf,
-    "1e-400"                  = 0,
-    "123456789012345678901234567890" = 123456789012345678901234567890)
+    "1e-400"                  = 0)
   for (nm in names(cases)) {
     expect_identical(.rmbl_strtod(nm), cases[[nm]], info = nm)
   }

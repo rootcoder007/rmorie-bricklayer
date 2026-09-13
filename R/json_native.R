@@ -716,13 +716,32 @@ bricklayer_json_unbox <- function(x) {
 
 
 # Decimal to double, correctly rounded, independent of the platform's
-# C library. The fallback to as.numeric() exists only for the case
-# where the compiled code is somehow unavailable; it is not the normal
-# path and does not silently take over, because a wrong number here is
-# exactly what this replaces.
+# C library.
+#
+# A capsule bundle vendors this file and sources it on its own, with
+# nothing but R 4.0+ available and no compiled library to call into --
+# that is the point of a bundle a recipient can run without installing
+# anything. There the registered symbol does not exist, and calling it
+# is what broke the bundle: "object 'C_rmbl_strtod' not found". So the
+# native converter is used when it is there and R's own reader when it
+# is not, decided once and remembered rather than per number.
+#
+# The fallback is the platform's strtod, which is not correctly rounded
+# at the extreme ends of the double range on every platform -- that is
+# the defect the native converter exists to fix. It is the right
+# trade here and nowhere else: a bundle reads configuration numbers and
+# CSV columns, and read.csv goes through the same reader regardless, so
+# the fallback cannot be worse than the rest of the bundle's arithmetic.
+# Inside the installed package the native path is always taken.
+.rmbl_native <- new.env(parent = emptyenv())
 #' @noRd
 .rmbl_strtod <- function(x) {
-  .Call(C_rmbl_strtod, as.character(x))
+  have <- .rmbl_native$strtod
+  if (is.null(have)) {
+    have <- exists("C_rmbl_strtod", inherits = TRUE)
+    .rmbl_native$strtod <- have
+  }
+  if (have) .Call(C_rmbl_strtod, as.character(x)) else as.numeric(x)
 }
 
 # ================================================================ parser
