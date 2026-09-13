@@ -246,10 +246,22 @@ cannot catch one that was wrong when it was written.
 [`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
 wrote doubles at four significant digits, so a manifest recording `1/3`
 said `0.3333` and no later recomputation could match what was written.
-Every number is now written at full double precision and round-trips
-exactly, denormals and `.Machine$double.xmax` included. A provenance
-record that cannot reproduce its own numbers is the one failure mode the
-whole capsule apparatus exists to prevent, and this was it.
+Every number is now written at full double precision – seventeen
+significant digits, which is enough to recover any double exactly – and
+round-trips exactly, the smallest denormal included.
+
+That holds on every platform, because the package no longer asks the
+platform. Seventeen digits recover any double only through a reader that
+rounds correctly, and not every C library does: macOS arm64 (R 4.6.0)
+reads the correct decimal for `.Machine$double.xmax` as `Inf`, and loses
+low bits above about 1e100 on text written elsewhere. So the decimal
+conversion is done here instead, in integer arithmetic with a remainder
+that decides the rounding – round to nearest, ties to even, with no
+floating point involved in the decision. A manifest written on one
+machine now reads back bit-identically on another, and a caller does
+nothing to get that. A provenance record that cannot reproduce its own
+numbers is the one failure mode the whole capsule apparatus exists to
+prevent, and this was it.
 
 - [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
   and

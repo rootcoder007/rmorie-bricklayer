@@ -40,6 +40,16 @@ Sign `manifest_digest()`, not the pretty JSON. The digest is stable
 across the assembly order, across `pretty`, and across a round trip
 through a file.
 
+Full precision means full precision on every platform, which took more
+than writing enough digits. Seventeen significant digits recover any
+double exactly, but only through a reader that converts decimal to
+binary with correct rounding, and not every C library does – macOS arm64
+reads the correct decimal for the largest double as infinity. So this
+package converts decimals itself rather than asking the platform, in
+integer arithmetic with a remainder that decides the rounding. A
+manifest written on one machine reads back bit-identically on another,
+and a caller does nothing to get that.
+
 ## See also
 
 [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md),

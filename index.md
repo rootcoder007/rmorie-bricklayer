@@ -153,15 +153,17 @@ while a misregistered name compiles cleanly and fails only when called.
 reference implementation.** The whole 2500-byte signature for
 XMSS-SHA2_10_256 – index, randomiser, WOTS+ signature and authentication
 path – matches it exactly, checked against embedded vectors in the test
-suite so the check needs no network. The **The standardised schemes are
-byte-identical to OpenSSL.** ML-DSA (FIPS 204) at all three parameter
-sets and SLH-DSA (FIPS 205) at all twelve – six over SHAKE, six over
-SHA-2 – are implemented here, with no system dependency. Every one of
-the fifteen is checked against OpenSSL 3.5: in deterministic mode the
-two implementations produce the SAME BYTES, over several message and
-context lengths, and each verifies the other’s signatures. OpenSSL’s
-keys and the digests of its signatures are embedded in the test suite,
-so the check needs no network and no system library.
+suite so the check needs no network.
+
+**The standardised schemes are byte-identical to OpenSSL.** ML-DSA (FIPS
+204) at all three parameter sets and SLH-DSA (FIPS 205) at all twelve –
+six over SHAKE, six over SHA-2 – are implemented here, with no system
+dependency. Every one of the fifteen is checked against OpenSSL 3.5: in
+deterministic mode the two implementations produce the SAME BYTES, over
+several message and context lengths, and each verifies the other’s
+signatures. OpenSSL’s keys and the digests of its signatures are
+embedded in the test suite, so the check needs no network and no system
+library.
 
 ML-KEM (FIPS 203) is here too, at all three levels, along with the
 pre-hashed variants of both signature standards and ML-DSA’s external-mu
