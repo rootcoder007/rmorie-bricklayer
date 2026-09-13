@@ -230,7 +230,13 @@ format.bricklayer_timestamp <- function(x, ...) {
     sprintf("  %-20s %-5s %s", x$checks$check,
             ifelse(x$checks$ok, "ok", "FAIL"),
             substring(x$checks$detail, 1L, 42L)),
-    "  trust in the certificate is NOT checked here",
+    # Only say this when it is true. Trust IS checked when an anchor
+    # was given, and a line claiming otherwise under a verified chain
+    # would be the most misleading thing on the screen.
+    if (any(x$checks$check == "certificate_trust" & !x$checks$ok) &&
+        !any(startsWith(x$checks$check, "chain:")))
+      "  no anchor was given: nothing vouches for the certificate"
+    else NULL,
     .rmbl_rule())
 }
 

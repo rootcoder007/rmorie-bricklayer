@@ -103,7 +103,8 @@ misregistered name compiles cleanly and fails only when called.
 reference implementation.** The whole 2500-byte signature for
 XMSS-SHA2_10_256 -- index, randomiser, WOTS+ signature and
 authentication path -- matches it exactly, checked against embedded
-vectors in the test suite so the check needs no network. The
+vectors in the test suite so the check needs no network.
+
 **The standardised schemes are byte-identical to OpenSSL.** ML-DSA
 (FIPS 204) at all three parameter sets and SLH-DSA (FIPS 205) at all
 twelve -- six over SHAKE, six over SHA-2 -- are implemented here, with
