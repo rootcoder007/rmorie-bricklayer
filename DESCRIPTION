@@ -65,7 +65,8 @@ Suggests:
     stringi,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-URL: https://github.com/rootcoder007/rmorie-bricklayer
+URL: https://github.com/rootcoder007/rmorie-bricklayer,
+    https://rootcoder007.github.io/rmorie-bricklayer/
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
