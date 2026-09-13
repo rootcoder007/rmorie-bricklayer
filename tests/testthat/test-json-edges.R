@@ -239,6 +239,24 @@ test_that("the codec still agrees with jsonlite where it is installed", {
   for (x in cases) {
     mine <- as.character(bricklayer_json_to_json(x))
     theirs <- as.character(jsonlite::toJSON(x))
+    if (!identical(mine, theirs) && is.double(x) && length(x) == 1L &&
+          is.finite(x)) {
+      # jsonlite brings its own decimal converter, and on some platforms
+      # it is wrong: Windows aarch64 renders the double nearest 1e300 as
+      # ...0006e+300, which does NOT read back as that double, while
+      # this package renders ...0007e+300, which does. Byte agreement
+      # with a converter that lost the value is not a contract worth
+      # holding. What must hold is that ours did not lose it -- and this
+      # branch is only taken when jsonlite's text really is lossy, so a
+      # disagreement for any other reason still fails here.
+      strip <- function(t) gsub("[][]", "", t)
+      expect_identical(.rmbl_strtod(strip(mine)), x,
+                       info = paste("ours lost", deparse(x)[1]))
+      expect_false(isTRUE(.rmbl_strtod(strip(theirs)) == x),
+                   info = paste("jsonlite agreed after all for",
+                                deparse(x)[1]))
+      next
+    }
     expect_equal(mine, theirs,
                  info = paste("mismatch for", deparse(x)[1]))
   }
