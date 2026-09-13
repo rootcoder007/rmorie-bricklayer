@@ -43,23 +43,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # pkgcheck queries event=push ONLY, and per workflow name takes
+          # the single most recent push run. So the exact objects it will
+          # read are "the newest push run named R-CMD-check" and "the
+          # newest push run named r-coverage" -- not this run's siblings,
+          # and not anything triggered by workflow_dispatch. Wait for
+          # precisely those, whatever commit they belong to.
           need="R-CMD-check r-coverage"
           for i in $(seq 1 75); do
             runs=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&head_sha=${GITHUB_SHA}&per_page=100")
+              "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&per_page=100")
             pending=""
             for wf in $need; do
-              st=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
+              row=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
                 '[.workflow_runs[] | select(.name == $n)]
-                 | sort_by(.created_at) | last | .status // "absent"')
+                 | sort_by(.created_at) | last
+                 | if . == null then "absent absent"
+                   else "\(.status) \(.conclusion // "null")" end')
+              st=${row%% *}
               if [ "$st" != "completed" ] && [ "$st" != "absent" ]; then
                 pending="$pending $wf($st)"
               fi
             done
             if [ -z "$pending" ]; then
-              echo "the runs pkgcheck reads have concluded"
-              printf '%s' "$runs" | jq -r \
-                '.workflow_runs[] | "  \(.name): \(.conclusion // .status)"' | sort -u
+              echo "the runs pkgcheck will read have concluded:"
+              for wf in $need; do
+                printf '%s' "$runs" | jq -r --arg n "$wf" \
+                  '[.workflow_runs[] | select(.name == $n)]
+                   | sort_by(.created_at) | last
+                   | "  \(.name): \(.conclusion // "null") (\(.head_sha[0:8]))"'
+              done
               exit 0
             fi
             echo "[${i}/75] waiting for:$pending"
