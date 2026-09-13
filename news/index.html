@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,9 +43,13 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.7" id="rmoriebricklayer-047">rmoriebricklayer 0.4.7<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-047"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.8" id="rmoriebricklayer-048">rmoriebricklayer 0.4.8<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-048"></a></h2>
 <div class="section level3">
-<h3 id="the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-7">The stock and flow measures reach the example, and so does the MNAR pair<a class="anchor" aria-label="anchor" href="#the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-7"></a></h3>
+<h3 id="why-the-version-moved-0-4-8">Why the version moved<a class="anchor" aria-label="anchor" href="#why-the-version-moved-0-4-8"></a></h3>
+<p>Five exported functions – <code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code>, <code><a href="../reference/admissions.html">admissions()</a></code>, <code><a href="../reference/adp_from_counts.html">adp_from_counts()</a></code>, <code><a href="../reference/stock_flow.html">stock_flow()</a></code>, and then <code><a href="../reference/period_days.html">period_days()</a></code> and <code><a href="../reference/stay_summary.html">stay_summary()</a></code> – were added across three commits that all carried <code>Version: 0.4.7</code>. r-universe had already built and served 0.4.7 from an earlier snapshot, so a package depending on <code>rmoriebricklayer (&gt;= 0.4.7)</code> could be handed a build without any of them, and rmorie’s minimal-dependency job duly failed on exactly that. A version number that does not move when the interface grows cannot be depended on, which is the whole reason it exists. Everything below was previously listed under 0.4.7.</p>
+</div>
+<div class="section level3">
+<h3 id="the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-8">The stock and flow measures reach the example, and so does the MNAR pair<a class="anchor" aria-label="anchor" href="#the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-8"></a></h3>
 <p>Both were computed and published for reading before they were shipped anywhere a check could see them. They are in <code>analysis.R</code> now.</p>
 <p><strong>Section 3e</strong> computes Lakner’s measures for segregation through the package’s own <code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/stock_flow.html">stock_flow()</a></code>, so the example exercises the functions rather than reimplementing them. It is NOT gated, unlike the rate tables: there is no denominator to argue about, since days divided by 365 and days divided by the people who served them are both unambiguous.</p>
 <p>It records checks that can fail, not just values:</p>
@@ -64,7 +68,7 @@
 <p>New outputs: <code>12_stock_flow.csv</code> and <code>13_capacity_mnar.csv</code>. The capacity analyses need Ontario’s institutional-locations CSV, a separate CKAN dataset, shipped with the example and overridable with <code>OTIS_LOCATIONS</code>.</p>
 </div>
 <div class="section level3">
-<h3 id="stock-and-flow-person-days-have-two-denominators-0-4-7">Stock and flow: person-days have two denominators<a class="anchor" aria-label="anchor" href="#stock-and-flow-person-days-have-two-denominators-0-4-7"></a></h3>
+<h3 id="stock-and-flow-person-days-have-two-denominators-0-4-8">Stock and flow: person-days have two denominators<a class="anchor" aria-label="anchor" href="#stock-and-flow-person-days-have-two-denominators-0-4-8"></a></h3>
 <p><code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code>, <code><a href="../reference/admissions.html">admissions()</a></code>, <code><a href="../reference/adp_from_counts.html">adp_from_counts()</a></code> and <code><a href="../reference/stock_flow.html">stock_flow()</a></code> implement the measures from Lakner, <em>A Manual of Statistical Sampling Methods for Corrections Planners</em> (University of Illinois at Urbana-Champaign, 1976). One quantity, person-days, carries two denominators:</p>
 <ul><li>divided by TIME it gives the average daily population, a <strong>stock</strong>: how many people are held at once. Lakner p.15.</li>
 <li>divided by PEOPLE it gives the average length of stay. Lakner p.16.</li>
@@ -76,7 +80,7 @@
 <p>The tests anchor on Lakner’s own worked examples rather than on each other: 13,500 days over a year giving 36.986; 12,150 days across 2,700 people giving 4.5; 25 held daily against 1,750 admissions giving 5.2; and counts on 255 days summing to 34,935 giving 50,005 person-days. Those are numbers computed by someone else, so they can disagree with this code, which is the property a test needs.</p>
 </div>
 <div class="section level3">
-<h3 id="rates-shares-and-rate-change-0-4-7">Rates, shares and rate change<a class="anchor" aria-label="anchor" href="#rates-shares-and-rate-change-0-4-7"></a></h3>
+<h3 id="rates-shares-and-rate-change-0-4-8">Rates, shares and rate change<a class="anchor" aria-label="anchor" href="#rates-shares-and-rate-change-0-4-8"></a></h3>
 <p>A count is not comparable across places of different size or years of different population, so <code><a href="../reference/rate.html">rate()</a></code> divides counts by exposure and scales to a denominator – <code>per = 1000</code>, <code>"10k"</code>, <code>"100k"</code>, <code>"1m"</code>, or any positive number. The interval is the exact Poisson one, matching <code><a href="https://rdrr.io/r/stats/poisson.test.html" class="external-link">stats::poisson.test</a></code> to the last digit, so a count of zero gives a lower limit of exactly zero instead of a negative rate.</p>
 <p><code><a href="../reference/share.html">share()</a></code> is the other quantity people mean by “percentage”: what fraction of a total each count is. Its denominator is the total of the same events, not a population, so shares over a complete grouping sum to 100. The interval is Wilson’s rather than the normal approximation, which runs past the ends of the scale and reports negative percentages at exactly the small counts people reach for it.</p>
 <p>Labelling one of these as the other is the most common error in a published table, which is why they are separate functions with separate intervals rather than one function with a flag.</p>
@@ -84,7 +88,7 @@
 <p>Like <code><a href="../reference/yoy.html">yoy()</a></code>, the comparison period is matched on the period value and not on row position, so a missing year reports no comparison instead of silently comparing 2023 against 2020.</p>
 </div>
 <div class="section level3">
-<h3 id="verifying-the-published-year-over-year-tables-0-4-7">Verifying the published year-over-year tables<a class="anchor" aria-label="anchor" href="#verifying-the-published-year-over-year-tables-0-4-7"></a></h3>
+<h3 id="verifying-the-published-year-over-year-tables-0-4-8">Verifying the published year-over-year tables<a class="anchor" aria-label="anchor" href="#verifying-the-published-year-over-year-tables-0-4-8"></a></h3>
 <p>The <code>otis-mrp</code> example now recomputes every published OTIS year-over-year table from the province’s own CSVs and compares all of them: 147 tables across 29 datasets, 8,214 cells. Previously the example verified the models and the descriptives but said nothing about those tables, so a reader checking them had nothing to check against.</p>
 <p>The table definitions are a port of the generator that produced the published page, not a reimplementation from column names – percent change rounded to one decimal and undefined when the earlier value is zero, shares against the column total, groups sorted with NA and empty dropped. Getting those subtly different would produce mismatches that look like data errors and are actually definition errors.</p>
 <p>It also checks something a cell-by-cell comparison cannot: three OTIS datasets reach the same restrictive-confinement population by different routes, and <code>a01</code> distinct individuals, <code>c01</code> totals and <code>c04</code> totals must agree per fiscal year (20,781 / 19,641 / 25,045). A wrong grain rule would move both sides of a cell comparison together and pass; this fails.</p>
@@ -92,7 +96,7 @@
 <p>Files are named from the CKAN resource URL, which ends in the canonical filename for all 29. Nothing is inferred from the resource title, which would be guesswork – “Segregation Placements - Maximum, Median and Mode Consecutive Durations by Region” is the file called <code>b04_segregation_placements_consecutive_durations_by_region</code>, and 15 of the 29 diverge that way. A column signature then confirms a downloaded file contains what its name claims, which catches the province reshuffling data behind a URL – an error no comparison against published output could catch, because both sides would move together.</p>
 </div>
 <div class="section level3">
-<h3 id="rate-tables-verified-against-both-exposures--opt-in-0-4-7">Rate tables, verified against both exposures – opt-in<a class="anchor" aria-label="anchor" href="#rate-tables-verified-against-both-exposures--opt-in-0-4-7"></a></h3>
+<h3 id="rate-tables-verified-against-both-exposures--opt-in-0-4-8">Rate tables, verified against both exposures – opt-in<a class="anchor" aria-label="anchor" href="#rate-tables-verified-against-both-exposures--opt-in-0-4-8"></a></h3>
 <p>The example can verify the 108 published rate tables across 24 OTIS datasets, 15,831 cells, and does so on request:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>OTIS_RATES_VERIFY<span class="ot">=</span><span class="dv">1</span> Rscript analysis.R <span class="sc">&lt;</span>input<span class="sc">&gt;</span> <span class="er">&lt;</span>outdir<span class="sc">&gt;</span></span></code></pre></div>
 <p>It is off by default, and not because it fails – it passes all 108. It is held back because a group row in those tables divides that group’s count by the WHOLE yearly population, so it states how much the group contributes to the overall rate rather than the rate among its own members: men’s placements over the whole restrictive-confinement population is not a rate for men. c01 carries the population by gender, so a matched denominator exists for some tables and not others, and choosing per table is its own piece of work. The example already has the rates it needs, and the year-over-year tables already give counts, shares and percentage change for every published table.</p>
@@ -105,19 +109,19 @@
 <p>A group row in these tables is a CONTRIBUTION, not a per-capita rate: the numerator is that group’s count and the denominator is the whole yearly population, so men’s placements over the whole restrictive-confinement population is not a rate for men. Where the measure counts recurring events rather than people the per-1,000 figure can exceed 1,000, for the same reason one person can hold several placements. Both facts are stated on every table rather than left for a reader to infer.</p>
 </div>
 <div class="section level3">
-<h3 id="the-count-model-no-longer-reports-a-missing-aic-0-4-7">The count model no longer reports a missing AIC<a class="anchor" aria-label="anchor" href="#the-count-model-no-longer-reports-a-missing-aic-0-4-7"></a></h3>
+<h3 id="the-count-model-no-longer-reports-a-missing-aic-0-4-8">The count model no longer reports a missing AIC<a class="anchor" aria-label="anchor" href="#the-count-model-no-longer-reports-a-missing-aic-0-4-8"></a></h3>
 <p>The canonical <code>glmmTMB</code> fit returned a non-positive-definite Hessian and no AIC, which the example flagged as a warning for several releases. The cause is identifiable: the negative-binomial dispersion runs to 4.35e+08. A negative binomial whose theta goes to infinity IS a Poisson, so the likelihood is flat in that direction and the Hessian is singular in it. The <code>rc</code> random intercept, with a standard deviation of 4.5, has already absorbed the overdispersion theta would explain – the outcome is 93% zeros with mean 0.173 and variance 0.473 – so the two compete to describe the same variation and one is left unidentified.</p>
 <p>The fit now names the model it is actually fitting. The Poisson gives the same coefficient and the same standard error to four decimals, with a positive-definite Hessian and an AIC of 3045.3 against the published 3041.7. Which family produced the numbers is recorded in the manifest, because a coefficient is not interpretable without it.</p>
 <p>A different optimiser was the wrong answer and was tried first: Nelder-Mead converges, but to a worse optimum (AIC 3054), trading a missing AIC for a wrong one.</p>
 </div>
 <div class="section level3">
-<h3 id="the-otis-mrp-example-0-4-7">The otis-mrp example<a class="anchor" aria-label="anchor" href="#the-otis-mrp-example-0-4-7"></a></h3>
+<h3 id="the-otis-mrp-example-0-4-8">The otis-mrp example<a class="anchor" aria-label="anchor" href="#the-otis-mrp-example-0-4-8"></a></h3>
 <p>The example analysis had an absolute path to the author’s own volume as its default input. It could not exist on a reviewer’s machine and it published a local directory layout, so the input is now searched for – command line, then <code>OTIS_INPUT</code>, then known filenames in the working directory and beside the script – and the script stops with the exact command to run when it finds nothing.</p>
 <p><code>lme4</code> and <code>DHARMa</code> were attached and recorded as dependencies but never called; both are gone. The header now also says which arm is canonical for what: <code>rmorie::morie_otis_irm_dml</code> is the preferred DML path and makes <code>DoubleML</code>, <code>mlr3</code>, <code>mlr3learners</code> and <code>lgr</code> unnecessary, while <code>MatchIt</code> and <code>glmmTMB</code> stay because the published numbers came from them and the script exists to let a reviewer check those numbers.</p>
 <p>The analysis now also writes <code>08_rates_and_yoy.csv</code>: movement rates per 1,000 placements and per 1,000 person-years, each year’s share of the total, and the year-over-year change in the rate. Capsule bundles carry <code>yoy.R</code> and <code>rate.R</code> so this works with nothing installed.</p>
 </div>
 <div class="section level3">
-<h3 id="fixes-0-4-7">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-4-7"></a></h3>
+<h3 id="fixes-0-4-8">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-4-8"></a></h3>
 <ul><li><p>A capsule bundle sources <code>json_native.R</code> with no compiled library present, so calling the registered native decimal converter failed with <code>object 'C_rmbl_strtod' not found</code> and every bundle run died. The converter is used when it is there and R’s own reader when it is not.</p></li>
 <li><p><code>test-attest.R</code> compared the decimal converter against decimal literals, which are converted by whatever C library R was built against – the thing under test. On macOS both sides moved together and the test failed against the correct answer. Expected values are now transported as the bytes of the double.</p></li>
 <li><p>The version-drift test read <code>DESCRIPTION</code> from a source tree that <code>R CMD check</code> does not provide, erroring on all five platforms.</p></li>

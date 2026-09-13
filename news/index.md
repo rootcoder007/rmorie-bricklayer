@@ -1,6 +1,26 @@
 # Changelog
 
-## rmoriebricklayer 0.4.7
+## rmoriebricklayer 0.4.8
+
+### Why the version moved
+
+Five exported functions –
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
+[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md),
+[`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md),
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md),
+and then
+[`period_days()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+and
+[`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+– were added across three commits that all carried `Version: 0.4.7`.
+r-universe had already built and served 0.4.7 from an earlier snapshot,
+so a package depending on `rmoriebricklayer (>= 0.4.7)` could be handed
+a build without any of them, and rmorie’s minimal-dependency job duly
+failed on exactly that. A version number that does not move when the
+interface grows cannot be depended on, which is the whole reason it
+exists. Everything below was previously listed under 0.4.7.
 
 ### The stock and flow measures reach the example, and so does the MNAR pair
 
