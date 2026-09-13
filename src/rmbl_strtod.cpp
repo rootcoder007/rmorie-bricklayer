@@ -28,9 +28,11 @@
  */
 
 #include <cmath>
+#include <cstdio>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include <R.h>
@@ -417,6 +419,128 @@ double convert(const char *s, size_t len, bool *ok) {
     return p.negative ? -v : v;
 }
 
+
+/* ------------------------------------------------------------------ *
+ * The writer's half: double to correctly-rounded decimal.
+ *
+ * The platform that cannot read seventeen digits cannot always write
+ * them either. On Windows aarch64 the C library renders the largest
+ * double as 1.7976931348623156e+308 -- one ulp low, so it reads back
+ * as a different number -- and renders the double nearest 1e300 as
+ * ...0007e+300 where the correct seventeen-digit decimal is
+ * ...0001e+300. jsonlite, which brings its own converter, disagreed
+ * with both. A manifest is a record meant to be checked on some other
+ * machine, so the digits it carries cannot depend on which machine
+ * wrote them.
+ *
+ * The digits are produced here by exact integer arithmetic: the double
+ * is held as mantissa * 2^exponent, scaled to a seventeen digit
+ * integer by an exact multiply and an exact division, and the
+ * remainder decides the rounding -- to nearest, ties to even. The text
+ * is then laid out exactly as "%.17g" specifies, so where the
+ * platform's library is correct the output is byte for byte what it
+ * has always been.
+ * ------------------------------------------------------------------ */
+
+const int kSig = 17;
+const uint64_t kDigLo = 10000000000000000ull;  /* 10^16 */
+const uint64_t kDigHi = 100000000000000000ull; /* 10^17 */
+
+/* |v| = m * 2^e2 with m a 53-bit integer. Exact, subnormals included. */
+void decompose(double v, uint64_t *m, int *e2) {
+    int exp2 = 0;
+    const double fr = std::frexp(v, &exp2);  /* 0.5 <= fr < 1 */
+    *m = static_cast<uint64_t>(std::ldexp(fr, 53));
+    *e2 = exp2 - 53;
+}
+
+/* The seventeen significant digits of |v|, and the decimal exponent X
+ * for which |v| ~ d.dddddddddddddddd * 10^X. */
+void digits17(double v, char *out, int *xout) {
+    uint64_t m = 0;
+    int e2 = 0;
+    decompose(v, &m, &e2);
+
+    Big num(2, 0u), den(1, 1u);
+    num[0] = static_cast<uint32_t>(m & 0xffffffffu);
+    num[1] = static_cast<uint32_t>(m >> 32);
+    trim(num);
+    if (e2 >= 0) {
+        shl(num, static_cast<size_t>(e2));
+    } else {
+        shl(den, static_cast<size_t>(-e2));
+    }
+
+    int x = static_cast<int>(std::floor(std::log10(v)));
+    uint64_t q64 = kDigLo;
+    for (int guard = 0; guard < 6; ++guard) {
+        Big a = num, b = den;
+        const int k = (kSig - 1) - x;
+        if (k >= 0) {
+            mul_pow10(a, k);
+        } else {
+            mul_pow10(b, -k);
+        }
+        Big q, r;
+        divmod(a, b, q, r);
+        if (bit_length(q) > 63) { ++x; continue; }
+        uint64_t qq = to_u64(q);
+        Big r2 = r;
+        shl(r2, 1);
+        const int c = cmp(r2, b);
+        if (c > 0 || (c == 0 && (qq & 1ull))) ++qq;
+        if (qq >= kDigHi) { ++x; continue; }
+        if (qq < kDigLo)  { --x; continue; }
+        q64 = qq;
+        break;
+    }
+    for (int i = kSig; i-- > 0;) {
+        out[i] = static_cast<char>('0' + static_cast<int>(q64 % 10));
+        q64 /= 10;
+    }
+    out[kSig] = '\0';
+    *xout = x;
+}
+
+/* Lay the digits out exactly as "%.17g" does: scientific when the
+ * exponent falls outside [-4, 17), fixed otherwise, trailing zeros of
+ * the fraction removed, exponent at least two digits. */
+std::string format_g(bool neg, const char *d, int x) {
+    std::string s;
+    if (neg) s += '-';
+    if (x < -4 || x >= kSig) {
+        int last = kSig - 1;
+        while (last > 0 && d[last] == '0') --last;
+        s += d[0];
+        if (last > 0) {
+            s += '.';
+            s.append(d + 1, static_cast<size_t>(last));
+        }
+        s += 'e';
+        int e = x;
+        s += (e < 0) ? '-' : '+';
+        if (e < 0) e = -e;
+        char eb[16];
+        std::snprintf(eb, sizeof eb, (e >= 100) ? "%03d" : "%02d", e);
+        s += eb;
+    } else if (x >= 0) {
+        int last = kSig - 1;
+        while (last > x && d[last] == '0') --last;
+        s.append(d, static_cast<size_t>(x + 1));
+        if (last > x) {
+            s += '.';
+            s.append(d + x + 1, static_cast<size_t>(last - x));
+        }
+    } else {
+        int last = kSig - 1;
+        while (last > 0 && d[last] == '0') --last;
+        s += "0.";
+        for (int i = 0; i < -x - 1; ++i) s += '0';
+        s.append(d, static_cast<size_t>(last + 1));
+    }
+    return s;
+}
+
 }  // namespace
 
 extern "C" {
@@ -440,6 +564,38 @@ SEXP C_rmbl_strtod(SEXP x) {
         bool ok = false;
         o[i] = convert(cs, std::strlen(cs), &ok);
         if (!ok) o[i] = R_NaReal;
+    }
+    UNPROTECT(1);
+    return out;
+}
+
+
+/* Render doubles as correctly-rounded seventeen-digit decimals without
+ * asking the platform. Non-finite input gives NA_character_: the JSON
+ * writer renders Inf, -Inf, NaN and NA its own way before it gets
+ * here. */
+SEXP C_rmbl_dtoa17(SEXP x) {
+    if (TYPEOF(x) != REALSXP) Rf_error("`x` must be a double vector");
+    const R_xlen_t n = XLENGTH(x);
+    const double *v = REAL(x);
+    SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+    for (R_xlen_t i = 0; i < n; ++i) {
+        const double d = v[i];
+        if (!R_FINITE(d)) {
+            SET_STRING_ELT(out, i, NA_STRING);
+            continue;
+        }
+        if (d == 0.0) {
+            SET_STRING_ELT(out, i, Rf_mkChar(std::signbit(d) ? "-0" : "0"));
+            continue;
+        }
+        char dig[kSig + 1];
+        int xx = 0;
+        digits17(std::fabs(d), dig, &xx);
+        const std::string s = format_g(d < 0.0, dig, xx);
+        SET_STRING_ELT(out, i,
+                       Rf_mkCharLenCE(s.data(), static_cast<int>(s.size()),
+                                      CE_NATIVE));
     }
     UNPROTECT(1);
     return out;
