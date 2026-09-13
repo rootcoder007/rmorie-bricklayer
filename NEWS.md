@@ -221,8 +221,18 @@ edited manifest and cannot catch one that was wrong when it was written.
 `write_manifest_json()` wrote doubles at four significant digits, so a
 manifest recording `1/3` said `0.3333` and no later recomputation could
 match what was written. Every number is now written at full double
-precision and round-trips exactly, denormals and `.Machine$double.xmax`
-included. A provenance record that cannot reproduce its own numbers is
+precision -- seventeen significant digits, which is enough to recover
+any double exactly -- and round-trips exactly, the smallest denormal
+included.
+
+One caveat, stated because the claim above is easy to over-read:
+recovering the value requires a reader that converts decimal to binary
+with correct rounding, and not every platform does. On macOS arm64
+(R 4.6.0) `as.numeric()` returns `Inf` for the correct decimal of
+`.Machine$double.xmax`, and loses low bits on magnitudes around 1e100
+and beyond when the text was written elsewhere. The text this package
+writes is right; what a given C library makes of it is outside the
+package's reach. A provenance record that cannot reproduce its own numbers is
 the one failure mode the whole capsule apparatus exists to prevent, and
 this was it.
 

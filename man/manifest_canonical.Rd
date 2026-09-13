@@ -36,6 +36,17 @@ comes back as \code{0.3333} and no recomputation can match it.
 Sign \code{\link[=manifest_digest]{manifest_digest()}}, not the pretty
 JSON. The digest is stable across the assembly order, across
 \code{pretty}, and across a round trip through a file.
+
+On the limits of decimal. Seventeen significant digits recover any
+double exactly, but only through a reader that converts decimal to
+binary with correct rounding, and not every platform's does. On macOS
+arm64 (R 4.6.0) reading the correct decimal for
+\code{.Machine$double.xmax} gives \code{Inf}, and magnitudes around
+1e100 and beyond can lose low bits when the text was written on another
+machine. The digest itself is unaffected, since it is taken over the
+text and the text is identical everywhere; but a caller who needs a
+value at the extreme ends of the double range to survive a trip between
+machines should record its bits rather than rely on its decimal.
 }
 \examples{
 a <- make_manifest(list(b = 2, a = 1), environment = FALSE)
