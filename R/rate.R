@@ -66,9 +66,10 @@
 #' interval, computed through the gamma relation, so a count of zero has
 #' a lower limit of exactly zero rather than a negative number.
 #'
-#' `per` takes a number, or one of `"1k"`, `"10k"`, `"100k"`, `"1m"`,
-#' because a denominator mistyped by a factor of ten is invisible once
-#' it reaches a table.
+#' `per` takes a number, or one of `"1k"`,
+#' `"10k"`, `"100k"`, `"1m"`, because a
+#' denominator mistyped by a factor of ten is
+#' invisible once it reaches a table.
 #'
 #' @param x A data frame, or a numeric vector of counts.
 #' @param ... Passed to methods.
@@ -84,13 +85,17 @@
 #'   report, with the rate still computed. Default 0, which flags
 #'   nothing; published guidance often uses 5 or 10.
 #'
-#' @return A data frame of class `rmbl_rate` with the grouping columns,
-#'   `count`, `population`, `rate`, `lower`, `upper` and `flag`, and a
-#'   `rate` attribute recording the denominator and confidence level.
+#' @return A data frame of class `rmbl_rate` with the
+#'   grouping columns, `count`, `population`,
+#'   `rate`, `lower`, `upper` and `flag`, plus a
+#'   `rate` attribute recording the denominator and
+#'   the confidence level.
 #'
-#' @seealso [share()] for a percentage of a total, [rate_change()] for
-#'   the change in a rate between periods, [sir()] for a rate compared
-#'   against an expected count rather than a population.
+#' @seealso [share()] for a percentage of a
+#'   total, [rate_change()] for the change in a
+#'   rate between periods, [sir()] for a rate
+#'   compared against an expected count rather
+#'   than a population.
 #'
 #' @examples
 #' stops <- data.frame(
@@ -256,12 +261,14 @@ print.rmbl_rate <- function(x, ...) {
 #'   instead -- for the case where some of the total is not in the table.
 #' @param conf_level Confidence level for the interval.
 #'
-#' @return A data frame of class `rmbl_share` with the grouping columns,
-#'   `count`, `total`, `share`, `lower` and `upper`, and a `share`
-#'   attribute recording the denominator and confidence level.
+#' @return A data frame of class `rmbl_share`
+#'   with the grouping columns, `count`, `total`,
+#'   `share`, `lower` and `upper`, plus a `share`
+#'   attribute recording the denominator and the
+#'   confidence level.
 #'
-#' @seealso [rate()] for events per population, [yoy()] for change
-#'   between periods.
+#' @seealso [rate()] for events per population,
+#'   [yoy()] for change between periods.
 #'
 #' @examples
 #' stops <- data.frame(
@@ -404,9 +411,12 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 #'   this are flagged and their percent change withheld, the way
 #'   [yoy()] withholds a percent change off a tiny base.
 #'
-#' @return A data frame of class `rmbl_rate_change` with the grouping
-#'   columns, `period`, `count`, `population`, `rate`, `previous_rate`,
-#'   `rate_ratio`, `pct_change`, `pct_lower`, `pct_upper` and `flag`.
+#' @return A data frame of class
+#'   `rmbl_rate_change` with the grouping
+#'   columns, `period`, `count`, `population`,
+#'   `rate`, `previous_rate`, `rate_ratio`,
+#'   `pct_change`, `pct_lower`, `pct_upper` and
+#'   `flag`.
 #'
 #' @seealso [rate()], [yoy()] for change in a count or a measured
 #'   quantity.

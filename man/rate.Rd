@@ -44,9 +44,11 @@ report, with the rate still computed. Default 0, which flags
 nothing; published guidance often uses 5 or 10.}
 }
 \value{
-A data frame of class \code{rmbl_rate} with the grouping columns,
-\code{count}, \code{population}, \code{rate}, \code{lower}, \code{upper} and \code{flag}, and a
-\code{rate} attribute recording the denominator and confidence level.
+A data frame of class \code{rmbl_rate} with the
+grouping columns, \code{count}, \code{population},
+\code{rate}, \code{lower}, \code{upper} and \code{flag}, plus a
+\code{rate} attribute recording the denominator and
+the confidence level.
 }
 \description{
 Counts divided by exposure and scaled to a denominator, with the
@@ -61,9 +63,10 @@ interval here is the one that says so. It is the exact Poisson
 interval, computed through the gamma relation, so a count of zero has
 a lower limit of exactly zero rather than a negative number.
 
-\code{per} takes a number, or one of \code{"1k"}, \code{"10k"}, \code{"100k"}, \code{"1m"},
-because a denominator mistyped by a factor of ten is invisible once
-it reaches a table.
+\code{per} takes a number, or one of \code{"1k"},
+\code{"10k"}, \code{"100k"}, \code{"1m"}, because a
+denominator mistyped by a factor of ten is
+invisible once it reaches a table.
 }
 \examples{
 stops <- data.frame(
@@ -86,7 +89,9 @@ rate(stops, stops, residents, by = "division", per = "100k",
 rate(3, 9500, per = "100k")
 }
 \seealso{
-\code{\link[=share]{share()}} for a percentage of a total, \code{\link[=rate_change]{rate_change()}} for
-the change in a rate between periods, \code{\link[=sir]{sir()}} for a rate compared
-against an expected count rather than a population.
+\code{\link[=share]{share()}} for a percentage of a
+total, \code{\link[=rate_change]{rate_change()}} for the change in a
+rate between periods, \code{\link[=sir]{sir()}} for a rate
+compared against an expected count rather
+than a population.
 }
