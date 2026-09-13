@@ -229,6 +229,20 @@ reference:
       - yoy_write
       - yoy_delim
       - yoy_palettes
+  - title: Stock and flow over time
+    desc: >
+      Person-days are one quantity with two denominators. Divided by TIME they
+      give the average daily population, a stock: how many are held at once.
+      Divided by PEOPLE they give the average length of stay. When stay length
+      moves the two can carry opposite signs, so a report quoting one implies
+      the wrong direction for the other. After Lakner (1976), A Manual of
+      Statistical Sampling Methods for Corrections Planners.
+    contents:
+      - adp
+      - alos
+      - admissions
+      - adp_from_counts
+      - stock_flow
   - title: Rates, shares and rate change
     desc: >
       A count is not comparable across places of different size or years of
