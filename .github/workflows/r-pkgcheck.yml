@@ -14,16 +14,60 @@ on:
 permissions:
   contents: read
   issues: write
+  actions: read
 
 jobs:
   pkgcheck:
     name: rOpenSci pkgcheck
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: read
       issues: write
+      actions: read
     steps:
+      # pkgcheck's own CI check cannot pass without this wait.
+      #
+      # Its ci_results_gh() fetches /actions/runs?event=push for the whole
+      # repository, keeps the most recent run of each workflow NAME, and
+      # output_pkgchk_ci() then requires every workflow whose name matches
+      # 'cmd|coverage' to have conclusion == "success". Those runs are
+      # triggered by the same push as this job, so they are still in
+      # flight while pkgcheck gathers its information: conclusion is null,
+      # all(NA == "success") is NA, and the NA is coerced to FALSE. The
+      # result is "Package fails continuous integration checks" on a
+      # repository whose checks all pass -- which is what was happening,
+      # every run, while R CMD check reported no errors and no warnings.
+      - name: Wait for the runs pkgcheck reads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          need="R-CMD-check r-coverage"
+          for i in $(seq 1 75); do
+            runs=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&head_sha=${GITHUB_SHA}&per_page=100")
+            pending=""
+            for wf in $need; do
+              st=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
+                '[.workflow_runs[] | select(.name == $n)]
+                 | sort_by(.created_at) | last | .status // "absent"')
+              if [ "$st" != "completed" ] && [ "$st" != "absent" ]; then
+                pending="$pending $wf($st)"
+              fi
+            done
+            if [ -z "$pending" ]; then
+              echo "the runs pkgcheck reads have concluded"
+              printf '%s' "$runs" | jq -r \
+                '.workflow_runs[] | "  \(.name): \(.conclusion // .status)"' | sort -u
+              exit 0
+            fi
+            echo "[${i}/75] waiting for:$pending"
+            sleep 20
+          done
+          # Not fatal: pkgcheck still reports every other check, and
+          # blocking the whole job on a stuck sibling would hide those.
+          echo "gave up waiting; pkgcheck may read an unfinished run"
       - uses: ropensci-review-tools/pkgcheck-action@fa6dc3e9dec0580397ae44ec6fb9e7953947758c # main
         with:
           ref: ${{ github.sha }}
