@@ -124,7 +124,7 @@ Module-Lattice-Based Key-Encapsulation Mechanism Standard. FIPS 203.
 <span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sent</span><span class="op">$</span><span class="va">ciphertext</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">bad</span>, <span class="fl">1L</span>, <span class="fl">2L</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"00"</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span><span class="op">)</span>, <span class="va">got</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

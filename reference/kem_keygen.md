@@ -73,5 +73,5 @@ identical(sent$shared, got)
 bad <- sent$ciphertext
 substring(bad, 1L, 2L) <- "00"
 identical(kem_decapsulate(key, bad), got)
-#> [1] TRUE
+#> [1] FALSE
 ```
