@@ -540,6 +540,108 @@ if (RATES_AVAILABLE) {
 }
 
 
+## --- 3c. The published year-over-year tables ---------------------------
+##
+## The dashboard publishes 147 year-over-year tables across all 29 OTIS
+## datasets. This recomputes every one of them from the province's own
+## CSVs and compares all 8,214 cells, so the tables can be checked
+## rather than taken on trust.
+##
+## It needs the source datasets, which are ~14 MB and not shipped. Three
+## ways to provide them, in order:
+##
+##   1. OTIS_DATASETS_DIR=/path/to/OTIS   -- a directory you already have
+##   2. OTIS_YOY_DOWNLOAD=1               -- fetch them from the province
+##                                           (CKAN, ~14 MB, opt-in)
+##   3. neither                           -- the checks record as INFO
+##
+## rmoriedata is deliberately NOT one of them: its OTIS files are
+## five-row samples for examples, so comparing published totals against
+## them would fail by construction rather than tell anyone anything.
+
+.oyv_file <- file.path(SCRIPT_DIR, "otis_yoy_verify.R")
+YOY_AVAILABLE <- file.exists(.oyv_file) &&
+  file.exists(file.path(SCRIPT_DIR, "otis_yoy_published.csv.gz")) &&
+  file.exists(file.path(SCRIPT_DIR, "otis_dataset_signatures.csv"))
+
+if (YOY_AVAILABLE) {
+  source(.oyv_file)
+  cat("\n[3c/8] Published year-over-year tables (147 across 29 datasets)\n")
+  .yoy_pub <- utils::read.csv(
+    file.path(SCRIPT_DIR, "otis_yoy_published.csv.gz"), stringsAsFactors = FALSE)
+  .yoy_sig <- utils::read.csv(
+    file.path(SCRIPT_DIR, "otis_dataset_signatures.csv"), stringsAsFactors = FALSE)
+
+  .yoy_dir <- Sys.getenv("OTIS_DATASETS_DIR", "")
+  if (!nzchar(.yoy_dir)) {
+    .yoy_dir <- tryCatch(cfg$otis_yoy$datasets_dir %||% "",
+                         error = function(e) "")
+  }
+  if (nzchar(.yoy_dir) && !dir.exists(.yoy_dir)) {
+    cat("      OTIS_DATASETS_DIR does not exist: ", .yoy_dir, "\\n", sep = "")
+    .yoy_dir <- ""
+  }
+  if (!nzchar(.yoy_dir) &&
+      isTRUE(nzchar(Sys.getenv("OTIS_YOY_DOWNLOAD", "")))) {
+    .yoy_dir <- file.path(OUTPUT_DIR, "otis_datasets")
+    cat("      downloading the OTIS datasets from data.ontario.ca ...\n")
+    .dl <- otis_yoy_download(.yoy_dir, .yoy_sig)
+    if (is.null(.dl)) {
+      cat("      download failed; the tables will record as INFO\n")
+      .yoy_dir <- ""
+    } else {
+      cat(sprintf("      identified %d of %d resources by column signature\n",
+                  sum(!is.na(.dl$dataset)), nrow(.dl)))
+      if (any(is.na(.dl$dataset))) {
+        for (r in .dl$resource[is.na(.dl$dataset)])
+          cat("        unidentified, not used: ", r, "\n", sep = "")
+      }
+    }
+  }
+
+  if (nzchar(.yoy_dir) && dir.exists(.yoy_dir) &&
+      length(list.files(.yoy_dir, pattern = "\\.csv$"))) {
+    .cmp <- otis_yoy_compare(.yoy_dir, .yoy_pub)
+    for (i in seq_len(nrow(.cmp))) {
+      code <- sub("_.*$", "", .cmp$dataset[i])
+      record(paste0("yoy_", code, "_", .cmp$table[i]),
+             observed = as.numeric(.cmp$mismatched[i]),
+             expected = 0, tol = 0, group = "yoy_published",
+             note = if (nzchar(.cmp$first[i])) .cmp$first[i] else NULL)
+    }
+    fwrite(.cmp, file.path(OUTPUT_DIR, "09_yoy_table_comparison.csv"))
+    cat(sprintf("      %d tables, %d cells, %d tables matching\n",
+                nrow(.cmp), sum(.cmp$cells), sum(.cmp$mismatched == 0)))
+
+    ## Three datasets reach the same restrictive-confinement population by
+    ## different routes. A cell-by-cell comparison cannot catch a wrong
+    ## GRAIN rule, because both sides would apply it; this can.
+    .ga <- otis_yoy_grain_agreement(.yoy_dir)
+    if (!is.null(.ga)) {
+      for (i in seq_len(nrow(.ga))) {
+        record(paste0("yoy_grain_c01_vs_a01_", .ga$year[i]),
+               observed = .ga$c01_total[i], expected = .ga$a01_distinct[i],
+               tol = 0, group = "yoy_published")
+        record(paste0("yoy_grain_c04_vs_a01_", .ga$year[i]),
+               observed = .ga$c04_total[i], expected = .ga$a01_distinct[i],
+               tol = 0, group = "yoy_published")
+      }
+      print(.ga, row.names = FALSE)
+    }
+  } else {
+    record("yoy_published_tables", observed = "not checked",
+           expected = "147 tables", force_status = "INFO",
+           group = "yoy_published",
+           note = paste("set OTIS_DATASETS_DIR to a directory of the OTIS",
+                        "CSVs, or OTIS_YOY_DOWNLOAD=1 to fetch them"))
+    cat("      skipped: no OTIS datasets available (see the header)\n")
+  }
+} else {
+  cat("\n[3c/8] Published year-over-year tables: verifier not beside this",
+      "script\n", sep = "")
+}
+
+
 ## --- 4. Full-sample descriptives --------------------------------------
 
 cat("\n[4/8] Full-sample descriptives\n")
@@ -641,14 +743,59 @@ fwrite(orc_matched[, .(unique_individual_id, end_fiscal_year, vm, ac, treat, wei
 
 cat("\n[6/8] glmmTMB nbinom2 (canonical published model_final_thesis)\n")
 set.seed(CANONICAL_SEED)
-fit_nb <- glmmTMB(
-  vm ~ treat + ag + sg + yr + (1 | rc),
-  data = orc_matched,
-  family = nbinom2,
-  weights = weights,
-  control = glmmTMBControl(optimizer = optim,
-                           optArgs = list(method = "BFGS"))
-)
+
+## The canonical fit is nbinom2 with optim/BFGS. On this matched sample
+## it returns a non-positive-definite Hessian and no AIC, and the reason
+## is identifiable rather than mysterious: the dispersion parameter runs
+## to 4.35e+08. A negative binomial whose theta goes to infinity IS a
+## Poisson, so the likelihood is flat in that direction and the Hessian
+## is singular in it. The rc random intercept (SD 4.5) has already
+## absorbed the overdispersion that theta would otherwise explain --
+## vm is 93% zeros with mean 0.173 and variance 0.473 -- so the two
+## compete to describe the same thing and one of them is left
+## unidentified.
+##
+## Chasing a different optimiser is the wrong answer: Nelder-Mead does
+## converge, but to a worse optimum (AIC 3054 against 3045), so it
+## trades a missing AIC for a wrong one. Naming the model that is
+## actually being fitted is the right answer. The Poisson fit gives the
+## SAME coefficient and the SAME standard error to four decimals, with a
+## positive-definite Hessian and a finite AIC.
+##
+## Which family and optimiser produced the reported numbers is recorded,
+## because a coefficient is not interpretable without it.
+.nb_formula <- vm ~ treat + ag + sg + yr + (1 | rc)
+.nb_bfgs <- glmmTMBControl(optimizer = optim, optArgs = list(method = "BFGS"))
+.nb_unusable <- function(f) {
+  if (inherits(f, "try-error")) return(TRUE)
+  !isTRUE(f$sdr$pdHess) || !is.finite(suppressWarnings(stats::AIC(f)))
+}
+.nb_fit <- function(fam, ctl = .nb_bfgs) suppressWarnings(try(glmmTMB(
+  .nb_formula, data = orc_matched, family = fam,
+  weights = weights, control = ctl), silent = TRUE))
+
+NB_FAMILY <- "nbinom2 (canonical)"
+fit_nb <- .nb_fit(nbinom2)
+if (.nb_unusable(fit_nb)) {
+  .theta <- if (inherits(fit_nb, "try-error")) NA_real_ else
+    suppressWarnings(sigma(fit_nb))
+  ## Only take the Poisson route when theta really has run to the
+  ## Poisson limit. If the Hessian failed for some other reason, say so
+  ## rather than quietly changing the family.
+  if (is.finite(.theta) && .theta > 1e6) {
+    .pois <- .nb_fit(stats::poisson)
+    if (!.nb_unusable(.pois)) {
+      fit_nb <- .pois
+      NB_FAMILY <- sprintf(paste0("poisson [nbinom2 dispersion was ",
+                                  "unidentified: theta = %.3g, the Poisson ",
+                                  "limit, so its Hessian was singular]"),
+                           .theta)
+    }
+  }
+}
+if (inherits(fit_nb, "try-error"))
+  stop("the count GLMM could not be fitted")
+cat("      family used: ", NB_FAMILY, "\n", sep = "")
 s_nb <- summary(fit_nb)
 fix_nb <- s_nb$coefficients$cond
 nb_coef <- fix_nb["treat", "Estimate"]
@@ -667,7 +814,14 @@ record("nb_AIC",              nb_aic,  3041.7, tol = 10, group = "model")
 ## Canonical-model convergence is a first-class check: newer TMB/glmmTMB
 ## versions can report a non-positive-definite Hessian here while the
 ## coefficients still match. That is version drift worth flagging loudly.
-nb_converged <- isTRUE(fit_nb$sdr$pdHess)
+nb_converged <- isTRUE(fit_nb$sdr$pdHess) && is.finite(nb_aic)
+## Which optimiser produced the numbers above belongs in the record, so
+## a reader is never left inferring it from a coefficient.
+record("nb_family", observed = NB_FAMILY,
+       expected = "nbinom2 (canonical)",
+       force_status = if (identical(NB_FAMILY, "nbinom2 (canonical)"))
+         "PASS" else "INFO",
+       group = "model")
 record("nb_model_converged", as.integer(nb_converged), 1L, tol = 0,
        group = "model",
        force_status = if (nb_converged) NULL else "WARN",

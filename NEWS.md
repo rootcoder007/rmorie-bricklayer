@@ -32,6 +32,67 @@ Like `yoy()`, the comparison period is matched on the period value and
 not on row position, so a missing year reports no comparison instead of
 silently comparing 2023 against 2020.
 
+## Verifying the published year-over-year tables
+
+The `otis-mrp` example now recomputes every published OTIS
+year-over-year table from the province's own CSVs and compares all of
+them: 147 tables across 29 datasets, 8,214 cells. Previously the
+example verified the models and the descriptives but said nothing about
+those tables, so a reader checking them had nothing to check against.
+
+The table definitions are a port of the generator that produced the
+published page, not a reimplementation from column names -- percent
+change rounded to one decimal and undefined when the earlier value is
+zero, shares against the column total, groups sorted with NA and empty
+dropped. Getting those subtly different would produce mismatches that
+look like data errors and are actually definition errors.
+
+It also checks something a cell-by-cell comparison cannot: three OTIS
+datasets reach the same restrictive-confinement population by different
+routes, and `a01` distinct individuals, `c01` totals and `c04` totals
+must agree per fiscal year (20,781 / 19,641 / 25,045). A wrong grain
+rule would move both sides of a cell comparison together and pass; this
+fails.
+
+The datasets are ~14 MB and are not shipped. They come from
+`OTIS_DATASETS_DIR` if you already have them, or `OTIS_YOY_DOWNLOAD=1`
+to fetch them from the province. rmoriedata is deliberately not a
+source: its OTIS files are five-row samples for examples, so comparing
+published totals against them would fail by construction rather than
+tell anyone anything.
+
+Files are named from the CKAN resource URL, which ends in the canonical
+filename for all 29. Nothing is inferred from the resource title, which
+would be guesswork -- "Segregation Placements - Maximum, Median and Mode
+Consecutive Durations by Region" is the file called
+`b04_segregation_placements_consecutive_durations_by_region`, and 15 of
+the 29 diverge that way. A column signature then confirms a downloaded
+file contains what its name claims, which catches the province
+reshuffling data behind a URL -- an error no comparison against
+published output could catch, because both sides would move together.
+
+## The count model no longer reports a missing AIC
+
+The canonical `glmmTMB` fit returned a non-positive-definite Hessian and
+no AIC, which the example flagged as a warning for several releases. The
+cause is identifiable: the negative-binomial dispersion runs to
+4.35e+08. A negative binomial whose theta goes to infinity IS a Poisson,
+so the likelihood is flat in that direction and the Hessian is singular
+in it. The `rc` random intercept, with a standard deviation of 4.5, has
+already absorbed the overdispersion theta would explain -- the outcome
+is 93% zeros with mean 0.173 and variance 0.473 -- so the two compete to
+describe the same variation and one is left unidentified.
+
+The fit now names the model it is actually fitting. The Poisson gives
+the same coefficient and the same standard error to four decimals, with
+a positive-definite Hessian and an AIC of 3045.3 against the published
+3041.7. Which family produced the numbers is recorded in the manifest,
+because a coefficient is not interpretable without it.
+
+A different optimiser was the wrong answer and was tried first:
+Nelder-Mead converges, but to a worse optimum (AIC 3054), trading a
+missing AIC for a wrong one.
+
 ## The otis-mrp example
 
 The example analysis had an absolute path to the author's own volume as
@@ -71,6 +132,20 @@ total, and the year-over-year change in the rate. Capsule bundles carry
 * `rate_change()` on non-numeric periods indexed with positions that
   could be zero, which returns a shorter vector and recycles wrong
   answers rather than reporting anything.
+
+* `analysis.R` called `say()`, which is defined only in the bundle's
+  `lib_interactive.R`. Run from a bundle it resolved; run directly from
+  a checkout -- which is how a reviewer runs it -- it died with
+  `Error in say(...)`. Both call sites use `cat()` now.
+* The example's default input was an absolute path inside the author's
+  own volume. It could not exist on a reviewer's machine and it
+  published a local directory layout. The input is searched for now.
+* Column signatures are compared after sorting with `method = "radix"`.
+  The default `sort()` uses the locale's collation, which orders
+  `Number_Of_Placements` before `NumberConsecutiveDays_Segregation`
+  while byte order does the reverse; one dataset of the 29 differs only
+  in that pair, so under the default sort its signature failed to match
+  itself and the file went unidentified.
 
 # rmoriebricklayer 0.4.6
 
