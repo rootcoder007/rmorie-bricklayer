@@ -117,6 +117,57 @@ yoy_summary(y)
 `cagr_pct` is the compound rate per period: applying it across the span
 returns `total_pct` exactly.
 
+## Rates, when the denominator moves too
+
+`yoy()` compares counts. A count is not comparable across places of
+different size, or across years whose populations differ, and the fix
+is a rate -- but a rate is not made trustworthy by being a rate.
+
+```{r}
+stops <- data.frame(
+  division = c("North", "South", "East"),
+  stops = c(412, 77, 3),
+  residents = c(120000, 41000, 9500))
+
+rate(stops, stops, residents, by = "division", per = "100k")
+```
+
+East's interval is wider than its own estimate. That is the honest
+reading of three events, and it is the reason the interval is printed
+beside the rate rather than left to the reader to imagine. The interval
+is the exact Poisson one, so a count of zero has a lower limit of
+exactly zero instead of a negative rate.
+
+A share is a different quantity. Its denominator is the total of the
+same events, not a population, so shares over a complete grouping sum
+to 100:
+
+```{r}
+share(stops, stops, by = "division")
+```
+
+"40% of stops" and "40 stops per 1,000 residents" are different claims,
+and a table that labels one as the other is wrong however carefully the
+arithmetic was done. That is why these are separate functions.
+
+For the change in a rate, both the counts and the denominators move:
+
+```{r}
+d <- data.frame(
+  year = rep(2021:2023, each = 2),
+  division = rep(c("North", "South"), 3),
+  stops = c(400, 70, 430, 66, 455, 61),
+  residents = c(120000, 41000, 122000, 41500, 125000, 42000))
+
+rate_change(d, stops, residents, year, by = "division", per = "100k")
+```
+
+North's count rose, and so did its population, so the rate change is
+smaller than the count change -- which is the whole reason to look at
+the rate. The interval conditions on the two counts and corrects for
+the ratio of the two exposures; with equal populations it reduces to
+exactly the conditional-binomial interval `yoy()` uses above.
+
 ## Output
 
 The same object writes to six formats. The format follows the file name.

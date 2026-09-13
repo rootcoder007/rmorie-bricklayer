@@ -1,3 +1,77 @@
+# rmoriebricklayer 0.4.7
+
+## Rates, shares and rate change
+
+A count is not comparable across places of different size or years of
+different population, so `rate()` divides counts by exposure and scales
+to a denominator -- `per = 1000`, `"10k"`, `"100k"`, `"1m"`, or any
+positive number. The interval is the exact Poisson one, matching
+`stats::poisson.test` to the last digit, so a count of zero gives a
+lower limit of exactly zero instead of a negative rate.
+
+`share()` is the other quantity people mean by "percentage": what
+fraction of a total each count is. Its denominator is the total of the
+same events, not a population, so shares over a complete grouping sum
+to 100. The interval is Wilson's rather than the normal approximation,
+which runs past the ends of the scale and reports negative percentages
+at exactly the small counts people reach for it.
+
+Labelling one of these as the other is the most common error in a
+published table, which is why they are separate functions with separate
+intervals rather than one function with a flag.
+
+`rate_change()` is the change in a rate between periods. This is not
+the percent change of two rates treated as measured numbers: both
+denominators move, and an interval that ignores them understates the
+uncertainty. It conditions on the total of the two counts and corrects
+for the exposure ratio -- `yoy()`'s exact conditional-binomial interval
+generalised to unequal denominators, and it reduces to exactly that
+interval when the two populations are equal, which is a test.
+
+Like `yoy()`, the comparison period is matched on the period value and
+not on row position, so a missing year reports no comparison instead of
+silently comparing 2023 against 2020.
+
+## The otis-mrp example
+
+The example analysis had an absolute path to the author's own volume as
+its default input. It could not exist on a reviewer's machine and it
+published a local directory layout, so the input is now searched for --
+command line, then `OTIS_INPUT`, then known filenames in the working
+directory and beside the script -- and the script stops with the exact
+command to run when it finds nothing.
+
+`lme4` and `DHARMa` were attached and recorded as dependencies but
+never called; both are gone. The header now also says which arm is
+canonical for what: `rmorie::morie_otis_irm_dml` is the preferred DML
+path and makes `DoubleML`, `mlr3`, `mlr3learners` and `lgr`
+unnecessary, while `MatchIt` and `glmmTMB` stay because the published
+numbers came from them and the script exists to let a reviewer check
+those numbers.
+
+The analysis now also writes `08_rates_and_yoy.csv`: movement rates per
+1,000 placements and per 1,000 person-years, each year's share of the
+total, and the year-over-year change in the rate. Capsule bundles carry
+`yoy.R` and `rate.R` so this works with nothing installed.
+
+## Fixes
+
+* A capsule bundle sources `json_native.R` with no compiled library
+  present, so calling the registered native decimal converter failed
+  with `object 'C_rmbl_strtod' not found` and every bundle run died.
+  The converter is used when it is there and R's own reader when it is
+  not.
+* `test-attest.R` compared the decimal converter against decimal
+  literals, which are converted by whatever C library R was built
+  against -- the thing under test. On macOS both sides moved together
+  and the test failed against the correct answer. Expected values are
+  now transported as the bytes of the double.
+* The version-drift test read `DESCRIPTION` from a source tree that
+  `R CMD check` does not provide, erroring on all five platforms.
+* `rate_change()` on non-numeric periods indexed with positions that
+  could be zero, which returns a shorter vector and recycles wrong
+  answers rather than reporting anything.
+
 # rmoriebricklayer 0.4.6
 
 Certificate path validation is now complete: the three things 0.4.5

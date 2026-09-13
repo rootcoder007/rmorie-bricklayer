@@ -109,6 +109,9 @@ cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_data_loader.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_synthetic.R"   "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
+# yoy.R carries .yoy_col, which rate.R uses, so the two travel together
+cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
 
