@@ -66,8 +66,8 @@ rate(x, population, per = 1000, conf_level = 0.95, min_count = 0, ...)
 ## Value
 
 A data frame of class `rmbl_rate` with the grouping columns, `count`,
-`population`, `rate`, `lower`, `upper` and `flag`, and a `rate`
-attribute recording the denominator and confidence level.
+`population`, `rate`, `lower`, `upper` and `flag`, plus a `rate`
+attribute recording the denominator and the confidence level.
 
 ## Details
 

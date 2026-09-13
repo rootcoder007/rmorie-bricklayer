@@ -113,9 +113,11 @@ nothing; published guidance often uses 5 or 10.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame of class <code>rmbl_rate</code> with the grouping columns,
-<code>count</code>, <code>population</code>, <code>rate</code>, <code>lower</code>, <code>upper</code> and <code>flag</code>, and a
-<code>rate</code> attribute recording the denominator and confidence level.</p>
+    <p>A data frame of class <code>rmbl_rate</code> with the
+grouping columns, <code>count</code>, <code>population</code>,
+<code>rate</code>, <code>lower</code>, <code>upper</code> and <code>flag</code>, plus a
+<code>rate</code> attribute recording the denominator and
+the confidence level.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -126,15 +128,18 @@ gives a rate with an interval several times its own width, and the
 interval here is the one that says so. It is the exact Poisson
 interval, computed through the gamma relation, so a count of zero has
 a lower limit of exactly zero rather than a negative number.</p>
-<p><code>per</code> takes a number, or one of <code>"1k"</code>, <code>"10k"</code>, <code>"100k"</code>, <code>"1m"</code>,
-because a denominator mistyped by a factor of ten is invisible once
-it reaches a table.</p>
+<p><code>per</code> takes a number, or one of <code>"1k"</code>,
+<code>"10k"</code>, <code>"100k"</code>, <code>"1m"</code>, because a
+denominator mistyped by a factor of ten is
+invisible once it reaches a table.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="share.html">share()</a></code> for a percentage of a total, <code><a href="rate_change.html">rate_change()</a></code> for
-the change in a rate between periods, <code><a href="sir.html">sir()</a></code> for a rate compared
-against an expected count rather than a population.</p></div>
+    <div class="dont-index"><p><code><a href="share.html">share()</a></code> for a percentage of a
+total, <code><a href="rate_change.html">rate_change()</a></code> for the change in a
+rate between periods, <code><a href="sir.html">sir()</a></code> for a rate
+compared against an expected count rather
+than a population.</p></div>
     </div>
 
     <div class="section level2">

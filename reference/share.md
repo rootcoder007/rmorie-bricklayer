@@ -46,8 +46,8 @@ share(x, total = NULL, conf_level = 0.95, ...)
 ## Value
 
 A data frame of class `rmbl_share` with the grouping columns, `count`,
-`total`, `share`, `lower` and `upper`, and a `share` attribute recording
-the denominator and confidence level.
+`total`, `share`, `lower` and `upper`, plus a `share` attribute
+recording the denominator and the confidence level.
 
 ## Details
 
