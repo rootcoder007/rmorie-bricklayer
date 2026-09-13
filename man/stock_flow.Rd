@@ -4,7 +4,15 @@
 \alias{stock_flow}
 \title{Stock and flow side by side, with the decomposition}
 \usage{
-stock_flow(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05)
+stock_flow(
+  days,
+  people,
+  period = NULL,
+  t = 365,
+  exposure = NULL,
+  per = 1e+05,
+  baseline = c("first", "previous")
+)
 }
 \arguments{
 \item{days}{Person-days, one element per period.}
@@ -13,12 +21,18 @@ stock_flow(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05)
 
 \item{period}{Optional labels for the periods.}
 
-\item{t}{Length of each period in days. Default 365.}
+\item{t}{Length of each period in days, one value or one per period.
+Default 365. \code{\link[=period_days]{period_days()}} turns dates into this.}
 
 \item{exposure}{Optional population to express rates against, one per
 period; for example provincial residents.}
 
 \item{per}{Rate denominator when \code{exposure} is given. Default 100000.}
+
+\item{baseline}{What the change columns compare against: \code{"first"}
+(the default) measures every period against the first, which is
+what a report on a whole window wants; \code{"previous"} measures each
+period against the one before it, which is what a series wants.}
 }
 \value{
 A data frame of class \code{rmbl_stock_flow}, one row per period:

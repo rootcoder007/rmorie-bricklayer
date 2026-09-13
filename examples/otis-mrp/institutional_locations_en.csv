@@ -1,0 +1,36 @@
+﻿Institution,Facility_Type,Sex,Region,Street,City,Province,Country,Postal_Code,Latitude,Longitude,Operating_Status,Year_Opened,Year_Closed, Operational_Capacity 
+Algoma Treatment and Remand Centre,Treatment Centre,Females and Males,Northern,800 Great Northern Rd,Sault Ste. Marie,Ontario,Canada,P6B 0B5,46.55004065,-84.31548756,Open,1990,,133
+Brantford Jail,Jail,Males,Western,105 Market St.,Brantford,Ontario,Canada,N3T 6A9,43.14203958,-80.26334016,Closed,1852,2017,
+Brockville Jail,Jail,Males,Eastern,10 Wall Street,Brockville,Ontario,Canada,K6V 4R9,44.591072,-75.68556,Open,1842,,48
+Central East Correctional Centre,Correctional Centre,Females and Males,Eastern,541 Highway 36,Lindsay,Ontario,Canada,K9V 4S6,44.379267,-78.730342,Open,2002,,"1,016"
+Central North Correctional Centre,Correctional Centre,Females and Males,Western,1501 Fuller Avenue,Penetanguishene,Ontario,Canada,L9M 2H4,44.799251,-79.923531,Open,2001,,"1,060"
+Chatham Jail,Jail,Males,Western,17 Seventh St.,Chatham,Ontario,Canada,N7M 4J9,42.40955164,-82.17974788,Closed,1849,2014,
+Elgin-Middlesex Detention Centre,Detention Centre,Females and Males,Western,711 Exeter Road,London,Ontario,Canada,N6E 1L3,42.920803,-81.224303,Open,1977,,388
+Fort Frances Jail,Jail,Females and Males,Northern,310 Nelson Street,Fort Frances,Ontario,Canada,P9A 1B1,48.608085,-93.3948,Open,1907,,22
+Hamilton-Wentworth Detention Centre,Detention Centre,Females and Males,Central,165 Barton Street East,Hamilton,Ontario,Canada,L8L 2W6,43.263267,-79.858734,Open,1978,,466
+Kenora Jail,Jail,Females and Males,Northern,1430 River Street,Kenora,Ontario,Canada,P9N 1K5,49.760542,-94.465081,Open,1926,,196
+Maplehurst Correctional Complex,Correctional Centre,Males,Central,661 Martin Street,Milton,Ontario,Canada,L9T 2Y3,43.525747,-79.898341,Open,1975,,944
+Mimico Correctional Centre,Correctional Centre,Males,Toronto,130 Horner Avenue,Toronto,Ontario,Canada,M8Z 4Y1,43.61208534,-79.51627636,Closed,1952,2012,
+Monteith Correctional Complex,Correctional Centre,Females and Males,Northern,3052 Rese Road,Monteith,Ontario,Canada,P0K 1P0,48.641872,-80.678001,Open,1965,,222
+Monteith Jail,Jail,Females and Males,Northern,3052 Rese Road,Monteith,Ontario,Canada,P0K 1P0,48.64171642,-80.67793692,Closed,1938,2014,
+Niagara Detention Centre,Detention Centre,Females and Males,Central,1355 Uppers Lane Hwy 58,Thorold,Ontario,Canada,L2V 4A6,43.087112,-79.196749,Open,1973,,240
+North Bay Jail,Jail,Females and Males,Northern,2550 Trout Lake Road,North Bay,Ontario,Canada,P1B 7S7,46.32402,-79.433549,Open,1930,,104
+Ontario Correctional Institute,Correctional and Treatment Centre,Males,Central,109 McLaughin Road South,Brampton,Ontario,Canada,L6Y 2C8,43.669681,-79.765659,Open,1973,,98
+Ottawa-Carleton Detention Centre,Detention Centre,Females and Males,Eastern,2244 Innes Road,Ottawa,Ontario,Canada,K1B 4C4,45.42433,-75.579237,Open,1972,,484
+Owen Sound Jail,Jail,Females and Males,Western,1237 3rd Ave E,Owen Sound,Ontario,Canada,N4K 2L6,44.57183421,-80.93874169,Closed,1854,2012,
+Quinte Detention Centre,Detention Centre,Females and Males,Eastern,89 Richmond Boulevard ,Napanee,Ontario,Canada,K7R 3S1,44.263144,-76.960813,Open,1971,,226
+Sarnia Jail,Jail,Females and Males,Western,700 North Christina Street ,Sarnia,Ontario,Canada,N7V 3C2,42.989253,-82.394834,Open,1961,,92
+South West Detention Centre,Detention Centre,Females and Males,Western,4819 8th Concession Road,Maidstone,Ontario,Canada,N0R 1K0,42.250031,-82.9497,Open,2014,,262
+St. Lawrence Valley Correctional and Treatment Centre,Correctional and Treatment Centre,Males,Eastern,1804 Hwy 2 E,Brockville,Ontario,Canada,K6V 7N2,44.60663131,-75.66683139,Open,2003,,100
+Stratford Jail,Jail,Males,Western,30 St. Andrew Street,Stratford,Ontario,Canada,N5A 1A3,43.371247,-80.985895,Open,1901,,50
+Sudbury Jail,Jail,Females and Males,Northern,181 Elm Street West,Sudbury,Ontario,Canada,P3C 1T8,46.492809,-81.002629,Open,1929,,149
+Thunder Bay Correctional Centre,Correctional Centre,Females and Males,Northern,2351 Highway 61 South,Thunder Bay ,Ontario,Canada,P7C 4Y4,48.310749,-89.377572,Open,1911,,194
+Thunder Bay Jail,Jail,Males,Northern,"285 MacDougall Street, P.O.Box 2806 ",Thunder Bay,Ontario,Canada,P7A 2K6,48.452287,-89.199776,Open,1926,,130
+Toronto East Detention Centre,Detention Centre,Males,Toronto,55 Civic Road,Scarborough,Ontario,Canada,M1L 2K9,43.727274,-79.281333,Open,1977,,359
+Toronto Intermittent Centre,Detention Centre,Males,Toronto,160 Horner Avenue,Toronto,Ontario,Canada,M8Z 0C2,43.610067,-79.516187,Closed,2014,2020,
+Toronto Jail,Jail,Males,Toronto,550 Gerrard St. E,Toronto,Ontario,Canada,M4M 2B5,43.66605398,-79.35425727,Closed,1864,2014,
+Toronto South Detention Centre,Detention Centre,Males,Toronto,160 Horner Avenue,Toronto,Ontario,Canada,M8Z 0C2,43.610067,-79.516187,Open,2014,,"1,294"
+Toronto West Detention Centre,Detention Centre,Males,Toronto,111 Disco Road,Toronto,Ontario,Canada,M9W 1M3,43.69948173,-79.59789473,Closed,1976,2014,
+Vanier Centre for Women,Correctional and Treatment Centre,Females,Central,655 Martin Street,Milton,Ontario,Canada,L9T 5E6,43.526838,-79.898405,Open,2003,,273
+Walkerton Jail,Jail,Females and Males,Western,209 Cayley St.,Walkerton,Ontario,Canada,N0G 2V0,44.13099746,-81.15004226,Closed,1866,2012,
+Windsor Jail,Jail,Females and Males,Western,378 Brock St.,Windsor,Ontario,Canada,N9C 3Y6,42.29998309,-83.07552335,Closed,1925,2014,

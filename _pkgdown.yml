@@ -243,6 +243,8 @@ reference:
       - admissions
       - adp_from_counts
       - stock_flow
+      - stay_summary
+      - period_days
   - title: Rates, shares and rate change
     desc: >
       A count is not comparable across places of different size or years of

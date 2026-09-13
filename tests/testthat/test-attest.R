@@ -316,12 +316,23 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
   expect_identical(.rmbl_strtod("1e23"), 1e23)
   expect_identical(.rmbl_strtod("-2.5"), -2.5)
   expect_identical(.rmbl_strtod("0"), 0)
-  expect_true(is.na(.rmbl_strtod("not a number")))
+  # The two paths differ on unparseable input, and that difference is
+  # worth stating rather than silencing: the fallback is as.numeric(),
+  # which warns as it coerces, while the native converter returns NA
+  # without a word. A test that suppressed the warning would hide a
+  # real behavioural divergence between the path the package takes and
+  # the path a bundle takes.
+  expect_warning(fallback_na <- .rmbl_strtod("not a number"),
+                 "NAs introduced by coercion")
+  expect_true(is.na(fallback_na))
 
-  # and the native path, restored, agrees with it on ordinary values
+  # and the native path, restored, agrees with it on ordinary values and
+  # is silent on the input that made the fallback warn
   cache$strtod <- TRUE
   expect_identical(.rmbl_strtod("0.1"), 0.1)
   expect_identical(.rmbl_strtod("1e23"), 1e23)
+  expect_silent(native_na <- .rmbl_strtod("not a number"))
+  expect_true(is.na(native_na))
 })
 
 test_that("the reader is chosen once, not re-decided per number", {
