@@ -157,6 +157,18 @@ and CRC-32 (ITU V.42). The statistics are anchored on base R
 [`stats::qpois`](https://rdrr.io/r/stats/Poisson.html)) or on closed
 forms recomputed by hand.
 
+The worked example in `examples/otis-mrp/` goes further than checking
+the package: it recomputes **147 published year-over-year tables across
+29 datasets — 8,214 cells** — from the source data and compares every
+one, alongside the descriptives, the matched sample and the causal
+estimates. It also checks what a cell-by-cell comparison cannot: three
+of those datasets reach the same population by different routes, so a
+wrong grain rule would move both sides of a cell comparison together and
+pass, while `a01` distinct individuals against `c01` and `c04` totals
+fails. The datasets are not shipped — point `OTIS_DATASETS_DIR` at a
+copy you have, or set `OTIS_YOY_DOWNLOAD=1` to fetch them from the
+province.
+
 The compiled kernels are published for `LinkingTo`, and a consumer
 package is built **and run** against `inst/include/rmoriebricklayer.h`
 as part of the test suite — a signature mismatch is a compile error,
