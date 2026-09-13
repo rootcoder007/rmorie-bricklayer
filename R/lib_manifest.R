@@ -187,16 +187,15 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' JSON. The digest is stable across the assembly order, across
 #' `pretty`, and across a round trip through a file.
 #'
-#' On the limits of decimal. Seventeen significant digits recover any
+#' Full precision means full precision on every platform, which took more
+#' than writing enough digits. Seventeen significant digits recover any
 #' double exactly, but only through a reader that converts decimal to
-#' binary with correct rounding, and not every platform's does. On macOS
-#' arm64 (R 4.6.0) reading the correct decimal for
-#' `.Machine$double.xmax` gives `Inf`, and magnitudes around
-#' 1e100 and beyond can lose low bits when the text was written on another
-#' machine. The digest itself is unaffected, since it is taken over the
-#' text and the text is identical everywhere; but a caller who needs a
-#' value at the extreme ends of the double range to survive a trip between
-#' machines should record its bits rather than rely on its decimal.
+#' binary with correct rounding, and not every C library does -- macOS
+#' arm64 reads the correct decimal for the largest double as infinity. So
+#' this package converts decimals itself rather than asking the platform,
+#' in integer arithmetic with a remainder that decides the rounding. A
+#' manifest written on one machine reads back bit-identically on another,
+#' and a caller does nothing to get that.
 #'
 #' @param manifest A manifest, as from
 #' [make_manifest()].
