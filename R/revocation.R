@@ -152,8 +152,15 @@ revocation_fetch <- function(path, timeout = 10) {
 .rmbl_http_der <- function(url, timeout = 10) {
   tmp <- tempfile()
   on.exit(unlink(tmp), add = TRUE)
+  # The fallback URL goes in a variable rather than inline. R's own
+  # checkFF, which walks .Call arguments during R CMD check, does
+  # `as.character()` on each one and tests the result against "..." --
+  # a literal NA_character_ makes that comparison NA and the check
+  # errors out, which surfaces as a NOTE about foreign function calls
+  # that says nothing about the call being wrong.
+  no_fallback <- NA_character_
   got <- tryCatch(
-    .Call(C_rmbl_fetch_fallback, url, NA_character_, tmp,
+    .Call(C_rmbl_fetch_fallback, url, no_fallback, tmp,
           as.integer(timeout)),
     error = function(e) NULL)
   if (is.null(got) || !file.exists(tmp) || file.size(tmp) == 0) {
