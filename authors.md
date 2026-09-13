@@ -8,7 +8,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/inst/CITATION)
+[`inst/CITATION`](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/inst/CITATION)
 
 Ruhela V (2026). *rmoriebricklayer: Reproducible Data Capsules with
 Provenance and Fallback*. R package version 0.4.7,
