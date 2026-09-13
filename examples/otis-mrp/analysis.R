@@ -611,15 +611,33 @@ if (YOY_AVAILABLE) {
     }
     fwrite(.cmp, file.path(OUTPUT_DIR, "09_yoy_table_comparison.csv"))
 
-    ## --- the published RATE tables, both denominators ----------------
-    ## A count is not comparable across years: the custody population
-    ## grew from 33,571 to 43,481 between FY2023 and FY2025, so a rising
-    ## count can mean a falling rate. Each of the 108 published rate
-    ## tables is recomputed here against the same two exposures -- the
-    ## prison population the dataset covers (per 1,000, from c01) and
-    ## Ontario residents (per 100,000, StatCan 17-10-0009-01).
+    ## --- the published RATE tables, OPT-IN ---------------------------
+    ##
+    ## Off by default, and not because it fails: it verified all 108
+    ## published rate tables, 15,831 cells, when last run. It is held
+    ## back because the rates need a decision this example is the wrong
+    ## place to make.
+    ##
+    ## A group row divides that group's count by the WHOLE yearly
+    ## population, so it states how much the group contributes to the
+    ## overall rate, not the rate among its own members: men's
+    ## placements over the whole restrictive-confinement population is
+    ## not a rate for men. c01 carries the population BY GENDER, so a
+    ## matched denominator exists for some tables and not others, and
+    ## choosing per table is its own piece of work. Where the measure
+    ## counts recurring events rather than people, the per-1,000 figure
+    ## also exceeds 1,000, which reads wrongly however it is labelled.
+    ##
+    ## Section 3b above already gives this example the rates it needs,
+    ## and section 3c gives counts, shares and percentage change for
+    ## every published table. So the machinery is kept and exercised on
+    ## request rather than deleted:
+    ##
+    ##     OTIS_RATES_VERIFY=1 Rscript analysis.R <input> <outdir>
+    ##
     .rates_pub_f <- file.path(SCRIPT_DIR, "otis_rates_published.csv.gz")
-    if (file.exists(.rates_pub_f)) {
+    if (nzchar(Sys.getenv("OTIS_RATES_VERIFY", "")) &&
+        file.exists(.rates_pub_f)) {
       .rpub <- utils::read.csv(.rates_pub_f, stringsAsFactors = FALSE)
       .rcmp <- otis_rates_compare(.yoy_dir, .rpub)
       if (!is.null(.rcmp) && nrow(.rcmp)) {

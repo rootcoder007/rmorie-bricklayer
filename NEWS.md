@@ -71,11 +71,25 @@ file contains what its name claims, which catches the province
 reshuffling data behind a URL -- an error no comparison against
 published output could catch, because both sides would move together.
 
-## Rate tables, verified against both exposures
+## Rate tables, verified against both exposures -- opt-in
 
-The example now also verifies the 108 published rate tables across 24
-OTIS datasets -- 15,831 cells, all of them. Each count is expressed
-against two exposures:
+The example can verify the 108 published rate tables across 24 OTIS
+datasets, 15,831 cells, and does so on request:
+
+    OTIS_RATES_VERIFY=1 Rscript analysis.R <input> <outdir>
+
+It is off by default, and not because it fails -- it passes all 108.
+It is held back because a group row in those tables divides that group's
+count by the WHOLE yearly population, so it states how much the group
+contributes to the overall rate rather than the rate among its own
+members: men's placements over the whole restrictive-confinement
+population is not a rate for men. c01 carries the population by gender,
+so a matched denominator exists for some tables and not others, and
+choosing per table is its own piece of work. The example already has
+the rates it needs, and the year-over-year tables already give counts,
+shares and percentage change for every published table.
+
+Each count is expressed against two exposures:
 
 * the yearly total of the prison population the dataset covers, per
   1,000, taken from `c01`, which states all three regime totals
