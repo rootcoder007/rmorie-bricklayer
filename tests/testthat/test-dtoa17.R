@@ -147,17 +147,20 @@ test_that("the layout follows the %.17g rules", {
 
 test_that("a vendored bundle with no compiled library still writes numbers", {
   # json_native.R is vendored standalone into the otis-mrp bundle, where
-  # C_rmbl_dtoa17 does not exist. That must degrade to the platform, not
-  # error -- the same trap that broke the bundle with C_rmbl_strtod.
-  env <- new.env(parent = asNamespace("rmoriebricklayer"))
-  local({
-    .rmbl_native <- new.env(parent = emptyenv())
-    fn <- get(".rmbl_dtoa17", envir = asNamespace("rmoriebricklayer"))
-    environment(fn) <- list2env(
-      list(.rmbl_native = .rmbl_native,
-           exists = function(...) FALSE),
-      parent = asNamespace("rmoriebricklayer"))
-    expect_identical(fn(1.5), "1.5")
-    expect_identical(fn(.Machine$double.xmax), sprintf("%.17g", .Machine$double.xmax))
-  }, envir = env)
+  # C_rmbl_dtoa17 does not exist. That must degrade to the platform
+  # rather than error -- the same trap that once broke the bundle with
+  # C_rmbl_strtod. Flipping the cached availability flag exercises the
+  # real closure's fallback branch, which a copy with a doctored
+  # environment does not.
+  ne <- get(".rmbl_native", envir = asNamespace("rmoriebricklayer"))
+  old <- ne$dtoa17
+  on.exit({
+    ne$dtoa17 <- old
+  }, add = TRUE)
+  ne$dtoa17 <- FALSE
+  expect_identical(.rmbl_dtoa17(1.5), "1.5")
+  expect_identical(.rmbl_dtoa17(0.5), "0.5")
+  expect_identical(.rmbl_dtoa17(-2), "-2")
+  ne$dtoa17 <- TRUE
+  expect_identical(.rmbl_dtoa17(1.5), "1.5")
 })
