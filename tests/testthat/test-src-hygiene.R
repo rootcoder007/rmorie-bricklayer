@@ -205,10 +205,15 @@ test_that("the version is not stated twice with two different answers", {
   # nothing compared it to DESCRIPTION -- the sort of staleness that
   # only a reader notices, and only after it has been wrong for a
   # while. This is the comparison.
+  # R CMD check runs the tests from the installed package, where this
+  # source tree is not present -- reading DESCRIPTION from it errored on
+  # every platform. The version is available without a source tree; the
+  # files being compared against it are not, so they gate the test.
   root <- test_path("..", "..")
-  desc <- read.dcf(file.path(root, "DESCRIPTION"))[1, "Version"]
   cff <- file.path(root, "CITATION.cff")
-  skip_if_not(file.exists(cff), "no CITATION.cff in this tree")
+  skip_if_not(file.exists(cff) && file.exists(file.path(root, "NEWS.md")),
+              "not running from a source tree")
+  desc <- as.character(utils::packageVersion("rmoriebricklayer"))
   txt <- readLines(cff, warn = FALSE)
   line <- grep("^version:", txt, value = TRUE)
   expect_length(line, 1L)
