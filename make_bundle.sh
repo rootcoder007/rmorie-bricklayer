@@ -112,12 +112,15 @@ cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
 # yoy.R carries .yoy_col, which rate.R uses, so the two travel together
 cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
+# custody.R carries the stock and flow measures section 3e uses
+cp "${BRICKLAYER_ROOT}/R/custody.R"        "${STAGE}/"
 # the published year-over-year tables, their column signatures, and
 # the verifier that recomputes them from the province's own CSVs
 cp "${PROJECT_DIR}/otis_yoy_verify.R"        "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_yoy_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_rates_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_dataset_signatures.csv" "${STAGE}/" 2>/dev/null || true
+cp "${PROJECT_DIR}/institutional_locations_en.csv" "${STAGE}/" 2>/dev/null || true
 cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
 
