@@ -64,7 +64,8 @@ if (HELP_MODE) {
 LIB_DIR <- script_dir  # libs may be next to setup_and_run.R after bundle build
 for (lib in c("json_native.R", "sha256_native.R",
               "lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
-              "lib_synthetic.R", "lib_manifest.R")) {
+              "lib_synthetic.R", "lib_manifest.R",
+              "yoy.R", "rate.R")) {
   lib_path <- file.path(LIB_DIR, lib)
   if (!file.exists(lib_path))
     stop("Required library not found: ", lib_path)

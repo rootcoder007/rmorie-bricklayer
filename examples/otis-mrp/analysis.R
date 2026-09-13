@@ -30,11 +30,44 @@
 ##              because they're pre-computed in the .RData (see paper §5).
 ##
 ##  DEFAULTS:
-##    Input:   /Volumes/VSR/rootcoderfiles/OTIS-RC/correctional_stats_report_environment1b.RData
+##    Input:   searched for, not assumed -- see INPUT DISCOVERY below
 ##    Output:  ./otis_MRP_results/  (CSVs + manifest.json)
 ##
+##  INPUT DISCOVERY, in order:
+##    1. the first command-line argument
+##    2. $OTIS_INPUT
+##    3. a known input filename in the working directory
+##    4. a known input filename beside this script
+##  If none is found the script stops and says what to pass. It does NOT
+##  fall back to an absolute path: the previous default pointed inside
+##  the author's own volume, so it could never exist on a reviewer's
+##  machine and published a local directory layout in a public
+##  repository.
+##
 ##  Dependencies (CRAN):
-##    data.table, MatchIt, glmmTMB, lme4, DHARMa, Hmisc, jsonlite
+##    data.table, MatchIt, glmmTMB (with TMB), Hmisc, jsonlite
+##
+##    lme4 and DHARMa were listed here and loaded but never called;
+##    they are gone. DoubleML, mlr3, mlr3learners and lgr are OPTIONAL
+##    and only for the independent DML recompute: without them those
+##    checks record as INFO instead of failing.
+##
+##  WHERE rmorie REPLACES A CRAN PACKAGE, AND WHERE IT DOES NOT:
+##    DML:       rmorie::morie_otis_irm_dml is the PREFERRED path and runs
+##               in seconds; the DoubleML/mlr3 route is the fallback and
+##               takes about 24 minutes for the same estimate. If rmorie
+##               is installed you do not need DoubleML, mlr3, mlr3learners
+##               or lgr at all.
+##    Matching:  MatchIt is still canonical here. rmorie has native
+##               matching (morie_otis_psm and the morie_matching_* family)
+##               but the published matched sample came from MatchIt.
+##    GLMM:      glmmTMB nbinom2 is still canonical here, for the same
+##               reason (rmorie's morie_otis_irr_glmm_vm exists).
+##    These two stay because this script's job is to let a reviewer
+##    verify PUBLISHED numbers. Swapping the estimator that produced them
+##    would change what is being checked, which is the opposite of a
+##    cross-check: agreement between two implementations is evidence,
+##    and replacing one with the other throws that evidence away.
 ##
 ##  Version: 2.1 (2026-06-23) — added CSV-direct mode (reads public OGL-Ontario
 ##                              dataset directly from data.ontario.ca format)
@@ -49,7 +82,6 @@ suppressPackageStartupMessages({
   library(data.table)
   library(MatchIt)
   library(glmmTMB)
-  library(lme4)
   library(Hmisc)
   library(jsonlite)
 })
@@ -61,23 +93,71 @@ set.seed(CANONICAL_SEED)
 
 ## CLI: input path + output dir
 args <- commandArgs(trailingOnly = TRUE)
-INPUT_PATH <- if (length(args) >= 1) args[1] else
-  "/Volumes/VSR/rootcoderfiles/OTIS-RC/correctional_stats_report_environment1b.RData"
+
+## Where this script lives, so an input sitting beside it is found.
+## Works under Rscript, under R CMD BATCH, and when sourced.
+.otis_script_dir <- function() {
+  a <- commandArgs(trailingOnly = FALSE)
+  f <- sub("^--file=", "", a[grepl("^--file=", a)])
+  if (length(f) && nzchar(f[1L])) return(dirname(normalizePath(f[1L])))
+  if (!is.null(sys.frames()) && !is.null(attr(body(sys.function(1L)), "srcfile")))
+    return(dirname(normalizePath(attr(body(sys.function(1L)), "srcfile")$filename)))
+  getwd()
+}
+SCRIPT_DIR <- tryCatch(.otis_script_dir(), error = function(e) getwd())
+
+## The input is searched for, never assumed. An absolute default is
+## wrong twice over: it cannot exist on anyone else's machine, and it
+## states the author's directory layout in a public repository.
+.OTIS_INPUT_NAMES <- c("correctional_stats_report_environment1b.RData",
+                       "otis_input.RData", "otis_input.csv",
+                       "input.csv")
+.otis_find_input <- function() {
+  cand <- c(Sys.getenv("OTIS_INPUT", ""),
+            file.path(getwd(), .OTIS_INPUT_NAMES),
+            file.path(SCRIPT_DIR, .OTIS_INPUT_NAMES))
+  cand <- cand[nzchar(cand)]
+  hit <- cand[file.exists(cand)]
+  if (!length(hit)) {
+    stop("No input data found. Pass it explicitly:\n",
+         "    Rscript analysis.R <path-to-input> [output-dir]\n",
+         "  or set OTIS_INPUT=<path>, or put one of these beside the\n",
+         "  script or in the working directory:\n    ",
+         paste(.OTIS_INPUT_NAMES, collapse = "\n    "),
+         "\n  Accepted formats: .RData (author-prepared workspace, all 36\n",
+         "  cross-checks) or .csv (public OTIS A01RCDD dataset, 28\n",
+         "  cross-checks). See the header of this file for the source URL.",
+         call. = FALSE)
+  }
+  normalizePath(hit[1L])
+}
+## Synthetic-data mode is signalled by setup_and_run.R through the
+## environment, and has no input file to find, so it has to be known
+## before the search runs.
+SYNTHETIC_MODE <- isTRUE(nzchar(Sys.getenv("BRICKLAYER_SYNTHETIC", "")) ||
+                           nzchar(Sys.getenv("OTIS_SYNTHETIC", "")))
+INPUT_PATH <- if (length(args) >= 1) {
+  args[1]
+} else if (SYNTHETIC_MODE) {
+  ""
+} else {
+  .otis_find_input()
+}
 OUTPUT_DIR  <- if (length(args) >= 2) args[2] else
   file.path(getwd(), "otis_MRP_results")
 
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 ## Detect input mode by file extension
-INPUT_MODE <- if (grepl("\\.csv$", INPUT_PATH, ignore.case = TRUE)) "csv" else
+INPUT_MODE <- if (SYNTHETIC_MODE && !nzchar(INPUT_PATH)) "synthetic" else
+              if (grepl("\\.csv$", INPUT_PATH, ignore.case = TRUE)) "csv" else
               if (grepl("\\.RData$", INPUT_PATH, ignore.case = TRUE)) "rdata" else
               stop("Input must be .csv or .RData — got: ", INPUT_PATH)
 
-## Synthetic-data mode is signalled by setup_and_run.R via env var.
-## In this mode, all cross-checks are recorded as INFO (not PASS/DIFFER)
-## because the data is randomly generated and not expected to match
-## published values.
-SYNTHETIC_MODE <- isTRUE(nzchar(Sys.getenv("BRICKLAYER_SYNTHETIC", "")) || nzchar(Sys.getenv("OTIS_SYNTHETIC", "")))
+## SYNTHETIC_MODE is set above, before the input search, because that
+## search has nothing to find in this mode. In it every cross-check is
+## recorded as INFO rather than PASS/DIFFER: the data is randomly
+## generated and is not expected to match published values.
 if (SYNTHETIC_MODE) {
   INPUT_MODE <- "synthetic"
 }
@@ -235,8 +315,11 @@ manifest <- list(
     ## produced on specific TMB/glmmTMB versions, and drift here explains
     ## most convergence/AIC differences reviewers will see.
     r_package_versions = {
-      pkgs <- c("data.table", "MatchIt", "glmmTMB", "TMB", "lme4",
-                "DHARMa", "Hmisc", "jsonlite", "digest")
+      ## Only packages this script actually calls. glmmTMB and TMB
+      ## stay because the reference numbers move with their versions;
+      ## lme4 and DHARMa were recorded here and never used.
+      pkgs <- c("data.table", "MatchIt", "glmmTMB", "TMB",
+                "Hmisc", "jsonlite", "digest")
       vers <- lapply(pkgs, function(p)
         tryCatch(as.character(utils::packageVersion(p)),
                  error = function(e) NA_character_))
@@ -347,6 +430,114 @@ record("total_placements_sum",     sum(orc$np),           1933327, tol = 0, grou
 fwrite(orc[, .(unique_individual_id, end_fiscal_year, vm, ac, np,
                gender, age, yr, rc, treat, sg, ag)],
        file.path(OUTPUT_DIR, "01_orc_person_year.csv"))
+
+
+## --- 3b. Rates and year-over-year change ------------------------------
+##
+## vm is vm_within + vm_across: MOVEMENTS, within and across
+## facilities. A count of movements per year is not comparable across
+## years, because the number of placements they could have occurred in
+## moves too. These are the movement rates, with the exact Poisson
+## interval, and the
+## change between consecutive years with the exact conditional interval
+## for a rate ratio -- which is not the percent change of two rates
+## treated as measured numbers, since both denominators move.
+##
+## Descriptive output only: these are NOT cross-checks against
+## published values, so they add nothing to the PASS/DIFFER counts.
+
+## rate()/rate_change()/share() come from the installed package when
+## there is one, and from the copies a bundle vendors beside this
+## script when there is not.
+## An INSTALLED package is not the same as one that has these
+## functions: requireNamespace() succeeds against any version, and an
+## older bricklayer satisfies it while exporting no rate() at all --
+## which is precisely what a reviewer with an earlier version
+## installed would hit. So ask for the functions, not the namespace.
+.otis_pkg_fns <- function(names) {
+  if (!requireNamespace("rmoriebricklayer", quietly = TRUE)) return(NULL)
+  ns <- asNamespace("rmoriebricklayer")
+  if (!all(vapply(names, exists, logical(1), envir = ns,
+                  inherits = FALSE))) {
+    return(NULL)
+  }
+  stats::setNames(lapply(names, get, envir = ns), names)
+}
+
+RATES_AVAILABLE <- FALSE
+.rate_fns <- .otis_pkg_fns(c("rate", "share", "rate_change"))
+if (!is.null(.rate_fns)) {
+  rate        <- .rate_fns$rate
+  share       <- .rate_fns$share
+  rate_change <- .rate_fns$rate_change
+  RATES_AVAILABLE <- TRUE
+} else {
+  ## Beside the script is where a bundle puts them; ../../R is the
+  ## repository layout, for running this file straight from a checkout.
+  for (.f in c("yoy.R", "rate.R")) {
+    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+      .fp <- file.path(.dir, .f)
+      if (file.exists(.fp)) {
+        source(.fp)
+        break
+      }
+    }
+  }
+  RATES_AVAILABLE <- exists("rate", mode = "function") &&
+    exists("rate_change", mode = "function") &&
+    exists("share", mode = "function")
+}
+
+if (RATES_AVAILABLE) {
+  cat("\n[3b/8] Movement rates per 1,000 placements and year-over-year change\n")
+  by_year <- as.data.frame(orc[, .(vm = sum(vm), np = sum(np),
+                                   person_years = .N),
+                               by = .(end_fiscal_year)])
+  by_year <- by_year[order(by_year$end_fiscal_year), , drop = FALSE]
+
+  ## per 1,000 placements, and per 1,000 person-years: two different
+  ## denominators for the same events, reported as two columns rather
+  ## than one ambiguous "rate"
+  r_placements <- rate(by_year, vm, np, by = "end_fiscal_year", per = "1k")
+  r_personyrs  <- rate(by_year, vm, person_years,
+                       by = "end_fiscal_year", per = "1k")
+  ## share of the period's total movements falling in each year
+  s_year <- share(by_year, vm, by = "end_fiscal_year")
+  ## change in the placement-based rate, year over year
+  rc_year <- rate_change(by_year, vm, np, end_fiscal_year, per = "1k")
+
+  rates_tbl <- data.frame(
+    end_fiscal_year   = r_placements$end_fiscal_year,
+    vm                = r_placements$count,
+    placements        = r_placements$population,
+    person_years      = r_personyrs$population,
+    rate_per_1k_plc   = r_placements$rate,
+    rate_lower        = r_placements$lower,
+    rate_upper        = r_placements$upper,
+    rate_per_1k_py    = r_personyrs$rate,
+    share_of_total_pct = s_year$share,
+    share_lower       = s_year$lower,
+    share_upper       = s_year$upper,
+    stringsAsFactors  = FALSE)
+  chg <- data.frame(end_fiscal_year = rc_year$end_fiscal_year,
+                    previous_rate = rc_year$previous_rate,
+                    pct_change = rc_year$pct_change,
+                    pct_lower = rc_year$pct_lower,
+                    pct_upper = rc_year$pct_upper,
+                    change_flag = rc_year$flag,
+                    stringsAsFactors = FALSE)
+  rates_tbl <- merge(rates_tbl, chg, by = "end_fiscal_year", all.x = TRUE)
+  rates_tbl <- rates_tbl[order(rates_tbl$end_fiscal_year), , drop = FALSE]
+
+  fwrite(rates_tbl, file.path(OUTPUT_DIR, "08_rates_and_yoy.csv"))
+  print(utils::head(rates_tbl[, c("end_fiscal_year", "vm", "placements",
+                                  "rate_per_1k_plc", "pct_change")], 12),
+        row.names = FALSE)
+  cat("      wrote 08_rates_and_yoy.csv (descriptive, not a cross-check)\n")
+} else {
+  cat("\n[3b/8] Rates skipped: neither the rmoriebricklayer package nor\n",
+      "      vendored yoy.R/rate.R were found beside this script.\n", sep = "")
+}
 
 
 ## --- 4. Full-sample descriptives --------------------------------------
