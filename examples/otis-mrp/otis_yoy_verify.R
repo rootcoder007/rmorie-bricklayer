@@ -339,3 +339,242 @@ otis_yoy_download <- function(destdir, signatures,
   if (!length(out)) return(NULL)
   do.call(rbind, out)
 }
+
+## ---------------------------------------------------------------------
+## The published RATE tables
+##
+## https://zeus.tail6f5dd7.ts.net/dashboard/otis-rates.html publishes 108
+## rate tables across 24 datasets, each count expressed against two
+## exposures:
+##
+##   1. the yearly total of the prison population the dataset covers,
+##      per 1,000, taken from c01;
+##   2. Ontario residents at April 1, per 100,000, from Statistics
+##      Canada 17-10-0009-01.
+##
+## This is the textbook construction: a count divided by an exposure,
+## which in a count model enters as an offset of log(exposure). The
+## interval is the exact Poisson one, and for change between years the
+## exact conditional interval for a rate ratio corrected for both
+## exposures.
+##
+## The recomputation here deliberately does NOT port the generator's
+## arithmetic the way the year-over-year check does. It goes through
+## rate() and rate_change(), whose intervals are anchored to
+## stats::poisson.test. The two sides are therefore independent, and
+## that has already earned itself twice: the generator first shipped
+## with the rate-ratio arguments reversed, giving a +34.4% change an
+## interval of -25.9 to -25.3, and then with an upper limit of Inf on a
+## change that was simply undefined because the group had no exposure.
+
+OTIS_PER_PRISON <- 1000
+OTIS_PER_ONT <- 100000
+
+## Ontario residents at April 1 (fiscal year end), Statistics Canada
+## table 17-10-0009-01, geography position 7 confirmed as Ontario from
+## the cube metadata rather than assumed.
+OTIS_ONT_POP <- c("2022" = 15051975, "2023" = 15495050, "2024" = 16046534,
+                  "2025" = 16256538, "2026" = 16103890)
+
+## The prison populations, from c01, which states them directly.
+otis_prison_pop <- function(dsdir) {
+  p <- file.path(dsdir,
+    "c01_individuals_in_segregation_and_restrictive_confinement_total_individuals.csv")
+  if (!file.exists(p)) return(NULL)
+  c01 <- .oyv_read_otis(p)
+  list(incustody = tapply(c01$NumberIndividuals_InCustody, c01$EndFiscalYear, sum),
+       rc = tapply(c01$NumberIndividuals_RestrictiveConfinement, c01$EndFiscalYear, sum),
+       seg = tapply(c01$NumberIndividuals_Segregation, c01$EndFiscalYear, sum))
+}
+
+.oyv_pop_for <- function(measure, dataset) {
+  m <- tolower(measure)
+  if (grepl("restrictiveconfinement", m)) return("rc")
+  if (grepl("segregation", m)) return("seg")
+  if (grepl("incustody|custodialdeath", m)) return("incustody")
+  code <- substr(dataset, 1, 1)
+  if (identical(code, "a")) "rc" else if (identical(code, "b")) "seg" else
+    "incustody"
+}
+
+.oyv_rate_inputs <- function(path) {
+  d <- .oyv_read_otis(path)
+  nm <- names(d)
+  ycol <- if ("EndFiscalYear" %in% nm) "EndFiscalYear" else
+          if ("Year" %in% nm) "Year" else NA_character_
+  if (is.na(ycol) || "Measure" %in% nm) return(NULL)
+  idcol <- nm[grepl("UniqueIndividual_ID", nm)]
+  measures <- nm[.oyv_is_measure(nm)]
+  for (mc in measures) if (is.character(d[[mc]])) {
+    cl <- suppressWarnings(as.numeric(gsub("[, ]", "", d[[mc]])))
+    if (all(is.na(cl) == is.na(d[[mc]]) | !nzchar(d[[mc]]))) d[[mc]] <- cl
+  }
+  measures <- measures[vapply(measures, function(mc) is.numeric(d[[mc]]),
+                              logical(1))]
+  if (!length(measures)) return(NULL)
+  list(d = d, ycol = ycol, measures = measures,
+       dims = setdiff(nm, c(ycol, idcol, measures, "Measure")),
+       years = sort(unique(d[[ycol]])))
+}
+
+## One rate table, recomputed through rate() and rate_change().
+otis_rates_table <- function(inp, dimcol, mcol, popkey, ppop) {
+  d <- inp$d
+  groups <- sort(unique(d[[dimcol]]))
+  groups <- groups[!is.na(groups) & nzchar(as.character(groups))]
+  if (!length(groups)) return(NULL)
+  pv <- ppop[[popkey]]
+  agg <- do.call(rbind, lapply(groups, function(g) do.call(rbind,
+    lapply(inp$years, function(y) {
+      s <- d[d[[inp$ycol]] == y & d[[dimcol]] == g, , drop = FALSE]
+      ys <- as.character(y)
+      data.frame(group = as.character(g), year = ys,
+                 n = sum(s[[mcol]], na.rm = TRUE),
+                 pop = if (ys %in% names(pv)) as.numeric(pv[[ys]]) else NA_real_,
+                 ont = if (ys %in% names(OTIS_ONT_POP)) OTIS_ONT_POP[[ys]] else NA_real_,
+                 stringsAsFactors = FALSE)
+    }))))
+  pr <- agg[!is.na(agg$pop) & agg$pop > 0, , drop = FALSE]
+  po <- agg[!is.na(agg$ont) & agg$ont > 0, , drop = FALSE]
+  list(all = agg,
+       prison = if (nrow(pr)) rate(pr, n, pop, by = c("group", "year"),
+                                   per = OTIS_PER_PRISON) else NULL,
+       ont = if (nrow(po)) rate(po, n, ont, by = c("group", "year"),
+                                per = OTIS_PER_ONT) else NULL,
+       change = if (nrow(pr)) rate_change(pr, n, pop, year, by = "group",
+                                          per = OTIS_PER_PRISON) else NULL)
+}
+
+.oyv_rate_cell <- function(got, group, col) {
+  pick <- function(df, y, vc) {
+    if (is.null(df)) return(NA_real_)
+    i <- which(as.character(df$group) == group & as.character(df$year) == y)
+    if (!length(i)) return(NA_real_)
+    suppressWarnings(as.numeric(df[[vc]][i[1]]))
+  }
+  m <- regmatches(col,
+    regexec("^(n|pop|rate|lo|hi|orate|olo|ohi)_([0-9]{4})$", col))[[1]]
+  if (length(m) == 3L) {
+    y <- m[3]
+    return(switch(m[2],
+      n = pick(got$all, y, "n"),
+      pop = pick(got$all, y, "pop"),
+      rate = pick(got$prison, y, "rate"),
+      lo = pick(got$prison, y, "lower"),
+      hi = pick(got$prison, y, "upper"),
+      orate = pick(got$ont, y, "rate"),
+      olo = pick(got$ont, y, "lower"),
+      ohi = pick(got$ont, y, "upper"),
+      NA_real_))
+  }
+  m <- regmatches(col, regexec("^(d|lo|hi)_([0-9]{4})_([0-9]{4})$", col))[[1]]
+  if (length(m) == 4L) {
+    later <- m[4]
+    return(switch(m[2],
+      d = pick(got$change, later, "pct_change"),
+      lo = pick(got$change, later, "pct_lower"),
+      hi = pick(got$change, later, "pct_upper"),
+      NA_real_))
+  }
+  NA_real_
+}
+
+#' Compare the published rate tables against a recomputation
+#'
+#' @param dsdir Directory holding the OTIS dataset CSVs.
+#' @param published Data frame from otis_rates_published.csv.gz.
+#' @return One row per published table: dataset, table, cells,
+#'   mismatched, and the first mismatch as text.
+otis_rates_compare <- function(dsdir, published) {
+  ppop <- otis_prison_pop(dsdir)
+  if (is.null(ppop)) return(NULL)
+  published$ds_slug <- .oyv_slug(published$dataset)
+  published$tb_slug <- .oyv_slug(published$table)
+  files <- sort(list.files(dsdir, pattern = "\\.csv$", full.names = TRUE))
+  out <- list()
+  for (p in files) {
+    ds <- sub("\\.csv$", "", basename(p))
+    pub_ds <- published[published$ds_slug == .oyv_slug(ds), , drop = FALSE]
+    if (!nrow(pub_ds)) next
+    inp <- .oyv_rate_inputs(p)
+    if (is.null(inp)) next
+    for (dmc in inp$dims) for (mcol in inp$measures) {
+      tb_slug <- .oyv_slug(paste0(mcol, " by ", dmc))
+      want <- pub_ds[pub_ds$tb_slug == tb_slug, , drop = FALSE]
+      if (!nrow(want)) next
+      got <- tryCatch(otis_rates_table(inp, dmc, mcol,
+                                       .oyv_pop_for(mcol, ds), ppop),
+                      error = function(e) NULL)
+      if (is.null(got)) {
+        out[[length(out) + 1L]] <- data.frame(dataset = ds, table = tb_slug,
+          cells = nrow(want), mismatched = nrow(want),
+          first = "table not produced", stringsAsFactors = FALSE)
+        next
+      }
+      bad <- 0L; first <- NA_character_
+      for (k in seq_len(nrow(want))) {
+        g <- want$group[k]; col <- want$column[k]
+        exp_v <- suppressWarnings(as.numeric(want$value[k]))
+        obs_v <- .oyv_rate_cell(got, g, col)
+        ok <- if (is.na(exp_v) && is.na(obs_v)) TRUE else
+              if (is.na(exp_v) || is.na(obs_v)) FALSE else
+              if (is.infinite(exp_v) || is.infinite(obs_v))
+                identical(exp_v, obs_v) else
+              abs(exp_v - obs_v) <= 0.06
+        if (!ok) {
+          bad <- bad + 1L
+          if (is.na(first))
+            first <- sprintf("%s / %s: published %s, recomputed %s",
+                             g, col, format(exp_v), format(obs_v))
+        }
+      }
+      out[[length(out) + 1L]] <- data.frame(dataset = ds, table = tb_slug,
+        cells = nrow(want), mismatched = bad,
+        first = if (is.na(first)) "" else first, stringsAsFactors = FALSE)
+    }
+  }
+  if (!length(out))
+    return(data.frame(dataset = character(0), table = character(0),
+                      cells = integer(0), mismatched = integer(0),
+                      first = character(0), stringsAsFactors = FALSE))
+  do.call(rbind, out)
+}
+
+#' The named criminological rates, with exact Poisson intervals
+#'
+#' Incarceration, restrictive-confinement and solitary-confinement
+#' rates per 100,000 Ontario residents, and the two confinement rates
+#' per 1,000 people in custody.
+#'
+#' @param dsdir Directory holding the OTIS dataset CSVs.
+#' @return A data frame: rate, year, count, exposure, per, rate, lower,
+#'   upper.
+otis_headline_rates <- function(dsdir) {
+  ppop <- otis_prison_pop(dsdir)
+  if (is.null(ppop)) return(NULL)
+  years <- intersect(names(ppop$incustody), names(OTIS_ONT_POP))
+  mk <- function(label, count, exposure, per) {
+    r <- rate(count, exposure, per = per)
+    data.frame(rate = label, count = count, exposure = exposure, per = per,
+               value = r$rate, lower = r$lower, upper = r$upper,
+               stringsAsFactors = FALSE)
+  }
+  out <- list()
+  for (y in years) {
+    cu <- as.numeric(ppop$incustody[[y]])
+    rc <- as.numeric(ppop$rc[[y]])
+    sg <- as.numeric(ppop$seg[[y]])
+    on <- OTIS_ONT_POP[[y]]
+    for (row in list(
+      mk("incarceration rate per 100,000 residents", cu, on, OTIS_PER_ONT),
+      mk("restrictive confinement rate per 100,000 residents", rc, on, OTIS_PER_ONT),
+      mk("solitary confinement rate per 100,000 residents", sg, on, OTIS_PER_ONT),
+      mk("restrictive confinement per 1,000 in custody", rc, cu, OTIS_PER_PRISON),
+      mk("solitary confinement per 1,000 in custody", sg, cu, OTIS_PER_PRISON))) {
+      row$year <- y
+      out[[length(out) + 1L]] <- row
+    }
+  }
+  res <- do.call(rbind, out)
+  res[, c("rate", "year", "count", "exposure", "per", "value", "lower", "upper")]
+}
