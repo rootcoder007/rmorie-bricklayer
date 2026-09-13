@@ -75,6 +75,7 @@ extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* rmbl_mgf1.cpp: HMAC and MGF1, for the SHA-2 instantiation of FIPS 205
  * and exposed so their published vectors can be asserted */
 extern SEXP C_rmbl_strtod(SEXP);
+extern SEXP C_rmbl_dtoa17(SEXP);
 extern SEXP C_rmbl_sha1(SEXP);
 extern SEXP C_rmbl_sha384(SEXP);
 extern SEXP C_rmbl_hmac_shax(SEXP, SEXP, SEXP);
@@ -251,6 +252,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mldsa_verify_mu",   (DL_FUNC) &C_rmbl_mldsa_verify_mu,   4},
     {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
     {"C_rmbl_strtod",             (DL_FUNC) &C_rmbl_strtod,             1},
+    {"C_rmbl_dtoa17",             (DL_FUNC) &C_rmbl_dtoa17,             1},
     {"C_rmbl_sha1",               (DL_FUNC) &C_rmbl_sha1,               1},
     {"C_rmbl_sha384",             (DL_FUNC) &C_rmbl_sha384,             1},
     {"C_rmbl_hmac_shax",         (DL_FUNC) &C_rmbl_hmac_shax,         3},
