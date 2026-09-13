@@ -228,6 +228,20 @@ reference:
       - yoy_write
       - yoy_delim
       - yoy_palettes
+  - title: Rates, shares and rate change
+    desc: >
+      A count is not comparable across places of different size or years of
+      different population, and a share of a total is not a rate per
+      population -- labelling one as the other is the most common error in a
+      published table, so they are separate functions with separate
+      intervals. Rates carry the exact Poisson interval, shares carry
+      Wilson-s, and the change in a rate conditions on the two counts and
+      corrects for the exposure ratio rather than treating two rates as
+      measured numbers.
+    contents:
+      - rate
+      - share
+      - rate_change
   - title: Banded categories
     desc: >
       Published categories are intervals -- "2 to 5", "50+" -- and anything

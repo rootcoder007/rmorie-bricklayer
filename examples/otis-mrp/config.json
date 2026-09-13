@@ -31,9 +31,11 @@
 
   "data": {
     "default_candidates": [
-      "/Volumes/VSR/rootcoderfiles/OTIS-RC/correctional_stats_report_environment1b.RData"
+      "correctional_stats_report_environment1b.RData",
+      "otis_input.RData",
+      "otis_input.csv"
     ],
-    "_comment": "Additional file paths to probe before asking the user."
+    "_comment": "Filenames probed in the working directory and beside the script, in this order, before asking the user. Relative on purpose: an absolute path cannot exist on a reviewer's machine, and naming one publishes a local directory layout."
   },
 
   "network": {

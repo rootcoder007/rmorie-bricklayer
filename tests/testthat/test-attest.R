@@ -298,3 +298,41 @@ test_that("falsification input is checked", {
   expect_error(capsule_falsify(d, function(z) 1, subset_frac = 1),
                "between 0 and 1")
 })
+
+test_that("the bundle's reader fallback works, since a bundle runs it", {
+  # A capsule bundle sources json_native.R with no compiled library
+  # present, so .rmbl_strtod takes its fallback branch. Inside the
+  # package the native symbol is always there, which means this branch
+  # ships to every bundle recipient while being the one path the test
+  # suite would otherwise never run.
+  cache <- get(".rmbl_native", envir = asNamespace("rmoriebricklayer"))
+  old <- cache$strtod
+  on.exit({
+    cache$strtod <- old
+  }, add = TRUE)
+
+  cache$strtod <- FALSE
+  expect_identical(.rmbl_strtod("0.1"), 0.1)
+  expect_identical(.rmbl_strtod("1e23"), 1e23)
+  expect_identical(.rmbl_strtod("-2.5"), -2.5)
+  expect_identical(.rmbl_strtod("0"), 0)
+  expect_true(is.na(.rmbl_strtod("not a number")))
+
+  # and the native path, restored, agrees with it on ordinary values
+  cache$strtod <- TRUE
+  expect_identical(.rmbl_strtod("0.1"), 0.1)
+  expect_identical(.rmbl_strtod("1e23"), 1e23)
+})
+
+test_that("the reader is chosen once, not re-decided per number", {
+  cache <- get(".rmbl_native", envir = asNamespace("rmoriebricklayer"))
+  old <- cache$strtod
+  on.exit({
+    cache$strtod <- old
+  }, add = TRUE)
+  cache$strtod <- NULL
+  invisible(.rmbl_strtod("1"))
+  # the decision is recorded, so a later call does not repeat the lookup
+  expect_false(is.null(cache$strtod))
+  expect_true(isTRUE(cache$strtod))
+})

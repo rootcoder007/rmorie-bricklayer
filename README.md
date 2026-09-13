@@ -56,6 +56,14 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Synthetic fallback** — `make_synthetic_column()` / `make_synthetic_csv()`
   generate schema-driven stand-ins when the real source is down, so a
   pipeline still runs end-to-end.
+- **Rates and shares** — `rate()` gives events per population at any
+  denominator (`per = 1000`, `"100k"`, `"1m"`) with the exact Poisson
+  interval; `share()` gives percentage of a total with Wilson's interval.
+  They are separate functions because a share of a total is not a rate per
+  population, and labelling one as the other is the most common error in a
+  published table. `rate_change()` gives the change in a rate between
+  periods, conditioning on the two counts and correcting for the exposure
+  ratio rather than treating two rates as measured numbers.
 - **Change tables** — `yoy()` computes period-over-period change matched on
   the period's own value rather than on row order, so a missing year is a
   gap instead of a quietly multi-year comparison. A percent off a small
