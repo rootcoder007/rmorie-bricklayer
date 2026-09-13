@@ -30,9 +30,7 @@ test_that("a recorded number can be recovered from the manifest", {
   # as 0.3333 and no later recomputation could match what was written.
   # A provenance record that cannot reproduce its own numbers is the one
   # failure mode this whole file exists to prevent.
-  # .Machine$double.xmax is deliberately NOT in this list; the test
-  # below says why.
-  for (x in c(1 / 3, pi, 1e-300, 2^-1074,
+  for (x in c(1 / 3, pi, 1e-300, 2^-1074, .Machine$double.xmax,
               .Machine$double.eps, 1234567.891011)) {
     m <- make_manifest(list(x = x), environment = FALSE)
     back <- bricklayer_json_from_json(manifest_canonical(m))
@@ -54,35 +52,63 @@ test_that("a recorded number can be recovered from the manifest", {
   unlink(tmp)
 })
 
-test_that("the largest double is written correctly, whatever reads it", {
-  # Seventeen significant digits is enough to recover any double
-  # exactly, PROVIDED the reader converts decimal to binary with
-  # correct rounding. Not every platform does. On macOS arm64 (R 4.6.0)
-  # `as.numeric()` returns Inf for the correct decimal of
-  # .Machine$double.xmax, and loses low bits on magnitudes around
-  # 1e100 and beyond when the text was written elsewhere.
-  #
-  # What this package is responsible for is the text. So that is what
-  # is asserted here: the largest double is written as its correct
-  # shortest-exact decimal. Whether a given C library can read it back
-  # is that library's business, and asserting otherwise would make this
-  # test a report on someone else's strtod.
-  m <- make_manifest(list(x = .Machine$double.xmax), environment = FALSE)
-  txt <- manifest_canonical(m)
-  expect_match(txt, "1.7976931348623157e+308", fixed = TRUE)
-  # and the round trip is exact wherever the reader is correct
-  back <- bricklayer_json_from_json(txt)$meta$x
-  if (is.finite(back)) {
-    expect_identical(back, .Machine$double.xmax)
-  } else {
-    expect_true(is.infinite(back))
+test_that("the extremes survive, because the reader is ours", {
+  # This used to be a platform limitation, and the fix was to stop
+  # relying on the platform. Seventeen significant digits recover any
+  # double exactly, but only through a reader that rounds correctly:
+  # macOS arm64's C library reads the correct decimal for the largest
+  # double as infinity, so a manifest written on Linux came back
+  # different there. The package now converts decimals itself, with
+  # integer arithmetic and a remainder that decides the rounding, so
+  # the answer is the same on every IEEE platform.
+  for (x in c(.Machine$double.xmax, 1e308, 1.5e300, 1e200, 1e100,
+              2^-1074, 5e-324, 1e-310)) {
+    m <- make_manifest(list(x = x), environment = FALSE)
+    back <- bricklayer_json_from_json(manifest_canonical(m))$meta$x
+    expect_identical(back, x, info = format(x, digits = 17))
   }
-  # the same for the other end of the range, which more readers get
-  # right and which therefore is asserted unconditionally
-  tiny <- make_manifest(list(x = 2^-1074), environment = FALSE)
-  expect_identical(
-    bricklayer_json_from_json(manifest_canonical(tiny))$meta$x, 2^-1074)
+  # and the text is what it should be, which is the writer's half
+  expect_match(manifest_canonical(
+    make_manifest(list(x = .Machine$double.xmax), environment = FALSE)),
+    "1.7976931348623157e+308", fixed = TRUE)
 })
+
+test_that("decimal conversion is correctly rounded, not libc's guess", {
+  # The inputs below are the ones that catch a decimal-to-binary
+  # converter: the boundary between the largest subnormal and the
+  # smallest normal, a value whose shortest form rounds the wrong way
+  # under naive arithmetic, and the ends of the range.
+  cases <- list(
+    "2.2250738585072011e-308" = 2.2250738585072009e-308,
+    "1e23"                    = 1e23,
+    "0.1"                     = 0.1,
+    "0.3"                     = 0.3,
+    "1e-323"                  = 1e-323,
+    "1.7976931348623157e+308" = .Machine$double.xmax,
+    "0"                       = 0,
+    "-0"                      = 0,
+    "1e400"                   = Inf,
+    "-1e400"                  = -Inf,
+    "1e-400"                  = 0,
+    "123456789012345678901234567890" = 123456789012345678901234567890)
+  for (nm in names(cases)) {
+    expect_identical(.rmbl_strtod(nm), cases[[nm]], info = nm)
+  }
+  # a run of digits far longer than can matter is handled, not refused
+  long <- paste0("1.", strrep("0", 900), "1")
+  expect_identical(.rmbl_strtod(long), 1)
+  expect_identical(.rmbl_strtod(paste0("1", strrep("0", 400))), Inf)
+  # and unparseable input is NA rather than an error, because this sits
+  # inside a parser that reports a bad document its own way
+  expect_true(is.na(.rmbl_strtod("")))
+  expect_true(is.na(.rmbl_strtod("abc")))
+  expect_true(is.na(.rmbl_strtod("1.2.3")))
+  expect_true(is.na(.rmbl_strtod("1e")))
+  expect_true(is.na(.rmbl_strtod(NA_character_)))
+  expect_identical(.rmbl_strtod(c("1", "2.5")), c(1, 2.5))
+})
+
+
 
 test_that("the environment record carries the generator", {
   env <- capture_environment()

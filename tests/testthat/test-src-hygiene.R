@@ -198,3 +198,24 @@ test_that("no S3 method for one class is defined in two files", {
   expect_identical(anyDuplicated(s3), 0L)
   expect_gt(length(s3), 20L)
 })
+
+test_that("the version is not stated twice with two different answers", {
+  # CITATION.cff carries its own version field, and pkgdown renders it
+  # on the citation page. It sat at 0.4.0 through six releases because
+  # nothing compared it to DESCRIPTION -- the sort of staleness that
+  # only a reader notices, and only after it has been wrong for a
+  # while. This is the comparison.
+  root <- test_path("..", "..")
+  desc <- read.dcf(file.path(root, "DESCRIPTION"))[1, "Version"]
+  cff <- file.path(root, "CITATION.cff")
+  skip_if_not(file.exists(cff), "no CITATION.cff in this tree")
+  txt <- readLines(cff, warn = FALSE)
+  line <- grep("^version:", txt, value = TRUE)
+  expect_length(line, 1L)
+  stated <- gsub('^version: *"?|"?$', "", line)
+  expect_identical(stated, unname(desc))
+  # NEWS must lead with the version being released, too
+  news <- readLines(file.path(root, "NEWS.md"), warn = FALSE)
+  first <- grep("^# ", news, value = TRUE)[1]
+  expect_match(first, unname(desc), fixed = TRUE)
+})

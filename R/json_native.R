@@ -715,11 +715,30 @@ bricklayer_json_unbox <- function(x) {
 }
 
 
+# Decimal to double, correctly rounded, independent of the platform's
+# C library. The fallback to as.numeric() exists only for the case
+# where the compiled code is somehow unavailable; it is not the normal
+# path and does not silently take over, because a wrong number here is
+# exactly what this replaces.
+#' @noRd
+.rmbl_strtod <- function(x) {
+  .Call(C_rmbl_strtod, as.character(x))
+}
+
 # ================================================================ parser
 
 # A yajl-equivalent parser: one pass over the text with a byte cursor.
 # Numbers follow yajl_tree: no '.'/'e' -> integer (double above 2^31-1,
-# character above 2^53 when bigint_as_char); otherwise strtod.
+# character above 2^53 when bigint_as_char); otherwise a decimal.
+#
+# The decimal is converted by this package rather than by the platform.
+# Seventeen significant digits recover any double exactly, but only
+# through a reader that rounds correctly, and not every platform's
+# does -- on macOS arm64 the C library reads the correct decimal for
+# the largest double as infinity, and loses low bits above about 1e100.
+# A manifest written on one machine would then read back as a different
+# number on another, which for a format meant to be checked elsewhere
+# is a bug rather than a caveat. See src/rmbl_strtod.cpp.
 #' @noRd
 .rmbl_json_parse <- function(txt, bigint_as_char = FALSE) {
   s <- paste(txt, collapse = "\n")
@@ -794,7 +813,7 @@ bricklayer_json_unbox <- function(x) {
       while (i <= n && grepl("[0-9]", ch[i])) i <<- i + 1L
     }
     t0 <- paste(ch[st:(i - 1L)], collapse = "")
-    v <- as.numeric(t0)
+    v <- .rmbl_strtod(t0)
     if (isint) {
       digs <- sub("^-", "", t0)
       big <- nchar(digs) > 16L || (nchar(digs) == 16L && digs > "9007199254740992")
