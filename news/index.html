@@ -45,6 +45,25 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.7" id="rmoriebricklayer-047">rmoriebricklayer 0.4.7<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-047"></a></h2>
 <div class="section level3">
+<h3 id="the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-7">The stock and flow measures reach the example, and so does the MNAR pair<a class="anchor" aria-label="anchor" href="#the-stock-and-flow-measures-reach-the-example-and-so-does-the-mnar-pair-0-4-7"></a></h3>
+<p>Both were computed and published for reading before they were shipped anywhere a check could see them. They are in <code>analysis.R</code> now.</p>
+<p><strong>Section 3e</strong> computes Lakner’s measures for segregation through the package’s own <code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/stock_flow.html">stock_flow()</a></code>, so the example exercises the functions rather than reimplementing them. It is NOT gated, unlike the rate tables: there is no denominator to argue about, since days divided by 365 and days divided by the people who served them are both unambiguous.</p>
+<p>It records checks that can fail, not just values:</p>
+<ul><li>
+<code>lakner_b02_one_row_per_person</code> asserts the structure that makes <code>TotalAggregatedDays_Segregation</code> Lakner’s X-sub-i.</li>
+<li>
+<code>lakner_people_b01_vs_b02_*</code> requires the two tables to agree on how many people there were.</li>
+<li>
+<code>lakner_decomposition_exact</code> requires <code>(1 + p) * (1 + l) - 1</code> to recover the change in days, to 1e-9.</li>
+<li>
+<code>lakner_b01_consecutive_is_not_total_*</code> records the ratio, about 0.67, so the trap cannot be rediscovered the hard way: <code>b01</code> holds roughly 2.7 rows per person and its <code>NumberConsecutiveDays_Segregation</code> is a spell length, not an additive share of the year.</li>
+<li>
+<code>lakner_day_share_*</code> puts the day share beside the headcount share, which is how Lakner p.15 says a subgroup share of the average daily population must be taken.</li>
+</ul><p><strong>Section 3f</strong> is the capacity analysis, as a pair rather than an imputation. <code>Operational_Capacity</code> is missing for three of the 25 open institutions and they are the large ones – Central East CC, Central North CC and Toronto South DC – while the largest observed capacity is 944. Missingness that depends on the value is MNAR, not MAR, so imputing would pull all three toward the observed mean and understate three denominators in a knowable direction.</p>
+<p>So Central and Northern, whose capacity is fully observed, get a complete-case estimate, and the other three get a range across the plausible span of their one missing capacity. Three checks carry the argument: that every <code>Alert_Type</code> gives the same yearly total, since summing across types would count each placement six times; that exactly two regions are fully observed; and that all three unobserved capacities exceed the largest observed one, which is what makes this MNAR.</p>
+<p>New outputs: <code>12_stock_flow.csv</code> and <code>13_capacity_mnar.csv</code>. The capacity analyses need Ontario’s institutional-locations CSV, a separate CKAN dataset, shipped with the example and overridable with <code>OTIS_LOCATIONS</code>.</p>
+</div>
+<div class="section level3">
 <h3 id="stock-and-flow-person-days-have-two-denominators-0-4-7">Stock and flow: person-days have two denominators<a class="anchor" aria-label="anchor" href="#stock-and-flow-person-days-have-two-denominators-0-4-7"></a></h3>
 <p><code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code>, <code><a href="../reference/admissions.html">admissions()</a></code>, <code><a href="../reference/adp_from_counts.html">adp_from_counts()</a></code> and <code><a href="../reference/stock_flow.html">stock_flow()</a></code> implement the measures from Lakner, <em>A Manual of Statistical Sampling Methods for Corrections Planners</em> (University of Illinois at Urbana-Champaign, 1976). One quantity, person-days, carries two denominators:</p>
 <ul><li>divided by TIME it gives the average daily population, a <strong>stock</strong>: how many people are held at once. Lakner p.15.</li>

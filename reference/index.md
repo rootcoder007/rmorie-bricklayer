@@ -384,6 +384,10 @@ Statistical Sampling Methods for Corrections Planners.
   : Person-days estimated from periodic headcounts
 - [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
   : Stock and flow side by side, with the decomposition
+- [`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+  : Length of stay with its distribution and interval
+- [`period_days()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+  : Period length in days, from dates
 
 ## Rates, shares and rate change
 

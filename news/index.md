@@ -2,6 +2,59 @@
 
 ## rmoriebricklayer 0.4.7
 
+### The stock and flow measures reach the example, and so does the MNAR pair
+
+Both were computed and published for reading before they were shipped
+anywhere a check could see them. They are in `analysis.R` now.
+
+**Section 3e** computes Lakner’s measures for segregation through the
+package’s own
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
+and
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md),
+so the example exercises the functions rather than reimplementing them.
+It is NOT gated, unlike the rate tables: there is no denominator to
+argue about, since days divided by 365 and days divided by the people
+who served them are both unambiguous.
+
+It records checks that can fail, not just values:
+
+- `lakner_b02_one_row_per_person` asserts the structure that makes
+  `TotalAggregatedDays_Segregation` Lakner’s X-sub-i.
+- `lakner_people_b01_vs_b02_*` requires the two tables to agree on how
+  many people there were.
+- `lakner_decomposition_exact` requires `(1 + p) * (1 + l) - 1` to
+  recover the change in days, to 1e-9.
+- `lakner_b01_consecutive_is_not_total_*` records the ratio, about 0.67,
+  so the trap cannot be rediscovered the hard way: `b01` holds roughly
+  2.7 rows per person and its `NumberConsecutiveDays_Segregation` is a
+  spell length, not an additive share of the year.
+- `lakner_day_share_*` puts the day share beside the headcount share,
+  which is how Lakner p.15 says a subgroup share of the average daily
+  population must be taken.
+
+**Section 3f** is the capacity analysis, as a pair rather than an
+imputation. `Operational_Capacity` is missing for three of the 25 open
+institutions and they are the large ones – Central East CC, Central
+North CC and Toronto South DC – while the largest observed capacity is
+944. Missingness that depends on the value is MNAR, not MAR, so imputing
+would pull all three toward the observed mean and understate three
+denominators in a knowable direction.
+
+So Central and Northern, whose capacity is fully observed, get a
+complete-case estimate, and the other three get a range across the
+plausible span of their one missing capacity. Three checks carry the
+argument: that every `Alert_Type` gives the same yearly total, since
+summing across types would count each placement six times; that exactly
+two regions are fully observed; and that all three unobserved capacities
+exceed the largest observed one, which is what makes this MNAR.
+
+New outputs: `12_stock_flow.csv` and `13_capacity_mnar.csv`. The
+capacity analyses need Ontario’s institutional-locations CSV, a separate
+CKAN dataset, shipped with the example and overridable with
+`OTIS_LOCATIONS`.
+
 ### Stock and flow: person-days have two denominators
 
 [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),

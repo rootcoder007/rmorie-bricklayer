@@ -7,7 +7,15 @@ from how long they stayed.
 ## Usage
 
 ``` r
-stock_flow(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05)
+stock_flow(
+  days,
+  people,
+  period = NULL,
+  t = 365,
+  exposure = NULL,
+  per = 1e+05,
+  baseline = c("first", "previous")
+)
 ```
 
 ## Arguments
@@ -26,7 +34,10 @@ stock_flow(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05)
 
 - t:
 
-  Length of each period in days. Default 365.
+  Length of each period in days, one value or one per period.
+  Default 365.
+  [`period_days()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+  turns dates into this.
 
 - exposure:
 
@@ -36,6 +47,13 @@ stock_flow(days, people, period = NULL, t = 365, exposure = NULL, per = 1e+05)
 - per:
 
   Rate denominator when `exposure` is given. Default 100000.
+
+- baseline:
+
+  What the change columns compare against: `"first"` (the default)
+  measures every period against the first, which is what a report on a
+  whole window wants; `"previous"` measures each period against the one
+  before it, which is what a series wants.
 
 ## Value
 

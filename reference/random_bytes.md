@@ -43,7 +43,7 @@ which uses this for its seeds.
 
 ``` r
 random_bytes(8)
-#> [1] ac 40 c1 7c b7 02 5a d8
+#> [1] 82 e8 f6 e0 b3 41 73 2f
 
 # Independent between calls, unlike a seeded generator.
 identical(random_bytes(16), random_bytes(16))
@@ -59,5 +59,5 @@ identical(stats::runif(1), a)
 
 # As hex, for a seed argument.
 paste(format(random_bytes(4)), collapse = "")
-#> [1] "237dc4b4"
+#> [1] "0db4fafa"
 ```
