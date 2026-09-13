@@ -30,7 +30,9 @@ test_that("a recorded number can be recovered from the manifest", {
   # as 0.3333 and no later recomputation could match what was written.
   # A provenance record that cannot reproduce its own numbers is the one
   # failure mode this whole file exists to prevent.
-  for (x in c(1 / 3, pi, 1e-300, 2^-1074, .Machine$double.xmax,
+  # .Machine$double.xmax is deliberately NOT in this list; the test
+  # below says why.
+  for (x in c(1 / 3, pi, 1e-300, 2^-1074,
               .Machine$double.eps, 1234567.891011)) {
     m <- make_manifest(list(x = x), environment = FALSE)
     back <- bricklayer_json_from_json(manifest_canonical(m))
@@ -50,6 +52,36 @@ test_that("a recorded number can be recovered from the manifest", {
   expect_identical(core_sha256(charToRaw(readLines(tmp))),
                    manifest_digest(m))
   unlink(tmp)
+})
+
+test_that("the largest double is written correctly, whatever reads it", {
+  # Seventeen significant digits is enough to recover any double
+  # exactly, PROVIDED the reader converts decimal to binary with
+  # correct rounding. Not every platform does. On macOS arm64 (R 4.6.0)
+  # `as.numeric()` returns Inf for the correct decimal of
+  # .Machine$double.xmax, and loses low bits on magnitudes around
+  # 1e100 and beyond when the text was written elsewhere.
+  #
+  # What this package is responsible for is the text. So that is what
+  # is asserted here: the largest double is written as its correct
+  # shortest-exact decimal. Whether a given C library can read it back
+  # is that library's business, and asserting otherwise would make this
+  # test a report on someone else's strtod.
+  m <- make_manifest(list(x = .Machine$double.xmax), environment = FALSE)
+  txt <- manifest_canonical(m)
+  expect_match(txt, "1.7976931348623157e+308", fixed = TRUE)
+  # and the round trip is exact wherever the reader is correct
+  back <- bricklayer_json_from_json(txt)$meta$x
+  if (is.finite(back)) {
+    expect_identical(back, .Machine$double.xmax)
+  } else {
+    expect_true(is.infinite(back))
+  }
+  # the same for the other end of the range, which more readers get
+  # right and which therefore is asserted unconditionally
+  tiny <- make_manifest(list(x = 2^-1074), environment = FALSE)
+  expect_identical(
+    bricklayer_json_from_json(manifest_canonical(tiny))$meta$x, 2^-1074)
 })
 
 test_that("the environment record carries the generator", {
