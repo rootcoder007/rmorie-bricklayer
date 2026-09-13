@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -951,6 +951,36 @@
 
         </dt>
         <dd>Colour palettes for change tables</dd>
+      </dl></div><div class="section level2">
+      <h2 id="rates-shares-and-rate-change">Rates, shares and rate change<a class="anchor" aria-label="anchor" href="#rates-shares-and-rate-change"></a></h2>
+
+      <div class="section-desc"><p>A count is not comparable across places of different size or years of different population, and a share of a total is not a rate per population – labelling one as the other is the most common error in a published table, so they are separate functions with separate intervals. Rates carry the exact Poisson interval, shares carry Wilson-s, and the change in a rate conditions on the two counts and corrects for the exposure ratio rather than treating two rates as measured numbers.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rate.html">rate()</a></code>
+
+        </dt>
+        <dd>Event rates per unit of population</dd>
+
+        <dt>
+
+          <code><a href="share.html">share()</a></code>
+
+        </dt>
+        <dd>Share of a total, in percent</dd>
+
+        <dt>
+
+          <code><a href="rate_change.html">rate_change()</a></code>
+
+        </dt>
+        <dd>Change in a rate between periods</dd>
       </dl></div><div class="section level2">
       <h2 id="banded-categories">Banded categories<a class="anchor" aria-label="anchor" href="#banded-categories"></a></h2>
 

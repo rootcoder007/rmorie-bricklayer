@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -221,11 +221,80 @@ December:</p>
 across the span returns <code>total_pct</code> exactly.</p>
 </div>
 <div class="section level2">
+<h2 id="rates-when-the-denominator-moves-too">Rates, when the denominator moves too<a class="anchor" aria-label="anchor" href="#rates-when-the-denominator-moves-too"></a>
+</h2>
+<p><code><a href="../reference/yoy.html">yoy()</a></code> compares counts. A count is not comparable across
+places of different size, or across years whose populations differ, and
+the fix is a rate – but a rate is not made trustworthy by being a
+rate.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">stops</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  division <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span><span class="op">)</span>,</span>
+<span>  stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">412</span>, <span class="fl">77</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120000</span>, <span class="fl">41000</span>, <span class="fl">9500</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/rate.html">rate</a></span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, <span class="va">residents</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Rate per 100,000, 95% exact Poisson interval</span></span>
+<span><span class="co">#&gt;   division count population      rate      lower     upper flag</span></span>
+<span><span class="co">#&gt; 1     East     3       9500  31.57895   6.512338  92.28708 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 2    North   412     120000 343.33333 310.977110 378.14142 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 3    South    77      41000 187.80488 148.212673 234.72387 &lt;NA&gt;</span></span></code></pre></div>
+<p>East’s interval is wider than its own estimate. That is the honest
+reading of three events, and it is the reason the interval is printed
+beside the rate rather than left to the reader to imagine. The interval
+is the exact Poisson one, so a count of zero has a lower limit of
+exactly zero instead of a negative rate.</p>
+<p>A share is a different quantity. Its denominator is the total of the
+same events, not a population, so shares over a complete grouping sum to
+100:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/share.html">share</a></span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Share of 492, 95% Wilson interval</span></span>
+<span><span class="co">#&gt;   division count total      share      lower     upper</span></span>
+<span><span class="co">#&gt; 1     East     3   492  0.6097561  0.2075843  1.777215</span></span>
+<span><span class="co">#&gt; 2    North   412   492 83.7398374 80.2200225 86.736863</span></span>
+<span><span class="co">#&gt; 3    South    77   492 15.6504065 12.7074531 19.125597</span></span></code></pre></div>
+<p>“40% of stops” and “40 stops per 1,000 residents” are different
+claims, and a table that labels one as the other is wrong however
+carefully the arithmetic was done. That is why these are separate
+functions.</p>
+<p>For the change in a rate, both the counts and the denominators
+move:</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">2021</span><span class="op">:</span><span class="fl">2023</span>, each <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  division <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>  stops <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">70</span>, <span class="fl">430</span>, <span class="fl">66</span>, <span class="fl">455</span>, <span class="fl">61</span><span class="op">)</span>,</span>
+<span>  residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120000</span>, <span class="fl">41000</span>, <span class="fl">122000</span>, <span class="fl">41500</span>, <span class="fl">125000</span>, <span class="fl">42000</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/rate_change.html">rate_change</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">stops</span>, <span class="va">residents</span>, <span class="va">year</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Change in rate per 100,000, lag 1, 95% exact conditional interval</span></span>
+<span><span class="co">#&gt;   division year count population     rate previous_rate rate_ratio pct_change</span></span>
+<span><span class="co">#&gt; 1    North 2021   400     120000 333.3333            NA         NA         NA</span></span>
+<span><span class="co">#&gt; 2    North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705</span></span>
+<span><span class="co">#&gt; 3    North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419</span></span>
+<span><span class="co">#&gt; 4    South 2021    70      41000 170.7317            NA         NA         NA</span></span>
+<span><span class="co">#&gt; 5    South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258</span></span>
+<span><span class="co">#&gt; 6    South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046</span></span>
+<span><span class="co">#&gt;    pct_lower pct_upper                 flag</span></span>
+<span><span class="co">#&gt; 1         NA        NA no comparison period</span></span>
+<span><span class="co">#&gt; 2  -7.937165  21.46533                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 3  -9.679876  18.10199                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 4         NA        NA no comparison period</span></span>
+<span><span class="co">#&gt; 5 -34.473784  32.29053                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; 6 -36.596300  31.35600                 &lt;NA&gt;</span></span></code></pre></div>
+<p>North’s count rose, and so did its population, so the rate change is
+smaller than the count change – which is the whole reason to look at the
+rate. The interval conditions on the two counts and corrects for the
+ratio of the two exposures; with equal populations it reduces to exactly
+the conditional-binomial interval <code><a href="../reference/yoy.html">yoy()</a></code> uses above.</p>
+</div>
+<div class="section level2">
 <h2 id="output">Output<a class="anchor" aria-label="anchor" href="#output"></a>
 </h2>
 <p>The same object writes to six formats. The format follows the file
 name.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">ext</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"csv"</span>, <span class="st">"tsv"</span>, <span class="st">"json"</span>, <span class="st">"md"</span>, <span class="st">"html"</span>, <span class="st">"pdf"</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">dir</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"placements."</span>, <span class="va">ext</span><span class="op">)</span><span class="op">)</span></span>
@@ -241,7 +310,7 @@ name.</p>
 <p>The delimited writers lead with the settings as comments, and carry
 the <code>flag</code> column, so a withheld percentage stays marked as
 withheld wherever it lands:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy_delim.html">yoy_csv</a></span><span class="op">(</span><span class="va">y</span>, <span class="cn">NULL</span>, digits <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # value: Number_Of_Placements; period: EndFiscalYear; by: Gender; lag: 1; units: count; interval: 95% exact rate ratio; percent withheld below a base of 20; direction: lower is better</span></span>
 <span><span class="co">#&gt; Gender,EndFiscalYear,value,previous,change,pct_change,flag,pct_lower,pct_upper,verdict</span></span>
@@ -256,7 +325,7 @@ withheld wherever it lands:</p>
 <span><span class="co">#&gt; Male,2022,268,190,78,41.1,,16.7,70.8,worse</span></span>
 <span><span class="co">#&gt; Male,2023,331,268,63,23.5,,4.8,45.6,worse</span></span></code></pre></div>
 <p>Markdown, for a report:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy_delim.html">yoy_markdown</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, period <span class="op">=</span> <span class="va">year</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; | year | n   | previous | change | change % |     interval | note                 |</span></span>
 <span><span class="co">#&gt; | ---- | --- | -------- | -----: | -------: | -----------: | -------------------- |</span></span>
@@ -272,7 +341,7 @@ request, so the page renders later exactly as it rendered when the
 capsule was sealed. It defines its palette as custom properties and
 carries a dark variant. The PDF is drawn on R’s own device and paginates
 rather than truncating, so neither needs a package beyond base R.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/yoy_palettes.html">yoy_palettes</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "diverging" "safe"      "mono"</span></span></code></pre></div>
 <p><code>"safe"</code> is a blue/orange pair that survives both common

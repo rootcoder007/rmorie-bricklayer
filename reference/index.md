@@ -365,6 +365,23 @@ HTML, PDF, CSV, TSV, JSON or Markdown.
 - [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md)
   : Colour palettes for change tables
 
+## Rates, shares and rate change
+
+A count is not comparable across places of different size or years of
+different population, and a share of a total is not a rate per
+population – labelling one as the other is the most common error in a
+published table, so they are separate functions with separate intervals.
+Rates carry the exact Poisson interval, shares carry Wilson-s, and the
+change in a rate conditions on the two counts and corrects for the
+exposure ratio rather than treating two rates as measured numbers.
+
+- [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+  : Event rates per unit of population
+- [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/share.md)
+  : Share of a total, in percent
+- [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+  : Change in a rate between periods
+
 ## Banded categories
 
 Published categories are intervals – “2 to 5”, “50+” – and anything

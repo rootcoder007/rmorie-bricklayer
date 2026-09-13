@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,32 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/bricklayer/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.7" id="rmoriebricklayer-047">rmoriebricklayer 0.4.7<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-047"></a></h2>
+<div class="section level3">
+<h3 id="rates-shares-and-rate-change-0-4-7">Rates, shares and rate change<a class="anchor" aria-label="anchor" href="#rates-shares-and-rate-change-0-4-7"></a></h3>
+<p>A count is not comparable across places of different size or years of different population, so <code><a href="../reference/rate.html">rate()</a></code> divides counts by exposure and scales to a denominator – <code>per = 1000</code>, <code>"10k"</code>, <code>"100k"</code>, <code>"1m"</code>, or any positive number. The interval is the exact Poisson one, matching <code><a href="https://rdrr.io/r/stats/poisson.test.html" class="external-link">stats::poisson.test</a></code> to the last digit, so a count of zero gives a lower limit of exactly zero instead of a negative rate.</p>
+<p><code><a href="../reference/share.html">share()</a></code> is the other quantity people mean by “percentage”: what fraction of a total each count is. Its denominator is the total of the same events, not a population, so shares over a complete grouping sum to 100. The interval is Wilson’s rather than the normal approximation, which runs past the ends of the scale and reports negative percentages at exactly the small counts people reach for it.</p>
+<p>Labelling one of these as the other is the most common error in a published table, which is why they are separate functions with separate intervals rather than one function with a flag.</p>
+<p><code><a href="../reference/rate_change.html">rate_change()</a></code> is the change in a rate between periods. This is not the percent change of two rates treated as measured numbers: both denominators move, and an interval that ignores them understates the uncertainty. It conditions on the total of the two counts and corrects for the exposure ratio – <code><a href="../reference/yoy.html">yoy()</a></code>’s exact conditional-binomial interval generalised to unequal denominators, and it reduces to exactly that interval when the two populations are equal, which is a test.</p>
+<p>Like <code><a href="../reference/yoy.html">yoy()</a></code>, the comparison period is matched on the period value and not on row position, so a missing year reports no comparison instead of silently comparing 2023 against 2020.</p>
+</div>
+<div class="section level3">
+<h3 id="the-otis-mrp-example-0-4-7">The otis-mrp example<a class="anchor" aria-label="anchor" href="#the-otis-mrp-example-0-4-7"></a></h3>
+<p>The example analysis had an absolute path to the author’s own volume as its default input. It could not exist on a reviewer’s machine and it published a local directory layout, so the input is now searched for – command line, then <code>OTIS_INPUT</code>, then known filenames in the working directory and beside the script – and the script stops with the exact command to run when it finds nothing.</p>
+<p><code>lme4</code> and <code>DHARMa</code> were attached and recorded as dependencies but never called; both are gone. The header now also says which arm is canonical for what: <code>rmorie::morie_otis_irm_dml</code> is the preferred DML path and makes <code>DoubleML</code>, <code>mlr3</code>, <code>mlr3learners</code> and <code>lgr</code> unnecessary, while <code>MatchIt</code> and <code>glmmTMB</code> stay because the published numbers came from them and the script exists to let a reviewer check those numbers.</p>
+<p>The analysis now also writes <code>08_rates_and_yoy.csv</code>: movement rates per 1,000 placements and per 1,000 person-years, each year’s share of the total, and the year-over-year change in the rate. Capsule bundles carry <code>yoy.R</code> and <code>rate.R</code> so this works with nothing installed.</p>
+</div>
+<div class="section level3">
+<h3 id="fixes-0-4-7">Fixes<a class="anchor" aria-label="anchor" href="#fixes-0-4-7"></a></h3>
+<ul><li>A capsule bundle sources <code>json_native.R</code> with no compiled library present, so calling the registered native decimal converter failed with <code>object 'C_rmbl_strtod' not found</code> and every bundle run died. The converter is used when it is there and R’s own reader when it is not.</li>
+<li>
+<code>test-attest.R</code> compared the decimal converter against decimal literals, which are converted by whatever C library R was built against – the thing under test. On macOS both sides moved together and the test failed against the correct answer. Expected values are now transported as the bytes of the double.</li>
+<li>The version-drift test read <code>DESCRIPTION</code> from a source tree that <code>R CMD check</code> does not provide, erroring on all five platforms.</li>
+<li>
+<code><a href="../reference/rate_change.html">rate_change()</a></code> on non-numeric periods indexed with positions that could be zero, which returns a shorter vector and recycles wrong answers rather than reporting anything.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.6" id="rmoriebricklayer-046">rmoriebricklayer 0.4.6<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-046"></a></h2>
 <p>Certificate path validation is now complete: the three things 0.4.5 listed as still missing are done.</p>

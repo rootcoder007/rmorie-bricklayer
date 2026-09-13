@@ -176,6 +176,88 @@ yoy_summary(y)
 `cagr_pct` is the compound rate per period: applying it across the span
 returns `total_pct` exactly.
 
+## Rates, when the denominator moves too
+
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+compares counts. A count is not comparable across places of different
+size, or across years whose populations differ, and the fix is a rate –
+but a rate is not made trustworthy by being a rate.
+
+``` r
+
+stops <- data.frame(
+  division = c("North", "South", "East"),
+  stops = c(412, 77, 3),
+  residents = c(120000, 41000, 9500))
+
+rate(stops, stops, residents, by = "division", per = "100k")
+#> Rate per 100,000, 95% exact Poisson interval
+#>   division count population      rate      lower     upper flag
+#> 1     East     3       9500  31.57895   6.512338  92.28708 <NA>
+#> 2    North   412     120000 343.33333 310.977110 378.14142 <NA>
+#> 3    South    77      41000 187.80488 148.212673 234.72387 <NA>
+```
+
+East’s interval is wider than its own estimate. That is the honest
+reading of three events, and it is the reason the interval is printed
+beside the rate rather than left to the reader to imagine. The interval
+is the exact Poisson one, so a count of zero has a lower limit of
+exactly zero instead of a negative rate.
+
+A share is a different quantity. Its denominator is the total of the
+same events, not a population, so shares over a complete grouping sum to
+100:
+
+``` r
+
+share(stops, stops, by = "division")
+#> Share of 492, 95% Wilson interval
+#>   division count total      share      lower     upper
+#> 1     East     3   492  0.6097561  0.2075843  1.777215
+#> 2    North   412   492 83.7398374 80.2200225 86.736863
+#> 3    South    77   492 15.6504065 12.7074531 19.125597
+```
+
+“40% of stops” and “40 stops per 1,000 residents” are different claims,
+and a table that labels one as the other is wrong however carefully the
+arithmetic was done. That is why these are separate functions.
+
+For the change in a rate, both the counts and the denominators move:
+
+``` r
+
+d <- data.frame(
+  year = rep(2021:2023, each = 2),
+  division = rep(c("North", "South"), 3),
+  stops = c(400, 70, 430, 66, 455, 61),
+  residents = c(120000, 41000, 122000, 41500, 125000, 42000))
+
+rate_change(d, stops, residents, year, by = "division", per = "100k")
+#> Change in rate per 100,000, lag 1, 95% exact conditional interval
+#>   division year count population     rate previous_rate rate_ratio pct_change
+#> 1    North 2021   400     120000 333.3333            NA         NA         NA
+#> 2    North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705
+#> 3    North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419
+#> 4    South 2021    70      41000 170.7317            NA         NA         NA
+#> 5    South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258
+#> 6    South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046
+#>    pct_lower pct_upper                 flag
+#> 1         NA        NA no comparison period
+#> 2  -7.937165  21.46533                 <NA>
+#> 3  -9.679876  18.10199                 <NA>
+#> 4         NA        NA no comparison period
+#> 5 -34.473784  32.29053                 <NA>
+#> 6 -36.596300  31.35600                 <NA>
+```
+
+North’s count rose, and so did its population, so the rate change is
+smaller than the count change – which is the whole reason to look at the
+rate. The interval conditions on the two counts and corrects for the
+ratio of the two exposures; with equal populations it reduces to exactly
+the conditional-binomial interval
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+uses above.
+
 ## Output
 
 The same object writes to six formats. The format follows the file name.

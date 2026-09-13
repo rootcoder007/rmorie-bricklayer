@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,6 +91,8 @@
 <strong>Capsules larger than memory</strong> — exact block-wise moment accumulation, reservoir sampling, and HyperLogLog distinct counts, all in one pass.</li>
 <li>
 <strong>Synthetic fallback</strong> — <code><a href="reference/make_synthetic_column.html">make_synthetic_column()</a></code> / <code><a href="reference/make_synthetic_csv.html">make_synthetic_csv()</a></code> generate schema-driven stand-ins when the real source is down, so a pipeline still runs end-to-end.</li>
+<li>
+<strong>Rates and shares</strong> — <code><a href="reference/rate.html">rate()</a></code> gives events per population at any denominator (<code>per = 1000</code>, <code>"100k"</code>, <code>"1m"</code>) with the exact Poisson interval; <code><a href="reference/share.html">share()</a></code> gives percentage of a total with Wilson’s interval. They are separate functions because a share of a total is not a rate per population, and labelling one as the other is the most common error in a published table. <code><a href="reference/rate_change.html">rate_change()</a></code> gives the change in a rate between periods, conditioning on the two counts and correcting for the exposure ratio rather than treating two rates as measured numbers.</li>
 <li>
 <strong>Change tables</strong> — <code><a href="reference/yoy.html">yoy()</a></code> computes period-over-period change matched on the period’s own value rather than on row order, so a missing year is a gap instead of a quietly multi-year comparison. A percent off a small base is withheld with its reason; a column already in percent is reported in percentage <em>points</em>; a ratio of counts carries the exact conditional-binomial interval. <code><a href="reference/yoy_write.html">yoy_write()</a></code> renders to HTML, PDF, CSV, TSV, JSON or Markdown, format taken from the file name, with nothing outside base R.</li>
 <li>

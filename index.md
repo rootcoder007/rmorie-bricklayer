@@ -81,6 +81,19 @@ produced the data.
   [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
   generate schema-driven stand-ins when the real source is down, so a
   pipeline still runs end-to-end.
+- **Rates and shares** —
+  [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+  gives events per population at any denominator (`per = 1000`,
+  `"100k"`, `"1m"`) with the exact Poisson interval;
+  [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/share.md)
+  gives percentage of a total with Wilson’s interval. They are separate
+  functions because a share of a total is not a rate per population, and
+  labelling one as the other is the most common error in a published
+  table.
+  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+  gives the change in a rate between periods, conditioning on the two
+  counts and correcting for the exposure ratio rather than treating two
+  rates as measured numbers.
 - **Change tables** —
   [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   computes period-over-period change matched on the period’s own value
