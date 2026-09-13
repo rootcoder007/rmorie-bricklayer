@@ -4,7 +4,11 @@
 # is where the platform-specific link paths live (-lcurl on Linux/macOS,
 # Makevars.win's pkg-config --static libcurl on Windows). A single Linux
 # runner would leave "works everywhere" unproven.
-name: r-pkg-check
+# Named to match 'cmd' on purpose: pkgcheck's CI check greps workflow
+# names for 'cmd|coverage' and consults only what matches, so under the
+# old name "r-pkg-check" this entire matrix was invisible to it and the
+# check rested on coverage alone.
+name: R-CMD-check
 
 on:
   push:
