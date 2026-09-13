@@ -610,6 +610,63 @@ if (YOY_AVAILABLE) {
              note = if (nzchar(.cmp$first[i])) .cmp$first[i] else NULL)
     }
     fwrite(.cmp, file.path(OUTPUT_DIR, "09_yoy_table_comparison.csv"))
+
+    ## --- the published RATE tables, both denominators ----------------
+    ## A count is not comparable across years: the custody population
+    ## grew from 33,571 to 43,481 between FY2023 and FY2025, so a rising
+    ## count can mean a falling rate. Each of the 108 published rate
+    ## tables is recomputed here against the same two exposures -- the
+    ## prison population the dataset covers (per 1,000, from c01) and
+    ## Ontario residents (per 100,000, StatCan 17-10-0009-01).
+    .rates_pub_f <- file.path(SCRIPT_DIR, "otis_rates_published.csv.gz")
+    if (file.exists(.rates_pub_f)) {
+      .rpub <- utils::read.csv(.rates_pub_f, stringsAsFactors = FALSE)
+      .rcmp <- otis_rates_compare(.yoy_dir, .rpub)
+      if (!is.null(.rcmp) && nrow(.rcmp)) {
+        for (i in seq_len(nrow(.rcmp))) {
+          code <- sub("_.*$", "", .rcmp$dataset[i])
+          record(paste0("rate_", code, "_", .rcmp$table[i]),
+                 observed = as.numeric(.rcmp$mismatched[i]),
+                 expected = 0, tol = 0, group = "rates_published",
+                 note = if (nzchar(.rcmp$first[i])) .rcmp$first[i] else NULL)
+        }
+        fwrite(.rcmp, file.path(OUTPUT_DIR, "10_rate_table_comparison.csv"))
+        cat(sprintf("      %d rate tables, %d cells, %d matching\n",
+                    nrow(.rcmp), sum(.rcmp$cells),
+                    sum(.rcmp$mismatched == 0)))
+      }
+
+      ## The named criminological rates. These are the headline numbers
+      ## a reader wants, and they move in opposite directions: the
+      ## incarceration rate rose while the solitary-confinement rate
+      ## fell, which a count alone would hide.
+      .head <- otis_headline_rates(.yoy_dir)
+      if (!is.null(.head)) {
+        fwrite(.head, file.path(OUTPUT_DIR, "11_headline_rates.csv"))
+        for (i in seq_len(nrow(.head))) {
+          record(paste0("headline_", gsub("[^a-z0-9]+", "_",
+                                          tolower(.head$rate[i])),
+                        "_", .head$year[i]),
+                 ## Descriptive: there is no published figure to
+                 ## compare a headline rate against, so it is recorded
+                 ## as text rather than against a fake expected value.
+                 observed = sprintf("%.2f (%.2f-%.2f) per %s",
+                                    .head$value[i], .head$lower[i],
+                                    .head$upper[i],
+                                    format(.head$per[i], big.mark = ",",
+                                           scientific = FALSE)),
+                 expected = "descriptive, no published value",
+                 force_status = "INFO", group = "headline_rates",
+                 note = sprintf("%s in %s: %.1f (%.1f-%.1f), %d of %d",
+                                .head$rate[i], .head$year[i], .head$value[i],
+                                .head$lower[i], .head$upper[i],
+                                .head$count[i], .head$exposure[i]))
+        }
+        cat("      headline rates:\n")
+        print(.head[, c("rate", "year", "value", "lower", "upper")],
+              row.names = FALSE, digits = 5)
+      }
+    }
     cat(sprintf("      %d tables, %d cells, %d tables matching\n",
                 nrow(.cmp), sum(.cmp$cells), sum(.cmp$mismatched == 0)))
 
