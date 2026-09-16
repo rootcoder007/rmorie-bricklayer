@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -1187,6 +1187,50 @@
 
         </dt>
         <dd>Global Moran's I over a neighbour list</dd>
+      </dl></div><div class="section level2">
+      <h2 id="points-and-the-regions-that-contain-them">Points, and the regions that contain them<a class="anchor" aria-label="anchor" href="#points-and-the-regions-that-contain-them"></a></h2>
+
+      <div class="section-desc"><p>A crosswalk from point locations to statistical regions is built once and read many times, so an error in it reproduces downstream instead of showing up there. These check it three ways: that it is internally sound, that a recomputation agrees with it cell by cell, and that an assignment derived a DIFFERENT way agrees too, which is the only one of the three that can catch an error in the original method. The coverage summary reports what share of the population lives in a region holding a unit, and says each time that the share is context rather than a rate denominator: units serve catchments, which a point location does not state.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="region_coverage.html">region_coverage()</a></code>
+
+        </dt>
+        <dd>Population of the regions that contain a unit, and of those that do not</dd>
+
+        <dt>
+
+          <code><a href="crosswalk_integrity.html">crosswalk_integrity()</a></code>
+
+        </dt>
+        <dd>Internal soundness of a crosswalk</dd>
+
+        <dt>
+
+          <code><a href="crosswalk_compare.html">crosswalk_compare()</a></code>
+
+        </dt>
+        <dd>Compare a recomputed crosswalk against a published one</dd>
+
+        <dt>
+
+          <code><a href="crosswalk_second_route.html">crosswalk_second_route()</a></code>
+
+        </dt>
+        <dd>Check a crosswalk against an independently derived assignment</dd>
+
+        <dt>
+
+          <code><a href="crosswalk_from_points.html">crosswalk_from_points()</a></code>
+
+        </dt>
+        <dd>Recompute a point-to-region crosswalk by point in polygon</dd>
       </dl></div><div class="section level2">
       <h2 id="describe-a-capsule">Describe a capsule<a class="anchor" aria-label="anchor" href="#describe-a-capsule"></a></h2>
 

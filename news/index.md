@@ -1,5 +1,87 @@
 # Changelog
 
+## rmoriebricklayer 0.5.0
+
+### Point locations and the regions that contain them
+
+A crosswalk from facilities to statistical regions is built once and
+read many times, so an error in it is the one error recomputing the
+downstream tables cannot find: everything downstream reads the
+crosswalk, and both sides of any comparison move together.
+`R/crosswalk.R` adds the checks that can find it.
+
+- [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+  reports how many regions hold at least one unit and what share of the
+  population lives in them, and its print method says each time that the
+  share is not a rate denominator. A region holding no unit is not an
+  unserved population: units serve catchments, which a point location
+  does not state. Summing the populations of unit-holding regions pairs
+  a partial denominator with a numerator drawn from the whole territory,
+  and every rate built that way is inflated unevenly.
+
+- [`crosswalk_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_integrity.md)
+  finds what a comparison against published output cannot, because it
+  would be present on both sides: a unit assigned two regions, a unit
+  assigned none, a region code belonging to another province. No
+  geometry, so it runs with nothing installed.
+
+- [`crosswalk_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_compare.md)
+  matches two crosswalks on the unit identifier and compares them cell
+  by cell, numerics through
+  [`all.equal()`](https://rdrr.io/r/base/all.equal.html) so a coordinate
+  that survived a round trip through text is not reported as a change.
+
+- [`crosswalk_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_second_route.md)
+  compares the assignment against one derived a DIFFERENT way, and takes
+  the known-bad cases by name rather than by a loosened tolerance. This
+  is the only one of the four that can catch an error in the original
+  method, because it does not use that method.
+
+- [`crosswalk_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_from_points.md)
+  recomputes the assignment by point in polygon, projecting the points
+  onto the boundary file’s own coordinate system rather than the
+  reverse. It returns `NULL` without `sf` or without the boundary file,
+  so a verification script records the check as unavailable instead of
+  failing over an optional dependency. `sf` joins Suggests.
+
+### The otis-mrp example
+
+- New section 3g re-derives the institution to census division crosswalk
+  and the division populations under it, rather than reading them. The
+  49 Ontario census-division populations re-derive exactly from
+  Statistics Canada 17-10-0139-01, summing to 15,109,416; the 21
+  divisions holding an open institution hold 10,110,752 of those. Twelve
+  checks run with nothing granted, and injected errors were confirmed to
+  fail them: a moved institution, a foreign region code, an altered
+  population, a dropped division and a duplicated row each break at
+  least one.
+
+- The city-name second route covers eleven of the twenty-five open
+  institutions and disagrees on one, which is recorded as documented
+  rather than tolerated. Sudbury Jail stands inside the City of Greater
+  Sudbury, census division 3553 and 171,568 people; the bare name
+  “Sudbury” belongs to census division 3552, Sudbury District, 22,746
+  people. Two places, one name. The geometry is right and the name route
+  is wrong, and a SECOND disagreement is still a failure.
+
+- `institution_cd_crosswalk.csv` and `cd_population_2022.csv` now travel
+  with the example, so the checks run from the bundle.
+
+### Bug fixes
+
+- `examples/otis-mrp/custody.R` is removed. It duplicated `R/custody.R`
+  and took precedence over it: `analysis.R` searches beside the script
+  before `../../R`, so a run from a checkout without the package
+  installed resolved to a
+  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+  without the `baseline` argument and without
+  [`period_days()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.md)
+  or
+  [`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md).
+  It was the only one of the nine vendored R files tracked under
+  `examples/`, and `make_bundle.sh` copies the package file over it at
+  build time, so built bundles were unaffected.
+
 ## rmoriebricklayer 0.4.9
 
 ### Bug fixes

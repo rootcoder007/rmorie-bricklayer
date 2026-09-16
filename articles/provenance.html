@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,7 +140,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       65976085df0f018d3758ba1d497f07fa3e8dc92a12af0c14dfe236b95dd40b03</span></span>
+<span><span class="co">#&gt;   root       bf1ec2530be9bdd1765d3c2540a2d4f14eeb041003a94e8255df055c30ec6a94</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -153,7 +153,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    65976085df0f018d3758ba1d497f07fa3e8dc92a12af0c14dfe236b95dd40b03</span></span>
+<span><span class="co">#&gt;   root    bf1ec2530be9bdd1765d3c2540a2d4f14eeb041003a94e8255df055c30ec6a94</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -367,13 +367,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-09-13T22:38:40Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-09-16T06:54:15Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"by_year"</span>, <span class="st">"by_precinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-09-13T22:38:40Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-09-16T06:54:15Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): by_year, by_precinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -415,7 +415,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    2ad326b23a52f9ebd060352100c53b907a94</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    f0ada35a1489722d8520226475b51d3e02d4</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
