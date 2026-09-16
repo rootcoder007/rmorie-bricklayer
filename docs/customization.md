@@ -45,9 +45,9 @@ Every configurable point in `rmorie-bricklayer`, organized by which file control
     ]
   },
   "expected": {
-    "total_checks": 36,
-    "pass_real":    36,
-    "pass_csv":     28  // expected PASS count when running from public CSV (DML INFO)
+    "total_checks": 55,
+    "pass_real":    49,
+    "pass_csv":     41  // expected PASS count when running from public CSV (DML INFO)
   }
 }
 ```
