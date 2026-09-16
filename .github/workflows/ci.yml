@@ -1,8 +1,10 @@
-# CI for rmorie-bricklayer: lint the shell scripts and run the canonical
-# build-and-verify smoke test. The bundle's setup_and_run.R installs its R
-# deps from CRAN source if missing (slow; DHARMa/Hmisc can fail to compile),
-# so we pre-install them here as cached BINARIES via pak — making the smoke
-# test fast and reliable (setup_and_run then finds everything present).
+# CI for rmorie-bricklayer: lint the shell scripts, keep the vendored R
+# files where they belong, and run the canonical build-and-verify smoke
+# test against the real OTIS input so every section of analysis.R is
+# exercised rather than recorded as INFO.
+#
+# The bundle's R dependencies are read from examples/otis-mrp/config.json
+# so this file and the bundle cannot disagree about them.
 name: CI
 
 on:
@@ -19,8 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  shellcheck:
-    name: shellcheck
+  hygiene:
+    name: shellcheck + vendored files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -29,6 +31,20 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y shellcheck
           find . -name '*.sh' -not -path './.git/*' -print0 \
             | xargs -0 -r shellcheck --severity=error
+      # make_bundle.sh copies these from R/ at build time. A copy tracked
+      # under examples/ is found first by analysis.R's source fallback and
+      # silently shadows the package file.
+      - name: Vendored R files live in R/, never under examples/
+        run: |
+          fail=0
+          for f in $(grep -oE 'R/[A-Za-z0-9_]+\.R' make_bundle.sh | sort -u | xargs -n1 basename); do
+            hits="$(find examples -name "$f" -print)"
+            if [ -n "$hits" ]; then
+              echo "::error::tracked copy of R/$f under examples/: $hits"
+              fail=1
+            fi
+          done
+          exit $fail
 
   smoke-test:
     name: build + verify otis-mrp bundle
@@ -40,18 +56,37 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Read the bundle's R packages from config.json
+        id: pkgs
+        run: |
+          {
+            echo 'list<<EOF'
+            jq -r '.r_packages[] | "any::" + .' examples/otis-mrp/config.json
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       # Binary installs + automatic system-dependency handling + caching.
       - uses: r-lib/actions/setup-r-dependencies@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
         with:
-          packages: |
-            any::data.table
-            any::MatchIt
-            any::glmmTMB
-            any::lme4
-            any::DHARMa
-            any::Hmisc
-            any::jsonlite
-            any::digest
+          packages: ${{ steps.pkgs.outputs.list }}
+
+      # The A01 input is 4.7 MB of public data. Cached on the pinned
+      # provenance so a changed upstream file changes the key.
+      - name: Cache the OTIS A01 input
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .otis-input
+          key: otis-a01-${{ hashFiles('examples/otis-mrp/data_provenance.json') }}
+
+      - name: Fetch the OTIS A01 input
+        run: |
+          mkdir -p .otis-input
+          f=.otis-input/a01_restrictive_confinement_detailed_dataset.csv
+          if [ ! -s "$f" ]; then
+            url="$(jq -r '.resource.direct_url' examples/otis-mrp/data_provenance.json)"
+            curl -sSfL --retry 3 --retry-delay 5 -o "$f" "$url"
+          fi
+          ls -la "$f"
 
       - name: Build and verify the otis-mrp bundle
-        run: ./dev/test_build_otis.sh
+        run: ./dev/test_build_otis.sh --with-data "$PWD/.otis-input/a01_restrictive_confinement_detailed_dataset.csv"

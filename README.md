@@ -88,6 +88,18 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Region-coded counts** — `expected_counts()` for indirect
   standardisation, `sir()` with the exact Poisson interval, `eb_rates()`
   for Clayton-Kaldor shrinkage, `funnel_limits()`, and `morans_i()`.
+- **Points, and the regions that contain them** — `region_map_integrity()`,
+  `region_map_compare()` and `region_map_second_route()` check a
+  point-to-region assignment on its own terms, since an error in it
+  reproduces perfectly in every table built on it; `region_map_from_points()`
+  recomputes one by point in polygon when `sf` is available; and
+  `region_coverage()` reports the population of the regions holding a unit
+  while saying, each time it prints, why that share is not a rate
+  denominator.
+- **Stock and flow** — `adp()`, `alos()` and `stock_flow()` read the same
+  person-days two ways, per day and per person, after Lakner (1976). When
+  stays lengthen the two move in opposite directions, so `stock_flow()`
+  reports both and the exact decomposition between them.
 
 ## Verification
 

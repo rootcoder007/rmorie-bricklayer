@@ -22,7 +22,7 @@ Academic reproducibility usually fails at one of three places: (a) the data is g
 
 ## Status
 
-**v0.1 — early development.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `examples/otis-mrp/` and runs to **37/37 PASS** in audit on macOS. End-to-end tested on macOS and on Linux (Fedora, R 4.6.1: fresh library, unattended `./start_here.sh`, live data download — 36 checks, 27 PASS / 0 DIFFER / 9 INFO). Windows runs welcome as test reports. Those two figures are dated: they were taken before sections 3e, 3f and 3g existed. The current CSV-mode run, measured 2026-09-16 on Linux with no `OTIS_DATASETS_DIR` and no optional downloads, is **55 records, 41 PASS, 0 DIFFER, 14 INFO**.
+**v0.5.0.** Production-quality reference implementation (Vansh Singh Ruhela's OTIS MRP) lives in `examples/otis-mrp/` and runs to **37/37 PASS** in audit on macOS. End-to-end tested on macOS and on Linux (Fedora, R 4.6.1: fresh library, unattended `./start_here.sh`, live data download — 36 checks, 27 PASS / 0 DIFFER / 9 INFO). Windows runs welcome as test reports. Those two figures are dated: they were taken before sections 3e, 3f and 3g existed. The current CSV-mode run, measured 2026-09-16 on Linux with no `OTIS_DATASETS_DIR` and no optional downloads, is **55 records, 41 PASS, 0 DIFFER, 14 INFO**.
 
 ## What you get
 

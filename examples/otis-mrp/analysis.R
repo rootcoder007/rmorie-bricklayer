@@ -483,7 +483,7 @@ if (!is.null(.sf_pkg)) {
 } else {
   ## Beside the script is where a bundle puts them; ../../R is the
   ## repository layout, for running this file straight from a checkout.
-  for (.f in c("yoy.R", "rate.R", "custody.R")) {
+  for (.f in c("print_methods.R", "yoy.R", "rate.R", "custody.R")) {
     for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
       .fp <- file.path(.dir, .f)
       if (file.exists(.fp)) {
@@ -507,8 +507,9 @@ if (!is.null(.sf_pkg)) {
 if (!is.null(.cw_pkg)) {
   for (.n in names(.cw_pkg)) assign(.n, .cw_pkg[[.n]])
 } else {
+  for (.f in c("print_methods.R", "region_map.R"))
   for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
-    .fp <- file.path(.dir, "region_map.R")
+    .fp <- file.path(.dir, .f)
     if (file.exists(.fp)) {
       source(.fp)
       break

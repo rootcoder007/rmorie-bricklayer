@@ -104,10 +104,11 @@ SUMMARY="$(python3 - <<PYEOF
 import json
 m = json.load(open("${LATEST}/manifest.json"))
 r = m["results"]
-print(f'{len(r)} {sum(1 for v in r.values() if v["status"]=="PASS")} {sum(1 for v in r.values() if v["status"]=="DIFFER")} {sum(1 for v in r.values() if v["status"]=="INFO")}')
+print(f'{len(r)} {sum(1 for v in r.values() if v["status"]=="PASS")} {sum(1 for v in r.values() if v["status"]=="DIFFER")} {sum(1 for v in r.values() if v["status"]=="INFO")} {m.get("meta", {}).get("input_mode", "unknown")}')
 PYEOF
 )"
-read -r TOTAL PASS_N DIFF_N INFO_N <<< "${SUMMARY}"
+read -r TOTAL PASS_N DIFF_N INFO_N INPUT_MODE <<< "${SUMMARY}"
+echo "      Mode:   ${INPUT_MODE}"
 echo "      Total:  ${TOTAL}"
 echo "      PASS:   ${PASS_N}"
 echo "      DIFFER: ${DIFF_N}"
@@ -117,6 +118,30 @@ echo
 if (( DIFF_N > 0 )); then
   echo "FAIL: ${DIFF_N} cross-check(s) differ."
   exit 6
+fi
+
+# With real data the counts are pinned in the bundle's own config.json --
+# pass_csv for a CSV input, pass_real for the .RData -- so a section that
+# stopped running, or a check that started passing for the wrong reason,
+# fails here instead of changing the documentation. The manifest says
+# which mode ran; synthetic mode forces INFO and is not compared.
+if [[ -f "${EXTRACTED}/config.json" && "${INPUT_MODE}" != "synthetic" ]]; then
+  EXPECTED="$(python3 - <<PYEOF
+import json
+c = json.load(open("${EXTRACTED}/config.json")).get("expected", {})
+key = "pass_csv" if "${INPUT_MODE}" == "csv" else "pass_real"
+print(c.get("total_checks", -1), c.get(key, -1), key)
+PYEOF
+)"
+  read -r EXP_TOTAL EXP_PASS EXP_KEY <<< "${EXPECTED}"
+  if (( EXP_TOTAL >= 0 && EXP_PASS >= 0 )); then
+    if (( TOTAL != EXP_TOTAL || PASS_N != EXP_PASS )); then
+      echo "FAIL: config.json expects ${EXP_PASS}/${EXP_TOTAL} PASS (${EXP_KEY}); this ${INPUT_MODE} run gave ${PASS_N}/${TOTAL}."
+      echo "      Re-measure and update examples/<project>/config.json if the change is intended."
+      exit 7
+    fi
+    echo "      matches config.json ${EXP_KEY}: ${EXP_PASS}/${EXP_TOTAL} PASS"
+  fi
 fi
 
 echo "=========================================================="

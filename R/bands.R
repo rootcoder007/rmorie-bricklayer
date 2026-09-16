@@ -273,21 +273,19 @@ band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
 #' @rdname band_sensitivity
 #' @export
 print.rmbl_band_sensitivity <- function(x, ...) {
-  cat("Sensitivity to the open top band's assumed cap\n\n")
-  print(as.data.frame(x), row.names = FALSE)
   sp <- attr(x, "span", exact = TRUE)
   rel <- attr(x, "relative_span", exact = TRUE)
-  cat("\nspan over the caps tried: ", format(sp, digits = 4L), sep = "")
-  if (!is.na(rel)) {
-    cat(" (", format(100 * rel, digits = 3L),
-        "% of the typical value)", sep = "")
-  }
-  cat("\n")
+  footer <- paste0("span over the caps tried: ", format(sp, digits = 4L),
+                   if (!is.na(rel)) paste0(" (", format(100 * rel, digits = 3L),
+                                           "% of the typical value)") else "")
   if (!is.na(rel) && rel > 0.1) {
-    cat("The statistic moves by more than a tenth of itself across the\n",
-        "caps tried, so it is a property of the assumption as much as\n",
-        "of the data. Report the range, not a single figure.\n", sep = "")
+    footer <- c(footer,
+      "The statistic moves by more than a tenth of itself across the",
+      "caps tried, so it is a property of the assumption as much as",
+      "of the data. Report the range, not a single figure.")
   }
+  .rmbl_print_table("Sensitivity to the open top band's assumed cap",
+                    as.data.frame(x), footer = footer, ...)
   invisible(x)
 }
 

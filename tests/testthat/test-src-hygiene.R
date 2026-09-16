@@ -224,3 +224,14 @@ test_that("the version is not stated twice with two different answers", {
   first <- grep("^# ", news, value = TRUE)[1]
   expect_match(first, unname(desc), fixed = TRUE)
 })
+
+test_that("every exported topic is in the pkgdown reference index", {
+  skip_if_not_installed("pkgdown")
+  d <- src_dir()
+  skip_if(is.na(d), "package sources not available from here")
+  root <- normalizePath(file.path(d, ".."))
+  skip_if(!file.exists(file.path(root, "_pkgdown.yml")), "no _pkgdown.yml")
+  # check_pkgdown() aborts on a topic missing from the index, which is the
+  # failure the site build otherwise reports only after a push
+  expect_no_error(pkgdown::check_pkgdown(root))
+})
