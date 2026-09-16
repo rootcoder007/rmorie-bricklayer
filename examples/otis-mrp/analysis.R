@@ -501,14 +501,14 @@ if (!is.null(.sf_pkg)) {
 ## because a reviewer with the package installed should get the package
 ## copies, and one without should still get 3g rather than losing it to
 ## whether the stock-flow lookup happened to succeed.
-.cw_pkg <- .otis_pkg_fns(c("region_coverage", "crosswalk_integrity",
-                           "crosswalk_compare", "crosswalk_second_route",
-                           "crosswalk_from_points"))
+.cw_pkg <- .otis_pkg_fns(c("region_coverage", "region_map_integrity",
+                           "region_map_compare", "region_map_second_route",
+                           "region_map_from_points"))
 if (!is.null(.cw_pkg)) {
   for (.n in names(.cw_pkg)) assign(.n, .cw_pkg[[.n]])
 } else {
   for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
-    .fp <- file.path(.dir, "crosswalk.R")
+    .fp <- file.path(.dir, "region_map.R")
     if (file.exists(.fp)) {
       source(.fp)
       break

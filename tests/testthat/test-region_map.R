@@ -39,107 +39,107 @@ test_that("printing region_coverage says the share is not a denominator", {
   expect_match(out, "catchment")
 })
 
-test_that("crosswalk_integrity finds duplicates, gaps and unknown regions", {
+test_that("region_map_integrity finds duplicates, gaps and unknown regions", {
   cw <- data.frame(inst = c("North", "South", "East"),
                    cd = c("3557", "3520", "3506"), stringsAsFactors = FALSE)
   known <- c("3557", "3520", "3506")
-  ok <- crosswalk_integrity(cw, "inst", "cd", regions = known)
+  ok <- region_map_integrity(cw, "inst", "cd", regions = known)
   expect_true(all(ok$pass))
   expect_equal(nrow(ok), 3L)
 
   dup <- rbind(cw, cw[1, ])
-  expect_equal(crosswalk_integrity(dup, "inst", "cd", known)$observed[1], 1)
+  expect_equal(region_map_integrity(dup, "inst", "cd", known)$observed[1], 1)
 
   gap <- cw; gap$cd[2] <- ""
-  expect_equal(crosswalk_integrity(gap, "inst", "cd", known)$observed[2], 1)
+  expect_equal(region_map_integrity(gap, "inst", "cd", known)$observed[2], 1)
 
   wrong <- cw; wrong$cd[3] <- "2406"
-  expect_equal(crosswalk_integrity(wrong, "inst", "cd", known)$observed[3], 1)
+  expect_equal(region_map_integrity(wrong, "inst", "cd", known)$observed[3], 1)
 
   ## without a reference geography the third check is not offered at all,
   ## rather than passing vacuously
-  expect_equal(nrow(crosswalk_integrity(cw, "inst", "cd")), 2L)
+  expect_equal(nrow(region_map_integrity(cw, "inst", "cd")), 2L)
 })
 
-test_that("crosswalk_integrity errors on a column that is not there", {
+test_that("region_map_integrity errors on a column that is not there", {
   cw <- data.frame(inst = "North", cd = "3557", stringsAsFactors = FALSE)
-  expect_error(crosswalk_integrity(cw, "facility", "cd"), "no column")
-  expect_error(crosswalk_integrity(cw, "inst", "division"), "no column")
+  expect_error(region_map_integrity(cw, "facility", "cd"), "no column")
+  expect_error(region_map_integrity(cw, "inst", "division"), "no column")
 })
 
-test_that("crosswalk_compare reports agreement and the first disagreement", {
+test_that("region_map_compare reports agreement and the first disagreement", {
   pub <- data.frame(inst = c("North", "South"), cd = c("3557", "3520"),
                     stringsAsFactors = FALSE)
-  same <- crosswalk_compare(pub, pub, "inst")
+  same <- region_map_compare(pub, pub, "inst")
   expect_true(all(same$mismatched == 0))
   expect_true(all(same$first == ""))
 
   obs <- pub; obs$cd[2] <- "3521"
-  diff <- crosswalk_compare(pub, obs, "inst")
+  diff <- region_map_compare(pub, obs, "inst")
   cd <- diff[diff$column == "cd", ]
   expect_equal(cd$mismatched, 1)
   expect_match(cd$first, "South")
   expect_match(cd$first, "3521")
 })
 
-test_that("crosswalk_compare counts units present on one side only", {
+test_that("region_map_compare counts units present on one side only", {
   pub <- data.frame(inst = c("North", "South"), cd = c("3557", "3520"),
                     stringsAsFactors = FALSE)
   obs <- pub[1, ]
-  rows <- crosswalk_compare(pub, obs, "inst")
+  rows <- region_map_compare(pub, obs, "inst")
   rows <- rows[rows$column == "rows", ]
   expect_equal(rows$mismatched, 1)
   expect_match(rows$first, "published only")
 })
 
-test_that("crosswalk_compare tolerates a numeric round trip through text", {
+test_that("region_map_compare tolerates a numeric round trip through text", {
   pub <- data.frame(inst = "North", lat = 46.55004065, stringsAsFactors = FALSE)
   obs <- data.frame(inst = "North",
                     lat = as.numeric(format(46.55004065, digits = 15)),
                     stringsAsFactors = FALSE)
-  cmp <- crosswalk_compare(pub, obs, "inst", cols = "lat")
+  cmp <- region_map_compare(pub, obs, "inst", cols = "lat")
   expect_equal(cmp$mismatched[cmp$column == "lat"], 0)
 })
 
-test_that("crosswalk_second_route separates documented from unexplained", {
+test_that("region_map_second_route separates documented from unexplained", {
   cw <- data.frame(inst = c("North", "South", "Hill"),
                    cd = c("3557", "3520", "3506"), stringsAsFactors = FALSE)
   route <- c("North" = "3557", "South" = "3520", "Hill" = "3519")
 
-  d <- crosswalk_second_route(cw, "inst", "cd", route, known = "Hill")
+  d <- region_map_second_route(cw, "inst", "cd", route, known = "Hill")
   expect_equal(nrow(d), 1L)
   expect_true(d$known)
   expect_equal(sum(!d$known), 0L)
 
   route["South"] <- "3521"
-  d <- crosswalk_second_route(cw, "inst", "cd", route, known = "Hill")
+  d <- region_map_second_route(cw, "inst", "cd", route, known = "Hill")
   expect_equal(nrow(d), 2L)
   expect_equal(sum(!d$known), 1L)
   expect_equal(d$unit[!d$known], "South")
 })
 
-test_that("crosswalk_second_route skips units the route does not cover", {
+test_that("region_map_second_route skips units the route does not cover", {
   cw <- data.frame(inst = c("North", "South"), cd = c("3557", "3520"),
                    stringsAsFactors = FALSE)
   ## the route knows nothing about South, which is not a disagreement
-  d <- crosswalk_second_route(cw, "inst", "cd", c("North" = "3557"))
+  d <- region_map_second_route(cw, "inst", "cd", c("North" = "3557"))
   expect_equal(nrow(d), 0L)
 })
 
-test_that("crosswalk_second_route accepts the route as a data frame", {
+test_that("region_map_second_route accepts the route as a data frame", {
   cw <- data.frame(inst = c("North", "South"), cd = c("3557", "3520"),
                    stringsAsFactors = FALSE)
   rt <- data.frame(inst = c("North", "South"), cd = c("3557", "3599"),
                    stringsAsFactors = FALSE)
-  d <- crosswalk_second_route(cw, "inst", "cd", rt)
+  d <- region_map_second_route(cw, "inst", "cd", rt)
   expect_equal(d$unit, "South")
   expect_equal(d$second, "3599")
 })
 
-test_that("crosswalk_from_points returns NULL rather than failing without sf", {
+test_that("region_map_from_points returns NULL rather than failing without sf", {
   ## the boundary file does not exist, which is the same answer sf's
   ## absence gives: the caller records the check as unavailable
-  expect_null(crosswalk_from_points(x = 1, y = 2, unit = "North",
+  expect_null(region_map_from_points(x = 1, y = 2, unit = "North",
                                     boundaries = tempfile(),
                                     fields = "CDUID"))
 })

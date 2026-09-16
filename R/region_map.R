@@ -1,7 +1,7 @@
 # Mapping point locations to the regions that contain them, and checking
 # the result rather than trusting it.
 #
-# A crosswalk from facilities to statistical regions is built once, by
+# A region map from facilities to statistical regions is built once, by
 # geometry, and then read many times. Everything downstream inherits it,
 # so the failure that matters is not a wrong arithmetic step later: it is
 # a silently wrong assignment here, which no recomputation of the tables
@@ -10,22 +10,22 @@
 # Three separate things are therefore checked, and they fail for
 # different reasons:
 #
-#   crosswalk_integrity()    the crosswalk is internally sound -- one
-#                            region per unit, no gaps, every region id
-#                            known to the population table.
-#   crosswalk_compare()      a recomputed crosswalk agrees with the
-#                            published one, cell by cell.
-#   crosswalk_second_route() an assignment derived a DIFFERENT way
-#                            agrees, except on the cases already known
-#                            to defeat that route. This is the only one
-#                            of the three that can catch an error in the
-#                            original method, because it does not use
-#                            that method.
+#   region_map_integrity()    the map is internally sound -- one region
+#                             per unit, no gaps, every region id known to
+#                             the population table.
+#   region_map_compare()      a recomputed map agrees with the published
+#                             one, cell by cell.
+#   region_map_second_route() an assignment derived a DIFFERENT way
+#                             agrees, except on the cases already known to
+#                             defeat that route. This is the only one of
+#                             the three that can catch an error in the
+#                             original method, because it does not use
+#                             that method.
 #
 # And one thing is deliberately not offered: a per-capita rate by region.
 # See region_coverage().
 
-.rmbl_cw_chr <- function(x, arg) {
+.rmbl_rm_chr <- function(x, arg) {
   x <- trimws(as.character(x))
   if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x) || !all(nzchar(x))) {
@@ -35,7 +35,7 @@
   x
 }
 
-.rmbl_cw_col <- function(d, nm, arg) {
+.rmbl_rm_col <- function(d, nm, arg) {
   if (!is.data.frame(d)) stop(sprintf("`%s` must be a data frame", arg),
                               call. = FALSE)
   if (length(nm) != 1L || !nm %in% names(d)) {
@@ -86,9 +86,9 @@
 #' The print method says this each time, because the covered share is
 #' precisely the number a reader is tempted to divide by.
 #'
-#' @seealso [crosswalk_integrity()],
-#'   [crosswalk_compare()],
-#'   [crosswalk_second_route()]
+#' @seealso [region_map_integrity()],
+#'   [region_map_compare()],
+#'   [region_map_second_route()]
 #'
 #' @examples
 #' # Four regions, two of which hold a facility.
@@ -101,7 +101,7 @@
 #' attr(cov, "coverage")$covered_share
 #' @export
 region_coverage <- function(region, population, units) {
-  region <- .rmbl_cw_chr(region, "region")
+  region <- .rmbl_rm_chr(region, "region")
   population <- as.numeric(population)
   units <- as.numeric(units)
   if (length(population) != length(region) || length(units) != length(region)) {
@@ -161,12 +161,12 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
   invisible(x)
 }
 
-#' Internal soundness of a crosswalk
+#' Internal soundness of a region map
 #'
-#' Checks that a crosswalk assigns exactly one region to every unit and
+#' Checks that a region map assigns exactly one region to every unit and
 #' that every region it names is one the reference geography knows about.
 #'
-#' @param crosswalk Data frame, one row per unit.
+#' @param map Data frame, one row per unit.
 #' @param unit Name of the column holding the unit identifier.
 #' @param region Name of the column holding the region identifier.
 #' @param regions Optional character vector of every valid region
@@ -185,23 +185,23 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #' is a typo or belongs to a neighbouring province. None of them require
 #' the geometry, so they run with nothing installed.
 #'
-#' @seealso [crosswalk_compare()],
-#'   [crosswalk_second_route()],
+#' @seealso [region_map_compare()],
+#'   [region_map_second_route()],
 #'   [region_coverage()]
 #'
 #' @examples
 #' cw <- data.frame(inst = c("North Jail", "South Jail", "East Jail"),
 #'                  cd = c("3557", "3520", "3506"),
 #'                  stringsAsFactors = FALSE)
-#' crosswalk_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
+#' region_map_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
 #'
 #' # a region code the geography does not know fails the third check
 #' cw$cd[3] <- "2406"
-#' crosswalk_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
+#' region_map_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
 #' @export
-crosswalk_integrity <- function(crosswalk, unit, region, regions = NULL) {
-  u <- as.character(.rmbl_cw_col(crosswalk, unit, "crosswalk"))
-  r <- as.character(.rmbl_cw_col(crosswalk, region, "crosswalk"))
+region_map_integrity <- function(map, unit, region, regions = NULL) {
+  u <- as.character(.rmbl_rm_col(map, unit, "map"))
+  r <- as.character(.rmbl_rm_col(map, region, "map"))
   blank <- function(v) is.na(v) | !nzchar(trimws(ifelse(is.na(v), "", v)))
   dup <- sum(duplicated(u[!blank(u)]))
   gap <- sum(blank(r))
@@ -223,13 +223,13 @@ crosswalk_integrity <- function(crosswalk, unit, region, regions = NULL) {
   out
 }
 
-#' Compare a recomputed crosswalk against a published one
+#' Compare a recomputed region map against a published one
 #'
-#' Matches two crosswalks on the unit identifier and compares the named
+#' Matches two region maps on the unit identifier and compares the named
 #' columns cell by cell.
 #'
-#' @param published The crosswalk as published.
-#' @param observed The crosswalk as recomputed.
+#' @param published The region map as published.
+#' @param observed The region map as recomputed.
 #' @param unit Name of the unit identifier column, present in both.
 #' @param cols Columns to compare. Defaults to every column the two share
 #'   apart from `unit`.
@@ -249,24 +249,24 @@ crosswalk_integrity <- function(crosswalk, unit, region, regions = NULL) {
 #' published assignment. It does NOT establish that the assignment is
 #' right: run the same method against the same boundary file and a
 #' definitional error reproduces perfectly. That is what
-#' [crosswalk_second_route()] is for.
+#' [region_map_second_route()] is for.
 #'
-#' @seealso [crosswalk_second_route()],
-#'   [crosswalk_integrity()]
+#' @seealso [region_map_second_route()],
+#'   [region_map_integrity()]
 #'
 #' @examples
 #' pub <- data.frame(inst = c("North Jail", "South Jail"),
 #'                   cd = c("3557", "3520"), stringsAsFactors = FALSE)
 #' obs <- pub
-#' crosswalk_compare(pub, obs, "inst")
+#' region_map_compare(pub, obs, "inst")
 #'
 #' # a changed assignment is reported with the unit that moved
 #' obs$cd[2] <- "3521"
-#' crosswalk_compare(pub, obs, "inst")
+#' region_map_compare(pub, obs, "inst")
 #' @export
-crosswalk_compare <- function(published, observed, unit, cols = NULL) {
-  pu <- trimws(as.character(.rmbl_cw_col(published, unit, "published")))
-  ou <- trimws(as.character(.rmbl_cw_col(observed, unit, "observed")))
+region_map_compare <- function(published, observed, unit, cols = NULL) {
+  pu <- trimws(as.character(.rmbl_rm_col(published, unit, "published")))
+  ou <- trimws(as.character(.rmbl_rm_col(observed, unit, "observed")))
   if (is.null(cols)) {
     cols <- setdiff(intersect(names(published), names(observed)), unit)
   }
@@ -309,13 +309,13 @@ crosswalk_compare <- function(published, observed, unit, cols = NULL) {
   out
 }
 
-#' Check a crosswalk against an independently derived assignment
+#' Check a region map against an independently derived assignment
 #'
 #' Compares the region each unit was assigned with the region a DIFFERENT
 #' method assigns it, and marks the disagreements that are already known
 #' and explained.
 #'
-#' @param crosswalk Data frame, one row per unit.
+#' @param map Data frame, one row per unit.
 #' @param unit Name of the unit identifier column.
 #' @param region Name of the assigned region column.
 #' @param route Named character vector, or a data frame with the same two
@@ -345,8 +345,8 @@ crosswalk_compare <- function(published, observed, unit, cols = NULL) {
 #' tolerance until everything passes, and listing them by NAME means an
 #' unexpected disagreement cannot hide inside an allowance.
 #'
-#' @seealso [crosswalk_compare()],
-#'   [crosswalk_integrity()]
+#' @seealso [region_map_compare()],
+#'   [region_map_integrity()]
 #'
 #' @examples
 #' cw <- data.frame(inst = c("North Jail", "South Jail", "Hill Jail"),
@@ -356,21 +356,21 @@ crosswalk_compare <- function(published, observed, unit, cols = NULL) {
 #' # a name-based route that is known to mis-place one unit
 #' route <- c("North Jail" = "3557", "South Jail" = "3520",
 #'            "Hill Jail" = "3519")
-#' crosswalk_second_route(cw, "inst", "cd", route, known = "Hill Jail")
+#' region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 #'
 #' # an undocumented disagreement is what the check is for
 #' route["South Jail"] <- "3521"
-#' d <- crosswalk_second_route(cw, "inst", "cd", route, known = "Hill Jail")
+#' d <- region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 #' sum(!d$known)
 #' @export
-crosswalk_second_route <- function(crosswalk, unit, region, route,
+region_map_second_route <- function(map, unit, region, route,
                                    known = character()) {
-  u <- trimws(as.character(.rmbl_cw_col(crosswalk, unit, "crosswalk")))
-  r <- trimws(as.character(.rmbl_cw_col(crosswalk, region, "crosswalk")))
+  u <- trimws(as.character(.rmbl_rm_col(map, unit, "map")))
+  r <- trimws(as.character(.rmbl_rm_col(map, region, "map")))
   if (is.data.frame(route)) {
     route <- stats::setNames(
-      trimws(as.character(.rmbl_cw_col(route, region, "route"))),
-      trimws(as.character(.rmbl_cw_col(route, unit, "route"))))
+      trimws(as.character(.rmbl_rm_col(route, region, "route"))),
+      trimws(as.character(.rmbl_rm_col(route, unit, "route"))))
   }
   route <- route[!is.na(route) & nzchar(trimws(as.character(route)))]
   if (is.null(names(route))) {
@@ -390,7 +390,7 @@ crosswalk_second_route <- function(crosswalk, unit, region, route,
   out
 }
 
-#' Recompute a point-to-region crosswalk by point in polygon
+#' Recompute a region map by point in polygon
 #'
 #' Assigns each point to the polygon that contains it. Requires the `sf`
 #' package and a boundary file; returns `NULL` when either is absent, so
@@ -426,27 +426,27 @@ crosswalk_second_route <- function(crosswalk, unit, region, route,
 #' larger one, a township absorbed by a neighbour. The geometry has no
 #' opinion about any of that.
 #'
-#' Use [crosswalk_second_route()]
+#' Use [region_map_second_route()]
 #' to check this result against the name route, with those cases named.
 #'
-#' @seealso [crosswalk_compare()],
-#'   [crosswalk_second_route()]
+#' @seealso [region_map_compare()],
+#'   [region_map_second_route()]
 #'
 #' @examples
 #' # Needs sf and a boundary file, so this is the shape of the call
 #' # rather than a run of it.
 #' \dontrun{
-#' obs <- crosswalk_from_points(
+#' obs <- region_map_from_points(
 #'   x = inst$Longitude, y = inst$Latitude, unit = inst$Institution,
 #'   boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME"))
 #' stopifnot(all(obs$n_regions == 1))
 #' }
 #' @export
-crosswalk_from_points <- function(x, y, unit, boundaries, fields,
+region_map_from_points <- function(x, y, unit, boundaries, fields,
                                   crs = 4326) {
   if (!requireNamespace("sf", quietly = TRUE)) return(NULL)
   if (length(boundaries) != 1L || !file.exists(boundaries)) return(NULL)
-  unit <- .rmbl_cw_chr(unit, "unit")
+  unit <- .rmbl_rm_chr(unit, "unit")
   x <- as.numeric(x); y <- as.numeric(y)
   if (length(x) != length(unit) || length(y) != length(unit)) {
     stop("`x`, `y` and `unit` must be the same length", call. = FALSE)
