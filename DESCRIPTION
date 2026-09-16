@@ -49,6 +49,7 @@ Description: Tools for building brick-proof, reproducible, self-contained
     <doi:10.2307/2532003>, funnel-plot limits and Moran's I.
 License: AGPL-3
 Encoding: UTF-8
+Language: en-US
 Roxygen: list(markdown = TRUE)
 Depends:
     R (>= 4.1.0)
