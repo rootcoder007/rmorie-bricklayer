@@ -132,7 +132,7 @@ otis_cd_population_download <- function(dir, year = OTIS_CD_YEAR,
 #'
 #' Returns a named character vector, institution to CDUID, covering only
 #' the institutions whose city is itself the name of a census division.
-#' Everything else is left out, so crosswalk_second_route() skips it
+#' Everything else is left out, so region_map_second_route() skips it
 #' rather than counting it as a disagreement.
 otis_crosswalk_name_route <- function(crosswalk, population) {
   ## "Ottawa, Ontario" -> "Ottawa"
@@ -149,7 +149,7 @@ otis_crosswalk_name_route <- function(crosswalk, population) {
 #' file are both available. NULL otherwise.
 otis_crosswalk_recompute_sf <- function(crosswalk, boundaries) {
   if (!nzchar(boundaries)) return(NULL)
-  crosswalk_from_points(
+  region_map_from_points(
     x = crosswalk$Longitude, y = crosswalk$Latitude,
     unit = crosswalk$Institution, boundaries = boundaries,
     fields = c("CDUID", "CDNAME"))
@@ -175,7 +175,7 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
                     stringsAsFactors = FALSE)
 
   ## --- structure -----------------------------------------------------
-  integ <- crosswalk_integrity(cw, "Institution", "CDUID",
+  integ <- region_map_integrity(cw, "Institution", "CDUID",
                                regions = pop$cduid)
   for (i in seq_len(nrow(integ)))
     out <- add(out, integ$check[i], integ$observed[i], integ$expected[i])
@@ -196,7 +196,7 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
 
   ## --- the populations, re-derived from Statistics Canada ------------
   if (!is.null(obs_pop)) {
-    cmp <- crosswalk_compare(pop, obs_pop, "cduid", cols = "population")
+    cmp <- region_map_compare(pop, obs_pop, "cduid", cols = "population")
     for (i in seq_len(nrow(cmp)))
       out <- add(out, paste0("cd_population_2022.csv, ", cmp$column[i]),
                  cmp$mismatched[i], 0, cmp$first[i])
@@ -204,7 +204,7 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
 
   ## --- the second route ----------------------------------------------
   route <- otis_crosswalk_name_route(cw, pop)
-  dis <- crosswalk_second_route(cw, "Institution", "CDUID", route,
+  dis <- region_map_second_route(cw, "Institution", "CDUID", route,
                                 known = OTIS_CW_NAME_KNOWN)
   out <- add(out, "institutions covered by the city-name route",
              length(route), OTIS_CW_NAME_COVERAGE,
@@ -232,7 +232,7 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
   if (!is.null(sf_obs)) {
     out <- add(out, "institutions inside exactly one census division",
                sum(sf_obs$n_regions == 1L), nrow(sf_obs))
-    scmp <- crosswalk_compare(cw, sf_obs, "Institution", cols = "CDUID")
+    scmp <- region_map_compare(cw, sf_obs, "Institution", cols = "CDUID")
     for (i in seq_len(nrow(scmp)))
       out <- add(out, paste0("point in polygon recompute, ", scmp$column[i]),
                  scmp$mismatched[i], 0, scmp$first[i])

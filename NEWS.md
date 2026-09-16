@@ -16,22 +16,22 @@ that can find it.
   regions pairs a partial denominator with a numerator drawn from the
   whole territory, and every rate built that way is inflated unevenly.
 
-* `crosswalk_integrity()` finds what a comparison against published
+* `region_map_integrity()` finds what a comparison against published
   output cannot, because it would be present on both sides: a unit
   assigned two regions, a unit assigned none, a region code belonging to
   another province. No geometry, so it runs with nothing installed.
 
-* `crosswalk_compare()` matches two crosswalks on the unit identifier and
+* `region_map_compare()` matches two crosswalks on the unit identifier and
   compares them cell by cell, numerics through `all.equal()` so a
   coordinate that survived a round trip through text is not reported as a
   change.
 
-* `crosswalk_second_route()` compares the assignment against one derived a
+* `region_map_second_route()` compares the assignment against one derived a
   DIFFERENT way, and takes the known-bad cases by name rather than by a
   loosened tolerance. This is the only one of the four that can catch an
   error in the original method, because it does not use that method.
 
-* `crosswalk_from_points()` recomputes the assignment by point in
+* `region_map_from_points()` recomputes the assignment by point in
   polygon, projecting the points onto the boundary file's own coordinate
   system rather than the reverse. It returns `NULL` without `sf` or
   without the boundary file, so a verification script records the check as
