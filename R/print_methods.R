@@ -46,6 +46,29 @@
                 character(1)))
 }
 
+# One frame for every statistic that returns a classed data frame: a
+# titled rule, optional lines that qualify the table, the table without
+# row names, optional lines that follow it, a closing rule. The stock and
+# flow, rate, share, coverage and band printers all go through here, so
+# their caveats -- which are the argument each of them makes -- are laid
+# out the same way instead of rewritten per method.
+.rmbl_print_table <- function(title, df, notes = NULL, footer = NULL, ...) {
+  cat(.rmbl_rule(title), "\n")
+  if (length(notes)) {
+    cat(paste0("  ", notes), sep = "\n")
+    cat("\n")
+  }
+  df <- as.data.frame(df, stringsAsFactors = FALSE)
+  class(df) <- "data.frame"
+  print.data.frame(df, row.names = FALSE, ...)
+  if (length(footer)) {
+    cat("\n")
+    cat(paste0("  ", footer), sep = "\n")
+  }
+  cat(.rmbl_rule(), "\n")
+  invisible(NULL)
+}
+
 .rmbl_fmt_p <- function(p) {
   ifelse(is.na(p), "NA",
          ifelse(p < 2e-16, "<2e-16", formatC(p, format = "g", digits = 3)))

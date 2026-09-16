@@ -271,25 +271,26 @@ stock_flow <- function(days, people, period = NULL, t = 365,
 #' @export
 print.rmbl_stock_flow <- function(x, ...) {
   has_rate <- "stock_rate" %in% names(x)
-  cat("Stock and flow over", nrow(x), "periods\n")
   cols <- c("period", "people", "days", "alos", "adp")
   if (has_rate) cols <- c(cols, "flow_rate", "stock_rate")
-  print.data.frame(x[, cols, drop = FALSE], row.names = FALSE, ...)
+  footer <- NULL
   if (nrow(x) > 1L) {
     i <- nrow(x)
     base <- attr(x, "stock_flow")$baseline
     from <- if (identical(base, "previous")) x$period[i - 1L] else x$period[1L]
-    cat(sprintf("\n%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%\n",
-                from, x$period[i], x$people_change[i],
-                x$alos_change[i], x$days_change[i]))
+    footer <- sprintf("%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%",
+                      from, x$period[i], x$people_change[i],
+                      x$alos_change[i], x$days_change[i])
     if (has_rate) {
-      cat(sprintf("  flow rate %+.1f%%, stock rate %+.1f%%%s\n",
-                  x$flow_rate_change[i], x$stock_rate_change[i],
-                  if (sign(x$flow_rate_change[i]) !=
-                      sign(x$stock_rate_change[i]))
-                    "  <- opposite signs: quote both" else ""))
+      footer <- c(footer, sprintf(
+        "flow rate %+.1f%%, stock rate %+.1f%%%s",
+        x$flow_rate_change[i], x$stock_rate_change[i],
+        if (sign(x$flow_rate_change[i]) != sign(x$stock_rate_change[i]))
+          "  <- opposite signs: quote both" else ""))
     }
   }
+  .rmbl_print_table(paste("Stock and flow over", nrow(x), "periods"),
+                    x[, cols, drop = FALSE], footer = footer, ...)
   invisible(x)
 }
 

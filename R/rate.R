@@ -231,9 +231,8 @@ rate.default <- function(x, population, per = 1000, conf_level = 0.95,
 #' @export
 print.rmbl_rate <- function(x, ...) {
   meta <- attr(x, "rate")
-  cat(sprintf("Rate %s, %g%% exact Poisson interval\n", meta$per_label,
-              100 * meta$conf_level))
-  print.data.frame(x, ...)
+  .rmbl_print_table(sprintf("Rate %s, %g%% exact Poisson interval",
+                            meta$per_label, 100 * meta$conf_level), x, ...)
   invisible(x)
 }
 
@@ -576,17 +575,17 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
 #' @export
 print.rmbl_rate_change <- function(x, ...) {
   meta <- attr(x, "rate_change")
-  cat(sprintf("Change in rate %s, lag %d, %g%% exact conditional interval\n",
-              meta$per_label, meta$lag, 100 * meta$conf_level))
-  print.data.frame(x, ...)
+  .rmbl_print_table(
+    sprintf("Change in rate %s, lag %d, %g%% exact conditional interval",
+            meta$per_label, meta$lag, 100 * meta$conf_level), x, ...)
   invisible(x)
 }
 
 #' @export
 print.rmbl_share <- function(x, ...) {
   meta <- attr(x, "share")
-  cat(sprintf("Share of %s, %g%% Wilson interval\n",
-              format(meta$total, big.mark = ","), 100 * meta$conf_level))
-  print.data.frame(x, ...)
+  .rmbl_print_table(sprintf("Share of %s, %g%% Wilson interval",
+                            format(meta$total, big.mark = ","),
+                            100 * meta$conf_level), x, ...)
   invisible(x)
 }

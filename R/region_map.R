@@ -141,23 +141,23 @@ region_coverage <- function(region, population, units) {
 print.rmbl_region_coverage <- function(x, n = 10L, ...) {
   a <- attr(x, "coverage")
   fm <- function(v) format(round(v), big.mark = ",", trim = TRUE)
-  cat(sprintf("%s units in %s of %s regions\n",
-              fm(a$units), fm(a$with_unit), fm(a$regions)))
-  cat(sprintf("  those regions hold %s of %s residents (%.1f%%)\n",
-              fm(a$covered_population), fm(a$total_population),
-              a$covered_share))
-  cat(sprintf("  %s regions hold none; %s residents (%.1f%%) live there\n",
-              fm(a$without_unit), fm(a$uncovered_population),
-              100 - a$covered_share))
   n <- min(as.integer(n)[1L], nrow(x))
-  if (n > 0L) {
-    cat("\n")
-    print.data.frame(x[seq_len(n), , drop = FALSE], row.names = FALSE, ...)
-    if (nrow(x) > n) cat(sprintf("  ... %d more regions\n", nrow(x) - n))
-  }
-  cat("\nThe covered share is context, not a denominator: units serve",
-      "\ncatchments, so a rate over these regions alone would take its",
-      "\nnumerator from the whole territory and is inflated.\n")
+  footer <- c(
+    if (nrow(x) > n) sprintf("... %d more regions", nrow(x) - n),
+    "The covered share is context, not a denominator: units serve",
+    "catchments, so a rate over these regions alone would take its",
+    "numerator from the whole territory and is inflated.")
+  .rmbl_print_table(
+    sprintf("%s units in %s of %s regions", fm(a$units), fm(a$with_unit),
+            fm(a$regions)),
+    x[seq_len(n), , drop = FALSE],
+    notes = c(sprintf("those regions hold %s of %s residents (%.1f%%)",
+                      fm(a$covered_population), fm(a$total_population),
+                      a$covered_share),
+              sprintf("%s regions hold none; %s residents (%.1f%%) live there",
+                      fm(a$without_unit), fm(a$uncovered_population),
+                      100 - a$covered_share)),
+    footer = footer, ...)
   invisible(x)
 }
 
