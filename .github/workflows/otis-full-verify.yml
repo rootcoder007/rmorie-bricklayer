@@ -89,6 +89,7 @@ jobs:
           OTIS_CROSSWALK_SHP: ${{ github.workspace }}/.otis-cache/shp/lcd_000b21a_e.shp
           OTIS_LOCATIONS: ${{ github.workspace }}/examples/otis-mrp/institutional_locations_en.csv
         run: |
+          set -o pipefail
           out="$PWD/full-verify-out"
           mkdir -p "$out" "$CACHE/statcan"
           # analysis.R writes the Statistics Canada download beside its

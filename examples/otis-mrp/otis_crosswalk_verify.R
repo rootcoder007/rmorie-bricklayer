@@ -149,10 +149,15 @@ otis_crosswalk_name_route <- function(crosswalk, population) {
 #' file are both available. NULL otherwise.
 otis_crosswalk_recompute_sf <- function(crosswalk, boundaries) {
   if (!nzchar(boundaries)) return(NULL)
-  region_map_from_points(
+  obs <- region_map_from_points(
     x = crosswalk$Longitude, y = crosswalk$Latitude,
     unit = crosswalk$Institution, boundaries = boundaries,
     fields = c("CDUID", "CDNAME"))
+  if (is.null(obs)) return(NULL)
+  ## the package function names the unit column generically; the
+  ## comparison against the published file is keyed on Institution
+  names(obs)[names(obs) == "unit"] <- "Institution"
+  obs
 }
 
 #' Every crosswalk check, as one frame of check / observed / expected.
