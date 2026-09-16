@@ -22,7 +22,7 @@ Description: Tools for building brick-proof, reproducible, self-contained
     re-released extract can be statistically identical yet differ
     byte-for-byte, and a column can keep its name and type while having
     been silently rescaled. Manifests can be authenticated rather than
-    merely checksummed, with keyed digests ('HMAC-SHA-256', RFC 2104) or
+    only checksum-verified, with keyed digests ('HMAC-SHA-256', RFC 2104) or
     post-quantum hash-based signatures ('Winternitz' one-time signatures under a 'Merkle'
     tree, RFC 8391), and pinned chunk-wise through a 'Merkle'
     tree so a mismatch identifies which part of a capsule moved. Also
