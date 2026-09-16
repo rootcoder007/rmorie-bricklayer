@@ -1,5 +1,5 @@
-## otis_crosswalk_verify.R -- re-derive the institution to census
-## division crosswalk and the census division populations it rests on,
+## otis_region_map_verify.R -- re-derive the institution to census
+## division region map and the census division populations it rests on,
 ## and compare both against the published files.
 ##
 ## The page at
@@ -8,8 +8,10 @@
 ## population of the divisions that hold one. Those two published files
 ## travel with this example:
 ##
-##   institution_cd_crosswalk.csv   35 institutions, assigned by point in
-##                                  polygon against the 2021 cartographic
+##   institution_cd_region_map.csv   35 institutions, assigned by point in
+##                                  polygon (published on zeus as
+##                                  institution_cd_crosswalk.csv)
+##                                  against the 2021 cartographic
 ##                                  boundary file lcd_000b21a_e.shp
 ##   cd_population_2022.csv         49 Ontario census divisions, from
 ##                                  Statistics Canada 17-10-0139-01
@@ -48,7 +50,7 @@
 ## division or by correctional region. region_coverage() reports the
 ## covered share and its print method says why that share is not a
 ## denominator. See the WHAT IT DOES NOT SUPPORT section of the
-## crosswalk's own PROVENANCE.txt.
+## region map's own PROVENANCE.txt.
 
 OTIS_CD_POP_URL <- "https://www150.statcan.gc.ca/n1/tbl/csv/17100139-eng.zip"
 
@@ -69,13 +71,13 @@ OTIS_CD_YEAR <- "2022"
 ##
 ## It is listed by name rather than allowed for by loosening the check,
 ## so that a SECOND disagreement is still a failure.
-OTIS_CW_NAME_KNOWN <- c("Sudbury Jail")
+OTIS_RM_NAME_KNOWN <- c("Sudbury Jail")
 
 ## Recorded as a fixed number so the route cannot quietly stop covering
 ## anything and leave the disagreement check passing over an empty set.
-OTIS_CW_NAME_COVERAGE <- 11L
+OTIS_RM_NAME_COVERAGE <- 11L
 
-.ocv_read <- function(p) {
+.orm_read <- function(p) {
   d <- utils::read.csv(p, fileEncoding = "UTF-8-BOM", check.names = TRUE,
                        stringsAsFactors = FALSE)
   names(d) <- sub("^X\\.U\\.FEFF\\.", "", names(d))
@@ -84,7 +86,7 @@ OTIS_CW_NAME_COVERAGE <- 11L
   d
 }
 
-.ocv_norm <- function(x) {
+.orm_norm <- function(x) {
   x <- tolower(trimws(as.character(x)))
   gsub("[^a-z0-9]+", "", x)
 }
@@ -134,24 +136,24 @@ otis_cd_population_download <- function(dir, year = OTIS_CD_YEAR,
 #' the institutions whose city is itself the name of a census division.
 #' Everything else is left out, so region_map_second_route() skips it
 #' rather than counting it as a disagreement.
-otis_crosswalk_name_route <- function(crosswalk, population) {
+otis_region_map_name_route <- function(map, population) {
   ## "Ottawa, Ontario" -> "Ottawa"
   cdname <- sub(",\\s*Ontario$", "", population$geo)
-  key <- .ocv_norm(cdname)
+  key <- .orm_norm(cdname)
   ok <- !duplicated(key) & nzchar(key)
   lookup <- stats::setNames(population$cduid[ok], key[ok])
-  hit <- lookup[.ocv_norm(crosswalk$City)]
+  hit <- lookup[.orm_norm(map$City)]
   keep <- !is.na(hit)
-  stats::setNames(as.character(hit[keep]), crosswalk$Institution[keep])
+  stats::setNames(as.character(hit[keep]), map$Institution[keep])
 }
 
 #' Recompute the assignment by point in polygon, if sf and the boundary
 #' file are both available. NULL otherwise.
-otis_crosswalk_recompute_sf <- function(crosswalk, boundaries) {
+otis_region_map_recompute_sf <- function(map, boundaries) {
   if (!nzchar(boundaries)) return(NULL)
   obs <- region_map_from_points(
-    x = crosswalk$Longitude, y = crosswalk$Latitude,
-    unit = crosswalk$Institution, boundaries = boundaries,
+    x = map$Longitude, y = map$Latitude,
+    unit = map$Institution, boundaries = boundaries,
     fields = c("CDUID", "CDNAME"))
   if (is.null(obs)) return(NULL)
   ## the package function names the unit column generically; the
@@ -160,15 +162,15 @@ otis_crosswalk_recompute_sf <- function(crosswalk, boundaries) {
   obs
 }
 
-#' Every crosswalk check, as one frame of check / observed / expected.
+#' Every region map check, as one frame of check / observed / expected.
 #'
 #' Each row is written so that the expected value is what a sound
-#' crosswalk gives, and every row can fail: the populations are re-derived
+#' region map gives, and every row can fail: the populations are re-derived
 #' from Statistics Canada rather than restated, the division count and the
 #' covered population are arithmetic over that re-derivation, the name
 #' route is an independent assignment, and the institution join is
 #' measured against the OTIS data rather than assumed.
-otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
+otis_region_map_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
                                   sf_obs = NULL) {
   add <- function(d, check, observed, expected, note = "") {
     rbind(d, data.frame(check = check, observed = observed,
@@ -208,14 +210,14 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
   }
 
   ## --- the second route ----------------------------------------------
-  route <- otis_crosswalk_name_route(cw, pop)
+  route <- otis_region_map_name_route(cw, pop)
   dis <- region_map_second_route(cw, "Institution", "CDUID", route,
-                                known = OTIS_CW_NAME_KNOWN)
+                                known = OTIS_RM_NAME_KNOWN)
   out <- add(out, "institutions covered by the city-name route",
-             length(route), OTIS_CW_NAME_COVERAGE,
+             length(route), OTIS_RM_NAME_COVERAGE,
              "fixed, so the disagreement check cannot pass over an empty set")
   out <- add(out, "documented city-name disagreements",
-             sum(dis$known), length(OTIS_CW_NAME_KNOWN),
+             sum(dis$known), length(OTIS_RM_NAME_KNOWN),
              paste("a documented case that stops disagreeing means the route",
                    "changed underneath the documentation"))
   unexplained <- dis[!dis$known, , drop = FALSE]
@@ -227,8 +229,8 @@ otis_crosswalk_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
   ## --- the OTIS join --------------------------------------------------
   if (!is.null(otis_inst)) {
     inst <- unique(otis_inst[nzchar(otis_inst)])
-    matched <- sum(.ocv_norm(inst) %in% .ocv_norm(cw$Institution))
-    out <- add(out, "OTIS institution names matched into the crosswalk",
+    matched <- sum(.orm_norm(inst) %in% .orm_norm(cw$Institution))
+    out <- add(out, "OTIS institution names matched into the region map",
                matched, length(inst),
                "after collapsing non-alphanumerics")
   }

@@ -3,7 +3,7 @@
 # Five environment variables gate the expensive verifications -- the 147
 # published year-over-year tables, the 108 rate tables, the census
 # division populations re-derived from Statistics Canada, and the
-# point-in-polygon recompute of the institution crosswalk. All of them are
+# point-in-polygon recompute of the institution region map. All of them are
 # off by default and off in the push CI, so without this workflow
 # "verified" has no date attached. The downloads are cached; a run with a
 # warm cache is a few minutes.
@@ -85,8 +85,8 @@ jobs:
         env:
           OTIS_DATASETS_DIR: ${{ github.workspace }}/.otis-cache/otis
           OTIS_RATES_VERIFY: "1"
-          OTIS_CROSSWALK_POP: "1"
-          OTIS_CROSSWALK_SHP: ${{ github.workspace }}/.otis-cache/shp/lcd_000b21a_e.shp
+          OTIS_REGION_MAP_POP: "1"
+          OTIS_REGION_MAP_SHP: ${{ github.workspace }}/.otis-cache/shp/lcd_000b21a_e.shp
           OTIS_LOCATIONS: ${{ github.workspace }}/examples/otis-mrp/institutional_locations_en.csv
         run: |
           set -o pipefail

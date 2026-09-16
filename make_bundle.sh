@@ -126,10 +126,10 @@ cp "${PROJECT_DIR}/otis_yoy_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_rates_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_dataset_signatures.csv" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/institutional_locations_en.csv" "${STAGE}/" 2>/dev/null || true
-# the institution-to-census-division crosswalk, the division populations
+# the institution-to-census-division region map, the division populations
 # it rests on, and the verifier that re-derives both
-cp "${PROJECT_DIR}/otis_crosswalk_verify.R" "${STAGE}/" 2>/dev/null || true
-cp "${PROJECT_DIR}/institution_cd_crosswalk.csv" "${STAGE}/" 2>/dev/null || true
+cp "${PROJECT_DIR}/otis_region_map_verify.R" "${STAGE}/" 2>/dev/null || true
+cp "${PROJECT_DIR}/institution_cd_region_map.csv" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/cd_population_2022.csv" "${STAGE}/" 2>/dev/null || true
 cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
