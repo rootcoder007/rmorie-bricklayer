@@ -497,15 +497,15 @@ if (!is.null(.sf_pkg)) {
     exists("share", mode = "function")
 }
 
-## The crosswalk checks section 3g uses. Separate from the block above
+## The region map checks section 3g uses. Separate from the block above
 ## because a reviewer with the package installed should get the package
 ## copies, and one without should still get 3g rather than losing it to
 ## whether the stock-flow lookup happened to succeed.
-.cw_pkg <- .otis_pkg_fns(c("region_coverage", "region_map_integrity",
+.rm_pkg <- .otis_pkg_fns(c("region_coverage", "region_map_integrity",
                            "region_map_compare", "region_map_second_route",
                            "region_map_from_points"))
-if (!is.null(.cw_pkg)) {
-  for (.n in names(.cw_pkg)) assign(.n, .cw_pkg[[.n]])
+if (!is.null(.rm_pkg)) {
+  for (.n in names(.rm_pkg)) assign(.n, .rm_pkg[[.n]])
 } else {
   for (.f in c("print_methods.R", "region_map.R"))
   for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
@@ -1057,12 +1057,12 @@ if (nzchar(.loc_f) && file.exists(.loc_f) && nzchar(.yoy_dir) &&
 }
 
 
-## --- 3g. The institution to census division crosswalk ------------------
+## --- 3g. The institution to census division region map ------------------
 ##
-## Sections 3c and 3f read a crosswalk that assigns every institution to
+## Sections 3c and 3f read a region map that assigns every institution to
 ## the census division containing it. Everything built on that assignment
 ## inherits it, which is exactly why recomputing the tables cannot check
-## it: an error in the crosswalk reproduces perfectly downstream, because
+## it: an error in the region map reproduces perfectly downstream, because
 ## downstream is where it is read. So the two inputs are re-derived.
 ##
 ## The populations re-derive completely, from Statistics Canada
@@ -1076,24 +1076,24 @@ if (nzchar(.loc_f) && file.exists(.loc_f) && nzchar(.yoy_dir) &&
 ## population arithmetic catches any move that changes WHICH divisions
 ## hold an institution. What neither catches is a move between two
 ## divisions that both already hold one: that needs the geometry, which
-## is what OTIS_CROSSWALK_SHP is for.
+## is what OTIS_REGION_MAP_SHP is for.
 ##
-##     OTIS_CROSSWALK_POP=1   re-derive the 49 populations (27 MB)
-##     OTIS_CROSSWALK_SHP=<lcd_000b21a_e.shp>   recompute by st_within
+##     OTIS_REGION_MAP_POP=1   re-derive the 49 populations (27 MB)
+##     OTIS_REGION_MAP_SHP=<lcd_000b21a_e.shp>   recompute by st_within
 
-.cw_f  <- file.path(SCRIPT_DIR, "institution_cd_crosswalk.csv")
-.cwp_f <- file.path(SCRIPT_DIR, "cd_population_2022.csv")
-.cwv_f <- file.path(SCRIPT_DIR, "otis_crosswalk_verify.R")
-if (all(file.exists(c(.cw_f, .cwp_f, .cwv_f))) &&
+.rm_f  <- file.path(SCRIPT_DIR, "institution_cd_region_map.csv")
+.rmp_f <- file.path(SCRIPT_DIR, "cd_population_2022.csv")
+.rmv_f <- file.path(SCRIPT_DIR, "otis_region_map_verify.R")
+if (all(file.exists(c(.rm_f, .rmp_f, .rmv_f))) &&
     exists("region_coverage", mode = "function")) {
-  source(.cwv_f)
-  cat("\n[3g/8] Institution to census division crosswalk\n")
-  .cw  <- .ocv_read(.cw_f)
-  .cwp <- .ocv_read(.cwp_f)
-  .cwp$cduid <- sprintf("%04d", as.integer(.cwp$cduid))
+  source(.rmv_f)
+  cat("\n[3g/8] Institution to census division region map\n")
+  .rm  <- .orm_read(.rm_f)
+  .rmp <- .orm_read(.rmp_f)
+  .rmp$cduid <- sprintf("%04d", as.integer(.rmp$cduid))
 
   .obs_pop <- NULL
-  if (nzchar(Sys.getenv("OTIS_CROSSWALK_POP", ""))) {
+  if (nzchar(Sys.getenv("OTIS_REGION_MAP_POP", ""))) {
     cat("      re-deriving the census division populations from",
         "17-10-0139-01 ...\n")
     .obs_pop <- otis_cd_population_download(file.path(OUTPUT_DIR, "statcan"))
@@ -1108,66 +1108,66 @@ if (all(file.exists(c(.cw_f, .cwp_f, .cwv_f))) &&
       "b03_segregation_placements_alerts_and_hold_flags_by_institution.csv")
   else ""
   if (nzchar(.b03) && file.exists(.b03))
-    .otis_inst <- .ocv_read(.b03)$Institution_AtTimeOfPlacement
+    .otis_inst <- .orm_read(.b03)$Institution_AtTimeOfPlacement
 
-  .shp <- Sys.getenv("OTIS_CROSSWALK_SHP", "")
-  .sf_obs <- otis_crosswalk_recompute_sf(.cw, .shp)
+  .shp <- Sys.getenv("OTIS_REGION_MAP_SHP", "")
+  .sf_obs <- otis_region_map_recompute_sf(.rm, .shp)
   if (is.null(.sf_obs) && nzchar(.shp))
     cat("      sf not installed or boundary file unreadable; recorded as INFO\n")
 
-  .cwchk <- otis_crosswalk_checks(.cw, .cwp, obs_pop = .obs_pop,
+  .rmchk <- otis_region_map_checks(.rm, .rmp, obs_pop = .obs_pop,
                                   otis_inst = .otis_inst, sf_obs = .sf_obs)
-  for (i in seq_len(nrow(.cwchk)))
-    record(paste0("crosswalk_",
+  for (i in seq_len(nrow(.rmchk)))
+    record(paste0("region_map_",
                   gsub("(^_|_$)", "",
-                       gsub("[^a-z0-9]+", "_", tolower(.cwchk$check[i])))),
-           observed = .cwchk$observed[i], expected = .cwchk$expected[i],
-           tol = 0, group = "crosswalk",
-           note = if (nzchar(.cwchk$note[i])) .cwchk$note[i] else NULL)
+                       gsub("[^a-z0-9]+", "_", tolower(.rmchk$check[i])))),
+           observed = .rmchk$observed[i], expected = .rmchk$expected[i],
+           tol = 0, group = "region_map",
+           note = if (nzchar(.rmchk$note[i])) .rmchk$note[i] else NULL)
 
-  .open <- .cw[grepl("open", .cw$Operating_Status, ignore.case = TRUE), ]
-  .units <- vapply(.cwp$cduid, function(u) sum(.open$CDUID == u), numeric(1))
-  .cov <- region_coverage(.cwp$cduid, .cwp$population, .units)
+  .open <- .rm[grepl("open", .rm$Operating_Status, ignore.case = TRUE), ]
+  .units <- vapply(.rmp$cduid, function(u) sum(.open$CDUID == u), numeric(1))
+  .cov <- region_coverage(.rmp$cduid, .rmp$population, .units)
   print(.cov, n = 5)
   fwrite(as.data.frame(.cov), file.path(OUTPUT_DIR, "13_cd_coverage.csv"))
-  fwrite(.cwchk, file.path(OUTPUT_DIR, "14_crosswalk_checks.csv"))
+  fwrite(.rmchk, file.path(OUTPUT_DIR, "14_region_map_checks.csv"))
 
   ## The covered share is reported and is NOT used. Recorded as INFO so
   ## that it appears in the manifest with the reason attached rather than
   ## being quietly available to whoever reads the coverage CSV next.
-  record("crosswalk_covered_share_is_not_a_denominator",
+  record("region_map_covered_share_is_not_a_denominator",
          observed = sprintf("%.1f%% of residents live in a division holding an institution",
                             attr(.cov, "coverage")$covered_share),
          expected = "context, never an exposure", force_status = "INFO",
-         group = "crosswalk",
+         group = "region_map",
          note = paste("institutions serve court catchments, not the division",
                       "containing them, so a rate over these divisions alone",
                       "would draw its numerator from the whole province.",
                       "The defensible per-capita figures are province-wide."))
 
   if (is.null(.obs_pop))
-    record("crosswalk_populations_rederived", observed = "not checked",
+    record("region_map_populations_rederived", observed = "not checked",
            expected = "17-10-0139-01", force_status = "INFO",
-           group = "crosswalk",
-           note = paste("set OTIS_CROSSWALK_POP=1 to re-derive the 49 census",
+           group = "region_map",
+           note = paste("set OTIS_REGION_MAP_POP=1 to re-derive the 49 census",
                         "division populations from Statistics Canada",
                         "(27 MB download)"))
   if (is.null(.sf_obs))
-    record("crosswalk_point_in_polygon", observed = "not checked",
+    record("region_map_point_in_polygon", observed = "not checked",
            expected = "st_within against lcd_000b21a_e.shp",
-           force_status = "INFO", group = "crosswalk",
-           note = paste("set OTIS_CROSSWALK_SHP to the 2021 census division",
+           force_status = "INFO", group = "region_map",
+           note = paste("set OTIS_REGION_MAP_SHP to the 2021 census division",
                         "cartographic boundary file, with sf installed, to",
                         "recompute the assignment geometrically"))
 
-  cat(sprintf("      %d checks, %d failing\n", nrow(.cwchk),
-              sum(.cwchk$observed != .cwchk$expected)))
+  cat(sprintf("      %d checks, %d failing\n", nrow(.rmchk),
+              sum(.rmchk$observed != .rmchk$expected)))
 } else {
-  record("crosswalk", observed = "not checked",
-         expected = "institution_cd_crosswalk.csv", force_status = "INFO",
-         group = "crosswalk",
-         note = "the crosswalk files were not beside this script")
-  cat("\n[3g/8] Crosswalk: files not beside this script\n")
+  record("region_map", observed = "not checked",
+         expected = "institution_cd_region_map.csv", force_status = "INFO",
+         group = "region_map",
+         note = "the region map files were not beside this script")
+  cat("\n[3g/8] Region map: files not beside this script\n")
 }
 
 
