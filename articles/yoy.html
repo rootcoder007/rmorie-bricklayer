@@ -234,11 +234,12 @@ rate.</p>
 <span>  residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120000</span>, <span class="fl">41000</span>, <span class="fl">9500</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/rate.html">rate</a></span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, <span class="va">residents</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Rate per 100,000, 95% exact Poisson interval</span></span>
-<span><span class="co">#&gt;   division count population      rate      lower     upper flag</span></span>
-<span><span class="co">#&gt; 1     East     3       9500  31.57895   6.512338  92.28708 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 2    North   412     120000 343.33333 310.977110 378.14142 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 3    South    77      41000 187.80488 148.212673 234.72387 &lt;NA&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; ── Rate per 100,000, 95% exact Poisson interval ────────────────── </span></span>
+<span><span class="co">#&gt;  division count population      rate      lower     upper flag</span></span>
+<span><span class="co">#&gt;      East     3       9500  31.57895   6.512338  92.28708 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;     North   412     120000 343.33333 310.977110 378.14142 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;     South    77      41000 187.80488 148.212673 234.72387 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>East’s interval is wider than its own estimate. That is the honest
 reading of three events, and it is the reason the interval is printed
 beside the rate rather than left to the reader to imagine. The interval
@@ -249,11 +250,12 @@ same events, not a population, so shares over a complete grouping sum to
 100:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/share.html">share</a></span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Share of 492, 95% Wilson interval</span></span>
-<span><span class="co">#&gt;   division count total      share      lower     upper</span></span>
-<span><span class="co">#&gt; 1     East     3   492  0.6097561  0.2075843  1.777215</span></span>
-<span><span class="co">#&gt; 2    North   412   492 83.7398374 80.2200225 86.736863</span></span>
-<span><span class="co">#&gt; 3    South    77   492 15.6504065 12.7074531 19.125597</span></span></code></pre></div>
+<span><span class="co">#&gt; ── Share of 492, 95% Wilson interval ───────────────────────────── </span></span>
+<span><span class="co">#&gt;  division count total      share      lower     upper</span></span>
+<span><span class="co">#&gt;      East     3   492  0.6097561  0.2075843  1.777215</span></span>
+<span><span class="co">#&gt;     North   412   492 83.7398374 80.2200225 86.736863</span></span>
+<span><span class="co">#&gt;     South    77   492 15.6504065 12.7074531 19.125597</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>“40% of stops” and “40 stops per 1,000 residents” are different
 claims, and a table that labels one as the other is wrong however
 carefully the arithmetic was done. That is why these are separate
@@ -268,21 +270,22 @@ move:</p>
 <span>  residents <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120000</span>, <span class="fl">41000</span>, <span class="fl">122000</span>, <span class="fl">41500</span>, <span class="fl">125000</span>, <span class="fl">42000</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/rate_change.html">rate_change</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">stops</span>, <span class="va">residents</span>, <span class="va">year</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Change in rate per 100,000, lag 1, 95% exact conditional interval</span></span>
-<span><span class="co">#&gt;   division year count population     rate previous_rate rate_ratio pct_change</span></span>
-<span><span class="co">#&gt; 1    North 2021   400     120000 333.3333            NA         NA         NA</span></span>
-<span><span class="co">#&gt; 2    North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705</span></span>
-<span><span class="co">#&gt; 3    North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419</span></span>
-<span><span class="co">#&gt; 4    South 2021    70      41000 170.7317            NA         NA         NA</span></span>
-<span><span class="co">#&gt; 5    South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258</span></span>
-<span><span class="co">#&gt; 6    South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046</span></span>
-<span><span class="co">#&gt;    pct_lower pct_upper                 flag</span></span>
-<span><span class="co">#&gt; 1         NA        NA no comparison period</span></span>
-<span><span class="co">#&gt; 2  -7.937165  21.46533                 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 3  -9.679876  18.10199                 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 4         NA        NA no comparison period</span></span>
-<span><span class="co">#&gt; 5 -34.473784  32.29053                 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt; 6 -36.596300  31.35600                 &lt;NA&gt;</span></span></code></pre></div>
+<span><span class="co">#&gt; ── Change in rate per 100,000, lag 1, 95% exact conditional interval  </span></span>
+<span><span class="co">#&gt;  division year count population     rate previous_rate rate_ratio pct_change</span></span>
+<span><span class="co">#&gt;     North 2021   400     120000 333.3333            NA         NA         NA</span></span>
+<span><span class="co">#&gt;     North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705</span></span>
+<span><span class="co">#&gt;     North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419</span></span>
+<span><span class="co">#&gt;     South 2021    70      41000 170.7317            NA         NA         NA</span></span>
+<span><span class="co">#&gt;     South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258</span></span>
+<span><span class="co">#&gt;     South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046</span></span>
+<span><span class="co">#&gt;   pct_lower pct_upper                 flag</span></span>
+<span><span class="co">#&gt;          NA        NA no comparison period</span></span>
+<span><span class="co">#&gt;   -7.937165  21.46533                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;   -9.679876  18.10199                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;          NA        NA no comparison period</span></span>
+<span><span class="co">#&gt;  -34.473784  32.29053                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt;  -36.596300  31.35600                 &lt;NA&gt;</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>North’s count rose, and so did its population, so the rate change is
 smaller than the count change – which is the whole reason to look at the
 rate. The interval conditions on the two counts and corrects for the

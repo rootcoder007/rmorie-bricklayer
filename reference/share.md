@@ -79,11 +79,12 @@ stops <- data.frame(
 
 # shares of the table's own total, summing to 100
 share(stops, stops, by = "division")
-#> Share of 492, 95% Wilson interval
-#>   division count total      share      lower     upper
-#> 1     East     3   492  0.6097561  0.2075843  1.777215
-#> 2    North   412   492 83.7398374 80.2200225 86.736863
-#> 3    South    77   492 15.6504065 12.7074531 19.125597
+#> ── Share of 492, 95% Wilson interval ───────────────────────────── 
+#>  division count total      share      lower     upper
+#>      East     3   492  0.6097561  0.2075843  1.777215
+#>     North   412   492 83.7398374 80.2200225 86.736863
+#>     South    77   492 15.6504065 12.7074531 19.125597
+#> ────────────────────────────────────────────────────────────────── 
 
 # East is 0.6% of stops, and the interval does not run below zero
 # the way a normal approximation would
@@ -92,9 +93,10 @@ share(stops, stops, by = "division")$lower
 
 # a denominator from outside the table
 share(stops, stops, by = "division", total = 10000)
-#> Share of 10,000, 95% Wilson interval
-#>   division count total share      lower      upper
-#> 1     East     3 10000  0.03 0.01020322 0.08817358
-#> 2    North   412 10000  4.12 3.74774662 4.52748907
-#> 3    South    77 10000  0.77 0.61657440 0.96123408
+#> ── Share of 10,000, 95% Wilson interval ────────────────────────── 
+#>  division count total share      lower      upper
+#>      East     3 10000  0.03 0.01020322 0.08817358
+#>     North   412 10000  4.12 3.74774662 4.52748907
+#>     South    77 10000  0.77 0.61657440 0.96123408
+#> ────────────────────────────────────────────────────────────────── 
 ```

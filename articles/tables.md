@@ -52,8 +52,7 @@ how much it matters:
 
 counts <- c(1200, 430, 110, 38)
 band_sensitivity(bands, counts)
-#> Sensitivity to the open top band's assumed cap
-#> 
+#> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap     value
 #>   11.55000 0.4254708
 #>   15.09841 0.4346095
@@ -68,10 +67,11 @@ band_sensitivity(bands, counts)
 #>  168.29590 0.6610951
 #>  220.00000 0.7002144
 #> 
-#> span over the caps tried: 0.2747 (53.7% of the typical value)
-#> The statistic moves by more than a tenth of itself across the
-#> caps tried, so it is a property of the assumption as much as
-#> of the data. Report the range, not a single figure.
+#>   span over the caps tried: 0.2747 (53.7% of the typical value)
+#>   The statistic moves by more than a tenth of itself across the
+#>   caps tried, so it is a property of the assumption as much as
+#>   of the data. Report the range, not a single figure.
+#> ──────────────────────────────────────────────────────────────────
 ```
 
 Read the span, not the middle row. A statistic that moves by more than a
@@ -335,7 +335,7 @@ that rate.
 units <- vapply(pop$region, function(r) sum(cw$region == r), numeric(1))
 cov <- region_coverage(pop$region, pop$population, units)
 cov
-#> 4 units in 3 of 5 regions
+#> ── 4 units in 3 of 5 regions ───────────────────────────────────── 
 #>   those regions hold 3,311,309 of 4,507,389 residents (73.5%)
 #>   2 regions hold none; 1,196,080 residents (26.5%) live there
 #> 
@@ -346,9 +346,10 @@ cov
 #>    3519    1173334     0    FALSE 26.0313454
 #>    3552      22746     0    FALSE  0.5046381
 #> 
-#> The covered share is context, not a denominator: units serve 
-#> catchments, so a rate over these regions alone would take its 
-#> numerator from the whole territory and is inflated.
+#>   The covered share is context, not a denominator: units serve
+#>   catchments, so a rate over these regions alone would take its
+#>   numerator from the whole territory and is inflated.
+#> ──────────────────────────────────────────────────────────────────
 ```
 
 Two of the five regions hold no facility at all. It is tempting to read

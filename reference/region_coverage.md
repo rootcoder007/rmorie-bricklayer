@@ -67,7 +67,7 @@ cov <- region_coverage(region = c("A", "B", "C", "D"),
                        population = c(1200000, 800000, 450000, 90000),
                        units = c(3, 0, 1, 0))
 cov
-#> 4 units in 2 of 4 regions
+#> ── 4 units in 2 of 4 regions ───────────────────────────────────── 
 #>   those regions hold 1,650,000 of 2,540,000 residents (65.0%)
 #>   2 regions hold none; 890,000 residents (35.0%) live there
 #> 
@@ -77,9 +77,10 @@ cov
 #>       B     800000     0    FALSE 31.496063
 #>       D      90000     0    FALSE  3.543307
 #> 
-#> The covered share is context, not a denominator: units serve 
-#> catchments, so a rate over these regions alone would take its 
-#> numerator from the whole territory and is inflated.
+#>   The covered share is context, not a denominator: units serve
+#>   catchments, so a rate over these regions alone would take its
+#>   numerator from the whole territory and is inflated.
+#> ────────────────────────────────────────────────────────────────── 
 
 # The covered share is reported, and is not a rate denominator.
 attr(cov, "coverage")$covered_share

@@ -140,6 +140,28 @@ produced the data.
   [`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md),
   and
   [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md).
+- **Points, and the regions that contain them** —
+  [`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md),
+  [`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
+  and
+  [`region_map_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_second_route.md)
+  check a point-to-region assignment on its own terms, since an error in
+  it reproduces perfectly in every table built on it;
+  [`region_map_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.md)
+  recomputes one by point in polygon when `sf` is available; and
+  [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+  reports the population of the regions holding a unit while saying,
+  each time it prints, why that share is not a rate denominator.
+- **Stock and flow** —
+  [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+  [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
+  and
+  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+  read the same person-days two ways, per day and per person, after
+  Lakner (1976). When stays lengthen the two move in opposite
+  directions, so
+  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+  reports both and the exact decomposition between them.
 
 ## Verification
 

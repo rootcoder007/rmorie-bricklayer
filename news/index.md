@@ -67,6 +67,47 @@ crosswalk, and both sides of any comparison move together.
 - `institution_cd_crosswalk.csv` and `cd_population_2022.csv` now travel
   with the example, so the checks run from the bundle.
 
+### Verification that runs
+
+- The push CI now fetches the public OTIS A01 input (4.7 MB, cached on
+  its pinned provenance) and passes it to the smoke test, so every
+  section of `analysis.R` is exercised on each push instead of recording
+  as INFO. The bundle’s R packages are read from `config.json` rather
+  than listed a second time in the workflow.
+
+- `verify_bundle.sh` compares the manifest against `config.json`’s
+  `total_checks` and `pass_csv` whenever real data was supplied, and
+  fails on a mismatch. The expected counts are now an assertion, not a
+  note.
+
+- A weekly workflow, `otis-full-verify.yml`, runs `analysis.R` with
+  every opt-in verification on: the 147 published year-over-year tables,
+  the 108 rate tables, the census-division populations re-derived from
+  Statistics Canada, and the point-in-polygon recompute of the crosswalk
+  against the 2021 boundary file. It fails on any DIFFER and keeps the
+  manifest for ninety days, so “verified” carries a date.
+
+- CI refuses a copy of any vendored R file tracked under `examples/`,
+  the shape of the `custody.R` shadowing below.
+
+- `check_pkgdown()` runs in the test suite when pkgdown is installed, so
+  a topic missing from the reference index fails locally rather than on
+  the site build.
+
+### Printing
+
+- The statistics that return a classed data frame –
+  [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md),
+  [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/share.md),
+  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md),
+  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md),
+  [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+  and
+  [`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+  – print through one frame: a titled rule, the table, the lines that
+  qualify it. The caveats each of them carries are laid out the same way
+  instead of rewritten per method.
+
 ### Bug fixes
 
 - `examples/otis-mrp/custody.R` is removed. It duplicated `R/custody.R`

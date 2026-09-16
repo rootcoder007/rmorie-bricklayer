@@ -120,7 +120,7 @@ precisely the number a reader is tempted to divide by.</p>
 <span class="r-in"><span>                       population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1200000</span>, <span class="fl">800000</span>, <span class="fl">450000</span>, <span class="fl">90000</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                       units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cov</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 units in 2 of 4 regions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ── 4 units in 2 of 4 regions ───────────────────────────────────── </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   those regions hold 1,650,000 of 2,540,000 residents (65.0%)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   2 regions hold none; 890,000 residents (35.0%) live there</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -130,9 +130,10 @@ precisely the number a reader is tempted to divide by.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       B     800000     0    FALSE 31.496063</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       D      90000     0    FALSE  3.543307</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> The covered share is context, not a denominator: units serve </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> catchments, so a rate over these regions alone would take its </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> numerator from the whole territory and is inflated.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   The covered share is context, not a denominator: units serve</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   catchments, so a rate over these regions alone would take its</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   numerator from the whole territory and is inflated.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The covered share is reported, and is not a rate denominator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">cov</span>, <span class="st">"coverage"</span><span class="op">)</span><span class="op">$</span><span class="va">covered_share</span></span></span>

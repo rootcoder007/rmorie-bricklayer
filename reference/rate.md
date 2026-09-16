@@ -102,33 +102,37 @@ stops <- data.frame(
 
 # per 1,000 residents, the default
 rate(stops, stops, residents, by = "division")
-#> Rate per 1,000, 95% exact Poisson interval
-#>   division count population      rate      lower     upper flag
-#> 1     East     3       9500 0.3157895 0.06512338 0.9228708 <NA>
-#> 2    North   412     120000 3.4333333 3.10977110 3.7814142 <NA>
-#> 3    South    77      41000 1.8780488 1.48212673 2.3472387 <NA>
+#> ── Rate per 1,000, 95% exact Poisson interval ──────────────────── 
+#>  division count population      rate      lower     upper flag
+#>      East     3       9500 0.3157895 0.06512338 0.9228708 <NA>
+#>     North   412     120000 3.4333333 3.10977110 3.7814142 <NA>
+#>     South    77      41000 1.8780488 1.48212673 2.3472387 <NA>
+#> ────────────────────────────────────────────────────────────────── 
 
 # the denominator published guidance usually asks for
 rate(stops, stops, residents, by = "division", per = "100k")
-#> Rate per 100,000, 95% exact Poisson interval
-#>   division count population      rate      lower     upper flag
-#> 1     East     3       9500  31.57895   6.512338  92.28708 <NA>
-#> 2    North   412     120000 343.33333 310.977110 378.14142 <NA>
-#> 3    South    77      41000 187.80488 148.212673 234.72387 <NA>
+#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
+#>  division count population      rate      lower     upper flag
+#>      East     3       9500  31.57895   6.512338  92.28708 <NA>
+#>     North   412     120000 343.33333 310.977110 378.14142 <NA>
+#>     South    77      41000 187.80488 148.212673 234.72387 <NA>
+#> ────────────────────────────────────────────────────────────────── 
 
 # East's three events: the interval is wider than the estimate, and
 # flagging it is the point of min_count
 rate(stops, stops, residents, by = "division", per = "100k",
      min_count = 5)
-#> Rate per 100,000, 95% exact Poisson interval
-#>   division count population      rate      lower     upper                flag
-#> 1     East     3       9500  31.57895   6.512338  92.28708 count at or below 5
-#> 2    North   412     120000 343.33333 310.977110 378.14142                <NA>
-#> 3    South    77      41000 187.80488 148.212673 234.72387                <NA>
+#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
+#>  division count population      rate      lower     upper                flag
+#>      East     3       9500  31.57895   6.512338  92.28708 count at or below 5
+#>     North   412     120000 343.33333 310.977110 378.14142                <NA>
+#>     South    77      41000 187.80488 148.212673 234.72387                <NA>
+#> ────────────────────────────────────────────────────────────────── 
 
 # vectors work too, for a single figure
 rate(3, 9500, per = "100k")
-#> Rate per 100,000, 95% exact Poisson interval
-#>   count population     rate    lower    upper flag
-#> 1     3       9500 31.57895 6.512338 92.28708 <NA>
+#> ── Rate per 100,000, 95% exact Poisson interval ────────────────── 
+#>  count population     rate    lower    upper flag
+#>      3       9500 31.57895 6.512338 92.28708 <NA>
+#> ────────────────────────────────────────────────────────────────── 
 ```

@@ -113,8 +113,7 @@ assumption, so measure how much it matters:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1200</span>, <span class="fl">430</span>, <span class="fl">110</span>, <span class="fl">38</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/band_sensitivity.html">band_sensitivity</a></span><span class="op">(</span><span class="va">bands</span>, <span class="va">counts</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Sensitivity to the open top band's assumed cap</span></span>
-<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; ── Sensitivity to the open top band's assumed cap ──────────────── </span></span>
 <span><span class="co">#&gt;        cap     value</span></span>
 <span><span class="co">#&gt;   11.55000 0.4254708</span></span>
 <span><span class="co">#&gt;   15.09841 0.4346095</span></span>
@@ -129,10 +128,11 @@ assumption, so measure how much it matters:</p>
 <span><span class="co">#&gt;  168.29590 0.6610951</span></span>
 <span><span class="co">#&gt;  220.00000 0.7002144</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; span over the caps tried: 0.2747 (53.7% of the typical value)</span></span>
-<span><span class="co">#&gt; The statistic moves by more than a tenth of itself across the</span></span>
-<span><span class="co">#&gt; caps tried, so it is a property of the assumption as much as</span></span>
-<span><span class="co">#&gt; of the data. Report the range, not a single figure.</span></span></code></pre></div>
+<span><span class="co">#&gt;   span over the caps tried: 0.2747 (53.7% of the typical value)</span></span>
+<span><span class="co">#&gt;   The statistic moves by more than a tenth of itself across the</span></span>
+<span><span class="co">#&gt;   caps tried, so it is a property of the assumption as much as</span></span>
+<span><span class="co">#&gt;   of the data. Report the range, not a single figure.</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>Read the span, not the middle row. A statistic that moves by more
 than a tenth of itself across plausible caps is a property of the
 assumption as much as of the data, and the honest report is the
@@ -344,7 +344,7 @@ every time it prints, declines to supply that rate.</p>
 <code class="sourceCode R"><span><span class="va">units</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cw</span><span class="op">$</span><span class="va">region</span> <span class="op">==</span> <span class="va">r</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/region_coverage.html">region_coverage</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="va">pop</span><span class="op">$</span><span class="va">population</span>, <span class="va">units</span><span class="op">)</span></span>
 <span><span class="va">cov</span></span>
-<span><span class="co">#&gt; 4 units in 3 of 5 regions</span></span>
+<span><span class="co">#&gt; ── 4 units in 3 of 5 regions ───────────────────────────────────── </span></span>
 <span><span class="co">#&gt;   those regions hold 3,311,309 of 4,507,389 residents (73.5%)</span></span>
 <span><span class="co">#&gt;   2 regions hold none; 1,196,080 residents (26.5%) live there</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -355,9 +355,10 @@ every time it prints, declines to supply that rate.</p>
 <span><span class="co">#&gt;    3519    1173334     0    FALSE 26.0313454</span></span>
 <span><span class="co">#&gt;    3552      22746     0    FALSE  0.5046381</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; The covered share is context, not a denominator: units serve </span></span>
-<span><span class="co">#&gt; catchments, so a rate over these regions alone would take its </span></span>
-<span><span class="co">#&gt; numerator from the whole territory and is inflated.</span></span></code></pre></div>
+<span><span class="co">#&gt;   The covered share is context, not a denominator: units serve</span></span>
+<span><span class="co">#&gt;   catchments, so a rate over these regions alone would take its</span></span>
+<span><span class="co">#&gt;   numerator from the whole territory and is inflated.</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>Two of the five regions hold no facility at all. It is tempting to
 read their population as uncovered, and to build a regional rate on the
 population of the regions that do hold one. Both readings are wrong, for

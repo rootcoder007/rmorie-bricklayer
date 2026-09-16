@@ -60,6 +60,18 @@
 <li><p><code>institution_cd_crosswalk.csv</code> and <code>cd_population_2022.csv</code> now travel with the example, so the checks run from the bundle.</p></li>
 </ul></div>
 <div class="section level3">
+<h3 id="verification-that-runs-0-5-0">Verification that runs<a class="anchor" aria-label="anchor" href="#verification-that-runs-0-5-0"></a></h3>
+<ul><li><p>The push CI now fetches the public OTIS A01 input (4.7 MB, cached on its pinned provenance) and passes it to the smoke test, so every section of <code>analysis.R</code> is exercised on each push instead of recording as INFO. The bundle’s R packages are read from <code>config.json</code> rather than listed a second time in the workflow.</p></li>
+<li><p><code>verify_bundle.sh</code> compares the manifest against <code>config.json</code>’s <code>total_checks</code> and <code>pass_csv</code> whenever real data was supplied, and fails on a mismatch. The expected counts are now an assertion, not a note.</p></li>
+<li><p>A weekly workflow, <code>otis-full-verify.yml</code>, runs <code>analysis.R</code> with every opt-in verification on: the 147 published year-over-year tables, the 108 rate tables, the census-division populations re-derived from Statistics Canada, and the point-in-polygon recompute of the crosswalk against the 2021 boundary file. It fails on any DIFFER and keeps the manifest for ninety days, so “verified” carries a date.</p></li>
+<li><p>CI refuses a copy of any vendored R file tracked under <code>examples/</code>, the shape of the <code>custody.R</code> shadowing below.</p></li>
+<li><p><code>check_pkgdown()</code> runs in the test suite when pkgdown is installed, so a topic missing from the reference index fails locally rather than on the site build.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="printing-0-5-0">Printing<a class="anchor" aria-label="anchor" href="#printing-0-5-0"></a></h3>
+<ul><li>The statistics that return a classed data frame – <code><a href="../reference/rate.html">rate()</a></code>, <code><a href="../reference/share.html">share()</a></code>, <code><a href="../reference/rate_change.html">rate_change()</a></code>, <code><a href="../reference/stock_flow.html">stock_flow()</a></code>, <code><a href="../reference/region_coverage.html">region_coverage()</a></code> and <code><a href="../reference/band_sensitivity.html">band_sensitivity()</a></code> – print through one frame: a titled rule, the table, the lines that qualify it. The caveats each of them carries are laid out the same way instead of rewritten per method.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-0-5-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-5-0"></a></h3>
 <ul><li>
 <code>examples/otis-mrp/custody.R</code> is removed. It duplicated <code>R/custody.R</code> and took precedence over it: <code>analysis.R</code> searches beside the script before <code>../../R</code>, so a run from a checkout without the package installed resolved to a <code><a href="../reference/stock_flow.html">stock_flow()</a></code> without the <code>baseline</code> argument and without <code><a href="../reference/period_days.html">period_days()</a></code> or <code><a href="../reference/stay_summary.html">stay_summary()</a></code>. It was the only one of the nine vendored R files tracked under <code>examples/</code>, and <code>make_bundle.sh</code> copies the package file over it at build time, so built bundles were unaffected.</li>

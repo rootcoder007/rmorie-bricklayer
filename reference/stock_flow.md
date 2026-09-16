@@ -86,11 +86,12 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 stock_flow(days = c(115674, 126121), people = c(12647, 9608),
            period = c("2023", "2025"),
            exposure = c(15495050, 16256538))
-#> Stock and flow over 2 periods
+#> ── Stock and flow over 2 periods ───────────────────────────────── 
 #>  period people   days      alos      adp flow_rate stock_rate
 #>    2023  12647 115674  9.146359 316.9151  81.61961   2.045267
 #>    2025   9608 126121 13.126665 345.5370  59.10237   2.125526
 #> 
-#> 2023 to 2025: people -24.0%, stay +43.5%, days +9.0%
+#>   2023 to 2025: people -24.0%, stay +43.5%, days +9.0%
 #>   flow rate -27.6%, stock rate +3.9%  <- opposite signs: quote both
+#> ────────────────────────────────────────────────────────────────── 
 ```

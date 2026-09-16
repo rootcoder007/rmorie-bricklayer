@@ -122,11 +122,12 @@ Wilson's stays inside the scale and is accurate at those counts.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># shares of the table's own total, summing to 100</span></span></span>
 <span class="r-in"><span><span class="fu">share</span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, by <span class="op">=</span> <span class="st">"division"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Share of 492, 95% Wilson interval</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   division count total      share      lower     upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     East     3   492  0.6097561  0.2075843  1.777215</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    North   412   492 83.7398374 80.2200225 86.736863</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    South    77   492 15.6504065 12.7074531 19.125597</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ── Share of 492, 95% Wilson interval ───────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  division count total      share      lower     upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      East     3   492  0.6097561  0.2075843  1.777215</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     North   412   492 83.7398374 80.2200225 86.736863</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     South    77   492 15.6504065 12.7074531 19.125597</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># East is 0.6% of stops, and the interval does not run below zero</span></span></span>
 <span class="r-in"><span><span class="co"># the way a normal approximation would</span></span></span>
@@ -135,11 +136,12 @@ Wilson's stays inside the scale and is accurate at those counts.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># a denominator from outside the table</span></span></span>
 <span class="r-in"><span><span class="fu">share</span><span class="op">(</span><span class="va">stops</span>, <span class="va">stops</span>, by <span class="op">=</span> <span class="st">"division"</span>, total <span class="op">=</span> <span class="fl">10000</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Share of 10,000, 95% Wilson interval</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   division count total share      lower      upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1     East     3 10000  0.03 0.01020322 0.08817358</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    North   412 10000  4.12 3.74774662 4.52748907</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    South    77 10000  0.77 0.61657440 0.96123408</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ── Share of 10,000, 95% Wilson interval ────────────────────────── </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  division count total share      lower      upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      East     3 10000  0.03 0.01020322 0.08817358</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     North   412 10000  4.12 3.74774662 4.52748907</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     South    77 10000  0.77 0.61657440 0.96123408</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

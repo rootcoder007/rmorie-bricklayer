@@ -69,8 +69,7 @@ counts <- c(1200, 430, 110, 38)
 
 s <- band_sensitivity(b, counts)
 s
-#> Sensitivity to the open top band's assumed cap
-#> 
+#> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap     value
 #>   11.55000 0.4254708
 #>   15.09841 0.4346095
@@ -85,16 +84,16 @@ s
 #>  168.29590 0.6610951
 #>  220.00000 0.7002144
 #> 
-#> span over the caps tried: 0.2747 (53.7% of the typical value)
-#> The statistic moves by more than a tenth of itself across the
-#> caps tried, so it is a property of the assumption as much as
-#> of the data. Report the range, not a single figure.
+#>   span over the caps tried: 0.2747 (53.7% of the typical value)
+#>   The statistic moves by more than a tenth of itself across the
+#>   caps tried, so it is a property of the assumption as much as
+#>   of the data. Report the range, not a single figure.
+#> ────────────────────────────────────────────────────────────────── 
 
 # A statistic that barely moves has been measured; one that swings
 # has not.
 band_sensitivity(b, counts, statistic = mean)
-#> Sensitivity to the open top band's assumed cap
-#> 
+#> ── Sensitivity to the open top band's assumed cap ──────────────── 
 #>        cap    value
 #>   11.55000 2.257283
 #>   15.09841 2.295202
@@ -109,8 +108,9 @@ band_sensitivity(b, counts, statistic = mean)
 #>  168.29590 3.932296
 #>  220.00000 4.484814
 #> 
-#> span over the caps tried: 2.228 (83.2% of the typical value)
-#> The statistic moves by more than a tenth of itself across the
-#> caps tried, so it is a property of the assumption as much as
-#> of the data. Report the range, not a single figure.
+#>   span over the caps tried: 2.228 (83.2% of the typical value)
+#>   The statistic moves by more than a tenth of itself across the
+#>   caps tried, so it is a property of the assumption as much as
+#>   of the data. Report the range, not a single figure.
+#> ────────────────────────────────────────────────────────────────── 
 ```
