@@ -114,6 +114,8 @@ cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
 # custody.R carries the stock and flow measures section 3e uses
 cp "${BRICKLAYER_ROOT}/R/custody.R"        "${STAGE}/"
+# crosswalk.R carries the point-to-region checks section 3g uses
+cp "${BRICKLAYER_ROOT}/R/crosswalk.R"      "${STAGE}/"
 # the published year-over-year tables, their column signatures, and
 # the verifier that recomputes them from the province's own CSVs
 cp "${PROJECT_DIR}/otis_yoy_verify.R"        "${STAGE}/" 2>/dev/null || true
@@ -121,6 +123,11 @@ cp "${PROJECT_DIR}/otis_yoy_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_rates_published.csv.gz" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/otis_dataset_signatures.csv" "${STAGE}/" 2>/dev/null || true
 cp "${PROJECT_DIR}/institutional_locations_en.csv" "${STAGE}/" 2>/dev/null || true
+# the institution-to-census-division crosswalk, the division populations
+# it rests on, and the verifier that re-derives both
+cp "${PROJECT_DIR}/otis_crosswalk_verify.R" "${STAGE}/" 2>/dev/null || true
+cp "${PROJECT_DIR}/institution_cd_crosswalk.csv" "${STAGE}/" 2>/dev/null || true
+cp "${PROJECT_DIR}/cd_population_2022.csv" "${STAGE}/" 2>/dev/null || true
 cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
 
