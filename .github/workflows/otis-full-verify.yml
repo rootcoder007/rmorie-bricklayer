@@ -1,0 +1,125 @@
+# The checks analysis.R keeps opt-in, run with everything on, once a week.
+#
+# Five environment variables gate the expensive verifications -- the 147
+# published year-over-year tables, the 108 rate tables, the census
+# division populations re-derived from Statistics Canada, and the
+# point-in-polygon recompute of the institution crosswalk. All of them are
+# off by default and off in the push CI, so without this workflow
+# "verified" has no date attached. The downloads are cached; a run with a
+# warm cache is a few minutes.
+#
+# OTIS_DML_RECOMPUTE is not set: the self-contained port takes about
+# twenty-five minutes and the fast path needs rmorie, which is not on CRAN.
+name: OTIS full verification
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-verify:
+    runs-on: ubuntu-latest
+    env:
+      CACHE: ${{ github.workspace }}/.otis-cache
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
+        with:
+          use-public-rspm: true
+
+      - name: Read the bundle's R packages from config.json
+        id: pkgs
+        run: |
+          {
+            echo 'list<<EOF'
+            jq -r '.r_packages[] | "any::" + .' examples/otis-mrp/config.json
+            echo 'any::sf'
+            echo 'local::.'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: r-lib/actions/setup-r-dependencies@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
+        with:
+          packages: ${{ steps.pkgs.outputs.list }}
+
+      # 29 OTIS CSVs (14 MB), the Statistics Canada population table
+      # (27 MB zip, 334 MB CSV) and the census division boundary file.
+      - name: Cache the source datasets
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .otis-cache
+          key: otis-full-v1-${{ hashFiles('examples/otis-mrp/otis_dataset_signatures.csv') }}
+
+      - name: Fetch the OTIS datasets
+        run: |
+          mkdir -p "$CACHE/otis"
+          cd examples/otis-mrp
+          Rscript -e '
+            library(rmoriebricklayer)
+            source("otis_yoy_verify.R")
+            sig <- utils::read.csv("otis_dataset_signatures.csv", stringsAsFactors = FALSE)
+            dest <- file.path(Sys.getenv("CACHE"), "otis")
+            if (length(list.files(dest, pattern = "[.]csv$")) < nrow(sig)) {
+              r <- otis_yoy_download(dest, sig)
+              stopifnot(!is.null(r))
+              cat(sum(!is.na(r$dataset)), "of", nrow(r), "resources identified\n")
+            } else cat("OTIS datasets cached\n")'
+          ls "$CACHE/otis" | wc -l
+
+      - name: Fetch the census division boundary file
+        run: |
+          mkdir -p "$CACHE/shp"
+          if [ ! -s "$CACHE/shp/lcd_000b21a_e.shp" ]; then
+            curl -sSfL --retry 3 -o "$CACHE/shp/lcd.zip" \
+              "https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/files-fichiers/lcd_000b21a_e.zip"
+            unzip -o -q "$CACHE/shp/lcd.zip" -d "$CACHE/shp"
+          fi
+          ls -la "$CACHE/shp"
+
+      - name: Run analysis.R with every verification on
+        env:
+          OTIS_DATASETS_DIR: ${{ github.workspace }}/.otis-cache/otis
+          OTIS_RATES_VERIFY: "1"
+          OTIS_CROSSWALK_POP: "1"
+          OTIS_CROSSWALK_SHP: ${{ github.workspace }}/.otis-cache/shp/lcd_000b21a_e.shp
+          OTIS_LOCATIONS: ${{ github.workspace }}/examples/otis-mrp/institutional_locations_en.csv
+        run: |
+          out="$PWD/full-verify-out"
+          mkdir -p "$out" "$CACHE/statcan"
+          # analysis.R writes the Statistics Canada download beside its
+          # outputs; point that directory into the cache so it persists.
+          ln -sfn "$CACHE/statcan" "$out/statcan"
+          cd examples/otis-mrp
+          Rscript analysis.R "$CACHE/otis/a01_restrictive_confinement_detailed_dataset.csv" "$out" \
+            2>&1 | tee "$out/run.log"
+
+      - name: Nothing may DIFFER
+        run: |
+          python3 - <<'PYEOF'
+          import json, collections, sys
+          m = json.load(open("full-verify-out/manifest.json"))["results"]
+          by = collections.Counter((v["group"], v["status"]) for v in m.values())
+          for g in sorted({g for g, _ in by}):
+              print(f"{g:22s}", {s: n for (gg, s), n in by.items() if gg == g})
+          differ = [k for k, v in m.items() if v["status"] == "DIFFER"]
+          print(f"\n{len(m)} records, {len(differ)} DIFFER")
+          for k in differ:
+              print("  DIFFER:", k, m[k].get("note", ""))
+          sys.exit(1 if differ else 0)
+          PYEOF
+
+      - name: Keep the manifest and log
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: otis-full-verify-${{ github.run_id }}
+          path: |
+            full-verify-out/manifest.json
+            full-verify-out/run.log
+            full-verify-out/*.csv
+          retention-days: 90

@@ -109,6 +109,9 @@ cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_data_loader.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_synthetic.R"   "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_manifest.R"    "${STAGE}/"
+# print_methods.R carries the frame every table printer draws with, so
+# it goes first: rate.R, custody.R and region_map.R print through it
+cp "${BRICKLAYER_ROOT}/R/print_methods.R"  "${STAGE}/"
 # yoy.R carries .yoy_col, which rate.R uses, so the two travel together
 cp "${BRICKLAYER_ROOT}/R/yoy.R"            "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/rate.R"           "${STAGE}/"
@@ -146,7 +149,9 @@ cp "${PROJECT_DIR}"/analysis.R             "${STAGE}/"
 render_template() {
   local tmpl="$1" out="$2"
   python3 <<PYEOF
+import json
 tmpl = open("${tmpl}").read()
+_exp = json.load(open("${CONFIG}")).get("expected", {})
 subs = {
   "project_title":  "${PROJECT_TITLE}",
   "project_name":   "${PROJECT_NAME}",
@@ -174,8 +179,8 @@ subs = {
   "bricklayer_version": "${BRICKLAYER_VERSION}",
   "bundle_filename": "${BASENAME}.zip",
   "bundle_sha256":  "(computed after build — see make_bundle.sh output)",
-  "expected_pass_real": "see config.json",
-  "expected_total":     "see config.json",
+  "expected_pass_real": str(_exp.get("pass_real", "")),
+  "expected_total":     str(_exp.get("total_checks", "")),
   "licence_attribution": "Refer to the OGL-Ontario terms",
   "network_endpoints_table": "See data_provenance.json for endpoints",
 }
