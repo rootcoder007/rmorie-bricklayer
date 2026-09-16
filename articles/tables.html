@@ -221,13 +221,174 @@ three low values from three high ones.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="points-and-the-regions-that-contain-them">Points, and the regions that contain them<a class="anchor" aria-label="anchor" href="#points-and-the-regions-that-contain-them"></a>
+</h2>
+<p>Before a regional count means anything, something has to have decided
+which region each facility is in. That decision is a region map: built
+once, from coordinates and a boundary file, and then read by everything
+downstream.</p>
+<p>Which is exactly why recomputing the downstream tables cannot check
+it. An error in the region map reproduces perfectly in every table built
+on it, because those tables are where it is read. The region map has to
+be checked on its own terms.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  facility <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North Jail"</span>, <span class="st">"South Jail"</span>, <span class="st">"Hill Jail"</span>, <span class="st">"Lake Jail"</span><span class="op">)</span>,</span>
+<span>  region   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3520"</span>, <span class="st">"3553"</span>, <span class="st">"3520"</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">pop</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  region     <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"3557"</span>, <span class="st">"3520"</span>, <span class="st">"3553"</span>, <span class="st">"3552"</span>, <span class="st">"3519"</span><span class="op">)</span>,</span>
+<span>  population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">114094</span>, <span class="fl">3025647</span>, <span class="fl">171568</span>, <span class="fl">22746</span>, <span class="fl">1173334</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/region_map_integrity.html">region_map_integrity()</a></code> finds the failures that a
+comparison against published output cannot, because they would be
+present on both sides of it: a facility assigned two regions, a facility
+assigned none, a region code that belongs to a different province.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/region_map_integrity.html">region_map_integrity</a></span><span class="op">(</span><span class="va">cw</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regions <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                         check observed expected pass</span></span>
+<span><span class="co">#&gt; 1         units assigned more than one region        0        0 TRUE</span></span>
+<span><span class="co">#&gt; 2                    units assigned no region        0        0 TRUE</span></span>
+<span><span class="co">#&gt; 3 region codes not in the reference geography        0        0 TRUE</span></span></code></pre></div>
+<p>Every check is written so that zero is the passing value, which is
+what makes the frame safe to record directly into a manifest.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
+<span><span class="va">bad</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"2406"</span>          <span class="co"># a code from another province</span></span>
+<span><span class="fu"><a href="../reference/region_map_integrity.html">region_map_integrity</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, regions <span class="op">=</span> <span class="va">pop</span><span class="op">$</span><span class="va">region</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                         check observed expected  pass</span></span>
+<span><span class="co">#&gt; 1         units assigned more than one region        0        0  TRUE</span></span>
+<span><span class="co">#&gt; 2                    units assigned no region        0        0  TRUE</span></span>
+<span><span class="co">#&gt; 3 region codes not in the reference geography        1        0 FALSE</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="recomputing-is-not-the-same-as-checking">Recomputing is not the same as checking<a class="anchor" aria-label="anchor" href="#recomputing-is-not-the-same-as-checking"></a>
+</h3>
+<p><code><a href="../reference/region_map_compare.html">region_map_compare()</a></code> matches a recomputed region map
+against the published one and compares them cell by cell. Numeric
+columns go through <code><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal()</a></code>, so a coordinate that
+survived a round trip through text is not reported as a change.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">recomputed</span> <span class="op">&lt;-</span> <span class="va">cw</span></span>
+<span><span class="va">recomputed</span><span class="op">$</span><span class="va">region</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3519"</span></span>
+<span><span class="fu"><a href="../reference/region_map_compare.html">region_map_compare</a></span><span class="op">(</span><span class="va">cw</span>, <span class="va">recomputed</span>, <span class="st">"facility"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   column cells mismatched                                       first</span></span>
+<span><span class="co">#&gt; 1   rows     4          0                                            </span></span>
+<span><span class="co">#&gt; 2 region     4          1 South Jail: published 3520, recomputed 3519</span></span></code></pre></div>
+<p>That is worth having, and it is worth being clear about what it
+establishes: the recomputation reproduced the published assignment. Run
+the same method against the same boundary file and a
+<em>definitional</em> error reproduces perfectly too. Both sides move
+together.</p>
+</div>
+<div class="section level3">
+<h3 id="a-second-route-can-disagree">A second route can disagree<a class="anchor" aria-label="anchor" href="#a-second-route-can-disagree"></a>
+</h3>
+<p>The check that can catch an error in the original method is one that
+does not use that method. Derive the region a different way – from a
+place name, a postal geography, an administrative lookup – and
+compare.</p>
+<p>A name-based route is the usual second route, and it has understood
+weaknesses. Names collide. In Ontario, census division 3552 is named
+“Sudbury” and is a thinly populated district; census division 3553 is
+named “Greater Sudbury” and is the city inside it. A facility in the
+city has a postal address in Sudbury, and a name route sends it to the
+district.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">route</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North Jail"</span> <span class="op">=</span> <span class="st">"3557"</span>, <span class="st">"South Jail"</span> <span class="op">=</span> <span class="st">"3520"</span>,</span>
+<span>           <span class="st">"Hill Jail"</span> <span class="op">=</span> <span class="st">"3552"</span>, <span class="st">"Lake Jail"</span> <span class="op">=</span> <span class="st">"3520"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/region_map_second_route.html">region_map_second_route</a></span><span class="op">(</span><span class="va">cw</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, <span class="va">route</span>,</span>
+<span>                       known <span class="op">=</span> <span class="st">"Hill Jail"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        unit primary second known</span></span>
+<span><span class="co">#&gt; 1 Hill Jail    3553   3552  TRUE</span></span></code></pre></div>
+<p>The known-bad case is listed by NAME rather than allowed for by
+widening a tolerance, and the distinction matters. A tolerance of “one
+disagreement is acceptable” would swallow a second, different
+disagreement silently. Naming it means <code>sum(!x$known)</code> stays
+the number that must be zero.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">route</span><span class="op">[</span><span class="st">"South Jail"</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"3599"</span>    <span class="co"># an assignment nobody documented</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/region_map_second_route.html">region_map_second_route</a></span><span class="op">(</span><span class="va">cw</span>, <span class="st">"facility"</span>, <span class="st">"region"</span>, <span class="va">route</span>,</span>
+<span>                            known <span class="op">=</span> <span class="st">"Hill Jail"</span><span class="op">)</span></span>
+<span><span class="va">d</span></span>
+<span><span class="co">#&gt;         unit primary second known</span></span>
+<span><span class="co">#&gt; 1 South Jail    3520   3599 FALSE</span></span>
+<span><span class="co">#&gt; 2  Hill Jail    3553   3552  TRUE</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">d</span><span class="op">$</span><span class="va">known</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<p>Facilities the route does not cover are skipped rather than counted
+as disagreements, so a partial second route is still usable. Record how
+many it covered: a route that quietly stops matching anything leaves the
+disagreement check passing over an empty set.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">route</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 4</span></span></code></pre></div>
+<p><code><a href="../reference/region_map_from_points.html">region_map_from_points()</a></code> does the geometric recompute,
+projecting the points onto the boundary file’s own coordinate system
+rather than the reverse, since reprojecting polygons moves their edges.
+It needs <code>sf</code> and a boundary file and returns
+<code>NULL</code> without either, so a verification script records the
+check as unavailable instead of failing over an optional dependency. It
+also returns <code>n_regions</code> rather than silently resolving it:
+any value but 1 means the point fell outside the geography, or the
+boundaries overlap.</p>
+</div>
+<div class="section level3">
+<h3 id="the-coverage-share-is-not-a-denominator">The coverage share is not a denominator<a class="anchor" aria-label="anchor" href="#the-coverage-share-is-not-a-denominator"></a>
+</h3>
+<p>With the region map checked, the obvious next step is a rate per
+region. <code><a href="../reference/region_coverage.html">region_coverage()</a></code> reports the ingredients and,
+every time it prints, declines to supply that rate.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">units</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">cw</span><span class="op">$</span><span class="va">region</span> <span class="op">==</span> <span class="va">r</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">cov</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/region_coverage.html">region_coverage</a></span><span class="op">(</span><span class="va">pop</span><span class="op">$</span><span class="va">region</span>, <span class="va">pop</span><span class="op">$</span><span class="va">population</span>, <span class="va">units</span><span class="op">)</span></span>
+<span><span class="va">cov</span></span>
+<span><span class="co">#&gt; 4 units in 3 of 5 regions</span></span>
+<span><span class="co">#&gt;   those regions hold 3,311,309 of 4,507,389 residents (73.5%)</span></span>
+<span><span class="co">#&gt;   2 regions hold none; 1,196,080 residents (26.5%) live there</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  region population units has_unit  pop_share</span></span>
+<span><span class="co">#&gt;    3520    3025647     2     TRUE 67.1263785</span></span>
+<span><span class="co">#&gt;    3553     171568     1     TRUE  3.8063722</span></span>
+<span><span class="co">#&gt;    3557     114094     1     TRUE  2.5312659</span></span>
+<span><span class="co">#&gt;    3519    1173334     0    FALSE 26.0313454</span></span>
+<span><span class="co">#&gt;    3552      22746     0    FALSE  0.5046381</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; The covered share is context, not a denominator: units serve </span></span>
+<span><span class="co">#&gt; catchments, so a rate over these regions alone would take its </span></span>
+<span><span class="co">#&gt; numerator from the whole territory and is inflated.</span></span></code></pre></div>
+<p>Two of the five regions hold no facility at all. It is tempting to
+read their population as uncovered, and to build a regional rate on the
+population of the regions that do hold one. Both readings are wrong, for
+the same reason.</p>
+<p>A facility serves a catchment: an administrative fact about where
+people are sent from, which a coordinate does not state and cannot
+imply. Some geographies were never meant to have one facility each. So
+summing the populations of facility-holding regions gives a denominator
+covering part of the territory while the numerator counts people drawn
+from all of it. Every rate built that way is inflated, and inflated
+unevenly – a dense region holding one facility and a sparse region
+holding seven distort it in opposite directions.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">cov</span>, <span class="st">"coverage"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>covered <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">covered_population</span>, uncovered <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">uncovered_population</span>,</span>
+<span>  share <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">a</span><span class="op">$</span><span class="va">covered_share</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   covered uncovered     share </span></span>
+<span><span class="co">#&gt; 3311309.0 1196080.0      73.5</span></span></code></pre></div>
+<p>Where the numerator and the denominator have to cover the same
+people, the defensible figure is the whole-territory one. That is the
+next section.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="regions">Regions<a class="anchor" aria-label="anchor" href="#regions"></a>
 </h2>
 <p>A region code is an areal unit, not a coordinate. Three things go
 wrong with a table of regional counts: the regions hold different
 numbers of people, they hold different <em>kinds</em> of people, and a
 small region’s rate is mostly noise.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Central"</span>, <span class="st">"Eastern"</span>, <span class="st">"Northern"</span>, <span class="st">"Toronto"</span>, <span class="st">"Western"</span><span class="op">)</span>,</span>
 <span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"18 to 24"</span>, <span class="st">"25 to 49"</span>, <span class="st">"50+"</span><span class="op">)</span>,</span>
@@ -242,7 +403,7 @@ small region’s rate is mostly noise.</p>
 <p>Indirect standardisation handles the second problem: the expected
 count is what each region would have under the overall rate in every age
 band, given its own age composition.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/expected_counts.html">expected_counts</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">n</span>, <span class="va">d</span><span class="op">$</span><span class="va">pop</span>, <span class="va">d</span><span class="op">$</span><span class="va">region</span>, strata <span class="op">=</span> <span class="va">d</span><span class="op">$</span><span class="va">age</span><span class="op">)</span></span>
 <span><span class="va">e</span></span>
 <span><span class="co">#&gt;       area observed population  expected</span></span>
@@ -253,14 +414,14 @@ band, given its own age composition.</p>
 <span><span class="co">#&gt; 5  Western       37       2500 30.228758</span></span></code></pre></div>
 <p>The expected counts total the observed ones. That identity is what
 makes them a standardisation rather than a prediction.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span><span class="op">)</span>, expected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">expected</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; observed expected </span></span>
 <span><span class="co">#&gt;      185      185</span></span></code></pre></div>
 <p>The ratio, with an exact interval – the counts here are small, and a
 normal approximation on a count of six is a decoration rather than an
 interval:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sir.html">sir</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       area observed  expected       sir     lower     upper excess</span></span>
 <span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639   TRUE</span></span>
@@ -271,7 +432,7 @@ interval:</p>
 <p>And the third problem. A league table of rates ranks the small
 regions to both ends by construction, so borrow strength across
 regions:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eb_rates.html">eb_rates</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span>
 <span><span class="co">#&gt;       area observed  expected       sir        eb  shrinkage       nu    alpha</span></span>
 <span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.4301763 0.12133873 6.679104 6.679104</span></span>
@@ -286,7 +447,7 @@ was.</p>
 <p>The funnel plot shows the reader the same thing directly: what range
 a region’s ratio could take, given its size, if it were no different
 from anywhere else.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/funnel_limits.html">funnel_limits</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">20</span>, <span class="fl">50</span>, <span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   expected level lower upper</span></span>
 <span><span class="co">#&gt; 1        5 0.950 0.200 2.000</span></span>
@@ -300,7 +461,7 @@ from anywhere else.</p>
 <div class="section level3">
 <h3 id="autocorrelation-if-you-have-a-neighbour-list">Autocorrelation, if you have a neighbour list<a class="anchor" aria-label="anchor" href="#autocorrelation-if-you-have-a-neighbour-list"></a>
 </h3>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">4L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">3L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">5L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fl">5L</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">4L</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">mi</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/morans_i.html">morans_i</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span> <span class="op">/</span> <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">nb</span>, n_perm <span class="op">=</span> <span class="fl">999L</span><span class="op">)</span></span>
@@ -313,7 +474,7 @@ ships no geometry, and a guessed adjacency would make the answer a
 property of the guess. Note too that the null expectation is
 <code>-1/(n - 1)</code>, not zero: with five regions, a small negative
 <code>I</code> is what independence looks like.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">-</span><span class="fl">1</span> <span class="op">/</span> <span class="op">(</span><span class="fl">5</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] -0.25</span></span></code></pre></div>
 </div>

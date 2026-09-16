@@ -55,9 +55,9 @@ precisely the number a reader is tempted to divide by.
 
 ## See also
 
-[`crosswalk_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_integrity.md),
-[`crosswalk_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_compare.md),
-[`crosswalk_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_second_route.md)
+[`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md),
+[`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md),
+[`region_map_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_second_route.md)
 
 ## Examples
 

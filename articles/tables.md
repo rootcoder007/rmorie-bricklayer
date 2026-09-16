@@ -182,6 +182,202 @@ three high ones.
 #> [1] 0.1012483
 ```
 
+## Points, and the regions that contain them
+
+Before a regional count means anything, something has to have decided
+which region each facility is in. That decision is a region map: built
+once, from coordinates and a boundary file, and then read by everything
+downstream.
+
+Which is exactly why recomputing the downstream tables cannot check it.
+An error in the region map reproduces perfectly in every table built on
+it, because those tables are where it is read. The region map has to be
+checked on its own terms.
+
+``` r
+
+cw <- data.frame(
+  facility = c("North Jail", "South Jail", "Hill Jail", "Lake Jail"),
+  region   = c("3557", "3520", "3553", "3520"),
+  stringsAsFactors = FALSE
+)
+pop <- data.frame(
+  region     = c("3557", "3520", "3553", "3552", "3519"),
+  population = c(114094, 3025647, 171568, 22746, 1173334),
+  stringsAsFactors = FALSE
+)
+```
+
+[`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md)
+finds the failures that a comparison against published output cannot,
+because they would be present on both sides of it: a facility assigned
+two regions, a facility assigned none, a region code that belongs to a
+different province.
+
+``` r
+
+region_map_integrity(cw, "facility", "region", regions = pop$region)
+#>                                         check observed expected pass
+#> 1         units assigned more than one region        0        0 TRUE
+#> 2                    units assigned no region        0        0 TRUE
+#> 3 region codes not in the reference geography        0        0 TRUE
+```
+
+Every check is written so that zero is the passing value, which is what
+makes the frame safe to record directly into a manifest.
+
+``` r
+
+bad <- cw
+bad$region[3] <- "2406"          # a code from another province
+region_map_integrity(bad, "facility", "region", regions = pop$region)
+#>                                         check observed expected  pass
+#> 1         units assigned more than one region        0        0  TRUE
+#> 2                    units assigned no region        0        0  TRUE
+#> 3 region codes not in the reference geography        1        0 FALSE
+```
+
+### Recomputing is not the same as checking
+
+[`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
+matches a recomputed region map against the published one and compares
+them cell by cell. Numeric columns go through
+[`all.equal()`](https://rdrr.io/r/base/all.equal.html), so a coordinate
+that survived a round trip through text is not reported as a change.
+
+``` r
+
+recomputed <- cw
+recomputed$region[2] <- "3519"
+region_map_compare(cw, recomputed, "facility")
+#>   column cells mismatched                                       first
+#> 1   rows     4          0                                            
+#> 2 region     4          1 South Jail: published 3520, recomputed 3519
+```
+
+That is worth having, and it is worth being clear about what it
+establishes: the recomputation reproduced the published assignment. Run
+the same method against the same boundary file and a *definitional*
+error reproduces perfectly too. Both sides move together.
+
+### A second route can disagree
+
+The check that can catch an error in the original method is one that
+does not use that method. Derive the region a different way – from a
+place name, a postal geography, an administrative lookup – and compare.
+
+A name-based route is the usual second route, and it has understood
+weaknesses. Names collide. In Ontario, census division 3552 is named
+“Sudbury” and is a thinly populated district; census division 3553 is
+named “Greater Sudbury” and is the city inside it. A facility in the
+city has a postal address in Sudbury, and a name route sends it to the
+district.
+
+``` r
+
+route <- c("North Jail" = "3557", "South Jail" = "3520",
+           "Hill Jail" = "3552", "Lake Jail" = "3520")
+region_map_second_route(cw, "facility", "region", route,
+                       known = "Hill Jail")
+#>        unit primary second known
+#> 1 Hill Jail    3553   3552  TRUE
+```
+
+The known-bad case is listed by NAME rather than allowed for by widening
+a tolerance, and the distinction matters. A tolerance of “one
+disagreement is acceptable” would swallow a second, different
+disagreement silently. Naming it means `sum(!x$known)` stays the number
+that must be zero.
+
+``` r
+
+route["South Jail"] <- "3599"    # an assignment nobody documented
+d <- region_map_second_route(cw, "facility", "region", route,
+                            known = "Hill Jail")
+d
+#>         unit primary second known
+#> 1 South Jail    3520   3599 FALSE
+#> 2  Hill Jail    3553   3552  TRUE
+sum(!d$known)
+#> [1] 1
+```
+
+Facilities the route does not cover are skipped rather than counted as
+disagreements, so a partial second route is still usable. Record how
+many it covered: a route that quietly stops matching anything leaves the
+disagreement check passing over an empty set.
+
+``` r
+
+length(route)
+#> [1] 4
+```
+
+[`region_map_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.md)
+does the geometric recompute, projecting the points onto the boundary
+file’s own coordinate system rather than the reverse, since reprojecting
+polygons moves their edges. It needs `sf` and a boundary file and
+returns `NULL` without either, so a verification script records the
+check as unavailable instead of failing over an optional dependency. It
+also returns `n_regions` rather than silently resolving it: any value
+but 1 means the point fell outside the geography, or the boundaries
+overlap.
+
+### The coverage share is not a denominator
+
+With the region map checked, the obvious next step is a rate per region.
+[`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
+reports the ingredients and, every time it prints, declines to supply
+that rate.
+
+``` r
+
+units <- vapply(pop$region, function(r) sum(cw$region == r), numeric(1))
+cov <- region_coverage(pop$region, pop$population, units)
+cov
+#> 4 units in 3 of 5 regions
+#>   those regions hold 3,311,309 of 4,507,389 residents (73.5%)
+#>   2 regions hold none; 1,196,080 residents (26.5%) live there
+#> 
+#>  region population units has_unit  pop_share
+#>    3520    3025647     2     TRUE 67.1263785
+#>    3553     171568     1     TRUE  3.8063722
+#>    3557     114094     1     TRUE  2.5312659
+#>    3519    1173334     0    FALSE 26.0313454
+#>    3552      22746     0    FALSE  0.5046381
+#> 
+#> The covered share is context, not a denominator: units serve 
+#> catchments, so a rate over these regions alone would take its 
+#> numerator from the whole territory and is inflated.
+```
+
+Two of the five regions hold no facility at all. It is tempting to read
+their population as uncovered, and to build a regional rate on the
+population of the regions that do hold one. Both readings are wrong, for
+the same reason.
+
+A facility serves a catchment: an administrative fact about where people
+are sent from, which a coordinate does not state and cannot imply. Some
+geographies were never meant to have one facility each. So summing the
+populations of facility-holding regions gives a denominator covering
+part of the territory while the numerator counts people drawn from all
+of it. Every rate built that way is inflated, and inflated unevenly – a
+dense region holding one facility and a sparse region holding seven
+distort it in opposite directions.
+
+``` r
+
+a <- attr(cov, "coverage")
+c(covered = a$covered_population, uncovered = a$uncovered_population,
+  share = round(a$covered_share, 1))
+#>   covered uncovered     share 
+#> 3311309.0 1196080.0      73.5
+```
+
+Where the numerator and the denominator have to cover the same people,
+the defensible figure is the whole-territory one. That is the next
+section.
+
 ## Regions
 
 A region code is an areal unit, not a coordinate. Three things go wrong

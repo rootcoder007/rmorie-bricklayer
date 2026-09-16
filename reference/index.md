@@ -479,7 +479,7 @@ directly.
 
 ## Points, and the regions that contain them
 
-A crosswalk from point locations to statistical regions is built once
+A region map from point locations to statistical regions is built once
 and read many times, so an error in it reproduces downstream instead of
 showing up there. These check it three ways: that it is internally
 sound, that a recomputation agrees with it cell by cell, and that an
@@ -493,14 +493,14 @@ state.
 - [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
   : Population of the regions that contain a unit, and of those that do
   not
-- [`crosswalk_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_integrity.md)
-  : Internal soundness of a crosswalk
-- [`crosswalk_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_compare.md)
-  : Compare a recomputed crosswalk against a published one
-- [`crosswalk_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_second_route.md)
-  : Check a crosswalk against an independently derived assignment
-- [`crosswalk_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crosswalk_from_points.md)
-  : Recompute a point-to-region crosswalk by point in polygon
+- [`region_map_integrity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.md)
+  : Internal soundness of a region map
+- [`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
+  : Compare a recomputed region map against a published one
+- [`region_map_second_route()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_second_route.md)
+  : Check a region map against an independently derived assignment
+- [`region_map_from_points()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.md)
+  : Recompute a region map by point in polygon
 
 ## Describe a capsule
 
