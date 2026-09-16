@@ -18,13 +18,13 @@ Description: Tools for building brick-proof, reproducible, self-contained
     so any result can be traced back to its inputs. Distributional drift
     between a pinned capsule and a fresh fetch is tested with
     Kolmogorov-Smirnov, chi-square, population stability index,
-    Jensen-Shannon divergence and Benford first-digit screens, because a
+    Jensen-Shannon divergence and 'Benford' first-digit screens, because a
     re-released extract can be statistically identical yet differ
     byte-for-byte, and a column can keep its name and type while having
     been silently rescaled. Manifests can be authenticated rather than
     merely checksummed, with keyed digests ('HMAC-SHA-256', RFC 2104) or
-    post-quantum hash-based signatures (the Winternitz-plus-Merkle
-    construction of RFC 8391), and pinned chunk-wise through a Merkle
+    post-quantum hash-based signatures ('Winternitz' one-time signatures under a 'Merkle'
+    tree, RFC 8391), and pinned chunk-wise through a 'Merkle'
     tree so a mismatch identifies which part of a capsule moved. Also
     ships a compiled C++ core (summary, robust and rank statistics,
     'SHA-256', 'SHA-512' and 'CRC-32') that sibling packages in the
@@ -39,13 +39,13 @@ Description: Tools for building brick-proof, reproducible, self-contained
     JavaScript Object Notation ('JSON') or Markdown. Interval categories
     such as "2 to 5" or "50+" are parsed to bounds and the dependence of
     any derived figure on the open top band is measured rather than
-    assumed. Concentration is summarised by the Gini coefficient, the
+    assumed. Concentration is summarised by the 'Gini' coefficient, the
     Lorenz curve and tail-index estimation by exact discrete maximum
     likelihood; trend in a series of a few periods by the Mann-Kendall
-    test with Theil-Sen slopes, a permutation step-change scan and
+    test with 'Theil-Sen' slopes, a permutation step-change scan and
     Poisson rate ratios; and region-coded counts by indirect
     standardisation, exact standardised incidence ratios, the empirical
-    Bayes shrinkage of Clayton and Kaldor (1987)
+    Bayes shrinkage of Clayton and 'Kaldor' (1987)
     <doi:10.2307/2532003>, funnel-plot limits and Moran's I.
 License: AGPL-3
 Encoding: UTF-8
