@@ -4,11 +4,11 @@
 
 ### Point locations and the regions that contain them
 
-A crosswalk from facilities to statistical regions is built once and
+A region map from facilities to statistical regions is built once and
 read many times, so an error in it is the one error recomputing the
-downstream tables cannot find: everything downstream reads the
-crosswalk, and both sides of any comparison move together.
-`R/crosswalk.R` adds the checks that can find it.
+downstream tables cannot find: everything downstream reads the region
+map, and both sides of any comparison move together. `R/region map.R`
+adds the checks that can find it.
 
 - [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
   reports how many regions hold at least one unit and what share of the
@@ -26,7 +26,7 @@ crosswalk, and both sides of any comparison move together.
   geometry, so it runs with nothing installed.
 
 - [`region_map_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_compare.md)
-  matches two crosswalks on the unit identifier and compares them cell
+  matches two region maps on the unit identifier and compares them cell
   by cell, numerics through
   [`all.equal()`](https://rdrr.io/r/base/all.equal.html) so a coordinate
   that survived a round trip through text is not reported as a change.
@@ -46,9 +46,9 @@ crosswalk, and both sides of any comparison move together.
 
 ### The otis-mrp example
 
-- New section 3g re-derives the institution to census division crosswalk
-  and the division populations under it, rather than reading them. The
-  49 Ontario census-division populations re-derive exactly from
+- New section 3g re-derives the institution to census division region
+  map and the division populations under it, rather than reading them.
+  The 49 Ontario census-division populations re-derive exactly from
   Statistics Canada 17-10-0139-01, summing to 15,109,416; the 21
   divisions holding an open institution hold 10,110,752 of those. Twelve
   checks run with nothing granted, and injected errors were confirmed to
@@ -64,8 +64,8 @@ crosswalk, and both sides of any comparison move together.
   people. Two places, one name. The geometry is right and the name route
   is wrong, and a SECOND disagreement is still a failure.
 
-- `institution_cd_crosswalk.csv` and `cd_population_2022.csv` now travel
-  with the example, so the checks run from the bundle.
+- `institution_cd_region_map.csv` and `cd_population_2022.csv` now
+  travel with the example, so the checks run from the bundle.
 
 ### Verification that runs
 
@@ -83,9 +83,9 @@ crosswalk, and both sides of any comparison move together.
 - A weekly workflow, `otis-full-verify.yml`, runs `analysis.R` with
   every opt-in verification on: the 147 published year-over-year tables,
   the 108 rate tables, the census-division populations re-derived from
-  Statistics Canada, and the point-in-polygon recompute of the crosswalk
-  against the 2021 boundary file. It fails on any DIFFER and keeps the
-  manifest for ninety days, so “verified” carries a date.
+  Statistics Canada, and the point-in-polygon recompute of the region
+  map against the 2021 boundary file. It fails on any DIFFER and keeps
+  the manifest for ninety days, so “verified” carries a date.
 
 - CI refuses a copy of any vendored R file tracked under `examples/`,
   the shape of the `custody.R` shadowing below.
