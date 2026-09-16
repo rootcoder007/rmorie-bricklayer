@@ -2,12 +2,14 @@
 
 ## rmoriebricklayer 0.5.0
 
+CRAN release: 2026-09-16
+
 ### Point locations and the regions that contain them
 
 A region map from facilities to statistical regions is built once and
 read many times, so an error in it is the one error recomputing the
 downstream tables cannot find: everything downstream reads the region
-map, and both sides of any comparison move together. `R/region map.R`
+map, and both sides of any comparison move together. `R/region_map.R`
 adds the checks that can find it.
 
 - [`region_coverage()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/region_coverage.md)
