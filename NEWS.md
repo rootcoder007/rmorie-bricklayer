@@ -5,7 +5,7 @@
 A region map from facilities to statistical regions is built once and read
 many times, so an error in it is the one error recomputing the downstream
 tables cannot find: everything downstream reads the region map, and both
-sides of any comparison move together. `R/region map.R` adds the checks
+sides of any comparison move together. `R/region_map.R` adds the checks
 that can find it.
 
 * `region_coverage()` reports how many regions hold at least one unit and
