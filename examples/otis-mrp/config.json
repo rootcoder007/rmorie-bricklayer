@@ -59,12 +59,14 @@
   },
 
   "expected": {
-    "total_checks": 36,
-    "pass_real":    36,
-    "pass_csv":     28,
-    "_recompute_comment": "With the optional heavy DML recompute (OTIS_DML_RECOMPUTE=1), the 8 DML checks reproduce from public data within +/-0.02 (reference run matched to ~0.00004) and a 37th aggregate confirmation is added -> 37/37.",
-    "pass_csv_recompute":   37,
-    "total_checks_recompute": 37,
-    "dml_recompute_tol":    0.02
+    "total_checks": 55,
+    "pass_csv":     41,
+    "_pass_real_comment": "DERIVED, not measured: no .RData input was available to run. Real mode turns the 8 DML records from INFO into PASS and changes nothing else, so 41 + 8 = 49. Re-measure with the .RData before quoting it.",
+    "pass_real":    49,
+    "_recompute_comment": "With the optional heavy DML recompute (OTIS_DML_RECOMPUTE=1), the 8 DML checks reproduce from public data within +/-0.02 (reference run matched to ~0.00004) and one aggregate confirmation is added. DERIVED the same way: 41 + 8 + 1 = 50 of 56.",
+    "pass_csv_recompute":   50,
+    "total_checks_recompute": 56,
+    "dml_recompute_tol":    0.02,
+    "_groups_comment": "CSV-mode record counts by group, measured in the same run: crosswalk 15 (12 PASS, 3 INFO), DML 8 (INFO), descriptive_full 6, model 6, descriptive_matched 5, bivariate_full 4, bivariate_matched 4, matched 3, structural 2, yoy_published 1 (INFO), capacity_mnar 1 (INFO)."
   }
 }

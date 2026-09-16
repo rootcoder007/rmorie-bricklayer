@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.4.9
+Version: 0.5.0
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -62,6 +62,7 @@ Suggests:
     knitr,
     openssl,
     rmarkdown,
+    sf,
     stringi,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr

@@ -497,6 +497,25 @@ if (!is.null(.sf_pkg)) {
     exists("share", mode = "function")
 }
 
+## The crosswalk checks section 3g uses. Separate from the block above
+## because a reviewer with the package installed should get the package
+## copies, and one without should still get 3g rather than losing it to
+## whether the stock-flow lookup happened to succeed.
+.cw_pkg <- .otis_pkg_fns(c("region_coverage", "crosswalk_integrity",
+                           "crosswalk_compare", "crosswalk_second_route",
+                           "crosswalk_from_points"))
+if (!is.null(.cw_pkg)) {
+  for (.n in names(.cw_pkg)) assign(.n, .cw_pkg[[.n]])
+} else {
+  for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+    .fp <- file.path(.dir, "crosswalk.R")
+    if (file.exists(.fp)) {
+      source(.fp)
+      break
+    }
+  }
+}
+
 if (RATES_AVAILABLE) {
   cat("\n[3b/8] Movement rates per 1,000 placements and year-over-year change\n")
   by_year <- as.data.frame(orc[, .(vm = sum(vm), np = sum(np),
@@ -1034,6 +1053,120 @@ if (nzchar(.loc_f) && file.exists(.loc_f) && nzchar(.yoy_dir) &&
                       "CSV (data.ontario.ca package",
                       "3ca4505b-091c-4b04-89e8-c316ffaa0d9e) to run the",
                       "capacity analyses"))
+}
+
+
+## --- 3g. The institution to census division crosswalk ------------------
+##
+## Sections 3c and 3f read a crosswalk that assigns every institution to
+## the census division containing it. Everything built on that assignment
+## inherits it, which is exactly why recomputing the tables cannot check
+## it: an error in the crosswalk reproduces perfectly downstream, because
+## downstream is where it is read. So the two inputs are re-derived.
+##
+## The populations re-derive completely, from Statistics Canada
+## 17-10-0139-01 itself, and that is opt-in only because the archive is
+## 27 MB. The assignment has a recompute by the same method, which needs
+## sf and the boundary file, and a second route from the city name, which
+## needs nothing and runs always.
+##
+## The second route covers eleven institutions, not all twenty-five, and
+## catches a move only where a name is available to disagree. The
+## population arithmetic catches any move that changes WHICH divisions
+## hold an institution. What neither catches is a move between two
+## divisions that both already hold one: that needs the geometry, which
+## is what OTIS_CROSSWALK_SHP is for.
+##
+##     OTIS_CROSSWALK_POP=1   re-derive the 49 populations (27 MB)
+##     OTIS_CROSSWALK_SHP=<lcd_000b21a_e.shp>   recompute by st_within
+
+.cw_f  <- file.path(SCRIPT_DIR, "institution_cd_crosswalk.csv")
+.cwp_f <- file.path(SCRIPT_DIR, "cd_population_2022.csv")
+.cwv_f <- file.path(SCRIPT_DIR, "otis_crosswalk_verify.R")
+if (all(file.exists(c(.cw_f, .cwp_f, .cwv_f))) &&
+    exists("region_coverage", mode = "function")) {
+  source(.cwv_f)
+  cat("\n[3g/8] Institution to census division crosswalk\n")
+  .cw  <- .ocv_read(.cw_f)
+  .cwp <- .ocv_read(.cwp_f)
+  .cwp$cduid <- sprintf("%04d", as.integer(.cwp$cduid))
+
+  .obs_pop <- NULL
+  if (nzchar(Sys.getenv("OTIS_CROSSWALK_POP", ""))) {
+    cat("      re-deriving the census division populations from",
+        "17-10-0139-01 ...\n")
+    .obs_pop <- otis_cd_population_download(file.path(OUTPUT_DIR, "statcan"))
+    if (is.null(.obs_pop)) cat("      download failed; recorded as INFO\n")
+  }
+
+  ## the OTIS institution names, for the join check. b03 is the smallest
+  ## table carrying one row per institution-year.
+  .otis_inst <- NULL
+  .b03 <- if (exists(".yoy_dir") && nzchar(.yoy_dir))
+    file.path(.yoy_dir,
+      "b03_segregation_placements_alerts_and_hold_flags_by_institution.csv")
+  else ""
+  if (nzchar(.b03) && file.exists(.b03))
+    .otis_inst <- .ocv_read(.b03)$Institution_AtTimeOfPlacement
+
+  .shp <- Sys.getenv("OTIS_CROSSWALK_SHP", "")
+  .sf_obs <- otis_crosswalk_recompute_sf(.cw, .shp)
+  if (is.null(.sf_obs) && nzchar(.shp))
+    cat("      sf not installed or boundary file unreadable; recorded as INFO\n")
+
+  .cwchk <- otis_crosswalk_checks(.cw, .cwp, obs_pop = .obs_pop,
+                                  otis_inst = .otis_inst, sf_obs = .sf_obs)
+  for (i in seq_len(nrow(.cwchk)))
+    record(paste0("crosswalk_",
+                  gsub("(^_|_$)", "",
+                       gsub("[^a-z0-9]+", "_", tolower(.cwchk$check[i])))),
+           observed = .cwchk$observed[i], expected = .cwchk$expected[i],
+           tol = 0, group = "crosswalk",
+           note = if (nzchar(.cwchk$note[i])) .cwchk$note[i] else NULL)
+
+  .open <- .cw[grepl("open", .cw$Operating_Status, ignore.case = TRUE), ]
+  .units <- vapply(.cwp$cduid, function(u) sum(.open$CDUID == u), numeric(1))
+  .cov <- region_coverage(.cwp$cduid, .cwp$population, .units)
+  print(.cov, n = 5)
+  fwrite(as.data.frame(.cov), file.path(OUTPUT_DIR, "13_cd_coverage.csv"))
+  fwrite(.cwchk, file.path(OUTPUT_DIR, "14_crosswalk_checks.csv"))
+
+  ## The covered share is reported and is NOT used. Recorded as INFO so
+  ## that it appears in the manifest with the reason attached rather than
+  ## being quietly available to whoever reads the coverage CSV next.
+  record("crosswalk_covered_share_is_not_a_denominator",
+         observed = sprintf("%.1f%% of residents live in a division holding an institution",
+                            attr(.cov, "coverage")$covered_share),
+         expected = "context, never an exposure", force_status = "INFO",
+         group = "crosswalk",
+         note = paste("institutions serve court catchments, not the division",
+                      "containing them, so a rate over these divisions alone",
+                      "would draw its numerator from the whole province.",
+                      "The defensible per-capita figures are province-wide."))
+
+  if (is.null(.obs_pop))
+    record("crosswalk_populations_rederived", observed = "not checked",
+           expected = "17-10-0139-01", force_status = "INFO",
+           group = "crosswalk",
+           note = paste("set OTIS_CROSSWALK_POP=1 to re-derive the 49 census",
+                        "division populations from Statistics Canada",
+                        "(27 MB download)"))
+  if (is.null(.sf_obs))
+    record("crosswalk_point_in_polygon", observed = "not checked",
+           expected = "st_within against lcd_000b21a_e.shp",
+           force_status = "INFO", group = "crosswalk",
+           note = paste("set OTIS_CROSSWALK_SHP to the 2021 census division",
+                        "cartographic boundary file, with sf installed, to",
+                        "recompute the assignment geometrically"))
+
+  cat(sprintf("      %d checks, %d failing\n", nrow(.cwchk),
+              sum(.cwchk$observed != .cwchk$expected)))
+} else {
+  record("crosswalk", observed = "not checked",
+         expected = "institution_cd_crosswalk.csv", force_status = "INFO",
+         group = "crosswalk",
+         note = "the crosswalk files were not beside this script")
+  cat("\n[3g/8] Crosswalk: files not beside this script\n")
 }
 
 
