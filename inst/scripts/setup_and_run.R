@@ -93,8 +93,6 @@ REQ_PKGS        <- unlist(cfg$r_packages) %||% c()
 ## thirty seconds into the run.
 dml_on <- tolower(Sys.getenv("OTIS_DML_RECOMPUTE", "")) %in%
   c("1", "yes", "true", "y")
-if (dml_on && !requireNamespace("rmorie", quietly = TRUE))
-  REQ_PKGS <- unique(c(REQ_PKGS, "DoubleML", "mlr3", "mlr3learners"))
 if (nzchar(Sys.getenv("OTIS_REGION_MAP_SHP", "")))
   REQ_PKGS <- unique(c(REQ_PKGS, "sf"))
 
@@ -173,6 +171,34 @@ if (length(REQ_PKGS) > 0L) {
   say("  \u2713 All required packages present.")
 } else {
   say("  (No packages declared in config$r_packages.)")
+}
+## The published DML estimates were produced with DoubleML + mlr3, so that
+## is the route the recompute reproduces; rmorie's morie_otis_irm_dml() is
+## the same estimator in ~10 s and is used only when DoubleML is absent.
+if (dml_on) {
+  fb <- c("DoubleML", "mlr3", "mlr3learners")
+  fb_missing <- fb[!vapply(fb, requireNamespace, logical(1),
+                           quietly = TRUE)]
+  if (length(fb_missing) == 0L) {
+    say("  \u2713 OTIS_DML_RECOMPUTE: DoubleML, mlr3 and mlr3learners present",
+        " (the published route; ~24 min, ~6 GB RAM).")
+  } else if (requireNamespace("rmorie", quietly = TRUE)) {
+    say("  OTIS_DML_RECOMPUTE: DoubleML route missing ",
+        paste(fb_missing, collapse = ", "),
+        "; rmorie is installed and its ~10 s implementation of the same")
+    say("  estimator will be used instead. For the published route:")
+    say("    install.packages(c(", paste0('"', fb, '"', collapse = ", "), "))")
+  } else {
+    say("  Missing for OTIS_DML_RECOMPUTE=1: ",
+        paste(fb_missing, collapse = ", "))
+    say("  This script does not install packages itself. Install them in R,")
+    say("  then re-run this script:")
+    say("    install.packages(c(", paste0('"', fb, '"', collapse = ", "), "))")
+    say("  Alternative: install.packages(\"rmorie\") gives the same estimator",
+        " in ~10 s.")
+    say("  Or unset OTIS_DML_RECOMPUTE: the 8 DML checks then record as INFO.")
+    quit(status = 3)
+  }
 }
 hr()
 
@@ -449,7 +475,13 @@ if (file.exists(manifest_path)) {
 }
 hr()
 
-say("Step 5/5: Done.")
+if (exit_code != 0L || !file.exists(manifest_path)) {
+  say("Step 5/5: NOT completed (analysis exit code ", exit_code,
+      if (!file.exists(manifest_path)) "; no manifest.json written" else "",
+      "). See run.log in the results folder.")
+} else {
+  say("Step 5/5: Done.")
+}
 say("  Results folder: ", output_dir)
 say("  Plain-language summary: SUMMARY.txt in that folder.")
 
