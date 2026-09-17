@@ -1,5 +1,16 @@
 # rmoriebricklayer 0.5.1
 
+## core_mean() no longer overflows where base R does not
+
+The shared numeric core summed naively, so `core_mean(rep(1e308, 3))` was
+`Inf` and `core_mean(rep(1e120, 3))` was off by 1.4e104; `core_var()`,
+`core_sd()` and `core_moments()` inherited it, returning 3e208 for the
+variance of three identical values. The core now uses base R's algorithm
+(extended precision sum plus one corrective pass) with a running mean as
+the fallback when the sum overflows although every input is finite, and
+the same fix ships in rmorie, which carries a copy of the header. Results
+on ordinary data are bit-identical to `mean()`.
+
 ## One call for a published table
 
 `analyse_table()` runs the questions asked of every published table of

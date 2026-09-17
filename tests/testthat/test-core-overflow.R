@@ -1,0 +1,12 @@
+test_that("core_mean and its dependants survive where base R does", {
+  expect_identical(core_mean(rep(1e308, 3)), 1e308)
+  expect_identical(core_mean(rep(1e120, 3)), 1e120)
+  expect_identical(core_var(rep(1e120, 3)), 0)
+  expect_identical(core_var(rep(1e308, 3)), 0)
+  expect_identical(core_mean(c(1, Inf)), Inf)
+  expect_true(is.na(core_mean(c(1, NA))))
+  set.seed(3)
+  x <- stats::rnorm(1000, 1e6, 1)
+  expect_identical(core_mean(x), mean(x))
+  expect_equal(core_var(x), stats::var(x), tolerance = 1e-14)
+})
