@@ -723,7 +723,6 @@ bricklayer_json_unbox <- function(x) {
   obj
 }
 
-
 # Decimal to double, correctly rounded, independent of the platform's
 # C library.
 #
@@ -787,7 +786,7 @@ bricklayer_json_unbox <- function(x) {
 .rmbl_json_parse <- function(txt, bigint_as_char = FALSE) {
   s <- paste(txt, collapse = "\n")
   s <- enc2utf8(s)
-  if (startsWith(s, "\ufeff")) {
+  if (.rmbl_has_bom(s)) {
     warning("JSON string contains (illegal) UTF8 byte-order-mark!", call. = FALSE)
     s <- substring(s, 2L)
   }
@@ -1198,16 +1197,32 @@ bricklayer_json_write_json <- function(x, path, ...) {
   invisible(path)
 }
 
+# A byte-order mark is three bytes; test and strip it on the bytes so a
+# C locale never has to translate U+FEFF to its native encoding (that
+# translation is what raised "unable to translate '<U+FEFF>...'" and
+# "invalid char string in output conversion").
+.rmbl_has_bom <- function(s) {
+  r <- charToRaw(s)
+  length(r) >= 3L && identical(r[1:3], as.raw(c(0xef, 0xbb, 0xbf)))
+}
+.rmbl_strip_bom <- function(s) {
+  if (!.rmbl_has_bom(s)) return(s)
+  out <- rawToChar(charToRaw(s)[-(1:3)])
+  Encoding(out) <- "UTF-8"
+  out
+}
+
 #' Validate JSON text
 #'
 #' @param txt character; lines are joined with newlines.
 #' @return `TRUE`, or `FALSE` with attributes `err` and
 #' `offset`.
+
 #' @noRd
 bricklayer_json_validate <- function(txt) {
   stopifnot(is.character(txt))
   txt <- paste(txt, collapse = "\n")
-  if (startsWith(txt, "\ufeff"))
+  if (.rmbl_has_bom(txt))
     return(structure(FALSE, err = "JSON string contains UTF8 byte-order-mark."))
   res <- tryCatch({
     .rmbl_json_parse(txt)
@@ -1228,7 +1243,7 @@ bricklayer_json_validate <- function(txt) {
 #' @noRd
 .rmbl_json_reformat <- function(txt, pretty, indent_string = "    ") {
   s <- paste(txt, collapse = "\n")
-  if (startsWith(s, "\ufeff")) s <- substring(s, 2L)
+  s <- .rmbl_strip_bom(s)
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
   i <- 1L

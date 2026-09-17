@@ -25,6 +25,14 @@ and a digest anyone can recompute says nothing about who produced the data.
 
 ## What it does
 
+- **One call for a published table** — `analyse_table()` takes a table of
+  counts by period and group and returns what changed with exact intervals,
+  p-values adjusted over the whole scan, the envelope that rounding and
+  suppression in the release imply (`published_bounds()`), trend, rates if
+  there is an exposure, and a drift screen against the prior capsule;
+  `report_analysis()` writes it as Markdown or one HTML file and
+  `use_capsule_template()` starts a capsule that runs as written. Start
+  with `vignette("getting-started")`.
 - **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.
@@ -201,6 +209,20 @@ remotes::install_github("rootcoder007/rmorie-bricklayer")
 ```
 
 ## Quick example
+
+The shortest path, on the OTIS table that ships with the package:
+
+```r
+library(rmoriebricklayer)
+otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
+                             package = "rmoriebricklayer"))
+a <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"), rounding = 5)
+a                                   # what changed, how sure, what was withheld
+report_analysis(a, "otis.html")     # one self-contained file
+```
+
+The full capsule, step by step:
 
 ```r
 library(rmoriebricklayer)
