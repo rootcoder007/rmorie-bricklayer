@@ -10,3 +10,16 @@ test_that("core_mean and its dependants survive where base R does", {
   expect_identical(core_mean(x), mean(x))
   expect_equal(core_var(x), stats::var(x), tolerance = 1e-14)
 })
+
+test_that("the running-mean fallback matches mean() and cannot overflow", {
+  r <- rmoriebricklayer:::.core_mean_running
+  expect_identical(r(rep(1e308, 3)), 1e308)
+  expect_equal(r(c(1e308, 1e308, -1e308)), 1e308 / 3, tolerance = 1e-15)
+  expect_equal(r(c(-1e308, 1e308, 1e308, -1e308)), 0)
+  expect_true(is.na(r(numeric(0))))
+  expect_true(is.na(r(c(1, NA))))
+  set.seed(4)
+  x <- stats::rnorm(500, 1e6, 1)
+  expect_equal(r(x), mean(x), tolerance = 1e-12)
+  expect_equal(r(1:10), 5.5)
+})

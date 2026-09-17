@@ -37,6 +37,14 @@ static R_INLINE double rmbl_mean(const double *x, R_xlen_t n) {
     return fn(x, n);
 }
 
+static R_INLINE double rmbl_mean_running(const double *x, R_xlen_t n) {
+    static double (*fn)(const double *, R_xlen_t) = NULL;
+    if (fn == NULL)
+        fn = (double (*)(const double *, R_xlen_t))
+             R_GetCCallable("rmoriebricklayer", "rmbl_mean_running");
+    return fn(x, n);
+}
+
 static R_INLINE double rmbl_var(const double *x, R_xlen_t n) {
     static double (*fn)(const double *, R_xlen_t) = NULL;
     if (fn == NULL)

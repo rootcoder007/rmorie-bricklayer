@@ -32,6 +32,11 @@
 #' @export
 core_mean <- function(x) .Call(C_rmbl_mean, as.numeric(x))
 
+# The overflow fallback of core_mean(): a running mean that cannot
+# overflow on finite input. core_mean() reaches it only where long double
+# is 64-bit, so it is exposed here (internal) to be tested everywhere.
+.core_mean_running <- function(x) .Call(C_rmbl_mean_running, as.numeric(x))
+
 #' @rdname rmbl_core_stats
 #' @export
 core_var <- function(x) .Call(C_rmbl_var, as.numeric(x))
