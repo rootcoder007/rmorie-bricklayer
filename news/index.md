@@ -1,5 +1,25 @@
 # Changelog
 
+## rmoriebricklayer 0.5.1
+
+### Encoding handling no longer depends on the session locale
+
+[`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
+and
+[`to_ascii()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/to_ascii.md)
+test the bytes with
+[`validUTF8()`](https://rdrr.io/r/base/validUTF8.html) and drop invalid
+ones with an explicit UTF-8-to-UTF-8
+[`iconv()`](https://rdrr.io/r/base/iconv.html). The previous guard went
+through [`enc2utf8()`](https://rdrr.io/r/base/Encoding.html), which
+under a C locale re-encodes invalid bytes as Latin-1 instead of flagging
+them, so the fallback returned them untouched.
+`bricklayer_json_minify()` and `bricklayer_json_prettify()` declare
+their result as UTF-8 ([`paste()`](https://rdrr.io/r/base/paste.html)
+had dropped the mark, so `nchar(x, "chars")` over-counted in a C
+locale). Found by an independent C-locale check of 0.5.0; the check
+matrix now includes a C-locale cell.
+
 ## rmoriebricklayer 0.5.0
 
 CRAN release: 2026-09-16
