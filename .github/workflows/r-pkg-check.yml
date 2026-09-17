@@ -29,7 +29,7 @@ concurrency:
 jobs:
   check:
     runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})${{ matrix.config.locale && ' C-locale' || '' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -40,8 +40,13 @@ jobs:
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
           - {os: ubuntu-latest,  r: 'oldrel-1'}
+          # A C locale changes what enc2utf8()/validUTF8() report; 0.5.0
+          # passed every UTF-8 cell and failed here. Keep one cell on it.
+          - {os: ubuntu-latest,  r: 'release', locale: 'C'}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      LANG: ${{ matrix.config.locale || 'C.UTF-8' }}
+      LC_ALL: ${{ matrix.config.locale || 'C.UTF-8' }}
       # pak queries 5 Bioconductor repos by default; this package needs
       # none of them, and when bioconductor.org is slow the resolver logs
       # "unable to access index for repository .../bioc" on every leg.

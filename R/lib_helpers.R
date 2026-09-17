@@ -68,6 +68,13 @@ sha256_file <- function(path) {
 #' all(charToRaw(to_ascii("caf\u00e9")) < 128)
 to_ascii <- function(x) {
   x <- as.character(x)
+  # Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
+  # first. validUTF8() and an explicit UTF-8 -> UTF-8 iconv() both work on
+  # the bytes, so this does not depend on the session locale; enc2utf8()
+  # does, and under a C locale it re-encodes the bytes as Latin-1 instead
+  # of flagging them.
+  inv <- !is.na(x) & !validUTF8(x)
+  if (any(inv)) x[inv] <- iconv(x[inv], "UTF-8", "UTF-8", sub = "")
   if (requireNamespace("stringi", quietly = TRUE)) {
     # Best + platform-independent: romanize any script to Latin, then fold
     # Latin accents to ASCII. Handles far more than Latin accents
@@ -170,7 +177,8 @@ ascii_fallback <- function(x, force = FALSE) {
   x <- as.character(x)
   if (isTRUE(force)) return(to_ascii(x))
   out <- x
-  bad <- !validUTF8(enc2utf8(x)) & !is.na(x)
+  # Test the bytes, not the locale's opinion of them (see to_ascii()).
+  bad <- !is.na(x) & !validUTF8(x)
   if (any(bad)) out[bad] <- to_ascii(x[bad])
   out
 }
