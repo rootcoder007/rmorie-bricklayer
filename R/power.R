@@ -104,7 +104,7 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
                         "could ever be detected"),
                  n, 1 / (n + 1), alpha), call. = FALSE)
   }
-  .rmbl_local_seed(as.integer(seed)[1L])
+  if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
 
   rows <- lapply(sizes, function(sz) {
     hits <- 0L
