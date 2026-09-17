@@ -2,6 +2,21 @@
 
 ## rmoriebricklayer 0.5.1
 
+### core_mean() no longer overflows where base R does not
+
+The shared numeric core summed naively, so `core_mean(rep(1e308, 3))`
+was `Inf` and `core_mean(rep(1e120, 3))` was off by 1.4e104;
+[`core_var()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md),
+[`core_sd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_spread.md)
+and
+[`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
+inherited it, returning 3e208 for the variance of three identical
+values. The core now uses base R’s algorithm (extended precision sum
+plus one corrective pass) with a running mean as the fallback when the
+sum overflows although every input is finite, and the same fix ships in
+rmorie, which carries a copy of the header. Results on ordinary data are
+bit-identical to [`mean()`](https://rdrr.io/r/base/mean.html).
+
 ### One call for a published table
 
 [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
