@@ -59,3 +59,4 @@ PUSH_TO_GITHUB.md
 pkg-site/
 *.tar.gz
 cran-comments.md
+.otis-input/
