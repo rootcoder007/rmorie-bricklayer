@@ -170,6 +170,10 @@ double rmbl_mean(const double *x, R_xlen_t n) {
     return morie::core::mean(x, static_cast<std::size_t>(n));
 }
 
+double rmbl_mean_running(const double *x, R_xlen_t n) {
+    return morie::core::mean_running(x, static_cast<std::size_t>(n));
+}
+
 double rmbl_var(const double *x, R_xlen_t n) {
     return morie::core::variance(x, static_cast<std::size_t>(n), 1);  // n-1, like R var()
 }
@@ -391,6 +395,13 @@ SEXP C_rmbl_hawkes_nll(SEXP t, SEXP T, SEXP kernel, SEXP par) {
 SEXP C_rmbl_mean(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean(REAL(x), XLENGTH(x));
+    UNPROTECT(1);
+    return Rf_ScalarReal(r);
+}
+
+SEXP C_rmbl_mean_running(SEXP x) {
+    x = PROTECT(Rf_coerceVector(x, REALSXP));
+    double r = rmbl_mean_running(REAL(x), XLENGTH(x));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }

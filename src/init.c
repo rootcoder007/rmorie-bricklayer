@@ -17,6 +17,7 @@
 
 /* .Call wrappers (defined in rmbl_core.c) */
 extern SEXP C_rmbl_mean(SEXP);
+extern SEXP C_rmbl_mean_running(SEXP);
 extern SEXP C_rmbl_var(SEXP);
 extern SEXP C_rmbl_cor(SEXP, SEXP);
 extern SEXP C_rmbl_normal_pdf(SEXP, SEXP, SEXP);
@@ -145,6 +146,7 @@ extern SEXP C_rmbl_siu_schema(SEXP);
 
 /* plain-C kernels (defined in rmbl_core.c) -- the cross-package API */
 extern double rmbl_mean(const double *, R_xlen_t);
+extern double rmbl_mean_running(const double *, R_xlen_t);
 extern double rmbl_var(const double *, R_xlen_t);
 extern double rmbl_cor_pearson(const double *, const double *, R_xlen_t);
 extern double rmbl_normal_pdf(double, double, double);
@@ -196,6 +198,7 @@ extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
 
 static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mean",           (DL_FUNC) &C_rmbl_mean,           1},
+    {"C_rmbl_mean_running",   (DL_FUNC) &C_rmbl_mean_running,   1},
     {"C_rmbl_var",            (DL_FUNC) &C_rmbl_var,            1},
     {"C_rmbl_cor",            (DL_FUNC) &C_rmbl_cor,            2},
     {"C_rmbl_normal_pdf",     (DL_FUNC) &C_rmbl_normal_pdf,     3},
@@ -305,6 +308,7 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_RegisterCCallable("rmoriebricklayer", "rmbl_theil_sen",  (DL_FUNC) rmbl_theil_sen);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_hurwitz_zeta", (DL_FUNC) rmbl_hurwitz_zeta);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_mean",        (DL_FUNC) rmbl_mean);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_mean_running", (DL_FUNC) rmbl_mean_running);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_var",         (DL_FUNC) rmbl_var);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_cor_pearson", (DL_FUNC) rmbl_cor_pearson);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_normal_pdf",  (DL_FUNC) rmbl_normal_pdf);
