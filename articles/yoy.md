@@ -236,20 +236,27 @@ d <- data.frame(
 
 rate_change(d, stops, residents, year, by = "division", per = "100k")
 #> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  
-#>  division year count population     rate previous_rate rate_ratio pct_change
-#>     North 2021   400     120000 333.3333            NA         NA         NA
-#>     North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705
-#>     North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419
-#>     South 2021    70      41000 170.7317            NA         NA         NA
-#>     South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258
-#>     South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046
-#>   pct_lower pct_upper                 flag
-#>          NA        NA no comparison period
-#>   -7.937165  21.46533                 <NA>
-#>   -9.679876  18.10199                 <NA>
-#>          NA        NA no comparison period
-#>  -34.473784  32.29053                 <NA>
-#>  -36.596300  31.35600                 <NA>
+#>  division year count population     rate previous_rate previous_count
+#>     North 2021   400     120000 333.3333            NA             NA
+#>     North 2022   430     122000 352.4590      333.3333            400
+#>     North 2023   455     125000 364.0000      352.4590            430
+#>     South 2021    70      41000 170.7317            NA             NA
+#>     South 2022    66      41500 159.0361      170.7317             70
+#>     South 2023    61      42000 145.2381      159.0361             66
+#>  previous_population rate_ratio pct_change  pct_lower pct_upper
+#>                   NA         NA         NA         NA        NA
+#>               120000  1.0573770   5.737705  -7.937165  21.46533
+#>               122000  1.0327442   3.274419  -9.679876  18.10199
+#>                   NA         NA         NA         NA        NA
+#>                41000  0.9314974  -6.850258 -34.473784  32.29053
+#>                41500  0.9132395  -8.676046 -36.596300  31.35600
+#>                  flag
+#>  no comparison period
+#>                  <NA>
+#>                  <NA>
+#>  no comparison period
+#>                  <NA>
+#>                  <NA>
 #> ──────────────────────────────────────────────────────────────────
 ```
 

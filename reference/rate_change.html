@@ -20,7 +20,8 @@ earlier, with the exact conditional interval for the rate ratio."><meta name="go
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
@@ -156,20 +157,27 @@ quantity.</p></div>
 <span class="r-in"><span><span class="co"># is smaller than the count change, which is the reason to use it</span></span></span>
 <span class="r-in"><span><span class="fu">rate_change</span><span class="op">(</span><span class="va">d</span>, <span class="va">stops</span>, <span class="va">residents</span>, <span class="va">year</span>, by <span class="op">=</span> <span class="st">"division"</span>, per <span class="op">=</span> <span class="st">"100k"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Change in rate per 100,000, lag 1, 95% exact conditional interval  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  division year count population     rate previous_rate rate_ratio pct_change</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2021   400     120000 333.3333            NA         NA         NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2022   430     122000 352.4590      333.3333  1.0573770   5.737705</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2023   455     125000 364.0000      352.4590  1.0327442   3.274419</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2021    70      41000 170.7317            NA         NA         NA</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2022    66      41500 159.0361      170.7317  0.9314974  -6.850258</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2023    61      42000 145.2381      159.0361  0.9132395  -8.676046</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   pct_lower pct_upper                 flag</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          NA        NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -7.937165  21.46533                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   -9.679876  18.10199                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>          NA        NA no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -34.473784  32.29053                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  -36.596300  31.35600                 &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  division year count population     rate previous_rate previous_count</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2021   400     120000 333.3333            NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2022   430     122000 352.4590      333.3333            400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     North 2023   455     125000 364.0000      352.4590            430</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2021    70      41000 170.7317            NA             NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2022    66      41500 159.0361      170.7317             70</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     South 2023    61      42000 145.2381      159.0361             66</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  previous_population rate_ratio pct_change  pct_lower pct_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   NA         NA         NA         NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               120000  1.0573770   5.737705  -7.937165  21.46533</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               122000  1.0327442   3.274419  -9.679876  18.10199</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   NA         NA         NA         NA        NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                41000  0.9314974  -6.850258 -34.473784  32.29053</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                41500  0.9132395  -8.676046 -36.596300  31.35600</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  flag</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 </code></pre></div>
     </div>

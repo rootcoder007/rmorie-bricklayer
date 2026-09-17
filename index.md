@@ -16,6 +16,19 @@ produced the data.
 
 ## What it does
 
+- **One call for a published table** —
+  [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  takes a table of counts by period and group and returns what changed
+  with exact intervals, p-values adjusted over the whole scan, the
+  envelope that rounding and suppression in the release imply
+  ([`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)),
+  trend, rates if there is an exposure, and a drift screen against the
+  prior capsule;
+  [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  writes it as Markdown or one HTML file and
+  [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+  starts a capsule that runs as written. Start with
+  [`vignette("getting-started")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md).
 - **CKAN resolution** —
   [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
   /
@@ -271,6 +284,21 @@ remotes::install_github("rootcoder007/rmorie-bricklayer")
 ```
 
 ## Quick example
+
+The shortest path, on the OTIS table that ships with the package:
+
+``` r
+
+library(rmoriebricklayer)
+otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
+                             package = "rmoriebricklayer"))
+a <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"), rounding = 5)
+a                                   # what changed, how sure, what was withheld
+report_analysis(a, "otis.html")     # one self-contained file
+```
+
+The full capsule, step by step:
 
 ``` r
 

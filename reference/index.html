@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+    <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
@@ -42,6 +43,78 @@
     </div>
 
     <div class="section level2">
+      <h2 id="one-call-for-a-published-table">One call for a published table<a class="anchor" aria-label="anchor" href="#one-call-for-a-published-table"></a></h2>
+
+      <div class="section-desc"><p>Analyse a table of counts by period and group in one call: exact intervals on every change, multiple-comparison adjustment over the scan, the envelope that rounding and suppression imply, trend, and a drift screen against the prior capsule; then a report and a capsule template.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="analyse_table.html">analyse_table()</a></code>
+
+        </dt>
+        <dd>Analyse a published administrative table in one call</dd>
+
+        <dt>
+
+          <code><a href="report_analysis.html">report_analysis()</a></code>
+
+        </dt>
+        <dd>Write an analysis as a Markdown or HTML report</dd>
+
+        <dt>
+
+          <code><a href="published_bounds.html">published_bounds()</a></code>
+
+        </dt>
+        <dd>Bounds implied by rounding and suppression in a published table</dd>
+
+        <dt>
+
+          <code><a href="change_envelope.html">change_envelope()</a></code>
+
+        </dt>
+        <dd>Envelope of a difference, a percent change or a rate under publication bounds</dd>
+
+        <dt>
+
+          <code><a href="yoy_bounds.html">yoy_bounds()</a></code>
+
+        </dt>
+        <dd>Add publication bounds to a year-over-year table</dd>
+
+        <dt>
+
+          <code><a href="yoy_pvalues.html">yoy_pvalues()</a></code>
+
+        </dt>
+        <dd>Exact p-values for the rows of a year-over-year table</dd>
+
+        <dt>
+
+          <code><a href="scan_adjust.html">scan_adjust()</a></code>
+
+        </dt>
+        <dd>Adjust a scan of many comparisons for multiple testing</dd>
+
+        <dt>
+
+          <code><a href="drift_calibrate.html">drift_calibrate()</a></code>
+
+        </dt>
+        <dd>Calibrate the drift screens on data known not to have drifted</dd>
+
+        <dt>
+
+          <code><a href="use_capsule_template.html">use_capsule_template()</a></code>
+
+        </dt>
+        <dd>Start a capsule from a template</dd>
+      </dl></div><div class="section level2">
       <h2 id="fetch-open-data">Fetch open data<a class="anchor" aria-label="anchor" href="#fetch-open-data"></a></h2>
 
       <div class="section-desc"><p>Resilient downloaders with libcurl + Wayback fallback for pulling public datasets over flaky endpoints.</p></div>

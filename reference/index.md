@@ -1,5 +1,32 @@
 # Package index
 
+## One call for a published table
+
+Analyse a table of counts by period and group in one call: exact
+intervals on every change, multiple-comparison adjustment over the scan,
+the envelope that rounding and suppression imply, trend, and a drift
+screen against the prior capsule; then a report and a capsule template.
+
+- [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  : Analyse a published administrative table in one call
+- [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  : Write an analysis as a Markdown or HTML report
+- [`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)
+  : Bounds implied by rounding and suppression in a published table
+- [`change_envelope()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/change_envelope.md)
+  : Envelope of a difference, a percent change or a rate under
+  publication bounds
+- [`yoy_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_bounds.md)
+  : Add publication bounds to a year-over-year table
+- [`yoy_pvalues()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md)
+  : Exact p-values for the rows of a year-over-year table
+- [`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+  : Adjust a scan of many comparisons for multiple testing
+- [`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)
+  : Calibrate the drift screens on data known not to have drifted
+- [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+  : Start a capsule from a template
+
 ## Fetch open data
 
 Resilient downloaders with libcurl + Wayback fallback for pulling public

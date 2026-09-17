@@ -2,6 +2,58 @@
 
 ## rmoriebricklayer 0.5.1
 
+### One call for a published table
+
+[`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+runs the questions asked of every published table of counts (what is in
+it, what changed and how sure, rates if there is an exposure, trend,
+drift against the prior capsule) and returns one object;
+[`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+writes it as Markdown or a single HTML file;
+[`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+writes a capsule folder whose `analysis.R` runs as written. A
+getting-started vignette walks the shipped OTIS table through it in
+twenty lines.
+
+### Uncertainty the release itself introduces
+
+[`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)
+turns rounded (`rounding = 5`, nearest or Statistics Canada random
+rounding) and suppressed (`"x"`, `"<5"`) cells into the interval of
+observed counts that could have produced them;
+[`change_envelope()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/change_envelope.md)
+carries that interval through a difference, a percent change or a rate
+exactly;
+[`yoy_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_bounds.md)
+adds it to a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+table with a combined interval that is the union of the sampling
+interval and the envelope. No confidence interval covers this
+uncertainty, so it was previously invisible.
+
+### Many comparisons, and screens that fire on nothing
+
+[`yoy_pvalues()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md)
+gives the exact conditional-binomial test that matches the
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+interval;
+[`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+adjusts a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+or
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+scan for multiple comparisons (Benjamini-Hochberg by default) and marks
+what survives;
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+now returns `previous_count` and `previous_population` so the test is
+exact given the exposures.
+[`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)
+estimates how often
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)’s
+screens fire on identical data by splitting one release into random
+halves, per column and family-wise, with the per-screen alpha that would
+hold the family-wise rate.
+
 ### Encoding handling no longer depends on the session locale
 
 [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
@@ -18,7 +70,10 @@ them, so the fallback returned them untouched.
 their result as UTF-8 ([`paste()`](https://rdrr.io/r/base/paste.html)
 had dropped the mark, so `nchar(x, "chars")` over-counted in a C
 locale). Found by an independent C-locale check of 0.5.0; the check
-matrix now includes a C-locale cell.
+matrix now includes a C-locale cell. The JSON byte-order-mark test and
+strip work on the bytes, so a C locale no longer warns “unable to
+translate ‘\<U+FEFF\>…’” or “invalid char string in output conversion”
+while validating or minifying JSON.
 
 ## rmoriebricklayer 0.5.0
 

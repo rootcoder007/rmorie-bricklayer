@@ -16,6 +16,19 @@ produced the data.
 
 ## What it does
 
+- **One call for a published table** —
+  [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  takes a table of counts by period and group and returns what changed
+  with exact intervals, p-values adjusted over the whole scan, the
+  envelope that rounding and suppression in the release imply
+  ([`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)),
+  trend, rates if there is an exposure, and a drift screen against the
+  prior capsule;
+  [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  writes it as Markdown or one HTML file and
+  [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+  starts a capsule that runs as written. Start with
+  [`vignette("getting-started")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md).
 - **CKAN resolution** —
   [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
   /
@@ -272,6 +285,21 @@ remotes::install_github("rootcoder007/rmorie-bricklayer")
 
 ## Quick example
 
+The shortest path, on the OTIS table that ships with the package:
+
+``` r
+
+library(rmoriebricklayer)
+otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
+                             package = "rmoriebricklayer"))
+a <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"), rounding = 5)
+a                                   # what changed, how sure, what was withheld
+report_analysis(a, "otis.html")     # one self-contained file
+```
+
+The full capsule, step by step:
+
 ``` r
 
 library(rmoriebricklayer)
@@ -351,6 +379,33 @@ Conduct](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CODE_OF_CON
 By contributing, you agree to abide by its terms.
 
 # Package index
+
+## One call for a published table
+
+Analyse a table of counts by period and group in one call: exact
+intervals on every change, multiple-comparison adjustment over the scan,
+the envelope that rounding and suppression imply, trend, and a drift
+screen against the prior capsule; then a report and a capsule template.
+
+- [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  : Analyse a published administrative table in one call
+- [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  : Write an analysis as a Markdown or HTML report
+- [`published_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.md)
+  : Bounds implied by rounding and suppression in a published table
+- [`change_envelope()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/change_envelope.md)
+  : Envelope of a difference, a percent change or a rate under
+  publication bounds
+- [`yoy_bounds()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_bounds.md)
+  : Add publication bounds to a year-over-year table
+- [`yoy_pvalues()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md)
+  : Exact p-values for the rows of a year-over-year table
+- [`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+  : Adjust a scan of many comparisons for multiple testing
+- [`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)
+  : Calibrate the drift screens on data known not to have drifted
+- [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
+  : Start a capsule from a template
 
 ## Fetch open data
 
@@ -965,6 +1020,8 @@ Printed reports for the objects the package returns.
 
 ### Guides
 
+- [Your first capsule: a published table, analysed and
+  recorded](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md):
 - [Building reproducible data
   capsules](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md):
 - [Look at the data

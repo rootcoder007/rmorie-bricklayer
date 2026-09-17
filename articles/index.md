@@ -2,6 +2,8 @@
 
 ### Guides
 
+- [Your first capsule: a published table, analysed and
+  recorded](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md):
 - [Building reproducible data
   capsules](https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.md):
 - [Look at the data

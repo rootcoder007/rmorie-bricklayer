@@ -7,6 +7,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/capsules.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/describe.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/index.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/tables.html</loc></url>
@@ -19,6 +20,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.html</loc></url>
@@ -46,6 +48,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_environment.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/change_envelope.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/chunk_file.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/cite_capsule.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/clean_column_names.html</loc></url>
@@ -69,6 +72,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/download_data.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_ks.html</loc></url>
@@ -118,6 +122,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/prereg_declare.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/published_bounds.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.html</loc></url>
@@ -127,6 +132,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_from_points.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_integrity.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/region_map_second_route.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_arcgis.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.html</loc></url>
@@ -152,6 +158,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256_file.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/share.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/signing_public_key.html</loc></url>
@@ -163,6 +170,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/to_ascii.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.html</loc></url>
@@ -173,9 +181,11 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/write_summary_txt.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/write_text_fallback.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_bounds.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.html</loc></url>
