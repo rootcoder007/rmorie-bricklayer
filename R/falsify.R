@@ -95,7 +95,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
       stop("`treatment` is not a column of `data`", call. = FALSE)
     }
   }
-  .rmbl_local_seed(as.integer(seed)[1L])
+  if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
 
   observed <- .rmbl_falsify_eval(statistic, data, "the data as given")
   rows <- list()
