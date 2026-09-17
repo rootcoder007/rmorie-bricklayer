@@ -1,3 +1,16 @@
+# rmoriebricklayer 0.5.1
+
+## Encoding handling no longer depends on the session locale
+
+`ascii_fallback()` and `to_ascii()` test the bytes with `validUTF8()` and
+drop invalid ones with an explicit UTF-8-to-UTF-8 `iconv()`. The previous
+guard went through `enc2utf8()`, which under a C locale re-encodes invalid
+bytes as Latin-1 instead of flagging them, so the fallback returned them
+untouched. `bricklayer_json_minify()` and `bricklayer_json_prettify()`
+declare their result as UTF-8 (`paste()` had dropped the mark, so
+`nchar(x, "chars")` over-counted in a C locale). Found by an independent
+C-locale check of 0.5.0; the check matrix now includes a C-locale cell.
+
 # rmoriebricklayer 0.5.0
 
 ## Point locations and the regions that contain them

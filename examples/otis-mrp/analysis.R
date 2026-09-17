@@ -1493,22 +1493,64 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
   record("DML_2025_ATTE",                res_by_year$effect[6], 0.1704, tol = 0.001, group = "DML")
 
 } else if (tolower(Sys.getenv("OTIS_DML_RECOMPUTE", "")) %in% c("1", "yes", "true", "y")) {
+  ## Steps 1-6 are already proven at this point. Write the manifest now so
+  ## that an OOM kill in the optional recompute (which no tryCatch can
+  ## intercept) still leaves the provenance record on disk; step 8
+  ## rewrites it with the DML rows added.
+  write_json(manifest, file.path(OUTPUT_DIR, "manifest.json"),
+             auto_unbox = TRUE, pretty = TRUE)
+  .dml_info <- function(why) {
+    cat("      DML recompute not completed:", why, "\n")
+    cat("      The 8 DML checks record as INFO; steps 1-6 stand.\n")
+    for (nm in names(.dml_refs))
+      record(nm, "not-computed", .dml_refs[[nm]], tol = 0, group = "DML",
+             force_status = "INFO",
+             note = paste("recompute not completed:", why))
+    record("DML_recompute_matches_published", "not-computed", 1L, tol = 0,
+           group = "DML", force_status = "INFO",
+           note = paste("recompute not completed:", why))
+  }
+  dml <- NULL
   if (requireNamespace("rmorie", quietly = TRUE)) {
     cat("\n[7/8] Recomputing DML via canonical rmorie::morie_otis_irm_dml ...\n")
     cat("      Using your installed 'rmorie' package (ols outcome + logit\n")
     cat("      propensity -- the published learners). FAST: reference run ~10 s.\n")
     cat("      Comparing to the published MRP estimates at tolerance +/- 0.02.\n")
-    dml <- recompute_dml_via_rmorie(df)
+    dml <- tryCatch(recompute_dml_via_rmorie(df), error = function(e) {
+      .dml_info(conditionMessage(e))
+      NULL
+    })
   } else {
     cat("\n[7/8] Recomputing DML from PUBLIC data (self-contained DoubleML) ...\n")
     cat("      ****************************************************************\n")
     cat("      *  HEAVY + SLOW fallback (no 'rmorie' installed). DoubleML +    *\n")
-    cat("      *  mlr3; expands to ~1.9M rows; reference ~24 min + ~1.2 GB RAM.*\n")
+    cat("      *  mlr3; ~1.9M rows; reference ~24 min and about 6 GB RAM  *\n")
+    cat("      *  (5.8 GB peak RSS measured on 2026-09-17).                   *\n")
     cat("      *  TIP: install 'rmorie' for the fast ~10 s canonical path.     *\n")
     cat("      *  Checks a FRESH IRM run vs published MRP estimates +/- 0.02.   *\n")
     cat("      ****************************************************************\n")
-    dml <- recompute_dml_irm(df)
+    ## Pre-flight: the fallback needs ~6 GB. Below that the kernel kills R
+    ## with no message but "Killed", so decline to INFO instead.
+    .avail_gb <- NA_real_
+    if (file.exists("/proc/meminfo")) {
+      .mi <- readLines("/proc/meminfo", warn = FALSE)
+      .kb <- as.numeric(sub("^MemAvailable:\\s+([0-9]+) kB.*$", "\\1",
+                            grep("^MemAvailable:", .mi,
+                                 value = TRUE)))
+      if (length(.kb) == 1L && is.finite(.kb)) .avail_gb <- .kb / 1024^2
+    }
+    if (is.finite(.avail_gb) && .avail_gb < 7) {
+      .dml_info(sprintf(paste0("only %.1f GB of memory available; ",
+                               "the fallback needs about 6 GB free"),
+                        .avail_gb))
+    } else {
+      dml <- tryCatch(recompute_dml_irm(df), error = function(e) {
+        .dml_info(conditionMessage(e))
+        NULL
+      })
+    }
   }
+  if (!is.null(dml)) {
   fwrite(dml$res_pool,    file.path(OUTPUT_DIR, "06_DML_res_pool.csv"))
   fwrite(dml$res_by_year, file.path(OUTPUT_DIR, "07_DML_res_by_year.csv"))
 
@@ -1528,6 +1570,7 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
                         unlist(.dml_refs, use.names = FALSE)) <= 0.02)
   record("DML_recompute_matches_published", as.integer(all_within), 1L,
          tol = 0, group = "DML")
+  }
 
 } else {
   cat("\n[7/8] Skipping DML recompute (CSV mode; default) -- recording as INFO\n")

@@ -1403,7 +1403,12 @@ bricklayer_json_validate <- function(txt) {
     if (pretty && state == "complete") emit("\n")
   }
   if (state != "complete") bad("unexpected end of input")
-  structure(paste(out, collapse = ""), class = "json")
+  # paste() drops the encoding mark; JSON is UTF-8 by definition (RFC 8259
+  # section 8.1), so declare it. Declare, do not convert: enc2utf8() under a
+  # C locale would re-encode the bytes as Latin-1.
+  res <- paste(out, collapse = "")
+  Encoding(res) <- "UTF-8"
+  structure(res, class = "json")
 }
 
 #' Indent JSON text (jsonlite's prettify)

@@ -69,7 +69,7 @@ test_that("the ASCII transliteration works without stringi", {
   # INVALID UTF-8: a byte sequence that is not valid text at all. This is
   # the branch that fires on a file whose encoding was mislabelled.
   broken <- rawToChar(as.raw(c(0x61, 0xff, 0xfe, 0x62)))
-  expect_false(validUTF8(enc2utf8(broken)))
+  expect_false(validUTF8(broken))
   fixed <- ascii_fallback(broken)
   expect_false(grepl("[^ -~]", fixed))
   # valid elements beside a broken one are untouched

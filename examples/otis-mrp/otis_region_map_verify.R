@@ -246,3 +246,24 @@ otis_region_map_checks <- function(cw, pop, obs_pop = NULL, otis_inst = NULL,
   }
   out
 }
+
+## Run directly (`Rscript otis_region_map_verify.R`) this file prints the
+## checks on the shipped files instead of silently defining functions.
+if (sys.nframe() == 0L) {
+  if (!requireNamespace("rmoriebricklayer", quietly = TRUE))
+    stop("otis_region_map_verify.R needs the rmoriebricklayer package")
+  library(rmoriebricklayer)
+  .arg <- grep("^--file=", commandArgs(), value = TRUE)
+  .dir <- if (length(.arg)) {
+    dirname(normalizePath(sub("^--file=", "", .arg[1])))
+  } else {
+    getwd()
+  }
+  .rm  <- .orm_read(file.path(.dir, "institution_cd_region_map.csv"))
+  .rmp <- .orm_read(file.path(.dir, "cd_population_2022.csv"))
+  .rmp$cduid <- sprintf("%04d", as.integer(.rmp$cduid))
+  .res <- otis_region_map_checks(.rm, .rmp)
+  print(.res, row.names = FALSE)
+  if (any(.res$observed != .res$expected & !grepl("INFO|context", .res$note)))
+    quit(status = 1)
+}

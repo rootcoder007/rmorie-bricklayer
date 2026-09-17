@@ -88,6 +88,15 @@ PROJECT_LICENCE <- cfg$project$licence      %||% "AGPL-3.0-or-later"
 ANALYSIS_R      <- file.path(script_dir,
                              cfg$analysis$r_script %||% "analysis.R")
 REQ_PKGS        <- unlist(cfg$r_packages) %||% c()
+## Opt-in stages have their own dependencies; probe them up front when the
+## stage is switched on, so a missing package is reported here and not
+## thirty seconds into the run.
+dml_on <- tolower(Sys.getenv("OTIS_DML_RECOMPUTE", "")) %in%
+  c("1", "yes", "true", "y")
+if (dml_on && !requireNamespace("rmorie", quietly = TRUE))
+  REQ_PKGS <- unique(c(REQ_PKGS, "DoubleML", "mlr3", "mlr3learners"))
+if (nzchar(Sys.getenv("OTIS_REGION_MAP_SHP", "")))
+  REQ_PKGS <- unique(c(REQ_PKGS, "sf"))
 
 ## ---------- Banner + OS detection ----------
 OS_KIND <- detect_os()
