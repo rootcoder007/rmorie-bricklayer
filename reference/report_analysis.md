@@ -58,7 +58,7 @@ md <- report_analysis(a)
 cat(substr(md, 1, 400))
 #> # Analysis of a published table
 #> 
-#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-09-17 11:35.
+#> `individuals` by `year`, grouped by `table` and `group`; 15 rows; 3 period(s) from 2023 to 2025; generated 2026-09-17 14:28.
 #> 
 #> ## Change between periods
 #> 
