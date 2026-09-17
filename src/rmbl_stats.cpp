@@ -29,6 +29,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "morie_core.h"
+
 namespace {
 
 const double kMadConstant = 1.4826022185056018;  /* 1 / qnorm(3/4) */
@@ -87,35 +89,44 @@ extern "C" {
 /* The higher moments use the sample-moment definitions m3 / m2^1.5  */
 /* and m4 / m2^2 - 3, with m_k the k-th central moment divided by n. */
 /* ---------------------------------------------------------------- */
+/* Mean, variance, skewness and excess kurtosis in two passes on scaled
+ * deviations. The single-pass update this replaces squared a[0] on its
+ * first step (NaN for |x| above the square root of DBL_MAX) and raised
+ * raw deviations to the fourth power (overflow beyond |d| ~ 1e77). Here
+ * the mean is base R's (extended-precision sum plus a corrective pass),
+ * deviations are divided by their largest magnitude before any power is
+ * taken, and the scale is put back only where it belongs. */
 void rmbl_moments(const double *a, R_xlen_t n, double *out) {
     out[0] = out[1] = out[2] = out[3] = std::nan("");
     if (n < 1) return;
     if (has_nan(a, n)) return;
 
-    double mean = 0.0, m2 = 0.0, m3 = 0.0, m4 = 0.0;
-    for (R_xlen_t i = 0; i < n; ++i) {
-        const double cnt = static_cast<double>(i) + 1.0;
-        const double d = a[i] - mean;
-        const double dn = d / cnt;
-        const double dn2 = dn * dn;
-        const double term = d * dn * (cnt - 1.0);
-        m4 += term * dn2 * (cnt * cnt - 3.0 * cnt + 3.0) +
-              6.0 * dn2 * m2 - 4.0 * dn * m3;
-        m3 += term * dn * (cnt - 2.0) - 3.0 * dn * m2;
-        m2 += term;
-        mean += dn;
-    }
-    const double dn_all = static_cast<double>(n);
+    const double mean = morie::core::mean(a, static_cast<std::size_t>(n));
     out[0] = mean;
-    out[1] = (n > 1) ? m2 / (dn_all - 1.0) : std::nan("");
-    if (n > 2 && m2 > 0.0) {
-        const double s2 = m2 / dn_all;
-        out[2] = (m3 / dn_all) / std::pow(s2, 1.5);
+    if (n < 2) return;
+    double s = 0.0;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        const double d = std::fabs(a[i] - mean);
+        if (d > s) s = d;
     }
-    if (n > 3 && m2 > 0.0) {
-        const double s2 = m2 / dn_all;
-        out[3] = (m4 / dn_all) / (s2 * s2) - 3.0;
+    if (s == 0.0) {            /* every value equal: no spread, no shape */
+        out[1] = 0.0;
+        return;
     }
+    long double z2 = 0.0L, z3 = 0.0L, z4 = 0.0L;
+    for (R_xlen_t i = 0; i < n; ++i) {
+        const long double z = (a[i] - mean) / s;
+        const long double zz = z * z;
+        z2 += zz;
+        z3 += zz * z;
+        z4 += zz * zz;
+    }
+    const long double dn_all = static_cast<long double>(n);
+    out[1] = static_cast<double>(z2 / (dn_all - 1.0L)) * s * s;
+    if (z2 <= 0.0L) return;
+    const long double m2 = z2 / dn_all;
+    if (n > 2) out[2] = static_cast<double>((z3 / dn_all) / std::pow(m2, 1.5L));
+    if (n > 3) out[3] = static_cast<double>((z4 / dn_all) / (m2 * m2) - 3.0L);
 }
 
 /* Type-7 quantiles at arbitrary probabilities. */

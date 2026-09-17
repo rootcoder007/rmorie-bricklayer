@@ -1,5 +1,39 @@
 # rmoriebricklayer 0.5.1
 
+## trend_test() no longer stalls beyond a few hundred periods
+
+The Sen confidence interval enumerated every pairwise slope in an R
+double loop that grew a vector one element at a time, so a series of
+2,000 periods took minutes and a long one never returned. The slopes are
+now enumerated and sorted in C (`n` of 3,000 runs in seconds, identical
+interval), and `trend_test()` refuses more than 20,000 periods with a
+message giving the memory the pairwise slopes would need.
+
+## Functions that seed the RNG leave the caller's stream alone
+
+`drift_calibrate()`, `capsule_power()`, `capsule_falsify()`,
+`falsify_family()`, the synthetic-data generator and the trend bootstrap
+seeded the session and left it seeded, so a user who had set a seed for
+reproducibility got identical downstream draws whatever seed they chose.
+Each now seeds for its own call and restores the caller's stream on exit;
+the seeded results are unchanged.
+
+## core_moments() and json_gzip_decode() at the extremes
+
+`core_moments()` squared its first value on the first step of the
+single-pass update, so any input above the square root of the largest
+double gave NaN for every statistic, and raised raw deviations to the
+fourth power, which overflowed beyond about 1e77. It now takes two passes
+on deviations scaled by their largest magnitude; the definitions and the
+results on ordinary data are unchanged, and the shape statistics are NaN
+only when the variance is zero. The streaming accumulator behind
+`rmbl_moments_acc_add()` no longer squares its first value either.
+
+`json_gzip_decode()` refuses input that is not a gzip member (fewer than
+18 bytes or not starting 1f 8b) with a clear error. It used to pass the
+bytes straight to `memDecompress()`, which in R 4.6 dumps core on an
+empty vector, so `json_gzip_decode("")` crashed the session.
+
 ## core_mean() no longer overflows where base R does not
 
 The shared numeric core summed naively, so `core_mean(rep(1e308, 3))` was
