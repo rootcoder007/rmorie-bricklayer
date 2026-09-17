@@ -1,0 +1,112 @@
+---
+title: "Your first capsule: a published table, analysed and recorded"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Your first capsule: a published table, analysed and recorded}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Most published administrative data arrives as a table of counts by
+period and group. The questions are always the same: what changed, how
+sure can we be, is there a trend, and is this release the one we had
+before. This vignette answers them for one real table in twenty lines,
+then records the run so someone else can repeat it.
+
+## The table
+
+Ontario publishes the number of distinct individuals held in restrictive
+confinement each fiscal year, by age category and gender. A tidy copy of
+the published figures ships with the package.
+
+```{r}
+library(rmoriebricklayer)
+otis <- read.csv(system.file("extdata", "otis_a01_individuals.csv",
+                             package = "rmoriebricklayer"))
+otis
+```
+
+## One call
+
+```{r}
+a <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"))
+a
+```
+
+The change table carries an exact interval for every percent change and
+a p-value that is exact too. Five groups are compared twice each, so the
+p-values are adjusted over the scan (Benjamini-Hochberg) before any row
+is called significant. A row that looks striking on its own is judged in
+the company of the other nine.
+
+```{r}
+a$change[, c("table", "group", "year", "value", "previous",
+             "pct_change", "pct_lower", "pct_upper", "p_adjusted",
+             "significant")]
+```
+
+## What the release withheld
+
+Published counts are often rounded. If this table had been rounded to
+the nearest five, each cell could have come from any count within two
+and a half of it, and the percent change inherits that. `rounding = 5`
+adds the envelope and a combined interval that is the union of the
+sampling interval and the envelope: the honest range for a number read
+off a rounded table. Suppressed cells (`"x"`, `"<5"`) are handled the
+same way through `suppression_limit`.
+
+```{r}
+b <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"), rounding = 5)
+b$change[!is.na(b$change$previous),
+         c("group", "year", "pct_change", "pct_lower", "pct_upper",
+           "combined_pct_lower", "combined_pct_upper")]
+```
+
+## Trend
+
+Three fiscal years is a short series. The Mann-Kendall test is exact for
+it, and its smallest possible p-value with three points is one third, so
+no trend can be declared from three years; the table says so instead of
+hiding it. The Poisson rate ratio per year is still informative as a
+description.
+
+```{r}
+a$trend
+```
+
+## Has the data changed since last time?
+
+Keep the previous release and pass it as `prior`; every column is
+screened. Before trusting a drift verdict, ask how often the screens fire
+on data that has not changed: `drift_calibrate()` splits one release into
+random halves and reports the false-alarm rate per column.
+
+```{r}
+drift_calibrate(otis, n = 10)
+```
+
+## Record it
+
+`report_analysis()` writes the whole analysis as Markdown or a single
+HTML file, and `use_capsule_template()` writes a folder with the
+provenance file, an `analysis.R` that pins the source bytes and runs the
+steps above, and a README. The template runs as written against this
+table.
+
+```{r}
+d <- use_capsule_template(tempfile("capsule-"), example = TRUE)
+list.files(d)
+cat(readLines(file.path(d, "analysis.R"))[1:12], sep = "\n")
+```
+
+From here, replace the source URL and the column names in
+`data_provenance.json`, run `Rscript analysis.R`, and copy the SHA-256
+it prints back into the provenance file. Later runs refuse to proceed if
+the bytes change, and `manifest_recompute()` compares two runs number by
+number.

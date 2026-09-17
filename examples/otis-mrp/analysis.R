@@ -1511,26 +1511,16 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
            note = paste("recompute not completed:", why))
   }
   dml <- NULL
-  if (requireNamespace("rmorie", quietly = TRUE)) {
-    cat("\n[7/8] Recomputing DML via canonical rmorie::morie_otis_irm_dml ...\n")
-    cat("      Using your installed 'rmorie' package (ols outcome + logit\n")
-    cat("      propensity -- the published learners). FAST: reference run ~10 s.\n")
-    cat("      Comparing to the published MRP estimates at tolerance +/- 0.02.\n")
-    dml <- tryCatch(recompute_dml_via_rmorie(df), error = function(e) {
-      .dml_info(conditionMessage(e))
-      NULL
-    })
-  } else {
-    cat("\n[7/8] Recomputing DML from PUBLIC data (self-contained DoubleML) ...\n")
-    cat("      ****************************************************************\n")
-    cat("      *  HEAVY + SLOW fallback (no 'rmorie' installed). DoubleML +    *\n")
-    cat("      *  mlr3; ~1.9M rows; reference ~24 min and about 6 GB RAM  *\n")
-    cat("      *  (5.8 GB peak RSS measured on 2026-09-17).                   *\n")
-    cat("      *  TIP: install 'rmorie' for the fast ~10 s canonical path.     *\n")
-    cat("      *  Checks a FRESH IRM run vs published MRP estimates +/- 0.02.   *\n")
-    cat("      ****************************************************************\n")
-    ## Pre-flight: the fallback needs ~6 GB. Below that the kernel kills R
-    ## with no message but "Killed", so decline to INFO instead.
+  .has_doubleml <- all(vapply(c("DoubleML", "mlr3", "mlr3learners"),
+                              requireNamespace, logical(1), quietly = TRUE))
+  if (.has_doubleml) {
+    cat("\n[7/8] Recomputing DML from PUBLIC data with DoubleML + mlr3 ...\n")
+    cat("      This is the route that produced the published estimates.\n")
+    cat("      Reference ~24 min and about 6 GB of RAM (5.8 GB peak RSS\n")
+    cat("      measured on 2026-09-17). Checks a FRESH IRM run against the\n")
+    cat("      published MRP estimates at +/- 0.02.\n")
+    ## Pre-flight: below ~6 GB the kernel kills R with no message but
+    ## "Killed", so decline to INFO instead.
     .avail_gb <- NA_real_
     if (file.exists("/proc/meminfo")) {
       .mi <- readLines("/proc/meminfo", warn = FALSE)
@@ -1541,7 +1531,7 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
     }
     if (is.finite(.avail_gb) && .avail_gb < 7) {
       .dml_info(sprintf(paste0("only %.1f GB of memory available; ",
-                               "the fallback needs about 6 GB free"),
+                               "the DoubleML route needs about 6 GB free"),
                         .avail_gb))
     } else {
       dml <- tryCatch(recompute_dml_irm(df), error = function(e) {
@@ -1549,6 +1539,18 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
         NULL
       })
     }
+  } else if (requireNamespace("rmorie", quietly = TRUE)) {
+    cat("\n[7/8] Recomputing DML via rmorie::morie_otis_irm_dml ...\n")
+    cat("      DoubleML is not installed; rmorie implements the same\n")
+    cat("      estimator (ols outcome + logit propensity) in ~10 s.\n")
+    cat("      Comparing to the published MRP estimates at +/- 0.02.\n")
+    dml <- tryCatch(recompute_dml_via_rmorie(df), error = function(e) {
+      .dml_info(conditionMessage(e))
+      NULL
+    })
+  } else {
+    .dml_info(paste0("neither DoubleML (with mlr3, mlr3learners) ",
+                     "nor rmorie is installed"))
   }
   if (!is.null(dml)) {
   fwrite(dml$res_pool,    file.path(OUTPUT_DIR, "06_DML_res_pool.csv"))

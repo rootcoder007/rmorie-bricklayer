@@ -1,0 +1,16 @@
+table,group,year,individuals
+age_category,18 to 24,2023,3507
+age_category,18 to 24,2024,2944
+age_category,18 to 24,2025,3688
+age_category,25 to 49,2023,14930
+age_category,25 to 49,2024,14445
+age_category,25 to 49,2025,18482
+age_category,50+,2023,2344
+age_category,50+,2024,2252
+age_category,50+,2025,2875
+gender,Female,2023,1511
+gender,Female,2024,1924
+gender,Female,2025,2821
+gender,Male,2023,19270
+gender,Male,2024,17717
+gender,Male,2025,22224

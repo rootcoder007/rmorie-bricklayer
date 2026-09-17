@@ -504,6 +504,8 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
     out$population <- pop
     out$rate <- rate_now
     out$previous_rate <- rate_prev
+    out$previous_count <- prev_cnt
+    out$previous_population <- prev_pop
     out$rate_ratio <- ratio
     out$pct_change <- pct
     out$pct_lower <- ci$lower

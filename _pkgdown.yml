@@ -35,6 +35,7 @@ articles:
   - title: Guides
     navbar: ~
     contents:
+      - getting-started
       - capsules
       - describe
       - drift
@@ -43,6 +44,23 @@ articles:
       - tables
 
 reference:
+  - title: One call for a published table
+    desc: >
+      Analyse a table of counts by period and group in one call: exact
+      intervals on every change, multiple-comparison adjustment over the
+      scan, the envelope that rounding and suppression imply, trend, and a
+      drift screen against the prior capsule; then a report and a capsule
+      template.
+    contents:
+      - analyse_table
+      - report_analysis
+      - published_bounds
+      - change_envelope
+      - yoy_bounds
+      - yoy_pvalues
+      - scan_adjust
+      - drift_calibrate
+      - use_capsule_template
   - title: Fetch open data
     desc: >
       Resilient downloaders with libcurl + Wayback fallback for pulling public
