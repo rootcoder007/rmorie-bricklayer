@@ -67,6 +67,6 @@
     "pass_csv_recompute":   50,
     "total_checks_recompute": 56,
     "dml_recompute_tol":    0.02,
-    "_groups_comment": "CSV-mode record counts by group, measured in the same run: region map 15 (12 PASS, 3 INFO), DML 8 (INFO), descriptive_full 6, model 6, descriptive_matched 5, bivariate_full 4, bivariate_matched 4, matched 3, structural 2, yoy_published 1 (INFO), capacity_mnar 1 (INFO)."
+    "_groups_comment": "CSV-mode record counts by group, measured in the same run: region map 15 (12 PASS, 3 INFO), DML 8 (INFO), descriptive_full 6, model 6, descriptive_matched 5, bivariate_full 4, bivariate_matched 4, matched 3, structural 2, yoy_published 1 (INFO), capacity_mnar 1 (INFO); of the 6 model records nb_family is always INFO (platform-dependent Hessian), so 14 INFO + 41 PASS = 55."
   }
 }

@@ -1346,10 +1346,16 @@ record("nb_AIC",              nb_aic,  3041.7, tol = 10, group = "model")
 nb_converged <- isTRUE(fit_nb$sdr$pdHess) && is.finite(nb_aic)
 ## Which optimiser produced the numbers above belongs in the record, so
 ## a reader is never left inferring it from a coefficient.
+## Always INFO: whether the nbinom2 Hessian is positive-definite differs
+## between platforms with the same glmmTMB (1.1.14 passed on CI and fell
+## back to Poisson on the author's machine on the same day), and the
+## verifier pins an exact PASS count. The family used is the record; the
+## coefficient checks above are what say whether the numbers reproduce.
 record("nb_family", observed = NB_FAMILY,
        expected = "nbinom2 (canonical)",
-       force_status = if (identical(NB_FAMILY, "nbinom2 (canonical)"))
-         "PASS" else "INFO",
+       force_status = "INFO",
+       note = if (identical(NB_FAMILY, "nbinom2 (canonical)")) NULL else
+         "nbinom2 dispersion ran to the Poisson limit on this platform; the Poisson fit gives the same coefficient and standard error",
        group = "model")
 record("nb_model_converged", as.integer(nb_converged), 1L, tol = 0,
        group = "model",
