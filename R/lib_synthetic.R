@@ -208,7 +208,7 @@ make_synthetic_csv <- function(schema, out_path,
     old_seed <- get(".Random.seed", envir = globalenv())
     on.exit(assign(".Random.seed", old_seed, envir = globalenv()), add = TRUE)
   }
-  set.seed(seed)
+  .rmbl_local_seed(seed)
 
   ## Optional: replicate rows per "person" if a multiplier is specified
   reps_spec <- schema$row_replication
