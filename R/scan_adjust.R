@@ -134,7 +134,7 @@ drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
          call. = FALSE)
   }
   n <- as.integer(n)
-  set.seed(seed)
+  .rmbl_local_seed(seed)
   hits <- NULL
   any_flag <- logical(n)
   for (i in seq_len(n)) {

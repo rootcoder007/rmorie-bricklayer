@@ -110,6 +110,12 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   if (n < 3L) {
     stop("a trend needs at least three periods", call. = FALSE)
   }
+  if (n > 20000L) {
+    stop(sprintf(paste0("trend_test() enumerates all n(n-1)/2 pairwise ",
+                        "slopes for the Sen interval; n = %d would need ",
+                        "%.1f GB. Aggregate or thin the series first."),
+                 n, n * (n - 1) / 2 * 8 / 1e9), call. = FALSE)
+  }
   mk <- .Call(C_rmbl_mann_kendall, y)
   ts <- .Call(C_rmbl_theil_sen, x, y)
   s <- mk$S
@@ -187,17 +193,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 # places at the level. Consistent with the test, rather than borrowed
 # from a normal-errors model the data was never claimed to follow.
 .rmbl_sen_ci <- function(x, y, var_s, conf_level) {
-  n <- length(y)
-  slopes <- numeric(0)
-  for (i in seq_len(n - 1L)) {
-    for (j in (i + 1L):n) {
-      dx <- x[j] - x[i]
-      if (dx != 0) slopes <- c(slopes, (y[j] - y[i]) / dx)
-    }
-  }
+  slopes <- .Call(C_rmbl_sen_slopes, as.numeric(x), as.numeric(y))
   m <- length(slopes)
   if (m < 2L || is.na(var_s) || var_s <= 0) return(c(NA_real_, NA_real_))
-  slopes <- sort(slopes)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   c_alpha <- z * sqrt(var_s)
   lo_rank <- floor((m - c_alpha) / 2)
@@ -299,7 +297,7 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     } else {
       NULL
     }
-    set.seed(seed)
+    .rmbl_local_seed(seed)
     null <- vapply(seq_len(n_perm),
                    function(i) max(stat(sample(y))$vals), 0)
     if (is.null(old)) {

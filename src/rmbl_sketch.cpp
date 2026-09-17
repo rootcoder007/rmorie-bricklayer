@@ -113,6 +113,11 @@ void rmbl_moments_acc(const double *x, R_xlen_t n, double *out) {
     double mean = 0.0, M2 = 0.0, M3 = 0.0, M4 = 0.0;
     for (R_xlen_t i = 0; i < n; ++i) {
         const double cnt = static_cast<double>(i) + 1.0;
+        if (i == 0) {          /* first value: it is the mean; squaring it
+                                  here overflowed above sqrt(DBL_MAX) */
+            mean = x[0];
+            continue;
+        }
         const double d = x[i] - mean;
         const double dn = d / cnt;
         const double dn2 = dn * dn;

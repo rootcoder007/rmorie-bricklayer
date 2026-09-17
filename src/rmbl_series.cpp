@@ -264,6 +264,30 @@ SEXP C_rmbl_mann_kendall(SEXP y) {
  * puts the line through the median residual. Quadratic in n, which is
  * why it is here, and resistant to a single aberrant period, which is
  * why it is preferred to least squares on a five-point series. */
+/* Every pairwise slope, sorted (pairs sharing an x contribute none). The
+ * Sen confidence interval needs their order statistics; enumerating them
+ * here replaces an R double loop that grew a vector one slope at a time
+ * and made trend_test() unusable beyond a few hundred periods. */
+SEXP C_rmbl_sen_slopes(SEXP x, SEXP y) {
+    const R_xlen_t n = XLENGTH(x);
+    const double *px = REAL(x);
+    const double *py = REAL(y);
+    std::vector<double> slopes;
+    if (n > 1) slopes.reserve(static_cast<size_t>(n) * (n - 1) / 2);
+    for (R_xlen_t i = 0; i + 1 < n; ++i) {
+        for (R_xlen_t j = i + 1; j < n; ++j) {
+            const double dx = px[j] - px[i];
+            if (dx == 0.0 || ISNAN(dx) || ISNAN(py[j]) || ISNAN(py[i])) continue;
+            slopes.push_back((py[j] - py[i]) / dx);
+        }
+    }
+    std::sort(slopes.begin(), slopes.end());
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, static_cast<R_xlen_t>(slopes.size())));
+    for (size_t k = 0; k < slopes.size(); ++k) REAL(out)[k] = slopes[k];
+    UNPROTECT(1);
+    return out;
+}
+
 SEXP C_rmbl_theil_sen(SEXP x, SEXP y) {
     const R_xlen_t n = XLENGTH(x);
     const double *px = REAL(x);

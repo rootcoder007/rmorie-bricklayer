@@ -116,6 +116,14 @@ json_gzip_decode <- function(txt, raw = FALSE, ...) {
     }
     bricklayer_json_base64_dec(as.character(txt)[1L])
   }
+  # A gzip member is at least 18 bytes (10 of header, 8 of trailer) and
+  # starts 1f 8b; R's own memDecompress() would return garbage on a short
+  # zlib-framed input and, in R 4.6, dumps core on an empty one.
+  if (length(bytes) < 18L || bytes[1L] != as.raw(0x1f) ||
+      bytes[2L] != as.raw(0x8b)) {
+    stop("`txt` does not hold a gzip member: expected at least 18 bytes ",
+         "starting 1f 8b, got ", length(bytes), " byte(s).", call. = FALSE)
+  }
   json <- rawToChar(memDecompress(bytes, type = "gzip"))
   bricklayer_json_from_json(json, ...)
 }

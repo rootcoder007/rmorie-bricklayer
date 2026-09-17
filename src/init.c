@@ -53,6 +53,7 @@ extern SEXP C_rmbl_lorenz(SEXP);
 extern SEXP C_rmbl_top_share(SEXP, SEXP);
 extern SEXP C_rmbl_mann_kendall(SEXP);
 extern SEXP C_rmbl_theil_sen(SEXP, SEXP);
+extern SEXP C_rmbl_sen_slopes(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 /* rmbl_keccak.cpp: FIPS 202 */
 extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
@@ -238,6 +239,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_top_share",         (DL_FUNC) &C_rmbl_top_share,         2},
     {"C_rmbl_mann_kendall",      (DL_FUNC) &C_rmbl_mann_kendall,      1},
     {"C_rmbl_theil_sen",         (DL_FUNC) &C_rmbl_theil_sen,         2},
+    {"C_rmbl_sen_slopes",        (DL_FUNC) &C_rmbl_sen_slopes,        2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
     {"C_rmbl_shake",             (DL_FUNC) &C_rmbl_shake,             3},
     {"C_rmbl_mldsa_zetas",       (DL_FUNC) &C_rmbl_mldsa_zetas,       0},
