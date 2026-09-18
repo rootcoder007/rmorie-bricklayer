@@ -217,3 +217,151 @@ test_that("transfer_verify accepts a faithful import, names a rotated one", {
     "do not match|permuted|not in the published"
   )
 })
+
+test_that("decode_codes keeps or drops NA codes as asked", {
+  d <- decode_codes(c(1, NA, 2), c("1" = "White", "2" = "Black"))
+  expect_equal(as.character(d), c("White", NA, "Black"))
+  expect_error(decode_codes(c(1, 2), c("White", "Black")), "named character")
+})
+
+test_that("guard_recode refuses an unnamed mapping and factor input works", {
+  expect_error(guard_recode(c("W", "B"), c("White", "Black")),
+               "named character vector")
+  r <- guard_recode(factor(c("W", "B")), c(W = "White", B = "Black"))
+  expect_equal(as.character(r), c("White", "Black"))
+})
+
+test_that("audit_categories covers labelled columns, empty frames and cols", {
+  lab <- structure(c(1, 2, 2), labels = c(White = 1, Black = 2),
+                   class = c("haven_labelled", "vctrs_vctr", "double"))
+  a <- audit_categories(data.frame(race = I(lab), n = 1:3))
+  expect_match(a$hazards[a$column == "race"], "foreign value labels")
+  wide <- data.frame(id = as.character(seq_len(60)), stringsAsFactors = FALSE)
+  expect_match(audit_categories(wide)$hazards[1], "identifier mistaken")
+  e <- audit_categories(data.frame(n = 1:3))
+  expect_equal(nrow(e), 0L)
+  expect_true(attr(e, "clean"))
+  expect_output(print(e), "no hazards")
+  only <- audit_categories(data.frame(a = c("x", "y"), b = c("1", "2"),
+                                      stringsAsFactors = FALSE), cols = "a")
+  expect_equal(only$column, "a")
+  expect_output(print(only), "a")
+})
+
+test_that("verify_recode reports fan-out and missingness leaks", {
+  expect_error(verify_recode(c("W", "W"), c("White", "Black"), c(W = "White")),
+               "MULTIPLE|fan")
+  expect_error(verify_recode(c("W", "B"), c("White", NA),
+                             c(W = "White", B = "Black")),
+               "missing")
+})
+
+test_that("verify_marginals honours a tolerance, reports mismatches", {
+  x <- c("White", "White", "Black")
+  expect_true(verify_marginals(x, c(White = 3, Black = 1), tolerance = 1)$ok)
+  expect_error(verify_marginals(x, c(White = 5, Black = 9)), "do not match")
+  expect_error(verify_marginals(x, c(3, 1)), "named numeric")
+})
+
+test_that("odds_ratio_check finds swapped outcome columns, checks input", {
+  tab <- matrix(c(900, 100, 700, 300), ncol = 2, byrow = TRUE,
+                dimnames = list(c("A", "B"), c("no", "yes")))
+  swapped <- odds_ratio_check(tab, "A", c(B = (700 / 300) / (900 / 100)))
+  expect_false(swapped$consistent)
+  expect_true(any(swapped$matches$outcome_columns_swapped))
+  expect_error(odds_ratio_check(tab, "Z", c(B = 1)), "not a row")
+  expect_error(odds_ratio_check(tab, "A", c(C = 1)), "named by every")
+  expect_error(odds_ratio_check(tab[, 1, drop = FALSE], "A", c(B = 1)),
+               "k-by-2")
+})
+
+test_that("guard_binary accepts NA, refuses factors and non-binary numbers", {
+  expect_true(guard_binary(c(0, 1, NA), "d"))
+  expect_error(guard_binary(factor(c("a", "b")), "d"), "level INDICES")
+  expect_error(guard_binary(c(0.5, 1), "d"), "binary")
+})
+
+test_that("an unsigned manifest verifies its body and reports no signature", {
+  x <- c("W", "B", "W")
+  y <- guard_recode(x, c(W = "White", B = "Black"))
+  m <- recode_manifest(x, y, c(W = "White", B = "Black"))
+  expect_null(m$signature)
+  p <- write_recode_manifest(m, tempfile(fileext = ".json"))
+  v <- verify_recode_manifest(p, x, y)
+  expect_true(v$ok)
+  expect_true(is.na(v$signature_ok))
+  expect_error(write_recode_manifest(list(), tempfile()), "recode_manifest")
+  expect_output(print(m), "recode")
+})
+
+test_that("a FIPS-signed manifest verifies through the fips key branch", {
+  skip_if_not(exists("fips_keygen"), "no fips_keygen in this build")
+  key <- tryCatch(fips_keygen(), error = function(e) NULL)
+  skip_if(is.null(key), "fips backend unavailable")
+  x <- c("W", "B")
+  y <- guard_recode(x, c(W = "White", B = "Black"))
+  m <- recode_manifest(x, y, c(W = "White", B = "Black"), key = key)
+  p <- write_recode_manifest(m, tempfile(fileext = ".json"))
+  expect_true(verify_recode_manifest(p, x, y)$signature_ok)
+})
+
+test_that("relabel keeps pass-through levels and refuses unmapped ones", {
+  f <- factor(c("W", "B", "X"))
+  g <- relabel(f, c(W = "White", B = "Black"), keep = "X")
+  expect_equal(as.character(g), c("White", "Black", "X"))
+  expect_true("X" %in% levels(g))
+  expect_error(relabel(c("W", "Q"), c(W = "White")), "NO mapping")
+})
+
+test_that("decode_labelled takes explicit labels, refuses bad attributes", {
+  d <- decode_labelled(c(2, 1), value_labels = c("1" = "White", "2" = "Black"))
+  expect_equal(as.character(d), c("Black", "White"))
+  expect_equal(levels(d), c("White", "Black"))
+  bad <- structure(c(1, 2), labels = c(1, 2))
+  expect_error(decode_labelled(bad), "no names")
+  s <- decode_labelled(c("b", "a"), value_labels = c(a = "Alpha", b = "Beta"))
+  expect_equal(levels(s), c("Alpha", "Beta"))
+})
+
+test_that("relabel_forensics names reversed and case-insensitive mechanisms", {
+  vl <- c("1" = "b", "2" = "A", "3" = "c")
+  rev_obs <- c(b = "c", A = "A", c = "b")
+  r <- relabel_forensics(vl, rev_obs)
+  expect_true(r$matches[r$mechanism == "labels reversed"])
+  ci <- relabel_forensics(vl, c(b = "A", A = "b", c = "c"))
+  ci_name <- "labels sorted case-insensitively, assigned by code position"
+  expect_true(ci$matches[ci$mechanism == ci_name])
+  expect_output(print(ci), "case-insensitively")
+  none <- relabel_forensics(c("1" = "x", "2" = "y", "3" = "z", "4" = "w"),
+                            c(x = "z", y = "x", z = "w", w = "y"))
+  expect_output(print(none), "No mechanism")
+  expect_error(relabel_forensics(c("x", "y"), c(x = "y", y = "x")), "named")
+})
+
+test_that("transfer_verify decodes plain codes with a code book, tolerance", {
+  cb <- c("1" = "White", "2" = "Black")
+  r <- transfer_verify(c(1, 1, 2), c(White = 2, Black = 1), code_book = cb)
+  expect_true(r$ok)
+  expect_true(is.na(r$code_book_ok))
+  expect_equal(levels(r$decoded), c("White", "Black"))
+  lab <- structure(c(1, 1, 2), labels = c(White = 1, Black = 2))
+  t2 <- transfer_verify(lab, c(White = 3, Black = 1), tolerance = 1)
+  expect_true(t2$ok)
+  expect_error(transfer_verify(c("White", "Other"), c(White = 1, Black = 1)),
+               "not in the published")
+})
+
+test_that("last guard branches: NA codes, non-frame, edited mapping", {
+  expect_error(decode_codes(c(1, NA), c("1" = "White"), keep_na = FALSE),
+               "missing codes")
+  expect_error(audit_categories(list(a = 1)), "data frame")
+  x <- c("W", "B")
+  y <- guard_recode(x, c(W = "White", B = "Black"))
+  m <- recode_manifest(x, y, c(W = "White", B = "Black"))
+  p <- write_recode_manifest(m, tempfile(fileext = ".json"))
+  txt <- gsub("White", "Whyte", readLines(p))
+  writeLines(txt, p)
+  v <- verify_recode_manifest(p, x, y)
+  expect_false(v$ok)
+  expect_true(any(grepl("mapping checksum", v$reasons)))
+})
