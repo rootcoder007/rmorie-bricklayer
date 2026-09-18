@@ -227,10 +227,16 @@ manifest_canonical <- function(manifest) {
 #' @rdname manifest_canonical
 #' @export
 manifest_digest <- function(manifest) {
-  bytes <- charToRaw(manifest_canonical(manifest))
-  # inside the package: the compiled core; sourced standalone in a capsule
-  # bundle: the pure-R implementation from sha256_native.R
-  if (exists("core_sha256", mode = "function")) return(core_sha256(bytes))
+  .rmbl_sha256_bytes(charToRaw(manifest_canonical(manifest)))
+}
+
+# Inside the package: the compiled core; sourced standalone in a capsule
+# bundle: the pure-R implementation from sha256_native.R.
+#' @noRd
+.rmbl_sha256_bytes <- function(bytes,
+                               native = exists("core_sha256",
+                                               mode = "function")) {
+  if (native) return(core_sha256(bytes))
   .rmbl_sha256_hex(bytes)
 }
 

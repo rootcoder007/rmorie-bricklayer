@@ -221,16 +221,21 @@ write_text_fallback <- function(text, path) {
   if (length(x) == 1L && grepl("^https?://", x)) {
     dest <- tempfile(fileext = ".json")
     on.exit(unlink(dest), add = TRUE)
-    # the compiled fetcher inside the package; plain download.file when
-    # this file is sourced standalone in a capsule bundle
-    if (exists("bricklayer_fetch", mode = "function")) {
-      bricklayer_fetch(x, dest)
-    } else {
-      utils::download.file(x, dest, mode = "wb", quiet = TRUE)
-    }
+    .rmbl_fetch_url(x, dest)
     x <- dest
   }
   txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
   bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify))
+}
+
+# The compiled fetcher inside the package; plain download.file when this
+# file is sourced standalone in a capsule bundle.
+#' @noRd
+.rmbl_fetch_url <- function(url, dest,
+                            native = exists("bricklayer_fetch",
+                                            mode = "function")) {
+  if (native) return(bricklayer_fetch(url, dest))
+  utils::download.file(url, dest, mode = "wb", quiet = TRUE)
+  invisible(dest)
 }

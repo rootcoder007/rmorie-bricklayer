@@ -471,9 +471,11 @@ print.bricklayer_profile <- function(x, ...) {
 # skewness m3 / m2^1.5, type-7 quartiles, Tukey fences at 1.5 IQR, MAD
 # with the 1.4826 constant.
 #' @noRd
-.rmbl_column_stats <- function(ok) {
+.rmbl_column_stats <- function(ok,
+                               native = exists("core_moments",
+                                               mode = "function")) {
   # bundle-scan-guarded: core_tukey_fences core_median core_mad
-  if (exists("core_moments", mode = "function")) {
+  if (native) {
     m <- core_moments(ok)
     f <- core_tukey_fences(ok)
     return(list(mean = m[["mean"]], sd = sqrt(m[["variance"]]),
