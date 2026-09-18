@@ -434,12 +434,18 @@ interval:
 ``` r
 
 sir(e$observed, e$expected, e$area)
-#>       area observed  expected       sir     lower     upper excess
-#> 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639   TRUE
-#> 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE
-#> 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE
-#> 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE
-#> 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE
+#>       area observed  expected       sir     lower     upper excess deficit
+#> 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639  FALSE    TRUE
+#> 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE   FALSE
+#> 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE   FALSE
+#> 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE   FALSE
+#> 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE   FALSE
+#>   significant
+#> 1        TRUE
+#> 2       FALSE
+#> 3       FALSE
+#> 4        TRUE
+#> 5       FALSE
 ```
 
 And the third problem. A league table of rates ranks the small regions

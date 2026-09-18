@@ -30,8 +30,9 @@ sir(observed, expected, area = NULL, conf_level = 0.95)
 
 ## Value
 
-A data frame with `observed`, `expected`, `sir`, `lower`, `upper` and
-`excess` – whether the interval excludes one.
+A data frame with `observed`, `expected`, `sir`, `lower`, `upper`,
+`excess` (the interval lies above one), `deficit` (the interval lies
+below one) and `significant` – whether the interval excludes one.
 
 ## Details
 
@@ -57,14 +58,18 @@ Modeling*. Chapman and Hall/CRC, Chapter 1.
 ``` r
 sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
     area = c("North", "South", "East"))
-#>    area observed expected       sir     lower    upper excess
-#> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE
-#> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE
-#> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE
+#>    area observed expected       sir     lower    upper excess deficit
+#> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE
+#> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE   FALSE
+#> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE   FALSE
+#>   significant
+#> 1        TRUE
+#> 2       FALSE
+#> 3       FALSE
 
 # An observed count of three carries almost no information, and the
 # interval says so rather than hiding it.
 sir(3, 5)
-#>   observed expected sir     lower    upper excess
-#> 1        3        5 0.6 0.1237344 1.753455  FALSE
+#>   observed expected sir     lower    upper excess deficit significant
+#> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE
 ```

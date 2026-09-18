@@ -128,7 +128,9 @@ or a width), <code>force</code>, plus <code>rownames</code>, <code>keep_vec_name
 
 
 <dt id="arg-null">null<a class="anchor" aria-label="anchor" href="#arg-null"></a></dt>
-<dd><p>As in jsonlite.</p></dd>
+<dd><p>As in jsonlite: <code>NULL</code> is written as <code><a href="https://rdrr.io/r/base/Paren.html" class="external-link">{}</a></code> by default
+(a round trip gives an empty list). Pass <code>null = "null"</code> for a
+JSON null; <a href="rmbl_json_serialize.html">bricklayer_json_serialize</a> round-trips <code>NULL</code> exactly.</p></dd>
 
 
 <dt id="arg-na">na<a class="anchor" aria-label="anchor" href="#arg-na"></a></dt>

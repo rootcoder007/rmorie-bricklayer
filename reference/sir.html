@@ -81,7 +81,8 @@ it. A ratio of one is the overall experience; above one is an excess.</p>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with <code>observed</code>, <code>expected</code>, <code>sir</code>,
-<code>lower</code>, <code>upper</code> and <code>excess</code> – whether the interval
+<code>lower</code>, <code>upper</code>, <code>excess</code> (the interval lies above one), <code>deficit</code>
+(the interval lies below one) and <code>significant</code> – whether the interval
 excludes one.</p>
     </div>
     <div class="section level2">
@@ -107,16 +108,20 @@ Modeling</em>. Chapman and Hall/CRC, Chapter 1.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">sir</span><span class="op">(</span>observed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">12</span>, <span class="fl">3</span><span class="op">)</span>, expected <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">14</span>, <span class="fl">5</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    area <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"North"</span>, <span class="st">"South"</span>, <span class="st">"East"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed expected       sir     lower    upper excess</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    area observed expected       sir     lower    upper excess deficit</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 North       30       20 1.5000000 1.0120437 2.141343   TRUE   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 South       12       14 0.8571429 0.4428982 1.497256  FALSE   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  East        3        5 0.6000000 0.1237344 1.753455  FALSE   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   significant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2       FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># An observed count of three carries almost no information, and the</span></span></span>
 <span class="r-in"><span><span class="co"># interval says so rather than hiding it.</span></span></span>
 <span class="r-in"><span><span class="fu">sir</span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   observed expected sir     lower    upper excess</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        3        5 0.6 0.1237344 1.753455  FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   observed expected sir     lower    upper excess deficit significant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

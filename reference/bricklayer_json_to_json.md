@@ -65,7 +65,11 @@ bricklayer_json_to_json(
 
 - null:
 
-  As in jsonlite.
+  As in jsonlite: `NULL` is written as
+  [`{}`](https://rdrr.io/r/base/Paren.html) by default (a round trip
+  gives an empty list). Pass `null = "null"` for a JSON null;
+  [bricklayer_json_serialize](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+  round-trips `NULL` exactly.
 
 - na:
 

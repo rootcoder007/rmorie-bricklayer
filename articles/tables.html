@@ -426,12 +426,18 @@ normal approximation on a count of six is a decoration rather than an
 interval:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sir.html">sir</a></span><span class="op">(</span><span class="va">e</span><span class="op">$</span><span class="va">observed</span>, <span class="va">e</span><span class="op">$</span><span class="va">expected</span>, <span class="va">e</span><span class="op">$</span><span class="va">area</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       area observed  expected       sir     lower     upper excess</span></span>
-<span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639   TRUE</span></span>
-<span><span class="co">#&gt; 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE</span></span>
-<span><span class="co">#&gt; 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE</span></span>
-<span><span class="co">#&gt; 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE</span></span>
-<span><span class="co">#&gt; 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;       area observed  expected       sir     lower     upper excess deficit</span></span>
+<span><span class="co">#&gt; 1  Central       17 48.366013 0.3514865 0.2047538 0.5627639  FALSE    TRUE</span></span>
+<span><span class="co">#&gt; 2  Eastern       36 36.274510 0.9924324 0.6950875 1.3739448  FALSE   FALSE</span></span>
+<span><span class="co">#&gt; 3 Northern        9  9.673203 0.9304054 0.4254406 1.7661993  FALSE   FALSE</span></span>
+<span><span class="co">#&gt; 4  Toronto       86 60.457516 1.4224865 1.1378056 1.7567592   TRUE   FALSE</span></span>
+<span><span class="co">#&gt; 5  Western       37 30.228758 1.2240000 0.8618090 1.6871228  FALSE   FALSE</span></span>
+<span><span class="co">#&gt;   significant</span></span>
+<span><span class="co">#&gt; 1        TRUE</span></span>
+<span><span class="co">#&gt; 2       FALSE</span></span>
+<span><span class="co">#&gt; 3       FALSE</span></span>
+<span><span class="co">#&gt; 4        TRUE</span></span>
+<span><span class="co">#&gt; 5       FALSE</span></span></code></pre></div>
 <p>And the third problem. A league table of rates ranks the small
 regions to both ends by construction, so borrow strength across
 regions:</p>

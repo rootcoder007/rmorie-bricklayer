@@ -58,8 +58,9 @@ published_bounds(
 ## Value
 
 A data frame of class `rmbl_bounds` with `value` (the published number,
-`NA` for a suppressed cell), `lower`, `upper` and `status` (`"exact"`,
-`"rounded"` or `"suppressed"`).
+`NA` for a suppressed cell), `lower`, `upper` and `status`: `"exact"`,
+`"rounded"`, `"suppressed"`, or `"missing"` for an `NA` that carried no
+suppression mark.
 
 ## See also
 

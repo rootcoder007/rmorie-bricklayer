@@ -56,6 +56,18 @@
 <p>CRAN’s gcc-UBSAN run on 0.5.0 reported two undefined operations, both fixed: ML-KEM’s Montgomery reduction multiplied two 16-bit unsigned values in <code>int</code> (overflow above 2^15); it now multiplies in <code>uint32_t</code>. HMAC with an empty key passed a null pointer to <code>memcpy</code> for zero bytes; the copy is skipped.</p>
 </div>
 <div class="section level3">
+<h3 id="every-export-degenerate-inputs-and-known-answers-0-5-1">Every export, degenerate inputs and known answers<a class="anchor" aria-label="anchor" href="#every-export-degenerate-inputs-and-known-answers-0-5-1"></a></h3>
+<ul><li>
+<code><a href="../reference/verify_capsule.html">verify_capsule()</a></code> failed on every intact capsule: the pinned digest arrives from provenance JSON as a length-1 list and was compared to the computed string with <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code>. <code><a href="../reference/verify_sha256.html">verify_sha256()</a></code> now coerces the digest and compares case-insensitively.</li>
+<li>
+<code><a href="../reference/core_ipw_weights.html">core_ipw_weights()</a></code> refuses a treatment that is not coded 0/1 (a 1/2 coding used to send every unit down the control branch) and a propensity outside [0, 1] (previously clipped to the trim bound); a missing treatment or propensity gives a missing weight.</li>
+<li>Input contracts on the exported primitives: numeric kernels refuse character, list and data-frame input instead of coercing to NA; the hash functions all map <code>NA</code> to <code>NA</code>; signatures, HMAC and key derivation need character or raw messages; stock-and-flow measures refuse <code>Inf</code> and numeric dates; band parsers need character labels; rule constructors need a column name; manifests need lists; the download, wayback, revocation and capsule verifiers need non-empty paths, and <code><a href="../reference/verify_capsule.html">verify_capsule()</a></code> an existing directory.</li>
+<li>
+<code><a href="../reference/sir.html">sir()</a></code> reports <code>excess</code> only when the interval lies above one, plus <code>deficit</code> and <code>significant</code>; <code><a href="../reference/published_bounds.html">published_bounds()</a></code> labels a bare <code>NA</code> <code>"missing"</code> instead of <code>"exact"</code>.</li>
+<li>
+<code>examples/otis-mrp/analysis.R</code> prefers rmorie for the DML recompute, as its header says, and falls back to DoubleML.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="third-stress-round-0-5-1">Third stress round<a class="anchor" aria-label="anchor" href="#third-stress-round-0-5-1"></a></h3>
 <ul><li>
 <code><a href="../reference/rmbl_core_stats.html">core_cor()</a></code>: the shared kernel now uses the centred two-pass formula and clamps to [-1, 1]. The one-pass expansion was wrong at the second decimal for a spread of 1e-7 of the mean, NaN by 1e-8, and returned |r| &gt; 1 at 1e-15; <code>cor(x, x)</code> could come back -1.</li>

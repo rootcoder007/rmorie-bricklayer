@@ -45,7 +45,8 @@ length(reps)
 c(sample = mean(x), bootstrap = mean(reps))
 #>    sample bootstrap 
 #>  5.100448  5.097066 
-c(bootstrap_se = stats::sd(reps), formula_se = stats::sd(x) / sqrt(length(x)))
+c(bootstrap_se = stats::sd(reps),
+  formula_se = stats::sd(x) / sqrt(length(x)))
 #> bootstrap_se   formula_se 
 #>    0.1174288    0.1175769 
 
