@@ -59,8 +59,11 @@ const int16_t kZetaRoot = 17;   /* the 256th root of unity mod q */
  * reduction: it keeps only the low 16 bits, which is exactly the
  * multiple of q that has to be subtracted. */
 inline int16_t montgomery_reduce(int32_t a) {
-    const int16_t t = static_cast<int16_t>(
-        static_cast<uint16_t>(a) * kQInv);
+    /* uint16 * uint16 promotes to int and overflows for a > 2^15 (gcc-UBSAN
+     * on CRAN, 2026-09-17); widen to uint32_t so the product is unsigned
+     * arithmetic, then keep the low 16 bits. */
+    const int16_t t = static_cast<int16_t>(static_cast<uint16_t>(
+        static_cast<uint32_t>(static_cast<uint16_t>(a)) * kQInv));
     return static_cast<int16_t>((a - static_cast<int32_t>(t) * kQ) >> 16);
 }
 

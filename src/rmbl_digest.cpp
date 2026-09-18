@@ -376,7 +376,9 @@ void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
         unsigned char kh[32];
         rmbl_sha256_raw(key, keylen, kh);
         std::memcpy(k0, kh, 32);
-    } else {
+    } else if (keylen > 0) {
+        /* memcpy with a null source is undefined even for zero bytes (an
+         * empty key arrives as NULL); k0 is already zero. */
         std::memcpy(k0, key, keylen);
     }
 
