@@ -1513,7 +1513,23 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
   dml <- NULL
   .has_doubleml <- all(vapply(c("DoubleML", "mlr3", "mlr3learners"),
                               requireNamespace, logical(1), quietly = TRUE))
-  if (.has_doubleml) {
+  .has_rmorie <- requireNamespace("rmorie", quietly = TRUE)
+  ## Precedence follows the header: rmorie is the PREFERRED path (seconds,
+  ## ~260 MB) and DoubleML the fallback (~24 min, ~6 GB). With both installed
+  ## the old order picked DoubleML and, under the memory pre-flight, dropped
+  ## the eight DML checks to INFO on ordinary hardware; installing DoubleML
+  ## made verification worse. Set OTIS_MRP_DML=doubleml to force that route.
+  .force_doubleml <- identical(Sys.getenv("OTIS_MRP_DML"), "doubleml")
+  if (.has_rmorie && !.force_doubleml) {
+    cat("\n[7/8] Recomputing DML via rmorie::morie_otis_irm_dml ...\n")
+    cat("      rmorie implements the published estimator (ols outcome +\n")
+    cat("      logit propensity) in ~10 s; DoubleML is the fallback route.\n")
+    cat("      Comparing to the published MRP estimates at +/- 0.02.\n")
+    dml <- tryCatch(recompute_dml_via_rmorie(df), error = function(e) {
+      .dml_info(conditionMessage(e))
+      NULL
+    })
+  } else if (.has_doubleml) {
     cat("\n[7/8] Recomputing DML from PUBLIC data with DoubleML + mlr3 ...\n")
     cat("      This is the route that produced the published estimates.\n")
     cat("      Reference ~24 min and about 6 GB of RAM (5.8 GB peak RSS\n")
@@ -1531,7 +1547,8 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
     }
     if (is.finite(.avail_gb) && .avail_gb < 7) {
       .dml_info(sprintf(paste0("only %.1f GB of memory available; ",
-                               "the DoubleML route needs about 6 GB free"),
+                               "the DoubleML route needs about 7 GB free ",
+                               "(5.8 GB peak RSS plus headroom)"),
                         .avail_gb))
     } else {
       dml <- tryCatch(recompute_dml_irm(df), error = function(e) {
@@ -1539,15 +1556,6 @@ if (INPUT_MODE == "rdata" && exists("res_pool") && exists("res_by_year")) {
         NULL
       })
     }
-  } else if (requireNamespace("rmorie", quietly = TRUE)) {
-    cat("\n[7/8] Recomputing DML via rmorie::morie_otis_irm_dml ...\n")
-    cat("      DoubleML is not installed; rmorie implements the same\n")
-    cat("      estimator (ols outcome + logit propensity) in ~10 s.\n")
-    cat("      Comparing to the published MRP estimates at +/- 0.02.\n")
-    dml <- tryCatch(recompute_dml_via_rmorie(df), error = function(e) {
-      .dml_info(conditionMessage(e))
-      NULL
-    })
   } else {
     .dml_info(paste0("neither DoubleML (with mlr3, mlr3learners) ",
                      "nor rmorie is installed"))

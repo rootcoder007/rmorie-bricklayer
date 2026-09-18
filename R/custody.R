@@ -23,6 +23,10 @@
 # caseloads. It is Little's law with the names corrections planning uses.
 
 .rmbl_pos_num <- function(x, arg, allow_zero = FALSE) {
+  x <- .rmbl_num_input(x, arg)
+  if (any(!is.finite(x[!is.na(x)]))) {
+    stop(sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
+  }
   x <- as.numeric(x)
   if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x)) stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
@@ -316,6 +320,10 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' period_days("2025-04-01", "2026-03-31")   # a fiscal year
 #' @export
 period_days <- function(from, to) {
+  if (is.numeric(from) || is.numeric(to)) {
+    stop("`from` and `to` must be dates or date strings, not numbers",
+         call. = FALSE)
+  }
   from <- as.Date(from); to <- as.Date(to)
   if (length(from) != 1L || length(to) != 1L)
     stop("`from` and `to` must each be a single date", call. = FALSE)

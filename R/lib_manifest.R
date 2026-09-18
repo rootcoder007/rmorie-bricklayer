@@ -55,6 +55,7 @@
 #' full$environment$r_version
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
+  if (!is.list(meta)) stop("`meta` must be a list", call. = FALSE)
   m <- list(meta = meta, results = list())
   if (isTRUE(environment)) m$environment <- capture_environment()
   m
@@ -155,6 +156,7 @@ record <- function(manifest, name, observed, expected,
 #' back$results$row_count$status        # "PASS"
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
+  path <- .rmbl_string1(path, "path")
   if (isTRUE(canonical)) {
     writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
     return(invisible(path))
@@ -216,6 +218,7 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
 #' @export
 manifest_canonical <- function(manifest) {
+  if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
   bricklayer_json_to_json(.rmbl_sort_keys(manifest), auto_unbox = TRUE,
                           pretty = FALSE, na = "null", null = "null",
                           digits = I(17))

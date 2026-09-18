@@ -85,6 +85,7 @@
 #' @export
 rule_in_set <- function(column, set, na_pass = TRUE,
                         severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   set <- as.character(set)
   rule(paste0(column, "_in_set"),
@@ -101,6 +102,7 @@ rule_in_set <- function(column, set, na_pass = TRUE,
 #' @export
 rule_between <- function(column, lo, hi, na_pass = TRUE,
                          severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   lo <- as.numeric(lo)[1L]
   hi <- as.numeric(hi)[1L]
@@ -120,6 +122,7 @@ rule_between <- function(column, lo, hi, na_pass = TRUE,
 #' @rdname rmbl_rule_library
 #' @export
 rule_not_null <- function(column, severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_not_null"), function(v) !is.na(v),
        column = column, severity = severity,
@@ -129,6 +132,7 @@ rule_not_null <- function(column, severity = c("warning", "fatal")) {
 #' @rdname rmbl_rule_library
 #' @export
 rule_unique <- function(column, severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_unique"),
        # duplicated() marks every occurrence after the first, so the
@@ -142,6 +146,7 @@ rule_unique <- function(column, severity = c("warning", "fatal")) {
 #' @export
 rule_regex <- function(column, pattern, na_pass = TRUE,
                        severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   pattern <- as.character(pattern)[1L]
   rule(paste0(column, "_regex"),
@@ -158,6 +163,7 @@ rule_regex <- function(column, pattern, na_pass = TRUE,
 #' @export
 rule_increasing <- function(column, strictly = FALSE,
                             severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_increasing"),
        function(v) {
@@ -176,6 +182,7 @@ rule_increasing <- function(column, strictly = FALSE,
 #' @export
 rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
                                severity = c("warning", "fatal")) {
+  column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   n <- as.numeric(n)[1L]
   if (is.na(n) || n <= 0) stop("`n` must be positive", call. = FALSE)

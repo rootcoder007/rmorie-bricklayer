@@ -34,7 +34,8 @@ length(reps)
 # The replicates centre on the sample mean, and their spread estimates
 # the standard error.
 c(sample = mean(x), bootstrap = mean(reps))
-c(bootstrap_se = stats::sd(reps), formula_se = stats::sd(x) / sqrt(length(x)))
+c(bootstrap_se = stats::sd(reps),
+  formula_se = stats::sd(x) / sqrt(length(x)))
 
 # A percentile confidence interval for the mean.
 stats::quantile(reps, c(0.025, 0.975))

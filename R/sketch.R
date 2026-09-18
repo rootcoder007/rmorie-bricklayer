@@ -262,8 +262,8 @@ distinct_sketch <- function(x, p = 14L, registers = NULL) {
 #' @rdname rmbl_distinct
 #' @export
 distinct_count <- function(registers) {
-  registers <- as.integer(registers)
-  if (length(registers) == 0L) return(0)
+  if (is.null(registers) || length(registers) == 0L) return(0)
+  registers <- .rmbl_registers(registers, "registers")
   .Call(C_rmbl_hll_count, registers)
 }
 
@@ -271,12 +271,23 @@ distinct_count <- function(registers) {
 #' @rdname rmbl_distinct
 #' @export
 sketch_merge <- function(a, b) {
-  a <- as.integer(a)
-  b <- as.integer(b)
+  a <- .rmbl_registers(a, "a")
+  b <- .rmbl_registers(b, "b")
   if (length(a) != length(b)) {
     stop("both sketches must have the same number of registers", call. = FALSE)
   }
   # A register holds the longest leading-zero run seen for its bucket, so
   # the union of two streams is the element-wise maximum.
   pmax(a, b)
+}
+
+# HyperLogLog registers: non-negative integers.
+.rmbl_registers <- function(r, what) {
+  r <- .rmbl_num_input(r, what)
+  if (any(!is.finite(r)) || any(r < 0) || any(r != floor(r))) {
+    stop(sprintf("`%s` must be non-negative integer registers", what),
+      call. = FALSE
+    )
+  }
+  as.integer(r)
 }

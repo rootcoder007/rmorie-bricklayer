@@ -85,7 +85,9 @@ test_that("the SIR interval is exactly poisson.test's", {
   # a ratio of one is never an excess; an extreme one is
   expect_false(sir(100, 100)$excess)
   expect_true(sir(100, 50)$excess)
-  expect_true(sir(10, 50)$excess)
+  expect_false(sir(10, 50)$excess)
+  expect_true(sir(10, 50)$deficit)
+  expect_true(sir(10, 50)$significant)
   # an observed count of three carries almost no information, so its
   # interval spans one
   expect_false(sir(3, 5)$excess)

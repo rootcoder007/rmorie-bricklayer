@@ -18,7 +18,8 @@ sir(observed, expected, area = NULL, conf_level = 0.95)
 }
 \value{
 A data frame with \code{observed}, \code{expected}, \code{sir},
-\code{lower}, \code{upper} and \code{excess} -- whether the interval
+\code{lower}, \code{upper}, \code{excess} (the interval lies above one), \code{deficit}
+(the interval lies below one) and \code{significant} -- whether the interval
 excludes one.
 }
 \description{

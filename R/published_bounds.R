@@ -28,8 +28,9 @@
 #'   the cell then lies in `[0, suppression_limit - 1]`.
 #' @param suppressed_marks Strings that mark a suppressed cell.
 #' @return A data frame of class `rmbl_bounds` with `value` (the
-#'   published number, `NA` for a suppressed cell), `lower`, `upper` and
-#'   `status` (`"exact"`, `"rounded"` or `"suppressed"`).
+#'   published number, `NA` for a suppressed cell), `lower`, `upper`
+#'   and `status`: `"exact"`, `"rounded"`, `"suppressed"`, or
+#'   `"missing"` for an `NA` that carried no suppression mark.
 #' @examples
 #' published_bounds(c(120, 35, 0), rounding = 5)
 #' published_bounds(c("120", "x", "<5"), rounding = 5,
@@ -72,6 +73,7 @@ published_bounds <- function(x, rounding = NULL,
   } else {
     value <- as.numeric(x)
   }
+  status[is.na(value) & status != "suppressed"] <- "missing"
   lower <- value
   upper <- value
   if (!is.null(rounding)) {

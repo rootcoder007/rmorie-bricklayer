@@ -50,6 +50,9 @@
 #' parse_bands(c("3", "unknown", "not stated"))
 #' @export
 parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
+  if (!is.null(x) && !is.character(x) && !is.factor(x)) {
+    stop("`x` must be character band labels", call. = FALSE)
+  }
   lab <- as.character(x)
   s <- tolower(trimws(lab))
   # normalise the dash family, which publishers mix freely
