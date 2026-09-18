@@ -19,7 +19,7 @@ fi
 
 cd "${REPO_ROOT}"
 
-echo "[1/3] Building otis-mrp bundle..."
+echo "[1/4] Building otis-mrp bundle..."
 if [[ -n "${DATA_PATH}" ]]; then
   ./make_bundle.sh otis-mrp --with-data "${DATA_PATH}" --version test
 else
@@ -27,7 +27,7 @@ else
 fi
 
 echo
-echo "[2/3] Locating built bundle..."
+echo "[2/4] Locating built bundle..."
 BUNDLE="$(ls -1t dist/otis-mrp_vtest*.zip 2>/dev/null | head -1)"
 if [[ -z "${BUNDLE}" ]]; then
   echo "FAIL: no bundle built"
@@ -36,9 +36,26 @@ fi
 echo "  Found: ${BUNDLE}"
 
 echo
-echo "[3/3] Auditing via verify_bundle.sh..."
+echo "[3/4] Auditing via verify_bundle.sh..."
 ./scripts/verify_bundle.sh "${BUNDLE}" --clean
 RC=$?
+
+echo
+echo "[4/4] Running the bundle's offline synthetic route (--synthetic --quick)..."
+# The one path a stranger with no internet is told to take; it never runs
+# on a normal CI pass because the download succeeds first.
+SYN_DIR="$(mktemp -d)"
+unzip -q "${BUNDLE}" -d "${SYN_DIR}"
+SYN_ROOT="$(find "${SYN_DIR}" -maxdepth 2 -name setup_and_run.R -exec dirname {} \; | head -1)"
+if ( cd "${SYN_ROOT}" && Rscript setup_and_run.R --synthetic --quick > synthetic_run.log 2>&1 ) \
+   && [[ -n "$(find "${SYN_ROOT}" -path "*/results_*/manifest.json" | head -1)" ]]; then
+  echo "  synthetic route: OK (manifest.json written)"
+else
+  echo "FAIL: synthetic route did not complete"
+  tail -30 "${SYN_ROOT}/synthetic_run.log" 2>/dev/null
+  RC=1
+fi
+rm -rf "${SYN_DIR}"
 
 if [[ ${RC} -eq 0 ]]; then
   echo

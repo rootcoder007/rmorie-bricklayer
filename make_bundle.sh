@@ -104,6 +104,7 @@ echo
 
 # --- Copy R libs + setup_and_run.R ---
 cp "${BRICKLAYER_ROOT}/R/aaa_input_guards.R" "${STAGE}/"
+cp "${BRICKLAYER_ROOT}/R/aaa_local_seed.R"   "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/json_native.R"    "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/sha256_native.R"  "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
@@ -134,6 +135,9 @@ cp "${PROJECT_DIR}/institution_cd_region_map.csv" "${STAGE}/" 2>/dev/null || tru
 cp "${PROJECT_DIR}/cd_population_2022.csv" "${STAGE}/" 2>/dev/null || true
 cp "${BRICKLAYER_ROOT}/inst/scripts/lib_interactive.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/inst/scripts/setup_and_run.R"   "${STAGE}/"
+# Every internal name the staged files call must be staged too: the
+# bundle runs on a machine with none of the family packages installed.
+Rscript "${BRICKLAYER_ROOT}/dev/bundle_symbol_scan.R" "${STAGE}" || exit 1
 
 # --- Copy OS launchers ---
 cp "${BRICKLAYER_ROOT}/launchers/"START_HERE.command "${STAGE}/"

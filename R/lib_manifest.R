@@ -227,7 +227,11 @@ manifest_canonical <- function(manifest) {
 #' @rdname manifest_canonical
 #' @export
 manifest_digest <- function(manifest) {
-  core_sha256(charToRaw(manifest_canonical(manifest)))
+  bytes <- charToRaw(manifest_canonical(manifest))
+  # inside the package: the compiled core; sourced standalone in a capsule
+  # bundle: the pure-R implementation from sha256_native.R
+  if (exists("core_sha256", mode = "function")) return(core_sha256(bytes))
+  .rmbl_sha256_hex(bytes)
 }
 
 # Recursively order the names of every list, leaving unnamed lists (JSON

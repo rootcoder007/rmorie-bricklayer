@@ -221,22 +221,35 @@ make_synthetic_csv <- function(schema, out_path,
                                     replace = TRUE,
                                     prob = unlist(reps_spec$weights))]
     expand <- function(x) rep(x, rows_per)
+    n_total <- sum(rows_per)
   } else {
     expand <- identity
+    n_total <- n_rows
   }
 
-  ## Latent per-row "baseline propensity" -- shared across bernoulli cols
-  base_p <- stats::runif(n_rows, 0, 1)
+  ## Latent per-person "baseline propensity" -- shared across bernoulli
+  ## cols; expanded to one entry per row so replicated rows of a person
+  ## share the propensity but draw their own outcome (a person's alert
+  ## status can change between placements, which is what the treatment
+  ## definition in the analyses rests on).
+  base_p <- expand(stats::runif(n_rows, 0, 1))
 
   ## Generate columns in declaration order; later columns can see ctx
   out <- list()
-  ctx <- list()
+  ctx <- list()         # one entry per row
+  ctx_person <- list()  # one entry per person, before replication
   for (col_name in names(schema$columns)) {
     spec <- schema$columns[[col_name]]
-    vals <- make_synthetic_column(spec, n_rows, ctx, base_p)
-    if (!is.null(reps_spec)) {
-      ## Expand non-id columns; ids handled inside id_pattern
-      if ((spec$type %||% "sample") != "id_pattern") vals <- expand(vals)
+    type <- spec$type %||% "sample"
+    if (identical(type, "bernoulli")) {
+      ## one draw per row, not one per person copied across rows
+      vals <- make_synthetic_column(spec, n_total, ctx, base_p)
+    } else {
+      ## person-level columns (ids, demographics, regions): drawn once per
+      ## person from the person-level context, then repeated over rows
+      vals <- make_synthetic_column(spec, n_rows, ctx_person)
+      ctx_person[[col_name]] <- vals
+      vals <- expand(vals)
     }
     ctx[[col_name]] <- vals
     out[[col_name]] <- vals
