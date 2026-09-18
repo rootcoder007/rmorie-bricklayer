@@ -68,6 +68,25 @@ values in `int` (overflow above 2^15); it now multiplies in `uint32_t`.
 HMAC with an empty key passed a null pointer to `memcpy` for zero bytes;
 the copy is skipped.
 
+### Capsule bundle staging
+
+The bundle built by `make_bundle.sh` runs on a machine with none of the
+family packages installed, so every internal name a staged file calls
+has to be staged too. Three were not: the input guards the libraries now
+call, the seed helper behind the synthetic-data route, and the compiled
+[`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
+behind
+[`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md).
+The first two files are now staged;
+[`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md),
+`.rmbl_read_json()` and the describe table fall back to the pure-R
+implementations when the compiled ones are absent, with the same
+numbers. `dev/bundle_symbol_scan.R` now runs inside the build and fails
+it on any called-but-unstaged name, so the class cannot recur.
+`setup_and_run.R --synthetic` (or `OTIS_MRP_SYNTHETIC=1`) takes the
+synthetic route without a prompt, and the exhausted-downloads message
+names that route by its real menu number.
+
 ### Every export, degenerate inputs and known answers
 
 - [`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
