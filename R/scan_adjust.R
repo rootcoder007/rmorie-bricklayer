@@ -91,6 +91,13 @@ scan_adjust <- function(x, method = "BH", alpha = 0.05) {
                 "rate_change() result"), call. = FALSE)
   }
   ok <- !is.na(x$p_value)
+  if (any(x$p_value[ok] < 0 | x$p_value[ok] > 1)) {
+    bad <- which(ok & (x$p_value < 0 | x$p_value > 1))
+    stop("`p_value` must lie in [0, 1]; row(s) ", paste(bad, collapse = ", "),
+         " hold ", paste(format(x$p_value[bad]), collapse = ", "),
+         ". Nothing outside that range is a probability, so no adjustment ",
+         "or significance decision is made.", call. = FALSE)
+  }
   adj <- rep(NA_real_, nrow(x))
   if (any(ok)) adj[ok] <- stats::p.adjust(x$p_value[ok], method = method)
   x$p_adjusted <- adj

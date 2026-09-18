@@ -179,10 +179,11 @@ test_that("relabel_forensics: OHRC rotation is an alphabetical relabel", {
   expect_false(any(none$matches))
   expect_match(attr(none, "verdict"), "No positional")
   expect_error(relabel_forensics(vl, c(White = "Black")), "permutation")
-  fr <- relabel_forensics(vl, c(White = "White", Black = "Black",
-                                Other = "Other", Unknown = "Unknown"),
-    counts = c(White = 9000, Black = 2000, Other = 1500, Unknown = 60)
-  )
+  # decreasing frequency: Black, Unknown, White, Other assigned to codes 1..4
+  seen <- c(White = "Black", Black = "Unknown", Other = "White",
+            Unknown = "Other")
+  cnt <- c(White = 100, Black = 9000, Other = 50, Unknown = 500)
+  fr <- relabel_forensics(vl, seen, counts = cnt)
   dec <- "labels ordered by decreasing frequency, assigned by code position"
   expect_true(fr$matches[fr$mechanism == dec])
 })
@@ -364,4 +365,63 @@ test_that("last guard branches: NA codes, non-frame, edited mapping", {
   v <- verify_recode_manifest(p, x, y)
   expect_false(v$ok)
   expect_true(any(grepl("mapping checksum", v$reasons)))
+})
+
+test_that("audit flags whitespace, empty and sentinel labels (round 3)", {
+  df <- data.frame(
+    trailing = c("White ", "White", "Black", "Black"),
+    leading = c(" White", "White", "Black", "Black"),
+    na_string = c("White", "NA", "Black", "Black"),
+    empty_str = c("", "White", "Black", "Black"),
+    unicode_ws = c("White ", "White", "Black", "Black"),
+    stringsAsFactors = FALSE
+  )
+  a <- audit_categories(df)
+  expect_false(attr(a, "clean"))
+  h <- stats::setNames(a$hazards, a$column)
+  expect_match(h[["trailing"]], "trailing whitespace")
+  expect_match(h[["trailing"]], "whitespace-variant duplicate")
+  expect_match(h[["leading"]], "REFERENCE level")
+  expect_match(h[["na_string"]], "sentinel")
+  expect_match(h[["empty_str"]], "empty-string")
+  expect_match(h[["empty_str"]], "REFERENCE level")
+  expect_match(h[["unicode_ws"]], "non-breaking")
+  expect_output(print(a), "REFERENCE level")
+})
+
+test_that("verify_marginals and transfer_verify return ok = FALSE when asked", {
+  x <- c("White", "White", "Black", "Indigenous", "White", "Black")
+  r <- verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1),
+                        strict = FALSE)
+  expect_false(r$ok)
+  expect_equal(unname(r$permutation[["White"]]), "Black")
+  expect_match(r$message, "permuted")
+  r2 <- verify_marginals(c(x, "Other"), c(White = 3, Black = 2, Indigenous = 1),
+                         strict = FALSE)
+  expect_false(r2$ok)
+  expect_match(r2$message, "not in the published")
+  cb <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
+  rotated <- structure(c(1, 1, 2, 4, 1),
+                       labels = c(Black = 1, Other = 2, Unknown = 3, White = 4))
+  t <- transfer_verify(rotated, c(White = 3, Black = 1, Unknown = 1),
+                       code_book = cb, strict = FALSE)
+  expect_false(t$ok)
+  expect_false(t$code_book_ok)
+  expect_true(any(grepl("code book", t$reasons)))
+  # the forensics input is reachable from the public path now
+  t2 <- transfer_verify(c("Black", "White", "White", "Black", "Black"),
+                        c(White = 3, Black = 2), strict = FALSE)
+  expect_false(t2$ok)
+  expect_equal(unname(t2$marginals$permutation[["White"]]), "Black")
+  expect_error(transfer_verify(c("Black", "White", "White", "Black", "Black"),
+                               c(White = 3, Black = 2)), "do not match")
+})
+
+test_that("relabel_forensics reports identity as no permutation", {
+  vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
+  r <- relabel_forensics(vl, c(White = "White", Black = "Black",
+                               Other = "Other", Unknown = "Unknown"))
+  expect_false(any(r$matches))
+  expect_match(attr(r, "verdict"), "no permutation")
+  expect_output(print(r), "No mechanism")
 })

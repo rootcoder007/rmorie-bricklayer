@@ -61,3 +61,32 @@ test_that("json_gzip_decode refuses input that is not a gzip member", {
   enc <- json_gzip_encode(list(a = 1, b = "x"))
   expect_equal(json_gzip_decode(enc), list(a = 1, b = "x"))
 })
+
+test_that("core_cor is exact at tiny spread, stays in [-1, 1] (round 3)", {
+  set.seed(3)
+  base <- rnorm(200)
+  for (cv in c(1e-5, 1e-7, 1e-8, 1e-10, 1e-12, 1e-15)) {
+    x <- 1e6 * (1 + cv * base)
+    y <- 1e6 * (1 + cv * (0.9 * base + sqrt(1 - 0.81) * rnorm(200)))
+    expect_equal(core_cor(x, y), stats::cor(x, y), tolerance = 1e-6,
+                 label = paste("cv", cv))
+    expect_equal(core_cor(x, x), 1, tolerance = 1e-12)
+    expect_lte(abs(core_cor(x, y)), 1)
+  }
+  for (i in 1:500) {
+    m <- 10^runif(1, -3, 8)
+    s <- m * 10^runif(1, -16, 0)
+    x <- m + s * rnorm(30)
+    r <- core_cor(x, x)
+    if (!is.na(r)) expect_equal(r, 1, tolerance = 1e-12)
+    expect_true(is.na(r) || abs(r) <= 1)
+  }
+})
+
+test_that("scan_adjust refuses p-values outside [0, 1]", {
+  bad <- data.frame(id = 1:2, p_value = c(-0.1, 0.5))
+  expect_error(scan_adjust(bad), "must lie in \\[0, 1\\]")
+  expect_error(scan_adjust(data.frame(id = 1, p_value = 1.5)), "row\\(s\\) 1")
+  ok <- scan_adjust(data.frame(id = 1:3, p_value = c(0.01, NA, 0.5)))
+  expect_true(is.na(ok$p_adjusted[2]))
+})
