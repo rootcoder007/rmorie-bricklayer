@@ -7,3 +7,17 @@ CXX_STD = CXX17
 # implemented in this directory, so there is no optional library to
 # detect and no ./configure step.
 PKG_LIBS = -lcurl
+
+# Header dependencies. R's default rules rebuild an object when its .cpp
+# changes but not when a header it includes changes; a warm build then
+# tests stale code and a header fix looks as though it never landed
+# (the shared morie_core.h, 2026-09-18). Explicit prerequisite lines are
+# portable make, so every editor and every CI cache rebuilds correctly.
+rmbl_core.o: morie_core.h
+rmbl_mldsa_ntt.o: rmbl_mldsa_core.h rmbl_prehash.h rmbl_mldsa_body.h rmbl_mldsa_body.h rmbl_mldsa_body.h
+rmbl_mlkem.o: rmbl_mlkem_core.h rmbl_mlkem_body.h rmbl_mlkem_body.h rmbl_mlkem_body.h
+rmbl_siu.o: siu_parse.h siu_resolve.h siu_schema.h
+rmbl_slhdsa.o: rmbl_slhdsa_core.h rmbl_prehash.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h rmbl_slhdsa_body.h
+rmbl_stats.o: morie_core.h
+siu_parse.o: siu_parse.h
+siu_resolve.o: siu_resolve.h

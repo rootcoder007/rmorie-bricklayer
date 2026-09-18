@@ -254,12 +254,16 @@ audit_categories <- function(data, cols = NULL) {
       ))
     }
     lc <- tolower(core)
-    if (anyDuplicated(lc)) {
+    # a case-variant pair is two DIFFERENT trimmed labels that agree once
+    # lower-cased; a pair that differs only by whitespace was reported above
+    case_groups <- split(core, lc)
+    is_pair <- vapply(case_groups, function(g) length(unique(g)) > 1L, TRUE)
+    case_groups <- case_groups[is_pair]
+    if (length(case_groups)) {
+      cv <- lv[lc %in% names(case_groups)]
       hazards <- c(hazards, paste0(
         "case-variant duplicate labels: ",
-        paste(.rmbl_squote(lv[lc %in% lc[duplicated(lc)]]),
-          collapse = ", "
-        )
+        paste(.rmbl_squote(cv), collapse = ", ")
       ))
     }
     if (is.factor(v) && length(setdiff(lv, obs))) {
