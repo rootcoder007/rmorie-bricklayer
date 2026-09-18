@@ -126,6 +126,74 @@ drift_calibrate(otis, n = 10)
 #>   per-screen alpha for a family-wise 0.01: 0.0025
 ```
 
+## Stock and flow
+
+A count of people in confinement on a day is a stock; the people who
+pass through in a year are a flow. Lakner’s decomposition ties them
+exactly: average daily population is person-days over the days in the
+period, average length of stay is person-days over the people served,
+and the identity `adp = admissions * alos / t` means a change in days
+must multiply out of a change in people and a change in stay.
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+reports both sides and checks the identity.
+
+``` r
+
+sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 period = c(2022, 2023, 2024), t = 365)
+sf
+#> ── Stock and flow over 3 periods ───────────────────────────────── 
+#>  period people  days alos adp
+#>    2022    300 21900   73  60
+#>    2023    325 23725   73  65
+#>    2024    280 20440   73  56
+#> 
+#>   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%
+#> ──────────────────────────────────────────────────────────────────
+```
+
+A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
+and
+[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+give the single measures.
+
+## Stock and flow
+
+A count of people in confinement on a day is a stock; the people who
+pass through in a year are a flow. Lakner’s decomposition ties them
+exactly: average daily population is person-days over the days in the
+period, average length of stay is person-days over the people served,
+and the identity `adp = admissions * alos / t` means a change in days
+must multiply out of a change in people and a change in stay.
+[`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+reports both sides and checks the identity.
+
+``` r
+
+sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 period = c(2022, 2023, 2024), t = 365)
+sf
+#> ── Stock and flow over 3 periods ───────────────────────────────── 
+#>  period people  days alos adp
+#>    2022    300 21900   73  60
+#>    2023    325 23725   73  65
+#>    2024    280 20440   73  56
+#> 
+#>   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%
+#> ──────────────────────────────────────────────────────────────────
+```
+
+A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+[`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+[`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
+and
+[`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md)
+give the single measures.
+
 ## Record it
 
 [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)

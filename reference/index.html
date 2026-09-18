@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
     <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
@@ -427,6 +428,192 @@
 
         </dt>
         <dd>SHA-256 hex digest (C backend)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="categorical-integrity">Categorical integrity<a class="anchor" aria-label="anchor" href="#categorical-integrity"></a></h2>
+
+      <div class="section-desc"><p>Labels that cannot be swapped quietly: name-based recodes that refuse anything unmapped, explicit levels, an import audit, a before/after cross-tabulation proof, counts checked against what was published, reported odds ratios checked under every relabelling, and a signed manifest of the whole chain.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="guard_recode.html">guard_recode()</a></code>
+
+        </dt>
+        <dd>Recode a categorical column by explicit name-to-name mapping</dd>
+
+        <dt>
+
+          <code><a href="decode_codes.html">decode_codes()</a></code>
+
+        </dt>
+        <dd>Decode numeric category codes with an explicit code-to-label dictionary</dd>
+
+        <dt>
+
+          <code><a href="guard_levels.html">guard_levels()</a></code>
+
+        </dt>
+        <dd>Build a factor with explicit, verified levels</dd>
+
+        <dt>
+
+          <code><a href="audit_categories.html">audit_categories()</a></code>
+
+        </dt>
+        <dd>Audit the categorical columns of a data frame for coding hazards</dd>
+
+        <dt>
+
+          <code><a href="verify_recode.html">verify_recode()</a></code>
+
+        </dt>
+        <dd>Prove a recode with a before/after cross-tabulation</dd>
+
+        <dt>
+
+          <code><a href="verify_marginals.html">verify_marginals()</a></code>
+
+        </dt>
+        <dd>Verify recoded category counts against the counts a release published</dd>
+
+        <dt>
+
+          <code><a href="odds_ratio_check.html">odds_ratio_check()</a></code>
+
+        </dt>
+        <dd>Check reported odds ratios against a labelled table, under every relabelling</dd>
+
+        <dt>
+
+          <code><a href="relabel.html">relabel()</a></code>
+
+        </dt>
+        <dd>Relabel a categorical variable by name, never by position</dd>
+
+        <dt>
+
+          <code><a href="decode_labelled.html">decode_labelled()</a></code>
+
+        </dt>
+        <dd>Decode a labelled import by its value labels, by code</dd>
+
+        <dt>
+
+          <code><a href="transfer_verify.html">transfer_verify()</a></code>
+
+        </dt>
+        <dd>Verify a categorical variable that crossed from one program to another</dd>
+
+        <dt>
+
+          <code><a href="relabel_forensics.html">relabel_forensics()</a></code>
+
+        </dt>
+        <dd>Name the mechanical step that reproduces a label permutation</dd>
+
+        <dt>
+
+          <code><a href="guard_binary.html">guard_binary()</a></code>
+
+        </dt>
+        <dd>Refuse a categorical column where a numeric 0/1 treatment is required</dd>
+
+        <dt>
+
+          <code><a href="recode_manifest.html">recode_manifest()</a></code>
+
+        </dt>
+        <dd>Record a recode as a manifest that can be signed and verified later</dd>
+
+        <dt>
+
+          <code><a href="write_recode_manifest.html">write_recode_manifest()</a></code> <code><a href="write_recode_manifest.html">verify_recode_manifest()</a></code>
+
+        </dt>
+        <dd>Write and verify a recode manifest</dd>
+      </dl></div><div class="section level2">
+      <h2 id="categorical-integrity-1">Categorical integrity<a class="anchor" aria-label="anchor" href="#categorical-integrity-1"></a></h2>
+
+      <div class="section-desc"><p>Labels that cannot be swapped quietly: name-based recodes that refuse anything unmapped, explicit levels, an import audit, a before/after cross-tabulation proof, counts checked against what was published, reported odds ratios checked under every relabelling, and a signed manifest of the whole chain.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="guard_recode.html">guard_recode()</a></code>
+
+        </dt>
+        <dd>Recode a categorical column by explicit name-to-name mapping</dd>
+
+        <dt>
+
+          <code><a href="decode_codes.html">decode_codes()</a></code>
+
+        </dt>
+        <dd>Decode numeric category codes with an explicit code-to-label dictionary</dd>
+
+        <dt>
+
+          <code><a href="guard_levels.html">guard_levels()</a></code>
+
+        </dt>
+        <dd>Build a factor with explicit, verified levels</dd>
+
+        <dt>
+
+          <code><a href="audit_categories.html">audit_categories()</a></code>
+
+        </dt>
+        <dd>Audit the categorical columns of a data frame for coding hazards</dd>
+
+        <dt>
+
+          <code><a href="verify_recode.html">verify_recode()</a></code>
+
+        </dt>
+        <dd>Prove a recode with a before/after cross-tabulation</dd>
+
+        <dt>
+
+          <code><a href="verify_marginals.html">verify_marginals()</a></code>
+
+        </dt>
+        <dd>Verify recoded category counts against the counts a release published</dd>
+
+        <dt>
+
+          <code><a href="odds_ratio_check.html">odds_ratio_check()</a></code>
+
+        </dt>
+        <dd>Check reported odds ratios against a labelled table, under every relabelling</dd>
+
+        <dt>
+
+          <code><a href="guard_binary.html">guard_binary()</a></code>
+
+        </dt>
+        <dd>Refuse a categorical column where a numeric 0/1 treatment is required</dd>
+
+        <dt>
+
+          <code><a href="recode_manifest.html">recode_manifest()</a></code>
+
+        </dt>
+        <dd>Record a recode as a manifest that can be signed and verified later</dd>
+
+        <dt>
+
+          <code><a href="write_recode_manifest.html">write_recode_manifest()</a></code> <code><a href="write_recode_manifest.html">verify_recode_manifest()</a></code>
+
+        </dt>
+        <dd>Write and verify a recode manifest</dd>
       </dl></div><div class="section level2">
       <h2 id="schema-validation-synthetic-data">Schema validation &amp; synthetic data<a class="anchor" aria-label="anchor" href="#schema-validation-synthetic-data"></a></h2>
 

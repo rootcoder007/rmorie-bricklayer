@@ -143,6 +143,83 @@ SHA-256 hashing and verification for downloaded files.
 - [`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
   : SHA-256 hex digest (C backend)
 
+## Categorical integrity
+
+Labels that cannot be swapped quietly: name-based recodes that refuse
+anything unmapped, explicit levels, an import audit, a before/after
+cross-tabulation proof, counts checked against what was published,
+reported odds ratios checked under every relabelling, and a signed
+manifest of the whole chain.
+
+- [`guard_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_recode.md)
+  : Recode a categorical column by explicit name-to-name mapping
+- [`decode_codes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_codes.md)
+  : Decode numeric category codes with an explicit code-to-label
+  dictionary
+- [`guard_levels()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_levels.md)
+  : Build a factor with explicit, verified levels
+- [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md)
+  : Audit the categorical columns of a data frame for coding hazards
+- [`verify_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_recode.md)
+  : Prove a recode with a before/after cross-tabulation
+- [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
+  : Verify recoded category counts against the counts a release
+  published
+- [`odds_ratio_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/odds_ratio_check.md)
+  : Check reported odds ratios against a labelled table, under every
+  relabelling
+- [`relabel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel.md)
+  : Relabel a categorical variable by name, never by position
+- [`decode_labelled()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_labelled.md)
+  : Decode a labelled import by its value labels, by code
+- [`transfer_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/transfer_verify.md)
+  : Verify a categorical variable that crossed from one program to
+  another
+- [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md)
+  : Name the mechanical step that reproduces a label permutation
+- [`guard_binary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_binary.md)
+  : Refuse a categorical column where a numeric 0/1 treatment is
+  required
+- [`recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recode_manifest.md)
+  : Record a recode as a manifest that can be signed and verified later
+- [`write_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+  [`verify_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+  : Write and verify a recode manifest
+
+## Categorical integrity
+
+Labels that cannot be swapped quietly: name-based recodes that refuse
+anything unmapped, explicit levels, an import audit, a before/after
+cross-tabulation proof, counts checked against what was published,
+reported odds ratios checked under every relabelling, and a signed
+manifest of the whole chain.
+
+- [`guard_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_recode.md)
+  : Recode a categorical column by explicit name-to-name mapping
+- [`decode_codes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_codes.md)
+  : Decode numeric category codes with an explicit code-to-label
+  dictionary
+- [`guard_levels()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_levels.md)
+  : Build a factor with explicit, verified levels
+- [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md)
+  : Audit the categorical columns of a data frame for coding hazards
+- [`verify_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_recode.md)
+  : Prove a recode with a before/after cross-tabulation
+- [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
+  : Verify recoded category counts against the counts a release
+  published
+- [`odds_ratio_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/odds_ratio_check.md)
+  : Check reported odds ratios against a labelled table, under every
+  relabelling
+- [`guard_binary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_binary.md)
+  : Refuse a categorical column where a numeric 0/1 treatment is
+  required
+- [`recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recode_manifest.md)
+  : Record a recode as a manifest that can be signed and verified later
+- [`write_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+  [`verify_recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_recode_manifest.md)
+  : Write and verify a recode manifest
+
 ## Schema validation & synthetic data
 
 Validate a data frame against a declared schema, and build typed

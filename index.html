@@ -36,7 +36,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+<li><a class="dropdown-item" href="articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
     <li><a class="dropdown-item" href="articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="articles/drift.html">Has the data changed?</a></li>
@@ -82,6 +83,8 @@
 <strong>Provenance</strong> — <code><a href="reference/load_provenance.html">load_provenance()</a></code>, <code><a href="reference/make_manifest.html">make_manifest()</a></code>, <code><a href="reference/record.html">record()</a></code>, <code><a href="reference/write_manifest_json.html">write_manifest_json()</a></code>, and <code><a href="reference/write_summary_txt.html">write_summary_txt()</a></code> capture every run as a manifest plus a plain-language summary.</li>
 <li>
 <strong>Integrity</strong> — <code><a href="reference/sha256_file.html">sha256_file()</a></code> / <code><a href="reference/verify_sha256.html">verify_sha256()</a></code> hash and verify downloads; <code><a href="reference/download_data.html">download_data()</a></code> / <code><a href="reference/friendly_download.html">friendly_download()</a></code> fetch with a Wayback Machine fallback.</li>
+<li>
+<strong>Categorical integrity</strong> — <code><a href="reference/guard_recode.html">guard_recode()</a></code>, <code><a href="reference/decode_codes.html">decode_codes()</a></code>, <code><a href="reference/guard_levels.html">guard_levels()</a></code>, <code><a href="reference/audit_categories.html">audit_categories()</a></code>, <code><a href="reference/verify_recode.html">verify_recode()</a></code>, <code><a href="reference/verify_marginals.html">verify_marginals()</a></code>, <code><a href="reference/odds_ratio_check.html">odds_ratio_check()</a></code>, <code><a href="reference/relabel.html">relabel()</a></code>, <code><a href="reference/decode_labelled.html">decode_labelled()</a></code>, <code><a href="reference/transfer_verify.html">transfer_verify()</a></code>, <code><a href="reference/relabel_forensics.html">relabel_forensics()</a></code> and a signed <code><a href="reference/recode_manifest.html">recode_manifest()</a></code>: recodes that refuse anything unmapped or positional, an SPSS/Stata/SAS import checked against the source code book and frequency table, reported odds ratios recomputed under every relabelling, and the mechanical step behind a permutation named, so a swapped label is fixed on the day, not blamed on the software.</li>
 <li>
 <strong>Schema validation</strong> — <code><a href="reference/infer_schema.html">infer_schema()</a></code> derives a pinnable schema from data you trust; <code><a href="reference/validate_schema.html">validate_schema()</a></code> checks names, types, ranges, value sets and missingness against it; <code><a href="reference/rule.html">rule()</a></code> and the <code>rule_*()</code> library express the project-specific checks a generic schema cannot.</li>
 <li>

@@ -52,6 +52,25 @@ produced the data.
   /
   [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
   fetch with a Wayback Machine fallback.
+- **Categorical integrity** —
+  [`guard_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_recode.md),
+  [`decode_codes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_codes.md),
+  [`guard_levels()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/guard_levels.md),
+  [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md),
+  [`verify_recode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_recode.md),
+  [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md),
+  [`odds_ratio_check()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/odds_ratio_check.md),
+  [`relabel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel.md),
+  [`decode_labelled()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/decode_labelled.md),
+  [`transfer_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/transfer_verify.md),
+  [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md)
+  and a signed
+  [`recode_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/recode_manifest.md):
+  recodes that refuse anything unmapped or positional, an SPSS/Stata/SAS
+  import checked against the source code book and frequency table,
+  reported odds ratios recomputed under every relabelling, and the
+  mechanical step behind a permutation named, so a swapped label is
+  fixed on the day, not blamed on the software.
 - **Schema validation** —
   [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
   derives a pinnable schema from data you trust;

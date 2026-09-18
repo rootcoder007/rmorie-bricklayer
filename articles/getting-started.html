@@ -34,7 +34,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+<li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
     <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
     <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
@@ -186,6 +187,62 @@ reports the false-alarm rate per column.</p>
 <span><span class="co">#&gt;   per-screen alpha for a family-wise 0.01: 0.0025</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="stock-and-flow">Stock and flow<a class="anchor" aria-label="anchor" href="#stock-and-flow"></a>
+</h2>
+<p>A count of people in confinement on a day is a stock; the people who
+pass through in a year are a flow. Lakner’s decomposition ties them
+exactly: average daily population is person-days over the days in the
+period, average length of stay is person-days over the people served,
+and the identity <code>adp = admissions * alos / t</code> means a change
+in days must multiply out of a change in people and a change in stay.
+<code><a href="../reference/stock_flow.html">stock_flow()</a></code> reports both sides and checks the
+identity.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stock_flow.html">stock_flow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
+<span>                 period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
+<span><span class="va">sf</span></span>
+<span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
+<span><span class="co">#&gt;  period people  days alos adp</span></span>
+<span><span class="co">#&gt;    2022    300 21900   73  60</span></span>
+<span><span class="co">#&gt;    2023    325 23725   73  65</span></span>
+<span><span class="co">#&gt;    2024    280 20440   73  56</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<p>A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admissions.html">admissions()</a></code>
+give the single measures.</p>
+</div>
+<div class="section level2">
+<h2 id="stock-and-flow-1">Stock and flow<a class="anchor" aria-label="anchor" href="#stock-and-flow-1"></a>
+</h2>
+<p>A count of people in confinement on a day is a stock; the people who
+pass through in a year are a flow. Lakner’s decomposition ties them
+exactly: average daily population is person-days over the days in the
+period, average length of stay is person-days over the people served,
+and the identity <code>adp = admissions * alos / t</code> means a change
+in days must multiply out of a change in people and a change in stay.
+<code><a href="../reference/stock_flow.html">stock_flow()</a></code> reports both sides and checks the
+identity.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stock_flow.html">stock_flow</a></span><span class="op">(</span>days <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">21900</span>, <span class="fl">23725</span>, <span class="fl">20440</span><span class="op">)</span>, people <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">325</span>, <span class="fl">280</span><span class="op">)</span>,</span>
+<span>                 period <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2022</span>, <span class="fl">2023</span>, <span class="fl">2024</span><span class="op">)</span>, t <span class="op">=</span> <span class="fl">365</span><span class="op">)</span></span>
+<span><span class="va">sf</span></span>
+<span><span class="co">#&gt; ── Stock and flow over 3 periods ───────────────────────────────── </span></span>
+<span><span class="co">#&gt;  period people  days alos adp</span></span>
+<span><span class="co">#&gt;    2022    300 21900   73  60</span></span>
+<span><span class="co">#&gt;    2023    325 23725   73  65</span></span>
+<span><span class="co">#&gt;    2024    280 20440   73  56</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   2022 to 2024: people -6.7%, stay +0.0%, days -6.7%</span></span>
+<span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
+<p>A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+<code><a href="../reference/adp.html">adp()</a></code>, <code><a href="../reference/alos.html">alos()</a></code> and <code><a href="../reference/admissions.html">admissions()</a></code>
+give the single measures.</p>
+</div>
+<div class="section level2">
 <h2 id="record-it">Record it<a class="anchor" aria-label="anchor" href="#record-it"></a>
 </h2>
 <p><code><a href="../reference/report_analysis.html">report_analysis()</a></code> writes the whole analysis as Markdown
@@ -193,7 +250,7 @@ or a single HTML file, and <code><a href="../reference/use_capsule_template.html
 folder with the provenance file, an <code>analysis.R</code> that pins
 the source bytes and runs the steps above, and a README. The template
 runs as written against this table.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/use_capsule_template.html">use_capsule_template</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"capsule-"</span><span class="op">)</span>, example <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "analysis.R"           "data_provenance.json" "README.md"</span></span>

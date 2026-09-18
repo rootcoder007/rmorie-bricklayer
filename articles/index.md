@@ -2,6 +2,8 @@
 
 ### Guides
 
+- [Categorical integrity: labels that cannot be swapped
+  quietly](https://rootcoder007.github.io/rmorie-bricklayer/articles/categorical-integrity.md):
 - [Your first capsule: a published table, analysed and
   recorded](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md):
 - [Building reproducible data
