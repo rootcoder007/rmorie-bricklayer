@@ -103,6 +103,7 @@ echo "  Stage:     ${STAGE}"
 echo
 
 # --- Copy R libs + setup_and_run.R ---
+cp "${BRICKLAYER_ROOT}/R/aaa_input_guards.R" "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/json_native.R"    "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/sha256_native.R"  "${STAGE}/"
 cp "${BRICKLAYER_ROOT}/R/lib_helpers.R"     "${STAGE}/"
