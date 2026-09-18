@@ -4,7 +4,7 @@
 \alias{verify_marginals}
 \title{Verify recoded category counts against the counts a release published}
 \usage{
-verify_marginals(x, published, tolerance = 0)
+verify_marginals(x, published, tolerance = 0, strict = TRUE)
 }
 \arguments{
 \item{x}{A character or factor vector after recoding.}
@@ -12,11 +12,18 @@ verify_marginals(x, published, tolerance = 0)
 \item{published}{Named numeric vector: label = published count.}
 
 \item{tolerance}{Absolute count tolerance per label (default 0).}
+
+\item{strict}{When \code{TRUE} (the default) a mismatch is an error, so a
+pipeline stops on the day. When \code{FALSE} the result is returned with
+\code{ok = FALSE}, the \code{permutation} that would explain the counts, and the
+\code{message} the error would have carried, for callers that want to
+report or hand the permutation to \code{\link[=relabel_forensics]{relabel_forensics()}}.}
 }
 \value{
-Invisibly, a list with \code{counts}, \code{published}, \code{ok} and
-\code{permutation} (the relabelling that matches, or \code{NULL}). Errors when the
-counts disagree.
+Invisibly, a list with \code{counts}, \code{published}, \code{ok},
+\code{permutation} (the relabelling that matches, or \code{NULL}) and \code{message}
+(\code{NULL} when \code{ok}). Errors when the counts disagree and \code{strict} is
+\code{TRUE}.
 }
 \description{
 After a recode, the number of rows per label must equal the counts the

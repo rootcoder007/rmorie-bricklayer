@@ -4,7 +4,13 @@
 \alias{transfer_verify}
 \title{Verify a categorical variable that crossed from one program to another}
 \usage{
-transfer_verify(imported, source_counts, code_book = NULL, tolerance = 0)
+transfer_verify(
+  imported,
+  source_counts,
+  code_book = NULL,
+  tolerance = 0,
+  strict = TRUE
+)
 }
 \arguments{
 \item{imported}{The vector as it arrived: a haven-style labelled vector,
@@ -18,10 +24,15 @@ source program's variable view. When \code{imported} carries a \code{labels}
 attribute the two are compared and any disagreement is an error.}
 
 \item{tolerance}{Passed to \code{\link{verify_marginals}}.}
+
+\item{strict}{When \code{TRUE} (the default) any disagreement is an error.
+When \code{FALSE} the result comes back with \code{ok = FALSE}, \code{reasons}, and
+\code{marginals$permutation} ready for \code{\link{relabel_forensics}}.}
 }
 \value{
 A list with \code{ok}, \code{decoded} (a factor in code order), \code{marginals}
-(the \code{\link{verify_marginals}} result) and \code{code_book_ok}.
+(the \code{\link{verify_marginals}} result), \code{code_book_ok} and
+\code{reasons} (character, empty when \code{ok}).
 }
 \description{
 The transfer that matters is SPSS/Stata/SAS to R or Python: the source
