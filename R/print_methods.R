@@ -404,16 +404,15 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
                      n_outliers = NA_integer_, hist = NA_character_,
                      top = NA_character_, stringsAsFactors = FALSE))
       }
-      m <- core_moments(ok)
-      f <- core_tukey_fences(ok)
+      st <- .rmbl_column_stats(ok)
       cbind(base, n_distinct = length(unique(ok)),
             n_zero = sum(ok == 0), n_negative = sum(ok < 0),
             n_infinite = sum(is.infinite(v)),
-            mean = m[["mean"]], sd = sqrt(m[["variance"]]),
-            median = core_median(ok), mad = core_mad(ok),
-            min = min(ok), max = max(ok), skewness = m[["skewness"]],
-            n_outliers = sum(ok < f[["lower"]] | ok > f[["upper"]]),
-            hist = .rmbl_sparkline(ok), top = NA_character_,
+            mean = st$mean, sd = st$sd,
+            median = st$median, mad = st$mad,
+            min = min(ok), max = max(ok), skewness = st$skewness,
+            n_outliers = sum(ok < st$lower | ok > st$upper),
+            hist = st$hist, top = NA_character_,
             stringsAsFactors = FALSE)
     } else {
       ok <- as.character(v[!is.na(v)])
@@ -464,4 +463,35 @@ print.bricklayer_profile <- function(x, ...) {
   print(df, row.names = FALSE)
   cat(.rmbl_rule(), "\n")
   invisible(x)
+}
+
+# Column statistics for the describe table. Inside the package these are
+# the compiled kernels; sourced standalone in a capsule bundle (no family
+# package installed) the same definitions come from base R: population
+# skewness m3 / m2^1.5, type-7 quartiles, Tukey fences at 1.5 IQR, MAD
+# with the 1.4826 constant.
+#' @noRd
+.rmbl_column_stats <- function(ok) {
+  # bundle-scan-guarded: core_tukey_fences core_median core_mad
+  if (exists("core_moments", mode = "function")) {
+    m <- core_moments(ok)
+    f <- core_tukey_fences(ok)
+    return(list(mean = m[["mean"]], sd = sqrt(m[["variance"]]),
+                skewness = m[["skewness"]], median = core_median(ok),
+                mad = core_mad(ok), lower = f[["lower"]],
+                upper = f[["upper"]],
+                hist = if (exists(".rmbl_sparkline", mode = "function"))
+                  .rmbl_sparkline(ok) else NA_character_))
+  }
+  n <- length(ok)
+  mu <- mean(ok)
+  d <- ok - mu
+  m2 <- mean(d^2)
+  sk <- if (n > 2 && m2 > 0) mean(d^3) / m2^1.5 else NaN
+  q <- stats::quantile(ok, c(0.25, 0.75), names = FALSE, type = 7)
+  iqr <- q[2L] - q[1L]
+  list(mean = mu, sd = if (n > 1) stats::sd(ok) else NaN, skewness = sk,
+       median = stats::median(ok), mad = stats::mad(ok),
+       lower = q[1L] - 1.5 * iqr, upper = q[2L] + 1.5 * iqr,
+       hist = NA_character_)
 }
