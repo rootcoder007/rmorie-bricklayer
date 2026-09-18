@@ -68,6 +68,38 @@ values in `int` (overflow above 2^15); it now multiplies in `uint32_t`.
 HMAC with an empty key passed a null pointer to `memcpy` for zero bytes;
 the copy is skipped.
 
+### Third stress round
+
+- [`core_cor()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md):
+  the shared kernel now uses the centred two-pass formula and clamps to
+  \[-1, 1\]. The one-pass expansion was wrong at the second decimal for
+  a spread of 1e-7 of the mean, NaN by 1e-8, and returned \|r\| \> 1 at
+  1e-15; `cor(x, x)` could come back -1.
+- [`verify_marginals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
+  and
+  [`transfer_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/transfer_verify.md)
+  gain `strict`. The default still errors on a mismatch; with
+  `strict = FALSE` the result comes back with `ok = FALSE`, the
+  `permutation` that explains the counts, a `message`, and (for
+  [`transfer_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/transfer_verify.md))
+  `reasons`, so
+  [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md)
+  is reachable from the public path. The documented `ok = FALSE` was
+  previously unreachable.
+- [`audit_categories()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/audit_categories.md)
+  flags leading/trailing whitespace including non-breaking spaces,
+  whitespace-variant duplicates, empty-string labels, missing-value
+  sentinels stored as labels (“NA”, “N/A”, “NULL”, …), and a reference
+  level that is any of those. Five such columns used to pass as “no
+  hazards detected”, two of them with the invisible variant as the
+  reference level.
+- [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md)
+  reports an identity permutation as “no permutation to explain” instead
+  of naming a mechanism.
+- [`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+  refuses p-values outside \[0, 1\] instead of adjusting them and
+  calling a negative value significant.
+
 ### trend_test() no longer stalls beyond a few hundred periods
 
 The Sen confidence interval enumerated every pairwise slope in an R

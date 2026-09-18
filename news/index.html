@@ -56,6 +56,19 @@
 <p>CRAN’s gcc-UBSAN run on 0.5.0 reported two undefined operations, both fixed: ML-KEM’s Montgomery reduction multiplied two 16-bit unsigned values in <code>int</code> (overflow above 2^15); it now multiplies in <code>uint32_t</code>. HMAC with an empty key passed a null pointer to <code>memcpy</code> for zero bytes; the copy is skipped.</p>
 </div>
 <div class="section level3">
+<h3 id="third-stress-round-0-5-1">Third stress round<a class="anchor" aria-label="anchor" href="#third-stress-round-0-5-1"></a></h3>
+<ul><li>
+<code><a href="../reference/rmbl_core_stats.html">core_cor()</a></code>: the shared kernel now uses the centred two-pass formula and clamps to [-1, 1]. The one-pass expansion was wrong at the second decimal for a spread of 1e-7 of the mean, NaN by 1e-8, and returned |r| &gt; 1 at 1e-15; <code>cor(x, x)</code> could come back -1.</li>
+<li>
+<code><a href="../reference/verify_marginals.html">verify_marginals()</a></code> and <code><a href="../reference/transfer_verify.html">transfer_verify()</a></code> gain <code>strict</code>. The default still errors on a mismatch; with <code>strict = FALSE</code> the result comes back with <code>ok = FALSE</code>, the <code>permutation</code> that explains the counts, a <code>message</code>, and (for <code><a href="../reference/transfer_verify.html">transfer_verify()</a></code>) <code>reasons</code>, so <code><a href="../reference/relabel_forensics.html">relabel_forensics()</a></code> is reachable from the public path. The documented <code>ok = FALSE</code> was previously unreachable.</li>
+<li>
+<code><a href="../reference/audit_categories.html">audit_categories()</a></code> flags leading/trailing whitespace including non-breaking spaces, whitespace-variant duplicates, empty-string labels, missing-value sentinels stored as labels (“NA”, “N/A”, “NULL”, …), and a reference level that is any of those. Five such columns used to pass as “no hazards detected”, two of them with the invisible variant as the reference level.</li>
+<li>
+<code><a href="../reference/relabel_forensics.html">relabel_forensics()</a></code> reports an identity permutation as “no permutation to explain” instead of naming a mechanism.</li>
+<li>
+<code><a href="../reference/scan_adjust.html">scan_adjust()</a></code> refuses p-values outside [0, 1] instead of adjusting them and calling a negative value significant.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="trend_test-no-longer-stalls-beyond-a-few-hundred-periods-0-5-1">trend_test() no longer stalls beyond a few hundred periods<a class="anchor" aria-label="anchor" href="#trend_test-no-longer-stalls-beyond-a-few-hundred-periods-0-5-1"></a></h3>
 <p>The Sen confidence interval enumerated every pairwise slope in an R double loop that grew a vector one element at a time, so a series of 2,000 periods took minutes and a long one never returned. The slopes are now enumerated and sorted in C (<code>n</code> of 3,000 runs in seconds, identical interval), and <code><a href="../reference/trend_test.html">trend_test()</a></code> refuses more than 20,000 periods with a message giving the memory the pairwise slopes would need.</p>
 </div>
