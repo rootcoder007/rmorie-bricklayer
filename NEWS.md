@@ -48,6 +48,29 @@ values in `int` (overflow above 2^15); it now multiplies in `uint32_t`.
 HMAC with an empty key passed a null pointer to `memcpy` for zero bytes;
 the copy is skipped.
 
+## Third stress round
+
+* `core_cor()`: the shared kernel now uses the centred two-pass formula
+  and clamps to [-1, 1]. The one-pass expansion was wrong at the second
+  decimal for a spread of 1e-7 of the mean, NaN by 1e-8, and returned
+  |r| > 1 at 1e-15; `cor(x, x)` could come back -1.
+* `verify_marginals()` and `transfer_verify()` gain `strict`. The default
+  still errors on a mismatch; with `strict = FALSE` the result comes back
+  with `ok = FALSE`, the `permutation` that explains the counts, a
+  `message`, and (for `transfer_verify()`) `reasons`, so
+  `relabel_forensics()` is reachable from the public path. The documented
+  `ok = FALSE` was previously unreachable.
+* `audit_categories()` flags leading/trailing whitespace including
+  non-breaking spaces, whitespace-variant duplicates, empty-string
+  labels, missing-value sentinels stored as labels ("NA", "N/A", "NULL",
+  ...), and a reference level that is any of those. Five such columns
+  used to pass as "no hazards detected", two of them with the invisible
+  variant as the reference level.
+* `relabel_forensics()` reports an identity permutation as "no
+  permutation to explain" instead of naming a mechanism.
+* `scan_adjust()` refuses p-values outside [0, 1] instead of adjusting
+  them and calling a negative value significant.
+
 ## trend_test() no longer stalls beyond a few hundred periods
 
 The Sen confidence interval enumerated every pairwise slope in an R
