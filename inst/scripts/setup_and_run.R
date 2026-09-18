@@ -20,6 +20,7 @@
 ## USAGE:
 ##   Rscript setup_and_run.R              # interactive
 ##   Rscript setup_and_run.R --quick      # non-interactive (defaults)
+##   Rscript setup_and_run.R --synthetic  # offline, fake data, no prompts
 ##   Rscript setup_and_run.R --data PATH  # explicit data path
 ##   Rscript setup_and_run.R --help
 ##
@@ -40,6 +41,10 @@ script_dir <- (function() {
 args <- commandArgs(trailingOnly = TRUE)
 QUICK_MODE <- any(args %in% c("-q", "--quick"))
 HELP_MODE  <- any(args %in% c("-h", "--help"))
+## --synthetic (or OTIS_MRP_SYNTHETIC=1): take the synthetic-data route
+## without a prompt, so an offline or unattended run can exercise it.
+SYNTH_ARG  <- any(args %in% "--synthetic") ||
+  nzchar(Sys.getenv("OTIS_MRP_SYNTHETIC", ""))
 ## No terminal on stdin (CI, reviewer harness, piped run): prompts would
 ## silently take their defaults anyway, so make that explicit and honest.
 AUTO_QUICK <- FALSE
@@ -62,7 +67,8 @@ if (HELP_MODE) {
 
 ## ---------- Source libraries ----------
 LIB_DIR <- script_dir  # libs may be next to setup_and_run.R after bundle build
-for (lib in c("aaa_input_guards.R", "json_native.R", "sha256_native.R",
+for (lib in c("aaa_input_guards.R", "aaa_local_seed.R",
+              "json_native.R", "sha256_native.R",
               "lib_interactive.R", "lib_helpers.R", "lib_data_loader.R",
               "lib_synthetic.R", "lib_manifest.R",
               "yoy.R", "rate.R")) {
@@ -257,7 +263,8 @@ if (!is.null(DATA_ARG)) {
       "Cancel and exit"
     )
     choice <- ask_menu("  How would you like to proceed?",
-                       menu_options, 3L, QUICK_MODE)
+                       menu_options, if (SYNTH_ARG) 4L else 3L,
+                       QUICK_MODE || SYNTH_ARG)
 
     if (choice == 1L) {
       hint_dir <- ask_save_location(
@@ -334,7 +341,7 @@ if (!is.null(DATA_ARG)) {
         say("  All download paths exhausted. Options:")
         say("    1) Re-run after disabling your VPN")
         say("    2) Download manually from: ", prov$dataset$catalogue_page)
-        say("    3) Try synthetic mode (no internet required)")
+        say("    4) Run on SYNTHETIC fake data (menu option 4, or --synthetic)")
         quit(status = 5)
       }
       input_path <- target
@@ -353,7 +360,7 @@ if (!is.null(DATA_ARG)) {
       say("  CANNOT verify any claim in the paper.")
       say("")
       if (!ask_yn("  Confirm — generate synthetic data and run on it?",
-                  "N", QUICK_MODE)) {
+                  if (SYNTH_ARG) "Y" else "N", QUICK_MODE || SYNTH_ARG)) {
         say("  Cancelled."); quit(status = 0)
       }
       save_dir <- ask_save_location(
