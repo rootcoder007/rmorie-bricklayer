@@ -40,6 +40,14 @@ be exonerated, or not, from the code book alone: no import routine sorts
 value labels onto codes. `audit_categories()` also flags code-prefixed
 labels such as "1. White".
 
+## gcc-UBSAN clean
+
+CRAN's gcc-UBSAN run on 0.5.0 reported two undefined operations, both
+fixed: ML-KEM's Montgomery reduction multiplied two 16-bit unsigned
+values in `int` (overflow above 2^15); it now multiplies in `uint32_t`.
+HMAC with an empty key passed a null pointer to `memcpy` for zero bytes;
+the copy is skipped.
+
 ## trend_test() no longer stalls beyond a few hundred periods
 
 The Sen confidence interval enumerated every pairwise slope in an R
