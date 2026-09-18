@@ -9,7 +9,7 @@ wrong groups.
 ## Usage
 
 ``` r
-verify_marginals(x, published, tolerance = 0)
+verify_marginals(x, published, tolerance = 0, strict = TRUE)
 ```
 
 ## Arguments
@@ -26,11 +26,20 @@ verify_marginals(x, published, tolerance = 0)
 
   Absolute count tolerance per label (default 0).
 
+- strict:
+
+  When `TRUE` (the default) a mismatch is an error, so a pipeline stops
+  on the day. When `FALSE` the result is returned with `ok = FALSE`, the
+  `permutation` that would explain the counts, and the `message` the
+  error would have carried, for callers that want to report or hand the
+  permutation to
+  [`relabel_forensics()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md).
+
 ## Value
 
-Invisibly, a list with `counts`, `published`, `ok` and `permutation`
-(the relabelling that matches, or `NULL`). Errors when the counts
-disagree.
+Invisibly, a list with `counts`, `published`, `ok`, `permutation` (the
+relabelling that matches, or `NULL`) and `message` (`NULL` when `ok`).
+Errors when the counts disagree and `strict` is `TRUE`.
 
 ## Examples
 

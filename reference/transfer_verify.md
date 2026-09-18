@@ -12,7 +12,13 @@ of the import, with the permutation named.
 ## Usage
 
 ``` r
-transfer_verify(imported, source_counts, code_book = NULL, tolerance = 0)
+transfer_verify(
+  imported,
+  source_counts,
+  code_book = NULL,
+  tolerance = 0,
+  strict = TRUE
+)
 ```
 
 ## Arguments
@@ -38,11 +44,18 @@ transfer_verify(imported, source_counts, code_book = NULL, tolerance = 0)
   Passed to
   [`verify_marginals`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md).
 
+- strict:
+
+  When `TRUE` (the default) any disagreement is an error. When `FALSE`
+  the result comes back with `ok = FALSE`, `reasons`, and
+  `marginals$permutation` ready for
+  [`relabel_forensics`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md).
+
 ## Value
 
 A list with `ok`, `decoded` (a factor in code order), `marginals` (the
 [`verify_marginals`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md)
-result) and `code_book_ok`.
+result), `code_book_ok` and `reasons` (character, empty when `ok`).
 
 ## See also
 

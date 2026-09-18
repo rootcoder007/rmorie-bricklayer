@@ -72,7 +72,13 @@ of the import, with the permutation named.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">transfer_verify</span><span class="op">(</span><span class="va">imported</span>, <span class="va">source_counts</span>, code_book <span class="op">=</span> <span class="cn">NULL</span>, tolerance <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">transfer_verify</span><span class="op">(</span></span>
+<span>  <span class="va">imported</span>,</span>
+<span>  <span class="va">source_counts</span>,</span>
+<span>  code_book <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tolerance <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  strict <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -98,11 +104,18 @@ attribute the two are compared and any disagreement is an error.</p></dd>
 <dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
 <dd><p>Passed to <code><a href="verify_marginals.html">verify_marginals</a></code>.</p></dd>
 
+
+<dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
+<dd><p>When <code>TRUE</code> (the default) any disagreement is an error.
+When <code>FALSE</code> the result comes back with <code>ok = FALSE</code>, <code>reasons</code>, and
+<code>marginals$permutation</code> ready for <code><a href="relabel_forensics.html">relabel_forensics</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>ok</code>, <code>decoded</code> (a factor in code order), <code>marginals</code>
-(the <code><a href="verify_marginals.html">verify_marginals</a></code> result) and <code>code_book_ok</code>.</p>
+(the <code><a href="verify_marginals.html">verify_marginals</a></code> result), <code>code_book_ok</code> and
+<code>reasons</code> (character, empty when <code>ok</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -63,7 +63,7 @@ groups.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">verify_marginals</span><span class="op">(</span><span class="va">x</span>, <span class="va">published</span>, tolerance <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">verify_marginals</span><span class="op">(</span><span class="va">x</span>, <span class="va">published</span>, tolerance <span class="op">=</span> <span class="fl">0</span>, strict <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -81,12 +81,21 @@ groups.</p>
 <dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>
 <dd><p>Absolute count tolerance per label (default 0).</p></dd>
 
+
+<dt id="arg-strict">strict<a class="anchor" aria-label="anchor" href="#arg-strict"></a></dt>
+<dd><p>When <code>TRUE</code> (the default) a mismatch is an error, so a
+pipeline stops on the day. When <code>FALSE</code> the result is returned with
+<code>ok = FALSE</code>, the <code>permutation</code> that would explain the counts, and the
+<code>message</code> the error would have carried, for callers that want to
+report or hand the permutation to <code><a href="relabel_forensics.html">relabel_forensics()</a></code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a list with <code>counts</code>, <code>published</code>, <code>ok</code> and
-<code>permutation</code> (the relabelling that matches, or <code>NULL</code>). Errors when the
-counts disagree.</p>
+    <p>Invisibly, a list with <code>counts</code>, <code>published</code>, <code>ok</code>,
+<code>permutation</code> (the relabelling that matches, or <code>NULL</code>) and <code>message</code>
+(<code>NULL</code> when <code>ok</code>). Errors when the counts disagree and <code>strict</code> is
+<code>TRUE</code>.</p>
     </div>
 
     <div class="section level2">
