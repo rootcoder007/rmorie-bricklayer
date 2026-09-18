@@ -88,6 +88,12 @@ yoy_label <- function(x, labels) {
 #' fiscal_year_label(2023, sep = "-")
 #' @export
 fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
+  if (!is.null(end_year) && !is.numeric(end_year) && !is.character(end_year)) {
+    stop("`end_year` must be numeric or character years", call. = FALSE)
+  }
+  if (is.numeric(end_year) && any(end_year < 1, na.rm = TRUE)) {
+    stop("`end_year` must be positive years", call. = FALSE)
+  }
   y <- suppressWarnings(as.integer(as.character(end_year)))
   out <- rep(NA_character_, length(y))
   ok <- !is.na(y)

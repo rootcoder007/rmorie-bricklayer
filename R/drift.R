@@ -54,8 +54,8 @@
 #' drift_ks(ref, ref)[["statistic"]]
 #' @export
 drift_ks <- function(x, y) {
-  x <- as.numeric(x)
-  y <- as.numeric(y)
+  x <- .rmbl_finite_input(x, "x", min_n = 1L)
+  y <- .rmbl_finite_input(y, "y", min_n = 1L)
   x <- x[!is.na(x)]
   y <- y[!is.na(y)]
   if (length(x) < 1L || length(y) < 1L) {
@@ -120,8 +120,8 @@ drift_ks <- function(x, y) {
 #' drift_psi(c(1, 1, 1), c(9, 9, 9))[["js_divergence"]] <= log(2)
 #' @export
 drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
-  x <- as.numeric(x)
-  y <- as.numeric(y)
+  x <- .rmbl_finite_input(x, "x", min_n = 1L)
+  y <- .rmbl_finite_input(y, "y", min_n = 1L)
   x <- x[!is.na(x)]
   y <- y[!is.na(y)]
   if (length(x) < 1L || length(y) < 1L) {
@@ -368,7 +368,7 @@ drift_homogeneity <- function(x, y) {
 #' benford_test(c(0, 0, 1, 2, 3))$n
 #' @export
 benford_test <- function(x) {
-  x <- as.numeric(x)
+  x <- .rmbl_num_input(x, "x")
   x <- x[is.finite(x) & x != 0]
   if (length(x) < 1L) {
     stop("`x` has no finite non-zero values to take a leading digit from",

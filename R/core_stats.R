@@ -50,14 +50,14 @@
 #' @name rmbl_core_spread
 #' @export
 core_sd <- function(x, ddof = 1L) {
-  .Call(C_rmbl_sd, as.numeric(x), as.integer(ddof))
+  .Call(C_rmbl_sd, .rmbl_num_input(x, "x"), as.integer(ddof))
 }
 
 #' @rdname rmbl_core_spread
 #' @export
 core_dist <- function(a, b) {
-  a <- as.numeric(a)
-  b <- as.numeric(b)
+  a <- .rmbl_num_input(a, "a")
+  b <- .rmbl_num_input(b, "b")
   if (length(a) != length(b)) {
     stop("`a` and `b` must have the same length", call. = FALSE)
   }
@@ -88,7 +88,8 @@ core_dist <- function(a, b) {
 #' core_normal_logpdf(50)            # about -1251
 #' @export
 core_normal_logpdf <- function(x, mean = 0, sd = 1) {
-  .Call(C_rmbl_normal_logpdf, as.numeric(x), as.numeric(mean), as.numeric(sd))
+  .Call(C_rmbl_normal_logpdf, .rmbl_num_input(x, "x"), as.numeric(mean),
+        as.numeric(sd))
 }
 
 #' Mean, variance, skewness and kurtosis in one pass (C backend)
@@ -130,7 +131,7 @@ core_normal_logpdf <- function(x, mean = 0, sd = 1) {
 #' # Too short to define a shape statistic: NaN rather than a guess.
 #' core_moments(c(1, 2))
 #' @export
-core_moments <- function(x) .Call(C_rmbl_moments, as.numeric(x))
+core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 
 #' Quantiles, median and robust spread (C backend)
 #'
@@ -190,6 +191,7 @@ core_moments <- function(x) .Call(C_rmbl_moments, as.numeric(x))
 #' @name rmbl_core_robust
 #' @export
 core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
+  x <- .rmbl_num_input(x, "x")
   probs <- as.numeric(probs)
   if (length(probs) == 0L) stop("`probs` is empty", call. = FALSE)
   if (anyNA(probs) || any(probs < 0 | probs > 1)) {
@@ -202,25 +204,25 @@ core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
 
 #' @rdname rmbl_core_robust
 #' @export
-core_median <- function(x) .Call(C_rmbl_median, as.numeric(x))
+core_median <- function(x) .Call(C_rmbl_median, .rmbl_num_input(x, "x"))
 
 #' @rdname rmbl_core_robust
 #' @export
 core_mad <- function(x, constant = 1.4826) {
-  .Call(C_rmbl_mad, as.numeric(x), as.numeric(constant))
+  .Call(C_rmbl_mad, .rmbl_num_input(x, "x"), as.numeric(constant))
 }
 
 #' @rdname rmbl_core_robust
 #' @export
 core_iqr <- function(x) {
-  q <- .Call(C_rmbl_quantile, as.numeric(x), c(0.25, 0.75))
+  q <- .Call(C_rmbl_quantile, .rmbl_num_input(x, "x"), c(0.25, 0.75))
   q[2L] - q[1L]
 }
 
 #' @rdname rmbl_core_robust
 #' @export
 core_tukey_fences <- function(x, k = 1.5) {
-  q <- .Call(C_rmbl_quantile, as.numeric(x), c(0.25, 0.75))
+  q <- .Call(C_rmbl_quantile, .rmbl_num_input(x, "x"), c(0.25, 0.75))
   iqr <- q[2L] - q[1L]
   c(lower = q[1L] - k * iqr, upper = q[2L] + k * iqr)
 }
@@ -256,13 +258,13 @@ core_tukey_fences <- function(x, k = 1.5) {
 #' @name rmbl_core_trimmed
 #' @export
 core_trimmed_mean <- function(x, trim = 0.1) {
-  .Call(C_rmbl_trimmed_mean, as.numeric(x), as.numeric(trim))
+  .Call(C_rmbl_trimmed_mean, .rmbl_num_input(x, "x"), as.numeric(trim))
 }
 
 #' @rdname rmbl_core_trimmed
 #' @export
 core_winsorized_mean <- function(x, trim = 0.1) {
-  .Call(C_rmbl_winsorized_mean, as.numeric(x), as.numeric(trim))
+  .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), as.numeric(trim))
 }
 
 #' Weighted mean and variance (C backend)
@@ -292,8 +294,8 @@ core_winsorized_mean <- function(x, trim = 0.1) {
 #' core_weighted(x, c(1, 1, 1, 1000))[["mean"]]
 #' @export
 core_weighted <- function(x, w) {
-  x <- as.numeric(x)
-  w <- as.numeric(w)
+  x <- .rmbl_num_input(x, "x")
+  w <- .rmbl_num_input(w, "w")
   if (length(x) != length(w)) {
     stop("`x` and `w` must have the same length", call. = FALSE)
   }
@@ -340,8 +342,8 @@ core_weighted <- function(x, w) {
 #' @name rmbl_core_rank
 #' @export
 core_cor_spearman <- function(x, y) {
-  x <- as.numeric(x)
-  y <- as.numeric(y)
+  x <- .rmbl_num_input(x, "x")
+  y <- .rmbl_num_input(y, "y")
   if (length(x) != length(y)) {
     stop("`x` and `y` must have the same length", call. = FALSE)
   }
@@ -350,7 +352,13 @@ core_cor_spearman <- function(x, y) {
 
 #' @rdname rmbl_core_rank
 #' @export
-core_midranks <- function(x) .Call(C_rmbl_midranks, as.numeric(x))
+core_midranks <- function(x) {
+  x <- .rmbl_num_input(x, "x")
+  out <- rep(NA_real_, length(x))
+  ok <- !is.na(x)
+  out[ok] <- .Call(C_rmbl_midranks, x[ok])
+  out
+}
 
 #' Covariance matrix of a numeric matrix (C backend)
 #'
@@ -412,7 +420,8 @@ core_cov <- function(x) {
 #' # The replicates centre on the sample mean, and their spread estimates
 #' # the standard error.
 #' c(sample = mean(x), bootstrap = mean(reps))
-#' c(bootstrap_se = stats::sd(reps), formula_se = stats::sd(x) / sqrt(length(x)))
+#' c(bootstrap_se = stats::sd(reps),
+#'   formula_se = stats::sd(x) / sqrt(length(x)))
 #'
 #' # A percentile confidence interval for the mean.
 #' stats::quantile(reps, c(0.025, 0.975))
@@ -423,6 +432,7 @@ core_cov <- function(x) {
 #'           core_bootstrap_mean(x, 100, seed = 1))
 #' @export
 core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
+  x <- .rmbl_num_input(x, "x")
   B <- as.numeric(B)
   if (length(B) != 1L || is.na(B) || B < 1) {
     stop("`B` must be a single number >= 1", call. = FALSE)
@@ -464,8 +474,8 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #' @export
 core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
                              trim_hi = 0.99) {
-  treat <- as.numeric(treat)
-  propensity <- as.numeric(propensity)
+  treat <- .rmbl_num_input(treat, "treat")
+  propensity <- .rmbl_num_input(propensity, "propensity")
   if (length(treat) != length(propensity)) {
     stop("`treat` and `propensity` must have the same length", call. = FALSE)
   }
@@ -474,7 +484,27 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
   if (!(trim_lo > 0 && trim_hi < 1 && trim_lo < trim_hi)) {
     stop("need 0 < `trim_lo` < `trim_hi` < 1", call. = FALSE)
   }
-  .Call(C_rmbl_ipw, treat, propensity, trim_lo, trim_hi)
+  # a 1/2-coded or otherwise non-binary treatment used to send every unit
+  # down the control branch, and a propensity outside [0, 1] was clipped
+  # to the trim bound and became a weight; both are refused. A missing
+  # treatment or propensity gives a missing weight.
+  ok_t <- !is.na(treat)
+  if (any(!(treat[ok_t] %in% c(0, 1)))) {
+    stop("`treat` must be coded 0/1 (got values ",
+         paste(utils::head(unique(treat[ok_t][!(treat[ok_t] %in% c(0, 1))]), 3),
+               collapse = ", "), ")", call. = FALSE)
+  }
+  ok_p <- !is.na(propensity)
+  if (any(propensity[ok_p] < 0 | propensity[ok_p] > 1)) {
+    stop("`propensity` must lie in [0, 1]", call. = FALSE)
+  }
+  out <- rep(NA_real_, length(treat))
+  keep <- ok_t & ok_p
+  if (any(keep)) {
+    out[keep] <- .Call(C_rmbl_ipw, treat[keep], propensity[keep], trim_lo,
+                       trim_hi)
+  }
+  out
 }
 
 #' Regularized incomplete gamma function (C backend)

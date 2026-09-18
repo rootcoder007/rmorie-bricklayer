@@ -78,6 +78,7 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 }
 
 .rmbl_conc_input <- function(x) {
+  x <- .rmbl_finite_input(x, "x", nonneg = TRUE)
   if (!is.numeric(x)) {
     stop("`x` must be numeric", call. = FALSE)
   }
@@ -281,7 +282,7 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 #' hurwitz_zeta(1)
 #' @export
 hurwitz_zeta <- function(s, q = 1) {
-  .rmbl_hurwitz(as.numeric(s), as.numeric(q)[1L])
+  .rmbl_hurwitz(.rmbl_num_input(s, "s"), as.numeric(q)[1L])
 }
 
 .rmbl_hurwitz <- function(s, q) {
@@ -358,6 +359,12 @@ hurwitz_zeta <- function(s, q = 1) {
 #'   corrected = cramers_v(sparse)$v)
 #' @export
 cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5) {
+  if (is.null(tbl) || !is.numeric(as.matrix(tbl)) ||
+        any(!is.finite(as.matrix(tbl))) || any(as.matrix(tbl) < 0)) {
+    stop("`tbl` must be a matrix or table of finite non-negative counts",
+      call. = FALSE
+    )
+  }
   m <- as.matrix(tbl)
   if (any(dim(m) < 2L)) {
     return(list(v = NA_real_, chisq = NA_real_, df = NA_integer_,

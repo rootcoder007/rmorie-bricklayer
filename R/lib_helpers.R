@@ -200,6 +200,7 @@ ascii_fallback <- function(x, force = FALSE) {
 #' readLines(p)
 #' @export
 write_text_fallback <- function(text, path) {
+  path <- .rmbl_string1(path, "path")
   ok <- tryCatch({
     con <- file(path, open = "w", encoding = "UTF-8")
     on.exit(close(con), add = TRUE)

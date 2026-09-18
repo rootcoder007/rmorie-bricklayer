@@ -48,6 +48,11 @@ verify_capsule <- function(capsule_dir,
                            data_file = NULL,
                            manifest_file = NULL,
                            script_file = NULL) {
+  capsule_dir <- .rmbl_string1(capsule_dir, "capsule_dir")
+  if (!dir.exists(capsule_dir)) {
+    stop("`capsule_dir` is not an existing directory: ", capsule_dir,
+         call. = FALSE)
+  }
   checks <- list()
   note <- function(check, ok, detail = "") {
     checks[[length(checks) + 1L]] <<- data.frame(

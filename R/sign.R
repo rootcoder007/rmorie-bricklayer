@@ -698,6 +698,7 @@ signing_public_key <- function(key) {
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                          deterministic = FALSE, prehash = "none") {
+  message <- .rmbl_text_input(message, "message")
   if (inherits(key, "bricklayer_oqs_key")) {
     msg <- .rmbl_sign_message(message)
     ctx <- .rmbl_fips_context(context)

@@ -62,6 +62,7 @@
 #' inline_hist(rep(5, 10))
 #' @export
 inline_hist <- function(x, bins = 10L) {
+  x <- .rmbl_num_input(x, "x")
   bins <- as.integer(bins)
   if (length(bins) != 1L || is.na(bins) || bins < 1L) {
     stop("`bins` must be a single positive integer", call. = FALSE)

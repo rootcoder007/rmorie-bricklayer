@@ -34,8 +34,9 @@ the cell then lies in \verb{[0, suppression_limit - 1]}.}
 }
 \value{
 A data frame of class \code{rmbl_bounds} with \code{value} (the
-published number, \code{NA} for a suppressed cell), \code{lower}, \code{upper} and
-\code{status} (\code{"exact"}, \code{"rounded"} or \code{"suppressed"}).
+published number, \code{NA} for a suppressed cell), \code{lower}, \code{upper}
+and \code{status}: \code{"exact"}, \code{"rounded"}, \code{"suppressed"}, or
+\code{"missing"} for an \code{NA} that carried no suppression mark.
 }
 \description{
 Administrative releases rarely publish the count that was observed.

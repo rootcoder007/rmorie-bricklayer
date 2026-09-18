@@ -254,6 +254,10 @@ manifest_restore_seed <- function(manifest) {
 #' is.na(capture_dependencies("stats")$repository)
 #' @export
 capture_dependencies <- function(packages = loadedNamespaces()) {
+  if (!is.null(packages) && !is.character(packages)) {
+    stop("`packages` must be a character vector of package names",
+         call. = FALSE)
+  }
   packages <- sort(unique(as.character(packages)))
   field <- function(d, nm) {
     if (is.null(d) || !nm %in% names(d)) return(NA_character_)

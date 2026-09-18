@@ -115,6 +115,8 @@ random_bytes <- function(n) {
 #' @export
 derive_key <- function(passphrase, salt, iterations = 100000L,
                        length = 32L) {
+  passphrase <- .rmbl_text_input(passphrase, "passphrase")
+  salt <- .rmbl_text_input(salt, "salt")
   if (!is.raw(passphrase)) {
     passphrase <- as.character(passphrase)
     if (base::length(passphrase) != 1L || is.na(passphrase)) {
@@ -191,6 +193,13 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
 #' identical(core_blake2b("abc"), core_blake2b(charToRaw("abc")))
 #' @export
 core_blake2b <- function(x, key = NULL, length = 32L) {
+  if (!is.raw(x) && !is.null(x) && any(is.na(x))) {
+    x <- as.character(x)
+    out <- rep(NA_character_, length(x))
+    ok <- !is.na(x)
+    if (any(ok)) out[ok] <- core_blake2b(x[ok], key = key, length = length)
+    return(out)
+  }
   length <- as.integer(length)
   if (base::length(length) != 1L || is.na(length) || length < 1L ||
       length > 64L) {

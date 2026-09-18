@@ -48,6 +48,30 @@ values in `int` (overflow above 2^15); it now multiplies in `uint32_t`.
 HMAC with an empty key passed a null pointer to `memcpy` for zero bytes;
 the copy is skipped.
 
+## Every export, degenerate inputs and known answers
+
+* `verify_capsule()` failed on every intact capsule: the pinned digest
+  arrives from provenance JSON as a length-1 list and was compared to the
+  computed string with `identical()`. `verify_sha256()` now coerces the
+  digest and compares case-insensitively.
+* `core_ipw_weights()` refuses a treatment that is not coded 0/1 (a 1/2
+  coding used to send every unit down the control branch) and a
+  propensity outside [0, 1] (previously clipped to the trim bound); a
+  missing treatment or propensity gives a missing weight.
+* Input contracts on the exported primitives: numeric kernels refuse
+  character, list and data-frame input instead of coercing to NA; the
+  hash functions all map `NA` to `NA`; signatures, HMAC and key derivation
+  need character or raw messages; stock-and-flow measures refuse `Inf` and
+  numeric dates; band parsers need character labels; rule constructors
+  need a column name; manifests need lists; the download, wayback,
+  revocation and capsule verifiers need non-empty paths, and
+  `verify_capsule()` an existing directory.
+* `sir()` reports `excess` only when the interval lies above one, plus
+  `deficit` and `significant`; `published_bounds()` labels a bare `NA`
+  `"missing"` instead of `"exact"`.
+* `examples/otis-mrp/analysis.R` prefers rmorie for the DML recompute, as
+  its header says, and falls back to DoubleML.
+
 ## Third stress round
 
 * `core_cor()`: the shared kernel now uses the centred two-pass formula

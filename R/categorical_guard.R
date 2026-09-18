@@ -133,6 +133,9 @@ guard_recode <- function(x, mapping, keep = character()) {
 #' guard_levels(c("White", "Black", "White"), c("White", "Black"), "White")
 #' @export
 guard_levels <- function(x, levels, reference = NULL) {
+  if (!is.character(levels) || !length(levels) || any(is.na(levels))) {
+    stop("`levels` must be a non-empty character vector", call. = FALSE)
+  }
   if (is.factor(x)) x <- as.character(x)
   stray <- setdiff(unique(x[!is.na(x)]), levels)
   if (length(stray)) {
@@ -336,6 +339,10 @@ print.bricklayer_category_audit <- function(x, ...) {
 #' )
 #' @export
 verify_recode <- function(original, recoded, declared) {
+  if (!is.atomic(original) || is.null(original) ||
+        !is.atomic(recoded) || is.null(recoded)) {
+    stop("`original` and `recoded` must be atomic vectors", call. = FALSE)
+  }
   if (is.factor(original)) original <- as.character(original)
   if (is.factor(recoded)) recoded <- as.character(recoded)
   if (length(original) != length(recoded)) {
@@ -586,6 +593,9 @@ odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
 #' guard_binary(c(0, 1, 1, 0), "treated")
 #' @export
 guard_binary <- function(x, col) {
+  if (is.null(x) || !is.atomic(x)) {
+    stop("Column `", col, "` must be an atomic vector", call. = FALSE)
+  }
   if (is.factor(x) || is.character(x)) {
     lv <- if (is.factor(x)) levels(x) else unique(as.character(x))
     stop("Column ", .rmbl_squote(col), " is categorical (",
