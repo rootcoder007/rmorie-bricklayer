@@ -35,6 +35,8 @@ articles:
   - title: Guides
     navbar: ~
     contents:
+      - categorical-integrity
+      - categorical-integrity
       - getting-started
       - capsules
       - describe
@@ -125,6 +127,46 @@ reference:
       - sha256_file
       - verify_sha256
       - core_sha256
+  - title: Categorical integrity
+    desc: >
+      Labels that cannot be swapped quietly: name-based recodes that refuse
+      anything unmapped, explicit levels, an import audit, a before/after
+      cross-tabulation proof, counts checked against what was published,
+      reported odds ratios checked under every relabelling, and a signed
+      manifest of the whole chain.
+    contents:
+      - guard_recode
+      - decode_codes
+      - guard_levels
+      - audit_categories
+      - verify_recode
+      - verify_marginals
+      - odds_ratio_check
+      - relabel
+      - decode_labelled
+      - transfer_verify
+      - relabel_forensics
+      - guard_binary
+      - recode_manifest
+      - write_recode_manifest
+  - title: Categorical integrity
+    desc: >
+      Labels that cannot be swapped quietly: name-based recodes that refuse
+      anything unmapped, explicit levels, an import audit, a before/after
+      cross-tabulation proof, counts checked against what was published,
+      reported odds ratios checked under every relabelling, and a signed
+      manifest of the whole chain.
+    contents:
+      - guard_recode
+      - decode_codes
+      - guard_levels
+      - audit_categories
+      - verify_recode
+      - verify_marginals
+      - odds_ratio_check
+      - guard_binary
+      - recode_manifest
+      - write_recode_manifest
   - title: Schema validation & synthetic data
     desc: >
       Validate a data frame against a declared schema, and build typed

@@ -1,5 +1,45 @@
 # rmoriebricklayer 0.5.1
 
+## Categorical integrity: labels that cannot be swapped quietly
+
+The Ontario Human Rights Commission's 2020 report *A Disparate Impact*
+stated that Black civilians in Toronto were 30 to 58 times as likely as
+White civilians to experience police use of force; the corrected figure
+(OHRC correction of 26 January 2023, after Maria Jung's independent review)
+is 4 to 5 times, because the four race codes had been rotated during a
+transfer from SPSS to R (White read as Black, Black as other racialized,
+other racialized as unknown, unknown as White), and the transfer took the
+blame for two and a half years. Thirteen functions make that
+class of error impossible to commit silently and easy to name after the
+fact: `guard_recode()` maps by name and refuses anything unmapped,
+`decode_codes()` decodes imported integer codes against an explicit
+dictionary, `guard_levels()` fixes levels and the reference group,
+`audit_categories()` flags the import hazards, `verify_recode()` proves
+a recode by cross-tabulation, `verify_marginals()` checks recoded counts
+against published counts and names the label permutation that would
+explain a mismatch, `odds_ratio_check()` recomputes reported odds ratios
+under every relabelling of the table and names the one that reproduces
+them, `guard_binary()` stops a factor reaching a numeric treatment slot,
+and `recode_manifest()` with `write_recode_manifest()` and
+`verify_recode_manifest()` records the chain, signs it with a
+[capsule_sign()] key, and verifies it later. The same guards ship in
+rmorie and morie (both arms), verified three-way. New vignette:
+*Categorical integrity*.
+
+The transfer itself is guarded and, when blamed, examined. `relabel()`
+maps old labels to new ones BY NAME and refuses a positional vector of
+labels, which is the one-line idiom (`levels(f) <- sort(labels)`) that
+produces exactly the documented rotation from codes 1 to 4.
+`decode_labelled()` decodes a haven-style labelled import by code, with
+the levels in code order. `transfer_verify()` takes what the source
+program printed (its code book and its frequency table) and refuses an
+import that does not reproduce both. `relabel_forensics()` names which
+mechanical step (alphabetical, reversed, rotated, frequency-ordered,
+string-sorted codes) reproduces an observed permutation, so a transfer can
+be exonerated, or not, from the code book alone: no import routine sorts
+value labels onto codes. `audit_categories()` also flags code-prefixed
+labels such as "1. White".
+
 ## trend_test() no longer stalls beyond a few hundred periods
 
 The Sen confidence interval enumerated every pairwise slope in an R

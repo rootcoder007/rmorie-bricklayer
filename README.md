@@ -42,6 +42,15 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Integrity** — `sha256_file()` / `verify_sha256()` hash and verify
   downloads; `download_data()` / `friendly_download()` fetch with a Wayback
   Machine fallback.
+- **Categorical integrity** — `guard_recode()`, `decode_codes()`,
+  `guard_levels()`, `audit_categories()`, `verify_recode()`,
+  `verify_marginals()`, `odds_ratio_check()`, `relabel()`,
+  `decode_labelled()`, `transfer_verify()`, `relabel_forensics()` and a
+  signed `recode_manifest()`: recodes that refuse anything unmapped or
+  positional, an SPSS/Stata/SAS import checked against the source code
+  book and frequency table, reported odds ratios recomputed under every
+  relabelling, and the mechanical step behind a permutation named, so a
+  swapped label is fixed on the day, not blamed on the software.
 - **Schema validation** — `infer_schema()` derives a pinnable schema from
   data you trust; `validate_schema()` checks names, types, ranges, value
   sets and missingness against it; `rule()` and the `rule_*()` library
