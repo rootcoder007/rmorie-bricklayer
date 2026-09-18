@@ -91,6 +91,46 @@ random halves and reports the false-alarm rate per column.
 drift_calibrate(otis, n = 10)
 ```
 
+## Stock and flow
+
+A count of people in confinement on a day is a stock; the people who pass
+through in a year are a flow. Lakner's decomposition ties them exactly:
+average daily population is person-days over the days in the period,
+average length of stay is person-days over the people served, and the
+identity `adp = admissions * alos / t` means a change in days must
+multiply out of a change in people and a change in stay. `stock_flow()`
+reports both sides and checks the identity.
+
+```{r}
+sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 period = c(2022, 2023, 2024), t = 365)
+sf
+```
+
+A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+`adp()`, `alos()` and `admissions()` give the single measures.
+
+## Stock and flow
+
+A count of people in confinement on a day is a stock; the people who pass
+through in a year are a flow. Lakner's decomposition ties them exactly:
+average daily population is person-days over the days in the period,
+average length of stay is person-days over the people served, and the
+identity `adp = admissions * alos / t` means a change in days must
+multiply out of a change in people and a change in stay. `stock_flow()`
+reports both sides and checks the identity.
+
+```{r}
+sf <- stock_flow(days = c(21900, 23725, 20440), people = c(300, 325, 280),
+                 period = c(2022, 2023, 2024), t = 365)
+sf
+```
+
+A population that rose while stays shortened, or fell while stays
+lengthened, reads differently from one where both moved together;
+`adp()`, `alos()` and `admissions()` give the single measures.
+
 ## Record it
 
 `report_analysis()` writes the whole analysis as Markdown or a single
