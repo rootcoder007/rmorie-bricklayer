@@ -304,6 +304,10 @@ bricklayer_json_base64url_enc <- function(input) {
 #' @rdname rmbl_base64
 #' @export
 bricklayer_json_base64url_dec <- function(input) {
+  input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
+  if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
+    stop("`input` is not base64url text", call. = FALSE)
+  }
   text <- gsub("[\r\n]", "", chartr("-_", "+/", input))[[1]]
   mod <- nchar(text) %% 4L
   if (mod > 0L) text <- paste0(text, strrep("=", 4L - mod))
@@ -659,7 +663,9 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @param factor As in jsonlite.
 #' @param complex As in jsonlite.
 #' @param raw As in jsonlite.
-#' @param null As in jsonlite.
+#' @param null As in jsonlite: `NULL` is written as `{}` by default
+#'   (a round trip gives an empty list). Pass `null = "null"` for a
+#'   JSON null; [bricklayer_json_serialize] round-trips `NULL` exactly.
 #' @param na As in jsonlite.
 #' @param auto_unbox As in jsonlite.
 #' @param digits As in jsonlite.

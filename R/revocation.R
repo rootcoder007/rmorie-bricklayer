@@ -51,6 +51,7 @@
 #' }
 #' @export
 revocation_fetch <- function(path, timeout = 10) {
+  path <- .rmbl_string1(path, "path")
   .rmbl_revocation_fetch(path, timeout)
 }
 

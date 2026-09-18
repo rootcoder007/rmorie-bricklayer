@@ -39,7 +39,9 @@ bricklayer_json_to_json(
 
 \item{raw}{As in jsonlite.}
 
-\item{null}{As in jsonlite.}
+\item{null}{As in jsonlite: \code{NULL} is written as \code{{}} by default
+(a round trip gives an empty list). Pass \code{null = "null"} for a
+JSON null; \link{bricklayer_json_serialize} round-trips \code{NULL} exactly.}
 
 \item{na}{As in jsonlite.}
 

@@ -193,6 +193,8 @@ resolve_via_ckan_search <- function(provenance) {
 #' }
 #' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
+  url <- .rmbl_string1(url, "url")
+  target_path <- .rmbl_string1(target_path, "target_path")
   utils::download.file(url, target_path, mode = mode, quiet = quiet)
   invisible(target_path)
 }
@@ -218,6 +220,7 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #' }
 #' @export
 wayback_snapshot_url <- function(url, timestamp = NULL) {
+  url <- .rmbl_string1(url, "url")
   api <- paste0(
     "http://archive.org/wayback/available?url=",
     utils::URLencode(url, reserved = TRUE)
@@ -265,6 +268,8 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' }
 #' @export
 friendly_download <- function(url, target_path, attempt_wayback = NULL) {
+  url <- .rmbl_string1(url, "url")
+  target_path <- .rmbl_string1(target_path, "target_path")
   result <- tryCatch({
     utils::download.file(url, target_path, mode = "wb", quiet = FALSE)
     TRUE
@@ -341,8 +346,15 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #' @export
 verify_sha256 <- function(path, expected_sha) {
   actual <- sha256_file(path)
-  list(actual = actual, expected = expected_sha,
-       match  = identical(actual, expected_sha))
+  # provenance JSON hands the pinned digest over as a length-1 list;
+  # identical() on list-vs-character never matched, so every intact
+  # capsule reported a mismatch between two identical strings.
+  expected <- tolower(trimws(as.character(unlist(expected_sha))))
+  if (length(expected) != 1L || is.na(expected)) {
+    stop("`expected_sha` must be a single SHA-256 hex string", call. = FALSE)
+  }
+  list(actual = actual, expected = expected,
+       match  = identical(tolower(actual), expected))
 }
 
 ## ----- Schema validation -----
@@ -422,6 +434,9 @@ verify_sha256 <- function(path, expected_sha) {
 #' length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
 #' @export
 validate_schema <- function(df_raw, provenance) {
+  if (!is.data.frame(df_raw)) {
+    stop("`df_raw` must be a data frame", call. = FALSE)
+  }
   issues <- list()
   if (is.null(provenance) || is.null(provenance$schema)) return(issues)
   sch <- provenance$schema

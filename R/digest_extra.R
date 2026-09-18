@@ -37,7 +37,11 @@
 #' @export
 core_sha512 <- function(x) {
   if (is.raw(x)) return(.Call(C_rmbl_sha512, x))
-  .Call(C_rmbl_sha512, as.character(x))
+  x <- as.character(x)
+  out <- rep(NA_character_, length(x))
+  ok <- !is.na(x)
+  if (any(ok)) out[ok] <- .Call(C_rmbl_sha512, x[ok])
+  out
 }
 
 #' CRC-32 checksum (C backend)
@@ -76,7 +80,11 @@ core_sha512 <- function(x) {
 #' @export
 core_crc32 <- function(x) {
   if (is.raw(x)) return(.Call(C_rmbl_crc32, x))
-  .Call(C_rmbl_crc32, as.character(x))
+  x <- as.character(x)
+  out <- rep(NA_real_, length(x))
+  ok <- !is.na(x)
+  if (any(ok)) out[ok] <- .Call(C_rmbl_crc32, x[ok])
+  out
 }
 
 #' Keyed digest and constant-time comparison (C backend)
@@ -129,6 +137,8 @@ core_crc32 <- function(x) {
 #' @name rmbl_keyed_digest
 #' @export
 core_hmac_sha256 <- function(key, message) {
+  key <- .rmbl_text_input(key, "key")
+  message <- .rmbl_text_input(message, "message")
   if (!is.raw(key)) {
     key <- as.character(key)
     if (length(key) != 1L || is.na(key)) {

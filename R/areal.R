@@ -68,8 +68,8 @@
 #' expected_counts(d$n, d$pop, d$region, strata = d$age)
 #' @export
 expected_counts <- function(counts, population, area, strata = NULL) {
-  counts <- as.numeric(counts)
-  population <- as.numeric(population)
+  counts <- .rmbl_finite_input(counts, "counts", nonneg = TRUE)
+  population <- .rmbl_finite_input(population, "population", nonneg = TRUE)
   area <- as.character(area)
   n <- length(counts)
   if (length(population) != n || length(area) != n) {
@@ -121,7 +121,8 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' @param area Optional labels.
 #' @param conf_level Confidence level.
 #' @return A data frame with `observed`, `expected`, `sir`,
-#' `lower`, `upper` and `excess` -- whether the interval
+#' `lower`, `upper`, `excess` (the interval lies above one), `deficit`
+#'   (the interval lies below one) and `significant` -- whether the interval
 #' excludes one.
 #' @details
 #' The interval is the exact Poisson one, from the relation between the
@@ -144,8 +145,10 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' sir(3, 5)
 #' @export
 sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
-  observed <- as.numeric(observed)
-  expected <- as.numeric(expected)
+  observed <- .rmbl_finite_input(observed, "observed", nonneg = TRUE,
+                                 min_n = 1L)
+  expected <- .rmbl_finite_input(expected, "expected", nonneg = TRUE,
+                                 min_n = 1L)
   if (length(expected) == 1L) expected <- rep(expected, length(observed))
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
@@ -165,7 +168,9 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   hi <- stats::qgamma(1 - a / 2, shape = observed + 1) / expected
   out <- data.frame(observed = observed, expected = expected,
                     sir = observed / expected, lower = lo, upper = hi,
-                    excess = lo > 1 | hi < 1,
+                    excess = lo > 1,
+                    deficit = hi < 1,
+                    significant = lo > 1 | hi < 1,
                     stringsAsFactors = FALSE)
   if (!is.null(area)) {
     out <- cbind(area = as.character(area), out, stringsAsFactors = FALSE)
@@ -219,7 +224,7 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #' @export
 eb_rates <- function(observed, expected, area = NULL) {
   observed <- as.numeric(observed)
-  expected <- as.numeric(expected)
+  expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
   }
@@ -302,7 +307,7 @@ eb_rates <- function(observed, expected, area = NULL) {
 #' @export
 funnel_limits <- function(expected, target = 1,
                           levels = c(0.95, 0.998)) {
-  expected <- as.numeric(expected)
+  expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
   if (any(expected <= 0, na.rm = TRUE)) {
     stop("`expected` must be positive", call. = FALSE)
   }

@@ -30,7 +30,7 @@
 #' @useDynLib rmoriebricklayer, .registration = TRUE
 #' @name rmbl_core_stats
 #' @export
-core_mean <- function(x) .Call(C_rmbl_mean, as.numeric(x))
+core_mean <- function(x) .Call(C_rmbl_mean, .rmbl_num_input(x, "x"))
 
 # The overflow fallback of core_mean(): a running mean that cannot
 # overflow on finite input. core_mean() reaches it only where long double
@@ -39,11 +39,13 @@ core_mean <- function(x) .Call(C_rmbl_mean, as.numeric(x))
 
 #' @rdname rmbl_core_stats
 #' @export
-core_var <- function(x) .Call(C_rmbl_var, as.numeric(x))
+core_var <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
 
 #' @rdname rmbl_core_stats
 #' @export
-core_cor <- function(x, y) .Call(C_rmbl_cor, as.numeric(x), as.numeric(y))
+core_cor <- function(x, y) {
+  .Call(C_rmbl_cor, .rmbl_num_input(x, "x"), .rmbl_num_input(y, "y"))
+}
 
 #' Normal density (C backend)
 #'
@@ -70,7 +72,8 @@ core_cor <- function(x, y) .Call(C_rmbl_cor, as.numeric(x), as.numeric(y))
 #' all.equal(core_normal_pdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 #' @export
 core_normal_pdf <- function(x, mean = 0, sd = 1) {
-  .Call(C_rmbl_normal_pdf, as.numeric(x), as.numeric(mean), as.numeric(sd))
+  .Call(C_rmbl_normal_pdf, .rmbl_num_input(x, "x"), as.numeric(mean),
+        as.numeric(sd))
 }
 
 #' SHA-256 hex digest (C backend)
