@@ -92,7 +92,7 @@ an error.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">random_bytes</span><span class="op">(</span><span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 93 2c b9 0d 31 db 1a ad</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4e ea 22 b4 ef 0f c6 48</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Independent between calls, unlike a seeded generator.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">random_bytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span>, <span class="fu">random_bytes</span><span class="op">(</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -108,7 +108,7 @@ an error.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># As hex, for a seed argument.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu">random_bytes</span><span class="op">(</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "01d71554"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "4a38eaf1"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

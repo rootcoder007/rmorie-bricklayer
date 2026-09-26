@@ -2,6 +2,8 @@
 
 ## rmoriebricklayer 0.5.1
 
+CRAN release: 2026-09-21
+
 ### Categorical integrity: labels that cannot be swapped quietly
 
 The Ontario Human Rights Commission’s 2020 report *A Disparate Impact*

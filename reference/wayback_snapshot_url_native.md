@@ -38,7 +38,7 @@ try(wayback_snapshot_url_native(""))     # empty url -> error
 # network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wayback_snapshot_url_native("https://www.r-project.org/")
-#> [1] "https://web.archive.org/web/20260918022217/https://www.r-project.org//"
+#> [1] "https://web.archive.org/web/20260922043044/https://www.r-project.org/"
 
 # A shorter timeout for a quick lookup.
 wayback_snapshot_url_native("https://cloud.r-project.org/", timeout = 10)
