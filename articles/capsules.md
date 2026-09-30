@@ -166,7 +166,7 @@ summary_path <- write_summary_txt(
 cat(readLines(summary_path)[7:12], sep = "\n")
 #> Project:   demo-study
 #> Author:    A. Author
-#> When:      2026-09-26 07:26:53 UTC
+#> When:      2026-09-30 06:11:47 UTC
 #> OS:        Linux
 #> R:         R version 4.6.1 (2026-06-24)
 #> Mode:      SYNTHETIC (not real data -- pipeline check only)
