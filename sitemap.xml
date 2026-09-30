@@ -28,11 +28,16 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_siu.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.html</loc></url>
@@ -104,6 +109,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/index.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/inline_hist.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_decapsulate.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.html</loc></url>

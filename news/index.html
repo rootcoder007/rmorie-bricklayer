@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,19 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.2" id="rmoriebricklayer-052">rmoriebricklayer 0.5.2<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-052"></a></h2>
+<div class="section level3">
+<h3 id="a-language-model-route-of-its-own-and-a-command-line-0-5-2">A language-model route of its own, and a command line<a class="anchor" aria-label="anchor" href="#a-language-model-route-of-its-own-and-a-command-line-0-5-2"></a></h3>
+<ul><li>
+<code><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code>, <code><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login()</a></code>, <code><a href="../reference/bricklayer_llm_logout.html">bricklayer_llm_logout()</a></code> and <code><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status()</a></code> talk to the hosted MORIE LLM tier at <a href="https://llm.rmorie.com" class="external-link uri">https://llm.rmorie.com</a> through the package’s own libcurl POST. Sign in with the GitHub device flow, a code sent to your email, or a key you already have; the key is kept in <code>$XDG_CONFIG_HOME/morie/credentials.json</code> (owner-only, written only by an explicit <code>login</code>), the file <code>morie</code> and <code>rmorie</code> read as well, so one sign-in serves all three. Nothing is imported from either.</li>
+<li>
+<code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> answers through that route when a key is stored and only then falls back to the optional rmorie-cli agent; it recognises the launcher that the rmorie R package installs under the same command name (which has no <code>agent</code> verb) and skips it.</li>
+<li>
+<code><a href="../reference/bricklayer_cli.html">bricklayer_cli()</a></code> and the <code>inst/bin/rmoriebricklayer</code> launcher give the package a shell command; <code><a href="../reference/install_cli.html">install_cli()</a></code> links it into <code>~/.local/bin</code> (a <code>.cmd</code> wrapper on Windows), only when called. Verbs: <code>login</code>, <code>logout</code>, <code>doctor</code>, <code>ask</code>, <code>bundle</code>, <code>functions</code>, <code>describe</code>, <code>examples</code>, <code>version</code>, <code>help</code>.</li>
+<li>The POST primitive takes extra headers (bearer authentication); Docker images get semver tags and <code>latest</code> follows release tags.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.1" id="rmoriebricklayer-051">rmoriebricklayer 0.5.1<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-051"></a></h2><p class="text-muted">CRAN release: 2026-09-21</p>
 <div class="section level3">

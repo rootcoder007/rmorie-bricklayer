@@ -109,8 +109,27 @@ verify it later so an analysis reproduces from the same inputs.
   : Write a Manifest to JSON
 - [`write_summary_txt()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_summary_txt.md)
   : Write a Plain-Language Run Summary
+
+## Language model and command line
+
+The hosted MORIE LLM tier at llm.rmorie.com, reached through rmorie’s
+provider chain when that package is installed and natively otherwise;
+the rmoriebricklayer shell command.
+
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   : Agent-assisted reproducibility-bundle help
+- [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+  : Ask the hosted MORIE language model
+- [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
+  : Sign in to the hosted MORIE language model
+- [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
+  : Forget the hosted MORIE language-model key
+- [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+  : Report the language-model routes available from this machine
+- [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
+  : Run the rmoriebricklayer command line
+- [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  : Install the rmoriebricklayer command-line launcher
 
 ## JSON (native codec)
 

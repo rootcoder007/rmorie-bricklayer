@@ -1,5 +1,35 @@
 # Changelog
 
+## rmoriebricklayer 0.5.2
+
+### A language-model route of its own, and a command line
+
+- [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md),
+  [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md),
+  [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
+  and
+  [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+  talk to the hosted MORIE LLM tier at <https://llm.rmorie.com> through
+  the package’s own libcurl POST. Sign in with the GitHub device flow, a
+  code sent to your email, or a key you already have; the key is kept in
+  `$XDG_CONFIG_HOME/morie/credentials.json` (owner-only, written only by
+  an explicit `login`), the file `morie` and `rmorie` read as well, so
+  one sign-in serves all three. Nothing is imported from either.
+- [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  answers through that route when a key is stored and only then falls
+  back to the optional rmorie-cli agent; it recognises the launcher that
+  the rmorie R package installs under the same command name (which has
+  no `agent` verb) and skips it.
+- [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
+  and the `inst/bin/rmoriebricklayer` launcher give the package a shell
+  command;
+  [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  links it into `~/.local/bin` (a `.cmd` wrapper on Windows), only when
+  called. Verbs: `login`, `logout`, `doctor`, `ask`, `bundle`,
+  `functions`, `describe`, `examples`, `version`, `help`.
+- The POST primitive takes extra headers (bearer authentication); Docker
+  images get semver tags and `latest` follows release tags.
+
 ## rmoriebricklayer 0.5.1
 
 CRAN release: 2026-09-21

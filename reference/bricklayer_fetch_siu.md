@@ -4,9 +4,13 @@ Downloads the HTML of one Ontario Special Investigations Unit (SIU)
 director's report to `dest`, via
 [`bricklayer_fetch`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
 (live URL with a Wayback Machine fallback). This is the fetch step of
-the open SIU corpus pipeline: pair it with the SIU parser in rmorie (or
-the standalone `siu` C++ package) to rebuild the full director's-report
-corpus yourself, then audit it with the multi-agent panel.
+the open SIU corpus pipeline: pair it with the SIU parser in this
+package
+([`bricklayer_fetch_parse_siu`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md)
+fetches and parses in one call; the compiled core under `src/siu_*.cpp`
+is the canonical implementation, and rmorie links to the same core) to
+rebuild the full director's-report corpus yourself, then audit it with
+the multi-agent panel.
 
 ## Usage
 
