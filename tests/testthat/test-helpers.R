@@ -31,6 +31,8 @@ test_that("write_text_fallback writes a readable file for accented input", {
 })
 
 test_that("agent_bundle validates its request and reports a missing binary", {
+  Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
+  on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
   expect_error(agent_bundle(""), "nzchar")
   expect_error(agent_bundle(c("a", "b")), "length")
 
@@ -38,7 +40,7 @@ test_that("agent_bundle validates its request and reports a missing binary", {
   old_path <- Sys.getenv("PATH")
   on.exit(Sys.setenv(PATH = old_path), add = TRUE)
   Sys.setenv(PATH = tempdir())
-  expect_match(agent_bundle("scaffold demo bundle"), "rmorie CLI not found")
+  expect_match(agent_bundle("scaffold demo bundle"), "No language-model route")
 })
 
 test_that(".to_ascii_fallback (no-stringi path) transliterates deterministically", {

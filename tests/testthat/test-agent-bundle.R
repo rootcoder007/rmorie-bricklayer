@@ -1,14 +1,36 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-test_that("agent_bundle() returns an install hint when the CLI is absent", {
+test_that("agent_bundle() returns a setup hint when no route is available", {
+  Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
+  on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
   testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = ""),
                                   .package = "base")
-  expect_match(agent_bundle("hello"), "rmorie CLI not found")
+  expect_match(agent_bundle("hello"), "No language-model route")
+  expect_match(agent_bundle("hello"), "llm.rmorie.com", fixed = TRUE)
+  expect_match(agent_bundle("hello", backend = "hosted"), "No key for the hosted")
+  expect_error(agent_bundle("hello", backend = "gemini"), "should be one of")
+})
+
+test_that(".rmorie_cli_binary() ignores the launcher of the rmorie R package", {
+  dir <- tempfile("launcher-")
+  dir.create(dir)
+  bin <- file.path(dir, "rmorie")
+  writeLines(c("#!/bin/sh",
+               "exec Rscript -e 'getNamespace(\"rmorie\")$morie_cli()' --args \"$@\""),
+             bin)
+  testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = bin),
+                                  .package = "base")
+  expect_equal(.rmorie_cli_binary(), "")
+  writeLines(c("#!/bin/sh", "printf '%s\\n' \"$@\""), bin)
+  expect_equal(unname(.rmorie_cli_binary()), bin)
 })
 
 test_that("agent_bundle() shell-quotes the request, backend and model", {
   skip_on_os("windows")
-  dir <- tempfile("fakecli-"); dir.create(dir)
+  Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
+  on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
+  dir <- tempfile("fakecli-")
+  dir.create(dir)
   bin <- file.path(dir, "rmorie")
   writeLines(c("#!/bin/sh", "printf '%s\\n' \"$@\""), bin)
   Sys.chmod(bin, "0755")

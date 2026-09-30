@@ -5,10 +5,12 @@
 #' Downloads the HTML of one Ontario Special Investigations Unit (SIU)
 #' director's report to \code{dest}, via \code{\link{bricklayer_fetch}}
 #' (live URL with a Wayback Machine fallback). This is the fetch step of
-#' the open SIU corpus pipeline: pair it with the SIU parser in
-#' \pkg{rmorie} (or the standalone \code{siu} C++ package) to rebuild the
-#' full director's-report corpus yourself, then audit it with the
-#' multi-agent panel.
+#' the open SIU corpus pipeline: pair it with the SIU parser in this
+#' package (\code{\link{bricklayer_fetch_parse_siu}} fetches and parses
+#' in one call; the compiled core under \code{src/siu_*.cpp} is the
+#' canonical implementation, and \pkg{rmorie} links to the same core) to
+#' rebuild the full director's-report corpus yourself, then audit it with
+#' the multi-agent panel.
 #'
 #' @param drid Director's-report id -- the \code{drid=} query
 #' parameter (integer or integer-like scalar).
