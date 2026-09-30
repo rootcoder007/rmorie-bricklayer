@@ -398,7 +398,11 @@ test_that("the Rd database falls back to the man directory and install_cli copie
   dir <- tempfile("bin-")
   target <- suppressMessages(install_cli(dir = dir))
   expect_true(file.exists(target))
-  expect_false(!is.na(Sys.readlink(target)) && nzchar(Sys.readlink(target)))
-  expect_match(readLines(target)[1], "^#!/bin/sh")
+  if (.Platform$OS.type == "windows") {
+    expect_match(readLines(target)[1], "^@echo off")  # the .cmd wrapper
+  } else {
+    expect_false(!is.na(Sys.readlink(target)) && nzchar(Sys.readlink(target)))
+    expect_match(readLines(target)[1], "^#!/bin/sh")
+  }
   unlink(dir, recursive = TRUE)
 })
