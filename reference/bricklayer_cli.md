@@ -16,9 +16,13 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
   report the language-model routes available here
 
-- `ask PROMPT...`:
+- `models`:
 
-  send a prompt to the model and print the reply
+  list the models the hosted tier offers your key (default marked)
+
+- `ask [--model NAME] PROMPT...`:
+
+  send a prompt to the model (or the named one) and print the reply
 
 - `bundle REQUEST...`:
 
@@ -71,7 +75,7 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.2
+#> rmoriebricklayer 0.5.3
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]
 #> 
@@ -79,7 +83,8 @@ bricklayer_cli("help")
 #>         [--code CODE] [--no-browser]
 #>   logout                                    forget the hosted key
 #>   doctor                                    language-model routes available here
-#>   ask PROMPT...                             ask the model
+#>   models                                    models the hosted tier offers your key
+#>   ask [--model NAME] PROMPT...              ask the model
 #>   bundle REQUEST...                         agent_bundle() from the shell
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function

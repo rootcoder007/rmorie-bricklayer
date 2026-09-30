@@ -126,6 +126,8 @@ the rmoriebricklayer shell command.
   : Forget the hosted MORIE language-model key
 - [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
   : Report the language-model routes available from this machine
+- [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
+  : Models offered by the hosted MORIE LLM tier
 - [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
   : Run the rmoriebricklayer command line
 - [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)

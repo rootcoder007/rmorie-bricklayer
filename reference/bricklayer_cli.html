@@ -12,8 +12,12 @@ forget the hosted key
 doctor
 report the language-model routes available here
 
-ask PROMPT...
-send a prompt to the model and print the
+models
+list the models the hosted tier offers your key
+(default marked)
+
+ask [--model NAME] PROMPT...
+send a prompt to the model (or the named one) and print the
 reply
 
 bundle REQUEST...
@@ -52,8 +56,12 @@ forget the hosted key
 doctor
 report the language-model routes available here
 
-ask PROMPT...
-send a prompt to the model and print the
+models
+list the models the hosted tier offers your key
+(default marked)
+
+ask [--model NAME] PROMPT...
+send a prompt to the model (or the named one) and print the
 reply
 
 bundle REQUEST...
@@ -87,7 +95,7 @@ this list
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,8 +146,12 @@ you paste with <code>--token</code> (prompts when KEY is omitted)</p></dd>
 <dt><code>doctor</code></dt>
 <dd><p>report the language-model routes available here</p></dd>
 
-<dt><code>ask PROMPT...</code></dt>
-<dd><p>send a prompt to the model and print the
+<dt><code>models</code></dt>
+<dd><p>list the models the hosted tier offers your key
+(default marked)</p></dd>
+
+<dt><code>ask [--model NAME] PROMPT...</code></dt>
+<dd><p>send a prompt to the model (or the named one) and print the
 reply</p></dd>
 
 <dt><code>bundle REQUEST...</code></dt>
@@ -192,7 +204,7 @@ console).</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"version"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.3</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"help"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -200,7 +212,8 @@ console).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--code CODE] [--no-browser]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   logout                                    forget the hosted key</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   doctor                                    language-model routes available here</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ask PROMPT...                             ask the model</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   models                                    models the hosted tier offers your key</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ask [--model NAME] PROMPT...              ask the model</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bundle REQUEST...                         agent_bundle() from the shell</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   functions [PATTERN]                       exported functions and their titles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   describe NAME                             help page of one function</span>

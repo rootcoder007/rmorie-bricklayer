@@ -1,5 +1,19 @@
 # Changelog
 
+## rmoriebricklayer 0.5.3
+
+### See what you can ask
+
+- [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
+  returns the models the hosted MORIE tier offers your key (through the
+  package’s own libcurl GET), with the default
+  [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+  would use as an attribute.
+- `rmoriebricklayer models` prints that list (default marked);
+  `rmoriebricklayer doctor` names the models on its hosted line;
+  `rmoriebricklayer ask --model NAME PROMPT` picks one for a single
+  call.
+
 ## rmoriebricklayer 0.5.2
 
 ### A language-model route of its own, and a command line
