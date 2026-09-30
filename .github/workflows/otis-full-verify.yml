@@ -45,6 +45,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
+          # Enhances (rmorie, r-universe only) must not be installed here
+          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
           packages: ${{ steps.pkgs.outputs.list }}
 
       # 29 OTIS CSVs (14 MB), the Statistics Canada population table

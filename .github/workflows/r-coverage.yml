@@ -37,6 +37,8 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          # Enhances (rmorie, r-universe only) must not be installed here
+          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
           extra-packages: any::covr, any::xml2, any::roxygen2
           cache: 'always'
           cache-version: 1
