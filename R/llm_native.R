@@ -152,7 +152,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                        headers = paste("Authorization: Bearer", key))
   if (res$status != 200L) .bl_reply_error(res, "the hosted MORIE LLM tier")
   txt <- res$json$choices[[1L]]$message$content
-  if (!is.character(txt) || !length(txt)) {
+  if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
     stop("the gateway returned no text", call. = FALSE)
   }
   paste(txt, collapse = "\n")

@@ -240,10 +240,12 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   if (!nzchar(src)) stop("the launcher is missing from this installation")
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   if (.Platform$OS.type == "windows") {
+    # nocov start -- the Windows wrapper; the coverage runner is Linux
     target <- file.path(dir, paste0(name, ".cmd"))
     writeLines(paste0("@echo off\r\nRscript --vanilla -e ",
                       "\"rmoriebricklayer::bricklayer_cli()\" --args %*"),
                target)
+    # nocov end
   } else {
     target <- file.path(dir, name)
     if (file.exists(target) || !is.na(Sys.readlink(target))) unlink(target)
