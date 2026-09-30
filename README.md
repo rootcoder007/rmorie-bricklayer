@@ -2,6 +2,8 @@
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/rmoriebricklayer)](https://CRAN.R-project.org/package=rmoriebricklayer)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/grand-total/rmoriebricklayer)](https://cran.r-project.org/package=rmoriebricklayer)
+[![CRAN downloads last month](https://cranlogs.r-pkg.org/badges/last-month/rmoriebricklayer)](https://cran.r-project.org/package=rmoriebricklayer)
 [![R-CMD-check](https://github.com/rootcoder007/rmorie-bricklayer/actions/workflows/r-pkg-check.yml/badge.svg)](https://github.com/rootcoder007/rmorie-bricklayer/actions/workflows/r-pkg-check.yml)
 [![Codecov test coverage](https://codecov.io/gh/rootcoder007/rmorie-bricklayer/graph/badge.svg)](https://app.codecov.io/gh/rootcoder007/rmorie-bricklayer)
 [![Project Status: Active](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
