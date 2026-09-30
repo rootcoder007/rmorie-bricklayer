@@ -189,7 +189,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       823824ae3b0be57bf1365c0e240ae94b35a11584e62a00a5b99cace904257989
+#>   root       67fd5bc9b1b037c67fcfa3ce0db8d53342d774599dcc9f79b13540249614b5eb
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -200,8 +200,8 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       823824ae3b0be57bf1365c0e240ae94b35a11584e62a00a5b99cace904257989
-#>   signature  8eb5d8c8afcd1798c4e1e8eaf70f0978... (2144 bytes)
+#>   root       67fd5bc9b1b037c67fcfa3ce0db8d53342d774599dcc9f79b13540249614b5eb
+#>   signature  58288cbca0e85325f478adca5c4b7255... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 ```
