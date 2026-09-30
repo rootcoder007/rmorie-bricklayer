@@ -91,7 +91,7 @@ agent_bundle <- function(request, model = NULL, backend = "auto") {
 # The rmorie route, in one small helper so tests can stand in for it
 # without a network or an installed rmorie.
 .rmorie_ask <- function(prompt, model = NULL) {
-  ans <- tryCatch(rmorie::morie_llm_ask(prompt, model = model),
+  ans <- tryCatch(.bl_rmorie("morie_llm_ask")(prompt, model = model),
                   error = function(e) NULL)
   if (is.null(ans)) return(NULL)
   paste(as.character(ans), collapse = "\n")

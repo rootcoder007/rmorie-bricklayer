@@ -68,7 +68,10 @@
         headers)
 }
 
+# rmorie is an Enhances (it lives on r-universe, not CRAN, so nothing may
+# try to install it during a check); its functions are looked up by name.
 .bl_has_rmorie <- function() requireNamespace("rmorie", quietly = TRUE)
+.bl_rmorie <- function(name) getExportedValue("rmorie", name)
 
 #' Ask the hosted MORIE language model
 #'
@@ -98,10 +101,10 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                                system_prompt = NULL) {
   stopifnot(is.character(prompt), length(prompt) == 1L, nzchar(prompt))
   if (.bl_has_rmorie()) {
+    ask <- .bl_rmorie("morie_llm_ask")
     return(paste(as.character(
-      rmorie::morie_llm_ask(prompt, model = model,
-                            system_prompt = system_prompt,
-                            timeout = timeout)), collapse = "\n"))
+      ask(prompt, model = model, system_prompt = system_prompt,
+          timeout = timeout)), collapse = "\n"))
   }
   .bl_hosted_ask(prompt, model = model, timeout = timeout,
                  system_prompt = system_prompt)
@@ -181,7 +184,8 @@ bricklayer_llm_login <- function(token = NULL, email = NULL) {
     return(invisible(token))
   }
   if (.bl_has_rmorie()) {
-    return(invisible(rmorie::morie_llm_login(email = email)))
+    login <- .bl_rmorie("morie_llm_login")
+    return(invisible(login(email = email)))
   }
   stop("bricklayer_llm_login() without a token needs the rmorie package ",
        "for the GitHub or email sign-in. Either install rmorie ",

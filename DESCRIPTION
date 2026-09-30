@@ -61,10 +61,10 @@ Suggests:
     openssl,
     pkgdown,
     rmarkdown,
-    rmorie,
     sf,
     stringi,
     testthat (>= 3.0.0)
+Enhances: rmorie
 VignetteBuilder: knitr
 Additional_repositories: https://rootcoder007.r-universe.dev
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
