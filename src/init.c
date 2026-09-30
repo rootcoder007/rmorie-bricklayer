@@ -90,6 +90,7 @@ extern SEXP C_rmbl_ec_order(SEXP);
 
 /* rmbl_asn1.cpp: DER parsing and the RSA operation, for RFC 3161 */
 extern SEXP C_rmbl_http_post(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_http_get(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_der_parse(SEXP);
 extern SEXP C_rmbl_rsa_recover(SEXP, SEXP, SEXP);
 
@@ -266,6 +267,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_ec_mul",             (DL_FUNC) &C_rmbl_ec_mul,             2},
     {"C_rmbl_ec_order",           (DL_FUNC) &C_rmbl_ec_order,           1},
     {"C_rmbl_http_post", (DL_FUNC) &C_rmbl_http_post, 5},
+    {"C_rmbl_http_get",  (DL_FUNC) &C_rmbl_http_get,  3},
     {"C_rmbl_der_parse",         (DL_FUNC) &C_rmbl_der_parse,         1},
     {"C_rmbl_rsa_recover",       (DL_FUNC) &C_rmbl_rsa_recover,       3},
     {"C_rmbl_mlkem_sizes",       (DL_FUNC) &C_rmbl_mlkem_sizes,       1},

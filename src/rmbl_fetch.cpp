@@ -105,6 +105,35 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     return (rc == CURLE_OK) ? code : -1;
 }
 
+/* GET a URL into a string with extra headers (the bearer key of the hosted
+ * MORIE tier). Returns HTTP status, -1 on failure. */
+long http_get_string(const std::string &url, std::string &out, long timeout_s,
+                     const std::vector<std::string> &extra_headers) {
+    CURL *h = curl_easy_init();
+    if (!h) return -1;
+    out.clear();
+    struct curl_slist *hdr = NULL;
+    for (size_t i = 0; i < extra_headers.size(); ++i) {
+        hdr = curl_slist_append(hdr, extra_headers[i].c_str());
+    }
+    curl_easy_setopt(h, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(h, CURLOPT_HTTPGET, 1L);
+    if (hdr) curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr);
+    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
+    curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
+    curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
+    curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_string);
+    curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
+    CURLcode rc = curl_easy_perform(h);
+    long code = -1;
+    if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
+    if (hdr) curl_slist_free_all(hdr);
+    curl_easy_cleanup(h);
+    return (rc == CURLE_OK) ? code : -1;
+}
+
 /* GET a URL straight to a file path. Returns HTTP status, -1 on failure.
  * A 4xx/5xx still writes the error body; callers check the return code. */
 long http_get_file(const std::string &url, const std::string &path, long timeout_s) {
@@ -232,6 +261,40 @@ SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
         CHAR(STRING_ELT(url, 0)), RAW(body),
         static_cast<size_t>(XLENGTH(body)),
         CHAR(STRING_ELT(content_type, 0)), out, tmo, extra);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
+        static_cast<R_xlen_t>(out.size())));
+    if (!out.empty()) {
+        std::memcpy(RAW(raw_out), out.data(), out.size());
+    }
+    SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
+    SET_VECTOR_ELT(res, 1, raw_out);
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
+    SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
+    Rf_setAttrib(res, R_NamesSymbol, nm);
+    UNPROTECT(3);
+    return res;
+}
+
+/* GET with headers, reply as raw bytes plus the HTTP status: the hosted
+ * tier's model list. */
+SEXP C_rmbl_http_get(SEXP url, SEXP timeout, SEXP headers) {
+    if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
+        Rf_error("`url` must be a single string");
+    }
+    const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
+        ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
+    std::vector<std::string> extra;
+    if (TYPEOF(headers) == STRSXP) {
+        for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
+            extra.push_back(CHAR(STRING_ELT(headers, i)));
+        }
+    } else if (headers != R_NilValue) {
+        Rf_error("`headers` must be a character vector or NULL");
+    }
+    std::string out;
+    const long code = http_get_string(CHAR(STRING_ELT(url, 0)), out, tmo, extra);
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));

@@ -75,6 +75,45 @@
   if (nzchar(v)) v else .bl_hosted_default_model
 }
 
+# The GET seam: the hosted tier's model list.
+.bl_http_get <- function(url, timeout, headers) {
+  .Call(C_rmbl_http_get, url, as.integer(timeout), headers)
+}
+
+#' Models offered by the hosted MORIE LLM tier
+#'
+#' Asks the gateway (\code{GET /v1/models}) which models the stored key may
+#' use, through the package's own libcurl binding.
+#'
+#' @param timeout Seconds to wait for the gateway.
+#' @return A character vector of model names, empty when the tier is disabled,
+#'   no key is stored, or the gateway does not answer, with attribute
+#'   \code{"default"}: the model \code{bricklayer_llm_ask()} uses when none
+#'   is named (the configured one when offered, else the first listed).
+#' @examples
+#' \donttest{
+#' m <- bricklayer_llm_models()
+#' attr(m, "default")
+#' }
+#' @export
+bricklayer_llm_models <- function(timeout = 10) {
+  base <- .bl_hosted_base()
+  key <- .bl_hosted_key()
+  if (is.null(base) || is.null(key)) return(structure(character(), default = NULL))
+  res <- tryCatch(.bl_http_get(paste0(base, "/v1/models"), timeout,
+                               paste("Authorization: Bearer", key)),
+                  error = function(e) NULL)
+  if (is.null(res) || !identical(as.integer(res$status), 200L)) {
+    return(structure(character(), default = NULL))
+  }
+  parsed <- tryCatch(jsonlite::fromJSON(rawToChar(res$body), simplifyVector = FALSE),
+                     error = function(e) NULL)
+  ids <- vapply(parsed$data %||% list(), function(m) as.character(m$id %||% ""), "")
+  ids <- ids[nzchar(ids)]
+  wanted <- .bl_hosted_model()
+  structure(ids, default = if (length(ids) && !wanted %in% ids) ids[[1L]] else wanted)
+}
+
 # One seam for the HTTP layer so tests can stand in canned replies.
 .bl_http_post <- function(url, body, content_type, timeout, headers) {
   .Call(C_rmbl_http_post, url, body, content_type, as.integer(timeout),
@@ -302,7 +341,14 @@ bricklayer_llm_status <- function() {
       else if (is.null(key)) "not logged in" else "key stored",
       if (nzchar(.rmorie_cli_binary())) "on PATH" else "absent"),
     detail = c(
-      if (is.null(base)) "MORIE_HOSTED_BASE_URL=off" else base,
+      if (is.null(base)) "MORIE_HOSTED_BASE_URL=off"
+      else if (is.null(key)) base
+      else {
+        hm <- bricklayer_llm_models()
+        if (length(hm)) sprintf("%s  models: %s (default %s)", base,
+                                paste(hm, collapse = ", "), attr(hm, "default"))
+        else paste(base, " (gateway not reachable)")
+      },
       "backend = \"ollama\" or \"anthropic\" in agent_bundle()"),
     stringsAsFactors = FALSE)
 }

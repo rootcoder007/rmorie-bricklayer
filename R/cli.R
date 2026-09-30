@@ -16,7 +16,9 @@
 #'     you paste with \code{--token} (prompts when KEY is omitted)}
 #'   \item{\code{logout}}{forget the hosted key}
 #'   \item{\code{doctor}}{report the language-model routes available here}
-#'   \item{\code{ask PROMPT...}}{send a prompt to the model and print the
+#'   \item{\code{models}}{list the models the hosted tier offers your key
+#'     (default marked)}
+#'   \item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model (or the named one) and print the
 #'     reply}
 #'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 #'     shell}
@@ -76,11 +78,32 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                       st$detail[i]))
         }
       },
-      ask = {
-        if (!length(rest) || identical(rest[[1L]], "--help")) {
-          out("usage: rmoriebricklayer ask PROMPT...\n")
+      models = {
+        if (is.null(.bl_hosted_base())) {
+          out("Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
+        } else if (is.null(.bl_hosted_key())) {
+          out("Hosted MORIE tier: not logged in -- rmoriebricklayer login\n")
         } else {
-          out(paste0(bricklayer_llm_ask(paste(rest, collapse = " ")), "\n"))
+          hm <- bricklayer_llm_models()
+          if (!length(hm)) {
+            out(sprintf(paste0("Hosted MORIE tier (%s): logged in, gateway not reachable ",
+                            "(or the key was replaced by a newer sign-in: run rmoriebricklayer login again)\n"),
+                        .bl_hosted_base()))
+          } else {
+            out(sprintf("Hosted MORIE tier (%s); default marked *:\n", .bl_hosted_base()))
+            for (m in hm) out(sprintf("  %s %s\n", if (identical(m, attr(hm, "default"))) "*" else " ", m))
+            out("Pick one per call with `rmoriebricklayer ask --model NAME ...`, or set MORIE_HOSTED_MODEL.\n")
+          }
+        }
+      },
+      ask = {
+        mdl <- flag("--model")
+        if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
+        if (!length(rest) || identical(rest[[1L]], "--help")) {
+          out("usage: rmoriebricklayer ask [--model NAME] PROMPT...\n")
+        } else {
+          out(paste0(bricklayer_llm_ask(paste(rest, collapse = " "),
+                                        model = mdl), "\n"))
         }
       },
       bundle = {
@@ -125,7 +148,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         "  logout                                    forget the hosted key\n",
         "  doctor                                    language-model routes ",
         "available here\n",
-        "  ask PROMPT...                             ask the model\n",
+        "  models                                    models the hosted tier ",
+        "offers your key\n",
+        "  ask [--model NAME] PROMPT...              ask the model\n",
         "  bundle REQUEST...                         agent_bundle() from the ",
         "shell\n",
         "  functions [PATTERN]                       exported functions and ",
