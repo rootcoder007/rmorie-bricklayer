@@ -152,6 +152,51 @@ test_that("the command line dispatches its verbs", {
   expect_null(.bl_hosted_key())
 })
 
+test_that("models lists the hosted tier's models and ask --model names one", {
+  .sandbox()
+  cap <- function(...) {
+    buf <- character()
+    st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
+    list(text = paste(buf, collapse = ""), status = st)
+  }
+  expect_match(cap("models")$text, "not logged in")
+  expect_length(bricklayer_llm_models(), 0L)
+  suppressMessages(bricklayer_llm_login(token = "sk-models"))
+  seen <- NULL
+  testthat::local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
+    seen <<- list(url = url, headers = headers)
+    list(status = 200L, body = charToRaw('{"data":[{"id":"a:cloud"},{"id":"b:cloud"}]}'))
+  })
+  old_model <- Sys.getenv("MORIE_HOSTED_MODEL", unset = NA)
+  on.exit(if (is.na(old_model)) Sys.unsetenv("MORIE_HOSTED_MODEL")
+          else Sys.setenv(MORIE_HOSTED_MODEL = old_model), add = TRUE)
+  Sys.setenv(MORIE_HOSTED_MODEL = "b:cloud")
+  hm <- bricklayer_llm_models()
+  expect_equal(as.character(hm), c("a:cloud", "b:cloud"))
+  expect_equal(attr(hm, "default"), "b:cloud")
+  expect_equal(seen$url, "https://llm.rmorie.com/v1/models")
+  expect_equal(seen$headers, "Authorization: Bearer sk-models")
+  Sys.setenv(MORIE_HOSTED_MODEL = "retired:cloud")
+  expect_equal(attr(bricklayer_llm_models(), "default"), "a:cloud")
+  m <- cap("models")
+  expect_equal(m$status, 0L)
+  expect_match(m$text, "default marked \\*:\n  \\* a:cloud\n    b:cloud\n")
+  expect_match(cap("doctor")$text, "models: a:cloud, b:cloud \\(default a:cloud\\)")
+  testthat::local_mocked_bindings(.bl_http_get = function(...) list(status = 502L, body = raw()))
+  expect_length(bricklayer_llm_models(), 0L)
+  expect_match(cap("models")$text, "gateway not reachable")
+  asked <- NULL
+  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, model = NULL, ...) {
+    asked <<- model
+    "echo"
+  })
+  expect_equal(cap("ask", "--model", "a:cloud", "hi", "there")$text, "echo\n")
+  expect_equal(asked, "a:cloud")
+  expect_equal(cap("ask", "hi")$text, "echo\n")
+  expect_null(asked)
+  expect_match(cap("ask", "--help")$text, "usage: rmoriebricklayer ask \\[--model NAME\\]")
+})
+
 test_that("the email sign-in requests a code and exchanges it for a key", {
   .sandbox()
   seen <- list()
