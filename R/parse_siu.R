@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# SIU parse/resolve surface over the native core (src/siu_*.cpp -- the
-# canonical home; the standalone `siu` package mirrors it). Everything here
+# SIU parse/resolve surface over the native core (src/siu_*.cpp is the
+# canonical home; rmorie links to this same core, there is no separate
+# SIU package). Everything here
 # is deterministic and offline; the only network function remains
 # bricklayer_fetch_siu().
 

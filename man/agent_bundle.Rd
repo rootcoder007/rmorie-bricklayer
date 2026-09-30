@@ -7,47 +7,37 @@
 agent_bundle(request, model = NULL, backend = "auto")
 }
 \arguments{
-\item{request}{Character scalar describing the bundle
-task.}
+\item{request}{Character scalar describing the bundle task.}
 
-\item{model}{Optional model id, e.g.
-\code{"minimax-m3:cloud"} for an Ollama server or
-\code{"claude-sonnet-5"} for Anthropic; defaults to
-\code{$RMORIE_AGENT_MODEL} or the CLI's auto-pick.}
+\item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"} for the
+hosted tier, \code{"claude-sonnet-5"} for the Anthropic route of the
+CLI agent; \code{NULL} lets the route pick.}
 
-\item{backend}{\code{"auto"} (default), \code{"ollama"}
-(server from
-\code{$RMORIE_AGENT_OLLAMA_URL}) or \code{"anthropic"}
-( \code{$RMORIE_AGENT_API_KEY}) .}
+\item{backend}{\code{"auto"} (default: hosted tier, then the CLI
+agent), \code{"hosted"} (only the hosted tier), \code{"ollama"} or
+\code{"anthropic"} (only the CLI agent, with its
+\code{$RMORIE_AGENT_OLLAMA_URL} / \code{$RMORIE_AGENT_API_KEY}).}
 }
 \value{
-Character scalar: the agent's output, or a message if the
-\code{rmorie} binary is not installed.
+Character scalar: the answer, or a message saying what to set
+up when no route is available.
 }
 \description{
-Forwards a bundle-building request to the \code{rmorie} command-line
-agent (optional binary from rmorie-cli), with a rmoriebricklayer-focused
-preamble. The agent can run R and read/write files to help assemble or
-repair a brick-proof bundle. See \code{rmorie::agent} for requirements.
+Sends a bundle-building request, with a rmoriebricklayer-focused
+preamble, to a language model: the hosted MORIE tier at
+\url{https://llm.rmorie.com} when a key is stored
+(\code{\link{bricklayer_llm_login}}), otherwise the optional
+\code{rmorie} command-line agent from rmorie-cli if it is on the PATH.
 }
 \examples{
 \donttest{
-# Routed to the optional rmorie CLI agent when it is installed; with no
-# binary on PATH each call returns an install hint instantly (no error,
-# no network), so this is safe to execute anywhere.
-agent_bundle("scaffold a bundle for analysis.R using the Toronto CKAN dataset")
-
-# Free local/cloud route: an Ollama server (RMORIE_AGENT_OLLAMA_URL, default
-# http://localhost:11434) serving the model the MORIE stack uses.
-agent_bundle("add a Wayback fallback to my fetch step",
-             backend = "ollama", model = "minimax-m3:cloud")
-
-# Anthropic route (needs RMORIE_AGENT_API_KEY); the CLI's default model.
+agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
+agent_bundle("add a Wayback fallback to my fetch step", backend = "hosted")
 agent_bundle("repair the SHA256 provenance for my capsule",
              backend = "anthropic", model = "claude-sonnet-5")
 }
 
-# With no rmorie binary on PATH the call returns an install hint, not an
+# With no route configured the call returns a setup hint, not an
 # error -- safe to run anywhere:
-if (!nzchar(Sys.which("rmorie"))) agent_bundle("hello")
+if (!nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) agent_bundle("hello")
 }

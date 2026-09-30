@@ -112,7 +112,19 @@ reference:
       - capture_dependencies
       - write_manifest_json
       - write_summary_txt
+  - title: Language model and command line
+    desc: >
+      The hosted MORIE LLM tier at llm.rmorie.com, reached through rmorie's
+      provider chain when that package is installed and natively otherwise;
+      the rmoriebricklayer shell command.
+    contents:
       - agent_bundle
+      - bricklayer_llm_ask
+      - bricklayer_llm_login
+      - bricklayer_llm_logout
+      - bricklayer_llm_status
+      - bricklayer_cli
+      - install_cli
   - title: JSON (native codec)
     desc: jsonlite's mapping in base R, byte-for-byte; no jsonlite at run time.
     contents:

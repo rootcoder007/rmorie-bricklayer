@@ -1,0 +1,3 @@
+#!/bin/sh
+# rmoriebricklayer command-line launcher (installed by rmoriebricklayer::install_cli()).
+exec Rscript --vanilla -e 'suppressPackageStartupMessages({ q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q)) })' --args "$@"

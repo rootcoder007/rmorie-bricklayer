@@ -271,7 +271,8 @@ revocation_fetch <- function(path, timeout = 10) {
   # against most responders, which refuse GET.
   body <- NULL
   res <- tryCatch(.Call(C_rmbl_http_post, url, req,
-                        "application/ocsp-request", as.integer(timeout)),
+                        "application/ocsp-request", as.integer(timeout),
+                        NULL),
                   error = function(e) NULL)
   if (!is.null(res) && identical(res$status, 200L) &&
       length(res$body) > 0L) {
