@@ -14,13 +14,15 @@
  * One implementation, every language -- the ecosystem's C++-first rule.
  */
 
-#include <R.h>
-#include <Rinternals.h>
-#include <curl/curl.h>
+/* C++ standard headers first: Rinternals.h defines a `length` macro that
+ * breaks libc++'s <locale>, which <vector> pulls in on macOS. */
 #include <cstdio>
 #include <cstring>
 #include <string>
 #include <vector>
+#include <R.h>
+#include <Rinternals.h>
+#include <curl/curl.h>
 
 namespace {
 
