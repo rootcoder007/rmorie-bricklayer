@@ -31,7 +31,6 @@ test_that("write_text_fallback writes a readable file for accented input", {
 })
 
 test_that("agent_bundle validates its request and reports a missing binary", {
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
   on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
   expect_error(agent_bundle(""), "nzchar")

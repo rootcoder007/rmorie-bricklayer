@@ -10,14 +10,13 @@ agent_bundle(request, model = NULL, backend = "auto")
 \item{request}{Character scalar describing the bundle task.}
 
 \item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"} for the
-Ollama or hosted route, \code{"claude-sonnet-5"} for the Anthropic
-route of the CLI agent; \code{NULL} lets the route pick.}
+hosted tier, \code{"claude-sonnet-5"} for the Anthropic route of the
+CLI agent; \code{NULL} lets the route pick.}
 
-\item{backend}{\code{"auto"} (default, the order above),
-\code{"rmorie"} (only the package route), \code{"hosted"} (only the
-native hosted route), \code{"ollama"} or \code{"anthropic"} (only
-the CLI agent, with its \code{$RMORIE_AGENT_OLLAMA_URL} /
-\code{$RMORIE_AGENT_API_KEY}).}
+\item{backend}{\code{"auto"} (default: hosted tier, then the CLI
+agent), \code{"hosted"} (only the hosted tier), \code{"ollama"} or
+\code{"anthropic"} (only the CLI agent, with its
+\code{$RMORIE_AGENT_OLLAMA_URL} / \code{$RMORIE_AGENT_API_KEY}).}
 }
 \value{
 Character scalar: the answer, or a message saying what to set
@@ -25,14 +24,10 @@ up when no route is available.
 }
 \description{
 Sends a bundle-building request, with a rmoriebricklayer-focused
-preamble, to a language model. Routes, in order: the \code{rmorie}
-package when installed (\code{rmorie::morie_llm_ask()}: a local Ollama
-first, then the hosted MORIE tier at \url{https://llm.rmorie.com},
-then any Gemini or OpenAI-compatible key, then a keyword fallback);
-otherwise the hosted tier directly through this package's own HTTP
-layer when a key is stored (\code{\link{bricklayer_llm_login}});
-otherwise the optional \code{rmorie} command-line agent from
-rmorie-cli if it is on the PATH.
+preamble, to a language model: the hosted MORIE tier at
+\url{https://llm.rmorie.com} when a key is stored
+(\code{\link{bricklayer_llm_login}}), otherwise the optional
+\code{rmorie} command-line agent from rmorie-cli if it is on the PATH.
 }
 \examples{
 \donttest{
@@ -44,8 +39,5 @@ agent_bundle("repair the SHA256 provenance for my capsule",
 
 # With no route configured the call returns a setup hint, not an
 # error -- safe to run anywhere:
-if (!requireNamespace("rmorie", quietly = TRUE) &&
-    !nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) {
-  agent_bundle("hello")
-}
+if (!nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) agent_bundle("hello")
 }

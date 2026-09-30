@@ -18,10 +18,10 @@ The exit status, invisibly (0 on success).
 \description{
 Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 \describe{
-\item{\code{login [--token [KEY]] [--email ADDRESS]}}{sign in to the
-hosted MORIE LLM tier: paste a key (prompts when KEY is omitted), or
-with the rmorie package installed run its GitHub or emailed-code
-flow}
+\item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
+    [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
+device flow by default, a code sent to \code{--email}, or a key
+you paste with \code{--token} (prompts when KEY is omitted)}
 \item{\code{logout}}{forget the hosted key}
 \item{\code{doctor}}{report the language-model routes available here}
 \item{\code{ask PROMPT...}}{send a prompt to the model and print the

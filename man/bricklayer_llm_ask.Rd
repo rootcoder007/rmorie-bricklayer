@@ -25,14 +25,11 @@ gateway answers with an error.
 Sends one prompt to the MORIE LLM tier at
 \url{https://llm.rmorie.com} with the key stored by
 \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}) and
-returns the reply. When the \code{rmorie} package is installed the
-request goes through \code{rmorie::morie_llm_ask()} instead, whose
-chain also tries a local Ollama first and your own Gemini or OpenAI
-keys after the hosted tier.
+returns the reply.
 }
 \examples{
 \dontrun{
-bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
+bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
 }
 }

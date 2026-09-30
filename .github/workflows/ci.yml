@@ -68,10 +68,6 @@ jobs:
       # Binary installs + automatic system-dependency handling + caching.
       - uses: r-lib/actions/setup-r-dependencies@f9a764fea8d5c63df6ef9a5c7795bf7deb5d7e05 # v2
         with:
-          # rmorie (Enhances) lives on r-universe: pak needs the address to
-          # resolve it, but only Depends/Imports/LinkingTo/Suggests are installed
-          extra-repositories: https://rootcoder007.r-universe.dev
-          dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
           packages: ${{ steps.pkgs.outputs.list }}
 
       # The A01 input is 4.7 MB of public data. Cached on the pinned

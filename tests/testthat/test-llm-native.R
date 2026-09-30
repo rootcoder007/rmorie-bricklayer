@@ -36,7 +36,6 @@
 
 test_that("a token is stored owner-only in the shared credentials file", {
   dir <- .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   expect_message(bricklayer_llm_login(token = "  sk-test "), "Token stored")
   p <- file.path(dir, "morie", "credentials.json")
   expect_true(file.exists(p))
@@ -53,7 +52,6 @@ test_that("a token is stored owner-only in the shared credentials file", {
 
 test_that("the environment key wins and off disables the tier", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   bricklayer_llm_login(token = "file-key")
   Sys.setenv(MORIE_HOSTED_KEY = "env-key")
   expect_equal(.bl_hosted_key(), "env-key")
@@ -66,7 +64,6 @@ test_that("the environment key wins and off disables the tier", {
 
 test_that("the native route posts a bearer-authenticated chat request", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
   seen <- NULL
   testthat::local_mocked_bindings(
@@ -91,7 +88,6 @@ test_that("the native route posts a bearer-authenticated chat request", {
 
 test_that("gateway errors are reported with their message", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   expect_error(bricklayer_llm_ask("hi"), "bricklayer_llm_login")
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
   testthat::local_mocked_bindings(
@@ -102,9 +98,8 @@ test_that("gateway errors are reported with their message", {
   expect_error(bricklayer_llm_ask("hi"), "answered -1")
 })
 
-test_that("agent_bundle() uses the native hosted route when rmorie is absent", {
+test_that("agent_bundle() uses the hosted route when a key is stored", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
   seen <- NULL
   testthat::local_mocked_bindings(
@@ -114,27 +109,23 @@ test_that("agent_bundle() uses the native hosted route when rmorie is absent", {
     })
   expect_match(agent_bundle("add provenance"), "Pin the SHA256")
   expect_match(seen, "brick-proof", fixed = TRUE)
-  expect_match(agent_bundle("x", backend = "rmorie"), "not installed")
   suppressMessages(bricklayer_llm_logout())
   expect_match(agent_bundle("x", backend = "hosted"), "No key for the hosted")
 })
 
-test_that("bricklayer_llm_status() names the three routes", {
+test_that("bricklayer_llm_status() names the two routes", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = ""),
                                   .package = "base")
   st <- bricklayer_llm_status()
-  expect_equal(st$route, c("rmorie package", "hosted MORIE tier",
-                           "rmorie-cli agent"))
-  expect_equal(st$status, c("absent", "not logged in", "absent"))
+  expect_equal(st$route, c("hosted MORIE tier", "rmorie-cli agent"))
+  expect_equal(st$status, c("not logged in", "absent"))
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
-  expect_equal(bricklayer_llm_status()$status[2], "key stored")
+  expect_equal(bricklayer_llm_status()$status[1], "key stored")
 })
 
 test_that("the command line dispatches its verbs", {
   .sandbox()
-  testthat::local_mocked_bindings(.bl_has_rmorie = function() FALSE)
   testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = ""),
                                   .package = "base")
   cap <- function(...) {
@@ -159,7 +150,63 @@ test_that("the command line dispatches its verbs", {
   expect_equal(cap("bundle")$status, 1L)
   expect_equal(suppressMessages(cap("logout"))$status, 0L)
   expect_null(.bl_hosted_key())
-  expect_match(cap("login")$text, "needs the rmorie package")
+})
+
+test_that("the email sign-in requests a code and exchanges it for a key", {
+  .sandbox()
+  seen <- list()
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      seen[[length(seen) + 1L]] <<- list(url = url, body = rawToChar(body))
+      if (grepl("/email/code$", url)) {
+        return(list(status = 200L,
+                    body = charToRaw("{\"sent\":true,\"expires_in\":600}")))
+      }
+      list(status = 200L,
+           body = charToRaw("{\"api_key\":\"sk-mail\",\"user\":\"mail:abc\"}"))
+    })
+  key <- suppressMessages(bricklayer_llm_login(email = " Vee@Example.com",
+                                               code = " 123456 "))
+  expect_equal(key, "sk-mail")
+  expect_length(seen, 1L)  # a supplied code skips the request step
+  expect_equal(seen[[1]]$url, "https://llm.rmorie.com/auth/email/verify")
+  req <- bricklayer_json_from_json(seen[[1]]$body)
+  expect_equal(req$email, "vee@example.com")
+  expect_equal(req$code, "123456")
+  expect_equal(.bl_hosted_key(), "sk-mail")
+  expect_equal(.bl_read_credentials()$hosted_user, "mail:abc")
+  expect_error(bricklayer_llm_login(email = "nope"), "email address")
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(...) list(status = 403L, body = charToRaw(
+      "{\"error\":\"wrong code\"}")))
+  expect_error(bricklayer_llm_login(email = "vee@example.com", code = "0"),
+               "403: wrong code")
+})
+
+test_that("the device flow polls until GitHub approval and stores the key", {
+  .sandbox()
+  polls <- 0L
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      if (grepl("/device/code$", url)) {
+        return(list(status = 200L, body = charToRaw(paste0(
+          "{\"device_code\":\"dev-1\",\"user_code\":\"ABCD-1234\",",
+          "\"verification_uri\":\"https://github.com/login/device\",",
+          "\"interval\":0}"))))
+      }
+      polls <<- polls + 1L
+      if (polls < 3L) return(list(status = 428L, body = charToRaw(
+        "{\"error\":\"authorization_pending\"}")))
+      list(status = 200L, body = charToRaw(
+        "{\"api_key\":\"sk-dev\",\"user\":\"octocat\"}"))
+    })
+  expect_message(key <- bricklayer_llm_login(open_browser = FALSE,
+                                             poll_max_seconds = 5),
+                 "ABCD-1234")
+  expect_equal(key, "sk-dev")
+  expect_equal(polls, 3L)
+  expect_equal(.bl_hosted_key(), "sk-dev")
+  expect_equal(.bl_read_credentials()$hosted_user, "octocat")
 })
 
 test_that("the command line helps people find their way around the package", {

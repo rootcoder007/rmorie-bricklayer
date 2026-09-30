@@ -10,10 +10,10 @@
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 #' \describe{
-#'   \item{\code{login [--token [KEY]] [--email ADDRESS]}}{sign in to the
-#'     hosted MORIE LLM tier: paste a key (prompts when KEY is omitted), or
-#'     with the rmorie package installed run its GitHub or emailed-code
-#'     flow}
+#'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
+#'     [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
+#'     device flow by default, a code sent to \code{--email}, or a key
+#'     you paste with \code{--token} (prompts when KEY is omitted)}
 #'   \item{\code{logout}}{forget the hosted key}
 #'   \item{\code{doctor}}{report the language-model routes available here}
 #'   \item{\code{ask PROMPT...}}{send a prompt to the model and print the
@@ -62,7 +62,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
           bricklayer_llm_login(token = tok)
         } else {
-          bricklayer_llm_login(email = flag("--email"))
+          bricklayer_llm_login(email = flag("--email"), code = flag("--code"),
+                               open_browser = !has("--no-browser") &&
+                                 interactive())
         }
         out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
       },
@@ -117,8 +119,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
       `--help` = ,
       `-h` = out(paste0(
         "usage: rmoriebricklayer <verb> [options]\n\n",
-        "  login [--token [KEY]] [--email ADDRESS]   sign in to the hosted ",
+        "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
         "MORIE LLM tier\n",
+        "        [--code CODE] [--no-browser]\n",
         "  logout                                    forget the hosted key\n",
         "  doctor                                    language-model routes ",
         "available here\n",

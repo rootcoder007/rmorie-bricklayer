@@ -4,30 +4,47 @@
 \alias{bricklayer_llm_login}
 \title{Sign in to the hosted MORIE language model}
 \usage{
-bricklayer_llm_login(token = NULL, email = NULL)
+bricklayer_llm_login(
+  token = NULL,
+  email = NULL,
+  code = NULL,
+  open_browser = interactive(),
+  poll_max_seconds = 600
+)
 }
 \arguments{
-\item{token}{A key from \url{https://llm.rmorie.com}; stored as is.}
+\item{token}{A key from \url{https://llm.rmorie.com}.}
 
-\item{email}{With \code{rmorie} installed: sign in with a 6-digit code
-sent to this address instead of GitHub.}
+\item{email}{Sign in with a code sent to this address.}
+
+\item{code}{The emailed code, when you already have it.}
+
+\item{open_browser}{Open the GitHub page for the device flow.}
+
+\item{poll_max_seconds}{How long the device flow waits for approval.}
 }
 \value{
 The key, invisibly.
 }
 \description{
-Stores a key for \url{https://llm.rmorie.com} in the credentials file
-shared with the \code{morie} and \code{rmorie} packages
-(\code{$XDG_CONFIG_HOME/morie/credentials.json}, owner-only). Pass
-a key obtained from the website (\code{token}); or, with the
-\code{rmorie} package installed, leave \code{token} empty to run
-rmorie's GitHub device flow or emailed-code flow (\code{email}).
+Mints a personal key for \url{https://llm.rmorie.com} and stores it in
+\code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
+the \code{morie} and \code{rmorie} packages read too, so one sign-in
+serves all three). Three ways in:
+\itemize{
+\item \code{token}: a key you already have, from the website or an
+email; stored as is.
+\item \code{email}: a 6-digit code is sent to the address (valid
+ten minutes, single use); you type it, or pass \code{code}.
+\item neither: the GitHub device flow; a code is shown to enter at
+github.com, and the key arrives once you approve.
+}
 Nothing is written except by this explicit call.
 }
 \examples{
 \dontrun{
+bricklayer_llm_login(email = "you@example.com")
+bricklayer_llm_login()                           # GitHub device flow
 bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
-bricklayer_llm_login()                         # GitHub, needs rmorie
-bricklayer_llm_login(email = "you@example.com")  # emailed code, needs rmorie
 }
 }
