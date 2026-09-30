@@ -84,5 +84,7 @@ test_that("agent_bundle validates input and degrades gracefully without the CLI"
   expect_error(agent_bundle(""), "nzchar")
   expect_error(agent_bundle(c("a", "b")))
   skip_if(nzchar(Sys.which("rmorie")), "rmorie CLI present; live path not exercised here")
-  expect_match(agent_bundle("scaffold a capsule"), "rmorie CLI not found")
+  Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
+  on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
+  expect_match(agent_bundle("scaffold a capsule"), "No language-model route")
 })
