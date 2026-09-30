@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -67,13 +68,18 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
  */
 long http_post_bytes(const std::string &url, const unsigned char *body,
                      size_t bodylen, const std::string &content_type,
-                     std::string &out, long timeout_s) {
+                     std::string &out, long timeout_s,
+                     const std::vector<std::string> &extra_headers) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
     struct curl_slist *hdr = NULL;
     const std::string ct = "Content-Type: " + content_type;
     hdr = curl_slist_append(hdr, ct.c_str());
+    /* e.g. "Authorization: Bearer ..." for the hosted MORIE LLM tier */
+    for (size_t i = 0; i < extra_headers.size(); ++i) {
+        hdr = curl_slist_append(hdr, extra_headers[i].c_str());
+    }
     /* libcurl would otherwise announce Expect: 100-continue and wait */
     hdr = curl_slist_append(hdr, "Expect:");
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
@@ -201,7 +207,7 @@ int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
 /* POST raw bytes, return the reply as raw bytes and the HTTP status.
  * Used only by the OCSP path, which is opt-in. */
 SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
-                      SEXP timeout) {
+                      SEXP timeout, SEXP headers) {
     if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
         Rf_error("`url` must be a single string");
     }
@@ -211,11 +217,19 @@ SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
     }
     const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
         ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
+    std::vector<std::string> extra;
+    if (TYPEOF(headers) == STRSXP) {
+        for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
+            extra.push_back(CHAR(STRING_ELT(headers, i)));
+        }
+    } else if (headers != R_NilValue) {
+        Rf_error("`headers` must be a character vector or NULL");
+    }
     std::string out;
     const long code = http_post_bytes(
         CHAR(STRING_ELT(url, 0)), RAW(body),
         static_cast<size_t>(XLENGTH(body)),
-        CHAR(STRING_ELT(content_type, 0)), out, tmo);
+        CHAR(STRING_ELT(content_type, 0)), out, tmo, extra);
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));

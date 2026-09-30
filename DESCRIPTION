@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.5.1
+Version: 0.5.2
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -61,10 +61,12 @@ Suggests:
     openssl,
     pkgdown,
     rmarkdown,
+    rmorie,
     sf,
     stringi,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Additional_repositories: https://rootcoder007.r-universe.dev
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
