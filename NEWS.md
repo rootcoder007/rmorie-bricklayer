@@ -10,9 +10,8 @@
   an explicit `login`). With the `rmorie` package installed the same
   functions use its fuller chain instead: a local Ollama first, then the
   hosted tier, then any Gemini or OpenAI-compatible key, then a keyword
-  fallback. `rmorie` is optional and not declared in DESCRIPTION (it is on
-  r-universe, not CRAN, and check runners try to install anything declared)
-  ; it is probed with `requireNamespace()`.
+  fallback. `rmorie` is declared under Enhances with its r-universe address in
+  `Additional_repositories`; it is probed with `requireNamespace()`.
 * `agent_bundle()` routes through those in order (rmorie, native hosted,
   the optional rmorie-cli agent) instead of requiring the rmorie-cli binary,
   and recognises the launcher that `rmorie::install_cli()` places on the

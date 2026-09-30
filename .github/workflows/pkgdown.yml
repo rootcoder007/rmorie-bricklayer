@@ -27,7 +27,9 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # Enhances (rmorie, r-universe only) must not be installed here
+          # rmorie (Enhances) lives on r-universe: pak needs the address to
+          # resolve it, but only Depends/Imports/LinkingTo/Suggests are installed
+          extra-repositories: https://rootcoder007.r-universe.dev
           dependencies: 'c("Depends", "Imports", "LinkingTo", "Suggests")'
           extra-packages: any::pkgdown, any::roxygen2
           needs: website
