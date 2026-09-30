@@ -123,6 +123,7 @@ reference:
       - bricklayer_llm_login
       - bricklayer_llm_logout
       - bricklayer_llm_status
+      - bricklayer_llm_models
       - bricklayer_cli
       - install_cli
   - title: JSON (native codec)
