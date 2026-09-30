@@ -24,7 +24,9 @@ device flow by default, a code sent to \code{--email}, or a key
 you paste with \code{--token} (prompts when KEY is omitted)}
 \item{\code{logout}}{forget the hosted key}
 \item{\code{doctor}}{report the language-model routes available here}
-\item{\code{ask PROMPT...}}{send a prompt to the model and print the
+\item{\code{models}}{list the models the hosted tier offers your key
+(default marked)}
+\item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model (or the named one) and print the
 reply}
 \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 shell}
