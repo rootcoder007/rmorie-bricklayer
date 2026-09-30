@@ -68,8 +68,10 @@
         headers)
 }
 
-# rmorie is an Enhances (it lives on r-universe, not CRAN, so nothing may
-# try to install it during a check); its functions are looked up by name.
+# rmorie is optional and deliberately not declared in DESCRIPTION: it lives
+# on r-universe, not CRAN, and every dependency resolver on the check
+# runners tries to install whatever is declared, even under Enhances. It is
+# probed with requireNamespace() and its functions are looked up by name.
 .bl_has_rmorie <- function() requireNamespace("rmorie", quietly = TRUE)
 .bl_rmorie <- function(name) getExportedValue("rmorie", name)
 

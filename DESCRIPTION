@@ -64,9 +64,7 @@ Suggests:
     sf,
     stringi,
     testthat (>= 3.0.0)
-Enhances: rmorie
 VignetteBuilder: knitr
-Additional_repositories: https://rootcoder007.r-universe.dev
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
