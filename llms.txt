@@ -325,22 +325,61 @@ a                                   # what changed, how sure, what was withheld
 report_analysis(a, "otis.html")     # one self-contained file
 ```
 
-The full capsule, step by step:
+The full capsule, step by step. It runs as written, offline: the
+provenance file pins the source, the schema and a recipe for a synthetic
+stand-in, and the stand-in is what gets validated and recorded when the
+portal is not reachable.
 
 ``` r
 
 library(rmoriebricklayer)
 
-prov <- load_provenance("provenance.json")     # pinned source + schema + hash
-res  <- resolve_via_ckan(prov)                  # find the resource on the portal
-path <- friendly_download(res$url, "data.csv")  # download (Wayback fallback)
-verify_sha256(path, prov$sha256)                # integrity check
-df   <- validate_schema(read.csv(path), prov)   # schema-validated data frame
+# 1. The pin: portal endpoint, resource pattern, expected schema, recipe.
+prov_path <- file.path(tempdir(), "data_provenance.json")
+writeLines('{
+  "dataset": {
+    "title": "Demo library statistics",
+    "ckan_api_endpoint": "https://data.ontario.ca/api/3/action/package_show?id=ontario-public-library-statistics"
+  },
+  "resource": { "name_match_pattern": "2014" },
+  "schema": {
+    "expected_columns": ["year", "visits", "alert"],
+    "structural_invariants": { "min_data_rows": 5 },
+    "expected_value_sets": { "year": [2024, 2025] },
+    "synthetic_recipe": {
+      "n_rows": 25, "seed": 42,
+      "columns": {
+        "year":   { "type": "sample",    "values": [2024, 2025] },
+        "visits": { "type": "poisson",   "lambda": 3, "min": 1 },
+        "alert":  { "type": "bernoulli", "p": 0.2 },
+        "id":     { "type": "id_pattern", "pattern": "p-{seq:05d}" }
+      }
+    }
+  }
+}', prov_path)
+prov <- load_provenance(prov_path)
 
-man  <- make_manifest(list(project = "my-study"))
-man  <- record(man, "rows", observed = nrow(df),    # a named cross-check:
-               expected = 1200L)                   # PASS / DIFFER / INFO
-write_manifest_json(man, "manifest.json")
+# 2. The data. With network: resolve the pinned endpoint to a current URL and
+#    download (Wayback fallback). Without: a reproducible stand-in from the
+#    recipe, marked synthetic all the way through.
+#   url  <- resolve_via_ckan(prov)
+#   path <- friendly_download(url, file.path(tempdir(), "data.csv"))
+path <- file.path(tempdir(), "data.csv")
+gen  <- make_synthetic_csv(prov$schema$synthetic_recipe, path)
+
+# 3. Integrity and schema.
+sha256_file(path)                               # pin this in the provenance
+df     <- read.csv(path)
+issues <- validate_schema(df, prov)             # names, types, value sets, rows
+
+# 4. The manifest: named cross-checks, then the two capsule artifacts.
+man <- make_manifest(list(project = "my-study", synthetic = TRUE))
+man <- record(man, "rows", observed = nrow(df), expected = gen$rows,
+              synthetic = TRUE)
+write_manifest_json(man, file.path(tempdir(), "manifest.json"))
+write_summary_txt(man, tempdir(),
+                  paths = list(input = path, results = tempdir()),
+                  what_was_done = "* validated the schema and recorded the row count")
 ```
 
 Then ask whether the data itself moved, and sign the answer:
@@ -348,13 +387,22 @@ Then ask whether the data itself moved, and sign the answer:
 ``` r
 
 # Did the distribution change, not just the bytes?
-capsule_drift(reference_extract, fresh_fetch)
+set.seed(1)
+ref  <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
+                   grade = sample(c("a", "b", "c"), 300, TRUE))
+same <- data.frame(value = rnorm(300), size = runif(300, 1, 10),
+                   grade = sample(c("a", "b", "c"), 300, TRUE))
+capsule_drift(ref, same)$any_drift        # a fresh draw: FALSE
+moved <- same
+moved$size <- moved$size * 3              # a silently rescaled column
+moved$grade[1:100] <- "z"                 # and a new category
+capsule_drift(ref, moved)                 # both are caught
 
 # Authenticate the manifest so a verifier knows who produced it.
-key <- pqc_keygen()                              # post-quantum, hash-based
-sig <- capsule_sign(core_sha256(readLines("manifest.json")), key)
-capsule_verify(core_sha256(readLines("manifest.json")), sig,
-               signing_public_key(key))
+digest <- sha256_file(file.path(tempdir(), "manifest.json"))
+key <- pqc_keygen()                       # post-quantum, hash-based
+sig <- capsule_sign(digest, key)
+capsule_verify(digest, sig, signing_public_key(key))
 ```
 
 See
