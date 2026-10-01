@@ -337,8 +337,9 @@ path <- friendly_download(res$url, "data.csv")  # download (Wayback fallback)
 verify_sha256(path, prov$sha256)                # integrity check
 df   <- validate_schema(read.csv(path), prov)   # schema-validated data frame
 
-man  <- make_manifest(project = "my-study")
-record(man, "input", path)                      # trace the input
+man  <- make_manifest(list(project = "my-study"))
+man  <- record(man, "rows", observed = nrow(df),    # a named cross-check:
+               expected = 1200L)                   # PASS / DIFFER / INFO
 write_manifest_json(man, "manifest.json")
 ```
 
