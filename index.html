@@ -86,6 +86,8 @@
 <li>
 <strong>Categorical integrity</strong> — <code><a href="reference/guard_recode.html">guard_recode()</a></code>, <code><a href="reference/decode_codes.html">decode_codes()</a></code>, <code><a href="reference/guard_levels.html">guard_levels()</a></code>, <code><a href="reference/audit_categories.html">audit_categories()</a></code>, <code><a href="reference/verify_recode.html">verify_recode()</a></code>, <code><a href="reference/verify_marginals.html">verify_marginals()</a></code>, <code><a href="reference/odds_ratio_check.html">odds_ratio_check()</a></code>, <code><a href="reference/relabel.html">relabel()</a></code>, <code><a href="reference/decode_labelled.html">decode_labelled()</a></code>, <code><a href="reference/transfer_verify.html">transfer_verify()</a></code>, <code><a href="reference/relabel_forensics.html">relabel_forensics()</a></code> and a signed <code><a href="reference/recode_manifest.html">recode_manifest()</a></code>: recodes that refuse anything unmapped or positional, an SPSS/Stata/SAS import checked against the source code book and frequency table, reported odds ratios recomputed under every relabelling, and the mechanical step behind a permutation named, so a swapped label is fixed on the day, not blamed on the software.</li>
 <li>
+<strong>Asking a model</strong> — <code><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login()</a></code>, <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> and <code><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code> sign in to the hosted MORIE tier, list the models your key can use and put a question to one; the <code>rmoriebricklayer</code> launcher offers the same as shell verbs.</li>
+<li>
 <strong>Schema validation</strong> — <code><a href="reference/infer_schema.html">infer_schema()</a></code> derives a pinnable schema from data you trust; <code><a href="reference/validate_schema.html">validate_schema()</a></code> checks names, types, ranges, value sets and missingness against it; <code><a href="reference/rule.html">rule()</a></code> and the <code>rule_*()</code> library express the project-specific checks a generic schema cannot.</li>
 <li>
 <strong>Drift detection</strong> — <code><a href="reference/capsule_drift.html">capsule_drift()</a></code> asks whether the <em>data</em> moved, not just the bytes, with Kolmogorov-Smirnov, two-sample homogeneity, population stability index, Jensen-Shannon divergence and a Benford first-digit screen.</li>
@@ -184,6 +186,34 @@
 <p>See <code><a href="articles/drift.html">vignette("drift")</a></code> for the distributional checks and <code><a href="articles/provenance.html">vignette("provenance")</a></code> for signing, Merkle pinning and manifest chains.</p>
 </div>
 <div class="section level2">
+<h2 id="asking-a-model">Asking a model<a class="anchor" aria-label="anchor" href="#asking-a-model"></a>
+</h2>
+<p>The package can put a question to a language model, from R or from the shell, through the hosted MORIE tier at <code>https://llm.rmorie.com</code>. Nothing runs until you sign in; without a key every call returns empty.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Sign in once. The device flow prints a link and a code to confirm in a</span></span>
+<span><span class="co"># browser; the email flow mails the code; a key you already hold can be</span></span>
+<span><span class="co"># pasted. The key is saved under ~/.config/rmorie and is shared with rmorie.</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>                                   <span class="co"># device flow</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span><span class="op">)</span>           <span class="co"># mailed code, then</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span>, code <span class="op">=</span> <span class="st">"123456"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span>                    <span class="co"># paste a key</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_status.html">bricklayer_llm_status</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># base URL, whether a key is stored, the default model</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># the models your key can use; attr(, "default")</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"Summarise what a Benford screen can and cannot show."</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"Same question, another model."</span>, model <span class="op">=</span> <span class="st">"deepseek-v4-pro"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># forget the key</span></span></code></pre></div>
+<p><code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> lists the hosted tier only; a local Ollama server is not consulted here. <code>MORIE_HOSTED_KEY</code> in the environment overrides the stored key, and <code>MORIE_HOSTED_BASE_URL</code> points the package at another gateway (set it to <code>off</code> to disable the hosted tier).</p>
+<p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: login --email ADDRESS, login --token</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># what you can ask, default marked</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>
 </h2>
 <p><code>rmoriebricklayer</code> is the reproducibility / provenance layer of the <a href="https://github.com/rootcoder007/morie" class="external-link">MORIE</a> ecosystem, alongside <a href="https://github.com/rootcoder007/rmorie" class="external-link">rmorie</a> and <a href="https://github.com/rootcoder007/rmoriedata" class="external-link">rmoriedata</a>.</p>
@@ -196,12 +226,12 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> <a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link uri">https://github.com/rootcoder007/rmorie-bricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">
