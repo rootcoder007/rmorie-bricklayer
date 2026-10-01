@@ -51,6 +51,10 @@ and a digest anyone can recompute says nothing about who produced the data.
   book and frequency table, reported odds ratios recomputed under every
   relabelling, and the mechanical step behind a permutation named, so a
   swapped label is fixed on the day, not blamed on the software.
+- **Asking a model** — `bricklayer_llm_login()`, `bricklayer_llm_models()`
+  and `bricklayer_llm_ask()` sign in to the hosted MORIE tier, list the
+  models your key can use and put a question to one; the
+  `rmoriebricklayer` launcher offers the same as shell verbs.
 - **Schema validation** — `infer_schema()` derives a pinnable schema from
   data you trust; `validate_schema()` checks names, types, ranges, value
   sets and missingness against it; `rule()` and the `rule_*()` library
@@ -262,6 +266,46 @@ capsule_verify(core_sha256(readLines("manifest.json")), sig,
 
 See `vignette("drift")` for the distributional checks and
 `vignette("provenance")` for signing, Merkle pinning and manifest chains.
+
+## Asking a model
+
+The package can put a question to a language model, from R or from the
+shell, through the hosted MORIE tier at `https://llm.rmorie.com`. Nothing
+runs until you sign in; without a key every call returns empty.
+
+```r
+library(rmoriebricklayer)
+
+# Sign in once. The device flow prints a link and a code to confirm in a
+# browser; the email flow mails the code; a key you already hold can be
+# pasted. The key is saved under ~/.config/rmorie and is shared with rmorie.
+bricklayer_llm_login()                                   # device flow
+bricklayer_llm_login(email = "you@example.org")           # mailed code, then
+bricklayer_llm_login(email = "you@example.org", code = "123456")
+bricklayer_llm_login(token = "sk-...")                    # paste a key
+
+bricklayer_llm_status()      # base URL, whether a key is stored, the default model
+bricklayer_llm_models()      # the models your key can use; attr(, "default")
+bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
+bricklayer_llm_ask("Same question, another model.", model = "deepseek-v4-pro")
+bricklayer_llm_logout()      # forget the key
+```
+
+`bricklayer_llm_models()` lists the hosted tier only; a local Ollama
+server is not consulted here. `MORIE_HOSTED_KEY` in the environment
+overrides the stored key, and `MORIE_HOSTED_BASE_URL` points the package at
+another gateway (set it to `off` to disable the hosted tier).
+
+The same verbs exist on the command line once the launcher is on your
+`PATH`:
+
+```sh
+Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer
+rmoriebricklayer login                          # or: login --email ADDRESS, login --token
+rmoriebricklayer models                         # what you can ask, default marked
+rmoriebricklayer ask --model NAME "your question"
+rmoriebricklayer doctor                         # which routes answer from this machine
+```
 
 ## Part of the MORIE family
 
