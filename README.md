@@ -345,9 +345,8 @@ server is not consulted here. `MORIE_HOSTED_KEY` in the environment
 overrides the stored key, and `MORIE_HOSTED_BASE_URL` points the package at
 another gateway (set it to `off` to disable the hosted tier).
 
-The tier serves ollama.com cloud models and Cloudflare Workers AI models
-(kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf); when a cloud model is rate limited or down the gateway answers from
-Workers AI.
+The tier serves AI cloud models via ollama and Cloudflare
+(kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf).
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
