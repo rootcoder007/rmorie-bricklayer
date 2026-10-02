@@ -46,6 +46,6 @@ prov <- list(
   )
 )
 resolve_via_ckan_search(prov)
-#> [1] "https://files.ontario.ca/ontario_public_library_statistics_2014_open_data_csv_february_17_2016.csv"
+#> NULL
 # }
 ```
