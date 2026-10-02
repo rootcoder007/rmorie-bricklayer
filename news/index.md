@@ -15,6 +15,13 @@
   [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
   and the data hub. `options(morie.quiet = TRUE)` silences it.
 
+- [`cert_chain_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_chain_verify.md)
+  and
+  [`timestamp_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/timestamp_verify.md)
+  verify SHA-384 signatures (ECDSA-SHA384, RSA-SHA384): the digest was
+  computed natively but never routed to the verifier, so such chains
+  stopped with an error.
+
 ### Curated datasets at data.rmorie.com
 
 - [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md),

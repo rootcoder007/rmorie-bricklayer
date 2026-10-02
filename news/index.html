@@ -48,6 +48,7 @@
 <h2 class="pkg-version" data-toc-text="0.5.4" id="rmoriebricklayer-054">rmoriebricklayer 0.5.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-054"></a></h2>
 <ul><li><p>The <code>rmoriebricklayer</code> launcher works under R 4.6, which keeps <code>--args</code> in <code><a href="https://rdrr.io/r/base/commandArgs.html" class="external-link">commandArgs()</a></code>; <code><a href="../reference/friendly_download.html">friendly_download()</a></code> goes through <code><a href="../reference/bricklayer_download.html">bricklayer_download()</a></code>.</p></li>
 <li><p><code><a href="../reference/bricklayer_download.html">bricklayer_download()</a></code>: one download routine with a live progress bar (percent, size, rate) on a terminal and milestone lines in a log, used by <code><a href="../reference/friendly_download.html">friendly_download()</a></code> and the data hub. <code>options(morie.quiet = TRUE)</code> silences it.</p></li>
+<li><p><code><a href="../reference/cert_chain_verify.html">cert_chain_verify()</a></code> and <code><a href="../reference/timestamp_verify.html">timestamp_verify()</a></code> verify SHA-384 signatures (ECDSA-SHA384, RSA-SHA384): the digest was computed natively but never routed to the verifier, so such chains stopped with an error.</p></li>
 </ul><div class="section level3">
 <h3 id="curated-datasets-at-datarmoriecom-0-5-4">Curated datasets at data.rmorie.com<a class="anchor" aria-label="anchor" href="#curated-datasets-at-datarmoriecom-0-5-4"></a></h3>
 <ul><li>
