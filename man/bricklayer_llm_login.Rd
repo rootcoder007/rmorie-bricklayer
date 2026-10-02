@@ -44,7 +44,7 @@ Nothing is written except by this explicit call.
 \examples{
 \dontrun{
 bricklayer_llm_login(email = "you@example.com")
-bricklayer_llm_login()                           # GitHub device flow
+bricklayer_llm_login() # GitHub device flow
 bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
 }
 }

@@ -54,7 +54,7 @@ b <- make_manifest(list(a = 1, b = 2), environment = FALSE)
 identical(manifest_digest(a), manifest_digest(b))
 
 # full precision, so a recorded number can be checked later
-m <- make_manifest(list(x = 1/3), environment = FALSE)
+m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
 }
 \seealso{

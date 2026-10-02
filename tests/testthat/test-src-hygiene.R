@@ -30,22 +30,28 @@ test_that("no R header precedes a header that pulls in libc++ locale", {
   # collision, which is why a Linux build is silent about it.
   #
   # These are the standard headers observed to reach <locale> on libc++.
-  hazardous <- c("functional", "locale", "regex", "iomanip", "iostream",
-                 "sstream", "iosfwd", "istream", "ostream", "fstream")
+  hazardous <- c(
+    "functional", "locale", "regex", "iomanip", "iostream",
+    "sstream", "iosfwd", "istream", "ostream", "fstream"
+  )
   offenders <- character(0)
   for (f in files) {
     lines <- readLines(f, warn = FALSE)
     inc <- grep("^\\s*#\\s*include\\s*<", lines)
     if (!length(inc)) next
-    r_at <- inc[grepl("^\\s*#\\s*include\\s*<R[./]|<Rinternals|<Rdefines",
-                      lines[inc])]
+    r_at <- inc[grepl(
+      "^\\s*#\\s*include\\s*<R[./]|<Rinternals|<Rdefines",
+      lines[inc]
+    )]
     if (!length(r_at)) next
     first_r <- min(r_at)
     for (i in inc[inc > first_r]) {
       hdr <- sub(".*<([^>]+)>.*", "\\1", lines[i])
       if (hdr %in% hazardous) {
-        offenders <- c(offenders, sprintf("%s:%d includes <%s> after an R header",
-                                          basename(f), i, hdr))
+        offenders <- c(offenders, sprintf(
+          "%s:%d includes <%s> after an R header",
+          basename(f), i, hdr
+        ))
       }
     }
   }
@@ -61,11 +67,16 @@ test_that("no source file carries a non-ASCII byte", {
   for (d in list("R", "src")) {
     p <- NULL
     for (cand in c(file.path("../..", d), file.path("../../..", d), d)) {
-      if (dir.exists(cand)) { p <- cand; break }
+      if (dir.exists(cand)) {
+        p <- cand
+        break
+      }
     }
     if (is.null(p)) next
-    files <- list.files(p, pattern = "[.](R|cpp|c|h|hpp)$",
-                        full.names = TRUE)
+    files <- list.files(p,
+      pattern = "[.](R|cpp|c|h|hpp)$",
+      full.names = TRUE
+    )
     bad <- character(0)
     for (f in files) {
       raw <- readBin(f, "raw", file.size(f))
@@ -89,7 +100,10 @@ test_that("no Rd line exceeds 90 characters", {
   # an earlier attempt at this made things worse.
   man <- NULL
   for (p in c("../../man", "../../../man", "man")) {
-    if (dir.exists(p)) { man <- p; break }
+    if (dir.exists(p)) {
+      man <- p
+      break
+    }
   }
   skip_if(is.null(man), "man/ not available from here")
   files <- list.files(man, pattern = "[.]Rd$", full.names = TRUE)
@@ -99,8 +113,10 @@ test_that("no Rd line exceeds 90 characters", {
     lines <- readLines(f, warn = FALSE)
     w <- which(nchar(lines) > 90L)
     for (i in w) {
-      long <- c(long, sprintf("%s:%d is %d chars", basename(f), i,
-                              nchar(lines[i])))
+      long <- c(long, sprintf(
+        "%s:%d is %d chars", basename(f), i,
+        nchar(lines[i])
+      ))
     }
   }
   expect_equal(long, character(0))
@@ -124,8 +140,10 @@ test_that("every C entry point is registered and every registration resolves", {
   for (f in list.files(d, pattern = "[.](cpp|c)$", full.names = TRUE)) {
     if (basename(f) == "init.c") next
     lines <- readLines(f, warn = FALSE)
-    m <- regmatches(lines, regexpr("SEXP\\s+C_rmbl_[A-Za-z0-9_]+\\s*\\(",
-                                   lines))
+    m <- regmatches(lines, regexpr(
+      "SEXP\\s+C_rmbl_[A-Za-z0-9_]+\\s*\\(",
+      lines
+    ))
     m <- m[nzchar(m)]
     defined <- c(defined, gsub("^SEXP\\s+|\\s*\\($", "", m))
   }
@@ -142,7 +160,8 @@ test_that("every C entry point is registered and every registration resolves", {
   for (nm in reg) {
     row <- grep(sprintf("\"%s\"", nm), ini, value = TRUE)
     arity <- suppressWarnings(as.integer(
-      sub(".*,\\s*([0-9]+)\\s*\\}.*", "\\1", row[1L])))
+      sub(".*,\\s*([0-9]+)\\s*\\}.*", "\\1", row[1L])
+    ))
     if (is.na(arity)) next
     at <- grep(sprintf("extern SEXP %s\\(", nm), ini)
     if (!length(at)) next
@@ -177,13 +196,16 @@ test_that("no S3 method for one class is defined in two files", {
   # capsule_sign() and fips_sign_mu() both return a
   # `bricklayer_signature`. Defining its METHODS twice is the mistake.
   files <- list.files(file.path(test_path("..", ".."), "R"),
-                      pattern = "[.]R$", full.names = TRUE)
+    pattern = "[.]R$", full.names = TRUE
+  )
   skip_if(length(files) == 0L, "not running from a source tree")
   seen <- list()
   for (f in files) {
     txt <- readLines(f, warn = FALSE)
     hits <- grep("^(format|print|as\\.character)\\.bricklayer_[A-Za-z0-9_]+ *<- *function",
-                 txt, value = TRUE)
+      txt,
+      value = TRUE
+    )
     for (h in hits) {
       m <- sub(" *<-.*", "", h)
       seen[[m]] <- unique(c(seen[[m]], basename(f)))
@@ -191,7 +213,8 @@ test_that("no S3 method for one class is defined in two files", {
   }
   twice <- seen[vapply(seen, length, integer(1)) > 1L]
   expect_identical(names(twice), character(0),
-                   info = paste(names(twice), collapse = ", "))
+    info = paste(names(twice), collapse = ", ")
+  )
   # every method is also registered exactly once
   ns <- readLines(test_path("..", "..", "NAMESPACE"), warn = FALSE)
   s3 <- grep("^S3method\\(", ns, value = TRUE)
@@ -211,8 +234,10 @@ test_that("the version is not stated twice with two different answers", {
   # files being compared against it are not, so they gate the test.
   root <- test_path("..", "..")
   cff <- file.path(root, "CITATION.cff")
-  skip_if_not(file.exists(cff) && file.exists(file.path(root, "NEWS.md")),
-              "not running from a source tree")
+  skip_if_not(
+    file.exists(cff) && file.exists(file.path(root, "NEWS.md")),
+    "not running from a source tree"
+  )
   desc <- as.character(utils::packageVersion("rmoriebricklayer"))
   txt <- readLines(cff, warn = FALSE)
   line <- grep("^version:", txt, value = TRUE)

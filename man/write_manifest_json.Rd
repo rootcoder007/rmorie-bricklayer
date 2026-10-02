@@ -35,5 +35,5 @@ file.exists(path)
 
 # Round-trips back through the package's own codec.
 back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
-back$results$row_count$status        # "PASS"
+back$results$row_count$status # "PASS"
 }

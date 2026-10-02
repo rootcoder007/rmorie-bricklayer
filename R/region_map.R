@@ -30,14 +30,18 @@
   if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x) || !all(nzchar(x))) {
     stop(sprintf("`%s` must not contain missing or empty values", arg),
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   x
 }
 
 .rmbl_rm_col <- function(d, nm, arg) {
-  if (!is.data.frame(d)) stop(sprintf("`%s` must be a data frame", arg),
-                              call. = FALSE)
+  if (!is.data.frame(d)) {
+    stop(sprintf("`%s` must be a data frame", arg),
+      call. = FALSE
+    )
+  }
   if (length(nm) != 1L || !nm %in% names(d)) {
     stop(sprintf("`%s` has no column `%s`", arg, nm), call. = FALSE)
   }
@@ -92,9 +96,11 @@
 #'
 #' @examples
 #' # Four regions, two of which hold a facility.
-#' cov <- region_coverage(region = c("A", "B", "C", "D"),
-#'                        population = c(1200000, 800000, 450000, 90000),
-#'                        units = c(3, 0, 1, 0))
+#' cov <- region_coverage(
+#'   region = c("A", "B", "C", "D"),
+#'   population = c(1200000, 800000, 450000, 90000),
+#'   units = c(3, 0, 1, 0)
+#' )
 #' cov
 #'
 #' # The covered share is reported, and is not a rate denominator.
@@ -106,7 +112,8 @@ region_coverage <- function(region, population, units) {
   units <- as.numeric(units)
   if (length(population) != length(region) || length(units) != length(region)) {
     stop("`region`, `population` and `units` must be the same length",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   if (anyDuplicated(region)) {
     stop("`region` must not repeat: one row per region", call. = FALSE)
@@ -118,23 +125,29 @@ region_coverage <- function(region, population, units) {
     stop("`units` must be complete, non-negative whole numbers", call. = FALSE)
   }
   tot <- sum(population)
-  out <- data.frame(region = region, population = population, units = units,
-                    has_unit = units > 0,
-                    pop_share = if (tot > 0) 100 * population / tot else NA_real_,
-                    stringsAsFactors = FALSE)
+  out <- data.frame(
+    region = region, population = population, units = units,
+    has_unit = units > 0,
+    pop_share = if (tot > 0) 100 * population / tot else NA_real_,
+    stringsAsFactors = FALSE
+  )
   out <- out[order(-out$units, -out$population), ]
   row.names(out) <- NULL
   cov <- sum(population[units > 0])
-  structure(out, class = c("rmbl_region_coverage", "data.frame"),
-            coverage = list(regions = length(region),
-                            with_unit = sum(units > 0),
-                            without_unit = sum(units == 0),
-                            units = sum(units),
-                            total_population = tot,
-                            covered_population = cov,
-                            uncovered_population = tot - cov,
-                            covered_share =
-                              if (tot > 0) 100 * cov / tot else NA_real_))
+  structure(out,
+    class = c("rmbl_region_coverage", "data.frame"),
+    coverage = list(
+      regions = length(region),
+      with_unit = sum(units > 0),
+      without_unit = sum(units == 0),
+      units = sum(units),
+      total_population = tot,
+      covered_population = cov,
+      uncovered_population = tot - cov,
+      covered_share =
+        if (tot > 0) 100 * cov / tot else NA_real_
+    )
+  )
 }
 
 #' @export
@@ -146,18 +159,28 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
     if (nrow(x) > n) sprintf("... %d more regions", nrow(x) - n),
     "The covered share is context, not a denominator: units serve",
     "catchments, so a rate over these regions alone would take its",
-    "numerator from the whole territory and is inflated.")
+    "numerator from the whole territory and is inflated."
+  )
   .rmbl_print_table(
-    sprintf("%s units in %s of %s regions", fm(a$units), fm(a$with_unit),
-            fm(a$regions)),
+    sprintf(
+      "%s units in %s of %s regions", fm(a$units), fm(a$with_unit),
+      fm(a$regions)
+    ),
     x[seq_len(n), , drop = FALSE],
-    notes = c(sprintf("those regions hold %s of %s residents (%.1f%%)",
-                      fm(a$covered_population), fm(a$total_population),
-                      a$covered_share),
-              sprintf("%s regions hold none; %s residents (%.1f%%) live there",
-                      fm(a$without_unit), fm(a$uncovered_population),
-                      100 - a$covered_share)),
-    footer = footer, ...)
+    notes = c(
+      sprintf(
+        "those regions hold %s of %s residents (%.1f%%)",
+        fm(a$covered_population), fm(a$total_population),
+        a$covered_share
+      ),
+      sprintf(
+        "%s regions hold none; %s residents (%.1f%%) live there",
+        fm(a$without_unit), fm(a$uncovered_population),
+        100 - a$covered_share
+      )
+    ),
+    footer = footer, ...
+  )
   invisible(x)
 }
 
@@ -190,9 +213,11 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #'   [region_coverage()]
 #'
 #' @examples
-#' cw <- data.frame(inst = c("North Jail", "South Jail", "East Jail"),
-#'                  cd = c("3557", "3520", "3506"),
-#'                  stringsAsFactors = FALSE)
+#' cw <- data.frame(
+#'   inst = c("North Jail", "South Jail", "East Jail"),
+#'   cd = c("3557", "3520", "3506"),
+#'   stringsAsFactors = FALSE
+#' )
 #' region_map_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
 #'
 #' # a region code the geography does not know fails the third check
@@ -205,18 +230,22 @@ region_map_integrity <- function(map, unit, region, regions = NULL) {
   blank <- function(v) is.na(v) | !nzchar(trimws(ifelse(is.na(v), "", v)))
   dup <- sum(duplicated(u[!blank(u)]))
   gap <- sum(blank(r))
-  unknown <- if (is.null(regions)) 0L else {
+  unknown <- if (is.null(regions)) {
+    0L
+  } else {
     known <- as.character(regions)
     sum(!blank(r) & !(trimws(r) %in% trimws(known)))
   }
   rows <- list(
     c("units assigned more than one region", dup),
     c("units assigned no region", gap),
-    c("region codes not in the reference geography", unknown))
+    c("region codes not in the reference geography", unknown)
+  )
   out <- data.frame(
     check = vapply(rows, `[`, character(1), 1L),
     observed = as.numeric(vapply(rows, `[`, character(1), 2L)),
-    expected = 0, stringsAsFactors = FALSE)
+    expected = 0, stringsAsFactors = FALSE
+  )
   if (is.null(regions)) out <- out[out$check != rows[[3]][1], , drop = FALSE]
   out$pass <- out$observed == out$expected
   row.names(out) <- NULL
@@ -255,8 +284,10 @@ region_map_integrity <- function(map, unit, region, regions = NULL) {
 #'   [region_map_integrity()]
 #'
 #' @examples
-#' pub <- data.frame(inst = c("North Jail", "South Jail"),
-#'                   cd = c("3557", "3520"), stringsAsFactors = FALSE)
+#' pub <- data.frame(
+#'   inst = c("North Jail", "South Jail"),
+#'   cd = c("3557", "3520"), stringsAsFactors = FALSE
+#' )
 #' obs <- pub
 #' region_map_compare(pub, obs, "inst")
 #'
@@ -274,7 +305,9 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
   missing_cols <- setdiff(cols, intersect(names(published), names(observed)))
   if (length(missing_cols)) {
     stop("both frames need the compared columns; missing: ",
-         paste(missing_cols, collapse = ", "), call. = FALSE)
+      paste(missing_cols, collapse = ", "),
+      call. = FALSE
+    )
   }
   only_pub <- setdiff(pu, ou)
   only_obs <- setdiff(ou, pu)
@@ -284,15 +317,21 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
   res <- list(data.frame(
     column = "rows", cells = length(unique(c(pu, ou))),
     mismatched = length(only_pub) + length(only_obs),
-    first = if (length(only_pub)) paste0("published only: ", only_pub[1])
-            else if (length(only_obs)) paste0("recomputed only: ", only_obs[1])
-            else "", stringsAsFactors = FALSE))
+    first = if (length(only_pub)) {
+      paste0("published only: ", only_pub[1])
+    } else if (length(only_obs)) {
+      paste0("recomputed only: ", only_obs[1])
+    } else {
+      ""
+    }, stringsAsFactors = FALSE
+  ))
   for (cl in cols) {
     a <- published[[cl]][ip]
     b <- observed[[cl]][io]
     same <- if (is.numeric(a) && is.numeric(b)) {
-      vapply(seq_along(a), function(i)
-        isTRUE(all.equal(a[i], b[i])), logical(1))
+      vapply(seq_along(a), function(i) {
+        isTRUE(all.equal(a[i], b[i]))
+      }, logical(1))
     } else {
       trimws(as.character(a)) == trimws(as.character(b))
     }
@@ -300,9 +339,15 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
     bad <- which(!same)
     res[[length(res) + 1L]] <- data.frame(
       column = cl, cells = length(shared), mismatched = length(bad),
-      first = if (length(bad)) sprintf("%s: published %s, recomputed %s",
-                                       shared[bad[1]], a[bad[1]], b[bad[1]])
-              else "", stringsAsFactors = FALSE)
+      first = if (length(bad)) {
+        sprintf(
+          "%s: published %s, recomputed %s",
+          shared[bad[1]], a[bad[1]], b[bad[1]]
+        )
+      } else {
+        ""
+      }, stringsAsFactors = FALSE
+    )
   }
   out <- do.call(rbind, res)
   row.names(out) <- NULL
@@ -349,13 +394,17 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
 #'   [region_map_integrity()]
 #'
 #' @examples
-#' cw <- data.frame(inst = c("North Jail", "South Jail", "Hill Jail"),
-#'                  cd = c("3557", "3520", "3506"),
-#'                  stringsAsFactors = FALSE)
+#' cw <- data.frame(
+#'   inst = c("North Jail", "South Jail", "Hill Jail"),
+#'   cd = c("3557", "3520", "3506"),
+#'   stringsAsFactors = FALSE
+#' )
 #'
 #' # a name-based route that is known to mis-place one unit
-#' route <- c("North Jail" = "3557", "South Jail" = "3520",
-#'            "Hill Jail" = "3519")
+#' route <- c(
+#'   "North Jail" = "3557", "South Jail" = "3520",
+#'   "Hill Jail" = "3519"
+#' )
 #' region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 #'
 #' # an undocumented disagreement is what the check is for
@@ -364,13 +413,14 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
 #' sum(!d$known)
 #' @export
 region_map_second_route <- function(map, unit, region, route,
-                                   known = character()) {
+                                    known = character()) {
   u <- trimws(as.character(.rmbl_rm_col(map, unit, "map")))
   r <- trimws(as.character(.rmbl_rm_col(map, region, "map")))
   if (is.data.frame(route)) {
     route <- stats::setNames(
       trimws(as.character(.rmbl_rm_col(route, region, "route"))),
-      trimws(as.character(.rmbl_rm_col(route, unit, "route"))))
+      trimws(as.character(.rmbl_rm_col(route, unit, "route")))
+    )
   }
   route <- route[!is.na(route) & nzchar(trimws(as.character(route)))]
   if (is.null(names(route))) {
@@ -384,7 +434,8 @@ region_map_second_route <- function(map, unit, region, route,
   out <- data.frame(
     unit = u[bad], primary = r[bad],
     second = trimws(as.character(route[u[bad]])),
-    known = u[bad] %in% known, stringsAsFactors = FALSE)
+    known = u[bad] %in% known, stringsAsFactors = FALSE
+  )
   out <- out[order(out$known, out$unit), ]
   row.names(out) <- NULL
   out
@@ -438,39 +489,52 @@ region_map_second_route <- function(map, unit, region, route,
 #' \dontrun{
 #' obs <- region_map_from_points(
 #'   x = inst$Longitude, y = inst$Latitude, unit = inst$Institution,
-#'   boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME"))
+#'   boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME")
+#' )
 #' stopifnot(all(obs$n_regions == 1))
 #' }
 #' @export
 region_map_from_points <- function(x, y, unit, boundaries, fields,
-                                  crs = 4326) {
-  if (!requireNamespace("sf", quietly = TRUE)) return(NULL)
-  if (length(boundaries) != 1L || !file.exists(boundaries)) return(NULL)
+                                   crs = 4326) {
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    return(NULL)
+  }
+  if (length(boundaries) != 1L || !file.exists(boundaries)) {
+    return(NULL)
+  }
   unit <- .rmbl_rm_chr(unit, "unit")
-  x <- as.numeric(x); y <- as.numeric(y)
+  x <- as.numeric(x)
+  y <- as.numeric(y)
   if (length(x) != length(unit) || length(y) != length(unit)) {
     stop("`x`, `y` and `unit` must be the same length", call. = FALSE)
   }
   if (anyNA(x) || anyNA(y)) {
     stop("`x` and `y` must be complete: a point with no coordinate ",
-         "cannot be matched", call. = FALSE)
+      "cannot be matched",
+      call. = FALSE
+    )
   }
   poly <- sf::st_read(boundaries, quiet = TRUE)
   fields <- as.character(fields)
   miss <- setdiff(fields, names(poly))
   if (length(miss)) {
     stop("boundary file has no column(s): ", paste(miss, collapse = ", "),
-         call. = FALSE)
+      call. = FALSE
+    )
   }
-  pts <- sf::st_as_sf(data.frame(.x = x, .y = y), coords = c(".x", ".y"),
-                      crs = crs)
+  pts <- sf::st_as_sf(data.frame(.x = x, .y = y),
+    coords = c(".x", ".y"),
+    crs = crs
+  )
   ## onto the boundary file's CRS, not the reverse: reprojecting the
   ## polygons would move their edges
   pts <- sf::st_transform(pts, sf::st_crs(poly))
   hit <- sf::st_within(pts, poly)
   n <- lengths(hit)
-  first <- vapply(hit, function(h) if (length(h)) h[1] else NA_integer_,
-                  integer(1))
+  first <- vapply(
+    hit, function(h) if (length(h)) h[1] else NA_integer_,
+    integer(1)
+  )
   out <- data.frame(unit = unit, stringsAsFactors = FALSE)
   for (f in fields) {
     v <- poly[[f]][first]

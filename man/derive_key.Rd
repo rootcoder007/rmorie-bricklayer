@@ -60,8 +60,10 @@ sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
 capsule_verify("manifest-digest", sig, key)
 
 # A longer key is a prefix-consistent extension of a shorter one.
-identical(substring(derive_key("pw", "s", 10, length = 64), 1, 64),
-          derive_key("pw", "s", 10, length = 32))
+identical(
+  substring(derive_key("pw", "s", 10, length = 64), 1, 64),
+  derive_key("pw", "s", 10, length = 32)
+)
 }
 \references{
 Moriarty K, Kaliski B, Rusch A (2017). PKCS #5:

@@ -112,8 +112,10 @@ seg <- data.frame(
   Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 )
 
-y <- yoy(seg, value = "Number_Of_Placements", period = "EndFiscalYear",
-         by = "Gender", direction = "lower_is_better")
+y <- yoy(seg,
+  value = "Number_Of_Placements", period = "EndFiscalYear",
+  by = "Gender", direction = "lower_is_better"
+)
 y
 
 # The interval is exact, so a small group does not get a confident

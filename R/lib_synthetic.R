@@ -8,8 +8,8 @@
 ## under-specified.
 ##
 ## Provides:
-##   make_synthetic_csv(schema, out_path, n_rows, seed)
-##   make_synthetic_column(spec, n, base_p)
+##   make_synthetic_csv: a schema to a CSV of n rows under a seed
+##   make_synthetic_column: one column from its spec
 ##
 ## Schema format (from data_provenance.json schema.synthetic_recipe):
 ##   {
@@ -39,7 +39,7 @@
 ##       },
 ##       "UniqueIndividual_ID": {
 ##         "type":    "id_pattern",
-##         "pattern": "{year}-{seq:05d}-RC",
+##         pattern, e.g. year-seq-RC with a 5-digit zero-padded seq,
 ##         "year_col": "EndFiscalYear"
 ##       }
 ##     }
@@ -73,19 +73,25 @@
 #' @examples
 #' set.seed(1)
 #' # "sample": categorical draw, optionally weighted.
-#' make_synthetic_column(list(type = "sample", values = list("a", "b"),
-#'                            weights = list(0.7, 0.3)), 5)
+#' make_synthetic_column(list(
+#'   type = "sample", values = list("a", "b"),
+#'   weights = list(0.7, 0.3)
+#' ), 5)
 #'
 #' # "bernoulli": two-label draw at probability p.
-#' make_synthetic_column(list(type = "bernoulli", p = 0.5,
-#'                            labels = list("Yes", "No")), 5)
+#' make_synthetic_column(list(
+#'   type = "bernoulli", p = 0.5,
+#'   labels = list("Yes", "No")
+#' ), 5)
 #'
 #' # "poisson": counts with a floor via `min`.
 #' make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
 #'
 #' # "id_pattern": templated IDs (the {seq:05d} token is zero-padded).
-#' make_synthetic_column(list(type = "id_pattern",
-#'                            pattern = "case-{seq:05d}"), 3)
+#' make_synthetic_column(list(
+#'   type = "id_pattern",
+#'   pattern = "case-{seq:05d}"
+#' ), 3)
 #'
 #' # "sequence": a running integer sequence from `from`.
 #' make_synthetic_column(list(type = "sequence", from = 100), 4)
@@ -98,7 +104,7 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
   switch(type,
     sample = {
       vals <- unlist(spec$values)
-      w    <- if (!is.null(spec$weights)) unlist(spec$weights) else NULL
+      w <- if (!is.null(spec$weights)) unlist(spec$weights) else NULL
       sample(vals, n, replace = TRUE, prob = w)
     },
     bernoulli = {
@@ -188,8 +194,8 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #' )
 #' out <- tempfile(fileext = ".csv")
 #' res <- make_synthetic_csv(recipe, out)
-#' res$rows                         # 20
-#' res$seed                         # 42 (reproducible)
+#' res$rows # 20
+#' res$seed # 42 (reproducible)
 #'
 #' # The written CSV round-trips and has the declared columns.
 #' df <- utils::read.csv(out)
@@ -200,7 +206,7 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #' make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
 #' @export
 make_synthetic_csv <- function(schema, out_path,
-                                n_rows = NULL, seed = NULL) {
+                               n_rows = NULL, seed = NULL) {
   if (is.null(seed)) seed <- schema$seed %||% 91735246L
   if (is.null(n_rows)) n_rows <- schema$n_rows %||% 50000L
   # CRAN policy: restore the caller's RNG state on exit.
@@ -218,8 +224,9 @@ make_synthetic_csv <- function(schema, out_path,
     # expand to 1:x (base R gotcha) and break single-value replication.
     rep_vals <- unlist(reps_spec$values)
     rows_per <- rep_vals[sample.int(length(rep_vals), n_persons,
-                                    replace = TRUE,
-                                    prob = unlist(reps_spec$weights))]
+      replace = TRUE,
+      prob = unlist(reps_spec$weights)
+    )]
     expand <- function(x) rep(x, rows_per)
     n_total <- sum(rows_per)
   } else {
@@ -236,8 +243,8 @@ make_synthetic_csv <- function(schema, out_path,
 
   ## Generate columns in declaration order; later columns can see ctx
   out <- list()
-  ctx <- list()         # one entry per row
-  ctx_person <- list()  # one entry per person, before replication
+  ctx <- list() # one entry per row
+  ctx_person <- list() # one entry per person, before replication
   for (col_name in names(schema$columns)) {
     spec <- schema$columns[[col_name]]
     type <- spec$type %||% "sample"

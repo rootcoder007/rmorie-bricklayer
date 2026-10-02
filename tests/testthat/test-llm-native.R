@@ -7,30 +7,46 @@
 .sandbox <- function(env = parent.frame()) {
   dir <- tempfile("xdg-")
   dir.create(dir)
-  old <- Sys.getenv(c("XDG_CONFIG_HOME", "MORIE_HOSTED_KEY",
-                      "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL"),
-                    unset = NA)
+  old <- Sys.getenv(
+    c(
+      "XDG_CONFIG_HOME", "MORIE_HOSTED_KEY",
+      "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL"
+    ),
+    unset = NA
+  )
   Sys.setenv(XDG_CONFIG_HOME = dir)
-  Sys.unsetenv(c("MORIE_HOSTED_KEY", "MORIE_HOSTED_BASE_URL",
-                 "MORIE_HOSTED_MODEL"))
+  Sys.unsetenv(c(
+    "MORIE_HOSTED_KEY", "MORIE_HOSTED_BASE_URL",
+    "MORIE_HOSTED_MODEL"
+  ))
   withr_restore <- function() {
     for (nm in names(old)) {
-      if (is.na(old[[nm]])) Sys.unsetenv(nm) else do.call(Sys.setenv,
-                                                          as.list(old[nm]))
+      if (is.na(old[[nm]])) {
+        Sys.unsetenv(nm)
+      } else {
+        do.call(
+          Sys.setenv,
+          as.list(old[nm])
+        )
+      }
     }
     unlink(dir, recursive = TRUE)
   }
   do.call(on.exit, list(substitute(withr_restore()), add = TRUE),
-          envir = env)
+    envir = env
+  )
   assign("withr_restore", withr_restore, envir = env)
   dir
 }
 
 .reply <- function(text, status = 200L) {
   body <- bricklayer_json_to_json(
-    list(choices = list(list(message = list(role = "assistant",
-                                            content = text)))),
-    auto_unbox = TRUE)
+    list(choices = list(list(message = list(
+      role = "assistant",
+      content = text
+    )))),
+    auto_unbox = TRUE
+  )
   list(status = status, body = charToRaw(body))
 }
 
@@ -68,10 +84,13 @@ test_that("the native route posts a bearer-authenticated chat request", {
   seen <- NULL
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
-      seen <<- list(url = url, body = rawToChar(body), ct = content_type,
-                    headers = headers)
+      seen <<- list(
+        url = url, body = rawToChar(body), ct = content_type,
+        headers = headers
+      )
       .reply("MORIE")
-    })
+    }
+  )
   expect_equal(bricklayer_llm_ask("say MORIE"), "MORIE")
   expect_equal(seen$url, "https://llm.rmorie.com/v1/chat/completions")
   expect_equal(seen$headers, "Authorization: Bearer sk-abc")
@@ -91,8 +110,12 @@ test_that("gateway errors are reported with their message", {
   expect_error(bricklayer_llm_ask("hi"), "bricklayer_llm_login")
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
   testthat::local_mocked_bindings(
-    .bl_http_post = function(...) list(status = 429L, body = charToRaw(
-      "{\"error\":{\"message\":\"Rate limit exceeded\"}}")))
+    .bl_http_post = function(...) {
+      list(status = 429L, body = charToRaw(
+        "{\"error\":{\"message\":\"Rate limit exceeded\"}}"
+      ))
+    }
+  )
   expect_error(bricklayer_llm_ask("hi"), "429: Rate limit exceeded")
   testthat::local_mocked_bindings(.bl_http_post = function(...) NULL)
   expect_error(bricklayer_llm_ask("hi"), "answered -1")
@@ -106,7 +129,8 @@ test_that("agent_bundle() uses the hosted route when a key is stored", {
     .bl_http_post = function(url, body, content_type, timeout, headers) {
       seen <<- rawToChar(body)
       .reply("Pin the SHA256 in the manifest.")
-    })
+    }
+  )
   expect_match(agent_bundle("add provenance"), "Pin the SHA256")
   expect_match(seen, "brick-proof", fixed = TRUE)
   suppressMessages(bricklayer_llm_logout())
@@ -115,8 +139,10 @@ test_that("agent_bundle() uses the hosted route when a key is stored", {
 
 test_that("bricklayer_llm_status() names the two routes", {
   .sandbox()
-  testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = ""),
-                                  .package = "base")
+  testthat::local_mocked_bindings(
+    Sys.which = function(names) c(rmorie = ""),
+    .package = "base"
+  )
   st <- bricklayer_llm_status()
   expect_equal(st$route, c("hosted MORIE tier", "rmorie-cli agent"))
   expect_equal(st$status, c("not logged in", "absent"))
@@ -126,8 +152,10 @@ test_that("bricklayer_llm_status() names the two routes", {
 
 test_that("the command line dispatches its verbs", {
   .sandbox()
-  testthat::local_mocked_bindings(Sys.which = function(names) c(rmorie = ""),
-                                  .package = "base")
+  testthat::local_mocked_bindings(
+    Sys.which = function(names) c(rmorie = ""),
+    .package = "base"
+  )
   cap <- function(...) {
     buf <- character()
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
@@ -168,8 +196,11 @@ test_that("models lists the hosted tier's models and ask --model names one", {
     list(status = 200L, body = charToRaw('{"data":[{"id":"a:cloud"},{"id":"b:cloud"}]}'))
   })
   old_model <- Sys.getenv("MORIE_HOSTED_MODEL", unset = NA)
-  on.exit(if (is.na(old_model)) Sys.unsetenv("MORIE_HOSTED_MODEL")
-          else Sys.setenv(MORIE_HOSTED_MODEL = old_model), add = TRUE)
+  on.exit(if (is.na(old_model)) {
+    Sys.unsetenv("MORIE_HOSTED_MODEL")
+  } else {
+    Sys.setenv(MORIE_HOSTED_MODEL = old_model)
+  }, add = TRUE)
   Sys.setenv(MORIE_HOSTED_MODEL = "b:cloud")
   hm <- bricklayer_llm_models()
   expect_equal(as.character(hm), c("a:cloud", "b:cloud"))
@@ -204,16 +235,23 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
     .bl_http_post = function(url, body, content_type, timeout, headers) {
       seen[[length(seen) + 1L]] <<- list(url = url, body = rawToChar(body))
       if (grepl("/email/code$", url)) {
-        return(list(status = 200L,
-                    body = charToRaw("{\"sent\":true,\"expires_in\":600}")))
+        return(list(
+          status = 200L,
+          body = charToRaw("{\"sent\":true,\"expires_in\":600}")
+        ))
       }
-      list(status = 200L,
-           body = charToRaw("{\"api_key\":\"sk-mail\",\"user\":\"mail:abc\"}"))
-    })
-  key <- suppressMessages(bricklayer_llm_login(email = " Vee@Example.com",
-                                               code = " 123456 "))
+      list(
+        status = 200L,
+        body = charToRaw("{\"api_key\":\"sk-mail\",\"user\":\"mail:abc\"}")
+      )
+    }
+  )
+  key <- suppressMessages(bricklayer_llm_login(
+    email = " Vee@Example.com",
+    code = " 123456 "
+  ))
   expect_equal(key, "sk-mail")
-  expect_length(seen, 1L)  # a supplied code skips the request step
+  expect_length(seen, 1L) # a supplied code skips the request step
   expect_equal(seen[[1]]$url, "https://llm.rmorie.com/auth/email/verify")
   req <- bricklayer_json_from_json(seen[[1]]$body)
   expect_equal(req$email, "vee@example.com")
@@ -222,10 +260,16 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
   expect_equal(.bl_read_credentials()$hosted_user, "mail:abc")
   expect_error(bricklayer_llm_login(email = "nope"), "email address")
   testthat::local_mocked_bindings(
-    .bl_http_post = function(...) list(status = 403L, body = charToRaw(
-      "{\"error\":\"wrong code\"}")))
-  expect_error(bricklayer_llm_login(email = "vee@example.com", code = "0"),
-               "403: wrong code")
+    .bl_http_post = function(...) {
+      list(status = 403L, body = charToRaw(
+        "{\"error\":\"wrong code\"}"
+      ))
+    }
+  )
+  expect_error(
+    bricklayer_llm_login(email = "vee@example.com", code = "0"),
+    "403: wrong code"
+  )
 })
 
 test_that("the device flow polls until GitHub approval and stores the key", {
@@ -237,17 +281,27 @@ test_that("the device flow polls until GitHub approval and stores the key", {
         return(list(status = 200L, body = charToRaw(paste0(
           "{\"device_code\":\"dev-1\",\"user_code\":\"ABCD-1234\",",
           "\"verification_uri\":\"https://github.com/login/device\",",
-          "\"interval\":0}"))))
+          "\"interval\":0}"
+        ))))
       }
       polls <<- polls + 1L
-      if (polls < 3L) return(list(status = 428L, body = charToRaw(
-        "{\"error\":\"authorization_pending\"}")))
+      if (polls < 3L) {
+        return(list(status = 428L, body = charToRaw(
+          "{\"error\":\"authorization_pending\"}"
+        )))
+      }
       list(status = 200L, body = charToRaw(
-        "{\"api_key\":\"sk-dev\",\"user\":\"octocat\"}"))
-    })
-  expect_message(key <- bricklayer_llm_login(open_browser = FALSE,
-                                             poll_max_seconds = 5),
-                 "ABCD-1234")
+        "{\"api_key\":\"sk-dev\",\"user\":\"octocat\"}"
+      ))
+    }
+  )
+  expect_message(
+    key <- bricklayer_llm_login(
+      open_browser = FALSE,
+      poll_max_seconds = 5
+    ),
+    "ABCD-1234"
+  )
   expect_equal(key, "sk-dev")
   expect_equal(polls, 3L)
   expect_equal(.bl_hosted_key(), "sk-dev")
@@ -296,7 +350,9 @@ test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
   old <- Sys.getenv("XDG_CONFIG_HOME")
   Sys.unsetenv("XDG_CONFIG_HOME")
   expect_match(.bl_credentials_path(),
-               file.path(".config", "morie", "credentials.json"), fixed = TRUE)
+    file.path(".config", "morie", "credentials.json"),
+    fixed = TRUE
+  )
   Sys.setenv(XDG_CONFIG_HOME = old)
   p <- .bl_credentials_path()
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
@@ -312,25 +368,40 @@ test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
 test_that("the real POST primitive reports an unreachable host as -1", {
   # port 9 (discard) on the loopback is closed on every CI runner; nothing
   # leaves the machine
-  res <- .bl_http_post("http://127.0.0.1:9/v1/chat/completions",
-                       charToRaw("{}"), "application/json", 2L, NULL)
+  res <- .bl_http_post(
+    "http://127.0.0.1:9/v1/chat/completions",
+    charToRaw("{}"), "application/json", 2L, NULL
+  )
   expect_equal(as.integer(res$status), -1L)
-  expect_error(.bl_http_post("http://127.0.0.1:9/", charToRaw("{}"),
-                             "application/json", 2L, 42),
-               "headers")
+  expect_error(
+    .bl_http_post(
+      "http://127.0.0.1:9/", charToRaw("{}"),
+      "application/json", 2L, 42
+    ),
+    "headers"
+  )
 })
 
 test_that("a reply without text and a reply with a plain error string are reported", {
   .sandbox()
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 200L, body = charToRaw("{\"choices\":[{\"message\":{\"content\":\"\"}}]}")))
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 200L, body = charToRaw("{\"choices\":[{\"message\":{\"content\":\"\"}}]}")
+    )
+  })
   expect_error(bricklayer_llm_ask("hi"), "returned no text")
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 500L, body = charToRaw("{\"error\":\"boom\"}")))
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 500L, body = charToRaw("{\"error\":\"boom\"}")
+    )
+  })
   expect_error(bricklayer_llm_ask("hi"), "500: boom")
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 502L, body = charToRaw("not json")))
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 502L, body = charToRaw("not json")
+    )
+  })
   expect_error(bricklayer_llm_ask("hi"), "answered 502$")
 })
 
@@ -344,50 +415,85 @@ test_that("the email flow asks for the code when none is given and reports error
         return(list(status = 200L, body = charToRaw("{\"sent\":true}")))
       }
       list(status = 200L, body = charToRaw("{\"api_key\":\"sk-typed\"}"))
-    })
-  testthat::local_mocked_bindings(readline = function(prompt = "") " 654321 ",
-                                  .package = "base")
-  expect_message(key <- bricklayer_llm_login(email = "vee@example.com"),
-                 "6-digit code")
+    }
+  )
+  testthat::local_mocked_bindings(
+    readline = function(prompt = "") " 654321 ",
+    .package = "base"
+  )
+  expect_message(
+    key <- bricklayer_llm_login(email = "vee@example.com"),
+    "6-digit code"
+  )
   expect_equal(key, "sk-typed")
   expect_equal(calls, c("/email/code", "/email/verify"))
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 429L, body = charToRaw("{\"error\":\"too many codes\"}")))
-  expect_error(bricklayer_llm_login(email = "vee@example.com"),
-               "429: too many codes")
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 200L, body = charToRaw("{\"sent\":true}")))
-  expect_error(bricklayer_llm_login(email = "vee@example.com", code = "1"),
-               "returned no key")
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 429L, body = charToRaw("{\"error\":\"too many codes\"}")
+    )
+  })
+  expect_error(
+    bricklayer_llm_login(email = "vee@example.com"),
+    "429: too many codes"
+  )
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 200L, body = charToRaw("{\"sent\":true}")
+    )
+  })
+  expect_error(
+    bricklayer_llm_login(email = "vee@example.com", code = "1"),
+    "returned no key"
+  )
 })
 
 test_that("the device flow opens the browser, rejects a hard error and times out", {
   .sandbox()
   opened <- NULL
-  testthat::local_mocked_bindings(browseURL = function(url, ...) opened <<- url,
-                                  .package = "utils")
+  testthat::local_mocked_bindings(
+    browseURL = function(url, ...) opened <<- url,
+    .package = "utils"
+  )
   start_reply <- list(status = 200L, body = charToRaw(paste0(
     "{\"device_code\":\"dev-2\",\"user_code\":\"WXYZ-0000\",",
-    "\"verification_uri\":\"https://github.com/login/device\",\"interval\":0}")))
+    "\"verification_uri\":\"https://github.com/login/device\",\"interval\":0}"
+  )))
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, ...) {
-      if (grepl("/device/code$", url)) return(start_reply)
+      if (grepl("/device/code$", url)) {
+        return(start_reply)
+      }
       list(status = 400L, body = charToRaw("{\"error\":\"expired_token\"}"))
-    })
-  expect_error(suppressMessages(bricklayer_llm_login(open_browser = TRUE,
-                                                     poll_max_seconds = 5)),
-               "400: expired_token")
+    }
+  )
+  expect_error(
+    suppressMessages(bricklayer_llm_login(
+      open_browser = TRUE,
+      poll_max_seconds = 5
+    )),
+    "400: expired_token"
+  )
   expect_equal(opened, "https://github.com/login/device")
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, ...) {
-      if (grepl("/device/code$", url)) return(start_reply)
+      if (grepl("/device/code$", url)) {
+        return(start_reply)
+      }
       list(status = 428L, body = charToRaw("{\"error\":\"authorization_pending\"}"))
-    })
-  expect_error(suppressMessages(bricklayer_llm_login(open_browser = FALSE,
-                                                     poll_max_seconds = 0)),
-               "timed out")
-  testthat::local_mocked_bindings(.bl_http_post = function(...) list(
-    status = 503L, body = charToRaw("{\"error\":\"down\"}")))
+    }
+  )
+  expect_error(
+    suppressMessages(bricklayer_llm_login(
+      open_browser = FALSE,
+      poll_max_seconds = 0
+    )),
+    "timed out"
+  )
+  testthat::local_mocked_bindings(.bl_http_post = function(...) {
+    list(
+      status = 503L, body = charToRaw("{\"error\":\"down\"}")
+    )
+  })
   expect_error(bricklayer_llm_login(open_browser = FALSE), "503: down")
 })
 
@@ -405,8 +511,10 @@ test_that("the command line prompts for a token, runs the device flow and checks
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  testthat::local_mocked_bindings(readline = function(prompt = "") "sk-prompted",
-                                  .package = "base")
+  testthat::local_mocked_bindings(
+    readline = function(prompt = "") "sk-prompted",
+    .package = "base"
+  )
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-prompted")
@@ -419,10 +527,12 @@ test_that("the command line prompts for a token, runs the device flow and checks
       if (grepl("/device/code$", url)) {
         return(list(status = 200L, body = charToRaw(paste0(
           "{\"device_code\":\"d\",\"user_code\":\"AAAA-1111\",",
-          "\"verification_uri\":\"https://github.com/login/device\",\"interval\":0}"))))
+          "\"verification_uri\":\"https://github.com/login/device\",\"interval\":0}"
+        ))))
       }
       list(status = 200L, body = charToRaw("{\"api_key\":\"sk-cli-dev\",\"user\":\"vee\"}"))
-    })
+    }
+  )
   d <- suppressMessages(cap("login", "--no-browser"))
   expect_equal(d$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-cli-dev")
@@ -436,15 +546,18 @@ test_that("the Rd database falls back to the man directory and install_cli copie
       if (!missing(package)) stop("no installed help")
       list()
     },
-    .package = "tools")
+    .package = "tools"
+  )
   expect_equal(.bl_rd_db(), list())
-  testthat::local_mocked_bindings(file.symlink = function(from, to) FALSE,
-                                  .package = "base")
+  testthat::local_mocked_bindings(
+    file.symlink = function(from, to) FALSE,
+    .package = "base"
+  )
   dir <- tempfile("bin-")
   target <- suppressMessages(install_cli(dir = dir))
   expect_true(file.exists(target))
   if (.Platform$OS.type == "windows") {
-    expect_match(readLines(target)[1], "^@echo off")  # the .cmd wrapper
+    expect_match(readLines(target)[1], "^@echo off") # the .cmd wrapper
   } else {
     expect_false(!is.na(Sys.readlink(target)) && nzchar(Sys.readlink(target)))
     expect_match(readLines(target)[1], "^#!/bin/sh")

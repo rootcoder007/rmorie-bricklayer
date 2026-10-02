@@ -1,0 +1,24 @@
+linters: linters_with_defaults(
+    line_length_linter = line_length_linter(120L),
+    object_name_linter = NULL,
+    # styler is the formatter in this repo; its continuation style disagrees
+    # with indentation_linter, so the formatter wins (as in rmoriedata).
+    indentation_linter = NULL,
+    # same-package calls resolve at load time; the linter cannot see them file by file
+    object_usage_linter = NULL
+  )
+exclusions: list(
+    # ports kept byte-for-byte against their reference implementations
+    "R/json_native.R" = Inf,
+    "R/sha256_native.R" = Inf,
+    "R/RcppExports.R" = Inf,
+    # test vectors and JSON fixtures cannot be wrapped
+    "tests/testthat/test-json-branches.R" = list(line_length_linter = Inf),
+    "tests/testthat/test-json-parity.R" = list(line_length_linter = Inf),
+    "tests/testthat/test-sha256-native.R" = list(line_length_linter = Inf),
+    "inst" = Inf,
+    "src" = Inf,
+    "dev" = Inf,
+    "data-raw" = Inf
+  )
+encoding: "UTF-8"

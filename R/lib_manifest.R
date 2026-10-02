@@ -10,8 +10,8 @@
 ##   record(manifest, name, observed,   Append a cross-check entry; returns
 ##          expected, tol, group,         the mutated manifest
 ##          synthetic)
-##   write_manifest_json(manifest, path)
-##   write_summary_txt(manifest, output_dir, paths, what_was_done)
+##   write_manifest_json: the manifest to a JSON path
+##   write_summary_txt: the manifest summary next to the outputs
 ##
 ## Licence: AGPL-3.0-or-later
 ## =====================================================================
@@ -45,13 +45,14 @@
 #' @examples
 #' # Minimal manifest, no environment capture.
 #' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
-#'                      environment = FALSE)
-#' names(man)          # "meta" "results"
+#'   environment = FALSE
+#' )
+#' names(man) # "meta" "results"
 #' man$meta$project
 #'
 #' # With environment = TRUE it also records R version / platform / packages.
 #' full <- make_manifest(list(project = "demo"), environment = TRUE)
-#' names(full)         # adds "environment"
+#' names(full) # adds "environment"
 #' full$environment$r_version
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
@@ -86,46 +87,63 @@ make_manifest <- function(meta, environment = TRUE) {
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
 #'
 #' # Within tolerance -> PASS.
-#' man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
-#'               tol = 0.001)
-#' man$results$mean_matches$status      # "PASS"
+#' man <- record(man, "mean_matches",
+#'   observed = 1.0001, expected = 1,
+#'   tol = 0.001
+#' )
+#' man$results$mean_matches$status # "PASS"
 #'
 #' # Outside tolerance -> DIFFER.
 #' man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
-#' man$results$sd_matches$status        # "DIFFER"
+#' man$results$sd_matches$status # "DIFFER"
 #'
 #' # Synthetic data -> INFO (comparison not meaningful).
-#' man <- record(man, "synthetic_row", observed = 5, expected = 5,
-#'               synthetic = TRUE)
-#' man$results$synthetic_row$status     # "INFO"
+#' man <- record(man, "synthetic_row",
+#'   observed = 5, expected = 5,
+#'   synthetic = TRUE
+#' )
+#' man$results$synthetic_row$status # "INFO"
 #'
 #' # Calls chain: record() returns the mutated manifest.
-#' length(man$results)                  # 3
+#' length(man$results) # 3
 #' @export
 record <- function(manifest, name, observed, expected,
                    tol = 0.0001, group = "general",
                    synthetic = FALSE) {
-  diff <- if (is.numeric(observed) && is.numeric(expected))
-    abs(observed - expected) else NA_real_
-  status <- if (isTRUE(synthetic)) "INFO"
-            else if (!is.na(diff) && diff <= tol) "PASS"
-            else if (!is.na(diff)) "DIFFER"
-            else "INFO"
+  diff <- if (is.numeric(observed) && is.numeric(expected)) {
+    abs(observed - expected)
+  } else {
+    NA_real_
+  }
+  status <- if (isTRUE(synthetic)) {
+    "INFO"
+  } else if (!is.na(diff) && diff <= tol) {
+    "PASS"
+  } else if (!is.na(diff)) {
+    "DIFFER"
+  } else {
+    "INFO"
+  }
   manifest$results[[name]] <- list(
-    group    = group,
+    group = group,
     observed = observed,
     expected = expected,
-    diff     = diff,
-    status   = status,
-    tol      = tol,
-    note     = if (isTRUE(synthetic))
-                  "synthetic data -- comparison not meaningful" else NULL
+    diff = diff,
+    status = status,
+    tol = tol,
+    note = if (isTRUE(synthetic)) {
+      "synthetic data -- comparison not meaningful"
+    } else {
+      NULL
+    }
   )
-  message(sprintf("  %-44s observed = %-12s expected = %-12s [%s]",
-                  name,
-                  if (is.numeric(observed)) sprintf("%.4f", observed) else as.character(observed),
-                  if (is.numeric(expected)) sprintf("%.4f", expected) else as.character(expected),
-                  status))
+  message(sprintf(
+    "  %-44s observed = %-12s expected = %-12s [%s]",
+    name,
+    if (is.numeric(observed)) sprintf("%.4f", observed) else as.character(observed),
+    if (is.numeric(expected)) sprintf("%.4f", expected) else as.character(expected),
+    status
+  ))
   manifest
 }
 
@@ -153,7 +171,7 @@ record <- function(manifest, name, observed, expected,
 #'
 #' # Round-trips back through the package's own codec.
 #' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
-#' back$results$row_count$status        # "PASS"
+#' back$results$row_count$status # "PASS"
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
   path <- .rmbl_string1(path, "path")
@@ -161,11 +179,16 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
     writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
     return(invisible(path))
   }
-  writeLines(bricklayer_json_to_json(manifest, auto_unbox = TRUE,
-                                     pretty = TRUE, na = "null",
-                                     null = "null",
-                                     digits = I(17)),
-             path, useBytes = TRUE)
+  writeLines(
+    bricklayer_json_to_json(manifest,
+      auto_unbox = TRUE,
+      pretty = TRUE, na = "null",
+      null = "null",
+      digits = I(17)
+    ),
+    path,
+    useBytes = TRUE
+  )
   invisible(path)
 }
 
@@ -214,14 +237,16 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' identical(manifest_digest(a), manifest_digest(b))
 #'
 #' # full precision, so a recorded number can be checked later
-#' m <- make_manifest(list(x = 1/3), environment = FALSE)
+#' m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 #' grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
 #' @export
 manifest_canonical <- function(manifest) {
   if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
-  bricklayer_json_to_json(.rmbl_sort_keys(manifest), auto_unbox = TRUE,
-                          pretty = FALSE, na = "null", null = "null",
-                          digits = I(17))
+  bricklayer_json_to_json(.rmbl_sort_keys(manifest),
+    auto_unbox = TRUE,
+    pretty = FALSE, na = "null", null = "null",
+    digits = I(17)
+  )
 }
 
 #' @rdname manifest_canonical
@@ -235,18 +260,25 @@ manifest_digest <- function(manifest) {
 #' @noRd
 .rmbl_sha256_bytes <- function(bytes,
                                native = exists("core_sha256",
-                                               mode = "function")) {
-  if (native) return(core_sha256(bytes))
+                                 mode = "function"
+                               )) {
+  if (native) {
+    return(core_sha256(bytes))
+  }
   .rmbl_sha256_hex(bytes)
 }
 
 # Recursively order the names of every list, leaving unnamed lists (JSON
 # arrays, where order is content) alone.
 .rmbl_sort_keys <- function(x) {
-  if (!is.list(x)) return(x)
+  if (!is.list(x)) {
+    return(x)
+  }
   x <- lapply(x, .rmbl_sort_keys)
   nm <- names(x)
-  if (is.null(nm) || any(!nzchar(nm))) return(x)
+  if (is.null(nm) || any(!nzchar(nm))) {
+    return(x)
+  }
   x[order(nm, method = "radix")]
 }
 
@@ -299,7 +331,8 @@ summarise_counts <- function(manifest) {
 #' @return The path to the written `SUMMARY.txt`, returned invisibly.
 #' @examples
 #' man <- make_manifest(list(project = "demo", author = "A. Author"),
-#'                      environment = FALSE)
+#'   environment = FALSE
+#' )
 #' man <- record(man, "row_count", observed = 20, expected = 20)
 #' out <- file.path(tempdir(), "demo-run")
 #' dir.create(out, showWarnings = FALSE)
@@ -322,26 +355,33 @@ write_summary_txt <- function(manifest, output_dir, paths,
     "##########################################################",
     "",
     paste0("Project:   ", manifest$meta$project %||% "(unnamed)"),
-    paste0("Author:    ", manifest$meta$author  %||% "(unknown)"),
+    paste0("Author:    ", manifest$meta$author %||% "(unknown)"),
     paste0("When:      ", manifest$meta$run_at %||%
-                          format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
+      format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
     paste0("OS:        ", manifest$meta$os %||% Sys.info()[["sysname"]]),
     paste0("R:         ", manifest$meta$r_version %||% R.version.string),
-    paste0("Mode:      ", if (is_synth)
-                            "SYNTHETIC (not real data -- pipeline check only)"
-                          else "real data"),
+    paste0("Mode:      ", if (is_synth) {
+      "SYNTHETIC (not real data -- pipeline check only)"
+    } else {
+      "real data"
+    }),
     "",
     "----------------------------------------------------------",
     "  PATHS -- exact absolute locations used in this run",
     "----------------------------------------------------------"
   )
   for (nm in names(paths)) {
-    lines <- c(lines, sprintf("%-15s %s",
-                              paste0(toupper(substr(nm, 1, 1)),
-                                     substr(nm, 2, nchar(nm)), ":"),
-                              paths[[nm]]))
+    lines <- c(lines, sprintf(
+      "%-15s %s",
+      paste0(
+        toupper(substr(nm, 1, 1)),
+        substr(nm, 2, nchar(nm)), ":"
+      ),
+      paths[[nm]]
+    ))
   }
-  lines <- c(lines, "",
+  lines <- c(
+    lines, "",
     "----------------------------------------------------------",
     "  RESULT COUNTS",
     "----------------------------------------------------------",
@@ -358,21 +398,27 @@ write_summary_txt <- function(manifest, output_dir, paths,
   )
   vers <- manifest$meta$r_package_versions
   if (!is.null(vers) && length(vers) > 0L) {
-    lines <- c(lines, "",
+    lines <- c(
+      lines, "",
       "----------------------------------------------------------",
       "  R PACKAGE VERSIONS USED IN THIS RUN",
       "  (reference numbers were produced on specific versions;",
       "   drift here explains most WARN/convergence differences)",
       "----------------------------------------------------------",
-      sprintf("  %-12s %s", names(vers),
-              vapply(vers, function(v) as.character(v %||% "?"), character(1))))
+      sprintf(
+        "  %-12s %s", names(vers),
+        vapply(vers, function(v) as.character(v %||% "?"), character(1))
+      )
+    )
   }
   if (!is.null(what_was_done)) {
-    lines <- c(lines, "",
+    lines <- c(
+      lines, "",
       "----------------------------------------------------------",
       "  WHAT WAS DONE",
       "----------------------------------------------------------",
-      what_was_done)
+      what_was_done
+    )
   }
   if (!is.null(contact)) lines <- c(lines, "", paste0("Contact: ", contact))
   if (!is.null(licence)) lines <- c(lines, paste0("Licence: ", licence))

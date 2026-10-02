@@ -58,6 +58,8 @@
 #' @param timeout Seconds allowed for the whole transfer.
 #' @param quiet \code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
 #'   session and options.
+#' @param tty Draw the live bar (\code{TRUE}) or print milestone lines
+#'   (\code{FALSE}); \code{NULL} asks whether stderr is a terminal.
 #' @return \code{dest}, invisibly.
 #' @examples
 #' src <- tempfile(fileext = ".txt")
@@ -68,13 +70,13 @@
 #' @export
 bricklayer_download <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
-                                timeout = 3600, quiet = NULL) {
+                                timeout = 3600, quiet = NULL, tty = NULL) {
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
   size <- suppressWarnings(as.numeric(if (is.null(size)) NA else size[[1L]]))
   if (!is.finite(size) || size <= 0) size <- NA_real_
   old <- options(timeout = max(getOption("timeout", 60), timeout))
   on.exit(options(old), add = TRUE)
-  tty <- isatty(stderr())
+  if (is.null(tty)) tty <- isatty(stderr())
   if (is.null(headers)) {
     con <- url(url, open = "rb")
   } else {
@@ -102,7 +104,7 @@ bricklayer_download <- function(url, dest, headers = NULL,
     if (quiet) next
     if (tty) {
       now <- proc.time()[["elapsed"]]
-      if (now - last < 0.1) next
+      if (spin > 0L && now - last < 0.1) next  # the first chunk draws at once, then ten frames a second
       last <- now
       spin <- spin + 1L
       line <- .bl_dl_line(label, got, size, t0, spin)

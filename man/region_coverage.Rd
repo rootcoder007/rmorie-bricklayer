@@ -53,9 +53,11 @@ precisely the number a reader is tempted to divide by.
 }
 \examples{
 # Four regions, two of which hold a facility.
-cov <- region_coverage(region = c("A", "B", "C", "D"),
-                       population = c(1200000, 800000, 450000, 90000),
-                       units = c(3, 0, 1, 0))
+cov <- region_coverage(
+  region = c("A", "B", "C", "D"),
+  population = c(1200000, 800000, 450000, 90000),
+  units = c(3, 0, 1, 0)
+)
 cov
 
 # The covered share is reported, and is not a rate denominator.

@@ -27,12 +27,13 @@ via \code{\link[=record]{record()}} and is later serialized with
 \examples{
 # Minimal manifest, no environment capture.
 man <- make_manifest(list(project = "demo-study", author = "A. Author"),
-                     environment = FALSE)
-names(man)          # "meta" "results"
+  environment = FALSE
+)
+names(man) # "meta" "results"
 man$meta$project
 
 # With environment = TRUE it also records R version / platform / packages.
 full <- make_manifest(list(project = "demo"), environment = TRUE)
-names(full)         # adds "environment"
+names(full) # adds "environment"
 full$environment$r_version
 }

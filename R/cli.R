@@ -134,7 +134,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
           out(.bl_examples(rest[[1L]]))
         },
-        data = .bl_cli_data(rest, flag, out),
+        data = status <- .bl_cli_data(rest, flag, out),
         version = out(sprintf("rmoriebricklayer %s\n", as.character(
           utils::packageVersion("rmoriebricklayer")
         ))),
@@ -367,6 +367,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       "usage: rmoriebricklayer data list | ",
       "data pull db/table [--out FILE.csv]\n"
     ))
+    return(2L)
   }
-  invisible(NULL)
+  0L
 }

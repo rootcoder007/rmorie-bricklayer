@@ -74,13 +74,18 @@
 #' @export
 trend_test <- function(y, x = NULL, value = NULL, period = NULL,
                        exact = NULL,
-                       alternative = c("two.sided", "increasing",
-                                       "decreasing"),
+                       alternative = c(
+                         "two.sided", "increasing",
+                         "decreasing"
+                       ),
                        conf_level = 0.95) {
   alternative <- match.arg(alternative)
   if (is.data.frame(y)) {
-    if (is.null(value)) stop("`value` is required for a data frame",
-                             call. = FALSE)
+    if (is.null(value)) {
+      stop("`value` is required for a data frame",
+        call. = FALSE
+      )
+    }
     d <- y
     if (!value %in% names(d)) {
       stop(sprintf("`value` column not found: %s", value), call. = FALSE)
@@ -88,7 +93,8 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     if (!is.null(period)) {
       if (!period %in% names(d)) {
         stop(sprintf("`period` column not found: %s", period),
-             call. = FALSE)
+          call. = FALSE
+        )
       }
       x <- as.numeric(d[[period]])
     }
@@ -111,10 +117,14 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     stop("a trend needs at least three periods", call. = FALSE)
   }
   if (n > 20000L) {
-    stop(sprintf(paste0("trend_test() enumerates all n(n-1)/2 pairwise ",
-                        "slopes for the Sen interval; n = %d would need ",
-                        "%.1f GB. Aggregate or thin the series first."),
-                 n, n * (n - 1) / 2 * 8 / 1e9), call. = FALSE)
+    stop(sprintf(
+      paste0(
+        "trend_test() enumerates all n(n-1)/2 pairwise ",
+        "slopes for the Sen interval; n = %d would need ",
+        "%.1f GB. Aggregate or thin the series first."
+      ),
+      n, n * (n - 1) / 2 * 8 / 1e9
+    ), call. = FALSE)
   }
   mk <- .Call(C_rmbl_mann_kendall, y)
   ts <- .Call(C_rmbl_theil_sen, x, y)
@@ -127,28 +137,36 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     p <- switch(alternative,
       increasing = mean(null_s >= s),
       decreasing = mean(null_s <= s),
-      two.sided = mean(abs(null_s) >= abs(s)))
-    method <- sprintf("Mann-Kendall, exact over all %d orderings",
-                      length(null_s))
+      two.sided = mean(abs(null_s) >= abs(s))
+    )
+    method <- sprintf(
+      "Mann-Kendall, exact over all %d orderings",
+      length(null_s)
+    )
   } else {
     # the continuity correction moves S one unit toward zero, since S
     # changes in steps of two
-    z <- if (is.na(mk$var) || mk$var <= 0) NA_real_ else {
+    z <- if (is.na(mk$var) || mk$var <= 0) {
+      NA_real_
+    } else {
       (s - sign(s)) / sqrt(mk$var)
     }
     p <- switch(alternative,
       increasing = stats::pnorm(z, lower.tail = FALSE),
       decreasing = stats::pnorm(z),
-      two.sided = 2 * stats::pnorm(-abs(z)))
+      two.sided = 2 * stats::pnorm(-abs(z))
+    )
     p <- min(1, p)
     method <- "Mann-Kendall, normal approximation with tie correction"
   }
   ci <- .rmbl_sen_ci(x, y, mk$var, conf_level)
-  list(S = s, tau = tau, p_value = p, slope = ts$slope,
-       intercept = ts$intercept, slope_lower = ci[1L],
-       slope_upper = ci[2L], n = n, var_S = mk$var,
-       alternative = alternative, conf_level = conf_level,
-       method = method)
+  list(
+    S = s, tau = tau, p_value = p, slope = ts$slope,
+    intercept = ts$intercept, slope_lower = ci[1L],
+    slope_upper = ci[2L], n = n, var_S = mk$var,
+    alternative = alternative, conf_level = conf_level,
+    method = method
+  )
 }
 
 # Exact null distribution of S, memoised: every ordering of n distinct
@@ -158,7 +176,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 
 .rmbl_mk_exact <- function(n) {
   key <- as.character(n)
-  if (!is.null(.rmbl_mk_cache[[key]])) return(.rmbl_mk_cache[[key]])
+  if (!is.null(.rmbl_mk_cache[[key]])) {
+    return(.rmbl_mk_cache[[key]])
+  }
   perms <- .rmbl_permutations(n)
   s <- apply(perms, 1L, function(p) {
     tot <- 0
@@ -172,7 +192,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 }
 
 .rmbl_permutations <- function(n) {
-  if (n == 1L) return(matrix(1L, 1L, 1L))
+  if (n == 1L) {
+    return(matrix(1L, 1L, 1L))
+  }
   sub <- .rmbl_permutations(n - 1L)
   out <- matrix(0L, nrow(sub) * n, n)
   r <- 1L
@@ -195,7 +217,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 .rmbl_sen_ci <- function(x, y, var_s, conf_level) {
   slopes <- .Call(C_rmbl_sen_slopes, as.numeric(x), as.numeric(y))
   m <- length(slopes)
-  if (m < 2L || is.na(var_s) || var_s <= 0) return(c(NA_real_, NA_real_))
+  if (m < 2L || is.na(var_s) || var_s <= 0) {
+    return(c(NA_real_, NA_real_))
+  }
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   c_alpha <- z * sqrt(var_s)
   lo_rank <- floor((m - c_alpha) / 2)
@@ -252,7 +276,8 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   if (n < 2L * min_segment) {
     stop(sprintf(
       "need at least %d periods for a break with %d either side",
-      2L * min_segment, min_segment), call. = FALSE)
+      2L * min_segment, min_segment
+    ), call. = FALSE)
   }
   # The weighted squared mean difference,
   #   (n_a n_b / n) (mean_a - mean_b)^2,
@@ -298,8 +323,10 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
       NULL
     }
     .rmbl_local_seed(seed)
-    null <- vapply(seq_len(n_perm),
-                   function(i) max(stat(sample(y))$vals), 0)
+    null <- vapply(
+      seq_len(n_perm),
+      function(i) max(stat(sample(y))$vals), 0
+    )
     if (is.null(old)) {
       suppressWarnings(rm(".Random.seed", envir = globalenv()))
     } else {
@@ -313,10 +340,12 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # own null -- without it a p-value of exactly zero is reportable, and
   # no permutation test can support that
   p <- (1 + sum(null >= tmax)) / (1 + length(null))
-  list(break_after = x[best], index = best, before = mean(a),
-       after = mean(b), difference = mean(b) - mean(a),
-       statistic = tmax, p_value = min(1, p), n_perm = np,
-       method = method)
+  list(
+    break_after = x[best], index = best, before = mean(a),
+    after = mean(b), difference = mean(b) - mean(a),
+    statistic = tmax, p_value = min(1, p), n_perm = np,
+    method = method
+  )
 }
 
 #' Trend in a count series, as a rate ratio per period
@@ -365,7 +394,7 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
     stop("`x` and `y` must be the same length", call. = FALSE)
   }
   if (any(y < 0, na.rm = TRUE) ||
-        any(abs(y - round(y)) > 1e-8, na.rm = TRUE)) {
+    any(abs(y - round(y)) > 1e-8, na.rm = TRUE)) {
     stop("`y` must be non-negative whole numbers", call. = FALSE)
   }
   logoff <- if (is.null(offset)) {
@@ -405,9 +434,14 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
     swxz <- sum(w * xc * z)
     det <- sw * swxx - swx^2
     if (!is.finite(det) || abs(det) < 1e-12) break
-    nb <- c((swxx * swz - swx * swxz) / det,
-            (sw * swxz - swx * swz) / det)
-    if (max(abs(nb - beta)) < 1e-10) { beta <- nb; break }
+    nb <- c(
+      (swxx * swz - swx * swxz) / det,
+      (sw * swxz - swx * swz) / det
+    )
+    if (max(abs(nb - beta)) < 1e-10) {
+      beta <- nb
+      break
+    }
     beta <- nb
   }
   eta <- beta[1L] + beta[2L] * xc + logoff
@@ -425,19 +459,21 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   over <- is.finite(disp) && disp > 1.5
   se_use <- if (over && is.finite(se)) se * sqrt(disp) else se
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
-  list(rate_ratio = exp(beta[2L]),
-       lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
-       upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
-       p_value = if (is.finite(se_use) && se_use > 0) {
-         2 * stats::pnorm(-abs(beta[2L] / se_use))
-       } else {
-         NA_real_
-       },
-       log_slope = beta[2L], se = se_use, fitted = mu,
-       dispersion = disp, overdispersed = over, n = n,
-       method = if (over) {
-         "quasi-Poisson (dispersion above 1.5)"
-       } else {
-         "Poisson log-linear"
-       })
+  list(
+    rate_ratio = exp(beta[2L]),
+    lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
+    upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
+    p_value = if (is.finite(se_use) && se_use > 0) {
+      2 * stats::pnorm(-abs(beta[2L] / se_use))
+    } else {
+      NA_real_
+    },
+    log_slope = beta[2L], se = se_use, fitted = mu,
+    dispersion = disp, overdispersed = over, n = n,
+    method = if (over) {
+      "quasi-Poisson (dispersion above 1.5)"
+    } else {
+      "Poisson log-linear"
+    }
+  )
 }

@@ -7,7 +7,8 @@ test_that("load_provenance returns NULL for a missing path and roundtrips JSON",
   p <- tempfile(fileext = ".json")
   jsonlite::write_json(
     list(dataset = list(id = "otis-b01"), resource = list(sha256 = "abc")),
-    p, auto_unbox = TRUE
+    p,
+    auto_unbox = TRUE
   )
   prov <- load_provenance(p)
   expect_identical(prov$dataset$id, "otis-b01")
@@ -23,9 +24,11 @@ test_that("resolve_via_ckan returns NULL on absent provenance or endpoint", {
 test_that("wayback_snapshot_url upgrades snapshots to https and rejects unavailable", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) list(archived_snapshots = list(closest = list(
-      available = TRUE, url = "http://web.archive.org/web/2024/https://x.csv"
-    )))
+    .rmbl_read_json = function(...) {
+      list(archived_snapshots = list(closest = list(
+        available = TRUE, url = "http://web.archive.org/web/2024/https://x.csv"
+      )))
+    }
   )
   out <- wayback_snapshot_url("https://example.org/x.csv")
   expect_match(out, "^https://web\\.archive\\.org/")
@@ -104,10 +107,12 @@ test_that("apply_schema_validation stops on fatal, warns on warning, TRUE when c
 test_that("resolve_via_ckan returns the first name-matched resource URL", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) list(success = TRUE, result = list(resources = list(
-      list(name = "Readme", url = "https://example.org/readme.txt"),
-      list(name = "Data 2014", url = "https://example.org/2014.csv")
-    )))
+    .rmbl_read_json = function(...) {
+      list(success = TRUE, result = list(resources = list(
+        list(name = "Readme", url = "https://example.org/readme.txt"),
+        list(name = "Data 2014", url = "https://example.org/2014.csv")
+      )))
+    }
   )
   prov <- list(
     dataset  = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
@@ -127,14 +132,16 @@ test_that("resolve_via_ckan_search matches resources and derives the query", {
       seen_url <<- url
       list(result = list(results = list(list(resources = list(
         list(name = "Data 2014", format = "XLSX", url = "https://example.org/s.xlsx"),
-        list(name = "Data 2014", format = "CSV",  url = "https://example.org/s.csv")
+        list(name = "Data 2014", format = "CSV", url = "https://example.org/s.csv")
       )))))
     }
   )
   prov <- list(
-    dataset  = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
-    resource = list(name_match_pattern = "2014", search_query = "library stats",
-                    format = "CSV")
+    dataset = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
+    resource = list(
+      name_match_pattern = "2014", search_query = "library stats",
+      format = "CSV"
+    )
   )
   expect_identical(resolve_via_ckan_search(prov), "https://example.org/s.csv")
   expect_match(seen_url, "package_search\\?q=library%20stats")
@@ -156,11 +163,13 @@ test_that("wayback_snapshot_url honours an explicit timestamp", {
       seen <<- url
       list(archived_snapshots = list(closest = list(
         available = TRUE,
-        url = "http://web.archive.org/web/20240101/https://x.csv")))
+        url = "http://web.archive.org/web/20240101/https://x.csv"
+      )))
     }
   )
   out <- wayback_snapshot_url("https://example.org/x.csv",
-                              timestamp = "20240101000000")
+    timestamp = "20240101000000"
+  )
   expect_match(seen, "&timestamp=20240101000000", fixed = TRUE)
   expect_match(out, "^https://")
 })
@@ -179,9 +188,11 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
     }
   )
   dst <- tempfile(fileext = ".csv")
-  out <- capture.output(type = "message", 
+  out <- capture.output(
+    type = "message",
     ok <- friendly_download("https://example.org/x.csv", dst,
-                            attempt_wayback = paste0("file://", snap))
+      attempt_wayback = paste0("file://", snap)
+    )
   )
   expect_true(ok)
   expect_true(file.exists(dst))
@@ -192,13 +203,17 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
 test_that("friendly_download covers the failure diagnostics and total failure", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .bl_fetch_file = function(...) stop(paste(
-      "SSL certificate handshake failed; connection timed out;",
-      "could not resolve host; HTTP 403 forbidden"))
+    .bl_fetch_file = function(...) {
+      stop(paste(
+        "SSL certificate handshake failed; connection timed out;",
+        "could not resolve host; HTTP 403 forbidden"
+      ))
+    }
   )
   # auto-resolution consults wayback_snapshot_url; make it find nothing
   testthat::local_mocked_bindings(wayback_snapshot_url = function(...) NULL)
-  out <- capture.output(type = "message", 
+  out <- capture.output(
+    type = "message",
     ok <- friendly_download("https://example.org/x.csv", tempfile())
   )
   expect_false(ok)
@@ -213,9 +228,11 @@ test_that("friendly_download reports a failed wayback retry", {
   testthat::local_mocked_bindings(
     .bl_fetch_file = function(...) stop("could not resolve host")
   )
-  out <- capture.output(type = "message", 
+  out <- capture.output(
+    type = "message",
     ok <- friendly_download("https://example.org/x.csv", tempfile(),
-                            attempt_wayback = "file:///nonexistent/nope.csv")
+      attempt_wayback = "file:///nonexistent/nope.csv"
+    )
   )
   expect_false(ok)
   expect_true(any(grepl("also failed", out)))
@@ -224,30 +241,38 @@ test_that("friendly_download reports a failed wayback retry", {
 test_that("resolve_via_socrata returns the canonical CSV export URL", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) list(id = "ijzp-q8t2"))
-  prov <- list(dataset = list(socrata_domain = "data.example.org",
-                              socrata_id     = "ijzp-q8t2"))
+    .rmbl_read_json = function(...) list(id = "ijzp-q8t2")
+  )
+  prov <- list(dataset = list(
+    socrata_domain = "data.example.org",
+    socrata_id = "ijzp-q8t2"
+  ))
   expect_identical(
     resolve_via_socrata(prov),
-    "https://data.example.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD")
+    "https://data.example.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
+  )
 
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) stop("network down"))
+    .rmbl_read_json = function(...) stop("network down")
+  )
   expect_null(resolve_via_socrata(prov))
 })
 
 test_that("resolve_via_arcgis returns a paged GeoJSON query URL, trimming slashes", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) list(name = "Layer0"))
+    .rmbl_read_json = function(...) list(name = "Layer0")
+  )
   prov <- list(dataset = list(
-    arcgis_layer_url = "https://svc.example.org/FeatureServer/0///"))
+    arcgis_layer_url = "https://svc.example.org/FeatureServer/0///"
+  ))
   expect_identical(
     resolve_via_arcgis(prov),
-    "https://svc.example.org/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson")
+    "https://svc.example.org/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson"
+  )
 
   testthat::local_mocked_bindings(
-    .rmbl_read_json = function(...) list(error = list(code = 400)))
+    .rmbl_read_json = function(...) list(error = list(code = 400))
+  )
   expect_null(resolve_via_arcgis(prov))
 })
-

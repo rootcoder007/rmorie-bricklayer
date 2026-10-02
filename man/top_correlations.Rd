@@ -42,8 +42,8 @@ df <- data.frame(
   b = stats::rnorm(n),
   grade = sample(letters[1:3], n, TRUE)
 )
-df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1)   # strongly related to a
-df$d <- exp(df$a)                              # monotone but curved
+df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1) # strongly related to a
+df$d <- exp(df$a) # monotone but curved
 
 top_correlations(df)
 

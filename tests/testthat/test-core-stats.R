@@ -35,13 +35,17 @@ test_that("core_sd and core_dist agree with base R", {
 test_that("core_normal_logpdf is dnorm on the log scale", {
   x <- seq(-4, 4, by = 0.25)
   expect_equal(core_normal_logpdf(x), stats::dnorm(x, log = TRUE))
-  expect_equal(core_normal_logpdf(x, 0.3, 1.7),
-               stats::dnorm(x, 0.3, 1.7, log = TRUE))
+  expect_equal(
+    core_normal_logpdf(x, 0.3, 1.7),
+    stats::dnorm(x, 0.3, 1.7, log = TRUE)
+  )
   # exponentiating recovers the density
   expect_equal(exp(core_normal_logpdf(x, -1, 2)), stats::dnorm(x, -1, 2))
   # the peak is -log(sd sqrt(2 pi))
-  expect_equal(core_normal_logpdf(5, mean = 5, sd = 2),
-               -log(2 * sqrt(2 * pi)))
+  expect_equal(
+    core_normal_logpdf(5, mean = 5, sd = 2),
+    -log(2 * sqrt(2 * pi))
+  )
   # it stays finite where the density itself underflows to zero
   expect_equal(stats::dnorm(50), 0)
   expect_true(is.finite(core_normal_logpdf(50)))
@@ -91,8 +95,10 @@ test_that("core_quantile is the type-7 quantile", {
   set.seed(3)
   x <- stats::rnorm(97)
   pr <- c(0, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99, 1)
-  expect_equal(unname(core_quantile(x, pr)),
-               unname(stats::quantile(x, pr, type = 7)))
+  expect_equal(
+    unname(core_quantile(x, pr)),
+    unname(stats::quantile(x, pr, type = 7))
+  )
   expect_equal(names(core_quantile(x, c(0.25, 0.5))), c("25%", "50%"))
   # the extremes are the sample extremes
   expect_equal(unname(core_quantile(x, 0)), min(x))
@@ -161,8 +167,10 @@ test_that("trimmed and winsorized means behave as documented", {
   # computed by hand: replace the 100 with 9 and the 1 with 2. On this
   # sample the two coincide, because the trimmed pair happens to average
   # to the same value as the pulled-in pair
-  expect_equal(core_winsorized_mean(x, 0.1),
-               mean(c(2, 2, 3, 4, 5, 6, 7, 8, 9, 9)))
+  expect_equal(
+    core_winsorized_mean(x, 0.1),
+    mean(c(2, 2, 3, 4, 5, 6, 7, 8, 9, 9))
+  )
   expect_equal(core_trimmed_mean(x, 0.1), core_winsorized_mean(x, 0.1))
   # where the tails are asymmetric they separate: with two high outliers
   # winsorizing keeps some of their weight and trimming discards it
@@ -174,8 +182,10 @@ test_that("trimmed and winsorized means behave as documented", {
   expect_equal(core_winsorized_mean(s, 0.2), mean(s))
   # trimming more can only move the estimate toward the median, though
   # successive trims can land on the same value
-  tms <- vapply(c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
-                function(t) core_trimmed_mean(x, t), 0)
+  tms <- vapply(
+    c(0, 0.1, 0.2, 0.3, 0.4, 0.5),
+    function(t) core_trimmed_mean(x, t), 0
+  )
   expect_true(all(diff(tms) <= 0))
   expect_lt(tms[length(tms)], tms[1])
 
@@ -205,7 +215,8 @@ test_that("core_weighted matches base R and reduces correctly", {
   expect_equal(core_weighted(x, w * 7)[["variance"]], r[["variance"]])
   # a dominant weight pulls the mean onto that observation
   expect_equal(core_weighted(x, c(1, 1, 1, 1e6))[["mean"]], 40,
-               tolerance = 1e-3)
+    tolerance = 1e-3
+  )
   # a zero weight is the same as dropping the observation
   expect_equal(core_weighted(x, c(1, 1, 1, 0))[["mean"]], mean(x[1:3]))
 
@@ -222,8 +233,10 @@ test_that("Spearman's rho and the midranks match stats::cor and rank", {
   # ties get midranks, which is what makes the agreement hold
   xt <- c(1, 2, 2, 2, 5, 5, 7)
   yt <- c(3, 1, 1, 4, 4, 9, 2)
-  expect_equal(core_cor_spearman(xt, yt),
-               stats::cor(xt, yt, method = "spearman"))
+  expect_equal(
+    core_cor_spearman(xt, yt),
+    stats::cor(xt, yt, method = "spearman")
+  )
   expect_equal(core_midranks(xt), rank(xt))
   expect_equal(core_midranks(yt), rank(yt))
   expect_equal(core_midranks(c(5, 5, 5)), rep(2, 3))
@@ -256,13 +269,16 @@ test_that("core_cov matches stats::cov and keeps its names", {
   df <- data.frame(u = 1:5, v = c(2, 1, 4, 3, 6))
   expect_equal(core_cov(df), stats::cov(df))
   expect_equal(core_cov(cbind(1:5, 5:1)), stats::cov(cbind(1:5, 5:1)),
-               ignore_attr = TRUE)
+    ignore_attr = TRUE
+  )
   # a single column is a 1x1 variance
   expect_equal(as.numeric(core_cov(cbind(z = 1:6))), stats::var(1:6))
 
   expect_error(core_cov(1:5), "matrix or data frame")
-  expect_error(core_cov(data.frame(a = 1:3, b = letters[1:3])),
-               "must be numeric")
+  expect_error(
+    core_cov(data.frame(a = 1:3, b = letters[1:3])),
+    "must be numeric"
+  )
 })
 
 test_that("bootstrap replicate means are reproducible and unbiased", {
@@ -278,7 +294,8 @@ test_that("bootstrap replicate means are reproducible and unbiased", {
   # this is a loose agreement by nature, not an identity
   expect_equal(mean(b), mean(x), tolerance = 0.02)
   expect_equal(stats::sd(b), stats::sd(x) / sqrt(length(x)),
-               tolerance = 0.1)
+    tolerance = 0.1
+  )
   # every replicate is a mean of values drawn from x, so all lie inside
   # the sample range
   expect_true(all(b >= min(x) & b <= max(x)))
@@ -296,25 +313,33 @@ test_that("bootstrap replicate means are reproducible and unbiased", {
 test_that("IPW weights invert the clamped propensity score", {
   treat <- c(1, 0, 1, 0)
   e <- c(0.5, 0.25, 0.02, 0.9)
-  expect_equal(core_ipw_weights(treat, e),
-               c(1 / 0.5, 1 / 0.75, 1 / 0.02, 1 / 0.1))
+  expect_equal(
+    core_ipw_weights(treat, e),
+    c(1 / 0.5, 1 / 0.75, 1 / 0.02, 1 / 0.1)
+  )
   # a balanced score gives weight 2 to either arm
   expect_equal(core_ipw_weights(c(1, 0), c(0.5, 0.5)), c(2, 2))
   # the clamp bites before the inversion, so it bounds the weight
   expect_equal(core_ipw_weights(1, 0.001, trim_lo = 0.05), 1 / 0.05)
   expect_equal(core_ipw_weights(0, 0.999, trim_hi = 0.95), 1 / 0.05)
   # a tighter clamp can only shrink an extreme weight
-  expect_lt(core_ipw_weights(1, 0.02, trim_lo = 0.10),
-            core_ipw_weights(1, 0.02, trim_lo = 0.01))
+  expect_lt(
+    core_ipw_weights(1, 0.02, trim_lo = 0.10),
+    core_ipw_weights(1, 0.02, trim_lo = 0.01)
+  )
   # logical indicators work
-  expect_equal(core_ipw_weights(c(TRUE, FALSE), c(0.4, 0.4)),
-               c(1 / 0.4, 1 / 0.6))
+  expect_equal(
+    core_ipw_weights(c(TRUE, FALSE), c(0.4, 0.4)),
+    c(1 / 0.4, 1 / 0.6)
+  )
   # every weight is at least 1, since a probability cannot exceed one
   expect_true(all(core_ipw_weights(treat, e) >= 1))
   expect_error(core_ipw_weights(1:3, 1:4), "same length")
   expect_error(core_ipw_weights(1, 0.5, trim_lo = 0), "trim_lo")
-  expect_error(core_ipw_weights(1, 0.5, trim_lo = 0.9, trim_hi = 0.1),
-               "trim_lo")
+  expect_error(
+    core_ipw_weights(1, 0.5, trim_lo = 0.9, trim_hi = 0.1),
+    "trim_lo"
+  )
 })
 
 test_that("core_gamma_cdf is the unit-rate gamma distribution function", {
@@ -332,8 +357,10 @@ test_that("core_gamma_cdf is the unit-rate gamma distribution function", {
   # the chi-square tail built from it matches stats::pchisq
   for (df in c(1, 2, 5, 8)) {
     for (stat in c(0.5, 2, 6, 15)) {
-      expect_equal(1 - core_gamma_cdf(df / 2, stat / 2),
-                   stats::pchisq(stat, df, lower.tail = FALSE))
+      expect_equal(
+        1 - core_gamma_cdf(df / 2, stat / 2),
+        stats::pchisq(stat, df, lower.tail = FALSE)
+      )
     }
   }
   expect_error(core_gamma_cdf(0, 1), "single positive")
@@ -375,35 +402,63 @@ test_that("the Hawkes likelihood matches an independent recomputation", {
   # a branching ratio at or above one is not a stationary process, and is
   # reported as the sentinel rather than a number an optimiser would
   # happily walk toward
-  expect_equal(core_hawkes_nll(times, horizon, "exponential",
-                               c(a0, 1.5, beta)), 1e12)
-  expect_equal(core_hawkes_nll(times, horizon, "exponential",
-                               c(a0, 0, beta)), 1e12)
-  expect_equal(core_hawkes_nll(times, horizon, "exponential",
-                               c(a0, eta, 100)), 1e12)
-  expect_equal(core_hawkes_nll(times, horizon, "exponential",
-                               c(50, eta, beta)), 1e12)
+  expect_equal(core_hawkes_nll(
+    times, horizon, "exponential",
+    c(a0, 1.5, beta)
+  ), 1e12)
+  expect_equal(core_hawkes_nll(
+    times, horizon, "exponential",
+    c(a0, 0, beta)
+  ), 1e12)
+  expect_equal(core_hawkes_nll(
+    times, horizon, "exponential",
+    c(a0, eta, 100)
+  ), 1e12)
+  expect_equal(core_hawkes_nll(
+    times, horizon, "exponential",
+    c(50, eta, beta)
+  ), 1e12)
 
   # a stronger baseline raises the intensity everywhere, so an
   # implausibly low one fits worse than a fitted value
-  fit <- stats::optim(c(a0, eta, beta),
-                      function(p) core_hawkes_nll(times, horizon,
-                                                  "exponential", p))
+  fit <- stats::optim(
+    c(a0, eta, beta),
+    function(p) {
+      core_hawkes_nll(
+        times, horizon,
+        "exponential", p
+      )
+    }
+  )
   expect_lt(fit$value, got + 1e-8)
-  expect_lt(fit$value, core_hawkes_nll(times, horizon, "exponential",
-                                       c(-3, 0.9, 5)))
+  expect_lt(fit$value, core_hawkes_nll(
+    times, horizon, "exponential",
+    c(-3, 0.9, 5)
+  ))
 
-  expect_error(core_hawkes_nll(times, horizon, "exponential", c(1, 2)),
-               "length 3")
-  expect_error(core_hawkes_nll(times, horizon, "gamma", c(1, 2, 3)),
-               "length 4")
-  expect_error(core_hawkes_nll(c(3, 1, 2), horizon, "exponential",
-                               c(a0, eta, beta)), "sorted")
-  expect_error(core_hawkes_nll(times, -1, "exponential", c(a0, eta, beta)),
-               "positive")
-  expect_error(core_hawkes_nll(c(1, 20), 10, "exponential",
-                               c(a0, eta, beta)), "within")
-  expect_error(core_hawkes_nll(c(1, NA), 10, "exponential",
-                               c(a0, eta, beta)), "NA")
+  expect_error(
+    core_hawkes_nll(times, horizon, "exponential", c(1, 2)),
+    "length 3"
+  )
+  expect_error(
+    core_hawkes_nll(times, horizon, "gamma", c(1, 2, 3)),
+    "length 4"
+  )
+  expect_error(core_hawkes_nll(
+    c(3, 1, 2), horizon, "exponential",
+    c(a0, eta, beta)
+  ), "sorted")
+  expect_error(
+    core_hawkes_nll(times, -1, "exponential", c(a0, eta, beta)),
+    "positive"
+  )
+  expect_error(core_hawkes_nll(
+    c(1, 20), 10, "exponential",
+    c(a0, eta, beta)
+  ), "within")
+  expect_error(core_hawkes_nll(
+    c(1, NA), 10, "exponential",
+    c(a0, eta, beta)
+  ), "NA")
   expect_error(core_hawkes_nll(times, horizon, "cauchy", c(1, 2, 3)))
 })

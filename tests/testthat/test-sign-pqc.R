@@ -17,8 +17,10 @@ test_that("the always-available backend is reported", {
 })
 
 test_that("HMAC signing authenticates and rejects tampering", {
-  sig <- capsule_sign("sha256:abc123", key = "shared-secret",
-                      scheme = "hmac")
+  sig <- capsule_sign("sha256:abc123",
+    key = "shared-secret",
+    scheme = "hmac"
+  )
   expect_s3_class(sig, "bricklayer_signature")
   expect_equal(sig$scheme, "hmac")
   expect_match(sig$signature, "^[0-9a-f]{64}$")
@@ -33,15 +35,21 @@ test_that("HMAC signing authenticates and rejects tampering", {
   expect_false(capsule_verify("sha256:abc123", bad, "shared-secret"))
 
   # the tag is exactly the keyed digest, and deterministic
-  expect_equal(sig$signature,
-               core_hmac_sha256("shared-secret", "sha256:abc123"))
-  expect_equal(capsule_sign("sha256:abc123", "shared-secret",
-                            "hmac")$signature, sig$signature)
+  expect_equal(
+    sig$signature,
+    core_hmac_sha256("shared-secret", "sha256:abc123")
+  )
+  expect_equal(capsule_sign(
+    "sha256:abc123", "shared-secret",
+    "hmac"
+  )$signature, sig$signature)
   # the scheme is inferred when the key is a bare secret
   expect_equal(capsule_sign("m", "k")$scheme, "hmac")
   # raw keys and messages work
-  expect_true(capsule_verify(charToRaw("m"),
-                             capsule_sign(charToRaw("m"), "k", "hmac"), "k"))
+  expect_true(capsule_verify(
+    charToRaw("m"),
+    capsule_sign(charToRaw("m"), "k", "hmac"), "k"
+  ))
 })
 
 test_that("a post-quantum key generates deterministically from its seeds", {
@@ -58,11 +66,17 @@ test_that("a post-quantum key generates deterministically from its seeds", {
   # the same seeds reproduce the same public root
   expect_equal(pqc_keygen(3, s1, s2)$root, key$root)
   # and any change to either seed, or the height, changes it
-  expect_false(identical(pqc_keygen(3, paste(rep("12", 32), collapse = ""),
-                                    s2)$root, key$root))
-  expect_false(identical(pqc_keygen(3, s1,
-                                    paste(rep("23", 32), collapse = ""))$root,
-                         key$root))
+  expect_false(identical(pqc_keygen(
+    3, paste(rep("12", 32), collapse = ""),
+    s2
+  )$root, key$root))
+  expect_false(identical(
+    pqc_keygen(
+      3, s1,
+      paste(rep("23", 32), collapse = "")
+    )$root,
+    key$root
+  ))
   expect_false(identical(pqc_keygen(4, s1, s2)$root, key$root))
   # capacity is 2^height
   expect_equal(pqc_keygen(1, s1, s2)$capacity, 2L)
@@ -85,8 +99,10 @@ test_that("a post-quantum key generates deterministically from its seeds", {
 })
 
 test_that("a post-quantum signature verifies and resists every forgery", {
-  key <- pqc_keygen(height = 3, sk_seed = paste(rep("aa", 32), collapse = ""),
-                    pub_seed = paste(rep("bb", 32), collapse = ""))
+  key <- pqc_keygen(
+    height = 3, sk_seed = paste(rep("aa", 32), collapse = ""),
+    pub_seed = paste(rep("bb", 32), collapse = "")
+  )
   pub <- signing_public_key(key)
   msg <- "capsule manifest sha256:deadbeef"
   sig <- capsule_sign(msg, key)
@@ -109,15 +125,20 @@ test_that("a post-quantum signature verifies and resists every forgery", {
   # so is every byte of the signature and the authentication path
   flip <- function(h, pos) {
     ch <- substring(h, pos, pos)
-    paste0(substring(h, 1L, pos - 1L), if (ch == "a") "b" else "a",
-           substring(h, pos + 1L))
+    paste0(
+      substring(h, 1L, pos - 1L), if (ch == "a") "b" else "a",
+      substring(h, pos + 1L)
+    )
   }
-  bad <- sig; bad$signature <- flip(sig$signature, 7L)
+  bad <- sig
+  bad$signature <- flip(sig$signature, 7L)
   expect_false(capsule_verify(msg, bad, pub))
-  bad2 <- sig; bad2$auth <- flip(sig$auth, 3L)
+  bad2 <- sig
+  bad2$auth <- flip(sig$auth, 3L)
   expect_false(capsule_verify(msg, bad2, pub))
   # and the leaf index
-  bad3 <- sig; bad3$index <- 1L
+  bad3 <- sig
+  bad3$index <- 1L
   expect_false(capsule_verify(msg, bad3, pub))
   # a foreign key does not verify it
   expect_false(capsule_verify(msg, sig, signing_public_key(pqc_keygen(3))))
@@ -129,19 +150,39 @@ test_that("a post-quantum signature verifies and resists every forgery", {
   # malformed input is "not verified", never an error a caller might
   # catch and ignore
   for (mangle in list(
-    function(s) { s$signature <- substring(s$signature, 1L, 64L); s },
-    function(s) { s$signature <- substring(s$signature, 1L,
-                                           nchar(s$signature) - 1L); s },
-    function(s) { s$signature <- paste0("zz", substring(s$signature, 3L)); s },
-    function(s) { s$auth <- substring(s$auth, 1L, 64L); s },
-    function(s) { s$auth <- ""; s })) {
+    function(s) {
+      s$signature <- substring(s$signature, 1L, 64L)
+      s
+    },
+    function(s) {
+      s$signature <- substring(
+        s$signature, 1L,
+        nchar(s$signature) - 1L
+      )
+      s
+    },
+    function(s) {
+      s$signature <- paste0("zz", substring(s$signature, 3L))
+      s
+    },
+    function(s) {
+      s$auth <- substring(s$auth, 1L, 64L)
+      s
+    },
+    function(s) {
+      s$auth <- ""
+      s
+    }
+  )) {
     expect_false(capsule_verify(msg, mangle(sig), pub))
   }
 })
 
 test_that("every leaf of the tree signs under one public root", {
-  key <- pqc_keygen(height = 3, sk_seed = paste(rep("0f", 32), collapse = ""),
-                    pub_seed = paste(rep("f0", 32), collapse = ""))
+  key <- pqc_keygen(
+    height = 3, sk_seed = paste(rep("0f", 32), collapse = ""),
+    pub_seed = paste(rep("f0", 32), collapse = "")
+  )
   pub <- signing_public_key(key)
   root <- key$root
 
@@ -164,11 +205,15 @@ test_that("every leaf of the tree signs under one public root", {
   expect_false(capsule_verify("manifest-2", sigs[[1]], pub))
   expect_false(capsule_verify("manifest-1", sigs[[2]], pub))
   # every signature is distinct even though the root is shared
-  expect_equal(length(unique(vapply(sigs, function(s) s$signature,
-                                    character(1)))), 8L)
+  expect_equal(length(unique(vapply(
+    sigs, function(s) s$signature,
+    character(1)
+  ))), 8L)
   # the same message at two indices gives two different signatures
-  k2 <- pqc_keygen(2, paste(rep("01", 32), collapse = ""),
-                   paste(rep("02", 32), collapse = ""))
+  k2 <- pqc_keygen(
+    2, paste(rep("01", 32), collapse = ""),
+    paste(rep("02", 32), collapse = "")
+  )
   a <- capsule_sign("same", k2)
   b <- capsule_sign("same", a$key_state)
   expect_false(identical(a$signature, b$signature))
@@ -177,8 +222,10 @@ test_that("every leaf of the tree signs under one public root", {
 })
 
 test_that("signing rejects the inputs it cannot honour", {
-  key <- pqc_keygen(height = 1, sk_seed = paste(rep("07", 32), collapse = ""),
-                    pub_seed = paste(rep("70", 32), collapse = ""))
+  key <- pqc_keygen(
+    height = 1, sk_seed = paste(rep("07", 32), collapse = ""),
+    pub_seed = paste(rep("70", 32), collapse = "")
+  )
   expect_error(capsule_sign(c("a", "b"), key), "length-1")
   expect_error(capsule_sign("m", list(), scheme = "xmss"), "pqc_keygen")
   expect_error(capsule_verify("m", list(), key), "capsule_sign")
@@ -193,9 +240,11 @@ test_that("signing rejects the inputs it cannot honour", {
 test_that("a signed manifest digest is the intended end-to-end use", {
   # the realistic flow: hash the manifest, sign the digest, publish the
   # public key, and let a third party check both
-  manifest <- paste0("source=https://example.org/data.csv\n",
-                     "sha256=", core_sha256("the,data\n1,2\n"), "\n",
-                     "fetched=2026-09-12")
+  manifest <- paste0(
+    "source=https://example.org/data.csv\n",
+    "sha256=", core_sha256("the,data\n1,2\n"), "\n",
+    "fetched=2026-09-12"
+  )
   digest <- core_sha256(manifest)
   key <- pqc_keygen(height = 2)
   sig <- capsule_sign(digest, key)

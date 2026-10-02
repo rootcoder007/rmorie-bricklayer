@@ -48,19 +48,23 @@ the console, and returning the updated manifest.
 man <- make_manifest(list(project = "demo"), environment = FALSE)
 
 # Within tolerance -> PASS.
-man <- record(man, "mean_matches", observed = 1.0001, expected = 1,
-              tol = 0.001)
-man$results$mean_matches$status      # "PASS"
+man <- record(man, "mean_matches",
+  observed = 1.0001, expected = 1,
+  tol = 0.001
+)
+man$results$mean_matches$status # "PASS"
 
 # Outside tolerance -> DIFFER.
 man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
-man$results$sd_matches$status        # "DIFFER"
+man$results$sd_matches$status # "DIFFER"
 
 # Synthetic data -> INFO (comparison not meaningful).
-man <- record(man, "synthetic_row", observed = 5, expected = 5,
-              synthetic = TRUE)
-man$results$synthetic_row$status     # "INFO"
+man <- record(man, "synthetic_row",
+  observed = 5, expected = 5,
+  synthetic = TRUE
+)
+man$results$synthetic_row$status # "INFO"
 
 # Calls chain: record() returns the mutated manifest.
-length(man$results)                  # 3
+length(man$results) # 3
 }

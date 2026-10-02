@@ -11,7 +11,8 @@ bricklayer_download(
   label = basename(dest),
   size = NULL,
   timeout = 3600,
-  quiet = NULL
+  quiet = NULL,
+  tty = NULL
 )
 }
 \arguments{
@@ -30,6 +31,9 @@ spinner).}
 
 \item{quiet}{\code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
 session and options.}
+
+\item{tty}{Draw the live bar (\code{TRUE}) or print milestone lines
+(\code{FALSE}); \code{NULL} asks whether stderr is a terminal.}
 }
 \value{
 \code{dest}, invisibly.

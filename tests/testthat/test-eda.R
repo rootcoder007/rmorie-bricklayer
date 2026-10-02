@@ -16,9 +16,13 @@ test_that("inline_hist draws the shape of a distribution", {
   # one is tallest at the left
   norm_bars <- strsplit(inline_hist(stats::rnorm(5000)), "")[[1]]
   exp_bars <- strsplit(inline_hist(stats::rexp(5000)), "")[[1]]
-  rank_of <- function(v) match(v, c(" ", ".", ":", "-", "=", "#",
-                                    "▁", "▂", "▃", "▄",
-                                    "▅", "▆", "▇", "█"))
+  rank_of <- function(v) {
+    match(v, c(
+      " ", ".", ":", "-", "=", "#",
+      "▁", "▂", "▃", "▄",
+      "▅", "▆", "▇", "█"
+    ))
+  }
   expect_gt(rank_of(norm_bars[5]), rank_of(norm_bars[1]))
   expect_gt(rank_of(exp_bars[1]), rank_of(exp_bars[10]))
 
@@ -45,8 +49,10 @@ test_that("frequency_table counts and percentages add up", {
   # pct is of all rows; pct_valid of the non-missing ones, and the two
   # differ by exactly the missingness
   expect_equal(ft$pct[ft$value == "b" & !is.na(ft$value)], 100 * 3 / 6)
-  expect_equal(ft$pct_valid[ft$value == "b" & !is.na(ft$value)],
-               100 * 3 / 5)
+  expect_equal(
+    ft$pct_valid[ft$value == "b" & !is.na(ft$value)],
+    100 * 3 / 5
+  )
   expect_equal(sum(ft$pct), 100)
   expect_equal(sum(ft$pct_valid, na.rm = TRUE), 100)
   # the missing row has no share of the valid values
@@ -79,8 +85,10 @@ test_that("frequency_table counts and percentages add up", {
 
 test_that("correlation_table reports every pair with its support", {
   set.seed(73)
-  df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100),
-                   g = "x", stringsAsFactors = FALSE)
+  df <- data.frame(
+    a = stats::rnorm(100), b = stats::rnorm(100),
+    g = "x", stringsAsFactors = FALSE
+  )
   df$c <- df$a + stats::rnorm(100, sd = 0.2)
 
   ct <- correlation_table(df)
@@ -103,7 +111,8 @@ test_that("correlation_table reports every pair with its support", {
   gappy$a[1:80] <- NA
   expect_equal(correlation_table(gappy)$n_pairs[
     correlation_table(gappy)$x == "a" &
-      correlation_table(gappy)$y == "b"], 20L)
+      correlation_table(gappy)$y == "b"
+  ], 20L)
   thin <- df
   thin$a[1:99] <- NA
   ctt <- correlation_table(thin)
@@ -115,8 +124,10 @@ test_that("correlation_table reports every pair with its support", {
 })
 
 test_that("drop_empty and drop_constant remove only what they claim", {
-  df <- data.frame(keep = c(1, 2, NA), all_na = c(NA, NA, NA),
-                   constant = c(7, 7, 7), stringsAsFactors = FALSE)
+  df <- data.frame(
+    keep = c(1, 2, NA), all_na = c(NA, NA, NA),
+    constant = c(7, 7, 7), stringsAsFactors = FALSE
+  )
 
   de <- drop_empty(df)
   expect_equal(names(de), c("keep", "constant"))
@@ -131,7 +142,8 @@ test_that("drop_empty and drop_constant remove only what they claim", {
 
   # rows only
   rows_only <- drop_empty(data.frame(a = c(1, NA), b = c(2, NA)),
-                          which = "rows")
+    which = "rows"
+  )
   expect_equal(nrow(rows_only), 1L)
   expect_equal(ncol(rows_only), 2L)
   # cols only leaves the rows alone
@@ -151,8 +163,10 @@ test_that("drop_empty and drop_constant remove only what they claim", {
 })
 
 test_that("clean_column_names normalises and disambiguates", {
-  got <- clean_column_names(c("Total  Population (2021)", "% change",
-                              "Ville / City", "dup", "dup"))
+  got <- clean_column_names(c(
+    "Total  Population (2021)", "% change",
+    "Ville / City", "dup", "dup"
+  ))
   expect_equal(got[1], "total_population_2021")
   # a percent sign carries meaning, so it becomes a word
   expect_equal(got[2], "pct_change")
@@ -174,12 +188,18 @@ test_that("clean_column_names normalises and disambiguates", {
   expect_equal(clean_column_names("!!!"), "x")
 
   # the other cases
-  expect_equal(clean_column_names("Total Pop", case = "lower_camel"),
-               "totalPop")
-  expect_equal(clean_column_names("Total Pop", case = "upper_camel"),
-               "TotalPop")
-  expect_equal(clean_column_names("Total Pop", case = "screaming_snake"),
-               "TOTAL_POP")
+  expect_equal(
+    clean_column_names("Total Pop", case = "lower_camel"),
+    "totalPop"
+  )
+  expect_equal(
+    clean_column_names("Total Pop", case = "upper_camel"),
+    "TotalPop"
+  )
+  expect_equal(
+    clean_column_names("Total Pop", case = "screaming_snake"),
+    "TOTAL_POP"
+  )
   expect_equal(clean_column_names("Total Pop", sep = "."), "total.pop")
 
   # applied to a data frame, the original names are retained, which is
@@ -211,15 +231,20 @@ test_that("Mahalanobis outliers find jointly impossible rows", {
   expect_lt(df$weight[1], max(df$weight[-1]) * 3)
 
   # the p-value is the chi-square tail on p degrees of freedom
-  expect_equal(out$p_value, stats::pchisq(out$distance^2, df = 2,
-                                          lower.tail = FALSE),
-               tolerance = 1e-8)
+  expect_equal(out$p_value, stats::pchisq(out$distance^2,
+    df = 2,
+    lower.tail = FALSE
+  ),
+  tolerance = 1e-8
+  )
   expect_true(all(out$p_value >= 0 & out$p_value <= 1))
   # sorted by descending distance
   expect_equal(out$distance, sort(out$distance, decreasing = TRUE))
   # a stricter alpha flags no more rows
-  expect_lte(sum(mahalanobis_outliers(df, alpha = 1e-10)$outlier),
-             sum(out$outlier))
+  expect_lte(
+    sum(mahalanobis_outliers(df, alpha = 1e-10)$outlier),
+    sum(out$outlier)
+  )
 
   # MASKING: with several outliers the classical covariance is inflated
   # by them, so the robust version separates them further
@@ -237,15 +262,19 @@ test_that("Mahalanobis outliers find jointly impossible rows", {
   expect_true(is.na(og$distance[og$row == 5]))
   expect_output(print(out), "Mahalanobis outliers")
 
-  expect_error(mahalanobis_outliers(data.frame(a = letters[1:3])),
-               "no numeric columns")
+  expect_error(
+    mahalanobis_outliers(data.frame(a = letters[1:3])),
+    "no numeric columns"
+  )
   expect_error(mahalanobis_outliers(df, alpha = 0), "strictly inside")
   expect_error(mahalanobis_outliers(df[1:2, ]), "more complete rows")
 })
 
 test_that("missing_runs separates outages from scattered gaps", {
-  df <- data.frame(outage = c(1, 2, NA, NA, NA, NA, 7, 8),
-                   scattered = c(1, NA, 3, 4, NA, 6, NA, NA))
+  df <- data.frame(
+    outage = c(1, 2, NA, NA, NA, NA, 7, 8),
+    scattered = c(1, NA, 3, 4, NA, 6, NA, NA)
+  )
   # the same total count, different shape
   expect_equal(sum(is.na(df$outage)), sum(is.na(df$scattered)))
 
@@ -269,11 +298,13 @@ test_that("missing_runs separates outages from scattered gaps", {
   # to the total missing count
   r1 <- missing_runs(df, min_run = 1L)
   expect_equal(sum(r1$length), sum(is.na(df$outage)) +
-                 sum(is.na(df$scattered)))
+    sum(is.na(df$scattered)))
   # cross-checked against rle directly
   rr <- rle(is.na(df$scattered))
-  expect_equal(sort(rr$lengths[rr$values], decreasing = TRUE),
-               sort(r1$length[r1$column == "scattered"], decreasing = TRUE))
+  expect_equal(
+    sort(rr$lengths[rr$values], decreasing = TRUE),
+    sort(r1$length[r1$column == "scattered"], decreasing = TRUE)
+  )
 
   # a complete column has no runs
   expect_equal(nrow(missing_runs(data.frame(x = 1:5))), 0L)
@@ -285,13 +316,16 @@ test_that("missing_runs separates outages from scattered gaps", {
 
 test_that("the missingness map draws the whole table", {
   set.seed(75)
-  df <- data.frame(complete = 1:100,
-                   block = c(rep(NA, 30), 31:100),
-                   scattered = ifelse(stats::runif(100) < 0.3, NA, 1),
-                   gone = c(1:5, rep(NA, 95)))
+  df <- data.frame(
+    complete = 1:100,
+    block = c(rep(NA, 30), 31:100),
+    scattered = ifelse(stats::runif(100) < 0.3, NA, 1),
+    gone = c(1:5, rep(NA, 95))
+  )
   lines <- withCallingHandlers(
     utils::capture.output(res <- missingness_map(df, height = 10L)),
-    warning = function(w) invokeRestart("muffleWarning"))
+    warning = function(w) invokeRestart("muffleWarning")
+  )
   expect_type(res, "character")
   expect_true(length(res) > 5L)
   txt <- paste(lines, collapse = "\n")
@@ -332,9 +366,11 @@ test_that("missingness_summary answers the scalar questions", {
 })
 
 test_that("duplicate_rows shows which rows repeat", {
-  df <- data.frame(id = c(1, 2, 2, 3, 3, 3),
-                   value = c("a", "b", "b", "c", "d", "c"),
-                   stringsAsFactors = FALSE)
+  df <- data.frame(
+    id = c(1, 2, 2, 3, 3, 3),
+    value = c("a", "b", "b", "c", "d", "c"),
+    stringsAsFactors = FALSE
+  )
 
   # duplicated on every column: the (2,b) pair and the (3,c) pair
   all_cols <- duplicate_rows(df)
