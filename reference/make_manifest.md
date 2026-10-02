@@ -36,15 +36,16 @@ requested) `environment`.
 ``` r
 # Minimal manifest, no environment capture.
 man <- make_manifest(list(project = "demo-study", author = "A. Author"),
-                     environment = FALSE)
-names(man)          # "meta" "results"
+  environment = FALSE
+)
+names(man) # "meta" "results"
 #> [1] "meta"    "results"
 man$meta$project
 #> [1] "demo-study"
 
 # With environment = TRUE it also records R version / platform / packages.
 full <- make_manifest(list(project = "demo"), environment = TRUE)
-names(full)         # adds "environment"
+names(full) # adds "environment"
 #> [1] "meta"        "results"     "environment"
 full$environment$r_version
 #> [1] "4.6.1"

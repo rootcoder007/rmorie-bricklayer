@@ -89,7 +89,8 @@ fails, or the layer metadata reports an error.</p>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="va">prov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>arcgis_layer_url <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/"</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="st">"Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">resolve_via_arcgis</span><span class="op">(</span><span class="va">prov</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0/query?where=1%3D1&amp;outFields=*&amp;f=geojson"</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

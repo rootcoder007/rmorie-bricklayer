@@ -52,9 +52,11 @@ so they run with nothing installed.
 ## Examples
 
 ``` r
-cw <- data.frame(inst = c("North Jail", "South Jail", "East Jail"),
-                 cd = c("3557", "3520", "3506"),
-                 stringsAsFactors = FALSE)
+cw <- data.frame(
+  inst = c("North Jail", "South Jail", "East Jail"),
+  cd = c("3557", "3520", "3506"),
+  stringsAsFactors = FALSE
+)
 region_map_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
 #>                                         check observed expected pass
 #> 1         units assigned more than one region        0        0 TRUE

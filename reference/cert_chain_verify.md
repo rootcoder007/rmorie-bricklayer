@@ -91,8 +91,10 @@ rely on now, pass now.
 
 ``` r
 if (FALSE) { # \dontrun{
-res <- cert_chain_verify("tsa.crt", trust = "ca.crt",
-                         purpose = "timeStamping")
+res <- cert_chain_verify("tsa.crt",
+  trust = "ca.crt",
+  purpose = "timeStamping"
+)
 res$ok
 res$checks
 } # }

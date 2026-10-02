@@ -214,8 +214,10 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span>  Number_Of_Placements <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">402</span>, <span class="fl">28</span>, <span class="fl">377</span>, <span class="fl">12</span>, <span class="fl">190</span>, <span class="fl">19</span>, <span class="fl">268</span>, <span class="fl">24</span>, <span class="fl">331</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">yoy</span><span class="op">(</span><span class="va">seg</span>, value <span class="op">=</span> <span class="st">"Number_Of_Placements"</span>, period <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
-<span class="r-in"><span>         by <span class="op">=</span> <span class="st">"Gender"</span>, direction <span class="op">=</span> <span class="st">"lower_is_better"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu">yoy</span><span class="op">(</span><span class="va">seg</span>,</span></span>
+<span class="r-in"><span>  value <span class="op">=</span> <span class="st">"Number_Of_Placements"</span>, period <span class="op">=</span> <span class="st">"EndFiscalYear"</span>,</span></span>
+<span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>, direction <span class="op">=</span> <span class="st">"lower_is_better"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval    </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ────────────</span>

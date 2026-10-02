@@ -40,7 +40,9 @@ The `target_path`, returned invisibly.
 # \donttest{
 # try(): a live download must fail gracefully on an offline check machine.
 dest <- try(download_data("https://cloud.r-project.org/",
-                          tempfile(fileext = ".html"), quiet = TRUE))
+  tempfile(fileext = ".html"),
+  quiet = TRUE
+))
 if (!inherits(dest, "try-error")) file.exists(dest)
 #> [1] TRUE
 # }

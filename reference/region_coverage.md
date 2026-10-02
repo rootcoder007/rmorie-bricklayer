@@ -63,9 +63,11 @@ precisely the number a reader is tempted to divide by.
 
 ``` r
 # Four regions, two of which hold a facility.
-cov <- region_coverage(region = c("A", "B", "C", "D"),
-                       population = c(1200000, 800000, 450000, 90000),
-                       units = c(3, 0, 1, 0))
+cov <- region_coverage(
+  region = c("A", "B", "C", "D"),
+  population = c(1200000, 800000, 450000, 90000),
+  units = c(3, 0, 1, 0)
+)
 cov
 #> ── 4 units in 2 of 4 regions ───────────────────────────────────── 
 #>   those regions hold 1,650,000 of 2,540,000 residents (65.0%)

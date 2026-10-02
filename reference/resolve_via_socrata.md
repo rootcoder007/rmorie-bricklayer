@@ -33,8 +33,10 @@ missing, the request fails, or the metadata reports an error.
 resolve_via_socrata(list())
 #> NULL
 # \donttest{
-prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
-                            socrata_id     = "ijzp-q8t2"))
+prov <- list(dataset = list(
+  socrata_domain = "data.cityofchicago.org",
+  socrata_id = "ijzp-q8t2"
+))
 resolve_via_socrata(prov)
 #> [1] "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"
 # }

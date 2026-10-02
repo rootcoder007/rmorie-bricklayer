@@ -42,9 +42,11 @@ rows are in front of you.
 ## Examples
 
 ``` r
-df <- data.frame(id = c(1, 2, 2, 3, 3, 3),
-                 value = c("a", "b", "b", "c", "d", "c"),
-                 stringsAsFactors = FALSE)
+df <- data.frame(
+  id = c(1, 2, 2, 3, 3, 3),
+  value = c("a", "b", "b", "c", "d", "c"),
+  stringsAsFactors = FALSE
+)
 
 # Duplicated on every column.
 duplicate_rows(df)

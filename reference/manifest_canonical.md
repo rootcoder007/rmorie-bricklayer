@@ -66,7 +66,7 @@ identical(manifest_digest(a), manifest_digest(b))
 #> [1] TRUE
 
 # full precision, so a recorded number can be checked later
-m <- make_manifest(list(x = 1/3), environment = FALSE)
+m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
 #> [1] TRUE
 ```

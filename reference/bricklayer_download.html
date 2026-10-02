@@ -70,7 +70,8 @@ lines when stderr is not a terminal, and nothing when
 <span>  label <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">basename</a></span><span class="op">(</span><span class="va">dest</span><span class="op">)</span>,</span>
 <span>  size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  timeout <span class="op">=</span> <span class="fl">3600</span>,</span>
-<span>  quiet <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  quiet <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tty <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,6 +107,11 @@ spinner).</p></dd>
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p><code>TRUE</code>, <code>FALSE</code>, or <code>NULL</code> to follow the
 session and options.</p></dd>
+
+
+<dt id="arg-tty">tty<a class="anchor" aria-label="anchor" href="#arg-tty"></a></dt>
+<dd><p>Draw the live bar (<code>TRUE</code>) or print milestone lines
+(<code>FALSE</code>); <code>NULL</code> asks whether stderr is a terminal.</p></dd>
 
 </dl></div>
     <div class="section level2">

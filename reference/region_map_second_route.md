@@ -67,13 +67,17 @@ disagreement cannot hide inside an allowance.
 ## Examples
 
 ``` r
-cw <- data.frame(inst = c("North Jail", "South Jail", "Hill Jail"),
-                 cd = c("3557", "3520", "3506"),
-                 stringsAsFactors = FALSE)
+cw <- data.frame(
+  inst = c("North Jail", "South Jail", "Hill Jail"),
+  cd = c("3557", "3520", "3506"),
+  stringsAsFactors = FALSE
+)
 
 # a name-based route that is known to mis-place one unit
-route <- c("North Jail" = "3557", "South Jail" = "3520",
-           "Hill Jail" = "3519")
+route <- c(
+  "North Jail" = "3557", "South Jail" = "3520",
+  "Hill Jail" = "3519"
+)
 region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 #>        unit primary second known
 #> 1 Hill Jail    3506   3519  TRUE

@@ -83,9 +83,11 @@ Corrections Planners*. University of Illinois at Urbana-Champaign.
 
 ``` r
 # Fewer people, held longer: the flow falls while the stock rises.
-stock_flow(days = c(115674, 126121), people = c(12647, 9608),
-           period = c("2023", "2025"),
-           exposure = c(15495050, 16256538))
+stock_flow(
+  days = c(115674, 126121), people = c(12647, 9608),
+  period = c("2023", "2025"),
+  exposure = c(15495050, 16256538)
+)
 #> ── Stock and flow over 2 periods ───────────────────────────────── 
 #>  period people   days      alos      adp flow_rate stock_rate
 #>    2023  12647 115674  9.146359 316.9151  81.61961   2.045267

@@ -55,7 +55,8 @@ The path to the written `SUMMARY.txt`, returned invisibly.
 
 ``` r
 man <- make_manifest(list(project = "demo", author = "A. Author"),
-                     environment = FALSE)
+  environment = FALSE
+)
 man <- record(man, "row_count", observed = 20, expected = 20)
 #>   row_count                                    observed = 20.0000      expected = 20.0000      [PASS]
 out <- file.path(tempdir(), "demo-run")

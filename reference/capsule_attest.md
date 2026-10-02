@@ -90,7 +90,8 @@ is for the other question.
 
 ``` r
 m <- make_manifest(list(dataset = "otis", rows = 1200L),
-                   environment = FALSE)
+  environment = FALSE
+)
 key <- fips_keygen("ML-DSA-65")
 att <- capsule_attest(m, key, note = "counts as published")
 
@@ -116,6 +117,7 @@ capsule_check_attestation(att, m2)$ok
 
 # and so does presenting a different key
 capsule_check_attestation(att, m,
-  key_expected = fips_keygen("ML-DSA-65")$public)$ok
+  key_expected = fips_keygen("ML-DSA-65")$public
+)$ok
 #> [1] FALSE
 ```

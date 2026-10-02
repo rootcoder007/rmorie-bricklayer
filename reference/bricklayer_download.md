@@ -16,7 +16,8 @@ bricklayer_download(
   label = basename(dest),
   size = NULL,
   timeout = 3600,
-  quiet = NULL
+  quiet = NULL,
+  tty = NULL
 )
 ```
 
@@ -50,6 +51,11 @@ bricklayer_download(
 - quiet:
 
   `TRUE`, `FALSE`, or `NULL` to follow the session and options.
+
+- tty:
+
+  Draw the live bar (`TRUE`) or print milestone lines (`FALSE`); `NULL`
+  asks whether stderr is a terminal.
 
 ## Value
 

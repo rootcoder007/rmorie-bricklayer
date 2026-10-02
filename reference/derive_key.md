@@ -87,7 +87,9 @@ capsule_verify("manifest-digest", sig, key)
 #> [1] TRUE
 
 # A longer key is a prefix-consistent extension of a shorter one.
-identical(substring(derive_key("pw", "s", 10, length = 64), 1, 64),
-          derive_key("pw", "s", 10, length = 32))
+identical(
+  substring(derive_key("pw", "s", 10, length = 64), 1, 64),
+  derive_key("pw", "s", 10, length = 32)
+)
 #> [1] TRUE
 ```

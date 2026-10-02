@@ -58,8 +58,10 @@ is for.
 ## Examples
 
 ``` r
-pub <- data.frame(inst = c("North Jail", "South Jail"),
-                  cd = c("3557", "3520"), stringsAsFactors = FALSE)
+pub <- data.frame(
+  inst = c("North Jail", "South Jail"),
+  cd = c("3557", "3520"), stringsAsFactors = FALSE
+)
 obs <- pub
 region_map_compare(pub, obs, "inst")
 #>   column cells mismatched first

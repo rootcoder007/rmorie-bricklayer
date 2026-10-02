@@ -36,9 +36,10 @@ resolve_via_ckan(list())
 #> NULL
 # \donttest{
 prov <- list(
-  dataset  = list(ckan_api_endpoint = paste0(
+  dataset = list(ckan_api_endpoint = paste0(
     "https://data.ontario.ca/api/3/action/package_show",
-    "?id=ontario-public-library-statistics")),
+    "?id=ontario-public-library-statistics"
+  )),
   resource = list(name_match_pattern = "2014")
 )
 resolve_via_ckan(prov)

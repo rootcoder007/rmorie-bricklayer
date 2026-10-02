@@ -76,7 +76,8 @@ to check this result against the name route, with those cases named.
 if (FALSE) { # \dontrun{
 obs <- region_map_from_points(
   x = inst$Longitude, y = inst$Latitude, unit = inst$Institution,
-  boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME"))
+  boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME")
+)
 stopifnot(all(obs$n_regions == 1))
 } # }
 ```

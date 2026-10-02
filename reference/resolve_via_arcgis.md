@@ -36,7 +36,8 @@ resolve_via_arcgis(list())
 # \donttest{
 prov <- list(dataset = list(arcgis_layer_url = paste0(
   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
-  "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0")))
+  "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
+)))
 resolve_via_arcgis(prov)
 #> [1] "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson"
 # }

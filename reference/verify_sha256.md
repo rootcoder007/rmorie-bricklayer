@@ -32,13 +32,13 @@ writeLines("hello capsule", f)
 
 # Matching digest -> match TRUE.
 chk <- verify_sha256(f, sha256_file(f))
-chk$match          # TRUE
+chk$match # TRUE
 #> [1] TRUE
 
 # A wrong expected digest -> match FALSE, with both values reported.
 bad <- verify_sha256(f, strrep("0", 64L))
-bad$match          # FALSE
+bad$match # FALSE
 #> [1] FALSE
-bad$actual         # the real digest
+bad$actual # the real digest
 #> [1] "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02"
 ```

@@ -87,8 +87,10 @@ fields are missing, the request fails, or the metadata reports an error.</p>
 <span class="r-in"><span><span class="fu">resolve_via_socrata</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> NULL</span>
 <span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="va">prov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>socrata_domain <span class="op">=</span> <span class="st">"data.cityofchicago.org"</span>,</span></span>
-<span class="r-in"><span>                            socrata_id     <span class="op">=</span> <span class="st">"ijzp-q8t2"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">prov</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>dataset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  socrata_domain <span class="op">=</span> <span class="st">"data.cityofchicago.org"</span>,</span></span>
+<span class="r-in"><span>  socrata_id <span class="op">=</span> <span class="st">"ijzp-q8t2"</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">resolve_via_socrata</span><span class="op">(</span><span class="va">prov</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv?accessType=DOWNLOAD"</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

@@ -37,10 +37,10 @@ and 2023 at 365 without anyone choosing.
 ## Examples
 
 ``` r
-period_days("2024-01-01", "2024-12-31")   # a leap year
+period_days("2024-01-01", "2024-12-31") # a leap year
 #> [1] 366
 period_days("2023-01-01", "2023-12-31")
 #> [1] 365
-period_days("2025-04-01", "2026-03-31")   # a fiscal year
+period_days("2025-04-01", "2026-03-31") # a fiscal year
 #> [1] 365
 ```
