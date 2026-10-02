@@ -237,13 +237,18 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   sub("^http://", "https://", snap$url)
 }
 
-## ----- friendly_download: wraps utils::download.file with diagnostic
+# The one transport friendly_download() uses, live and Wayback alike (tests mock it).
+.bl_fetch_file <- function(url, dest) {
+  bricklayer_download(url, dest, quiet = FALSE)
+}
+
+## ----- friendly_download: wraps bricklayer_download with diagnostic
 ## error messages for common academic/corporate network failures.
 ## Returns TRUE on success, FALSE on failure.
 
 #' Download a File With Diagnostic Error Messages
 #'
-#' Wraps [utils::download.file()] and, on
+#' Wraps [bricklayer_download()] and, on
 #' failure, prints plain-language guidance for the most common academic and
 #' corporate network problems (rate limiting, TLS-inspection VPNs, DNS
 #' failures, timeouts, HTTP 403). Optionally retries from a Wayback Machine
@@ -271,7 +276,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
   url <- .rmbl_string1(url, "url")
   target_path <- .rmbl_string1(target_path, "target_path")
   result <- tryCatch({
-    utils::download.file(url, target_path, mode = "wb", quiet = FALSE)
+    .bl_fetch_file(url, target_path)
     TRUE
   }, error = function(e) {
     msg <- conditionMessage(e)
@@ -305,7 +310,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
     if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
       message("  Trying Wayback Machine fallback snapshot...")
       tryCatch({
-        utils::download.file(attempt_wayback, target_path, mode = "wb", quiet = FALSE)
+        .bl_fetch_file(attempt_wayback, target_path)
         message("  [ok] Wayback snapshot retrieved.")
         return(TRUE)
       }, error = function(e2) {

@@ -171,13 +171,12 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
   writeLines("a,b\n1,2", snap)
   calls <- 0L
   testthat::local_mocked_bindings(
-    download.file = function(url, destfile, ...) {
+    .bl_fetch_file = function(url, dest) {
       calls <<- calls + 1L
       if (calls == 1L) stop("HTTP error 429: too many requests")
-      file.copy(sub("^file://", "", url), destfile, overwrite = TRUE)
-      0L
-    },
-    .package = "utils"
+      file.copy(sub("^file://", "", url), dest, overwrite = TRUE)
+      invisible(dest)
+    }
   )
   dst <- tempfile(fileext = ".csv")
   out <- capture.output(type = "message", 
@@ -193,10 +192,9 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
 test_that("friendly_download covers the failure diagnostics and total failure", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    download.file = function(...) stop(paste(
+    .bl_fetch_file = function(...) stop(paste(
       "SSL certificate handshake failed; connection timed out;",
-      "could not resolve host; HTTP 403 forbidden")),
-    .package = "utils"
+      "could not resolve host; HTTP 403 forbidden"))
   )
   # auto-resolution consults wayback_snapshot_url; make it find nothing
   testthat::local_mocked_bindings(wayback_snapshot_url = function(...) NULL)
@@ -213,8 +211,7 @@ test_that("friendly_download covers the failure diagnostics and total failure", 
 test_that("friendly_download reports a failed wayback retry", {
   skip_if_cannot_mock()
   testthat::local_mocked_bindings(
-    download.file = function(...) stop("could not resolve host"),
-    .package = "utils"
+    .bl_fetch_file = function(...) stop("could not resolve host")
   )
   out <- capture.output(type = "message", 
     ok <- friendly_download("https://example.org/x.csv", tempfile(),
