@@ -237,9 +237,15 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   sub("^http://", "https://", snap$url)
 }
 
-# The one transport friendly_download() uses, live and Wayback alike (tests mock it).
+# The one transport friendly_download() uses, live and Wayback alike (tests
+# mock it). Inside the package it is bricklayer_download() with its live
+# progress bar; a staged bundle (which copies this file alone) uses base R.
 .bl_fetch_file <- function(url, dest) {
-  bricklayer_download(url, dest, quiet = FALSE)
+  if (exists("bricklayer_download", mode = "function")) {
+    bricklayer_download(url, dest, quiet = FALSE)
+  } else {
+    utils::download.file(url, dest, mode = "wb", quiet = FALSE)
+  }
 }
 
 ## ----- friendly_download: wraps bricklayer_download with diagnostic
