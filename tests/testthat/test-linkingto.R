@@ -25,9 +25,13 @@ test_that("every published kernel compiles and resolves from a consumer", {
   skip_if(Sys.getenv("R_TESTS_NO_COMPILE") != "", "compilation disabled")
   skip_if(!nzchar(Sys.which("R")), "no R on the path")
   inc <- system.file("include", package = "rmoriebricklayer")
-  skip_if(!nzchar(inc) || !file.exists(file.path(inc,
-                                                 "rmoriebricklayer.h")),
-          "package not installed with its include directory")
+  skip_if(
+    !nzchar(inc) || !file.exists(file.path(
+      inc,
+      "rmoriebricklayer.h"
+    )),
+    "package not installed with its include directory"
+  )
 
   dir <- file.path(tempdir(), paste0("rmblconsume", Sys.getpid()))
   on.exit(unlink(dir, recursive = TRUE), add = TRUE)
@@ -53,12 +57,18 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "Imports: rmoriebricklayer",
     "LinkingTo: rmoriebricklayer"
   ), file.path(dir, "DESCRIPTION"))
-  writeLines(c("useDynLib(rmblconsume, .registration = TRUE)",
-               "import(rmoriebricklayer)",
-               "export(consume_series)"),
-             file.path(dir, "NAMESPACE"))
-  writeLines("consume_series <- function() .Call(C_consume_series)",
-             file.path(dir, "R", "consume.R"))
+  writeLines(
+    c(
+      "useDynLib(rmblconsume, .registration = TRUE)",
+      "import(rmoriebricklayer)",
+      "export(consume_series)"
+    ),
+    file.path(dir, "NAMESPACE")
+  )
+  writeLines(
+    "consume_series <- function() .Call(C_consume_series)",
+    file.path(dir, "R", "consume.R")
+  )
 
   # Deliberately a .c file, not .cpp: the header must be usable from
   # plain C, which is what most consumers compile.
@@ -119,15 +129,20 @@ test_that("every published kernel compiles and resolves from a consumer", {
   on.exit(unlink(lib, recursive = TRUE), add = TRUE)
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "R"),
-    c("CMD", "INSTALL", paste0("--library=", shQuote(lib)),
-      "--no-docs", shQuote(dir)),
-    stdout = TRUE, stderr = TRUE))
+    c(
+      "CMD", "INSTALL", paste0("--library=", shQuote(lib)),
+      "--no-docs", shQuote(dir)
+    ),
+    stdout = TRUE, stderr = TRUE
+  ))
   status <- attr(out, "status")
   # A compile failure here IS the finding, so show it rather than
   # skipping past it.
   if (!is.null(status) && status != 0L) {
-    fail(paste("the consumer package did not build:",
-               paste(utils::tail(out, 25L), collapse = "\n")))
+    fail(paste(
+      "the consumer package did not build:",
+      paste(utils::tail(out, 25L), collapse = "\n")
+    ))
   }
   expect_true(dir.exists(file.path(lib, "rmblconsume")))
 
@@ -136,40 +151,49 @@ test_that("every published kernel compiles and resolves from a consumer", {
   # to survive R quoting it, the shell quoting it, and R parsing it
   # again, and one of those layers eats it.
   code <- paste(
-    sprintf('.libPaths(c(%s, .libPaths()))', shQuote(lib)),
-    'library(rmblconsume)',
+    sprintf(".libPaths(c(%s, .libPaths()))", shQuote(lib)),
+    "library(rmblconsume)",
     # loaded by the Imports above, but make the dependency explicit so a
     # failure here is unambiguous
     'stopifnot("rmoriebricklayer" %in% loadedNamespaces())',
-    'r <- consume_series()',
+    "r <- consume_series()",
     'writeLines(paste(sprintf("%.17g", r), collapse=","))',
     'writeLines(attr(r, "sha256_abc"))',
-    sep = "; ")
+    sep = "; "
+  )
   res <- suppressWarnings(system2(file.path(R.home("bin"), "Rscript"),
-                                  c("-e", shQuote(code)),
-                                  stdout = TRUE, stderr = TRUE))
+    c("-e", shQuote(code)),
+    stdout = TRUE, stderr = TRUE
+  ))
   st <- attr(res, "status")
   if (!is.null(st) && st != 0L) {
-    fail(paste("the consumer built but could not call the kernels:",
-               paste(utils::tail(res, 25L), collapse = "\n")))
+    fail(paste(
+      "the consumer built but could not call the kernels:",
+      paste(utils::tail(res, 25L), collapse = "\n")
+    ))
     return(invisible(NULL))
   }
   # If the output is not the two lines expected, say what it WAS.
   # "Execution halted" reported as an unexpected digest tells the reader
   # nothing about the cause.
   if (length(res) < 2L) {
-    fail(paste("unexpected output from the consumer:",
-               paste(res, collapse = " | ")))
+    fail(paste(
+      "unexpected output from the consumer:",
+      paste(res, collapse = " | ")
+    ))
     return(invisible(NULL))
   }
   # %.17g round-trips a binary64 exactly, so the comparisons below can
   # be identities rather than tolerances
   nums <- suppressWarnings(
-    as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]]))
+    as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
+  )
   sha <- trimws(res[length(res)])
   if (length(nums) != 12L || anyNA(nums)) {
-    fail(paste("the consumer did not print 12 numbers; it printed:",
-               paste(utils::tail(res, 10L), collapse = " | ")))
+    fail(paste(
+      "the consumer did not print 12 numbers; it printed:",
+      paste(utils::tail(res, 10L), collapse = " | ")
+    ))
     return(invisible(NULL))
   }
   expect_length(nums, 12L)
@@ -196,5 +220,6 @@ test_that("every published kernel compiles and resolves from a consumer", {
   # regression in the older shims surfaces here too
   expect_identical(sha, core_sha256("abc"))
   expect_identical(
-    sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  )
 })

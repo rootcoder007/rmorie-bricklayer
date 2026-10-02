@@ -39,8 +39,10 @@ definitional error reproduces perfectly. That is what
 \code{\link[=region_map_second_route]{region_map_second_route()}} is for.
 }
 \examples{
-pub <- data.frame(inst = c("North Jail", "South Jail"),
-                  cd = c("3557", "3520"), stringsAsFactors = FALSE)
+pub <- data.frame(
+  inst = c("North Jail", "South Jail"),
+  cd = c("3557", "3520"), stringsAsFactors = FALSE
+)
 obs <- pub
 region_map_compare(pub, obs, "inst")
 

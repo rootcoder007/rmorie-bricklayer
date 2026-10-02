@@ -22,10 +22,13 @@
 
 .bl_read_credentials <- function() {
   p <- .bl_credentials_path()
-  if (!file.exists(p)) return(list())
+  if (!file.exists(p)) {
+    return(list())
+  }
   txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
   out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE),
-                  error = function(e) NULL)
+    error = function(e) NULL
+  )
   if (is.list(out)) out else list()
 }
 
@@ -33,8 +36,10 @@
   p <- .bl_credentials_path()
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- paste0(p, ".tmp")
-  writeLines(bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE),
-             tmp)
+  writeLines(
+    bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE),
+    tmp
+  )
   Sys.chmod(tmp, mode = "0600")
   file.rename(tmp, p)
   invisible(p)
@@ -50,7 +55,9 @@
 
 .bl_hosted_key <- function() {
   env <- trimws(Sys.getenv("MORIE_HOSTED_KEY", unset = ""))
-  if (nzchar(env)) return(env)
+  if (nzchar(env)) {
+    return(env)
+  }
   key <- .bl_read_credentials()$hosted_key
   if (is.character(key) && length(key) == 1L && nzchar(key)) key else NULL
 }
@@ -99,15 +106,22 @@
 bricklayer_llm_models <- function(timeout = 10) {
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
-  if (is.null(base) || is.null(key)) return(structure(character(), default = NULL))
-  res <- tryCatch(.bl_http_get(paste0(base, "/v1/models"), timeout,
-                               paste("Authorization: Bearer", key)),
-                  error = function(e) NULL)
+  if (is.null(base) || is.null(key)) {
+    return(structure(character(), default = NULL))
+  }
+  res <- tryCatch(
+    .bl_http_get(
+      paste0(base, "/v1/models"), timeout,
+      paste("Authorization: Bearer", key)
+    ),
+    error = function(e) NULL
+  )
   if (is.null(res) || !identical(as.integer(res$status), 200L)) {
     return(structure(character(), default = NULL))
   }
   parsed <- tryCatch(jsonlite::fromJSON(rawToChar(res$body), simplifyVector = FALSE),
-                     error = function(e) NULL)
+    error = function(e) NULL
+  )
   ids <- vapply(parsed$data %||% list(), function(m) as.character(m$id %||% ""), "")
   ids <- ids[nzchar(ids)]
   wanted <- .bl_hosted_model()
@@ -116,22 +130,30 @@ bricklayer_llm_models <- function(timeout = 10) {
 
 # One seam for the HTTP layer so tests can stand in canned replies.
 .bl_http_post <- function(url, body, content_type, timeout, headers) {
-  .Call(C_rmbl_http_post, url, body, content_type, as.integer(timeout),
-        headers)
+  .Call(
+    C_rmbl_http_post, url, body, content_type, as.integer(timeout),
+    headers
+  )
 }
 
 # POST a JSON document, get back list(status, json) where json is the
 # parsed reply (NULL when the body is not JSON).
 .bl_post_json <- function(url, payload, timeout = 30, headers = NULL) {
   raw <- charToRaw(enc2utf8(bricklayer_json_to_json(payload,
-                                                     auto_unbox = TRUE)))
+    auto_unbox = TRUE
+  )))
   res <- .bl_http_post(url, raw, "application/json", timeout, headers)
-  if (is.null(res)) return(list(status = -1L, json = NULL))
+  if (is.null(res)) {
+    return(list(status = -1L, json = NULL))
+  }
   json <- NULL
   if (length(res$body)) {
-    json <- tryCatch(bricklayer_json_from_json(rawToChar(res$body),
-                                               simplifyVector = FALSE),
-                     error = function(e) NULL)
+    json <- tryCatch(
+      bricklayer_json_from_json(rawToChar(res$body),
+        simplifyVector = FALSE
+      ),
+      error = function(e) NULL
+    )
   }
   list(status = as.integer(res$status), json = json)
 }
@@ -171,12 +193,15 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   base <- .bl_hosted_base()
   if (is.null(base)) {
     stop("the hosted MORIE LLM tier is disabled (MORIE_HOSTED_BASE_URL)",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   key <- .bl_hosted_key()
   if (is.null(key)) {
     stop("no key for https://llm.rmorie.com: run bricklayer_llm_login() ",
-         "(or `rmoriebricklayer login` from the shell)", call. = FALSE)
+      "(or `rmoriebricklayer login` from the shell)",
+      call. = FALSE
+    )
   }
   msgs <- list()
   if (!is.null(system_prompt)) {
@@ -184,11 +209,17 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   }
   msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
   res <- .bl_post_json(paste0(base, "/v1/chat/completions"),
-                       list(model = if (is.null(model)) .bl_hosted_model()
-                                    else model,
-                            messages = msgs),
-                       timeout = timeout,
-                       headers = paste("Authorization: Bearer", key))
+    list(
+      model = if (is.null(model)) {
+        .bl_hosted_model()
+      } else {
+        model
+      },
+      messages = msgs
+    ),
+    timeout = timeout,
+    headers = paste("Authorization: Bearer", key)
+  )
   if (res$status != 200L) .bl_reply_error(res, "the hosted MORIE LLM tier")
   txt <- res$json$choices[[1L]]$message$content
   if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
@@ -222,7 +253,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' @examples
 #' \dontrun{
 #' bricklayer_llm_login(email = "you@example.com")
-#' bricklayer_llm_login()                           # GitHub device flow
+#' bricklayer_llm_login() # GitHub device flow
 #' bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
 #' }
 #' @export
@@ -238,7 +269,9 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     message(sprintf("Token stored in %s", p))
     return(invisible(token))
   }
-  if (!is.null(email)) return(.bl_login_email(email, code))
+  if (!is.null(email)) {
+    return(.bl_login_email(email, code))
+  }
   .bl_login_device(open_browser, poll_max_seconds)
 }
 
@@ -251,12 +284,16 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   if (is.null(code)) {
     res <- .bl_post_json(paste0(auth, "/email/code"), list(email = email))
     if (res$status != 200L) .bl_reply_error(res, "the sign-in service")
-    message(sprintf("A 6-digit code was sent to %s (valid for 10 minutes).",
-                    email))
+    message(sprintf(
+      "A 6-digit code was sent to %s (valid for 10 minutes).",
+      email
+    ))
     code <- readline("Enter the code: ")
   }
-  res <- .bl_post_json(paste0(auth, "/email/verify"),
-                       list(email = email, code = trimws(code)))
+  res <- .bl_post_json(
+    paste0(auth, "/email/verify"),
+    list(email = email, code = trimws(code))
+  )
   if (res$status != 200L) .bl_reply_error(res, "the sign-in service")
   key <- res$json$api_key
   if (!is.character(key) || !nzchar(key)) {
@@ -273,8 +310,10 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   start <- .bl_post_json(paste0(auth, "/device/code"), list())
   if (start$status != 200L) .bl_reply_error(start, "the sign-in service")
   info <- start$json
-  message(sprintf("Sign in at %s and enter the code: %s",
-                  info$verification_uri, info$user_code))
+  message(sprintf(
+    "Sign in at %s and enter the code: %s",
+    info$verification_uri, info$user_code
+  ))
   if (isTRUE(open_browser)) {
     try(utils::browseURL(info$verification_uri), silent = TRUE)
   }
@@ -282,13 +321,17 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   deadline <- Sys.time() + poll_max_seconds
   while (Sys.time() < deadline) {
     Sys.sleep(interval)
-    res <- .bl_post_json(paste0(auth, "/device/token"),
-                         list(device_code = info$device_code))
+    res <- .bl_post_json(
+      paste0(auth, "/device/token"),
+      list(device_code = info$device_code)
+    )
     if (res$status == 200L && is.character(res$json$api_key)) {
       p <- .bl_store_key(res$json$api_key, res$json$user)
-      message(sprintf("Logged in as %s; key stored in %s",
-                      if (is.null(res$json$user)) "user" else res$json$user,
-                      p))
+      message(sprintf(
+        "Logged in as %s; key stored in %s",
+        if (is.null(res$json$user)) "user" else res$json$user,
+        p
+      ))
       return(invisible(res$json$api_key))
     }
     if (res$status != 428L) .bl_reply_error(res, "the sign-in service")
@@ -318,8 +361,11 @@ bricklayer_llm_logout <- function() {
   } else if (file.exists(p)) {
     unlink(p)
   }
-  message(if (had) "Logged out of the hosted MORIE LLM tier." else
-            "No hosted key was stored.")
+  message(if (had) {
+    "Logged out of the hosted MORIE LLM tier."
+  } else {
+    "No hosted key was stored."
+  })
   invisible(had)
 }
 
@@ -337,18 +383,33 @@ bricklayer_llm_status <- function() {
   data.frame(
     route = c("hosted MORIE tier", "rmorie-cli agent"),
     status = c(
-      if (is.null(base)) "disabled"
-      else if (is.null(key)) "not logged in" else "key stored",
-      if (nzchar(.rmorie_cli_binary())) "on PATH" else "absent"),
-    detail = c(
-      if (is.null(base)) "MORIE_HOSTED_BASE_URL=off"
-      else if (is.null(key)) base
-      else {
-        hm <- bricklayer_llm_models()
-        if (length(hm)) sprintf("%s  models: %s (default %s)", base,
-                                paste(hm, collapse = ", "), attr(hm, "default"))
-        else paste(base, " (gateway not reachable)")
+      if (is.null(base)) {
+        "disabled"
+      } else if (is.null(key)) {
+        "not logged in"
+      } else {
+        "key stored"
       },
-      "backend = \"ollama\" or \"anthropic\" in agent_bundle()"),
-    stringsAsFactors = FALSE)
+      if (nzchar(.rmorie_cli_binary())) "on PATH" else "absent"
+    ),
+    detail = c(
+      if (is.null(base)) {
+        "MORIE_HOSTED_BASE_URL=off"
+      } else if (is.null(key)) {
+        base
+      } else {
+        hm <- bricklayer_llm_models()
+        if (length(hm)) {
+          sprintf(
+            "%s  models: %s (default %s)", base,
+            paste(hm, collapse = ", "), attr(hm, "default")
+          )
+        } else {
+          paste(base, " (gateway not reachable)")
+        }
+      },
+      "backend = \"ollama\" or \"anthropic\" in agent_bundle()"
+    ),
+    stringsAsFactors = FALSE
+  )
 }

@@ -48,13 +48,17 @@ tolerance until everything passes, and listing them by NAME means an
 unexpected disagreement cannot hide inside an allowance.
 }
 \examples{
-cw <- data.frame(inst = c("North Jail", "South Jail", "Hill Jail"),
-                 cd = c("3557", "3520", "3506"),
-                 stringsAsFactors = FALSE)
+cw <- data.frame(
+  inst = c("North Jail", "South Jail", "Hill Jail"),
+  cd = c("3557", "3520", "3506"),
+  stringsAsFactors = FALSE
+)
 
 # a name-based route that is known to mis-place one unit
-route <- c("North Jail" = "3557", "South Jail" = "3520",
-           "Hill Jail" = "3519")
+route <- c(
+  "North Jail" = "3557", "South Jail" = "3520",
+  "Hill Jail" = "3519"
+)
 region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 
 # an undocumented disagreement is what the check is for

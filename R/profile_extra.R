@@ -54,14 +54,16 @@ missingness_pattern <- function(data, max_patterns = 20L) {
   }
   max_patterns <- as.integer(max_patterns)
   if (length(max_patterns) != 1L || is.na(max_patterns) ||
-      max_patterns < 1L) {
+    max_patterns < 1L) {
     stop("`max_patterns` must be a single positive integer", call. = FALSE)
   }
   n <- nrow(data)
   if (n == 0L) {
-    out <- data.frame(pattern = character(0), n_rows = integer(0),
-                      pct_rows = numeric(0), n_missing = integer(0),
-                      columns = character(0), stringsAsFactors = FALSE)
+    out <- data.frame(
+      pattern = character(0), n_rows = integer(0),
+      pct_rows = numeric(0), n_missing = integer(0),
+      columns = character(0), stringsAsFactors = FALSE
+    )
     attr(out, "columns") <- names(data)
     class(out) <- c("bricklayer_missingness", "data.frame")
     return(out)
@@ -69,8 +71,11 @@ missingness_pattern <- function(data, max_patterns = 20L) {
 
   m <- vapply(data, is.na, logical(n))
   if (is.null(dim(m))) m <- matrix(m, nrow = n)
-  codes <- apply(m, 1L, function(r) paste0(ifelse(r, "X", "."),
-                                           collapse = ""))
+  codes <- apply(m, 1L, function(r) {
+    paste0(ifelse(r, "X", "."),
+      collapse = ""
+    )
+  })
   tab <- sort(table(codes), decreasing = TRUE)
   keep <- utils::head(names(tab), max_patterns)
 
@@ -86,7 +91,8 @@ missingness_pattern <- function(data, max_patterns = 20L) {
       } else {
         ""
       },
-      stringsAsFactors = FALSE)
+      stringsAsFactors = FALSE
+    )
   })
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
@@ -97,14 +103,18 @@ missingness_pattern <- function(data, max_patterns = 20L) {
 
 #' @export
 print.bricklayer_missingness <- function(x, ...) {
-  if (.rmbl_needs_cols(x, c("pattern", "n_rows", "pct_rows", "n_missing",
-                            "columns"))) {
+  if (.rmbl_needs_cols(x, c(
+    "pattern", "n_rows", "pct_rows", "n_missing",
+    "columns"
+  ))) {
     return(invisible(x))
   }
   cat(.rmbl_rule("Missingness patterns"), "\n")
   cols <- attr(x, "columns")
   cat("  columns, in pattern order: ", paste(cols, collapse = ", "),
-      "\n\n", sep = "")
+    "\n\n",
+    sep = ""
+  )
   df <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   attr(df, "columns") <- NULL
   df$pct_rows <- formatC(df$pct_rows, format = "f", digits = 1)
@@ -145,8 +155,8 @@ print.bricklayer_missingness <- function(x, ...) {
 #'   b = stats::rnorm(n),
 #'   grade = sample(letters[1:3], n, TRUE)
 #' )
-#' df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1)   # strongly related to a
-#' df$d <- exp(df$a)                              # monotone but curved
+#' df$c <- df$a * 2 + stats::rnorm(n, sd = 0.1) # strongly related to a
+#' df$d <- exp(df$a) # monotone but curved
 #'
 #' top_correlations(df)
 #'
@@ -160,8 +170,10 @@ print.bricklayer_missingness <- function(x, ...) {
 #' # Filter to the pairs worth looking at.
 #' top_correlations(df, min_abs = 0.5)
 #' @export
-top_correlations <- function(data, n = 10L, method = c("spearman",
-                                                       "pearson"),
+top_correlations <- function(data, n = 10L, method = c(
+                               "spearman",
+                               "pearson"
+                             ),
                              min_abs = 0) {
   method <- match.arg(method)
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
@@ -175,7 +187,7 @@ top_correlations <- function(data, n = 10L, method = c("spearman",
   }
   min_abs <- as.numeric(min_abs)
   if (length(min_abs) != 1L || is.na(min_abs) || min_abs < 0 ||
-      min_abs > 1) {
+    min_abs > 1) {
     stop("`min_abs` must be a single value in [0, 1]", call. = FALSE)
   }
 
@@ -184,7 +196,9 @@ top_correlations <- function(data, n = 10L, method = c("spearman",
     a <- data[[pairs[1L, j]]]
     b <- data[[pairs[2L, j]]]
     ok <- !is.na(a) & !is.na(b)
-    if (sum(ok) < 3L) return(NA_real_)
+    if (sum(ok) < 3L) {
+      return(NA_real_)
+    }
     if (identical(method, "spearman")) {
       core_cor_spearman(a[ok], b[ok])
     } else {
@@ -192,10 +206,13 @@ top_correlations <- function(data, n = 10L, method = c("spearman",
     }
   }, 0)
 
-  out <- data.frame(x = pairs[1L, ], y = pairs[2L, ], correlation = vals,
-                    abs_correlation = abs(vals), stringsAsFactors = FALSE)
+  out <- data.frame(
+    x = pairs[1L, ], y = pairs[2L, ], correlation = vals,
+    abs_correlation = abs(vals), stringsAsFactors = FALSE
+  )
   out <- out[!is.na(out$correlation) & out$abs_correlation >= min_abs, ,
-             drop = FALSE]
+    drop = FALSE
+  ]
   out <- out[order(-out$abs_correlation), , drop = FALSE]
   out <- utils::head(out, n)
   rownames(out) <- NULL
@@ -280,13 +297,16 @@ environment_diff <- function(a, b) {
     if (is.list(x) && !is.null(x$environment)) x <- x$environment
     if (!is.list(x)) {
       stop("`a` and `b` must be environment records or manifests",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
     x[[what]]
   }
   pkgs <- function(x) {
     p <- pull(x, "packages")
-    if (is.null(p)) return(character(0))
+    if (is.null(p)) {
+      return(character(0))
+    }
     v <- vapply(p, function(z) as.character(z)[1L], character(1))
     stats::setNames(v, names(p))
   }
@@ -302,24 +322,40 @@ environment_diff <- function(a, b) {
   rows <- lapply(all_names, function(nm) {
     va <- if (nm %in% names(ka)) ka[[nm]] else NA_character_
     vb <- if (nm %in% names(kb)) kb[[nm]] else NA_character_
-    if (identical(va, vb)) return(NULL)
-    change <- if (is.na(va)) "added" else if (is.na(vb)) "removed" else
+    if (identical(va, vb)) {
+      return(NULL)
+    }
+    change <- if (is.na(va)) {
+      "added"
+    } else if (is.na(vb)) {
+      "removed"
+    } else {
       "changed"
-    data.frame(package = nm, a = va, b = vb, change = change,
-               stringsAsFactors = FALSE)
+    }
+    data.frame(
+      package = nm, a = va, b = vb, change = change,
+      stringsAsFactors = FALSE
+    )
   })
   rows <- rows[!vapply(rows, is.null, logical(1))]
-  pkg_df <- if (length(rows)) do.call(rbind, rows) else
-    data.frame(package = character(0), a = character(0), b = character(0),
-               change = character(0), stringsAsFactors = FALSE)
+  pkg_df <- if (length(rows)) {
+    do.call(rbind, rows)
+  } else {
+    data.frame(
+      package = character(0), a = character(0), b = character(0),
+      change = character(0), stringsAsFactors = FALSE
+    )
+  }
   rownames(pkg_df) <- NULL
 
   r_diff <- if (!identical(ra, rb)) c(a = ra, b = rb) else NULL
   p_diff <- if (!identical(pa, pb)) c(a = pa, b = pb) else NULL
 
-  out <- list(identical = is.null(r_diff) && is.null(p_diff) &&
-                nrow(pkg_df) == 0L,
-              r_version = r_diff, platform = p_diff, packages = pkg_df)
+  out <- list(
+    identical = is.null(r_diff) && is.null(p_diff) &&
+      nrow(pkg_df) == 0L,
+    r_version = r_diff, platform = p_diff, packages = pkg_df
+  )
   class(out) <- c("bricklayer_env_diff", "list")
   out
 }
@@ -327,28 +363,40 @@ environment_diff <- function(a, b) {
 #' @export
 format.bricklayer_env_diff <- function(x, ...) {
   g <- .rmbl_glyphs()
-  lines <- c(.rmbl_rule("Environment diff"),
-             paste0("  ", if (isTRUE(x$identical))
-               paste0(g$ok, " environments match") else
-               paste0(g$bad, " environments differ")),
-             "")
+  lines <- c(
+    .rmbl_rule("Environment diff"),
+    paste0("  ", if (isTRUE(x$identical)) {
+      paste0(g$ok, " environments match")
+    } else {
+      paste0(g$bad, " environments differ")
+    }),
+    ""
+  )
   if (!is.null(x$r_version)) {
-    lines <- c(lines, .rmbl_kv(list("R version" = sprintf("%s -> %s",
-      x$r_version[["a"]], x$r_version[["b"]]))))
+    lines <- c(lines, .rmbl_kv(list("R version" = sprintf(
+      "%s -> %s",
+      x$r_version[["a"]], x$r_version[["b"]]
+    ))))
   }
   if (!is.null(x$platform)) {
-    lines <- c(lines, .rmbl_kv(list(platform = sprintf("%s -> %s",
-      x$platform[["a"]], x$platform[["b"]]))))
+    lines <- c(lines, .rmbl_kv(list(platform = sprintf(
+      "%s -> %s",
+      x$platform[["a"]], x$platform[["b"]]
+    ))))
   }
   if (nrow(x$packages) == 0L) {
     return(c(lines, "  no package differences", .rmbl_rule()))
   }
-  lines <- c(lines, sprintf("  %d package difference(s):",
-                            nrow(x$packages)), "")
-  rows <- sprintf("  %-24s %-12s %-12s %s", x$packages$package,
-                  ifelse(is.na(x$packages$a), g$dash, x$packages$a),
-                  ifelse(is.na(x$packages$b), g$dash, x$packages$b),
-                  x$packages$change)
+  lines <- c(lines, sprintf(
+    "  %d package difference(s):",
+    nrow(x$packages)
+  ), "")
+  rows <- sprintf(
+    "  %-24s %-12s %-12s %s", x$packages$package,
+    ifelse(is.na(x$packages$a), g$dash, x$packages$a),
+    ifelse(is.na(x$packages$b), g$dash, x$packages$b),
+    x$packages$change
+  )
   c(lines, rows, .rmbl_rule())
 }
 

@@ -25,5 +25,5 @@ prov_file <- tempfile(fileext = ".json")
 writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
 prov <- load_provenance(prov_file)
 prov$dataset$title
-load_provenance(file.path(tempdir(), "no-such-file.json"))  # NULL
+load_provenance(file.path(tempdir(), "no-such-file.json")) # NULL
 }

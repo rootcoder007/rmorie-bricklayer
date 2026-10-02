@@ -8,22 +8,28 @@
 test_that("SHA-512 matches the published FIPS 180-4 vectors", {
   expect_equal(core_sha512("abc"), paste0(
     "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a",
-    "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"))
+    "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
+  ))
   # the empty message exercises the pure-padding path
   expect_equal(core_sha512(""), paste0(
     "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce",
-    "47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"))
+    "47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+  ))
   # 112 bytes forces a second compression block, the classic padding bug
   expect_equal(core_sha512(paste0(
     "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmno",
-    "ijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu")), paste0(
+    "ijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+  )), paste0(
     "8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018",
-    "501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"))
+    "501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909"
+  ))
 
   expect_equal(nchar(core_sha512("abc")), 128L)
   # vectorised over character input
-  expect_equal(core_sha512(c("abc", "")),
-               c(core_sha512("abc"), core_sha512("")))
+  expect_equal(
+    core_sha512(c("abc", "")),
+    c(core_sha512("abc"), core_sha512(""))
+  )
   expect_length(core_sha512(c("a", "b", "c")), 3L)
   # raw input hashes the same bytes to the same digest
   expect_identical(core_sha512("abc"), core_sha512(charToRaw("abc")))
@@ -54,26 +60,42 @@ test_that("CRC-32 matches the ITU V.42 check value", {
 
 test_that("HMAC-SHA-256 matches the RFC 4231 test cases", {
   # case 1: a 20-byte key of 0x0b
-  expect_equal(core_hmac_sha256(as.raw(rep(0x0b, 20)), "Hi There"),
-    "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7")
+  expect_equal(
+    core_hmac_sha256(as.raw(rep(0x0b, 20)), "Hi There"),
+    "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
+  )
   # case 2: a short ASCII key
-  expect_equal(core_hmac_sha256("Jefe", "what do ya want for nothing?"),
-    "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843")
+  expect_equal(
+    core_hmac_sha256("Jefe", "what do ya want for nothing?"),
+    "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
+  )
   # case 3: a 20-byte key of 0xaa over 50 bytes of 0xdd
-  expect_equal(core_hmac_sha256(as.raw(rep(0xaa, 20)),
-                                as.raw(rep(0xdd, 50))),
-    "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe")
+  expect_equal(
+    core_hmac_sha256(
+      as.raw(rep(0xaa, 20)),
+      as.raw(rep(0xdd, 50))
+    ),
+    "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe"
+  )
   # case 6: a 131-byte key, longer than the 64-byte block, so it is
   # hashed down first
-  expect_equal(core_hmac_sha256(as.raw(rep(0xaa, 131)),
-    "Test Using Larger Than Block-Size Key - Hash Key First"),
-    "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54")
+  expect_equal(
+    core_hmac_sha256(
+      as.raw(rep(0xaa, 131)),
+      "Test Using Larger Than Block-Size Key - Hash Key First"
+    ),
+    "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54"
+  )
 
   # the key is what makes it an authentication tag rather than a digest
-  expect_false(identical(core_hmac_sha256("key-a", "m"),
-                         core_hmac_sha256("key-b", "m")))
-  expect_false(identical(core_hmac_sha256("k", "m1"),
-                         core_hmac_sha256("k", "m2")))
+  expect_false(identical(
+    core_hmac_sha256("key-a", "m"),
+    core_hmac_sha256("key-b", "m")
+  ))
+  expect_false(identical(
+    core_hmac_sha256("k", "m1"),
+    core_hmac_sha256("k", "m2")
+  ))
   # and it is not the plain digest of key and message concatenated
   expect_false(identical(core_hmac_sha256("k", "m"), core_sha256("km")))
   expect_match(core_hmac_sha256("k", "m"), "^[0-9a-f]{64}$")
@@ -96,13 +118,17 @@ test_that("digest comparison is length-aware and constant-time", {
   expect_true(core_digest_equal("", ""))
   # it compares the whole string, not a prefix -- a tag agreeing on all
   # but the last character must still be rejected
-  almost <- paste0(substring(tag, 1L, 63L),
-                   if (substring(tag, 64L) == "a") "b" else "a")
+  almost <- paste0(
+    substring(tag, 1L, 63L),
+    if (substring(tag, 64L) == "a") "b" else "a"
+  )
   expect_false(core_digest_equal(tag, almost))
   # and one differing only in the FIRST character, which is what a
   # short-circuiting comparison would leak
-  first <- paste0(if (substring(tag, 1L, 1L) == "a") "b" else "a",
-                  substring(tag, 2L))
+  first <- paste0(
+    if (substring(tag, 1L, 1L) == "a") "b" else "a",
+    substring(tag, 2L)
+  )
   expect_false(core_digest_equal(tag, first))
   expect_error(core_digest_equal(c("a", "b"), "a"), "length-1")
 })
@@ -112,8 +138,10 @@ test_that("the Merkle root is the hand-computed construction", {
   # the tree does -- not the concatenated hex spelling
   pair <- function(h1, h2) {
     hex <- paste0(h1, h2)
-    core_sha256(as.raw(strtoi(substring(hex, seq(1L, 127L, 2L),
-                                        seq(2L, 128L, 2L)), 16L)))
+    core_sha256(as.raw(strtoi(substring(
+      hex, seq(1L, 127L, 2L),
+      seq(2L, 128L, 2L)
+    ), 16L)))
   }
   la <- core_sha256("a")
   lb <- core_sha256("b")
@@ -125,18 +153,24 @@ test_that("the Merkle root is the hand-computed construction", {
   # two chunks are one compression
   expect_equal(merkle_root(c("a", "b")), pair(la, lb))
   # four chunks are a balanced tree
-  expect_equal(merkle_root(c("a", "b", "c", "d")),
-               pair(pair(la, lb), pair(lc, ld)))
+  expect_equal(
+    merkle_root(c("a", "b", "c", "d")),
+    pair(pair(la, lb), pair(lc, ld))
+  )
   # three chunks PROMOTE the unpaired leaf rather than duplicating it
   expect_equal(merkle_root(c("a", "b", "c")), pair(pair(la, lb), lc))
   # which is what stops two different chunk lists sharing a root: were
   # the last leaf duplicated, c("a","b","c") and c("a","b","c","c") would
   # collide
-  expect_false(identical(merkle_root(c("a", "b", "c")),
-                         merkle_root(c("a", "b", "c", "c"))))
+  expect_false(identical(
+    merkle_root(c("a", "b", "c")),
+    merkle_root(c("a", "b", "c", "c"))
+  ))
   # five chunks promote at two levels
-  expect_equal(merkle_root(c("a", "b", "c", "d", "a")),
-               pair(pair(pair(la, lb), pair(lc, ld)), la))
+  expect_equal(
+    merkle_root(c("a", "b", "c", "d", "a")),
+    pair(pair(pair(la, lb), pair(lc, ld)), la)
+  )
 
   # the leaves are the per-chunk digests
   expect_equal(merkle_leaves(c("a", "b", "c")), c(la, lb, lc))
@@ -145,8 +179,10 @@ test_that("the Merkle root is the hand-computed construction", {
   # order matters
   expect_false(identical(merkle_root(c("a", "b")), merkle_root(c("b", "a"))))
   # any change to any chunk changes the root
-  expect_false(identical(merkle_root(c("a", "b", "c", "d")),
-                         merkle_root(c("a", "b", "c", "d "))))
+  expect_false(identical(
+    merkle_root(c("a", "b", "c", "d")),
+    merkle_root(c("a", "b", "c", "d "))
+  ))
   expect_match(merkle_root(c("a", "b")), "^[0-9a-f]{64}$")
   expect_error(merkle_root(c("a", NA)), "must not contain NA")
 })
@@ -157,7 +193,7 @@ test_that("a Merkle proof verifies exactly the chunk it was built for", {
   # every chunk proves its own membership
   for (i in seq_along(chunks)) {
     pr <- merkle_proof(chunks, i)
-    expect_length(pr$sibling, 3L)     # log2(8)
+    expect_length(pr$sibling, 3L) # three levels for eight leaves
     expect_true(all(pr$side %in% c("left", "right")))
     expect_true(merkle_verify(chunks[i], pr, root))
     # and proves nothing else
@@ -196,7 +232,7 @@ test_that("a Merkle proof verifies exactly the chunk it was built for", {
 test_that("chunk_file splits a file and pins it", {
   p <- tempfile()
   on.exit(unlink(p), add = TRUE)
-  writeLines(rep("abcdefghij", 40), p)     # 440 bytes
+  writeLines(rep("abcdefghij", 40), p) # 440 bytes
 
   ch <- chunk_file(p, chunk_bytes = 100L)
   expect_equal(length(ch), 5L)
@@ -208,8 +244,10 @@ test_that("chunk_file splits a file and pins it", {
   expect_identical(unlist(ch), readBin(p, "raw", n = 1e6))
   # one chunk covering the whole file is the whole file
   expect_equal(length(chunk_file(p, chunk_bytes = 1e6)), 1L)
-  expect_equal(merkle_root(chunk_file(p, 1e6)),
-               core_sha256(chunk_file(p, 1e6)[[1L]]))
+  expect_equal(
+    merkle_root(chunk_file(p, 1e6)),
+    core_sha256(chunk_file(p, 1e6)[[1L]])
+  )
   # editing one chunk's worth of bytes moves exactly one leaf
   before <- merkle_leaves(ch)
   p2 <- tempfile()
@@ -244,7 +282,8 @@ test_that("file digests stream to the same value at any block size", {
   expect_equal(crc32_file(p, block_bytes = 13L), crc32_file(p))
   # and the existing SHA-256 file digest still agrees with the core
   expect_equal(sha256_file(p), core_sha256(rawToChar(readBin(p, "raw",
-                                                             n = 1e7))))
+    n = 1e7
+  ))))
 
   e <- tempfile()
   on.exit(unlink(e), add = TRUE)

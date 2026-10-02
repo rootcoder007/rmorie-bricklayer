@@ -32,8 +32,9 @@ snapshot URL.
 \examples{
 \donttest{
 ok <- friendly_download("https://cloud.r-project.org/",
-                        tempfile(fileext = ".html"),
-                        attempt_wayback = "")  # disable the fallback
+  tempfile(fileext = ".html"),
+  attempt_wayback = ""
+) # disable the fallback
 ok
 }
 }

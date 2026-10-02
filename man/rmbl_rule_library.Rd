@@ -106,16 +106,20 @@ names(validate_rules(df, rules))
 validate_rules(df, rules)$grade_in_set$rows
 
 # Clean data passes every one of them.
-ok <- data.frame(id = 1:3, grade = c("a", "b", "c"),
-                 score = c(5, 50, 7),
-                 email = c("a@b.com", "c@d.org", "e@f.net"),
-                 day = 1:3, stringsAsFactors = FALSE)
+ok <- data.frame(
+  id = 1:3, grade = c("a", "b", "c"),
+  score = c(5, 50, 7),
+  email = c("a@b.com", "c@d.org", "e@f.net"),
+  day = 1:3, stringsAsFactors = FALSE
+)
 length(validate_rules(ok, rules))
 
 # A robust outlier rule: MADs from the median, not standard
 # deviations from the mean, so one wild value cannot hide the others.
-validate_rules(data.frame(v = c(1, 2, 3, 2, 1, 900)),
-               rule_within_n_mads("v", 5))$v_within_mads$rows
+validate_rules(
+  data.frame(v = c(1, 2, 3, 2, 1, 900)),
+  rule_within_n_mads("v", 5)
+)$v_within_mads$rows
 
 # Whole-table rules.
 validate_rules(df, rule_distinct_rows())

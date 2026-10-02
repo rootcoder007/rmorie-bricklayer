@@ -71,8 +71,10 @@ are being asked to rely on now, pass now.
 }
 \examples{
 \dontrun{
-res <- cert_chain_verify("tsa.crt", trust = "ca.crt",
-                         purpose = "timeStamping")
+res <- cert_chain_verify("tsa.crt",
+  trust = "ca.crt",
+  purpose = "timeStamping"
+)
 res$ok
 res$checks
 }

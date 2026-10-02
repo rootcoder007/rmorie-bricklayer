@@ -18,11 +18,14 @@ test_that("the canonical form does not depend on assembly order", {
   # but an ARRAY's order is content, not presentation, and must survive
   expect_false(identical(
     manifest_digest(list(v = list(1, 2))),
-    manifest_digest(list(v = list(2, 1)))))
+    manifest_digest(list(v = list(2, 1)))
+  ))
   # the digest is 64 hex characters and changes with the content
   expect_match(manifest_digest(a), "^[0-9a-f]{64}$")
-  expect_false(identical(manifest_digest(a),
-                         manifest_digest(list(meta = list(a = 1, b = 3)))))
+  expect_false(identical(
+    manifest_digest(a),
+    manifest_digest(list(meta = list(a = 1, b = 3)))
+  ))
 })
 
 test_that("a recorded number can be recovered from the manifest", {
@@ -30,8 +33,10 @@ test_that("a recorded number can be recovered from the manifest", {
   # as 0.3333 and no later recomputation could match what was written.
   # A provenance record that cannot reproduce its own numbers is the one
   # failure mode this whole file exists to prevent.
-  for (x in c(1 / 3, pi, 1e-300, 2^-1074, .Machine$double.xmax,
-              .Machine$double.eps, 1234567.891011)) {
+  for (x in c(
+    1 / 3, pi, 1e-300, 2^-1074, .Machine$double.xmax,
+    .Machine$double.eps, 1234567.891011
+  )) {
     m <- make_manifest(list(x = x), environment = FALSE)
     back <- bricklayer_json_from_json(manifest_canonical(m))
     expect_identical(back$meta$x, x, info = format(x, digits = 17))
@@ -47,8 +52,10 @@ test_that("a recorded number can be recovered from the manifest", {
   tmp <- tempfile(fileext = ".json")
   write_manifest_json(m, tmp, canonical = TRUE)
   expect_length(readLines(tmp), 1L)
-  expect_identical(core_sha256(charToRaw(readLines(tmp))),
-                   manifest_digest(m))
+  expect_identical(
+    core_sha256(charToRaw(readLines(tmp))),
+    manifest_digest(m)
+  )
   unlink(tmp)
 })
 
@@ -61,16 +68,22 @@ test_that("the extremes survive, because the reader is ours", {
   # different there. The package now converts decimals itself, with
   # integer arithmetic and a remainder that decides the rounding, so
   # the answer is the same on every IEEE platform.
-  for (x in c(.Machine$double.xmax, 1e308, 1.5e300, 1e200, 1e100,
-              2^-1074, 5e-324, 1e-310)) {
+  for (x in c(
+    .Machine$double.xmax, 1e308, 1.5e300, 1e200, 1e100,
+    2^-1074, 5e-324, 1e-310
+  )) {
     m <- make_manifest(list(x = x), environment = FALSE)
     back <- bricklayer_json_from_json(manifest_canonical(m))$meta$x
     expect_identical(back, x, info = format(x, digits = 17))
   }
   # and the text is what it should be, which is the writer's half
-  expect_match(manifest_canonical(
-    make_manifest(list(x = .Machine$double.xmax), environment = FALSE)),
-    "1.7976931348623157e+308", fixed = TRUE)
+  expect_match(
+    manifest_canonical(
+      make_manifest(list(x = .Machine$double.xmax), environment = FALSE)
+    ),
+    "1.7976931348623157e+308",
+    fixed = TRUE
+  )
 })
 
 test_that("decimal conversion is correctly rounded, not libc's guess", {
@@ -86,26 +99,33 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
   # together and the assertion failed against the correct answer.
   # These patterns are glibc's, which is correctly rounded, and are
   # what any conforming converter must produce on every platform.
-  dbl <- function(hex)
-    readBin(as.raw(strtoi(substring(hex, seq(1L, 15L, 2L),
-                                    seq(2L, 16L, 2L)), 16L)),
-            "double", n = 1L, size = 8L, endian = "little")
+  dbl <- function(hex) {
+    readBin(
+      as.raw(strtoi(substring(
+        hex, seq(1L, 15L, 2L),
+        seq(2L, 16L, 2L)
+      ), 16L)),
+      "double",
+      n = 1L, size = 8L, endian = "little"
+    )
+  }
   cases <- list(
     # the largest subnormal, one below the smallest normal
     "2.2250738585072011e-308" = dbl("ffffffffffff0f00"),
-    "1e23"                    = dbl("f64ae1c7022db544"),
-    "0.1"                     = dbl("9a9999999999b93f"),
-    "0.3"                     = dbl("333333333333d33f"),
-    "1e-323"                  = dbl("0200000000000000"),
+    "1e23" = dbl("f64ae1c7022db544"),
+    "0.1" = dbl("9a9999999999b93f"),
+    "0.3" = dbl("333333333333d33f"),
+    "1e-323" = dbl("0200000000000000"),
     "1.7976931348623157e+308" = dbl("ffffffffffffef7f"),
     # thirty significant digits: the naive answer is two ulps high
     "123456789012345678901234567890" = dbl("3e376cff90eef845"),
     # these need no rounding, so no platform can disagree about them
-    "0"                       = 0,
-    "-0"                      = 0,
-    "1e400"                   = Inf,
-    "-1e400"                  = -Inf,
-    "1e-400"                  = 0)
+    "0" = 0,
+    "-0" = 0,
+    "1e400" = Inf,
+    "-1e400" = -Inf,
+    "1e-400" = 0
+  )
   for (nm in names(cases)) {
     expect_identical(.rmbl_strtod(nm), cases[[nm]], info = nm)
   }
@@ -124,7 +144,6 @@ test_that("decimal conversion is correctly rounded, not libc's guess", {
 })
 
 
-
 test_that("the environment record carries the generator", {
   env <- capture_environment()
   # Without the generator's identity a stochastic result cannot be
@@ -133,8 +152,10 @@ test_that("the environment record carries the generator", {
   expect_true("rng_kind" %in% names(env))
   expect_match(env$rng_kind, "Mersenne-Twister|Wichmann|Marsaglia|Knuth")
   expect_true(is.logical(env$rng_seeded))
-  expect_true(all(c("r_version", "platform", "os", "captured_utc",
-                    "packages") %in% names(env)))
+  expect_true(all(c(
+    "r_version", "platform", "os", "captured_utc",
+    "packages"
+  ) %in% names(env)))
   # and the recorded kind is the one in force
   old <- RNGkind()
   on.exit(RNGkind(old[1], old[2], old[3]), add = TRUE)
@@ -144,11 +165,14 @@ test_that("the environment record carries the generator", {
 
 test_that("an attestation binds the manifest, the key and the note", {
   m <- make_manifest(list(dataset = "otis", rows = 1200L),
-                     environment = FALSE)
+    environment = FALSE
+  )
   for (sch in c("ML-DSA-44", "SLH-DSA-SHAKE-128f")) {
     key <- fips_keygen(sch)
-    att <- capsule_attest(m, key, context = "release",
-                          note = "counts as published")
+    att <- capsule_attest(m, key,
+      context = "release",
+      note = "counts as published"
+    )
     expect_s3_class(att, "bricklayer_attestation")
     expect_identical(att$scheme, sch)
     expect_identical(att$digest, manifest_digest(m))
@@ -157,9 +181,11 @@ test_that("an attestation binds the manifest, the key and the note", {
     expect_true(all(res$checks$ok))
     # naming the key that should have signed is part of the check
     expect_true(capsule_check_attestation(att, m,
-      key_expected = key$public)$ok, info = sch)
+      key_expected = key$public
+    )$ok, info = sch)
     expect_false(capsule_check_attestation(att, m,
-      key_expected = fips_keygen(sch)$public)$ok, info = sch)
+      key_expected = fips_keygen(sch)$public
+    )$ok, info = sch)
 
     # every field inside the payload is covered by the signature, so
     # editing any of them afterwards is detected
@@ -170,7 +196,8 @@ test_that("an attestation binds the manifest, the key and the note", {
       bad <- att
       bad[[field]] <- paste0(bad[[field]], "x")
       expect_false(capsule_check_attestation(bad, m)$ok,
-                   info = paste(sch, field))
+        info = paste(sch, field)
+      )
     }
     # and a signature lifted from another attestation does not fit
     other <- capsule_attest(m, key, context = "release", note = "other")
@@ -197,8 +224,10 @@ test_that("an attestation works with the stateful hash-based key too", {
 test_that("the attestation surface refuses what it cannot check", {
   m <- make_manifest(list(a = 1), environment = FALSE)
   expect_error(capsule_attest(m, list()), "fips_keygen")
-  expect_error(capsule_attest("not a manifest", fips_keygen("ML-DSA-44")),
-               "manifest")
+  expect_error(
+    capsule_attest("not a manifest", fips_keygen("ML-DSA-44")),
+    "manifest"
+  )
   expect_error(capsule_check_attestation(list(), m), "capsule_attest")
   # an attestation missing a field fails rather than being read around
   att <- capsule_attest(m, fips_keygen("ML-DSA-44"))
@@ -220,31 +249,38 @@ test_that("the falsification controls can fail, and do", {
   }
 
   real <- capsule_falsify(d, function(z) stats::cor(z$x, z$y),
-                          treatment = "x", n = 199L, seed = 42L)
+    treatment = "x", n = 199L, seed = 42L
+  )
   expect_s3_class(real, "bricklayer_falsification")
   expect_true(all(real$controls$passed))
   expect_length(real$permutation, 199L)
 
   # a constant is not an association, and the permutation control is
   # what says so: everything else about a constant is perfectly stable
-  const <- capsule_falsify(d, function(z) 0.5, treatment = "x",
-                           n = 199L, seed = 42L)
+  const <- capsule_falsify(d, function(z) 0.5,
+    treatment = "x",
+    n = 199L, seed = 42L
+  )
   expect_false(verdict(const, "permutation"))
   expect_true(verdict(const, "subset_stability"))
 
   # nor is noise
   noise <- data.frame(x = stats::rnorm(200), y = stats::rnorm(200))
   nul <- capsule_falsify(noise, function(z) stats::cor(z$x, z$y),
-                         treatment = "x", n = 199L, seed = 7L)
+    treatment = "x", n = 199L, seed = 7L
+  )
   expect_false(verdict(nul, "permutation"))
 
   # a statistic that reads the injected noise column is caught by the
   # control whose whole point is that the column cannot matter
   peek <- capsule_falsify(
     d,
-    function(z) stats::cor(z$x, z$y) +
-      if (".rmbl_random_common_cause" %in% names(z)) 1 else 0,
-    treatment = "x", n = 99L, seed = 3L)
+    function(z) {
+      stats::cor(z$x, z$y) +
+        if (".rmbl_random_common_cause" %in% names(z)) 1 else 0
+    },
+    treatment = "x", n = 99L, seed = 3L
+  )
   expect_false(verdict(peek, "random_common_cause"))
   expect_true(verdict(peek, "permutation"))
 })
@@ -254,14 +290,17 @@ test_that("the permutation floor is reported rather than implied", {
   d <- data.frame(x = stats::rnorm(60))
   d$y <- 2 * d$x + stats::rnorm(60, sd = 0.1)
   r <- capsule_falsify(d, function(z) stats::cor(z$x, z$y),
-                       treatment = "x", n = 19L, seed = 1L)
+    treatment = "x", n = 19L, seed = 1L
+  )
   p <- r$controls$value[r$controls$control == "permutation"]
   # 19 permutations cannot produce a p-value below 1/20, however strong
   # the association: the floor is a property of the design, and a
   # reader who does not know it will over-read a p of 0.05
   expect_gte(p, 1 / 20)
-  expect_match(r$controls$detail[r$controls$control == "permutation"],
-               "smallest this design can report")
+  expect_match(
+    r$controls$detail[r$controls$control == "permutation"],
+    "smallest this design can report"
+  )
   expect_error(capsule_falsify(d, function(z) 1, n = 8L), "at least 9")
 })
 
@@ -274,7 +313,8 @@ test_that("a skipped control is reported as skipped", {
   expect_true(all(grepl("skipped", sk$detail)))
   # the controls that do not need a treatment still ran
   expect_true(all(!is.na(
-    r$controls$passed[r$controls$control == "subset_stability"])))
+    r$controls$passed[r$controls$control == "subset_stability"]
+  )))
   expect_null(r$treatment)
   # the RNG state is recorded, so the run can be repeated
   expect_match(r$rng_kind, "Mersenne-Twister")
@@ -287,16 +327,25 @@ test_that("falsification input is checked", {
   expect_error(capsule_falsify(d[1:3, ], function(z) 1), "at least 4 rows")
   expect_error(capsule_falsify(as.list(d), function(z) 1), "data frame")
   expect_error(capsule_falsify(d, "notafunction"), "must be a function")
-  expect_error(capsule_falsify(d, function(z) c(1, 2), treatment = "x"),
-               "one finite number")
-  expect_error(capsule_falsify(d, function(z) NA_real_, treatment = "x"),
-               "one finite number")
+  expect_error(
+    capsule_falsify(d, function(z) c(1, 2), treatment = "x"),
+    "one finite number"
+  )
+  expect_error(
+    capsule_falsify(d, function(z) NA_real_, treatment = "x"),
+    "one finite number"
+  )
   expect_error(capsule_falsify(d, function(z) stop("boom"),
-                               treatment = "x"), "the statistic failed")
-  expect_error(capsule_falsify(d, function(z) 1, treatment = "nope"),
-               "not a column")
-  expect_error(capsule_falsify(d, function(z) 1, subset_frac = 1),
-               "between 0 and 1")
+    treatment = "x"
+  ), "the statistic failed")
+  expect_error(
+    capsule_falsify(d, function(z) 1, treatment = "nope"),
+    "not a column"
+  )
+  expect_error(
+    capsule_falsify(d, function(z) 1, subset_frac = 1),
+    "between 0 and 1"
+  )
 })
 
 test_that("the bundle's reader fallback works, since a bundle runs it", {
@@ -307,9 +356,12 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
   # suite would otherwise never run.
   cache <- get(".rmbl_native", envir = asNamespace("rmoriebricklayer"))
   old <- cache$strtod
-  on.exit({
-    cache$strtod <- old
-  }, add = TRUE)
+  on.exit(
+    {
+      cache$strtod <- old
+    },
+    add = TRUE
+  )
 
   cache$strtod <- FALSE
   expect_identical(.rmbl_strtod("0.1"), 0.1)
@@ -322,8 +374,10 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
   # without a word. A test that suppressed the warning would hide a
   # real behavioural divergence between the path the package takes and
   # the path a bundle takes.
-  expect_warning(fallback_na <- .rmbl_strtod("not a number"),
-                 "NAs introduced by coercion")
+  expect_warning(
+    fallback_na <- .rmbl_strtod("not a number"),
+    "NAs introduced by coercion"
+  )
   expect_true(is.na(fallback_na))
 
   # and the native path, restored, agrees with it on ordinary values and
@@ -338,9 +392,12 @@ test_that("the bundle's reader fallback works, since a bundle runs it", {
 test_that("the reader is chosen once, not re-decided per number", {
   cache <- get(".rmbl_native", envir = asNamespace("rmoriebricklayer"))
   old <- cache$strtod
-  on.exit({
-    cache$strtod <- old
-  }, add = TRUE)
+  on.exit(
+    {
+      cache$strtod <- old
+    },
+    add = TRUE
+  )
   cache$strtod <- NULL
   invisible(.rmbl_strtod("1"))
   # the decision is recorded, so a later call does not repeat the lookup

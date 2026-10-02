@@ -54,9 +54,11 @@ table is that neither can then be quoted alone.
 }
 \examples{
 # Fewer people, held longer: the flow falls while the stock rises.
-stock_flow(days = c(115674, 126121), people = c(12647, 9608),
-           period = c("2023", "2025"),
-           exposure = c(15495050, 16256538))
+stock_flow(
+  days = c(115674, 126121), people = c(12647, 9608),
+  period = c("2023", "2025"),
+  exposure = c(15495050, 16256538)
+)
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

@@ -27,8 +27,10 @@ across the MORIE family.
 # Missing fields return NULL rather than erroring:
 resolve_via_socrata(list())
 \donttest{
-prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
-                            socrata_id     = "ijzp-q8t2"))
+prov <- list(dataset = list(
+  socrata_domain = "data.cityofchicago.org",
+  socrata_id = "ijzp-q8t2"
+))
 resolve_via_socrata(prov)
 }
 }

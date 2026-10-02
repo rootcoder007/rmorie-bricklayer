@@ -32,9 +32,13 @@
   if (anyNA(x)) stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
   bad <- if (allow_zero) any(x < 0) else any(x <= 0)
   if (bad) {
-    stop(sprintf("`%s` must be %s", arg,
-                 if (allow_zero) "non-negative" else "positive"),
-         call. = FALSE)
+    stop(
+      sprintf(
+        "`%s` must be %s", arg,
+        if (allow_zero) "non-negative" else "positive"
+      ),
+      call. = FALSE
+    )
   }
   x
 }
@@ -218,9 +222,11 @@ adp_from_counts <- function(counts, t = 365) {
 #'
 #' @examples
 #' # Fewer people, held longer: the flow falls while the stock rises.
-#' stock_flow(days = c(115674, 126121), people = c(12647, 9608),
-#'            period = c("2023", "2025"),
-#'            exposure = c(15495050, 16256538))
+#' stock_flow(
+#'   days = c(115674, 126121), people = c(12647, 9608),
+#'   period = c("2023", "2025"),
+#'   exposure = c(15495050, 16256538)
+#' )
 #' @export
 stock_flow <- function(days, people, period = NULL, t = 365,
                        exposure = NULL, per = 100000,
@@ -234,8 +240,10 @@ stock_flow <- function(days, people, period = NULL, t = 365,
   t <- .rmbl_pos_num(t, "t")
   if (length(t) == 1L) t <- rep(t, length(days))
   if (is.null(period)) period <- seq_along(days)
-  out <- data.frame(period = as.character(period), people = people,
-                    days = days, stringsAsFactors = FALSE)
+  out <- data.frame(
+    period = as.character(period), people = people,
+    days = days, stringsAsFactors = FALSE
+  )
   out$alos <- days / people
   out$adp <- days / t
   if (!is.null(exposure)) {
@@ -243,7 +251,8 @@ stock_flow <- function(days, people, period = NULL, t = 365,
     if (length(exposure) == 1L) exposure <- rep(exposure, length(days))
     if (length(exposure) != length(days)) {
       stop("`exposure` must be length 1 or the same length as `days`",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
     per <- .rmbl_pos_num(per, "per")[1L]
     out$exposure <- exposure
@@ -267,9 +276,13 @@ stock_flow <- function(days, people, period = NULL, t = 365,
     out$flow_rate_change <- chg(out$flow_rate)
     out$stock_rate_change <- chg(out$stock_rate)
   }
-  structure(out, class = c("rmbl_stock_flow", "data.frame"),
-            stock_flow = list(t = t, baseline = baseline,
-                              per = if (is.null(exposure)) NA else per))
+  structure(out,
+    class = c("rmbl_stock_flow", "data.frame"),
+    stock_flow = list(
+      t = t, baseline = baseline,
+      per = if (is.null(exposure)) NA else per
+    )
+  )
 }
 
 #' @export
@@ -282,19 +295,24 @@ print.rmbl_stock_flow <- function(x, ...) {
     i <- nrow(x)
     base <- attr(x, "stock_flow")$baseline
     from <- if (identical(base, "previous")) x$period[i - 1L] else x$period[1L]
-    footer <- sprintf("%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%",
-                      from, x$period[i], x$people_change[i],
-                      x$alos_change[i], x$days_change[i])
+    footer <- sprintf(
+      "%s to %s: people %+.1f%%, stay %+.1f%%, days %+.1f%%",
+      from, x$period[i], x$people_change[i],
+      x$alos_change[i], x$days_change[i]
+    )
     if (has_rate) {
       footer <- c(footer, sprintf(
         "flow rate %+.1f%%, stock rate %+.1f%%%s",
         x$flow_rate_change[i], x$stock_rate_change[i],
         if (sign(x$flow_rate_change[i]) != sign(x$stock_rate_change[i]))
-          "  <- opposite signs: quote both" else ""))
+          "  <- opposite signs: quote both" else ""
+      ))
     }
   }
   .rmbl_print_table(paste("Stock and flow over", nrow(x), "periods"),
-                    x[, cols, drop = FALSE], footer = footer, ...)
+    x[, cols, drop = FALSE],
+    footer = footer, ...
+  )
   invisible(x)
 }
 
@@ -315,16 +333,18 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' @seealso [adp()]
 #'
 #' @examples
-#' period_days("2024-01-01", "2024-12-31")   # a leap year
+#' period_days("2024-01-01", "2024-12-31") # a leap year
 #' period_days("2023-01-01", "2023-12-31")
-#' period_days("2025-04-01", "2026-03-31")   # a fiscal year
+#' period_days("2025-04-01", "2026-03-31") # a fiscal year
 #' @export
 period_days <- function(from, to) {
   if (is.numeric(from) || is.numeric(to)) {
     stop("`from` and `to` must be dates or date strings, not numbers",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
-  from <- as.Date(from); to <- as.Date(to)
+  from <- as.Date(from)
+  to <- as.Date(to)
   if (length(from) != 1L || length(to) != 1L)
     stop("`from` and `to` must each be a single date", call. = FALSE)
   if (is.na(from) || is.na(to))
@@ -379,9 +399,11 @@ stay_summary <- function(days_per_person, conf_level = 0.95) {
   se <- if (n > 1L) s / sqrt(n) else NA_real_
   tq <- if (n > 1L) stats::qt(1 - (1 - conf_level) / 2, df = n - 1L) else NA_real_
   q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE, type = 7)
-  data.frame(n = n, total_days = sum(x), mean = m, sd = s, median = q[2],
-             iqr = q[3] - q[1], max = max(x), se = se,
-             lower = if (n > 1L) m - tq * se else NA_real_,
-             upper = if (n > 1L) m + tq * se else NA_real_,
-             stringsAsFactors = FALSE)
+  data.frame(
+    n = n, total_days = sum(x), mean = m, sd = s, median = q[2],
+    iqr = q[3] - q[1], max = max(x), se = se,
+    lower = if (n > 1L) m - tq * se else NA_real_,
+    upper = if (n > 1L) m + tq * se else NA_real_,
+    stringsAsFactors = FALSE
+  )
 }

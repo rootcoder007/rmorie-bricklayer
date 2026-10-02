@@ -59,7 +59,7 @@ prov <- list(schema = list(
 ))
 df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
 issues <- validate_schema(df, prov)
-names(issues)  # flags the out-of-set year value
+names(issues) # flags the out-of-set year value
 
 # A column that silently changed type is caught.
 typed <- list(schema = list(expected_types = c(id = "integer")))

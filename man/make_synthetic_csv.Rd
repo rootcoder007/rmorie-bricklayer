@@ -43,8 +43,8 @@ recipe <- list(
 )
 out <- tempfile(fileext = ".csv")
 res <- make_synthetic_csv(recipe, out)
-res$rows                         # 20
-res$seed                         # 42 (reproducible)
+res$rows # 20
+res$seed # 42 (reproducible)
 
 # The written CSV round-trips and has the declared columns.
 df <- utils::read.csv(out)

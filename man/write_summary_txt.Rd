@@ -44,7 +44,8 @@ files produced, and optional notes, contact, and licence lines.
 }
 \examples{
 man <- make_manifest(list(project = "demo", author = "A. Author"),
-                     environment = FALSE)
+  environment = FALSE
+)
 man <- record(man, "row_count", observed = 20, expected = 20)
 out <- file.path(tempdir(), "demo-run")
 dir.create(out, showWarnings = FALSE)

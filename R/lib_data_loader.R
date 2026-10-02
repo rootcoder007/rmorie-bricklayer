@@ -32,10 +32,12 @@
 #' writeLines('{"dataset": {"title": "demo"}, "sha256": "abc"}', prov_file)
 #' prov <- load_provenance(prov_file)
 #' prov$dataset$title
-#' load_provenance(file.path(tempdir(), "no-such-file.json"))  # NULL
+#' load_provenance(file.path(tempdir(), "no-such-file.json")) # NULL
 #' @export
 load_provenance <- function(path) {
-  if (!file.exists(path)) return(NULL)
+  if (!file.exists(path)) {
+    return(NULL)
+  }
   .rmbl_read_json(path, simplify = FALSE)
 }
 
@@ -64,29 +66,40 @@ load_provenance <- function(path) {
 #' resolve_via_ckan(list())
 #' \donttest{
 #' prov <- list(
-#'   dataset  = list(ckan_api_endpoint = paste0(
+#'   dataset = list(ckan_api_endpoint = paste0(
 #'     "https://data.ontario.ca/api/3/action/package_show",
-#'     "?id=ontario-public-library-statistics")),
+#'     "?id=ontario-public-library-statistics"
+#'   )),
 #'   resource = list(name_match_pattern = "2014")
 #' )
 #' resolve_via_ckan(prov)
 #' }
 #' @export
 resolve_via_ckan <- function(provenance) {
-  if (is.null(provenance)) return(NULL)
-  ds   <- provenance$dataset
-  res  <- provenance$resource
-  if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern))
+  if (is.null(provenance)) {
     return(NULL)
+  }
+  ds <- provenance$dataset
+  res <- provenance$resource
+  if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
+    return(NULL)
+  }
   api_url <- ds$ckan_api_endpoint
-  if (is.null(api_url) || !nzchar(api_url)) return(NULL)
+  if (is.null(api_url) || !nzchar(api_url)) {
+    return(NULL)
+  }
   resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
-                   error = function(e) NULL)
-  if (is.null(resp) || !isTRUE(resp$success)) return(NULL)
+    error = function(e) NULL
+  )
+  if (is.null(resp) || !isTRUE(resp$success)) {
+    return(NULL)
+  }
   pat <- res$name_match_pattern
   for (r in resp$result$resources) {
     name <- if (is.null(r$name)) "" else r$name
-    if (grepl(pat, name, ignore.case = TRUE)) return(r$url)
+    if (grepl(pat, name, ignore.case = TRUE)) {
+      return(r$url)
+    }
   }
   NULL
 }
@@ -114,41 +127,58 @@ resolve_via_ckan <- function(provenance) {
 #' resolve_via_ckan_search(list())
 #' \donttest{
 #' prov <- list(
-#'   dataset  = list(ckan_api_endpoint = paste0(
+#'   dataset = list(ckan_api_endpoint = paste0(
 #'     "https://data.ontario.ca/api/3/action/package_show",
-#'     "?id=ontario-public-library-statistics")),
-#'   resource = list(name_match_pattern = "2014",
-#'                   search_query = "public library statistics")
+#'     "?id=ontario-public-library-statistics"
+#'   )),
+#'   resource = list(
+#'     name_match_pattern = "2014",
+#'     search_query = "public library statistics"
+#'   )
 #' )
 #' resolve_via_ckan_search(prov)
 #' }
 #' @export
 resolve_via_ckan_search <- function(provenance) {
-  if (is.null(provenance)) return(NULL)
+  if (is.null(provenance)) {
+    return(NULL)
+  }
   res <- provenance$resource
-  q   <- res$search_query
+  q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
     ## Derive a search query from the resource name pattern
     q <- gsub("[^A-Za-z0-9 ]", " ", res$name_match_pattern %||% "")
-    if (!nzchar(q)) return(NULL)
+    if (!nzchar(q)) {
+      return(NULL)
+    }
   }
   ## CKAN portal base URL inferred from package_show endpoint
-  base <- sub("/api/3/.*$", "",
-              provenance$dataset$ckan_api_endpoint %||% "")
-  if (!nzchar(base)) return(NULL)
-  api_url <- sprintf("%s/api/3/action/package_search?q=%s",
-                     base, utils::URLencode(q, reserved = TRUE))
+  base <- sub(
+    "/api/3/.*$", "",
+    provenance$dataset$ckan_api_endpoint %||% ""
+  )
+  if (!nzchar(base)) {
+    return(NULL)
+  }
+  api_url <- sprintf(
+    "%s/api/3/action/package_search?q=%s",
+    base, utils::URLencode(q, reserved = TRUE)
+  )
   resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
-                   error = function(e) NULL)
-  if (is.null(resp)) return(NULL)
+    error = function(e) NULL
+  )
+  if (is.null(resp)) {
+    return(NULL)
+  }
   pat <- res$name_match_pattern
   for (pkg in resp$result$results) {
     for (r in pkg$resources) {
       name <- if (is.null(r$name)) "" else r$name
-      fmt  <- toupper(r$format %||% "")
+      fmt <- toupper(r$format %||% "")
       if (grepl(pat, name, ignore.case = TRUE) &&
-          (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt))
+        (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)) {
         return(r$url)
+      }
     }
   }
   NULL
@@ -188,7 +218,9 @@ resolve_via_ckan_search <- function(provenance) {
 #' \donttest{
 #' # try(): a live download must fail gracefully on an offline check machine.
 #' dest <- try(download_data("https://cloud.r-project.org/",
-#'                           tempfile(fileext = ".html"), quiet = TRUE))
+#'   tempfile(fileext = ".html"),
+#'   quiet = TRUE
+#' ))
 #' if (!inherits(dest, "try-error")) file.exists(dest)
 #' }
 #' @export
@@ -228,7 +260,7 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   if (!is.null(timestamp) && nzchar(timestamp)) {
     api <- paste0(api, "&timestamp=", timestamp)
   }
-  res  <- tryCatch(.rmbl_read_json(api), error = function(e) NULL)
+  res <- tryCatch(.rmbl_read_json(api), error = function(e) NULL)
   snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
   if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
@@ -273,59 +305,75 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' @examples
 #' \donttest{
 #' ok <- friendly_download("https://cloud.r-project.org/",
-#'                         tempfile(fileext = ".html"),
-#'                         attempt_wayback = "")  # disable the fallback
+#'   tempfile(fileext = ".html"),
+#'   attempt_wayback = ""
+#' ) # disable the fallback
 #' ok
 #' }
 #' @export
 friendly_download <- function(url, target_path, attempt_wayback = NULL) {
   url <- .rmbl_string1(url, "url")
   target_path <- .rmbl_string1(target_path, "target_path")
-  result <- tryCatch({
-    .bl_fetch_file(url, target_path)
-    TRUE
-  }, error = function(e) {
-    msg <- conditionMessage(e)
-    message("  ! Download failed.")
-    message("    URL:   ", url)
-    message("    Error: ", msg, "\n\n")
-    message("  Common causes (in rough order of likelihood):")
-    if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
-      message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
-      message("      and often trip rate limits. Try disabling your VPN.")
+  result <- tryCatch(
+    {
+      .bl_fetch_file(url, target_path)
+      TRUE
+    },
+    error = function(e) {
+      msg <- conditionMessage(e)
+      message("  ! Download failed.")
+      message("    URL:   ", url)
+      message("    Error: ", msg, "\n\n")
+      message("  Common causes (in rough order of likelihood):")
+      if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
+        message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
+        message("      and often trip rate limits. Try disabling your VPN.")
+      }
+      if (grepl("SSL|TLS|certificate|handshake|UNEXPECTED_EOF",
+        msg,
+        ignore.case = TRUE
+      )) {
+        message("    * SSL/TLS handshake failed.")
+        message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
+        message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
+      }
+      if (grepl("could not|unable to resolve|name not|getaddrinfo",
+        msg,
+        ignore.case = TRUE
+      )) {
+        message("    * DNS lookup failed; check network connectivity.")
+      }
+      if (grepl("timeout|timed out|connection (refused|reset)",
+        msg,
+        ignore.case = TRUE
+      )) {
+        message("    * Connection timed out / refused (firewall, often institutional).")
+      }
+      if (grepl("403|forbidden", msg, ignore.case = TRUE)) {
+        message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
+      }
+      ## Auto-resolve a Wayback snapshot if the caller did not supply one
+      ## (NULL = auto; "" = explicitly disabled).
+      if (is.null(attempt_wayback)) {
+        attempt_wayback <- wayback_snapshot_url(url)
+      }
+      if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
+        message("  Trying Wayback Machine fallback snapshot...")
+        tryCatch(
+          {
+            .bl_fetch_file(attempt_wayback, target_path)
+            message("  [ok] Wayback snapshot retrieved.")
+            return(TRUE)
+          },
+          error = function(e2) {
+            message("  ! Wayback fallback also failed: ", conditionMessage(e2), "")
+            FALSE
+          }
+        )
+      }
+      FALSE
     }
-    if (grepl("SSL|TLS|certificate|handshake|UNEXPECTED_EOF",
-              msg, ignore.case = TRUE)) {
-      message("    * SSL/TLS handshake failed.")
-      message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
-      message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
-    }
-    if (grepl("could not|unable to resolve|name not|getaddrinfo",
-              msg, ignore.case = TRUE))
-      message("    * DNS lookup failed; check network connectivity.")
-    if (grepl("timeout|timed out|connection (refused|reset)",
-              msg, ignore.case = TRUE))
-      message("    * Connection timed out / refused (firewall, often institutional).")
-    if (grepl("403|forbidden", msg, ignore.case = TRUE))
-      message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
-    ## Auto-resolve a Wayback snapshot if the caller did not supply one
-    ## (NULL = auto; "" = explicitly disabled).
-    if (is.null(attempt_wayback)) {
-      attempt_wayback <- wayback_snapshot_url(url)
-    }
-    if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
-      message("  Trying Wayback Machine fallback snapshot...")
-      tryCatch({
-        .bl_fetch_file(attempt_wayback, target_path)
-        message("  [ok] Wayback snapshot retrieved.")
-        return(TRUE)
-      }, error = function(e2) {
-        message("  ! Wayback fallback also failed: ", conditionMessage(e2), "")
-        return(FALSE)
-      })
-    }
-    FALSE
-  })
+  )
   result
 }
 
@@ -348,12 +396,12 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
 #'
 #' # Matching digest -> match TRUE.
 #' chk <- verify_sha256(f, sha256_file(f))
-#' chk$match          # TRUE
+#' chk$match # TRUE
 #'
 #' # A wrong expected digest -> match FALSE, with both values reported.
 #' bad <- verify_sha256(f, strrep("0", 64L))
-#' bad$match          # FALSE
-#' bad$actual         # the real digest
+#' bad$match # FALSE
+#' bad$actual # the real digest
 #' @export
 verify_sha256 <- function(path, expected_sha) {
   actual <- sha256_file(path)
@@ -364,8 +412,10 @@ verify_sha256 <- function(path, expected_sha) {
   if (length(expected) != 1L || is.na(expected)) {
     stop("`expected_sha` must be a single SHA-256 hex string", call. = FALSE)
   }
-  list(actual = actual, expected = expected,
-       match  = identical(tolower(actual), expected))
+  list(
+    actual = actual, expected = expected,
+    match = identical(tolower(actual), expected)
+  )
 }
 
 ## ----- Schema validation -----
@@ -428,7 +478,7 @@ verify_sha256 <- function(path, expected_sha) {
 #' ))
 #' df <- data.frame(id = 1:3, year = c(2020, 2021, 2030))
 #' issues <- validate_schema(df, prov)
-#' names(issues)  # flags the out-of-set year value
+#' names(issues) # flags the out-of-set year value
 #'
 #' # A column that silently changed type is caught.
 #' typed <- list(schema = list(expected_types = c(id = "integer")))
@@ -449,7 +499,9 @@ validate_schema <- function(df_raw, provenance) {
     stop("`df_raw` must be a data frame", call. = FALSE)
   }
   issues <- list()
-  if (is.null(provenance) || is.null(provenance$schema)) return(issues)
+  if (is.null(provenance) || is.null(provenance$schema)) {
+    return(issues)
+  }
   sch <- provenance$schema
 
   ## --- Required columns ---
@@ -458,26 +510,34 @@ validate_schema <- function(df_raw, provenance) {
     if (length(missing_cols) > 0L) {
       issues$missing_columns <- list(
         severity = "fatal",
-        message  = paste0("Missing required columns: ",
-                          paste(missing_cols, collapse = ", "))
+        message = paste0(
+          "Missing required columns: ",
+          paste(missing_cols, collapse = ", ")
+        )
       )
     }
   }
 
   ## --- Row count bounds ---
   inv <- sch$structural_invariants
-  if (!is.null(inv$min_data_rows) && nrow(df_raw) < inv$min_data_rows)
+  if (!is.null(inv$min_data_rows) && nrow(df_raw) < inv$min_data_rows) {
     issues$row_count_low <- list(
       severity = "warning",
-      message  = sprintf("Row count %d below expected minimum %d",
-                        nrow(df_raw), inv$min_data_rows)
+      message = sprintf(
+        "Row count %d below expected minimum %d",
+        nrow(df_raw), inv$min_data_rows
+      )
     )
-  if (!is.null(inv$max_data_rows) && nrow(df_raw) > inv$max_data_rows)
+  }
+  if (!is.null(inv$max_data_rows) && nrow(df_raw) > inv$max_data_rows) {
     issues$row_count_high <- list(
       severity = "warning",
-      message  = sprintf("Row count %d above expected maximum %d",
-                        nrow(df_raw), inv$max_data_rows)
+      message = sprintf(
+        "Row count %d above expected maximum %d",
+        nrow(df_raw), inv$max_data_rows
+      )
     )
+  }
 
   ## --- Column types ---
   ## A column that silently changed type (a numeric read back as
@@ -496,8 +556,10 @@ validate_schema <- function(df_raw, provenance) {
       if (!same) {
         issues[[paste0("type_", col)]] <- list(
           severity = "warning",
-          message  = sprintf("Column '%s' is %s, expected %s",
-                             col, got, want)
+          message = sprintf(
+            "Column '%s' is %s, expected %s",
+            col, got, want
+          )
         )
       }
     }
@@ -518,9 +580,10 @@ validate_schema <- function(df_raw, provenance) {
       if (n_out > 0L) {
         issues[[paste0("range_", col)]] <- list(
           severity = "warning",
-          message  = sprintf(
+          message = sprintf(
             "Column '%s' has %d value(s) outside [%s, %s]",
-            col, n_out, format(lo), format(hi))
+            col, n_out, format(lo), format(hi)
+          )
         )
       }
     }
@@ -535,9 +598,10 @@ validate_schema <- function(df_raw, provenance) {
       if (frac > cap) {
         issues[[paste0("missing_", col)]] <- list(
           severity = "warning",
-          message  = sprintf(
+          message = sprintf(
             "Column '%s' is %.1f%% missing, above the expected %.1f%%",
-            col, 100 * frac, 100 * cap)
+            col, 100 * frac, 100 * cap
+          )
         )
       }
     }
@@ -547,14 +611,16 @@ validate_schema <- function(df_raw, provenance) {
   if (!is.null(sch$expected_value_sets)) {
     for (col in names(sch$expected_value_sets)) {
       if (!col %in% colnames(df_raw)) next
-      actual_vals  <- unique(df_raw[[col]])
+      actual_vals <- unique(df_raw[[col]])
       expected_vals <- sch$expected_value_sets[[col]]
-      unexpected   <- setdiff(actual_vals, expected_vals)
+      unexpected <- setdiff(actual_vals, expected_vals)
       if (length(unexpected) > 0L) {
         issues[[paste0("unexpected_", col)]] <- list(
           severity = "warning",
-          message  = sprintf("Column '%s' has unexpected values: %s",
-                             col, paste(unexpected, collapse = ", "))
+          message = sprintf(
+            "Column '%s' has unexpected values: %s",
+            col, paste(unexpected, collapse = ", ")
+          )
         )
       }
     }
@@ -611,21 +677,31 @@ apply_schema_validation <- function(df_raw, provenance) {
 #' # Missing fields return NULL rather than erroring:
 #' resolve_via_socrata(list())
 #' \donttest{
-#' prov <- list(dataset = list(socrata_domain = "data.cityofchicago.org",
-#'                             socrata_id     = "ijzp-q8t2"))
+#' prov <- list(dataset = list(
+#'   socrata_domain = "data.cityofchicago.org",
+#'   socrata_id = "ijzp-q8t2"
+#' ))
 #' resolve_via_socrata(prov)
 #' }
 #' @export
 resolve_via_socrata <- function(provenance) {
-  if (is.null(provenance)) return(NULL)
+  if (is.null(provenance)) {
+    return(NULL)
+  }
   domain <- provenance$dataset$socrata_domain
-  id     <- provenance$dataset$socrata_id
-  if (is.null(domain) || is.null(id)) return(NULL)
+  id <- provenance$dataset$socrata_id
+  if (is.null(domain) || is.null(id)) {
+    return(NULL)
+  }
   meta_url <- paste0("https://", domain, "/api/views/", id, ".json")
   meta <- tryCatch(.rmbl_read_json(meta_url), error = function(e) NULL)
-  if (is.null(meta) || is.null(meta$id)) return(NULL)
-  paste0("https://", domain, "/api/views/", id,
-         "/rows.csv?accessType=DOWNLOAD")
+  if (is.null(meta) || is.null(meta$id)) {
+    return(NULL)
+  }
+  paste0(
+    "https://", domain, "/api/views/", id,
+    "/rows.csv?accessType=DOWNLOAD"
+  )
 }
 
 #' Resolve a Query URL via ArcGIS FeatureServer Metadata
@@ -648,17 +724,23 @@ resolve_via_socrata <- function(provenance) {
 #' \donttest{
 #' prov <- list(dataset = list(arcgis_layer_url = paste0(
 #'   "https://services.arcgis.com/S9th0jAJ7bqgIRjw/arcgis/rest/services/",
-#'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0")))
+#'   "Neighbourhood_Crime_Rates_Open_Data/FeatureServer/0"
+#' )))
 #' resolve_via_arcgis(prov)
 #' }
 #' @export
 resolve_via_arcgis <- function(provenance) {
-  if (is.null(provenance)) return(NULL)
+  if (is.null(provenance)) {
+    return(NULL)
+  }
   layer <- provenance$dataset$arcgis_layer_url
-  if (is.null(layer)) return(NULL)
+  if (is.null(layer)) {
+    return(NULL)
+  }
   layer <- sub("/+$", "", layer)
   meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json")),
-                   error = function(e) NULL)
+    error = function(e) NULL
+  )
   if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {
     return(NULL)
   }

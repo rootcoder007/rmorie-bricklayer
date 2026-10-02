@@ -49,9 +49,10 @@ random_bytes <- function(n) {
   out <- .Call(C_rmbl_os_random, n)
   if (is.null(out)) {
     stop("no operating-system random source could be read. Refusing to ",
-         "fall back to R's generator, which is reproducible by design ",
-         "and unsuitable for a key: supply key material yourself.",
-         call. = FALSE)
+      "fall back to R's generator, which is reproducible by design ",
+      "and unsuitable for a key: supply key material yourself.",
+      call. = FALSE
+    )
   }
   out
 }
@@ -110,8 +111,10 @@ random_bytes <- function(n) {
 #' capsule_verify("manifest-digest", sig, key)
 #'
 #' # A longer key is a prefix-consistent extension of a shorter one.
-#' identical(substring(derive_key("pw", "s", 10, length = 64), 1, 64),
-#'           derive_key("pw", "s", 10, length = 32))
+#' identical(
+#'   substring(derive_key("pw", "s", 10, length = 64), 1, 64),
+#'   derive_key("pw", "s", 10, length = 32)
+#' )
 #' @export
 derive_key <- function(passphrase, salt, iterations = 100000L,
                        length = 32L) {
@@ -121,26 +124,29 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
     passphrase <- as.character(passphrase)
     if (base::length(passphrase) != 1L || is.na(passphrase)) {
       stop("`passphrase` must be a length-1 character vector or raw vector",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
   if (!is.raw(salt)) {
     salt <- as.character(salt)
     if (base::length(salt) != 1L || is.na(salt)) {
       stop("`salt` must be a length-1 character vector or raw vector",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
   iterations <- as.integer(iterations)
   if (base::length(iterations) != 1L || is.na(iterations) ||
-      iterations < 1L) {
+    iterations < 1L) {
     stop("`iterations` must be a single integer of at least 1", call. = FALSE)
   }
   length <- as.integer(length)
   if (base::length(length) != 1L || is.na(length) || length < 1L ||
-      length > 1024L) {
+    length > 1024L) {
     stop("`length` must be a single integer between 1 and 1024",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   .Call(C_rmbl_pbkdf2, passphrase, salt, iterations, length)
 }
@@ -202,17 +208,20 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
   }
   length <- as.integer(length)
   if (base::length(length) != 1L || is.na(length) || length < 1L ||
-      length > 64L) {
+    length > 64L) {
     stop("`length` must be a single integer between 1 and 64", call. = FALSE)
   }
   if (!is.null(key) && !is.raw(key)) {
     key <- as.character(key)
     if (base::length(key) != 1L || is.na(key)) {
       stop("`key` must be a length-1 character vector or a raw vector",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
-  if (is.raw(x)) return(.Call(C_rmbl_blake2b, x, key, length))
+  if (is.raw(x)) {
+    return(.Call(C_rmbl_blake2b, x, key, length))
+  }
   .Call(C_rmbl_blake2b, as.character(x), key, length)
 }
 
@@ -258,8 +267,10 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
 #' # A data frame's digest pins the data, so it can go in a manifest.
 #' digest_object(data.frame(x = 1:3))
 #' @export
-digest_object <- function(x, algo = c("sha256", "sha512", "blake2b",
-                                      "crc32"), key = NULL) {
+digest_object <- function(x, algo = c(
+                            "sha256", "sha512", "blake2b",
+                            "crc32"
+                          ), key = NULL) {
   algo <- match.arg(algo)
   bytes <- serialize(x, NULL, version = 2L, xdr = TRUE)
   if (!is.null(key)) {
@@ -269,16 +280,20 @@ digest_object <- function(x, algo = c("sha256", "sha512", "blake2b",
     # the weaker guarantee, so refuse instead.
     if (!algo %in% c("sha256", "blake2b")) {
       stop(sprintf(
-        "`key` is not supported for algo = \"%s\"; keyed digests are available for \"sha256\" (HMAC-SHA-256) and \"blake2b\"",
-        algo), call. = FALSE)
+        paste0("`key` is not supported for algo = \"%s\"; keyed digests are available for ",
+               "\"sha256\" (HMAC-SHA-256) and \"blake2b\""),
+        algo
+      ), call. = FALSE)
     }
     return(switch(algo,
       sha256 = core_hmac_sha256(key, bytes),
-      blake2b = core_blake2b(bytes, key = key, length = 32L)))
+      blake2b = core_blake2b(bytes, key = key, length = 32L)
+    ))
   }
   switch(algo,
     sha256 = core_sha256(bytes),
     sha512 = core_sha512(bytes),
     crc32 = core_crc32(bytes),
-    blake2b = core_blake2b(bytes, length = 32L))
+    blake2b = core_blake2b(bytes, length = 32L)
+  )
 }

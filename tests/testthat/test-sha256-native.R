@@ -4,12 +4,18 @@
 # boundary.
 
 test_that("pure-R SHA-256 reproduces the FIPS 180-4 vectors", {
-  expect_identical(.rmbl_sha256_hex(charToRaw("abc")),
-                   "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
-  expect_identical(.rmbl_sha256_hex(raw(0)),
-                   "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-  expect_identical(.rmbl_sha256_hex(charToRaw("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")),
-                   "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1")
+  expect_identical(
+    .rmbl_sha256_hex(charToRaw("abc")),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  )
+  expect_identical(
+    .rmbl_sha256_hex(raw(0)),
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  )
+  expect_identical(
+    .rmbl_sha256_hex(charToRaw("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq")),
+    "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1"
+  )
 })
 
 test_that("pure-R SHA-256 matches the compiled core across block boundaries", {
@@ -22,7 +28,8 @@ test_that("pure-R SHA-256 matches the compiled core across block boundaries", {
 })
 
 test_that("sha256_file uses the pure-R digest when the compiled core is absent", {
-  p <- tempfile(); writeBin(charToRaw("abc"), p)
+  p <- tempfile()
+  writeBin(charToRaw("abc"), p)
   expect_identical(sha256_file(p), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   # simulate a standalone bundle: source the file into a bare env. The
   # sources sit next to the tests only in a source checkout, not in an
@@ -31,8 +38,10 @@ test_that("sha256_file uses the pure-R digest when the compiled core is absent",
   skip_if(!file.exists(src), "package sources not present (installed package)")
   e <- new.env(parent = baseenv())
   sys.source(src, envir = e)
-  expect_identical(e$.rmbl_sha256_hex(charToRaw("abc")),
-                   "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+  expect_identical(
+    e$.rmbl_sha256_hex(charToRaw("abc")),
+    "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  )
 })
 
 test_that("codec branches the parity grid does not reach", {
@@ -56,11 +65,14 @@ test_that("codec branches the parity grid does not reach", {
   x <- data.frame(a = 1:2, b = c("x", "y"))
   con <- rawConnection(raw(0), "w")
   bricklayer_json_stream_out(x, con, verbose = FALSE, prefix = "\x1e")
-  txt <- rawToChar(rawConnectionValue(con)); close(con)
+  txt <- rawToChar(rawConnectionValue(con))
+  close(con)
   expect_identical(strsplit(txt, "\n")[[1]], c('\x1e{"a":1,"b":"x"}', '\x1e{"a":2,"b":"y"}'))
   seen <- list()
-  bricklayer_json_stream_in(textConnection(c('{"a":1}', '{"a":2}')), handler = function(d) seen[[length(seen) + 1L]] <<- d,
-                            pagesize = 1, verbose = FALSE)
+  bricklayer_json_stream_in(textConnection(c('{"a":1}', '{"a":2}')),
+    handler = function(d) seen[[length(seen) + 1L]] <<- d,
+    pagesize = 1, verbose = FALSE
+  )
   expect_length(seen, 2L)
   expect_identical(bricklayer_json_rbind_pages(list()), data.frame())
 })

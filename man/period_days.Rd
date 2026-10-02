@@ -25,9 +25,9 @@ special handling: the arithmetic is on dates, so 2024 comes out at
 366 and 2023 at 365 without anyone choosing.
 }
 \examples{
-period_days("2024-01-01", "2024-12-31")   # a leap year
+period_days("2024-01-01", "2024-12-31") # a leap year
 period_days("2023-01-01", "2023-12-31")
-period_days("2025-04-01", "2026-03-31")   # a fiscal year
+period_days("2025-04-01", "2026-03-31") # a fiscal year
 }
 \seealso{
 \code{\link[=adp]{adp()}}

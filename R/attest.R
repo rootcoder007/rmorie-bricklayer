@@ -63,7 +63,8 @@
 #' [chain_seal()].
 #' @examples
 #' m <- make_manifest(list(dataset = "otis", rows = 1200L),
-#'                    environment = FALSE)
+#'   environment = FALSE
+#' )
 #' key <- fips_keygen("ML-DSA-65")
 #' att <- capsule_attest(m, key, note = "counts as published")
 #'
@@ -79,17 +80,21 @@
 #'
 #' # and so does presenting a different key
 #' capsule_check_attestation(att, m,
-#'   key_expected = fips_keygen("ML-DSA-65")$public)$ok
+#'   key_expected = fips_keygen("ML-DSA-65")$public
+#' )$ok
 #' @export
 capsule_attest <- function(manifest, key, context = NULL,
                            prehash = "none", note = NULL) {
   if (!is.list(manifest)) {
     stop("`manifest` must be a manifest from make_manifest()",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   scheme <- .rmbl_attest_scheme(key)
   pub <- .rmbl_attest_public(key)
-  ctx <- if (is.null(context)) NULL else {
+  ctx <- if (is.null(context)) {
+    NULL
+  } else {
     if (is.raw(context)) context else as.character(context)[1L]
   }
   # The note is inside the signed payload rather than beside it: a claim
@@ -99,8 +104,7 @@ capsule_attest <- function(manifest, key, context = NULL,
     digest = manifest_digest(manifest),
     scheme = scheme,
     public = pub,
-    context = if (is.null(ctx)) "" else
-      if (is.raw(ctx)) .rmbl_hexlify(ctx) else ctx,
+    context = if (is.null(ctx)) "" else if (is.raw(ctx)) .rmbl_hexlify(ctx) else ctx,
     prehash = prehash,
     note = if (is.null(note)) "" else as.character(note)[1L],
     signed_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
@@ -124,38 +128,57 @@ capsule_check_attestation <- function(attestation, manifest,
   note_row <- function(check, ok, detail = "") {
     checks[[length(checks) + 1L]] <<- data.frame(
       check = check, ok = isTRUE(ok), detail = as.character(detail),
-      stringsAsFactors = FALSE)
+      stringsAsFactors = FALSE
+    )
   }
   if (!inherits(attestation, "bricklayer_attestation")) {
     stop("`attestation` must come from capsule_attest()", call. = FALSE)
   }
-  needed <- c("digest", "scheme", "public", "context", "prehash", "note",
-              "signed_utc", "signature")
+  needed <- c(
+    "digest", "scheme", "public", "context", "prehash", "note",
+    "signed_utc", "signature"
+  )
   missing <- setdiff(needed, names(attestation))
-  note_row("attestation_complete", length(missing) == 0L,
-           if (length(missing)) paste(missing, collapse = ", ") else "")
+  note_row(
+    "attestation_complete", length(missing) == 0L,
+    if (length(missing)) paste(missing, collapse = ", ") else ""
+  )
 
   got <- tryCatch(manifest_digest(manifest), error = function(e) NA_character_)
-  note_row("manifest_digest", identical(got, attestation$digest),
-           if (identical(got, attestation$digest)) got else
-             sprintf("attested %s, manifest is %s", attestation$digest,
-                     got))
+  note_row(
+    "manifest_digest", identical(got, attestation$digest),
+    if (identical(got, attestation$digest)) {
+      got
+    } else {
+      sprintf(
+        "attested %s, manifest is %s", attestation$digest,
+        got
+      )
+    }
+  )
 
   if (!is.null(key_expected)) {
-    note_row("key_as_expected",
-             identical(tolower(as.character(key_expected)[1L]),
-                       tolower(attestation$public)),
-             "the attestation carries the key it was checked against")
+    note_row(
+      "key_as_expected",
+      identical(
+        tolower(as.character(key_expected)[1L]),
+        tolower(attestation$public)
+      ),
+      "the attestation carries the key it was checked against"
+    )
   }
 
-  payload <- attestation[c("digest", "scheme", "public", "context",
-                           "prehash", "note", "signed_utc")]
+  payload <- attestation[c(
+    "digest", "scheme", "public", "context",
+    "prehash", "note", "signed_utc"
+  )]
   signed <- .rmbl_attest_payload_digest(payload)
   ok <- FALSE
   detail <- ""
   if (length(missing) == 0L) {
     key <- tryCatch(.rmbl_attest_key_from(attestation),
-                    error = function(e) NULL)
+      error = function(e) NULL
+    )
     if (is.null(key)) {
       detail <- "the attested public key is not usable for this scheme"
     } else {
@@ -164,11 +187,16 @@ capsule_check_attestation <- function(attestation, manifest,
           capsule_verify(signed, attestation$signature, key)
         } else {
           capsule_verify(signed, attestation$signature, key,
-                         context = if (nzchar(attestation$context))
-                           attestation$context else NULL,
-                         prehash = attestation$prehash)
+            context = if (nzchar(attestation$context)) {
+              attestation$context
+            } else {
+              NULL
+            },
+            prehash = attestation$prehash
+          )
         },
-        error = function(e) FALSE)
+        error = function(e) FALSE
+      )
     }
   }
   note_row("signature", ok, detail)
@@ -182,17 +210,23 @@ capsule_check_attestation <- function(attestation, manifest,
 
 #' @export
 format.bricklayer_attestation <- function(x, ...) {
-  c(.rmbl_rule("Capsule attestation"),
-    .rmbl_kv(list(scheme = x$scheme,
-                  digest = x$digest,
-                  context = if (nzchar(x$context)) x$context else "<none>",
-                  prehash = x$prehash,
-                  note = if (nzchar(x$note)) x$note else "<none>",
-                  signed = x$signed_utc,
-                  "public key" = sprintf("%s... (%d bytes)",
-                                         substring(x$public, 1L, 32L),
-                                         nchar(x$public) %/% 2L))),
-    .rmbl_rule())
+  c(
+    .rmbl_rule("Capsule attestation"),
+    .rmbl_kv(list(
+      scheme = x$scheme,
+      digest = x$digest,
+      context = if (nzchar(x$context)) x$context else "<none>",
+      prehash = x$prehash,
+      note = if (nzchar(x$note)) x$note else "<none>",
+      signed = x$signed_utc,
+      "public key" = sprintf(
+        "%s... (%d bytes)",
+        substring(x$public, 1L, 32L),
+        nchar(x$public) %/% 2L
+      )
+    )),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname rmbl_print_methods
@@ -204,12 +238,18 @@ print.bricklayer_attestation <- function(x, ...) {
 
 #' @export
 format.bricklayer_attestation_check <- function(x, ...) {
-  c(.rmbl_rule(sprintf("Attestation check: %s",
-                       if (x$ok) "OK" else "FAILED")),
-    sprintf("  %-22s %-5s %s", x$checks$check,
-            ifelse(x$checks$ok, "ok", "FAIL"),
-            substring(x$checks$detail, 1L, 44L)),
-    .rmbl_rule())
+  c(
+    .rmbl_rule(sprintf(
+      "Attestation check: %s",
+      if (x$ok) "OK" else "FAILED"
+    )),
+    sprintf(
+      "  %-22s %-5s %s", x$checks$check,
+      ifelse(x$checks$ok, "ok", "FAIL"),
+      substring(x$checks$detail, 1L, 44L)
+    ),
+    .rmbl_rule()
+  )
 }
 
 #' @rdname rmbl_print_methods
@@ -250,9 +290,11 @@ print.bricklayer_attestation_check <- function(x, ...) {
     n <- nchar(attestation$public)
     if (n != 128L) stop("an XMSS public key is 64 bytes", call. = FALSE)
     sig <- attestation$signature
-    out <- list(root = substring(attestation$public, 1L, 64L),
-                pub_seed = substring(attestation$public, 65L, 128L),
-                height = sig$height, scheme = "xmss-sha256")
+    out <- list(
+      root = substring(attestation$public, 1L, 64L),
+      pub_seed = substring(attestation$public, 65L, 128L),
+      height = sig$height, scheme = "xmss-sha256"
+    )
     class(out) <- c("bricklayer_public_key", "list")
     return(out)
   }

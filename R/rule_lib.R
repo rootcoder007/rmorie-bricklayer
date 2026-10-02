@@ -66,16 +66,20 @@
 #' validate_rules(df, rules)$grade_in_set$rows
 #'
 #' # Clean data passes every one of them.
-#' ok <- data.frame(id = 1:3, grade = c("a", "b", "c"),
-#'                  score = c(5, 50, 7),
-#'                  email = c("a@b.com", "c@d.org", "e@f.net"),
-#'                  day = 1:3, stringsAsFactors = FALSE)
+#' ok <- data.frame(
+#'   id = 1:3, grade = c("a", "b", "c"),
+#'   score = c(5, 50, 7),
+#'   email = c("a@b.com", "c@d.org", "e@f.net"),
+#'   day = 1:3, stringsAsFactors = FALSE
+#' )
 #' length(validate_rules(ok, rules))
 #'
 #' # A robust outlier rule: MADs from the median, not standard
 #' # deviations from the mean, so one wild value cannot hide the others.
-#' validate_rules(data.frame(v = c(1, 2, 3, 2, 1, 900)),
-#'                rule_within_n_mads("v", 5))$v_within_mads$rows
+#' validate_rules(
+#'   data.frame(v = c(1, 2, 3, 2, 1, 900)),
+#'   rule_within_n_mads("v", 5)
+#' )$v_within_mads$rows
 #'
 #' # Whole-table rules.
 #' validate_rules(df, rule_distinct_rows())
@@ -89,13 +93,16 @@ rule_in_set <- function(column, set, na_pass = TRUE,
   severity <- match.arg(severity)
   set <- as.character(set)
   rule(paste0(column, "_in_set"),
-       function(v) {
-         ok <- as.character(v) %in% set
-         if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
-       },
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has values outside the allowed set",
-                         column))
+    function(v) {
+      ok <- as.character(v) %in% set
+      if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
+    },
+    column = column, severity = severity,
+    message = sprintf(
+      "Column '%s' has values outside the allowed set",
+      column
+    )
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -110,13 +117,16 @@ rule_between <- function(column, lo, hi, na_pass = TRUE,
     stop("need `lo` <= `hi`, both non-missing", call. = FALSE)
   }
   rule(paste0(column, "_between"),
-       function(v) {
-         ok <- v >= lo & v <= hi
-         if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
-       },
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has values outside [%s, %s]",
-                         column, format(lo), format(hi)))
+    function(v) {
+      ok <- v >= lo & v <= hi
+      if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
+    },
+    column = column, severity = severity,
+    message = sprintf(
+      "Column '%s' has values outside [%s, %s]",
+      column, format(lo), format(hi)
+    )
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -125,8 +135,9 @@ rule_not_null <- function(column, severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_not_null"), function(v) !is.na(v),
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has missing values", column))
+    column = column, severity = severity,
+    message = sprintf("Column '%s' has missing values", column)
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -135,11 +146,12 @@ rule_unique <- function(column, severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_unique"),
-       # duplicated() marks every occurrence after the first, so the
-       # reported rows are the repeats rather than all of them
-       function(v) !duplicated(v),
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has duplicate values", column))
+    # duplicated() marks every occurrence after the first, so the
+    # reported rows are the repeats rather than all of them
+    function(v) !duplicated(v),
+    column = column, severity = severity,
+    message = sprintf("Column '%s' has duplicate values", column)
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -150,13 +162,16 @@ rule_regex <- function(column, pattern, na_pass = TRUE,
   severity <- match.arg(severity)
   pattern <- as.character(pattern)[1L]
   rule(paste0(column, "_regex"),
-       function(v) {
-         ok <- grepl(pattern, as.character(v))
-         if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
-       },
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has values not matching /%s/",
-                         column, pattern))
+    function(v) {
+      ok <- grepl(pattern, as.character(v))
+      if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
+    },
+    column = column, severity = severity,
+    message = sprintf(
+      "Column '%s' has values not matching /%s/",
+      column, pattern
+    )
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -166,16 +181,25 @@ rule_increasing <- function(column, strictly = FALSE,
   column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
   rule(paste0(column, "_increasing"),
-       function(v) {
-         d <- diff(as.numeric(v))
-         ok <- if (isTRUE(strictly)) all(d > 0, na.rm = TRUE) else
-           all(d >= 0, na.rm = TRUE)
-         isTRUE(ok)
-       },
-       column = column, severity = severity,
-       message = sprintf("Column '%s' is not %s", column,
-                         if (isTRUE(strictly)) "strictly increasing" else
-                           "non-decreasing"))
+    function(v) {
+      d <- diff(as.numeric(v))
+      ok <- if (isTRUE(strictly)) {
+        all(d > 0, na.rm = TRUE)
+      } else {
+        all(d >= 0, na.rm = TRUE)
+      }
+      isTRUE(ok)
+    },
+    column = column, severity = severity,
+    message = sprintf(
+      "Column '%s' is not %s", column,
+      if (isTRUE(strictly)) {
+        "strictly increasing"
+      } else {
+        "non-decreasing"
+      }
+    )
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -187,21 +211,26 @@ rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
   n <- as.numeric(n)[1L]
   if (is.na(n) || n <= 0) stop("`n` must be positive", call. = FALSE)
   rule(paste0(column, "_within_mads"),
-       function(v) {
-         v <- as.numeric(v)
-         ok_idx <- !is.na(v)
-         if (!any(ok_idx)) return(rep(TRUE, length(v)))
-         med <- core_median(v[ok_idx])
-         mad <- core_mad(v[ok_idx])
-         # A zero MAD means over half the values are identical; any
-         # departure at all is then an outlier, and dividing by it would
-         # be an error rather than an answer.
-         ok <- if (mad > 0) abs(v - med) <= n * mad else v == med
-         if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
-       },
-       column = column, severity = severity,
-       message = sprintf("Column '%s' has values more than %s MADs from its median",
-                         column, format(n)))
+    function(v) {
+      v <- as.numeric(v)
+      ok_idx <- !is.na(v)
+      if (!any(ok_idx)) {
+        return(rep(TRUE, length(v)))
+      }
+      med <- core_median(v[ok_idx])
+      mad <- core_mad(v[ok_idx])
+      # A zero MAD means over half the values are identical; any
+      # departure at all is then an outlier, and dividing by it would
+      # be an error rather than an answer.
+      ok <- if (mad > 0) abs(v - med) <= n * mad else v == med
+      if (isTRUE(na_pass)) ok | is.na(v) else ok & !is.na(v)
+    },
+    column = column, severity = severity,
+    message = sprintf(
+      "Column '%s' has values more than %s MADs from its median",
+      column, format(n)
+    )
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -209,9 +238,10 @@ rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
 rule_complete_rows <- function(severity = c("warning", "fatal")) {
   severity <- match.arg(severity)
   rule("complete_rows",
-       function(d) stats::complete.cases(d),
-       severity = severity,
-       message = "Some rows have missing values")
+    function(d) stats::complete.cases(d),
+    severity = severity,
+    message = "Some rows have missing values"
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -220,18 +250,28 @@ rule_distinct_rows <- function(columns = NULL,
                                severity = c("warning", "fatal")) {
   severity <- match.arg(severity)
   rule("distinct_rows",
-       function(d) {
-         sub <- if (is.null(columns)) d else {
-           have <- intersect(columns, names(d))
-           if (length(have) == 0L) return(TRUE)
-           d[, have, drop = FALSE]
-         }
-         !duplicated(sub)
-       },
-       severity = severity,
-       message = if (is.null(columns)) "Some rows are duplicated" else
-         sprintf("Some rows are duplicated on (%s)",
-                 paste(columns, collapse = ", ")))
+    function(d) {
+      sub <- if (is.null(columns)) {
+        d
+      } else {
+        have <- intersect(columns, names(d))
+        if (length(have) == 0L) {
+          return(TRUE)
+        }
+        d[, have, drop = FALSE]
+      }
+      !duplicated(sub)
+    },
+    severity = severity,
+    message = if (is.null(columns)) {
+      "Some rows are duplicated"
+    } else {
+      sprintf(
+        "Some rows are duplicated on (%s)",
+        paste(columns, collapse = ", ")
+      )
+    }
+  )
 }
 
 #' @rdname rmbl_rule_library
@@ -243,9 +283,10 @@ rule_col_count <- function(n, severity = c("warning", "fatal")) {
     stop("`n` must be a non-negative integer", call. = FALSE)
   }
   rule("col_count",
-       function(d) ncol(d) == n,
-       severity = severity,
-       message = sprintf("Expected %d columns", n))
+    function(d) ncol(d) == n,
+    severity = severity,
+    message = sprintf("Expected %d columns", n)
+  )
 }
 
 #' Duplicated rows, with their groups
@@ -269,9 +310,11 @@ rule_col_count <- function(n, severity = c("warning", "fatal")) {
 #' [rule_distinct_rows()],
 #' [rule_unique()]
 #' @examples
-#' df <- data.frame(id = c(1, 2, 2, 3, 3, 3),
-#'                  value = c("a", "b", "b", "c", "d", "c"),
-#'                  stringsAsFactors = FALSE)
+#' df <- data.frame(
+#'   id = c(1, 2, 2, 3, 3, 3),
+#'   value = c("a", "b", "b", "c", "d", "c"),
+#'   stringsAsFactors = FALSE
+#' )
 #'
 #' # Duplicated on every column.
 #' duplicate_rows(df)
@@ -291,8 +334,10 @@ duplicate_rows <- function(data, columns = NULL) {
   cols <- if (is.null(columns)) names(data) else as.character(columns)
   missing_cols <- setdiff(cols, names(data))
   if (length(missing_cols) > 0L) {
-    stop(sprintf("no such column(s): %s",
-                 paste(missing_cols, collapse = ", ")), call. = FALSE)
+    stop(sprintf(
+      "no such column(s): %s",
+      paste(missing_cols, collapse = ", ")
+    ), call. = FALSE)
   }
   key <- do.call(paste, c(lapply(cols, function(cn) {
     as.character(data[[cn]])
@@ -339,10 +384,12 @@ missingness_summary <- function(data) {
   total <- sum(per_col)
   cells <- max(1L, n * ncol(data))
   complete <- if (n == 0L) 0L else sum(stats::complete.cases(data))
-  c(n_rows = n, n_cols = ncol(data), n_missing = total,
+  c(
+    n_rows = n, n_cols = ncol(data), n_missing = total,
     pct_missing = 100 * total / cells,
     n_complete_rows = complete,
     pct_complete_rows = if (n == 0L) 0 else 100 * complete / n,
     n_cols_any_missing = sum(per_col > 0),
-    n_cols_all_missing = sum(per_col == n & n > 0))
+    n_cols_all_missing = sum(per_col == n & n > 0)
+  )
 }

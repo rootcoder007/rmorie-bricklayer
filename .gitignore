@@ -60,3 +60,4 @@ pkg-site/
 *.tar.gz
 cran-comments.md
 .otis-input/
+tests/testthat/_problems/

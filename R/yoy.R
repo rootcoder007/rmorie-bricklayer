@@ -85,8 +85,10 @@
 #'   Number_Of_Placements = c(31, 402, 28, 377, 12, 190, 19, 268, 24, 331)
 #' )
 #'
-#' y <- yoy(seg, value = "Number_Of_Placements", period = "EndFiscalYear",
-#'          by = "Gender", direction = "lower_is_better")
+#' y <- yoy(seg,
+#'   value = "Number_Of_Placements", period = "EndFiscalYear",
+#'   by = "Gender", direction = "lower_is_better"
+#' )
 #' y
 #'
 #' # The interval is exact, so a small group does not get a confident
@@ -106,8 +108,10 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
                            fun = sum,
                            units = c("count", "continuous", "percent"),
                            min_base = NULL, conf_level = 0.95,
-                           direction = c("neutral", "higher_is_better",
-                                         "lower_is_better"),
+                           direction = c(
+                             "neutral", "higher_is_better",
+                             "lower_is_better"
+                           ),
                            complete = TRUE, ...) {
   units <- match.arg(units)
   direction <- match.arg(direction)
@@ -117,8 +121,10 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
     by <- as.character(by)
     miss <- setdiff(by, names(x))
     if (length(miss)) {
-      stop(sprintf("`by` column not found: %s",
-                   paste(miss, collapse = ", ")), call. = FALSE)
+      stop(sprintf(
+        "`by` column not found: %s",
+        paste(miss, collapse = ", ")
+      ), call. = FALSE)
     }
   }
   lag <- as.integer(lag)
@@ -132,28 +138,39 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
   v <- x[[value]]
   if (!is.numeric(v)) {
     stop(sprintf("`%s` must be numeric, not %s", value, class(v)[1L]),
-         call. = FALSE)
+      call. = FALSE
+    )
   }
   if (units == "count") {
     nonint <- stats::na.omit(v)
     if (length(nonint) && (any(nonint < 0) ||
-                             any(abs(nonint - round(nonint)) > 1e-8))) {
-      stop(paste0("`units = \"count\"` needs non-negative whole numbers; ",
-                  "use units = \"continuous\" for a measured quantity"),
-           call. = FALSE)
+      any(abs(nonint - round(nonint)) > 1e-8))) {
+      stop(
+        paste0(
+          "`units = \"count\"` needs non-negative whole numbers; ",
+          "use units = \"continuous\" for a measured quantity"
+        ),
+        call. = FALSE
+      )
     }
   }
   if (is.null(min_base)) min_base <- if (units == "count") 20 else 0
 
   agg <- .yoy_aggregate(x, value, period, by, fun)
   if (isTRUE(complete)) agg <- .yoy_complete(agg, period, by, lag)
-  out <- .yoy_compute(agg, value, period, by, lag, units, min_base,
-                      conf_level, direction)
-  structure(out, class = c("rmbl_yoy", "data.frame"),
-            yoy = list(value = value, period = period, by = by, lag = lag,
-                       units = units, min_base = min_base,
-                       conf_level = conf_level, direction = direction,
-                       value_digits = .yoy_value_digits(v, units)))
+  out <- .yoy_compute(
+    agg, value, period, by, lag, units, min_base,
+    conf_level, direction
+  )
+  structure(out,
+    class = c("rmbl_yoy", "data.frame"),
+    yoy = list(
+      value = value, period = period, by = by, lag = lag,
+      units = units, min_base = min_base,
+      conf_level = conf_level, direction = direction,
+      value_digits = .yoy_value_digits(v, units)
+    )
+  )
 }
 
 #' @rdname yoy
@@ -250,9 +267,13 @@ yoy.ts <- function(x, lag = NULL, ...) {
     grid <- data.frame(x = full, stringsAsFactors = FALSE)
     names(grid) <- period
   } else {
-    grid <- expand.grid(c(stats::setNames(list(full), period),
-                          lapply(agg[by], function(z) unique(z))),
-                        stringsAsFactors = FALSE)
+    grid <- expand.grid(
+      c(
+        stats::setNames(list(full), period),
+        lapply(agg[by], function(z) unique(z))
+      ),
+      stringsAsFactors = FALSE
+    )
   }
   # all = TRUE, not all.x: the grid contributes the missing periods and
   # the data keeps every period it actually has, even one the grid does
@@ -291,7 +312,11 @@ yoy.ts <- function(x, lag = NULL, ...) {
   g <- abs(round(d[1L]))
   for (k in round(d[-1L])) {
     k <- abs(k)
-    while (k) { t <- g %% k; g <- k; k <- t }
+    while (k) {
+      t <- g %% k
+      g <- k
+      k <- t
+    }
   }
   as.numeric(g)
 }
@@ -313,8 +338,10 @@ yoy.ts <- function(x, lag = NULL, ...) {
     # period is absent. Taking v[i - lag] instead would compare 2023
     # with 2020 whenever 2021 were missing, and say nothing about it.
     prev <- .yoy_previous(p, v, lag)
-    out <- data.frame(period = p, value = v, previous = prev,
-                      stringsAsFactors = FALSE)
+    out <- data.frame(
+      period = p, value = v, previous = prev,
+      stringsAsFactors = FALSE
+    )
     names(out)[1L] <- period
     out$change <- v - prev
     if (units == "percent") {

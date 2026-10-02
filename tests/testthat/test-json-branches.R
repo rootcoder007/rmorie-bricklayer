@@ -28,7 +28,8 @@ test_that("encoder option paths: keep_vec_names, json_verbatim, force, digits = 
   # digits cannot carry this value back exactly.
   coarse <- to(0.1 + 0.2, digits = I(3))
   expect_false(identical(
-    as.numeric(sub("^\\[(.*)\\]$", "\\1", coarse)), 0.1 + 0.2))
+    as.numeric(sub("^\\[(.*)\\]$", "\\1", coarse)), 0.1 + 0.2
+  ))
   odd <- structure(1:3, class = "odd")
   expect_identical(to(odd, force = TRUE), "[1,2,3]")
   expect_identical(to(structure(list(a = 1), class = c("odd", "list"))), '{"a":[1]}')
@@ -46,8 +47,10 @@ test_that("encoder class paths: POSIXlt, hms, blob, mongo dates, matrix in data.
   lt <- as.POSIXlt("2024-05-06 07:08:09", tz = "UTC")
   expect_identical(to(lt), '["2024-05-06 07:08:09"]')
   expect_identical(to(lt, POSIXt = "mongo"), '[{"$date":1714979289000}]')
-  expect_identical(to(as.POSIXct(c("2024-05-06 07:08:09", NA), tz = "UTC"), POSIXt = "mongo"),
-                   '[{"$date":1714979289000},null]')
+  expect_identical(
+    to(as.POSIXct(c("2024-05-06 07:08:09", NA), tz = "UTC"), POSIXt = "mongo"),
+    '[{"$date":1714979289000},null]'
+  )
   expect_identical(to(lt, POSIXt = "ISO8601", UTC = TRUE), '["2024-05-06T07:08:09Z"]')
   expect_identical(to(lt, time_format = "%H:%M"), '["07:08"]')
   df <- data.frame(t = as.POSIXlt(c("2024-05-06 07:08:09", "2024-05-07 00:00:00"), tz = "UTC"))
@@ -56,15 +59,19 @@ test_that("encoder class paths: POSIXlt, hms, blob, mongo dates, matrix in data.
   expect_identical(to(hms, hms = "secs"), '[3661,"NA"]')
   blob <- structure(list(charToRaw("hi"), raw(0)), class = "blob")
   expect_identical(to(blob), '["aGk=",""]')
-  expect_identical(to(blob, raw = "int"), '[[104,105],[]]')
-  dfm <- data.frame(id = 1:2); dfm$m <- matrix(1:4, 2)
+  expect_identical(to(blob, raw = "int"), "[[104,105],[]]")
+  dfm <- data.frame(id = 1:2)
+  dfm$m <- matrix(1:4, 2)
   expect_identical(to(dfm), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
   expect_identical(to(dfm, matrix = "columnmajor"), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
-  dfr <- data.frame(id = 1:2); dfr$r <- as.raw(c(1, 255))
+  dfr <- data.frame(id = 1:2)
+  dfr$r <- as.raw(c(1, 255))
   expect_identical(to(dfr), '[{"id":1,"r":"01"},{"id":2,"r":"ff"}]')
-  dfc <- data.frame(id = 1:2); dfc$z <- c(1 + 2i, 3 - 1i)
+  dfc <- data.frame(id = 1:2)
+  dfc$z <- c(1 + 2i, 3 - 1i)
   expect_identical(to(dfc, complex = "list"), '[{"id":1,"z":{"real":1,"imaginary":2}},{"id":2,"z":{"real":3,"imaginary":-1}}]')
-  dfl <- data.frame(id = 1:2); dfl$l <- list(list(a = 1), list(b = 2))
+  dfl <- data.frame(id = 1:2)
+  dfl$l <- list(list(a = 1), list(b = 2))
   expect_identical(to(dfl), '[{"id":1,"l":{"a":[1]}},{"id":2,"l":{"b":[2]}}]')
   expect_identical(to(as.pairlist(list(a = 1, b = "x"))), '{"a":[1],"b":["x"]}')
   expect_identical(to(array(1:8, c(2, 2, 2)), matrix = "columnmajor"), "[[[1,2],[3,4]],[[5,6],[7,8]]]")
@@ -77,7 +84,7 @@ test_that("number formatting reproduces modp_dtoa2 rounding and the sprintf fall
   expect_identical(to(c(0.5, 1.5, 2.5), digits = 0), "[0,2,2]")
   expect_identical(to(c(0.9999999, 123.456789), digits = 6), "[1,123.456789]")
   expect_identical(to(2147483648, digits = 2), "[2147483648]")
-  expect_identical(to(c(1e-6, 3e-5), digits = 4), "[1e-06,0]")  # modp_dtoa2: 3e-5 has no digits at 4 decimals
+  expect_identical(to(c(1e-6, 3e-5), digits = 4), "[1e-06,0]") # modp_dtoa2: 3e-5 has no digits at 4 decimals
   expect_identical(to(123456.789, digits = I(4)), "[1.235e+05]")
   expect_identical(to(c(1, 2.5), always_decimal = TRUE), "[1.0,2.5]")
   expect_identical(to(NA_real_, na = "string"), '["NA"]')
@@ -88,15 +95,17 @@ test_that("base64 edge cases", {
   expect_identical(bricklayer_json_base64_enc(raw(0)), "")
   expect_identical(bricklayer_json_base64_dec(""), raw(0))
   expect_identical(bricklayer_json_base64_dec(charToRaw("aGk=")), charToRaw("hi"))
-  expect_identical(bricklayer_json_base64_dec("@@@@"), raw(0))  # non-alphabet bytes are skipped, as jsonlite does
+  expect_identical(bricklayer_json_base64_dec("@@@@"), raw(0)) # non-alphabet bytes are skipped, as jsonlite does
   expect_identical(bricklayer_json_base64url_enc(as.raw(c(251, 255))), "-_8")
   expect_identical(bricklayer_json_base64url_dec("-_8"), as.raw(c(251, 255)))
   expect_identical(bricklayer_json_base64url_dec("aGk"), charToRaw("hi"))
 })
 
 test_that("parser rejects what yajl rejects, with a position", {
-  bad <- c("-", "1.", "1e", "01", ".5", "[1 2]", "[1,]", "{\"a\" 1}", "{\"a\":1 \"b\":2}", "{1:2}",
-           "\"abc", "\"a\\qb\"", "\"a\\u12G4\"", "\"a\\u0000\"", "\"tab\tin\"", "tru", "nul", "[1]x", "", "   ")
+  bad <- c(
+    "-", "1.", "1e", "01", ".5", "[1 2]", "[1,]", "{\"a\" 1}", "{\"a\":1 \"b\":2}", "{1:2}",
+    "\"abc", "\"a\\qb\"", "\"a\\u12G4\"", "\"a\\u0000\"", "\"tab\tin\"", "tru", "nul", "[1]x", "", "   "
+  )
   for (b in bad) expect_error(bricklayer_json_from_json(b, simplifyVector = FALSE), "at character|end of input", label = b)
   expect_warning(v <- bricklayer_json_from_json("\ufeff[1]"), "byte-order-mark")
   expect_identical(v, 1L)
@@ -106,11 +115,13 @@ test_that("parser rejects what yajl rejects, with a position", {
   expect_identical(bricklayer_json_from_json("[1,2]", simplify = FALSE), list(1L, 2L))
   expect_identical(bricklayer_json_from_json("[-9007199254740993]", bigint_as_char = TRUE), "-9007199254740993")
   expect_identical(bricklayer_json_from_json("[123456789012]"), 123456789012)
-  expect_identical(bricklayer_json_from_json("[{\"$date\":\"2024-05-06T07:08:09Z\"}]"),
-                   as.POSIXct("2024-05-06 07:08:09", tz = "UTC"))
+  expect_identical(
+    bricklayer_json_from_json("[{\"$date\":\"2024-05-06T07:08:09Z\"}]"),
+    as.POSIXct("2024-05-06 07:08:09", tz = "UTC")
+  )
   d2 <- bricklayer_json_from_json('[{"$date":"2024-05-06T07:08:09"},{"$date":"2024-05-07T00:00:00"}]')
   expect_s3_class(d2, "POSIXct")
-  expect_identical(format(d2, "%Y-%m-%d %H:%M:%S"), c("2024-05-06 07:08:09", "2024-05-07 00:00:00"))  # local-time strings, tz-agnostic
+  expect_identical(format(d2, "%Y-%m-%d %H:%M:%S"), c("2024-05-06 07:08:09", "2024-05-07 00:00:00")) # local-time strings, tz-agnostic
   # a scalar list of dates collapses to a POSIXct vector (jsonlite's mongo-date rule)
   expect_identical(bricklayer_json_from_json('{"a":{"$date":1714979289000}}'), structure(1714979289, class = c("POSIXct", "POSIXt")))
   expect_identical(bricklayer_json_from_json('[{"$date":1714979289000},null]'), structure(c(1714979289, NA), class = c("POSIXct", "POSIXt")))
@@ -137,8 +148,10 @@ test_that("prettify/minify report yajl-style errors and handle escapes", {
     expect_error(bricklayer_json_minify(b), "at character", label = b)
   }
   expect_identical(as.character(bricklayer_json_minify('["\\u00e9\\u0001\\/<\\/x"]')), '["\u00e9\\u0001/<\\/x"]')
-  expect_identical(as.character(bricklayer_json_minify("\ufeff{\"a\":true,\"b\":false,\"c\":null,\"d\":-1.5e3}")),
-                   '{"a":true,"b":false,"c":null,"d":-1.5e3}')
+  expect_identical(
+    as.character(bricklayer_json_minify("\ufeff{\"a\":true,\"b\":false,\"c\":null,\"d\":-1.5e3}")),
+    '{"a":true,"b":false,"c":null,"d":-1.5e3}'
+  )
   expect_identical(as.character(bricklayer_json_prettify('{"a":[]}', indent = 2)), "{\n  \"a\": [\n\n  ]\n}\n")
   v <- bricklayer_json_validate("\ufeff[1]")
   expect_false(isTRUE(v))
@@ -163,8 +176,10 @@ test_that("serializer covers every storage mode digest of an R object needs", {
   expect_match(as.character(s4j), '"type":"S4"')
   expect_warning(bricklayer_json_serialize(quote(`{`)), NA)
   expect_identical(as.character(bricklayer_json_serialize(NULL)), '{"type":"NULL"}')
-  expect_identical(as.character(bricklayer_json_serialize(list(1, "a"), pretty = TRUE)),
-                   "{\n  \"type\": \"list\",\n  \"attributes\": {},\n  \"value\": [\n    {\n      \"type\": \"double\",\n      \"attributes\": {},\n      \"value\": [1]\n    },\n    {\n      \"type\": \"character\",\n      \"attributes\": {},\n      \"value\": [\"a\"]\n    }\n  ]\n}")
+  expect_identical(
+    as.character(bricklayer_json_serialize(list(1, "a"), pretty = TRUE)),
+    "{\n  \"type\": \"list\",\n  \"attributes\": {},\n  \"value\": [\n    {\n      \"type\": \"double\",\n      \"attributes\": {},\n      \"value\": [1]\n    },\n    {\n      \"type\": \"character\",\n      \"attributes\": {},\n      \"value\": [\"a\"]\n    }\n  ]\n}"
+  )
   expect_error(bricklayer_json_unserialize('{"type":"weird","attributes":{},"value":[]}'), "encode.mode")
 })
 

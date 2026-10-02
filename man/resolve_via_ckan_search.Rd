@@ -30,11 +30,14 @@ CSV format when specified.
 resolve_via_ckan_search(list())
 \donttest{
 prov <- list(
-  dataset  = list(ckan_api_endpoint = paste0(
+  dataset = list(ckan_api_endpoint = paste0(
     "https://data.ontario.ca/api/3/action/package_show",
-    "?id=ontario-public-library-statistics")),
-  resource = list(name_match_pattern = "2014",
-                  search_query = "public library statistics")
+    "?id=ontario-public-library-statistics"
+  )),
+  resource = list(
+    name_match_pattern = "2014",
+    search_query = "public library statistics"
+  )
 )
 resolve_via_ckan_search(prov)
 }

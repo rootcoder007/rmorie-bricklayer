@@ -35,9 +35,11 @@ is a typo or belongs to a neighbouring province. None of them require
 the geometry, so they run with nothing installed.
 }
 \examples{
-cw <- data.frame(inst = c("North Jail", "South Jail", "East Jail"),
-                 cd = c("3557", "3520", "3506"),
-                 stringsAsFactors = FALSE)
+cw <- data.frame(
+  inst = c("North Jail", "South Jail", "East Jail"),
+  cd = c("3557", "3520", "3506"),
+  stringsAsFactors = FALSE
+)
 region_map_integrity(cw, "inst", "cd", regions = c("3557", "3520", "3506"))
 
 # a region code the geography does not know fails the third check

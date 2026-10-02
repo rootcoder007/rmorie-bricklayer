@@ -46,9 +46,10 @@ test_that("person-days come out of periodic headcounts, as on p.21", {
 test_that("the identity adp = n * alos / t holds", {
   # This is algebra rather than data, so it is asserted once and then
   # relied on: days = people x stay, so dividing by t either way agrees.
-  days <- 126121; people <- 9608
+  days <- 126121
+  people <- 9608
   expect_equal(adp(days), admissions(adp(days), alos(days, people)) *
-                          alos(days, people) / 365)
+    alos(days, people) / 365)
   expect_equal(admissions(adp(days), alos(days, people)), people)
 })
 
@@ -56,9 +57,11 @@ test_that("stock and flow can carry opposite signs", {
   # The reason these functions exist. Fewer people, held longer: the
   # flow rate falls while the stock rate rises, and a report quoting
   # either alone states the wrong direction for the other.
-  sf <- stock_flow(days = c(115674, 126121), people = c(12647, 9608),
-                   period = c("2023", "2025"),
-                   exposure = c(15495050, 16256538))
+  sf <- stock_flow(
+    days = c(115674, 126121), people = c(12647, 9608),
+    period = c("2023", "2025"),
+    exposure = c(15495050, 16256538)
+  )
   expect_s3_class(sf, "rmbl_stock_flow")
   expect_identical(nrow(sf), 2L)
   # people down, stay up, days up
@@ -87,14 +90,18 @@ test_that("stock_flow works without an exposure", {
 })
 
 test_that("the printed form says when the signs disagree", {
-  sf <- stock_flow(days = c(115674, 126121), people = c(12647, 9608),
-                   period = c("2023", "2025"),
-                   exposure = c(15495050, 16256538))
+  sf <- stock_flow(
+    days = c(115674, 126121), people = c(12647, 9608),
+    period = c("2023", "2025"),
+    exposure = c(15495050, 16256538)
+  )
   expect_output(print(sf), "opposite signs")
   expect_output(print(sf), "stock_rate")
   # and stays quiet when they agree
-  agree <- stock_flow(days = c(100, 200), people = c(10, 20),
-                      exposure = c(1000, 1000))
+  agree <- stock_flow(
+    days = c(100, 200), people = c(10, 20),
+    exposure = c(1000, 1000)
+  )
   expect_failure(expect_output(print(agree), "opposite signs"))
 })
 
@@ -107,14 +114,20 @@ test_that("the arguments are validated", {
   expect_error(alos(100, 0), "positive")
   expect_error(admissions(25, 0), "positive")
   expect_error(stock_flow(days = c(1, 2), people = 1), "same length")
-  expect_error(stock_flow(days = c(1, 2), people = c(1, 2),
-                          exposure = c(1, 2, 3)),
-               "length 1 or the same length")
+  expect_error(
+    stock_flow(
+      days = c(1, 2), people = c(1, 2),
+      exposure = c(1, 2, 3)
+    ),
+    "length 1 or the same length"
+  )
 })
 
 test_that("a single exposure is recycled across periods", {
-  sf <- stock_flow(days = c(100, 200), people = c(10, 20),
-                   exposure = 1000, per = 1000)
+  sf <- stock_flow(
+    days = c(100, 200), people = c(10, 20),
+    exposure = 1000, per = 1000
+  )
   expect_equal(sf$exposure, c(1000, 1000))
   expect_equal(sf$flow_rate, c(10, 20))
 })
@@ -128,11 +141,15 @@ test_that("period_days counts both ends, and leap years look after themselves", 
   expect_equal(period_days("2023-01-01", "2023-12-31"), 365)
   expect_equal(period_days("2025-04-01", "2026-03-31"), 365)
   # and it feeds straight into adp()
-  expect_equal(adp(13500, period_days("2023-01-01", "2023-12-31")),
-               adp(13500, 365))
+  expect_equal(
+    adp(13500, period_days("2023-01-01", "2023-12-31")),
+    adp(13500, 365)
+  )
   expect_error(period_days("2024-12-31", "2024-01-01"), "must not precede")
-  expect_error(period_days(c("2024-01-01", "2024-01-02"), "2024-12-31"),
-               "a single date")
+  expect_error(
+    period_days(c("2024-01-01", "2024-01-02"), "2024-12-31"),
+    "a single date"
+  )
 })
 
 test_that("stay_summary describes the distribution, not just its mean", {
@@ -175,29 +192,38 @@ test_that("stay_summary copes with a single person and refuses nonsense", {
 })
 
 test_that("stock_flow measures against the previous period when asked", {
-  sf1 <- stock_flow(days = c(100, 200, 400), people = c(10, 10, 10),
-                    period = c("a", "b", "c"))
-  sf2 <- stock_flow(days = c(100, 200, 400), people = c(10, 10, 10),
-                    period = c("a", "b", "c"), baseline = "previous")
+  sf1 <- stock_flow(
+    days = c(100, 200, 400), people = c(10, 10, 10),
+    period = c("a", "b", "c")
+  )
+  sf2 <- stock_flow(
+    days = c(100, 200, 400), people = c(10, 10, 10),
+    period = c("a", "b", "c"), baseline = "previous"
+  )
   # against the first: b is +100%, c is +300%
   expect_equal(sf1$days_change, c(0, 100, 300))
   # against the previous: each doubling is +100%, and the first has none
   expect_true(is.na(sf2$days_change[1]))
   expect_equal(sf2$days_change[-1], c(100, 100))
   expect_identical(attr(sf2, "stock_flow")$baseline, "previous")
-  expect_error(stock_flow(days = 1:2, people = c(1, 1), baseline = "middle"),
-               "should be one of")
+  expect_error(
+    stock_flow(days = 1:2, people = c(1, 1), baseline = "middle"),
+    "should be one of"
+  )
 })
 
 test_that("the measures hold together on a period that is not a year", {
   # A thirty-day month, which is the case a hardcoded 365 would break.
   t30 <- period_days("2025-04-01", "2025-04-30")
   expect_equal(t30, 30)
-  sf <- stock_flow(days = c(2400, 2750), people = c(300, 250),
-                   period = c("Apr", "May"), t = t30)
+  sf <- stock_flow(
+    days = c(2400, 2750), people = c(300, 250),
+    period = c("Apr", "May"), t = t30
+  )
   expect_equal(sf$adp, c(2400, 2750) / 30)
   expect_equal(sf$alos, c(8, 11))
   # people down, stay up, days up: the decomposition still multiplies out
-  p <- sf$people_change[2] / 100; l <- sf$alos_change[2] / 100
+  p <- sf$people_change[2] / 100
+  l <- sf$alos_change[2] / 100
   expect_equal((1 + p) * (1 + l) - 1, sf$days_change[2] / 100)
 })

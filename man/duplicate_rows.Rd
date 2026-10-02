@@ -29,9 +29,11 @@ or a re-release appended rather than replaced, both of which are visible
 only once the offending rows are in front of you.
 }
 \examples{
-df <- data.frame(id = c(1, 2, 2, 3, 3, 3),
-                 value = c("a", "b", "b", "c", "d", "c"),
-                 stringsAsFactors = FALSE)
+df <- data.frame(
+  id = c(1, 2, 2, 3, 3, 3),
+  value = c("a", "b", "b", "c", "d", "c"),
+  stringsAsFactors = FALSE
+)
 
 # Duplicated on every column.
 duplicate_rows(df)
