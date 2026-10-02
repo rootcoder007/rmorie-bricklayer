@@ -16,8 +16,15 @@ models
 list the models the hosted tier offers your key
 (default marked)
 
+data list
+the curated tables at data.rmorie.com
+
+data pull db/table
+download one table as CSV
+
 ask [--model NAME] PROMPT...
-send a prompt to the model (or the named one) and print the
+send a prompt to the model
+(or the named one) and print the
 reply
 
 bundle REQUEST...
@@ -60,8 +67,15 @@ models
 list the models the hosted tier offers your key
 (default marked)
 
+data list
+the curated tables at data.rmorie.com
+
+data pull db/table
+download one table as CSV
+
 ask [--model NAME] PROMPT...
-send a prompt to the model (or the named one) and print the
+send a prompt to the model
+(or the named one) and print the
 reply
 
 bundle REQUEST...
@@ -95,7 +109,7 @@ this list
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -150,8 +164,15 @@ you paste with <code>--token</code> (prompts when KEY is omitted)</p></dd>
 <dd><p>list the models the hosted tier offers your key
 (default marked)</p></dd>
 
+<dt><code>data list</code></dt>
+<dd><p>the curated tables at data.rmorie.com</p></dd>
+
+<dt><code>data pull db/table</code></dt>
+<dd><p>download one table as CSV</p></dd>
+
 <dt><code>ask [--model NAME] PROMPT...</code></dt>
-<dd><p>send a prompt to the model (or the named one) and print the
+<dd><p>send a prompt to the model
+(or the named one) and print the
 reply</p></dd>
 
 <dt><code>bundle REQUEST...</code></dt>
@@ -204,7 +225,7 @@ console).</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"version"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.4</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"help"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -218,6 +239,8 @@ console).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   functions [PATTERN]                       exported functions and their titles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   describe NAME                             help page of one function</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   examples NAME                             its examples</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   data list                                 curated tables at data.rmorie.com</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   version                                   package version</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"functions"</span>, <span class="st">"json"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bricklayer_json_base64_dec     Base64 encoding</span>

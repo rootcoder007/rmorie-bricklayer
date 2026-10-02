@@ -20,6 +20,14 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
   list the models the hosted tier offers your key (default marked)
 
+- `data list`:
+
+  the curated tables at data.rmorie.com
+
+- `data pull db/table`:
+
+  download one table as CSV
+
 - `ask [--model NAME] PROMPT...`:
 
   send a prompt to the model (or the named one) and print the reply
@@ -75,7 +83,7 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.3
+#> rmoriebricklayer 0.5.4
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]
 #> 
@@ -89,6 +97,8 @@ bricklayer_cli("help")
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function
 #>   examples NAME                             its examples
+#>   data list                                 curated tables at data.rmorie.com
+#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)
 #>   version                                   package version
 bricklayer_cli(c("functions", "json"))
 #>   bricklayer_json_base64_dec     Base64 encoding

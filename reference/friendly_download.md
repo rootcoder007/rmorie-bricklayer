@@ -1,7 +1,7 @@
 # Download a File With Diagnostic Error Messages
 
 Wraps
-[`utils::download.file()`](https://rdrr.io/r/utils/download.file.html)
+[`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
 and, on failure, prints plain-language guidance for the most common
 academic and corporate network problems (rate limiting, TLS-inspection
 VPNs, DNS failures, timeouts, HTTP 403). Optionally retries from a

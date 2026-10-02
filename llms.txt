@@ -496,6 +496,14 @@ Please note that this project is released with a [Contributor Code of
 Conduct](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CODE_OF_CONDUCT.md).
 By contributing, you agree to abide by its terms.
 
+## Smoke suite
+
+Every release is gated on a clean-user smoke suite that installs the
+built package into an empty home directory on Linux, macOS and Windows
+and runs every command for real, with live downloads and assertions, no
+mocks (`Rscript inst/smoke/smoke.R`; `.github/workflows/smoke.yml`). A
+verb without a smoke case fails the suite.
+
 # Package index
 
 ## One call for a published table
@@ -626,6 +634,12 @@ the rmoriebricklayer shell command.
   : Report the language-model routes available from this machine
 - [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
   : Models offered by the hosted MORIE LLM tier
+- [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  : Curated datasets at data.rmorie.com
+- [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  : Download a file with live progress
 - [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
   : Run the rmoriebricklayer command line
 - [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)

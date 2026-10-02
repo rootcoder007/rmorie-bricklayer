@@ -1,5 +1,31 @@
 # Changelog
 
+## rmoriebricklayer 0.5.4
+
+- The `rmoriebricklayer` launcher works under R 4.6, which keeps
+  `--args` in
+  [`commandArgs()`](https://rdrr.io/r/base/commandArgs.html);
+  [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+  goes through
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md).
+
+- [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md):
+  one download routine with a live progress bar (percent, size, rate) on
+  a terminal and milestone lines in a log, used by
+  [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+  and the data hub. `options(morie.quiet = TRUE)` silences it.
+
+### Curated datasets at data.rmorie.com
+
+- [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md),
+  [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  and `bricklayer_data_load("db/table")`: the 160 databases the MORIE
+  project materialises from BigQuery public datasets, served from the
+  edge and opened by the key
+  [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
+  stores. From the shell: `rmoriebricklayer data list`,
+  `rmoriebricklayer data pull db/table`.
+
 ## rmoriebricklayer 0.5.3
 
 ### See what you can ask

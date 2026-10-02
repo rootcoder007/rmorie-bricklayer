@@ -495,3 +495,11 @@ AGPL-3.0-or-later.
 Please note that this project is released with a [Contributor Code of
 Conduct](https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CODE_OF_CONDUCT.md).
 By contributing, you agree to abide by its terms.
+
+## Smoke suite
+
+Every release is gated on a clean-user smoke suite that installs the
+built package into an empty home directory on Linux, macOS and Windows
+and runs every command for real, with live downloads and assertions, no
+mocks (`Rscript inst/smoke/smoke.R`; `.github/workflows/smoke.yml`). A
+verb without a smoke case fails the suite.

@@ -128,6 +128,12 @@ the rmoriebricklayer shell command.
   : Report the language-model routes available from this machine
 - [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
   : Models offered by the hosted MORIE LLM tier
+- [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  : Curated datasets at data.rmorie.com
+- [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  : Download a file with live progress
 - [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
   : Run the rmoriebricklayer command line
 - [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
