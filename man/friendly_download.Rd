@@ -23,7 +23,7 @@ fallback entirely.}
 fallback succeeds, otherwise \code{FALSE}.
 }
 \description{
-Wraps \code{\link[utils:download.file]{utils::download.file()}} and, on
+Wraps \code{\link[=bricklayer_download]{bricklayer_download()}} and, on
 failure, prints plain-language guidance for the most common academic and
 corporate network problems (rate limiting, TLS-inspection VPNs, DNS
 failures, timeouts, HTTP 403). Optionally retries from a Wayback Machine

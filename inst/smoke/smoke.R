@@ -1,0 +1,57 @@
+# Clean-user smoke for rmoriebricklayer: every `rmoriebricklayer` verb and the data
+# client run for real in an empty HOME. Rscript inst/smoke/smoke.R (package installed).
+tree <- Sys.getenv("MORIE_SMOKE_TREE", "")
+if (nzchar(tree)) suppressPackageStartupMessages(pkgload::load_all(tree, quiet = TRUE)) else suppressPackageStartupMessages(library(rmoriebricklayer))
+home <- tempfile("bl-smoke-"); dir.create(home); setwd(home)
+Sys.setenv(HOME = home, XDG_CONFIG_HOME = file.path(home, "cfg"))
+key <- Sys.getenv("MORIE_SMOKE_KEY", "")
+if (nzchar(key)) Sys.setenv(MORIE_HOSTED_KEY = key) else Sys.unsetenv("MORIE_HOSTED_KEY")
+options(timeout = 600)
+run <- function(...) { buf <- character(); st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
+check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
+cases <- list(
+  version = function() { r <- run("version"); check(r$status == 0 && grepl("rmoriebricklayer", r$text), r$text) },
+  doctor = function() { r <- run("doctor"); check(r$status == 0 && nzchar(r$text), r$text) },
+  models = function() { r <- run("models"); check(r$status == 0, r$text) },
+  ask = function() { r <- run("ask", "hello"); check(r$status == 0, r$text) },
+  launcher = function() {
+    # what inst/bin/rmoriebricklayer does under R 4.6 (which keeps "--args" in commandArgs)
+    load <- if (nzchar(tree)) sprintf("pkgload::load_all(%s, quiet = TRUE)", shQuote(tree)) else "library(rmoriebricklayer)"
+    r <- suppressWarnings(system2("Rscript", c("--vanilla", "-e",
+      shQuote(sprintf("suppressMessages(%s); q <- bricklayer_cli(); quit(status = as.integer(q))", load)),
+      "--args", "version"), stdout = TRUE, stderr = TRUE))
+    check(is.null(attr(r, "status")) && any(grepl("rmoriebricklayer 0\\.", r)), paste("launcher:", paste(r, collapse = " | ")))
+  },
+  login = function() { if (!nzchar(key)) return(message("  login: SKIP")); r <- run("login", "--token", key); check(r$status == 0, r$text) },
+  logout = function() { check(run("logout")$status == 0, "logout") },
+  functions = function() { r <- run("functions", "capsule"); check(r$status == 0 && grepl("capsule_sign", r$text), substr(r$text, 1, 200)) },
+  describe = function() { r <- run("describe", "make_manifest"); check(r$status == 0 && grepl("manifest", r$text, ignore.case = TRUE), substr(r$text, 1, 200)) },
+  examples = function() { r <- run("examples", "capsule_bundle"); check(r$status == 0 && nzchar(r$text), r$text) },
+  bundle = function() { r <- run("bundle", "validate a csv schema"); check(r$status %in% c(0L, 1L), r$text) },
+  data = function() {
+    r <- run("data"); check(r$status %in% c(0L, 1L), r$text)
+    if (!nzchar(key)) return(message("  data list/pull: SKIP (MORIE_SMOKE_KEY not set)"))
+    r <- run("data", "list"); check(r$status == 0 && grepl("chicago_crime", r$text), substr(r$text, 1, 300))
+    r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
+    df <- bricklayer_data_load("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "bricklayer_data_load")
+  },
+  capsule = function() {
+    dir <- file.path(home, "cap"); dir.create(dir)
+    utils::write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"), row.names = FALSE)
+    m <- make_manifest(list(dataset = "smoke"), environment = FALSE)
+    keyp <- fips_keygen("ML-DSA-44")
+    b <- capsule_bundle(dir, m, keyp)
+    check(isTRUE(capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok), "bundle does not verify")
+  }
+)
+help_text <- run("help")$text
+verbs <- trimws(unique(regmatches(help_text, gregexpr("(?m)^  ([a-z][a-z-]*)", help_text, perl = TRUE))[[1]]))
+missing <- setdiff(verbs, c(names(cases), "help"))
+if (length(missing)) { cat("VERBS WITHOUT A SMOKE CASE:", paste(missing, collapse = ", "), "\n"); quit(status = 2) }
+failed <- 0L
+for (n in names(cases)) {
+  out <- tryCatch({ cases[[n]](); "OK" }, error = function(e) { failed <<- failed + 1L; paste("FAIL", substr(conditionMessage(e), 1, 400)) })
+  cat(sprintf("[%s] %s\n", substr(out, 1, 4), n)); if (startsWith(out, "FAIL")) cat("      ", out, "\n")
+}
+cat(sprintf("\nsmoke (rmoriebricklayer): %d ok, %d failed\n", length(cases) - failed, failed))
+quit(status = if (failed) 1L else 0L)

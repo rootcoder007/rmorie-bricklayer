@@ -18,7 +18,10 @@
 #'   \item{\code{doctor}}{report the language-model routes available here}
 #'   \item{\code{models}}{list the models the hosted tier offers your key
 #'     (default marked)}
-#'   \item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model (or the named one) and print the
+#'   \item{\code{data list}}{the curated tables at data.rmorie.com}
+#'   \item{\code{data pull db/table}}{download one table as CSV}
+#'   \item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model
+#'     (or the named one) and print the
 #'     reply}
 #'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 #'     shell}
@@ -42,12 +45,17 @@
 #' @export
 bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
+  old_progress <- options(morie.progress = TRUE)  # downloads draw their bar
+  on.exit(options(old_progress), add = TRUE)
   args <- as.character(args)
+  if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
   rest <- args[-1L]
   flag <- function(name) {
     i <- match(name, rest)
-    if (is.na(i)) return(NULL)
+    if (is.na(i)) {
+      return(NULL)
+    }
     if (i == length(rest)) {
       stop(sprintf("%s needs a value", name), call. = FALSE)
     }
@@ -55,116 +63,118 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   }
   has <- function(name) name %in% rest
   status <- 0L
-  tryCatch({
-    switch(verb,
-      login = {
-        if (has("--token")) {
-          i <- match("--token", rest)
-          tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-          if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
-          bricklayer_llm_login(token = tok)
-        } else {
-          bricklayer_llm_login(email = flag("--email"), code = flag("--code"),
-                               open_browser = !has("--no-browser") &&
-                                 interactive())
-        }
-        out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
-      },
-      logout = bricklayer_llm_logout(),
-      doctor = {
-        st <- bricklayer_llm_status()
-        for (i in seq_len(nrow(st))) {
-          out(sprintf("  %-20s %-16s %s\n", st$route[i], st$status[i],
-                      st$detail[i]))
-        }
-      },
-      models = {
-        if (is.null(.bl_hosted_base())) {
-          out("Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
-        } else if (is.null(.bl_hosted_key())) {
-          out("Hosted MORIE tier: not logged in -- rmoriebricklayer login\n")
-        } else {
-          hm <- bricklayer_llm_models()
-          if (!length(hm)) {
-            out(sprintf(paste0("Hosted MORIE tier (%s): logged in, gateway not reachable ",
-                            "(or the key was replaced by a newer sign-in: run rmoriebricklayer login again)\n"),
-                        .bl_hosted_base()))
+  tryCatch(
+    {
+      switch(verb,
+        login = {
+          if (has("--token")) {
+            i <- match("--token", rest)
+            tok <- if (i < length(rest)) rest[[i + 1L]] else ""
+            if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
+            bricklayer_llm_login(token = tok)
           } else {
-            out(sprintf("Hosted MORIE tier (%s); default marked *:\n", .bl_hosted_base()))
-            for (m in hm) out(sprintf("  %s %s\n", if (identical(m, attr(hm, "default"))) "*" else " ", m))
-            out("Pick one per call with `rmoriebricklayer ask --model NAME ...`, or set MORIE_HOSTED_MODEL.\n")
+            bricklayer_llm_login(
+              email = flag("--email"), code = flag("--code"),
+              open_browser = !has("--no-browser") &&
+                interactive()
+            )
           }
-        }
-      },
-      ask = {
-        mdl <- flag("--model")
-        if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
-        if (!length(rest) || identical(rest[[1L]], "--help")) {
-          out("usage: rmoriebricklayer ask [--model NAME] PROMPT...\n")
-        } else {
-          out(paste0(bricklayer_llm_ask(paste(rest, collapse = " "),
-                                        model = mdl), "\n"))
-        }
-      },
-      bundle = {
-        if (!length(rest)) {
-          stop("usage: rmoriebricklayer bundle REQUEST...", call. = FALSE)
-        }
-        out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
-      },
-      functions = {
-        tab <- .bl_function_index(if (length(rest)) rest[[1L]] else NULL)
-        if (!nrow(tab)) {
-          out("no exported function matches\n")
-        } else {
-          w <- max(nchar(tab$name))
-          for (i in seq_len(nrow(tab))) {
-            out(sprintf(paste0("  %-", w, "s  %s\n"), tab$name[i],
-                        tab$title[i]))
+          out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
+        },
+        logout = bricklayer_llm_logout(),
+        doctor = {
+          st <- bricklayer_llm_status()
+          for (i in seq_len(nrow(st))) {
+            out(sprintf(
+              "  %-20s %-16s %s\n", st$route[i], st$status[i],
+              st$detail[i]
+            ))
           }
-        }
-      },
-      describe = {
-        if (!length(rest)) {
-          stop("usage: rmoriebricklayer describe NAME", call. = FALSE)
-        }
-        out(.bl_describe(rest[[1L]]))
-      },
-      examples = {
-        if (!length(rest)) {
-          stop("usage: rmoriebricklayer examples NAME", call. = FALSE)
-        }
-        out(.bl_examples(rest[[1L]]))
-      },
-      version = out(sprintf("rmoriebricklayer %s\n", as.character(
-        utils::packageVersion("rmoriebricklayer")))),
-      help = ,
-      `--help` = ,
-      `-h` = out(paste0(
-        "usage: rmoriebricklayer <verb> [options]\n\n",
-        "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
-        "MORIE LLM tier\n",
-        "        [--code CODE] [--no-browser]\n",
-        "  logout                                    forget the hosted key\n",
-        "  doctor                                    language-model routes ",
-        "available here\n",
-        "  models                                    models the hosted tier ",
-        "offers your key\n",
-        "  ask [--model NAME] PROMPT...              ask the model\n",
-        "  bundle REQUEST...                         agent_bundle() from the ",
-        "shell\n",
-        "  functions [PATTERN]                       exported functions and ",
-        "their titles\n",
-        "  describe NAME                             help page of one ",
-        "function\n",
-        "  examples NAME                             its examples\n",
-        "  version                                   package version\n")),
-      stop(sprintf("unknown verb '%s' (try: rmoriebricklayer help)", verb),
-           call. = FALSE))
-  }, error = function(e) {
-    out(paste0("rmoriebricklayer: ", conditionMessage(e), "\n"))
-    status <<- 1L
-  })
+        },
+        models = .bl_cli_models(out),
+        ask = {
+          mdl <- flag("--model")
+          if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
+          if (!length(rest) || identical(rest[[1L]], "--help")) {
+            out("usage: rmoriebricklayer ask [--model NAME] PROMPT...\n")
+          } else {
+            prompt <- paste(rest, collapse = " ")
+            out(paste0(bricklayer_llm_ask(prompt, model = mdl), "\n"))
+          }
+        },
+        bundle = {
+          if (!length(rest)) {
+            stop("usage: rmoriebricklayer bundle REQUEST...", call. = FALSE)
+          }
+          out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
+        },
+        functions = {
+          tab <- .bl_function_index(if (length(rest)) rest[[1L]] else NULL)
+          if (!nrow(tab)) {
+            out("no exported function matches\n")
+          } else {
+            w <- max(nchar(tab$name))
+            for (i in seq_len(nrow(tab))) {
+              out(sprintf(
+                paste0("  %-", w, "s  %s\n"), tab$name[i],
+                tab$title[i]
+              ))
+            }
+          }
+        },
+        describe = {
+          if (!length(rest)) {
+            stop("usage: rmoriebricklayer describe NAME", call. = FALSE)
+          }
+          out(.bl_describe(rest[[1L]]))
+        },
+        examples = {
+          if (!length(rest)) {
+            stop("usage: rmoriebricklayer examples NAME", call. = FALSE)
+          }
+          out(.bl_examples(rest[[1L]]))
+        },
+        data = .bl_cli_data(rest, flag, out),
+        version = out(sprintf("rmoriebricklayer %s\n", as.character(
+          utils::packageVersion("rmoriebricklayer")
+        ))),
+        help = ,
+        `--help` = ,
+        `-h` = out(paste0(
+          "usage: rmoriebricklayer <verb> [options]\n\n",
+          "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
+          "MORIE LLM tier\n",
+          "        [--code CODE] [--no-browser]\n",
+          "  logout                                    forget the hosted key\n",
+          "  doctor                                    language-model routes ",
+          "available here\n",
+          "  models                                    models the hosted tier ",
+          "offers your key\n",
+          "  ask [--model NAME] PROMPT...              ask the model\n",
+          "  bundle REQUEST...                         agent_bundle() from ",
+          "the ",
+          "shell\n",
+          "  functions [PATTERN]                       exported functions and ",
+          "their titles\n",
+          "  describe NAME                             help page of one ",
+          "function\n",
+          "  examples NAME                             its examples\n",
+          "  data list                                 curated tables at ",
+          "data.rmorie.com\n",
+          "  data pull db/table [--out FILE.csv]       download one of them ",
+          "(your MORIE key)\n",
+          "  version                                   package version\n"
+        )),
+        stop(sprintf("unknown verb '%s' (try: rmoriebricklayer help)", verb),
+          call. = FALSE
+        )
+      )
+    },
+    error = function(e) {
+      out(paste0("rmoriebricklayer: ", conditionMessage(e), "\n"))
+      status <<- 1L
+    }
+  )
   invisible(status)
 }
 
@@ -174,7 +184,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # else the man/ directory of a source tree loaded with pkgload.
 .bl_rd_db <- function() {
   db <- tryCatch(tools::Rd_db("rmoriebricklayer"), error = function(e) NULL)
-  if (length(db)) return(db)
+  if (length(db)) {
+    return(db)
+  }
   man <- system.file("man", package = "rmoriebricklayer")
   if (nzchar(man)) {
     db <- tryCatch(tools::Rd_db(dir = dirname(man)), error = function(e) NULL)
@@ -193,7 +205,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 .bl_rd_for <- function(name) {
   for (rd in .bl_rd_db()) {
-    if (name %in% .bl_rd_aliases(rd)) return(rd)
+    if (name %in% .bl_rd_aliases(rd)) {
+      return(rd)
+    }
   }
   NULL
 }
@@ -202,7 +216,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # "Arguments:", "Examples:" when underlining is off.
 .bl_rd_text <- function(rd) {
   txt <- utils::capture.output(
-    tools::Rd2txt(rd, options = list(underline_titles = FALSE, width = 78)))
+    tools::Rd2txt(rd, options = list(underline_titles = FALSE, width = 78))
+  )
   txt
 }
 
@@ -218,7 +233,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     ti <- which(.bl_rd_tags(rd) == "\\title")
     if (length(ti)) {
       titles[hit] <- trimws(paste(as.character(unlist(rd[[ti[1L]]])),
-                                  collapse = ""))
+        collapse = ""
+      ))
     }
   }
   data.frame(name = ns, title = unname(titles), stringsAsFactors = FALSE)
@@ -226,7 +242,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 .bl_describe <- function(name) {
   rd <- .bl_rd_for(name)
-  if (is.null(rd)) return(sprintf("no help page for '%s'\n", name))
+  if (is.null(rd)) {
+    return(sprintf("no help page for '%s'\n", name))
+  }
   txt <- .bl_rd_text(rd)
   cut <- which(txt == "Examples:")
   if (length(cut)) txt <- txt[seq_len(cut[1L] - 1L)]
@@ -235,10 +253,14 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 .bl_examples <- function(name) {
   rd <- .bl_rd_for(name)
-  if (is.null(rd)) return(sprintf("no help page for '%s'\n", name))
+  if (is.null(rd)) {
+    return(sprintf("no help page for '%s'\n", name))
+  }
   txt <- .bl_rd_text(rd)
   start <- which(txt == "Examples:")
-  if (!length(start)) return(sprintf("'%s' has no examples\n", name))
+  if (!length(start)) {
+    return(sprintf("'%s' has no examples\n", name))
+  }
   paste0(paste(txt[-seq_len(start[1L])], collapse = "\n"), "\n")
 }
 
@@ -267,9 +289,13 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   if (.Platform$OS.type == "windows") {
     # nocov start -- the Windows wrapper; the coverage runner is Linux
     target <- file.path(dir, paste0(name, ".cmd"))
-    writeLines(paste0("@echo off\r\nRscript --vanilla -e ",
-                      "\"rmoriebricklayer::bricklayer_cli()\" --args %*"),
-               target)
+    writeLines(
+      paste0(
+        "@echo off\r\nRscript --vanilla -e ",
+        "\"rmoriebricklayer::bricklayer_cli()\" --args %*"
+      ),
+      target
+    )
     # nocov end
   } else {
     target <- file.path(dir, name)
@@ -282,7 +308,65 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     Sys.chmod(src, "0755")
   }
   on_path <- dir %in% strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1L]]
-  message(sprintf("Installed %s%s", target,
-                  if (on_path) "" else sprintf("; add %s to your PATH", dir)))
+  message(sprintf(
+    "Installed %s%s", target,
+    if (on_path) "" else sprintf("; add %s to your PATH", dir)
+  ))
   invisible(target)
+}
+
+# The models verb: the hosted tier's list for this key, default marked.
+.bl_cli_models <- function(out) {
+  if (is.null(.bl_hosted_base())) {
+    out("Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
+  } else if (is.null(.bl_hosted_key())) {
+    out("Hosted MORIE tier: not logged in -- rmoriebricklayer login\n")
+  } else {
+    hm <- bricklayer_llm_models()
+    if (!length(hm)) {
+      out(sprintf(
+        paste0(
+          "Hosted MORIE tier (%s): logged in, gateway not reachable ",
+          "(or the key was replaced by a newer sign-in: ",
+          "run rmoriebricklayer login again)\n"
+        ),
+        .bl_hosted_base()
+      ))
+    } else {
+      out(sprintf(
+        "Hosted MORIE tier (%s); default marked *:\n",
+        .bl_hosted_base()
+      ))
+      for (m in hm) {
+        mark <- if (identical(m, attr(hm, "default"))) "*" else " "
+        out(sprintf("  %s %s\n", mark, m))
+      }
+      out(paste0(
+        "Pick one per call with `rmoriebricklayer ask --model NAME ...`",
+        ", or set MORIE_HOSTED_MODEL.\n"
+      ))
+    }
+  }
+}
+
+# The data verb: the curated tables at data.rmorie.com.
+.bl_cli_data <- function(rest, flag, out) {
+  sub <- if (length(rest)) rest[[1L]] else "list"
+  if (identical(sub, "list")) {
+    tables <- bricklayer_data_tables()
+    tbl <- utils::capture.output(print(tables, row.names = FALSE))
+    out(paste0(paste(tbl, collapse = "\n"), "\n"))
+  } else if (identical(sub, "pull") && length(rest) >= 2L) {
+    df <- bricklayer_data_load(rest[[2L]])
+    dest <- flag("--out") %||%
+      paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
+    utils::write.csv(df, dest, row.names = FALSE)
+    out(sprintf("wrote %s  (%d rows, %d cols)\n", dest, nrow(df), ncol(df)))
+  } else {
+    out(paste0(
+      "usage: rmoriebricklayer data list | ",
+      "data pull db/table [--out FILE.csv]\n"
+    ))
+  }
+  invisible(NULL)
 }

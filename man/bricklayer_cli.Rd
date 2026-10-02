@@ -26,7 +26,10 @@ you paste with \code{--token} (prompts when KEY is omitted)}
 \item{\code{doctor}}{report the language-model routes available here}
 \item{\code{models}}{list the models the hosted tier offers your key
 (default marked)}
-\item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model (or the named one) and print the
+\item{\code{data list}}{the curated tables at data.rmorie.com}
+\item{\code{data pull db/table}}{download one table as CSV}
+\item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model
+(or the named one) and print the
 reply}
 \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 shell}
