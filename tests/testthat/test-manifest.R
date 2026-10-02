@@ -67,3 +67,14 @@ test_that("write_summary_txt includes what-was-done, contact and licence blocks"
   expect_true(any(grepl("Contact: maintainer@example.org", txt, fixed = TRUE)))
   expect_true(any(grepl("Licence: AGPL-3.0-or-later", txt, fixed = TRUE)))
 })
+
+test_that("write_summary_txt labels a synthetic run as a pipeline check", {
+  m <- make_manifest(list(study = "synthetic-run", synthetic = TRUE))
+  capture.output(m <- record(m, "a", observed = 1, expected = 1))
+  out_dir <- file.path(tempdir(), "brick-summary-synth")
+  dir.create(out_dir, showWarnings = FALSE)
+  capture.output(write_summary_txt(m, out_dir, paths = list(capsule = out_dir)))
+  files <- list.files(out_dir, pattern = "\\.txt$", full.names = TRUE)
+  txt <- paste(readLines(files[1], warn = FALSE), collapse = "\n")
+  expect_match(txt, "SYNTHETIC")
+})

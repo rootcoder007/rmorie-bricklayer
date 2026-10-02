@@ -276,3 +276,33 @@ test_that("resolve_via_arcgis returns a paged GeoJSON query URL, trimming slashe
   )
   expect_null(resolve_via_arcgis(prov))
 })
+
+test_that("the CKAN resolvers return NULL for an empty endpoint, a failed call and no match", {
+  skip_if_cannot_mock()
+  prov <- list(dataset = list(ckan_api_endpoint = ""), resource = list(name_match_pattern = "x"))
+  expect_null(resolve_via_ckan(prov))
+  prov$dataset$ckan_api_endpoint <- "https://portal/api/3/action/package_show?id=x"
+  testthat::with_mocked_bindings(
+    .rmbl_read_json = function(...) list(success = FALSE),
+    expect_null(resolve_via_ckan(prov))
+  )
+  expect_null(resolve_via_ckan_search(list(dataset = prov$dataset, resource = list(name_match_pattern = ""))))
+  testthat::with_mocked_bindings(
+    .rmbl_read_json = function(...) NULL,
+    expect_null(resolve_via_ckan_search(list(dataset = prov$dataset, resource = list(search_query = "libraries"))))
+  )
+  testthat::with_mocked_bindings(
+    .rmbl_read_json = function(...) {
+      list(result = list(results = list(list(resources = list(list(name = "other", format = "CSV", url = "u"))))))
+    },
+    expect_null(resolve_via_ckan_search(list(
+      dataset = prov$dataset, resource = list(search_query = "libraries", name_match_pattern = "stats")
+    )))
+  )
+})
+
+test_that("numeric range checks skip non-numeric and all-missing columns", {
+  prov <- list(schema = list(numeric_ranges = list(a = c(min = 0, max = 1), b = c(min = 0, max = 1))))
+  df <- data.frame(a = c("x", "y"), b = c(NA_real_, NA_real_), stringsAsFactors = FALSE)
+  expect_length(validate_schema(df, prov), 0)
+})

@@ -8,6 +8,10 @@
   `friendly_download()` and the data hub. `options(morie.quiet = TRUE)`
   silences it.
 
+* `cert_chain_verify()` and `timestamp_verify()` verify SHA-384 signatures
+  (ECDSA-SHA384, RSA-SHA384): the digest was computed natively but never
+  routed to the verifier, so such chains stopped with an error.
+
 ## Curated datasets at data.rmorie.com
 
 * `bricklayer_data_manifest()`, `bricklayer_data_tables()` and

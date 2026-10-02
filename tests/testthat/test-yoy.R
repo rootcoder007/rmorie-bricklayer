@@ -639,3 +639,13 @@ test_that("a label changes the printing and nothing else", {
   gl <- as.data.frame(yoy_label(g, fiscal_year_label))
   expect_equal(gl$period_label, fiscal_year_label(gl$y))
 })
+
+test_that("the period helpers restore every key class and refuse a grid with no step", {
+  expect_identical(.yoy_restore(c("b", "a"), factor(c("a", "b"))), factor(c("b", "a"), levels = c("a", "b")))
+  expect_identical(.yoy_restore(c("TRUE", "FALSE"), TRUE), c(TRUE, FALSE))
+  expect_identical(.yoy_restore("x", "x"), "x")
+  expect_true(is.na(.yoy_gcd(numeric(0))))
+  expect_null(.yoy_period_grid(c(1, Inf)))
+  expect_null(.yoy_period_grid(as.Date(c(0, Inf), origin = "1970-01-01")))
+  expect_identical(.yoy_previous(c(1, Inf), c(1, 2), 1L), c(NA_real_, NA_real_))
+})

@@ -174,3 +174,39 @@ test_that("region_map_from_points returns NULL rather than failing without sf", 
     fields = "CDUID"
   ))
 })
+
+test_that("the region helpers refuse empty units, non-frames and missing columns", {
+  expect_error(.rmbl_rm_chr(character(0), "unit"), "must not be empty")
+  expect_error(region_map_integrity("not a frame", "inst", "cd"), "must be a data frame")
+  pub <- data.frame(
+    inst = c("North", "South"), cd = c("3557", "3520"),
+    stringsAsFactors = FALSE
+  )
+  expect_error(region_map_compare(pub, pub, "inst", cols = "nope"), "missing: nope")
+  obs <- rbind(pub, data.frame(inst = "East", cd = "3599", stringsAsFactors = FALSE))
+  rows <- region_map_compare(pub, obs, "inst")
+  rows <- rows[rows$column == "rows", ]
+  expect_match(rows$first, "recomputed only: East")
+  expect_error(region_map_second_route(pub, "inst", "cd", c("3557", "3599")), "named by unit")
+})
+
+test_that("region_map_from_points assigns points to the polygons that contain them", {
+  skip_if_not_installed("sf")
+  square <- function(x0) sf::st_polygon(list(rbind(c(x0, 0), c(x0 + 1, 0), c(x0 + 1, 1), c(x0, 1), c(x0, 0))))
+  poly <- sf::st_sf(CDUID = c("3520", "3521"), geometry = sf::st_sfc(square(0), square(1), crs = 4326))
+  bf <- tempfile(fileext = ".geojson")
+  sf::st_write(poly, bf, quiet = TRUE)
+  out <- region_map_from_points(
+    x = c(0.5, 1.5, 5), y = c(0.5, 0.5, 5), unit = c("A", "B", "C"),
+    boundaries = bf, fields = "CDUID"
+  )
+  expect_identical(out$unit, c("A", "B", "C"))
+  expect_identical(out$CDUID, c("3520", "3521", NA))
+  expect_identical(out$n_regions, c(1L, 1L, 0L))
+  expect_error(region_map_from_points(1, 1:2, "A", bf, "CDUID"), "same length")
+  expect_error(region_map_from_points(NA, 1, "A", bf, "CDUID"), "must be complete")
+  expect_error(region_map_from_points(1, 1, "A", bf, "NOPE"), "no column")
+  # without sf the answer is NULL, as it is when the boundary file is missing
+  testthat::local_mocked_bindings(requireNamespace = function(...) FALSE, .package = "base")
+  expect_null(region_map_from_points(1, 1, "A", bf, "CDUID"))
+})

@@ -404,3 +404,17 @@ test_that("the reader is chosen once, not re-decided per number", {
   expect_false(is.null(cache$strtod))
   expect_true(isTRUE(cache$strtod))
 })
+
+test_that("a hash-based attestation carries its context, and a damaged key is reported", {
+  m <- make_manifest(list(a = 1), environment = FALSE)
+  key <- pqc_keygen(height = 4L)
+  att <- capsule_attest(m, key, context = "release")
+  expect_identical(att$context, "release")
+  expect_true(capsule_check_attestation(att, m)$ok)
+  bad <- att
+  bad$public <- substring(att$public, 1L, 100L)
+  res <- capsule_check_attestation(bad, m)
+  expect_false(res$ok)
+  expect_match(res$checks$detail[res$checks$check == "signature"], "not usable")
+  expect_error(.rmbl_attest_key_from(bad), "64 bytes")
+})

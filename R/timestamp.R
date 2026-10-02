@@ -382,6 +382,7 @@ print.bricklayer_timestamp <- function(x, ...) {
 .rmbl_ts_digest <- function(alg, bytes) {
   switch(alg,
     sha256 = .rmbl_hex_to_raw(core_sha256(bytes)),
+    sha384 = .Call(C_rmbl_sha384, bytes),
     sha512 = .rmbl_hex_to_raw(core_sha512(bytes)),
     stop(sprintf("digest %s is not available here", alg),
       call. = FALSE
