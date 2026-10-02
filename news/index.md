@@ -2,6 +2,12 @@
 
 ## rmoriebricklayer 0.5.4
 
+- The hosted tier lists Cloudflare Workers AI models (gpt-oss-120b:cf,
+  gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf
+  and gemma-4-26b:cf) beside the ollama.com ones, and falls back to them
+  when a cloud model is rate limited;
+  `rmoriebricklayer ask --model gpt-oss-120b:cf` picks one.
+
 - The `rmoriebricklayer` launcher works under R 4.6, which keeps
   `--args` in
   [`commandArgs()`](https://rdrr.io/r/base/commandArgs.html);

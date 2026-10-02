@@ -432,7 +432,7 @@ bricklayer_llm_login(token = "sk-...")                    # paste a key
 bricklayer_llm_status()      # base URL, whether a key is stored, the default model
 bricklayer_llm_models()      # the models your key can use; attr(, "default")
 bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
-bricklayer_llm_ask("Same question, another model.", model = "deepseek-v4-pro")
+bricklayer_llm_ask("Same question, another model.", model = "gpt-oss-120b:cf")
 bricklayer_llm_logout()      # forget the key
 ```
 
@@ -441,6 +441,11 @@ lists the hosted tier only; a local Ollama server is not consulted here.
 `MORIE_HOSTED_KEY` in the environment overrides the stored key, and
 `MORIE_HOSTED_BASE_URL` points the package at another gateway (set it to
 `off` to disable the hosted tier).
+
+The tier serves ollama.com cloud models and Cloudflare Workers AI models
+(gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf,
+nemotron-3-120b:cf and gemma-4-26b:cf); when a cloud model is rate
+limited or down the gateway answers from Workers AI.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
