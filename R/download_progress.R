@@ -104,7 +104,8 @@ bricklayer_download <- function(url, dest, headers = NULL,
     if (quiet) next
     if (tty) {
       now <- proc.time()[["elapsed"]]
-      if (spin > 0L && now - last < 0.1) next  # the first chunk draws at once, then ten frames a second
+      # the first chunk draws at once, then ten frames a second
+      if (spin > 0L && now - last < 0.1) next
       last <- now
       spin <- spin + 1L
       line <- .bl_dl_line(label, got, size, t0, spin)
