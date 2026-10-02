@@ -161,3 +161,8 @@ test_that("digest_object fingerprints arbitrary objects stably", {
   expect_match(digest_object(NULL), "^[0-9a-f]{64}$")
   expect_error(digest_object(1, algo = "md5"))
 })
+
+test_that("core_blake2b keeps a missing input missing", {
+  expect_identical(core_blake2b(c("abc", NA)), c(core_blake2b("abc"), NA_character_))
+  expect_identical(core_blake2b(NA_character_), NA_character_)
+})

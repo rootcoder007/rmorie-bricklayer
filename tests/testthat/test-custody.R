@@ -227,3 +227,7 @@ test_that("the measures hold together on a period that is not a year", {
   l <- sf$alos_change[2] / 100
   expect_equal((1 + p) * (1 + l) - 1, sf$days_change[2] / 100)
 })
+
+test_that("period_days refuses a missing date", {
+  expect_error(period_days(NA_character_, "2020-01-02"), "must be dates")
+})

@@ -187,3 +187,9 @@ test_that("the rule library composes into one gate", {
   expect_gt(length(c(validate_schema(dirty, list(schema = sch)),
                      validate_rules(dirty, rules))), 3L)
 })
+
+test_that("rule_within_n_mads lets a missing value through only when asked", {
+  d <- data.frame(v = c(1, 1.1, 0.9, 1.05, NA))
+  expect_length(validate_rules(d, rule_within_n_mads("v")), 0L)
+  expect_length(validate_rules(d, rule_within_n_mads("v", na_pass = FALSE)), 1L)
+})

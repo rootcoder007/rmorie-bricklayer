@@ -38,3 +38,15 @@ test_that("trend_test scales to thousands of periods, refuses absurd sizes", {
   expect_true(is.finite(r$slope_lower) && is.finite(r$slope_upper))
   expect_error(trend_test(seq_len(20001)), "20001")
 })
+
+test_that("step_change leaves the session's random state as it found it, present or not", {
+  y <- c(1, 1.2, 0.9, 1.1, 1, 0.8, 5, 5.1, 4.9, 5.2, 5, 4.8)
+  suppressWarnings(rm(".Random.seed", envir = globalenv()))
+  r <- step_change(y, n_perm = 50L, seed = 3L)
+  expect_identical(r$index, 6L)
+  expect_false(exists(".Random.seed", envir = globalenv()))
+  set.seed(11)
+  before <- get(".Random.seed", envir = globalenv())
+  step_change(y, n_perm = 50L, seed = 3L)
+  expect_identical(get(".Random.seed", envir = globalenv()), before)
+})

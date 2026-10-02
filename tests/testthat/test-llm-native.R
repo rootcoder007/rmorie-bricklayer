@@ -564,3 +564,20 @@ test_that("the Rd database falls back to the man directory and install_cli copie
   }
   unlink(dir, recursive = TRUE)
 })
+
+test_that("the status says when the tier is off, and an explicit model reaches the gateway", {
+  .sandbox()
+  withr::local_envvar(MORIE_HOSTED_BASE_URL = "off")
+  st <- bricklayer_llm_status()
+  expect_identical(st$status[1], "disabled")
+  expect_identical(st$detail[1], "MORIE_HOSTED_BASE_URL=off")
+
+  withr::local_envvar(MORIE_HOSTED_BASE_URL = "https://gw.example", MORIE_HOSTED_KEY = "sk-test")
+  seen <- NULL
+  testthat::local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
+    seen <<- payload
+    list(status = 200L, json = list(choices = list(list(message = list(content = "pong")))))
+  })
+  expect_identical(bricklayer_llm_ask("ping", model = "custom-model"), "pong")
+  expect_identical(seen$model, "custom-model")
+})
