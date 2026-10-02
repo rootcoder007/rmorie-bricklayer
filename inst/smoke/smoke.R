@@ -9,11 +9,25 @@ if (nzchar(key)) Sys.setenv(MORIE_HOSTED_KEY = key) else Sys.unsetenv("MORIE_HOS
 options(timeout = 600)
 run <- function(...) { buf <- character(); st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
 check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
+# the hosted tier answers 429 when every runner of every package asks at once on the shared key: wait and ask once more
+run_llm <- function(...) {
+  r <- run(...)
+  if (r$status != 0 && grepl("429", r$text, fixed = TRUE)) { Sys.sleep(45); r <- run(...) }
+  r
+}
 cases <- list(
   version = function() { r <- run("version"); check(r$status == 0 && grepl("rmoriebricklayer", r$text), r$text) },
   doctor = function() { r <- run("doctor"); check(r$status == 0 && nzchar(r$text), r$text) },
-  models = function() { r <- run("models"); check(r$status == 0, r$text) },
-  ask = function() { r <- run("ask", "hello"); check(r$status == 0, r$text) },
+  models = function() {
+    r <- run("models"); check(r$status == 0, r$text)
+    # the gateway serves Cloudflare Workers AI models beside the ollama.com ones
+    if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no Workers AI model listed:", r$text))
+  },
+  ask = function() { r <- run_llm("ask", "hello"); check(r$status == 0, r$text) },
+  ask_workers_ai = function() {
+    r <- run_llm("ask", "--model", "gpt-oss-120b:cf", "Reply with the single word pong.")
+    check(r$status == 0 && nzchar(trimws(r$text)), r$text)
+  },
   launcher = function() {
     # what inst/bin/rmoriebricklayer does under R 4.6 (which keeps "--args" in commandArgs)
     load <- if (nzchar(tree)) sprintf("pkgload::load_all(%s, quiet = TRUE)", shQuote(tree)) else "library(rmoriebricklayer)"
