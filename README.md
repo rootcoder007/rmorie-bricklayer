@@ -327,9 +327,10 @@ library(rmoriebricklayer)
 
 # Sign in once. The device flow prints a link and a code to confirm in a
 # browser; the email flow mails the code; a key you already hold can be
-# pasted. The key is saved under ~/.config/rmorie and is shared with rmorie.
-bricklayer_llm_login()                                   # device flow
-bricklayer_llm_login(email = "you@example.org")           # mailed code, then
+# pasted. The key is saved in ~/.config/morie/credentials.json, shared with
+# rmorie and the Python package morie.
+bricklayer_llm_login()                                   # with a GitHub account (device flow)
+bricklayer_llm_login(email = "you@example.org")           # no GitHub account: a code is emailed, then
 bricklayer_llm_login(email = "you@example.org", code = "123456")
 bricklayer_llm_login(token = "sk-...")                    # paste a key
 
@@ -361,7 +362,17 @@ rmoriebricklayer login --no-browser             # server / SSH: prints a link + 
 rmoriebricklayer models                         # what you can ask, default marked
 rmoriebricklayer ask --model NAME "your question"
 rmoriebricklayer doctor                         # which routes answer from this machine
-rmbl doctor                                     # rmbl is the same command, short form
+```
+
+`rmbl` is the same command under a short name; every verb works under either:
+
+```sh
+rmbl login                                      # GitHub
+rmbl login --email you@example.com              # no GitHub account: type the emailed code at the prompt
+rmbl login --no-browser                         # server / SSH
+rmbl models
+rmbl ask "your question"
+rmbl doctor
 ```
 
 ## Part of the MORIE family
