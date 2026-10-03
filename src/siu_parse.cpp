@@ -295,7 +295,7 @@ std::string to_iso_date(const std::string& human) {
         {"september", 9}, {"october", 10}, {"november", 11}, {"december", 12},
         {"janvier", 1}, {"f\xc3\xa9vrier", 2}, {"fevrier", 2}, {"mars", 3}, {"avril", 4},
         {"mai", 5}, {"juin", 6}, {"juillet", 7}, {"ao\xc3\xbbt", 8}, {"aout", 8},
-        {"septembre", 9}, {"octobre", 10}, {"novembre", 11}, {"d\xc3\xa9cembre", 12}, {"decembre", 12}};
+        {"septembre", 9}, {"octobre", 10}, {"novembre", 11}, {"d\xc3\xa9" "cembre", 12}, {"decembre", 12}};
     // "January 5, 2023" / "January 5 2023" (month first) or "5 janvier 2023" / "3 ao\xc3\xbbt 2017" (day first)
     static const std::regex pat(R"(([^\s\d,]+)\s+(\d{1,2})(?:er|e)?,?\s+(\d{4}))");
     static const std::regex pat_fr(R"((\d{1,2})(?:er|e)?\s+([^\s\d,]+)\s+(\d{4}))");
