@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -254,11 +254,12 @@
 <p><code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> lists the hosted tier only; a local Ollama server is not consulted here. <code>MORIE_HOSTED_KEY</code> in the environment overrides the stored key, and <code>MORIE_HOSTED_BASE_URL</code> points the package at another gateway (set it to <code>off</code> to disable the hosted tier).</p>
 <p>The tier serves AI cloud models via ollama and Cloudflare (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf).</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer</span></span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: login --email ADDRESS, login --token</span></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># what you can ask, default marked</span></span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span></code></pre></div>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">rmbl</span> doctor                                     <span class="co"># rmbl is the same command, short form</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>

@@ -11,7 +11,7 @@ and carries an exact interval for count data."><meta name="google-site-verificat
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ and carries an exact interval for count data.</p>
 <span>  <span class="va">period</span>,</span>
 <span>  by <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lag <span class="op">=</span> <span class="fl">1L</span>,</span>
-<span>  fun <span class="op">=</span> <span class="va">sum</span>,</span>
+<span>  fun <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"count"</span>, <span class="st">"continuous"</span>, <span class="st">"percent"</span><span class="op">)</span>,</span>
 <span>  min_base <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conf_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
@@ -124,7 +124,9 @@ year earlier.</p></dd>
 
 
 <dt id="arg-fun">fun<a class="anchor" aria-label="anchor" href="#arg-fun"></a></dt>
-<dd><p>Aggregation applied to <code>value</code> within a
+<dd><p>How several rows of one period are combined: <code>NULL</code> (the default)
+sums counts and averages continuous values and percentages; pass a
+function to choose.
 period and group, when there is more than one row. Default
 <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, which is what a count needs.</p></dd>
 

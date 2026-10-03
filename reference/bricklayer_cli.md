@@ -83,9 +83,9 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.4
+#> rmoriebricklayer 0.5.5
 bricklayer_cli("help")
-#> usage: rmoriebricklayer <verb> [options]
+#> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command)
 #> 
 #>   login [--email ADDRESS] [--token [KEY]]   sign in to the hosted MORIE LLM tier
 #>         [--code CODE] [--no-browser]

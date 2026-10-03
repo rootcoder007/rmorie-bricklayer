@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,8 +45,13 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.5" id="rmoriebricklayer-055">rmoriebricklayer 0.5.5<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-055"></a></h2>
+<ul><li>The command line answers to <code>rmbl</code> as well as <code>rmoriebricklayer</code>: <code><a href="../reference/install_cli.html">install_cli()</a></code> writes both launchers, pinned to the library they were installed from with <code><a href="https://rdrr.io/r/base/libPaths.html" class="external-link">.libPaths()</a></code> inside R (an <code>R_LIBS</code> in the shell or <code>~/.Renviron</code> cannot swap in another copy) and without the explicit <code>--args</code> that made R 4.6 report “unknown verb ‘–args’”; <code>login --help</code> prints the usage instead of starting the sign-in.</li>
+<li>Fixes from the 1.4.0 stress test of the family: <code><a href="../reference/friendly_download.html">friendly_download()</a></code> no longer fails inside its own Wayback fallback when the snapshot lookup returns nothing usable, and names a cause for an error it does not recognise; <code><a href="../reference/wayback_snapshot_url.html">wayback_snapshot_url()</a></code> returns <code>NULL</code> for a malformed answer; <code><a href="../reference/yoy.html">yoy()</a></code> averages several rows of one period for continuous values and percentages (counts still add up; pass <code>fun</code> to choose); <code><a href="../reference/report_analysis.html">report_analysis()</a></code> renders a percent analysis (its changes are percentage points); the SIU parser reads French dates (“3 ao0fbt 2017”) and decodes accented named entities (<code>&amp;ccedil;</code>, <code>&amp;eacute;</code>, …) and every numeric entity.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.4" id="rmoriebricklayer-054">rmoriebricklayer 0.5.4<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-054"></a></h2>
-<ul><li><p>The hosted tier lists Cloudflare Workers AI models (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf) beside the ollama.com ones, and falls back to them when a cloud model is rate limited; <code>rmoriebricklayer ask --model gpt-oss-120b:cf</code> picks one.</p></li>
+<ul><li><p>The hosted tier lists additional AI models (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf) beside the ollama.com ones, and falls back to them when a cloud model is rate limited; <code>rmoriebricklayer ask --model gpt-oss-120b:cf</code> picks one.</p></li>
 <li><p>The <code>rmoriebricklayer</code> launcher works under R 4.6, which keeps <code>--args</code> in <code><a href="https://rdrr.io/r/base/commandArgs.html" class="external-link">commandArgs()</a></code>; <code><a href="../reference/friendly_download.html">friendly_download()</a></code> goes through <code><a href="../reference/bricklayer_download.html">bricklayer_download()</a></code>.</p></li>
 <li><p><code><a href="../reference/bricklayer_download.html">bricklayer_download()</a></code>: one download routine with a live progress bar (percent, size, rate) on a terminal and milestone lines in a log, used by <code><a href="../reference/friendly_download.html">friendly_download()</a></code> and the data hub. <code>options(morie.quiet = TRUE)</code> silences it.</p></li>
 <li><p><code><a href="../reference/cert_chain_verify.html">cert_chain_verify()</a></code> and <code><a href="../reference/timestamp_verify.html">timestamp_verify()</a></code> verify SHA-384 signatures (ECDSA-SHA384, RSA-SHA384): the digest was computed natively but never routed to the verifier, so such chains stopped with an error.</p></li>

@@ -16,7 +16,7 @@ yoy(
   period,
   by = NULL,
   lag = 1L,
-  fun = sum,
+  fun = NULL,
   units = c("count", "continuous", "percent"),
   min_base = NULL,
   conf_level = 0.95,
@@ -72,8 +72,9 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - fun:
 
-  Aggregation applied to `value` within a period and group, when there
-  is more than one row. Default
+  How several rows of one period are combined: `NULL` (the default) sums
+  counts and averages continuous values and percentages; pass a function
+  to choose. period and group, when there is more than one row. Default
   [`sum()`](https://rdrr.io/r/base/sum.html), which is what a count
   needs.
 

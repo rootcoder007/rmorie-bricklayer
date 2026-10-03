@@ -1,8 +1,33 @@
 # Changelog
 
+## rmoriebricklayer 0.5.5
+
+- The command line answers to `rmbl` as well as `rmoriebricklayer`:
+  [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  writes both launchers, pinned to the library they were installed from
+  with [`.libPaths()`](https://rdrr.io/r/base/libPaths.html) inside R
+  (an `R_LIBS` in the shell or `~/.Renviron` cannot swap in another
+  copy) and without the explicit `--args` that made R 4.6 report
+  “unknown verb ‘–args’”; `login --help` prints the usage instead of
+  starting the sign-in.
+- Fixes from the 1.4.0 stress test of the family:
+  [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+  no longer fails inside its own Wayback fallback when the snapshot
+  lookup returns nothing usable, and names a cause for an error it does
+  not recognise;
+  [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md)
+  returns `NULL` for a malformed answer;
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  averages several rows of one period for continuous values and
+  percentages (counts still add up; pass `fun` to choose);
+  [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  renders a percent analysis (its changes are percentage points); the
+  SIU parser reads French dates (“3 ao0fbt 2017”) and decodes accented
+  named entities (`&ccedil;`, `&eacute;`, …) and every numeric entity.
+
 ## rmoriebricklayer 0.5.4
 
-- The hosted tier lists Cloudflare Workers AI models (kimi-k2.6:cf,
+- The hosted tier lists additional AI models (kimi-k2.6:cf,
   kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf,
   glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf,
   gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf
