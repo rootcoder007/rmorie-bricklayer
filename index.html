@@ -240,9 +240,10 @@
 <span></span>
 <span><span class="co"># Sign in once. The device flow prints a link and a code to confirm in a</span></span>
 <span><span class="co"># browser; the email flow mails the code; a key you already hold can be</span></span>
-<span><span class="co"># pasted. The key is saved under ~/.config/rmorie and is shared with rmorie.</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>                                   <span class="co"># device flow</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span><span class="op">)</span>           <span class="co"># mailed code, then</span></span>
+<span><span class="co"># pasted. The key is saved in ~/.config/morie/credentials.json, shared with</span></span>
+<span><span class="co"># rmorie and the Python package morie.</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>                                   <span class="co"># with a GitHub account (device flow)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span><span class="op">)</span>           <span class="co"># no GitHub account: a code is emailed, then</span></span>
 <span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span>, code <span class="op">=</span> <span class="st">"123456"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span>                    <span class="co"># paste a key</span></span>
 <span></span>
@@ -255,12 +256,21 @@
 <p>The tier serves AI cloud models via ollama and Cloudflare (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf).</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: login --email ADDRESS, login --token</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># what you can ask, default marked</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="ex">rmbl</span> doctor                                     <span class="co"># rmbl is the same command, short form</span></span></code></pre></div>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># with a GitHub account</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># no GitHub account: a code is emailed, type it at the prompt</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># paste a key you already have</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># what you can ask, default marked</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span></code></pre></div>
+<p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">rmbl</span> login                                      <span class="co"># GitHub</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--email</span> you@example.com              <span class="co"># no GitHub account: type the emailed code at the prompt</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--no-browser</span>                         <span class="co"># server / SSH</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">rmbl</span> models</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>
@@ -275,12 +285,12 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> <a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link uri">https://github.com/rootcoder007/rmorie-bricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">
