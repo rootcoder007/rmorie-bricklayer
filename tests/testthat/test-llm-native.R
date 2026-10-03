@@ -596,6 +596,13 @@ test_that("install_cli() writes both launchers, pinned with .libPaths() and with
     expect_false(grepl("--vanilla", txt, fixed = TRUE))
     expect_true(file.access(p, 1L) == 0L)
   }
+  # a second install replaces the launchers it finds, links included
+  file.remove(paths[[2L]])
+  file.symlink(paths[[1L]], paths[[2L]])
+  suppressMessages(install_cli(dir = d))
+  expect_true(is.na(Sys.readlink(paths[[2L]])) || !nzchar(Sys.readlink(paths[[2L]])))
+  expect_match(paste(readLines(paths[[2L]]), collapse = "\n"),
+               "# rmbl: the rmoriebricklayer command line", fixed = TRUE)
 })
 
 test_that("login --help prints the usage and the usage names rmbl", {

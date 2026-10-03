@@ -289,13 +289,19 @@ std::string detect_language(const std::string& text) {
 
 std::string to_iso_date(const std::string& human) {
     // English and French month names (the SIU publishes both); accents are kept as UTF-8
-    static const std::map<std::string, int> kMonths = {
-        {"january", 1}, {"february", 2}, {"march", 3},    {"april", 4},
-        {"may", 5},     {"june", 6},     {"july", 7},     {"august", 8},
-        {"september", 9}, {"october", 10}, {"november", 11}, {"december", 12},
-        {"janvier", 1}, {"f\xc3\xa9vrier", 2}, {"fevrier", 2}, {"mars", 3}, {"avril", 4},
-        {"mai", 5}, {"juin", 6}, {"juillet", 7}, {"ao\xc3\xbbt", 8}, {"aout", 8},
-        {"septembre", 9}, {"octobre", 10}, {"novembre", 11}, {"d\xc3\xa9" "cembre", 12}, {"decembre", 12}};
+    // a data table (no code per line), loaded into the map once
+    static const char* const kNames[] = {
+        "january", "february", "march", "april", "may", "june", "july", "august",
+        "september", "october", "november", "december",
+        "janvier", "f\xc3\xa9vrier", "fevrier", "mars", "avril", "mai", "juin", "juillet",
+        "ao\xc3\xbbt", "aout", "septembre", "octobre", "novembre", "d\xc3\xa9" "cembre", "decembre"};
+    static const int kNums[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+                                1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 12};
+    static const std::map<std::string, int> kMonths = [] {
+        std::map<std::string, int> m;
+        for (size_t i = 0; i < sizeof(kNums) / sizeof(kNums[0]); ++i) m[kNames[i]] = kNums[i];
+        return m;
+    }();
     // "January 5, 2023" / "January 5 2023" (month first) or "5 janvier 2023" / "3 ao\xc3\xbbt 2017" (day first)
     static const std::regex pat(R"(([^\s\d,]+)\s+(\d{1,2})(?:er|e)?,?\s+(\d{4}))");
     static const std::regex pat_fr(R"((\d{1,2})(?:er|e)?\s+([^\s\d,]+)\s+(\d{4}))");

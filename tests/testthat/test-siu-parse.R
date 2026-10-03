@@ -126,4 +126,14 @@ test_that("French dates and accented entities parse", {
   expect_equal(bricklayer_siu_iso_date("no date here"), "")
   txt <- bricklayer_siu_text("<p>Director&#039;s report &ndash; Qu&eacute;bec, fran&ccedil;ais &#x00e9;t&#233;</p>")
   expect_equal(trimws(txt), "Director's report - Québec, français été")
+  # every French month, and numeric entities that need three and four UTF-8 bytes
+  fr <- c("janvier", "février", "fevrier", "mars", "avril", "mai", "juin", "juillet", "août", "aout",
+          "septembre", "octobre", "novembre", "décembre", "decembre")
+  mo <- c(1, 2, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 12)
+  for (i in seq_along(fr)) {
+    expect_equal(bricklayer_siu_iso_date(paste("5", fr[i], "2021")), sprintf("2021-%02d-05", mo[i]))
+  }
+  # the curly apostrophe folds to a straight one, as the SIU fields expect
+  txt <- bricklayer_siu_text("<p>Director&#8217;s &#x20AC;5 &#128512;</p>")
+  expect_equal(trimws(txt), "Director's \u20ac5 \U0001F600")
 })
