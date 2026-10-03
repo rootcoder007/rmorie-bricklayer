@@ -2,6 +2,13 @@
 
 ## rmoriebricklayer 0.5.5
 
+- The SIU parser reads ordinal dates (“August 3rd, 2017”) as well as
+  French months, and names the police service from the sentence that
+  notified the SIU, so legislation such as the Police Services Act no
+  longer outvotes the force (17-OVI-201 reads Guelph Police Service,
+  2017-08-03). `data --help` exits 0 like every other help, and
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+  refuses an empty URL or path in words.
 - The command line answers to `rmbl` as well as `rmoriebricklayer`:
   [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
   writes both launchers, pinned to the library they were installed from

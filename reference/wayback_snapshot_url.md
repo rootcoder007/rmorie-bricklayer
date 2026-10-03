@@ -34,6 +34,6 @@ A character scalar snapshot URL, or `NULL`.
 ``` r
 # \donttest{
 wayback_snapshot_url("https://www.r-project.org/")
-#> [1] "https://web.archive.org/web/20261002111814/https://www.r-project.org/"
+#> NULL
 # }
 ```

@@ -42,7 +42,7 @@ Invisibly, one of `"live"`, `"wayback"`, or throws on total failure.
 ``` r
 # Inputs are validated before any network access:
 try(bricklayer_fetch("", tempfile()))          # empty url -> error
-#> Error in bricklayer_fetch("", tempfile()) : nzchar(url) is not TRUE
+#> Error : `url` must be one non-empty URL string
 
 # \donttest{
 # Downloads from the live web service; try() keeps the example graceful
