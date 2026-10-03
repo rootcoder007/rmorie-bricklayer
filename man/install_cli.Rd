@@ -6,22 +6,24 @@
 \usage{
 install_cli(
   dir = file.path(path.expand("~"), ".local", "bin"),
-  name = "rmoriebricklayer"
+  name = c("rmoriebricklayer", "rmbl")
 )
 }
 \arguments{
 \item{dir}{Target directory (default \code{~/.local/bin}; created if
 absent).}
 
-\item{name}{Command name (default \code{rmoriebricklayer}).}
+\item{name}{Command names to install (default both \code{rmoriebricklayer}
+and its short form \code{rmbl}; every verb works under either).}
 }
 \value{
-The path of the installed launcher, invisibly.
+The path of the installed \code{rmoriebricklayer} launcher,
+invisibly (\code{rmbl} is written beside it).
 }
 \description{
 Links the launcher shipped in the package (\code{inst/bin/rmoriebricklayer})
 into a directory on your PATH so that \code{rmoriebricklayer login},
-\code{rmoriebricklayer ask ...} and the other verbs of
+\code{rmbl ask ...} and the other verbs of
 \code{\link{bricklayer_cli}} work from any shell. On Windows a
 \code{rmoriebricklayer.cmd} wrapper is written instead of a symlink.
 Nothing outside \code{dir} is touched, and only when you call this.

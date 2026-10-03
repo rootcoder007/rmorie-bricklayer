@@ -67,7 +67,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     {
       switch(verb,
         login = {
-          if (has("--token")) {
+          if (identical(rest[1L], "--help")) {
+            out(paste0("usage: rmoriebricklayer login [--email ADDRESS [--code CODE]] [--no-browser] | ",
+                       "login --token [KEY]   (rmbl login is the same)\n"))
+          } else if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
             if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
@@ -79,7 +82,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                 interactive()
             )
           }
-          out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
+          if (!identical(rest[1L], "--help")) out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
         },
         logout = bricklayer_llm_logout(),
         doctor = {
@@ -141,7 +144,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         help = ,
         `--help` = ,
         `-h` = out(paste0(
-          "usage: rmoriebricklayer <verb> [options]\n\n",
+          "usage: rmoriebricklayer <verb> [options]   (rmbl is the same command)\n\n",
           "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
           "MORIE LLM tier\n",
           "        [--code CODE] [--no-browser]\n",
@@ -268,51 +271,59 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 #'
 #' Links the launcher shipped in the package (\code{inst/bin/rmoriebricklayer})
 #' into a directory on your PATH so that \code{rmoriebricklayer login},
-#' \code{rmoriebricklayer ask ...} and the other verbs of
+#' \code{rmbl ask ...} and the other verbs of
 #' \code{\link{bricklayer_cli}} work from any shell. On Windows a
 #' \code{rmoriebricklayer.cmd} wrapper is written instead of a symlink.
 #' Nothing outside \code{dir} is touched, and only when you call this.
 #' @param dir Target directory (default \code{~/.local/bin}; created if
 #'   absent).
-#' @param name Command name (default \code{rmoriebricklayer}).
-#' @return The path of the installed launcher, invisibly.
+#' @param name Command names to install (default both \code{rmoriebricklayer}
+#'   and its short form \code{rmbl}; every verb works under either).
+#' @return The path of the installed \code{rmoriebricklayer} launcher,
+#'   invisibly (\code{rmbl} is written beside it).
 #' @examples
 #' \dontrun{
 #' install_cli()
 #' }
 #' @export
 install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
-                        name = "rmoriebricklayer") {
+                        name = c("rmoriebricklayer", "rmbl")) {
   src <- system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
   if (!nzchar(src)) stop("the launcher is missing from this installation")
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
-  if (.Platform$OS.type == "windows") {
-    # nocov start -- the Windows wrapper; the coverage runner is Linux
-    target <- file.path(dir, paste0(name, ".cmd"))
-    writeLines(
-      paste0(
-        "@echo off\r\nRscript --vanilla -e ",
-        "\"rmoriebricklayer::bricklayer_cli()\" --args %*"
-      ),
-      target
-    )
-    # nocov end
-  } else {
-    target <- file.path(dir, name)
-    if (file.exists(target) || !is.na(Sys.readlink(target))) unlink(target)
-    ok <- file.symlink(src, target)
-    if (!isTRUE(ok)) {
-      file.copy(src, target, overwrite = TRUE)
+  # the launcher pins the library this copy of the package lives in, inside R with .libPaths(),
+  # so the shell's R_LIBS or an R_LIBS in ~/.Renviron cannot swap in another copy
+  lib <- normalizePath(dirname(system.file(package = "rmoriebricklayer")), winslash = "/")
+  targets <- character()
+  for (nm in name) {
+    if (.Platform$OS.type == "windows") {
+      # nocov start -- the Windows wrapper; the coverage runner is Linux
+      target <- file.path(dir, paste0(nm, ".cmd"))
+      writeLines(sprintf(paste0("@echo off\r\nRscript --no-save --no-restore -e ",
+                                "\".libPaths(c('%s', .libPaths())); ",
+                                "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q))\" %%*"),
+                         lib), target)
+      # nocov end
+    } else {
+      target <- file.path(dir, nm)
+      if (file.exists(target) || !is.na(Sys.readlink(target))) unlink(target)
+      body <- paste0("suppressPackageStartupMessages({ .libPaths(c(\"", lib, "\", .libPaths())); ",
+                     "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q)) })")
+      writeLines(c("#!/bin/sh",
+                   sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())", nm),
+                   sprintf("# runs the package in %s (pinned with .libPaths() inside R)", lib),
+                   sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)),
+                 target)
       Sys.chmod(target, "0755")
     }
-    Sys.chmod(src, "0755")
+    targets <- c(targets, target)
   }
   on_path <- dir %in% strsplit(Sys.getenv("PATH"), .Platform$path.sep)[[1L]]
   message(sprintf(
-    "Installed %s%s", target,
+    "Installed %s%s", paste(targets, collapse = " and "),
     if (on_path) "" else sprintf("; add %s to your PATH", dir)
   ))
-  invisible(target)
+  invisible(targets[[1L]])  # the primary launcher's path; rmbl sits beside it
 }
 
 # The models verb: the hosted tier's list for this key, default marked.

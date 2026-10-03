@@ -1,6 +1,21 @@
+# rmoriebricklayer 0.5.5
+
+* The command line answers to `rmbl` as well as `rmoriebricklayer`: `install_cli()` writes both
+  launchers, pinned to the library they were installed from with `.libPaths()` inside R (an `R_LIBS`
+  in the shell or `~/.Renviron` cannot swap in another copy) and without the explicit `--args` that
+  made R 4.6 report "unknown verb '--args'"; `login --help` prints the usage instead of starting the
+  sign-in.
+* Fixes from the 1.4.0 stress test of the family: `friendly_download()` no longer fails inside its own
+  Wayback fallback when the snapshot lookup returns nothing usable, and names a cause for an error it
+  does not recognise; `wayback_snapshot_url()` returns `NULL` for a malformed answer; `yoy()` averages
+  several rows of one period for continuous values and percentages (counts still add up; pass `fun`
+  to choose); `report_analysis()` renders a percent analysis (its changes are percentage points);
+  the SIU parser reads French dates ("3 ao\u00fbt 2017") and decodes accented named entities
+  (`&ccedil;`, `&eacute;`, ...) and every numeric entity.
+
 # rmoriebricklayer 0.5.4
 
-* The hosted tier lists Cloudflare Workers AI models (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf) beside the
+* The hosted tier lists additional AI models (kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf) beside the
   ollama.com ones, and falls back to them when a cloud model is rate
   limited; `rmoriebricklayer ask --model gpt-oss-120b:cf` picks one.
 

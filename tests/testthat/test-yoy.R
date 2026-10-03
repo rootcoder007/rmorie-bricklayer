@@ -649,3 +649,14 @@ test_that("the period helpers restore every key class and refuse a grid with no 
   expect_null(.yoy_period_grid(as.Date(c(0, Inf), origin = "1970-01-01")))
   expect_identical(.yoy_previous(c(1, Inf), c(1, 2), 1L), c(NA_real_, NA_real_))
 })
+
+test_that("several rows of one period: counts add up, percentages are averaged", {
+  d <- data.frame(year = c(2019, 2019, 2020, 2020), share = c(53, 57.9, 60, 62))
+  p <- yoy(d, value = "share", period = "year", units = "percent")
+  expect_equal(p$value[p$year == 2019], mean(c(53, 57.9)))
+  n <- data.frame(year = c(2019, 2019, 2020, 2020), cases = c(53, 58, 60, 62))
+  k <- yoy(n, value = "cases", period = "year", units = "count")
+  expect_equal(k$value[k$year == 2019], 53 + 58)
+  m <- yoy(d, value = "share", period = "year", units = "percent", fun = max)
+  expect_equal(m$value[m$year == 2019], 57.9)
+})

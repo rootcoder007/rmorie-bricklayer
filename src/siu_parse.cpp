@@ -288,22 +288,32 @@ std::string detect_language(const std::string& text) {
 }  // namespace
 
 std::string to_iso_date(const std::string& human) {
+    // English and French month names (the SIU publishes both); accents are kept as UTF-8
     static const std::map<std::string, int> kMonths = {
         {"january", 1}, {"february", 2}, {"march", 3},    {"april", 4},
         {"may", 5},     {"june", 6},     {"july", 7},     {"august", 8},
-        {"september", 9}, {"october", 10}, {"november", 11}, {"december", 12}};
-    static const std::regex pat(R"(([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4}))");
+        {"september", 9}, {"october", 10}, {"november", 11}, {"december", 12},
+        {"janvier", 1}, {"f\xc3\xa9vrier", 2}, {"fevrier", 2}, {"mars", 3}, {"avril", 4},
+        {"mai", 5}, {"juin", 6}, {"juillet", 7}, {"ao\xc3\xbbt", 8}, {"aout", 8},
+        {"septembre", 9}, {"octobre", 10}, {"novembre", 11}, {"d\xc3\xa9cembre", 12}, {"decembre", 12}};
+    // "January 5, 2023" / "January 5 2023" (month first) or "5 janvier 2023" / "3 ao\xc3\xbbt 2017" (day first)
+    static const std::regex pat(R"(([^\s\d,]+)\s+(\d{1,2})(?:er|e)?,?\s+(\d{4}))");
+    static const std::regex pat_fr(R"((\d{1,2})(?:er|e)?\s+([^\s\d,]+)\s+(\d{4}))");
     std::smatch m;
-    if (!std::regex_search(human, m, pat)) {
+    std::string month, day, year;
+    if (std::regex_search(human, m, pat) && kMonths.count(lower(m[1].str()))) {
+        month = m[1].str(); day = m[2].str(); year = m[3].str();
+    } else if (std::regex_search(human, m, pat_fr) && kMonths.count(lower(m[2].str()))) {
+        day = m[1].str(); month = m[2].str(); year = m[3].str();
+    } else {
         // already ISO?
         static const std::regex iso(R"(^\d{4}-\d{2}-\d{2}$)");
         return std::regex_match(human, iso) ? human : "";
     }
-    const auto it = kMonths.find(lower(m[1].str()));
+    const auto it = kMonths.find(lower(month));
     if (it == kMonths.end()) return "";
     char buf[16];
-    std::snprintf(buf, sizeof buf, "%s-%02d-%02d", m[3].str().c_str(),
-                  it->second, std::stoi(m[2].str()));
+    std::snprintf(buf, sizeof buf, "%s-%02d-%02d", year.c_str(), it->second, std::stoi(day));
     return buf;
 }
 
@@ -325,6 +335,42 @@ std::string html_to_text(const std::string& html) {
     t = std::regex_replace(t, std::regex(R"(&#0?39;|&apos;)"), "'");
     t = std::regex_replace(t, std::regex(R"(&#8211;|&ndash;)"), "-");
     t = std::regex_replace(t, std::regex(R"(&#8212;|&mdash;)"), "--");
+    // accented named entities of the French pages, as UTF-8
+    static const std::array<std::pair<const char*, const char*>, 18> kNamed = {{
+        {"&eacute;", "\xc3\xa9"}, {"&egrave;", "\xc3\xa8"}, {"&ecirc;", "\xc3\xaa"}, {"&euml;", "\xc3\xab"},
+        {"&agrave;", "\xc3\xa0"}, {"&acirc;", "\xc3\xa2"}, {"&ccedil;", "\xc3\xa7"}, {"&icirc;", "\xc3\xae"},
+        {"&iuml;", "\xc3\xaf"}, {"&ocirc;", "\xc3\xb4"}, {"&ouml;", "\xc3\xb6"}, {"&ucirc;", "\xc3\xbb"},
+        {"&ugrave;", "\xc3\xb9"}, {"&uuml;", "\xc3\xbc"}, {"&auml;", "\xc3\xa4"}, {"&copy;", "\xc2\xa9"},
+        {"&reg;", "\xc2\xae"}, {"&Eacute;", "\xc3\x89"}}};
+    for (const auto& [ent, ch] : kNamed) {
+        t = std::regex_replace(t, std::regex(ent), ch);
+    }
+    // any other numeric entity (decimal or hex) becomes its UTF-8 character
+    {
+        static const std::regex num(R"(&#(x[0-9a-fA-F]+|[0-9]+);)");
+        std::string out;
+        std::sregex_iterator it(t.begin(), t.end(), num), end;
+        std::size_t last = 0;
+        for (; it != end; ++it) {
+            const auto& mm = *it;
+            out.append(t, last, mm.position() - last);
+            const std::string body = mm[1].str();
+            unsigned long cp = 0;
+            try {
+                cp = (body[0] == 'x' || body[0] == 'X') ? std::stoul(body.substr(1), nullptr, 16)
+                                                       : std::stoul(body, nullptr, 10);
+            } catch (...) { cp = 0; }
+            if (cp > 0 && cp < 0x110000) {
+                if (cp < 0x80) out += static_cast<char>(cp);
+                else if (cp < 0x800) { out += static_cast<char>(0xC0 | (cp >> 6)); out += static_cast<char>(0x80 | (cp & 0x3F)); }
+                else if (cp < 0x10000) { out += static_cast<char>(0xE0 | (cp >> 12)); out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F)); out += static_cast<char>(0x80 | (cp & 0x3F)); }
+                else { out += static_cast<char>(0xF0 | (cp >> 18)); out += static_cast<char>(0x80 | ((cp >> 12) & 0x3F)); out += static_cast<char>(0x80 | ((cp >> 6) & 0x3F)); out += static_cast<char>(0x80 | (cp & 0x3F)); }
+            }
+            last = mm.position() + mm.length();
+        }
+        out.append(t, last, std::string::npos);
+        t = out;
+    }
     // Angle brackets last: the markup is already gone, so a decoded "<"
     // cannot be mistaken for a tag by anything downstream.
     t = std::regex_replace(t, std::regex(R"(&lt;)"), "<");

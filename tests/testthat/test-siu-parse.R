@@ -118,3 +118,12 @@ test_that("the privacy paragraph never counts as a subject mention", {
                "and other evidence. No subject official was designated.")
   expect_equal(bricklayer_siu_resolve_so(txt)$count, 0L)
 })
+
+test_that("French dates and accented entities parse", {
+  expect_equal(bricklayer_siu_iso_date("3 août 2017"), "2017-08-03")
+  expect_equal(bricklayer_siu_iso_date("1er janvier 2020"), "2020-01-01")
+  expect_equal(bricklayer_siu_iso_date("August 3, 2017"), "2017-08-03")
+  expect_equal(bricklayer_siu_iso_date("no date here"), "")
+  txt <- bricklayer_siu_text("<p>Director&#039;s report &ndash; Qu&eacute;bec, fran&ccedil;ais &#x00e9;t&#233;</p>")
+  expect_equal(trimws(txt), "Director's report - Québec, français été")
+})

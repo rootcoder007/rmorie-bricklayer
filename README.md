@@ -352,11 +352,12 @@ The same verbs exist on the command line once the launcher is on your
 `PATH`:
 
 ```sh
-Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer
+Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 rmoriebricklayer login                          # or: login --email ADDRESS, login --token
 rmoriebricklayer models                         # what you can ask, default marked
 rmoriebricklayer ask --model NAME "your question"
 rmoriebricklayer doctor                         # which routes answer from this machine
+rmbl doctor                                     # rmbl is the same command, short form
 ```
 
 ## Part of the MORIE family

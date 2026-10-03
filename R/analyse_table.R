@@ -287,7 +287,8 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
               100 * m$conf_level, sum(!is.na(x$change$previous)),
               m$adjust, m$alpha), "")
   ch <- x$change
-  cols <- c(m$by, m$period, "value", "previous", "pct_change")
+  chg <- if ("pct_change" %in% names(ch)) "pct_change" else "pp_change"  # percent units change in points
+  cols <- c(m$by, m$period, "value", "previous", chg)
   if (!is.null(ch$pct_lower)) cols <- c(cols, "pct_lower", "pct_upper")
   if (!is.null(ch$combined_pct_lower)) {
     cols <- c(cols, "combined_pct_lower", "combined_pct_upper")

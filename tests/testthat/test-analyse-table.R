@@ -175,3 +175,11 @@ test_that("the capsule template runs as written on the shipped example", {
               info = paste(res, collapse = "\n"))
   expect_true(file.exists(file.path(d, "results", "report.html")))
 })
+
+test_that("report_analysis() renders a percent analysis", {
+  d <- data.frame(year = rep(2019:2022, each = 2), g = rep(c("a", "b"), 4), share = c(50, 52, 53, 55, 54, 57, 58, 60))
+  a <- analyse_table(d, value = "share", period = "year", by = "g", units = "percent")
+  txt <- report_analysis(a)
+  expect_true(is.character(txt))
+  expect_match(paste(txt, collapse = "\n"), "pp_change")
+})
