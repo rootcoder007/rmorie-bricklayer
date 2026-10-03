@@ -306,3 +306,11 @@ test_that("numeric range checks skip non-numeric and all-missing columns", {
   df <- data.frame(a = c("x", "y"), b = c(NA_real_, NA_real_), stringsAsFactors = FALSE)
   expect_length(validate_schema(df, prov), 0)
 })
+
+test_that("a snapshot lookup that returns nothing usable is no snapshot", {
+  answer <- function(url) list(archived_snapshots = list(closest = list(available = TRUE, url = url)))
+  testthat::local_mocked_bindings(.rmbl_read_json = function(api) answer(list()))
+  expect_null(wayback_snapshot_url("https://example.invalid/x.csv"))
+  testthat::local_mocked_bindings(.rmbl_read_json = function(api) answer("http://web.archive.org/x"))
+  expect_equal(wayback_snapshot_url("https://example.invalid/x.csv"), "https://web.archive.org/x")
+})

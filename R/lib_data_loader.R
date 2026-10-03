@@ -265,8 +265,10 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
   }
+  snap_url <- unlist(snap$url)
+  if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) return(NULL)
   ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs.
-  sub("^http://", "https://", snap$url)
+  sub("^http://", "https://", snap_url)
 }
 
 # The one transport friendly_download() uses, live and Wayback alike (tests
@@ -325,6 +327,10 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       message("    URL:   ", url)
       message("    Error: ", msg, "\n\n")
       message("  Common causes (in rough order of likelihood):")
+      known <- grepl(paste0("429|too many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could not|",
+                            "unable to resolve|name not|getaddrinfo|timeout|timed out|connection (refused|reset)|",
+                            "403|forbidden"),
+                     msg, ignore.case = TRUE)
       if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
         message("    * Rate-limited (HTTP 429). VPNs share IPs across users")
         message("      and often trip rate limits. Try disabling your VPN.")
@@ -352,10 +358,17 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       if (grepl("403|forbidden", msg, ignore.case = TRUE)) {
         message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
       }
+      if (!known) {
+        message("    * The server did not serve the file (see the error above): the URL may have moved or the")
+        message("      portal may be down; a Wayback Machine snapshot is tried next.")
+      }
       ## Auto-resolve a Wayback snapshot if the caller did not supply one
       ## (NULL = auto; "" = explicitly disabled).
       if (is.null(attempt_wayback)) {
-        attempt_wayback <- wayback_snapshot_url(url)
+        attempt_wayback <- tryCatch(wayback_snapshot_url(url), error = function(e) NULL)
+      }
+      if (!is.character(attempt_wayback) || length(attempt_wayback) != 1L || is.na(attempt_wayback)) {
+        attempt_wayback <- ""  # no usable snapshot
       }
       if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
         message("  Trying Wayback Machine fallback snapshot...")

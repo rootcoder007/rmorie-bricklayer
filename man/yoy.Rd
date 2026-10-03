@@ -17,7 +17,7 @@ yoy(x, ...)
   period,
   by = NULL,
   lag = 1L,
-  fun = sum,
+  fun = NULL,
   units = c("count", "continuous", "percent"),
   min_base = NULL,
   conf_level = 0.95,
@@ -54,7 +54,9 @@ year-over-year on annual data; for a \code{ts} the default follows the
 series' own frequency, so monthly data compares with the same month a
 year earlier.}
 
-\item{fun}{Aggregation applied to \code{value} within a
+\item{fun}{How several rows of one period are combined: \code{NULL} (the default)
+sums counts and averages continuous values and percentages; pass a
+function to choose.
 period and group, when there is more than one row. Default
 \code{\link[=sum]{sum()}}, which is what a count needs.}
 

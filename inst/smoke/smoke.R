@@ -20,8 +20,8 @@ cases <- list(
   doctor = function() { r <- run("doctor"); check(r$status == 0 && nzchar(r$text), r$text) },
   models = function() {
     r <- run("models"); check(r$status == 0, r$text)
-    # the gateway serves Cloudflare Workers AI models beside the ollama.com ones
-    if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no Workers AI model listed:", r$text))
+    # the gateway serves additional AI models (suffix :cf) beside the ollama.com ones
+    if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no additional AI model (:cf) listed:", r$text))
   },
   ask = function() { r <- run_llm("ask", "hello"); check(r$status == 0, r$text) },
   ask_workers_ai = function() {
