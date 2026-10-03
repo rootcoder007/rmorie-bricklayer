@@ -39,7 +39,9 @@
 #' year-over-year on annual data; for a `ts` the default follows the
 #' series' own frequency, so monthly data compares with the same month a
 #' year earlier.
-#' @param fun Aggregation applied to `value` within a
+#' @param fun How several rows of one period are combined: `NULL` (the default)
+#'   sums counts and averages continuous values and percentages; pass a
+#'   function to choose.
 #' period and group, when there is more than one row. Default
 #' [sum()], which is what a count needs.
 #' @param units What the measure is. `"count"` gets the
@@ -105,7 +107,7 @@ yoy <- function(x, ...) UseMethod("yoy")
 #' @rdname yoy
 #' @export
 yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
-                           fun = sum,
+                           fun = NULL,
                            units = c("count", "continuous", "percent"),
                            min_base = NULL, conf_level = 0.95,
                            direction = c(
@@ -115,6 +117,9 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
                            complete = TRUE, ...) {
   units <- match.arg(units)
   direction <- match.arg(direction)
+  # several rows for one period: counts add up, a rate or a share is averaged
+  # (two shares of 53% and 57.9% are not 110.9%)
+  if (is.null(fun)) fun <- if (units == "count") sum else mean
   value <- .yoy_col(substitute(value), value, x, "value")
   period <- .yoy_col(substitute(period), period, x, "period")
   if (!is.null(by)) {

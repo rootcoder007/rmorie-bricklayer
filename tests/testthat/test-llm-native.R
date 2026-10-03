@@ -581,3 +581,36 @@ test_that("the status says when the tier is off, and an explicit model reaches t
   expect_identical(bricklayer_llm_ask("ping", model = "custom-model"), "pong")
   expect_identical(seen$model, "custom-model")
 })
+
+test_that("install_cli() writes both launchers, pinned with .libPaths() and without --args", {
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  primary <- suppressMessages(install_cli(dir = d))
+  expect_equal(basename(primary), "rmoriebricklayer")
+  paths <- file.path(d, c("rmoriebricklayer", "rmbl"))
+  expect_true(all(file.exists(paths)))
+  for (p in paths) {
+    txt <- paste(readLines(p), collapse = "\n")
+    expect_match(txt, ".libPaths(c(", fixed = TRUE)
+    expect_false(grepl("--args", txt, fixed = TRUE))
+    expect_false(grepl("--vanilla", txt, fixed = TRUE))
+    expect_true(file.access(p, 1L) == 0L)
+  }
+  # a second install replaces the launchers it finds, links included
+  file.remove(paths[[2L]])
+  file.symlink(paths[[1L]], paths[[2L]])
+  suppressMessages(install_cli(dir = d))
+  expect_true(is.na(Sys.readlink(paths[[2L]])) || !nzchar(Sys.readlink(paths[[2L]])))
+  expect_match(paste(readLines(paths[[2L]]), collapse = "\n"),
+               "# rmbl: the rmoriebricklayer command line", fixed = TRUE)
+})
+
+test_that("login --help prints the usage and the usage names rmbl", {
+  buf <- character()
+  st <- bricklayer_cli(c("login", "--help"), out = function(x) buf <<- c(buf, x))
+  expect_equal(st, 0L)
+  expect_match(paste(buf, collapse = ""), "usage: rmoriebricklayer login")
+  buf <- character()
+  bricklayer_cli("help", out = function(x) buf <<- c(buf, x))
+  expect_match(paste(buf, collapse = ""), "rmbl is the same command")
+})
