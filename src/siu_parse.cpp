@@ -87,13 +87,25 @@ std::string count_tagged(const std::string& section, const std::string& prefix) 
 // ---- individual field extractors ----------------------------------------
 
 std::string detect_police_service(const std::string& text) {
+    // The notification sentence names the force that called the SIU in: prefer it over counting.
+    {
+        static const std::regex notif(
+            R"(((?:[A-Z][A-Za-z'\-]+[ \t]+){1,5}(?:Police Service|Provincial Police|Police|Constabulary))\s*(?:\(\s*[A-Z]{2,6}\s*\)\s*)?(?:notified|contacted)\s+the\s+SIU)");
+        std::smatch nm;
+        if (std::regex_search(text, nm, notif)) {
+            std::string name = trim(nm[1].str());
+            static const std::regex lead0(R"(^(?:The|A|An|At|On|In|By)\s+)");
+            for (int i = 0; i < 3; ++i) name = std::regex_replace(name, lead0, "");
+            if (!name.empty()) return name;
+        }
+    }
     // DEVIATION from the Python vocabulary list: pattern-based. Capture every
     // "<Proper Name> Police Service|Police|Provincial Police" phrase, count
     // occurrences, return the most frequent (ties -> longer name). Falls back
     // to the big-force abbreviations. Boilerplate-safe enough because the
     // most-frequent rule swamps one-off footer mentions.
     static const std::regex pat(
-        R"(((?:[A-Z][A-Za-z'\-]+[ \t]+){1,5}(?:Police Service|Provincial Police|Police|Constabulary)))");
+        R"(((?:[A-Z][A-Za-z'\-]+[ \t]+){1,5}(?:Police Service|Provincial Police|Police|Constabulary))\b(?![ \t]+Services?[ \t]+(?:Act|Board)))");
     std::map<std::string, int> counts;
     for (auto it = std::sregex_iterator(text.begin(), text.end(), pat);
          it != std::sregex_iterator(); ++it) {
@@ -134,7 +146,7 @@ std::string detect_incident_date(const std::string& text) {
             {"Nature of Injuries", "Evidence", "The Team",
              "Analysis and Director", "Relevant Legislation"});
         if (sec.empty()) continue;
-        static const std::regex pat(R"(\b[Oo]n\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}))");
+        static const std::regex pat(R"(\b[Oo]n\s+([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}))");
         for (auto it = std::sregex_iterator(sec.begin(), sec.end(), pat);
              it != std::sregex_iterator(); ++it) {
             const size_t a = it->position(0) > 50 ? it->position(0) - 50 : 0;
@@ -157,18 +169,18 @@ std::string detect_siu_notified(const std::string& text) {
     std::smatch m;
     // Form A: "On <Date> ... notified/contacted the SIU"
     static const std::regex a(
-        R"(\b[Oo]n\s+(?:[A-Z][a-z]+,?\s+)?([A-Z][a-z]+\s+\d{1,2},?\s+\d{4})[^\n]{0,200}?(?:notified|contacted)\s+the\s+SIU)");
+        R"(\b[Oo]n\s+(?:[A-Z][a-z]+,?\s+)?([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})[^\n]{0,200}?(?:notified|contacted)\s+the\s+SIU)");
     if (std::regex_search(hay, m, a))
         return std::regex_replace(m[1].str(), std::regex(","), "");
     // Form B: "notified/contacted the SIU on <Date>"
     static const std::regex b(
-        R"((?:notified|contacted)\s+the\s+SIU[^\n]{0,200}?[Oo]n\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}))");
+        R"((?:notified|contacted)\s+the\s+SIU[^\n]{0,200}?[Oo]n\s+([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}))");
     if (std::regex_search(hay, m, b))
         return std::regex_replace(m[1].str(), std::regex(","), "");
     // Form C: first "On <Date>" inside "Notification of the SIU"
     const std::string notif = section_text(
         text, "Notification of the SIU", {"The Team", "Incident Narrative", "Evidence"});
-    static const std::regex c(R"(On\s+([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}))");
+    static const std::regex c(R"(On\s+([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}))");
     if (!notif.empty() && std::regex_search(notif, m, c))
         return std::regex_replace(m[1].str(), std::regex(","), "");
     return "";
@@ -176,7 +188,7 @@ std::string detect_siu_notified(const std::string& text) {
 
 std::string detect_decision_date(const std::string& text) {
     std::smatch m;
-    static const std::regex a(R"(Date:\s*([A-Z][a-z]+\s+\d{1,2},?\s+\d{4}))");
+    static const std::regex a(R"(Date:\s*([A-Z][a-z]+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}))");
     if (std::regex_search(text, m, a))
         return std::regex_replace(m[1].str(), std::regex(","), "");
     static const std::regex b(R"(Date:\s*(\d{4}-\d{2}-\d{2}))");
@@ -303,7 +315,7 @@ std::string to_iso_date(const std::string& human) {
         return m;
     }();
     // "January 5, 2023" / "January 5 2023" (month first) or "5 janvier 2023" / "3 ao\xc3\xbbt 2017" (day first)
-    static const std::regex pat(R"(([^\s\d,]+)\s+(\d{1,2})(?:er|e)?,?\s+(\d{4}))");
+    static const std::regex pat(R"(([^\s\d,]+)\s+(\d{1,2})(?:st|nd|rd|th|er|e)?,?\s+(\d{4}))");
     static const std::regex pat_fr(R"((\d{1,2})(?:er|e)?\s+([^\s\d,]+)\s+(\d{4}))");
     std::smatch m;
     std::string month, day, year;
