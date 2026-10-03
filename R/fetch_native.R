@@ -44,8 +44,12 @@
 #' }
 #' @export
 bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
-  stopifnot(is.character(url), length(url) == 1L, nzchar(url),
-            is.character(dest), length(dest) == 1L, nzchar(dest))
+  if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
+    stop("`url` must be one non-empty URL string", call. = FALSE)
+  }
+  if (!is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)) {
+    stop("`dest` must be one non-empty file path", call. = FALSE)
+  }
   code <- .Call(C_rmbl_fetch_fallback, url,
                 if (is.null(wayback)) "" else as.character(wayback),
                 dest, as.integer(timeout))

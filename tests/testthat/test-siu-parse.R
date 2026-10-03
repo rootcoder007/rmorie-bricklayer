@@ -137,3 +137,27 @@ test_that("French dates and accented entities parse", {
   txt <- bricklayer_siu_text("<p>Director&#8217;s &#x20AC;5 &#128512;</p>")
   expect_equal(trimws(txt), "Director's \u20ac5 \U0001F600")
 })
+
+
+
+test_that("ordinal dates and the notifying force are read from a report like 17-OVI-201", {
+  html <- paste0(
+    "<html><body><h2>The Investigation</h2><h3>Notification of the SIU</h3>",
+    "<p>At approximately 11:46 a.m. on August 3rd, 2017, the Guelph Police Service ( GPS ) notified the SIU ",
+    "of the injury.</p><p>Under the Police Services Act, the Director decides. The Ontario Police Services Board ",
+    "and the Police Services Act are named again here: Police Services Act.</p>",
+    "<h2>Incident Narrative</h2><p>The GPS reported that at 10:30 a.m., on August 3rd, 2017, three masked men ",
+    "attempted to rob a bank.</p></body></html>")
+  f <- bricklayer_parse_siu(html)
+  expect_equal(f[["police_service"]], "Guelph Police Service")
+  expect_equal(f[["date_siu_notified_iso"]], "2017-08-03")
+  expect_equal(bricklayer_siu_iso_date("August 3rd, 2017"), "2017-08-03")
+  expect_equal(bricklayer_siu_iso_date("June 21st 2019"), "2019-06-21")
+})
+
+test_that("data --help exits 0 and an empty fetch URL is refused in words", {
+  out <- character()
+  expect_equal(bricklayer_cli(c("data", "--help"), out = function(x) out <<- c(out, x)), 0L)
+  expect_error(bricklayer_fetch("", tempfile()), "`url` must be one non-empty URL string")
+  expect_error(bricklayer_fetch("https://example.org", ""), "`dest` must be one non-empty file path")
+})

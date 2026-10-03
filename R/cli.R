@@ -378,7 +378,8 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       "usage: rmoriebricklayer data list | ",
       "data pull db/table [--out FILE.csv]\n"
     ))
-    return(2L)
+    # asking for help is not a mistake: --help exits 0 like every other verb's help
+    return(if (identical(sub, "--help") || identical(sub, "-h") || identical(sub, "help")) 0L else 2L)
   }
   0L
 }
