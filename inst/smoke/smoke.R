@@ -23,8 +23,9 @@ cases <- list(
     # the gateway serves additional AI models (suffix :cf) beside the ollama.com ones
     if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no additional AI model (:cf) listed:", r$text))
   },
-  ask = function() { r <- run_llm("ask", "hello"); check(r$status == 0, r$text) },
-  ask_workers_ai = function() {
+  ask = function() {
+    r <- run_llm("ask", "hello"); check(r$status == 0, r$text)
+    # one of the additional models, named per call
     r <- run_llm("ask", "--model", "gpt-oss-120b:cf", "Reply with the single word pong.")
     check(r$status == 0 && nzchar(trimws(r$text)), r$text)
   },
