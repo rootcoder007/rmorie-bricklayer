@@ -51,8 +51,13 @@ jobs:
           # precisely those, whatever commit they belong to.
           need="R-CMD-check r-coverage"
           for i in $(seq 1 75); do
-            runs=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&per_page=100")
+            # an API hiccup (GitHub answered 503 on 2026-10-03) is a reason to ask again, not to fail
+            if ! runs=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/runs?event=push&per_page=100"); then
+              echo "[${i}/75] the Actions API did not answer; asking again"
+              sleep 20
+              continue
+            fi
             pending=""
             for wf in $need; do
               row=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
