@@ -7,6 +7,9 @@ Summarise a change table
 ``` r
 yoy_summary(object, ...)
 
+# Default S3 method
+yoy_summary(object, ...)
+
 # S3 method for class 'rmbl_yoy'
 yoy_summary(object, ...)
 ```

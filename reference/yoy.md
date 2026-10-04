@@ -9,6 +9,9 @@ carries an exact interval for count data.
 ``` r
 yoy(x, ...)
 
+# Default S3 method
+yoy(x, ...)
+
 # S3 method for class 'data.frame'
 yoy(
   x,

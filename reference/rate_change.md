@@ -8,6 +8,9 @@ with the exact conditional interval for the rate ratio.
 ``` r
 rate_change(x, ...)
 
+# Default S3 method
+rate_change(x, ...)
+
 # S3 method for class 'data.frame'
 rate_change(
   x,
