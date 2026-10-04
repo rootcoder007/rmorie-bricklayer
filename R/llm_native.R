@@ -104,6 +104,7 @@
 #' }
 #' @export
 bricklayer_llm_models <- function(timeout = 10) {
+  timeout <- .rmbl_num(timeout, "timeout")
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
   if (is.null(base) || is.null(key)) {
@@ -187,6 +188,10 @@ bricklayer_llm_models <- function(timeout = 10) {
 }
 
 .bl_reply_error <- function(res, what) {
+  if (!isTRUE(res$status > 0L)) {
+    # libcurl gives -1 when no HTTP answer came at all (offline, a proxy refusing the connection)
+    stop(sprintf("could not reach %s (no network, or a proxy refused the connection)", what), call. = FALSE)
+  }
   if (identical(what, "the hosted MORIE LLM tier") && isTRUE(res$status %in% c(401L, 403L))) {
     stop(sprintf("the hosted MORIE LLM tier rejected your key (HTTP %d): run `%s login` again",
                  res$status, .bl_prog()), call. = FALSE)
@@ -231,7 +236,7 @@ bricklayer_llm_models <- function(timeout = 10) {
 #' @export
 bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                                system_prompt = NULL) {
-  stopifnot(is.character(prompt), length(prompt) == 1L, nzchar(prompt))
+  prompt <- .rmbl_string1(prompt, "prompt")
   base <- .bl_hosted_base()
   if (is.null(base)) {
     stop("the hosted MORIE LLM tier is disabled (MORIE_HOSTED_BASE_URL)",
@@ -262,7 +267,17 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
     timeout = timeout,
     headers = paste("Authorization: Bearer", key)
   )
-  if (res$status != 200L) .bl_reply_error(res, "the hosted MORIE LLM tier")
+  if (res$status != 200L) {
+    if (!is.null(model) && isTRUE(res$status %in% c(401L, 403L))) {
+      # the gateway answers 403 for a model the key does not have: say that, not "log in again"
+      have <- tryCatch(bricklayer_llm_models(), error = function(e) character())
+      if (length(have) && !model %in% have) {
+        stop(sprintf("the hosted tier has no model '%s' (`%s models` lists the %d it has)",
+                     model, .bl_prog(), length(have)), call. = FALSE)
+      }
+    }
+    .bl_reply_error(res, "the hosted MORIE LLM tier")
+  }
   txt <- res$json$choices[[1L]]$message$content
   if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
     stop("the gateway returned no text", call. = FALSE)
@@ -307,6 +322,8 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     if (length(token) != 1L || !nzchar(token)) {
       stop("an empty token cannot be stored", call. = FALSE)
     }
+    # ask the gateway first: a mistyped key in the shared file breaks rmorie and morie too
+    .bl_check_token(token)
     p <- .bl_store_key(token)
     message(sprintf("Token stored in %s", p))
     return(invisible(token))

@@ -82,7 +82,7 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
   if (!is.numeric(x)) {
     stop("`x` must be numeric", call. = FALSE)
   }
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   # a negative value has no place in a share of a total, and treating it
   # as zero would understate the concentration
   if (any(x < 0, na.rm = TRUE)) {
@@ -158,14 +158,14 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 #' @export
 hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                             approx = FALSE, min_tail = 3L) {
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   x <- x[is.finite(x) & x > 0]
   if (is.null(x_min)) {
     # enough of a tail to estimate from, or everything if there is not
     s <- sort(x, decreasing = TRUE)
     x_min <- if (length(s) >= 50L) s[50L] else if (length(s)) min(s) else NA_real_
   }
-  x_min <- as.numeric(x_min)[1L]
+  x_min <- .rmbl_num(x_min, "x_min")[1L]
   if (is.na(x_min) || x_min <= 0) {
     stop("`x_min` must be positive", call. = FALSE)
   }

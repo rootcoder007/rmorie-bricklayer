@@ -25,7 +25,7 @@
 #' if (!nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) agent_bundle("hello")
 #' @export
 agent_bundle <- function(request, model = NULL, backend = "auto") {
-  stopifnot(is.character(request), length(request) == 1L, nzchar(request))
+  request <- .rmbl_string1(request, "request")
   backend <- match.arg(backend, c("auto", "hosted"))
   preamble <- paste0(
     "You are helping build a brick-proof, reproducible data bundle with ",

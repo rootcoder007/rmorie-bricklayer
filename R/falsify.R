@@ -80,12 +80,12 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
   if (!is.function(statistic)) {
     stop("`statistic` must be a function of one data frame", call. = FALSE)
   }
-  n <- as.integer(n)[1L]
+  n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) {
     stop("`n` must be at least 9: fewer permutations cannot produce a ",
          "p-value below 0.1", call. = FALSE)
   }
-  subset_frac <- as.numeric(subset_frac)[1L]
+  subset_frac <- .rmbl_num(subset_frac, "subset_frac")[1L]
   if (is.na(subset_frac) || subset_frac <= 0 || subset_frac >= 1) {
     stop("`subset_frac` must be between 0 and 1", call. = FALSE)
   }

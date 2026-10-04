@@ -128,7 +128,7 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
     stop("both samples must have at least one non-missing value",
          call. = FALSE)
   }
-  bins <- as.integer(bins)
+  bins <- .rmbl_num(bins, "bins", integer = TRUE)
   if (is.na(bins) || bins < 2L) {
     stop("`bins` must be at least 2", call. = FALSE)
   }
@@ -474,12 +474,12 @@ capsule_drift <- function(reference, current, alpha = 0.01,
   if (!is.data.frame(reference) || !is.data.frame(current)) {
     stop("`reference` and `current` must both be data frames", call. = FALSE)
   }
-  alpha <- as.numeric(alpha)
+  alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single value strictly inside (0, 1)",
          call. = FALSE)
   }
-  psi_min_n <- as.integer(psi_min_n)
+  psi_min_n <- .rmbl_num(psi_min_n, "psi_min_n", integer = TRUE)
   if (length(psi_min_n) != 1L || is.na(psi_min_n) || psi_min_n < 0L) {
     stop("`psi_min_n` must be a single non-negative integer", call. = FALSE)
   }

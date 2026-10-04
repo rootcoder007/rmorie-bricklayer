@@ -498,6 +498,9 @@ verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
 #' odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))$verdict
 #' @export
 odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
+  if (is.null(counts) || !(is.matrix(counts) || is.data.frame(counts) || is.table(counts))) {
+    stop("`counts` must be a 2-column matrix or table of counts (rows named)", call. = FALSE)
+  }
   counts <- as.matrix(counts)
   if (ncol(counts) != 2L || is.null(rownames(counts))) {
     stop("odds_ratio_check: `counts` must be a k-by-2 matrix with row names ",
@@ -715,6 +718,7 @@ write_recode_manifest <- function(manifest, path) {
 #'   manifest.
 #' @export
 verify_recode_manifest <- function(path, original, recoded) {
+  path <- .rmbl_file1(path, "path")
   m <- bricklayer_json_from_json(paste(
     readLines(path, warn = FALSE, encoding = "UTF-8"),
     collapse = "\n"

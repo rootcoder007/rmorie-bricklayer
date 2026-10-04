@@ -236,7 +236,7 @@
 bricklayer_json_base64_enc <- function(input) {
   if (is.null(input)) return(NA_character_)
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
-  stopifnot(is.raw(input))
+  if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
   b <- as.integer(input)
   n <- length(b)
   if (!n) return("")
@@ -271,7 +271,7 @@ bricklayer_json_base64_enc <- function(input) {
 #' @export
 bricklayer_json_base64_dec <- function(input) {
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
-  stopifnot(is.raw(input))
+  if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
   s <- rawToChar(input)
   ch <- strsplit(gsub("[^A-Za-z0-9+/]", "", s), "")[[1]]
   if (!length(ch)) return(raw(0))
@@ -305,6 +305,7 @@ bricklayer_json_base64url_enc <- function(input) {
 #' @export
 bricklayer_json_base64url_dec <- function(input) {
   input <- .rmbl_text_input(input, "input", allow_raw = FALSE)
+  if (!is.character(input) || anyNA(input)) stop("`input` must be base64url text", call. = FALSE)
   if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
     stop("`input` is not base64url text", call. = FALSE)
   }

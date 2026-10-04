@@ -140,7 +140,7 @@ drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
     stop("`data` must be a data frame with at least four rows",
          call. = FALSE)
   }
-  n <- as.integer(n)
+  n <- .rmbl_num(n, "n", integer = TRUE)
   .rmbl_local_seed(seed)
   hits <- NULL
   any_flag <- logical(n)

@@ -2,6 +2,7 @@
 % Please edit documentation in R/yoy.R, R/yoy_output.R
 \name{yoy}
 \alias{yoy}
+\alias{yoy.default}
 \alias{yoy.data.frame}
 \alias{yoy.numeric}
 \alias{yoy.integer}
@@ -10,6 +11,8 @@
 \title{Year-over-year (and period-over-period) change}
 \usage{
 yoy(x, ...)
+
+\method{yoy}{default}(x, ...)
 
 \method{yoy}{data.frame}(
   x,

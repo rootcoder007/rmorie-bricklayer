@@ -242,7 +242,7 @@ merkle_leaves <- function(chunks) {
 #' @export
 merkle_proof <- function(chunks, index) {
   chunks <- .rmbl_chunk_bytes(chunks)
-  index <- as.integer(index)
+  index <- .rmbl_num(index, "index", integer = TRUE)
   if (length(index) != 1L || is.na(index) || index < 1L ||
       index > length(chunks)) {
     stop("`index` must be between 1 and the number of chunks", call. = FALSE)
@@ -360,11 +360,8 @@ merkle_verify <- function(leaf, proof, root) {
 #' unlink(p)
 #' @export
 chunk_file <- function(path, chunk_bytes = 1048576L) {
-  path <- as.character(path)[1L]
-  if (!file.exists(path)) {
-    stop(sprintf("no such file: %s", path), call. = FALSE)
-  }
-  chunk_bytes <- as.integer(chunk_bytes)
+  path <- .rmbl_file1(path, "path")
+  chunk_bytes <- .rmbl_num(chunk_bytes, "chunk_bytes", integer = TRUE)
   if (is.na(chunk_bytes) || chunk_bytes < 1L) {
     stop("`chunk_bytes` must be a positive integer", call. = FALSE)
   }
@@ -416,11 +413,8 @@ crc32_file <- function(path, block_bytes = 1048576L) {
 }
 
 .rmbl_read_all_raw <- function(path, block_bytes = 1048576L) {
-  path <- as.character(path)[1L]
-  if (!file.exists(path)) {
-    stop(sprintf("no such file: %s", path), call. = FALSE)
-  }
-  block_bytes <- as.integer(block_bytes)
+  path <- .rmbl_file1(path, "path")
+  block_bytes <- .rmbl_num(block_bytes, "block_bytes", integer = TRUE)
   if (is.na(block_bytes) || block_bytes < 1L) {
     stop("`block_bytes` must be a positive integer", call. = FALSE)
   }

@@ -288,7 +288,7 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
 .yoy_export_frame <- function(x, digits) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {
-    digits <- as.integer(digits)[1L]
+    digits <- .rmbl_num(digits, "digits", integer = TRUE)[1L]
     for (nm in intersect(c("pct_change", "pp_change", "pct_lower",
                            "pct_upper"), names(d))) {
       d[[nm]] <- round(d[[nm]], digits)
