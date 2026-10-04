@@ -1166,7 +1166,8 @@ inline double hawkes_eval(const double *t, std::size_t n, double T, const double
             D1[i] = d1;
         }
     } else {
-        const double cut = method == 2 ? std::min(k.tail_lag(eps), k.underflow_lag()) : k.underflow_lag();
+        // soe on a kernel it cannot represent (gamma with shape >= 1, or fewer than 2K events) truncates
+        const double cut = method != 0 ? std::min(k.tail_lag(eps), k.underflow_lag()) : k.underflow_lag();
         std::size_t lo = 0;
         for (std::size_t i = 1; i < n; ++i) {
             while (lo < i && t[i] - t[lo] > cut) ++lo;

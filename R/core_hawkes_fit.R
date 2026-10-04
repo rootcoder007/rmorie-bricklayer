@@ -11,10 +11,11 @@
 
 .rmbl_hk_method <- function(method, kernel) {
   method <- match.arg(method, .rmbl_hk_methods)
-  if (method == "auto") return(if (kernel %in% c("lomax", "gamma")) "soe" else "exact")
+  # Weibull's exact window is where the kernel underflows: for shape < 1 the whole record
+  if (method == "auto") return(switch(kernel, exponential = "exact", weibull = "truncate", "soe"))
   if (method == "soe" && !kernel %in% c("lomax", "gamma")) {
     stop("method = \"soe\" applies to completely monotone kernels: \"lomax\", and \"gamma\" with shape < 1 ",
-         "(a gamma kernel with shape >= 1 is evaluated exactly); use \"exact\" or \"truncate\"", call. = FALSE)
+         "(a gamma kernel with shape >= 1 is truncated at eps); use \"exact\" or \"truncate\"", call. = FALSE)
   }
   method
 }
@@ -92,14 +93,15 @@
 #'     the full sum); Lomax the full O(n^2) sum.}
 #'   \item{\code{"soe"}}{the completely monotone kernels (Lomax; gamma with shape < 1) as a
 #'     sum of exponentials (Beylkin & Monzon 2010): relative error \code{eps} on every
-#'     intensity, O(n K).}
+#'     intensity, O(n K); a gamma kernel with shape >= 1 is truncated at \code{eps}.}
 #'   \item{\code{"truncate"}}{each event excites only lags with kernel tail mass above
 #'     \code{eps}: an approximation for light-tailed kernels, O(n w).}
 #'   \item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008): the same maximum, a
 #'     different route.}
 #'   \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned counts
 #'     (constant baseline only): a different, fast, approximate estimator.}
-#'   \item{\code{"auto"}}{\code{"soe"} for Lomax and gamma, \code{"exact"} otherwise.}
+#'   \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"} for
+#'     Weibull, \code{"soe"} for Lomax and gamma.}
 #' }
 #' The reported \code{nll} is the exact likelihood at the estimate whatever the route, so AIC
 #' is comparable across routes. An event exactly at \code{horizon} is left out, as in morie's
