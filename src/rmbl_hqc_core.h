@@ -726,8 +726,7 @@ struct Fft {
     static void radix(uint16_t *f0, uint16_t *f1, const uint16_t *f, uint32_t m_f) {
         switch (m_f) {
         case 4:
-            if constexpr (MAXMF < 4) break;
-            else {
+            if constexpr (MAXMF >= 4) {
             f0[4] = f[8] ^ f[12];
             f0[6] = f[12] ^ f[14];
             f0[7] = f[14] ^ f[15];
@@ -762,10 +761,8 @@ struct Fft {
             f1[0] = f[1] ^ f0[1];
             f1[1] = f[3];
             break;
-        case 1:
-            f0[0] = f[0];
-            f1[0] = f[1];
-            break;
+        /* no m_f = 1 case: rec() evaluates a degree-1 polynomial directly and
+         * never asks for that split, and run() and radix_big() start at 4 */
         default:
             /* only the 32-point FFT (HQC-3/5) splits further; for HQC-1 this
              * path cannot run and is not compiled */
