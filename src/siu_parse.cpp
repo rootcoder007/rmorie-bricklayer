@@ -433,7 +433,7 @@ std::string html_to_text(const std::string& html) {
 }
 
 // ---- French reports: the SIU publishes every report in both languages, and the French copy
-// ---- has its own headings and phrasing ("Le 12 novembre 2022", "a communiqué ... à l'UES")
+// ---- has its own headings and phrasing ("Le 12 novembre 2022", "a communique ... a l UES")
 static const std::string kFrMonths =
     "(?:janvier|f\xc3\xa9vrier|fevrier|mars|avril|mai|juin|juillet|ao\xc3\xbbt|aout|septembre|octobre|novembre|"
     "d\xc3\xa9" "cembre|decembre)";

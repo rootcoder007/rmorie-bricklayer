@@ -340,7 +340,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       message("  Common causes (in rough order of likelihood):")
       known <- grepl(paste0("429|too many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could not|",
                             "unable to resolve|resolve host|name not|getaddrinfo|timeout|timed out|",
-                            "connection (refused|reset)|",
+                            "connection (refused|reset)|couldn.t connect|",
                             "403|forbidden"),
                      msg, ignore.case = TRUE)
       if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
@@ -355,17 +355,20 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
         message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
         message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
       }
-      if (grepl("could not|unable to resolve|resolve host|name not|getaddrinfo",
+      if (grepl("could not resolve|unable to resolve|resolve host|name not|getaddrinfo",
         msg,
         ignore.case = TRUE
       )) {
         message("    * DNS lookup failed; check network connectivity.")
       }
-      if (grepl("timeout|timed out|connection (refused|reset)",
+      if (grepl("could not connect|connection (refused|reset)|couldn.t connect",
         msg,
         ignore.case = TRUE
       )) {
-        message("    * Connection timed out / refused (firewall, often institutional).")
+        message("    * Could not connect to the server (offline, or a proxy or firewall refused the connection).")
+      }
+      if (grepl("timeout|timed out", msg, ignore.case = TRUE)) {
+        message("    * Connection timed out (firewall, often institutional).")
       }
       if (grepl("403|forbidden", msg, ignore.case = TRUE)) {
         message("    * HTTP 403 Forbidden (geo-restriction; try a different VPN region).")
