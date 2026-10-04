@@ -44,12 +44,13 @@
 #'
 #' @param level Security level, as a NIST category: 1, 3 (the default) or 5
 #' (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
-#' Level 3 matches the category of ML-KEM-768, [kem_keygen()]'s default.
+#' Level 3 matches the category of ML-KEM-768,
+#' [kem_keygen()]'s default.
 #' @param seed Optional raw vector: 32 bytes (`seed_KEM`) for v5; for round 4
-#' the [hqc_sizes()]`["seed"]` bytes its key generation draws (`sk_seed`,
-#' `sigma`, `pk_seed`: 96, 104 or 112). Supplying it makes the key
-#' reproducible, which is what the known-answer tests need; the default draws
-#' from the operating system's CSPRNG.
+#' the [hqc_sizes()]`["seed"]` bytes its key generation
+#' draws (`sk_seed`, `sigma`, `pk_seed`: 96, 104 or 112).
+#' Supplying it makes the key reproducible, which is what the known-answer
+#' tests need; the default draws from the operating system's CSPRNG.
 #' @param version `"v5"` (the default: the specification of 2025-08-22, a
 #' 32-byte shared secret) or `"round4"` (the submission of 2023-04-30, a
 #' 64-byte shared secret). Keys remember it; encapsulation and decapsulation
@@ -131,7 +132,8 @@ hqc_public_key <- function(key) {
 #' hard-code them.
 #'
 #' @param level Security level: 1, 3 or 5 (or 128, 192, 256).
-#' @param version `"v5"` (the default) or `"round4"`, as in [hqc_keygen()].
+#' @param version `"v5"` (the default) or `"round4"`, as in
+#'   [hqc_keygen()].
 #' @return A named integer vector: `encapsulation_key`, `decapsulation_key`,
 #' `ciphertext`, `seed` (key generation), `message` and `salt`
 #' (encapsulation randomness) and `shared_secret`, all in bytes.
@@ -155,16 +157,19 @@ hqc_sizes <- function(level, version = c("v5", "round4")) {
 #' Produces a ciphertext and the shared secret it carries (32 bytes; 64 for a
 #' round-4 key). Only the public key is needed.
 #'
-#' @param key A key or public key from [hqc_keygen()] / [hqc_public_key()].
+#' @param key A key or public key from [hqc_keygen()] /
+#'   [hqc_public_key()].
 #' @param m,salt Optional raw vectors of encapsulation randomness: `m` of
-#' [hqc_sizes()]`["message"]` bytes (16, 24 or 32) and `salt` of 16 bytes.
+#' [hqc_sizes()]`["message"]` bytes (16, 24 or 32)
+#' and `salt` of 16 bytes.
 #' Supplying them makes the operation reproducible, which is what the
 #' known-answer tests need; the default draws both from the operating
 #' system's CSPRNG. Reusing them for the same key repeats the shared secret,
 #' so supply them only deliberately.
 #' @return A list of class `bricklayer_hqc_capsule`: `ciphertext` and
 #' `shared` (both hex), `level` and `version`.
-#' @seealso [hqc_decapsulate()], [hqc_keygen()].
+#' @seealso [hqc_decapsulate()],
+#'   [hqc_keygen()].
 #' @examples
 #' key <- hqc_keygen(1)
 #' a <- hqc_encapsulate(key)
@@ -222,7 +227,8 @@ hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
 #' whose public half is not the one its secret seed makes) IS refused.
 #'
 #' @param key A key from [hqc_keygen()], with its secret half.
-#' @param ciphertext Ciphertext from [hqc_encapsulate()], hex or raw.
+#' @param ciphertext Ciphertext from
+#'   [hqc_encapsulate()], hex or raw.
 #' @return The shared secret as hex: 64 characters (32 bytes), or 128 for a
 #' round-4 key.
 #' @seealso [hqc_encapsulate()].

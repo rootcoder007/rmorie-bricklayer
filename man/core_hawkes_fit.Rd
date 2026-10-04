@@ -19,7 +19,8 @@ core_hawkes_fit(
 
 \item{horizon}{End of the observation window.}
 
-\item{kernel}{One of \code{"exponential"}, \code{"weibull"}, \code{"gamma"}, \code{"lomax"}.}
+\item{kernel}{One of \code{"exponential"}, \code{"weibull"},
+\code{"gamma"}, \code{"lomax"}.}
 
 \item{baseline}{\code{"constant"} or \code{"sinusoidal"}.}
 

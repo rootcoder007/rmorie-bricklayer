@@ -17,7 +17,8 @@ core_hawkes_residuals(
 
 \item{horizon}{End of the observation window.}
 
-\item{kernel}{One of \code{"exponential"}, \code{"weibull"}, \code{"gamma"}, \code{"lomax"}.}
+\item{kernel}{One of \code{"exponential"}, \code{"weibull"},
+\code{"gamma"}, \code{"lomax"}.}
 
 \item{par}{Parameters (baseline, eta, kernel), as \code{core_hawkes_fit()} returns them in
 \code{theta}.}

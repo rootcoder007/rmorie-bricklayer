@@ -12,13 +12,14 @@ hqc_public_key(key)
 \arguments{
 \item{level}{Security level, as a NIST category: 1, 3 (the default) or 5
 (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
-Level 3 matches the category of ML-KEM-768, \code{\link[=kem_keygen]{kem_keygen()}}'s default.}
+Level 3 matches the category of ML-KEM-768,
+\code{\link[=kem_keygen]{kem_keygen()}}'s default.}
 
 \item{seed}{Optional raw vector: 32 bytes (\code{seed_KEM}) for v5; for round 4
-the \code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["seed"]} bytes its key generation draws (\code{sk_seed},
-\code{sigma}, \code{pk_seed}: 96, 104 or 112). Supplying it makes the key
-reproducible, which is what the known-answer tests need; the default draws
-from the operating system's CSPRNG.}
+the \code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["seed"]} bytes its key generation
+draws (\code{sk_seed}, \code{sigma}, \code{pk_seed}: 96, 104 or 112).
+Supplying it makes the key reproducible, which is what the known-answer
+tests need; the default draws from the operating system's CSPRNG.}
 
 \item{version}{\code{"v5"} (the default: the specification of 2025-08-22, a
 32-byte shared secret) or \code{"round4"} (the submission of 2023-04-30, a

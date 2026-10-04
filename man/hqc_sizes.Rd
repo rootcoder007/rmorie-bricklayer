@@ -9,7 +9,8 @@ hqc_sizes(level, version = c("v5", "round4"))
 \arguments{
 \item{level}{Security level: 1, 3 or 5 (or 128, 192, 256).}
 
-\item{version}{\code{"v5"} (the default) or \code{"round4"}, as in \code{\link[=hqc_keygen]{hqc_keygen()}}.}
+\item{version}{\code{"v5"} (the default) or \code{"round4"}, as in
+\code{\link[=hqc_keygen]{hqc_keygen()}}.}
 }
 \value{
 A named integer vector: \code{encapsulation_key}, \code{decapsulation_key},

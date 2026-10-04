@@ -9,7 +9,8 @@ drbg_generate(drbg, n, additional = NULL)
 \arguments{
 \item{drbg}{A generator from \code{\link[=drbg_new]{drbg_new()}}.}
 
-\item{n}{Number of bytes, 1 to 65536 (the standard's limit per request for AES: 2^19 bits).}
+\item{n}{Number of bytes, 1 to 65536 (the standard's limit per request for
+AES: 2^19 bits).}
 
 \item{additional}{Optional additional input of up to 48 bytes, raw or hex, mixed into the
 state before and after the output.}

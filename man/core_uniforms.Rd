@@ -15,10 +15,11 @@ core_uniforms(n, seed)
 A numeric vector of length \code{n}.
 }
 \description{
-The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on [0, 1) from a
-64-bit \code{seed}, the same numbers morie's Python computes, so the R and Python arms can
-draw identical "random" values where their results must agree (the within-day jitter of tied
-event dates in the TPS Hawkes fits, a subsample). Not a statistical replacement for R's own
+The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on
+[0, 1) from a 64-bit \code{seed}, the same numbers morie's Python computes,
+so the R and Python arms can draw identical "random" values where their
+results must agree (the within-day jitter of tied event dates in the TPS
+Hawkes fits, a subsample). Not a statistical replacement for R's own
 generators.
 }
 \examples{

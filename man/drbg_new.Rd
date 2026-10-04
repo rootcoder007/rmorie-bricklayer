@@ -7,8 +7,8 @@
 drbg_new(entropy = NULL, personalization = NULL)
 }
 \arguments{
-\item{entropy}{Entropy input: 48 bytes, raw or hex. \code{NULL} (the default) draws them from the
-operating system's CSPRNG.}
+\item{entropy}{Entropy input: 48 bytes, raw or hex. \code{NULL} (the default)
+draws them from the operating system's CSPRNG.}
 
 \item{personalization}{Optional personalization string of up to 48 bytes, raw or hex.}
 }
@@ -16,22 +16,27 @@ operating system's CSPRNG.}
 An object of class \code{bricklayer_drbg}. Its state (Key, V) is not printed.
 }
 \description{
-Creates the counter-mode DRBG of NIST SP 800-90A Rev. 1, section 10.2.1, with AES-256 and no
-derivation function, implemented in this package (no system library). From the same entropy,
-personalization and additional inputs it returns the same bytes, which is what reproducible
-key generation and known-answer tests need; for keys meant to stay secret, seed it from
-\code{\link[=random_bytes]{random_bytes()}} (the default) or use \code{\link[=random_bytes]{random_bytes()}} directly.
+Creates the counter-mode DRBG of NIST SP 800-90A Rev. 1, section 10.2.1,
+with AES-256 and no derivation function, implemented in this package (no
+system library). From the same entropy, personalization and additional
+inputs it returns the same bytes, which is what reproducible key generation
+and known-answer tests need; for keys meant to stay secret, seed it from
+\code{\link[=random_bytes]{random_bytes()}} (the default) or use
+\code{\link[=random_bytes]{random_bytes()}} directly.
 }
 \details{
-It reproduces all 720 AES-256 no-df vectors of NIST's DRBG validation suite (without
-reseeding, with reseeding, and with prediction resistance; the package's tests check a sample
-of them), and it is the \code{randombytes()} of NIST's \code{rng.c}, with which most post-quantum
-submissions wrote their known-answer files: \code{drbg_new(as.raw(0:47))} followed by
-\code{drbg_generate(d, 48)} gives the \code{seed} of their vector 0. AES runs in constant time: the
-S-box is computed (an inversion in GF(2^8) and the affine map) rather than looked up, and on
-x86-64 processors with AES-NI the rounds use those instructions.
+It reproduces all 720 AES-256 no-df vectors of NIST's DRBG validation suite
+(without reseeding, with reseeding, and with prediction resistance; the
+package's tests check a sample of them), and it is the \code{randombytes()} of
+NIST's \code{rng.c}, with which most post-quantum submissions wrote their
+known-answer files: \code{drbg_new(as.raw(0:47))} followed by
+\code{drbg_generate(d, 48)} gives the \code{seed} of their vector 0. AES runs in
+constant time: the S-box is computed (an inversion in GF(2^8) and the affine
+map) rather than looked up, and on x86-64 processors with AES-NI the rounds
+use those instructions.
 
-The generator is an object that changes as it is used: every \code{\link[=drbg_generate]{drbg_generate()}} and
+The generator is an object that changes as it is used: every
+\code{\link[=drbg_generate]{drbg_generate()}} and
 \code{\link[=drbg_reseed]{drbg_reseed()}} advances it in place.
 }
 \examples{
@@ -56,5 +61,6 @@ NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
 \doi{10.6028/NIST.FIPS.197-upd1}
 }
 \seealso{
-\code{\link[=drbg_generate]{drbg_generate()}}, \code{\link[=drbg_reseed]{drbg_reseed()}}, \code{\link[=random_bytes]{random_bytes()}}.
+\code{\link[=drbg_generate]{drbg_generate()}}, \code{\link[=drbg_reseed]{drbg_reseed()}},
+\code{\link[=random_bytes]{random_bytes()}}.
 }

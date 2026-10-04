@@ -9,8 +9,8 @@ drbg_reseed(drbg, entropy = NULL, additional = NULL)
 \arguments{
 \item{drbg}{A generator from \code{\link[=drbg_new]{drbg_new()}}.}
 
-\item{entropy}{Entropy input: 48 bytes, raw or hex; \code{NULL} draws them from the operating
-system's CSPRNG.}
+\item{entropy}{Entropy input: 48 bytes, raw or hex; \code{NULL} draws them from
+the operating system's CSPRNG.}
 
 \item{additional}{Optional additional input of up to 48 bytes, raw or hex.}
 }
@@ -18,8 +18,8 @@ system's CSPRNG.}
 \code{drbg}, invisibly, reseeded in place.
 }
 \description{
-Mixes fresh entropy into the generator (SP 800-90A's Reseed function) and resets its request
-count.
+Mixes fresh entropy into the generator (SP 800-90A's Reseed function) and
+resets its request count.
 }
 \examples{
 d <- drbg_new(as.raw(0:47))

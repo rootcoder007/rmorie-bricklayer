@@ -9,7 +9,8 @@ hqc_decapsulate(key, ciphertext)
 \arguments{
 \item{key}{A key from \code{\link[=hqc_keygen]{hqc_keygen()}}, with its secret half.}
 
-\item{ciphertext}{Ciphertext from \code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, hex or raw.}
+\item{ciphertext}{Ciphertext from
+\code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, hex or raw.}
 }
 \value{
 The shared secret as hex: 64 characters (32 bytes), or 128 for a

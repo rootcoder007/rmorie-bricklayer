@@ -7,10 +7,12 @@
 hqc_encapsulate(key, m = NULL, salt = NULL)
 }
 \arguments{
-\item{key}{A key or public key from \code{\link[=hqc_keygen]{hqc_keygen()}} / \code{\link[=hqc_public_key]{hqc_public_key()}}.}
+\item{key}{A key or public key from \code{\link[=hqc_keygen]{hqc_keygen()}} /
+\code{\link[=hqc_public_key]{hqc_public_key()}}.}
 
 \item{m, salt}{Optional raw vectors of encapsulation randomness: \code{m} of
-\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or 32) and \code{salt} of 16 bytes.
+\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or 32)
+and \code{salt} of 16 bytes.
 Supplying them makes the operation reproducible, which is what the
 known-answer tests need; the default draws both from the operating
 system's CSPRNG. Reusing them for the same key repeats the shared secret,
@@ -38,5 +40,6 @@ identical(hqc_decapsulate(key, a$ciphertext), a$shared)
 identical(hqc_decapsulate(key, b$ciphertext), b$shared)
 }
 \seealso{
-\code{\link[=hqc_decapsulate]{hqc_decapsulate()}}, \code{\link[=hqc_keygen]{hqc_keygen()}}.
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}},
+\code{\link[=hqc_keygen]{hqc_keygen()}}.
 }

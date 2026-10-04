@@ -109,7 +109,8 @@
 #'
 #' @param times Sorted event times in \code{[0, horizon]}.
 #' @param horizon End of the observation window.
-#' @param kernel One of \code{"exponential"}, \code{"weibull"}, \code{"gamma"}, \code{"lomax"}.
+#' @param kernel One of \code{"exponential"}, \code{"weibull"},
+#'   \code{"gamma"}, \code{"lomax"}.
 #' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param method One of \code{"auto"}, \code{"exact"}, \code{"soe"}, \code{"truncate"},
 #'   \code{"em"}, \code{"inar"}.
@@ -362,10 +363,11 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 
 #' Reproducible uniforms shared with morie's Python arm (splitmix64)
 #'
-#' The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on [0, 1) from a
-#' 64-bit \code{seed}, the same numbers morie's Python computes, so the R and Python arms can
-#' draw identical "random" values where their results must agree (the within-day jitter of tied
-#' event dates in the TPS Hawkes fits, a subsample). Not a statistical replacement for R's own
+#' The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on
+#' [0, 1) from a 64-bit \code{seed}, the same numbers morie's Python computes,
+#' so the R and Python arms can draw identical "random" values where their
+#' results must agree (the within-day jitter of tied event dates in the TPS
+#' Hawkes fits, a subsample). Not a statistical replacement for R's own
 #' generators.
 #'
 #' @param n Number of uniforms.

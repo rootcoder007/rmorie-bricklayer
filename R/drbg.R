@@ -6,25 +6,30 @@
 
 #' A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP 800-90A)
 #'
-#' Creates the counter-mode DRBG of NIST SP 800-90A Rev. 1, section 10.2.1, with AES-256 and no
-#' derivation function, implemented in this package (no system library). From the same entropy,
-#' personalization and additional inputs it returns the same bytes, which is what reproducible
-#' key generation and known-answer tests need; for keys meant to stay secret, seed it from
-#' [random_bytes()] (the default) or use [random_bytes()] directly.
+#' Creates the counter-mode DRBG of NIST SP 800-90A Rev. 1, section 10.2.1,
+#' with AES-256 and no derivation function, implemented in this package (no
+#' system library). From the same entropy, personalization and additional
+#' inputs it returns the same bytes, which is what reproducible key generation
+#' and known-answer tests need; for keys meant to stay secret, seed it from
+#' [random_bytes()] (the default) or use
+#' [random_bytes()] directly.
 #'
-#' It reproduces all 720 AES-256 no-df vectors of NIST's DRBG validation suite (without
-#' reseeding, with reseeding, and with prediction resistance; the package's tests check a sample
-#' of them), and it is the `randombytes()` of NIST's `rng.c`, with which most post-quantum
-#' submissions wrote their known-answer files: `drbg_new(as.raw(0:47))` followed by
-#' `drbg_generate(d, 48)` gives the `seed` of their vector 0. AES runs in constant time: the
-#' S-box is computed (an inversion in GF(2^8) and the affine map) rather than looked up, and on
-#' x86-64 processors with AES-NI the rounds use those instructions.
+#' It reproduces all 720 AES-256 no-df vectors of NIST's DRBG validation suite
+#' (without reseeding, with reseeding, and with prediction resistance; the
+#' package's tests check a sample of them), and it is the `randombytes()` of
+#' NIST's `rng.c`, with which most post-quantum submissions wrote their
+#' known-answer files: `drbg_new(as.raw(0:47))` followed by
+#' `drbg_generate(d, 48)` gives the `seed` of their vector 0. AES runs in
+#' constant time: the S-box is computed (an inversion in GF(2^8) and the affine
+#' map) rather than looked up, and on x86-64 processors with AES-NI the rounds
+#' use those instructions.
 #'
-#' The generator is an object that changes as it is used: every [drbg_generate()] and
+#' The generator is an object that changes as it is used: every
+#' [drbg_generate()] and
 #' [drbg_reseed()] advances it in place.
 #'
-#' @param entropy Entropy input: 48 bytes, raw or hex. `NULL` (the default) draws them from the
-#'   operating system's CSPRNG.
+#' @param entropy Entropy input: 48 bytes, raw or hex. `NULL` (the default)
+#'   draws them from the operating system's CSPRNG.
 #' @param personalization Optional personalization string of up to 48 bytes, raw or hex.
 #' @return An object of class `bricklayer_drbg`. Its state (Key, V) is not printed.
 #' @references NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
@@ -32,7 +37,8 @@
 #'
 #'   NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
 #'   \doi{10.6028/NIST.FIPS.197-upd1}
-#' @seealso [drbg_generate()], [drbg_reseed()], [random_bytes()].
+#' @seealso [drbg_generate()], [drbg_reseed()],
+#'   [random_bytes()].
 #' @examples
 #' # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
 #' d <- drbg_new(as.raw(0:47))
@@ -64,7 +70,8 @@ drbg_new <- function(entropy = NULL, personalization = NULL) {
 #' Generates `n` bytes (SP 800-90A's Generate function) and advances the generator.
 #'
 #' @param drbg A generator from [drbg_new()].
-#' @param n Number of bytes, 1 to 65536 (the standard's limit per request for AES: 2^19 bits).
+#' @param n Number of bytes, 1 to 65536 (the standard's limit per request for
+#'   AES: 2^19 bits).
 #' @param additional Optional additional input of up to 48 bytes, raw or hex, mixed into the
 #'   state before and after the output.
 #' @return A raw vector of `n` bytes.
@@ -99,12 +106,12 @@ drbg_generate <- function(drbg, n, additional = NULL) {
 
 #' Reseed a DRBG
 #'
-#' Mixes fresh entropy into the generator (SP 800-90A's Reseed function) and resets its request
-#' count.
+#' Mixes fresh entropy into the generator (SP 800-90A's Reseed function) and
+#' resets its request count.
 #'
 #' @inheritParams drbg_generate
-#' @param entropy Entropy input: 48 bytes, raw or hex; `NULL` draws them from the operating
-#'   system's CSPRNG.
+#' @param entropy Entropy input: 48 bytes, raw or hex; `NULL` draws them from
+#'   the operating system's CSPRNG.
 #' @param additional Optional additional input of up to 48 bytes, raw or hex.
 #' @return `drbg`, invisibly, reseeded in place.
 #' @seealso [drbg_new()], [drbg_generate()].
