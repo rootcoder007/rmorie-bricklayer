@@ -50,13 +50,31 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
   if (!is.character(dest) || length(dest) != 1L || is.na(dest) || !nzchar(dest)) {
     stop("`dest` must be one non-empty file path", call. = FALSE)
   }
+  # what can be told before any download: the URL, the destination, the timeout
+  if (!grepl("^https?://", url, ignore.case = TRUE)) {
+    stop(sprintf("bricklayer_fetch: '%s' is not an http(s) URL", url), call. = FALSE)
+  }
+  d <- dirname(path.expand(dest))
+  if (!dir.exists(d) || file.access(d, 2L) != 0L) {
+    stop(sprintf("bricklayer_fetch: cannot write %s (%s)", dest,
+                 if (!dir.exists(d)) "its directory does not exist" else "no permission"), call. = FALSE)
+  }
+  timeout <- suppressWarnings(as.integer(timeout))
+  if (length(timeout) != 1L || is.na(timeout) || timeout < 1L) {
+    stop("`timeout` must be a positive number of seconds", call. = FALSE)
+  }
   code <- .Call(C_rmbl_fetch_fallback, url,
                 if (is.null(wayback)) "" else as.character(wayback),
                 dest, as.integer(timeout))
   if (code == 0L) return(invisible("live"))
   if (code == 1L) return(invisible("wayback"))
-  stop("bricklayer_fetch: both the live URL and its Wayback fallback failed for ",
-       url, call. = FALSE)
+  v <- -code
+  live <- v %/% 10L
+  stop(sprintf("bricklayer_fetch: %s; %s",
+               if (live == 1L) sprintf("could not reach %s", url) else sprintf("%s answered HTTP %d", url, live),
+               if (v %% 10L == 1L) "the Wayback Machine copy could not be downloaded either"
+               else "the Wayback Machine has no snapshot of it (or did not answer)"),
+       call. = FALSE)
 }
 
 #' Resolve a Wayback Machine snapshot URL (C++/libcurl)
@@ -87,7 +105,9 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
 #' }
 #' @export
 wayback_snapshot_url_native <- function(url, timeout = 30L) {
-  stopifnot(is.character(url), length(url) == 1L, nzchar(url))
+  if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
+    stop("`url` must be a single non-empty string", call. = FALSE)
+  }
   snap <- .Call(C_rmbl_wayback, url, as.integer(timeout))
   if (is.character(snap) && nzchar(snap)) snap else NULL
 }

@@ -107,25 +107,37 @@ bricklayer_llm_models <- function(timeout = 10) {
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
   if (is.null(base) || is.null(key)) {
-    return(structure(character(), default = NULL))
+    return(structure(character(), default = NULL, http_status = NA_integer_))
   }
-  res <- tryCatch(
-    .bl_http_get(
-      paste0(base, "/v1/models"), timeout,
-      paste("Authorization: Bearer", key)
-    ),
-    error = function(e) NULL
-  )
+  res <- .bl_models_reply(base, key, timeout)
   if (is.null(res) || !identical(as.integer(res$status), 200L)) {
-    return(structure(character(), default = NULL))
+    # http_status says why the list is empty: 401/403 a rejected key, NA no answer at all
+    return(structure(character(), default = NULL,
+                     http_status = if (is.null(res)) NA_integer_ else as.integer(res$status)))
   }
-  parsed <- tryCatch(jsonlite::fromJSON(rawToChar(res$body), simplifyVector = FALSE),
+  parsed <- tryCatch(bricklayer_json_from_json(rawToChar(res$body), simplifyVector = FALSE),
     error = function(e) NULL
   )
   ids <- vapply(parsed$data %||% list(), function(m) as.character(m$id %||% ""), "")
   ids <- ids[nzchar(ids)]
   wanted <- .bl_hosted_model()
   structure(ids, default = if (length(ids) && !wanted %in% ids) ids[[1L]] else wanted)
+}
+
+# GET /v1/models with a key: the reply, or NULL when the gateway did not answer.
+.bl_models_reply <- function(base, key, timeout = 10) {
+  tryCatch(
+    .bl_http_get(paste0(base, "/v1/models"), timeout, paste("Authorization: Bearer", key)),
+    error = function(e) NULL
+  )
+}
+
+# One line for a key the gateway refused, or for a gateway that did not answer.
+.bl_key_state <- function(models) {
+  st <- attr(models, "http_status")
+  if (length(models)) return("ok")
+  if (isTRUE(st %in% c(401L, 403L))) return("rejected")
+  "unreachable"
 }
 
 # One seam for the HTTP layer so tests can stand in canned replies.
@@ -159,11 +171,25 @@ bricklayer_llm_models <- function(timeout = 10) {
 }
 
 .bl_reply_error <- function(res, what) {
+  if (identical(what, "the hosted MORIE LLM tier") && isTRUE(res$status %in% c(401L, 403L))) {
+    stop(sprintf("the hosted MORIE LLM tier rejected your key (HTTP %d): run `%s login` again",
+                 res$status, .bl_prog()), call. = FALSE)
+  }
   msg <- res$json$error
   if (is.list(msg)) msg <- msg$message
   detail <- ""
-  if (is.character(msg) && length(msg) == 1L) detail <- paste0(": ", msg)
+  if (is.character(msg) && length(msg) == 1L) {
+    # a gateway error can quote the key it was sent ("Received API Key = sk-...", a key hash): never print it
+    msg <- sub("(?i)[.,;]?\\s*(received api key|key hash).*$", "", msg, perl = TRUE)
+    detail <- paste0(": ", msg)
+  }
   stop(sprintf("%s answered %d%s", what, res$status, detail), call. = FALSE)
+}
+
+# The command name the user typed (the launchers set RMBL_PROG; rmbl and rmoriebricklayer are one command).
+.bl_prog <- function() {
+  p <- Sys.getenv("RMBL_PROG", "")
+  if (nzchar(p)) p else "rmoriebricklayer"
 }
 
 #' Ask the hosted MORIE language model
@@ -265,6 +291,17 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     if (length(token) != 1L || !nzchar(token)) {
       stop("an empty token cannot be stored", call. = FALSE)
     }
+    base <- .bl_hosted_base()
+    if (!is.null(base)) {
+      res <- .bl_models_reply(base, token)
+      if (is.null(res)) {
+        stop(sprintf("could not reach %s to check the key; nothing stored (try again)", base), call. = FALSE)
+      }
+      if (!identical(as.integer(res$status), 200L)) {
+        stop(sprintf("the gateway did not accept that key (HTTP %d); nothing stored (`%s login` mints one)",
+                     as.integer(res$status), .bl_prog()), call. = FALSE)
+      }
+    }
     p <- .bl_store_key(token)
     message(sprintf("Token stored in %s", p))
     return(invisible(token))
@@ -278,8 +315,11 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 .bl_login_email <- function(email, code = NULL) {
   auth <- .bl_hosted_auth()
   email <- tolower(trimws(as.character(email)))
-  if (length(email) != 1L || !grepl("@", email, fixed = TRUE)) {
+  if (length(email) != 1L || is.na(email) || !nzchar(email)) {
     stop("an email address is required", call. = FALSE)
+  }
+  if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", email)) {
+    stop(sprintf("'%s' is not an email address", email), call. = FALSE)
   }
   if (is.null(code)) {
     res <- .bl_post_json(paste0(auth, "/email/code"), list(email = email))
@@ -319,8 +359,14 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   }
   interval <- as.numeric(if (is.null(info$interval)) 5 else info$interval)
   deadline <- Sys.time() + poll_max_seconds
+  waited <- 0
   while (Sys.time() < deadline) {
     Sys.sleep(interval)
+    waited <- waited + interval
+    if (waited %% 30 < interval) {
+      # a silent wait reads as a hang
+      message(sprintf("still waiting for the sign-in to be approved (%ds elapsed; Ctrl-C stops)", as.integer(waited)))
+    }
     res <- .bl_post_json(
       paste0(auth, "/device/token"),
       list(device_code = info$device_code)
@@ -381,7 +427,7 @@ bricklayer_llm_status <- function() {
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
   data.frame(
-    route = c("hosted MORIE tier", "rmorie-cli agent"),
+    route = c("hosted MORIE tier", "rmorie launcher"),
     status = c(
       if (is.null(base)) {
         "disabled"
@@ -390,7 +436,7 @@ bricklayer_llm_status <- function() {
       } else {
         "key stored"
       },
-      if (nzchar(.rmorie_cli_binary())) "on PATH" else "absent"
+      if (nzchar(Sys.which("rmorie"))) "on PATH" else "absent"
     ),
     detail = c(
       if (is.null(base)) {
@@ -399,16 +445,13 @@ bricklayer_llm_status <- function() {
         base
       } else {
         hm <- bricklayer_llm_models()
-        if (length(hm)) {
-          sprintf(
-            "%s  models: %s (default %s)", base,
-            paste(hm, collapse = ", "), attr(hm, "default")
-          )
-        } else {
-          paste(base, " (gateway not reachable)")
-        }
+        switch(.bl_key_state(hm),
+          ok = sprintf("%s  models: %s (default %s)", base, paste(hm, collapse = ", "), attr(hm, "default")),
+          rejected = sprintf("%s  (key rejected by the gateway -- run `%s login` again)", base, .bl_prog()),
+          sprintf("%s  (gateway not reachable)", base)
+        )
       },
-      "backend = \"ollama\" or \"anthropic\" in agent_bundle()"
+      "rmorie ask / rmorie agent use the same key (rmorie::install_cli() puts it on the PATH)"
     ),
     stringsAsFactors = FALSE
   )

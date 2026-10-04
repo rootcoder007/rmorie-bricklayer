@@ -53,8 +53,7 @@ agent_bundle <- function(request, model = NULL, backend = "auto") {
   if (!nzchar(bin)) {
     return(paste0(
       "No language-model route is set up. Sign in to the hosted MORIE tier ",
-      "with bricklayer_llm_login() (key from https://llm.rmorie.com), or ",
-      "put the rmorie-cli agent on the PATH."))
+      "with bricklayer_llm_login() or `rmbl login` (GitHub, an emailed code, or a key from https://llm.rmorie.com)."))
   }
   # nocov start -- forwards to the optional AGPL-licensed rmorie-cli binary
   # system2() hands `args` to a shell: quote every value, or the first
