@@ -96,6 +96,7 @@ test_that("EM reaches the direct maximum; INAR is close; truncation is close; ba
   expect_lt(abs(inar$branching_ratio - direct$branching_ratio), 0.25)
   tr <- core_hawkes_fit(e$t, e$T, "gamma", method = "truncate", eps = 1e-10)
   expect_identical(tr$method, "truncate")
+  expect_identical(tr$n, length(e$t[e$t <= e$T]))  # an event at the horizon is part of the record
   expect_identical(core_hawkes_fit(e$t, e$T, "weibull")$method, "truncate")
   expect_lt(abs(tr$nll - core_hawkes_fit(e$t, e$T, "gamma", method = "exact")$nll), 1e-3)
   expect_error(core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "inar"), "stationary")

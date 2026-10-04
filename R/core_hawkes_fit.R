@@ -148,7 +148,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   method <- .rmbl_hk_method(method, kernel)
   chk <- .rmbl_hk_check_times(times, horizon)
   horizon <- chk$horizon
-  times <- chk$times[chk$times >= 0 & chk$times < horizon]
+  times <- chk$times[chk$times >= 0 & chk$times <= horizon]
   n <- length(times)
   if (n < 50L) stop(sprintf("too few events (%d) for the fit", n), call. = FALSE)
   if (!is.numeric(eps) || length(eps) != 1L || !(eps > 0) || eps >= 1) {
