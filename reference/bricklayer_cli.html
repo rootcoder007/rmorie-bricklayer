@@ -4,7 +4,7 @@ login [--token [KEY]] [--email ADDRESS [--code CODE]]
     [--no-browser]
 sign in to the hosted MORIE LLM tier: the GitHub
 device flow by default, a code sent to --email, or a key
-you paste with --token (prompts when KEY is omitted)
+you paste with --token (read from the terminal or a pipe when KEY is omitted)
 
 logout
 forget the hosted key
@@ -55,7 +55,7 @@ login [--token [KEY]] [--email ADDRESS [--code CODE]]
     [--no-browser]
 sign in to the hosted MORIE LLM tier: the GitHub
 device flow by default, a code sent to --email, or a key
-you paste with --token (prompts when KEY is omitted)
+you paste with --token (read from the terminal or a pipe when KEY is omitted)
 
 logout
 forget the hosted key
@@ -152,7 +152,7 @@ this list
     [--no-browser]</code></dt>
 <dd><p>sign in to the hosted MORIE LLM tier: the GitHub
 device flow by default, a code sent to <code>--email</code>, or a key
-you paste with <code>--token</code> (prompts when KEY is omitted)</p></dd>
+you paste with <code>--token</code> (read from the terminal or a pipe when KEY is omitted)</p></dd>
 
 <dt><code>logout</code></dt>
 <dd><p>forget the hosted key</p></dd>
@@ -227,7 +227,7 @@ console).</p></dd>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"version"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.5</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"help"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]   (rmbl is the same command)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]   (rmbl is the same command as rmoriebricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   login [--email ADDRESS] [--token [KEY]]   sign in to the hosted MORIE LLM tier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--code CODE] [--no-browser]</span>

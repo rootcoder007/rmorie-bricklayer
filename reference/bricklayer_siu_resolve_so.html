@@ -85,11 +85,9 @@ and <code>reason</code> (the human-readable evidence).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>bricklayer is the foundation layer: this function is the pure
-rule set. Reports already in the panel-reviewed corpus should never be
-re-derived – use <code>rmorie::morie_siu_resolve_so()</code>, which returns
-the verified corpus value first and only falls back to these rules for
-unreviewed reports.</p>
+    <p>This function is the pure rule set. For reports that already
+have a panel-reviewed count, prefer that verified value; use these rules
+for unreviewed reports.</p>
     </div>
 
     <div class="section level2">

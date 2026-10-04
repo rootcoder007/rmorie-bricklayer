@@ -60,7 +60,7 @@ try(bricklayer_fetch(
   "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
   wayback = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
   timeout = 60))
-#> Error : bricklayer_fetch: both the live URL and its Wayback fallback failed for https://example.org/rotated-file.csv
+#> Error : bricklayer_fetch: could not reach https://example.org/rotated-file.csv; the Wayback fallback failed too (its copy could not be downloaded)
 
 # The return value tells you which source served the file.
 status <- try(bricklayer_fetch("https://cloud.r-project.org/", tempfile()))

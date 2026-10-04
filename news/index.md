@@ -2,6 +2,43 @@
 
 ## rmoriebricklayer 0.5.5
 
+- Fresh-user round 5: `VERB --help` prints the verb’s usage under both
+  names and never runs it (`logout --help` used to forget the key);
+  messages name the command typed (`rmbl` or `rmoriebricklayer`); usage
+  errors exit 2 and an unknown function in `describe` / `examples` exits
+  1; `--version` works. `login --token` asks the gateway before storing
+  a key and refuses a rejected one; `login --email` checks the address
+  and `--code` needs `--email`; the GitHub sign-in says it is still
+  waiting every 30 s. A key the gateway rejects is reported as rejected
+  (not “gateway not reachable”), the gateway’s quote of the key and its
+  hash is never printed, and `models` lists the models without the
+  suggested jsonlite.
+  [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  and `doctor` use the package’s own hosted route only (`backend` is
+  “auto” or “hosted”).
+
+- [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+  says why a download failed (the HTTP status, a server never reached,
+  no Wayback snapshot) and refuses a non-http(s) URL, an unwritable
+  destination or a non-positive timeout before downloading;
+  [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+  keeps R’s [`url()`](https://rdrr.io/r/base/connections.html) warning
+  out of the console, reports its status as the cause and says when the
+  Wayback Machine has no copy; the Wayback lookup retries once. SIU: an
+  impossible date (“February 30”) is no date, day-first ordinals (“2nd
+  February 2018”, “22nd of March 2019”) and abbreviated months read, the
+  hex quotes and dashes decode as the decimal ones, report pages are
+  read from their body rather than the table of contents (incident dates
+  were empty), and the helpers take `NA` and several reports.
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  compares a biennial series step to step (it found no comparisons) and
+  labels an inserted year “no data”;
+  [`report_analysis()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_analysis.md)
+  prints years without a thousands separator and describes a percent
+  analysis in percentage points;
+  [`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256_file.md)
+  names a missing file.
+
 - The SIU parser reads ordinal dates (“August 3rd, 2017”) as well as
   French months, and names the police service from the sentence that
   notified the SIU, so legislation such as the Police Services Act no
@@ -9,6 +46,7 @@
   2017-08-03). `data --help` exits 0 like every other help, and
   [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
   refuses an empty URL or path in words.
+
 - The command line answers to `rmbl` as well as `rmoriebricklayer`:
   [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
   writes both launchers, pinned to the library they were installed from
@@ -17,6 +55,7 @@
   copy) and without the explicit `--args` that made R 4.6 report
   “unknown verb ‘–args’”; `login --help` prints the usage instead of
   starting the sign-in.
+
 - Fixes from the 1.4.0 stress test of the family:
   [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
   no longer fails inside its own Wayback fallback when the snapshot

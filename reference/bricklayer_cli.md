@@ -6,7 +6,7 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
   sign in to the hosted MORIE LLM tier: the GitHub device flow by
   default, a code sent to `--email`, or a key you paste with `--token`
-  (prompts when KEY is omitted)
+  (read from the terminal or a pipe when KEY is omitted)
 
 - `logout`:
 
@@ -85,7 +85,7 @@ The exit status, invisibly (0 on success).
 bricklayer_cli("version")
 #> rmoriebricklayer 0.5.5
 bricklayer_cli("help")
-#> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command)
+#> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
 #>   login [--email ADDRESS] [--token [KEY]]   sign in to the hosted MORIE LLM tier
 #>         [--code CODE] [--no-browser]
