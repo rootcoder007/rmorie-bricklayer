@@ -21,8 +21,9 @@ hqc_kat <- function() {
              stringsAsFactors = FALSE)
 }
 
-hex_raw <- function(h) as.raw(strtoi(substring(h, seq(1L, nchar(h), 2L),
-                                               seq(2L, nchar(h), 2L)), 16L))
+hex_raw <- function(h) {
+  as.raw(strtoi(substring(h, seq(1L, nchar(h), 2L), seq(2L, nchar(h), 2L)), 16L))
+}
 
 run_kat <- function(row) {
   k <- hqc_sizes(row$level)[["message"]]
