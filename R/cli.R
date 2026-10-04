@@ -6,12 +6,15 @@
 # directory on PATH (an R package cannot install executables itself,
 # and it only does so when the user calls install_cli()).
 
+# interactive() is a primitive: tests cannot mock it in the installed package, so they mock this
+.bl_interactive <- function() interactive()
+
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
 # Rscript, where readline() returns "" at once, so outside an interactive session read one line of
 # stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
 # history). Closed or empty stdin gives "".
 .bl_readline <- function(prompt) {
-  if (interactive()) return(trimws(readline(prompt)))
+  if (.bl_interactive()) return(trimws(readline(prompt)))
   con <- file("stdin")
   on.exit(close(con))
   if (isatty(stdin())) cat(prompt, file = stderr())

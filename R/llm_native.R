@@ -241,7 +241,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   key <- .bl_hosted_key()
   if (is.null(key)) {
     stop("no key for https://llm.rmorie.com: run bricklayer_llm_login() ",
-      "(or `rmoriebricklayer login` from the shell)",
+      sprintf("(or `%s login` from the shell)", .bl_prog()),
       call. = FALSE
     )
   }

@@ -194,8 +194,8 @@ test_that("numeric entities outside Unicode, and NUL, are dropped", {
 })
 
 test_that("login --token with no value reads the key from stdin when not interactive", {
+  testthat::local_mocked_bindings(.bl_interactive = function() FALSE)
   testthat::local_mocked_bindings(
-    interactive = function() FALSE,
     isatty = function(con) FALSE,
     readLines = function(con, n = -1L, ok = TRUE, warn = TRUE, encoding = "unknown", skipNul = FALSE) " sk-piped ",
     .package = "base"
@@ -204,11 +204,8 @@ test_that("login --token with no value reads the key from stdin when not interac
 })
 
 test_that("login --token with no value prompts in an interactive session", {
-  testthat::local_mocked_bindings(
-    interactive = function() TRUE,
-    readline = function(prompt = "") " sk-typed ",
-    .package = "base"
-  )
+  testthat::local_mocked_bindings(.bl_interactive = function() TRUE)
+  testthat::local_mocked_bindings(readline = function(prompt = "") " sk-typed ", .package = "base")
   expect_equal(.bl_readline("Paste your MORIE key: "), "sk-typed")
 })
 
@@ -225,4 +222,9 @@ test_that("an email sign-in with no code typed says how to finish instead of pos
   expect_error(suppressMessages(bricklayer_llm_login(email = "vee@example.com")),
                "no code entered; finish with `.* login --email vee@example.com --code CODE`")
   expect_equal(calls, "/email/code")
+})
+
+test_that("the key hints name the command the user typed", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
+  expect_error(bricklayer_data_manifest(), "`rmbl login`", fixed = TRUE)
 })
