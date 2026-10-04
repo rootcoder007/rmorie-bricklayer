@@ -322,3 +322,28 @@ test_that("bad inputs get a worded error and no coercion warning", {
   expect_equal(random_bytes("4") |> length(), 4L)  # a number given as text still works
   expect_no_warning(capture_dependencies("no.such.package.xyz"))
 })
+
+
+test_that("round-7 input guards answer in words", {
+  d <- withr::local_tempdir()
+  expect_error(bricklayer_json_base64_enc(1:3), "`input` must be a raw vector or text")
+  expect_error(bricklayer_json_base64_dec(1:3), "`input` must be a raw vector or text")
+  expect_error(make_synthetic_column(1, 5), "`spec` must be a column spec list")
+  expect_error(make_synthetic_csv(1, file.path(d, "x.csv")), "`schema` must be a schema list")
+  expect_error(load_provenance(d), "is a directory, not a provenance file")
+  for (f in list(resolve_via_ckan, resolve_via_ckan_search, resolve_via_socrata, resolve_via_arcgis)) {
+    expect_error(f("not a list"), "`provenance` must be a provenance list")
+  }
+  expect_error(write_summary_txt("x", d, list()), "`manifest` must be a manifest from make_manifest()")
+  expect_error(rmoriebricklayer:::.rmbl_as_bytes(d, "token"), "is a directory, not a token file")
+})
+
+test_that("French reports name the service mentioned most when no notification sentence is there", {
+  html <- paste0(
+    "<html><body><p>Mandat de l'UES</p><p>Exercice du mandat</p>",
+    "<p>Un agent du Service de police de Toronto et un agent du Service de police de Toronto ",
+    "ont parle a un agent du Service de police de Hamilton.</p></body></html>")
+  p <- bricklayer_parse_siu(html)
+  expect_equal(p[["_language"]], "fr")
+  expect_equal(p[["police_service"]], "Service de police de Toronto")
+})

@@ -71,7 +71,8 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
 long http_post_bytes(const std::string &url, const unsigned char *body,
                      size_t bodylen, const std::string &content_type,
                      std::string &out, long timeout_s,
-                     const std::vector<std::string> &extra_headers) {
+                     const std::vector<std::string> &extra_headers,
+                     std::string *err = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
@@ -100,6 +101,7 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     CURLcode rc = curl_easy_perform(h);
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
+    else if (err) *err = curl_easy_strerror(rc);  /* why no HTTP answer came */
     curl_slist_free_all(hdr);
     curl_easy_cleanup(h);
     return (rc == CURLE_OK) ? code : -1;
@@ -108,7 +110,8 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
 /* GET a URL into a string with extra headers (the bearer key of the hosted
  * MORIE tier). Returns HTTP status, -1 on failure. */
 long http_get_string(const std::string &url, std::string &out, long timeout_s,
-                     const std::vector<std::string> &extra_headers) {
+                     const std::vector<std::string> &extra_headers,
+                     std::string *err = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
@@ -129,6 +132,7 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     CURLcode rc = curl_easy_perform(h);
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
+    else if (err) *err = curl_easy_strerror(rc);
     if (hdr) curl_slist_free_all(hdr);
     curl_easy_cleanup(h);
     return (rc == CURLE_OK) ? code : -1;
@@ -267,12 +271,12 @@ SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
     } else if (headers != R_NilValue) {
         Rf_error("`headers` must be a character vector or NULL");
     }
-    std::string out;
+    std::string out, err;
     const long code = http_post_bytes(
         CHAR(STRING_ELT(url, 0)), RAW(body),
         static_cast<size_t>(XLENGTH(body)),
-        CHAR(STRING_ELT(content_type, 0)), out, tmo, extra);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+        CHAR(STRING_ELT(content_type, 0)), out, tmo, extra, &err);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
@@ -280,9 +284,11 @@ SEXP C_rmbl_http_post(SEXP url, SEXP body, SEXP content_type,
     }
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, raw_out);
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
+    SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
     UNPROTECT(3);
     return res;
@@ -304,9 +310,9 @@ SEXP C_rmbl_http_get(SEXP url, SEXP timeout, SEXP headers) {
     } else if (headers != R_NilValue) {
         Rf_error("`headers` must be a character vector or NULL");
     }
-    std::string out;
-    const long code = http_get_string(CHAR(STRING_ELT(url, 0)), out, tmo, extra);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    std::string out, err;
+    const long code = http_get_string(CHAR(STRING_ELT(url, 0)), out, tmo, extra, &err);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
@@ -314,9 +320,11 @@ SEXP C_rmbl_http_get(SEXP url, SEXP timeout, SEXP headers) {
     }
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, raw_out);
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
+    SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
     UNPROTECT(3);
     return res;
