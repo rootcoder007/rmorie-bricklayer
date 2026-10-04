@@ -392,6 +392,113 @@ SEXP C_rmbl_hawkes_nll(SEXP t, SEXP T, SEXP kernel, SEXP par) {
 }
 
 
+/* ---- general Hawkes routines (any baseline, analytic gradient) ----
+ * bkind 0 constant / 1 sinusoidal; kind 0 exponential, 1 Weibull, 2 gamma,
+ * 3 Lomax (the core's codes); method 0 exact, 1 sum of exponentials, 2
+ * truncated. R vectors are allocated before the core runs, so an R error
+ * cannot long-jump over a C++ destructor. */
+static int rmbl_hk_np(int kind) { return kind == 0 ? 1 : 2; }
+
+SEXP C_rmbl_hawkes_nll_grad(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi, SEXP method,
+                            SEXP eps, SEXP soeR, SEXP soeDelta, SEXP wantGrad) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    a = PROTECT(Rf_coerceVector(a, REALSXP));
+    psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    const int bk = Rf_asInteger(bkind), k = Rf_asInteger(kind);
+    const int nb = morie::core::hawkes_baseline_n(bk), np = rmbl_hk_np(k);
+    if (XLENGTH(a) != nb || XLENGTH(psi) != np) {
+        UNPROTECT(3);
+        Rf_error("wrong number of baseline or kernel parameters");
+    }
+    const bool wg = Rf_asLogical(wantGrad) == TRUE;
+    SEXP out = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP grad = PROTECT(Rf_allocVector(REALSXP, wg ? nb + 1 + np : 0));
+    const double nll = morie::core::hawkes_nll_grad(
+        REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), bk, REAL(a), Rf_asReal(eta), k, REAL(psi),
+        Rf_asInteger(method), Rf_asReal(eps), Rf_asReal(soeR), Rf_asReal(soeDelta), wg ? REAL(grad) : nullptr);
+    SET_VECTOR_ELT(out, 0, Rf_ScalarReal(nll));
+    SET_VECTOR_ELT(out, 1, grad);
+    UNPROTECT(5);
+    return out;
+}
+
+SEXP C_rmbl_hawkes_rescaled(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    a = PROTECT(Rf_coerceVector(a, REALSXP));
+    psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    SEXP U = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
+    morie::core::hawkes_rescaled(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), Rf_asInteger(bkind),
+                                 REAL(a), Rf_asReal(eta), Rf_asInteger(kind), REAL(psi), REAL(U));
+    UNPROTECT(4);
+    return U;
+}
+
+SEXP C_rmbl_hawkes_intensity(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    a = PROTECT(Rf_coerceVector(a, REALSXP));
+    psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    SEXP lam = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
+    morie::core::hawkes_intensity(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), Rf_asInteger(bkind),
+                                  REAL(a), Rf_asReal(eta), Rf_asInteger(kind), REAL(psi), REAL(lam));
+    UNPROTECT(4);
+    return lam;
+}
+
+SEXP C_rmbl_hawkes_em_pass(SEXP t, SEXP lamOld, SEXP etaOld, SEXP kind, SEXP psiOld, SEXP psiNew) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    lamOld = PROTECT(Rf_coerceVector(lamOld, REALSXP));
+    psiOld = PROTECT(Rf_coerceVector(psiOld, REALSXP));
+    psiNew = PROTECT(Rf_coerceVector(psiNew, REALSXP));
+    const int k = Rf_asInteger(kind), np = rmbl_hk_np(k);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, 2 + np));
+    double P = 0.0, dQ[2] = {0.0, 0.0};
+    const double Q = morie::core::hawkes_em_pass(REAL(t), static_cast<std::size_t>(XLENGTH(t)), REAL(lamOld),
+                                                 Rf_asReal(etaOld), k, REAL(psiOld), REAL(psiNew), &P, dQ);
+    REAL(out)[0] = Q;
+    REAL(out)[1] = P;
+    for (int q = 0; q < np; ++q) REAL(out)[2 + q] = dQ[q];
+    UNPROTECT(5);
+    return out;
+}
+
+SEXP C_rmbl_hawkes_cdf_sum(SEXP t, SEXP T, SEXP kind, SEXP psi) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    const int k = Rf_asInteger(kind), np = rmbl_hk_np(k);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, 1 + np));
+    double g[2] = {0.0, 0.0};
+    REAL(out)[0] = morie::core::hawkes_cdf_sum(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), k,
+                                               REAL(psi), g);
+    for (int q = 0; q < np; ++q) REAL(out)[1 + q] = g[q];
+    UNPROTECT(3);
+    return out;
+}
+
+SEXP C_rmbl_hawkes_fit_pbfgs(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method, SEXP eps, SEXP soeR,
+                             SEXP soeDelta, SEXP lo, SEXP hi, SEXP x0, SEXP maxiter, SEXP gtol) {
+    t = PROTECT(Rf_coerceVector(t, REALSXP));
+    lo = PROTECT(Rf_coerceVector(lo, REALSXP));
+    hi = PROTECT(Rf_coerceVector(hi, REALSXP));
+    x0 = PROTECT(Rf_coerceVector(x0, REALSXP));
+    const int bk = Rf_asInteger(bkind), k = Rf_asInteger(kind);
+    const R_xlen_t d = morie::core::hawkes_baseline_n(bk) + 1 + rmbl_hk_np(k);
+    if (XLENGTH(lo) != d || XLENGTH(hi) != d || XLENGTH(x0) != d) {
+        UNPROTECT(4);
+        Rf_error("wrong number of parameters");
+    }
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, d + 2));
+    for (R_xlen_t i = 0; i < d; ++i) REAL(out)[i] = REAL(x0)[i];
+    int it = 0;
+    const double f = morie::core::hawkes_fit_pbfgs(
+        REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), bk, k, Rf_asInteger(method), Rf_asReal(eps),
+        Rf_asReal(soeR), Rf_asReal(soeDelta), REAL(lo), REAL(hi), REAL(out), Rf_asInteger(maxiter), Rf_asReal(gtol),
+        &it);
+    REAL(out)[d] = f;
+    REAL(out)[d + 1] = it;
+    UNPROTECT(5);
+    return out;
+}
+
 SEXP C_rmbl_mean(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean(REAL(x), XLENGTH(x));

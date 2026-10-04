@@ -30,6 +30,12 @@ extern SEXP C_rmbl_ipw(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_bootstrap_mean(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gamma_cdf(SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_nll(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_nll_grad(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_rescaled(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_intensity(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_em_pass(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_cdf_sum(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_fit_pbfgs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_stats.cpp) -- bricklayer's own statistics */
 extern SEXP C_rmbl_moments(SEXP);
 extern SEXP C_rmbl_quantile(SEXP, SEXP);
@@ -229,6 +235,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_bootstrap_mean",    (DL_FUNC) &C_rmbl_bootstrap_mean,    3},
     {"C_rmbl_gamma_cdf",         (DL_FUNC) &C_rmbl_gamma_cdf,         2},
     {"C_rmbl_hawkes_nll",        (DL_FUNC) &C_rmbl_hawkes_nll,        4},
+    {"C_rmbl_hawkes_nll_grad",   (DL_FUNC) &C_rmbl_hawkes_nll_grad,   12},
+    {"C_rmbl_hawkes_rescaled",   (DL_FUNC) &C_rmbl_hawkes_rescaled,   7},
+    {"C_rmbl_hawkes_intensity",  (DL_FUNC) &C_rmbl_hawkes_intensity,  7},
+    {"C_rmbl_hawkes_em_pass",    (DL_FUNC) &C_rmbl_hawkes_em_pass,    6},
+    {"C_rmbl_hawkes_cdf_sum",    (DL_FUNC) &C_rmbl_hawkes_cdf_sum,    4},
+    {"C_rmbl_hawkes_fit_pbfgs",  (DL_FUNC) &C_rmbl_hawkes_fit_pbfgs,  13},
     {"C_rmbl_moments",           (DL_FUNC) &C_rmbl_moments,           1},
     {"C_rmbl_quantile",          (DL_FUNC) &C_rmbl_quantile,          2},
     {"C_rmbl_median",            (DL_FUNC) &C_rmbl_median,            1},
