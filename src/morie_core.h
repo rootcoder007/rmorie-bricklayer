@@ -25,6 +25,7 @@
 #include <complex>
 #include <limits>
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <vector>
 
@@ -980,6 +981,40 @@ struct HawkesKernel {
         }
         }
     }
+    // log-density and its psi-derivatives, finite where the density itself underflows to 0
+    // (EM's M-step weighs log g at new parameters on pairs the old ones barely reached);
+    // false only outside the support (u <= 0)
+    bool logdens(double u, double &lg, double &d0, double &d1) const {
+        if (!(u > 0.0)) return false;
+        switch (kind) {
+        case 0:
+            lg = std::log(p0) - p0 * u;
+            d0 = 1.0 / p0 - u;
+            d1 = 0.0;
+            return true;
+        case 1: {
+            const double lx = std::log(u / p1), z = std::exp(p0 * lx);
+            lg = std::log(p0) - lp1 + (p0 - 1.0) * lx - z;
+            d0 = 1.0 / p0 + lx - z * lx;
+            d1 = p0 * (z - 1.0) / p1;
+            return true;
+        }
+        case 2: {
+            const double lu = std::log(u);
+            lg = lconst + (p0 - 1.0) * lu - p1 * u;
+            d0 = lp1 - dig + lu;
+            d1 = p0 / p1 - u;
+            return true;
+        }
+        default: {
+            const double luc = std::log(u + p1);
+            lg = std::log(p0) + p0 * lp1 - (p0 + 1.0) * luc;
+            d0 = 1.0 / p0 + lp1 - luc;
+            d1 = p0 / p1 - (p0 + 1.0) / (u + p1);
+            return true;
+        }
+        }
+    }
     void cdf(double u, double &G, double &d0, double &d1) const {
         d0 = d1 = 0.0;
         if (!(u > 0.0)) {
@@ -1363,17 +1398,14 @@ inline double hawkes_em_pass(const double *t, std::size_t n, const double *lam_o
         const double inv = 1.0 / lam_old[i];
         for (std::size_t j = lo; j < i; ++j) {
             const double u = t[i] - t[j];
-            double go, a0, a1, gn, b0, b1;
+            double go, a0, a1, lgn, b0, b1;
             if (!ko.dens(u, go, a0, a1)) continue;
             const double p = eta_old * go * inv;
-            if (!kn.dens(u, gn, b0, b1) || !(gn > 0.0)) {
-                Q = -std::numeric_limits<double>::infinity();
-                continue;
-            }
+            if (!(p > 0.0) || !kn.logdens(u, lgn, b0, b1)) continue;
             sumP += p;
-            Q += p * std::log(gn);
-            d0 += p * b0 / gn;
-            d1 += p * b1 / gn;
+            Q += p * lgn;
+            d0 += p * b0;
+            d1 += p * b1;
         }
     }
     *P = sumP;
@@ -1602,6 +1634,24 @@ inline double hawkes_fit_pbfgs(const double *t, std::size_t n, double T, int bki
     for (int i = 0; i < d; ++i) x[i] = xv[i];
     if (iters) *iters = it;
     return f;
+}
+// --- splitmix64 uniforms -------------------------------------------------------
+//
+// The generator of Steele, Lea & Flood (2014, OOPSLA): one 64-bit state stepped
+// by the golden-ratio increment and mixed twice; u = (z >> 11) * 2^-53. A
+// stream both arms can reproduce bit for bit (morie's Python computes the same
+// numbers in pure Python), used where the R and Python arms must draw the
+// same "random" numbers, e.g. the within-day jitter of tied event dates.
+inline void splitmix64_uniforms(std::uint64_t seed, std::size_t n, double *out) {
+    std::uint64_t x = seed;
+    for (std::size_t i = 0; i < n; ++i) {
+        x += 0x9E3779B97F4A7C15ULL;
+        std::uint64_t z = x;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+        z ^= z >> 31;
+        out[i] = static_cast<double>(z >> 11) * (1.0 / 9007199254740992.0);
+    }
 }
 
 }  // namespace morie::core

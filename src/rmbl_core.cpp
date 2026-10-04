@@ -499,6 +499,15 @@ SEXP C_rmbl_hawkes_fit_pbfgs(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method,
     return out;
 }
 
+SEXP C_rmbl_uniforms(SEXP n, SEXP seed) {
+    const R_xlen_t m = static_cast<R_xlen_t>(Rf_asReal(n));
+    const double sd = Rf_asReal(seed);
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, m));
+    morie::core::splitmix64_uniforms(static_cast<std::uint64_t>(sd), static_cast<std::size_t>(m), REAL(out));
+    UNPROTECT(1);
+    return out;
+}
+
 SEXP C_rmbl_mean(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean(REAL(x), XLENGTH(x));

@@ -320,7 +320,10 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
   }
   n <- length(times)
   rate <- n / horizon
-  delta <- max(horizon / 20000, 0.25 / rate)
+  # bins narrow against the clustering (a quarter of the median gap), at most 20,000, as Python
+  gaps <- sort(diff(times))
+  med <- if (length(gaps)) gaps[[length(gaps) %/% 2L + 1L]] else horizon / max(n, 1L)
+  delta <- max(horizon / 20000, min(0.25 / rate, med / 4))
   support <- min(horizon / 10, 200 * delta)
   p <- max(2L, as.integer(ceiling(support / delta)))
   B <- as.integer(ceiling(horizon / delta))
@@ -353,4 +356,31 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
   x0 <- pmin(pmax(c(sum(a), psi0), b$lower[-1]), b$upper[-1])
   par <- stats::optim(x0, fk, method = "Nelder-Mead")$par
   c(min(max(log(nu), b$lower[[1]]), b$upper[[1]]), pmin(pmax(par, b$lower[-1]), b$upper[-1]))
+}
+
+#' Reproducible uniforms shared with morie's Python arm (splitmix64)
+#'
+#' The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on [0, 1) from a
+#' 64-bit \code{seed}, the same numbers morie's Python computes, so the R and Python arms can
+#' draw identical "random" values where their results must agree (the within-day jitter of tied
+#' event dates in the TPS Hawkes fits, a subsample). Not a statistical replacement for R's own
+#' generators.
+#'
+#' @param n Number of uniforms.
+#' @param seed A non-negative whole number below 2^53.
+#' @return A numeric vector of length \code{n}.
+#' @references Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number
+#'   generators. \emph{OOPSLA 2014}, 453--472. \doi{10.1145/2660193.2660195}
+#' @examples
+#' core_uniforms(3, 42)
+#' identical(core_uniforms(5, 1), core_uniforms(5, 1))
+#' @export
+core_uniforms <- function(n, seed) {
+  n <- .rmbl_num(n, "n")
+  seed <- .rmbl_num(seed, "seed")
+  if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) stop("`n` must be a non-negative whole number", call. = FALSE)
+  if (length(seed) != 1L || is.na(seed) || seed < 0 || seed != floor(seed) || seed >= 2^53) {
+    stop("`seed` must be a whole number in [0, 2^53)", call. = FALSE)
+  }
+  .Call(C_rmbl_uniforms, n, seed)
 }

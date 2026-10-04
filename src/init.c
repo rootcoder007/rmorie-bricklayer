@@ -35,6 +35,7 @@ extern SEXP C_rmbl_hawkes_rescaled(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_intensity(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_em_pass(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_cdf_sum(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_uniforms(SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_fit_pbfgs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_stats.cpp) -- bricklayer's own statistics */
 extern SEXP C_rmbl_moments(SEXP);
@@ -240,6 +241,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_hawkes_intensity",  (DL_FUNC) &C_rmbl_hawkes_intensity,  7},
     {"C_rmbl_hawkes_em_pass",    (DL_FUNC) &C_rmbl_hawkes_em_pass,    6},
     {"C_rmbl_hawkes_cdf_sum",    (DL_FUNC) &C_rmbl_hawkes_cdf_sum,    4},
+    {"C_rmbl_uniforms",          (DL_FUNC) &C_rmbl_uniforms,          2},
     {"C_rmbl_hawkes_fit_pbfgs",  (DL_FUNC) &C_rmbl_hawkes_fit_pbfgs,  13},
     {"C_rmbl_moments",           (DL_FUNC) &C_rmbl_moments,           1},
     {"C_rmbl_quantile",          (DL_FUNC) &C_rmbl_quantile,          2},
