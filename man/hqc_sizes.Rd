@@ -4,10 +4,12 @@
 \alias{hqc_sizes}
 \title{Byte lengths of an HQC parameter set}
 \usage{
-hqc_sizes(level)
+hqc_sizes(level, version = c("v5", "round4"))
 }
 \arguments{
 \item{level}{Security level: 1, 3 or 5 (or 128, 192, 256).}
+
+\item{version}{\code{"v5"} (the default) or \code{"round4"}, as in \code{\link[=hqc_keygen]{hqc_keygen()}}.}
 }
 \value{
 A named integer vector: \code{encapsulation_key}, \code{decapsulation_key},
@@ -22,9 +24,10 @@ hard-code them.
 hqc_sizes(1)
 
 # code-based keys and ciphertexts are larger than ML-KEM's at the same
-# category; the shared secret is 32 bytes at every level
+# category; the shared secret is 32 bytes at every level (64 in round 4)
 rbind(HQC = hqc_sizes(3)[c("encapsulation_key", "ciphertext")],
       ML_KEM = kem_sizes(768)[c("encapsulation_key", "ciphertext")])
+rbind(v5 = hqc_sizes(1), round4 = hqc_sizes(1, "round4"))
 }
 \seealso{
 \code{\link[=hqc_keygen]{hqc_keygen()}}, \code{\link[=kem_sizes]{kem_sizes()}} for ML-KEM.

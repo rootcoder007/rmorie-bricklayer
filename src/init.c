@@ -114,6 +114,10 @@ extern SEXP C_rmbl_hqc_encaps(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hqc_decaps(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hqc_backend(SEXP);
 extern SEXP C_rmbl_hqc_selftest(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_sizes(SEXP);
+extern SEXP C_rmbl_hqc4_keygen(SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_encaps(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_decaps(SEXP, SEXP, SEXP);
 
 extern SEXP C_rmbl_slhdsa_sizes(SEXP);
 extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
@@ -302,6 +306,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_hqc_decaps",        (DL_FUNC) &C_rmbl_hqc_decaps,        3},
     {"C_rmbl_hqc_backend",       (DL_FUNC) &C_rmbl_hqc_backend,       1},
     {"C_rmbl_hqc_selftest",      (DL_FUNC) &C_rmbl_hqc_selftest,      3},
+    {"C_rmbl_hqc4_sizes",        (DL_FUNC) &C_rmbl_hqc4_sizes,        1},
+    {"C_rmbl_hqc4_keygen",       (DL_FUNC) &C_rmbl_hqc4_keygen,       2},
+    {"C_rmbl_hqc4_encaps",       (DL_FUNC) &C_rmbl_hqc4_encaps,       4},
+    {"C_rmbl_hqc4_decaps",       (DL_FUNC) &C_rmbl_hqc4_decaps,       3},
     {"C_rmbl_slhdsa_sizes",     (DL_FUNC) &C_rmbl_slhdsa_sizes,     1},
     {"C_rmbl_slhdsa_keypair",   (DL_FUNC) &C_rmbl_slhdsa_keypair,   2},
     {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      6},

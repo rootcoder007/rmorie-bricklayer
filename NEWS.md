@@ -1,5 +1,12 @@
 # rmoriebricklayer 0.5.5
 
+* HQC in both revisions: `hqc_keygen(version = "round4")` adds the fourth-round submission of
+  2023-04-30 (HQC-128/192/256, the HQC of liboqs up to 0.12 and of PQClean) with its 64-byte shared
+  secret, next to the default v5 (2025-08-22, 32 bytes). It shares v5's codes and parameters and
+  reproduces all 300 of that revision's official known-answer vectors on both multipliers. Keys
+  carry their `version`, `hqc_encapsulate()` / `hqc_decapsulate()` follow it, `hqc_sizes()` takes
+  it, and a round-4 secret key whose public half is not the one its seed makes is refused. A `level`
+  must be one whole number (`c(1, 3)` and `3.5` were read as 1 and 3).
 * Hawkes processes fitted fast and exactly: `core_hawkes_fit()` (constant or sinusoidal baseline;
   exponential, Weibull, gamma or Lomax kernel) maximises the likelihood with its analytic gradient
   by projected BFGS in C++, and `core_hawkes_residuals()` gives the time-rescaling residuals in O(n)

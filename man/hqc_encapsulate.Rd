@@ -18,11 +18,11 @@ so supply them only deliberately.}
 }
 \value{
 A list of class \code{bricklayer_hqc_capsule}: \code{ciphertext} and
-\code{shared} (both hex), and \code{level}.
+\code{shared} (both hex), \code{level} and \code{version}.
 }
 \description{
-Produces a ciphertext and the 32-byte shared secret it carries. Only the
-public key is needed.
+Produces a ciphertext and the shared secret it carries (32 bytes; 64 for a
+round-4 key). Only the public key is needed.
 }
 \examples{
 key <- hqc_keygen(1)

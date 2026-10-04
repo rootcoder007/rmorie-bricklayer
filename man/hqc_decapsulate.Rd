@@ -12,19 +12,23 @@ hqc_decapsulate(key, ciphertext)
 \item{ciphertext}{Ciphertext from \code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, hex or raw.}
 }
 \value{
-64 hex characters: the 32-byte shared secret.
+The shared secret as hex: 64 characters (32 bytes), or 128 for a
+round-4 key.
 }
 \description{
-Returns the 32-byte shared secret the ciphertext carries, as hex.
+Returns the shared secret the ciphertext carries, as hex (32 bytes; 64 for
+a round-4 key).
 }
 \details{
 A ciphertext that was not produced by a correct encapsulation under this
-key does not raise an error: it yields the key \code{J(H(ek) || sigma || c)},
-derived from a value only the decapsulation key holds (the
+key does not raise an error: it yields the key \code{J(H(ek) || sigma || c)}
+(round 4: \code{K(sigma || u || v)}), derived from a value only the
+decapsulation key holds (the
 Fujisaki-Okamoto transform's implicit rejection), so whoever sent it
 learns nothing from the outcome. A mismatch between the two sides' secrets
 is the signal that something was wrong. A decapsulation key whose stored
-seeds no longer derive from each other (corrupted or spliced) IS refused.
+seeds no longer derive from each other (corrupted or spliced; for round 4,
+whose public half is not the one its secret seed makes) IS refused.
 }
 \examples{
 key <- hqc_keygen(1)
