@@ -16,12 +16,16 @@ hk_theta <- function(kernel, baseline) {
   c(a, 0.35, psi)
 }
 
-hk_nll <- function(t, T, kernel, baseline, th, method = 0L, eps = 1e-12) {
+hk_nll <- function(t, horizon, kernel, baseline, th, method = 0L, eps = 1e-12) {
   nb <- if (baseline == "constant") 1L else 4L
   kind <- c(exponential = 0L, weibull = 1L, gamma = 2L, lomax = 3L)[[kernel]]
-  soe <- if (kernel == "lomax") c(T + 100, 1e-3 / (T + 100)) else c(T, max(min(diff(t)[diff(t) > 0]), 1e-12) / T)
-  .Call(rmoriebricklayer:::C_rmbl_hawkes_nll_grad, t, T, if (baseline == "constant") 0L else 1L, th[seq_len(nb)],
-        th[[nb + 1L]], kind, th[-seq_len(nb + 1L)], method, eps, soe[[1]], soe[[2]], TRUE)
+  soe <- if (kernel == "lomax") {
+    c(horizon + 100, 1e-3 / (horizon + 100))
+  } else {
+    c(horizon, max(min(diff(t)[diff(t) > 0]), 1e-12) / horizon)
+  }
+  .Call(rmoriebricklayer:::C_rmbl_hawkes_nll_grad, t, horizon, if (baseline == "constant") 0L else 1L,
+        th[seq_len(nb)], th[[nb + 1L]], kind, th[-seq_len(nb + 1L)], method, eps, soe[[1]], soe[[2]], TRUE)
 }
 
 test_that("splitmix64 is the stream morie's Python draws", {
@@ -54,8 +58,9 @@ test_that("fits reproduce the reference morie's Python reaches (same core, same 
   e <- hk_events()
   ref <- list(
     "exponential/constant" = list(118.69858088105596, c(-0.018591937991204354, 0.3570981557350094, 17.45814437003573)),
-    "exponential/sinusoidal" = list(116.36039351077994, c(0.1401679237176167, -0.41637456168187165, -0.09236260967814879,
-                                                            -0.3202571656173522, 0.35328832763395485, 17.76625382246286)),
+    "exponential/sinusoidal" = list(116.36039351077994, c(0.1401679237176167, -0.41637456168187165,
+                                                            -0.09236260967814879, -0.3202571656173522,
+                                                            0.35328832763395485, 17.76625382246286)),
     "weibull/constant" = list(116.70074310550106, c(0.005222397486131046, 0.3416039447382219, 1.2237668778195339,
                                                     0.05153286699576664)),
     "gamma/constant" = list(116.00586580075705, c(-0.007363356926464604, 0.34983843433834755, 1.3153317779470712, 25)),

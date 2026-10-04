@@ -378,7 +378,9 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 core_uniforms <- function(n, seed) {
   n <- .rmbl_num(n, "n")
   seed <- .rmbl_num(seed, "seed")
-  if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) stop("`n` must be a non-negative whole number", call. = FALSE)
+  if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) {
+    stop("`n` must be a non-negative whole number", call. = FALSE)
+  }
   if (length(seed) != 1L || is.na(seed) || seed < 0 || seed != floor(seed) || seed >= 2^53) {
     stop("`seed` must be a whole number in [0, 2^53)", call. = FALSE)
   }
