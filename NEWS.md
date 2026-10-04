@@ -1,5 +1,11 @@
 # rmoriebricklayer 0.5.5
 
+* A deterministic random bit generator: `drbg_new()`, `drbg_generate()` and `drbg_reseed()` are the
+  CTR_DRBG of NIST SP 800-90A with AES-256 and no derivation function, written here (AES computed in
+  constant time, with AES-NI on x86-64). It reproduces all 720 AES-256 no-df vectors of NIST's DRBG
+  validation suite (no reseed, reseed, prediction resistance) on both ciphers, and it is the
+  `randombytes()` of NIST's `rng.c`: seeded with the bytes 0..47 it gives the seed of vector 0 of
+  the post-quantum known-answer files written with it.
 * HQC in both revisions: `hqc_keygen(version = "round4")` adds the fourth-round submission of
   2023-04-30 (HQC-128/192/256, the HQC of liboqs up to 0.12 and of PQClean) with its 64-byte shared
   secret, next to the default v5 (2025-08-22, 32 bytes). It shares v5's codes and parameters and

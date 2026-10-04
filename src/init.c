@@ -119,6 +119,13 @@ extern SEXP C_rmbl_hqc4_keygen(SEXP, SEXP);
 extern SEXP C_rmbl_hqc4_encaps(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hqc4_decaps(SEXP, SEXP, SEXP);
 
+/* rmbl_drbg.cpp: AES-256 and the SP 800-90A CTR_DRBG */
+extern SEXP C_rmbl_aes256_encrypt(SEXP, SEXP);
+extern SEXP C_rmbl_drbg_instantiate(SEXP, SEXP);
+extern SEXP C_rmbl_drbg_reseed(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_drbg_generate(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_aes_backend(SEXP);
+
 extern SEXP C_rmbl_slhdsa_sizes(SEXP);
 extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -310,6 +317,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_hqc4_keygen",       (DL_FUNC) &C_rmbl_hqc4_keygen,       2},
     {"C_rmbl_hqc4_encaps",       (DL_FUNC) &C_rmbl_hqc4_encaps,       4},
     {"C_rmbl_hqc4_decaps",       (DL_FUNC) &C_rmbl_hqc4_decaps,       3},
+    {"C_rmbl_aes256_encrypt",    (DL_FUNC) &C_rmbl_aes256_encrypt,    2},
+    {"C_rmbl_drbg_instantiate",  (DL_FUNC) &C_rmbl_drbg_instantiate,  2},
+    {"C_rmbl_drbg_reseed",       (DL_FUNC) &C_rmbl_drbg_reseed,       4},
+    {"C_rmbl_drbg_generate",     (DL_FUNC) &C_rmbl_drbg_generate,     4},
+    {"C_rmbl_aes_backend",       (DL_FUNC) &C_rmbl_aes_backend,       1},
     {"C_rmbl_slhdsa_sizes",     (DL_FUNC) &C_rmbl_slhdsa_sizes,     1},
     {"C_rmbl_slhdsa_keypair",   (DL_FUNC) &C_rmbl_slhdsa_keypair,   2},
     {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      6},
