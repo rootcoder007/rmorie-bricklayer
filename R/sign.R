@@ -561,7 +561,7 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
-  height <- as.integer(height)
+  height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
   }

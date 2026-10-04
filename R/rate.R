@@ -40,7 +40,7 @@
     }
     return(unname(.rate_per_names[[key]]))
   }
-  per <- as.numeric(per)[1L]
+  per <- .rmbl_num(per, "per")[1L]
   if (is.na(per) || !is.finite(per) || per <= 0) {
     stop("`per` must be a single positive, finite number", call. = FALSE)
   }
@@ -169,8 +169,8 @@ rate.data.frame <- function(x, count, population, by = NULL, per = 1000,
 #' @export
 rate.default <- function(x, population, per = 1000, conf_level = 0.95,
                          min_count = 0, ...) {
-  x <- as.numeric(x)
-  population <- as.numeric(population)
+  x <- .rmbl_num(x, "x")
+  population <- .rmbl_num(population, "population")
   if (length(population) == 1L) population <- rep(population, length(x))
   if (length(x) != length(population)) {
     stop("`x` and `population` must be the same length", call. = FALSE)
@@ -187,7 +187,7 @@ rate.default <- function(x, population, per = 1000, conf_level = 0.95,
 }
 
 .rate_compute <- function(agg, per, conf_level, min_count) {
-  conf_level <- as.numeric(conf_level)[1L]
+  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
   if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
   }
@@ -330,7 +330,7 @@ share.data.frame <- function(x, count, by = NULL, total = NULL,
 #' @rdname share
 #' @export
 share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   denom <- if (is.null(total)) sum(x, na.rm = TRUE) else as.numeric(total)[1L]
   agg <- data.frame(count = x, stringsAsFactors = FALSE)
   structure(.share_compute(agg, denom, conf_level),
@@ -340,7 +340,7 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 }
 
 .share_compute <- function(agg, denom, conf_level) {
-  conf_level <- as.numeric(conf_level)[1L]
+  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
   if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
   }
@@ -435,6 +435,12 @@ rate_change <- function(x, ...) UseMethod("rate_change")
 
 #' @rdname rate_change
 #' @export
+rate_change.default <- function(x, ...) {
+  stop(sprintf("`x` must be a data frame, not %s", class(x)[1L]), call. = FALSE)
+}
+
+#' @rdname rate_change
+#' @export
 rate_change.data.frame <- function(x, count, population, period, by = NULL,
                                    lag = 1L, per = 1000, conf_level = 0.95,
                                    min_count = 0, ...) {
@@ -451,11 +457,11 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
     }
   }
   per <- .rate_per(per)
-  lag <- as.integer(lag)
+  lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
     stop("`lag` must be a positive integer", call. = FALSE)
   }
-  conf_level <- as.numeric(conf_level)[1L]
+  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
   if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
   }

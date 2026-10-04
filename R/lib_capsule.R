@@ -218,6 +218,7 @@ capture_environment <- function(packages = loadedNamespaces()) {
 #' @export
 cite_capsule <- function(provenance) {
   if (is.null(provenance)) return(NULL)
+  if (!is.list(provenance)) stop("`provenance` must be a provenance list (read_provenance())", call. = FALSE)
   ds  <- provenance$dataset
   res <- provenance$resource
   year <- substr(provenance$captured_at_utc %||% "", 1, 4)

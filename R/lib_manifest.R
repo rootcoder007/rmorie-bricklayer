@@ -343,6 +343,7 @@ write_summary_txt <- function(manifest, output_dir, paths,
                               what_was_done = NULL,
                               contact = NULL,
                               licence = NULL) {
+  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
   counts <- summarise_counts(manifest)
   files <- sort(list.files(output_dir))
   is_synth <- isTRUE(manifest$meta$synthetic)

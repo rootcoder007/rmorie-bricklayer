@@ -47,14 +47,14 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 .yoy_arrow <- function(chg) {
   out <- rep(" ", length(chg))
   ok <- !is.na(chg)
-  out[ok & chg > 0] <- "\u25b2"
-  out[ok & chg < 0] <- "\u25bc"
+  out[ok & chg > 0] <- .yg("\u25b2")
+  out[ok & chg < 0] <- .yg("\u25bc")
   out[ok & chg == 0] <- "\u2013"
   out
 }
 
 .yoy_fmt_pct <- function(v, digits = 1L, pp = FALSE) {
-  out <- rep("\u2014", length(v))
+  out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v) & is.finite(v)
   out[ok] <- sprintf(paste0("%+.", digits, "f%s"), v[ok],
                      if (pp) "pp" else "%")
@@ -63,7 +63,7 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 }
 
 .yoy_fmt_num <- function(v, digits = 0L) {
-  out <- rep("\u2014", length(v))
+  out <- rep(.yg("\u2014"), length(v))
   ok <- !is.na(v)
   out[ok] <- formatC(v[ok], format = "f", digits = digits, big.mark = ",")
   out
@@ -108,7 +108,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   )
   if (all(c("pct_lower", "pct_upper") %in% names(d))) {
     cols$interval <- ifelse(
-      is.na(d$pct_lower), "\u2014",
+      is.na(d$pct_lower), .yg("\u2014"),
       sprintf("[%s, %s]",
               .yoy_fmt_pct(d$pct_lower, 0L), .yoy_fmt_pct(d$pct_upper, 0L)))
   }
@@ -127,7 +127,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   pad <- function(s, w) formatC(s, width = w, flag = "-")
   cat(paste(vapply(seq_along(cols), function(i) pad(hdr[i], widths[i]), ""),
             collapse = "  "), "\n", sep = "")
-  cat(paste(vapply(widths, function(w) strrep("\u2500", w), ""),
+  cat(paste(vapply(widths, function(w) strrep(.yg("\u2500"), w), ""),
             collapse = "  "), "\n", sep = "")
   for (r in seq_len(nrow(d))) {
     line <- paste(vapply(seq_along(cols),
@@ -143,7 +143,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
     }
     cat(line, "\n", sep = "")
     if (!is.na(d$flag[r])) {
-      cat("    \u21b3 percent withheld: ", d$flag[r], "\n", sep = "")
+      cat(.yg("    \u21b3 percent withheld: "), d$flag[r], "\n", sep = "")
     }
   }
   if (nrow(as.data.frame(x)) > n) {
@@ -175,7 +175,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
   if (!identical(m$direction, "neutral")) {
     bits <- c(bits, sub("_", " ", gsub("_", " ", m$direction)))
   }
-  paste(bits, collapse = " \u00b7 ")
+  paste(bits, collapse = .yg(" \u00b7 "))
 }
 
 #' Summarise a change table
@@ -190,6 +190,12 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 #' yoy_summary(yoy(d, value = "n", period = "year"))
 #' @export
 yoy_summary <- function(object, ...) UseMethod("yoy_summary")
+
+#' @rdname yoy_summary
+#' @export
+yoy_summary.default <- function(object, ...) {
+  stop(sprintf("`object` must be a yoy() result, not %s", class(object)[1L]), call. = FALSE)
+}
 
 #' @rdname yoy_summary
 #' @export
@@ -244,3 +250,6 @@ yoy_summary.rmbl_yoy <- function(object, ...) {
   rownames(out) <- NULL
   out
 }
+
+# a glyph, or its ASCII meaning where the console cannot render UTF-8 (LC_ALL=C, some CI logs)
+.yg <- function(x) if (.rmbl_unicode_ok()) x else .yoy_ascii(x)

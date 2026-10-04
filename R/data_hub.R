@@ -3,6 +3,14 @@
 # a manifest lists every table with its rows, columns, SHA-256 and the
 # BigQuery public dataset it was built from.
 
+# a TRUE/FALSE argument, said plainly when it is not one
+.bl_check_flag <- function(x, name) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop(sprintf("`%s` must be TRUE or FALSE", name), call. = FALSE)
+  }
+  invisible(x)
+}
+
 .bl_data_url <- function() {
   sub("/+$", "", Sys.getenv("MORIE_DATA_URL", "https://data.rmorie.com"))
 }
@@ -86,6 +94,7 @@
 #' }
 #' @export
 bricklayer_data_manifest <- function(refresh = FALSE) {
+  .bl_check_flag(refresh, "refresh")
   p <- file.path(.bl_data_cache_dir(), "manifest.json")
   age <- if (file.exists(p)) {
     as.numeric(difftime(Sys.time(), file.mtime(p), units = "secs"))
@@ -127,6 +136,11 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
   if (!ok) {
     stop("key must be db/table (see bricklayer_data_tables())", call. = FALSE)
   }
+  .bl_check_flag(refresh, "refresh")
+  known <- tryCatch(vapply(bricklayer_data_manifest()$datasets, function(d) d$key, ""), error = function(e) NULL)
+  if (length(known) && !key %in% known) {
+    stop(sprintf("no table %s at data.rmorie.com (`%s data list` shows them)", key, .bl_prog()), call. = FALSE)
+  }
   parts <- strsplit(key, "/", fixed = TRUE)[[1L]]
   dest <- file.path(.bl_data_cache_dir(),
                     paste0(gsub("/", "__", key, fixed = TRUE), ".csv.gz"))
@@ -134,5 +148,5 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
     rest <- paste(parts[-1L], collapse = "/")
     .bl_data_get(sprintf("/%s/%s.csv.gz", parts[[1L]], rest), dest)
   }
-  utils::read.csv(gzfile(dest), stringsAsFactors = FALSE)
+  utils::read.csv(gzfile(dest), stringsAsFactors = FALSE, skipNul = TRUE)  # some sources carry NUL bytes
 }

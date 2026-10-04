@@ -62,6 +62,12 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
   old_progress <- options(morie.progress = TRUE)  # downloads draw their bar
   on.exit(options(old_progress), add = TRUE)
+  if (nzchar(Sys.getenv("RMBL_PROG")) && is.null(getOption("rmoriebricklayer.data_cache"))) {
+    # from the shell every call is a new R session: keep the data.rmorie.com manifest and tables in
+    # the user cache (tools::R_user_dir) instead of a fresh tempdir() each time
+    old_cache <- options(rmoriebricklayer.data_cache = tools::R_user_dir("rmoriebricklayer", "cache"))
+    on.exit(options(old_cache), add = TRUE)
+  }
   args <- as.character(args)
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
@@ -91,6 +97,18 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     out(u)
     return(invisible(0L))
   }
+  # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
+  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = "--model", data = "--out")
+  opts <- rest[startsWith(rest, "--")]
+  values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--out"), function(f) {
+    i <- match(f, rest)
+    if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
+  }))
+  bad <- setdiff(opts, c(known[[verb]], values))
+  if (length(bad) && !is.null(.bl_verb_usage(verb, prog))) {
+    out(sprintf("%s %s: unknown option %s (%s %s --help)\n", prog, verb, bad[[1L]], prog, verb))
+    return(invisible(2L))
+  }
   status <- 0L
   tryCatch(
     {
@@ -103,7 +121,6 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             if (!nzchar(tok)) {
               usage_error("--token needs a value: login --token KEY, or paste the key when asked")
             }
-            .bl_check_token(tok)
             bricklayer_llm_login(token = tok)
           } else {
             if (has("--code") && is.null(flag("--email"))) {

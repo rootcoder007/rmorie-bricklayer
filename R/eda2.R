@@ -82,7 +82,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   storage.mode(X) <- "double"
   p <- ncol(X)
   if (p < 1L) stop("`data` has no numeric columns", call. = FALSE)
-  alpha <- as.numeric(alpha)
+  alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single value strictly inside (0, 1)",
          call. = FALSE)
@@ -219,7 +219,7 @@ print.bricklayer_outliers <- function(x, ...) {
 missing_runs <- function(data, min_run = 2L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
-  min_run <- as.integer(min_run)
+  min_run <- .rmbl_num(min_run, "min_run", integer = TRUE)
   if (length(min_run) != 1L || is.na(min_run) || min_run < 1L) {
     stop("`min_run` must be a single positive integer", call. = FALSE)
   }
@@ -297,7 +297,7 @@ print.bricklayer_runs <- function(x, ...) {
 missingness_map <- function(data, height = 20L, width = 12L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
-  height <- as.integer(height)
+  height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L) {
     stop("`height` must be a single positive integer", call. = FALSE)
   }

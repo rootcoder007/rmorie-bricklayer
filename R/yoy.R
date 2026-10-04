@@ -106,6 +106,12 @@ yoy <- function(x, ...) UseMethod("yoy")
 
 #' @rdname yoy
 #' @export
+yoy.default <- function(x, ...) {
+  stop(sprintf("`x` must be a data frame, not %s", class(x)[1L]), call. = FALSE)
+}
+
+#' @rdname yoy
+#' @export
 yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
                            fun = NULL,
                            units = c("count", "continuous", "percent"),
@@ -132,11 +138,11 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
       ), call. = FALSE)
     }
   }
-  lag <- as.integer(lag)
+  lag <- .rmbl_num(lag, "lag", integer = TRUE)
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
     stop("`lag` must be a positive integer", call. = FALSE)
   }
-  conf_level <- as.numeric(conf_level)[1L]
+  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
   if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
   }

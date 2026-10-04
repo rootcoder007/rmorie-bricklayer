@@ -108,8 +108,8 @@
 #' @export
 region_coverage <- function(region, population, units) {
   region <- .rmbl_rm_chr(region, "region")
-  population <- as.numeric(population)
-  units <- as.numeric(units)
+  population <- .rmbl_num(population, "population")
+  units <- .rmbl_num(units, "units")
   if (length(population) != length(region) || length(units) != length(region)) {
     stop("`region`, `population` and `units` must be the same length",
       call. = FALSE
@@ -503,8 +503,8 @@ region_map_from_points <- function(x, y, unit, boundaries, fields,
     return(NULL)
   }
   unit <- .rmbl_rm_chr(unit, "unit")
-  x <- as.numeric(x)
-  y <- as.numeric(y)
+  x <- .rmbl_num(x, "x")
+  y <- .rmbl_num(y, "y")
   if (length(x) != length(unit) || length(y) != length(unit)) {
     stop("`x`, `y` and `unit` must be the same length", call. = FALSE)
   }

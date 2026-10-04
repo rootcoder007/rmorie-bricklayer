@@ -27,7 +27,7 @@
   if (any(!is.finite(x[!is.na(x)]))) {
     stop(sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
   }
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   if (!length(x)) stop(sprintf("`%s` must not be empty", arg), call. = FALSE)
   if (anyNA(x)) stop(sprintf("`%s` must not contain NA", arg), call. = FALSE)
   bad <- if (allow_zero) any(x < 0) else any(x <= 0)
@@ -390,7 +390,7 @@ period_days <- function(from, to) {
 #' @export
 stay_summary <- function(days_per_person, conf_level = 0.95) {
   x <- .rmbl_pos_num(days_per_person, "days_per_person", allow_zero = TRUE)
-  conf_level <- as.numeric(conf_level)[1L]
+  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
   if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1)
     stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
   n <- length(x)

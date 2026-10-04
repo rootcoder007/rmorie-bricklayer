@@ -2,10 +2,13 @@
 % Please edit documentation in R/yoy_output.R
 \name{yoy_summary}
 \alias{yoy_summary}
+\alias{yoy_summary.default}
 \alias{yoy_summary.rmbl_yoy}
 \title{Summarise a change table}
 \usage{
 yoy_summary(object, ...)
+
+\method{yoy_summary}{default}(object, ...)
 
 \method{yoy_summary}{rmbl_yoy}(object, ...)
 }

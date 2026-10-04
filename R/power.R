@@ -93,8 +93,8 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
     stop("`treatment` is not a column of `data`", call. = FALSE)
   }
   sizes <- sort(unique(c(0, as.numeric(sizes))))
-  n <- as.integer(n)[1L]
-  reps <- as.integer(reps)[1L]
+  n <- .rmbl_num(n, "n", integer = TRUE)[1L]
+  reps <- .rmbl_num(reps, "reps", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) stop("`n` must be at least 9", call. = FALSE)
   if (is.na(reps) || reps < 1L) stop("`reps` must be at least 1",
                                      call. = FALSE)

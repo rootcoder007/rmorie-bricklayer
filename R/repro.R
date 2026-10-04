@@ -188,7 +188,7 @@ print.bricklayer_recompute <- function(x, ...) {
 #' identical(runif(3), first)
 #' @export
 manifest_record_seed <- function(manifest) {
-  if (!is.list(manifest)) {
+  if (!is.list(manifest) || is.data.frame(manifest)) {
     stop("`manifest` must be a manifest from make_manifest()",
          call. = FALSE)
   }
@@ -210,6 +210,9 @@ manifest_record_seed <- function(manifest) {
 #' @rdname manifest_record_seed
 #' @export
 manifest_restore_seed <- function(manifest) {
+  if (!is.list(manifest) || is.data.frame(manifest)) {
+    stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
+  }
   rng <- manifest[["rng"]]
   if (is.null(rng) || is.null(rng$state) || is.null(rng$kind)) {
     stop("this manifest carries no recorded generator state; ",
@@ -266,7 +269,7 @@ capture_dependencies <- function(packages = loadedNamespaces()) {
     as.character(v)[1L]
   }
   rows <- lapply(packages, function(p) {
-    d <- tryCatch(utils::packageDescription(p), error = function(e) NULL)
+    d <- suppressWarnings(tryCatch(utils::packageDescription(p), error = function(e) NULL))  # absent: an NA row
     if (inherits(d, "try-error") || !is.list(d)) d <- NULL
     data.frame(
       package    = p,

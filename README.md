@@ -337,7 +337,8 @@ bricklayer_llm_login(token = "sk-...")                    # paste a key
 bricklayer_llm_status()      # base URL, whether a key is stored, the default model
 bricklayer_llm_models()      # the models your key can use; attr(, "default")
 bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
-bricklayer_llm_ask("Same question, another model.", model = "gpt-oss-120b:cf")
+bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.",
+                  model = "gpt-oss-120b:cf")  # the same question, another model
 bricklayer_llm_logout()      # forget the key
 ```
 

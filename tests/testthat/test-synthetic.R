@@ -81,7 +81,7 @@ test_that("core_normal_pdf agrees with stats::dnorm", {
 })
 
 test_that("agent_bundle validates input and degrades gracefully without a key", {
-  expect_error(agent_bundle(""), "nzchar")
+  expect_error(agent_bundle(""), "single non-empty string")
   expect_error(agent_bundle(c("a", "b")))
   Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
   on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)

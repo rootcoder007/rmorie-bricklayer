@@ -238,7 +238,7 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
 band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
                              rule = "midpoint") {
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
-  counts <- as.numeric(counts)
+  counts <- .rmbl_num(counts, "counts")
   if (length(counts) != nrow(bands)) {
     stop(sprintf("`counts` has %d entries for %d bands",
                  length(counts), nrow(bands)), call. = FALSE)
@@ -309,7 +309,7 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #' @export
 expand_bands <- function(bands, counts, ...) {
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
-  counts <- as.numeric(counts)
+  counts <- .rmbl_num(counts, "counts")
   if (length(counts) != nrow(bands)) {
     stop(sprintf("`counts` has %d entries for %d bands",
                  length(counts), nrow(bands)), call. = FALSE)

@@ -73,11 +73,11 @@ infer_schema <- function(data, slack = 0.1, max_levels = 50L) {
   if (ncol(data) == 0L) {
     stop("`data` has no columns to learn a schema from", call. = FALSE)
   }
-  slack <- as.numeric(slack)
+  slack <- .rmbl_num(slack, "slack")
   if (length(slack) != 1L || is.na(slack) || slack < 0) {
     stop("`slack` must be a single non-negative number", call. = FALSE)
   }
-  max_levels <- as.integer(max_levels)
+  max_levels <- .rmbl_num(max_levels, "max_levels", integer = TRUE)
   if (length(max_levels) != 1L || is.na(max_levels) || max_levels < 1L) {
     stop("`max_levels` must be a single positive integer", call. = FALSE)
   }

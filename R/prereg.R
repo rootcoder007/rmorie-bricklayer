@@ -342,7 +342,7 @@ print.bricklayer_falsify_family <- function(x, ...) {
 #' @export
 evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
   one <- function(v) {
-    v <- as.numeric(v)[1L]
+    v <- .rmbl_num(v, "v")[1L]
     if (!is.finite(v) || v <= 0) {
       stop("risk ratios must be finite and positive", call. = FALSE)
     }
