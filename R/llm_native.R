@@ -173,7 +173,7 @@ bricklayer_llm_models <- function(timeout = 10) {
   )))
   res <- .bl_http_post(url, raw, "application/json", timeout, headers)
   if (is.null(res)) {
-    return(list(status = -1L, json = NULL))
+    return(list(status = -1L, json = NULL, error = ""))
   }
   json <- NULL
   if (length(res$body)) {
@@ -184,13 +184,14 @@ bricklayer_llm_models <- function(timeout = 10) {
       error = function(e) NULL
     )
   }
-  list(status = as.integer(res$status), json = json)
+  list(status = as.integer(res$status), json = json, error = res$error %||% "")
 }
 
 .bl_reply_error <- function(res, what) {
   if (!isTRUE(res$status > 0L)) {
-    # libcurl gives -1 when no HTTP answer came at all (offline, a proxy refusing the connection)
-    stop(sprintf("could not reach %s (no network, or a proxy refused the connection)", what), call. = FALSE)
+    # libcurl gives -1 when no HTTP answer came at all; its own reason says which way it failed
+    why <- if (nzchar(res$error %||% "")) res$error else "no network, or a proxy refused the connection"
+    stop(sprintf("could not reach %s (%s)", what, why), call. = FALSE)
   }
   if (identical(what, "the hosted MORIE LLM tier") && isTRUE(res$status %in% c(401L, 403L))) {
     stop(sprintf("the hosted MORIE LLM tier rejected your key (HTTP %d): run `%s login` again",
@@ -255,18 +256,27 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
     msgs[[length(msgs) + 1L]] <- list(role = "system", content = system_prompt)
   }
   msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
-  res <- .bl_post_json(paste0(base, "/v1/chat/completions"),
-    list(
-      model = if (is.null(model)) {
-        .bl_hosted_model()
-      } else {
-        model
-      },
-      messages = msgs
-    ),
-    timeout = timeout,
-    headers = paste("Authorization: Bearer", key)
-  )
+  ask <- function() {
+    .bl_post_json(paste0(base, "/v1/chat/completions"),
+      list(
+        model = if (is.null(model)) {
+          .bl_hosted_model()
+        } else {
+          model
+        },
+        messages = msgs,
+        # reasoning models think first: without room the answer comes back empty
+        max_tokens = 4096L
+      ),
+      timeout = timeout,
+      headers = paste("Authorization: Bearer", key)
+    )
+  }
+  res <- ask()
+  if (!isTRUE(res$status > 0L)) {
+    Sys.sleep(1)  # one retry: a dropped connection to the gateway is often momentary
+    res <- ask()
+  }
   if (res$status != 200L) {
     if (!is.null(model) && isTRUE(res$status %in% c(401L, 403L))) {
       # the gateway answers 403 for a model the key does not have: say that, not "log in again"
@@ -280,7 +290,10 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   }
   txt <- res$json$choices[[1L]]$message$content
   if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
-    stop("the gateway returned no text", call. = FALSE)
+    why <- res$json$choices[[1L]]$finish_reason %||% ""
+    stop(paste0("the gateway returned no text",
+                if (nzchar(why)) sprintf(" (finish_reason: %s; try again, or another model with --model)", why)),
+         call. = FALSE)
   }
   paste(txt, collapse = "\n")
 }

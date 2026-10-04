@@ -314,3 +314,16 @@ test_that("a snapshot lookup that returns nothing usable is no snapshot", {
   testthat::local_mocked_bindings(.rmbl_read_json = function(api) answer("http://web.archive.org/x"))
   expect_equal(wayback_snapshot_url("https://example.invalid/x.csv"), "https://web.archive.org/x")
 })
+
+
+test_that("friendly_download names a refused connection as one, not as a DNS failure", {
+  skip_if_cannot_mock()
+  testthat::local_mocked_bindings(
+    .bl_fetch_file = function(...) stop("URL 'https://www.r-project.org/': status was 'Could not connect to server'")
+  )
+  out <- capture.output(type = "message",
+    ok <- suppressWarnings(friendly_download("https://www.r-project.org/", tempfile(), attempt_wayback = "")))
+  expect_false(ok)
+  expect_true(any(grepl("Could not connect to the server", out)))
+  expect_false(any(grepl("DNS lookup failed", out)))
+})

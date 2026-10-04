@@ -605,3 +605,56 @@ test_that("login --help prints the usage and the usage names rmbl", {
   bricklayer_cli("help", out = function(x) buf <<- c(buf, x))
   expect_match(paste(buf, collapse = ""), "rmbl is the same command")
 })
+
+
+test_that("a dropped connection is retried once and then named with curl's reason", {
+  .sandbox()
+  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  n <- 0L
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      n <<- n + 1L
+      if (n > 1L) return(.reply("back"))
+      list(status = -1L, body = raw(), error = "Recv failure: Connection reset by peer")
+    }
+  )
+  expect_equal(bricklayer_llm_ask("hi"), "back")  # the second try answered
+  expect_equal(n, 2L)
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      list(status = -1L, body = raw(), error = "Recv failure: Connection reset by peer")
+    }
+  )
+  expect_error(bricklayer_llm_ask("hi"),
+               "could not reach the hosted MORIE LLM tier \\(Recv failure: Connection reset by peer\\)")
+})
+
+test_that("an empty answer names why, and the request leaves room for reasoning models", {
+  .sandbox()
+  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  seen <- NULL
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      seen <<- bricklayer_json_from_json(rawToChar(body), simplifyVector = FALSE)
+      b <- bricklayer_json_to_json(list(choices = list(list(message = list(content = ""), finish_reason = "length"))),
+                                   auto_unbox = TRUE)
+      list(status = 200L, body = charToRaw(b))
+    }
+  )
+  expect_error(bricklayer_llm_ask("hi"), "returned no text \\(finish_reason: length")
+  expect_equal(seen$max_tokens, 4096L)
+})
+
+test_that("agent_bundle tells the model which functions the package has", {
+  .sandbox()
+  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  sent <- NULL
+  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, ...) {
+    sent <<- prompt
+    "plan"
+  })
+  expect_equal(agent_bundle("bundle analysis.R"), "plan")
+  for (fn in c("resolve_via_ckan()", "friendly_download()", "make_manifest()", "capsule_bundle()")) {
+    expect_true(grepl(fn, sent, fixed = TRUE), info = fn)
+  }
+})
