@@ -1,5 +1,15 @@
 # rmoriebricklayer 0.5.5
 
+* Hawkes processes fitted fast and exactly: `core_hawkes_fit()` (constant or sinusoidal baseline;
+  exponential, Weibull, gamma or Lomax kernel) maximises the likelihood with its analytic gradient
+  by projected BFGS in C++, and `core_hawkes_residuals()` gives the time-rescaling residuals in O(n)
+  or O(n w). Routes: `"exact"` (Ozaki's O(n) recursion for the exponential kernel; the Weibull and
+  gamma double sums stop where the kernel underflows to 0, so they equal the full sums), `"soe"`
+  (Lomax and gamma with shape < 1 as sums of exponentials with relative error `eps`, Beylkin &
+  Monzon 2010), `"truncate"`, `"em"` (Veen & Schoenberg 2008) and `"inar"` (Kirchner 2017). The
+  code is shared with morie's Python arm, which calls the same routine, so the two return the same
+  estimate (asserted on common data in both test suites). `core_uniforms()` exposes the splitmix64
+  stream both arms use where they must draw the same numbers.
 * HQC-KEM, the code-based key encapsulation NIST selected in March 2025 beside ML-KEM:
   `hqc_keygen()`, `hqc_public_key()`, `hqc_encapsulate()`, `hqc_decapsulate()` and `hqc_sizes()` at
   HQC-1, HQC-3 and HQC-5, implemented in the package. All 300 official known-answer vectors of the
