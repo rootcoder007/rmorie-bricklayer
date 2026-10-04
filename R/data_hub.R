@@ -20,7 +20,7 @@
   key <- .bl_hosted_key()
   if (is.null(key)) {
     stop("data.rmorie.com needs your MORIE key: run ",
-         "bricklayer_llm_login() (or `rmoriebricklayer login`) once.",
+         sprintf("bricklayer_llm_login() (or `%s login`) once.", .bl_prog()),
          call. = FALSE)
   }
   old <- options(timeout = max(getOption("timeout", 60), timeout))

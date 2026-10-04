@@ -52,7 +52,18 @@ bricklayer_siu_text <- function(html) {
 #' f[["number_of_subject_officers"]]
 #' @export
 bricklayer_parse_siu <- function(html) {
-  stopifnot(is.character(html), length(html) == 1L, !is.na(html))
+  if (!is.character(html) || anyNA(html) || !length(html)) {
+    stop("`html` must be report HTML (or the path of a saved report), not ",
+         if (!length(html)) "an empty vector" else if (anyNA(html)) "NA" else class(html)[1L], call. = FALSE)
+  }
+  if (length(html) > 1L) {
+    # several reports: one row each
+    rows <- lapply(html, bricklayer_parse_siu)
+    cols <- unique(unlist(lapply(rows, names)))
+    out <- lapply(cols, function(cn) vapply(rows, function(r) if (cn %in% names(r)) r[[cn]] else NA_character_, ""))
+    names(out) <- cols
+    return(as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE))
+  }
   if (!grepl("<", html, fixed = TRUE) && file.exists(html)) {
     html <- paste(readLines(html, warn = FALSE, encoding = "UTF-8"),
                   collapse = "\n")
@@ -102,8 +113,9 @@ bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
 #' bricklayer_siu_iso_date(c("January 5, 2023", "not a date"))
 #' @export
 bricklayer_siu_iso_date <- function(x) {
-  stopifnot(is.character(x))
-  vapply(x, function(v) .Call(C_rmbl_siu_to_iso_date, v), character(1),
+  if (!is.character(x) && !all(is.na(x))) stop("`x` must be a character vector of dates", call. = FALSE)
+  x <- as.character(x)
+  vapply(x, function(v) if (is.na(v)) NA_character_ else .Call(C_rmbl_siu_to_iso_date, v), character(1),
          USE.NAMES = FALSE)
 }
 
@@ -121,11 +133,9 @@ bricklayer_siu_iso_date <- function(x) {
 #' @return A list with `count` (integer, `NA` when unresolved)
 #' and `reason` (the human-readable evidence).
 #'
-#' @details bricklayer is the foundation layer: this function is the pure
-#' rule set. Reports already in the panel-reviewed corpus should never be
-#' re-derived -- use `rmorie::morie_siu_resolve_so()`, which returns
-#' the verified corpus value first and only falls back to these rules for
-#' unreviewed reports.
+#' @details This function is the pure rule set. For reports that already
+#' have a panel-reviewed count, prefer that verified value; use these rules
+#' for unreviewed reports.
 #' @examples
 #' bricklayer_siu_resolve_so(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")

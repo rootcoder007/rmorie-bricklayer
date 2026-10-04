@@ -279,15 +279,21 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
               m$n_rows, length(m$periods), m$periods[1L],
               m$periods[length(m$periods)], m$when), "")
 
-  add("## Change between periods", "",
-      sprintf(paste0("Percent change with a %g%% exact conditional-binomial ",
-                     "interval; p-values are exact and adjusted over the %d ",
-                     "comparisons by %s. A row is significant when the ",
-                     "adjusted p-value is below %g."),
-              100 * m$conf_level, sum(!is.na(x$change$previous)),
-              m$adjust, m$alpha), "")
   ch <- x$change
   chg <- if ("pct_change" %in% names(ch)) "pct_change" else "pp_change"  # percent units change in points
+  add("## Change between periods", "",
+      if (identical(chg, "pp_change")) {
+        # the values are percentages: they change in points, and a count interval does not apply
+        paste("Change in percentage points between consecutive periods (the values are percentages,",
+              "so no count-based interval applies).")
+      } else {
+        sprintf(paste0("Percent change with a %g%% exact conditional-binomial ",
+                       "interval; p-values are exact and adjusted over the %d ",
+                       "comparisons by %s. A row is significant when the ",
+                       "adjusted p-value is below %g."),
+                100 * m$conf_level, sum(!is.na(x$change$previous)),
+                m$adjust, m$alpha)
+      }, "")
   cols <- c(m$by, m$period, "value", "previous", chg)
   if (!is.null(ch$pct_lower)) cols <- c(cols, "pct_lower", "pct_upper")
   if (!is.null(ch$combined_pct_lower)) {
@@ -301,7 +307,7 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
   }
   if (!is.null(ch$p_adjusted)) cols <- c(cols, "p_adjusted", "significant")
   cols <- c(cols, "flag")
-  add(.md_table(ch[cols], digits), "")
+  add(.md_table(ch[cols], digits, plain = m$period), "")
 
   if (!is.null(x$rate_change)) {
     add(sprintf("## Rates per %s", format(m$per)), "",
@@ -312,7 +318,7 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
     add(.md_table(rc[c(m$by, m$period, "count", "population", "rate",
                        "previous_rate", "pct_change", "pct_lower",
                        "pct_upper", "p_adjusted", "significant", "flag")],
-                  digits), "")
+                  digits, plain = m$period), "")
   }
 
   add("## Trend over the series", "",
@@ -357,18 +363,24 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
 
 # Minimal Markdown table (pipe syntax) from a data frame; numeric
 # columns rounded to `digits`, logicals as yes/no, NA as blank.
-.md_table <- function(d, digits = 1L) {
+.md_table <- function(d, digits = 1L, plain = character()) {
   d <- as.data.frame(d, stringsAsFactors = FALSE)
   if (!nrow(d)) return("(no rows)")
-  cells <- lapply(d, function(v) {
-    if (is.logical(v)) {
+  cells <- lapply(names(d), function(nm) {
+    v <- d[[nm]]
+    if (nm %in% plain) {
+      # a period (2023) is a label, not a quantity: no thousands separator
+      ifelse(is.na(v), "", format(v, trim = TRUE, scientific = FALSE))
+    } else if (is.logical(v)) {
       ifelse(is.na(v), "", ifelse(v, "yes", "no"))
     } else if (is.numeric(v)) {
       whole <- v == round(v) & abs(v) < 1e9
+      # a separator from 10,000 up only: a four-digit whole number (a year in the profile's
+      # min / max) read as "2,023"
       ifelse(is.na(v), "",
              ifelse(whole,
-                    format(v, big.mark = ",", trim = TRUE,
-                           scientific = FALSE),
+                    ifelse(abs(v) >= 1e4, format(v, big.mark = ",", trim = TRUE, scientific = FALSE),
+                           format(v, trim = TRUE, scientific = FALSE)),
                     formatC(v, digits = digits, format = "f")))
     } else {
       ifelse(is.na(v), "", as.character(v))

@@ -316,19 +316,27 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 friendly_download <- function(url, target_path, attempt_wayback = NULL) {
   url <- .rmbl_string1(url, "url")
   target_path <- .rmbl_string1(target_path, "target_path")
+  # base R's url() reports the HTTP status in a warning and then errors with a bare
+  # "cannot open the connection": keep the warning's words as the cause, and do not let it leak
+  said <- character()
   result <- tryCatch(
     {
-      .bl_fetch_file(url, target_path)
+      withCallingHandlers(.bl_fetch_file(url, target_path), warning = function(w) {
+        said <<- c(said, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
       TRUE
     },
     error = function(e) {
       msg <- conditionMessage(e)
+      if (length(said) && grepl("cannot open the connection", msg, fixed = TRUE)) msg <- said[[length(said)]]
       message("  ! Download failed.")
       message("    URL:   ", url)
       message("    Error: ", msg, "\n\n")
       message("  Common causes (in rough order of likelihood):")
       known <- grepl(paste0("429|too many|rate|SSL|TLS|certificate|handshake|UNEXPECTED_EOF|could not|",
-                            "unable to resolve|name not|getaddrinfo|timeout|timed out|connection (refused|reset)|",
+                            "unable to resolve|resolve host|name not|getaddrinfo|timeout|timed out|",
+                            "connection (refused|reset)|",
                             "403|forbidden"),
                      msg, ignore.case = TRUE)
       if (grepl("429|too many|rate", msg, ignore.case = TRUE)) {
@@ -343,7 +351,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
         message("      VPNs with TLS inspection (Cisco AnyConnect, GlobalProtect,")
         message("      Zscaler, NetSkope) break R's HTTPS. Try disabling.")
       }
-      if (grepl("could not|unable to resolve|name not|getaddrinfo",
+      if (grepl("could not|unable to resolve|resolve host|name not|getaddrinfo",
         msg,
         ignore.case = TRUE
       )) {
@@ -360,7 +368,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       }
       if (!known) {
         message("    * The server did not serve the file (see the error above): the URL may have moved or the")
-        message("      portal may be down; a Wayback Machine snapshot is tried next.")
+        message("      portal may be down.")
       }
       ## Auto-resolve a Wayback snapshot if the caller did not supply one
       ## (NULL = auto; "" = explicitly disabled).
@@ -369,6 +377,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       }
       if (!is.character(attempt_wayback) || length(attempt_wayback) != 1L || is.na(attempt_wayback)) {
         attempt_wayback <- ""  # no usable snapshot
+        message("  The Wayback Machine has no snapshot of it (or did not answer); nothing more to try.")
       }
       if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
         message("  Trying Wayback Machine fallback snapshot...")
