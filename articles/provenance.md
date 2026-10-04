@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       e908eba991fff2c35edb16d455c1b74d51d4c0668ec528657d9bb9a584d6bc94
+#>   root       7970ee53d9589d8aca10de69a4e41ddc93e8fe12620f30e5abc5b5491a57fb98
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    e908eba991fff2c35edb16d455c1b74d51d4c0668ec528657d9bb9a584d6bc94
+#>   root    7970ee53d9589d8aca10de69a4e41ddc93e8fe12620f30e5abc5b5491a57fb98
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -366,13 +366,13 @@ plan <- prereg_declare(c(
 
 # a declared outcome that was not reported
 prereg_check(plan, "n_rows")
-#> ── Against the declaration of 2026-10-04T13:17:55Z: departures below 
+#> ── Against the declaration of 2026-10-04T14:00:56Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
-#> ── Against the declaration of 2026-10-04T13:17:55Z: departures below 
+#> ── Against the declaration of 2026-10-04T14:00:56Z: departures below 
 #>   reported but not declared (2 addition(s)): by_year, by_precinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -424,7 +424,7 @@ capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    d9d119172a4deaf2378963c729663cf4ee30
+#>   attestation:manifest_digest    ok    b1c7f70d5f7769e5a7ea3095fa26c21be17e
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
