@@ -368,6 +368,7 @@ yoy.ts <- function(x, lag = NULL, ...) {
       zero <- !is.na(prev) & prev == 0
       flag[zero] <- "previous period is zero"
     }
+    flag[is.na(v)] <- "no data"  # a period the grid inserted: nothing was published for it
     out$flag <- flag
     if (units == "count") {
       ci <- .yoy_ratio_ci(v, prev, conf_level)
@@ -410,7 +411,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
   # in 10^16 away from the period it is meant to find and match() misses
   # every row -- a table in which nothing has a comparison period.
   # Dividing by the step first turns the comparison into integers.
-  key <- round(as.numeric(p) / step)
+  # from the first period: 2017 / 2 is 1008.5, and round() goes to the even 1008 for 2015 and
+  # 2017 alike, so a biennial series had no comparison at all
+  key <- round((as.numeric(p) - as.numeric(min(u))) / step)
   idx <- match(key - lag, key)
   out <- rep(NA_real_, length(v))
   ok <- !is.na(idx)

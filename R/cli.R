@@ -6,6 +6,21 @@
 # directory on PATH (an R package cannot install executables itself,
 # and it only does so when the user calls install_cli()).
 
+# interactive() is a primitive: tests cannot mock it in the installed package, so they mock this
+.bl_interactive <- function() interactive()
+
+# One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
+# Rscript, where readline() returns "" at once, so outside an interactive session read one line of
+# stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
+# history). Closed or empty stdin gives "".
+.bl_readline <- function(prompt) {
+  if (.bl_interactive()) return(trimws(readline(prompt)))
+  con <- file("stdin")
+  on.exit(close(con))
+  if (isatty(stdin())) cat(prompt, file = stderr())
+  trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
+}
+
 #' Run the rmoriebricklayer command line
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
@@ -13,7 +28,7 @@
 #'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
 #'     [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
 #'     device flow by default, a code sent to \code{--email}, or a key
-#'     you paste with \code{--token} (prompts when KEY is omitted)}
+#'     you paste with \code{--token} (read from the terminal or a pipe when KEY is omitted)}
 #'   \item{\code{logout}}{forget the hosted key}
 #'   \item{\code{doctor}}{report the language-model routes available here}
 #'   \item{\code{models}}{list the models the hosted tier offers your key
@@ -51,38 +66,56 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
   rest <- args[-1L]
+  prog <- .bl_prog()
+  usage_error <- function(msg) {
+    stop(structure(class = c("bl_usage", "error", "condition"), list(message = msg, call = NULL)))
+  }
   flag <- function(name) {
     i <- match(name, rest)
     if (is.na(i)) {
       return(NULL)
     }
-    if (i == length(rest)) {
-      stop(sprintf("%s needs a value", name), call. = FALSE)
+    if (i == length(rest) || startsWith(rest[[i + 1L]], "--")) {
+      usage_error(sprintf("%s needs a value", name))
     }
     rest[[i + 1L]]
   }
   has <- function(name) name %in% rest
+  # `VERB --help` describes the verb and never runs it (logout --help used to forget the key)
+  if (!verb %in% c("help", "--help", "-h") && any(rest %in% c("--help", "-h"))) {
+    u <- .bl_verb_usage(verb, prog)
+    if (is.null(u)) {
+      out(sprintf("%s: unknown verb '%s' (try: %s help)\n", prog, verb, prog))
+      return(invisible(2L))
+    }
+    out(u)
+    return(invisible(0L))
+  }
   status <- 0L
   tryCatch(
     {
       switch(verb,
         login = {
-          if (identical(rest[1L], "--help")) {
-            out(paste0("usage: rmoriebricklayer login [--email ADDRESS [--code CODE]] [--no-browser] | ",
-                       "login --token [KEY]   (rmbl login is the same)\n"))
-          } else if (has("--token")) {
+          if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-            if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
+            if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ")
+            if (!nzchar(tok)) {
+              usage_error("--token needs a value: login --token KEY, or paste the key when asked")
+            }
+            .bl_check_token(tok)
             bricklayer_llm_login(token = tok)
           } else {
+            if (has("--code") && is.null(flag("--email"))) {
+              usage_error("--code needs --email ADDRESS (the code was sent there)")
+            }
             bricklayer_llm_login(
               email = flag("--email"), code = flag("--code"),
               open_browser = !has("--no-browser") &&
                 interactive()
             )
           }
-          if (!identical(rest[1L], "--help")) out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
+          out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
         },
         logout = bricklayer_llm_logout(),
         doctor = {
@@ -98,8 +131,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         ask = {
           mdl <- flag("--model")
           if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
-          if (!length(rest) || identical(rest[[1L]], "--help")) {
-            out("usage: rmoriebricklayer ask [--model NAME] PROMPT...\n")
+          if (!length(rest)) {
+            usage_error(sprintf("usage: %s ask [--model NAME] PROMPT...", prog))
           } else {
             prompt <- paste(rest, collapse = " ")
             out(paste0(bricklayer_llm_ask(prompt, model = mdl), "\n"))
@@ -107,7 +140,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         bundle = {
           if (!length(rest)) {
-            stop("usage: rmoriebricklayer bundle REQUEST...", call. = FALSE)
+            usage_error(sprintf("usage: %s bundle REQUEST...", prog))
           }
           out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
         },
@@ -127,24 +160,36 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         describe = {
           if (!length(rest)) {
-            stop("usage: rmoriebricklayer describe NAME", call. = FALSE)
+            usage_error(sprintf("usage: %s describe NAME", prog))
           }
-          out(.bl_describe(rest[[1L]]))
+          if (is.null(.bl_rd_for(rest[[1L]]))) {
+            out(sprintf("no help page for '%s' (%s functions lists them)\n", rest[[1L]], prog))
+            status <- 1L
+          } else {
+            out(.bl_describe(rest[[1L]]))
+          }
         },
         examples = {
           if (!length(rest)) {
-            stop("usage: rmoriebricklayer examples NAME", call. = FALSE)
+            usage_error(sprintf("usage: %s examples NAME", prog))
           }
-          out(.bl_examples(rest[[1L]]))
+          if (is.null(.bl_rd_for(rest[[1L]]))) {
+            out(sprintf("no help page for '%s' (%s functions lists them)\n", rest[[1L]], prog))
+            status <- 1L
+          } else {
+            out(.bl_examples(rest[[1L]]))
+          }
         },
         data = status <- .bl_cli_data(rest, flag, out),
+        `--version` = ,
+        `-v` = ,
         version = out(sprintf("rmoriebricklayer %s\n", as.character(
           utils::packageVersion("rmoriebricklayer")
         ))),
         help = ,
         `--help` = ,
         `-h` = out(paste0(
-          "usage: rmoriebricklayer <verb> [options]   (rmbl is the same command)\n\n",
+          sprintf("usage: %s <verb> [options]   (rmbl is the same command as rmoriebricklayer)\n\n", prog),
           "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
           "MORIE LLM tier\n",
           "        [--code CODE] [--no-browser]\n",
@@ -168,20 +213,38 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           "(your MORIE key)\n",
           "  version                                   package version\n"
         )),
-        stop(sprintf("unknown verb '%s' (try: rmoriebricklayer help)", verb),
-          call. = FALSE
-        )
+        usage_error(sprintf("unknown verb '%s' (try: %s help)", verb, prog))
       )
     },
     error = function(e) {
-      out(paste0("rmoriebricklayer: ", conditionMessage(e), "\n"))
-      status <<- 1L
+      out(paste0(prog, ": ", conditionMessage(e), "\n"))
+      status <<- if (inherits(e, "bl_usage")) 2L else 1L
     }
   )
   invisible(status)
 }
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
+# One usage line per verb, for `VERB --help`; NULL for a verb that does not exist.
+.bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
+  u <- c(
+    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token KEY",
+                  "  sign in to the hosted MORIE LLM tier"),
+    logout = "logout   forget the hosted key",
+    doctor = "doctor   report the language-model routes available here",
+    models = "models   the models the hosted tier offers your key (default marked)",
+    ask = "ask [--model NAME] PROMPT...   ask the model",
+    bundle = "bundle REQUEST...   agent_bundle() from the shell",
+    functions = "functions [PATTERN]   exported functions and their titles",
+    describe = "describe NAME   help page of one function",
+    examples = "examples NAME   the examples of one function",
+    data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
+    version = "version   package version"
+  )
+  if (!verb %in% names(u)) return(NULL)
+  sprintf("usage: %s %s\n", prog, u[[verb]])
+}
 
 # The Rd database of this package: the installed copy when there is one,
 # else the man/ directory of a source tree loaded with pkgload.
@@ -299,7 +362,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     if (.Platform$OS.type == "windows") {
       # nocov start -- the Windows wrapper; the coverage runner is Linux
       target <- file.path(dir, paste0(nm, ".cmd"))
-      writeLines(sprintf(paste0("@echo off\r\nRscript --no-save --no-restore -e ",
+      writeLines(sprintf(paste0("@echo off\r\nset RMBL_PROG=", nm, "\r\nRscript --no-save --no-restore -e ",
                                 "\".libPaths(c('%s', .libPaths())); ",
                                 "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q))\" %%*"),
                          lib), target)
@@ -312,6 +375,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       writeLines(c("#!/bin/sh",
                    sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())", nm),
                    sprintf("# runs the package in %s (pinned with .libPaths() inside R)", lib),
+                   sprintf("export RMBL_PROG=%s", nm),
                    sprintf("exec Rscript --no-save --no-restore -e '%s' \"$@\"", body)),
                  target)
       Sys.chmod(target, "0755")
@@ -331,18 +395,17 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   if (is.null(.bl_hosted_base())) {
     out("Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
   } else if (is.null(.bl_hosted_key())) {
-    out("Hosted MORIE tier: not logged in -- rmoriebricklayer login\n")
+    out(sprintf("Hosted MORIE tier: not logged in -- %s login\n", .bl_prog()))
   } else {
     hm <- bricklayer_llm_models()
-    if (!length(hm)) {
-      out(sprintf(
-        paste0(
-          "Hosted MORIE tier (%s): logged in, gateway not reachable ",
-          "(or the key was replaced by a newer sign-in: ",
-          "run rmoriebricklayer login again)\n"
-        ),
-        .bl_hosted_base()
-      ))
+    state <- .bl_key_state(hm)
+    if (identical(state, "rejected")) {
+      out(sprintf(paste0("Hosted MORIE tier (%s): the gateway rejected the stored key ",
+                         "(a newer sign-in elsewhere replaces it): run `%s login` again\n"),
+                  .bl_hosted_base(), .bl_prog()))
+    } else if (!length(hm)) {
+      out(sprintf("Hosted MORIE tier (%s): logged in, gateway not reachable (network?); try again\n",
+                  .bl_hosted_base()))
     } else {
       out(sprintf(
         "Hosted MORIE tier (%s); default marked *:\n",
@@ -353,7 +416,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
         out(sprintf("  %s %s\n", mark, m))
       }
       out(paste0(
-        "Pick one per call with `rmoriebricklayer ask --model NAME ...`",
+        sprintf("Pick one per call with `%s ask --model NAME ...`", .bl_prog()),
         ", or set MORIE_HOSTED_MODEL.\n"
       ))
     }
@@ -371,11 +434,18 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     df <- bricklayer_data_load(rest[[2L]])
     dest <- flag("--out") %||%
       paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
-    utils::write.csv(df, dest, row.names = FALSE)
+    ok <- tryCatch({
+      suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
+      TRUE
+    }, error = function(e) FALSE)
+    if (!ok) {
+      out(sprintf("cannot write %s (the directory does not exist, or no permission)\n", dest))
+      return(1L)
+    }
     out(sprintf("wrote %s  (%d rows, %d cols)\n", dest, nrow(df), ncol(df)))
   } else {
     out(paste0(
-      "usage: rmoriebricklayer data list | ",
+      sprintf("usage: %s data list | ", .bl_prog()),
       "data pull db/table [--out FILE.csv]\n"
     ))
     # asking for help is not a mistake: --help exits 0 like every other verb's help

@@ -1,5 +1,26 @@
 # rmoriebricklayer 0.5.5
 
+* Fresh-user round 5: `VERB --help` prints the verb's usage under both names and never runs it
+  (`logout --help` used to forget the key); messages name the command typed (`rmbl` or
+  `rmoriebricklayer`); usage errors exit 2 and an unknown function in `describe` / `examples` exits 1;
+  `--version` works. `login --token` asks the gateway before storing a key and refuses a rejected one;
+  `login --email` checks the address and `--code` needs `--email`; the GitHub sign-in says it is still
+  waiting every 30 s. A key the gateway rejects is reported as rejected (not "gateway not reachable"),
+  the gateway's quote of the key and its hash is never printed, and `models` lists the models without
+  the suggested jsonlite. `agent_bundle()` and `doctor` use the package's own hosted route only
+  (`backend` is "auto" or "hosted").
+* `bricklayer_fetch()` says why a download failed (the HTTP status, a server never reached, no
+  Wayback snapshot) and refuses a non-http(s) URL, an unwritable destination or a non-positive timeout
+  before downloading; `friendly_download()` keeps R's `url()` warning out of the console, reports its
+  status as the cause and says when the Wayback Machine has no copy; the Wayback lookup retries once.
+  SIU: an impossible date ("February 30") is no date, day-first ordinals ("2nd February 2018",
+  "22nd of March 2019") and abbreviated months read, the hex quotes and dashes decode as the decimal
+  ones, report pages are read from their body rather than the table of contents (incident dates were
+  empty), and the helpers take `NA` and several reports. `yoy()` compares a biennial series step to
+  step (it found no comparisons) and labels an inserted year "no data"; `report_analysis()` prints
+  years without a thousands separator and describes a percent analysis in percentage points;
+  `sha256_file()` names a missing file.
+
 * The SIU parser reads ordinal dates ("August 3rd, 2017") as well as French months, and names the
   police service from the sentence that notified the SIU, so legislation such as the Police Services Act
   no longer outvotes the force (17-OVI-201 reads Guelph Police Service, 2017-08-03). `data --help` exits

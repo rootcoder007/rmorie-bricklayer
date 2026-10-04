@@ -31,6 +31,10 @@
 #' stopifnot(sha256_file(f) == pinned)
 #' @export
 sha256_file <- function(path) {
+  if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
+    stop(sprintf("sha256_file: %s is not a file", if (is.character(path) && length(path) == 1L) path else "`path`"),
+         call. = FALSE)
+  }
   bytes <- readBin(path, "raw", n = file.info(path)$size)
   # inside the package: the compiled SHA-256 core (identical output to
   # digest::digest(file = path, algo = "sha256")); sourced standalone in a

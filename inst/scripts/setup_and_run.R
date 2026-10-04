@@ -200,8 +200,9 @@ if (dml_on) {
     say("  This script does not install packages itself. Install them in R,")
     say("  then re-run this script:")
     say("    install.packages(c(", paste0('"', fb, '"', collapse = ", "), "))")
-    say("  Alternative: install.packages(\"rmorie\") gives the same estimator",
-        " in ~10 s.")
+    say("  Alternative: rmorie gives the same estimator in ~10 s (it is on r-universe, not CRAN):")
+    say("    install.packages(\"rmorie\", repos = c(\"https://rootcoder007.r-universe.dev\",",
+        " \"https://cloud.r-project.org\"))")
     say("  Or unset OTIS_DML_RECOMPUTE: the 8 DML checks then record as INFO.")
     quit(status = 3)
   }

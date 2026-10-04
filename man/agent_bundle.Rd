@@ -9,35 +9,29 @@ agent_bundle(request, model = NULL, backend = "auto")
 \arguments{
 \item{request}{Character scalar describing the bundle task.}
 
-\item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"} for the
-hosted tier, \code{"claude-sonnet-5"} for the Anthropic route of the
-CLI agent; \code{NULL} lets the route pick.}
+\item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"};
+\code{NULL} uses the default (\code{rmbl models} lists them).}
 
-\item{backend}{\code{"auto"} (default: hosted tier, then the CLI
-agent), \code{"hosted"} (only the hosted tier), \code{"ollama"} or
-\code{"anthropic"} (only the CLI agent, with its
-\code{$RMORIE_AGENT_OLLAMA_URL} / \code{$RMORIE_AGENT_API_KEY}).}
+\item{backend}{\code{"auto"} (default) or \code{"hosted"}: both send the
+request to the hosted MORIE tier.}
 }
 \value{
 Character scalar: the answer, or a message saying what to set
-up when no route is available.
+up when no key is stored.
 }
 \description{
 Sends a bundle-building request, with a rmoriebricklayer-focused
-preamble, to a language model: the hosted MORIE tier at
-\url{https://llm.rmorie.com} when a key is stored
-(\code{\link{bricklayer_llm_login}}), otherwise the optional
-\code{rmorie} command-line agent from rmorie-cli if it is on the PATH.
+preamble, to the hosted MORIE language model at
+\url{https://llm.rmorie.com} with the key stored by
+\code{\link{bricklayer_llm_login}} (\code{rmbl login} from the shell).
 }
 \examples{
 \donttest{
 agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
-agent_bundle("add a Wayback fallback to my fetch step", backend = "hosted")
-agent_bundle("repair the SHA256 provenance for my capsule",
-             backend = "anthropic", model = "claude-sonnet-5")
+agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud")
 }
 
-# With no route configured the call returns a setup hint, not an
+# With no key stored the call returns a setup hint, not an
 # error -- safe to run anywhere:
 if (!nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) agent_bundle("hello")
 }

@@ -100,7 +100,9 @@ test_that("plural cue and unresolved paths work", {
 test_that("bindings validate their inputs", {
   expect_error(bricklayer_siu_text(1L))
   expect_error(bricklayer_siu_resolve_so(NA_character_))
-  expect_error(bricklayer_parse_siu(c("a", "b")))
+  expect_error(bricklayer_parse_siu(NA_character_), "not NA")
+  # several reports parse to one row each
+  expect_equal(nrow(bricklayer_parse_siu(c("<p>a</p>", "<p>b</p>"))), 2L)
   expect_error(bricklayer_siu_iso_date(5))
 })
 

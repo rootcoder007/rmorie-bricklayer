@@ -23,11 +23,9 @@ singular subject official present (1); witness-official-only (0, a real
 answer); otherwise unresolved ( \code{NA}) .
 }
 \details{
-bricklayer is the foundation layer: this function is the pure
-rule set. Reports already in the panel-reviewed corpus should never be
-re-derived -- use \code{rmorie::morie_siu_resolve_so()}, which returns
-the verified corpus value first and only falls back to these rules for
-unreviewed reports.
+This function is the pure rule set. For reports that already
+have a panel-reviewed count, prefer that verified value; use these rules
+for unreviewed reports.
 }
 \examples{
 bricklayer_siu_resolve_so(

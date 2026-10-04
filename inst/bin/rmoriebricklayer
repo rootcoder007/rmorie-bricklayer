@@ -1,4 +1,5 @@
 #!/bin/sh
 # rmoriebricklayer command-line launcher (installed by rmoriebricklayer::install_cli(), also as rmbl).
 # Rscript adds the --args separator itself: passing one makes R 4.6's commandArgs(TRUE) return it.
+export RMBL_PROG=rmoriebricklayer
 exec Rscript --no-save --no-restore -e 'suppressPackageStartupMessages({ q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q)) })' "$@"

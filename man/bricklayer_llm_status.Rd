@@ -7,9 +7,9 @@
 bricklayer_llm_status()
 }
 \value{
-A data frame with one row per route: \code{route},
-\code{status} and \code{detail}. Printed by \code{rmoriebricklayer
-  doctor}.
+A data frame with one row per route (the hosted MORIE tier):
+\code{route}, \code{status} and \code{detail}. Printed by
+\code{rmoriebricklayer doctor}.
 }
 \description{
 Report the language-model routes available from this machine

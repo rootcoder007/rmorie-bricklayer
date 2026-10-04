@@ -141,6 +141,9 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     if (!fp) return -1;
     CURL *h = curl_easy_init();
     if (!h) { std::fclose(fp); return -1; }
+#if LIBCURL_VERSION_NUM >= 0x075500
+    curl_easy_setopt(h, CURLOPT_PROTOCOLS_STR, "http,https");  /* an ftp:// or file:// URL (or redirect) is refused */
+#endif
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
     curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
@@ -176,7 +179,11 @@ std::string url_encode(const std::string &s) {
 std::string wayback_snapshot(const std::string &url, long timeout_s) {
     std::string api = "https://archive.org/wayback/available?url=" + url_encode(url);
     std::string body;
-    if (http_get_string(api, body, timeout_s) != 200) return "";
+    /* the availability API answers 429 / 5xx now and then: one more try before "no snapshot" */
+    if (http_get_string(api, body, timeout_s) != 200) {
+        body.clear();
+        if (http_get_string(api, body, timeout_s) != 200) return "";
+    }
     size_t c = body.find("\"closest\"");
     if (c == std::string::npos) return "";
     /* require "available": true within the closest object */
@@ -206,7 +213,10 @@ extern "C" {
  * auto-resolved Wayback snapshot. Returns:
  *   0  live URL succeeded
  *   1  live failed, wayback fallback succeeded
- *  -1  both failed (nothing written)
+ *  <0  both failed (nothing written): -(10 * live + w), where live is the
+ *      live URL's HTTP status (1 when the server was never reached) and
+ *      w is 1 when a snapshot was found but its download failed, 0 when
+ *      the Wayback Machine had none (so the caller can say which).
  */
 int rmbl_fetch_with_fallback(const char *url, const char *wayback,
                              const char *path, int timeout_s) {
@@ -218,7 +228,8 @@ int rmbl_fetch_with_fallback(const char *url, const char *wayback,
         long c2 = http_get_file(wb, path, timeout_s);
         if (c2 >= 200 && c2 < 300) return 1;
     }
-    return -1;
+    long live = code > 0 ? code : 1;
+    return (int) -(10 * live + (wb.empty() ? 0 : 1));
 }
 
 /* Resolve a Wayback snapshot URL for `url` into `out` (size `cap`). Returns
