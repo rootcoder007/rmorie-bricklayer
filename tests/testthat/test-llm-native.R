@@ -5,6 +5,8 @@
 # XDG_CONFIG_HOME. Nothing leaves the machine and nothing touches $HOME.
 
 .sandbox <- function(env = parent.frame()) {
+  # storing a token asks the gateway first: offline here, the check passes
+  testthat::local_mocked_bindings(.bl_check_token = function(token) invisible(TRUE), .env = env)
   dir <- tempfile("xdg-")
   dir.create(dir)
   old <- Sys.getenv(
@@ -118,7 +120,7 @@ test_that("gateway errors are reported with their message", {
   )
   expect_error(bricklayer_llm_ask("hi"), "429: Rate limit exceeded")
   testthat::local_mocked_bindings(.bl_http_post = function(...) NULL)
-  expect_error(bricklayer_llm_ask("hi"), "answered -1")
+  expect_error(bricklayer_llm_ask("hi"), "could not reach the hosted MORIE LLM tier")
 })
 
 test_that("agent_bundle() uses the hosted route when a key is stored", {

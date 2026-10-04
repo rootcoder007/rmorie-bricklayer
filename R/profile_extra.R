@@ -52,7 +52,7 @@ missingness_pattern <- function(data, max_patterns = 20L) {
   if (ncol(data) == 0L) {
     stop("`data` has no columns", call. = FALSE)
   }
-  max_patterns <- as.integer(max_patterns)
+  max_patterns <- .rmbl_num(max_patterns, "max_patterns", integer = TRUE)
   if (length(max_patterns) != 1L || is.na(max_patterns) ||
     max_patterns < 1L) {
     stop("`max_patterns` must be a single positive integer", call. = FALSE)
@@ -181,11 +181,11 @@ top_correlations <- function(data, n = 10L, method = c(
   if (length(num) < 2L) {
     stop("need at least two numeric columns to correlate", call. = FALSE)
   }
-  n <- as.integer(n)
+  n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L) {
     stop("`n` must be a single positive integer", call. = FALSE)
   }
-  min_abs <- as.numeric(min_abs)
+  min_abs <- .rmbl_num(min_abs, "min_abs")
   if (length(min_abs) != 1L || is.na(min_abs) || min_abs < 0 ||
     min_abs > 1) {
     stop("`min_abs` must be a single value in [0, 1]", call. = FALSE)

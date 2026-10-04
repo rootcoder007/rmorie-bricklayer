@@ -223,7 +223,7 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #'          area = c("North", "South", "Tiny"))
 #' @export
 eb_rates <- function(observed, expected, area = NULL) {
-  observed <- as.numeric(observed)
+  observed <- .rmbl_num(observed, "observed")
   expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
@@ -311,7 +311,7 @@ funnel_limits <- function(expected, target = 1,
   if (any(expected <= 0, na.rm = TRUE)) {
     stop("`expected` must be positive", call. = FALSE)
   }
-  target <- as.numeric(target)[1L]
+  target <- .rmbl_num(target, "target")[1L]
   if (is.na(target) || target <= 0) {
     stop("`target` must be positive", call. = FALSE)
   }
@@ -378,7 +378,7 @@ funnel_limits <- function(expected, target = 1,
 morans_i <- function(x, neighbours, style = c("W", "B"),
                      n_perm = 9999L) {
   style <- match.arg(style)
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   n <- length(x)
   if (n < 3L) stop("Moran's I needs at least three areas", call. = FALSE)
   if (anyNA(x)) {

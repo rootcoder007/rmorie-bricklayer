@@ -2,10 +2,13 @@
 % Please edit documentation in R/rate.R
 \name{rate_change}
 \alias{rate_change}
+\alias{rate_change.default}
 \alias{rate_change.data.frame}
 \title{Change in a rate between periods}
 \usage{
 rate_change(x, ...)
+
+\method{rate_change}{default}(x, ...)
 
 \method{rate_change}{data.frame}(
   x,

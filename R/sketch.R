@@ -75,7 +75,7 @@ summary_update <- function(acc, x) {
   if (!inherits(acc, "bricklayer_online")) {
     stop("`acc` must come from online_summary()", call. = FALSE)
   }
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   x <- x[!is.na(x)]
   if (length(x) == 0L) return(acc)
   block <- .Call(C_rmbl_moments_acc, x)
@@ -172,8 +172,8 @@ print.bricklayer_online <- function(x, ...) {
 #' @name rmbl_reservoir
 #' @export
 reservoir_indices <- function(n, k, seed = 42L) {
-  n <- as.numeric(n)
-  k <- as.numeric(k)
+  n <- .rmbl_num(n, "n")
+  k <- .rmbl_num(k, "k")
   if (length(n) != 1L || is.na(n) || n < 0) {
     stop("`n` must be a single non-negative number", call. = FALSE)
   }
@@ -245,12 +245,12 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' @name rmbl_distinct
 #' @export
 distinct_sketch <- function(x, p = 14L, registers = NULL) {
-  p <- as.integer(p)
+  p <- .rmbl_num(p, "p", integer = TRUE)
   if (length(p) != 1L || is.na(p) || p < 4L || p > 20L) {
     stop("`p` must be a single integer between 4 and 20", call. = FALSE)
   }
   if (!is.null(registers)) {
-    registers <- as.integer(registers)
+    registers <- .rmbl_num(registers, "registers", integer = TRUE)
     if (length(registers) != bitwShiftL(1L, p)) {
       stop("`registers` must have 2^p entries, from a sketch with the ",
            "same `p`", call. = FALSE)

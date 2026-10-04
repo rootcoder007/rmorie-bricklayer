@@ -42,7 +42,7 @@
 #' paste(format(random_bytes(4)), collapse = "")
 #' @export
 random_bytes <- function(n) {
-  n <- as.integer(n)
+  n <- .rmbl_num(n, "n", integer = TRUE)
   if (length(n) != 1L || is.na(n) || n < 1L || n > 1048576L) {
     stop("`n` must be a single integer between 1 and 1048576", call. = FALSE)
   }
@@ -136,12 +136,12 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
       )
     }
   }
-  iterations <- as.integer(iterations)
+  iterations <- .rmbl_num(iterations, "iterations", integer = TRUE)
   if (base::length(iterations) != 1L || is.na(iterations) ||
     iterations < 1L) {
     stop("`iterations` must be a single integer of at least 1", call. = FALSE)
   }
-  length <- as.integer(length)
+  length <- .rmbl_num(length, "length", integer = TRUE)
   if (base::length(length) != 1L || is.na(length) || length < 1L ||
     length > 1024L) {
     stop("`length` must be a single integer between 1 and 1024",
@@ -206,7 +206,7 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
     if (any(ok)) out[ok] <- core_blake2b(x[ok], key = key, length = length)
     return(out)
   }
-  length <- as.integer(length)
+  length <- .rmbl_num(length, "length", integer = TRUE)
   if (base::length(length) != 1L || is.na(length) || length < 1L ||
     length > 64L) {
     stop("`length` must be a single integer between 1 and 64", call. = FALSE)

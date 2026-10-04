@@ -33,8 +33,8 @@ test_that("write_text_fallback writes a readable file for accented input", {
 test_that("agent_bundle validates its request and reports a missing binary", {
   Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
   on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
-  expect_error(agent_bundle(""), "nzchar")
-  expect_error(agent_bundle(c("a", "b")), "length")
+  expect_error(agent_bundle(""), "single non-empty string")
+  expect_error(agent_bundle(c("a", "b")), "single non-empty string")
 
   expect_match(agent_bundle("scaffold demo bundle"), "No language-model route")
 })

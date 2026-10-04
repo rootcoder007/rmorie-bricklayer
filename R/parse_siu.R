@@ -141,6 +141,8 @@ bricklayer_siu_iso_date <- function(x) {
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")
 #' @export
 bricklayer_siu_resolve_so <- function(text) {
-  stopifnot(is.character(text), length(text) == 1L, !is.na(text))
+  if (!is.character(text) || length(text) != 1L || is.na(text)) {
+    stop("`text` must be a single string of report text", call. = FALSE)
+  }
   .Call(C_rmbl_siu_resolve_so, text)
 }

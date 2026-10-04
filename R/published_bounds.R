@@ -47,7 +47,7 @@ published_bounds <- function(x, rounding = NULL,
                                                   "n/a")) {
   rounding_kind <- match.arg(rounding_kind)
   if (!is.null(rounding)) {
-    rounding <- as.numeric(rounding)[1L]
+    rounding <- .rmbl_num(rounding, "rounding")[1L]
     if (is.na(rounding) || rounding <= 0) {
       stop("`rounding` must be a positive number", call. = FALSE)
     }

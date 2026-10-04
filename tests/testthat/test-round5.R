@@ -228,3 +228,97 @@ test_that("the key hints name the command the user typed", {
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
   expect_error(bricklayer_data_manifest(), "`rmbl login`", fixed = TRUE)
 })
+
+test_that("a model the key does not have is named, not blamed on the key", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = "sk-ok", MORIE_HOSTED_BASE_URL = NA)
+  testthat::local_mocked_bindings(
+    .bl_post_json = function(...) list(status = 403L, json = list(), body = raw(0)),
+    bricklayer_llm_models = function(...) c("a", "b")
+  )
+  expect_error(bricklayer_llm_ask("hi", model = "nosuchmodel"),
+               "the hosted tier has no model 'nosuchmodel' (`rmoriebricklayer models` lists the 2 it has)",
+               fixed = TRUE)
+})
+
+test_that("no answer at all is reported as unreachable, not as HTTP -1", {
+  expect_error(.bl_reply_error(list(status = -1L), "the hosted MORIE LLM tier"),
+               "could not reach the hosted MORIE LLM tier (no network, or a proxy refused the connection)",
+               fixed = TRUE)
+})
+
+test_that("bricklayer_llm_login(token =) refuses a key the gateway rejects", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, MORIE_HOSTED_BASE_URL = NA)
+  testthat::local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) list(status = 401L))
+  expect_error(bricklayer_llm_login(token = "sk-bad"), "did not accept that key")
+  expect_null(.bl_hosted_key())
+})
+
+test_that("an unknown hosted table is named before anything downloads; refresh must be a flag", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = "sk-ok", RMBL_PROG = "rmbl")
+  got <- character()
+  testthat::local_mocked_bindings(
+    bricklayer_data_manifest = function(refresh = FALSE) list(datasets = list(list(key = "hib/cpads_cpads"))),
+    .bl_data_get = function(path, dest, timeout = 600) got <<- c(got, path)
+  )
+  expect_error(bricklayer_data_load("hib/nosuch_table"),
+               "no table hib/nosuch_table at data.rmorie.com (`rmbl data list` shows them)", fixed = TRUE)
+  expect_length(got, 0L)
+  expect_error(bricklayer_data_load("hib/cpads_cpads", refresh = NULL), "`refresh` must be TRUE or FALSE", fixed = TRUE)
+})
+
+test_that("the yoy print is plain ASCII where the console cannot render UTF-8", {
+  withr::local_envvar(RMBL_ASCII_ONLY = "1")
+  out <- utils::capture.output(print(yoy(
+    data.frame(year = 2020:2022, n = c(10, 20, 30)), value = "n", period = "year")))
+  expect_true(all(!grepl("[^\x01-\x7f]", out, perl = TRUE)))
+  expect_true(any(grepl("percent withheld", out, fixed = TRUE)))
+})
+
+test_that("an option a verb does not take is refused and nothing runs", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
+  for (v in c("logout", "doctor", "models", "functions", "ask", "bundle", "login")) {
+    r <- .cap(v, "--nosuch-flag-xyz")
+    expect_equal(r$status, 2L, info = v)
+    expect_match(r$text, sprintf("rmbl %s: unknown option --nosuch-flag-xyz", v), fixed = TRUE, info = v)
+  }
+  expect_equal(.cap("ask", "--model", "m", "--nosuch", "hi")$status, 2L)
+})
+
+test_that("French reports give the police service, the dates and the person", {
+  html <- paste0(
+    "<html><body><p>Mandat de l'UES</p><p>Exercice du mandat</p>",
+    "<p>Le présent rapport porte sur la blessure grave subie par un homme de 21 ans (plaignant).</p>",
+    "<p>L’enquête</p><p>Notification de l' UES [1]</p>",
+    "<p>Le 29 juillet 2024, à 0 h 59, le Service de police des parcs du Niagara a communiqué ",
+    "les renseignements suivants à l' UES .</p>",
+    "<p>Le 28 juillet 2024, autour de 22 h 40, un agent du Service de police des parcs du Niagara conduisait.</p>",
+    "<p>L'équipe</p><p>Date et heure de l'envoi de l'équipe : Le 29 juillet 2024, à 2 h 7</p>",
+    "<p>Témoins civils</p><p>Agents impliqués</p>",
+    "<p>Date : Le 26 novembre 2024</p></body></html>")
+  p <- bricklayer_parse_siu(html)
+  expect_equal(p[["_language"]], "fr")
+  expect_equal(p[["police_service"]], "Service de police des parcs du Niagara")
+  expect_equal(p[["date_of_incident_iso"]], "2024-07-28")
+  expect_equal(p[["date_siu_notified_iso"]], "2024-07-29")
+  expect_equal(p[["date_of_director_decision_iso"]], "2024-11-26")
+  expect_equal(p[["age_affected"]], "21")
+  expect_equal(p[["sex_gender_affected"]], "man")
+})
+
+test_that("bad inputs get a worded error and no coercion warning", {
+  d <- withr::local_tempdir()
+  dir.create(file.path(d, "adir"))
+  expect_error(yoy("abc"), "`x` must be a data frame, not character", fixed = TRUE)
+  expect_error(yoy_summary(NULL), "`object` must be a yoy() result, not NULL", fixed = TRUE)
+  expect_error(rate_change(NA), "`x` must be a data frame", fixed = TRUE)
+  expect_error(agent_bundle(NA), "`request` must be a single non-empty string", fixed = TRUE)
+  expect_error(bricklayer_json_base64url_dec(NA), "`input` must be base64url text", fixed = TRUE)
+  expect_error(cite_capsule("abc"), "`provenance` must be a provenance list", fixed = TRUE)
+  expect_error(manifest_restore_seed("abc"), "`manifest` must be a manifest", fixed = TRUE)
+  expect_error(odds_ratio_check(NULL), "`counts` must be a 2-column matrix", fixed = TRUE)
+  expect_error(sha512_file(file.path(d, "adir")), "is a directory, not a file", fixed = TRUE)
+  expect_no_warning(expect_error(random_bytes("abc"), "`n` must be numeric, not text such as \"abc\"", fixed = TRUE))
+  expect_no_warning(expect_error(eb_rates("abc"), "must be numeric", fixed = TRUE))
+  expect_equal(random_bytes("4") |> length(), 4L)  # a number given as text still works
+  expect_no_warning(capture_dependencies("no.such.package.xyz"))
+})

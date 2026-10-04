@@ -57,3 +57,26 @@
   }
   x
 }
+
+# A numeric argument: text that is not a number is refused in words (as.numeric() turned it into NA
+# with "NAs introduced by coercion" and the function failed further on); every other type converts
+# exactly as as.numeric() / as.integer() always did.
+.rmbl_num <- function(x, what, integer = FALSE) {
+  if (is.character(x)) {
+    v <- suppressWarnings(as.numeric(x))
+    bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
+    if (any(bad)) {
+      stop(sprintf("`%s` must be numeric, not text such as \"%s\"", what, x[bad][1L]), call. = FALSE)
+    }
+    x <- v
+  }
+  if (integer) as.integer(x) else as.numeric(x)
+}
+
+# A file the function reads: one path that exists and is a file (not a directory)
+.rmbl_file1 <- function(path, what = "path") {
+  path <- .rmbl_string1(path, what)
+  if (!file.exists(path)) stop(sprintf("`%s`: no such file: %s", what, path), call. = FALSE)
+  if (dir.exists(path)) stop(sprintf("`%s` is a directory, not a file: %s", what, path), call. = FALSE)
+  path
+}

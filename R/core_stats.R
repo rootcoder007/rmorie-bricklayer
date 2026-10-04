@@ -192,7 +192,7 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' @export
 core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
   x <- .rmbl_num_input(x, "x")
-  probs <- as.numeric(probs)
+  probs <- .rmbl_num(probs, "probs")
   if (length(probs) == 0L) stop("`probs` is empty", call. = FALSE)
   if (anyNA(probs) || any(probs < 0 | probs > 1)) {
     stop("`probs` must lie in [0, 1]", call. = FALSE)
@@ -433,7 +433,7 @@ core_cov <- function(x) {
 #' @export
 core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
-  B <- as.numeric(B)
+  B <- .rmbl_num(B, "B")
   if (length(B) != 1L || is.na(B) || B < 1) {
     stop("`B` must be a single number >= 1", call. = FALSE)
   }
@@ -479,8 +479,8 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
   if (length(treat) != length(propensity)) {
     stop("`treat` and `propensity` must have the same length", call. = FALSE)
   }
-  trim_lo <- as.numeric(trim_lo)
-  trim_hi <- as.numeric(trim_hi)
+  trim_lo <- .rmbl_num(trim_lo, "trim_lo")
+  trim_hi <- .rmbl_num(trim_hi, "trim_hi")
   if (!(trim_lo > 0 && trim_hi < 1 && trim_lo < trim_hi)) {
     stop("need 0 < `trim_lo` < `trim_hi` < 1", call. = FALSE)
   }
@@ -533,7 +533,7 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 #' 1 - core_gamma_cdf(2 / 2, 5.99 / 2)      # about 0.05 on 2 df
 #' @export
 core_gamma_cdf <- function(shape, x) {
-  shape <- as.numeric(shape)
+  shape <- .rmbl_num(shape, "shape")
   if (length(shape) != 1L || is.na(shape) || shape <= 0) {
     stop("`shape` must be a single positive number", call. = FALSE)
   }
@@ -603,19 +603,19 @@ core_hawkes_nll <- function(times, horizon,
   kernel <- match.arg(kernel)
   code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L,
                  gamma = 3L)
-  times <- as.numeric(times)
+  times <- .rmbl_num(times, "times")
   if (anyNA(times)) stop("`times` must not contain NA", call. = FALSE)
   if (length(times) > 1L && any(diff(times) < 0)) {
     stop("`times` must be sorted in increasing order", call. = FALSE)
   }
-  horizon <- as.numeric(horizon)
+  horizon <- .rmbl_num(horizon, "horizon")
   if (length(horizon) != 1L || is.na(horizon) || horizon <= 0) {
     stop("`horizon` must be a single positive number", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
     stop("`times` must lie within [0, horizon]", call. = FALSE)
   }
-  par <- as.numeric(par)
+  par <- .rmbl_num(par, "par")
   need <- if (code == 0L) 3L else 4L
   if (length(par) != need) {
     stop(sprintf("the %s kernel needs `par` of length %d", kernel, need),

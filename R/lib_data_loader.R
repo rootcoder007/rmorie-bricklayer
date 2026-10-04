@@ -35,9 +35,11 @@
 #' load_provenance(file.path(tempdir(), "no-such-file.json")) # NULL
 #' @export
 load_provenance <- function(path) {
+  path <- .rmbl_string1(path, "path")
   if (!file.exists(path)) {
     return(NULL)
   }
+  if (dir.exists(path)) stop(sprintf("`path` is a directory, not a provenance file: %s", path), call. = FALSE)
   .rmbl_read_json(path, simplify = FALSE)
 }
 
@@ -79,6 +81,7 @@ resolve_via_ckan <- function(provenance) {
   if (is.null(provenance)) {
     return(NULL)
   }
+  if (!is.list(provenance)) stop("`provenance` must be a provenance list (read_provenance())", call. = FALSE)
   ds <- provenance$dataset
   res <- provenance$resource
   if (is.null(ds$ckan_api_endpoint) || is.null(res$name_match_pattern)) {
@@ -143,6 +146,7 @@ resolve_via_ckan_search <- function(provenance) {
   if (is.null(provenance)) {
     return(NULL)
   }
+  if (!is.list(provenance)) stop("`provenance` must be a provenance list (read_provenance())", call. = FALSE)
   res <- provenance$resource
   q <- res$search_query
   if (is.null(q) || !nzchar(q)) {
@@ -710,6 +714,7 @@ resolve_via_socrata <- function(provenance) {
   if (is.null(provenance)) {
     return(NULL)
   }
+  if (!is.list(provenance)) stop("`provenance` must be a provenance list (read_provenance())", call. = FALSE)
   domain <- provenance$dataset$socrata_domain
   id <- provenance$dataset$socrata_id
   if (is.null(domain) || is.null(id)) {
@@ -755,6 +760,7 @@ resolve_via_arcgis <- function(provenance) {
   if (is.null(provenance)) {
     return(NULL)
   }
+  if (!is.list(provenance)) stop("`provenance` must be a provenance list (read_provenance())", call. = FALSE)
   layer <- provenance$dataset$arcgis_layer_url
   if (is.null(layer)) {
     return(NULL)

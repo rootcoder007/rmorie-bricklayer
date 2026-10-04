@@ -311,6 +311,9 @@ print.bricklayer_timestamp <- function(x, ...) {
   if (is.raw(x)) {
     return(x)
   }
+  if (is.character(x) && length(x) == 1L && dir.exists(x)) {
+    stop(sprintf("`%s` is a directory, not a token file: %s", what, x), call. = FALSE)
+  }
   if (is.character(x) && length(x) == 1L && file.exists(x)) {
     b <- readBin(x, "raw", file.size(x))
     # a PEM file is base64 between markers; DER is what everything here

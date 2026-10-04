@@ -35,9 +35,11 @@
 bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"),
                                  wayback = "", timeout = 120L) {
   lang <- match.arg(lang)
-  did <- suppressWarnings(as.integer(drid))
-  stopifnot(length(drid) == 1L, !is.na(did), did > 0L,
-            is.character(dest), length(dest) == 1L, nzchar(dest))
+  did <- if (length(drid) == 1L) suppressWarnings(as.integer(drid)) else NA_integer_
+  if (is.na(did) || did <= 0L) {
+    stop("`drid` must be one positive report number (the drid in the SIU report URL)", call. = FALSE)
+  }
+  dest <- .rmbl_string1(dest, "dest")
   url <- sprintf(
     "https://www.siu.on.ca/%s/directors_report_details.php?drid=%d",
     lang, did)

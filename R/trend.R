@@ -100,9 +100,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     y <- as.numeric(d[[value]])
   }
-  y <- as.numeric(y)
+  y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
     stop("`x` and `y` must be the same length", call. = FALSE)
   }
@@ -266,13 +266,13 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 #' @export
 step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
                         seed = 1L) {
-  y <- as.numeric(y)
+  y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
   ok <- is.finite(y)
   y <- y[ok]
   x <- x[ok]
   n <- length(y)
-  min_segment <- as.integer(min_segment)
+  min_segment <- .rmbl_num(min_segment, "min_segment", integer = TRUE)
   if (n < 2L * min_segment) {
     stop(sprintf(
       "need at least %d periods for a break with %d either side",
@@ -387,9 +387,9 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 #' count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
 #' @export
 count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
-  y <- as.numeric(y)
+  y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   if (length(x) != length(y)) {
     stop("`x` and `y` must be the same length", call. = FALSE)
   }

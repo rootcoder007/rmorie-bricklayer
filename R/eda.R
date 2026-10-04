@@ -10,7 +10,7 @@
 # console cannot render them. Eight levels is what the Unicode blocks
 # give; the ASCII fallback has five and says less, but says it legibly.
 .rmbl_sparkline <- function(x, bins = 10L) {
-  x <- as.numeric(x)
+  x <- .rmbl_num(x, "x")
   x <- x[is.finite(x)]
   if (length(x) == 0L) return(strrep(" ", bins))
   rng <- range(x)
@@ -63,7 +63,7 @@
 #' @export
 inline_hist <- function(x, bins = 10L) {
   x <- .rmbl_num_input(x, "x")
-  bins <- as.integer(bins)
+  bins <- .rmbl_num(bins, "bins", integer = TRUE)
   if (length(bins) != 1L || is.na(bins) || bins < 1L) {
     stop("`bins` must be a single positive integer", call. = FALSE)
   }
@@ -128,7 +128,7 @@ frequency_table <- function(data, column = NULL, max_levels = 25L,
   } else {
     data
   }
-  max_levels <- as.integer(max_levels)
+  max_levels <- .rmbl_num(max_levels, "max_levels", integer = TRUE)
   if (length(max_levels) != 1L || is.na(max_levels) || max_levels < 1L) {
     stop("`max_levels` must be a single positive integer", call. = FALSE)
   }
@@ -238,7 +238,7 @@ correlation_table <- function(data, method = c("spearman", "pearson"),
   if (length(num) < 2L) {
     stop("need at least two numeric columns to correlate", call. = FALSE)
   }
-  min_pairs <- as.integer(min_pairs)
+  min_pairs <- .rmbl_num(min_pairs, "min_pairs", integer = TRUE)
   if (length(min_pairs) != 1L || is.na(min_pairs) || min_pairs < 2L) {
     stop("`min_pairs` must be a single integer of at least 2", call. = FALSE)
   }

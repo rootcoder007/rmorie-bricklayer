@@ -124,6 +124,7 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
 #' @rdname capsule_bundle
 #' @export
 capsule_bundle_read <- function(path) {
+  path <- .rmbl_file1(path, "path")
   b <- bricklayer_json_from_json(paste(readLines(path, warn = FALSE),
                                        collapse = "\n"),
                                  simplifyVector = FALSE)

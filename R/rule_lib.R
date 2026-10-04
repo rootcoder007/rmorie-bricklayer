@@ -111,8 +111,8 @@ rule_between <- function(column, lo, hi, na_pass = TRUE,
                          severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
-  lo <- as.numeric(lo)[1L]
-  hi <- as.numeric(hi)[1L]
+  lo <- .rmbl_num(lo, "lo")[1L]
+  hi <- .rmbl_num(hi, "hi")[1L]
   if (is.na(lo) || is.na(hi) || lo > hi) {
     stop("need `lo` <= `hi`, both non-missing", call. = FALSE)
   }
@@ -208,11 +208,11 @@ rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
                                severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
   severity <- match.arg(severity)
-  n <- as.numeric(n)[1L]
+  n <- .rmbl_num(n, "n")[1L]
   if (is.na(n) || n <= 0) stop("`n` must be positive", call. = FALSE)
   rule(paste0(column, "_within_mads"),
     function(v) {
-      v <- as.numeric(v)
+      v <- .rmbl_num(v, "v")
       ok_idx <- !is.na(v)
       if (!any(ok_idx)) {
         return(rep(TRUE, length(v)))
@@ -278,7 +278,7 @@ rule_distinct_rows <- function(columns = NULL,
 #' @export
 rule_col_count <- function(n, severity = c("warning", "fatal")) {
   severity <- match.arg(severity)
-  n <- as.integer(n)[1L]
+  n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   if (is.na(n) || n < 0L) {
     stop("`n` must be a non-negative integer", call. = FALSE)
   }
