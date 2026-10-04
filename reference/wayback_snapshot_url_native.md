@@ -42,7 +42,7 @@ wayback_snapshot_url_native("https://www.r-project.org/")
 
 # A shorter timeout for a quick lookup.
 wayback_snapshot_url_native("https://cloud.r-project.org/", timeout = 10)
-#> [1] "https://web.archive.org/web/20261002002617/https://cloud.r-project.org/"
+#> [1] "https://web.archive.org/web/20261004045847/https://cloud.r-project.org/"
 
 # A never-archived URL returns NULL rather than erroring.
 wayback_snapshot_url_native("https://example.invalid/never-archived")

@@ -28,6 +28,15 @@ print(x, ...)
 # S3 method for class 'bricklayer_falsification'
 print(x, ...)
 
+# S3 method for class 'bricklayer_hqc_key'
+print(x, ...)
+
+# S3 method for class 'bricklayer_hqc_public_key'
+print(x, ...)
+
+# S3 method for class 'bricklayer_hqc_capsule'
+print(x, ...)
+
 # S3 method for class 'bricklayer_kem_key'
 print(x, ...)
 
@@ -189,7 +198,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       d7e616e0c3573f7727012fd07c72256bc5ef570d052bbdc10d578027c90cb615
+#>   root       4eebc9c4b1d76559ba154c33cb51b947c9568a573d042a14730c828c365ef95c
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -200,8 +209,8 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       d7e616e0c3573f7727012fd07c72256bc5ef570d052bbdc10d578027c90cb615
-#>   signature  e7d8448f8d6828a87b48a1d442b98302... (2144 bytes)
+#>   root       4eebc9c4b1d76559ba154c33cb51b947c9568a573d042a14730c828c365ef95c
+#>   signature  992649bef93a97f55fc9f8bfbcc760ac... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 ```

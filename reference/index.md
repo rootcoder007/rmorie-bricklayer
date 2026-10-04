@@ -399,6 +399,15 @@ history itself tamper-evident.
   : Encapsulate a shared secret under an ML-KEM key
 - [`kem_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_decapsulate.md)
   : Recover a shared secret from an ML-KEM ciphertext
+- [`hqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_keygen.md)
+  [`hqc_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_keygen.md)
+  : Generate an HQC key pair
+- [`hqc_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_sizes.md)
+  : Byte lengths of an HQC parameter set
+- [`hqc_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_encapsulate.md)
+  : Encapsulate a shared secret under an HQC key
+- [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+  : Recover a shared secret from an HQC ciphertext
 - [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   : Generate a standardised post-quantum signing key (deprecated name)
@@ -713,6 +722,9 @@ Printed reports for the objects the package returns.
   [`print(`*`<bricklayer_bundle_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_chain>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_hqc_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_hqc_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_hqc_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_kem_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_kem_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_kem_capsule>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
