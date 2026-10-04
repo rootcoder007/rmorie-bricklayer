@@ -134,28 +134,20 @@ test_that("agent_bundle() uses the hosted route when a key is stored", {
   expect_match(agent_bundle("add provenance"), "Pin the SHA256")
   expect_match(seen, "brick-proof", fixed = TRUE)
   suppressMessages(bricklayer_llm_logout())
-  expect_match(agent_bundle("x", backend = "hosted"), "No key for the hosted")
+  expect_match(agent_bundle("x", backend = "hosted"), "No language-model route is set up")
 })
 
-test_that("bricklayer_llm_status() names the two routes", {
+test_that("bricklayer_llm_status() names the hosted route", {
   .sandbox()
-  testthat::local_mocked_bindings(
-    Sys.which = function(names) c(rmorie = ""),
-    .package = "base"
-  )
   st <- bricklayer_llm_status()
-  expect_equal(st$route, c("hosted MORIE tier", "rmorie-cli agent"))
-  expect_equal(st$status, c("not logged in", "absent"))
+  expect_equal(st$route, "hosted MORIE tier")
+  expect_equal(st$status, "not logged in")
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
   expect_equal(bricklayer_llm_status()$status[1], "key stored")
 })
 
 test_that("the command line dispatches its verbs", {
   .sandbox()
-  testthat::local_mocked_bindings(
-    Sys.which = function(names) c(rmorie = ""),
-    .package = "base"
-  )
   cap <- function(...) {
     buf <- character()
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
@@ -163,7 +155,9 @@ test_that("the command line dispatches its verbs", {
   }
   expect_match(cap("version")$text, "rmoriebricklayer 0\\.")
   expect_match(cap()$text, "usage: rmoriebricklayer")
-  expect_equal(cap("frobnicate")$status, 1L)
+  expect_equal(cap("frobnicate")$status, 2L)  # an unknown verb is a usage error
+  # `login --token` asks the gateway first: here it accepts the key
+  testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   expect_match(cap("frobnicate")$text, "unknown verb")
   r <- suppressMessages(cap("login", "--token", "sk-cli"))
   expect_equal(r$status, 0L)
@@ -175,7 +169,7 @@ test_that("the command line dispatches its verbs", {
   expect_equal(cap("ask", "what", "is", "MORIE")$text, "echo\n")
   expect_match(cap("ask", "--help")$text, "usage: rmoriebricklayer ask")
   expect_equal(cap("bundle", "scaffold", "it")$text, "echo\n")
-  expect_equal(cap("bundle")$status, 1L)
+  expect_equal(cap("bundle")$status, 2L)  # a missing request is a usage error
   expect_equal(suppressMessages(cap("logout"))$status, 0L)
   expect_null(.bl_hosted_key())
 })
@@ -326,7 +320,7 @@ test_that("the command line helps people find their way around the package", {
   expect_match(d$text, "agent_bundle(request", fixed = TRUE)
   expect_match(d$text, "Arguments:")
   expect_match(cap("describe", "no_such_fn")$text, "no help page")
-  expect_equal(cap("describe")$status, 1L)
+  expect_equal(cap("describe")$status, 2L)  # a missing name is a usage error
   e <- cap("examples", "bricklayer_llm_status")
   expect_match(e$text, "bricklayer_llm_status()", fixed = TRUE)
 })
@@ -515,12 +509,13 @@ test_that("the command line prompts for a token, runs the device flow and checks
     readline = function(prompt = "") "sk-prompted",
     .package = "base"
   )
+  testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-prompted")
   suppressMessages(bricklayer_llm_logout())
   e <- cap("login", "--email")
-  expect_equal(e$status, 1L)
+  expect_equal(e$status, 2L)  # a flag without its value is a usage error
   expect_match(e$text, "--email needs a value")
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, ...) {
@@ -536,7 +531,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
   d <- suppressMessages(cap("login", "--no-browser"))
   expect_equal(d$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-cli-dev")
-  expect_equal(cap("examples")$status, 1L)
+  expect_equal(cap("examples")$status, 2L)  # a missing name is a usage error
   expect_match(cap("examples", "no_such_fn")$text, "no help page")
 })
 

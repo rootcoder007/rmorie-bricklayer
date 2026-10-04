@@ -133,11 +133,9 @@ bricklayer_siu_iso_date <- function(x) {
 #' @return A list with `count` (integer, `NA` when unresolved)
 #' and `reason` (the human-readable evidence).
 #'
-#' @details bricklayer is the foundation layer: this function is the pure
-#' rule set. Reports already in the panel-reviewed corpus should never be
-#' re-derived -- use `rmorie::morie_siu_resolve_so()`, which returns
-#' the verified corpus value first and only falls back to these rules for
-#' unreviewed reports.
+#' @details This function is the pure rule set. For reports that already
+#' have a panel-reviewed count, prefer that verified value; use these rules
+#' for unreviewed reports.
 #' @examples
 #' bricklayer_siu_resolve_so(
 #'   "Subject Officials\nSO #1 Interviewed\nSO #2 Declined interview")

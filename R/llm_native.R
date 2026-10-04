@@ -132,6 +132,22 @@ bricklayer_llm_models <- function(timeout = 10) {
   )
 }
 
+# `login --token KEY`: ask the gateway before the key replaces a working one in the shared file
+# (stored as is, a mistyped key left all three packages reporting "key rejected").
+.bl_check_token <- function(token) {
+  base <- .bl_hosted_base()
+  if (is.null(base)) return(invisible(TRUE))
+  res <- .bl_models_reply(base, token)
+  if (is.null(res)) {
+    stop(sprintf("could not reach %s to check the key; nothing stored (try again)", base), call. = FALSE)
+  }
+  if (!identical(as.integer(res$status), 200L)) {
+    stop(sprintf("the gateway did not accept that key (HTTP %d); nothing stored (`%s login` mints one)",
+                 as.integer(res$status), .bl_prog()), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # One line for a key the gateway refused, or for a gateway that did not answer.
 .bl_key_state <- function(models) {
   st <- attr(models, "http_status")
@@ -291,17 +307,6 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     if (length(token) != 1L || !nzchar(token)) {
       stop("an empty token cannot be stored", call. = FALSE)
     }
-    base <- .bl_hosted_base()
-    if (!is.null(base)) {
-      res <- .bl_models_reply(base, token)
-      if (is.null(res)) {
-        stop(sprintf("could not reach %s to check the key; nothing stored (try again)", base), call. = FALSE)
-      }
-      if (!identical(as.integer(res$status), 200L)) {
-        stop(sprintf("the gateway did not accept that key (HTTP %d); nothing stored (`%s login` mints one)",
-                     as.integer(res$status), .bl_prog()), call. = FALSE)
-      }
-    }
     p <- .bl_store_key(token)
     message(sprintf("Token stored in %s", p))
     return(invisible(token))
@@ -417,9 +422,9 @@ bricklayer_llm_logout <- function() {
 
 #' Report the language-model routes available from this machine
 #'
-#' @return A data frame with one row per route: \code{route},
-#'   \code{status} and \code{detail}. Printed by \code{rmoriebricklayer
-#'   doctor}.
+#' @return A data frame with one row per route (the hosted MORIE tier):
+#'   \code{route}, \code{status} and \code{detail}. Printed by
+#'   \code{rmoriebricklayer doctor}.
 #' @examples
 #' bricklayer_llm_status()
 #' @export
@@ -427,32 +432,26 @@ bricklayer_llm_status <- function() {
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
   data.frame(
-    route = c("hosted MORIE tier", "rmorie launcher"),
-    status = c(
-      if (is.null(base)) {
-        "disabled"
-      } else if (is.null(key)) {
-        "not logged in"
-      } else {
-        "key stored"
-      },
-      if (nzchar(Sys.which("rmorie"))) "on PATH" else "absent"
-    ),
-    detail = c(
-      if (is.null(base)) {
-        "MORIE_HOSTED_BASE_URL=off"
-      } else if (is.null(key)) {
-        base
-      } else {
-        hm <- bricklayer_llm_models()
-        switch(.bl_key_state(hm),
-          ok = sprintf("%s  models: %s (default %s)", base, paste(hm, collapse = ", "), attr(hm, "default")),
-          rejected = sprintf("%s  (key rejected by the gateway -- run `%s login` again)", base, .bl_prog()),
-          sprintf("%s  (gateway not reachable)", base)
-        )
-      },
-      "rmorie ask / rmorie agent use the same key (rmorie::install_cli() puts it on the PATH)"
-    ),
+    route = "hosted MORIE tier",
+    status = if (is.null(base)) {
+      "disabled"
+    } else if (is.null(key)) {
+      "not logged in"
+    } else {
+      "key stored"
+    },
+    detail = if (is.null(base)) {
+      "MORIE_HOSTED_BASE_URL=off"
+    } else if (is.null(key)) {
+      base
+    } else {
+      hm <- bricklayer_llm_models()
+      switch(.bl_key_state(hm),
+        ok = sprintf("%s  models: %s (default %s)", base, paste(hm, collapse = ", "), attr(hm, "default")),
+        rejected = sprintf("%s  (key rejected by the gateway -- run `%s login` again)", base, .bl_prog()),
+        sprintf("%s  (gateway not reachable)", base)
+      )
+    },
     stringsAsFactors = FALSE
   )
 }

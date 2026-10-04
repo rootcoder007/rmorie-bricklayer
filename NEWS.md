@@ -7,7 +7,8 @@
   `login --email` checks the address and `--code` needs `--email`; the GitHub sign-in says it is still
   waiting every 30 s. A key the gateway rejects is reported as rejected (not "gateway not reachable"),
   the gateway's quote of the key and its hash is never printed, and `models` lists the models without
-  the suggested jsonlite. doctor and `agent_bundle()` no longer offer the retired rmorie-cli agent.
+  the suggested jsonlite. `agent_bundle()` and `doctor` use the package's own hosted route only
+  (`backend` is "auto" or "hosted").
 * `bricklayer_fetch()` says why a download failed (the HTTP status, a server never reached, no
   Wayback snapshot) and refuses a non-http(s) URL, an unwritable destination or a non-positive timeout
   before downloading; `friendly_download()` keeps R's `url()` warning out of the console, reports its

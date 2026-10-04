@@ -84,10 +84,12 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-            if (!nzchar(tok) && interactive()) tok <- trimws(readline("Paste your MORIE key: "))
+            # readline() answers "" at once when nobody can type (Rscript, a pipe): no hang, a usage error
+            if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
             if (!nzchar(tok)) {
               usage_error("--token needs a value: login --token KEY (or run it in a terminal to paste it)")
             }
+            .bl_check_token(tok)
             bricklayer_llm_login(token = tok)
           } else {
             if (has("--code") && is.null(flag("--email"))) {
@@ -173,7 +175,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         help = ,
         `--help` = ,
         `-h` = out(paste0(
-          sprintf("usage: %s <verb> [options]   (rmbl and rmoriebricklayer are the same command)\n\n", prog),
+          sprintf("usage: %s <verb> [options]   (rmbl is the same command as rmoriebricklayer)\n\n", prog),
           "  login [--email ADDRESS] [--token [KEY]]   sign in to the hosted ",
           "MORIE LLM tier\n",
           "        [--code CODE] [--no-browser]\n",
@@ -388,7 +390,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                          "(a newer sign-in elsewhere replaces it): run `%s login` again\n"),
                   .bl_hosted_base(), .bl_prog()))
     } else if (!length(hm)) {
-      out(sprintf("Hosted MORIE tier (%s): logged in, but the gateway did not answer (network?); try again\n",
+      out(sprintf("Hosted MORIE tier (%s): logged in, gateway not reachable (network?); try again\n",
                   .bl_hosted_base()))
     } else {
       out(sprintf(

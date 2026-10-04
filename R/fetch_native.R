@@ -72,8 +72,8 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
   live <- v %/% 10L
   stop(sprintf("bricklayer_fetch: %s; %s",
                if (live == 1L) sprintf("could not reach %s", url) else sprintf("%s answered HTTP %d", url, live),
-               if (v %% 10L == 1L) "the Wayback Machine copy could not be downloaded either"
-               else "the Wayback Machine has no snapshot of it (or did not answer)"),
+               if (v %% 10L == 1L) "the Wayback fallback failed too (its copy could not be downloaded)"
+               else "the Wayback fallback failed (the Wayback Machine has no snapshot of it, or did not answer)"),
        call. = FALSE)
 }
 

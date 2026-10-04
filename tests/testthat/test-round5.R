@@ -52,7 +52,6 @@ test_that("a refused key is said as such, and the gateway's key fragment is neve
   expect_match(.cap("models")$text, "rejected the stored key")
   st <- bricklayer_llm_status()
   expect_match(st$detail[1], "key rejected by the gateway")
-  expect_false(any(grepl("rmorie-cli", unlist(st))))
   res <- list(status = 401L, json = list(error = list(
     message = "Authentication Error, Received API Key = sk-...abcd, Key Hash (Token) =1234"
   )))
