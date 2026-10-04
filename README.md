@@ -176,6 +176,18 @@ secret in both -- which is the check that catches a wrong compression
 width, since compressing and decompressing with the same wrong width
 round-trips perfectly.
 
+HQC (Hamming Quasi-Cyclic), the code-based KEM NIST selected in March
+2025 to stand beside ML-KEM, is here as well at HQC-1, HQC-3 and HQC-5
+(`hqc_keygen()`, `hqc_encapsulate()`, `hqc_decapsulate()`). It reproduces
+all 300 of the authors' official known-answer vectors (specification of
+2025-08-22, reference implementation v5.0.0), runs in constant time with
+respect to secrets (checked with valgrind: no secret reaches a branch, a
+memory index or a variable shift), gives the same bytes on big-endian
+machines (the reference code does not), and uses the carry-less multiply
+instruction on x86-64 and ARMv8 when the processor has it. FIPS 207, the
+HQC standard, is still a draft and may change the key and ciphertext
+formats.
+
 Signing is fast enough to be tested unconditionally: an SLH-DSA `s`
 parameter set signs in about a second, down from seven, after the Keccak
 round was made branch-free, the tweakable hash stopped heap-allocating
