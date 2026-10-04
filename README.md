@@ -357,7 +357,7 @@ Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebrickl
 rmoriebricklayer login                          # with a GitHub account
 rmoriebricklayer login --email you@example.com  # no GitHub account: a code is emailed, type it at the prompt
 rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
-rmoriebricklayer login --token                  # paste a key you already have
+rmoriebricklayer login --token                  # paste a key you already have (or pipe it in)
 rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
 rmoriebricklayer models                         # what you can ask, default marked
 rmoriebricklayer ask --model NAME "your question"

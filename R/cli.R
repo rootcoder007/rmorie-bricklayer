@@ -6,6 +6,18 @@
 # directory on PATH (an R package cannot install executables itself,
 # and it only does so when the user calls install_cli()).
 
+# One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
+# Rscript, where readline() returns "" at once, so outside an interactive session read one line of
+# stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
+# history). Closed or empty stdin gives "".
+.bl_readline <- function(prompt) {
+  if (interactive()) return(trimws(readline(prompt)))
+  con <- file("stdin")
+  on.exit(close(con))
+  if (isatty(stdin())) cat(prompt, file = stderr())
+  trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
+}
+
 #' Run the rmoriebricklayer command line
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
@@ -13,7 +25,7 @@
 #'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
 #'     [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
 #'     device flow by default, a code sent to \code{--email}, or a key
-#'     you paste with \code{--token} (prompts when KEY is omitted)}
+#'     you paste with \code{--token} (read from the terminal or a pipe when KEY is omitted)}
 #'   \item{\code{logout}}{forget the hosted key}
 #'   \item{\code{doctor}}{report the language-model routes available here}
 #'   \item{\code{models}}{list the models the hosted tier offers your key
@@ -84,10 +96,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-            # readline() answers "" at once when nobody can type (Rscript, a pipe): no hang, a usage error
-            if (!nzchar(tok)) tok <- trimws(readline("Paste your MORIE key: "))
+            if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ")
             if (!nzchar(tok)) {
-              usage_error("--token needs a value: login --token KEY (or run it in a terminal to paste it)")
+              usage_error("--token needs a value: login --token KEY, or paste the key when asked")
             }
             .bl_check_token(tok)
             bricklayer_llm_login(token = tok)

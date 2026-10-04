@@ -68,7 +68,7 @@ test_that("a token is stored owner-only in the shared credentials file", {
 
 test_that("the environment key wins and off disables the tier", {
   .sandbox()
-  bricklayer_llm_login(token = "file-key")
+  suppressMessages(bricklayer_llm_login(token = "file-key"))
   Sys.setenv(MORIE_HOSTED_KEY = "env-key")
   expect_equal(.bl_hosted_key(), "env-key")
   Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
@@ -289,13 +289,13 @@ test_that("the device flow polls until GitHub approval and stores the key", {
       ))
     }
   )
-  expect_message(
+  msgs <- testthat::capture_messages(
     key <- bricklayer_llm_login(
       open_browser = FALSE,
       poll_max_seconds = 5
-    ),
-    "ABCD-1234"
+    )
   )
+  expect_match(paste(msgs, collapse = ""), "ABCD-1234")
   expect_equal(key, "sk-dev")
   expect_equal(polls, 3L)
   expect_equal(.bl_hosted_key(), "sk-dev")
@@ -411,14 +411,11 @@ test_that("the email flow asks for the code when none is given and reports error
       list(status = 200L, body = charToRaw("{\"api_key\":\"sk-typed\"}"))
     }
   )
-  testthat::local_mocked_bindings(
-    readline = function(prompt = "") " 654321 ",
-    .package = "base"
+  testthat::local_mocked_bindings(.bl_readline = function(prompt) "654321")
+  msgs <- testthat::capture_messages(
+    key <- bricklayer_llm_login(email = "vee@example.com")
   )
-  expect_message(
-    key <- bricklayer_llm_login(email = "vee@example.com"),
-    "6-digit code"
-  )
+  expect_match(paste(msgs, collapse = ""), "6-digit code")
   expect_equal(key, "sk-typed")
   expect_equal(calls, c("/email/code", "/email/verify"))
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
@@ -505,10 +502,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  testthat::local_mocked_bindings(
-    readline = function(prompt = "") "sk-prompted",
-    .package = "base"
-  )
+  testthat::local_mocked_bindings(.bl_readline = function(prompt) "sk-prompted")
   testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)

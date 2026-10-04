@@ -333,7 +333,11 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
       "A 6-digit code was sent to %s (valid for 10 minutes).",
       email
     ))
-    code <- readline("Enter the code: ")
+    code <- .bl_readline("Enter the code: ")
+    if (!nzchar(code)) {
+      stop(sprintf("no code entered; finish with `%s login --email %s --code CODE`", .bl_prog(), email),
+           call. = FALSE)
+    }
   }
   res <- .bl_post_json(
     paste0(auth, "/email/verify"),
