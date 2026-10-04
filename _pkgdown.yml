@@ -260,6 +260,10 @@ reference:
       - kem_sizes
       - kem_encapsulate
       - kem_decapsulate
+      - hqc_keygen
+      - hqc_sizes
+      - hqc_encapsulate
+      - hqc_decapsulate
       - oqs_keygen
       - pqc_backends
       - rmbl_chain

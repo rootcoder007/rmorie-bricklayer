@@ -1,5 +1,14 @@
 # rmoriebricklayer 0.5.5
 
+* HQC-KEM, the code-based key encapsulation NIST selected in March 2025 beside ML-KEM:
+  `hqc_keygen()`, `hqc_public_key()`, `hqc_encapsulate()`, `hqc_decapsulate()` and `hqc_sizes()` at
+  HQC-1, HQC-3 and HQC-5, implemented in the package. All 300 official known-answer vectors of the
+  specification of 2025-08-22 (reference implementation v5.0.0) are reproduced byte for byte, on
+  both the hardware (PCLMULQDQ / PMULL) and the portable carry-less product, and on big-endian
+  machines. Secret-dependent work is branch-free with no secret-indexed memory or shift (checked
+  with valgrind), secret intermediates are wiped, a ciphertext that fails the FO check yields the
+  implicit-rejection key, and a decapsulation key whose seeds do not derive from each other is
+  refused.
 * Fresh-user round 5: `VERB --help` prints the verb's usage under both names and never runs it
   (`logout --help` used to forget the key); messages name the command typed (`rmbl` or
   `rmoriebricklayer`); usage errors exit 2 and an unknown function in `describe` / `examples` exits 1;
