@@ -232,3 +232,54 @@ test_that("jitter keeps an event dated on the horizon inside the window", {
   expect_identical(core_hawkes_jitter(d), core_hawkes_jitter(d, horizon = Inf))
   expect_error(core_hawkes_jitter(d, horizon = 50), "must not exceed")
 })
+
+test_that("Hawkes argument guards name the problem", {
+  expect_error(core_hawkes_fit(c(1, NA, 3), 10), "must not contain NA")
+  tt <- sort(stats::runif(80, 0, 100))
+  expect_error(core_hawkes_fit(tt, 100, start = c(0, 0.5)), "`start` must have length 3")
+  expect_error(core_hawkes_jitter(1, horizon = c(1, 2)), "single number")
+  expect_error(bricklayer_parse_siu("no/such/report.html"), "no such file")
+})
+
+test_that("an incident dated relative to the notification takes the notification's calendar", {
+  p <- bricklayer_parse_siu(pg(
+    "The Investigation", "Notification of the SIU",
+    paste0("On March 1, 2020, at 2:00 a.m., the Toronto Police Service notified the SIU of an ",
+           "injury the Complainant sustained during his arrest the day before."),
+    "The Team", "Number of SIU Investigators assigned: 2"))
+  expect_identical(p[["date_siu_notified_iso"]], "2020-03-01")
+  expect_identical(p[["date_of_incident_iso"]], "2020-02-29")
+  p <- bricklayer_parse_siu(pg(
+    "The Investigation", "Notification of the SIU",
+    paste0("On January 1, 2021, at 4:00 a.m., the OPP notified the SIU of an injury the ",
+           "Complainant sustained during his arrest two hours prior."),
+    "The Team", "Number of SIU Investigators assigned: 2"))
+  expect_identical(p[["date_of_incident_iso"]], "2021-01-01")
+  p <- bricklayer_parse_siu(pg(
+    "The Investigation",
+    "The Ottawa Police Service notified the SIU on March 3, 2021 of an injury to a man in custody.",
+    "Incident Narrative", "The man fell in the cell."))
+  expect_identical(p[["date_siu_notified_iso"]], "2021-03-03")
+})
+
+test_that("team sizes in words, an empty witness roster and spelled-out civilian witnesses", {
+  p <- bricklayer_parse_siu(pg(
+    "The Investigation",
+    "Three SIU investigators and two SIU forensic investigators were assigned.",
+    "Witness Officials", "No police officers witnessed the arrest.",
+    "Civilian Witnesses", "Civilian Witness #1 Interviewed", "Civilian Witness #2 Interviewed",
+    "Civilian Witness #3 Interviewed",
+    "Evidence", "The scene was examined."))
+  expect_identical(p[["siu_investigators"]], "3")
+  expect_identical(p[["siu_forensics_investigators"]], "2")
+  expect_identical(p[["number_of_witness_officials"]], "0")
+  expect_identical(p[["number_of_civilian_witnesses"]], "3")
+  expect_identical(bricklayer_siu_iso_date("3 DÉCEMBRE 2017"), "2017-12-03")
+})
+
+test_that("resolve_so reads a French plural, and a lone l'agent impliqué", {
+  fr <- function(...) paste(c("Unité des enquêtes spéciales (UES)", ...), collapse = "\n")
+  expect_identical(bricklayer_siu_resolve_so(fr("Deux agents impliqués ont été désignés."))$count,
+                   2L)
+  expect_identical(bricklayer_siu_resolve_so(fr("L'agent impliqué a refusé une entrevue."))$count, 1L)
+})
