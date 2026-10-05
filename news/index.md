@@ -2,6 +2,19 @@
 
 ## rmoriebricklayer 0.5.5
 
+- SIU `police_service` is now the service of the subject officials, read
+  from the director’s analysis: the first service named in a sentence
+  that names a subject official (or the sentence before it), else the
+  service the analysis names most. It was the force that notified the
+  SIU, which is often a custody, requesting or neighbouring service – on
+  93 French reports it disagreed with the reviewed English report. The
+  case number’s letter (T Toronto, P OPP, I First Nations, O any other
+  service) rules out services of the wrong kind, and legacy reports’
+  “Police service:” header decides for them. Checked against every
+  reviewed report in the corpus: 2,147 of 2,163 French and 111 of 118
+  English agree; the French values the old rule wrote agreed on 2,097 of
+  2,191.
+
 - SIU reports name the same people “subject officers” (before the SIU
   Act, 2019), “subject officials” (after it) or “SO”: the parser now
   writes the count as `number_of_subject_officials`, the corpus’s and
