@@ -137,10 +137,11 @@ test_that("EM reaches the direct maximum for every kernel and for the sinusoidal
   for (k in c("weibull", "gamma", "lomax")) {
     em <- core_hawkes_fit(e$t, e$T, k, method = "em")
     expect_identical(em$method, "em")
-    expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, k)$nll), 1e-4)  # measured: at most 1.5e-5
+    expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, k)$nll), 1e-6)  # measured: at most 8e-12
+    expect_true(em$converged)
   }
   em <- core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "em")
-  expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal")$nll), 1e-5)  # measured 3.5e-7
+  expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal")$nll), 1e-6)  # measured 2.1e-8
 })
 
 test_that("truncation at a tiny eps equals the exact likelihood for the exponential and Lomax kernels", {

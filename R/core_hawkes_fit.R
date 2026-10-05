@@ -96,8 +96,9 @@
 #'     intensity, O(n K); a gamma kernel with shape >= 1 is truncated at \code{eps}.}
 #'   \item{\code{"truncate"}}{each event excites only lags with kernel tail mass above
 #'     \code{eps}: an approximation for light-tailed kernels, O(n w).}
-#'   \item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008): the same maximum, a
-#'     different route.}
+#'   \item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008), finished by the
+#'     projected BFGS on the exact likelihood from EM's point (EM's steps shrink before it
+#'     reaches the maximum): the same maximum, a different route.}
 #'   \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned counts
 #'     (constant baseline only): a different, fast, approximate estimator.}
 #'   \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"} for
@@ -163,7 +164,13 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   exact_nll <- function(th) .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[1]]
   converged <- TRUE
   if (method == "em") {
-    theta <- .rmbl_hk_em(times, horizon, kernel, baseline, x0, b)
+    em <- .rmbl_hk_em(times, horizon, kernel, baseline, x0, b)
+    # EM converges linearly: its steps shrink long before it reaches the maximum, so a small step
+    # is not a stop (it ended 1.4e-5 short on macOS x86_64). Finish with the projected BFGS on the
+    # exact likelihood from EM's point; it only moves uphill.
+    pol <- .rmbl_hk_pbfgs(times, horizon, kernel, baseline, "exact", 1e-12, b, em$theta)
+    theta <- if (pol$value <= exact_nll(em$theta)) pol$par else em$theta
+    converged <- pol$iterations < 2000
   } else if (method == "inar") {
     theta <- .rmbl_hk_inar(times, horizon, kernel, baseline, b)
   } else {
@@ -310,7 +317,7 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
     cur <- new
     if (done) break
   }
-  theta
+  list(theta = theta, converged = done)
 }
 
 .rmbl_hk_cdf <- function(u, kernel, psi) {
