@@ -58,8 +58,9 @@ sum of exponentials (Beylkin & Monzon 2010): relative error \code{eps} on every
 intensity, O(n K); a gamma kernel with shape >= 1 is truncated at \code{eps}.}
 \item{\code{"truncate"}}{each event excites only lags with kernel tail mass above
 \code{eps}: an approximation for light-tailed kernels, O(n w).}
-\item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008): the same maximum, a
-different route.}
+\item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008), finished by the
+projected BFGS on the exact likelihood from EM's point (EM's steps shrink before it
+reaches the maximum): the same maximum, a different route.}
 \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned counts
 (constant baseline only): a different, fast, approximate estimator.}
 \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"} for
