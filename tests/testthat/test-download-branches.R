@@ -8,14 +8,14 @@ test_that("bricklayer_download draws a live bar on a terminal and a spinner with
   dest <- withr::local_tempfile(fileext = ".bin")
   withr::local_options(morie.progress = TRUE, morie.quiet = NULL)
   bar <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, label = "two-mb", size = file.size(src), tty = TRUE),
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "two-mb", size = file.size(src), tty = TRUE),
     type = "message"
   )
   expect_true(any(grepl("\r", bar, fixed = TRUE)) || any(grepl("%", bar, fixed = TRUE)))
   expect_true(any(grepl("two-mb: 2.0 MB in", bar, fixed = TRUE)))
   expect_identical(file.size(dest), file.size(src))
   spin <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, label = "nosize", tty = TRUE),
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "nosize", tty = TRUE),
     type = "message"
   )
   expect_identical(.bl_fmt_bytes(Inf), "?")
@@ -28,12 +28,12 @@ test_that("off a terminal and without a size the helper prints a plain header an
   dest <- withr::local_tempfile(fileext = ".bin")
   withr::local_options(morie.progress = TRUE, morie.quiet = NULL)
   msgs <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, label = "small", tty = FALSE),
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "small", tty = FALSE),
     type = "message"
   )
   expect_true(any(grepl("small: downloading", msgs, fixed = TRUE)))
   expect_true(any(grepl("small: 1.0 KB in", msgs, fixed = TRUE)))
-  expect_error(bricklayer_download(paste0("file://", src), dest, size = "x", quiet = TRUE), NA)
+  expect_error(bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, size = "x", quiet = TRUE), NA)
 })
 
 test_that(".bl_data_get maps a refused key and other transport errors to words", {

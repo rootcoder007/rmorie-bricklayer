@@ -45,18 +45,18 @@ test_that("download_data and friendly_download work over file:// without network
   url <- paste0("file://", src)
 
   dst <- tempfile(fileext = ".csv")
-  download_data(url, dst, quiet = TRUE)
+  download_data(url, dst, quiet = TRUE, allow_file = TRUE)
   expect_identical(readLines(dst), readLines(src))
 
   dst2 <- tempfile(fileext = ".csv")
-  expect_true(suppressWarnings(friendly_download(url, dst2, attempt_wayback = "")))
+  expect_true(suppressWarnings(friendly_download(url, dst2, attempt_wayback = "", allow_file = TRUE)))
   expect_true(file.exists(dst2))
 
   # Failure path: nonexistent source, Wayback fallback disabled.
   bad <- paste0("file://", tempfile(fileext = ".missing"))
   res <- NULL
   capture.output(
-    res <- suppressWarnings(friendly_download(bad, tempfile(), attempt_wayback = ""))
+    res <- suppressWarnings(friendly_download(bad, tempfile(), attempt_wayback = "", allow_file = TRUE))
   )
   expect_false(res)
 })
@@ -180,7 +180,7 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
   writeLines("a,b\n1,2", snap)
   calls <- 0L
   testthat::local_mocked_bindings(
-    .bl_fetch_file = function(url, dest) {
+    .bl_fetch_file = function(url, dest, ...) {
       calls <<- calls + 1L
       if (calls == 1L) stop("HTTP error 429: too many requests")
       file.copy(sub("^file://", "", url), dest, overwrite = TRUE)
@@ -191,7 +191,8 @@ test_that("friendly_download prints diagnostics and retries from a wayback snaps
   out <- capture.output(
     type = "message",
     ok <- friendly_download("https://example.org/x.csv", dst,
-      attempt_wayback = paste0("file://", snap)
+      attempt_wayback = paste0("file://", snap),
+      allow_file = TRUE
     )
   )
   expect_true(ok)
@@ -231,7 +232,8 @@ test_that("friendly_download reports a failed wayback retry", {
   out <- capture.output(
     type = "message",
     ok <- friendly_download("https://example.org/x.csv", tempfile(),
-      attempt_wayback = "file:///nonexistent/nope.csv"
+      attempt_wayback = "file:///nonexistent/nope.csv",
+      allow_file = TRUE
     )
   )
   expect_false(ok)

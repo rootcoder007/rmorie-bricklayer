@@ -798,7 +798,9 @@ bricklayer_json_unbox <- function(x) {
 # number on another, which for a format meant to be checked elsewhere
 # is a bug rather than a caveat. See src/rmbl_strtod.cpp.
 #' @noRd
-.rmbl_json_parse <- function(txt, bigint_as_char = FALSE) {
+.rmbl_json_parse <- function(txt, bigint_as_char = FALSE,
+                             duplicate_keys = c("error", "keep")) {
+  duplicate_keys <- match.arg(duplicate_keys)
   s <- paste(txt, collapse = "\n")
   s <- enc2utf8(s)
   if (.rmbl_has_bom(s)) {
@@ -809,6 +811,8 @@ bricklayer_json_unbox <- function(x) {
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
   i <- 1L
+  depth <- 0L          # nesting, capped: 20,000 "[" exhausted the C stack
+  big_warned <- FALSE  # one warning per document for integers above 2^53
   bad <- function(msg) stop(sprintf("%s at character %d", msg, i), call. = FALSE)
   ws <- function() while (i <= n && (ch[i] == " " || ch[i] == "\t" || ch[i] == "\n" || ch[i] == "\r")) i <<- i + 1L
   str_ <- function() {
@@ -837,6 +841,9 @@ bricklayer_json_unbox <- function(x) {
                                      }
                                    }
                                    if (cp == 0) bad("NUL in string")
+                                   # an unpaired surrogate is not a character;
+                                   # intToUtf8() turned it into the text "NA"
+                                   if (cp >= 0xD800 && cp <= 0xDFFF) bad("lone surrogate escape")
                                    intToUtf8(cp)
                                  },
                                  bad("invalid escape")))
@@ -875,13 +882,24 @@ bricklayer_json_unbox <- function(x) {
     if (isint) {
       digs <- sub("^-", "", t0)
       big <- nchar(digs) > 16L || (nchar(digs) == 16L && digs > "9007199254740992")
-      if (bigint_as_char && big) return(t0)
+      if (big) {
+        if (bigint_as_char) return(t0)
+        if (!big_warned) {
+          big_warned <<- TRUE
+          warning(sprintf(paste0("integer %s exceeds 2^53 and cannot be held exactly ",
+                                 "in a double; pass bigint_as_char = TRUE to keep it as text"),
+                          t0), call. = FALSE)
+        }
+      }
       if (v > 2147483647 || v < -2147483647) return(v)
       return(as.integer(v))
     }
     v
   }
   value <- function() {
+    depth <<- depth + 1L
+    if (depth > 200L) bad("nesting deeper than 200 levels")
+    on.exit(depth <<- depth - 1L)
     ws()
     if (i > n) bad("unexpected end of input")
     c0 <- ch[i]
@@ -902,7 +920,7 @@ bricklayer_json_unbox <- function(x) {
         if (i > n || ch[i] != ":") bad("expected ':'")
         i <<- i + 1L
         vals[[length(vals) + 1L]] <- list(value())
-        keys <- c(keys, k)
+        keys[[length(keys) + 1L]] <- k
         ws()
         if (i <= n && ch[i] == ",") {
           i <<- i + 1L
@@ -913,6 +931,11 @@ bricklayer_json_unbox <- function(x) {
           break
         }
         bad("expected ',' or '}'")
+      }
+      # two values under one key let a file show a reader one digest and
+      # hand `$` another (the first); refuse unless asked to keep both
+      if (duplicate_keys == "error" && anyDuplicated(keys)) {
+        bad(sprintf("duplicate key \"%s\"", keys[duplicated(keys)][1L]))
       }
       out <- lapply(vals, function(w) w[[1L]])
       names(out) <- keys
@@ -1143,6 +1166,9 @@ bricklayer_json_unbox <- function(x) {
 #'
 #' @param txt JSON text, a file path, or an http(s) URL.
 #' @param simplifyVector,simplifyDataFrame,simplifyMatrix,flatten as in jsonlite.
+#' @param duplicate_keys What to do with an object that repeats a key:
+#' `"error"` (default) refuses the document, `"keep"` returns both
+#' values under the repeated name, as jsonlite does.
 #' @param bigint_as_char integers beyond 2^53 come
 #' back as strings.
 #' @param simplify legacy: `FALSE` turns every
@@ -1157,7 +1183,8 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
                                    simplifyDataFrame = simplifyVector,
                                    simplifyMatrix = simplifyVector,
                                    flatten = FALSE, bigint_as_char = FALSE,
-                                   simplify = NULL, ...) {
+                                   simplify = NULL,
+                                   duplicate_keys = c("error", "keep"), ...) {
   if (identical(simplify, FALSE)) simplifyVector <- simplifyDataFrame <- simplifyMatrix <- FALSE
   if (!is.character(txt) && !inherits(txt, "connection"))
     stop("Argument 'txt' must be a JSON string, URL or file.", call. = FALSE)
@@ -1177,7 +1204,7 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
     }
     txt <- readLines(con, warn = FALSE, encoding = "UTF-8")
   }
-  obj <- .rmbl_json_parse(txt, bigint_as_char)
+  obj <- .rmbl_json_parse(txt, bigint_as_char, match.arg(duplicate_keys))
   if (any(isTRUE(simplifyVector), isTRUE(simplifyDataFrame), isTRUE(simplifyMatrix)))
     return(.rmbl_json_simplify(obj, simplifyVector = simplifyVector, simplifyDataFrame = simplifyDataFrame,
                             simplifyMatrix = simplifyMatrix, flatten = flatten))
@@ -1646,11 +1673,23 @@ bricklayer_json_rbind_pages <- function(pages) {
        value = value)
 }
 #' @noRd
-.rmbl_json_unpack <- function(obj) {
+.rmbl_json_unpack <- function(obj, trusted = FALSE) {
   mode <- obj$type
   if (identical(mode, "NULL")) return(NULL)
+  # unserialize() on supplied bytes, parse() on supplied text,
+  # getNamespace() (which runs a package's .onLoad) and an S4 initialize
+  # method all execute code the JSON's author chose: untrusted JSON gets
+  # data types only
+  if (!isTRUE(trusted) && mode %in% c("S4", "namespace", "closure", "special",
+                                      "builtin", "language", "expression")) {
+    stop(sprintf(paste0("bricklayer_json_unserialize() refuses to rebuild a '%s' ",
+                        "from JSON it did not write: that would run code chosen ",
+                        "by the file's author. Pass trusted = TRUE only for JSON ",
+                        "produced by bricklayer_json_serialize() in your own session."),
+                 mode), call. = FALSE)
+  }
   if (identical(mode, "S4")) {
-    data <- lapply(obj$attributes, .rmbl_json_unpack)
+    data <- lapply(obj$attributes, .rmbl_json_unpack, trusted = trusted)
     return(do.call(methods::new, c(Class = obj$value$class, data)))
   }
   vals <- obj$value
@@ -1664,7 +1703,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     numeric = , double = as.double(.rmbl_json_list_to_vec(vals)),
     character = as.character(.rmbl_json_list_to_vec(vals)),
     complex = as.complex(.rmbl_json_list_to_vec(vals)),
-    list = , pairlist = , closure = lapply(vals, .rmbl_json_unpack),
+    list = , pairlist = , closure = lapply(vals, .rmbl_json_unpack, trusted = trusted),
     symbol = , name = if (identical(unlist(vals), "")) quote(expr = ) else as.name(unlist(vals)),
     expression = parse(text = unlist(vals)),
     language = as.call(parse(text = unlist(vals)))[[1L]],
@@ -1672,7 +1711,7 @@ bricklayer_json_rbind_pages <- function(pages) {
     stop("Switch falling through for encode.mode: ", mode, call. = FALSE)))
   # a missing formal comes back as the empty symbol; it must not be evaluated
   if (identical(newdata[[1L]], substitute())) return(substitute())
-  attrs <- lapply(obj$attributes, .rmbl_json_unpack)
+  attrs <- lapply(obj$attributes, .rmbl_json_unpack, trusted = trusted)
   output <- do.call("structure", c(newdata, attrs), quote = TRUE)
   if (mode == "closure") {
     f <- as.function(output)
@@ -1710,6 +1749,12 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' @param pretty Indent the output.
 #' @param txt JSON produced by
 #' `bricklayer_json_serialize()`.
+#' @param trusted `FALSE` (default) rebuilds data types only (vectors,
+#' lists, factors, matrices, data frames, environments, symbols) and
+#' refuses functions, calls, expressions, namespaces and S4 objects:
+#' rebuilding those runs code the JSON's author chose, through
+#' `unserialize()`, `parse()`, `getNamespace()` or an `initialize`
+#' method. Set `TRUE` only for JSON your own session produced.
 #' @return `bricklayer_json_serialize()` returns a length-1 character
 #' vector of class `json`; `bricklayer_json_unserialize()`
 #' returns the original object.
@@ -1749,10 +1794,10 @@ bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
 
 #' @rdname rmbl_json_serialize
 #' @export
-bricklayer_json_unserialize <- function(txt) {
+bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
   if (!is.character(txt) || length(txt) != 1L || is.na(txt)) {
     stop("`txt` must be one string of JSON from bricklayer_json_serialize()", call. = FALSE)
   }
-  .rmbl_json_unpack(.rmbl_json_parse(txt))
+  .rmbl_json_unpack(.rmbl_json_parse(txt), trusted = isTRUE(trusted))
 }
 

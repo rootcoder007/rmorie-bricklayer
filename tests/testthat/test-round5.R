@@ -115,7 +115,7 @@ test_that("report_analysis prints years without a thousands separator and says p
 })
 
 test_that("friendly_download does not leak url()'s warning and says when no snapshot exists", {
-  local_mocked_bindings(.bl_fetch_file = function(url, dest) {
+  local_mocked_bindings(.bl_fetch_file = function(url, dest, ...) {
     warning("cannot open URL 'x': HTTP status was '404 Not Found'")
     stop("cannot open the connection")
   }, wayback_snapshot_url = function(url, timestamp = NULL) NULL)

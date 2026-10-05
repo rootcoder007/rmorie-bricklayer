@@ -32,9 +32,13 @@ inside \code{capsule_dir}; compared against the manifest's recorded
 \code{meta$script_sha256} when both are present.}
 }
 \value{
-A list with \code{ok} (logical scalar: every check passed) and
-\code{checks} (data.frame with columns \code{check}, \code{ok},
-\code{detail}) .
+An object of class \code{bricklayer_capsule_check} (a list with a
+print method): \code{ok} (logical scalar: every check passed AND the three
+required checks -- \code{provenance_readable}, \code{data_present},
+\code{data_sha256} -- were all made), \code{checks} (data.frame with columns
+\code{check}, \code{ok}, \code{detail}), \code{required} and \code{missing}. A check that
+cannot be made because the provenance lacks the field is recorded as
+a FAILED row, never skipped: a provenance of \code{{}} verifies nothing.
 }
 \description{
 Runs the full custody chain over a capsule directory in one call: the

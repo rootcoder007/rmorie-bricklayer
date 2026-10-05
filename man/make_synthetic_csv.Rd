@@ -20,7 +20,10 @@ generate. Defaults to \code{schema$n_rows}, then 50000.}
 \code{schema$seed}, then 91735246.}
 }
 \value{
-Invisibly, a list with \code{path}, \code{rows} (rows written),
+Invisibly, an object of class \code{bricklayer_synthetic}: a list
+with \code{path}, \code{sidecar} (the \verb{<path>.synthetic} marker file;
+\code{\link[=verify_capsule]{verify_capsule()}} treats its presence as a failed check),
+\code{recipe_sha256}, \code{rows} (rows written),
 and \code{seed} used.
 }
 \description{

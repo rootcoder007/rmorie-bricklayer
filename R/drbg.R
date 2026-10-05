@@ -54,6 +54,8 @@
 #' length(drbg_generate(d, 32))
 #' @export
 drbg_new <- function(entropy = NULL, personalization = NULL) {
+  # the generator is an environment and is not meant to be serialised:
+  # a copy restored in another process reseeds itself on first use
   entropy <- if (is.null(entropy)) random_bytes(48L) else .rmbl_drbg_input(entropy, "entropy", 48L, exact = TRUE)
   pers <- .rmbl_drbg_input(personalization, "personalization", 48L)
   st <- .Call(C_rmbl_drbg_instantiate, entropy, pers)
@@ -61,6 +63,7 @@ drbg_new <- function(entropy = NULL, personalization = NULL) {
   d$key <- st$key
   d$v <- st$v
   d$reseed_counter <- 1
+  d$pid <- Sys.getpid()
   class(d) <- "bricklayer_drbg"
   d
 }
@@ -96,6 +99,10 @@ drbg_generate <- function(drbg, n, additional = NULL) {
     stop("the generator has served 2^48 requests since it was seeded: reseed it (drbg_reseed())",
          call. = FALSE)
   }
+  # a forked child (parallel::mclapply) inherits the parent's (Key, V) and
+  # would replay the parent's stream; so would a generator restored from
+  # saveRDS(). A process change reseeds from the operating system first.
+  if (!identical(drbg$pid, Sys.getpid())) drbg_reseed(drbg)
   st <- .Call(C_rmbl_drbg_generate, drbg$key, drbg$v, as.integer(n),
               .rmbl_drbg_input(additional, "additional", 48L))
   drbg$key <- st$key
@@ -127,6 +134,7 @@ drbg_reseed <- function(drbg, entropy = NULL, additional = NULL) {
   drbg$key <- st$key
   drbg$v <- st$v
   drbg$reseed_counter <- 1
+  drbg$pid <- Sys.getpid()
   invisible(drbg)
 }
 

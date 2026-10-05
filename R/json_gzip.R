@@ -124,6 +124,21 @@ json_gzip_decode <- function(txt, raw = FALSE, ...) {
     stop("`txt` does not hold a gzip member: expected at least 18 bytes ",
          "starting 1f 8b, got ", length(bytes), " byte(s).", call. = FALSE)
   }
-  json <- rawToChar(memDecompress(bytes, type = "gzip"))
+  # The trailer's ISIZE (uncompressed length mod 2^32) is a free pre-check
+  # against a decompression bomb from an untrusted field (gzip reaches
+  # ~1000:1), and a free integrity check afterwards.
+  nb <- length(bytes)
+  isize <- sum(as.numeric(as.integer(bytes[(nb - 3L):nb])) * 256^(0:3))
+  if (isize > 512 * 1024^2) {
+    stop(sprintf(paste0("`txt` declares %.0f uncompressed bytes (gzip ISIZE); ",
+                        "refusing to inflate more than 512 MiB"), isize),
+         call. = FALSE)
+  }
+  inflated <- memDecompress(bytes, type = "gzip")
+  if (length(inflated) %% 2^32 != isize) {
+    stop("the gzip member is corrupt: its inflated size does not match the ISIZE trailer",
+         call. = FALSE)
+  }
+  json <- rawToChar(inflated)
   bricklayer_json_from_json(json, ...)
 }

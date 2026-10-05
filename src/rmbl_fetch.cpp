@@ -28,8 +28,32 @@ namespace {
 
 const char *kUA = "morie-bricklayer/1.0 (+https://github.com/rootcoder007/rmorie-bricklayer)";
 
+/* Caps every transfer gets. Redirects are bounded and pinned to http(s)
+ * (a file:// URL, or a redirect to one, is refused), a download to a file
+ * is bounded in size, and a response read into memory is bounded too:
+ * write_to_string() appended without limit, so one hostile response could
+ * exhaust memory. CURLOPT_PROTOCOLS_STR arrived in libcurl 7.85; older
+ * builds take the bitmask form, so the pin holds everywhere. */
+const curl_off_t kMaxDownload = static_cast<curl_off_t>(2) << 30;  /* 2 GiB */
+const size_t kMaxBody = static_cast<size_t>(64) << 20;             /* 64 MiB */
+
+void harden(CURL *h) {
+    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(h, CURLOPT_MAXREDIRS, 5L);
+#if LIBCURL_VERSION_NUM >= 0x075500
+    curl_easy_setopt(h, CURLOPT_PROTOCOLS_STR, "http,https");
+    curl_easy_setopt(h, CURLOPT_REDIR_PROTOCOLS_STR, "http,https");
+#else
+    curl_easy_setopt(h, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+    curl_easy_setopt(h, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+#endif
+    curl_easy_setopt(h, CURLOPT_MAXFILESIZE_LARGE, kMaxDownload);
+}
+
 size_t write_to_string(char *ptr, size_t sz, size_t nm, void *ud) {
-    static_cast<std::string *>(ud)->append(ptr, sz * nm);
+    std::string *s = static_cast<std::string *>(ud);
+    if (s->size() + sz * nm > kMaxBody) return 0;  /* aborts the transfer */
+    s->append(ptr, sz * nm);
     return sz * nm;
 }
 
@@ -44,7 +68,7 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
     if (!h) return -1;
     out.clear();
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    harden(h);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
@@ -91,7 +115,7 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE,
                      static_cast<long>(bodylen));
     curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr);
-    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    harden(h);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
@@ -122,7 +146,7 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
     curl_easy_setopt(h, CURLOPT_HTTPGET, 1L);
     if (hdr) curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr);
-    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    harden(h);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
@@ -145,11 +169,8 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     if (!fp) return -1;
     CURL *h = curl_easy_init();
     if (!h) { std::fclose(fp); return -1; }
-#if LIBCURL_VERSION_NUM >= 0x075500
-    curl_easy_setopt(h, CURLOPT_PROTOCOLS_STR, "http,https");  /* an ftp:// or file:// URL (or redirect) is refused */
-#endif
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
+    harden(h);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
@@ -202,8 +223,14 @@ std::string wayback_snapshot(const std::string &url, long timeout_s) {
     /* require "available": true within the closest object */
     size_t avail = body.find("\"available\"", c);
     if (avail == std::string::npos) return "";
-    size_t t = body.find("true", avail);
-    if (t == std::string::npos || t - avail > 24) return "";
+    /* the value right after the colon must be the literal true: a string
+     * value containing "true" within 24 bytes used to satisfy this */
+    size_t colon0 = body.find(':', avail);
+    if (colon0 == std::string::npos) return "";
+    size_t v0 = colon0 + 1;
+    while (v0 < body.size() && (body[v0] == ' ' || body[v0] == '\t' ||
+                                body[v0] == '\n' || body[v0] == '\r')) ++v0;
+    if (body.compare(v0, 4, "true") != 0) return "";
     /* extract the value of "url": the FIRST quoted string after "url": */
     size_t u = body.find("\"url\"", c);
     if (u == std::string::npos) return "";
@@ -215,6 +242,8 @@ std::string wayback_snapshot(const std::string &url, long timeout_s) {
     if (close == std::string::npos) return "";
     std::string snap = body.substr(open + 1, close - open - 1);
     if (snap.rfind("http://", 0) == 0) snap = "https://" + snap.substr(7);
+    /* anything that is not an https URL is not a snapshot to fetch */
+    if (snap.rfind("https://", 0) != 0) return "";
     return snap;
 }
 

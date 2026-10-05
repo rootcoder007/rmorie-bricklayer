@@ -243,3 +243,80 @@ write_text_fallback <- function(text, path) {
   utils::download.file(url, dest, mode = "wb", quiet = TRUE)
   invisible(dest)
 }
+
+
+# A manifest-derived file name joined under a directory, or NULL when it is
+# not a plain relative path that stays inside: "..", an absolute path, a
+# drive letter, a home prefix or a symlink out are refused. The provenance
+# file is attacker-authored input, and bare file.path() hashed
+# "../../etc/shadow" when asked to.
+#' @noRd
+.rmbl_safe_rel <- function(rel, dir) {
+  rel <- as.character(unlist(rel))[1L]
+  if (is.na(rel) || !nzchar(rel)) return(NULL)
+  if (grepl("^([/\\\\]|~|[A-Za-z]:)", rel)) return(NULL)
+  parts <- strsplit(gsub("\\\\", "/", rel), "/", fixed = TRUE)[[1L]]
+  if (any(parts %in% c("", ".", ".."))) return(NULL)
+  full <- file.path(dir, rel)
+  d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
+  f <- normalizePath(full, winslash = "/", mustWork = FALSE)
+  if (!startsWith(f, paste0(d, "/"))) return(NULL)
+  full
+}
+
+# A URL the package is about to fetch, or an error in words. Resolvers
+# return whatever a CKAN record (or a MITM on a cleartext hop) says, so
+# before any transport sees it: https only (plain http needs the explicit
+# option), never file://, and never a loopback, link-local, private or
+# metadata address -- the SSRF targets.
+#' @noRd
+.rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
+                                   allow_http = getOption("rmoriebricklayer.allow_http", FALSE)) {
+  url <- as.character(unlist(url))[1L]
+  if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)
+  if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) return(url)
+  if (!grepl("^[a-z][a-z0-9+.-]*://", url, ignore.case = TRUE)) {
+    stop(sprintf("%s has no URL scheme: '%s'", what, url), call. = FALSE)
+  }
+  scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
+  ok_schemes <- c("https", if (isTRUE(allow_http)) "http")
+  if (!scheme %in% ok_schemes) {
+    stop(sprintf(paste0("%s must be an https:// URL, not %s:// ('%s'); ",
+                        "options(rmoriebricklayer.allow_http = TRUE) admits a ",
+                        "trusted plain-http mirror"), what, scheme, url),
+         call. = FALSE)
+  }
+  host <- sub("^[a-z][a-z0-9+.-]*://(?:[^/@]*@)?([^/?#]+).*$", "\\1", url,
+              ignore.case = TRUE, perl = TRUE)
+  host <- tolower(host)
+  host <- if (startsWith(host, "[")) sub("^\\[([^]]*)\\].*$", "\\1", host) else sub(":[0-9]*$", "", host)
+  if (host %in% c("localhost", "0.0.0.0", "::", "::1") ||
+      grepl("\\.localhost$", host) || .rmbl_private_host(host)) {
+    stop(sprintf("%s points at a local or private address ('%s'): refused", what, host),
+         call. = FALSE)
+  }
+  url
+}
+
+#' @noRd
+.rmbl_private_host <- function(host) {
+  if (grepl("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$", host)) {
+    o <- as.integer(strsplit(host, ".", fixed = TRUE)[[1L]])
+    return(o[1L] %in% c(0L, 10L, 127L) ||
+             (o[1L] == 169L && o[2L] == 254L) ||
+             (o[1L] == 172L && o[2L] >= 16L && o[2L] <= 31L) ||
+             (o[1L] == 192L && o[2L] == 168L) ||
+             (o[1L] == 100L && o[2L] >= 64L && o[2L] <= 127L))
+  }
+  # IPv6 literals: loopback, link-local, unique-local, mapped IPv4
+  grepl("^(fe[89ab][0-9a-f]:|f[cd][0-9a-f]{2}:|::1$|::ffff:|0:0:0:0:0:0:0:1$)", host)
+}
+
+# The package, not the analysis script, owns the synthetic flag: set by
+# the reference pipeline for its subprocess, read wherever a manifest is
+# built or written.
+#' @noRd
+.rmbl_synthetic_env <- function() {
+  v <- trimws(Sys.getenv("BRICKLAYER_SYNTHETIC", unset = ""))
+  nzchar(v) && !tolower(v) %in% c("0", "false", "no", "off")
+}

@@ -57,6 +57,10 @@
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
   if (!is.list(meta)) stop("`meta` must be a list", call. = FALSE)
+  # the package owns the synthetic flag: set here from BRICKLAYER_SYNTHETIC
+  # (the reference pipeline sets it for its analysis subprocess), so a
+  # manifest written on generated data says so whatever the script did
+  meta$synthetic <- isTRUE(meta$synthetic) || .rmbl_synthetic_env()
   m <- list(meta = meta, results = list())
   if (isTRUE(environment)) m$environment <- capture_environment()
   m
@@ -115,7 +119,9 @@ record <- function(manifest, name, observed, expected,
   } else {
     NA_real_
   }
-  status <- if (isTRUE(synthetic)) {
+  # a manifest built on synthetic data makes every comparison INFO
+  synthetic <- isTRUE(synthetic) || isTRUE(manifest$meta$synthetic)
+  status <- if (synthetic) {
     "INFO"
   } else if (!is.na(diff) && diff <= tol) {
     "PASS"
@@ -175,6 +181,8 @@ record <- function(manifest, name, observed, expected,
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
   path <- .rmbl_string1(path, "path")
+  # never written without the flag (see make_manifest())
+  manifest$meta$synthetic <- isTRUE(manifest$meta$synthetic) || .rmbl_synthetic_env()
   if (isTRUE(canonical)) {
     writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
     return(invisible(path))
@@ -276,9 +284,12 @@ manifest_digest <- function(manifest) {
   }
   x <- lapply(x, .rmbl_sort_keys)
   nm <- names(x)
-  if (is.null(nm) || any(!nzchar(nm))) {
+  if (is.null(nm)) {
     return(x)
   }
+  # an empty-string key is a legal JSON key; it sorts first. Leaving such
+  # a level in insertion order made a legitimately re-serialised manifest
+  # fail its own signature.
   x[order(nm, method = "radix")]
 }
 

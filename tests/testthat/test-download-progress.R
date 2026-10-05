@@ -6,7 +6,7 @@ test_that(".bl_dl copies a local file with milestone progress and honours quiet"
   dest <- withr::local_tempfile(fileext = ".bin")
   withr::local_options(morie.progress = TRUE, morie.quiet = NULL)
   msgs <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, label = "three-mb",
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "three-mb",
                         size = file.size(src)),
     type = "message"
   )
@@ -17,7 +17,7 @@ test_that(".bl_dl copies a local file with milestone progress and honours quiet"
 
   withr::local_options(morie.quiet = TRUE)
   quiet <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, label = "q"),
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "q"),
     type = "message"
   )
   expect_identical(quiet, character())

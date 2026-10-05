@@ -36,7 +36,10 @@ interval.}
 }
 \value{
 A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
-(Theil-Sen), \code{intercept}, \code{slope_lower} / \code{slope_upper}
+(Theil-Sen), \code{intercept}, \code{slope_lower} / \code{slope_upper},
+\code{slope_ci_clamped} (\code{TRUE} when the pairwise slopes do not reach the
+requested confidence on a side, so that bound is the extreme slope and
+the true interval is wider)
 (the distribution-free interval), \code{n} and \code{method}.
 }
 \description{

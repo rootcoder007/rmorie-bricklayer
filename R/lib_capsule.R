@@ -30,9 +30,13 @@
 #' @param script_file Optional analysis-script filename
 #' inside `capsule_dir`; compared against the manifest's recorded
 #' `meta$script_sha256` when both are present.
-#' @return A list with `ok` (logical scalar: every check passed) and
-#' `checks` (data.frame with columns `check`, `ok`,
-#' `detail`) .
+#' @return An object of class `bricklayer_capsule_check` (a list with a
+#' print method): `ok` (logical scalar: every check passed AND the three
+#' required checks -- `provenance_readable`, `data_present`,
+#' `data_sha256` -- were all made), `checks` (data.frame with columns
+#' `check`, `ok`, `detail`), `required` and `missing`. A check that
+#' cannot be made because the provenance lacks the field is recorded as
+#' a FAILED row, never skipped: a provenance of `{}` verifies nothing.
 #' @examples
 #' dir <- file.path(tempdir(), "capsule-example")
 #' dir.create(dir, showWarnings = FALSE)
@@ -65,31 +69,63 @@ verify_capsule <- function(capsule_dir,
   note("provenance_readable", !is.null(prov),
        file.path(capsule_dir, provenance_file))
 
+  # Every check that cannot be made is a FAILED check, recorded as a row:
+  # the former version appended nothing when a field was absent, and
+  # all() of the surviving rows said a capsule with altered data (or a
+  # provenance of exactly {}) was intact. These three rows must exist and
+  # pass for `ok`.
+  required <- c("provenance_readable", "data_present", "data_sha256")
+
   df <- NULL
+  dpath <- NULL
   data_file <- data_file %||% prov$resource$filename
-  if (!is.null(data_file)) {
-    dpath <- file.path(capsule_dir, data_file)
-    note("data_present", file.exists(dpath), dpath)
-    if (file.exists(dpath)) {
-      if (!is.null(prov$resource$sha256)) {
-        v <- verify_sha256(dpath, prov$resource$sha256)
-        note("data_sha256", v$match,
-             if (v$match) v$actual else
-               sprintf("expected %s, got %s", v$expected, v$actual))
-      }
-      if (!is.null(prov$resource$size_bytes)) {
-        note("data_size_bytes",
-             file.size(dpath) == as.numeric(prov$resource$size_bytes),
-             sprintf("%d bytes on disk", file.size(dpath)))
-      }
-      if (grepl("\\.csv$", dpath, ignore.case = TRUE)) {
-        df <- tryCatch(
-          utils::read.csv(dpath, check.names = FALSE,
-                          stringsAsFactors = FALSE),
-          error = function(e) NULL
-        )
-        note("data_readable", !is.null(df), dpath)
-      }
+  if (is.null(data_file)) {
+    note("data_present", FALSE,
+         "no data file: the provenance records no resource$filename and none was given")
+  } else {
+    dpath <- .rmbl_safe_rel(data_file, capsule_dir)
+    if (is.null(dpath)) {
+      note("data_present", FALSE,
+           sprintf("'%s' is not a plain relative path inside the capsule",
+                   as.character(unlist(data_file))[1L]))
+    } else {
+      note("data_present", file.exists(dpath), dpath)
+      if (!file.exists(dpath)) dpath <- NULL
+    }
+  }
+  if (!is.null(dpath)) {
+    if (file.exists(paste0(dpath, ".synthetic"))) {
+      note("data_not_synthetic", FALSE,
+           sprintf("%s.synthetic is present: these data were generated, not fetched",
+                   basename(dpath)))
+    }
+    pinned <- prov$resource$sha256
+    if (is.null(pinned)) {
+      note("data_sha256", FALSE,
+           "no sha256 recorded in the provenance: the data cannot be verified")
+    } else {
+      v <- verify_sha256(dpath, pinned)
+      note("data_sha256", v$match,
+           if (v$match) v$actual else
+             sprintf("expected %s, got %s", v$expected, v$actual))
+    }
+    if (!is.null(prov$resource$size_bytes)) {
+      note("data_size_bytes",
+           file.size(dpath) == as.numeric(prov$resource$size_bytes),
+           sprintf("%d bytes on disk", file.size(dpath)))
+    }
+    if (grepl("\\.csv$", dpath, ignore.case = TRUE)) {
+      df <- tryCatch(
+        utils::read.csv(dpath, check.names = FALSE,
+                        stringsAsFactors = FALSE),
+        error = function(e) NULL
+      )
+      note("data_readable", !is.null(df), dpath)
+    } else if (!is.null(prov$resource$row_count_data_rows) ||
+               !is.null(prov$schema)) {
+      note("data_readable", FALSE,
+           sprintf("%s is not a CSV: the recorded row count / schema cannot be checked",
+                   basename(dpath)))
     }
   }
 
@@ -112,34 +148,77 @@ verify_capsule <- function(capsule_dir,
   }
 
   manifest <- NULL
-  if (!is.null(manifest_file) &&
-      file.exists(file.path(capsule_dir, manifest_file))) {
-    manifest <- load_provenance(file.path(capsule_dir, manifest_file))
-    mismatch <- character(0)
-    for (nm in names(manifest$results)) {
-      r <- manifest$results[[nm]]
-      if (is.numeric(r$observed) && is.numeric(r$expected) &&
-          !is.null(r$tol) && r$status %in% c("PASS", "DIFFER")) {
-        want <- if (abs(r$observed - r$expected) <= r$tol) "PASS" else "DIFFER"
-        if (!identical(want, r$status)) mismatch <- c(mismatch, nm)
+  if (!is.null(manifest_file)) {
+    mpath <- .rmbl_safe_rel(manifest_file, capsule_dir)
+    if (is.null(mpath) || !file.exists(mpath)) {
+      note("manifest_consistent", FALSE,
+           sprintf("manifest '%s' is missing or outside the capsule",
+                   as.character(manifest_file)[1L]))
+    } else {
+      manifest <- load_provenance(mpath)
+      mismatch <- character(0)
+      for (nm in names(manifest$results)) {
+        r <- manifest$results[[nm]]
+        if (is.numeric(r$observed) && is.numeric(r$expected) &&
+            !is.null(r$tol) && r$status %in% c("PASS", "DIFFER")) {
+          want <- if (abs(r$observed - r$expected) <= r$tol) "PASS" else "DIFFER"
+          if (!identical(want, r$status)) mismatch <- c(mismatch, nm)
+        }
       }
+      note("manifest_consistent", length(mismatch) == 0L,
+           if (length(mismatch)) paste(mismatch, collapse = ", ") else
+             sprintf("%d results re-checked", length(manifest$results)))
     }
-    note("manifest_consistent", length(mismatch) == 0L,
-         if (length(mismatch)) paste(mismatch, collapse = ", ") else
-           sprintf("%d results re-checked", length(manifest$results)))
   }
 
-  if (!is.null(script_file) &&
-      file.exists(file.path(capsule_dir, script_file))) {
-    actual <- sha256_file(file.path(capsule_dir, script_file))
-    pinned <- manifest$meta$script_sha256 %||% prov$script$sha256
-    if (!is.null(pinned)) {
-      note("script_sha256", identical(actual, pinned), actual)
+  # A pinned script digest is checked whenever one exists, whether or not
+  # the caller remembered `script_file`: a capsule with a pinned script
+  # hash was never script-checked by default before.
+  pinned_script <- manifest$meta$script_sha256 %||% prov$script$sha256
+  script_file <- script_file %||% prov$script$filename %||%
+    manifest$meta$script_file
+  if (!is.null(script_file) || !is.null(pinned_script)) {
+    spath <- if (!is.null(script_file)) .rmbl_safe_rel(script_file, capsule_dir)
+    if (is.null(spath) || !file.exists(spath)) {
+      note("script_sha256", FALSE,
+           if (is.null(script_file))
+             "a script digest is pinned but no script file is named (script_file)"
+           else sprintf("script '%s' is missing or outside the capsule",
+                        as.character(unlist(script_file))[1L]))
+    } else if (is.null(pinned_script)) {
+      note("script_sha256", FALSE,
+           "no script digest is pinned in the manifest or the provenance")
+    } else {
+      actual <- sha256_file(spath)
+      note("script_sha256", identical(actual, as.character(unlist(pinned_script))[1L]),
+           actual)
     }
   }
 
   checks <- do.call(rbind, checks)
-  list(ok = all(checks$ok), checks = checks)
+  rownames(checks) <- NULL
+  missing <- setdiff(required, checks$check)
+  out <- list(ok = all(checks$ok) && length(missing) == 0L,
+              checks = checks, required = required, missing = missing)
+  class(out) <- c("bricklayer_capsule_check", "list")
+  out
+}
+
+#' @export
+format.bricklayer_capsule_check <- function(x, ...) {
+  ck <- x$checks
+  c(sprintf("Capsule verification: %s (%d of %d checks passed)",
+            if (isTRUE(x$ok)) "intact" else "NOT VERIFIED",
+            sum(ck$ok), nrow(ck)),
+    sprintf("  %s  %-20s %s", ifelse(ck$ok, "ok  ", "FAIL"), ck$check, ck$detail),
+    if (length(x$missing))
+      sprintf("  FAIL  %-20s required check was never made", x$missing))
+}
+
+#' @export
+print.bricklayer_capsule_check <- function(x, ...) {
+  cat(format(x, ...), sep = "\n")
+  invisible(x)
 }
 
 #' Capture the Analysis Environment for a Manifest

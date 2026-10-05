@@ -12,6 +12,7 @@ bricklayer_json_from_json(
   flatten = FALSE,
   bigint_as_char = FALSE,
   simplify = NULL,
+  duplicate_keys = c("error", "keep"),
   ...
 )
 }
@@ -25,6 +26,10 @@ back as strings.}
 
 \item{simplify}{legacy: \code{FALSE} turns every
 simplification off.}
+
+\item{duplicate_keys}{What to do with an object that repeats a key:
+\code{"error"} (default) refuses the document, \code{"keep"} returns both
+values under the repeated name, as jsonlite does.}
 
 \item{...}{ignored, for call compatibility.}
 }
