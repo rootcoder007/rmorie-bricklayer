@@ -2,6 +2,14 @@
 
 ## rmoriebricklayer 0.5.5
 
+- `core_hawkes_fit(method = "em")` finishes with the projected BFGS on
+  the exact likelihood from EM’s point. EM converges linearly, so its
+  steps shrink before it reaches the maximum: it stopped up to 1.5e-5
+  short of the direct fit in the negative log-likelihood (1.4e-5 on
+  macOS x86_64, where r-universe’s check failed); it now ends within
+  2e-8. `converged` reports whether that finish converged instead of
+  always `TRUE`.
+
 - SIU `police_service` is now the service of the subject officials, read
   from the director’s analysis: the first service named in a sentence
   that names a subject official (or the sentence before it), else the

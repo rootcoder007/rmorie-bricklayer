@@ -84,8 +84,9 @@ A list: `theta`, `baseline_params`, `branching_ratio`, `kernel_params`,
 
 - `"em"`:
 
-  the EM algorithm (Veen & Schoenberg 2008): the same maximum, a
-  different route.
+  the EM algorithm (Veen & Schoenberg 2008), finished by the projected
+  BFGS on the exact likelihood from EM's point (EM's steps shrink before
+  it reaches the maximum): the same maximum, a different route.
 
 - `"inar"`:
 

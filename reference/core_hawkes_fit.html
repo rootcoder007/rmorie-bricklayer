@@ -143,8 +143,9 @@ intensity, O(n K); a gamma kernel with shape &gt;= 1 is truncated at <code>eps</
 <code>eps</code>: an approximation for light-tailed kernels, O(n w).</p></dd>
 
 <dt><code>"em"</code></dt>
-<dd><p>the EM algorithm (Veen &amp; Schoenberg 2008): the same maximum, a
-different route.</p></dd>
+<dd><p>the EM algorithm (Veen &amp; Schoenberg 2008), finished by the
+projected BFGS on the exact likelihood from EM's point (EM's steps shrink before it
+reaches the maximum): the same maximum, a different route.</p></dd>
 
 <dt><code>"inar"</code></dt>
 <dd><p>Kirchner's (2017) INAR(p) least-squares estimator on binned counts
