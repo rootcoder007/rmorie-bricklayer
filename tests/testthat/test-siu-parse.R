@@ -142,7 +142,7 @@ test_that("French dates and accented entities parse", {
 
 
 
-test_that("ordinal dates and the notifying force are read from a report like 17-OVI-201", {
+test_that("ordinal dates and the police service are read from a report like 17-OVI-201", {
   html <- paste0(
     "<html><body><h2>The Investigation</h2><h3>Notification of the SIU</h3>",
     "<p>At approximately 11:46 a.m. on August 3rd, 2017, the Guelph Police Service ( GPS ) notified the SIU ",
