@@ -51,10 +51,14 @@ little- and big-endian machines. On x86-64 processors with PCLMULQDQ and on
 ARMv8 with the crypto extension the polynomial products use the carry-less
 multiply instruction; elsewhere a portable constant-time product.
 
-NIST's FIPS 207 (HQC-KEM) is still a draft. It is expected to shorten the
-decapsulation key to its 32-byte seed; the encapsulation key, ciphertext
-and shared secret of the final standard may differ from these, so keep
-keys and ciphertexts tagged with the scheme and level they belong to.
+NIST will publish HQC-KEM as FIPS 207 but has not yet released it, or a
+draft of it (checked 2026-10-05). The specification of 2025-08-22 followed
+here already makes the changes NIST listed for FIPS 207 (the salted FO
+transform, SHA3-512 seed expansion, the 32-byte shared secret, the new
+sampler, the seed in the decapsulation key, the seed-only compressed key
+that \code{\link[=hqc_compress_key]{hqc_compress_key()}} writes); the published standard may still differ
+in detail. Keep keys and ciphertexts tagged with the scheme, version and
+level they belong to.
 
 \code{version = "round4"} gives the earlier revision instead: the fourth-round
 submission of 2023-04-30 (HQC-128/192/256), the HQC of liboqs up to 0.12

@@ -267,6 +267,7 @@ reference:
       - hqc_sizes
       - hqc_encapsulate
       - hqc_decapsulate
+      - hqc_compress_key
       - oqs_keygen
       - pqc_backends
       - rmbl_chain

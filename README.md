@@ -143,8 +143,11 @@ and a digest anyone can recompute says nothing about who produced the data.
   2025-08-22, 32-byte shared secret), and `hqc_keygen(version = "round4")`
   (the fourth-round submission of 2023-04-30 — the HQC of liboqs up to
   0.12 and of PQClean — with a 64-byte shared secret). Keys carry their
-  revision and `hqc_encapsulate()` / `hqc_decapsulate()` follow it. All of
-  it is implemented here, with no system library; see
+  revision and `hqc_encapsulate()` / `hqc_decapsulate()` follow it;
+  `hqc_compress_key()` stores a secret key as its seed alone (v5's
+  32-byte `seed_KEM`; round 4's key-generation seed) and
+  `hqc_decapsulate()` expands it. All of it is implemented here, with no
+  system library; see
   [Verification](#verification).
 - **Deterministic random bits** — `drbg_new()`, `drbg_generate()` and
   `drbg_reseed()`: the AES-256 CTR_DRBG of NIST SP 800-90A (no derivation
@@ -247,8 +250,16 @@ and PQClean ship — with its 64-byte shared secret; it shares v5's codes
 and parameters and reproduces all 300 of that revision's official
 known-answer vectors on both multipliers. The two are not
 interchangeable: use round 4 to exchange keys with software built on it,
-v5 otherwise. FIPS 207, the HQC standard, is still a draft and may change
-the key and ciphertext formats.
+v5 otherwise. A secret key can be kept as its seed alone:
+`hqc_compress_key()` writes v5's compressed format, `dk = seed_KEM` (32
+bytes, defined by the v5 specification), or for round 4 the 96 to 112
+bytes its key generation draws (a convention of this package: round 4
+defines no compressed format), and `hqc_decapsulate()` re-derives the key
+pair and refuses a seed that does not give the key's own public half. NIST
+has named the HQC standard FIPS 207 but has not published it or a draft
+of it yet (checked 2026-10-05); v5 already carries the changes NIST
+listed for it, including the seed-only key, and the published standard may
+still differ in detail.
 
 The random bit generator reproduces all 720 AES-256 no-derivation-function
 vectors of NIST's DRBG validation suite (no reseed, reseed, and
