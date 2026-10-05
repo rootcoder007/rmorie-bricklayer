@@ -9,8 +9,9 @@
  * the authors' reference implementation v5.0.0 (public domain,
  * https://gitlab.com/pqc-hqc/hqc): every one of the 300 official
  * known-answer vectors (100 per parameter set) is reproduced exactly.
- * NIST's FIPS 207 draft may still change sizes (it proposes a 32-byte
- * seed-only decapsulation key); when it is final this file follows it.
+ * NIST will publish HQC-KEM as FIPS 207 but had released no text or draft of
+ * it by 2026-10-05; this specification already makes the changes NIST
+ * listed for it. When FIPS 207 is published this file follows it.
  *
  * Where this differs from the reference, it differs on purpose:
  *
