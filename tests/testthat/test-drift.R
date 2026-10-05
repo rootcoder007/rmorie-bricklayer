@@ -188,9 +188,10 @@ test_that("capsule_drift tests every shared column and flags the movers", {
   expect_length(d$added, 0L)
   expect_length(d$removed, 0L)
   expect_true(all(!d$columns$drifted))
-  # a numeric column reports PSI; a categorical one has none to report
-  expect_true(all(is.finite(d$columns$psi[d$columns$type == "numeric"])))
-  expect_true(all(is.na(d$columns$psi[d$columns$type == "categorical"])))
+  # every column reports a PSI: binned for a numeric one, over the union
+  # of categories for a categorical one (which is what sees a disjoint
+  # high-cardinality column the homogeneity test has no power against)
+  expect_true(all(is.finite(d$columns$psi)))
 
   # a rescaled numeric column and a new category are both caught
   moved <- same

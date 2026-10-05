@@ -58,6 +58,8 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
   # normalise the dash family, which publishers mix freely
   s <- gsub("[\u2010\u2011\u2012\u2013\u2014\u2015]", "-", s)
   s <- gsub("\\s+", " ", s)
+  # thousands separators ("1,000 to 2,499", the commonest published form)
+  s <- gsub("(?<=[0-9]),(?=[0-9]{3}(?![0-9]))", "", s, perl = TRUE)
   n <- length(s)
   lower <- rep(NA_real_, n)
   upper <- rep(NA_real_, n)
@@ -69,11 +71,21 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
   for (i in seq_len(n)) {
     z <- s[i]
     if (!nzchar(z) || is.na(z)) next
-    m <- regmatches(z, regexec(
-      "^(-?[0-9]*\\.?[0-9]+)\\s*(?:to|-|through)\\s*(-?[0-9]*\\.?[0-9]+)", z))[[1L]]
-    if (length(m) == 3L) {
-      lower[i] <- num(m[2L])
-      upper[i] <- num(m[3L])
+    # "18 to 24", "ages 18-24", "18 to 24 years". The whole label must be
+    # consumed: "100-200-300" has no reading, and "15 to 19 and over"
+    # contradicts itself, so both stay NA rather than parsing as the
+    # first two numbers. Inverted bounds ("24 to 18") stay NA too.
+    m <- regmatches(z, regexec(paste0(
+      "^(?:[a-z]+ )?(-?[0-9]*\\.?[0-9]+) ?(?:to|-|through) ?",
+      "(-?[0-9]*\\.?[0-9]+)((?: [a-z]+)*) ?$"), z))[[1L]]
+    if (length(m) == 4L) {
+      lo <- num(m[2L])
+      up <- num(m[3L])
+      cue <- grepl("over|above|more|plus|under|less|below|fewer", m[4L])
+      if (!cue && !is.na(lo) && !is.na(up) && lo <= up) {
+        lower[i] <- lo
+        upper[i] <- up
+      }
       next
     }
     # An open UPPER band. The INCLUSIVE wordings go first: "65 and
@@ -115,8 +127,9 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
       }
       next
     }
-    # a bare number is a band of width zero
-    if (grepl("^-?[0-9]*\\.?[0-9]+$", z)) {
+    # a bare number is a band of width zero; a bare "-5" is not (a
+    # suppressed cell, or a range missing its first bound) and stays NA
+    if (grepl("^[0-9]*\\.?[0-9]+$", z)) {
       lower[i] <- num(z)
       upper[i] <- lower[i]
       next
@@ -183,6 +196,14 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
       rep(as.numeric(open_upper_cap)[1L], sum(bands$open_upper))
     }
     hi[bands$open_upper] <- cap
+    if (any(hi[bands$open_upper] < lo[bands$open_upper], na.rm = TRUE)) {
+      stop(sprintf(paste0("the open-band cap (%s) lies below the band's own ",
+                          "lower bound (%s); a midpoint there would be below ",
+                          "every value in the band"),
+                   format(min(hi[bands$open_upper], na.rm = TRUE)),
+                   format(max(lo[bands$open_upper], na.rm = TRUE))),
+           call. = FALSE)
+    }
   }
   if (any(bands$open_lower)) {
     lo[bands$open_lower] <- as.numeric(open_lower_floor)[1L]
@@ -299,6 +320,10 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #' @param counts How many units fall in each band.
 #' @param ... Passed to
 #' [band_values()].
+#' @param drop_unparsed A band whose label could not be parsed, yet which
+#' has a count, is an error by default: every statistic computed from the
+#' result would otherwise describe a fraction of the data in silence.
+#' `TRUE` leaves those units out with a warning instead.
 #' @return A numeric vector with one entry per unit.
 #' @examples
 #' x <- expand_bands(c("1", "2 to 5", "Greater than 5"),
@@ -307,7 +332,7 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 #'
 #' gini(x)
 #' @export
-expand_bands <- function(bands, counts, ...) {
+expand_bands <- function(bands, counts, ..., drop_unparsed = FALSE) {
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
   counts <- .rmbl_num(counts, "counts")
   if (length(counts) != nrow(bands)) {
@@ -318,6 +343,17 @@ expand_bands <- function(bands, counts, ...) {
     stop("`counts` must be non-negative", call. = FALSE)
   }
   bv <- band_values(bands, ...)
+  lost <- is.na(bv$value) & !is.na(counts) & counts > 0
+  if (any(lost)) {
+    msg <- sprintf("%s unit(s) in %d band(s) could not be placed: %s",
+                   format(sum(counts[lost])), sum(lost),
+                   paste(sprintf("'%s'", bands$label[lost]), collapse = ", "))
+    if (!isTRUE(drop_unparsed)) {
+      stop(msg, " (set drop_unparsed = TRUE to leave them out)",
+           call. = FALSE)
+    }
+    warning(msg, call. = FALSE)
+  }
   keep <- !is.na(bv$value) & !is.na(counts)
   rep(bv$value[keep], times = round(counts[keep]))
 }

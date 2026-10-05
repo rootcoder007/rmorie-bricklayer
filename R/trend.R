@@ -33,7 +33,10 @@
 #' @param conf_level Confidence level for the slope
 #' interval.
 #' @return A list with `S`, `tau`, `p_value`, `slope`
-#' (Theil-Sen), `intercept`, `slope_lower` / `slope_upper`
+#' (Theil-Sen), `intercept`, `slope_lower` / `slope_upper`,
+#' `slope_ci_clamped` (`TRUE` when the pairwise slopes do not reach the
+#' requested confidence on a side, so that bound is the extreme slope and
+#' the true interval is wider)
 #' (the distribution-free interval), `n` and `method`.
 #' @details
 #' Kendall's tau here is S over the number of comparable pairs, so it is
@@ -106,6 +109,10 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   if (length(x) != length(y)) {
     stop("`x` and `y` must be the same length", call. = FALSE)
   }
+  if (any(is.infinite(y)) || any(is.infinite(x))) {
+    # a missing period is dropped; an infinite value is a data error
+    stop("`x` and `y` must not contain infinite values", call. = FALSE)
+  }
   ok <- is.finite(x) & is.finite(y)
   x <- x[ok]
   y <- y[ok]
@@ -133,16 +140,24 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   tau <- s / npairs
   if (is.null(exact)) exact <- n <= 8L
   if (isTRUE(exact) && n <= 8L) {
-    null_s <- .rmbl_mk_exact(n)
+    # With ties the null is over the orderings of the OBSERVED multiset,
+    # not of n distinct ranks: S is computed with sign(), so tied pairs
+    # contribute 0 and the distinct-rank null is wrong in both
+    # directions (p = 0.0167 for 1,1,2,2,3,3 where the exact conditional
+    # p is 0.0222).
+    tied <- anyDuplicated(y) > 0L
+    null_s <- if (tied) .rmbl_mk_exact_values(y) else .rmbl_mk_exact(n)
     p <- switch(alternative,
       increasing = mean(null_s >= s),
       decreasing = mean(null_s <= s),
       two.sided = mean(abs(null_s) >= abs(s))
     )
-    method <- sprintf(
-      "Mann-Kendall, exact over all %d orderings",
-      length(null_s)
-    )
+    method <- if (tied) {
+      sprintf("Mann-Kendall, exact over all %d orderings of the observed values (ties kept)",
+              length(null_s))
+    } else {
+      sprintf("Mann-Kendall, exact over all %d orderings", length(null_s))
+    }
   } else {
     # the continuity correction moves S one unit toward zero, since S
     # changes in steps of two
@@ -163,7 +178,9 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   list(
     S = s, tau = tau, p_value = p, slope = ts$slope,
     intercept = ts$intercept, slope_lower = ci[1L],
-    slope_upper = ci[2L], n = n, var_S = mk$var,
+    slope_upper = ci[2L],
+    slope_ci_clamped = isTRUE(any(attr(ci, "clamped"))),
+    n = n, var_S = mk$var,
     alternative = alternative, conf_level = conf_level,
     method = method
   )
@@ -189,6 +206,20 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   })
   .rmbl_mk_cache[[key]] <- s
   s
+}
+
+# S over every ordering of the observed values themselves (ties and all).
+.rmbl_mk_exact_values <- function(y) {
+  n <- length(y)
+  perms <- .rmbl_permutations(n)
+  apply(perms, 1L, function(p) {
+    v <- y[p]
+    tot <- 0
+    for (i in seq_len(n - 1L)) {
+      tot <- tot + sum(sign(v[(i + 1L):n] - v[i]))
+    }
+    tot
+  })
 }
 
 .rmbl_permutations <- function(n) {
@@ -224,9 +255,15 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   c_alpha <- z * sqrt(var_s)
   lo_rank <- floor((m - c_alpha) / 2)
   hi_rank <- ceiling((m + c_alpha) / 2) + 1
+  # A rank off either end means the pairwise slopes do not reach the
+  # requested confidence on that side (at n = 5 the 95% lower rank is
+  # 0.999, at n = 3 both are off). The bound shown is then the extreme
+  # slope and the true interval is wider; the result says so through
+  # `slope_ci_clamped` rather than presenting the clamp as an interval.
+  clamped <- c(lo_rank < 1, hi_rank > m)
   lo_rank <- max(1L, min(m, as.integer(lo_rank)))
   hi_rank <- max(1L, min(m, as.integer(hi_rank)))
-  c(slopes[lo_rank], slopes[hi_rank])
+  structure(c(slopes[lo_rank], slopes[hi_rank]), clamped = clamped)
 }
 
 #' A single step change, with the scan's own null distribution
@@ -458,13 +495,21 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   disp <- if (n > 2L) sum(resid^2) / (n - 2L) else NA_real_
   over <- is.finite(disp) && disp > 1.5
   se_use <- if (over && is.finite(se)) se * sqrt(disp) else se
-  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  # quasi-likelihood estimates the dispersion from n - 2 residual degrees
+  # of freedom, so its reference distribution is t, not normal: on a
+  # four-period series z = 1.96 where t = 4.30 is wanted
+  z <- if (over) {
+    stats::qt(1 - (1 - conf_level) / 2, df = n - 2L)
+  } else {
+    stats::qnorm(1 - (1 - conf_level) / 2)
+  }
   list(
     rate_ratio = exp(beta[2L]),
     lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
     upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
     p_value = if (is.finite(se_use) && se_use > 0) {
-      2 * stats::pnorm(-abs(beta[2L] / se_use))
+      if (over) 2 * stats::pt(-abs(beta[2L] / se_use), df = n - 2L)
+      else 2 * stats::pnorm(-abs(beta[2L] / se_use))
     } else {
       NA_real_
     },
