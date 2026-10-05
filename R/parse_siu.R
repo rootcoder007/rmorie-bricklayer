@@ -49,7 +49,7 @@ bricklayer_siu_text <- function(html) {
 #' f <- bricklayer_parse_siu(system.file("extdata",
 #'                                       "siu_synthetic_report.html",
 #'                                       package = "rmoriebricklayer"))
-#' f[["number_of_subject_officers"]]
+#' f[["number_of_subject_officials"]]
 #' @export
 bricklayer_parse_siu <- function(html) {
   if (!is.character(html) || anyNA(html) || !length(html)) {

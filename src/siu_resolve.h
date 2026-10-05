@@ -33,6 +33,6 @@ std::string strip_boilerplate(const std::string& report_text);
 //   5. otherwise                                         -> unresolved
 // Rule 3 MUST precede rule 4: a 1-SO report often also says some witness
 // officer "is not a subject official".
-SoResolution resolve_subject_officers(const std::string& report_text);
+SoResolution resolve_subject_officials(const std::string& report_text);
 
 }  // namespace siu
