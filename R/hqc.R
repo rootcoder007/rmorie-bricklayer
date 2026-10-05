@@ -28,10 +28,14 @@
 #' ARMv8 with the crypto extension the polynomial products use the carry-less
 #' multiply instruction; elsewhere a portable constant-time product.
 #'
-#' NIST's FIPS 207 (HQC-KEM) is still a draft. It is expected to shorten the
-#' decapsulation key to its 32-byte seed; the encapsulation key, ciphertext
-#' and shared secret of the final standard may differ from these, so keep
-#' keys and ciphertexts tagged with the scheme and level they belong to.
+#' NIST will publish HQC-KEM as FIPS 207 but has not yet released it, or a
+#' draft of it (checked 2026-10-05). The specification of 2025-08-22 followed
+#' here already makes the changes NIST listed for FIPS 207 (the salted FO
+#' transform, SHA3-512 seed expansion, the 32-byte shared secret, the new
+#' sampler, the seed in the decapsulation key, the seed-only compressed key
+#' that [hqc_compress_key()] writes); the published standard may still differ
+#' in detail. Keep keys and ciphertexts tagged with the scheme, version and
+#' level they belong to.
 #'
 #' `version = "round4"` gives the earlier revision instead: the fourth-round
 #' submission of 2023-04-30 (HQC-128/192/256), the HQC of liboqs up to 0.12
@@ -252,6 +256,7 @@ hqc_decapsulate <- function(key, ciphertext) {
   }
   sz <- hqc_sizes(level, version)
   dk <- .rmbl_hex_or_null(key$secret)
+  if (length(dk) == sz[["seed"]]) dk <- .rmbl_hqc_expand(key, dk, level, version)
   if (is.null(dk) || length(dk) != sz[["decapsulation_key"]]) {
     stop(sprintf("`key` has no usable HQC-%d secret key (%d bytes)", level,
                  sz[["decapsulation_key"]]), call. = FALSE)
@@ -262,6 +267,72 @@ hqc_decapsulate <- function(key, ciphertext) {
                  sz[["ciphertext"]], level), call. = FALSE)
   }
   .rmbl_hexlify(.Call(if (version == "v5") C_rmbl_hqc_decaps else C_rmbl_hqc4_decaps, level, dk, ct))
+}
+
+#' The compressed HQC decapsulation key
+#'
+#' The HQC specification of 2025-08-22 allows the decapsulation key to be
+#' stored as its 32-byte `seed_KEM` alone (the compressed format
+#' `dk_KEM = (seed_KEM)`), from which the whole key pair is derived again.
+#' `hqc_compress_key()` keeps only that seed; [hqc_decapsulate()] takes such a
+#' key and expands it, and refuses one whose seed does not derive the key's
+#' public half.
+#'
+#' The round-4 revision (64-byte shared secret) defines no compressed format,
+#' but its key pair is derived from the randomness its key generation draws,
+#' `sk_seed || sigma || pk_seed` (96, 104 or 112 bytes: the `seed` of
+#' [hqc_keygen()] and [hqc_sizes()]), all of which its secret key
+#' `sk_seed || sigma || pk_seed || s` carries. For a round-4 key the compressed
+#' form is that seed: this package's convention, not a format of the
+#' submission, so software built on round 4 (liboqs, PQClean) expects the
+#' full secret key.
+#'
+#' @param key A key from [hqc_keygen()].
+#' @return The key with `secret` replaced by the hex of its seed: 32 bytes
+#' for v5, 96, 104 or 112 for round 4.
+#' @references Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC),
+#' specification of 2025-08-22, section 3 (HQC-KEM key pair formats).
+#' <https://pqc-hqc.org/>
+#' @seealso [hqc_keygen()], [hqc_decapsulate()]
+#' @examples
+#' key <- hqc_keygen(1)
+#' small <- hqc_compress_key(key)
+#' nchar(small$secret) / 2
+#' sent <- hqc_encapsulate(hqc_public_key(key))
+#' identical(hqc_decapsulate(small, sent$ciphertext), sent$shared)
+#' @export
+hqc_compress_key <- function(key) {
+  if (!inherits(key, "bricklayer_hqc_key")) {
+    stop("`key` must come from hqc_keygen()", call. = FALSE)
+  }
+  version <- .rmbl_hqc_key_version(key)
+  sz <- hqc_sizes(key$level, version)
+  dk <- .rmbl_hex_or_null(key$secret)
+  n <- length(dk)
+  if (n == sz[["seed"]]) return(key)
+  if (n != sz[["decapsulation_key"]]) {
+    stop("`key` has no usable HQC secret key", call. = FALSE)
+  }
+  # v5: dk = ek, seed_dk, sigma, seed_KEM, so the seed is its last 32 bytes
+  key$secret <- .rmbl_hexlify(if (version == "v5") {
+    dk[(n - 31L):n]
+  } else {
+    # sk_seed || sigma || ek with ek = pk_seed || s: the seed is the first
+    # sk_seed || sigma bytes and the first 40 bytes of ek
+    k <- sz[["seed"]] - 80L
+    dk[c(seq_len(40L + k), 40L + k + seq_len(40L))]
+  })
+  key
+}
+
+# a compressed decapsulation key: re-derive the pair from its seed, and
+# refuse a seed that does not give the key's own public half
+.rmbl_hqc_expand <- function(key, seed, level, version) {
+  full <- hqc_keygen(level, seed = seed, version = version)
+  if (!is.null(key[["public"]]) && !identical(tolower(key$public), full$public)) {
+    stop("the compressed secret key does not derive this key's public key", call. = FALSE)
+  }
+  .rmbl_hex_or_null(full$secret)
 }
 
 #' @export
