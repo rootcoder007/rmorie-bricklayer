@@ -18,6 +18,7 @@ using rmbl_hqc::HQC1;
 using rmbl_hqc::HQC3;
 using rmbl_hqc::HQC5;
 using rmbl_hqc::Scheme;
+using rmbl_hqc::Scheme4;
 
 int hqc_level(SEXP level) {
     if (TYPEOF(level) != INTSXP || XLENGTH(level) != 1) {
@@ -94,6 +95,69 @@ template <class P>
 SEXP sizes() {
     const int v[7] = {static_cast<int>(P::EK), static_cast<int>(P::DK), static_cast<int>(P::CT), 32,
                       static_cast<int>(P::K), static_cast<int>(P::SALT), 32};
+    const char *nm[7] = {"encapsulation_key", "decapsulation_key", "ciphertext", "seed",
+                         "message", "salt", "shared_secret"};
+    SEXP out = PROTECT(Rf_allocVector(INTSXP, 7));
+    SEXP names = PROTECT(Rf_allocVector(STRSXP, 7));
+    for (int i = 0; i < 7; ++i) {
+        INTEGER(out)[i] = v[i];
+        SET_STRING_ELT(names, i, Rf_mkChar(nm[i]));
+    }
+    Rf_setAttrib(out, R_NamesSymbol, names);
+    UNPROTECT(2);
+    return out;
+}
+
+/* round 4 (2023-04-30): the same contract, 40-byte seeds and a 64-byte secret */
+template <class P>
+SEXP keygen4(SEXP rnd) {
+    using S = Scheme4<P>;
+    need_raw(rnd, S::RND, "seed");
+    SEXP pub = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::EK)));
+    SEXP sec = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::DK)));
+    SEXP out = PROTECT(named_list2("public", pub, "secret", sec));
+    S::keygen(RAW(pub), RAW(sec), RAW(rnd));
+    UNPROTECT(3);
+    return out;
+}
+
+template <class P>
+SEXP encaps4(SEXP ek, SEXP m, SEXP salt) {
+    using S = Scheme4<P>;
+    need_raw(ek, S::EK, "ek");
+    need_raw(m, P::K, "m");
+    need_raw(salt, S::SALT, "salt");
+    if (!S::ek_ok(RAW(ek))) {
+        Rf_error("the encapsulation key is malformed (bits set past the code length)");
+    }
+    SEXP c = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::CT)));
+    SEXP s = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::SS)));
+    SEXP out = PROTECT(named_list2("ciphertext", c, "shared", s));
+    S::encaps(RAW(c), RAW(s), RAW(ek), RAW(m), RAW(salt));
+    UNPROTECT(3);
+    return out;
+}
+
+template <class P>
+SEXP decaps4(SEXP dk, SEXP ct) {
+    using S = Scheme4<P>;
+    need_raw(dk, S::DK, "dk");
+    need_raw(ct, S::CT, "ct");
+    if (!S::dk_ok(RAW(dk))) {
+        Rf_error("the decapsulation key is corrupt: its public half is not the one its secret seed makes");
+    }
+    SEXP ss = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(S::SS)));
+    S::decaps(RAW(ss), RAW(dk), RAW(ct));
+    UNPROTECT(1);
+    return ss;
+}
+
+template <class P>
+SEXP sizes4() {
+    using S = Scheme4<P>;
+    const int v[7] = {static_cast<int>(S::EK), static_cast<int>(S::DK), static_cast<int>(S::CT),
+                      static_cast<int>(S::RND), static_cast<int>(P::K), static_cast<int>(S::SALT),
+                      static_cast<int>(S::SS)};
     const char *nm[7] = {"encapsulation_key", "decapsulation_key", "ciphertext", "seed",
                          "message", "salt", "shared_secret"};
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 7));
@@ -190,6 +254,38 @@ SEXP C_rmbl_hqc_decaps(SEXP level, SEXP dk, SEXP ct) {
     case 1: return decaps<HQC1>(dk, ct);
     case 3: return decaps<HQC3>(dk, ct);
     default: return decaps<HQC5>(dk, ct);
+    }
+}
+
+SEXP C_rmbl_hqc4_sizes(SEXP level) {
+    switch (hqc_level(level)) {
+    case 1: return sizes4<HQC1>();
+    case 3: return sizes4<HQC3>();
+    default: return sizes4<HQC5>();
+    }
+}
+
+SEXP C_rmbl_hqc4_keygen(SEXP level, SEXP rnd) {
+    switch (hqc_level(level)) {
+    case 1: return keygen4<HQC1>(rnd);
+    case 3: return keygen4<HQC3>(rnd);
+    default: return keygen4<HQC5>(rnd);
+    }
+}
+
+SEXP C_rmbl_hqc4_encaps(SEXP level, SEXP ek, SEXP m, SEXP salt) {
+    switch (hqc_level(level)) {
+    case 1: return encaps4<HQC1>(ek, m, salt);
+    case 3: return encaps4<HQC3>(ek, m, salt);
+    default: return encaps4<HQC5>(ek, m, salt);
+    }
+}
+
+SEXP C_rmbl_hqc4_decaps(SEXP level, SEXP dk, SEXP ct) {
+    switch (hqc_level(level)) {
+    case 1: return decaps4<HQC1>(dk, ct);
+    case 3: return decaps4<HQC3>(dk, ct);
+    default: return decaps4<HQC5>(dk, ct);
     }
 }
 

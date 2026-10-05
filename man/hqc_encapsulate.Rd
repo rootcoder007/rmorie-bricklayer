@@ -7,10 +7,12 @@
 hqc_encapsulate(key, m = NULL, salt = NULL)
 }
 \arguments{
-\item{key}{A key or public key from \code{\link[=hqc_keygen]{hqc_keygen()}} / \code{\link[=hqc_public_key]{hqc_public_key()}}.}
+\item{key}{A key or public key from \code{\link[=hqc_keygen]{hqc_keygen()}} /
+\code{\link[=hqc_public_key]{hqc_public_key()}}.}
 
 \item{m, salt}{Optional raw vectors of encapsulation randomness: \code{m} of
-\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or 32) and \code{salt} of 16 bytes.
+\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or 32)
+and \code{salt} of 16 bytes.
 Supplying them makes the operation reproducible, which is what the
 known-answer tests need; the default draws both from the operating
 system's CSPRNG. Reusing them for the same key repeats the shared secret,
@@ -18,11 +20,11 @@ so supply them only deliberately.}
 }
 \value{
 A list of class \code{bricklayer_hqc_capsule}: \code{ciphertext} and
-\code{shared} (both hex), and \code{level}.
+\code{shared} (both hex), \code{level} and \code{version}.
 }
 \description{
-Produces a ciphertext and the 32-byte shared secret it carries. Only the
-public key is needed.
+Produces a ciphertext and the shared secret it carries (32 bytes; 64 for a
+round-4 key). Only the public key is needed.
 }
 \examples{
 key <- hqc_keygen(1)
@@ -38,5 +40,6 @@ identical(hqc_decapsulate(key, a$ciphertext), a$shared)
 identical(hqc_decapsulate(key, b$ciphertext), b$shared)
 }
 \seealso{
-\code{\link[=hqc_decapsulate]{hqc_decapsulate()}}, \code{\link[=hqc_keygen]{hqc_keygen()}}.
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}},
+\code{\link[=hqc_keygen]{hqc_keygen()}}.
 }

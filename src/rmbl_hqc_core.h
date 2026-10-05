@@ -1176,6 +1176,204 @@ struct Scheme {
     }
 };
 
+/* ------------------------------------------------------------ HQC round 4 */
+
+/* The round-4 submission of 2023-04-30 (liboqs <= 0.12, PQClean's hqc-128/192/256): the same
+ * codes and parameters as above, a different KEM around them -- 40-byte seeds, SHAKE256-512
+ * with a trailing domain byte for G (3) and K (4) and for the seed expander (2), positions
+ * drawn as i + (r mod (N - i)), and a 64-byte shared secret K(m || u || v). */
+template <class P>
+struct Scheme4 {
+    static constexpr size_t NW = P::NW;
+    static constexpr size_t SEED = 40;
+    static constexpr size_t SALT = 16;
+    static constexpr size_t SS = 64;
+    static constexpr size_t EK = SEED + P::NBYTES;
+    static constexpr size_t DK = SEED + P::K + EK;
+    static constexpr size_t CT = P::NBYTES + P::N1N2BYTES + SALT;
+    static constexpr size_t RND = 2 * SEED + P::K; /* the keygen randomness: sk_seed, sigma, pk_seed */
+    enum : uint8_t { DOM_SEEDEXP = 2, DOM_G4 = 3, DOM_K4 = 4 };
+
+    static void shake512(uint8_t out[64], uint8_t domain, const uint8_t *const *parts, const size_t *lens,
+                         size_t nparts) {
+        RmblKeccak st;
+        rmbl_keccak_init(&st, 136, 0x1F);
+        for (size_t i = 0; i < nparts; ++i) rmbl_keccak_absorb(&st, parts[i], lens[i]);
+        rmbl_keccak_absorb(&st, &domain, 1);
+        rmbl_keccak_finalize(&st);
+        rmbl_keccak_squeeze(&st, out, 64);
+        wipe(&st, sizeof st);
+    }
+
+    /* r mod (N - i) as the reference computes it: Barrett with floor(2^32 / (N - i)) and one
+     * conditional subtraction (the modulus is public, so the division is too) */
+    static uint32_t reduce(uint32_t a, size_t i) {
+        const uint32_t n = static_cast<uint32_t>(P::N - i);
+        const uint32_t m = static_cast<uint32_t>((uint64_t(1) << 32) / n);
+        const uint32_t q = static_cast<uint32_t>((static_cast<uint64_t>(a) * m) >> 32);
+        uint32_t r = a - q * n;
+        r -= n;
+        return r + (n & (0u - (r >> 31)));
+    }
+
+    static void fixed_weight(Xof &ctx, uint64_t *v, size_t weight) {
+        uint32_t support[P::WR > P::W ? P::WR : P::W] = {0};
+        uint8_t buf[4 * (P::WR > P::W ? P::WR : P::W)];
+        ctx.get(buf, 4 * weight);
+        for (size_t i = 0; i < weight; ++i) {
+            support[i] = static_cast<uint32_t>(i + reduce(static_cast<uint32_t>(load_le64(buf + 4 * i, 4)), i));
+        }
+        for (size_t ii = weight - 1; ii-- > 0;) {
+            uint32_t found = 0;
+            for (size_t j = ii + 1; j < weight; ++j) {
+                uint32_t d = support[j] ^ support[ii];
+                found |= 1 ^ ((d | (0u - d)) >> 31);
+            }
+            uint32_t mask = 0u - found;
+            support[ii] = (mask & static_cast<uint32_t>(ii)) ^ (~mask & support[ii]);
+        }
+        sample::write_support<P>(v, support, weight);
+        wipe(support, sizeof support);
+        wipe(buf, sizeof buf);
+    }
+
+    static void secret_xy(uint64_t *x, uint64_t *y, const uint8_t *sk_seed) {
+        Xof sx;
+        sx.init(sk_seed, SEED, DOM_SEEDEXP);
+        fixed_weight(sx, x, P::W);
+        fixed_weight(sx, y, P::W);
+    }
+    static void public_h(uint64_t *h, const uint8_t *pk_seed) {
+        Xof px;
+        px.init(pk_seed, SEED, DOM_SEEDEXP);
+        sample::uniform<P>(px, h);
+    }
+
+    /* ek = pk_seed || s, dk = sk_seed || sigma || ek, from the RND bytes the reference draws */
+    static void keygen(uint8_t *ek, uint8_t *dk, const uint8_t *rnd) {
+        const uint8_t *sk_seed = rnd, *sigma = rnd + SEED, *pk_seed = rnd + SEED + P::K;
+        uint64_t x[NW], y[NW], h[NW], s[NW];
+        secret_xy(x, y, sk_seed);
+        public_h(h, pk_seed);
+        gf2x::mul<P>(s, y, h);
+        for (size_t i = 0; i < NW; ++i) s[i] ^= x[i];
+        std::memcpy(ek, pk_seed, SEED);
+        words_to_bytes(ek + SEED, P::NBYTES, s);
+        std::memcpy(dk, sk_seed, SEED);
+        std::memcpy(dk + SEED, sigma, P::K);
+        std::memcpy(dk + SEED + P::K, ek, EK);
+        wipe(x, sizeof x);
+        wipe(y, sizeof y);
+    }
+
+    static bool ek_ok(const uint8_t *ek) {
+        constexpr unsigned spare = static_cast<unsigned>(8 * P::NBYTES - P::N);
+        return spare == 0 || (ek[EK - 1] >> (8 - spare)) == 0;
+    }
+
+    /* the stored public key must be the one the secret seed makes (s = x + y h): a corrupted or
+     * spliced key is refused instead of decapsulating to garbage. Constant time in the secrets. */
+    static bool dk_ok(const uint8_t *dk) {
+        const uint8_t *ek = dk + SEED + P::K;
+        if (!ek_ok(ek)) return false;
+        uint64_t x[NW], y[NW], h[NW], s[NW];
+        uint8_t sb[P::NBYTES];
+        secret_xy(x, y, dk);
+        public_h(h, ek);
+        gf2x::mul<P>(s, y, h);
+        for (size_t i = 0; i < NW; ++i) s[i] ^= x[i];
+        words_to_bytes(sb, P::NBYTES, s);
+        uint64_t ok = ct_eq_mask(sb, ek + SEED, P::NBYTES);
+        wipe(x, sizeof x);
+        wipe(y, sizeof y);
+        wipe(s, sizeof s);
+        wipe(sb, sizeof sb);
+        return ok != 0;
+    }
+
+    /* (u || v) as bytes into ct */
+    static void pke_encrypt(uint8_t *ct, const uint8_t *ek, const uint8_t *m, const uint8_t *theta) {
+        uint64_t h[NW], s[NW], r1[NW], r2[NW], e[NW], u[NW], t[NW];
+        uint64_t v[P::N1N2W];
+        public_h(h, ek);
+        bytes_to_words(s, NW, ek + SEED, P::NBYTES);
+        {
+            Xof tx;
+            tx.init(theta, SEED, DOM_SEEDEXP);
+            fixed_weight(tx, r1, P::WR);
+            fixed_weight(tx, r2, P::WR);
+            fixed_weight(tx, e, P::WE);
+        }
+        gf2x::mul<P>(u, r2, h);
+        for (size_t i = 0; i < NW; ++i) u[i] ^= r1[i];
+        uint8_t rsw[P::N1];
+        rs::encode<P>(rsw, m);
+        rm::encode<P>(v, rsw);
+        gf2x::mul<P>(t, r2, s);
+        for (size_t i = 0; i < NW; ++i) t[i] ^= e[i];
+        for (size_t i = 0; i < P::N1N2W; ++i) v[i] ^= t[i];
+        words_to_bytes(ct, P::NBYTES, u);
+        words_to_bytes(ct + P::NBYTES, P::N1N2BYTES, v);
+        wipe(r1, sizeof r1);
+        wipe(r2, sizeof r2);
+        wipe(e, sizeof e);
+        wipe(t, sizeof t);
+        wipe(v, sizeof v);
+        wipe(rsw, sizeof rsw);
+    }
+
+    static void hash_g(uint8_t theta[64], const uint8_t *m, const uint8_t *ek, const uint8_t *salt) {
+        const uint8_t *parts[3] = {m, ek, salt};
+        size_t lens[3] = {P::K, EK, SALT};
+        shake512(theta, DOM_G4, parts, lens, 3);
+    }
+    static void hash_k(uint8_t ss[64], const uint8_t *m, const uint8_t *uv) {
+        const uint8_t *parts[2] = {m, uv};
+        size_t lens[2] = {P::K, P::NBYTES + P::N1N2BYTES};
+        shake512(ss, DOM_K4, parts, lens, 2);
+    }
+
+    static void encaps(uint8_t *ct, uint8_t ss[64], const uint8_t *ek, const uint8_t *m, const uint8_t *salt) {
+        uint8_t theta[64];
+        hash_g(theta, m, ek, salt);
+        pke_encrypt(ct, ek, m, theta);
+        std::memcpy(ct + P::NBYTES + P::N1N2BYTES, salt, SALT);
+        hash_k(ss, m, ct);
+        wipe(theta, sizeof theta);
+    }
+
+    static void decaps(uint8_t ss[64], const uint8_t *dk, const uint8_t *ct) {
+        const uint8_t *sigma = dk + SEED;
+        const uint8_t *ek = dk + SEED + P::K;
+        uint64_t x[NW], y[NW], u[NW], t[NW];
+        uint64_t v[P::N1N2W];
+        uint8_t m[P::K], theta[64], mc[P::K], rsw[P::N1];
+        uint8_t ct2[P::NBYTES + P::N1N2BYTES];
+        secret_xy(x, y, dk);
+        bytes_to_words(u, NW, ct, P::NBYTES);
+        bytes_to_words(v, P::N1N2W, ct + P::NBYTES, P::N1N2BYTES);
+        gf2x::mul<P>(t, y, u);
+        for (size_t i = 0; i < P::N1N2W; ++i) v[i] ^= t[i];
+        rm::decode<P>(rsw, v);
+        rs::decode<P>(m, rsw);
+        hash_g(theta, m, ek, ct + P::NBYTES + P::N1N2BYTES);
+        pke_encrypt(ct2, ek, m, theta);
+        uint64_t keep = ct_eq_mask(ct, ct2, P::NBYTES + P::N1N2BYTES); /* all ones when (u, v) = (u', v') */
+        uint8_t k8 = static_cast<uint8_t>(barrier(keep));
+        for (size_t i = 0; i < P::K; ++i) mc[i] = static_cast<uint8_t>((m[i] & k8) | (sigma[i] & static_cast<uint8_t>(~k8)));
+        hash_k(ss, mc, ct);
+        wipe(x, sizeof x);
+        wipe(y, sizeof y);
+        wipe(t, sizeof t);
+        wipe(v, sizeof v);
+        wipe(m, sizeof m);
+        wipe(mc, sizeof mc);
+        wipe(theta, sizeof theta);
+        wipe(rsw, sizeof rsw);
+        wipe(ct2, sizeof ct2);
+    }
+};
+
 } // namespace rmbl_hqc
 
 #endif
