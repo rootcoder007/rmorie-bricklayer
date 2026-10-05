@@ -67,6 +67,9 @@ bricklayer_parse_siu <- function(html) {
   if (!grepl("<", html, fixed = TRUE) && file.exists(html)) {
     html <- paste(readLines(html, warn = FALSE, encoding = "UTF-8"),
                   collapse = "\n")
+  } else if (!grepl("[<\n]", html) && grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)) {
+    # a mistyped path is not an empty report
+    stop("`html`: no such file: ", html, call. = FALSE)
   }
   .Call(C_rmbl_siu_parse_html, html)
 }
@@ -90,6 +93,8 @@ bricklayer_parse_siu <- function(html) {
 #' }
 #' @export
 bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
+  lang <- match.arg(lang)  # argument errors, before any network
+  drid <- .rmbl_drid(drid)
   dest <- tempfile(fileext = ".html")
   on.exit(unlink(dest), add = TRUE)
   ok <- tryCatch(bricklayer_fetch_siu(drid, dest, lang = lang),

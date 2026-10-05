@@ -64,5 +64,5 @@ identical(json_gzip_decode(bytes, raw = TRUE)$rows$id, 1:50)
 \seealso{
 \code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}},
 \code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}}
-for a lossless but uncompressed form.
+for an uncompressed form that keeps types and attributes.
 }

@@ -220,6 +220,7 @@ reference:
       - core_hawkes_fit
       - core_hawkes_residuals
       - core_uniforms
+      - core_hawkes_jitter
   - title: Distributional drift
     desc: >
       Whether a freshly fetched column is still the column the capsule was

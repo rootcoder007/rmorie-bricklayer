@@ -942,8 +942,10 @@ struct HawkesKernel {
             lp1 = std::log(p1);
         }
     }
-    // density and d(density)/d(psi); false when the term is exactly 0
+    // density and d(density)/d(psi); false when the term is exactly 0, and outside the
+    // support (u <= 0): an event does not excite one at the same instant
     bool dens(double u, double &g, double &d0, double &d1) const {
+        if (!(u > 0.0)) return false;
         switch (kind) {
         case 0: {
             const double e = std::exp(-p0 * u);
@@ -1114,12 +1116,20 @@ inline double hawkes_eval(const double *t, std::size_t n, double T, const double
         if (2 * soe_s.size() > n) soe = false;
     }
     if (kind == 0 && method != 2) {
-        // Ozaki: A_i = sum e^{-b d}, B_i = sum d e^{-b d}
-        double A = 0.0, B = 0.0;
+        // Ozaki: A_i = sum e^{-b d}, B_i = sum d e^{-b d}, over the events strictly before t_i
+        // (an event does not excite one at the same instant): `tie` counts the events at
+        // t_{i-1}, which join the sum only once time moves on
+        double A = 0.0, B = 0.0, tie = 1.0;
         for (std::size_t i = 1; i < n; ++i) {
-            const double dt = t[i] - t[i - 1], e = std::exp(-psi[0] * dt);
-            B = e * (B + dt * (A + 1.0));
-            A = e * (A + 1.0);
+            const double dt = t[i] - t[i - 1];
+            if (dt > 0.0) {
+                const double e = std::exp(-psi[0] * dt);
+                B = e * (B + dt * (A + tie));
+                A = e * (A + tie);
+                tie = 1.0;
+            } else {
+                tie += 1.0;
+            }
             S[i] = psi[0] * A;
             D0[i] = A - psi[0] * B;
         }
@@ -1150,13 +1160,17 @@ inline double hawkes_eval(const double *t, std::size_t n, double T, const double
             }
         }
         std::vector<double> A(K, 0.0), B(K, 0.0);
+        double tie = 1.0;  // events at t_{i-1}: strictly earlier events only, as the Ozaki loop
         for (std::size_t i = 1; i < n; ++i) {
             const double dt = t[i] - t[i - 1];
+            const bool moved = dt > 0.0;
             double si = 0.0, d0 = 0.0, d1 = 0.0;
             for (std::size_t m = 0; m < K; ++m) {
-                const double e = std::exp(-rate[m] * dt);
-                if (kind == 2) B[m] = e * (B[m] + dt * (A[m] + 1.0));
-                A[m] = e * (A[m] + 1.0);
+                if (moved) {
+                    const double e = std::exp(-rate[m] * dt);
+                    if (kind == 2) B[m] = e * (B[m] + dt * (A[m] + tie));
+                    A[m] = e * (A[m] + tie);
+                }
                 si += w[m] * A[m];
                 d0 += dw0[m] * A[m];
                 d1 += dw1[m] * A[m] - (kind == 2 ? w[m] * B[m] : 0.0);
@@ -1164,6 +1178,7 @@ inline double hawkes_eval(const double *t, std::size_t n, double T, const double
             S[i] = si;
             D0[i] = d0;
             D1[i] = d1;
+            tie = moved ? 1.0 : tie + 1.0;
         }
     } else {
         // soe on a kernel it cannot represent (gamma with shape >= 1, or fewer than 2K events) truncates
@@ -1534,6 +1549,7 @@ inline double hawkes_fit_pbfgs(const double *t, std::size_t n, double T, int bki
     };
     reset();
     bool first = true, scale_h0 = true, just_reset = false;
+    std::vector<char> fr_prev;
     int it = 0, slow = 0;
     for (it = 1; it <= maxiter; ++it) {
         double pg = 0.0;
@@ -1541,6 +1557,16 @@ inline double hawkes_fit_pbfgs(const double *t, std::size_t n, double T, int bki
         if (pg < gtol) break;
         std::vector<char> fr(d);
         for (int i = 0; i < d; ++i) fr[i] = !((xv[i] <= lo[i] && g[i] > 0) || (xv[i] >= hi[i] && g[i] < 0));
+        // a variable joining or leaving its bound changes the subspace the BFGS matrix models:
+        // start it afresh there (curvature learned with the variable free mis-scales the rest; a
+        // Lomax fit drifting to the bound on alpha crawled through 1,164 iterations along the ridge)
+        if (fr != fr_prev) {
+            if (!fr_prev.empty()) {
+                reset();
+                first = scale_h0 = true;
+            }
+            fr_prev = fr;
+        }
         double slope = 0.0;
         for (int i = 0; i < d; ++i) {
             double acc = 0.0;

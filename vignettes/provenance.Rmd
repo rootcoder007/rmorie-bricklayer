@@ -116,6 +116,9 @@ signing_key$next_index
 
 s2 <- capsule_sign(core_sha256("a second manifest"), signing_key)
 capsule_verify(core_sha256("a second manifest"), s2, pub)
+
+# and forward again, for the next signature
+signing_key <- s2$key_state
 ```
 
 An exhausted key is an error rather than a silent wrap-around:

@@ -309,7 +309,8 @@ bricklayer_json_base64url_dec <- function(input) {
   if (any(grepl("[^A-Za-z0-9_=-]", gsub("[\r\n]", "", input)))) {
     stop("`input` is not base64url text", call. = FALSE)
   }
-  text <- gsub("[\r\n]", "", chartr("-_", "+/", input))[[1]]
+  if (!length(input)) return(bricklayer_json_base64_dec(input))
+  text <- paste(gsub("[\r\n]", "", chartr("-_", "+/", input)), collapse = "")
   mod <- nchar(text) %% 4L
   if (mod > 0L) text <- paste0(text, strrep("=", 4L - mod))
   bricklayer_json_base64_dec(text)
@@ -416,6 +417,7 @@ bricklayer_json_base64url_dec <- function(input) {
   }
   if (inherits(x, "Date")) {
     out <- if (identical(o$Date, "epoch")) unclass(x) else format(x)
+    o$always_decimal <- FALSE
     return(.rmbl_json_as(out, o, collapse, na, oldna, auto_unbox, indent))
   }
   if (inherits(x, "POSIXt")) {
@@ -425,7 +427,7 @@ bricklayer_json_base64url_dec <- function(input) {
       o2 <- o
       o2$digits <- NA
       o2$always_decimal <- FALSE
-      tmp <- .rmbl_json_as(df, o2, collapse = FALSE, na = na, oldna = oldna, indent = indent)
+      tmp <- .rmbl_json_as(df, o2, collapse = FALSE, na = na, oldna = oldna, indent = NA_integer_)
       tmp[is.na(x)] <- .rmbl_json_as(NA_character_, o, collapse = FALSE, na = na)
       return(if (isTRUE(collapse)) .rmbl_json_collapse(tmp, inner = FALSE, indent = indent) else tmp)
     }
@@ -497,7 +499,8 @@ bricklayer_json_base64url_dec <- function(input) {
 .rmbl_json_as_num <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
     message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
-    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = indent))
+    o$always_decimal <- FALSE
+    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
   na <- if (is.null(na)) "string" else match.arg(na, c("string", "null", "NA"))
   nas <- switch(na, string = TRUE, null = FALSE, "NA" = NA)
@@ -510,7 +513,7 @@ bricklayer_json_base64url_dec <- function(input) {
 .rmbl_json_as_chr <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
     message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
-    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = indent))
+    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
   tmp <- .rmbl_json_esc(as.character(x))
   miss <- which(is.na(x))
@@ -525,7 +528,7 @@ bricklayer_json_base64url_dec <- function(input) {
 .rmbl_json_as_lgl <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
     message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
-    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = indent))
+    return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
   na <- if (is.null(na)) "null" else match.arg(na, c("null", "string", "NA"))
   tmp <- ifelse(x, "true", "false")
@@ -556,11 +559,15 @@ bricklayer_json_base64url_dec <- function(input) {
   if (raw == "mongo") {
     type <- if (length(attr(x, "type"))) attr(x, "type") else 5
     return(.rmbl_json_as(list(`$binary` = bricklayer_json_unbox(bricklayer_json_base64_enc(x)),
-                           `$type` = bricklayer_json_unbox(as.character(type))), o))
+                           `$type` = bricklayer_json_unbox(as.character(type))), o, indent = NA_integer_))
   }
-  if (raw == "hex") return(.rmbl_json_as(format(as.hexmode(as.integer(x)), width = 2L), o, collapse, na, oldna, auto_unbox, indent))
+  if (raw == "hex") return(.rmbl_json_as(as.character.hexmode(x), o, collapse, na, oldna, auto_unbox, indent))
   if (raw == "int") return(.rmbl_json_as(as.integer(x), o, collapse, na, oldna, auto_unbox, indent))
-  if (raw == "js") return(paste0("(new Uint8Array(", .rmbl_json_as(as.integer(x), o, collapse = TRUE), "))"))
+  if (raw == "js") {
+    o$always_decimal <- FALSE
+    return(paste0("(new Uint8Array(", .rmbl_json_as(as.integer(x), o, collapse = TRUE, na = NULL,
+                                                  auto_unbox = FALSE, indent = NA_integer_), "))"))
+  }
   .rmbl_json_as(bricklayer_json_base64_enc(x), o, collapse, na, oldna, auto_unbox, indent)
 }
 #' @noRd
@@ -612,6 +619,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @noRd
 .rmbl_json_as_df <- function(x, o, collapse, na, oldna, indent, keep_vec_names) {
   dataframe <- o$dataframe
+  o$keep_vec_names <- FALSE
   has_names <- identical(length(names(x)), ncol(x))
   rn <- attr(x, "row.names")
   if (isTRUE(o$rownames) || (is.null(o$rownames) && is.character(rn) && !all(grepl("^\\d+$", rn)))) {
@@ -626,7 +634,7 @@ bricklayer_json_base64url_dec <- function(input) {
   if (is.null(na) || !length(na) || identical(na, "NA")) oldna <- NULL else oldna <- na
   if (dataframe == "rows" && has_names) na <- if (is.null(na)) "NA" else match.arg(na, c("NA", "null", "string"))
   if (!nrow(x)) return(.rmbl_json_as(list(), o, collapse = collapse, indent = indent))
-  for (i in which(vapply(x, is.raw, logical(1)))) x[[i]] <- format(as.hexmode(as.integer(x[[i]])), width = 2L)
+  for (i in which(vapply(x, is.raw, logical(1)))) x[[i]] <- as.character.hexmode(x[[i]])
   if (identical(o$complex, "list"))
     for (i in which(vapply(x, is.complex, logical(1))))
       x[[i]] <- data.frame(real = Re(x[[i]]), imaginary = Im(x[[i]]))
@@ -1675,7 +1683,7 @@ bricklayer_json_rbind_pages <- function(pages) {
   output
 }
 
-#' Lossless JSON serialisation of an R object
+#' JSON serialisation of an R object, type and attributes included
 #'
 #' Writes an R object to JSON with its type and attributes alongside the
 #' value, so the round trip returns THE SAME OBJECT rather than something
@@ -1693,7 +1701,12 @@ bricklayer_json_rbind_pages <- function(pages) {
 #'
 #' @param x Object to serialise.
 #' @param digits Decimal digits retained for doubles (default
-#' 8, the jsonlite default). Raise it where full precision matters.
+#' 8, the jsonlite default, so `1/3` is written as `0.33333333`).
+#' `digits = I(17)` writes every double exactly (17 significant digits),
+#' which makes the round trip `identical()` for doubles too; `NA`
+#' means 15 significant digits, as in jsonlite, and is not exact.
+#' A complex value with only one `NA` part comes back as `NA`, as it
+#' does in jsonlite.
 #' @param pretty Indent the output.
 #' @param txt JSON produced by
 #' `bricklayer_json_serialize()`.
@@ -1721,6 +1734,11 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
 #' identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
 #'
+#' # Doubles are rounded to `digits`; I(17) keeps them exact.
+#' bricklayer_json_serialize(1/3)
+#' exact <- bricklayer_json_serialize(1/3, digits = I(17))
+#' identical(bricklayer_json_unserialize(exact), 1/3)
+#'
 #' # The serialised form is JSON, so it can be pinned like any other text.
 #' nchar(core_sha256(bricklayer_json_serialize(m)))
 #' @name rmbl_json_serialize
@@ -1731,5 +1749,10 @@ bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {
 
 #' @rdname rmbl_json_serialize
 #' @export
-bricklayer_json_unserialize <- function(txt) .rmbl_json_unpack(.rmbl_json_parse(txt))
+bricklayer_json_unserialize <- function(txt) {
+  if (!is.character(txt) || length(txt) != 1L || is.na(txt)) {
+    stop("`txt` must be one string of JSON from bricklayer_json_serialize()", call. = FALSE)
+  }
+  .rmbl_json_unpack(.rmbl_json_parse(txt))
+}
 

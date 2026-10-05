@@ -70,7 +70,21 @@
     }
     x <- v
   }
-  if (integer) as.integer(x) else as.numeric(x)
+  if (!integer) return(as.numeric(x))
+  # a count, not a flag: as.numeric(TRUE) is 1
+  if (is.logical(x) && any(!is.na(x))) {
+    stop(sprintf("`%s` must be a whole number, not %s", what, format(x[!is.na(x)][1L])), call. = FALSE)
+  }
+  # a whole number: as.integer() would read 2.5 as 2 and pick another setting silently, and
+  # turn Inf or 1e10 into NA with a coercion warning
+  x <- as.numeric(x)
+  frac <- (is.finite(x) & x != floor(x)) | is.infinite(x)
+  if (any(frac)) stop(sprintf("`%s` must be a whole number, not %s", what, format(x[frac][1L])), call. = FALSE)
+  big <- !is.na(x) & abs(x) > .Machine$integer.max
+  if (any(big)) {
+    stop(sprintf("`%s` is too large: %s (the limit is 2147483647)", what, format(x[big][1L])), call. = FALSE)
+  }
+  as.integer(x)
 }
 
 # A file the function reads: one path that exists and is a file (not a directory)

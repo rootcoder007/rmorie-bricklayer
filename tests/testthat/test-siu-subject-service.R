@@ -95,3 +95,12 @@ test_that("a legacy report's Police service header decides", {
             "Notification of the SIU The Riverton Police Service notified the SIU."),
     "Elmwood")
 })
+
+test_that("the OPP has one French name, whether a report spells it out or refers back to it", {
+  page <- function(...) paste0("<html><body>", paste0("<p>", c(...), "</p>", collapse = ""), "</body></html>")
+  short <- page("Témoins civils", "Agents impliqués", "Notification de l’UES",
+                "La Police provinciale de l’Ontario a avisé l’UES.",
+                "Analyse et décision du directeur",
+                "La Police provinciale a avisé l’UES que deux de ses agents, l’AI, étaient impliqués.")
+  expect_identical(bricklayer_parse_siu(short)[["police_service"]], "Police provinciale de l\x27Ontario")
+})

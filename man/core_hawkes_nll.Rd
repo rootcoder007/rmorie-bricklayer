@@ -49,8 +49,10 @@ intensity ( \eqn{\nu = e^{a0}}) and \code{eta} the branching ratio in
 (0, 1) -- the expected number of children per event, so the process is
 stationary only for \code{eta < 1}. The remaining entries are the
 kernel's own shape parameters: \code{beta} (exponential),
-\verb{alpha, lambda} (Weibull), \verb{alpha, c} (Lomax),
-\verb{alpha, beta} (gamma).
+\verb{alpha, lambda} (Weibull: shape and scale), \verb{alpha, c} (Lomax: shape
+and scale, \eqn{g(u) = \alpha c^\alpha (u + c)^{-(\alpha + 1)}}),
+\verb{alpha, beta} (gamma: shape and rate). This is the likelihood
+\code{\link[=core_hawkes_fit]{core_hawkes_fit()}} maximises, on the same parameters.
 }
 \examples{
 set.seed(4)

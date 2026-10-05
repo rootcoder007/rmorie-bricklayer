@@ -248,7 +248,7 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
 #' [core_sha256()] for hashing text or bytes
 #' directly,
 #' [bricklayer_json_serialize()]
-#' for a readable lossless form.
+#' for a readable form that keeps types and attributes.
 #' @examples
 #' digest_object(list(a = 1L, b = "x"))
 #'

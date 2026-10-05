@@ -306,7 +306,8 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' serves all three). Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an
-#'     email; stored as is.
+#'     email. It is checked with the gateway first and stored only when
+#'     the gateway accepts it; a refused key, or no answer, stores nothing.
 #'   \item \code{email}: a 6-digit code is sent to the address (valid
 #'     ten minutes, single use); you type it, or pass \code{code}.
 #'   \item neither: the GitHub device flow; a code is shown to enter at

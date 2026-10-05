@@ -53,5 +53,5 @@ digest_object(data.frame(x = 1:3))
 \code{\link[=core_sha256]{core_sha256()}} for hashing text or bytes
 directly,
 \code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}}
-for a readable lossless form.
+for a readable form that keeps types and attributes.
 }

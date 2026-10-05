@@ -66,7 +66,8 @@ test_that("encoder class paths: POSIXlt, hms, blob, mongo dates, matrix in data.
   expect_identical(to(dfm, matrix = "columnmajor"), '[{"id":1,"m":[1,3]},{"id":2,"m":[2,4]}]')
   dfr <- data.frame(id = 1:2)
   dfr$r <- as.raw(c(1, 255))
-  expect_identical(to(dfr), '[{"id":1,"r":"01"},{"id":2,"r":"ff"}]')
+  # jsonlite writes a raw column with as.character.hexmode(): no zero padding
+  expect_identical(to(dfr), '[{"id":1,"r":"1"},{"id":2,"r":"ff"}]')
   dfc <- data.frame(id = 1:2)
   dfc$z <- c(1 + 2i, 3 - 1i)
   expect_identical(to(dfc, complex = "list"), '[{"id":1,"z":{"real":1,"imaginary":2}},{"id":2,"z":{"real":3,"imaginary":-1}}]')

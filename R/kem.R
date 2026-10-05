@@ -261,11 +261,11 @@ print.bricklayer_kem_capsule <- function(x, ...) {
 # rather than select a default: the level is not recorded in the
 # ciphertext, so the two sides have to agree by other means.
 .rmbl_kem_level <- function(level) {
-  level <- suppressWarnings(as.integer(level)[1L])
-  if (is.na(level) || !level %in% c(512L, 768L, 1024L)) {
-    stop("`level` must be 512, 768 or 1024", call. = FALSE)
-  }
-  level
+  # one whole number: as.integer() read c(512, 768) as 512 and 512.5 as 512
+  ok <- is.numeric(level) && length(level) == 1L && !is.na(level) && level == round(level) &&
+    level %in% c(512, 768, 1024)
+  if (!ok) stop("`level` must be one of 512, 768 or 1024", call. = FALSE)
+  as.integer(level)
 }
 
 .rmbl_kem_key_level <- function(key) {

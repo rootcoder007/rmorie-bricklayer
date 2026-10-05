@@ -71,12 +71,22 @@ jobs:
             } else cat("OTIS datasets cached\n")'
           ls "$CACHE/otis" | wc -l
 
+      # Statistics Canada answers scripted downloads with a browser challenge (403 since
+      # 2026-10); the same file (Statistics Canada Open Licence) is mirrored on
+      # data.rmorie.com behind the MORIE key. Either copy must match the checksum.
       - name: Fetch the census division boundary file
+        env:
+          MORIE_KEY: ${{ secrets.MORIE_SMOKE_KEY }}
         run: |
           mkdir -p "$CACHE/shp"
           if [ ! -s "$CACHE/shp/lcd_000b21a_e.shp" ]; then
-            curl -sSfL --retry 3 -o "$CACHE/shp/lcd.zip" \
-              "https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/files-fichiers/lcd_000b21a_e.zip"
+            if ! curl -sSfL --retry 3 -o "$CACHE/shp/lcd.zip" \
+              "https://www12.statcan.gc.ca/census-recensement/2021/geo/sip-pis/boundary-limites/files-fichiers/lcd_000b21a_e.zip"; then
+              echo "Statistics Canada refused the download; using the data.rmorie.com mirror"
+              curl -sSfL --retry 3 -H "Authorization: Bearer $MORIE_KEY" -o "$CACHE/shp/lcd.zip" \
+                "https://data.rmorie.com/files/statcan/lcd_000b21a_e.zip"
+            fi
+            echo "1b638cea73fbf8349ba908d86be678272b2abcc74240fb0dfd9daf7a28457ad0  $CACHE/shp/lcd.zip" | sha256sum -c -
             unzip -o -q "$CACHE/shp/lcd.zip" -d "$CACHE/shp"
           fi
           ls -la "$CACHE/shp"

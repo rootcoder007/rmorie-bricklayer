@@ -635,7 +635,12 @@ signing_public_key <- function(key) {
 #' An XMSS signature consumes a leaf. The returned object therefore carries
 #' `key_state`, the key with `next_index` advanced, and
 #' **subsequent signing must use that** -- reusing an index breaks the
-#' scheme. Passing an exhausted key is an error, not a silent wrap-around.
+#' scheme. The key is an R value, so `capsule_sign()` cannot advance the
+#' caller's copy; instead it remembers, for the session, the highest index
+#' each key has signed with and refuses that index or an earlier one (signing
+#' twice with one key object, or with a stale copy). Across sessions the
+#' saved key must be the latest `key_state`: save it after every signature.
+#' Passing an exhausted key is an error, not a silent wrap-around.
 #'
 #' @param message Length-1 character vector (or raw vector)
 #' to sign.
@@ -735,7 +740,12 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   if (!inherits(key, "bricklayer_signing_key")) {
     stop("`scheme = \"xmss\"` needs a key from pqc_keygen()", call. = FALSE)
   }
-  idx <- as.integer(key$next_index)
+  idx <- key$next_index
+  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx)) {
+    stop("this key's `next_index` is not a whole number >= 0: the key state is damaged; ",
+         "do not hand-edit it", call. = FALSE)
+  }
+  idx <- as.integer(idx)
   if (idx >= key$capacity) {
     stop(sprintf(paste0("this key is exhausted: a height-%d key signs %d ",
                         "messages and all of them are used. Generate a new ",
@@ -754,6 +764,18 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                 "cannot produce a conformant signature; generate a new ",
                 "one with pqc_keygen()"), call. = FALSE)
   }
+  # an index must never sign twice (RFC 8391; NIST SP 800-208 section 8.1): the key is a
+  # copied value, so this session remembers the highest index each key has used and refuses
+  # an older state -- signing twice with one key object, or with a stale copy
+  kid <- paste0(key$root, ":", key$pub_seed)
+  used <- .rmbl_xmss_used[[kid]]
+  if (!is.null(used) && idx <= used) {
+    stop(sprintf(paste0("index %d of this key was already used in this session: signing it again ",
+                        "would break the scheme. Carry the key forward with the `key_state` of ",
+                        "its last signature (next index %d)."), idx, used + 1L), call. = FALSE)
+  }
+  # retire the index before the signature exists (RFC 8391's order)
+  assign(kid, idx, envir = .rmbl_xmss_used)
   res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
                as.integer(key$height), idx, message)
   advanced <- key
@@ -923,3 +945,6 @@ capsule_verify <- function(message, signature, key, context = NULL,
   }
   tolower(seed)
 }
+
+# the highest XMSS index each key (root:pub_seed) has signed with in this session
+.rmbl_xmss_used <- new.env(parent = emptyenv())

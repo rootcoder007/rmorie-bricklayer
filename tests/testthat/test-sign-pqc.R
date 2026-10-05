@@ -264,3 +264,32 @@ test_that("a signed manifest digest is the intended end-to-end use", {
   expect_true(capsule_verify(root, rsig, pub))
   expect_false(capsule_verify(merkle_root(c(chunks[1:2], "3,5")), rsig, pub))
 })
+
+test_that("an XMSS index never signs twice: one key object, or a stale copy, is refused", {
+  key <- pqc_keygen(height = 3)
+  s1 <- capsule_sign("message one", key)
+  expect_identical(s1$index, 0L)
+  # the same key object again: index 0 is spent
+  expect_error(capsule_sign("message two", key), "index 0 of this key was already used")
+  s2 <- capsule_sign("message two", s1$key_state)
+  expect_identical(s2$index, 1L)
+  # a stale copy (the state after the first signature) is refused too
+  expect_error(capsule_sign("message three", s1$key_state), "index 1 of this key was already used")
+  s3 <- capsule_sign("message three", s2$key_state)
+  expect_identical(s3$index, 2L)
+  pub <- signing_public_key(key)
+  expect_true(all(c(capsule_verify("message one", s1, pub), capsule_verify("message two", s2, pub),
+                    capsule_verify("message three", s3, pub))))
+  # another key is independent
+  other <- pqc_keygen(height = 2)
+  expect_identical(capsule_sign("m", other)$index, 0L)
+})
+
+test_that("a damaged next_index is refused in words", {
+  key <- pqc_keygen(height = 2)
+  for (bad in list(NA, -1L, 1.5, c(0L, 1L), "0")) {
+    k <- key
+    k$next_index <- bad
+    expect_error(capsule_sign("m", k), "not a whole number >= 0", info = deparse(bad))
+  }
+})

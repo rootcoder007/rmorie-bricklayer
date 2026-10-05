@@ -35,13 +35,19 @@
 bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"),
                                  wayback = "", timeout = 120L) {
   lang <- match.arg(lang)
-  did <- if (length(drid) == 1L) suppressWarnings(as.integer(drid)) else NA_integer_
-  if (is.na(did) || did <= 0L) {
-    stop("`drid` must be one positive report number (the drid in the SIU report URL)", call. = FALSE)
-  }
+  did <- .rmbl_drid(drid)
   dest <- .rmbl_string1(dest, "dest")
   url <- sprintf(
     "https://www.siu.on.ca/%s/directors_report_details.php?drid=%d",
     lang, did)
   bricklayer_fetch(url, dest, wayback = wayback, timeout = timeout)
+}
+
+# One positive whole report number: as.integer() would read 1.5 as 1 and fetch another report.
+.rmbl_drid <- function(drid) {
+  v <- if (length(drid) == 1L && !is.logical(drid)) suppressWarnings(as.numeric(drid)) else NA_real_
+  if (is.na(v) || !is.finite(v) || v != floor(v) || v <= 0 || v > .Machine$integer.max) {
+    stop("`drid` must be one positive report number (the drid in the SIU report URL)", call. = FALSE)
+  }
+  as.integer(v)
 }

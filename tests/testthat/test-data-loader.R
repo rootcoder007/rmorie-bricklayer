@@ -327,3 +327,23 @@ test_that("friendly_download names a refused connection as one, not as a DNS fai
   expect_true(any(grepl("Could not connect to the server", out)))
   expect_false(any(grepl("DNS lookup failed", out)))
 })
+
+test_that("friendly_download with the Wayback fallback off says so, and claims no lookup", {
+  skip_if_cannot_mock()
+  testthat::local_mocked_bindings(
+    .bl_fetch_file = function(...) stop("HTTP 404"),
+    wayback_snapshot_url = function(...) stop("must not be called")
+  )
+  for (off in list(FALSE, "")) {
+    out <- capture.output(type = "message", ok <- friendly_download("https://example.org/x.csv", tempfile(),
+                                                                    attempt_wayback = off))
+    expect_false(ok)
+    expect_true(any(grepl("switched off", out)))
+    expect_false(any(grepl("no snapshot", out)))
+  }
+  # the default looks one up, and says when there is none
+  testthat::local_mocked_bindings(wayback_snapshot_url = function(...) NULL)
+  out <- capture.output(type = "message", ok <- friendly_download("https://example.org/x.csv", tempfile()))
+  expect_false(ok)
+  expect_true(any(grepl("no snapshot", out)))
+})
