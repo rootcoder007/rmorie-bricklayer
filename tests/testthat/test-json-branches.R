@@ -112,7 +112,8 @@ test_that("parser rejects what yajl rejects, with a position", {
   expect_identical(v, 1L)
   expect_identical(bricklayer_json_from_json("\x1e[1]"), 1L)
   expect_identical(bricklayer_json_from_json("\"\\ud83d\\ude00\""), "\U0001F600")
-  expect_identical(bricklayer_json_from_json("\"\\ud83d x\""), paste0(intToUtf8(0xD83D), " x"))
+  # an unpaired surrogate is not a character: refused, not the text "NA"
+  expect_error(bricklayer_json_from_json("\"\\ud83d x\""), "lone surrogate")
   expect_identical(bricklayer_json_from_json("[1,2]", simplify = FALSE), list(1L, 2L))
   expect_identical(bricklayer_json_from_json("[-9007199254740993]", bigint_as_char = TRUE), "-9007199254740993")
   expect_identical(bricklayer_json_from_json("[123456789012]"), 123456789012)
@@ -160,7 +161,8 @@ test_that("prettify/minify report yajl-style errors and handle escapes", {
 })
 
 test_that("serializer covers every storage mode digest of an R object needs", {
-  rt <- function(x) bricklayer_json_unserialize(bricklayer_json_serialize(x))
+  # code-bearing types need trusted = TRUE; this is JSON this session wrote
+  rt <- function(x) bricklayer_json_unserialize(bricklayer_json_serialize(x), trusted = TRUE)
   f <- function(a, b = 2) a + b
   g <- rt(f)
   expect_identical(g(1), 3)

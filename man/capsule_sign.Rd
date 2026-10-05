@@ -84,6 +84,17 @@ saved key must be the latest \code{key_state}: save it after every signature.
 Passing an exhausted key is an error, not a silent wrap-around.
 }
 
+\section{Security}{
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+}
+
 \examples{
 # Symmetric: one shared secret.
 sig <- capsule_sign("sha256:abc123", key = "shared-secret",

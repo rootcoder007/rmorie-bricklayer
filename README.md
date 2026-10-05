@@ -163,7 +163,7 @@ and a digest anyone can recompute says nothing about who produced the data.
   [Verification](#verification).
 - **Deterministic random bits** — `drbg_new()`, `drbg_generate()` and
   `drbg_reseed()`: the AES-256 CTR_DRBG of NIST SP 800-90A (no derivation
-  function), with constant-time AES and AES-NI on x86-64. The same entropy
+  function), with a table-free AES written to run in constant time, and AES-NI on x86-64. The same entropy
   gives the same bytes, which is what reproducible key generation and
   known-answer tests need; `random_bytes()` reads the operating system's
   generator for keys meant to stay secret.
@@ -195,6 +195,24 @@ and a digest anyone can recompute says nothing about who produced the data.
   `bricklayer_data_load("db/table")` opens one with your MORIE key, cached
   locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
+
+## Security posture
+
+Everything cryptographic in this package is a hand-written implementation:
+ML-KEM, ML-DSA, SLH-DSA, HQC, XMSS, the CTR_DRBG, SHA-2, SHA-3, BLAKE2b,
+ECDSA and RSA verification, the ASN.1/DER parser and the X.509 / OCSP /
+timestamp stack. It has had **no third-party security audit and no
+side-channel evaluation**. What has been checked is correctness: the
+standardised schemes are byte-identical to OpenSSL 3.5 and reproduce the
+NIST known-answer vectors (next section), and the suite runs under
+AddressSanitizer and UndefinedBehaviorSanitizer in CI. Where this document
+or a help page says "constant time", read it as the design the code
+follows (table-free S-boxes, masked shifts, constant-time tag comparison),
+not as a property anyone has measured -- HQC's valgrind check is the one
+exception, and one module does not license a package-wide claim. Use the
+schemes for provenance and research; for anything where a key's secrecy
+is load-bearing, prefer an audited library and keep this one's output as
+a cross-check.
 
 ## Verification
 

@@ -12,6 +12,8 @@ build/
 *.Rcheck/
 
 # Compiled C/C++ objects (src/ is source-only)
+# written by ./configure from src/Makevars.in
+src/Makevars
 *.o
 *.so
 *.dll

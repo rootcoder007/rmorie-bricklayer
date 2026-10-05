@@ -93,6 +93,14 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' sig2 <- capsule_sign("a manifest digest", key, context = "release")
 #' capsule_verify("a manifest digest", sig2, key, context = "release")
 #' capsule_verify("a manifest digest", sig2, key, context = "staging")
+#' @section Security:
+#' A hand-written implementation. The standardised schemes are checked byte
+#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' suite, which establishes correctness, not resistance to side channels:
+#' no third-party security audit and no timing or leakage analysis has been
+#' done. Use it for provenance and research, and read any constant-time
+#' wording in this documentation as a design intent, not a verified
+#' property.
 #' @export
 fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
@@ -451,6 +459,14 @@ fips_sizes <- function(scheme) {
 #' # Deprecated: use fips_keygen().
 #' key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
 #' key$scheme
+#' @section Security:
+#' A hand-written implementation. The standardised schemes are checked byte
+#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' suite, which establishes correctness, not resistance to side channels:
+#' no third-party security audit and no timing or leakage analysis has been
+#' done. Use it for provenance and research, and read any constant-time
+#' wording in this documentation as a design intent, not a verified
+#' property.
 #' @export
 oqs_keygen <- function(scheme = "ML-DSA-65") {
   .Deprecated("fips_keygen")
@@ -558,6 +574,14 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' s1 <- paste(rep("11", 32), collapse = "")
 #' s2 <- paste(rep("22", 32), collapse = "")
 #' identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
+#' @section Security:
+#' A hand-written implementation. The standardised schemes are checked byte
+#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' suite, which establishes correctness, not resistance to side channels:
+#' no third-party security audit and no timing or leakage analysis has been
+#' done. Use it for provenance and research, and read any constant-time
+#' wording in this documentation as a design intent, not a verified
+#' property.
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
@@ -700,6 +724,14 @@ signing_public_key <- function(key) {
 #'
 #' # A signature does not transfer to another message.
 #' capsule_verify("manifest-1", s2, signing_public_key(key))
+#' @section Security:
+#' A hand-written implementation. The standardised schemes are checked byte
+#' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+#' suite, which establishes correctness, not resistance to side channels:
+#' no third-party security audit and no timing or leakage analysis has been
+#' done. Use it for provenance and research, and read any constant-time
+#' wording in this documentation as a design intent, not a verified
+#' property.
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                          deterministic = FALSE, prehash = "none") {

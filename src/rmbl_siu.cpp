@@ -62,14 +62,6 @@ SEXP C_rmbl_siu_to_iso_date(SEXP human) {
     return ans;
 }
 
-SEXP C_rmbl_siu_strip_boilerplate(SEXP text) {
-    const std::string out = siu::strip_boilerplate(as_string(text, "text"));
-    SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
-    SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
-    UNPROTECT(1);
-    return ans;
-}
-
 SEXP C_rmbl_siu_resolve_so(SEXP text) {
     const siu::SoResolution res =
         siu::resolve_subject_officials(as_string(text, "text"));

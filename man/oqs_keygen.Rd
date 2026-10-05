@@ -25,6 +25,17 @@ The schemes are no longer reached through liboqs -- they are implemented
 in this package -- and the name no longer describes anything, so use
 \code{\link[=fips_keygen]{fips_keygen()}} instead.
 }
+\section{Security}{
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+}
+
 \examples{
 # Deprecated: use fips_keygen().
 key <- suppressWarnings(oqs_keygen("ML-DSA-65"))

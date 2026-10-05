@@ -1,12 +1,12 @@
+# Generated from src/Makevars.in by ./configure -- edit the .in file.
 # std::optional/<regex> in the vendored SIU core need C++17.
 CXX_STD = CXX17
-# Portable: no GNU-make extensions (CRAN policy). -lcurl resolves once the
-# SystemRequirement libcurl (deb: libcurl4-openssl-dev, rpm: libcurl-devel)
-# is installed. There is nothing else to link: the post-quantum schemes
-# -- XMSS, ML-DSA (FIPS 204) and SLH-DSA (FIPS 205) -- are all
-# implemented in this directory, so there is no optional library to
-# detect and no ./configure step.
-PKG_LIBS = -lcurl
+# libcurl as ./configure found it (pkg-config, curl-config, or the bare
+# -lcurl). There is nothing else to link: the post-quantum schemes --
+# XMSS, ML-KEM (FIPS 203), ML-DSA (FIPS 204), SLH-DSA (FIPS 205), HQC --
+# are all implemented in this directory.
+PKG_CPPFLAGS = @CURL_CFLAGS@
+PKG_LIBS = @CURL_LIBS@
 
 # Header dependencies. R's default rules rebuild an object when its .cpp
 # changes but not when a header it includes changes; a warm build then

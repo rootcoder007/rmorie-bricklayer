@@ -39,6 +39,17 @@ The generator is an object that changes as it is used: every
 \code{\link[=drbg_generate]{drbg_generate()}} and
 \code{\link[=drbg_reseed]{drbg_reseed()}} advances it in place.
 }
+\section{Security}{
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+}
+
 \examples{
 # NIST's rng.c, as the post-quantum known-answer files use it: vector 0's seed
 d <- drbg_new(as.raw(0:47))

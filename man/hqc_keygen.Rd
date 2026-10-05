@@ -70,6 +70,17 @@ ciphertexts are not interchangeable with v5's. It reproduces that
 revision's 300 official known-answer vectors (the package's tests check
 them); use it to exchange keys with software built on it, and v5 otherwise.
 }
+\section{Security}{
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+}
+
 \examples{
 key <- hqc_keygen(1)
 pub <- hqc_public_key(key)

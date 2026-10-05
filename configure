@@ -1,0 +1,54 @@
+#!/bin/sh
+# Unix build configuration for rmoriebricklayer: find libcurl.
+#
+# Makevars.win already asks pkg-config; this is the Unix half. Order:
+# an explicit override, pkg-config, curl-config, then the bare -lcurl that
+# works where libcurl's headers sit on the default search path. A compile
+# check follows whichever wins, so a missing development package is one
+# clear message rather than a wall of errors from rmbl_fetch.cpp.
+#
+#   CURL_CFLAGS=... CURL_LIBS=... R CMD INSTALL .   # override everything
+
+: "${PKG_CONFIG:=pkg-config}"
+if [ -n "$CURL_LIBS" ]; then
+  : # caller knows best
+elif "$PKG_CONFIG" --exists libcurl 2>/dev/null; then
+  CURL_CFLAGS=`"$PKG_CONFIG" --cflags libcurl`
+  CURL_LIBS=`"$PKG_CONFIG" --libs libcurl`
+elif command -v curl-config >/dev/null 2>&1; then
+  CURL_CFLAGS=`curl-config --cflags`
+  CURL_LIBS=`curl-config --libs`
+else
+  CURL_CFLAGS=""
+  CURL_LIBS="-lcurl"
+fi
+
+if [ -z "$R_HOME" ]; then
+  R_HOME=`R RHOME`
+fi
+CC=`"${R_HOME}/bin/R" CMD config CC`
+CFLAGS=`"${R_HOME}/bin/R" CMD config CFLAGS`
+CPPFLAGS=`"${R_HOME}/bin/R" CMD config CPPFLAGS`
+
+cat > conftest.c <<'EOF'
+#include <curl/curl.h>
+int main(void) { return curl_version() == 0; }
+EOF
+if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest >/dev/null 2>&1; then
+  rm -f conftest.c conftest
+  echo "------------------------- ANTICONF ERROR ---------------------------"
+  echo "Configuration failed: libcurl (headers and library) was not found."
+  echo "Install the development package and try again:"
+  echo " * deb:  libcurl4-openssl-dev (Debian, Ubuntu)"
+  echo " * rpm:  libcurl-devel (Fedora, CentOS, RHEL)"
+  echo " * brew: curl (macOS; then export PKG_CONFIG_PATH for its pkgconfig dir)"
+  echo "If libcurl is installed somewhere unusual, set CURL_CFLAGS and"
+  echo "CURL_LIBS, e.g.  CURL_CFLAGS=-I/opt/curl/include CURL_LIBS='-L/opt/curl/lib -lcurl'"
+  echo "--------------------------------------------------------------------"
+  exit 1
+fi
+rm -f conftest.c conftest
+
+sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|" -e "s|@CURL_LIBS@|$CURL_LIBS|" \
+    src/Makevars.in > src/Makevars
+exit 0

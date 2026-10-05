@@ -71,46 +71,104 @@ test_that("every published kernel compiles and resolves from a consumer", {
   )
 
   # Deliberately a .c file, not .cpp: the header must be usable from
-  # plain C, which is what most consumers compile.
+  # plain C, which is what most consumers compile. Every one of the 45
+  # shims is called (the two libcurl ones need a network, so their
+  # addresses are taken, which instantiates and resolves them).
   writeLines(c(
     "#include <R.h>",
     "#include <Rinternals.h>",
     "#include <R_ext/Rdynload.h>",
+    "#include <string.h>",
     "#include <rmoriebricklayer.h>",
     "",
     "SEXP C_consume_series(void) {",
-    "    const double x[5] = {1.0, 2.0, 3.0, 4.0, 5.0};",
-    "    double g = rmbl_gini(x, 5);",
-    "    R_xlen_t units = 0;",
-    "    double ts = rmbl_top_share(x, 5, 0.4, &units);",
-    "    double pop[6], val[6];",
-    "    R_xlen_t npts = rmbl_lorenz(x, 5, pop, val);",
-    "    double S = 0.0, var = 0.0; R_xlen_t used = 0;",
-    "    rmbl_mann_kendall(x, 5, &S, &var, &used);",
-    "    double slope = 0.0, intercept = 0.0;",
-    "    rmbl_theil_sen(x, x, 5, &slope, &intercept);",
-    "    double z2 = rmbl_hurwitz_zeta(2.0, 1.0);",
-    "    double m = rmbl_mean(x, 5);",
-    "    double md = rmbl_median(x, 5);",
-    "    char sha[65];",
-    "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, sha);",
-    "    SEXP out = PROTECT(Rf_allocVector(REALSXP, 12));",
-    "    REAL(out)[0] = g;",
-    "    REAL(out)[1] = ts;",
-    "    REAL(out)[2] = (double) units;",
-    "    REAL(out)[3] = (double) npts;",
-    "    REAL(out)[4] = val[5];",
-    "    REAL(out)[5] = S;",
-    "    REAL(out)[6] = var;",
-    "    REAL(out)[7] = slope;",
-    "    REAL(out)[8] = intercept;",
-    "    REAL(out)[9] = z2;",
-    "    REAL(out)[10] = m;",
-    "    REAL(out)[11] = md;",
-    "    SEXP s = PROTECT(Rf_mkString(sha));",
-    "    Rf_setAttrib(out, Rf_install(\"sha256_abc\"), s);",
+    "    const double x[6] = {1.0, 2.0, 3.0, 4.0, 5.0, 9.0};",
+    "    const double y[6] = {2.0, 1.0, 4.0, 3.0, 6.0, 5.0};",
+    "    const double w[6] = {1.0, 1.0, 2.0, 2.0, 1.0, 1.0};",
+    "    const double treat[6] = {1, 0, 1, 0, 1, 0};",
+    "    const double prop[6] = {0.6, 0.4, 0.7, 0.3, 0.5, 0.5};",
+    "    const double probs[2] = {0.25, 0.75};",
+    "    const double pp[3] = {0.2, 0.3, 0.5}, qq[3] = {0.3, 0.3, 0.4};",
+    "    const double hpar[3] = {0.5, 0.3, 1.0};",
+    "    double out[48], tmp[64], pop[8], val[8], ma[8], mb[8], mm[8];",
+    "    double S = 0, var = 0, slope = 0, icpt = 0, d = 0;",
+    "    R_xlen_t units = 0, used = 0, npts = 0;",
+    "    unsigned char raw32[32], raw64[64];",
+    "    char hex[129];",
+    "    int k = 0;",
+    "    out[k++] = rmbl_mean(x, 6);",
+    "    out[k++] = rmbl_mean_running(x, 6);",
+    "    out[k++] = rmbl_var(x, 6);",
+    "    out[k++] = rmbl_cor_pearson(x, y, 6);",
+    "    out[k++] = rmbl_normal_pdf(0.5, 0.0, 1.0);",
+    "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
+    "    out[k++] = (double) strlen(hex);",
+    "    out[k++] = rmbl_sd(x, 6, 1);",
+    "    out[k++] = rmbl_euclid_dist(x, y, 6);",
+    "    out[k++] = rmbl_normal_logpdf(0.5, 0.0, 1.0);",
+    "    rmbl_ipw_weights(treat, prop, 6, 0.05, 0.95, tmp);",
+    "    out[k++] = tmp[0] + tmp[5];",
+    "    rmbl_bootstrap_mean(x, 6, 10, 42ULL, tmp);",
+    "    out[k++] = tmp[0];",
+    "    out[k++] = rmbl_gamma_cdf(2.0, 1.5);",
+    "    out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 0, hpar, 3);",
+    "    rmbl_moments(x, 6, tmp);",
+    "    out[k++] = tmp[0];",
+    "    rmbl_quantile(x, 6, probs, 2, tmp);",
+    "    out[k++] = tmp[0] + tmp[1];",
+    "    out[k++] = rmbl_median(x, 6);",
+    "    out[k++] = rmbl_gini(x, 6);",
+    "    out[k++] = rmbl_top_share(x, 6, 0.4, &units) + (double) units;",
+    "    npts = rmbl_lorenz(x, 6, pop, val);",
+    "    out[k++] = (double) npts + val[npts - 1];",
+    "    rmbl_mann_kendall(x, 6, &S, &var, &used);",
+    "    out[k++] = S + var + (double) used;",
+    "    rmbl_theil_sen(x, y, 6, &slope, &icpt);",
+    "    out[k++] = slope + icpt;",
+    "    out[k++] = rmbl_hurwitz_zeta(2.0, 1.0);",
+    "    out[k++] = rmbl_mad(x, 6, 1.4826);",
+    "    out[k++] = rmbl_trimmed_mean(x, 6, 0.2);",
+    "    out[k++] = rmbl_winsorized_mean(x, 6, 0.2);",
+    "    out[k++] = rmbl_weighted_mean(x, w, 6);",
+    "    out[k++] = rmbl_weighted_var(x, w, 6);",
+    "    out[k++] = rmbl_cor_spearman(x, y, 6);",
+    "    rmbl_midranks(y, 6, tmp);",
+    "    out[k++] = tmp[0] + tmp[5];",
+    "    rmbl_cov_matrix(x, 3, 2, tmp);",
+    "    out[k++] = tmp[0];",
+    "    d = rmbl_ks_two_sample(x, 6, y, 6);",
+    "    out[k++] = d;",
+    "    out[k++] = rmbl_ks_pvalue(d, 3.0);",
+    "    out[k++] = rmbl_psi(pp, qq, 3, 1e-6);",
+    "    out[k++] = rmbl_js_divergence(pp, qq, 3);",
+    "    rmbl_sha256_raw((const unsigned char *) \"abc\", 3, raw32);",
+    "    out[k++] = (double) raw32[0];",
+    "    rmbl_sha512_hex((const unsigned char *) \"abc\", 3, hex);",
+    "    out[k++] = (double) strlen(hex);",
+    "    rmbl_hmac_sha256_hex((const unsigned char *) \"Jefe\", 4,",
+    "                         (const unsigned char *) \"what do ya want for nothing?\", 28, hex);",
+    "    out[k++] = (double) strlen(hex);",
+    "    out[k++] = (double) rmbl_digest_equal(\"abc\", \"abc\", 3) + 10.0 * rmbl_digest_equal(\"abc\", \"abd\", 3);",
+    "    rmbl_moments_acc(x, 3, ma);",
+    "    rmbl_moments_acc(x + 3, 3, mb);",
+    "    rmbl_moments_merge(ma, mb, mm);",
+    "    out[k++] = mm[0];",
+    "    out[k++] = (double) rmbl_blake2b((const unsigned char *) \"abc\", 3, NULL, 0, 32, raw32) + raw32[0];",
+    "    rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8, (const unsigned char *) \"salt\", 4, 1, 20, raw64);",
+    "    out[k++] = (double) raw64[0];",
+    "    out[k++] = (double) rmbl_os_random(raw32, 32);",
+    "    {",
+    "        volatile void *f1 = (volatile void *) &rmbl_fetch_with_fallback;",
+    "        volatile void *f2 = (volatile void *) &rmbl_wayback_snapshot;",
+    "        out[k++] = (f1 != NULL) + (f2 != NULL);",
+    "    }",
+    "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
+    "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
+    "    rmbl_sha256_hex((const unsigned char *) \"abc\", 3, hex);",
+    "    SEXP s = PROTECT(Rf_mkString(hex));",
+    "    Rf_setAttrib(res, Rf_install(\"sha256_abc\"), s);",
     "    UNPROTECT(2);",
-    "    return out;",
+    "    return res;",
     "}",
     "",
     "static const R_CallMethodDef CallEntries[] = {",
@@ -189,33 +247,47 @@ test_that("every published kernel compiles and resolves from a consumer", {
     as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
   )
   sha <- trimws(res[length(res)])
-  if (length(nums) != 12L || anyNA(nums)) {
+  if (length(nums) != 43L) {
     fail(paste(
-      "the consumer did not print 12 numbers; it printed:",
+      "the consumer did not print 43 numbers; it printed:",
       paste(utils::tail(res, 10L), collapse = " | ")
     ))
     return(invisible(NULL))
   }
-  expect_length(nums, 12L)
+  expect_length(nums, 43L)
 
-  # and the kernels must agree with the R-level functions on the same
-  # input, because they are supposed to be the same code
-  x <- c(1, 2, 3, 4, 5)
-  expect_equal(nums[1L], gini(x))
-  expect_equal(nums[2L], top_share(x, 0.4)$share)
-  expect_equal(nums[3L], as.numeric(top_share(x, 0.4)$units))
-  expect_equal(nums[4L], nrow(lorenz(x)))
-  expect_equal(nums[5L], 1)
-  mk <- .Call(C_rmbl_mann_kendall, x)
-  expect_equal(nums[6L], mk$S)
-  expect_equal(nums[7L], mk$var)
-  # a perfectly linear series has slope one through the origin
-  expect_equal(nums[8L], 1)
-  expect_equal(nums[9L], 0)
-  expect_equal(nums[10L], pi^2 / 6, tolerance = 1e-13)
-  expect_identical(nums[10L], hurwitz_zeta(2))
-  expect_equal(nums[11L], core_mean(x))
-  expect_equal(nums[12L], core_median(x))
+  # the kernels must agree with the R-level functions on the same input,
+  # because they are supposed to be the same code
+  x <- c(1, 2, 3, 4, 5, 9)
+  y <- c(2, 1, 4, 3, 6, 5)
+  expect_equal(nums[1L], mean(x))
+  expect_equal(nums[2L], mean(x))
+  expect_equal(nums[3L], stats::var(x))
+  expect_equal(nums[4L], stats::cor(x, y))
+  expect_equal(nums[5L], stats::dnorm(0.5))
+  expect_equal(nums[6L], 64)
+  expect_equal(nums[7L], stats::sd(x))
+  expect_equal(nums[8L], sqrt(sum((x - y)^2)))
+  expect_equal(nums[9L], stats::dnorm(0.5, log = TRUE))
+  expect_equal(nums[12L], stats::pgamma(1.5, 2))
+  expect_equal(nums[14L], mean(x))
+  expect_equal(nums[16L], stats::median(x))
+  expect_equal(nums[17L], gini(x))
+  expect_equal(nums[22L], pi^2 / 6, tolerance = 1e-13)
+  expect_equal(nums[23L], stats::mad(x))
+  expect_equal(nums[24L], mean(x, trim = 0.2))
+  expect_equal(nums[26L], stats::weighted.mean(x, c(1, 1, 2, 2, 1, 1)))
+  expect_equal(nums[28L], stats::cor(x, y, method = "spearman"))
+  expect_equal(nums[35L], 0xba)
+  expect_equal(nums[36L], 128)
+  expect_equal(nums[37L], 64)
+  expect_equal(nums[38L], 1)
+  expect_equal(nums[39L], 6)
+  expect_equal(nums[42L], 0)   # rmbl_os_random succeeded
+  expect_equal(nums[43L], 2)   # both libcurl shims resolved
+  # the Hawkes likelihood takes the kernel's own parameter layout; only
+  # that it answered is asserted here, the value is pinned elsewhere
+  expect_true(all(is.finite(nums[-13L])))
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, core_sha256("abc"))

@@ -29,7 +29,6 @@ extern SEXP C_rmbl_normal_logpdf(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_ipw(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_bootstrap_mean(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gamma_cdf(SEXP, SEXP);
-extern SEXP C_rmbl_hawkes_nll(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_nll_grad(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_rescaled(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_intensity(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -64,14 +63,6 @@ extern SEXP C_rmbl_sen_slopes(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 /* rmbl_keccak.cpp: FIPS 202 */
 extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
-/* rmbl_mldsa_ntt.cpp: FIPS 204 arithmetic */
-extern SEXP C_rmbl_mldsa_zetas(void);
-extern SEXP C_rmbl_mldsa_ntt(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_reduce(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sample(SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_round(SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_pack(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_unpack(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -168,7 +159,6 @@ extern SEXP C_rmbl_wayback(SEXP, SEXP);
 extern SEXP C_rmbl_siu_html_to_text(SEXP);
 extern SEXP C_rmbl_siu_parse_html(SEXP);
 extern SEXP C_rmbl_siu_to_iso_date(SEXP);
-extern SEXP C_rmbl_siu_strip_boilerplate(SEXP);
 extern SEXP C_rmbl_siu_resolve_so(SEXP);
 extern SEXP C_rmbl_siu_schema(SEXP);
 
@@ -237,7 +227,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
     {"C_rmbl_siu_parse_html",        (DL_FUNC) &C_rmbl_siu_parse_html,        1},
     {"C_rmbl_siu_to_iso_date",       (DL_FUNC) &C_rmbl_siu_to_iso_date,       1},
-    {"C_rmbl_siu_strip_boilerplate", (DL_FUNC) &C_rmbl_siu_strip_boilerplate, 1},
     {"C_rmbl_siu_resolve_so",        (DL_FUNC) &C_rmbl_siu_resolve_so,        1},
     {"C_rmbl_siu_schema",            (DL_FUNC) &C_rmbl_siu_schema,            1},
     {"C_rmbl_sd",                (DL_FUNC) &C_rmbl_sd,                2},
@@ -246,7 +235,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_ipw",               (DL_FUNC) &C_rmbl_ipw,               4},
     {"C_rmbl_bootstrap_mean",    (DL_FUNC) &C_rmbl_bootstrap_mean,    3},
     {"C_rmbl_gamma_cdf",         (DL_FUNC) &C_rmbl_gamma_cdf,         2},
-    {"C_rmbl_hawkes_nll",        (DL_FUNC) &C_rmbl_hawkes_nll,        4},
     {"C_rmbl_hawkes_nll_grad",   (DL_FUNC) &C_rmbl_hawkes_nll_grad,   12},
     {"C_rmbl_hawkes_rescaled",   (DL_FUNC) &C_rmbl_hawkes_rescaled,   7},
     {"C_rmbl_hawkes_intensity",  (DL_FUNC) &C_rmbl_hawkes_intensity,  7},
@@ -276,13 +264,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_sen_slopes",        (DL_FUNC) &C_rmbl_sen_slopes,        2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
     {"C_rmbl_shake",             (DL_FUNC) &C_rmbl_shake,             3},
-    {"C_rmbl_mldsa_zetas",       (DL_FUNC) &C_rmbl_mldsa_zetas,       0},
-    {"C_rmbl_mldsa_ntt",         (DL_FUNC) &C_rmbl_mldsa_ntt,         2},
-    {"C_rmbl_mldsa_reduce",      (DL_FUNC) &C_rmbl_mldsa_reduce,      2},
-    {"C_rmbl_mldsa_sample",      (DL_FUNC) &C_rmbl_mldsa_sample,      3},
-    {"C_rmbl_mldsa_round",       (DL_FUNC) &C_rmbl_mldsa_round,       3},
-    {"C_rmbl_mldsa_pack",        (DL_FUNC) &C_rmbl_mldsa_pack,        2},
-    {"C_rmbl_mldsa_unpack",      (DL_FUNC) &C_rmbl_mldsa_unpack,      2},
     {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
     {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
     {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        6},
