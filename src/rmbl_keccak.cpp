@@ -27,6 +27,16 @@
 #include <R.h>
 #include <Rinternals.h>
 
+/* The first element of a character argument, or an error in words: every
+ * STRING_ELT(x, 0) below went through this once a length-0 or NA input
+ * reached a .Call directly (the R wrappers guard; the entry points did not). */
+static const char *rmbl_str0(SEXP x, const char *name) {
+    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
+        Rf_error("`%s` must be a non-missing string", name);
+    }
+    return CHAR(STRING_ELT(x, 0));
+}
+
 namespace {
 
 /* Round constants, FIPS 202 Table 1 (iota). */
@@ -285,12 +295,16 @@ SEXP C_rmbl_shake(SEXP which, SEXP x, SEXP outlen) {
     const int w = Rf_asInteger(which);
     const R_xlen_t n = Rf_asInteger(outlen);
     if (n < 0) Rf_error("`outlen` must be non-negative");
+    /* every Rf_error() before the std::vectors below exist */
+    if (w != 128 && w != 256 && w != 3256 && w != 3512) {
+        Rf_error("unknown function selector");
+    }
     std::vector<unsigned char> in;
     if (TYPEOF(x) == RAWSXP) {
         in.assign(RAW(x), RAW(x) + XLENGTH(x));
     } else {
         SEXP sx = PROTECT(Rf_coerceVector(x, STRSXP));
-        const char *s = CHAR(STRING_ELT(sx, 0));
+        const char *s = rmbl_str0(sx, "x");
         in.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }
@@ -302,11 +316,9 @@ SEXP C_rmbl_shake(SEXP which, SEXP x, SEXP outlen) {
     } else if (w == 3256) {
         out.resize(32);
         rmbl_sha3_256(out.data(), in.data(), in.size());
-    } else if (w == 3512) {
+    } else {
         out.resize(64);
         rmbl_sha3_512(out.data(), in.data(), in.size());
-    } else {
-        Rf_error("unknown function selector");
     }
     SEXP res = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) std::memcpy(RAW(res), out.data(), out.size());

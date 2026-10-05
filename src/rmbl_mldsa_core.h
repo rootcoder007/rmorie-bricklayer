@@ -48,6 +48,14 @@ extern "C" void rmbl_shake256(unsigned char *, size_t,
 
 namespace rmbl_mldsa_core {
 
+/* sign_mu() gives up rather than loop forever: a length-correct but corrupt
+ * secret key (s1 / s2 outside +-eta, or a rejection loop that never
+ * accepts) is reported, not spun on until the user kills R. */
+const int kMaxSignAttempts = 1024;
+const char *const kSignFailed =
+    "ML-DSA signing failed: the secret key is malformed (its coefficients "
+    "are out of range or no candidate signature was accepted)";
+
 
 const int32_t kQ = 8380417;
 const int32_t kQInv = 58728449;      /* q^-1 mod 2^32 */

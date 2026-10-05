@@ -197,17 +197,19 @@ SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
         rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
                             static_cast<size_t>(XLENGTH(msg)), &ph);
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
+        int rc;
         if (ph.oid_len > 0) {
-            M::sign_prehash(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
-                            static_cast<size_t>(XLENGTH(ctx)), ph.oid,
-                            ph.oid_len, RAW(rnd), RAW(sk));
+            rc = M::sign_prehash(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
+                                 static_cast<size_t>(XLENGTH(ctx)), ph.oid,
+                                 ph.oid_len, RAW(rnd), RAW(sk));
         } else {
-            M::sign_internal(RAW(sig), RAW(msg),
-                             static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
-                             static_cast<size_t>(XLENGTH(ctx)), RAW(rnd),
-                             RAW(sk));
+            rc = M::sign_internal(RAW(sig), RAW(msg),
+                                  static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
+                                  static_cast<size_t>(XLENGTH(ctx)), RAW(rnd),
+                                  RAW(sk));
         }
         UNPROTECT(1);
+        if (rc != 0) Rf_error("%s", rmbl_mldsa_core::kSignFailed);
         return sig;
     });
 }
@@ -290,8 +292,9 @@ SEXP C_rmbl_mldsa_sign_mu(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
             Rf_error("`sk` must be a raw vector of %d bytes", M::kSkBytes);
         }
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
-        M::sign_mu(RAW(sig), RAW(mu), RAW(rnd), RAW(sk));
+        const int rc = M::sign_mu(RAW(sig), RAW(mu), RAW(rnd), RAW(sk));
         UNPROTECT(1);
+        if (rc != 0) Rf_error("%s", rmbl_mldsa_core::kSignFailed);
         return sig;
     });
 }
@@ -380,7 +383,14 @@ SEXP C_rmbl_mldsa_round(SEXP x, SEXP which, SEXP hints) {
     SEXP xi = PROTECT(Rf_coerceVector(x, INTSXP));
     SEXP out = PROTECT(Rf_allocVector(INTSXP, n));
     SEXP hi = R_NilValue;
-    if (w == 3) hi = PROTECT(Rf_coerceVector(hints, INTSXP));
+    if (w == 3) {
+        hi = PROTECT(Rf_coerceVector(hints, INTSXP));
+        if (XLENGTH(hi) < n) {
+            UNPROTECT(3);
+            Rf_error("`hints` must have at least %d elements",
+                     static_cast<int>(n));
+        }
+    }
     for (R_xlen_t i = 0; i < n; ++i) {
         const int32_t v = INTEGER(xi)[i];
         int32_t a0;
@@ -428,13 +438,21 @@ SEXP C_rmbl_mldsa_unpack(SEXP bytes, SEXP which) {
     using namespace rmbl_mldsa;
     const int w = Rf_asInteger(which);
     if (TYPEOF(bytes) != RAWSXP) Rf_error("`bytes` must be raw");
+    /* each unpacker reads a fixed width; a shorter vector read past its
+     * allocation into the returned integers */
+    const R_xlen_t need = (w == 0) ? kPolyT1Packed : (w == 1) ? kPolyT0Packed
+                        : (w == 2) ? kPolyEtaPacked : (w == 3) ? kPolyZPacked : -1;
+    if (need < 0) Rf_error("unknown unpacker");
+    if (XLENGTH(bytes) < need) {
+        Rf_error("`bytes` must have at least %d bytes for unpacker %d",
+                 static_cast<int>(need), w);
+    }
     int32_t a[256];
     const unsigned char *b = RAW(bytes);
     if (w == 0) polyt1_unpack(a, b);
     else if (w == 1) polyt0_unpack(a, b);
     else if (w == 2) polyeta_unpack(a, b);
-    else if (w == 3) polyz_unpack(a, b);
-    else Rf_error("unknown unpacker");
+    else polyz_unpack(a, b);
     SEXP out = PROTECT(Rf_allocVector(INTSXP, 256));
     for (int i = 0; i < 256; ++i) INTEGER(out)[i] = a[i];
     UNPROTECT(1);
