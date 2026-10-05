@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Canonical home of the SIU parse/resolve core. The standalone `siu`
-// package (github.com/rootcoder007/siu) mirrors these sources; edit here
-// first, then resync the mirror.
+// Canonical home of the SIU parse/resolve core. rmorie (src/siu/) and morie
+// (morie.siu.native) carry ports of these sources; edit here first, then port.
 #include "siu_resolve.h"
 
 #include <algorithm>
