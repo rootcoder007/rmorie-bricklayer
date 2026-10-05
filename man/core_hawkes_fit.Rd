@@ -66,8 +66,8 @@ different route.}
 Weibull, \code{"soe"} for Lomax and gamma.}
 }
 The reported \code{nll} is the exact likelihood at the estimate whatever the route, so AIC
-is comparable across routes. An event exactly at \code{horizon} is left out, as in morie's
-Python fit.
+is comparable across routes. An event exactly at \code{horizon} is part of the record and
+counted, as in morie's Python fit.
 }
 \examples{
 set.seed(1)

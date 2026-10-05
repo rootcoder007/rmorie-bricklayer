@@ -121,6 +121,62 @@ and a digest anyone can recompute says nothing about who produced the data.
   person-days two ways, per day and per person, after Lakner (1976). When
   stays lengthen the two move in opposite directions, so `stock_flow()`
   reports both and the exact decomposition between them.
+- **Self-exciting event series (Hawkes)** — `core_hawkes_fit()` fits a
+  univariate Hawkes process by maximum likelihood: a constant or seasonal
+  (sinusoidal) baseline, and an exponential, Weibull, gamma or Lomax
+  kernel, maximised in C++ by projected BFGS on the analytic gradient.
+  `method` picks how the likelihood is evaluated: `"exact"` (Ozaki's O(n)
+  recursion for the exponential kernel; the Weibull and gamma sums stop
+  where the kernel underflows to 0), `"soe"` (Lomax and gamma as a sum of
+  exponentials, Beylkin & Monzón 2010, relative error `eps`),
+  `"truncate"`, `"em"` (Veen & Schoenberg 2008) or `"inar"` (Kirchner
+  2017); `"auto"` chooses by kernel. The reported likelihood is exact
+  whatever the route, so AIC compares across routes and kernels.
+  `core_hawkes_nll()` gives the likelihood and its gradient,
+  `core_hawkes_residuals()` the time-rescaling residuals and their
+  Kolmogorov-Smirnov test.
+- **Post-quantum keys and signatures** — ML-KEM (`kem_keygen()`,
+  `kem_encapsulate()`, `kem_decapsulate()`); ML-DSA and SLH-DSA keys from
+  `fips_keygen()` and XMSS keys from `pqc_keygen()`, both signing through
+  `capsule_sign()`; and HQC-KEM in both revisions:
+  `hqc_keygen(version = "v5")`, the default (specification of
+  2025-08-22, 32-byte shared secret), and `hqc_keygen(version = "round4")`
+  (the fourth-round submission of 2023-04-30 — the HQC of liboqs up to
+  0.12 and of PQClean — with a 64-byte shared secret). Keys carry their
+  revision and `hqc_encapsulate()` / `hqc_decapsulate()` follow it. All of
+  it is implemented here, with no system library; see
+  [Verification](#verification).
+- **Deterministic random bits** — `drbg_new()`, `drbg_generate()` and
+  `drbg_reseed()`: the AES-256 CTR_DRBG of NIST SP 800-90A (no derivation
+  function), with constant-time AES and AES-NI on x86-64. The same entropy
+  gives the same bytes, which is what reproducible key generation and
+  known-answer tests need; `random_bytes()` reads the operating system's
+  generator for keys meant to stay secret.
+- **Ontario SIU director's reports** — `bricklayer_fetch_siu()` fetches a
+  report by its id, in English or French; `bricklayer_parse_siu()` reads
+  it into the 16 fields of `bricklayer_siu_schema()` (the police service;
+  the dates of the incident, the notification and the decision; the SIU
+  team's size; the counts of subject officials, witness officials and
+  civilian witnesses; the affected person's age and sex; the charges; the
+  director; where the call was; the injuries; the legislation);
+  `bricklayer_fetch_parse_siu()` does both.
+  `bricklayer_siu_resolve_so()` counts the subject officials from the text
+  ("SO", "subject officer" and "subject official" are one quantity).
+  `police_service` is the service of the subject officials, read from the
+  director's analysis — not the force that notified the SIU, which is
+  often a custody, requesting or neighbouring service. rmorie and morie
+  run the same parser.
+- **JSON without jsonlite** — `bricklayer_json_to_json()` and
+  `bricklayer_json_from_json()` are jsonlite's `toJSON()` and
+  `fromJSON()`, natively: every option, the same defaults and the same
+  bytes out. `bricklayer_json_serialize()` round-trips any R object
+  losslessly, with base64 and base64url codecs beside it.
+- **Curated tables** — `bricklayer_data_tables()` lists the tables served
+  at data.rmorie.com (161 databases and 203 tables on 2026-10-05,
+  materialised from Google BigQuery public datasets), and
+  `bricklayer_data_load("db/table")` opens one with your MORIE key, cached
+  locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
+  fallback (libcurl).
 
 ## Verification
 
@@ -178,15 +234,35 @@ round-trips perfectly.
 
 HQC (Hamming Quasi-Cyclic), the code-based KEM NIST selected in March
 2025 to stand beside ML-KEM, is here as well at HQC-1, HQC-3 and HQC-5
-(`hqc_keygen()`, `hqc_encapsulate()`, `hqc_decapsulate()`). It reproduces
-all 300 of the authors' official known-answer vectors (specification of
-2025-08-22, reference implementation v5.0.0), runs in constant time with
-respect to secrets (checked with valgrind: no secret reaches a branch, a
-memory index or a variable shift), gives the same bytes on big-endian
-machines (the reference code does not), and uses the carry-less multiply
-instruction on x86-64 and ARMv8 when the processor has it. FIPS 207, the
-HQC standard, is still a draft and may change the key and ciphertext
-formats.
+(`hqc_keygen()`, `hqc_encapsulate()`, `hqc_decapsulate()`), in two
+revisions. The default, v5, reproduces all 300 of the authors' official
+known-answer vectors (specification of 2025-08-22, reference
+implementation v5.0.0), runs in constant time with respect to secrets
+(checked with valgrind: no secret reaches a branch, a memory index or a
+variable shift), gives the same bytes on big-endian machines (the
+reference code does not), and uses the carry-less multiply instruction on
+x86-64 and ARMv8 when the processor has it. `version = "round4"` is the
+fourth-round submission of 2023-04-30 — the revision liboqs (up to 0.12)
+and PQClean ship — with its 64-byte shared secret; it shares v5's codes
+and parameters and reproduces all 300 of that revision's official
+known-answer vectors on both multipliers. The two are not
+interchangeable: use round 4 to exchange keys with software built on it,
+v5 otherwise. FIPS 207, the HQC standard, is still a draft and may change
+the key and ciphertext formats.
+
+The random bit generator reproduces all 720 AES-256 no-derivation-function
+vectors of NIST's DRBG validation suite (no reseed, reseed, and
+prediction resistance) on both AES paths, and seeded with the bytes 0..47
+it is the `randombytes()` of NIST's `rng.c`, the generator the
+post-quantum known-answer files were written with.
+
+The JSON codec is checked against jsonlite itself, output byte for byte
+and parsed values exactly. The Hawkes likelihood, gradient and fit are
+checked on the same inputs as morie's Python tests, so every Hawkes test
+is also a cross-language parity check; `core_uniforms()` is the splitmix64
+stream both draw from. The SIU parser's police service agrees with the
+panel-reviewed English corpus on 2,147 of 2,163 French reports and 111 of
+118 English ones.
 
 Signing is fast enough to be tested unconditionally: an SLH-DSA `s`
 parameter set signs in about a second, down from seven, after the Keccak
@@ -359,8 +435,14 @@ server is not consulted here. `MORIE_HOSTED_KEY` in the environment
 overrides the stored key, and `MORIE_HOSTED_BASE_URL` points the package at
 another gateway (set it to `off` to disable the hosted tier).
 
-The tier serves AI cloud models via ollama and Cloudflare
-(kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf, glm-5.3-flash:cf, gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf and gemma-4-26b:cf).
+On 2026-10-05 the tier served 20 models, each of which answered:
+ollama.com cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud,
+glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud
+and gpt-oss:120b-cloud) and additional AI models (gpt-oss-120b:cf,
+gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf,
+gemma-4-26b:cf, kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf,
+deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf and glm-5.3-flash:cf).
+`bricklayer_llm_models()` reports what your key can use now.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
@@ -375,6 +457,14 @@ rmoriebricklayer login --no-browser             # server / SSH: prints a link + 
 rmoriebricklayer models                         # what you can ask, default marked
 rmoriebricklayer ask --model NAME "your question"
 rmoriebricklayer doctor                         # which routes answer from this machine
+rmoriebricklayer logout                         # forget the key
+rmoriebricklayer data list                      # the curated tables at data.rmorie.com
+rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
+rmoriebricklayer bundle "your request"          # agent_bundle() from the shell
+rmoriebricklayer functions [PATTERN]            # exported functions and their titles
+rmoriebricklayer describe NAME                  # one function's help page
+rmoriebricklayer examples NAME                  # its examples
+rmoriebricklayer version
 ```
 
 `rmbl` is the same command under a short name; every verb works under either:
