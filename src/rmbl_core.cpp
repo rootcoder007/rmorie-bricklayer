@@ -382,15 +382,6 @@ SEXP C_rmbl_gamma_cdf(SEXP shape, SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_hawkes_nll(SEXP t, SEXP T, SEXP kernel, SEXP par) {
-    t = PROTECT(Rf_coerceVector(t, REALSXP));
-    par = PROTECT(Rf_coerceVector(par, REALSXP));
-    double r = rmbl_hawkes_nll(REAL(t), XLENGTH(t), Rf_asReal(T),
-                               Rf_asInteger(kernel), REAL(par), XLENGTH(par));
-    UNPROTECT(2);
-    return Rf_ScalarReal(r);
-}
-
 
 /* ---- general Hawkes routines (any baseline, analytic gradient) ----
  * bkind 0 constant / 1 sinusoidal; kind 0 exponential, 1 Weibull, 2 gamma,

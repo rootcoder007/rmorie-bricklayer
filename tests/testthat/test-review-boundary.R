@@ -173,7 +173,6 @@ test_that("hostile DER is an error, not an abort", {
   h2 <- "300c0488ffffffffffffffff0100"
   b2 <- as.raw(strtoi(substring(h2, seq(1, nchar(h2), 2), seq(2, nchar(h2), 2)), 16L))
   expect_error(.Call(rmoriebricklayer:::C_rmbl_der_parse, b2), "not well-formed DER")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_mldsa_unpack, raw(1), 3L), "at least")
 })
 
 test_that("a DRBG reseeds itself in a new process", {

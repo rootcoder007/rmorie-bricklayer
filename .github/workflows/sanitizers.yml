@@ -1,0 +1,57 @@
+# AddressSanitizer + UndefinedBehaviorSanitizer over src/.
+#
+# About 9,000 lines of hand-written cryptography and an ASN.1/DER parser that
+# reads network bytes: this is the one job that finds the next
+# length-overflow before a user does (0.5.5's DER parser aborted R on a
+# 22-byte file; UBSAN flags that class on the first malformed input).
+# rocker/r-devel-san ships R-devel built with both sanitizers as `RD`.
+name: sanitizers
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'tests/**', 'R/**', '.github/workflows/sanitizers.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'tests/**', 'R/**', '.github/workflows/sanitizers.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sanitizers-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  asan-ubsan:
+    name: ASAN + UBSAN (rocker/r-devel-san)
+    runs-on: ubuntu-latest
+    container: rocker/r-devel-san
+    timeout-minutes: 120
+    env:
+      # R itself leaks by design at exit; a leak report would drown the signal
+      ASAN_OPTIONS: detect_leaks=0:abort_on_error=0:print_summary=1
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0
+      # the LinkingTo sub-build is covered by R-CMD-check; not what this cell is for
+      R_TESTS_NO_COMPILE: "1"
+      NOT_CRAN: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - name: System libraries
+        run: apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev
+      - name: Test dependencies
+        run: |
+          RDscript -e 'install.packages(c("testthat", "withr", "digest", "jsonlite", "openssl"), repos = "https://cloud.r-project.org")'
+      - name: Install under the sanitizers
+        run: RD CMD INSTALL --preclean .
+      - name: Run the test suite under ASAN + UBSAN
+        shell: bash
+        run: |
+          set -o pipefail
+          RDscript -e 'library(testthat); library(rmoriebricklayer); test_dir("tests/testthat", package = "rmoriebricklayer", reporter = "summary", stop_on_failure = TRUE)' 2>&1 | tee san.log
+          # the sanitizers report to stderr and keep going; any report fails the job
+          if grep -E "runtime error:|ERROR: AddressSanitizer|SUMMARY: (Address|UndefinedBehavior)Sanitizer" san.log; then
+            echo "::error::sanitizer report above"
+            exit 1
+          fi

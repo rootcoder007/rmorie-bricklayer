@@ -191,7 +191,7 @@ Status values: `PASS`, `DIFFER`, `INFO`.
 
 The libraries `lib_manifest.R::record()` and `lib_manifest.R::write_manifest_json()` exist exactly to make this easy. Source them from your analysis.R if you want.
 
-If `Sys.getenv("BRICKLAYER_SYNTHETIC")` is `"1"`, your script should mark all cross-checks as `INFO` rather than `PASS/DIFFER` — the comparison isn't meaningful on random data.
+When the pipeline runs on synthetic data it sets `BRICKLAYER_SYNTHETIC=1` for your script, and the package acts on it by itself: `make_manifest()` records `meta$synthetic = TRUE`, `record()` marks every cross-check `INFO` rather than `PASS/DIFFER` (the comparison isn't meaningful on random data), and `write_manifest_json()` writes the flag whether or not your script set it. You can still pass `synthetic = TRUE` to `record()` explicitly, but nothing depends on your remembering to.
 
 ---
 

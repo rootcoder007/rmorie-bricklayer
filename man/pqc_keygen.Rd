@@ -53,6 +53,17 @@ carries no \code{sk_prf} and cannot sign;
 a signature no other implementation could read. Generate a new one.
 }
 
+\section{Security}{
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+}
+
 \examples{
 # A small key, to keep the example quick.
 key <- pqc_keygen(height = 3)

@@ -97,9 +97,12 @@ test_that("expanding a banded table reproduces the counts", {
   expect_equal(sum(x == 1), 10L)
   expect_equal(sum(x == 3.5), 4L)
   expect_equal(sum(x == 9), 2L)
-  # an unparseable band contributes nothing rather than NA values that
-  # would poison every statistic computed downstream
-  y <- expand_bands(c("1", "unknown"), counts = c(3, 5))
+  # an unparseable band with a count is an error by default (dropping its
+  # units in silence made every downstream statistic describe a fraction
+  # of the data); with drop_unparsed = TRUE it is left out, with a warning
+  expect_error(expand_bands(c("1", "unknown"), counts = c(3, 5)), "'unknown'")
+  expect_warning(y <- expand_bands(c("1", "unknown"), counts = c(3, 5), drop_unparsed = TRUE),
+                 "could not be placed")
   expect_length(y, 3L)
   expect_false(anyNA(y))
   expect_equal(length(expand_bands(c("1", "2 to 5"), c(0, 0))), 0L)

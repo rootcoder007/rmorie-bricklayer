@@ -81,5 +81,7 @@ jobs:
       - name: Roxygenise (generate NAMESPACE + man)
         run: Rscript -e 'roxygen2::roxygenise(); cat("EXPORTS:", sum(grepl("^export", readLines("NAMESPACE"))), "\n")'
 
+      # error_on = "warning": an undeclared import is a WARNING, and it
+      # passed this matrix for a release
       - name: R CMD check
-        run: Rscript -e 'rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "error")'
+        run: Rscript -e 'rcmdcheck::rcmdcheck(".", args = c("--no-manual", "--as-cran"), error_on = "warning")'
