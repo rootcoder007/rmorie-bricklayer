@@ -36,7 +36,20 @@ core_hawkes_fit(
 A list: \code{theta}, \code{baseline_params}, \code{branching_ratio},
 \code{kernel_params}, \code{nll}, \code{aic}, \code{bic}, \code{n}, \code{horizon},
 \code{k_params}, \code{ks_stat}, \code{ks_pvalue} (time-rescaling residuals against the
-uniform), \code{method}, \code{eps}, \code{converged}.
+uniform), \code{method}, \code{eps}, \code{converged} (the optimiser stopped at a
+maximum within the parameter box) and \code{at_bound} (the parameters that lie on the
+box, \code{character(0)} for an interior maximum). An estimate on the box is not
+an interior maximum of the likelihood: day-dated (tied) times drive a shape or
+decay to its wall, and a Lomax fitted to exponential data runs to its
+exponential limit.
+Events at the same instant do not excite each other: the intensity is
+\eqn{\lambda(t) = \nu(t) + \eta \sum_{t_j < t} g(t - t_j)}, over strictly earlier
+events, as the definition of a Hawkes process (a simple point process, with no two
+events at one time) has it. Tied times are fitted that way, with a warning: data
+recorded to a resolution, such as daily dates, carry ties the process itself never
+makes, and treating them as exact biases the fit (Filimonov & Sornette 2015), so spread
+them uniformly across their interval first with
+\code{\link[=core_hawkes_jitter]{core_hawkes_jitter()}}.
 }
 \description{
 Maximum-likelihood fit of a univariate Hawkes process
@@ -64,7 +77,7 @@ reaches the maximum): the same maximum, a different route.}
 \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned counts
 (constant baseline only): a different, fast, approximate estimator.}
 \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"} for
-Weibull, \code{"soe"} for Lomax and gamma.}
+Weibull, \code{"soe"} for gamma and Lomax.}
 }
 The reported \code{nll} is the exact likelihood at the estimate whatever the route, so AIC
 is comparable across routes. An event exactly at \code{horizon} is part of the record and
@@ -91,4 +104,12 @@ seismology using an EM-type algorithm. \emph{JASA} 103, 614--624.
 
 Kirchner M (2017). An estimation procedure for the Hawkes process.
 \emph{Quant. Finance} 17, 571--595. \doi{10.1080/14697688.2016.1211312}
+
+Filimonov V, Sornette D (2015). Apparent criticality and calibration issues in the
+Hawkes self-excited point process model: application to high-frequency financial data.
+\emph{Quant. Finance} 15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
+}
+\seealso{
+\code{\link[=core_hawkes_jitter]{core_hawkes_jitter()}}, for times recorded to a
+resolution.
 }

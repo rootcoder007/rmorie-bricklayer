@@ -162,7 +162,12 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(h);
     std::fclose(fp);
-    if (rc != CURLE_OK) { std::remove(path.c_str()); return -1; }
+    if (rc != CURLE_OK) {
+        std::remove(path.c_str());
+        /* the server answered with an error status (FAILONERROR turns 4xx/5xx into
+         * CURLE_HTTP_RETURNED_ERROR): report the status, not "never reached" */
+        return (rc == CURLE_HTTP_RETURNED_ERROR && code >= 400) ? code : -1;
+    }
     return code;
 }
 

@@ -105,7 +105,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
   }))
   bad <- setdiff(opts, c(known[[verb]], values))
-  if (length(bad) && !is.null(.bl_verb_usage(verb, prog))) {
+  if (verb %in% c("help", "--help", "-h")) bad <- setdiff(opts, c("--help", "-h"))
+  if (length(bad) && (verb %in% c("help", "--help", "-h") || !is.null(.bl_verb_usage(verb, prog)))) {
     out(sprintf("%s %s: unknown option %s (%s %s --help)\n", prog, verb, bad[[1L]], prog, verb))
     return(invisible(2L))
   }
@@ -125,6 +126,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           } else {
             if (has("--code") && is.null(flag("--email"))) {
               usage_error("--code needs --email ADDRESS (the code was sent there)")
+            }
+            em <- flag("--email")
+            if (!is.null(em) && !grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", trimws(em))) {
+              usage_error(sprintf("--email: '%s' is not an email address", em))
             }
             bricklayer_llm_login(
               email = flag("--email"), code = flag("--code"),
@@ -152,6 +157,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             usage_error(sprintf("usage: %s ask [--model NAME] PROMPT...", prog))
           } else {
             prompt <- paste(rest, collapse = " ")
+            if (!nzchar(trimws(prompt))) {
+              usage_error(sprintf("the prompt is empty (usage: %s ask [--model NAME] PROMPT...)", prog))
+            }
             out(paste0(bricklayer_llm_ask(prompt, model = mdl), "\n"))
           }
         },
@@ -159,7 +167,14 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!length(rest)) {
             usage_error(sprintf("usage: %s bundle REQUEST...", prog))
           }
+          if (!nzchar(trimws(paste(rest, collapse = " ")))) {
+            usage_error(sprintf("the request is empty (usage: %s bundle REQUEST...)", prog))
+          }
+          # with no language-model route agent_bundle() explains how to set one up: nothing was
+          # produced, so the command fails
+          routed <- !is.null(.bl_hosted_base()) && !is.null(.bl_hosted_key())
           out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
+          if (!routed) status <- 1L
         },
         functions = {
           tab <- .bl_function_index(if (length(rest)) rest[[1L]] else NULL)
@@ -448,9 +463,15 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     tbl <- utils::capture.output(print(tables, row.names = FALSE))
     out(paste0(paste(tbl, collapse = "\n"), "\n"))
   } else if (identical(sub, "pull") && length(rest) >= 2L) {
-    df <- bricklayer_data_load(rest[[2L]])
     dest <- flag("--out") %||%
       paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")
+    # refuse an unwritable destination before downloading the table, not after
+    dir <- dirname(dest)
+    if (!dir.exists(dir) || file.access(dir, 2L) != 0L || dir.exists(dest)) {
+      out(sprintf("cannot write %s (the directory does not exist, or no permission)\n", dest))
+      return(1L)
+    }
+    df <- bricklayer_data_load(rest[[2L]])
     ok <- tryCatch({
       suppressWarnings(utils::write.csv(df, dest, row.names = FALSE))
       TRUE

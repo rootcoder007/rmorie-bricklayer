@@ -558,8 +558,10 @@ core_gamma_cdf <- function(shape, x) {
 #' (0, 1) -- the expected number of children per event, so the process is
 #' stationary only for `eta < 1`. The remaining entries are the
 #' kernel's own shape parameters: `beta` (exponential),
-#' `alpha, lambda` (Weibull), `alpha, c` (Lomax),
-#' `alpha, beta` (gamma).
+#' `alpha, lambda` (Weibull: shape and scale), `alpha, c` (Lomax: shape
+#' and scale, \eqn{g(u) = \alpha c^\alpha (u + c)^{-(\alpha + 1)}}),
+#' `alpha, beta` (gamma: shape and rate). This is the likelihood
+#' [core_hawkes_fit()] maximises, on the same parameters.
 #'
 #' @param times Sorted numeric vector of event times in
 #' `[0, horizon]`.
@@ -609,8 +611,8 @@ core_hawkes_nll <- function(times, horizon,
     stop("`times` must be sorted in increasing order", call. = FALSE)
   }
   horizon <- .rmbl_num(horizon, "horizon")
-  if (length(horizon) != 1L || is.na(horizon) || horizon <= 0) {
-    stop("`horizon` must be a single positive number", call. = FALSE)
+  if (length(horizon) != 1L || !is.finite(horizon) || horizon <= 0) {
+    stop("`horizon` must be a single positive finite number", call. = FALSE)
   }
   if (length(times) > 0L && (min(times) < 0 || max(times) > horizon)) {
     stop("`times` must lie within [0, horizon]", call. = FALSE)
@@ -621,5 +623,17 @@ core_hawkes_nll <- function(times, horizon,
     stop(sprintf("the %s kernel needs `par` of length %d", kernel, need),
          call. = FALSE)
   }
-  .Call(C_rmbl_hawkes_nll, times, horizon, code, par)
+  # outside the feasible region, the documented sentinel: a stationary branching ratio, a
+  # bounded log-baseline and the kernel parameters' ranges (those of the earlier routine;
+  # the Lomax takes core_hawkes_fit()'s)
+  lo <- switch(kernel, exponential = 0.05, weibull = c(0.05, 1e-3), gamma = c(0.05, 0.05), lomax = c(0.05, 1e-3))
+  hi <- switch(kernel, exponential = 30, weibull = c(20, 1e3), gamma = c(20, 30), lomax = c(30, 100))
+  psi <- par[-(1:2)]
+  if (anyNA(par) || !(par[[2L]] > 1e-6 && par[[2L]] < 0.999) || !(par[[1L]] > -20 && par[[1L]] < 20) ||
+      any(psi < lo) || any(psi > hi)) {
+    return(1e12)
+  }
+  # the likelihood core_hawkes_fit() maximises (the shared C++ core), so the
+  # two agree for every kernel; the Lomax is g(u) = alpha c^alpha / (u + c)^(alpha + 1)
+  .rmbl_hk_call(times, horizon, kernel, "constant", par, "exact", 1e-12, FALSE)[[1L]]
 }

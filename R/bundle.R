@@ -72,6 +72,7 @@
 capsule_bundle <- function(dir, manifest, key, files = NULL,
                            context = NULL, prehash = "none", note = NULL,
                            path = NULL) {
+  dir <- .rmbl_string1(dir, "dir")
   if (!dir.exists(dir)) {
     stop("`dir` does not exist: ", dir, call. = FALSE)
   }

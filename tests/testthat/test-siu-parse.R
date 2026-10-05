@@ -107,12 +107,16 @@ test_that("bindings validate their inputs", {
 })
 
 test_that("fetch_parse_siu fails gracefully when the fetch cannot happen", {
-  # invalid drid errors inside bricklayer_fetch_siu -> message + NULL
+  # a fetch that fails (no network, no report) -> message + NULL
+  skip_if_cannot_mock()
+  local_mocked_bindings(bricklayer_fetch_siu = function(...) stop("offline"))
   expect_message(
-    out <- bricklayer_fetch_parse_siu(-1),
+    out <- bricklayer_fetch_parse_siu(648),
     "could not fetch"
   )
   expect_null(out)
+  # an invalid drid is an argument error, before any network
+  expect_error(bricklayer_fetch_parse_siu(-1), "one positive report number")
 })
 
 test_that("the privacy paragraph never counts as a subject mention", {

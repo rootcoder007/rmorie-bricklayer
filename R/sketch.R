@@ -284,7 +284,7 @@ sketch_merge <- function(a, b) {
 # HyperLogLog registers: non-negative integers.
 .rmbl_registers <- function(r, what) {
   r <- .rmbl_num_input(r, what)
-  if (any(!is.finite(r)) || any(r < 0) || any(r != floor(r))) {
+  if (any(!is.finite(r)) || any(r < 0) || any(r > 64) || any(r != floor(r))) {
     stop(sprintf("`%s` must be non-negative integer registers", what),
       call. = FALSE
     )

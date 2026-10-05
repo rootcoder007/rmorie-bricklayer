@@ -132,13 +132,18 @@ and a digest anyone can recompute says nothing about who produced the data.
   `"truncate"`, `"em"` (Veen & Schoenberg 2008) or `"inar"` (Kirchner
   2017); `"auto"` chooses by kernel. The reported likelihood is exact
   whatever the route, so AIC compares across routes and kernels.
-  `core_hawkes_nll()` gives the likelihood and its gradient,
+  `core_hawkes_nll()` gives the same likelihood on the same parameters,
   `core_hawkes_residuals()` the time-rescaling residuals and their
-  Kolmogorov-Smirnov test.
+  Kolmogorov-Smirnov test. Events at one instant do not excite each other
+  (the intensity sums over strictly earlier events); times recorded to a
+  resolution, such as daily dates, are spread across their interval with
+  `core_hawkes_jitter()` before the fit (Filimonov & Sornette 2015), and the
+  fit warns when it sees ties.
 - **Post-quantum keys and signatures** — ML-KEM (`kem_keygen()`,
   `kem_encapsulate()`, `kem_decapsulate()`); ML-DSA and SLH-DSA keys from
   `fips_keygen()` and XMSS keys from `pqc_keygen()`, both signing through
-  `capsule_sign()`; and HQC-KEM in both revisions:
+  `capsule_sign()` (an XMSS index never signs twice: carry each
+  signature's `key_state` forward); and HQC-KEM in both revisions:
   `hqc_keygen(version = "v5")`, the default (specification of
   2025-08-22, 32-byte shared secret), and `hqc_keygen(version = "round4")`
   (the fourth-round submission of 2023-04-30 — the HQC of liboqs up to
@@ -167,13 +172,16 @@ and a digest anyone can recompute says nothing about who produced the data.
   ("SO", "subject officer" and "subject official" are one quantity).
   `police_service` is the service of the subject officials, read from the
   director's analysis — not the force that notified the SIU, which is
-  often a custody, requesting or neighbouring service. rmorie and morie
-  run the same parser.
+  often a custody, requesting or neighbouring service. Every layout is
+  read: the 2005-2011 legacy pages, the 2012-2019 and 2020-on English
+  pages, and the French pages (the SIU publishes each report in both
+  languages). rmorie and morie run the same parser.
 - **JSON without jsonlite** — `bricklayer_json_to_json()` and
   `bricklayer_json_from_json()` are jsonlite's `toJSON()` and
   `fromJSON()`, natively: every option, the same defaults and the same
-  bytes out. `bricklayer_json_serialize()` round-trips any R object
-  losslessly, with base64 and base64url codecs beside it.
+  bytes out. `bricklayer_json_serialize()` round-trips an R object with its type
+  and attributes (exactly, doubles included, with `digits = I(17)`), with
+  base64 and base64url codecs beside it.
 - **Curated tables** — `bricklayer_data_tables()` lists the tables served
   at data.rmorie.com (161 databases and 203 tables on 2026-10-05,
   materialised from Google BigQuery public datasets), and
@@ -410,6 +418,7 @@ digest <- sha256_file(file.path(tempdir(), "manifest.json"))
 key <- pqc_keygen()                       # post-quantum, hash-based
 sig <- capsule_sign(digest, key)
 capsule_verify(digest, sig, signing_public_key(key))
+key <- sig$key_state                     # the next signature must use this
 ```
 
 See `vignette("drift")` for the distributional checks and

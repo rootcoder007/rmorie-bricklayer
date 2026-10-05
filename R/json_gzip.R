@@ -35,7 +35,7 @@
 #' @seealso
 #' [bricklayer_json_to_json()],
 #' [bricklayer_json_serialize()]
-#' for a lossless but uncompressed form.
+#' for an uncompressed form that keeps types and attributes.
 #' @examples
 #' x <- list(rows = data.frame(id = 1:50, value = stats::runif(50)))
 #'

@@ -304,8 +304,8 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' URL tried as a fallback if the primary download fails. When `NULL`
 #' (the default) a snapshot is resolved automatically via
 #' [wayback_snapshot_url()]; pass an
-#' explicit URL to override the lookup, or `""` to disable the
-#' fallback entirely.
+#' explicit URL to override the lookup, or `""` (or `FALSE`) to disable
+#' the fallback entirely.
 #' @return `TRUE` if either the primary download or the Wayback
 #' fallback succeeds, otherwise `FALSE`.
 #' @examples
@@ -379,12 +379,18 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL) {
       }
       ## Auto-resolve a Wayback snapshot if the caller did not supply one
       ## (NULL = auto; "" = explicitly disabled).
-      if (is.null(attempt_wayback)) {
-        attempt_wayback <- tryCatch(wayback_snapshot_url(url), error = function(e) NULL)
-      }
-      if (!is.character(attempt_wayback) || length(attempt_wayback) != 1L || is.na(attempt_wayback)) {
-        attempt_wayback <- ""  # no usable snapshot
-        message("  The Wayback Machine has no snapshot of it (or did not answer); nothing more to try.")
+      if (isFALSE(attempt_wayback) || identical(attempt_wayback, "")) {
+        attempt_wayback <- ""  # switched off by the caller: no lookup was made
+        message("  The Wayback fallback is switched off; nothing more to try.")
+      } else {
+        if (is.null(attempt_wayback)) {
+          attempt_wayback <- tryCatch(wayback_snapshot_url(url), error = function(e) NULL)
+        }
+        if (!is.character(attempt_wayback) || length(attempt_wayback) != 1L || is.na(attempt_wayback) ||
+            !nzchar(attempt_wayback)) {
+          attempt_wayback <- ""  # no usable snapshot
+          message("  The Wayback Machine has no snapshot of it (or did not answer); nothing more to try.")
+        }
       }
       if (!is.null(attempt_wayback) && nzchar(attempt_wayback)) {
         message("  Trying Wayback Machine fallback snapshot...")

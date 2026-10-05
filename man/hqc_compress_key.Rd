@@ -17,7 +17,8 @@ for v5, 96, 104 or 112 for round 4.
 The HQC specification of 2025-08-22 allows the decapsulation key to be
 stored as its 32-byte \code{seed_KEM} alone (the compressed format
 \code{dk_KEM = (seed_KEM)}), from which the whole key pair is derived again.
-\code{hqc_compress_key()} keeps only that seed; \code{\link[=hqc_decapsulate]{hqc_decapsulate()}} takes such a
+\code{hqc_compress_key()} keeps only that seed;
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}} takes such a
 key and expands it, and refuses one whose seed does not derive the key's
 public half.
 }
@@ -25,7 +26,8 @@ public half.
 The round-4 revision (64-byte shared secret) defines no compressed format,
 but its key pair is derived from the randomness its key generation draws,
 \code{sk_seed || sigma || pk_seed} (96, 104 or 112 bytes: the \code{seed} of
-\code{\link[=hqc_keygen]{hqc_keygen()}} and \code{\link[=hqc_sizes]{hqc_sizes()}}), all of which its secret key
+\code{\link[=hqc_keygen]{hqc_keygen()}} and
+\code{\link[=hqc_sizes]{hqc_sizes()}}), all of which its secret key
 \code{sk_seed || sigma || pk_seed || s} carries. For a round-4 key the compressed
 form is that seed: this package's convention, not a format of the
 submission, so software built on round 4 (liboqs, PQClean) expects the
