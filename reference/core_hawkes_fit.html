@@ -123,7 +123,20 @@ gradient, so one likelihood evaluation per point instead of one per parameter.</
     <p>A list: <code>theta</code>, <code>baseline_params</code>, <code>branching_ratio</code>,
 <code>kernel_params</code>, <code>nll</code>, <code>aic</code>, <code>bic</code>, <code>n</code>, <code>horizon</code>,
 <code>k_params</code>, <code>ks_stat</code>, <code>ks_pvalue</code> (time-rescaling residuals against the
-uniform), <code>method</code>, <code>eps</code>, <code>converged</code>.</p>
+uniform), <code>method</code>, <code>eps</code>, <code>converged</code> (the optimiser stopped at a
+maximum within the parameter box) and <code>at_bound</code> (the parameters that lie on the
+box, <code>character(0)</code> for an interior maximum). An estimate on the box is not
+an interior maximum of the likelihood: day-dated (tied) times drive a shape or
+decay to its wall, and a Lomax fitted to exponential data runs to its
+exponential limit.
+Events at the same instant do not excite each other: the intensity is
+\(\lambda(t) = \nu(t) + \eta \sum_{t_j &lt; t} g(t - t_j)\), over strictly earlier
+events, as the definition of a Hawkes process (a simple point process, with no two
+events at one time) has it. Tied times are fitted that way, with a warning: data
+recorded to a resolution, such as daily dates, carry ties the process itself never
+makes, and treating them as exact biases the fit (Filimonov &amp; Sornette 2015), so spread
+them uniformly across their interval first with
+<code><a href="core_hawkes_jitter.html">core_hawkes_jitter()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -153,7 +166,7 @@ reaches the maximum): the same maximum, a different route.</p></dd>
 
 <dt><code>"auto"</code></dt>
 <dd><p><code>"exact"</code> for the exponential kernel, <code>"truncate"</code> for
-Weibull, <code>"soe"</code> for Lomax and gamma.</p></dd>
+Weibull, <code>"soe"</code> for gamma and Lomax.</p></dd>
 
 
 </dl><p>The reported <code>nll</code> is the exact likelihood at the estimate whatever the route, so AIC
@@ -171,6 +184,14 @@ seismology using an EM-type algorithm. <em>JASA</em> 103, 614–624.
 <a href="https://doi.org/10.1198/016214508000000148" class="external-link">doi:10.1198/016214508000000148</a></p>
 <p>Kirchner M (2017). An estimation procedure for the Hawkes process.
 <em>Quant. Finance</em> 17, 571–595. <a href="https://doi.org/10.1080/14697688.2016.1211312" class="external-link">doi:10.1080/14697688.2016.1211312</a></p>
+<p>Filimonov V, Sornette D (2015). Apparent criticality and calibration issues in the
+Hawkes self-excited point process model: application to high-frequency financial data.
+<em>Quant. Finance</em> 15(8), 1293–1314. <a href="https://doi.org/10.1080/14697688.2015.1032544" class="external-link">doi:10.1080/14697688.2015.1032544</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="core_hawkes_jitter.html">core_hawkes_jitter()</a></code>, for times recorded to a
+resolution.</p></div>
     </div>
 
     <div class="section level2">
@@ -179,11 +200,11 @@ seismology using an EM-type algorithm. <em>JASA</em> 103, 614–624.
 <span class="r-in"><span><span class="va">times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">0</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">core_hawkes_fit</span><span class="op">(</span><span class="va">times</span>, <span class="fl">100</span>, <span class="st">"exponential"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="va">branching_ratio</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.0291918</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.02919195</span>
 <span class="r-in"><span><span class="fu">core_hawkes_fit</span><span class="op">(</span><span class="va">times</span>, <span class="fl">100</span>, <span class="st">"lomax"</span>, method <span class="op">=</span> <span class="st">"soe"</span>, eps <span class="op">=</span> <span class="fl">1e-8</span><span class="op">)</span><span class="op">$</span><span class="va">nll</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] -156.388</span>
 <span class="r-in"><span><span class="fu">core_hawkes_fit</span><span class="op">(</span><span class="va">times</span>, <span class="fl">100</span>, <span class="st">"exponential"</span>, baseline <span class="op">=</span> <span class="st">"sinusoidal"</span><span class="op">)</span><span class="op">$</span><span class="va">aic</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -304.3579</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] -305.1927</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

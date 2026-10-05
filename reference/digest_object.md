@@ -44,7 +44,7 @@ because attributes are part of the serialization.
 [`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
 for hashing text or bytes directly,
 [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-for a readable lossless form.
+for a readable form that keeps types and attributes.
 
 ## Examples
 

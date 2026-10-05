@@ -90,8 +90,13 @@ cannot forge.
 
 An XMSS signature consumes a leaf. The returned object therefore carries
 `key_state`, the key with `next_index` advanced, and **subsequent
-signing must use that** – reusing an index breaks the scheme. Passing an
-exhausted key is an error, not a silent wrap-around.
+signing must use that** – reusing an index breaks the scheme. The key is
+an R value, so `capsule_sign()` cannot advance the caller's copy;
+instead it remembers, for the session, the highest index each key has
+signed with and refuses that index or an earlier one (signing twice with
+one key object, or with a stale copy). Across sessions the saved key
+must be the latest `key_state`: save it after every signature. Passing
+an exhausted key is an error, not a silent wrap-around.
 
 ## See also
 

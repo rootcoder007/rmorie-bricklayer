@@ -216,9 +216,15 @@ produced the data.
   is exact whatever the route, so AIC compares across routes and
   kernels.
   [`core_hawkes_nll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_nll.md)
-  gives the likelihood and its gradient,
+  gives the same likelihood on the same parameters,
   [`core_hawkes_residuals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.md)
-  the time-rescaling residuals and their Kolmogorov-Smirnov test.
+  the time-rescaling residuals and their Kolmogorov-Smirnov test. Events
+  at one instant do not excite each other (the intensity sums over
+  strictly earlier events); times recorded to a resolution, such as
+  daily dates, are spread across their interval with
+  [`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md)
+  before the fit (Filimonov & Sornette 2015), and the fit warns when it
+  sees ties.
 - **Post-quantum keys and signatures** — ML-KEM
   ([`kem_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md),
   [`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md),
@@ -228,9 +234,10 @@ produced the data.
   and XMSS keys from
   [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
   both signing through
-  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md);
-  and HQC-KEM in both revisions: `hqc_keygen(version = "v5")`, the
-  default (specification of 2025-08-22, 32-byte shared secret), and
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+  (an XMSS index never signs twice: carry each signature’s `key_state`
+  forward); and HQC-KEM in both revisions: `hqc_keygen(version = "v5")`,
+  the default (specification of 2025-08-22, 32-byte shared secret), and
   `hqc_keygen(version = "round4")` (the fourth-round submission of
   2023-04-30 — the HQC of liboqs up to 0.12 and of PQClean — with a
   64-byte shared secret). Keys carry their revision and
@@ -273,8 +280,10 @@ produced the data.
   and “subject official” are one quantity). `police_service` is the
   service of the subject officials, read from the director’s analysis —
   not the force that notified the SIU, which is often a custody,
-  requesting or neighbouring service. rmorie and morie run the same
-  parser.
+  requesting or neighbouring service. Every layout is read: the
+  2005-2011 legacy pages, the 2012-2019 and 2020-on English pages, and
+  the French pages (the SIU publishes each report in both languages).
+  rmorie and morie run the same parser.
 - **JSON without jsonlite** —
   [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
   and
@@ -282,7 +291,8 @@ produced the data.
   are jsonlite’s `toJSON()` and `fromJSON()`, natively: every option,
   the same defaults and the same bytes out.
   [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-  round-trips any R object losslessly, with base64 and base64url codecs
+  round-trips an R object with its type and attributes (exactly, doubles
+  included, with `digits = I(17)`), with base64 and base64url codecs
   beside it.
 - **Curated tables** —
   [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
@@ -538,6 +548,7 @@ digest <- sha256_file(file.path(tempdir(), "manifest.json"))
 key <- pqc_keygen()                       # post-quantum, hash-based
 sig <- capsule_sign(digest, key)
 capsule_verify(digest, sig, signing_public_key(key))
+key <- sig$key_state                     # the next signature must use this
 ```
 
 See
@@ -819,7 +830,7 @@ jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.
   : Encode an R object as JSON (jsonlite's toJSON, natively)
 - [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
   [`bricklayer_json_unserialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-  : Lossless JSON serialisation of an R object
+  : JSON serialisation of an R object, type and attributes included
 - [`json_gzip_encode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
   [`json_gzip_decode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
   : Compressed, base64-encoded JSON
@@ -992,6 +1003,8 @@ package computes with one copy of the arithmetic.
   : Time-rescaling residuals of a Hawkes process
 - [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
   : Reproducible uniforms shared with morie's Python arm (splitmix64)
+- [`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md)
+  : Spread event times recorded to a resolution across their interval
 
 ## Distributional drift
 

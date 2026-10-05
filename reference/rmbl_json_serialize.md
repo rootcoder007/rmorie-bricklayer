@@ -1,4 +1,4 @@
-# Lossless JSON serialisation of an R object
+# JSON serialisation of an R object, type and attributes included
 
 Writes an R object to JSON with its type and attributes alongside the
 value, so the round trip returns THE SAME OBJECT rather than something
@@ -22,8 +22,13 @@ bricklayer_json_unserialize(txt)
 
 - digits:
 
-  Decimal digits retained for doubles (default 8, the jsonlite default).
-  Raise it where full precision matters.
+  Decimal digits retained for doubles (default 8, the jsonlite default,
+  so `1/3` is written as `0.33333333`). `digits = I(17)` writes every
+  double exactly (17 significant digits), which makes the round trip
+  [`identical()`](https://rdrr.io/r/base/identical.html) for doubles
+  too; `NA` means 15 significant digits, as in jsonlite, and is not
+  exact. A complex value with only one `NA` part comes back as `NA`, as
+  it does in jsonlite.
 
 - pretty:
 
@@ -77,6 +82,13 @@ bricklayer_json_to_json(f)
 # Nested lists, names and NULLs round trip too.
 x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
 identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+#> [1] TRUE
+
+# Doubles are rounded to `digits`; I(17) keeps them exact.
+bricklayer_json_serialize(1/3)
+#> {"type":"double","attributes":{},"value":[0.33333333]} 
+exact <- bricklayer_json_serialize(1/3, digits = I(17))
+identical(bricklayer_json_unserialize(exact), 1/3)
 #> [1] TRUE
 
 # The serialised form is JSON, so it can be pinned like any other text.

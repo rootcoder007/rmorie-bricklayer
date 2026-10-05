@@ -60,7 +60,20 @@ core_hawkes_fit(
 A list: `theta`, `baseline_params`, `branching_ratio`, `kernel_params`,
 `nll`, `aic`, `bic`, `n`, `horizon`, `k_params`, `ks_stat`, `ks_pvalue`
 (time-rescaling residuals against the uniform), `method`, `eps`,
-`converged`.
+`converged` (the optimiser stopped at a maximum within the parameter
+box) and `at_bound` (the parameters that lie on the box, `character(0)`
+for an interior maximum). An estimate on the box is not an interior
+maximum of the likelihood: day-dated (tied) times drive a shape or decay
+to its wall, and a Lomax fitted to exponential data runs to its
+exponential limit. Events at the same instant do not excite each other:
+the intensity is \\\lambda(t) = \nu(t) + \eta \sum\_{t_j \< t} g(t -
+t_j)\\, over strictly earlier events, as the definition of a Hawkes
+process (a simple point process, with no two events at one time) has it.
+Tied times are fitted that way, with a warning: data recorded to a
+resolution, such as daily dates, carry ties the process itself never
+makes, and treating them as exact biases the fit (Filimonov & Sornette
+2015), so spread them uniformly across their interval first with
+[`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md).
 
 ## Details
 
@@ -96,7 +109,7 @@ A list: `theta`, `baseline_params`, `branching_ratio`, `kernel_params`,
 - `"auto"`:
 
   `"exact"` for the exponential kernel, `"truncate"` for Weibull,
-  `"soe"` for Lomax and gamma.
+  `"soe"` for gamma and Lomax.
 
 The reported `nll` is the exact likelihood at the estimate whatever the
 route, so AIC is comparable across routes. An event exactly at `horizon`
@@ -120,6 +133,16 @@ Kirchner M (2017). An estimation procedure for the Hawkes process.
 *Quant. Finance* 17, 571–595.
 [doi:10.1080/14697688.2016.1211312](https://doi.org/10.1080/14697688.2016.1211312)
 
+Filimonov V, Sornette D (2015). Apparent criticality and calibration
+issues in the Hawkes self-excited point process model: application to
+high-frequency financial data. *Quant. Finance* 15(8), 1293–1314.
+[doi:10.1080/14697688.2015.1032544](https://doi.org/10.1080/14697688.2015.1032544)
+
+## See also
+
+[`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md),
+for times recorded to a resolution.
+
 ## Examples
 
 ``` r
@@ -127,9 +150,9 @@ set.seed(1)
 times <- sort(stats::runif(400, 0, 100))
 fit <- core_hawkes_fit(times, 100, "exponential")
 fit$branching_ratio
-#> [1] 0.0291918
+#> [1] 0.02919195
 core_hawkes_fit(times, 100, "lomax", method = "soe", eps = 1e-8)$nll
 #> [1] -156.388
 core_hawkes_fit(times, 100, "exponential", baseline = "sinusoidal")$aic
-#> [1] -304.3579
+#> [1] -305.1927
 ```

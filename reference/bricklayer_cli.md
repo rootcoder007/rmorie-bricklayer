@@ -106,9 +106,9 @@ bricklayer_cli(c("functions", "json"))
 #>   bricklayer_json_base64url_dec  Base64 encoding
 #>   bricklayer_json_base64url_enc  Base64 encoding
 #>   bricklayer_json_from_json      Parse JSON into R objects (jsonlite's fromJSON, natively)
-#>   bricklayer_json_serialize      Lossless JSON serialisation of an R object
+#>   bricklayer_json_serialize      JSON serialisation of an R object, type and attributes included
 #>   bricklayer_json_to_json        Encode an R object as JSON (jsonlite's toJSON, natively)
-#>   bricklayer_json_unserialize    Lossless JSON serialisation of an R object
+#>   bricklayer_json_unserialize    JSON serialisation of an R object, type and attributes included
 #>   json_gzip_decode               Compressed, base64-encoded JSON
 #>   json_gzip_encode               Compressed, base64-encoded JSON
 #>   write_manifest_json            Write a Manifest to JSON

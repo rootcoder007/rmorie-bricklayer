@@ -52,7 +52,7 @@ what to use when writing to a file rather than embedding in text.
 
 [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md),
 [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-for a lossless but uncompressed form.
+for an uncompressed form that keeps types and attributes.
 
 ## Examples
 

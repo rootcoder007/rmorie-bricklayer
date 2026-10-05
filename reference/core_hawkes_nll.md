@@ -55,8 +55,12 @@ Parameters are passed on the scales the kernel is defined on:
 = e^{a0}\\) and `eta` the branching ratio in (0, 1) – the expected
 number of children per event, so the process is stationary only for
 `eta < 1`. The remaining entries are the kernel's own shape parameters:
-`beta` (exponential), `alpha, lambda` (Weibull), `alpha, c` (Lomax),
-`alpha, beta` (gamma).
+`beta` (exponential), `alpha, lambda` (Weibull: shape and scale),
+`alpha, c` (Lomax: shape and scale, \\g(u) = \alpha c^\alpha (u +
+c)^{-(\alpha + 1)}\\), `alpha, beta` (gamma: shape and rate). This is
+the likelihood
+[`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+maximises, on the same parameters.
 
 ## References
 

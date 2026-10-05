@@ -29,8 +29,8 @@ friendly_download(url, target_path, attempt_wayback = NULL)
   download fails. When `NULL` (the default) a snapshot is resolved
   automatically via
   [`wayback_snapshot_url()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url.md);
-  pass an explicit URL to override the lookup, or `""` to disable the
-  fallback entirely.
+  pass an explicit URL to override the lookup, or `""` (or `FALSE`) to
+  disable the fallback entirely.
 
 ## Value
 

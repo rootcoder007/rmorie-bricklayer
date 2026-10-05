@@ -149,7 +149,7 @@ jsonlite’s mapping in base R, byte-for-byte; no jsonlite at run time.
   : Encode an R object as JSON (jsonlite's toJSON, natively)
 - [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
   [`bricklayer_json_unserialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
-  : Lossless JSON serialisation of an R object
+  : JSON serialisation of an R object, type and attributes included
 - [`json_gzip_encode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
   [`json_gzip_decode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
   : Compressed, base64-encoded JSON
@@ -322,6 +322,8 @@ package computes with one copy of the arithmetic.
   : Time-rescaling residuals of a Hawkes process
 - [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
   : Reproducible uniforms shared with morie's Python arm (splitmix64)
+- [`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md)
+  : Spread event times recorded to a resolution across their interval
 
 ## Distributional drift
 

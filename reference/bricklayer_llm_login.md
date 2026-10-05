@@ -5,8 +5,9 @@ Mints a personal key for <https://llm.rmorie.com> and stores it in
 `morie` and `rmorie` packages read too, so one sign-in serves all
 three). Three ways in:
 
-- `token`: a key you already have, from the website or an email; stored
-  as is.
+- `token`: a key you already have, from the website or an email. It is
+  checked with the gateway first and stored only when the gateway
+  accepts it; a refused key, or no answer, stores nothing.
 
 - `email`: a 6-digit code is sent to the address (valid ten minutes,
   single use); you type it, or pass `code`.

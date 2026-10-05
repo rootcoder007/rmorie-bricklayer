@@ -4,7 +4,8 @@ $XDG_CONFIG_HOME/morie/credentials.json (owner-only; the file
 the morie and rmorie packages read too, so one sign-in
 serves all three). Three ways in:
 token: a key you already have, from the website or an
-email; stored as is.
+email. It is checked with the gateway first and stored only when
+the gateway accepts it; a refused key, or no answer, stores nothing.
 email: a 6-digit code is sent to the address (valid
 ten minutes, single use); you type it, or pass code.
 neither: the GitHub device flow; a code is shown to enter at
@@ -14,7 +15,8 @@ $XDG_CONFIG_HOME/morie/credentials.json (owner-only; the file
 the morie and rmorie packages read too, so one sign-in
 serves all three). Three ways in:
 token: a key you already have, from the website or an
-email; stored as is.
+email. It is checked with the gateway first and stored only when
+the gateway accepts it; a refused key, or no answer, stores nothing.
 email: a 6-digit code is sent to the address (valid
 ten minutes, single use); you type it, or pass code.
 neither: the GitHub device flow; a code is shown to enter at
@@ -70,7 +72,8 @@ Nothing is written except by this explicit call."><meta name="google-site-verifi
 <code>$XDG_CONFIG_HOME/morie/credentials.json</code> (owner-only; the file
 the <code>morie</code> and <code>rmorie</code> packages read too, so one sign-in
 serves all three). Three ways in:</p><ul><li><p><code>token</code>: a key you already have, from the website or an
-email; stored as is.</p></li>
+email. It is checked with the gateway first and stored only when
+the gateway accepts it; a refused key, or no answer, stores nothing.</p></li>
 <li><p><code>email</code>: a 6-digit code is sent to the address (valid
 ten minutes, single use); you type it, or pass <code>code</code>.</p></li>
 <li><p>neither: the GitHub device flow; a code is shown to enter at

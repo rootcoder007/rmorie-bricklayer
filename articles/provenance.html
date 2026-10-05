@@ -142,7 +142,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       ed3e71807504d4bf0b7cdbc2fd7463d5d830424e5aa9b61d008a854b5cc85755</span></span>
+<span><span class="co">#&gt;   root       7ca879a1937e84b0f512b78a0aefed994bdc746268f04d3ed9ece0ef790f31f9</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -155,7 +155,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    ed3e71807504d4bf0b7cdbc2fd7463d5d830424e5aa9b61d008a854b5cc85755</span></span>
+<span><span class="co">#&gt;   root    7ca879a1937e84b0f512b78a0aefed994bdc746268f04d3ed9ece0ef790f31f9</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -180,7 +180,10 @@ advanced state for you to carry forward:</p>
 <span></span>
 <span><span class="va">s2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="fu"><a href="../reference/core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="st">"a second manifest"</span><span class="op">)</span>, <span class="va">signing_key</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="fu"><a href="../reference/core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="st">"a second manifest"</span><span class="op">)</span>, <span class="va">s2</span>, <span class="va">pub</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] TRUE</span></span>
+<span></span>
+<span><span class="co"># and forward again, for the next signature</span></span>
+<span><span class="va">signing_key</span> <span class="op">&lt;-</span> <span class="va">s2</span><span class="op">$</span><span class="va">key_state</span></span></code></pre></div>
 <p>An exhausted key is an error rather than a silent wrap-around:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">k</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pqc_keygen.html">pqc_keygen</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>          <span class="co"># signs exactly 2 messages</span></span>
@@ -369,13 +372,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T05:13:31Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T10:28:54Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"by_year"</span>, <span class="st">"by_precinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T05:13:31Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T10:28:54Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): by_year, by_precinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -417,7 +420,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    c5d36baf0864832ae0ab4be3e7f08f5b6816</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    8d1ff2c08fc278dffdc58df1f88f4b2ce389</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
