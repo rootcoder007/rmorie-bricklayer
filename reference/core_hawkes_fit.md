@@ -99,7 +99,7 @@ A list: `theta`, `baseline_params`, `branching_ratio`, `kernel_params`,
 
 The reported `nll` is the exact likelihood at the estimate whatever the
 route, so AIC is comparable across routes. An event exactly at `horizon`
-is left out, as in morie's Python fit.
+is part of the record and counted, as in morie's Python fit.
 
 ## References
 
