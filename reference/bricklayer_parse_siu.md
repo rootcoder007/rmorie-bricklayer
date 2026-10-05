@@ -30,6 +30,6 @@ A named character vector: the 16 schema fields plus `_language`.
 f <- bricklayer_parse_siu(system.file("extdata",
                                       "siu_synthetic_report.html",
                                       package = "rmoriebricklayer"))
-f[["number_of_subject_officers"]]
+f[["number_of_subject_officials"]]
 #> [1] "2"
 ```

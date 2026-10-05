@@ -28,7 +28,7 @@ bricklayer_siu_schema()
 #> 6    siu_forensics_investigators     TRUE
 #> 7    number_of_witness_officials     TRUE
 #> 8   number_of_civilian_witnesses     TRUE
-#> 9     number_of_subject_officers     TRUE
+#> 9    number_of_subject_officials     TRUE
 #> 10                  age_affected    FALSE
 #> 11           sex_gender_affected    FALSE
 #> 12           charges_recommended    FALSE

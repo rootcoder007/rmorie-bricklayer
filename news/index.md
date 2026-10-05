@@ -2,6 +2,14 @@
 
 ## rmoriebricklayer 0.5.5
 
+- SIU reports name the same people “subject officers” (before the SIU
+  Act, 2019), “subject officials” (after it) or “SO”: the parser now
+  writes the count as `number_of_subject_officials`, the corpus’s and
+  the SIU Act’s term and the same form as `number_of_witness_officials`
+  (it was `number_of_subject_officers`, so the parsed row and the
+  shipped corpus disagreed on the column name). The section and ordinal
+  matching already read all three spellings.
+
 - A deterministic random bit generator:
   [`drbg_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.md),
   [`drbg_generate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_generate.md)
