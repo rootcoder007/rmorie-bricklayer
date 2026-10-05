@@ -11,10 +11,11 @@
 
 .rmbl_hk_method <- function(method, kernel) {
   method <- match.arg(method, .rmbl_hk_methods)
-  # Weibull's exact window is where the kernel underflows: for shape < 1 the whole record.
-  # Gamma: exact. Its truncated and sum-of-exponentials likelihoods change with the shape (the
-  # window and the number of terms move with it), so the optimiser can stall on them: on 2,118
-  # events it ran 2,000 iterations to a worse optimum, where the exact route took 173.
+  # Weibull's exact window is where the kernel underflows: for shape < 1 the whole record, so
+  # "auto" truncates. Lomax and gamma use the sum of exponentials ("soe"; a gamma kernel with
+  # shape >= 1 is truncated at eps). The gamma stall on that route (2,000 iterations to a worse
+  # optimum on 2,118 tied events) ended when the projected BFGS began restarting its curvature
+  # estimate at the bounds; it now reaches the exact route's maximum in 2.8 s.
   if (method == "auto") return(switch(kernel, exponential = "exact", weibull = "truncate", "soe"))
   if (method == "soe" && !kernel %in% c("lomax", "gamma")) {
     stop("method = \"soe\" applies to completely monotone kernels: \"lomax\", and \"gamma\" with shape < 1 ",
@@ -119,7 +120,8 @@
 #'   \code{"gamma"}, \code{"lomax"}.
 #' @param baseline \code{"constant"} or \code{"sinusoidal"}.
 #' @param method One of \code{"auto"}, \code{"exact"}, \code{"soe"}, \code{"truncate"},
-#'   \code{"em"}, \code{"inar"}.
+#'   \code{"em"}, \code{"inar"}. \code{"auto"} is \code{"exact"} for the exponential kernel,
+#'   \code{"truncate"} for Weibull and \code{"soe"} for Lomax and gamma.
 #' @param eps Error level of \code{"soe"} (relative, per intensity) and \code{"truncate"}
 #'   (kernel tail mass).
 #' @param start Optional starting values (baseline, eta, kernel).

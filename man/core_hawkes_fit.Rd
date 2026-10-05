@@ -25,7 +25,8 @@ core_hawkes_fit(
 \item{baseline}{\code{"constant"} or \code{"sinusoidal"}.}
 
 \item{method}{One of \code{"auto"}, \code{"exact"}, \code{"soe"}, \code{"truncate"},
-\code{"em"}, \code{"inar"}.}
+\code{"em"}, \code{"inar"}. \code{"auto"} is \code{"exact"} for the exponential kernel,
+\code{"truncate"} for Weibull and \code{"soe"} for Lomax and gamma.}
 
 \item{eps}{Error level of \code{"soe"} (relative, per intensity) and \code{"truncate"}
 (kernel tail mass).}
