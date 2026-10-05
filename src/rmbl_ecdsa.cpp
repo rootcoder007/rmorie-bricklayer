@@ -25,6 +25,16 @@
 #include <R.h>
 #include <Rinternals.h>
 
+/* The first element of a character argument, or an error in words: every
+ * STRING_ELT(x, 0) below went through this once a length-0 or NA input
+ * reached a .Call directly (the R wrappers guard; the entry points did not). */
+static const char *rmbl_str0(SEXP x, const char *name) {
+    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
+        Rf_error("`%s` must be a non-missing string", name);
+    }
+    return CHAR(STRING_ELT(x, 0));
+}
+
 namespace {
 
 /* 521 bits needs 17 limbs; one spare for carries during multiply. */
@@ -550,8 +560,8 @@ SEXP C_rmbl_ecdsa_verify(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
         Rf_error("`curve` must be \"P-256\", \"P-384\" or \"P-521\"");
     }
     Curve c;
-    if (!load_curve(&c, CHAR(STRING_ELT(curve, 0)))) {
-        Rf_error("unsupported curve: %s", CHAR(STRING_ELT(curve, 0)));
+    if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
+        Rf_error("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     if (TYPEOF(qx) != RAWSXP || TYPEOF(qy) != RAWSXP ||
         TYPEOF(r) != RAWSXP || TYPEOF(s) != RAWSXP ||
@@ -636,8 +646,8 @@ SEXP C_rmbl_ec_order(SEXP curve) {
         Rf_error("`curve` must be a single string");
     }
     Curve c;
-    if (!load_curve(&c, CHAR(STRING_ELT(curve, 0)))) {
-        Rf_error("unsupported curve: %s", CHAR(STRING_ELT(curve, 0)));
+    if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
+        Rf_error("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, c.bytes));
     to_bytes(&c.n, RAW(out), static_cast<size_t>(c.bytes));
@@ -653,8 +663,8 @@ SEXP C_rmbl_ec_mul(SEXP curve, SEXP k) {
         Rf_error("`curve` must be a single string");
     }
     Curve c;
-    if (!load_curve(&c, CHAR(STRING_ELT(curve, 0)))) {
-        Rf_error("unsupported curve: %s", CHAR(STRING_ELT(curve, 0)));
+    if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
+        Rf_error("unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
     if (TYPEOF(k) != RAWSXP) Rf_error("`k` must be a raw vector");
     Num nk;

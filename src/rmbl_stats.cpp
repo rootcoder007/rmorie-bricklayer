@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 /* SPDX-License-Identifier: AGPL-3.0-or-later
  *
  * rmbl_stats.cpp -- bricklayer's own statistical kernels.
@@ -26,6 +27,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstddef>
 #include <vector>
 
@@ -307,20 +309,42 @@ double rmbl_ks_two_sample(const double *x, R_xlen_t nx,
     return d;
 }
 
-/* Asymptotic two-sided KS p-value: the Kolmogorov distribution tail
- * 2 sum_{k>=1} (-1)^(k-1) exp(-2 k^2 t^2). */
+/* Asymptotic two-sided KS p-value, 1 - K(t) with t = sqrt(n_eff) * D.
+ *
+ * Two series, as in R's C_pKS2 (Marsaglia, Tsang and Wang 2003). For
+ * t >= 1 the Kolmogorov tail 2 sum_{k>=1} (-1)^(k-1) exp(-2 k^2 t^2)
+ * converges in a few terms. For t < 1 it does not: truncating it at 200
+ * terms left a partial sum far from 1 for small t, so two million-row
+ * columns differing in ONE value were reported as drifted (p = 0.02),
+ * and the error grew with n. The theta-function form
+ *   K(t) = sqrt(2 pi) / t * sum_{k odd} exp(-(k pi)^2 / (8 t^2))
+ * converges fast there instead. */
 double rmbl_ks_pvalue(double d, double n_eff) {
     if (!(d > 0.0) || !(n_eff > 0.0)) return 1.0;
     const double t = std::sqrt(n_eff) * d;
     if (t < 1e-12) return 1.0;
-    double s = 0.0;
-    for (int k = 1; k <= 200; ++k) {
-        const double term = std::exp(-2.0 * static_cast<double>(k) *
-                                     static_cast<double>(k) * t * t);
-        s += ((k % 2 == 1) ? 1.0 : -1.0) * term;
-        if (term < 1e-16) break;
+    double p;
+    if (t < 1.0) {
+        const double z = -(M_PI * M_PI / 8.0) / (t * t);
+        const double w = std::log(t);
+        double s = 0.0;
+        for (int k = 1; k < 200; k += 2) {
+            const double term = std::exp(static_cast<double>(k) *
+                                         static_cast<double>(k) * z - w);
+            s += term;
+            if (term < 1e-300) break;
+        }
+        p = 1.0 - std::sqrt(2.0 * M_PI) * s;
+    } else {
+        double s = 0.0;
+        for (int k = 1; k <= 200; ++k) {
+            const double term = std::exp(-2.0 * static_cast<double>(k) *
+                                         static_cast<double>(k) * t * t);
+            s += ((k % 2 == 1) ? 1.0 : -1.0) * term;
+            if (term < 1e-300) break;
+        }
+        p = 2.0 * s;
     }
-    double p = 2.0 * s;
     if (p < 0.0) p = 0.0;
     if (p > 1.0) p = 1.0;
     return p;
@@ -357,14 +381,15 @@ double rmbl_js_divergence(const double *p, const double *q, R_xlen_t k) {
 /* Leading significant decimal digit of |x|, or 0 when there is none. */
 int rmbl_first_digit(double x) {
     if (!std::isfinite(x)) return 0;
-    double v = std::fabs(x);
+    const double v = std::fabs(x);
     if (v == 0.0) return 0;
-    while (v < 1.0) v *= 10.0;
-    while (v >= 10.0) v /= 10.0;
-    int d = static_cast<int>(v);
-    if (d < 1) d = 1;
-    if (d > 9) d = 9;
-    return d;
+    /* Read the digit off the decimal rendering at 15 significant digits
+     * (R's own print precision). Repeated x10 / /10 accumulated an ulp of
+     * error per step and misread 2e-300 as 1 and 7e120 as 6. */
+    char buf[40];
+    std::snprintf(buf, sizeof buf, "%.14e", v);
+    const int d = buf[0] - '0';
+    return (d < 1) ? 1 : (d > 9) ? 9 : d;
 }
 
 void rmbl_first_digit_counts(const double *a, R_xlen_t n, double *out) {

@@ -279,9 +279,11 @@ inline int32_t use_hint(int32_t a, unsigned int hint) {
 }
 
 /* Rejects a polynomial whose coefficients leave the allowed range. The
- * comparison is written branch-free on the sign bit because it runs on
- * secret data during signing, and a data-dependent branch there is a
- * timing side channel. */
+ * absolute value is taken branch-free on the sign bit; the early return
+ * on the first out-of-range coefficient is data-dependent, as in the
+ * pq-crystals reference, and leaks only the index of that coefficient
+ * inside a rejection iteration whose outcome (rejected) is public anyway.
+ * It is not a constant-time comparison and does not claim to be. */
 inline int poly_chknorm(const int32_t a[256], int32_t B) {
     if (B > (kQ - 1) / 8) return 1;
     for (int i = 0; i < 256; ++i) {
@@ -714,7 +716,7 @@ void unpack_sk(unsigned char rho[32], unsigned char tr[64],
  * It is why the signature is 3309 bytes and not K*256 bits larger. */
 void pack_sig(unsigned char *sig, const unsigned char *c,
               const PolyVecL *z, const PolyVecK *h) {
-    std::memcpy(sig, c, static_cast<size_t>(kCtildeBytes));
+    std::memmove(sig, c, static_cast<size_t>(kCtildeBytes));  /* sign_mu passes sig as both */
     sig += kCtildeBytes;
     for (int i = 0; i < kL; ++i) {
         polyz_pack(sig + i * kPolyZPacked, z->v[i]);
@@ -853,39 +855,43 @@ void tr_from_pk(unsigned char tr[64], const unsigned char *pk) {
  * ExternalMu-ML-DSA interface. It exists so a device holding the key
  * never has to receive the message: everything below this point uses
  * only mu. */
-void sign_mu(unsigned char *sig, const unsigned char mu[64],
+int sign_mu(unsigned char *sig, const unsigned char mu[64],
              const unsigned char rnd[32], const unsigned char *sk);
 
 int verify_mu(const unsigned char *sig, const unsigned char mu[64],
               const unsigned char *pk);
 
-void sign_internal(unsigned char *sig, const unsigned char *m, size_t mlen,
+int sign_internal(unsigned char *sig, const unsigned char *m, size_t mlen,
                    const unsigned char *ctx, size_t ctxlen,
                    const unsigned char rnd[32], const unsigned char *sk) {
     /* only tr is needed up here, and it sits at a fixed offset: the
      * secret key is rho || K || tr || s1 || s2 || t0 */
     unsigned char mu[64];
     compute_mu(mu, sk + 64, m, mlen, ctx, ctxlen, NULL, 0);
-    sign_mu(sig, mu, rnd, sk);
+    return sign_mu(sig, mu, rnd, sk);
 }
 
 /* The pre-hashed variant, HashML-DSA. Identical below mu. */
-void sign_prehash(unsigned char *sig, const unsigned char *phm, size_t phlen,
+int sign_prehash(unsigned char *sig, const unsigned char *phm, size_t phlen,
                   const unsigned char *ctx, size_t ctxlen,
                   const unsigned char *oid, size_t oidlen,
                   const unsigned char rnd[32], const unsigned char *sk) {
     unsigned char mu[64];
     compute_mu(mu, sk + 64, phm, phlen, ctx, ctxlen, oid, oidlen);
-    sign_mu(sig, mu, rnd, sk);
+    return sign_mu(sig, mu, rnd, sk);
 }
 
-void sign_mu(unsigned char *sig, const unsigned char mu[64],
-             const unsigned char rnd[32], const unsigned char *sk) {
+int sign_mu(unsigned char *sig, const unsigned char mu[64],
+            const unsigned char rnd[32], const unsigned char *sk) {
     unsigned char rho[32], tr[64], key[32], rhoprime[64];
     PolyVecL mat[kK], s1, y, z;
     PolyVecK t0, s2, w1, w0, h;
     int32_t cp[256];
     unpack_sk(rho, tr, key, &t0, &s1, &s2, sk);
+    /* A key that is the right length but not a key: s1 and s2 are packed in
+     * [-eta, eta], so a coefficient outside it can only come from corrupt
+     * bytes. Signing with it would reject every candidate for ever. */
+    if (vecl_chknorm(&s1, kEta + 1) || veck_chknorm(&s2, kEta + 1)) return -1;
 
     RmblKeccak st;
     /* rhoprime = CRH(key, rnd, mu) */
@@ -902,7 +908,7 @@ void sign_mu(unsigned char *sig, const unsigned char mu[64],
     veck_ntt(&t0);
 
     uint16_t nonce = 0;
-    for (;;) {
+    for (int attempt = 0; attempt < rmbl_mldsa_core::kMaxSignAttempts; ++attempt) {
         vecl_uniform_gamma1(&y, rhoprime, nonce++);
         z = y;
         vecl_ntt(&z);
@@ -945,8 +951,9 @@ void sign_mu(unsigned char *sig, const unsigned char mu[64],
         if (n > static_cast<unsigned int>(kOmega)) continue;
 
         pack_sig(sig, sig, &z, &h);
-        return;
+        return 0;
     }
+    return -1;  /* a sound key accepts within a handful of attempts */
 }
 
 int verify_internal(const unsigned char *sig, const unsigned char *m,

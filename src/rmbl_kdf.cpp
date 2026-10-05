@@ -39,6 +39,22 @@ extern "C" BOOLEAN NTAPI SystemFunction036(PVOID buffer, ULONG length);
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+#include <cerrno>
+#if defined(__linux__) && defined(__GLIBC__) && \
+    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
+#include <sys/random.h>
+#define RMBL_HAVE_GETRANDOM 1
+#endif
+
+/* The first element of a character argument, or an error in words: every
+ * STRING_ELT(x, 0) below went through this once a length-0 or NA input
+ * reached a .Call directly (the R wrappers guard; the entry points did not). */
+static const char *rmbl_str0(SEXP x, const char *name) {
+    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
+        Rf_error("`%s` must be a non-missing string", name);
+    }
+    return CHAR(STRING_ELT(x, 0));
+}
 #include <R_ext/Rdynload.h>
 
 #include <cstdint>
@@ -251,6 +267,23 @@ void rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
  * be read -- the caller must treat that as fatal rather than falling
  * back to something guessable. */
 int rmbl_os_random(unsigned char *out, size_t n) {
+#if defined(RMBL_HAVE_GETRANDOM)
+    /* getrandom(2) needs no file descriptor, so it works under fd
+     * exhaustion and in a chroot without /dev. ENOSYS (an old kernel
+     * behind a new glibc) falls through to the device below. */
+    size_t done = 0;
+    bool unsupported = false;
+    while (done < n) {
+        const ssize_t got = getrandom(out + done, n - done, 0);
+        if (got < 0) {
+            if (errno == EINTR) continue;
+            if (errno == ENOSYS) { unsupported = true; break; }
+            return -1;
+        }
+        done += static_cast<size_t>(got);
+    }
+    if (!unsupported) return 0;
+#endif
 #if defined(_WIN32)
     /* ULONG is 32-bit, so a very large request has to be filled in
      * chunks rather than truncated. */
@@ -276,17 +309,27 @@ int rmbl_os_random(unsigned char *out, size_t n) {
 SEXP C_rmbl_blake2b(SEXP x, SEXP key, SEXP outlen) {
     const int ol = Rf_asInteger(outlen);
     if (ol < 1 || ol > 64) Rf_error("`length` must be between 1 and 64 bytes");
+    /* validate before any std::vector exists: Rf_error() longjmps past
+     * C++ destructors */
+    if (key != R_NilValue && TYPEOF(key) == RAWSXP && XLENGTH(key) > 64) {
+        Rf_error("`key` must be at most 64 bytes");
+    }
+    if (key != R_NilValue && TYPEOF(key) != RAWSXP) {
+        SEXP k = PROTECT(Rf_coerceVector(key, STRSXP));
+        const size_t kl = std::strlen(rmbl_str0(k, "key"));
+        UNPROTECT(1);
+        if (kl > 64) Rf_error("`key` must be at most 64 bytes");
+    }
     std::vector<unsigned char> kb;
     if (key != R_NilValue) {
         if (TYPEOF(key) == RAWSXP) {
             kb.assign(RAW(key), RAW(key) + XLENGTH(key));
         } else {
             SEXP k = PROTECT(Rf_coerceVector(key, STRSXP));
-            const char *s = CHAR(STRING_ELT(k, 0));
+            const char *s = rmbl_str0(k, "key");
             kb.assign(s, s + std::strlen(s));
             UNPROTECT(1);
         }
-        if (kb.size() > 64) Rf_error("`key` must be at most 64 bytes");
     }
     std::vector<unsigned char> ob(static_cast<size_t>(ol));
     std::string hex;
@@ -326,7 +369,7 @@ SEXP C_rmbl_pbkdf2(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
         pb.assign(RAW(pass), RAW(pass) + XLENGTH(pass));
     } else {
         SEXP p = PROTECT(Rf_coerceVector(pass, STRSXP));
-        const char *s = CHAR(STRING_ELT(p, 0));
+        const char *s = rmbl_str0(p, "password");
         pb.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }
@@ -334,7 +377,7 @@ SEXP C_rmbl_pbkdf2(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
         sb.assign(RAW(salt), RAW(salt) + XLENGTH(salt));
     } else {
         SEXP s2 = PROTECT(Rf_coerceVector(salt, STRSXP));
-        const char *s = CHAR(STRING_ELT(s2, 0));
+        const char *s = rmbl_str0(s2, "salt");
         sb.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }

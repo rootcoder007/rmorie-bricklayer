@@ -30,6 +30,16 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+
+/* The first element of a character argument, or an error in words: every
+ * STRING_ELT(x, 0) below went through this once a length-0 or NA input
+ * reached a .Call directly (the R wrappers guard; the entry points did not). */
+static const char *rmbl_str0(SEXP x, const char *name) {
+    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
+        Rf_error("`%s` must be a non-missing string", name);
+    }
+    return CHAR(STRING_ELT(x, 0));
+}
 #include <R_ext/Rdynload.h>
 
 #include <cstdint>
@@ -511,7 +521,7 @@ SEXP C_rmbl_hmac_sha256(SEXP key, SEXP msg) {
         kb.assign(RAW(key), RAW(key) + XLENGTH(key));
     } else {
         SEXP k = PROTECT(Rf_coerceVector(key, STRSXP));
-        const char *s = CHAR(STRING_ELT(k, 0));
+        const char *s = rmbl_str0(k, "key");
         kb.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }
@@ -519,7 +529,7 @@ SEXP C_rmbl_hmac_sha256(SEXP key, SEXP msg) {
         mb.assign(RAW(msg), RAW(msg) + XLENGTH(msg));
     } else {
         SEXP m = PROTECT(Rf_coerceVector(msg, STRSXP));
-        const char *s = CHAR(STRING_ELT(m, 0));
+        const char *s = rmbl_str0(m, "msg");
         mb.assign(s, s + std::strlen(s));
         UNPROTECT(1);
     }
@@ -531,8 +541,8 @@ SEXP C_rmbl_hmac_sha256(SEXP key, SEXP msg) {
 SEXP C_rmbl_digest_equal(SEXP a, SEXP b) {
     a = PROTECT(Rf_coerceVector(a, STRSXP));
     b = PROTECT(Rf_coerceVector(b, STRSXP));
-    const char *sa = CHAR(STRING_ELT(a, 0));
-    const char *sb = CHAR(STRING_ELT(b, 0));
+    const char *sa = rmbl_str0(a, "a");
+    const char *sb = rmbl_str0(b, "b");
     int eq = 0;
     if (std::strlen(sa) == std::strlen(sb)) {
         eq = rmbl_digest_equal(sa, sb, std::strlen(sa));

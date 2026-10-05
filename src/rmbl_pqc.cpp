@@ -65,6 +65,16 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+
+/* The first element of a character argument, or an error in words: every
+ * STRING_ELT(x, 0) below went through this once a length-0 or NA input
+ * reached a .Call directly (the R wrappers guard; the entry points did not). */
+static const char *rmbl_str0(SEXP x, const char *name) {
+    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
+        Rf_error("`%s` must be a non-missing string", name);
+    }
+    return CHAR(STRING_ELT(x, 0));
+}
 #include <R_ext/Rdynload.h>
 
 #include <cstdint>
@@ -369,6 +379,9 @@ void tree_root(const unsigned char *sk_seed, const unsigned char *pub_seed,
     const size_t nleaves = static_cast<size_t>(1) << h;
     std::vector<unsigned char> lvl(nleaves * kN);
     for (size_t i = 0; i < nleaves; ++i) {
+        /* height 16 is 65,536 WOTS+ key pairs (about 66M SHA-256 calls):
+         * let the user interrupt it rather than SIGKILL R */
+        if ((i & 1023) == 1023) R_CheckUserInterrupt();
         compute_leaf(sk_seed, pub_seed, static_cast<uint32_t>(i),
                      lvl.data() + i * kN);
     }
@@ -407,10 +420,10 @@ int rmbl_xmss_len(void) { return kLen; }
 
 SEXP C_rmbl_xmss_keygen(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     std::vector<unsigned char> sks, pubs;
-    if (!unhexlify(CHAR(STRING_ELT(sk_seed_hex, 0)), sks) || sks.size() != kN) {
+    if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
         Rf_error("`sk_seed` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(CHAR(STRING_ELT(pub_seed_hex, 0)), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
         Rf_error("`pub_seed` must be 64 hex characters (32 bytes)");
     }
@@ -427,14 +440,14 @@ SEXP C_rmbl_xmss_keygen(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
 SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
                       SEXP height, SEXP index, SEXP msg) {
     std::vector<unsigned char> sks, prfs, pubs;
-    if (!unhexlify(CHAR(STRING_ELT(sk_seed_hex, 0)), sks) || sks.size() != kN) {
+    if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
         Rf_error("`sk_seed` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(CHAR(STRING_ELT(sk_prf_hex, 0)), prfs) ||
+    if (!unhexlify(rmbl_str0(sk_prf_hex, "sk_prf"), prfs) ||
         prfs.size() != kN) {
         Rf_error("`sk_prf` must be 64 hex characters (32 bytes)");
     }
-    if (!unhexlify(CHAR(STRING_ELT(pub_seed_hex, 0)), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
         Rf_error("`pub_seed` must be 64 hex characters (32 bytes)");
     }
@@ -449,7 +462,7 @@ SEXP C_rmbl_xmss_sign(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
     if (TYPEOF(msg) == RAWSXP) {
         mb.assign(RAW(msg), RAW(msg) + XLENGTH(msg));
     } else {
-        const char *s = CHAR(STRING_ELT(msg, 0));
+        const char *s = rmbl_str0(msg, "msg");
         mb.assign(s, s + std::strlen(s));
     }
 
@@ -525,18 +538,18 @@ SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
                         SEXP index, SEXP msg, SEXP sig_hex, SEXP auth_hex,
                         SEXP r_hex) {
     std::vector<unsigned char> pubs, root, sig, auth;
-    if (!unhexlify(CHAR(STRING_ELT(pub_seed_hex, 0)), pubs) ||
+    if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
         return Rf_ScalarLogical(FALSE);
     }
-    if (!unhexlify(CHAR(STRING_ELT(root_hex, 0)), root) || root.size() != kN) {
+    if (!unhexlify(rmbl_str0(root_hex, "root"), root) || root.size() != kN) {
         return Rf_ScalarLogical(FALSE);
     }
-    if (!unhexlify(CHAR(STRING_ELT(sig_hex, 0)), sig) ||
+    if (!unhexlify(rmbl_str0(sig_hex, "sig"), sig) ||
         sig.size() != static_cast<size_t>(kLen) * kN) {
         return Rf_ScalarLogical(FALSE);
     }
-    if (!unhexlify(CHAR(STRING_ELT(auth_hex, 0)), auth)) {
+    if (!unhexlify(rmbl_str0(auth_hex, "auth"), auth)) {
         return Rf_ScalarLogical(FALSE);
     }
     const int h = Rf_asInteger(height);
@@ -553,13 +566,13 @@ SEXP C_rmbl_xmss_verify(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
     if (TYPEOF(msg) == RAWSXP) {
         mb.assign(RAW(msg), RAW(msg) + XLENGTH(msg));
     } else {
-        const char *s = CHAR(STRING_ELT(msg, 0));
+        const char *s = rmbl_str0(msg, "msg");
         mb.assign(s, s + std::strlen(s));
     }
 
     /* The verifier has no SK_PRF, so R travels with the signature. */
     std::vector<unsigned char> rnd;
-    if (!unhexlify(CHAR(STRING_ELT(r_hex, 0)), rnd) || rnd.size() != kN) {
+    if (!unhexlify(rmbl_str0(r_hex, "r"), rnd) || rnd.size() != kN) {
         Rf_error("`randomizer` must be 64 hex characters (32 bytes)");
     }
     unsigned char dig[32];
