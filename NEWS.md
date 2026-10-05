@@ -156,8 +156,8 @@
   estimate (asserted on common data in both test suites). `core_uniforms()` exposes the splitmix64
   stream both arms use where they must draw the same numbers. The default `method = "auto"` is exact
   for the exponential kernel, `"truncate"` for Weibull (whose exact window, where the kernel
-  underflows, spans the whole record when the shape is below 1), `"soe"` for Lomax and exact for
-  gamma; `"soe"` truncates a gamma kernel with shape >= 1 at `eps`.
+  underflows, spans the whole record when the shape is below 1) and `"soe"` for Lomax and gamma;
+  `"soe"` truncates a gamma kernel with shape >= 1 at `eps`.
 * HQC-KEM, the code-based key encapsulation NIST selected in March 2025 beside ML-KEM:
   `hqc_keygen()`, `hqc_public_key()`, `hqc_encapsulate()`, `hqc_decapsulate()` and `hqc_sizes()` at
   HQC-1, HQC-3 and HQC-5, implemented in the package. All 300 official known-answer vectors of the
