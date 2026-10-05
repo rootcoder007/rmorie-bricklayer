@@ -24,14 +24,30 @@ test_that("the subject official's service wins over the notifying force", {
     "Hillcrest Police Service")
 })
 
-test_that("with no service in a subject-official sentence, the analysis's most-named service wins", {
+test_that("a subject-official sentence without a service reads the sentence before it", {
   expect_equal(
     service("The Lakeshore Police Service notified the SIU.",
             "Analysis and Director's Decision",
             "The Complainant was arrested by Riverton Police Service officers.",
-            "The SO was identified as the subject official.",
-            "Riverton Police Service records were reviewed; Lakeshore Police Service assisted."),
+            "The SO was identified as the subject official."),
     "Riverton Police Service")
+})
+
+test_that("with no service near a subject official, the analysis's most-named service wins", {
+  expect_equal(
+    service("The Lakeshore Police Service notified the SIU.",
+            "Analysis and Director's Decision",
+            "The Complainant fell from a balcony.",
+            "The SO was identified as the subject official.",
+            "Riverton Police Service records were reviewed.",
+            "Riverton Police Service officers had attended; the Lakeshore Police Service assisted."),
+    "Riverton Police Service")
+  # a page's own abbreviation replaces the default reading of the same letters
+  expect_equal(
+    service("The Pinecrest Regional Police ( PRP ) notified the SIU.",
+            "Analysis and Director's Decision",
+            "The SO , a PRP officer, made the arrest."),
+    "Pinecrest Regional Police")
 })
 
 test_that("the case-number letter rules out services of the wrong kind", {
