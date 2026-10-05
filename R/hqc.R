@@ -33,15 +33,32 @@
 #' and shared secret of the final standard may differ from these, so keep
 #' keys and ciphertexts tagged with the scheme and level they belong to.
 #'
+#' `version = "round4"` gives the earlier revision instead: the fourth-round
+#' submission of 2023-04-30 (HQC-128/192/256), the HQC of liboqs up to 0.12
+#' and of PQClean, with a 64-byte shared secret. It uses the same codes and
+#' parameters under a different key encapsulation (40-byte seeds, SHAKE256
+#' with domain bytes in place of SHA3, another sampler), so its keys and
+#' ciphertexts are not interchangeable with v5's. It reproduces that
+#' revision's 300 official known-answer vectors (the package's tests check
+#' them); use it to exchange keys with software built on it, and v5 otherwise.
+#'
 #' @param level Security level, as a NIST category: 1, 3 (the default) or 5
 #' (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
-#' Level 3 matches the category of ML-KEM-768, [kem_keygen()]'s default.
-#' @param seed Optional raw vector of 32 bytes (`seed_KEM`). Supplying it makes
-#' the key reproducible, which is what the known-answer tests need; the
-#' default draws from the operating system's CSPRNG.
+#' Level 3 matches the category of ML-KEM-768,
+#' [kem_keygen()]'s default.
+#' @param seed Optional raw vector: 32 bytes (`seed_KEM`) for v5; for round 4
+#' the [hqc_sizes()]`["seed"]` bytes its key generation
+#' draws (`sk_seed`, `sigma`, `pk_seed`: 96, 104 or 112).
+#' Supplying it makes the key reproducible, which is what the known-answer
+#' tests need; the default draws from the operating system's CSPRNG.
+#' @param version `"v5"` (the default: the specification of 2025-08-22, a
+#' 32-byte shared secret) or `"round4"` (the submission of 2023-04-30, a
+#' 64-byte shared secret). Keys remember it; encapsulation and decapsulation
+#' follow the key.
 #' @return A list of class `bricklayer_hqc_key`: `public`, `secret` (both
-#' hex) and `level`. The secret key is the specification's
-#' `ek || seed_dk || sigma || seed_KEM`.
+#' hex), `level` and `version`. The v5 secret key is the specification's
+#' `ek || seed_dk || sigma || seed_KEM`; the round-4 one is
+#' `sk_seed || sigma || ek`.
 #' @references Gaborit, P., Aguilar-Melchor, C., Aragon, N., Bettaieb, S.,
 #' Bidoux, L., Blazy, O., Deneuville, J.-C., Persichetti, E., Zemor, G.,
 #' et al. (2025). Hamming Quasi-Cyclic (HQC), specification of 2025-08-22;
@@ -73,18 +90,26 @@
 #' # a reproducible key from a fixed seed
 #' identical(hqc_keygen(1, seed = as.raw(1:32))$public,
 #'           hqc_keygen(1, seed = as.raw(1:32))$public)
+#'
+#' # the round-4 revision: the same exchange, a 64-byte shared secret
+#' old <- hqc_keygen(1, version = "round4")
+#' cap <- hqc_encapsulate(hqc_public_key(old))
+#' nchar(cap$shared) / 2
+#' identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
 #' @export
-hqc_keygen <- function(level = 3L, seed = NULL) {
+hqc_keygen <- function(level = 3L, seed = NULL, version = c("v5", "round4")) {
   level <- .rmbl_hqc_level(level)
+  version <- match.arg(version)
+  n <- hqc_sizes(level, version)[["seed"]]
   if (is.null(seed)) {
-    seed <- random_bytes(32L)
-  } else if (!is.raw(seed) || length(seed) != 32L) {
-    stop("`seed` must be a raw vector of 32 bytes", call. = FALSE)
+    seed <- random_bytes(n)
+  } else if (!is.raw(seed) || length(seed) != n) {
+    stop(sprintf("`seed` must be a raw vector of %d bytes for HQC %s", n, version), call. = FALSE)
   }
-  res <- .Call(C_rmbl_hqc_keygen, level, seed)
+  res <- .Call(if (version == "v5") C_rmbl_hqc_keygen else C_rmbl_hqc4_keygen, level, seed)
   out <- list(public = .rmbl_hexlify(res$public),
               secret = .rmbl_hexlify(res$secret),
-              level = level)
+              level = level, version = version)
   class(out) <- c("bricklayer_hqc_key", "list")
   out
 }
@@ -96,7 +121,7 @@ hqc_public_key <- function(key) {
   if (!inherits(key, "bricklayer_hqc_key")) {
     stop("`key` must come from hqc_keygen()", call. = FALSE)
   }
-  out <- list(public = key$public, level = key$level)
+  out <- list(public = key$public, level = key$level, version = .rmbl_hqc_key_version(key))
   class(out) <- c("bricklayer_hqc_public_key", "list")
   out
 }
@@ -107,6 +132,8 @@ hqc_public_key <- function(key) {
 #' hard-code them.
 #'
 #' @param level Security level: 1, 3 or 5 (or 128, 192, 256).
+#' @param version `"v5"` (the default) or `"round4"`, as in
+#'   [hqc_keygen()].
 #' @return A named integer vector: `encapsulation_key`, `decapsulation_key`,
 #' `ciphertext`, `seed` (key generation), `message` and `salt`
 #' (encapsulation randomness) and `shared_secret`, all in bytes.
@@ -115,29 +142,34 @@ hqc_public_key <- function(key) {
 #' hqc_sizes(1)
 #'
 #' # code-based keys and ciphertexts are larger than ML-KEM's at the same
-#' # category; the shared secret is 32 bytes at every level
+#' # category; the shared secret is 32 bytes at every level (64 in round 4)
 #' rbind(HQC = hqc_sizes(3)[c("encapsulation_key", "ciphertext")],
 #'       ML_KEM = kem_sizes(768)[c("encapsulation_key", "ciphertext")])
+#' rbind(v5 = hqc_sizes(1), round4 = hqc_sizes(1, "round4"))
 #' @export
-hqc_sizes <- function(level) {
-  .Call(C_rmbl_hqc_sizes, .rmbl_hqc_level(level))
+hqc_sizes <- function(level, version = c("v5", "round4")) {
+  version <- match.arg(version)
+  .Call(if (version == "v5") C_rmbl_hqc_sizes else C_rmbl_hqc4_sizes, .rmbl_hqc_level(level))
 }
 
 #' Encapsulate a shared secret under an HQC key
 #'
-#' Produces a ciphertext and the 32-byte shared secret it carries. Only the
-#' public key is needed.
+#' Produces a ciphertext and the shared secret it carries (32 bytes; 64 for a
+#' round-4 key). Only the public key is needed.
 #'
-#' @param key A key or public key from [hqc_keygen()] / [hqc_public_key()].
+#' @param key A key or public key from [hqc_keygen()] /
+#'   [hqc_public_key()].
 #' @param m,salt Optional raw vectors of encapsulation randomness: `m` of
-#' [hqc_sizes()]`["message"]` bytes (16, 24 or 32) and `salt` of 16 bytes.
+#' [hqc_sizes()]`["message"]` bytes (16, 24 or 32)
+#' and `salt` of 16 bytes.
 #' Supplying them makes the operation reproducible, which is what the
 #' known-answer tests need; the default draws both from the operating
 #' system's CSPRNG. Reusing them for the same key repeats the shared secret,
 #' so supply them only deliberately.
 #' @return A list of class `bricklayer_hqc_capsule`: `ciphertext` and
-#' `shared` (both hex), and `level`.
-#' @seealso [hqc_decapsulate()], [hqc_keygen()].
+#' `shared` (both hex), `level` and `version`.
+#' @seealso [hqc_decapsulate()],
+#'   [hqc_keygen()].
 #' @examples
 #' key <- hqc_keygen(1)
 #' a <- hqc_encapsulate(key)
@@ -153,8 +185,9 @@ hqc_sizes <- function(level) {
 #' @export
 hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
   level <- .rmbl_hqc_key_level(key)
+  version <- .rmbl_hqc_key_version(key)
   ek <- .rmbl_hex_or_null(key$public)
-  sz <- hqc_sizes(level)
+  sz <- hqc_sizes(level, version)
   if (is.null(ek) || length(ek) != sz[["encapsulation_key"]]) {
     stop(sprintf("`key` has no usable HQC-%d public key (%d bytes)", level,
                  sz[["encapsulation_key"]]), call. = FALSE)
@@ -170,29 +203,34 @@ hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
   } else if (!is.raw(salt) || length(salt) != 16L) {
     stop("`salt` must be a raw vector of 16 bytes", call. = FALSE)
   }
-  res <- .Call(C_rmbl_hqc_encaps, level, ek, m, salt)
+  res <- .Call(if (version == "v5") C_rmbl_hqc_encaps else C_rmbl_hqc4_encaps, level, ek, m, salt)
   out <- list(ciphertext = .rmbl_hexlify(res$ciphertext),
               shared = .rmbl_hexlify(res$shared),
-              level = level)
+              level = level, version = version)
   class(out) <- c("bricklayer_hqc_capsule", "list")
   out
 }
 
 #' Recover a shared secret from an HQC ciphertext
 #'
-#' Returns the 32-byte shared secret the ciphertext carries, as hex.
+#' Returns the shared secret the ciphertext carries, as hex (32 bytes; 64 for
+#' a round-4 key).
 #'
 #' A ciphertext that was not produced by a correct encapsulation under this
-#' key does not raise an error: it yields the key `J(H(ek) || sigma || c)`,
-#' derived from a value only the decapsulation key holds (the
+#' key does not raise an error: it yields the key `J(H(ek) || sigma || c)`
+#' (round 4: `K(sigma || u || v)`), derived from a value only the
+#' decapsulation key holds (the
 #' Fujisaki-Okamoto transform's implicit rejection), so whoever sent it
 #' learns nothing from the outcome. A mismatch between the two sides' secrets
 #' is the signal that something was wrong. A decapsulation key whose stored
-#' seeds no longer derive from each other (corrupted or spliced) IS refused.
+#' seeds no longer derive from each other (corrupted or spliced; for round 4,
+#' whose public half is not the one its secret seed makes) IS refused.
 #'
 #' @param key A key from [hqc_keygen()], with its secret half.
-#' @param ciphertext Ciphertext from [hqc_encapsulate()], hex or raw.
-#' @return 64 hex characters: the 32-byte shared secret.
+#' @param ciphertext Ciphertext from
+#'   [hqc_encapsulate()], hex or raw.
+#' @return The shared secret as hex: 64 characters (32 bytes), or 128 for a
+#' round-4 key.
 #' @seealso [hqc_encapsulate()].
 #' @examples
 #' key <- hqc_keygen(1)
@@ -208,10 +246,11 @@ hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
 #' @export
 hqc_decapsulate <- function(key, ciphertext) {
   level <- .rmbl_hqc_key_level(key)
+  version <- .rmbl_hqc_key_version(key)
   if (is.null(key[["secret"]])) {
     stop("decapsulation needs a key with its secret half", call. = FALSE)
   }
-  sz <- hqc_sizes(level)
+  sz <- hqc_sizes(level, version)
   dk <- .rmbl_hex_or_null(key$secret)
   if (is.null(dk) || length(dk) != sz[["decapsulation_key"]]) {
     stop(sprintf("`key` has no usable HQC-%d secret key (%d bytes)", level,
@@ -222,13 +261,13 @@ hqc_decapsulate <- function(key, ciphertext) {
     stop(sprintf("`ciphertext` must be %d bytes for HQC-%d",
                  sz[["ciphertext"]], level), call. = FALSE)
   }
-  .rmbl_hexlify(.Call(C_rmbl_hqc_decaps, level, dk, ct))
+  .rmbl_hexlify(.Call(if (version == "v5") C_rmbl_hqc_decaps else C_rmbl_hqc4_decaps, level, dk, ct))
 }
 
 #' @export
 format.bricklayer_hqc_key <- function(x, ...) {
   c(.rmbl_rule("Key encapsulation key (HQC, code-based)"),
-    .rmbl_kv(list(level = sprintf("HQC-%d", x$level),
+    .rmbl_kv(list(level = .rmbl_hqc_label(x),
                   "public key" = sprintf("%s... (%d bytes)",
                                          substring(x$public, 1L, 32L),
                                          nchar(x$public) %/% 2L),
@@ -246,7 +285,7 @@ print.bricklayer_hqc_key <- function(x, ...) {
 #' @export
 format.bricklayer_hqc_public_key <- function(x, ...) {
   c(.rmbl_rule("Public encapsulation key (HQC, code-based)"),
-    .rmbl_kv(list(level = sprintf("HQC-%d", x$level),
+    .rmbl_kv(list(level = .rmbl_hqc_label(x),
                   "public key" = sprintf("%s... (%d bytes)",
                                          substring(x$public, 1L, 32L),
                                          nchar(x$public) %/% 2L))),
@@ -263,7 +302,7 @@ print.bricklayer_hqc_public_key <- function(x, ...) {
 #' @export
 format.bricklayer_hqc_capsule <- function(x, ...) {
   c(.rmbl_rule("Encapsulated shared secret (HQC, code-based)"),
-    .rmbl_kv(list(level = sprintf("HQC-%d", x$level),
+    .rmbl_kv(list(level = .rmbl_hqc_label(x),
                   ciphertext = sprintf("%s... (%d bytes)",
                                        substring(x$ciphertext, 1L, 32L),
                                        nchar(x$ciphertext) %/% 2L),
@@ -282,13 +321,34 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
 # A typo must fail rather than select a default: the level is not recorded
 # in the ciphertext, so both sides have to agree on it by other means.
 .rmbl_hqc_level <- function(level) {
-  lv <- suppressWarnings(as.integer(level)[1L])
-  lv <- c(`1` = 1L, `3` = 3L, `5` = 5L, `128` = 1L, `192` = 3L,
-          `256` = 5L)[as.character(lv)]
+  # one whole number: as.integer() would read c(1, 3) as 1 and 3.5 as 3
+  lv <- if (is.numeric(level) && length(level) == 1L && !is.na(level) && level == round(level)) {
+    c(`1` = 1L, `3` = 3L, `5` = 5L, `128` = 1L, `192` = 3L, `256` = 5L)[as.character(as.integer(level))]
+  } else {
+    NA_integer_
+  }
   if (length(lv) != 1L || is.na(lv)) {
-    stop("`level` must be 1, 3 or 5 (HQC-1, HQC-3, HQC-5)", call. = FALSE)
+    stop("`level` must be one of 1, 3 or 5 (HQC-1, HQC-3, HQC-5)", call. = FALSE)
   }
   unname(lv)
+}
+
+# a key made before the version existed is a v5 key
+.rmbl_hqc_key_version <- function(key) {
+  v <- key[["version"]]
+  if (is.null(v)) return("v5")
+  if (!identical(v, "v5") && !identical(v, "round4")) {
+    stop("`key$version` must be \"v5\" or \"round4\"", call. = FALSE)
+  }
+  v
+}
+
+.rmbl_hqc_label <- function(x) {
+  if (identical(.rmbl_hqc_key_version(x), "round4")) {
+    sprintf("HQC-%d (round 4, 2023-04-30)", c(`1` = 128L, `3` = 192L, `5` = 256L)[[as.character(x$level)]])
+  } else {
+    sprintf("HQC-%d", x$level)
+  }
 }
 
 .rmbl_hqc_key_level <- function(key) {

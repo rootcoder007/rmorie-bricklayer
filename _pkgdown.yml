@@ -217,6 +217,9 @@ reference:
       - core_ipw_weights
       - core_gamma_cdf
       - core_hawkes_nll
+      - core_hawkes_fit
+      - core_hawkes_residuals
+      - core_uniforms
   - title: Distributional drift
     desc: >
       Whether a freshly fetched column is still the column the capsule was
@@ -281,6 +284,9 @@ reference:
       - rmbl_file_digest
       - digest_object
       - random_bytes
+      - drbg_new
+      - drbg_generate
+      - drbg_reseed
       - derive_key
   - title: Schema and rules
     desc: >

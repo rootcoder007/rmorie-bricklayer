@@ -30,6 +30,13 @@ extern SEXP C_rmbl_ipw(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_bootstrap_mean(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gamma_cdf(SEXP, SEXP);
 extern SEXP C_rmbl_hawkes_nll(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_nll_grad(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_rescaled(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_intensity(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_em_pass(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_cdf_sum(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_uniforms(SEXP, SEXP);
+extern SEXP C_rmbl_hawkes_fit_pbfgs(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_stats.cpp) -- bricklayer's own statistics */
 extern SEXP C_rmbl_moments(SEXP);
 extern SEXP C_rmbl_quantile(SEXP, SEXP);
@@ -107,6 +114,17 @@ extern SEXP C_rmbl_hqc_encaps(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hqc_decaps(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_hqc_backend(SEXP);
 extern SEXP C_rmbl_hqc_selftest(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_sizes(SEXP);
+extern SEXP C_rmbl_hqc4_keygen(SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_encaps(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_hqc4_decaps(SEXP, SEXP, SEXP);
+
+/* rmbl_drbg.cpp: AES-256 and the SP 800-90A CTR_DRBG */
+extern SEXP C_rmbl_aes256_encrypt(SEXP, SEXP);
+extern SEXP C_rmbl_drbg_instantiate(SEXP, SEXP);
+extern SEXP C_rmbl_drbg_reseed(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_drbg_generate(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_aes_backend(SEXP);
 
 extern SEXP C_rmbl_slhdsa_sizes(SEXP);
 extern SEXP C_rmbl_slhdsa_keypair(SEXP, SEXP);
@@ -229,6 +247,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_bootstrap_mean",    (DL_FUNC) &C_rmbl_bootstrap_mean,    3},
     {"C_rmbl_gamma_cdf",         (DL_FUNC) &C_rmbl_gamma_cdf,         2},
     {"C_rmbl_hawkes_nll",        (DL_FUNC) &C_rmbl_hawkes_nll,        4},
+    {"C_rmbl_hawkes_nll_grad",   (DL_FUNC) &C_rmbl_hawkes_nll_grad,   12},
+    {"C_rmbl_hawkes_rescaled",   (DL_FUNC) &C_rmbl_hawkes_rescaled,   7},
+    {"C_rmbl_hawkes_intensity",  (DL_FUNC) &C_rmbl_hawkes_intensity,  7},
+    {"C_rmbl_hawkes_em_pass",    (DL_FUNC) &C_rmbl_hawkes_em_pass,    6},
+    {"C_rmbl_hawkes_cdf_sum",    (DL_FUNC) &C_rmbl_hawkes_cdf_sum,    4},
+    {"C_rmbl_uniforms",          (DL_FUNC) &C_rmbl_uniforms,          2},
+    {"C_rmbl_hawkes_fit_pbfgs",  (DL_FUNC) &C_rmbl_hawkes_fit_pbfgs,  13},
     {"C_rmbl_moments",           (DL_FUNC) &C_rmbl_moments,           1},
     {"C_rmbl_quantile",          (DL_FUNC) &C_rmbl_quantile,          2},
     {"C_rmbl_median",            (DL_FUNC) &C_rmbl_median,            1},
@@ -288,6 +313,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_hqc_decaps",        (DL_FUNC) &C_rmbl_hqc_decaps,        3},
     {"C_rmbl_hqc_backend",       (DL_FUNC) &C_rmbl_hqc_backend,       1},
     {"C_rmbl_hqc_selftest",      (DL_FUNC) &C_rmbl_hqc_selftest,      3},
+    {"C_rmbl_hqc4_sizes",        (DL_FUNC) &C_rmbl_hqc4_sizes,        1},
+    {"C_rmbl_hqc4_keygen",       (DL_FUNC) &C_rmbl_hqc4_keygen,       2},
+    {"C_rmbl_hqc4_encaps",       (DL_FUNC) &C_rmbl_hqc4_encaps,       4},
+    {"C_rmbl_hqc4_decaps",       (DL_FUNC) &C_rmbl_hqc4_decaps,       3},
+    {"C_rmbl_aes256_encrypt",    (DL_FUNC) &C_rmbl_aes256_encrypt,    2},
+    {"C_rmbl_drbg_instantiate",  (DL_FUNC) &C_rmbl_drbg_instantiate,  2},
+    {"C_rmbl_drbg_reseed",       (DL_FUNC) &C_rmbl_drbg_reseed,       4},
+    {"C_rmbl_drbg_generate",     (DL_FUNC) &C_rmbl_drbg_generate,     4},
+    {"C_rmbl_aes_backend",       (DL_FUNC) &C_rmbl_aes_backend,       1},
     {"C_rmbl_slhdsa_sizes",     (DL_FUNC) &C_rmbl_slhdsa_sizes,     1},
     {"C_rmbl_slhdsa_keypair",   (DL_FUNC) &C_rmbl_slhdsa_keypair,   2},
     {"C_rmbl_slhdsa_sign",      (DL_FUNC) &C_rmbl_slhdsa_sign,      6},

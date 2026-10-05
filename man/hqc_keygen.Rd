@@ -5,25 +5,34 @@
 \alias{hqc_public_key}
 \title{Generate an HQC key pair}
 \usage{
-hqc_keygen(level = 3L, seed = NULL)
+hqc_keygen(level = 3L, seed = NULL, version = c("v5", "round4"))
 
 hqc_public_key(key)
 }
 \arguments{
 \item{level}{Security level, as a NIST category: 1, 3 (the default) or 5
 (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
-Level 3 matches the category of ML-KEM-768, \code{\link[=kem_keygen]{kem_keygen()}}'s default.}
+Level 3 matches the category of ML-KEM-768,
+\code{\link[=kem_keygen]{kem_keygen()}}'s default.}
 
-\item{seed}{Optional raw vector of 32 bytes (\code{seed_KEM}). Supplying it makes
-the key reproducible, which is what the known-answer tests need; the
-default draws from the operating system's CSPRNG.}
+\item{seed}{Optional raw vector: 32 bytes (\code{seed_KEM}) for v5; for round 4
+the \code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["seed"]} bytes its key generation
+draws (\code{sk_seed}, \code{sigma}, \code{pk_seed}: 96, 104 or 112).
+Supplying it makes the key reproducible, which is what the known-answer
+tests need; the default draws from the operating system's CSPRNG.}
+
+\item{version}{\code{"v5"} (the default: the specification of 2025-08-22, a
+32-byte shared secret) or \code{"round4"} (the submission of 2023-04-30, a
+64-byte shared secret). Keys remember it; encapsulation and decapsulation
+follow the key.}
 
 \item{key}{A key from \code{hqc_keygen()}.}
 }
 \value{
 A list of class \code{bricklayer_hqc_key}: \code{public}, \code{secret} (both
-hex) and \code{level}. The secret key is the specification's
-\code{ek || seed_dk || sigma || seed_KEM}.
+hex), \code{level} and \code{version}. The v5 secret key is the specification's
+\code{ek || seed_dk || sigma || seed_KEM}; the round-4 one is
+\code{sk_seed || sigma || ek}.
 }
 \description{
 Generates a key for HQC (Hamming Quasi-Cyclic), the code-based key
@@ -46,6 +55,15 @@ NIST's FIPS 207 (HQC-KEM) is still a draft. It is expected to shorten the
 decapsulation key to its 32-byte seed; the encapsulation key, ciphertext
 and shared secret of the final standard may differ from these, so keep
 keys and ciphertexts tagged with the scheme and level they belong to.
+
+\code{version = "round4"} gives the earlier revision instead: the fourth-round
+submission of 2023-04-30 (HQC-128/192/256), the HQC of liboqs up to 0.12
+and of PQClean, with a 64-byte shared secret. It uses the same codes and
+parameters under a different key encapsulation (40-byte seeds, SHAKE256
+with domain bytes in place of SHA3, another sampler), so its keys and
+ciphertexts are not interchangeable with v5's. It reproduces that
+revision's 300 official known-answer vectors (the package's tests check
+them); use it to exchange keys with software built on it, and v5 otherwise.
 }
 \examples{
 key <- hqc_keygen(1)
@@ -65,6 +83,12 @@ identical(hqc_decapsulate(key, bad), got)
 # a reproducible key from a fixed seed
 identical(hqc_keygen(1, seed = as.raw(1:32))$public,
           hqc_keygen(1, seed = as.raw(1:32))$public)
+
+# the round-4 revision: the same exchange, a 64-byte shared secret
+old <- hqc_keygen(1, version = "round4")
+cap <- hqc_encapsulate(hqc_public_key(old))
+nchar(cap$shared) / 2
+identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
 }
 \references{
 Gaborit, P., Aguilar-Melchor, C., Aragon, N., Bettaieb, S.,
