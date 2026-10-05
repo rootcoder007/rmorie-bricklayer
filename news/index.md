@@ -2,6 +2,18 @@
 
 ## rmoriebricklayer 0.5.5
 
+- [`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+  stores an HQC secret key as its seed alone: for v5 the specification’s
+  compressed format `dk = seed_KEM` (32 bytes), for round 4 the 96 to
+  112 bytes its key generation draws (round 4 defines no compressed
+  format).
+  [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+  takes such a key, re-derives the pair and refuses a seed that does not
+  give the key’s own public half.
+
+- The HQC documentation no longer calls FIPS 207 a draft: NIST has named
+  the standard but had published neither it nor a draft by 2026-10-05.
+
 - `core_hawkes_fit(method = "em")` finishes with the projected BFGS on
   the exact likelihood from EM’s point. EM converges linearly, so its
   steps shrink before it reaches the maximum: it stopped up to 1.5e-5

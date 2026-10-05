@@ -415,6 +415,8 @@ history itself tamper-evident.
   : Encapsulate a shared secret under an HQC key
 - [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
   : Recover a shared secret from an HQC ciphertext
+- [`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+  : The compressed HQC decapsulation key
 - [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   : Generate a standardised post-quantum signing key (deprecated name)

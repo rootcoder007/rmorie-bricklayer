@@ -237,7 +237,12 @@ produced the data.
   [`hqc_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_encapsulate.md)
   /
   [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
-  follow it. All of it is implemented here, with no system library; see
+  follow it;
+  [`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+  stores a secret key as its seed alone (v5’s 32-byte `seed_KEM`; round
+  4’s key-generation seed) and
+  [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+  expands it. All of it is implemented here, with no system library; see
   [Verification](#verification).
 - **Deterministic random bits** —
   [`drbg_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.md),
@@ -363,8 +368,18 @@ the fourth-round submission of 2023-04-30 — the revision liboqs (up to
 codes and parameters and reproduces all 300 of that revision’s official
 known-answer vectors on both multipliers. The two are not
 interchangeable: use round 4 to exchange keys with software built on it,
-v5 otherwise. FIPS 207, the HQC standard, is still a draft and may
-change the key and ciphertext formats.
+v5 otherwise. A secret key can be kept as its seed alone:
+[`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+writes v5’s compressed format, `dk = seed_KEM` (32 bytes, defined by the
+v5 specification), or for round 4 the 96 to 112 bytes its key generation
+draws (a convention of this package: round 4 defines no compressed
+format), and
+[`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+re-derives the key pair and refuses a seed that does not give the key’s
+own public half. NIST has named the HQC standard FIPS 207 but has not
+published it or a draft of it yet (checked 2026-10-05); v5 already
+carries the changes NIST listed for it, including the seed-only key, and
+the published standard may still differ in detail.
 
 The random bit generator reproduces all 720 AES-256
 no-derivation-function vectors of NIST’s DRBG validation suite (no
@@ -1070,6 +1085,8 @@ history itself tamper-evident.
   : Encapsulate a shared secret under an HQC key
 - [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
   : Recover a shared secret from an HQC ciphertext
+- [`hqc_compress_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_compress_key.md)
+  : The compressed HQC decapsulation key
 - [`oqs_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   [`oqs_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/oqs_keygen.md)
   : Generate a standardised post-quantum signing key (deprecated name)
