@@ -91,6 +91,7 @@ resolve_via_ckan <- function(provenance) {
   if (is.null(api_url) || !nzchar(api_url)) {
     return(NULL)
   }
+  api_url <- .rmbl_check_public_url(api_url, "ckan_api_endpoint")
   resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
     error = function(e) NULL
   )
@@ -101,7 +102,8 @@ resolve_via_ckan <- function(provenance) {
   for (r in resp$result$resources) {
     name <- if (is.null(r$name)) "" else r$name
     if (grepl(pat, name, ignore.case = TRUE)) {
-      return(r$url)
+      # a hostile record is an error in words, not "source unreachable"
+      return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
     }
   }
   NULL
@@ -164,10 +166,10 @@ resolve_via_ckan_search <- function(provenance) {
   if (!nzchar(base)) {
     return(NULL)
   }
-  api_url <- sprintf(
+  api_url <- .rmbl_check_public_url(sprintf(
     "%s/api/3/action/package_search?q=%s",
     base, utils::URLencode(q, reserved = TRUE)
-  )
+  ), "the CKAN package_search URL")
   resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
     error = function(e) NULL
   )
@@ -181,7 +183,7 @@ resolve_via_ckan_search <- function(provenance) {
       fmt <- toupper(r$format %||% "")
       if (grepl(pat, name, ignore.case = TRUE) &&
         (fmt == "CSV" || is.null(res$format) || toupper(res$format) == fmt)) {
-        return(r$url)
+        return(.rmbl_check_public_url(r$url, "the CKAN resource URL"))
       }
     }
   }
@@ -228,8 +230,10 @@ resolve_via_ckan_search <- function(provenance) {
 #' if (!inherits(dest, "try-error")) file.exists(dest)
 #' }
 #' @export
-download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
+download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
+                          allow_file = FALSE) {
   url <- .rmbl_string1(url, "url")
+  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   target_path <- .rmbl_string1(target_path, "target_path")
   utils::download.file(url, target_path, mode = mode, quiet = quiet)
   invisible(target_path)
@@ -257,8 +261,9 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE) {
 #' @export
 wayback_snapshot_url <- function(url, timestamp = NULL) {
   url <- .rmbl_string1(url, "url")
+  # https: over cleartext a MITM chose the fallback snapshot
   api <- paste0(
-    "http://archive.org/wayback/available?url=",
+    "https://archive.org/wayback/available?url=",
     utils::URLencode(url, reserved = TRUE)
   )
   if (!is.null(timestamp) && nzchar(timestamp)) {
@@ -271,16 +276,20 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   }
   snap_url <- unlist(snap$url)
   if (!is.character(snap_url) || length(snap_url) != 1L || !nzchar(snap_url)) return(NULL)
-  ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs.
-  sub("^http://", "https://", snap_url)
+  ## Prefer HTTPS; the API sometimes returns http:// snapshot URLs. And
+  ## whatever it returns is fetched next, so it passes the same gate as
+  ## every other URL.
+  .rmbl_check_public_url(sub("^http://", "https://", snap_url),
+                         "the Wayback snapshot URL")
 }
 
 # The one transport friendly_download() uses, live and Wayback alike (tests
 # mock it). Inside the package it is bricklayer_download() with its live
 # progress bar; a staged bundle (which copies this file alone) uses base R.
-.bl_fetch_file <- function(url, dest) {
+.bl_fetch_file <- function(url, dest, allow_file = FALSE) {
+  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (exists("bricklayer_download", mode = "function")) {
-    bricklayer_download(url, dest, quiet = FALSE)
+    bricklayer_download(url, dest, quiet = FALSE, allow_file = allow_file)
   } else {
     utils::download.file(url, dest, mode = "wb", quiet = FALSE)
   }
@@ -317,15 +326,17 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' ok
 #' }
 #' @export
-friendly_download <- function(url, target_path, attempt_wayback = NULL) {
+friendly_download <- function(url, target_path, attempt_wayback = NULL,
+                              allow_file = FALSE) {
   url <- .rmbl_string1(url, "url")
+  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   target_path <- .rmbl_string1(target_path, "target_path")
   # base R's url() reports the HTTP status in a warning and then errors with a bare
   # "cannot open the connection": keep the warning's words as the cause, and do not let it leak
   said <- character()
   result <- tryCatch(
     {
-      withCallingHandlers(.bl_fetch_file(url, target_path), warning = function(w) {
+      withCallingHandlers(.bl_fetch_file(url, target_path, allow_file = allow_file), warning = function(w) {
         said <<- c(said, conditionMessage(w))
         invokeRestart("muffleWarning")
       })
@@ -729,15 +740,13 @@ resolve_via_socrata <- function(provenance) {
   if (is.null(domain) || is.null(id)) {
     return(NULL)
   }
-  meta_url <- paste0("https://", domain, "/api/views/", id, ".json")
+  base <- .rmbl_check_public_url(paste0("https://", domain), "socrata_domain")
+  meta_url <- paste0(base, "/api/views/", id, ".json")
   meta <- tryCatch(.rmbl_read_json(meta_url), error = function(e) NULL)
   if (is.null(meta) || is.null(meta$id)) {
     return(NULL)
   }
-  paste0(
-    "https://", domain, "/api/views/", id,
-    "/rows.csv?accessType=DOWNLOAD"
-  )
+  paste0(base, "/api/views/", id, "/rows.csv?accessType=DOWNLOAD")
 }
 
 #' Resolve a Query URL via ArcGIS FeatureServer Metadata
@@ -774,7 +783,7 @@ resolve_via_arcgis <- function(provenance) {
   if (is.null(layer)) {
     return(NULL)
   }
-  layer <- sub("/+$", "", layer)
+  layer <- .rmbl_check_public_url(sub("/+$", "", layer), "arcgis_layer_url")
   meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json")),
     error = function(e) NULL
   )

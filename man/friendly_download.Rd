@@ -4,7 +4,7 @@
 \alias{friendly_download}
 \title{Download a File With Diagnostic Error Messages}
 \usage{
-friendly_download(url, target_path, attempt_wayback = NULL)
+friendly_download(url, target_path, attempt_wayback = NULL, allow_file = FALSE)
 }
 \arguments{
 \item{url}{URL to download.}

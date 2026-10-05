@@ -22,6 +22,9 @@
 ##   Rscript setup_and_run.R --quick      # non-interactive (defaults)
 ##   Rscript setup_and_run.R --synthetic  # offline, fake data, no prompts
 ##   Rscript setup_and_run.R --data PATH  # explicit data path
+##   Rscript setup_and_run.R --allow-digest-drift  # analyse bytes whose
+##                                        # SHA-256 differs from the pinned
+##                                        # provenance (recorded in manifest)
 ##   Rscript setup_and_run.R --help
 ##
 ## Licence: AGPL-3.0-or-later
@@ -45,6 +48,24 @@ HELP_MODE  <- any(args %in% c("-h", "--help"))
 ## without a prompt, so an offline or unattended run can exercise it.
 SYNTH_ARG  <- any(args %in% "--synthetic") ||
   nzchar(Sys.getenv("OTIS_MRP_SYNTHETIC", ""))
+## The pinned digest is the capsule's guarantee. A mismatch stops the run
+## (exit 7) unless this flag is given, and then the override is recorded
+## in the manifest rather than printed once and forgotten.
+ALLOW_DRIFT <- any(args %in% "--allow-digest-drift")
+DIGEST_OVERRIDE <- FALSE
+digest_mismatch <- function(v) {
+  say("  ! SHA256 differs from the pinned provenance:")
+  say("      expected ", v$expected)
+  say("      got      ", v$actual)
+  if (!ALLOW_DRIFT) {
+    say("  Refusing to analyse bytes the capsule did not pin.")
+    say("  Re-run with --allow-digest-drift to proceed anyway; the override")
+    say("  is then recorded in manifest.json.")
+    quit(status = 7)
+  }
+  say("  --allow-digest-drift given: continuing; recorded in the manifest.")
+  DIGEST_OVERRIDE <<- TRUE
+}
 ## No terminal on stdin (CI, reviewer harness, piped run): prompts would
 ## silently take their defaults anyway, so make that explicit and honest.
 AUTO_QUICK <- FALSE
@@ -314,7 +335,7 @@ if (!is.null(DATA_ARG)) {
       if (!is.null(prov$resource$sha256)) {
         v <- verify_sha256(input_path, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 matches pinned provenance.")
-        else say("  ! SHA256 differs — the file may be a newer release.")
+        else digest_mismatch(v)
       }
     }
 
@@ -332,7 +353,8 @@ if (!is.null(DATA_ARG)) {
         say("ERROR: no download URL available — provenance missing.")
         quit(status = 5)
       }
-      fn <- prov$resource$filename %||% basename(url)
+      # the provenance's filename is a NAME, never a path
+      fn <- basename(prov$resource$filename %||% basename(url))
       target <- file.path(save_dir, fn)
       say("  Downloading: ", url)
       say("  → ", target)
@@ -349,7 +371,7 @@ if (!is.null(DATA_ARG)) {
       if (!is.null(prov$resource$sha256)) {
         v <- verify_sha256(target, prov$resource$sha256)
         if (v$match) say("  ✓ SHA256 byte-for-byte match.")
-        else say("  ! SHA256 differs — Ontario may have updated the data.")
+        else digest_mismatch(v)
       }
     }
 
@@ -413,9 +435,13 @@ if (isTRUE(SYNTHETIC_MODE)) {
   cat("##########################################################\n\n")
 }
 
-run_args <- c(ANALYSIS_R, shQuote(input_path), shQuote(output_dir))
+## every argument quoted: an R under "C:/Program Files/..." or a bundle
+## directory with a space broke the command line system2() composes
+sh_type <- if (OS_KIND == "windows") "cmd" else "sh"
+run_args <- c(shQuote(ANALYSIS_R, type = sh_type), shQuote(input_path, type = sh_type),
+              shQuote(output_dir, type = sh_type))
 env_vec <- if (isTRUE(SYNTHETIC_MODE)) "BRICKLAYER_SYNTHETIC=1" else character(0)
-exit_code <- system2(rscript_bin, run_args,
+exit_code <- system2(shQuote(rscript_bin, type = sh_type), run_args,
                      stdout = log_path, stderr = log_path,
                      env = env_vec)
 cat(readLines(log_path, warn = FALSE), sep = "\n")
@@ -459,6 +485,7 @@ if (file.exists(manifest_path)) {
   m$meta$author    <- PROJECT_AUTHOR
   m$meta$os        <- OS_KIND
   m$meta$synthetic <- SYNTHETIC_MODE
+  m$meta$digest_override <- DIGEST_OVERRIDE
   write_summary_txt(
     m, output_dir,
     paths = list(

@@ -36,11 +36,14 @@
   p <- .bl_credentials_path()
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- paste0(p, ".tmp")
+  # created empty and made private BEFORE the key is written, so no umask
+  # ever leaves it world-readable, even briefly
+  file.create(tmp)
+  Sys.chmod(tmp, mode = "0600")
   writeLines(
     bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE),
     tmp
   )
-  Sys.chmod(tmp, mode = "0600")
   file.rename(tmp, p)
   invisible(p)
 }
@@ -69,7 +72,9 @@
     return(.bl_hosted_default_base)
   }
   v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_BASE_URL")))
-  if (nzchar(v) && !tolower(v) %in% c("off", "none", "disabled")) v else NULL
+  if (!nzchar(v) || tolower(v) %in% c("off", "none", "disabled")) return(NULL)
+  # the bearer key is sent to this endpoint: https and a public address
+  .rmbl_check_public_url(v, "MORIE_HOSTED_BASE_URL")
 }
 
 .bl_hosted_auth <- function() {

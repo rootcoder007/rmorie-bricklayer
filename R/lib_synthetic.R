@@ -181,7 +181,10 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #' generate. Defaults to `schema$n_rows`, then 50000.
 #' @param seed Random seed for reproducibility. Defaults to
 #' `schema$seed`, then 91735246.
-#' @return Invisibly, a list with `path`, `rows` (rows written),
+#' @return Invisibly, an object of class `bricklayer_synthetic`: a list
+#' with `path`, `sidecar` (the `<path>.synthetic` marker file;
+#' [verify_capsule()] treats its presence as a failed check),
+#' `recipe_sha256`, `rows` (rows written),
 #' and `seed` used.
 #' @examples
 #' recipe <- list(
@@ -265,5 +268,35 @@ make_synthetic_csv <- function(schema, out_path,
   }
   out_df <- as.data.frame(out, stringsAsFactors = FALSE)
   utils::write.csv(out_df, out_path, row.names = FALSE)
-  invisible(list(path = out_path, rows = nrow(out_df), seed = seed))
+  # The CSV stays a plain CSV so every reader opens it; the sidecar beside
+  # it is what says the rows were generated (seed, recipe digest), and
+  # verify_capsule() refuses a capsule whose data file has one. Read back
+  # with read.csv() alone the file was indistinguishable from real data.
+  recipe_sha256 <- core_sha256(bricklayer_json_to_json(
+    .rmbl_sort_keys(schema), auto_unbox = TRUE, digits = I(17)))
+  sidecar <- paste0(out_path, ".synthetic")
+  writeLines(bricklayer_json_to_json(
+    list(synthetic = TRUE, rows = nrow(out_df), seed = seed,
+         recipe_sha256 = recipe_sha256,
+         generated_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")),
+    auto_unbox = TRUE, pretty = TRUE), sidecar)
+  res <- list(path = out_path, sidecar = sidecar, rows = nrow(out_df),
+              seed = seed, recipe_sha256 = recipe_sha256)
+  class(res) <- c("bricklayer_synthetic", "list")
+  invisible(res)
+}
+
+#' @export
+format.bricklayer_synthetic <- function(x, ...) {
+  c("SYNTHETIC data (generated from a recipe, not fetched)",
+    sprintf("  file    %s", x$path),
+    sprintf("  sidecar %s", x$sidecar),
+    sprintf("  rows %d, seed %s, recipe sha256 %s", x$rows, format(x$seed),
+            substr(x$recipe_sha256, 1L, 16L)))
+}
+
+#' @export
+print.bricklayer_synthetic <- function(x, ...) {
+  cat(format(x, ...), sep = "\n")
+  invisible(x)
 }

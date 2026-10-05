@@ -49,7 +49,10 @@
 #' lines when stderr is not a terminal, and nothing when
 #' \code{options(morie.quiet = TRUE)} or \code{quiet = TRUE}.
 #'
-#' @param url The URL (\code{http}, \code{https} or \code{file}).
+#' @param url The URL: \code{https} (plain \code{http} only with
+#'   \code{options(rmoriebricklayer.allow_http = TRUE)}); a loopback,
+#'   link-local or private address is refused.
+#' @param allow_file Accept a \code{file://} URL (default \code{FALSE}).
 #' @param dest Path to write.
 #' @param headers Named character vector of request headers, or \code{NULL}.
 #' @param label Text shown in front of the bar; the file name by default.
@@ -65,12 +68,17 @@
 #' src <- tempfile(fileext = ".txt")
 #' writeLines("hello", src)
 #' dest <- tempfile(fileext = ".txt")
-#' bricklayer_download(paste0("file://", src), dest, quiet = TRUE)
+#' bricklayer_download(paste0("file://", src), dest, quiet = TRUE,
+#'                     allow_file = TRUE)
 #' readLines(dest)
 #' @export
 bricklayer_download <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
-                                timeout = 3600, quiet = NULL, tty = NULL) {
+                                timeout = 3600, quiet = NULL, tty = NULL,
+                                allow_file = FALSE) {
+  # the capsule path's transport: https only, never a local or private
+  # address, and file:// only when the caller says so (an offline test)
+  url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
   size <- suppressWarnings(as.numeric(if (is.null(size)) NA else size[[1L]]))
   if (!is.finite(size) || size <= 0) size <- NA_real_

@@ -12,11 +12,14 @@ bricklayer_download(
   size = NULL,
   timeout = 3600,
   quiet = NULL,
-  tty = NULL
+  tty = NULL,
+  allow_file = FALSE
 )
 }
 \arguments{
-\item{url}{The URL (\code{http}, \code{https} or \code{file}).}
+\item{url}{The URL: \code{https} (plain \code{http} only with
+\code{options(rmoriebricklayer.allow_http = TRUE)}); a loopback,
+link-local or private address is refused.}
 
 \item{dest}{Path to write.}
 
@@ -34,6 +37,8 @@ session and options.}
 
 \item{tty}{Draw the live bar (\code{TRUE}) or print milestone lines
 (\code{FALSE}); \code{NULL} asks whether stderr is a terminal.}
+
+\item{allow_file}{Accept a \code{file://} URL (default \code{FALSE}).}
 }
 \value{
 \code{dest}, invisibly.
@@ -49,6 +54,7 @@ lines when stderr is not a terminal, and nothing when
 src <- tempfile(fileext = ".txt")
 writeLines("hello", src)
 dest <- tempfile(fileext = ".txt")
-bricklayer_download(paste0("file://", src), dest, quiet = TRUE)
+bricklayer_download(paste0("file://", src), dest, quiet = TRUE,
+                    allow_file = TRUE)
 readLines(dest)
 }

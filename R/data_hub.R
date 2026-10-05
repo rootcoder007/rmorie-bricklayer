@@ -12,7 +12,10 @@
 }
 
 .bl_data_url <- function() {
-  sub("/+$", "", Sys.getenv("MORIE_DATA_URL", "https://data.rmorie.com"))
+  # the bearer key goes to this host: https and a public address, or no key
+  .rmbl_check_public_url(
+    sub("/+$", "", Sys.getenv("MORIE_DATA_URL", "https://data.rmorie.com")),
+    "MORIE_DATA_URL")
 }
 
 .bl_data_cache_dir <- function() {

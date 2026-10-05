@@ -60,6 +60,13 @@ test_that("native encoder matches jsonlite::toJSON across the option grid", {
   )
 })
 
+test_that("a repeated key is refused by default and kept, as jsonlite keeps it, on request", {
+  skip_if_not_installed("jsonlite")
+  expect_error(bricklayer_json_from_json('{"a":1,"a":2}'), "duplicate key")
+  expect_equal(bricklayer_json_from_json('{"a":1,"a":2}', duplicate_keys = "keep"),
+               jsonlite::fromJSON('{"a":1,"a":2}'))
+})
+
 test_that("native parser + simplifier match jsonlite::fromJSON", {
   skip_if_not_installed("jsonlite")
   texts <- c(
@@ -70,7 +77,7 @@ test_that("native parser + simplifier match jsonlite::fromJSON", {
     "[1.5,2,1e3,-0,1E-2,123456789012345678]", '"\\u00e9\\ud83d\\ude00\\n\\t\\"\\\\\\/"', "[[[1,2],[3,4]],[[5,6],[7,8]]]",
     '[[1,"a"],[2,"b"]]', '{"a":{"b":{"c":1}}}', '[{"a":1,"b":null},{"a":null,"b":2}]', '[{"x":[1,2,3]},{"x":[4,5,6]}]',
     "[[true,1],[false,0]]", '[{"a":[{"b":1}]},{"a":[{"b":2}]}]', '{"a":[],"b":{}}', "[[],[]]", "[{},{}]",
-    "[[1],[2]]", "[1,2.0]", "[9007199254740993]", "  [ 1 , 2 ]  ", '{"a":1,"a":2}', '[{"a":1},{"a":"x"}]',
+    "[[1],[2]]", "[1,2.0]", "[9007199254740993]", "  [ 1 , 2 ]  ", '[{"a":1},{"a":"x"}]',
     '[{"a":[1,2]},{"a":3}]', "[1,[2,3]]", '{"a":[[1,2],[3,4]]}', '[{"$date":1700000000000},{"$date":1700000001000}]',
     '{"_row":"r1","a":1}', '[{"_row":"r1","a":1},{"_row":"r2","a":2}]', '["NA","NaN","Inf","-Inf"]', '["NA","x"]'
   )

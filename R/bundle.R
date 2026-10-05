@@ -78,8 +78,11 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
   }
   path <- path %||% file.path(dir, "capsule_bundle.json")
   if (is.null(files)) {
-    all_files <- list.files(dir, recursive = TRUE, all.files = FALSE,
-                            full.names = FALSE)
+    # dotfiles too: a .Rprofile dropped into a capsule directory runs when
+    # a session starts there, and a bundle that claims "every regular file"
+    # must have hashed it
+    all_files <- list.files(dir, recursive = TRUE, all.files = TRUE,
+                            full.names = FALSE, no.. = TRUE)
     keep <- vapply(all_files, function(f) {
       p <- file.path(dir, f)
       !dir.exists(p) && !identical(normalizePath(p, mustWork = FALSE),
@@ -135,6 +138,7 @@ capsule_bundle_read <- function(path) {
   class(b$attestation) <- c("bricklayer_attestation", "list")
   class(b$attestation$signature) <- c("bricklayer_signature", "list")
   class(b) <- c("bricklayer_bundle", "list")
+  attr(b, "path") <- normalizePath(path, winslash = "/", mustWork = FALSE)
   b
 }
 
@@ -155,7 +159,12 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
   }
   for (e in bundle$files) {
     f <- as.character(e$path)[1L]
-    p <- file.path(dir, f)
+    p <- .rmbl_safe_rel(f, dir)
+    if (is.null(p)) {
+      note_row(paste0("file:", f), FALSE,
+               "not a plain relative path inside the directory")
+      next
+    }
     if (!file.exists(p)) {
       note_row(paste0("file:", f), FALSE, "missing from the directory")
       next
@@ -171,10 +180,16 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
   # has been added beside it.
   named <- vapply(bundle$files, function(e) as.character(e$path)[1L],
                   character(1))
-  on_disk <- list.files(dir, recursive = TRUE, full.names = FALSE)
+  on_disk <- list.files(dir, recursive = TRUE, full.names = FALSE,
+                        all.files = TRUE, no.. = TRUE)
   on_disk <- on_disk[!dir.exists(file.path(dir, on_disk))]
-  extra <- setdiff(on_disk, c(named, basename(
-    c("capsule_bundle.json", on_disk[grepl("bundle\\.json$", on_disk)]))))
+  # only the bundle's OWN file is exempt from the listing, not every file
+  # whose name ends in bundle.json
+  own <- attr(bundle, "path")
+  d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
+  own_rel <- if (!is.null(own) && startsWith(own, paste0(d, "/")))
+    substring(own, nchar(d) + 2L) else "capsule_bundle.json"
+  extra <- setdiff(on_disk, c(named, own_rel))
   note_row("no_unlisted_files", length(extra) == 0L,
            if (length(extra))
              paste("not covered by the bundle:",

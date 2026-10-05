@@ -402,8 +402,11 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     } else {
       target <- file.path(dir, nm)
       if (file.exists(target) || !is.na(Sys.readlink(target))) unlink(target)
-      body <- paste0("suppressPackageStartupMessages({ .libPaths(c(\"", lib, "\", .libPaths())); ",
+      # the library path is an R string literal (deparse() escapes it) inside
+      # a single-quoted shell argument (a quote in the path becomes '\'')
+      body <- paste0("suppressPackageStartupMessages({ .libPaths(c(", deparse(lib), ", .libPaths())); ",
                      "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q)) })")
+      body <- gsub("'", "'\\\\''", body)
       writeLines(c("#!/bin/sh",
                    sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())", nm),
                    sprintf("# runs the package in %s (pinned with .libPaths() inside R)", lib),

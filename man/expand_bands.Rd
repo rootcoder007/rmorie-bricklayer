@@ -4,7 +4,7 @@
 \alias{expand_bands}
 \title{Expand a banded frequency table into per-unit values}
 \usage{
-expand_bands(bands, counts, ...)
+expand_bands(bands, counts, ..., drop_unparsed = FALSE)
 }
 \arguments{
 \item{bands}{A data frame from
@@ -14,6 +14,11 @@ expand_bands(bands, counts, ...)
 
 \item{...}{Passed to
 \code{\link[=band_values]{band_values()}}.}
+
+\item{drop_unparsed}{A band whose label could not be parsed, yet which
+has a count, is an error by default: every statistic computed from the
+result would otherwise describe a fraction of the data in silence.
+\code{TRUE} leaves those units out with a warning instead.}
 }
 \value{
 A numeric vector with one entry per unit.

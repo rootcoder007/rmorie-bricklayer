@@ -4,7 +4,7 @@
 \alias{download_data}
 \title{Download a File}
 \usage{
-download_data(url, target_path, mode = "wb", quiet = FALSE)
+download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 }
 \arguments{
 \item{url}{URL to download.}

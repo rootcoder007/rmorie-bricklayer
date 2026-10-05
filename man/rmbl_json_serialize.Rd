@@ -8,7 +8,7 @@
 \usage{
 bricklayer_json_serialize(x, digits = 8, pretty = FALSE)
 
-bricklayer_json_unserialize(txt)
+bricklayer_json_unserialize(txt, trusted = FALSE)
 }
 \arguments{
 \item{x}{Object to serialise.}
@@ -25,6 +25,13 @@ does in jsonlite.}
 
 \item{txt}{JSON produced by
 \code{bricklayer_json_serialize()}.}
+
+\item{trusted}{\code{FALSE} (default) rebuilds data types only (vectors,
+lists, factors, matrices, data frames, environments, symbols) and
+refuses functions, calls, expressions, namespaces and S4 objects:
+rebuilding those runs code the JSON's author chose, through
+\code{unserialize()}, \code{parse()}, \code{getNamespace()} or an \code{initialize}
+method. Set \code{TRUE} only for JSON your own session produced.}
 }
 \value{
 \code{bricklayer_json_serialize()} returns a length-1 character
