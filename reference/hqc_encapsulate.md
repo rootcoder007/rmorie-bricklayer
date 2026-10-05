@@ -1,7 +1,7 @@
 # Encapsulate a shared secret under an HQC key
 
-Produces a ciphertext and the 32-byte shared secret it carries. Only the
-public key is needed.
+Produces a ciphertext and the shared secret it carries (32 bytes; 64 for
+a round-4 key). Only the public key is needed.
 
 ## Usage
 
@@ -31,7 +31,7 @@ hqc_encapsulate(key, m = NULL, salt = NULL)
 ## Value
 
 A list of class `bricklayer_hqc_capsule`: `ciphertext` and `shared`
-(both hex), and `level`.
+(both hex), `level` and `version`.
 
 ## See also
 

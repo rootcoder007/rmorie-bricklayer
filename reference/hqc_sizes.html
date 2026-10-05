@@ -54,7 +54,7 @@ hard-code them.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hqc_sizes</span><span class="op">(</span><span class="va">level</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hqc_sizes</span><span class="op">(</span><span class="va">level</span>, version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v5"</span>, <span class="st">"round4"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -63,6 +63,11 @@ hard-code them.</p>
 
 <dl><dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
 <dd><p>Security level: 1, 3 or 5 (or 128, 192, 256).</p></dd>
+
+
+<dt id="arg-version">version<a class="anchor" aria-label="anchor" href="#arg-version"></a></dt>
+<dd><p><code>"v5"</code> (the default) or <code>"round4"</code>, as in
+<code><a href="hqc_keygen.html">hqc_keygen()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -85,12 +90,19 @@ hard-code them.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                16                16                32 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># code-based keys and ciphertexts are larger than ML-KEM's at the same</span></span></span>
-<span class="r-in"><span><span class="co"># category; the shared secret is 32 bytes at every level</span></span></span>
+<span class="r-in"><span><span class="co"># category; the shared secret is 32 bytes at every level (64 in round 4)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>HQC <span class="op">=</span> <span class="fu">hqc_sizes</span><span class="op">(</span><span class="fl">3</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"encapsulation_key"</span>, <span class="st">"ciphertext"</span><span class="op">)</span><span class="op">]</span>,</span></span>
 <span class="r-in"><span>      ML_KEM <span class="op">=</span> <span class="fu"><a href="kem_sizes.html">kem_sizes</a></span><span class="op">(</span><span class="fl">768</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"encapsulation_key"</span>, <span class="st">"ciphertext"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>        encapsulation_key ciphertext</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> HQC                 4514       8978</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ML_KEM              1184       1088</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>v5 <span class="op">=</span> <span class="fu">hqc_sizes</span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, round4 <span class="op">=</span> <span class="fu">hqc_sizes</span><span class="op">(</span><span class="fl">1</span>, <span class="st">"round4"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        encapsulation_key decapsulation_key ciphertext seed message salt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> v5                  2241              2321       4433   32      16   16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> round4              2249              2305       4433   96      16   16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        shared_secret</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> v5                32</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> round4            64</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

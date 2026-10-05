@@ -8,7 +8,7 @@ package, with no system dependency.
 ## Usage
 
 ``` r
-hqc_keygen(level = 3L, seed = NULL)
+hqc_keygen(level = 3L, seed = NULL, version = c("v5", "round4"))
 
 hqc_public_key(key)
 ```
@@ -25,9 +25,19 @@ hqc_public_key(key)
 
 - seed:
 
-  Optional raw vector of 32 bytes (`seed_KEM`). Supplying it makes the
-  key reproducible, which is what the known-answer tests need; the
-  default draws from the operating system's CSPRNG.
+  Optional raw vector: 32 bytes (`seed_KEM`) for v5; for round 4 the
+  [`hqc_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_sizes.md)`["seed"]`
+  bytes its key generation draws (`sk_seed`, `sigma`, `pk_seed`: 96, 104
+  or 112). Supplying it makes the key reproducible, which is what the
+  known-answer tests need; the default draws from the operating system's
+  CSPRNG.
+
+- version:
+
+  `"v5"` (the default: the specification of 2025-08-22, a 32-byte shared
+  secret) or `"round4"` (the submission of 2023-04-30, a 64-byte shared
+  secret). Keys remember it; encapsulation and decapsulation follow the
+  key.
 
 - key:
 
@@ -35,9 +45,10 @@ hqc_public_key(key)
 
 ## Value
 
-A list of class `bricklayer_hqc_key`: `public`, `secret` (both hex) and
-`level`. The secret key is the specification's
-`ek || seed_dk || sigma || seed_KEM`.
+A list of class `bricklayer_hqc_key`: `public`, `secret` (both hex),
+`level` and `version`. The v5 secret key is the specification's
+`ek || seed_dk || sigma || seed_KEM`; the round-4 one is
+`sk_seed || sigma || ek`.
 
 ## Details
 
@@ -57,6 +68,16 @@ the decapsulation key to its 32-byte seed; the encapsulation key,
 ciphertext and shared secret of the final standard may differ from
 these, so keep keys and ciphertexts tagged with the scheme and level
 they belong to.
+
+`version = "round4"` gives the earlier revision instead: the
+fourth-round submission of 2023-04-30 (HQC-128/192/256), the HQC of
+liboqs up to 0.12 and of PQClean, with a 64-byte shared secret. It uses
+the same codes and parameters under a different key encapsulation
+(40-byte seeds, SHAKE256 with domain bytes in place of SHA3, another
+sampler), so its keys and ciphertexts are not interchangeable with v5's.
+It reproduces that revision's 300 official known-answer vectors (the
+package's tests check them); use it to exchange keys with software built
+on it, and v5 otherwise.
 
 ## References
 
@@ -99,5 +120,13 @@ identical(hqc_decapsulate(key, bad), got)
 # a reproducible key from a fixed seed
 identical(hqc_keygen(1, seed = as.raw(1:32))$public,
           hqc_keygen(1, seed = as.raw(1:32))$public)
+#> [1] TRUE
+
+# the round-4 revision: the same exchange, a 64-byte shared secret
+old <- hqc_keygen(1, version = "round4")
+cap <- hqc_encapsulate(hqc_public_key(old))
+nchar(cap$shared) / 2
+#> [1] 64
+identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
 #> [1] TRUE
 ```

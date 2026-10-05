@@ -860,6 +860,27 @@
 
         </dt>
         <dd>Hawkes-process negative log-likelihood (C backend)</dd>
+
+        <dt>
+
+          <code><a href="core_hawkes_fit.html">core_hawkes_fit()</a></code>
+
+        </dt>
+        <dd>Fit a Hawkes process by maximum likelihood (analytic gradient, fast routes)</dd>
+
+        <dt>
+
+          <code><a href="core_hawkes_residuals.html">core_hawkes_residuals()</a></code>
+
+        </dt>
+        <dd>Time-rescaling residuals of a Hawkes process</dd>
+
+        <dt>
+
+          <code><a href="core_uniforms.html">core_uniforms()</a></code>
+
+        </dt>
+        <dd>Reproducible uniforms shared with morie's Python arm (splitmix64)</dd>
       </dl></div><div class="section level2">
       <h2 id="distributional-drift">Distributional drift<a class="anchor" aria-label="anchor" href="#distributional-drift"></a></h2>
 
@@ -1202,6 +1223,27 @@
 
         </dt>
         <dd>Cryptographically strong random bytes</dd>
+
+        <dt>
+
+          <code><a href="drbg_new.html">drbg_new()</a></code>
+
+        </dt>
+        <dd>A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP 800-90A)</dd>
+
+        <dt>
+
+          <code><a href="drbg_generate.html">drbg_generate()</a></code>
+
+        </dt>
+        <dd>Draw bytes from a DRBG</dd>
+
+        <dt>
+
+          <code><a href="drbg_reseed.html">drbg_reseed()</a></code>
+
+        </dt>
+        <dd>Reseed a DRBG</dd>
 
         <dt>
 
@@ -1770,7 +1812,7 @@
 
       <dl><dt>
 
-          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_capsule&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_capsule&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsify_family&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_recompute&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_timestamp&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certificate&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certpath_check&gt;</i>)</a></code>
+          <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_attestation_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_bundle_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_chain&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drbg&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_hqc_capsule&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_kem_capsule&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_mcar&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_prereg_check&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_falsify_family&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signing_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_signature&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_env_diff&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">summary(<i>&lt;bricklayer_report&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_recompute&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_schema&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_oqs_public_key&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_timestamp&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certificate&gt;</i>)</a></code> <code><a href="rmbl_print_methods.html">print(<i>&lt;bricklayer_certpath_check&gt;</i>)</a></code>
 
         </dt>
         <dd>Printed reports for bricklayer objects</dd>

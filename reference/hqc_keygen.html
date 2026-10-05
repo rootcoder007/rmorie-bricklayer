@@ -60,7 +60,7 @@ package, with no system dependency.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hqc_keygen</span><span class="op">(</span>level <span class="op">=</span> <span class="fl">3L</span>, seed <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">hqc_keygen</span><span class="op">(</span>level <span class="op">=</span> <span class="fl">3L</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, version <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"v5"</span>, <span class="st">"round4"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">hqc_public_key</span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -72,13 +72,23 @@ package, with no system dependency.</p>
 <dl><dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
 <dd><p>Security level, as a NIST category: 1, 3 (the default) or 5
 (HQC-1, HQC-3, HQC-5; 128, 192 and 256 are accepted for the same three).
-Level 3 matches the category of ML-KEM-768, <code><a href="kem_keygen.html">kem_keygen()</a></code>'s default.</p></dd>
+Level 3 matches the category of ML-KEM-768,
+<code><a href="kem_keygen.html">kem_keygen()</a></code>'s default.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional raw vector of 32 bytes (<code>seed_KEM</code>). Supplying it makes
-the key reproducible, which is what the known-answer tests need; the
-default draws from the operating system's CSPRNG.</p></dd>
+<dd><p>Optional raw vector: 32 bytes (<code>seed_KEM</code>) for v5; for round 4
+the <code><a href="hqc_sizes.html">hqc_sizes()</a></code><code>["seed"]</code> bytes its key generation
+draws (<code>sk_seed</code>, <code>sigma</code>, <code>pk_seed</code>: 96, 104 or 112).
+Supplying it makes the key reproducible, which is what the known-answer
+tests need; the default draws from the operating system's CSPRNG.</p></dd>
+
+
+<dt id="arg-version">version<a class="anchor" aria-label="anchor" href="#arg-version"></a></dt>
+<dd><p><code>"v5"</code> (the default: the specification of 2025-08-22, a
+32-byte shared secret) or <code>"round4"</code> (the submission of 2023-04-30, a
+64-byte shared secret). Keys remember it; encapsulation and decapsulation
+follow the key.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
@@ -88,8 +98,9 @@ default draws from the operating system's CSPRNG.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>bricklayer_hqc_key</code>: <code>public</code>, <code>secret</code> (both
-hex) and <code>level</code>. The secret key is the specification's
-<code>ek || seed_dk || sigma || seed_KEM</code>.</p>
+hex), <code>level</code> and <code>version</code>. The v5 secret key is the specification's
+<code>ek || seed_dk || sigma || seed_KEM</code>; the round-4 one is
+<code>sk_seed || sigma || ek</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -106,6 +117,14 @@ multiply instruction; elsewhere a portable constant-time product.</p>
 decapsulation key to its 32-byte seed; the encapsulation key, ciphertext
 and shared secret of the final standard may differ from these, so keep
 keys and ciphertexts tagged with the scheme and level they belong to.</p>
+<p><code>version = "round4"</code> gives the earlier revision instead: the fourth-round
+submission of 2023-04-30 (HQC-128/192/256), the HQC of liboqs up to 0.12
+and of PQClean, with a 64-byte shared secret. It uses the same codes and
+parameters under a different key encapsulation (40-byte seeds, SHAKE256
+with domain bytes in place of SHA3, another sampler), so its keys and
+ciphertexts are not interchangeable with v5's. It reproduces that
+revision's 300 official known-answer vectors (the package's tests check
+them); use it to exchange keys with software built on it, and v5 otherwise.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -146,6 +165,14 @@ Post-Quantum Cryptography Standardization Process. NIST IR 8545.
 <span class="r-in"><span><span class="co"># a reproducible key from a fixed seed</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">hqc_keygen</span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span>,</span></span>
 <span class="r-in"><span>          <span class="fu">hqc_keygen</span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the round-4 revision: the same exchange, a 64-byte shared secret</span></span></span>
+<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu">hqc_keygen</span><span class="op">(</span><span class="fl">1</span>, version <span class="op">=</span> <span class="st">"round4"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cap</span> <span class="op">&lt;-</span> <span class="fu"><a href="hqc_encapsulate.html">hqc_encapsulate</a></span><span class="op">(</span><span class="fu">hqc_public_key</span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">cap</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 64</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="hqc_decapsulate.html">hqc_decapsulate</a></span><span class="op">(</span><span class="va">old</span>, <span class="va">cap</span><span class="op">$</span><span class="va">ciphertext</span><span class="op">)</span>, <span class="va">cap</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 </code></pre></div>
     </div>

@@ -315,6 +315,13 @@ package computes with one copy of the arithmetic.
   : Regularized incomplete gamma function (C backend)
 - [`core_hawkes_nll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_nll.md)
   : Hawkes-process negative log-likelihood (C backend)
+- [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+  : Fit a Hawkes process by maximum likelihood (analytic gradient, fast
+  routes)
+- [`core_hawkes_residuals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.md)
+  : Time-rescaling residuals of a Hawkes process
+- [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
+  : Reproducible uniforms shared with morie's Python arm (splitmix64)
 
 ## Distributional drift
 
@@ -448,6 +455,13 @@ verified against its published test vectors.
   : Digest an arbitrary R object
 - [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
   : Cryptographically strong random bytes
+- [`drbg_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.md)
+  : A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP
+  800-90A)
+- [`drbg_generate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_generate.md)
+  : Draw bytes from a DRBG
+- [`drbg_reseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_reseed.md)
+  : Reseed a DRBG
 - [`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md)
   : Derive a key from a passphrase
 
@@ -721,6 +735,7 @@ Printed reports for the objects the package returns.
   [`print(`*`<bricklayer_bundle>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_bundle_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_chain>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
+  [`print(`*`<bricklayer_drbg>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_hqc_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_hqc_public_key>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)

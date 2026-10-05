@@ -68,13 +68,16 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_cov.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_crc32.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_gamma_cdf.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_nll.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_ipw_weights.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_logpdf.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha512.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/core_weighted.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.html</loc></url>
@@ -84,6 +87,9 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/download_data.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_generate.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_reseed.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.html</loc></url>

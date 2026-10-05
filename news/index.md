@@ -2,6 +2,57 @@
 
 ## rmoriebricklayer 0.5.5
 
+- A deterministic random bit generator:
+  [`drbg_new()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_new.md),
+  [`drbg_generate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_generate.md)
+  and
+  [`drbg_reseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_reseed.md)
+  are the CTR_DRBG of NIST SP 800-90A with AES-256 and no derivation
+  function, written here (AES computed in constant time, with AES-NI on
+  x86-64). It reproduces all 720 AES-256 no-df vectors of NIST’s DRBG
+  validation suite (no reseed, reseed, prediction resistance) on both
+  ciphers, and it is the `randombytes()` of NIST’s `rng.c`: seeded with
+  the bytes 0..47 it gives the seed of vector 0 of the post-quantum
+  known-answer files written with it.
+
+- HQC in both revisions: `hqc_keygen(version = "round4")` adds the
+  fourth-round submission of 2023-04-30 (HQC-128/192/256, the HQC of
+  liboqs up to 0.12 and of PQClean) with its 64-byte shared secret, next
+  to the default v5 (2025-08-22, 32 bytes). It shares v5’s codes and
+  parameters and reproduces all 300 of that revision’s official
+  known-answer vectors on both multipliers. Keys carry their `version`,
+  [`hqc_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_encapsulate.md)
+  /
+  [`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md)
+  follow it,
+  [`hqc_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_sizes.md)
+  takes it, and a round-4 secret key whose public half is not the one
+  its seed makes is refused. A `level` must be one whole number
+  (`c(1, 3)` and `3.5` were read as 1 and 3).
+
+- Hawkes processes fitted fast and exactly:
+  [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+  (constant or sinusoidal baseline; exponential, Weibull, gamma or Lomax
+  kernel) maximises the likelihood with its analytic gradient by
+  projected BFGS in C++, and
+  [`core_hawkes_residuals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.md)
+  gives the time-rescaling residuals in O(n) or O(n w). Routes:
+  `"exact"` (Ozaki’s O(n) recursion for the exponential kernel; the
+  Weibull and gamma double sums stop where the kernel underflows to 0,
+  so they equal the full sums), `"soe"` (Lomax and gamma with shape \< 1
+  as sums of exponentials with relative error `eps`, Beylkin & Monzon
+  2010), `"truncate"`, `"em"` (Veen & Schoenberg 2008) and `"inar"`
+  (Kirchner 2017). The code is shared with morie’s Python arm, which
+  calls the same routine, so the two return the same estimate (asserted
+  on common data in both test suites).
+  [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
+  exposes the splitmix64 stream both arms use where they must draw the
+  same numbers. The default `method = "auto"` is exact for the
+  exponential kernel, `"truncate"` for Weibull (whose exact window,
+  where the kernel underflows, spans the whole record when the shape is
+  below 1) and `"soe"` for Lomax and gamma; `"soe"` truncates a gamma
+  kernel with shape \>= 1 at `eps`.
+
 - HQC-KEM, the code-based key encapsulation NIST selected in March 2025
   beside ML-KEM:
   [`hqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_keygen.md),
