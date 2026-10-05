@@ -211,10 +211,16 @@ produced the data.
   (Ozaki’s O(n) recursion for the exponential kernel; the Weibull and
   gamma sums stop where the kernel underflows to 0), `"soe"` (Lomax and
   gamma as a sum of exponentials, Beylkin & Monzón 2010, relative error
-  `eps`), `"truncate"`, `"em"` (Veen & Schoenberg 2008) or `"inar"`
-  (Kirchner 2017); `"auto"` chooses by kernel. The reported likelihood
-  is exact whatever the route, so AIC compares across routes and
-  kernels.
+  `eps`), `"truncate"`, `"em"` (Veen & Schoenberg 2008, finished by the
+  BFGS on the exact likelihood, so it reaches the same maximum) or
+  `"inar"` (Kirchner 2017); `"auto"` chooses by kernel. The reported
+  likelihood is exact whatever the route, so AIC compares across routes
+  and kernels. The optimiser restarts its curvature whenever a parameter
+  reaches or leaves its bound, as L-BFGS-B does: a Lomax fit to 19,651
+  events takes 12 s (it took 344 s). `converged` reports the optimiser’s
+  stop and `at_bound` the parameters left on the parameter box (a shape
+  driven to its wall by day-dated times, or a Lomax at its exponential
+  limit).
   [`core_hawkes_nll()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_nll.md)
   gives the same likelihood on the same parameters,
   [`core_hawkes_residuals()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_residuals.md)
@@ -223,7 +229,8 @@ produced the data.
   strictly earlier events); times recorded to a resolution, such as
   daily dates, are spread across their interval with
   [`core_hawkes_jitter()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_jitter.md)
-  before the fit (Filimonov & Sornette 2015), and the fit warns when it
+  before the fit (Filimonov & Sornette 2015; `horizon =` keeps an event
+  dated on the window’s last day inside it), and the fit warns when it
   sees ties.
 - **Post-quantum keys and signatures** — ML-KEM
   ([`kem_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md),
