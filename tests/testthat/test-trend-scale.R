@@ -26,7 +26,9 @@ test_that("the Sen interval in C matches the former R loop exactly", {
   mk <- .Call(rmoriebricklayer:::C_rmbl_mann_kendall, y[order(x)])
   new <- rmoriebricklayer:::.rmbl_sen_ci(sort(x), y[order(x)], mk$var, 0.95)
   old <- old_sen_ci(sort(x), y[order(x)], mk$var, 0.95)
-  expect_identical(new, old)
+  # the C version also says whether a rank was clamped; the values match
+  expect_identical(as.numeric(new), old)
+  expect_identical(attr(new, "clamped"), c(FALSE, FALSE))
 })
 
 test_that("trend_test scales to thousands of periods, refuses absurd sizes", {

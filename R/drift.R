@@ -135,14 +135,18 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
   # The reference defines the bin edges, so the comparison asks where the
   # NEW sample sits relative to the pinned one.
   probs <- seq(0, 1, length.out = bins + 1L)
-  edges <- unique(.Call(C_rmbl_quantile, x, probs))
-  if (length(edges) < 2L) {
-    # A constant reference column has no spread to bin; fall back to
-    # comparing presence at that single value.
-    edges <- c(edges[1L] - 0.5, edges[1L] + 0.5)
+  q <- unique(.Call(C_rmbl_quantile, x, probs))
+  # The outer quantiles (the reference's min and max) become open ends so
+  # the new sample's tails land in a bin. When the reference has fewer
+  # than three distinct quantiles -- a constant column, or one that is
+  # mostly a single value with a thin tail -- every distinct value is a
+  # cut point instead: replacing the ends with +-Inf left ONE bin, and a
+  # column rescaled by 1000x reported PSI = 0.
+  edges <- if (length(q) >= 3L) {
+    c(-Inf, q[-c(1L, length(q))], Inf)
+  } else {
+    c(-Inf, q, Inf)
   }
-  edges[1L] <- -Inf
-  edges[length(edges)] <- Inf
   px <- as.numeric(table(cut(x, edges))) / length(x)
   py <- as.numeric(table(cut(y, edges))) / length(y)
   out <- .Call(C_rmbl_psi, px, py, as.numeric(eps))
@@ -227,17 +231,29 @@ drift_chisq <- function(observed, expected) {
   keep <- exp_counts > 0
   if (!any(keep)) stop("no category has a positive expected count",
                        call. = FALSE)
-  df <- max(1L, sum(keep) - 1L)
+  df <- sum(keep) - 1L
   # A category the reference assigns probability zero, yet which occurs,
   # contradicts the pinned distribution outright: the chi-square term
   # for it diverges. Report that rather than dropping the category and
   # returning a statistic computed as though it had not appeared.
   if (any(o[!keep] > 0)) {
-    return(c(statistic = Inf, df = df, p_value = 0))
+    return(c(statistic = Inf, df = max(1L, df), p_value = 0))
   }
   stat <- sum((o[keep] - exp_counts[keep])^2 / exp_counts[keep])
-  c(statistic = stat, df = df,
-    p_value = 1 - core_gamma_cdf(df / 2, stat / 2))
+  if (df < 1L) {
+    # one category on both sides: nothing to test, and df = 0 is not a
+    # chi-square distribution
+    return(c(statistic = stat, df = 0, p_value = NA_real_))
+  }
+  c(statistic = stat, df = df, p_value = .rmbl_chisq_p(stat, df))
+}
+
+# The upper tail of a chi-square, computed AS the upper tail. The former
+# 1 - core_gamma_cdf(df / 2, stat / 2) underflowed to exactly 0 once the
+# lower tail rounded to 1 (stat >= 74.9 at df = 2), and "p = 0" is a
+# number a reader quotes.
+.rmbl_chisq_p <- function(stat, df) {
+  stats::pchisq(stat, df, lower.tail = FALSE)
 }
 
 #' Chi-square test of homogeneity for two categorical samples
@@ -324,9 +340,30 @@ drift_homogeneity <- function(x, y) {
   }
   stat <- sum((cx[keep] - ex[keep])^2 / ex[keep]) +
     sum((cy[keep] - ey[keep])^2 / ey[keep])
-  df <- max(1L, sum(keep) - 1L)
-  c(statistic = stat, df = df,
-    p_value = 1 - core_gamma_cdf(df / 2, stat / 2))
+  df <- sum(keep) - 1L
+  if (df < 1L) {
+    return(c(statistic = stat, df = 0, p_value = NA_real_))
+  }
+  # The chi-square approximation rests on the expected counts. When any
+  # is below 5 -- every high-cardinality column, where two disjoint sets
+  # of 400 dates give expected counts of 0.5 each and the test has no
+  # power by construction -- the p-value is a Monte Carlo one over tables
+  # with the same margins, as cramers_v() already does.
+  simulated <- min(ex[keep], ey[keep]) < 5
+  p <- if (simulated) {
+    tab <- rbind(cx[keep], cy[keep])
+    as.numeric(suppressWarnings(stats::chisq.test(
+      tab, simulate.p.value = TRUE, B = 10000L))$p.value)
+  } else {
+    .rmbl_chisq_p(stat, df)
+  }
+  out <- c(statistic = stat, df = df, p_value = p)
+  attr(out, "method") <- if (simulated) {
+    "Monte Carlo permutation (small expected counts)"
+  } else {
+    "chi-square approximation"
+  }
+  out
 }
 
 #' Benford first-digit test
@@ -385,7 +422,7 @@ benford_test <- function(x) {
               expected = stats::setNames(expected, as.character(1:9)),
               proportion = counts / n,
               statistic = stat, df = df,
-              p_value = 1 - core_gamma_cdf(df / 2, stat / 2),
+              p_value = .rmbl_chisq_p(stat, df),
               n = n)
   class(out) <- c("bricklayer_benford", "list")
   out
@@ -523,10 +560,23 @@ capsule_drift <- function(reference, current, alpha = 0.01,
                           drifted = NA, stringsAsFactors = FALSE))
       }
       cs <- drift_homogeneity(av, bv)
+      # The homogeneity test conditions on the margins, so on a
+      # high-cardinality column (dates, identifiers) where every value
+      # occurs once it has no power at all: two DISJOINT sets of 400 dates
+      # give p = 1. The PSI over the union of categories, and the share
+      # of current rows in categories the reference never had, see that.
+      lv <- union(unique(av), unique(bv))
+      px <- as.numeric(table(factor(av, levels = lv))) / length(av)
+      py <- as.numeric(table(factor(bv, levels = lv))) / length(bv)
+      ps <- .Call(C_rmbl_psi, px, py, 1e-6)
+      psi_flag <- length(av) >= psi_min_n && length(bv) >= psi_min_n &&
+        ps[[1L]] > psi_threshold
+      unseen <- mean(!(bv %in% av))
       data.frame(column = nm, type = "categorical",
                  statistic = cs[["statistic"]], p_value = cs[["p_value"]],
-                 psi = NA_real_, js_divergence = NA_real_,
-                 drifted = cs[["p_value"]] < alpha,
+                 psi = ps[[1L]], js_divergence = ps[[2L]],
+                 drifted = cs[["p_value"]] < alpha || psi_flag ||
+                   unseen > 0.5,
                  stringsAsFactors = FALSE)
     }
   })

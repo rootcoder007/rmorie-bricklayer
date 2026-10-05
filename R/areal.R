@@ -224,11 +224,18 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 #' @export
 eb_rates <- function(observed, expected, area = NULL) {
   observed <- .rmbl_num(observed, "observed")
-  expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
+  expected <- .rmbl_num(expected, "expected")
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
   }
-  if (any(expected <= 0, na.rm = TRUE)) {
+  # counts: finite and non-negative, as sir() requires of the same inputs
+  if (anyNA(observed) || any(!is.finite(observed)) || any(observed < 0)) {
+    stop("`observed` must be finite, non-negative counts", call. = FALSE)
+  }
+  if (anyNA(expected) || any(!is.finite(expected))) {
+    stop("`expected` must be finite", call. = FALSE)
+  }
+  if (any(expected <= 0)) {
     stop("`expected` must be positive", call. = FALSE)
   }
   n <- length(observed)
@@ -385,9 +392,21 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
     stop("`x` must not contain missing values", call. = FALSE)
   }
   nb <- .rmbl_neighbours(neighbours, n)
-  # row standardisation divides each area's weights by their own total,
-  # so an area with many neighbours does not count for more
-  wts <- if (identical(style, "W")) {
+  # A weight matrix carries magnitudes (inverse distance, a
+  # pre-standardised matrix); they are used as given under style "B" and
+  # row-standardised under "W". A neighbour list is binary. Reducing a
+  # matrix to which(w != 0) threw the magnitudes away and gave a wrong I
+  # with no warning.
+  w_in <- attr(nb, "weights")
+  wts <- if (!is.null(w_in)) {
+    unlist(lapply(w_in, function(w) {
+      if (!length(w)) numeric(0)
+      else if (identical(style, "W")) w / sum(w)
+      else w
+    }), use.names = FALSE)
+  } else if (identical(style, "W")) {
+    # row standardisation divides each area's weights by their own total,
+    # so an area with many neighbours does not count for more
     unlist(lapply(nb, function(v) {
       if (!length(v)) numeric(0) else rep(1 / length(v), length(v))
     }), use.names = FALSE)
@@ -431,7 +450,18 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
       stop(sprintf("a weight matrix must be %d by %d", n, n),
            call. = FALSE)
     }
-    return(lapply(seq_len(n), function(i) which(neighbours[i, ] != 0)))
+    if (anyNA(neighbours) || any(!is.finite(neighbours))) {
+      stop("a weight matrix must be finite", call. = FALSE)
+    }
+    nb <- lapply(seq_len(n), function(i) {
+      j <- which(neighbours[i, ] != 0)
+      j[j != i]  # an area is not its own neighbour
+    })
+    # the magnitudes travel with the indices
+    attr(nb, "weights") <- lapply(seq_len(n), function(i) {
+      as.numeric(neighbours[i, nb[[i]]])
+    })
+    return(nb)
   }
   if (!is.list(neighbours)) {
     stop("`neighbours` must be a list of neighbour indices or a weight matrix",

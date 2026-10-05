@@ -311,7 +311,7 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
   out <- list(statistic = d2,
               df = df,
               p_value = if (df > 0) {
-                1 - core_gamma_cdf(df / 2, d2 / 2)
+                stats::pchisq(d2, df, lower.tail = FALSE)
               } else {
                 NA_real_
               },

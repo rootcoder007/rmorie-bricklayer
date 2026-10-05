@@ -138,7 +138,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   d2 <- rowSums((Z %*% S_inv) * Z)
 
   out <- data.frame(row = which(ok), distance = sqrt(d2),
-                    p_value = 1 - core_gamma_cdf(p / 2, d2 / 2),
+                    p_value = stats::pchisq(d2, p, lower.tail = FALSE),
                     stringsAsFactors = FALSE)
   out$outlier <- out$p_value < alpha
   skipped <- which(!ok)
