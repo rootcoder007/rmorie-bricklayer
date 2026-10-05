@@ -8,7 +8,7 @@ fixture <- system.file("extdata", "siu_synthetic_report.html",
 test_that("schema is the 16 reviewed fields with count flags", {
   sch <- bricklayer_siu_schema()
   expect_equal(nrow(sch), 16L)
-  expect_true(sch$is_count[sch$name == "number_of_subject_officers"])
+  expect_true(sch$is_count[sch$name == "number_of_subject_officials"])
   expect_false(sch$is_count[sch$name == "directors_name"])
 })
 
@@ -19,7 +19,7 @@ test_that("parser extracts the key fields from the synthetic report", {
   expect_equal(unname(f["date_of_incident_iso"]), "2023-01-05")
   expect_equal(unname(f["date_siu_notified_iso"]), "2023-01-06")
   expect_equal(unname(f["date_of_director_decision_iso"]), "2023-04-28")
-  expect_equal(unname(f["number_of_subject_officers"]), "2")
+  expect_equal(unname(f["number_of_subject_officials"]), "2")
   expect_equal(unname(f["number_of_witness_officials"]), "3")
   expect_equal(unname(f["number_of_civilian_witnesses"]), "2")
   expect_equal(unname(f["directors_name"]), "Joseph Martino")

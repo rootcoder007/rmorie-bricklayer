@@ -1,5 +1,10 @@
 # rmoriebricklayer 0.5.5
 
+* SIU reports name the same people "subject officers" (before the SIU Act, 2019), "subject
+  officials" (after it) or "SO": the parser now writes the count as `number_of_subject_officials`,
+  the corpus's and the SIU Act's term and the same form as `number_of_witness_officials` (it was
+  `number_of_subject_officers`, so the parsed row and the shipped corpus disagreed on the column
+  name). The section and ordinal matching already read all three spellings.
 * A deterministic random bit generator: `drbg_new()`, `drbg_generate()` and `drbg_reseed()` are the
   CTR_DRBG of NIST SP 800-90A with AES-256 and no derivation function, written here (AES computed in
   constant time, with AES-NI on x86-64). It reproduces all 720 AES-256 no-df vectors of NIST's DRBG

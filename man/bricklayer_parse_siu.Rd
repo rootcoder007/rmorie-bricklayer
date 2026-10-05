@@ -25,5 +25,5 @@ state come back as \code{""}.
 f <- bricklayer_parse_siu(system.file("extdata",
                                       "siu_synthetic_report.html",
                                       package = "rmoriebricklayer"))
-f[["number_of_subject_officers"]]
+f[["number_of_subject_officials"]]
 }

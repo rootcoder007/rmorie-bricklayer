@@ -72,7 +72,7 @@ SEXP C_rmbl_siu_strip_boilerplate(SEXP text) {
 
 SEXP C_rmbl_siu_resolve_so(SEXP text) {
     const siu::SoResolution res =
-        siu::resolve_subject_officers(as_string(text, "text"));
+        siu::resolve_subject_officials(as_string(text, "text"));
     SEXP ans = PROTECT(Rf_allocVector(VECSXP, 2));
     SEXP nms = PROTECT(Rf_allocVector(STRSXP, 2));
     SET_STRING_ELT(nms, 0, Rf_mkChar("count"));

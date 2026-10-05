@@ -290,7 +290,7 @@ test_that("the officer and witness counts read their own labels", {
     "WO #3 Interviewed\n",
     "Civilian Witnesses\nCW #1 Interviewed\n")
   f <- parse_text(body)
-  expect_equal(unname(f["number_of_subject_officers"]), "2")
+  expect_equal(unname(f["number_of_subject_officials"]), "2")
   expect_equal(unname(f["number_of_witness_officials"]), "3")
   expect_equal(unname(f["number_of_civilian_witnesses"]), "1")
 
@@ -301,6 +301,15 @@ test_that("the officer and witness counts read their own labels", {
                  "Witness Officials\nWO #1 Interviewed\n",
                  "Civilian Witnesses\nCW #1 Interviewed\n")
   sch <- bricklayer_siu_schema()
-  expect_true(sch$is_count[sch$name == "number_of_subject_officers"])
+  expect_true(sch$is_count[sch$name == "number_of_subject_officials"])
   expect_equal(unname(parse_text(none)["number_of_witness_officials"]), "1")
+})
+
+test_that("SO, subject officer and subject official count the same people", {
+  # reports before the SIU Act (2019) say "subject officer", later ones "subject official"
+  for (txt in c("Subject Officer #1 declined. Subject Officer #2 was interviewed.",
+                "Subject Official #1 declined. Subject Official #2 was interviewed.",
+                "SO #1 declined. SO #2 was interviewed.")) {
+    expect_identical(as.integer(bricklayer_siu_resolve_so(txt)$count), 2L, label = txt)
+  }
 })

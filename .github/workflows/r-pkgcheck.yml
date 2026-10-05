@@ -60,12 +60,29 @@ jobs:
             fi
             pending=""
             for wf in $need; do
-              row=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
-                '[.workflow_runs[] | select(.name == $n)]
+              # this commit's own run first: the API can list a push's runs a little after
+              # the push, and an older push's concluded run then ended the wait at once while
+              # this commit's run was still going (2026-10-05, 6fe582f)
+              row=$(printf '%s' "$runs" | jq -r --arg n "$wf" --arg sha "$GITHUB_SHA" \
+                '[.workflow_runs[] | select(.name == $n and .head_sha == $sha)]
                  | sort_by(.created_at) | last
                  | if . == null then "absent absent"
                    else "\(.status) \(.conclusion // "null")" end')
               st=${row%% *}
+              if [ "$st" = "absent" ] && [ "$i" -le 15 ]; then
+                # give the push's runs five minutes to appear; a workflow this push did not
+                # trigger (a paths filter) never will, and then the newest run is what pkgcheck reads
+                pending="$pending $wf(not listed yet)"
+                continue
+              fi
+              if [ "$st" = "absent" ]; then
+                row=$(printf '%s' "$runs" | jq -r --arg n "$wf" \
+                  '[.workflow_runs[] | select(.name == $n)]
+                   | sort_by(.created_at) | last
+                   | if . == null then "absent absent"
+                     else "\(.status) \(.conclusion // "null")" end')
+                st=${row%% *}
+              fi
               if [ "$st" != "completed" ] && [ "$st" != "absent" ]; then
                 pending="$pending $wf($st)"
               fi
