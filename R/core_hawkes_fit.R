@@ -169,6 +169,12 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   } else {
     run <- function(st) .rmbl_hk_pbfgs(times, horizon, kernel, baseline, method, eps, b, st)
     fit <- run(x0)
+    if (!is.null(start) && fit$value >= 1e11) {
+      # the optimizer cannot move from a point where the likelihood is not finite (it returned
+      # the start itself, reported as converged)
+      stop("the likelihood is not finite at `start` (no intensity, or an overflowing baseline): ",
+           "give a start inside the model", call. = FALSE)
+    }
     if (kernel != "exponential" && is.null(start)) {
       # a second, deterministic start at the exponential fit (the shape-1 member of Weibull and
       # gamma), as morie's Python fit: the likelihood is multimodal
@@ -176,7 +182,7 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
       if (fit2$value < fit$value) fit <- fit2
     }
     theta <- fit$par
-    converged <- fit$iterations < 2000
+    converged <- fit$iterations < 2000 && fit$value < 1e11
   }
   nll <- exact_nll(theta)
   k <- length(theta)
@@ -349,8 +355,11 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
   nu <- max(alpha0 / delta, 1e-12)
   edges <- delta * (0:p)
   fk <- function(par) {
+    # Nelder-Mead is unbounded: a point outside the parameter box scores as invalid before any
+    # CDF is evaluated (a negative shape made pweibull / pgamma warn "NaNs produced"), as Python
+    if (any(par < b$lower[-1] | par > b$upper[-1])) return(1e12)
     cdf <- tryCatch(.rmbl_hk_cdf(edges, kernel, par[-1]), error = function(e) NULL)
-    if (is.null(cdf) || anyNA(cdf)) return(1e12)
+    if (is.null(cdf) || any(!is.finite(cdf))) return(1e12)
     sum((a - par[[1]] * diff(cdf))^2)
   }
   mean_dt <- horizon / n

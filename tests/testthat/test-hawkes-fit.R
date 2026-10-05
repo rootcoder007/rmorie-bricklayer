@@ -114,3 +114,58 @@ test_that("residuals are uniform-range and refuse a wrong parameter count", {
   expect_true(all(U > 0 & U < 1))
   expect_error(core_hawkes_residuals(e$t, e$T, "gamma", c(1, 2)), "length")
 })
+
+
+test_that("a bad horizon, events outside the window and a start outside the model are refused", {
+  e <- hk_events(100L)
+  expect_error(core_hawkes_fit(e$t, 0), "single positive number")
+  expect_error(core_hawkes_fit(e$t, -1), "single positive number")
+  expect_error(core_hawkes_fit(c(e$t, e$T + 1), e$T), "within \\[0, horizon\\]")
+  expect_error(core_hawkes_fit(c(-1, e$t), e$T), "within \\[0, horizon\\]")
+  # exp(15) events a day over 10^5 days: a compensator past 10^11, where the core reports no likelihood
+  far <- seq(1, 1e5, length.out = 100L)
+  expect_error(core_hawkes_fit(far, 1e5 + 1, start = c(15, 0.5, 1)), "not finite at `start`")
+  # the core checks parameter counts itself
+  expect_error(.Call(C_rmbl_hawkes_nll_grad, e$t, e$T, 0L, c(0, 1), 0.5, 0L, 1, 0L, 1e-9, 1, 1e-3, TRUE),
+               "wrong number of baseline or kernel parameters")
+  expect_error(.Call(C_rmbl_hawkes_fit_pbfgs, e$t, e$T, 0L, 0L, 0L, 1e-9, 1, 1e-3, c(-5, 0), c(5, 1),
+                     c(0, 0.5), 100L, 1e-6), "wrong number of parameters")
+})
+
+test_that("EM reaches the direct maximum for every kernel and for the sinusoidal baseline", {
+  e <- hk_events(300L)
+  for (k in c("weibull", "gamma", "lomax")) {
+    em <- core_hawkes_fit(e$t, e$T, k, method = "em")
+    expect_identical(em$method, "em")
+    expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, k)$nll), 1e-4)  # measured: at most 1.5e-5
+  }
+  em <- core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "em")
+  expect_lt(abs(em$nll - core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal")$nll), 1e-5)  # measured 3.5e-7
+})
+
+test_that("truncation at a tiny eps equals the exact likelihood for the exponential and Lomax kernels", {
+  e <- hk_events(300L)
+  expect_lt(abs(core_hawkes_fit(e$t, e$T, "exponential", method = "truncate", eps = 1e-12)$nll -
+                  core_hawkes_fit(e$t, e$T, "exponential")$nll), 1e-9)
+  expect_lt(abs(core_hawkes_fit(e$t, e$T, "lomax", method = "truncate", eps = 1e-12)$nll -
+                  core_hawkes_fit(e$t, e$T, "lomax", method = "soe")$nll), 1e-9)
+})
+
+test_that("an event at the horizon is part of the record and adds no compensator", {
+  e <- hk_events(200L)
+  f <- core_hawkes_fit(e$t, max(e$t), "weibull")
+  expect_identical(f$n, length(e$t))
+  expect_true(is.finite(f$nll))
+})
+
+test_that("INAR fits every kernel without straying outside the parameter box", {
+  # Nelder-Mead is unbounded; a point outside the box is scored invalid before any CDF is
+  # evaluated, so no "NaNs produced" warning reaches the caller
+  e <- hk_events(300L)
+  for (k in c("weibull", "gamma", "lomax")) {
+    expect_no_warning(i <- core_hawkes_fit(e$t, e$T, k, method = "inar"))
+    expect_identical(i$method, "inar")
+    expect_true(is.finite(i$nll))
+    expect_lt(abs(i$branching_ratio - core_hawkes_fit(e$t, e$T, k)$branching_ratio), 0.25)
+  }
+})
