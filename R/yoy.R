@@ -152,6 +152,9 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
       call. = FALSE
     )
   }
+  if (any(is.infinite(v))) {
+    stop("`value` has an infinite entry: a count or a measurement is finite", call. = FALSE)
+  }
   if (units == "count") {
     nonint <- stats::na.omit(v)
     if (length(nonint) && (any(nonint < 0) ||

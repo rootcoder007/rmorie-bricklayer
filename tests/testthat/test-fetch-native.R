@@ -98,3 +98,15 @@ test_that("bricklayer_fetch_siu builds the SIU report URL and forwards options",
   expect_identical(seen$timeout, 30L)
   expect_error(bricklayer_fetch_siu(1, d, lang = "de"))
 })
+
+test_that("bricklayer_fetch reports the HTTP status of a server that answered", {
+  skip_if_no_internet()
+  # a 404 is an answer, not an unreachable server
+  msg <- tryCatch(
+    bricklayer_fetch("https://cloud.r-project.org/nosuch-bricklayer-r8.csv", tempfile(),
+                     wayback = "http://127.0.0.1:9/b", timeout = 60),
+    error = conditionMessage
+  )
+  if (grepl("could not reach", msg)) skip("cloud.r-project.org did not answer from this runner")
+  expect_match(msg, "answered HTTP 404")
+})

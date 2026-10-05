@@ -9,7 +9,7 @@ test_that("a failed SIU fetch returns NULL rather than erroring", {
   testthat::local_mocked_bindings(
     bricklayer_fetch_siu = function(...) stop("network unreachable")
   )
-  expect_message(res <- bricklayer_fetch_parse_siu("12-TCD-001"),
+  expect_message(res <- bricklayer_fetch_parse_siu(12),
                  "could not fetch SIU report")
   expect_null(res)
 
@@ -18,7 +18,7 @@ test_that("a failed SIU fetch returns NULL rather than erroring", {
   testthat::local_mocked_bindings(
     bricklayer_fetch_siu = function(drid, dest, ...) invisible(dest)
   )
-  expect_null(bricklayer_fetch_parse_siu("12-TCD-002"))
+  expect_null(bricklayer_fetch_parse_siu(13))
 })
 
 test_that("HyperLogLog uses its published constant at every register size", {

@@ -53,20 +53,25 @@ n <- 200
 df <- data.frame(height = stats::rnorm(n, 170, 10))
 df$weight <- df$height * 0.5 + stats::rnorm(n, 0, 5)
 
-# A row that is ordinary on each variable but impossible jointly.
-df[1, ] <- list(height = 150, weight = 140)
+# A row that is ordinary on each variable but unlikely jointly:
+# short and heavy.
+df[1, ] <- list(height = 155, weight = 100)
 
 out <- mahalanobis_outliers(df)
 head(out, 3)
 
-# It is flagged, even though neither value is a marginal outlier.
+# It is flagged, although both values lie inside the other rows' ranges.
 out$row[1] == 1
-range(df$height)
-range(df$weight)
+range(df$height[-1])
+range(df$weight[-1])
 
-# The classical version can be fooled by the outliers it should find.
-mahalanobis_outliers(df, robust = FALSE)$distance[1] <
-  mahalanobis_outliers(df, robust = TRUE)$distance[1]
+# A cluster of bad rows drags the mean toward itself; the median and
+# MAD move less, so the robust distance of such a row is the larger.
+bad <- df
+bad[2:21, ] <- list(height = 150, weight = 110)
+d_classical <- mahalanobis_outliers(bad, robust = FALSE)
+d_robust <- mahalanobis_outliers(bad, robust = TRUE)
+d_classical$distance[d_classical$row == 2] < d_robust$distance[d_robust$row == 2]
 
 # A duplicated column has no distance defined, and is refused.
 dup <- df

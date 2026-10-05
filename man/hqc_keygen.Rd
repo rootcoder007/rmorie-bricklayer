@@ -56,7 +56,8 @@ draft of it (checked 2026-10-05). The specification of 2025-08-22 followed
 here already makes the changes NIST listed for FIPS 207 (the salted FO
 transform, SHA3-512 seed expansion, the 32-byte shared secret, the new
 sampler, the seed in the decapsulation key, the seed-only compressed key
-that \code{\link[=hqc_compress_key]{hqc_compress_key()}} writes); the published standard may still differ
+that \code{\link[=hqc_compress_key]{hqc_compress_key()}} writes); the published standard
+may still differ
 in detail. Keep keys and ciphertexts tagged with the scheme, version and
 level they belong to.
 

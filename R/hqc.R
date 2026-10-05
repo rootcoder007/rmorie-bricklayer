@@ -33,7 +33,8 @@
 #' here already makes the changes NIST listed for FIPS 207 (the salted FO
 #' transform, SHA3-512 seed expansion, the 32-byte shared secret, the new
 #' sampler, the seed in the decapsulation key, the seed-only compressed key
-#' that [hqc_compress_key()] writes); the published standard may still differ
+#' that [hqc_compress_key()] writes); the published standard
+#' may still differ
 #' in detail. Keep keys and ciphertexts tagged with the scheme, version and
 #' level they belong to.
 #'
@@ -274,14 +275,16 @@ hqc_decapsulate <- function(key, ciphertext) {
 #' The HQC specification of 2025-08-22 allows the decapsulation key to be
 #' stored as its 32-byte `seed_KEM` alone (the compressed format
 #' `dk_KEM = (seed_KEM)`), from which the whole key pair is derived again.
-#' `hqc_compress_key()` keeps only that seed; [hqc_decapsulate()] takes such a
+#' `hqc_compress_key()` keeps only that seed;
+#' [hqc_decapsulate()] takes such a
 #' key and expands it, and refuses one whose seed does not derive the key's
 #' public half.
 #'
 #' The round-4 revision (64-byte shared secret) defines no compressed format,
 #' but its key pair is derived from the randomness its key generation draws,
 #' `sk_seed || sigma || pk_seed` (96, 104 or 112 bytes: the `seed` of
-#' [hqc_keygen()] and [hqc_sizes()]), all of which its secret key
+#' [hqc_keygen()] and
+#' [hqc_sizes()]), all of which its secret key
 #' `sk_seed || sigma || pk_seed || s` carries. For a round-4 key the compressed
 #' form is that seed: this package's convention, not a format of the
 #' submission, so software built on round 4 (liboqs, PQClean) expects the
@@ -393,8 +396,8 @@ print.bricklayer_hqc_capsule <- function(x, ...) {
 # in the ciphertext, so both sides have to agree on it by other means.
 .rmbl_hqc_level <- function(level) {
   # one whole number: as.integer() would read c(1, 3) as 1 and 3.5 as 3
-  lv <- if (is.numeric(level) && length(level) == 1L && !is.na(level) && level == round(level)) {
-    c(`1` = 1L, `3` = 3L, `5` = 5L, `128` = 1L, `192` = 3L, `256` = 5L)[as.character(as.integer(level))]
+  lv <- if (is.numeric(level) && length(level) == 1L && is.finite(level) && level == round(level)) {
+    c(`1` = 1L, `3` = 3L, `5` = 5L, `128` = 1L, `192` = 3L, `256` = 5L)[as.character(level)]
   } else {
     NA_integer_
   }

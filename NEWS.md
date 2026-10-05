@@ -1,5 +1,113 @@
 # rmoriebricklayer 0.5.5
 
+* **XMSS: an index never signs twice.** `capsule_sign()` signed two messages at index 0 when called
+  twice with the same key object (the key is an R value, so it cannot advance the caller's copy),
+  and the help said it refused. It now remembers, for the session, the highest index each key has
+  signed with and refuses that index or an earlier one (one key object signed twice, or a stale
+  copy), retiring the index before the signature exists (RFC 8391; NIST SP 800-208). A damaged
+  `next_index` (NA, negative, fractional) is refused in words. Across sessions, save the latest
+  `key_state` after every signature.
+* Hawkes processes: events at the same instant no longer excite each other. The intensity sums over
+  strictly earlier events, as the definition of a Hawkes process (a simple point process) has it;
+  the exponential recursion, the sum-of-exponentials recursion and the exponential and Lomax
+  densities counted a tie as an excitation at lag 0. `core_hawkes_fit()` warns when times are tied,
+  and `core_hawkes_jitter()` spreads times recorded to a resolution (daily dates) uniformly across
+  their interval, as Filimonov & Sornette (2015) recommend, with the splitmix64 uniforms rmorie and
+  morie use for the TPS fits (the same numbers on daily data). The goodness-of-fit KS test uses the
+  exact distribution only without tied residuals (the exact computation with ties ran for minutes
+  and exhausted memory).
+* `core_hawkes_fit()` is fast for the Lomax kernel: the projected BFGS now restarts its curvature
+  estimate when a parameter reaches or leaves its bound (as L-BFGS-B does). A Lomax fit to
+  exponential-like data drifts to the bound on `alpha` (its exponential limit), and the matrix learned
+  with `alpha` free mis-scaled the remaining steps: 1,164 iterations and 196 s on 9,839 events, now 64
+  iterations and 3 s to the same optimum. The same restart ends the gamma kernel's stall on its sum-of-
+  exponentials and truncated likelihoods (2,000 iterations to a worse optimum on 2,118 tied events;
+  now 2.8 s to the exact route's maximum), so `"auto"` keeps `"soe"` for gamma. `core_hawkes_fit()`
+  also returns `at_bound`, the parameters whose estimate lies on the box:
+  `converged` alone did not show that day-dated times had driven a shape to its wall. A fit whose event rate `n / horizon` lies outside what the
+  bounded baseline can reach (`e^-15` to `100 e^15` per unit time; `horizon = 1e308`) is refused with
+  a message to express the times in another unit, instead of returning its start.
+* `core_hawkes_nll()` is the likelihood `core_hawkes_fit()` maximises, on the same parameters: its
+  Lomax was a power law with exponent `alpha` (a Lomax of shape `alpha - 1`), so its values and a fit
+  of it disagreed with the fit and with the documented density; it now uses the shared core for every
+  kernel, keeping its documented sentinel outside the feasible region. A non-finite `horizon` is
+  refused by every Hawkes function (`Inf` returned a list that looked like a fit).
+* SIU reports: counts in every layout. Investigators, forensic investigators, subject and witness
+  officials and civilian witnesses are read from 2020-on English pages ("Witness Officials ( WO )",
+  the singular "Civilian Witness ( CW )"), French pages ("Agents témoins ( AT )", numbered
+  "AT no 1" or "AT n o 1", "Nombre d'enquêteurs de l'UES assignés : 3") and the legacy
+  (2005-2011) layouts ("Witness Officer #2", "Three SIU investigators and two forensic
+  investigators", "l'agent témoin n o 1", "Cinq enquêteurs"); "No civilian witnesses were
+  identified" is 0, and with no subject-official section the resolver's rules decide (a bare "SO" no
+  longer counts as one). Checked against the reviewed corpus on the 29 pages of the round-8 test:
+  witness officials 27 of 29 (16 before), civilian witnesses 24 of 25 (14), investigators 29 of 29
+  (20), subject officials 20 of 20 (17).
+* SIU `police_service`: a service named as the one that notified the SIU ("the OPS contacted the SIU
+  to report that police officers with the VPD ...") is passed over for the subject officials' service
+  (drid 2010: Vancouver Police Department, not Ottawa); the OPP has one French name ("la Police
+  provinciale", a legacy header's detachment) and one English name ("OPP Sioux Lookout").
+* SIU dates: a notification that dates the incident relative to itself ("during his arrest two hours
+  prior", "the day before", "deux heures plus tôt", "la veille") gives the incident date (drid 648:
+  2019-09-12, not an earlier break-in); legacy headers ("Incident date:", "Date de l'incident :") are
+  read; the French narrative's "du 9 février 2022" is read and interview and team dates are passed
+  over. Legacy pages are recognised by language. French abbreviated months ("5 janv. 2023"),
+  upper-case accented months ("3 AOÛT 2017") and "March 3 , 2020" are read.
+* SIU dates: the incident date is the first dated sentence of the narrative that is not the
+  notification or the SIU's own work (drid 670: "... contacted the SIU to report a serious injury. On
+  July 8, 2019 at about 3:50 p.m., CKLPS were called" is 2019-07-08), "of <date>" counts ("Just
+  before 4:00 a.m. of January 7, 2020"), and a narrative without a date gives way to the director's
+  analysis ("On December 4, 2020, the Complainant rolled his SUV"); drids 670, 820, 1200 and 4600
+  were empty. "The SIU was notified of the incident by ... on October 27, 2017" dates the
+  notification, and French "1 er septembre 2016" and "L'UES a été avisée ... le" are read.
+* SIU fields: `specific_injuries` comes from the investigation, never from the mandate's definition of
+  a serious injury, with whole words ("stab" is not "constables", "arm" not "firearm"), more body
+  parts, and French injuries ("fracture de l'épaule droite"); French `charges_recommended` and
+  `relevant_legislation` ("Code criminel") are read. `&Agrave;`, `&laquo;`, `&raquo;`, `&thinsp;` and
+  the other capital and French entities decode.
+* `bricklayer_siu_resolve_so()`: the spelled-out plural ("Two subject officials were designated"), "no
+  official was a subject official" and witness officials with no subject official named resolve, as
+  the help describes.
+* `bricklayer_siu_resolve_so()` reads French reports: the "Agent(s) impliqué(s)" roster ("AI no 1", a
+  lone "AI"), legacy ordinals ("agent impliqué n o 3", "l'agent(e) impliqué(e) n o 1"), "aucun agent
+  impliqué" and witness officials (AT) alone; the privacy, definition and legal paragraphs ("des agents
+  impliqués et témoins", "les agents impliqués sont invités ...") are not read as cues. It returned NA
+  on every French page. `bricklayer_parse_siu()` falls back to these rules for a French report with no roster,
+  as it does for an English one (drid 3658: 9, as its English twin).
+* Inputs: `kem_keygen(512.5)`, `kem_keygen(c(512, 768))`, `pqc_keygen(2.5)` and every other whole-number
+  argument refuse a fractional value instead of truncating it to another setting;
+  `bricklayer_fetch_siu(1.5)` no longer fetches drid 1; `bricklayer_parse_siu()` refuses a path that
+  does not exist (it parsed the string as an empty report); `bricklayer_fetch_parse_siu(lang = "xx")`
+  is an argument error.
+* Argument errors in words where R's internals spoke: `bricklayer_json_base64url_dec(character(0))`
+  (now empty, as `bricklayer_json_base64_dec()`), `bricklayer_json_unserialize()` of a number,
+  `capsule_bundle(character(0))`, `yoy()` of an infinite value, HyperLogLog registers beyond 64
+  (`distinct_count(1e300)`), and `bricklayer_fetch_parse_siu()` with an invalid drid, which is now an
+  argument error before any network instead of a message and `NULL`.
+* `core_hawkes_jitter(horizon = )` spreads each event over `[t, min(t + resolution, horizon)]`, so a
+  time dated on the horizon stays inside the window (it was pushed past it, and the fit then refused
+  the times); the fit's refusal names the span and the remedy.
+* The `?mahalanobis_outliers` example contradicted itself: its "ordinary on each variable" row had
+  the largest weight, and its classical-versus-robust comparison printed `FALSE`. The row is now
+  short and heavy within both ranges, and the comparison uses a cluster of bad rows.
+* A count argument refuses `TRUE` (it was read as 1: `drbg_generate(d, TRUE)` gave one byte), `Inf`
+  and values beyond the integer range in words, with no coercion warning; `hqc_sizes(Inf)` no longer
+  warns before refusing.
+* `bricklayer_fetch()` gives the HTTP status of a server that answered ("answered HTTP 404"; it said
+  "could not reach"); `friendly_download(attempt_wayback = FALSE)` (or `""`) says the fallback is
+  switched off instead of claiming the Wayback Machine has no snapshot.
+* `data pull` refuses an `--out` path it cannot write before downloading the table.
+* CLI exit codes: a `bundle` with no language-model route exits 1; an empty prompt or request, a
+  malformed `--email` and an unknown option to `help` exit 2.
+* `bricklayer_json_to_json()` is byte-identical to jsonlite's `toJSON()` where jsonlite does not
+  pass an option on: `raw = "js"` is written with jsonlite's defaults (`new Uint8Array([35])`, an
+  array, even under `auto_unbox`, where it wrote the number 35), `raw = "hex"` is unpadded ("f"), a
+  `Date` epoch never gets a decimal point, the mongo `$date` and `$binary` objects and
+  `keep_vec_names` objects stay on one line under `pretty`, and `keep_vec_names` does not reach the
+  columns of a data frame. 18,000 random objects now encode identically (30 in 3,000 differed).
+* `bricklayer_json_serialize()` is no longer called lossless: like jsonlite's `serializeJSON()` it
+  rounds doubles to `digits` (8); `digits = I(17)` round-trips them exactly. `?bricklayer_llm_login`
+  says a token is checked with the gateway before it is stored.
+* CI checks on Intel macOS (`macos-15-intel`), where r-universe's check had failed.
 * `hqc_compress_key()` stores an HQC secret key as its seed alone: for v5 the specification's
   compressed format `dk = seed_KEM` (32 bytes), for round 4 the 96 to 112 bytes its key generation
   draws (round 4 defines no compressed format). `hqc_decapsulate()` takes such a key, re-derives the
@@ -48,8 +156,8 @@
   estimate (asserted on common data in both test suites). `core_uniforms()` exposes the splitmix64
   stream both arms use where they must draw the same numbers. The default `method = "auto"` is exact
   for the exponential kernel, `"truncate"` for Weibull (whose exact window, where the kernel
-  underflows, spans the whole record when the shape is below 1) and `"soe"` for Lomax and gamma;
-  `"soe"` truncates a gamma kernel with shape >= 1 at `eps`.
+  underflows, spans the whole record when the shape is below 1), `"soe"` for Lomax and exact for
+  gamma; `"soe"` truncates a gamma kernel with shape >= 1 at `eps`.
 * HQC-KEM, the code-based key encapsulation NIST selected in March 2025 beside ML-KEM:
   `hqc_keygen()`, `hqc_public_key()`, `hqc_encapsulate()`, `hqc_decapsulate()` and `hqc_sizes()` at
   HQC-1, HQC-3 and HQC-5, implemented in the package. All 300 official known-answer vectors of the

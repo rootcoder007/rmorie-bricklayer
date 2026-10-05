@@ -154,7 +154,6 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
-    curl_easy_setopt(h, CURLOPT_FAILONERROR, 1L);   /* 4xx -> CURLE_HTTP_RETURNED_ERROR */
     curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_file);
     curl_easy_setopt(h, CURLOPT_WRITEDATA, fp);
     CURLcode rc = curl_easy_perform(h);
@@ -162,7 +161,17 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(h);
     std::fclose(fp);
-    if (rc != CURLE_OK) { std::remove(path.c_str()); return -1; }
+    /* a completed transfer with a 4xx/5xx status is the server's answer: report the status,
+     * not "never reached" (read from the response itself, not from FAILONERROR, whose
+     * error code differs across libcurl builds and protocols; macOS reported a 404 as -1) */
+    if (rc == CURLE_OK && code >= 400) {
+        std::remove(path.c_str());
+        return code;
+    }
+    if (rc != CURLE_OK) {
+        std::remove(path.c_str());
+        return -1;
+    }
     return code;
 }
 
