@@ -288,8 +288,8 @@
   same numbers. The default `method = "auto"` is exact for the
   exponential kernel, `"truncate"` for Weibull (whose exact window,
   where the kernel underflows, spans the whole record when the shape is
-  below 1), `"soe"` for Lomax and exact for gamma; `"soe"` truncates a
-  gamma kernel with shape \>= 1 at `eps`.
+  below 1) and `"soe"` for Lomax and gamma; `"soe"` truncates a gamma
+  kernel with shape \>= 1 at `eps`.
 
 - HQC-KEM, the code-based key encapsulation NIST selected in March 2025
   beside ML-KEM:

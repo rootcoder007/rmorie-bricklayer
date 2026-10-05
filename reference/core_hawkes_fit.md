@@ -45,6 +45,8 @@ core_hawkes_fit(
 - method:
 
   One of `"auto"`, `"exact"`, `"soe"`, `"truncate"`, `"em"`, `"inar"`.
+  `"auto"` is `"exact"` for the exponential kernel, `"truncate"` for
+  Weibull and `"soe"` for Lomax and gamma.
 
 - eps:
 
