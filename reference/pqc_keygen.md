@@ -57,6 +57,16 @@ cannot sign;
 raises rather than producing a signature no other implementation could
 read. Generate a new one.
 
+## Security
+
+A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.
+
 ## See also
 
 [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md),

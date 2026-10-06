@@ -52,8 +52,10 @@ trend_test(
 ## Value
 
 A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen), `intercept`,
-`slope_lower` / `slope_upper` (the distribution-free interval), `n` and
-`method`.
+`slope_lower` / `slope_upper`, `slope_ci_clamped` (`TRUE` when the
+pairwise slopes do not reach the requested confidence on a side, so that
+bound is the extreme slope and the true interval is wider) (the
+distribution-free interval), `n` and `method`.
 
 ## Details
 
@@ -109,6 +111,9 @@ trend_test(y)
 #> $slope_upper
 #> [1] 78
 #> 
+#> $slope_ci_clamped
+#> [1] TRUE
+#> 
 #> $n
 #> [1] 5
 #> 
@@ -149,6 +154,9 @@ trend_test(c(1, 2, 3, 4, 5))
 #> $slope_upper
 #> [1] 1
 #> 
+#> $slope_ci_clamped
+#> [1] TRUE
+#> 
 #> $n
 #> [1] 5
 #> 
@@ -167,7 +175,7 @@ trend_test(c(1, 2, 3, 4, 5))
 
 # One aberrant period does not create a trend.
 trend_test(c(100, 100, 100, 100, 900))$p_value
-#> [1] 0.4833333
+#> [1] 0.4
 
 # From a data frame.
 d <- data.frame(year = 2019:2023, n = y)

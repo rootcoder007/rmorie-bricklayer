@@ -13,6 +13,7 @@ bricklayer_json_from_json(
   flatten = FALSE,
   bigint_as_char = FALSE,
   simplify = NULL,
+  duplicate_keys = c("error", "keep"),
   ...
 )
 ```
@@ -34,6 +35,12 @@ bricklayer_json_from_json(
 - simplify:
 
   legacy: `FALSE` turns every simplification off.
+
+- duplicate_keys:
+
+  What to do with an object that repeats a key: `"error"` (default)
+  refuses the document, `"keep"` returns both values under the repeated
+  name, as jsonlite does.
 
 - ...:
 

@@ -21,7 +21,7 @@ tol fields."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,9 +115,13 @@ inside <code>capsule_dir</code>; compared against the manifest's recorded
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>ok</code> (logical scalar: every check passed) and
-<code>checks</code> (data.frame with columns <code>check</code>, <code>ok</code>,
-<code>detail</code>) .</p>
+    <p>An object of class <code>bricklayer_capsule_check</code> (a list with a
+print method): <code>ok</code> (logical scalar: every check passed AND the three
+required checks – <code>provenance_readable</code>, <code>data_present</code>,
+<code>data_sha256</code> – were all made), <code>checks</code> (data.frame with columns
+<code>check</code>, <code>ok</code>, <code>detail</code>), <code>required</code> and <code>missing</code>. A check that
+cannot be made because the provenance lacks the field is recorded as
+a FAILED row, never skipped: a provenance of <code><a href="https://rdrr.io/r/base/Paren.html" class="external-link">{}</a></code> verifies nothing.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

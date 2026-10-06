@@ -13,7 +13,7 @@ Shor's algorithm breaks."><meta name="google-site-verification" content="8ORzeHr
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,6 +110,18 @@ unless the key really must last that long.</p>
 carries no <code>sk_prf</code> and cannot sign;
 <code><a href="capsule_sign.html">capsule_sign()</a></code> raises rather than producing
 a signature no other implementation could read. Generate a new one.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
+
+
+<p>A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

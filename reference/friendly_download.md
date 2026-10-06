@@ -10,7 +10,7 @@ Wayback Machine snapshot URL.
 ## Usage
 
 ``` r
-friendly_download(url, target_path, attempt_wayback = NULL)
+friendly_download(url, target_path, attempt_wayback = NULL, allow_file = FALSE)
 ```
 
 ## Arguments

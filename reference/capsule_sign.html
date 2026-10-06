@@ -11,7 +11,7 @@ the key and has not been altered since."><meta name="google-site-verification" c
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,6 +148,18 @@ each key has signed with and refuses that index or an earlier one (signing
 twice with one key object, or with a stale copy). Across sessions the
 saved key must be the latest <code>key_state</code>: save it after every signature.
 Passing an exhausted key is an error, not a silent wrap-around.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
+
+
+<p>A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -101,11 +101,11 @@ a$trend
 #> 4       gender   Female       3  1511  2821 1.0000000 0.3333333  655.0
 #> 5       gender     Male       3 19270 22224 0.3333333 1.0000000 1477.0
 #>   rate_ratio rate_ratio_lower rate_ratio_upper
-#> 1   1.027143        0.8255565         1.277953
-#> 2   1.118024        0.9581424         1.304583
-#> 3   1.112728        0.9511489         1.301756
-#> 4   1.376319        1.2718682         1.489347
-#> 5   1.077781        0.9083509         1.278813
+#> 1   1.027143        0.2491778         4.234015
+#> 2   1.118024        0.4111145         3.040459
+#> 3   1.112728        0.4023851         3.077062
+#> 4   1.376319        0.8250989         2.295790
+#> 5   1.077781        0.3556341         3.266310
 ```
 
 ## Has the data changed since last time?
@@ -121,8 +121,10 @@ per column.
 
 drift_calibrate(otis, n = 10)
 #> Drift screens on 10 identical re-fetches (alpha = 0.01)
-#>   at least one column flagged: 0% of re-fetches
-#>   no column fired on identical data
+#>   at least one column flagged: 20% of re-fetches
+#>   columns that fire on identical data:
+#>     group                         20.0%
+#>     table                         10.0%
 #>   per-screen alpha for a family-wise 0.01: 0.0025
 ```
 

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -165,11 +165,11 @@ informative as a description.</p>
 <span><span class="co">#&gt; 4       gender   Female       3  1511  2821 1.0000000 0.3333333  655.0</span></span>
 <span><span class="co">#&gt; 5       gender     Male       3 19270 22224 0.3333333 1.0000000 1477.0</span></span>
 <span><span class="co">#&gt;   rate_ratio rate_ratio_lower rate_ratio_upper</span></span>
-<span><span class="co">#&gt; 1   1.027143        0.8255565         1.277953</span></span>
-<span><span class="co">#&gt; 2   1.118024        0.9581424         1.304583</span></span>
-<span><span class="co">#&gt; 3   1.112728        0.9511489         1.301756</span></span>
-<span><span class="co">#&gt; 4   1.376319        1.2718682         1.489347</span></span>
-<span><span class="co">#&gt; 5   1.077781        0.9083509         1.278813</span></span></code></pre></div>
+<span><span class="co">#&gt; 1   1.027143        0.2491778         4.234015</span></span>
+<span><span class="co">#&gt; 2   1.118024        0.4111145         3.040459</span></span>
+<span><span class="co">#&gt; 3   1.112728        0.4023851         3.077062</span></span>
+<span><span class="co">#&gt; 4   1.376319        0.8250989         2.295790</span></span>
+<span><span class="co">#&gt; 5   1.077781        0.3556341         3.266310</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="has-the-data-changed-since-last-time">Has the data changed since last time?<a class="anchor" aria-label="anchor" href="#has-the-data-changed-since-last-time"></a>
@@ -182,8 +182,10 @@ reports the false-alarm rate per column.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/drift_calibrate.html">drift_calibrate</a></span><span class="op">(</span><span class="va">otis</span>, n <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Drift screens on 10 identical re-fetches (alpha = 0.01)</span></span>
-<span><span class="co">#&gt;   at least one column flagged: 0% of re-fetches</span></span>
-<span><span class="co">#&gt;   no column fired on identical data</span></span>
+<span><span class="co">#&gt;   at least one column flagged: 20% of re-fetches</span></span>
+<span><span class="co">#&gt;   columns that fire on identical data:</span></span>
+<span><span class="co">#&gt;     group                         20.0%</span></span>
+<span><span class="co">#&gt;     table                         10.0%</span></span>
 <span><span class="co">#&gt;   per-screen alpha for a family-wise 0.01: 0.0025</span></span></code></pre></div>
 </div>
 <div class="section level2">

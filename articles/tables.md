@@ -150,7 +150,7 @@ c(rate_ratio = round(ct$rate_ratio, 3),
   lower = round(ct$lower, 3), upper = round(ct$upper, 3),
   dispersion = round(ct$dispersion, 2))
 #> rate_ratio      lower      upper dispersion 
-#>      0.923      0.776      1.098     24.390
+#>      0.923      0.696      1.223     24.390
 ```
 
 The dispersion is reported because a Poisson interval assumes it is one.

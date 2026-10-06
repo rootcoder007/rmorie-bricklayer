@@ -13,7 +13,7 @@ administrative extract actually has."><meta name="google-site-verification" cont
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,10 @@ interval.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>S</code>, <code>tau</code>, <code>p_value</code>, <code>slope</code>
-(Theil-Sen), <code>intercept</code>, <code>slope_lower</code> / <code>slope_upper</code>
+(Theil-Sen), <code>intercept</code>, <code>slope_lower</code> / <code>slope_upper</code>,
+<code>slope_ci_clamped</code> (<code>TRUE</code> when the pairwise slopes do not reach the
+requested confidence on a side, so that bound is the extreme slope and
+the true interval is wider)
 (the distribution-free interval), <code>n</code> and <code>method</code>.</p>
     </div>
     <div class="section level2">
@@ -164,6 +167,9 @@ it on a series this short.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $slope_upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 78</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $slope_ci_clamped</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -204,6 +210,9 @@ it on a series this short.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $slope_upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $slope_ci_clamped</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $n</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 5</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -222,7 +231,7 @@ it on a series this short.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># One aberrant period does not create a trend.</span></span></span>
 <span class="r-in"><span><span class="fu">trend_test</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">100</span>, <span class="fl">900</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p_value</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4833333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.4</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># From a data frame.</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>year <span class="op">=</span> <span class="fl">2019</span><span class="op">:</span><span class="fl">2023</span>, n <span class="op">=</span> <span class="va">y</span><span class="op">)</span></span></span>

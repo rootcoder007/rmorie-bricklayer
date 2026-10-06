@@ -17,7 +17,7 @@ per-person rows."><meta name="google-site-verification" content="8ORzeHrfoPIOruj
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,7 +95,10 @@ generate. Defaults to <code>schema$n_rows</code>, then 50000.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, a list with <code>path</code>, <code>rows</code> (rows written),
+    <p>Invisibly, an object of class <code>bricklayer_synthetic</code>: a list
+with <code>path</code>, <code>sidecar</code> (the <code>&lt;path&gt;.synthetic</code> marker file;
+<code><a href="verify_capsule.html">verify_capsule()</a></code> treats its presence as a failed check),
+<code>recipe_sha256</code>, <code>rows</code> (rows written),
 and <code>seed</code> used.</p>
     </div>
 

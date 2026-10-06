@@ -17,7 +17,7 @@ test applies to them."><meta name="google-site-verification" content="8ORzeHrfoP
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,8 +176,8 @@ check, which this complements rather than replaces.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Per-column tests ──────────────────────────────────────────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      column        type  stat      p   psi</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    ✗  grade categorical   121 &lt;2e-16     –</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✗   size     numeric 0.743 &lt;2e-16 4.299</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    ✗  grade categorical   121 &lt;2e-16 4.381</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    ✓  value     numeric  0.05  0.847 0.092</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ──────────────────────────────────────────────────────────────────</span>
 <span class="r-in"><span></span></span>
@@ -185,7 +185,7 @@ check, which this complements rather than replaces.</p></div>
 <span class="r-in"><span><span class="co"># small it is not allowed to raise the flag by itself -- binning noise</span></span></span>
 <span class="r-in"><span><span class="co"># alone would clear 0.25. Lower psi_min_n to override that.</span></span></span>
 <span class="r-in"><span><span class="fu">capsule_drift</span><span class="op">(</span><span class="va">ref</span>, <span class="va">same</span><span class="op">)</span><span class="op">$</span><span class="va">columns</span><span class="op">$</span><span class="va">psi</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.09244204 0.06635985         NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.092442043 0.066359848 0.003317333</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Structural changes are reported rather than tested.</span></span></span>
 <span class="r-in"><span><span class="fu">capsule_drift</span><span class="op">(</span><span class="va">ref</span>, <span class="va">same</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"value"</span>, <span class="st">"grade"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">$</span><span class="va">removed</span></span></span>

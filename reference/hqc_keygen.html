@@ -13,7 +13,7 @@ package, with no system dependency."><meta name="google-site-verification" conte
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -130,6 +130,18 @@ with domain bytes in place of SHA3, another sampler), so its keys and
 ciphertexts are not interchangeable with v5's. It reproduces that
 revision's 300 official known-answer vectors (the package's tests check
 them); use it to exchange keys with software built on it, and v5 otherwise.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
+
+
+<p>A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

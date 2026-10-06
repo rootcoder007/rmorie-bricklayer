@@ -50,8 +50,14 @@ verify_capsule(
 
 ## Value
 
-A list with `ok` (logical scalar: every check passed) and `checks`
-(data.frame with columns `check`, `ok`, `detail`) .
+An object of class `bricklayer_capsule_check` (a list with a print
+method): `ok` (logical scalar: every check passed AND the three required
+checks – `provenance_readable`, `data_present`, `data_sha256` – were all
+made), `checks` (data.frame with columns `check`, `ok`, `detail`),
+`required` and `missing`. A check that cannot be made because the
+provenance lacks the field is recorded as a FAILED row, never skipped: a
+provenance of [`{}`](https://rdrr.io/r/base/Paren.html) verifies
+nothing.
 
 ## Details
 

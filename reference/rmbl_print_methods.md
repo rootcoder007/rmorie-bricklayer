@@ -165,7 +165,7 @@ capsule_drift(ref, cur)
 #> ── Per-column tests ──────────────────────────────────────────────
 #>      column        type stat        p   psi
 #>    ✗      v     numeric 0.36 1.11e-11 0.814
-#>    ✓      g categorical 1.44     0.23     –
+#>    ✓      g categorical 1.44     0.23 0.014
 #> ──────────────────────────────────────────────────────────────────
 
 # format() gives the same lines for a log file.
@@ -201,7 +201,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       8ed8e256afb4ccbc24bcf567079db8b29582ee9981005c05297e5af0a194f156
+#>   root       a18b0683aab7054400f4dd64fbc347fb8afded13ee38e33bb1dbbf3a30303b92
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -212,8 +212,8 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       8ed8e256afb4ccbc24bcf567079db8b29582ee9981005c05297e5af0a194f156
-#>   signature  f06dcf7e9ed2bfe9c7de8d8b4a671cdd... (2144 bytes)
+#>   root       a18b0683aab7054400f4dd64fbc347fb8afded13ee38e33bb1dbbf3a30303b92
+#>   signature  9760ac5d32c3363b77d4eab5f5dcc690... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
 ```

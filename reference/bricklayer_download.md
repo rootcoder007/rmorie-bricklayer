@@ -17,7 +17,8 @@ bricklayer_download(
   size = NULL,
   timeout = 3600,
   quiet = NULL,
-  tty = NULL
+  tty = NULL,
+  allow_file = FALSE
 )
 ```
 
@@ -25,7 +26,9 @@ bricklayer_download(
 
 - url:
 
-  The URL (`http`, `https` or `file`).
+  The URL: `https` (plain `http` only with
+  `options(rmoriebricklayer.allow_http = TRUE)`); a loopback, link-local
+  or private address is refused.
 
 - dest:
 
@@ -57,6 +60,10 @@ bricklayer_download(
   Draw the live bar (`TRUE`) or print milestone lines (`FALSE`); `NULL`
   asks whether stderr is a terminal.
 
+- allow_file:
+
+  Accept a `file://` URL (default `FALSE`).
+
 ## Value
 
 `dest`, invisibly.
@@ -67,7 +74,8 @@ bricklayer_download(
 src <- tempfile(fileext = ".txt")
 writeLines("hello", src)
 dest <- tempfile(fileext = ".txt")
-bricklayer_download(paste0("file://", src), dest, quiet = TRUE)
+bricklayer_download(paste0("file://", src), dest, quiet = TRUE,
+                    allow_file = TRUE)
 readLines(dest)
 #> [1] "hello"
 ```

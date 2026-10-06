@@ -11,7 +11,7 @@ codec with no jsonlite dependency.
 ``` r
 bricklayer_json_serialize(x, digits = 8, pretty = FALSE)
 
-bricklayer_json_unserialize(txt)
+bricklayer_json_unserialize(txt, trusted = FALSE)
 ```
 
 ## Arguments
@@ -37,6 +37,18 @@ bricklayer_json_unserialize(txt)
 - txt:
 
   JSON produced by `bricklayer_json_serialize()`.
+
+- trusted:
+
+  `FALSE` (default) rebuilds data types only (vectors, lists, factors,
+  matrices, data frames, environments, symbols) and refuses functions,
+  calls, expressions, namespaces and S4 objects: rebuilding those runs
+  code the JSON's author chose, through
+  [`unserialize()`](https://rdrr.io/r/base/serialize.html),
+  [`parse()`](https://rdrr.io/r/base/parse.html),
+  [`getNamespace()`](https://rdrr.io/r/base/ns-reflect.html) or an
+  `initialize` method. Set `TRUE` only for JSON your own session
+  produced.
 
 ## Value
 

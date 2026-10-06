@@ -61,8 +61,8 @@ drift_chisq(c(a = 100, b = 60, c = 40), ref)
 
 # A reallocated mix is detected.
 drift_chisq(c(a = 40, b = 60, c = 100), ref)
-#> statistic        df   p_value 
-#>       126         2         0 
+#>   statistic          df     p_value 
+#> 1.26000e+02 2.00000e+00 4.35961e-28 
 
 # Agrees with stats::chisq.test().
 o <- c(a = 40, b = 60, c = 100)
@@ -84,5 +84,7 @@ drift_chisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
 # When a new category is legitimate, compare two samples instead.
 drift_homogeneity(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
 #> statistic        df   p_value 
-#> 1.3333333 2.0000000 0.5134171 
+#>  1.333333  2.000000  1.000000 
+#> attr(,"method")
+#> [1] "Monte Carlo permutation (small expected counts)"
 ```

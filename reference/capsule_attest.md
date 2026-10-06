@@ -106,7 +106,7 @@ res$checks
 #> 3            signature TRUE
 #>                                                             detail
 #> 1                                                                 
-#> 2 efa1b7387f225380245de0b5170999e87ad4044f3e8fd2ef6a6bfbc2bd0a9c90
+#> 2 dab2c443e87a91ad106b423930a17f56f0b15e5a536871cf4f4c38503df5367f
 #> 3                                                                 
 
 # any change to the manifest breaks it

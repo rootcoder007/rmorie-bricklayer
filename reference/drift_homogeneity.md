@@ -55,12 +55,16 @@ b <- sample(c("x", "y", "z"), 300, TRUE)
 drift_homogeneity(a, b)
 #> statistic        df   p_value 
 #> 0.5150386 2.0000000 0.7729667 
+#> attr(,"method")
+#> [1] "chi-square approximation"
 
 # A reallocated mix is detected.
 drift_homogeneity(a, sample(c("x", "y", "z"), 300, TRUE,
                             prob = c(0.7, 0.2, 0.1)))
 #>    statistic           df      p_value 
-#> 6.978222e+01 2.000000e+00 6.661338e-16 
+#> 6.978222e+01 2.000000e+00 7.030469e-16 
+#> attr(,"method")
+#> [1] "chi-square approximation"
 
 # Agrees with stats::chisq.test() on the 2-by-k table.
 tab <- rbind(table(a), table(b))

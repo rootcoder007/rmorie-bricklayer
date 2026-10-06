@@ -7,7 +7,7 @@ that returns the target path invisibly so it composes in pipelines.
 ## Usage
 
 ``` r
-download_data(url, target_path, mode = "wb", quiet = FALSE)
+download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 ```
 
 ## Arguments

@@ -65,7 +65,7 @@ capsule_drift(reference, current)
 #> ── Per-column tests ──────────────────────────────────────────────
 #>      column        type  stat      p   psi
 #>    ✓   size     numeric 0.078 0.0955 0.059
-#>    ✓  grade categorical  3.08  0.215     –
+#>    ✓  grade categorical  3.08  0.215 0.012
 #>    ✓  value     numeric 0.034  0.935 0.033
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -92,8 +92,8 @@ capsule_drift(reference, moved)
 #> 
 #> ── Per-column tests ──────────────────────────────────────────────
 #>      column        type  stat      p   psi
-#>    ✗  grade categorical   253 <2e-16     –
 #>    ✗   size     numeric 0.738 <2e-16 4.205
+#>    ✗  grade categorical   253 <2e-16 5.376
 #>    ✓  value     numeric 0.034  0.935 0.033
 #> ──────────────────────────────────────────────────────────────────
 ```

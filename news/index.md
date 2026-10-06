@@ -1,5 +1,146 @@
 # Changelog
 
+## rmoriebricklayer 0.5.6
+
+A security and correctness release from a full external review of 0.5.5
+(every item below was reproduced against the installed package before it
+was fixed, and each has a test that fails on 0.5.5).
+
+- **[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+  fails when it cannot check.** A provenance file that lacked
+  `resource$sha256`, `resource$filename` or the whole `resource` block –
+  or was exactly [`{}`](https://rdrr.io/r/base/Paren.html) – verified a
+  capsule with ALTERED data as `ok = TRUE`, because an absent field
+  appended no row and [`all()`](https://rdrr.io/r/base/all.html) of the
+  remaining rows was still true. Every check that cannot be made is now
+  a FAILED row with the reason, `ok` requires the three required rows
+  (`provenance_readable`, `data_present`, `data_sha256`) to exist and
+  pass, a pinned script digest is checked whenever one exists, a non-CSV
+  file with a recorded row count or schema is a failed check, a
+  `<data>.synthetic` sidecar is a failed check, and the result has a
+  class and a print method that shows what was skipped.
+- **The DER parser no longer aborts R.** A 22-byte file made
+  [`cert_parse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.md)
+  (and every OCSP, timestamp and X.509 path that parses network bytes)
+  throw `std::bad_alloc` through `std::terminate`, killing the session
+  past any [`tryCatch()`](https://rdrr.io/r/base/conditions.html): a
+  length field could be read as 2^64-1 and the bound checks wrapped.
+  Lengths are bounded without wrapping, the node count is capped, a
+  child must advance the cursor, and no C++ exception can cross the R
+  boundary (`rmbl_asn1.cpp`). The same discipline for `Rf_error()` over
+  live C++ objects in the RSA, BLAKE2b, SHAKE and digest entry points.
+- **ML-DSA signing cannot loop forever.** A length-correct but corrupt
+  secret key (s1/s2 outside +-eta) is refused in words, and the
+  rejection loop is capped. The seven unguarded FIPS 204 arithmetic
+  probes that read past a 1-byte allocation are removed (nothing called
+  them); the two other unreachable `.Call` registrations are gone too.
+  `pack_sig()` uses `memmove()` for its aliased copy; the
+  `poly_chknorm()` comment says what the code does.
+- Every `.Call` entry that reads a string checks it is one
+  (`rmbl_str0()`);
+  [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
+  prefers `getrandom(2)` where glibc has it; XMSS key generation can be
+  interrupted.
+- **Paths and URLs are checked before use.** `resource$filename`, bundle
+  paths and the pipeline’s download target must be plain relative paths
+  inside the capsule (`..`, absolute paths, drive letters and symlinks
+  out are refused). Every URL the resolvers return and every URL
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md),
+  [`friendly_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/friendly_download.md)
+  and
+  [`download_data()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/download_data.md)
+  fetch must be https (plain http only with
+  `options(rmoriebricklayer.allow_http = TRUE)`), never `file://` (an
+  offline test passes `allow_file = TRUE`), and never a loopback,
+  link-local, private or metadata address. The Wayback availability API
+  is queried over https; the snapshot URL it returns passes the same
+  gate. libcurl transfers are bounded: 5 redirects pinned to http(s), 2
+  GiB to a file, 64 MiB into memory, and the `"available": true` check
+  reads the literal value.
+- **JSON.** A repeated key is an error (`duplicate_keys = "keep"`
+  restores jsonlite’s behaviour); nesting is capped at 200 levels; a
+  lone surrogate escape is an error rather than the text `"NA"`; an
+  integer above 2^53 warns once unless `bigint_as_char = TRUE`.
+  [`bricklayer_json_unserialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+  rebuilds data types only by default and refuses functions, calls,
+  expressions, namespaces and S4 objects (`trusted = TRUE` for your own
+  session’s JSON).
+  [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  sorts a level with an empty-string key, so a re-serialised manifest
+  keeps its digest.
+  [`json_gzip_decode()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_gzip.md)
+  refuses a member whose ISIZE trailer declares more than 512 MiB and
+  checks the trailer after inflating.
+- **Synthetic data say so.**
+  [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
+  writes a `<path>.synthetic` sidecar and returns a classed object;
+  [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md)
+  and
+  [`write_manifest_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_manifest_json.md)
+  set `meta$synthetic` from `BRICKLAYER_SYNTHETIC` themselves, and
+  [`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
+  marks every comparison `INFO` on a synthetic manifest, whatever the
+  analysis script did.
+- **The reference pipeline stops on a digest mismatch** (exit 7) unless
+  `--allow-digest-drift` is given, and then records the override in the
+  manifest. Its subprocess command line is fully quoted.
+- [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  hashes dotfiles and
+  [`capsule_bundle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  lists them; only the bundle’s own file is exempt from “unlisted”.
+- The hosted-tier endpoints taken from `MORIE_DATA_URL` /
+  `MORIE_HOSTED_BASE_URL` must be https and public before a bearer key
+  is sent; the credentials file is created `0600` before the key is
+  written; a DRBG reseeds itself from the operating system in a forked
+  or restored process; the launcher
+  [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  writes quotes its library path.
+- **Statistics.** Chi-square p-values are the upper tail (they
+  underflowed to exactly 0 in
+  [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md),
+  [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md),
+  [`benford_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.md),
+  [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+  and the Mahalanobis screen); the KS p-value uses the theta-function
+  series for small t (two million-row columns differing in one value
+  were flagged as drifted);
+  [`drift_psi()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_psi.md)
+  no longer collapses to one bin on a constant or mostly-constant
+  reference (a 1000x rescale reported PSI = 0);
+  [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md)
+  gives a Monte Carlo p-value below five expected counts, and
+  [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+  reports a PSI and the unseen-category share for categorical columns,
+  so two disjoint date columns are flagged; a one-category table reports
+  df 0 and NA.
+  [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+  honours the magnitudes of a weight matrix. The exact Mann-Kendall
+  p-value enumerates the observed values, ties kept.
+  [`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md)
+  refuses negative, missing and infinite counts.
+  [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md)
+  strips thousands separators, reads “ages 18-24”, and leaves a bare
+  “-5”, inverted bounds, “100-200-300” and “15 to 19 and over” as NA;
+  [`expand_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+  errors (or warns, with `drop_unparsed = TRUE`) instead of dropping
+  units;
+  [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+  refuses a cap below a band’s lower bound.
+  [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  uses t quantiles in its quasi-Poisson branch;
+  [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+  reports `slope_ci_clamped` when the pairwise slopes do not reach the
+  requested confidence and refuses infinite values. Benford digits are
+  read from the decimal rendering (2e-300 was digit 1).
+- **Packaging.** `graphics`, `grDevices` and `tools` are declared;
+  `R CMD check` fails CI on a WARNING; a `configure` script probes
+  pkg-config / curl-config for libcurl on Unix; an ASAN + UBSAN job runs
+  the suite; DESCRIPTION names every scheme the package implements and
+  states that none has been audited; the key and signature help pages
+  carry a Security section; a FIPS 202 known-answer test covers SHA-3
+  and SHAKE directly; the LinkingTo consumer test calls all 45 published
+  kernels; the stale CHANGELOG.md is gone (NEWS.md is the record).
+
 ## rmoriebricklayer 0.5.5
 
 - **XMSS: an index never signs twice.**

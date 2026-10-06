@@ -5,7 +5,7 @@ Expand a banded frequency table into per-unit values
 ## Usage
 
 ``` r
-expand_bands(bands, counts, ...)
+expand_bands(bands, counts, ..., drop_unparsed = FALSE)
 ```
 
 ## Arguments
@@ -24,6 +24,13 @@ expand_bands(bands, counts, ...)
 
   Passed to
   [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md).
+
+- drop_unparsed:
+
+  A band whose label could not be parsed, yet which has a count, is an
+  error by default: every statistic computed from the result would
+  otherwise describe a fraction of the data in silence. `TRUE` leaves
+  those units out with a warning instead.
 
 ## Value
 

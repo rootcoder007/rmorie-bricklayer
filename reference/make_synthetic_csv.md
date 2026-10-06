@@ -36,7 +36,11 @@ make_synthetic_csv(schema, out_path, n_rows = NULL, seed = NULL)
 
 ## Value
 
-Invisibly, a list with `path`, `rows` (rows written), and `seed` used.
+Invisibly, an object of class `bricklayer_synthetic`: a list with
+`path`, `sidecar` (the `<path>.synthetic` marker file;
+[`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md)
+treats its presence as a failed check), `recipe_sha256`, `rows` (rows
+written), and `seed` used.
 
 ## Examples
 

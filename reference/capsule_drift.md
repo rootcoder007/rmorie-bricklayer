@@ -121,8 +121,8 @@ capsule_drift(ref, moved)
 #> 
 #> ── Per-column tests ──────────────────────────────────────────────
 #>      column        type  stat      p   psi
-#>    ✗  grade categorical   121 <2e-16     –
 #>    ✗   size     numeric 0.743 <2e-16 4.299
+#>    ✗  grade categorical   121 <2e-16 4.381
 #>    ✓  value     numeric  0.05  0.847 0.092
 #> ──────────────────────────────────────────────────────────────────
 
@@ -130,7 +130,7 @@ capsule_drift(ref, moved)
 # small it is not allowed to raise the flag by itself -- binning noise
 # alone would clear 0.25. Lower psi_min_n to override that.
 capsule_drift(ref, same)$columns$psi
-#> [1] 0.09244204 0.06635985         NA
+#> [1] 0.092442043 0.066359848 0.003317333
 
 # Structural changes are reported rather than tested.
 capsule_drift(ref, same[, c("value", "grade")])$removed

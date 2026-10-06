@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,7 +129,7 @@ another draw from the same process.</p>
 <span><span class="co">#&gt; ── Per-column tests ──────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;      column        type  stat      p   psi</span></span>
 <span><span class="co">#&gt;    ✓   size     numeric 0.078 0.0955 0.059</span></span>
-<span><span class="co">#&gt;    ✓  grade categorical  3.08  0.215     –</span></span>
+<span><span class="co">#&gt;    ✓  grade categorical  3.08  0.215 0.012</span></span>
 <span><span class="co">#&gt;    ✓  value     numeric 0.034  0.935 0.033</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 </div>
@@ -154,8 +154,8 @@ scale and a category appears that the capsule never saw.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── Per-column tests ──────────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;      column        type  stat      p   psi</span></span>
-<span><span class="co">#&gt;    ✗  grade categorical   253 &lt;2e-16     –</span></span>
 <span><span class="co">#&gt;    ✗   size     numeric 0.738 &lt;2e-16 4.205</span></span>
+<span><span class="co">#&gt;    ✗  grade categorical   253 &lt;2e-16 5.376</span></span>
 <span><span class="co">#&gt;    ✓  value     numeric 0.034  0.935 0.033</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p><code>value</code> is untouched and is not flagged. <code>size</code>

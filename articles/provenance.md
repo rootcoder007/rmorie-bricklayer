@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       a6463c7a54d819e5c26f180aa93a9d7d40b0b3ccc2bf390dd31883351cf01425
+#>   root       8621dc2417b9ff3c02ea02c97e329ebf8a6d2830f95034b30d8cb1644bdf267e
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    a6463c7a54d819e5c26f180aa93a9d7d40b0b3ccc2bf390dd31883351cf01425
+#>   root    8621dc2417b9ff3c02ea02c97e329ebf8a6d2830f95034b30d8cb1644bdf267e
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -201,7 +201,7 @@ att <- capsule_attest(m, key, note = "counts as published")
 capsule_check_attestation(att, m)
 #> ── Attestation check: OK ─────────────────────────────────────────
 #>   attestation_complete   ok    
-#>   manifest_digest        ok    efa1b7387f225380245de0b5170999e87ad4044f3e8f
+#>   manifest_digest        ok    dab2c443e87a91ad106b423930a17f56f0b15e5a5368
 #>   signature              ok    
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -369,13 +369,13 @@ plan <- prereg_declare(c(
 
 # a declared outcome that was not reported
 prereg_check(plan, "n_rows")
-#> ── Against the declaration of 2026-10-05T18:13:34Z: departures below 
+#> ── Against the declaration of 2026-10-06T01:06:53Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
-#> ── Against the declaration of 2026-10-05T18:13:34Z: departures below 
+#> ── Against the declaration of 2026-10-06T01:06:53Z: departures below 
 #>   reported but not declared (2 addition(s)): by_year, by_precinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -427,9 +427,9 @@ capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    c6daf7dc9891abbb8dbaf51e7fd3a1de1cc5
+#>   attestation:manifest_digest    ok    d6442529152a02f2635d095859f36be641cd
 #>   attestation:signature          ok    
-#>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
+#>   manifest_digest                ok    c4685dae9c0cfcbea745b55fb92145e659b0
 #> ──────────────────────────────────────────────────────────────────
 ```
 

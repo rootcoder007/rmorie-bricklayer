@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,7 +142,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       a6463c7a54d819e5c26f180aa93a9d7d40b0b3ccc2bf390dd31883351cf01425</span></span>
+<span><span class="co">#&gt;   root       8621dc2417b9ff3c02ea02c97e329ebf8a6d2830f95034b30d8cb1644bdf267e</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -155,7 +155,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    a6463c7a54d819e5c26f180aa93a9d7d40b0b3ccc2bf390dd31883351cf01425</span></span>
+<span><span class="co">#&gt;   root    8621dc2417b9ff3c02ea02c97e329ebf8a6d2830f95034b30d8cb1644bdf267e</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -232,7 +232,7 @@ payload.</p>
 <span><span class="fu"><a href="../reference/capsule_attest.html">capsule_check_attestation</a></span><span class="op">(</span><span class="va">att</span>, <span class="va">m</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ── Attestation check: OK ─────────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   attestation_complete   ok    </span></span>
-<span><span class="co">#&gt;   manifest_digest        ok    efa1b7387f225380245de0b5170999e87ad4044f3e8f</span></span>
+<span><span class="co">#&gt;   manifest_digest        ok    dab2c443e87a91ad106b423930a17f56f0b15e5a5368</span></span>
 <span><span class="co">#&gt;   signature              ok    </span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>The check needs the attestation and the manifest, nothing else.
@@ -372,13 +372,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T18:13:34Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-06T01:06:53Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"by_year"</span>, <span class="st">"by_precinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-05T18:13:34Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-06T01:06:53Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): by_year, by_precinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -420,9 +420,9 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    c6daf7dc9891abbb8dbaf51e7fd3a1de1cc5</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    d6442529152a02f2635d095859f36be641cd</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
-<span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
+<span><span class="co">#&gt;   manifest_digest                ok    c4685dae9c0cfcbea745b55fb92145e659b0</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>Files sitting in the directory that the bundle does not mention are
 reported as well: a signed list of what should be there says nothing

@@ -13,7 +13,7 @@ pqc_backends() lists the parameter sets."><meta name="google-site-verification" 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,6 +105,18 @@ parameter sets have small signatures and slow signing, its <code>f</code> sets
 the reverse, and its SHAKE and SHA-2 families are equally strong: pick
 SHA-2 where a validated SHA-2 implementation is what an auditor will ask
 about. <code>"ML-DSA-65"</code> is the sensible default.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
+
+
+<p>A hand-written implementation. The standardised schemes are checked byte
+for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
+suite, which establishes correctness, not resistance to side channels:
+no third-party security audit and no timing or leakage analysis has been
+done. Use it for provenance and research, and read any constant-time
+wording in this documentation as a design intent, not a verified
+property.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
