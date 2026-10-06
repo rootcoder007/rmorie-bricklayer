@@ -43,7 +43,7 @@ Every item below has a test in `tests/testthat/test-review2.R`.
 
 * **Every `.Call` entry point has the exception barrier**, not two of 110:
   `src/rmbl_barrier.cpp`, generated from `init.c` by
-  `inst/scripts/gen_barrier.py`, wraps each entry so a C++ exception is an
+  `inst/scripts/gen_barrier.R`, wraps each entry so a C++ exception is an
   R error raised after every destructor has run. Seven `NULL`s to
   `hawkes_rescaled`, a 2 GB `shake`, mismatched `theil_sen` lengths (a
   40 MB out-of-bounds read), a 4 TB `sen_slopes`, a 2^31 reservoir and an
@@ -134,6 +134,55 @@ Every item below has a test in `tests/testthat/test-review2.R`.
   self-neighbours from a weight matrix; `make_manifest()` no longer
   changes the digest of a real-data manifest (0.5.6 did); the OTIS
   full-verification workflow runs on demand only.
+
+The coverage pass that followed (every branch below was untested at
+96.2%) found five defects that no test had reached; the CRAN checks and
+the entry-point sweep found two more.
+
+* **Revocation checking worked only on paper.** `revocation_fetch()` ran
+  every certificate through the single-file-path guard, so a parsed path
+  was refused before anything was fetched; the CRL/OCSP fetch refused
+  plain `http`, which is what RFC 5280 distribution points and RFC 6960
+  responders use (the answers are signed, the transport adds nothing);
+  and a delegated OCSP responder's certificate was never found, because
+  the search for the `[0]` certificates element landed on `nextUpdate`
+  inside the SingleResponse first and the signed answer was reported as
+  unverifiable. All three are fixed; the client is now tested end to end
+  against recorded OpenSSL responses (good, revoked, unknown, SHA-384
+  without an embedded certificate, a delegated responder, an ECDSA
+  responder, `tryLater`, and every malformed shape), with the two network
+  calls behind one-line seams. The fixtures are documented in
+  `tests/testthat/x509-fixtures.txt`.
+* `top_share()` summed from the start for every fraction: a million
+  fractions over a million values was 10^12 additions with no interrupt
+  check (the entry-point sweep found it as the one hang). It is one prefix
+  sum now, interruptible.
+* `manifest_restore_seed()` padded a record naming only the main generator
+  kind with `NA`, which `RNGkind()` rejects; the recorded names are passed
+  as they are.
+* The JSON simplifier's date-list test used `is.numeric()`, which is
+  `FALSE` for a `POSIXct`, so a list of times was never folded back into
+  one vector.
+* `capsule_drift()`'s date detection errored on a column of timestamps
+  with one unreadable value ("2020-01-01 25:99") instead of treating the
+  column as text.
+* `rmbl_barrier.cpp` re-raised an interrupt through `Rf_onintr()`, which
+  is not part of R's API (CRAN refuses it). It now signals R's own
+  `interrupt` condition and invokes the `abort` restart, so
+  `tryCatch(interrupt = )` sees it exactly as before.
+* The two helper scripts that shipped in the tarball were Python
+  (`inst/scripts/gen_barrier.py`, `inst/fuzz/mkcorpus.py`); they are R
+  now (`gen_barrier.R`, `mkcorpus.R`), with the same output byte for byte.
+  `inst/ctcheck/` and `inst/fuzz/` each carry a README saying what they
+  are and how to run them. The `agent_bundle()` example switches the hosted
+  tier off for its run rather than reaching the network when a key is
+  stored.
+* Dead code found by the same pass is gone: the unused `wots_gen_pk()` /
+  `wots_sign()` in the SLH-DSA body, `rmbl_mad_constant()`, three
+  unreachable guards in `.rmbl_conc_input()` / `cramers_v()` /
+  `drift_chisq()`, and a duplicated line in the JSON object writer. The
+  LinkingTo consumer test now calls the Weibull, Lomax and gamma Hawkes
+  kernels and the NaN/short-input paths of the statistics kernels.
 
 # rmoriebricklayer 0.5.6
 

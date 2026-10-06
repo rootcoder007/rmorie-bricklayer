@@ -361,7 +361,6 @@ bricklayer_json_base64url_dec <- function(input) {
   vals <- vals[keep]
   if (!length(vals)) return("{}")
   if (is.na(indent)) return(paste0("{", paste0(keys, ":", vals, collapse = ","), "}"))
-  if (!length(vals)) return("{}")
   ni <- as.integer(indent)
   sp <- abs(attr(indent, "indent_spaces"))
   paste0("{\n", paste0(.rmbl_json_ws(ni + sp, indent), keys, ": ", vals, collapse = ",\n"),
@@ -1069,7 +1068,9 @@ bricklayer_json_unbox <- function(x) {
   for (el in x) {
     if (is.null(el)) next
     if (is.character(el) && length(el) && el[1L] == "NA") next
-    if (is.numeric(el) && inherits(el, "POSIXct")) status <- TRUE else return(FALSE)
+    # is.numeric() is FALSE for a POSIXct (it has an is.numeric method), so
+    # the class alone decides
+    if (inherits(el, "POSIXct")) status <- TRUE else return(FALSE)
   }
   status
 }
@@ -1862,7 +1863,7 @@ bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
   t <- sub("^[-+]", "", t0)
   parts <- strsplit(t, "[eE]")[[1L]]
   mant <- parts[1L]
-  e <- if (length(parts) > 1L) as.integer(parts[2L]) else 0L
+  e <- if (length(parts) > 1L) suppressWarnings(as.integer(parts[2L])) else 0L
   if (is.na(e)) return(NULL)
   mp <- strsplit(mant, ".", fixed = TRUE)[[1L]]
   digits <- paste0(mp, collapse = "")

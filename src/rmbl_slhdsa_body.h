@@ -319,28 +319,6 @@ Adrs wots_prf_adrs(const Adrs &base, uint32_t chain) {
     return p;
 }
 
-void wots_gen_pk(unsigned char *pk, const Ctx &ctx, Adrs adrs) {
-    for (int i = 0; i < kWotsLen; ++i) {
-        adrs.set_chain(static_cast<uint32_t>(i));
-        unsigned char sk[kN];
-        adrs.set_hash(0);
-        prf_addr(sk, ctx, wots_prf_adrs(adrs, static_cast<uint32_t>(i)));
-        gen_chain(pk + i * kN, sk, 0, kW - 1, ctx, adrs);
-    }
-}
-
-void wots_sign(unsigned char *sig, const unsigned char *msg,
-               const Ctx &ctx, Adrs adrs) {
-    unsigned int lengths[kWotsLen];
-    chain_lengths(lengths, msg);
-    for (int i = 0; i < kWotsLen; ++i) {
-        adrs.set_chain(static_cast<uint32_t>(i));
-        unsigned char sk[kN];
-        adrs.set_hash(0);
-        prf_addr(sk, ctx, wots_prf_adrs(adrs, static_cast<uint32_t>(i)));
-        gen_chain(sig + i * kN, sk, 0, lengths[i], ctx, adrs);
-    }
-}
 
 void wots_pk_from_sig(unsigned char *pk, const unsigned char *sig,
                       const unsigned char *msg, const Ctx &ctx, Adrs adrs) {

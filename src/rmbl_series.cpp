@@ -195,13 +195,20 @@ SEXP C_rmbl_top_share_impl(SEXP x, SEXP fracs) {
     const size_t n = v.size();
     std::sort(v.begin(), v.end(),
               [](double a, double b) { return a > b; });
-    long double total = 0.0L;
-    for (size_t i = 0; i < n; ++i) total += v[i];
+    /* prefix sums once: each fraction is then one lookup, so a long
+     * vector of fractions costs O(n + m), not O(n * m) */
+    std::vector<long double> pre(n + 1, 0.0L);
+    for (size_t i = 0; i < n; ++i) {
+        if ((i & 65535) == 0) rmbl::check_interrupt();
+        pre[i + 1] = pre[i] + v[i];
+    }
+    const long double total = pre[n];
     const R_xlen_t m = XLENGTH(fracs);
     const double *f = REAL(fracs);
     SEXP share = PROTECT(Rf_allocVector(REALSXP, m));
     SEXP took = PROTECT(Rf_allocVector(INTSXP, m));
     for (R_xlen_t j = 0; j < m; ++j) {
+        if ((j & 65535) == 0) rmbl::check_interrupt();
         if (n == 0 || total <= 0.0L || ISNAN(f[j]) || f[j] < 0 || f[j] > 1) {
             REAL(share)[j] = NA_REAL;
             INTEGER(took)[j] = NA_INTEGER;
@@ -210,9 +217,7 @@ SEXP C_rmbl_top_share_impl(SEXP x, SEXP fracs) {
         size_t k = static_cast<size_t>(
             std::ceil(f[j] * static_cast<double>(n) - 1e-9));
         if (k > n) k = n;
-        long double run = 0.0L;
-        for (size_t i = 0; i < k; ++i) run += v[i];
-        REAL(share)[j] = static_cast<double>(run / total);
+        REAL(share)[j] = static_cast<double>(pre[k] / total);
         INTEGER(took)[j] = static_cast<int>(k);
     }
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));

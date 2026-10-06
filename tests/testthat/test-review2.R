@@ -15,7 +15,7 @@ test_that("every entry point answers a hostile argument with an R error, never a
   expect_error(.Call(C("C_rmbl_fetch_fallback"), NA_character_, "", tempfile(), 5L), "non-missing")
   expect_identical(.Call(C("C_rmbl_siu_to_iso_date"), strrep("x", 100000)), "")
   # the generator that keeps the barrier in step with init.c ships with the package
-  expect_true(file.exists(system.file("scripts", "gen_barrier.py", package = "rmoriebricklayer")))
+  expect_true(file.exists(system.file("scripts", "gen_barrier.R", package = "rmoriebricklayer")))
 })
 
 test_that("the RSA public exponent is bounded, so a hostile certificate cannot buy hours of CPU", {

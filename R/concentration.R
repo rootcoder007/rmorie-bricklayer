@@ -81,16 +81,9 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 }
 
 .rmbl_conc_input <- function(x) {
-  x <- .rmbl_finite_input(x, "x", nonneg = TRUE)
-  if (!is.numeric(x)) {
-    stop("`x` must be numeric", call. = FALSE)
-  }
-  x <- .rmbl_num(x, "x")
-  # a negative value has no place in a share of a total, and treating it
-  # as zero would understate the concentration
-  if (any(x < 0, na.rm = TRUE)) {
-    stop("concentration measures need non-negative values", call. = FALSE)
-  }
+  # .rmbl_finite_input() has already refused non-numeric and negative
+  # values: a negative value has no place in a share of a total
+  x <- .rmbl_num(.rmbl_finite_input(x, "x", nonneg = TRUE), "x")
   if (!any(!is.na(x))) {
     stop("`x` has no values: a concentration measure of nothing is undefined", call. = FALSE)
   }
@@ -389,15 +382,9 @@ cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
                 method = if (dropped) "table too small after dropping empty rows/columns"
                          else "table too small"))
   }
-  if (any(m < 0, na.rm = TRUE)) {
-    stop("a contingency table cannot hold negative counts", call. = FALSE)
-  }
+  # negative counts were refused above, and a table with an empty margin
+  # has just been dropped, so what is left has a positive total
   n <- sum(m)
-  if (n == 0) {
-    return(list(v = NA_real_, chisq = NA_real_, df = NA_integer_,
-                p_value = NA_real_, n = 0, min_expected = NA_real_,
-                cells_below = NA_integer_, method = "empty table"))
-  }
   ct <- suppressWarnings(stats::chisq.test(m, correct = FALSE))
   chi <- as.numeric(ct$statistic)
   r <- nrow(m)

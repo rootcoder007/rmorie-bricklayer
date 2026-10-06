@@ -237,9 +237,7 @@ drift_chisq <- function(observed, expected) {
   if (sum(e) <= 0) stop("`expected` has no counts", call. = FALSE)
   # Reference proportions, scaled to the observed total.
   exp_counts <- sum(o) * e / sum(e)
-  keep <- exp_counts > 0
-  if (!any(keep)) stop("no category has a positive expected count",
-                       call. = FALSE)
+  keep <- exp_counts > 0   # non-empty: both totals are positive by now
   df <- sum(keep) - 1L
   # A category the reference assigns probability zero, yet which occurs,
   # contradicts the pinned distribution outright: the chi-square term
@@ -675,14 +673,18 @@ capsule_drift <- function(reference, current, alpha = 0.01,
   v <- as.character(v)
   ok <- !is.na(v)
   if (!any(ok)) return(NULL)
+  # a value that looks like a date but is not one ("2020-01-01 25:99")
+  # makes the column text, not an error: as.POSIXct() with tryFormats
+  # stops on the first unreadable string
   if (all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", v[ok]))) {
-    d <- as.Date(v, format = "%Y-%m-%d")
-    return(if (anyNA(d[ok])) NULL else d)
+    d <- tryCatch(as.Date(v, format = "%Y-%m-%d"), error = function(e) NULL)
+    return(if (is.null(d) || anyNA(d[ok])) NULL else d)
   }
   if (all(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9]{2}:[0-9]{2}(:[0-9]{2})?", v[ok]))) {
-    d <- as.POSIXct(sub("T", " ", v, fixed = TRUE), tz = "UTC",
-                    tryFormats = c("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"))
-    return(if (anyNA(d[ok])) NULL else d)
+    d <- tryCatch(as.POSIXct(sub("T", " ", v, fixed = TRUE), tz = "UTC",
+                             tryFormats = c("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M")),
+                  error = function(e) NULL)
+    return(if (is.null(d) || anyNA(d[ok])) NULL else d)
   }
   NULL
 }

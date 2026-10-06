@@ -163,7 +163,6 @@ double rmbl_mad(const double *a, R_xlen_t n, double constant) {
     return constant * median_sorted(v);
 }
 
-double rmbl_mad_constant(void) { return kMadConstant; }
 
 /* Symmetric trimmed mean: drop floor(n * trim) values from each end,
  * matching base R's mean(x, trim = ). */

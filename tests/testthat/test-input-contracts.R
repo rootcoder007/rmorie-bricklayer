@@ -103,7 +103,7 @@ test_that("I/O helpers refuse empty paths and missing capsules", {
                "not an existing directory")
   expect_error(validate_schema(NULL, NULL), "data frame")
   expect_error(apply_schema_validation(NULL, NULL), "data frame")
-  expect_error(revocation_fetch(""), "single non-empty string")
+  expect_error(revocation_fetch(""), "non-empty list of parsed certificates")
 })
 
 test_that("verify_sha256 accepts the digest as provenance JSON delivers it", {

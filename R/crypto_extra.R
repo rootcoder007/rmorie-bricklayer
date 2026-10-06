@@ -46,7 +46,7 @@ random_bytes <- function(n) {
   if (length(n) != 1L || is.na(n) || n < 1L || n > 1048576L) {
     stop("`n` must be a single integer between 1 and 1048576", call. = FALSE)
   }
-  out <- .Call(C_rmbl_os_random, n)
+  out <- .rmbl_os_random(n)
   if (is.null(out)) {
     stop("no operating-system random source could be read. Refusing to ",
       "fall back to R's generator, which is reproducible by design ",
@@ -297,3 +297,7 @@ digest_object <- function(x, algo = c(
     blake2b = core_blake2b(bytes, length = 32L)
   )
 }
+
+# NULL when no operating-system source could be read; random_bytes() refuses
+# to fall back. One line so the refusal can be exercised without breaking the OS.
+.rmbl_os_random <- function(n) .Call(C_rmbl_os_random, n)
