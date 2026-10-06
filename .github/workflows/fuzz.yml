@@ -38,7 +38,7 @@ jobs:
       - name: Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang r-base-dev
+          sudo apt-get install -y --no-install-recommends clang r-base-dev libcurl4-openssl-dev
       - name: Build the targets
         run: bash inst/fuzz/build.sh
       - name: Fuzz
