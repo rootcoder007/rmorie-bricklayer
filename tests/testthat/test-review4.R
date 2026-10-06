@@ -17,6 +17,7 @@ pkg_root_r4 <- function() {
 #   /drip        -> headers, then one byte every 2 s
 #   /endless     -> an unbounded chunked body
 #   /url-body    -> a body that is a bare URL
+#   /missing     -> 404 with an empty body
 r4_server <- function(env = parent.frame()) {
   skip_on_cran()
   skip_on_os("windows")
@@ -50,6 +51,8 @@ r4_server <- function(env = parent.frame()) {
     "            try:",
     "                while True: self.wfile.write(b'%x\\r\\n' % len(chunk) + chunk + b'\\r\\n')",
     "            except Exception: return",
+    "        if p == '/missing':",
+    "            self.send_response(404); self.send_header('Content-Length', '0'); self.end_headers(); return",
     "        if p == '/url-body':",
     "            body = ('http://127.0.0.1:%d/second' % PORT).encode()",
     "        elif p == '/second':",
@@ -340,4 +343,25 @@ test_that("limits: bricklayer_download() exposes max_bytes and checks it", {
   dest <- tempfile()
   bricklayer_download(paste0("file://", src), dest, quiet = TRUE, allow_file = TRUE, max_bytes = 10)
   expect_identical(readLines(dest), "abc")
+})
+
+test_that("the file sink: a chunked body past max_bytes ends the transfer, a non-2xx answer leaves nothing", {
+  srv <- r4_server()
+  dl <- r4("C_rmbl_http_download")
+  dest <- tempfile()
+  # no Content-Length: only the sink's own count can stop it (codecov: FileSink overflow)
+  r <- .Call(dl, paste0(srv$base, "/endless"), dest, 20L, NULL, NULL, 100000, TRUE)
+  expect_false(file.exists(dest))
+  expect_match(r$error, "larger than the 100000-byte limit", fixed = TRUE)
+  # this destination's own scratch file is gone (an earlier test leaves a foreign .rmbl-part on purpose)
+  expect_length(list.files(dirname(dest), pattern = paste0("^", basename(dest), "\\.rmbl-part")), 0L)
+  # a 404 is a final answer with nothing to keep: the part file goes, the status comes back
+  r <- .Call(dl, paste0(srv$base, "/missing"), dest, 20L, NULL, NULL, NULL, TRUE)
+  expect_identical(as.integer(r$status), 404L)
+  expect_match(r$error, "HTTP 404", fixed = TRUE)
+  expect_false(file.exists(dest))
+  # the two one-line network seams run for real against a refused address: a status, never a crash
+  expect_false(identical(r4(".rmbl_net_download")("https://127.0.0.1:1/x.json", tempfile(), 2), 200L))
+  post <- r4(".rmbl_net_post")("https://127.0.0.1:1/ocsp", raw(0), "application/ocsp-request", 2)
+  expect_true(is.null(post) || !identical(as.integer(post$status), 200L))
 })
