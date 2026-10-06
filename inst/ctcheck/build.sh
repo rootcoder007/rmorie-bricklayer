@@ -6,7 +6,10 @@ set -euo pipefail
 cd "$(dirname "$0")"
 CXX=${CXX:-g++}
 RCPP=$(R CMD config --cppflags)
-RLD=$(R CMD config --ldflags)
+# only R itself: `R CMD config --ldflags` lists libraries R was built against
+# (-ltirpc, -licuuc ...) that a plain runner does not carry
+RLIB=$(R RHOME)/lib
+RLD="-L$RLIB -Wl,-rpath,$RLIB -lR"
 AES=""
 if grep -q "RMBL_AES_X86_NI" ../../src/Makevars.in 2>/dev/null || grep -q "RMBL_AES_X86_NI" ../../src/Makevars 2>/dev/null; then
   AES="-DRMBL_AES_X86_NI -maes -msse2"

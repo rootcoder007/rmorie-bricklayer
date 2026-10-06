@@ -5,7 +5,10 @@ set -euo pipefail
 cd "$(dirname "$0")"
 CXX=${CXX:-clang++}
 RCPP=$(R CMD config --cppflags)
-RLD=$(R CMD config --ldflags)
+# only R itself: `R CMD config --ldflags` lists libraries R was built against
+# (-ltirpc, -licuuc ...) that a plain runner does not carry
+RLIB=$(R RHOME)/lib
+RLD="-L$RLIB -Wl,-rpath,$RLIB -lR"
 FLAGS="-std=gnu++17 -g -O1 -fno-omit-frame-pointer -fsanitize=fuzzer,address,undefined -fno-sanitize-recover=undefined -I../../src $RCPP"
 OUT=${OUT:-build}
 mkdir -p "$OUT"
