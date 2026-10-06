@@ -17,7 +17,7 @@ test applies to them."><meta name="google-site-verification" content="8ORzeHrfoP
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,9 @@ test applies to them.</p>
 <span>  alpha <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  psi_threshold <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  psi_min_n <span class="op">=</span> <span class="fl">1000L</span>,</span>
-<span>  bins <span class="op">=</span> <span class="fl">10L</span></span>
+<span>  bins <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  identifier_levels <span class="op">=</span> <span class="fl">100L</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">1L</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -114,6 +116,21 @@ reported as an effect size.</p></dd>
 <dt id="arg-bins">bins<a class="anchor" aria-label="anchor" href="#arg-bins"></a></dt>
 <dd><p>Bins passed to
 <code><a href="drift_psi.html">drift_psi()</a></code> (default 10).</p></dd>
+
+
+<dt id="arg-identifier-levels">identifier_levels<a class="anchor" aria-label="anchor" href="#arg-identifier-levels"></a></dt>
+<dd><p>A character column with more distinct values
+than this (or a distinct value for every fifth row) is an identifier,
+not a distribution: it gets <code>type = "identifier"</code>, its <code>unseen_share</code>
+(the fraction of current rows whose value the reference never had) and
+<code>drifted = NA</code>. Character columns that parse as dates are compared as
+dates (<code>type = "date"</code>).</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Seed for the Monte Carlo branch of the homogeneity test,
+<code><a href="drift_homogeneity.html">drift_homogeneity()</a></code>. The caller's RNG stream is left
+untouched.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -121,10 +121,8 @@ per column.
 
 drift_calibrate(otis, n = 10)
 #> Drift screens on 10 identical re-fetches (alpha = 0.01)
-#>   at least one column flagged: 20% of re-fetches
-#>   columns that fire on identical data:
-#>     group                         20.0%
-#>     table                         10.0%
+#>   at least one column flagged: 0% of re-fetches
+#>   no column fired on identical data
 #>   per-screen alpha for a family-wise 0.01: 0.0025
 ```
 

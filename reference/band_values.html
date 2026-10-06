@@ -13,7 +13,7 @@ recorded in the result rather than absorbed into it."><meta name="google-site-ve
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@ recorded in the result rather than absorbed into it.</p>
 <span>  rule <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"midpoint"</span>, <span class="st">"lower"</span>, <span class="st">"upper"</span>, <span class="st">"geometric"</span><span class="op">)</span>,</span>
 <span>  open_upper_cap <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  open_upper_factor <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  open_lower_floor <span class="op">=</span> <span class="fl">0</span></span>
+<span>  open_lower_floor <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,7 +99,10 @@ cap is given.</p></dd>
 
 
 <dt id="arg-open-lower-floor">open_lower_floor<a class="anchor" aria-label="anchor" href="#arg-open-lower-floor"></a></dt>
-<dd><p>Lower bound to assume
+<dd><p>Lower bound assumed for an open lower band
+("under 18"). <code>NULL</code>, the default, uses 0, or the band's own upper
+bound when that is below 0; an explicit floor above a band's upper
+bound is refused.
 for an open bottom band. Defaults to zero.</p></dd>
 
 </dl></div>

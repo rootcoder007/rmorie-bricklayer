@@ -1,7 +1,7 @@
 # Resolve a Wayback Machine snapshot URL
 
 Queries the Internet Archive availability API (
-`http://archive.org/wayback/available`) for the closest archived
+`https://archive.org/wayback/available`) for the closest archived
 snapshot of `url` and returns a directly-downloadable snapshot URL, or
 `NULL` if no snapshot exists or the lookup fails. This is the shared
 fetch failsafe the wider morie package family relies on: callers attempt
@@ -34,6 +34,6 @@ A character scalar snapshot URL, or `NULL`.
 ``` r
 # \donttest{
 wayback_snapshot_url("https://www.r-project.org/")
-#> NULL
+#> [1] "https://web.archive.org/web/20261004224521/https://www.r-project.org/"
 # }
 ```

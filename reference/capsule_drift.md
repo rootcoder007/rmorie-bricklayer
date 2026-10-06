@@ -19,7 +19,9 @@ capsule_drift(
   alpha = 0.01,
   psi_threshold = 0.25,
   psi_min_n = 1000L,
-  bins = 10L
+  bins = 10L,
+  identifier_levels = 100L,
+  seed = 1L
 )
 ```
 
@@ -59,6 +61,21 @@ capsule_drift(
   Bins passed to
   [`drift_psi()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_psi.md)
   (default 10).
+
+- identifier_levels:
+
+  A character column with more distinct values than this (or a distinct
+  value for every fifth row) is an identifier, not a distribution: it
+  gets `type = "identifier"`, its `unseen_share` (the fraction of
+  current rows whose value the reference never had) and `drifted = NA`.
+  Character columns that parse as dates are compared as dates
+  (`type = "date"`).
+
+- seed:
+
+  Seed for the Monte Carlo branch of the homogeneity test,
+  [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md).
+  The caller's RNG stream is left untouched.
 
 ## Value
 

@@ -56,13 +56,13 @@ ref <- c(a = 50, b = 30, c = 20)
 
 # Counts matching the reference proportions: nothing to report.
 drift_chisq(c(a = 100, b = 60, c = 40), ref)
-#> statistic        df   p_value 
-#>         0         2         1 
+#>   statistic          df     p_value log_p_value 
+#>           0           2           1           0 
 
 # A reallocated mix is detected.
 drift_chisq(c(a = 40, b = 60, c = 100), ref)
-#>   statistic          df     p_value 
-#> 1.26000e+02 2.00000e+00 4.35961e-28 
+#>    statistic           df      p_value  log_p_value 
+#>  1.26000e+02  2.00000e+00  4.35961e-28 -6.30000e+01 
 
 # Agrees with stats::chisq.test().
 o <- c(a = 40, b = 60, c = 100)
@@ -72,19 +72,19 @@ all.equal(drift_chisq(o, ref)[["statistic"]],
 
 # Raw vectors are tabulated for you.
 drift_chisq(c("a", "a", "b", "b"), c("a", "b"))
-#> statistic        df   p_value 
-#>         0         1         1 
+#>   statistic          df     p_value log_p_value 
+#>           0           1           1           0 
 
 # A category the reference rules out, but which occurs, is a flat
 # contradiction rather than a large finite statistic.
 drift_chisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
-#> statistic        df   p_value 
-#>       Inf         1         0 
+#>   statistic          df     p_value log_p_value 
+#>         Inf           1           0        -Inf 
 
 # When a new category is legitimate, compare two samples instead.
 drift_homogeneity(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
-#> statistic        df   p_value 
-#>  1.333333  2.000000  1.000000 
+#>   statistic          df     p_value log_p_value 
+#>    1.333333    2.000000    1.000000    0.000000 
 #> attr(,"method")
 #> [1] "Monte Carlo permutation (small expected counts)"
 ```

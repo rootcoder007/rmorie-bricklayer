@@ -14,6 +14,7 @@ bricklayer_json_from_json(
   bigint_as_char = FALSE,
   simplify = NULL,
   duplicate_keys = c("error", "keep"),
+  bigint_warn = TRUE,
   ...
 )
 ```
@@ -41,6 +42,12 @@ bricklayer_json_from_json(
   What to do with an object that repeats a key: `"error"` (default)
   refuses the document, `"keep"` returns both values under the repeated
   name, as jsonlite does.
+
+- bigint_warn:
+
+  warn (once per document) when a whole number beyond 2^53 is read into
+  a double; the package's own readers of API payloads turn this off,
+  since long numeric identifiers are routine there.
 
 - ...:
 

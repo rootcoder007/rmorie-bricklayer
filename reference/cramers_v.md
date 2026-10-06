@@ -6,7 +6,7 @@ the small-expected-count condition reported rather than assumed away.
 ## Usage
 
 ``` r
-cramers_v(tbl, bias_correct = TRUE, min_expected = 5)
+cramers_v(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L)
 ```
 
 ## Arguments
@@ -25,6 +25,11 @@ cramers_v(tbl, bias_correct = TRUE, min_expected = 5)
 
   Expected count below which the chi-square approximation is unreliable.
   Reported, not enforced.
+
+- seed:
+
+  Seed for the Monte Carlo branch; the caller's RNG stream is restored
+  afterwards.
 
 ## Value
 

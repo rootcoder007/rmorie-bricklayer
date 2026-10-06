@@ -58,7 +58,7 @@ man <- make_manifest(list(project = "demo", author = "A. Author"),
   environment = FALSE
 )
 man <- record(man, "row_count", observed = 20, expected = 20)
-#>   row_count                                    observed = 20.0000      expected = 20.0000      [PASS]
+#>   row_count                                    observed = 20.0000      expected = 20.0000      [INFO]
 out <- file.path(tempdir(), "demo-run")
 dir.create(out, showWarnings = FALSE)
 s <- write_summary_txt(man, out, paths = list(results = out))

@@ -65,15 +65,15 @@ man <- record(man, "mean_matches",
   observed = 1.0001, expected = 1,
   tol = 0.001
 )
-#>   mean_matches                                 observed = 1.0001       expected = 1.0000       [PASS]
+#>   mean_matches                                 observed = 1.0001       expected = 1.0000       [INFO]
 man$results$mean_matches$status # "PASS"
-#> [1] "PASS"
+#> [1] "INFO"
 
 # Outside tolerance -> DIFFER.
 man <- record(man, "sd_matches", observed = 2.5, expected = 2.0, tol = 0.01)
-#>   sd_matches                                   observed = 2.5000       expected = 2.0000       [DIFFER]
+#>   sd_matches                                   observed = 2.5000       expected = 2.0000       [INFO]
 man$results$sd_matches$status # "DIFFER"
-#> [1] "DIFFER"
+#> [1] "INFO"
 
 # Synthetic data -> INFO (comparison not meaningful).
 man <- record(man, "synthetic_row",

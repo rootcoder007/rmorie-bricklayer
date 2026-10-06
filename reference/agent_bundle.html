@@ -13,7 +13,7 @@ bricklayer_llm_login (rmbl login from the shell)."><meta name="google-site-verif
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,10 +96,14 @@ up when no key is stored.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "No language-model route is set up: sign in to the hosted MORIE tier with bricklayer_llm_login() or `rmbl login` (GitHub, an emailed code, or a key from https://llm.rmorie.com)."</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With no key stored the call returns a setup hint, not an</span></span></span>
-<span class="r-in"><span><span class="co"># error -- safe to run anywhere:</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"MORIE_HOSTED_KEY"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># With the hosted tier switched off the call returns a setup hint, not</span></span></span>
+<span class="r-in"><span><span class="co"># an error, and reaches no network -- safe to run anywhere:</span></span></span>
+<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"MORIE_HOSTED_BASE_URL"</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>MORIE_HOSTED_BASE_URL <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">agent_bundle</span><span class="op">(</span><span class="st">"hello"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "No language-model route is set up: sign in to the hosted MORIE tier with bricklayer_llm_login() or `rmbl login` (GitHub, an emailed code, or a key from https://llm.rmorie.com)."</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"MORIE_HOSTED_BASE_URL"</span><span class="op">)</span> <span class="kw">else</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>MORIE_HOSTED_BASE_URL <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

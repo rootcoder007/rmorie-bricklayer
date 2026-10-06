@@ -57,11 +57,13 @@ byte for byte the scheme of the authors' reference implementation
 v5.0.0: all 300 official known-answer vectors are reproduced (the
 package's tests check them). It runs in constant time with respect to
 secrets – no secret reaches a branch, a memory index or a variable
-shift, checked with valgrind – wipes its secret intermediates, and gives
-the same bytes on little- and big-endian machines. On x86-64 processors
-with PCLMULQDQ and on ARMv8 with the crypto extension the polynomial
-products use the carry-less multiply instruction; elsewhere a portable
-constant-time product.
+shift, checked under valgrind memcheck in CI (`inst/ctcheck`: the
+`hqc1`, `hqc3`, `hqc5` and `hqc1-round4` cases) – wipes its secret
+intermediates (the same harness scans the dead stack for them), and
+gives the same bytes on little- and big-endian machines. On x86-64
+processors with PCLMULQDQ and on ARMv8 with the crypto extension the
+polynomial products use the carry-less multiply instruction; elsewhere a
+portable constant-time product.
 
 NIST will publish HQC-KEM as FIPS 207 but has not yet released it, or a
 draft of it (checked 2026-10-05). The specification of 2025-08-22
@@ -88,11 +90,15 @@ on it, and v5 otherwise.
 
 A hand-written implementation. The standardised schemes are checked byte
 for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-suite, which establishes correctness, not resistance to side channels:
-no third-party security audit and no timing or leakage analysis has been
-done. Use it for provenance and research, and read any constant-time
-wording in this documentation as a design intent, not a verified
-property.
+suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+operation that touches a secret under valgrind memcheck with the secret
+marked undefined (the ctgrind method), so a branch or a memory address
+that depends on it is a reported error, and afterwards scans the dead
+stack for copies of the secret. Both checks run in CI on every change,
+with GCC and with Clang. They are checks of this code on those
+compilers, not of the hardware it runs on, and no third-party audit has
+been commissioned; the README's security section says exactly what is
+and is not covered.
 
 ## References
 

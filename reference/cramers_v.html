@@ -9,7 +9,7 @@ the small-expected-count condition reported rather than assumed away."><meta nam
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ the small-expected-count condition reported rather than assumed away.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cramers_v</span><span class="op">(</span><span class="va">tbl</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span>, min_expected <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cramers_v</span><span class="op">(</span><span class="va">tbl</span>, bias_correct <span class="op">=</span> <span class="cn">TRUE</span>, min_expected <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -75,6 +75,11 @@ is an artefact of the table's size.</p></dd>
 <dt id="arg-min-expected">min_expected<a class="anchor" aria-label="anchor" href="#arg-min-expected"></a></dt>
 <dd><p>Expected count below which the
 chi-square approximation is unreliable. Reported, not enforced.</p></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Seed for the Monte Carlo branch; the caller's RNG stream is
+restored afterwards.</p></dd>
 
 </dl></div>
     <div class="section level2">

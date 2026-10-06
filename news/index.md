@@ -1,5 +1,229 @@
 # Changelog
 
+## rmoriebricklayer 0.5.7
+
+A release about measuring what the 0.5.6 README could only describe.
+Every claim in the new “Security posture” table is a check that runs in
+CI.
+
+- **Constant-time verification, every primitive.** `inst/ctcheck/` runs
+  ML-KEM, ML-DSA, SLH-DSA, HQC (v5 and round 4), XMSS, the CTR_DRBG,
+  HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3 and the digest comparison
+  under valgrind memcheck with their secrets marked undefined (ctgrind),
+  with GCC and Clang; a branch or memory address that depends on a
+  secret fails the `constant-time` workflow. The run found and this
+  release fixes: ML-KEM’s `ByteEncode` branched on every bit it packed
+  (the secret key included); the hex encoder used a table indexed by the
+  secret nibble (every HMAC, PBKDF2 and key output); ML-DSA’s norm check
+  returned at the first offending coefficient; PBKDF2 round-tripped each
+  MAC through hex and branched on the characters; XMSS measured its
+  hex-encoded seeds with `strlen()`. The values the specifications
+  publish (rejected samples, the challenge, the hints, R) are
+  declassified at one named line each.
+- **Secrets are wiped.** The same harness scans the dead stack after
+  each operation for copies of the seed, signing key or password. Every
+  scheme left at least one; all temporaries now clear on every return
+  path (`rmbl_ct::Guard`), and the scan is part of the gate.
+- **Wycheproof.** 1,247 Project Wycheproof vectors (ECDSA P-256/SHA-256,
+  P-384/SHA-384, RSASSA-PKCS1-v1_5 2048/SHA-256) run in the test suite.
+  They found that the DER parser accepted BER (long-form lengths below
+  128, lengths with leading zeros, non-minimal tags, end-of-contents
+  octets), that `ECDSA-Sig-Value` was accepted with extra elements,
+  padded or negative integers, and that a PKCS#1 block was checked field
+  by field rather than against RFC 8017’s exact DigestInfo bytes. All
+  three are fixed; every valid vector verifies, every invalid and every
+  legacy “acceptable” one is refused.
+- **Fuzzing.** `inst/fuzz/` holds libFuzzer targets (ASan + UBSan) for
+  the DER parser and RSA arithmetic, the decimal-to-double conversion
+  (compared bit for bit with the C library), and the SIU report parsers,
+  with seed corpora; the `fuzz` workflow runs them on every change and
+  for longer weekly.
+- `SECURITY.md`: threat model, what each check catches and does not,
+  reporting. The README’s “Security posture” is now that table.
+- `rmbl_hmac_sha256_raw()` joins the C API (the hex variant is a
+  wrapper).
+
+The second review of 0.5.6 (2026-10-06) asked for each fix’s neighbours.
+Every item below has a test in `tests/testthat/test-review2.R`.
+
+- **Every `.Call` entry point has the exception barrier**, not two of
+  110: `src/rmbl_barrier.cpp`, generated from `init.c` by
+  `inst/scripts/gen_barrier.R`, wraps each entry so a C++ exception is
+  an R error raised after every destructor has run. Seven `NULL`s to
+  `hawkes_rescaled`, a 2 GB `shake`, mismatched `theil_sen` lengths (a
+  40 MB out-of-bounds read), a 4 TB `sen_slopes`, a 2^31 reservoir and
+  an INT_MAX PBKDF2 are all plain errors now; the quadratic loops and
+  the RSA arithmetic check for Ctrl-C; the RSA public exponent is capped
+  at 64 bytes (1 KB took 1.2 s, 1 MB would have taken 20 minutes, from a
+  certificate); `shake` output and PBKDF2 iterations are capped; every
+  string argument goes through one `rmbl_str0()`; the DER tree is
+  converted under `R_UnwindProtect`, so an allocation failure cannot
+  skip its destructor either.
+- **SSRF gate rewritten, in the transport.** `src/rmbl_fetch.cpp` parses
+  the authority as a URL parser does (`#@` and `?@` no longer hide a
+  host, any userinfo is refused), reads IPv4 literals with `inet_aton`’s
+  grammar (`127.1`, `0177.0.0.1`, `2130706433`, `0x7f000001`), IPv6 with
+  `inet_pton` (mapped, NAT64, link-local, unique-local), refuses local
+  names by suffix (`localhost`, `.local`, `.internal`, `.localdomain`,
+  `.home.arpa`), resolves every hostname and tests every address, pins
+  the connection to those addresses (`CURLOPT_RESOLVE`, so DNS rebinding
+  cannot answer differently), follows redirects itself one checked hop
+  at a time (an `https` fetch cannot be bounced to `http` or to a
+  private host), and caps a chunked download.
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md),
+  `.rmbl_read_json()`, the CRL/OCSP fetch, the Wayback resolver and the
+  hosted-model client all go through it. `.rmbl_check_public_url()`
+  calls the same C check.
+- [`verify_capsule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_capsule.md):
+  `provenance_file` is contained like every other path (a symlinked
+  `data_provenance.json` verified tampered data as intact);
+  `data_not_synthetic` is a required row that always exists and reads
+  the sidecar, the manifest and the provenance; a `manifest.json` in the
+  capsule is checked by default and `manifest_consistent` /
+  `script_sha256` are required whenever they apply; a `sha256` or
+  `filename` that is not a single string, an unreadable file or a
+  directory are failed rows, not R errors.
+- [`manifest_digest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  is injective again: the canonical encoder writes an empty key as `""`
+  (0.5.6 renamed it to its index, so `{"":"X"}` and `{"1":"X"}` shared a
+  digest and one attestation verified both). A list with a names
+  attribute is an object and is sorted, empty names included: a manifest
+  built with unnamed elements in a named list gets a different digest
+  from 0.5.5’s, which never canonicalised such a level.
+  [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md)
+  writes `meta$synthetic` only when it is `TRUE`, so a real-data
+  manifest keeps its pre-0.5.6 digest, and
+  [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md)
+  sets the flag in-process.
+- JSON: string assembly is linear (250,000 escapes took 16 minutes); the
+  reformatter refuses NUL and lone surrogates as the parser does; parser
+  and encoder share one 100-level cap (the encoder used to hit the C
+  stack first);
+  [`bricklayer_json_base64_dec()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_base64.md)
+  refuses characters outside the alphabet instead of deleting them;
+  whole numbers beyond 2^53 warn on the decimal branch too;
+  `bigint_warn = FALSE` and `duplicate_keys = "keep"` are what the
+  package’s own API readers use; the gzip inflate cap is 64 MiB.
+- [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md):
+  a character column of dates is compared as dates (two disjoint years
+  drift); a column with more than `identifier_levels` distinct values,
+  or one per five rows, is an identifier – its `unseen_share` is
+  reported and `drifted` is `NA` (the 0.5.6 PSI over the union of
+  categories fired on every id and date column); PSI for the rest is
+  over the reference’s categories with unseen mass pooled. The result
+  gains `type`, `unseen_share` and `note` columns.
+- [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md)
+  returns `p_value = NA` with `method = "inapplicable: ..."` when the
+  categories outnumber half the observations (every table with those
+  margins has the same statistic), draws its Monte Carlo p-value under a
+  local `seed` and restores the caller’s RNG, and like
+  [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)
+  refuses negative, NA and infinite counts. All chi-square sites report
+  `log_p_value` next to `p_value`: a double has no number for
+  exp(-2536), and the log says how far below zero the tail is.
+  [`cramers_v()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramers_v.md)
+  drops an unused level (it returned NaN) and takes a `seed` too.
+- [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md):
+  trailing units with punctuation (“18 to 24 (years)”, “5 to 9 years,
+  inclusive”) parse again; cue words are matched as words (“overnight”
+  is not “over”) in the leading slot as well as the tail (“under 18 to
+  24” is NA, not 18-24); a label with two numbers that is not a range is
+  NA (“more than 10 - 20”); thousands separators are removed only from
+  correctly grouped numbers (“12,34,567+” is NA); a label with a decimal
+  point is on a decimal scale; the dash family is normalised byte-wise,
+  so an en dash parses in a C locale.
+  [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)
+  guards the open-lower floor as it guards the cap, and its default
+  floor is `min(0, upper)`, so “under 0” has its midpoint inside the
+  band.
+- [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+  reports `slope_ci_clamped = TRUE` exactly when a rank is at an end,
+  warns when `exact = TRUE` cannot be honoured (n \> 8), and memoises
+  the tied exact null;
+  [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  refuses an all-zero series;
+  [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md)
+  and
+  [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  refuse infinite values as
+  [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md)
+  does;
+  [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+  refuses negative weights and a constant variable;
+  [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+  [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md),
+  [`lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  and
+  [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  refuse empty input;
+  [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  returns the Bernoulli values at non-positive integers (zeta(0, 1) =
+  -1/2); the Benford first digit of a subnormal is read from the
+  shortest round-tripping decimal (1e-310 is 1, not 9).
+- Result changes from 0.5.6 that NEWS did not state:
+  [`morans_i()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/morans_i.md)
+  excludes self-neighbours from a weight matrix;
+  [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md)
+  no longer changes the digest of a real-data manifest (0.5.6 did); the
+  OTIS full-verification workflow runs on demand only.
+
+The coverage pass that followed (every branch below was untested at
+96.2%) found five defects that no test had reached; the CRAN checks and
+the entry-point sweep found two more.
+
+- **Revocation checking worked only on paper.**
+  [`revocation_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/revocation_fetch.md)
+  ran every certificate through the single-file-path guard, so a parsed
+  path was refused before anything was fetched; the CRL/OCSP fetch
+  refused plain `http`, which is what RFC 5280 distribution points and
+  RFC 6960 responders use (the answers are signed, the transport adds
+  nothing); and a delegated OCSP responder’s certificate was never
+  found, because the search for the `[0]` certificates element landed on
+  `nextUpdate` inside the SingleResponse first and the signed answer was
+  reported as unverifiable. All three are fixed; the client is now
+  tested end to end against recorded OpenSSL responses (good, revoked,
+  unknown, SHA-384 without an embedded certificate, a delegated
+  responder, an ECDSA responder, `tryLater`, and every malformed shape),
+  with the two network calls behind one-line seams. The fixtures are
+  documented in `tests/testthat/x509-fixtures.txt`.
+- [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  summed from the start for every fraction: a million fractions over a
+  million values was 10^12 additions with no interrupt check (the
+  entry-point sweep found it as the one hang). It is one prefix sum now,
+  interruptible.
+- [`manifest_restore_seed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_record_seed.md)
+  padded a record naming only the main generator kind with `NA`, which
+  [`RNGkind()`](https://rdrr.io/r/base/Random.html) rejects; the
+  recorded names are passed as they are.
+- The JSON simplifier’s date-list test used
+  [`is.numeric()`](https://rdrr.io/r/base/numeric.html), which is
+  `FALSE` for a `POSIXct`, so a list of times was never folded back into
+  one vector.
+- [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)’s
+  date detection errored on a column of timestamps with one unreadable
+  value (“2020-01-01 25:99”) instead of treating the column as text.
+- `rmbl_barrier.cpp` re-raised an interrupt through `Rf_onintr()`, which
+  is not part of R’s API (CRAN refuses it). It now signals R’s own
+  `interrupt` condition and invokes the `abort` restart, so
+  `tryCatch(interrupt = )` sees it exactly as before.
+- The two helper scripts that shipped in the tarball were Python
+  (`inst/scripts/gen_barrier.py`, `inst/fuzz/mkcorpus.py`); they are R
+  now (`gen_barrier.R`, `mkcorpus.R`), with the same output byte for
+  byte. `inst/ctcheck/` and `inst/fuzz/` each carry a README saying what
+  they are and how to run them. The
+  [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  example switches the hosted tier off for its run rather than reaching
+  the network when a key is stored.
+- Dead code found by the same pass is gone: the unused `wots_gen_pk()` /
+  `wots_sign()` in the SLH-DSA body, `rmbl_mad_constant()`, three
+  unreachable guards in `.rmbl_conc_input()` /
+  [`cramers_v()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cramers_v.md)
+  /
+  [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md),
+  and a duplicated line in the JSON object writer. The LinkingTo
+  consumer test now calls the Weibull, Lomax and gamma Hawkes kernels
+  and the NaN/short-input paths of the statistics kernels.
+
 ## rmoriebricklayer 0.5.6
 
 A security and correctness release from a full external review of 0.5.5

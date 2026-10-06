@@ -13,7 +13,7 @@ band_values(
   rule = c("midpoint", "lower", "upper", "geometric"),
   open_upper_cap = NULL,
   open_upper_factor = 2,
-  open_lower_floor = 0
+  open_lower_floor = NULL
 )
 ```
 
@@ -46,7 +46,10 @@ band_values(
 
 - open_lower_floor:
 
-  Lower bound to assume for an open bottom band. Defaults to zero.
+  Lower bound assumed for an open lower band ("under 18"). `NULL`, the
+  default, uses 0, or the band's own upper bound when that is below 0;
+  an explicit floor above a band's upper bound is refused. for an open
+  bottom band. Defaults to zero.
 
 ## Value
 

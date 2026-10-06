@@ -61,9 +61,9 @@ omitted them would read as a clean bill of health.
 d <- data.frame(x = 1:10)
 m <- make_manifest(list(dataset = "demo"), environment = FALSE)
 m <- record(m, "mean_x", observed = mean(d$x), expected = 5.5)
-#>   mean_x                                       observed = 5.5000       expected = 5.5000       [PASS]
+#>   mean_x                                       observed = 5.5000       expected = 5.5000       [INFO]
 m <- record(m, "n", observed = nrow(d), expected = 10)
-#>   n                                            observed = 10.0000      expected = 10.0000      [PASS]
+#>   n                                            observed = 10.0000      expected = 10.0000      [INFO]
 
 # recomputing both reproduces them
 res <- manifest_recompute(m, d, list(mean_x = function(z) mean(z$x),

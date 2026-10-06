@@ -41,7 +41,7 @@ The `path`, returned invisibly.
 ``` r
 man <- make_manifest(list(project = "demo"), environment = FALSE)
 man <- record(man, "row_count", observed = 20, expected = 20)
-#>   row_count                                    observed = 20.0000      expected = 20.0000      [PASS]
+#>   row_count                                    observed = 20.0000      expected = 20.0000      [INFO]
 path <- write_manifest_json(man, tempfile(fileext = ".json"))
 file.exists(path)
 #> [1] TRUE
@@ -49,5 +49,5 @@ file.exists(path)
 # Round-trips back through the package's own codec.
 back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 back$results$row_count$status # "PASS"
-#> [1] "PASS"
+#> [1] "INFO"
 ```

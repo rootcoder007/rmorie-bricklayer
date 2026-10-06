@@ -1,10 +1,11 @@
 # Verify a capsule manifest signature
 
 Checks `signature` against `message`. For `"hmac"` the comparison is
-constant-time. For XMSS the Winternitz chains are walked to their ends
-and the authentication path replayed to the Merkle root; the digest is
-bound to both the leaf index and the root, so a signature cannot be
-replayed at another index or under another key.
+constant-time (verified under valgrind memcheck in CI: `inst/ctcheck`,
+cases `digest-equal` and `hmac-sha256`). For XMSS the Winternitz chains
+are walked to their ends and the authentication path replayed to the
+Merkle root; the digest is bound to both the leaf index and the root, so
+a signature cannot be replayed at another index or under another key.
 
 ## Usage
 

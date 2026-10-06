@@ -7,7 +7,7 @@ their counts.
 ## Usage
 
 ``` r
-drift_homogeneity(x, y)
+drift_homogeneity(x, y, seed = 1L)
 ```
 
 ## Arguments
@@ -16,6 +16,12 @@ drift_homogeneity(x, y)
 
   Factor or character vectors (or named count vectors) – the reference
   and the new sample.
+
+- seed:
+
+  Seed for the Monte Carlo branch (small expected counts). The draw is
+  made under this seed and the caller's RNG stream is restored, so the
+  same inputs give the same p-value and nothing downstream moves.
 
 ## Value
 
@@ -53,16 +59,16 @@ b <- sample(c("x", "y", "z"), 300, TRUE)
 
 # Two draws from the same distribution: no evidence of a difference.
 drift_homogeneity(a, b)
-#> statistic        df   p_value 
-#> 0.5150386 2.0000000 0.7729667 
+#>   statistic          df     p_value log_p_value 
+#>   0.5150386   2.0000000   0.7729667  -0.2575193 
 #> attr(,"method")
 #> [1] "chi-square approximation"
 
 # A reallocated mix is detected.
 drift_homogeneity(a, sample(c("x", "y", "z"), 300, TRUE,
                             prob = c(0.7, 0.2, 0.1)))
-#>    statistic           df      p_value 
-#> 6.978222e+01 2.000000e+00 7.030469e-16 
+#>     statistic            df       p_value   log_p_value 
+#>  6.978222e+01  2.000000e+00  7.030469e-16 -3.489111e+01 
 #> attr(,"method")
 #> [1] "chi-square approximation"
 

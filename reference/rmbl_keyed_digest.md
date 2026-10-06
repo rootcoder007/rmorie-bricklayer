@@ -44,11 +44,13 @@ two differ in length.
 
 ## Details
 
-`core_digest_equal()` compares two digests in constant time. Use it
-instead of `==` whenever the comparison is against a value an attacker
-supplied: a short-circuiting comparison leaks, through its own timing,
-how many leading characters were correct, which is enough to recover a
-tag byte by byte.
+`core_digest_equal()` compares two digests in constant time (verified
+under valgrind memcheck in CI with both inputs marked secret:
+`inst/ctcheck`, case `digest-equal`). Use it instead of `==` whenever
+the comparison is against a value an attacker supplied: a
+short-circuiting comparison leaks, through its own timing, how many
+leading characters were correct, which is enough to recover a tag byte
+by byte.
 
 ## References
 

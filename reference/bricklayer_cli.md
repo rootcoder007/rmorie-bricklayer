@@ -83,7 +83,7 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.6
+#> rmoriebricklayer 0.5.7
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
