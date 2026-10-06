@@ -201,18 +201,29 @@ and a digest anyone can recompute says nothing about who produced the data.
 Everything cryptographic in this package is a hand-written implementation:
 ML-KEM, ML-DSA, SLH-DSA, HQC, XMSS, the CTR_DRBG, SHA-2, SHA-3, BLAKE2b,
 ECDSA and RSA verification, the ASN.1/DER parser and the X.509 / OCSP /
-timestamp stack. It has had **no third-party security audit and no
-side-channel evaluation**. What has been checked is correctness: the
-standardised schemes are byte-identical to OpenSSL 3.5 and reproduce the
-NIST known-answer vectors (next section), and the suite runs under
-AddressSanitizer and UndefinedBehaviorSanitizer in CI. Where this document
-or a help page says "constant time", read it as the design the code
-follows (table-free S-boxes, masked shifts, constant-time tag comparison),
-not as a property anyone has measured -- HQC's valgrind check is the one
-exception, and one module does not license a package-wide claim. Use the
-schemes for provenance and research; for anything where a key's secrecy
-is load-bearing, prefer an audited library and keep this one's output as
-a cross-check.
+timestamp stack. Each property below is **measured in CI on every change**,
+by a check you can run yourself; none is a claim about the design.
+
+| Property | How it is checked | Where |
+|---|---|---|
+| Correct | Byte-identical to OpenSSL 3.5 (ML-KEM, ML-DSA, SLH-DSA) and to the NIST / reference known-answer vectors (HQC 300 KATs, CTR_DRBG CAVP, SHA-3, XMSS); SHA-2, HMAC, PBKDF2, BLAKE2b, CRC-32 against `digest`/`openssl` and the RFC vectors | `tests/testthat/test-fips-*.R`, `test-hqc*.R`, `test-xmss-kat.R`, `test-byte-parity.R` |
+| Rejects what a verifier must reject | 1,247 Project Wycheproof vectors: ECDSA P-256/SHA-256 (484), P-384/SHA-384 (504), RSASSA-PKCS1-v1_5 2048/SHA-256 (259) -- malformed DER, non-canonical integers, r or s out of range, points off the curve, every padding and DigestInfo variant. Every valid vector verifies, every invalid one is refused, and the legacy "acceptable" encodings are refused too | `tests/testthat/test-wycheproof.R` |
+| Constant time | ctgrind: every operation that touches a secret runs under valgrind memcheck with the secret marked undefined, so a branch or a memory address depending on it is an error. 22 cases -- ML-KEM 512/768/1024 (keygen, encaps, decaps and implicit rejection), ML-DSA 44/65/87 (keygen, sign), SLH-DSA (SHAKE and SHA-2 families), HQC 1/3/5 and round 4, XMSS, CTR_DRBG on the portable and the AES-NI path, HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3, digest comparison -- all clean with GCC and with Clang. The only values the schemes branch on are the ones their specifications publish (a rejected sample, the challenge, the hints, R), each declassified at one named line | `inst/ctcheck/`, workflow `constant-time` |
+| Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
+| Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
+| Survives hostile arguments | Every one of the 111 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.py`, `tests/testthat/test-review2.R` |
+| No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
+| Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
+| DER means DER | The parser refuses BER: long-form lengths below 128, lengths with leading zeros, non-minimal tags, end-of-contents octets, trailing bytes; `ECDSA-Sig-Value` must be exactly two canonical INTEGERs and the PKCS#1 block exactly the RFC 8017 DigestInfo | `src/rmbl_asn1.cpp`, `R/x509.R`, `R/timestamp.R` |
+
+What is not covered, stated as plainly: these are checks of this source on
+those compilers -- not of the machine code a different compiler, flag set or
+CPU microarchitecture produces, and not of physical side channels (power,
+EM, fault injection). No third-party audit has been commissioned; `SECURITY.md`
+has the threat model, the reporting address and the list of what each check
+would and would not catch. The checks are reproducible on any Linux machine
+with valgrind and clang: `bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh`
+and `bash inst/fuzz/build.sh && bash inst/fuzz/run.sh`.
 
 ## Verification
 

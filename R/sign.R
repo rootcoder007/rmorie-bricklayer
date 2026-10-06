@@ -96,11 +96,15 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-#' suite, which establishes correctness, not resistance to side channels:
-#' no third-party security audit and no timing or leakage analysis has been
-#' done. Use it for provenance and research, and read any constant-time
-#' wording in this documentation as a design intent, not a verified
-#' property.
+#' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+#' operation that touches a secret under valgrind memcheck with the secret
+#' marked undefined (the ctgrind method), so a branch or a memory address
+#' that depends on it is a reported error, and afterwards scans the dead
+#' stack for copies of the secret. Both checks run in CI on every change,
+#' with GCC and with Clang. They are checks of this code on those
+#' compilers, not of the hardware it runs on, and no third-party audit has
+#' been commissioned; the README's security section says exactly what is
+#' and is not covered.
 #' @export
 fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
@@ -462,11 +466,15 @@ fips_sizes <- function(scheme) {
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-#' suite, which establishes correctness, not resistance to side channels:
-#' no third-party security audit and no timing or leakage analysis has been
-#' done. Use it for provenance and research, and read any constant-time
-#' wording in this documentation as a design intent, not a verified
-#' property.
+#' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+#' operation that touches a secret under valgrind memcheck with the secret
+#' marked undefined (the ctgrind method), so a branch or a memory address
+#' that depends on it is a reported error, and afterwards scans the dead
+#' stack for copies of the secret. Both checks run in CI on every change,
+#' with GCC and with Clang. They are checks of this code on those
+#' compilers, not of the hardware it runs on, and no third-party audit has
+#' been commissioned; the README's security section says exactly what is
+#' and is not covered.
 #' @export
 oqs_keygen <- function(scheme = "ML-DSA-65") {
   .Deprecated("fips_keygen")
@@ -577,11 +585,15 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-#' suite, which establishes correctness, not resistance to side channels:
-#' no third-party security audit and no timing or leakage analysis has been
-#' done. Use it for provenance and research, and read any constant-time
-#' wording in this documentation as a design intent, not a verified
-#' property.
+#' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+#' operation that touches a secret under valgrind memcheck with the secret
+#' marked undefined (the ctgrind method), so a branch or a memory address
+#' that depends on it is a reported error, and afterwards scans the dead
+#' stack for copies of the secret. Both checks run in CI on every change,
+#' with GCC and with Clang. They are checks of this code on those
+#' compilers, not of the hardware it runs on, and no third-party audit has
+#' been commissioned; the README's security section says exactly what is
+#' and is not covered.
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
@@ -727,11 +739,15 @@ signing_public_key <- function(key) {
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-#' suite, which establishes correctness, not resistance to side channels:
-#' no third-party security audit and no timing or leakage analysis has been
-#' done. Use it for provenance and research, and read any constant-time
-#' wording in this documentation as a design intent, not a verified
-#' property.
+#' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+#' operation that touches a secret under valgrind memcheck with the secret
+#' marked undefined (the ctgrind method), so a branch or a memory address
+#' that depends on it is a reported error, and afterwards scans the dead
+#' stack for copies of the secret. Both checks run in CI on every change,
+#' with GCC and with Clang. They are checks of this code on those
+#' compilers, not of the hardware it runs on, and no third-party audit has
+#' been commissioned; the README's security section says exactly what is
+#' and is not covered.
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                          deterministic = FALSE, prehash = "none") {
@@ -823,7 +839,9 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' Verify a capsule manifest signature
 #'
 #' Checks `signature` against `message`. For `"hmac"` the
-#' comparison is constant-time. For XMSS the Winternitz chains are walked
+#' comparison is constant-time (verified under valgrind memcheck in CI:
+#' `inst/ctcheck`, cases `digest-equal` and `hmac-sha256`). For XMSS the
+#' Winternitz chains are walked
 #' to their ends and the authentication path replayed to the Merkle root;
 #' the digest is bound to both the leaf index and the root, so a signature
 #' cannot be replayed at another index or under another key.

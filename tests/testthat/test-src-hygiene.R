@@ -147,7 +147,9 @@ test_that("every C entry point is registered and every registration resolves", {
     m <- m[nzchar(m)]
     defined <- c(defined, gsub("^SEXP\\s+|\\s*\\($", "", m))
   }
-  defined <- unique(defined)
+  # every entry point is a wrapper in rmbl_barrier.cpp around <name>_impl:
+  # the implementation names are the registered names
+  defined <- unique(sub("_impl$", "", defined))
 
   # A registration naming a function nobody defines fails to LINK; a
   # definition nobody registers is dead weight that R_useDynamicSymbols

@@ -180,14 +180,16 @@ struct Adrs {
 void prf_addr(unsigned char out[kN], const Ctx &ctx, const Adrs &adrs) {
 #if SLH_SHA2
     unsigned char tail[kAdrsBytes + kN];
+    unsigned char h[32];
+    rmbl_ct::Guard gt(tail, sizeof tail), gh(h, sizeof h);
     std::memcpy(tail, adrs.a, kAdrsBytes);
     std::memcpy(tail + kAdrsBytes, ctx.sk_seed, kN);
-    unsigned char h[32];
     /* one block of PK.seed is already in the midstate */
     rmbl_sha256_finish(ctx.mid256, 1, tail, sizeof tail, h);
     std::memcpy(out, h, kN);
 #else
     unsigned char buf[2 * kN + kAdrsBytes];
+    rmbl_ct::Guard gb(buf, sizeof buf);
     std::memcpy(buf, ctx.pub_seed, kN);
     std::memcpy(buf + kN, adrs.a, kAdrsBytes);
     std::memcpy(buf + kN + kAdrsBytes, ctx.sk_seed, kN);
@@ -284,6 +286,13 @@ void chain_lengths(unsigned int *lengths, const unsigned char *msg) {
     base_w(lengths, kWotsLen1, msg);
     wots_checksum(lengths + kWotsLen1, lengths);
 }
+
+/* Constant-time testing hook (inst/ctcheck): a value the specification
+ * publishes anyway -- the randomiser R, the signature's first field -- is declared public to the checker here,
+ * so the branch that follows is not reported. A no-op in the package. */
+#ifndef RMBL_SLHDSA_DECLASSIFY
+#define RMBL_SLHDSA_DECLASSIFY(ptr, len) ((void)0)
+#endif
 
 /* s applications of the tweakable hash starting at step `start`. */
 void gen_chain(unsigned char *out, const unsigned char *in,
@@ -417,6 +426,7 @@ void wots_gen_leaf(unsigned char *leaf, const Ctx &ctx, uint32_t addr_idx,
         sadrs.set_chain(static_cast<uint32_t>(i));
         sadrs.set_hash(0);
         unsigned char sk[kN];
+        rmbl_ct::Guard gsk(sk, sizeof sk);
         prf_addr(sk, ctx, wots_prf_adrs(sadrs, static_cast<uint32_t>(i)));
         /* when this leaf is the one being signed, the chain is stopped
          * at the message digit and that prefix IS the signature */
@@ -635,10 +645,12 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
     if (oidlen > 0) msg.insert(msg.end(), oid, oid + oidlen);
     msg.insert(msg.end(), m, m + mlen);
     unsigned char h[64];
+    rmbl_ct::Guard gm(msg.data(), msg.size()), gh(h, sizeof h);
     rmbl_hmac_shax(kShaXOut, sk_prf, kN, msg.data(), msg.size(), h);
     std::memcpy(R, h, kN);
 #else
     RmblKeccak st;
+    rmbl_ct::Guard gst(&st, sizeof st);
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, sk_prf, kN);
     rmbl_keccak_absorb(&st, opt_rand, kN);
@@ -716,6 +728,7 @@ void seed_keypair(unsigned char *pk, unsigned char *sk,
     std::memcpy(sk, seed, 3 * kN);
     std::memcpy(pk, sk + 2 * kN, kN);
     Ctx ctx;
+    rmbl_ct::Guard gctx(&ctx, sizeof ctx);
     std::memcpy(ctx.pub_seed, pk, kN);
     std::memcpy(ctx.sk_seed, sk, kN);
     ctx.prepare();
@@ -728,8 +741,11 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
           const unsigned char *opt_rand, const unsigned char *sk,
           const unsigned char *oid, size_t oidlen) {
     Ctx ctx;
+    rmbl_ct::Guard gctx(&ctx, sizeof ctx);
     const unsigned char *sk_prf = sk + kN;
     const unsigned char *pk = sk + 2 * kN;
+    /* PK.seed || PK.root inside the secret key are the public key */
+    RMBL_SLHDSA_DECLASSIFY(const_cast<unsigned char *>(pk), 2 * kN);
     unsigned char mhash[kForsMsgBytes];
     unsigned char root[kN];
     uint64_t tree;
@@ -740,6 +756,7 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
 
     gen_message_random(sig, sk_prf, opt_rand, ctxb, ctxlen, m, mlen,
                        oid, oidlen);
+    RMBL_SLHDSA_DECLASSIFY(sig, kN); /* R is published; every index below derives from it */
     hash_message(mhash, &tree, &idx_leaf, sig, pk, ctxb, ctxlen, m, mlen,
                  oid, oidlen);
     sig += kN;
@@ -751,6 +768,9 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
     wots_adrs.set_keypair(idx_leaf);
 
     fors_sign(sig, root, mhash, ctx, wots_adrs);
+    /* the FORS root is what the verifier recomputes from the signature, and
+     * each layer's root below is the WOTS+ message of the layer above */
+    RMBL_SLHDSA_DECLASSIFY(root, kN);
     sig += kForsBytes;
 
     for (int i = 0; i < kD; ++i) {
@@ -759,6 +779,7 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
         wots_adrs.copy_subtree(tree_adrs);
         wots_adrs.set_keypair(idx_leaf);
         merkle_sign(sig, root, ctx, wots_adrs, tree_adrs, idx_leaf);
+        RMBL_SLHDSA_DECLASSIFY(root, kN);
         sig += kWotsBytes + kTreeHeight * kN;
         /* climb one layer: this subtree's index becomes the leaf index
          * of the layer above */

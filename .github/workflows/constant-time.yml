@@ -1,0 +1,49 @@
+# Constant-time verification of every secret-handling primitive, the way
+# ctgrind does it: secrets are marked undefined for valgrind memcheck and
+# the primitive runs; any branch or memory address that depends on them
+# is a memcheck error. Clean = no secret-dependent branch exists in this
+# binary. The same harness scans the dead stack for secret remnants after
+# each operation (zeroisation). Sources and cases: inst/ctcheck/.
+name: constant-time
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'inst/ctcheck/**', '.github/workflows/constant-time.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'inst/ctcheck/**', '.github/workflows/constant-time.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: constant-time-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  memcheck:
+    name: valgrind memcheck (${{ matrix.cxx }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++, clang++]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends valgrind r-base-dev g++ clang
+      - name: Build the harness
+        run: CXX=${{ matrix.cxx }} bash inst/ctcheck/build.sh
+      - name: Run every case under memcheck
+        run: bash inst/ctcheck/run.sh
+      - name: Memcheck logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memcheck-${{ matrix.cxx }}
+          path: inst/ctcheck/build/*.log

@@ -74,7 +74,7 @@ test_that("the JSON parser refuses duplicate keys, deep nesting and lone surroga
                                     simplifyVector = FALSE)
   expect_length(kept, 2L)
   deep <- paste0(strrep("[", 20000), strrep("]", 20000))
-  expect_error(bricklayer_json_from_json(deep), "nesting deeper than 200")
+  expect_error(bricklayer_json_from_json(deep), "nesting deeper than 100")
   expect_error(bricklayer_json_from_json('{"k":"\\ud800"}'), "lone surrogate")
   expect_identical(bricklayer_json_from_json('{"k":"\\ud83d\\ude00"}')$k, "\U0001F600")
   expect_warning(v <- bricklayer_json_from_json("[12345678901234567890]"), "exceeds 2\\^53")
@@ -112,7 +112,7 @@ test_that("public URLs are https, public and never file://", {
   expect_error(chk("https://192.168.1.1/"), "local or private")
   expect_error(chk("https://172.16.0.1/"), "local or private")
   expect_error(chk("https://[::1]/"), "local or private")
-  expect_error(chk("https://user@[fe80::1]/"), "local or private")
+  expect_error(chk("https://user@[fe80::1]/"), "local or private|refused")
   expect_identical(chk("https://172.32.0.1/"), "https://172.32.0.1/")
   withr::local_options(rmoriebricklayer.allow_http = TRUE)
   expect_identical(chk("http://data.ontario.ca/"), "http://data.ontario.ca/")
@@ -176,12 +176,20 @@ test_that("hostile DER is an error, not an abort", {
 })
 
 test_that("a DRBG reseeds itself in a new process", {
+  skip_on_os("windows")
+  skip_if_not_installed("parallel")
   d <- drbg_new(as.raw(0:47))
   expect_identical(d$pid, Sys.getpid())
-  d$pid <- -1L
-  x <- drbg_generate(d, 16)
-  expect_identical(d$pid, Sys.getpid())
-  # and the stream is no longer the deterministic one
-  e <- drbg_new(as.raw(0:47))
-  expect_false(identical(x, drbg_generate(e, 16)))
+  parent <- drbg_generate(d, 16)
+  # the SAME generator object, used in a forked child: the child's pid
+  # differs, so it must reseed and produce other bytes than the parent's
+  # deterministic continuation would
+  d2 <- drbg_new(as.raw(0:47))
+  job <- parallel::mcparallel(drbg_generate(d2, 16))
+  child <- parallel::mccollect(job)[[1L]]
+  expect_false(identical(child, parent))
+  expect_false(identical(child, drbg_generate(drbg_new(as.raw(0:47)), 16)))
+  # while two generators in one process from one seed agree
+  expect_identical(drbg_generate(drbg_new(as.raw(0:47)), 16),
+                   drbg_generate(drbg_new(as.raw(0:47)), 16))
 })

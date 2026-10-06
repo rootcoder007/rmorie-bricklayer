@@ -60,7 +60,9 @@ make_manifest <- function(meta, environment = TRUE) {
   # the package owns the synthetic flag: set here from BRICKLAYER_SYNTHETIC
   # (the reference pipeline sets it for its analysis subprocess), so a
   # manifest written on generated data says so whatever the script did
-  meta$synthetic <- isTRUE(meta$synthetic) || .rmbl_synthetic_env()
+  # the flag is written only when it is TRUE: a manifest of real data keeps
+  # the digest it had before the flag existed
+  if (isTRUE(meta$synthetic) || .rmbl_synthetic_flag()) meta$synthetic <- TRUE
   m <- list(meta = meta, results = list())
   if (isTRUE(environment)) m$environment <- capture_environment()
   m
@@ -182,7 +184,9 @@ record <- function(manifest, name, observed, expected,
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
   path <- .rmbl_string1(path, "path")
   # never written without the flag (see make_manifest())
-  manifest$meta$synthetic <- isTRUE(manifest$meta$synthetic) || .rmbl_synthetic_env()
+  if (isTRUE(manifest$meta$synthetic) || .rmbl_synthetic_flag()) {
+    manifest$meta$synthetic <- TRUE
+  }
   if (isTRUE(canonical)) {
     writeLines(manifest_canonical(manifest), path, useBytes = TRUE)
     return(invisible(path))
@@ -250,10 +254,12 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' @export
 manifest_canonical <- function(manifest) {
   if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
+  # keep_empty_names: an empty-string key is written as "", not renamed to
+  # its position, so two documents differing only there do not share a digest
   bricklayer_json_to_json(.rmbl_sort_keys(manifest),
     auto_unbox = TRUE,
     pretty = FALSE, na = "null", null = "null",
-    digits = I(17)
+    digits = I(17), keep_empty_names = TRUE
   )
 }
 
@@ -287,9 +293,11 @@ manifest_digest <- function(manifest) {
   if (is.null(nm)) {
     return(x)
   }
-  # an empty-string key is a legal JSON key; it sorts first. Leaving such
-  # a level in insertion order made a legitimately re-serialised manifest
-  # fail its own signature.
+  # A list with a names attribute is a JSON object, and an empty string is
+  # a legal key that sorts first: {"":"X"} and {"1":"X"} are different
+  # documents (the encoder writes "" as "", see manifest_canonical()). A
+  # level with no non-empty name at all is an array and keeps its order.
+  if (!any(nzchar(nm))) return(unname(x))
   x[order(nm, method = "radix")]
 }
 

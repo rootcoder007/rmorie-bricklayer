@@ -4,7 +4,7 @@
 \alias{cramers_v}
 \title{Association in a contingency table}
 \usage{
-cramers_v(tbl, bias_correct = TRUE, min_expected = 5)
+cramers_v(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L)
 }
 \arguments{
 \item{tbl}{A table or matrix of counts.}
@@ -16,6 +16,9 @@ is an artefact of the table's size.}
 
 \item{min_expected}{Expected count below which the
 chi-square approximation is unreliable. Reported, not enforced.}
+
+\item{seed}{Seed for the Monte Carlo branch; the caller's RNG stream is
+restored afterwards.}
 }
 \value{
 A list with \code{v}, \code{chisq}, \code{df}, \code{p_value},

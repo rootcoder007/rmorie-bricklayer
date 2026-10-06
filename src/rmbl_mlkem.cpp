@@ -87,7 +87,7 @@ static int mlkem_level(SEXP level) {
     return INTEGER(level)[0];
 }
 
-SEXP C_rmbl_mlkem_sizes(SEXP level) {
+SEXP C_rmbl_mlkem_sizes_impl(SEXP level) {
     int ek = 0, dk = 0, ct = 0;
     switch (mlkem_level(level)) {
     case 512:
@@ -119,7 +119,7 @@ SEXP C_rmbl_mlkem_sizes(SEXP level) {
     return out;
 }
 
-SEXP C_rmbl_mlkem_keygen(SEXP level, SEXP seed) {
+SEXP C_rmbl_mlkem_keygen_impl(SEXP level, SEXP seed) {
     if (TYPEOF(seed) != RAWSXP || XLENGTH(seed) != 64) {
         Rf_error("`seed` must be a raw vector of 64 bytes (d || z)");
     }
@@ -142,7 +142,7 @@ SEXP C_rmbl_mlkem_keygen(SEXP level, SEXP seed) {
 /* `m` is the 32 bytes of encapsulation randomness. Supplying it makes
  * the operation reproducible, which is what the standard's test vectors
  * need; a caller wanting a fresh secret passes fresh bytes. */
-SEXP C_rmbl_mlkem_encaps(SEXP level, SEXP ek, SEXP m) {
+SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
     if (TYPEOF(m) != RAWSXP || XLENGTH(m) != 32) {
         Rf_error("`m` must be a raw vector of 32 bytes");
     }
@@ -171,7 +171,7 @@ SEXP C_rmbl_mlkem_encaps(SEXP level, SEXP ek, SEXP m) {
     });
 }
 
-SEXP C_rmbl_mlkem_decaps(SEXP level, SEXP dk, SEXP ct) {
+SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
             Rf_error("`dk` must be a raw vector of %d bytes", M::kDkBytes);

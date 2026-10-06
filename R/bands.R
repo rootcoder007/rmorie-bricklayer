@@ -55,39 +55,66 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
   }
   lab <- as.character(x)
   s <- tolower(trimws(lab))
-  # normalise the dash family, which publishers mix freely
-  s <- gsub("[\u2010\u2011\u2012\u2013\u2014\u2015]", "-", s)
+  # normalise the dash family, which publishers mix freely. Byte-wise, so
+  # the en dash -- the commonest published separator -- parses in a C
+  # locale too, where a UTF-8 pattern aborted the call.
+  dashes <- paste(c("\xe2\x80\x90", "\xe2\x80\x91", "\xe2\x80\x92", "\xe2\x80\x93",
+                    "\xe2\x80\x94", "\xe2\x80\x95", "\xe2\x88\x92"), collapse = "|")
+  s <- gsub(dashes, "-", s, useBytes = TRUE, perl = TRUE)
   s <- gsub("\\s+", " ", s)
-  # thousands separators ("1,000 to 2,499", the commonest published form)
-  s <- gsub("(?<=[0-9]),(?=[0-9]{3}(?![0-9]))", "", s, perl = TRUE)
+  # thousands separators ("1,000 to 2,499", the commonest published form):
+  # only a correctly grouped number loses its commas; "12,34,567" is not
+  # a number and stays as it is, so the label stays NA
+  s <- vapply(s, function(z) {
+    if (is.na(z)) return(z)
+    m <- gregexpr("(?<![0-9,])[0-9]{1,3}(?:,[0-9]{3})+(?![0-9,])", z, perl = TRUE)[[1L]]
+    if (m[1L] > 0) {
+      toks <- regmatches(z, list(m))[[1L]]
+      regmatches(z, list(m)) <- list(gsub(",", "", toks, fixed = TRUE))
+    }
+    z
+  }, character(1), USE.NAMES = FALSE)
   n <- length(s)
   lower <- rep(NA_real_, n)
   upper <- rep(NA_real_, n)
   ol <- rep(FALSE, n)
   ou <- rep(FALSE, n)
   num <- function(z) suppressWarnings(as.numeric(z))
-  step <- if (isTRUE(integer_scale)) 1 else 0
+  cue_re <- "\\b(over|above|more|plus|under|less|below|fewer|greater|than|gt|lt)\\b"
 
   for (i in seq_len(n)) {
     z <- s[i]
     if (!nzchar(z) || is.na(z)) next
-    # "18 to 24", "ages 18-24", "18 to 24 years". The whole label must be
-    # consumed: "100-200-300" has no reading, and "15 to 19 and over"
-    # contradicts itself, so both stay NA rather than parsing as the
-    # first two numbers. Inverted bounds ("24 to 18") stay NA too.
+    # a label written with decimals is on a decimal scale whatever
+    # `integer_scale` says: "under 0.5" is not "at most -0.5"
+    step <- if (isTRUE(integer_scale) && !grepl("[0-9]\\.[0-9]", z)) 1 else 0
+    # "18 to 24", "ages 18-24", "18 to 24 (years)", "0 to 5 overnight
+    # stays". The two numbers must be the only digits in the label:
+    # "100-200-300" has no reading, and "15 to 19 and over" contradicts
+    # itself, so both stay NA rather than parsing as the first two
+    # numbers. A cue word (over, under, more ...) anywhere -- in the
+    # leading word slot or the trailing unit -- is a contradiction too,
+    # matched as a WORD: "overnight" is not "over". Inverted bounds
+    # ("24 to 18") stay NA.
     m <- regmatches(z, regexec(paste0(
-      "^(?:[a-z]+ )?(-?[0-9]*\\.?[0-9]+) ?(?:to|-|through) ?",
-      "(-?[0-9]*\\.?[0-9]+)((?: [a-z]+)*) ?$"), z))[[1L]]
-    if (length(m) == 4L) {
-      lo <- num(m[2L])
-      up <- num(m[3L])
-      cue <- grepl("over|above|more|plus|under|less|below|fewer", m[4L])
+      "^([a-z]+ )?(-?[0-9]*\\.?[0-9]+) ?(?:to|-|through) ?",
+      "(-?[0-9]*\\.?[0-9]+)([^0-9]*)$"), z))[[1L]]
+    if (length(m) == 5L) {
+      lo <- num(m[3L])
+      up <- num(m[4L])
+      cue <- grepl(cue_re, m[2L], perl = TRUE) || grepl(cue_re, m[5L], perl = TRUE) ||
+        grepl("\\+", m[5L])
       if (!cue && !is.na(lo) && !is.na(up) && lo <= up) {
         lower[i] <- lo
         upper[i] <- up
       }
       next
     }
+    # From here on a label names ONE bound. Two numbers that did not read
+    # as a range above ("more than 10 - 20", "under 18 to 24") contradict
+    # themselves and stay NA rather than yielding the first number.
+    nums <- regmatches(z, gregexpr("-?[0-9]*\\.?[0-9]+", z))[[1L]]
+    if (length(nums) != 1L) next
     # An open UPPER band. The INCLUSIVE wordings go first: "65 and
     # over" includes 65, and the bare "over" in the exclusive pattern
     # below matches it too, which moved the bound by a whole unit of
@@ -160,7 +187,10 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
 #' `open_upper_factor`, which is an assumption and is flagged as one.
 #' @param open_upper_factor Multiplier used when no
 #' cap is given.
-#' @param open_lower_floor Lower bound to assume
+#' @param open_lower_floor Lower bound assumed for an open lower band
+#'   ("under 18"). `NULL`, the default, uses 0, or the band's own upper
+#'   bound when that is below 0; an explicit floor above a band's upper
+#'   bound is refused.
 #' for an open bottom band. Defaults to zero.
 #' @return The band table with a `value` column and an `assumed`
 #' column marking the rows whose value rests on the open-band assumption.
@@ -177,7 +207,7 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
 band_values <- function(bands, rule = c("midpoint", "lower", "upper",
                                         "geometric"),
                         open_upper_cap = NULL, open_upper_factor = 2,
-                        open_lower_floor = 0) {
+                        open_lower_floor = NULL) {
   rule <- match.arg(rule)
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
   need <- c("lower", "upper", "open_lower", "open_upper")
@@ -206,7 +236,23 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
     }
   }
   if (any(bands$open_lower)) {
-    lo[bands$open_lower] <- as.numeric(open_lower_floor)[1L]
+    # the mirror of the cap above: a floor above the band's own upper bound
+    # would put the midpoint outside the band. The default floor is 0, or
+    # the band's upper bound when that is lower ("under 0").
+    floor_v <- if (is.null(open_lower_floor)) {
+      pmin(0, hi[bands$open_lower])
+    } else {
+      rep(as.numeric(open_lower_floor)[1L], sum(bands$open_lower))
+    }
+    if (any(floor_v > hi[bands$open_lower], na.rm = TRUE)) {
+      stop(sprintf(paste0("the open-band floor (%s) lies above the band's own ",
+                          "upper bound (%s); a midpoint there would be above ",
+                          "every value in the band"),
+                   format(max(floor_v, na.rm = TRUE)),
+                   format(min(hi[bands$open_lower], na.rm = TRUE))),
+           call. = FALSE)
+    }
+    lo[bands$open_lower] <- floor_v
   }
   value <- switch(rule,
     lower = lo,

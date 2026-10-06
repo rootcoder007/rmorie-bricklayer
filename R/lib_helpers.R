@@ -223,6 +223,7 @@ write_text_fallback <- function(text, path) {
 #' @noRd
 .rmbl_read_json <- function(x, simplify = TRUE) {
   if (length(x) == 1L && grepl("^https?://", x)) {
+    .rmbl_check_public_url(x, "url")
     dest <- tempfile(fileext = ".json")
     on.exit(unlink(dest), add = TRUE)
     .rmbl_fetch_url(x, dest)
@@ -230,7 +231,12 @@ write_text_fallback <- function(text, path) {
   }
   txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
-  bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify))
+  # a portal's metadata is read the way jsonlite reads it: a repeated key
+  # keeps its last value and a long numeric id is not a warning. The
+  # package's own documents (provenance, manifests, bundles) keep the
+  # strict defaults.
+  bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify),
+                            duplicate_keys = "keep", bigint_warn = FALSE)
 }
 
 # The compiled fetcher inside the package; plain download.file when this
@@ -285,45 +291,56 @@ write_text_fallback <- function(text, path) {
 # metadata address -- the SSRF targets.
 #' @noRd
 .rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
-                                   allow_http = getOption("rmoriebricklayer.allow_http", FALSE)) {
+                                   allow_http = getOption("rmoriebricklayer.allow_http", FALSE),
+                                   resolve = FALSE) {
   url <- as.character(unlist(url))[1L]
   if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)
   if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) return(url)
   if (!grepl("^[a-z][a-z0-9+.-]*://", url, ignore.case = TRUE)) {
     stop(sprintf("%s has no URL scheme: '%s'", what, url), call. = FALSE)
   }
+  # One implementation, in C, shared with the transport itself: the
+  # authority is parsed as a URL parser does, IPv4 literals are read with
+  # inet_aton's grammar (127.1, 0177.0.0.1, 2130706433, 0x7f000001), IPv6
+  # with inet_pton, local names are refused by suffix, and with `resolve`
+  # every address the name resolves to is tested. The fetch layer always
+  # resolves, and pins the connection to the addresses it checked.
+  why <- .Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve))
+  if (!nzchar(why)) return(url)
   scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
-  ok_schemes <- c("https", if (isTRUE(allow_http)) "http")
-  if (!scheme %in% ok_schemes) {
+  if (startsWith(why, "plain http") || startsWith(why, "scheme ")) {
     stop(sprintf(paste0("%s must be an https:// URL, not %s:// ('%s'); ",
                         "options(rmoriebricklayer.allow_http = TRUE) admits a ",
                         "trusted plain-http mirror"), what, scheme, url),
          call. = FALSE)
   }
-  host <- sub("^[a-z][a-z0-9+.-]*://(?:[^/@]*@)?([^/?#]+).*$", "\\1", url,
-              ignore.case = TRUE, perl = TRUE)
-  host <- tolower(host)
-  host <- if (startsWith(host, "[")) sub("^\\[([^]]*)\\].*$", "\\1", host) else sub(":[0-9]*$", "", host)
-  if (host %in% c("localhost", "0.0.0.0", "::", "::1") ||
-      grepl("\\.localhost$", host) || .rmbl_private_host(host)) {
-    stop(sprintf("%s points at a local or private address ('%s'): refused", what, host),
-         call. = FALSE)
+  if (grepl("local|private|resolves", why)) {
+    stop(sprintf("%s points at a local or private address ('%s'): refused (%s)",
+                 what, url, why), call. = FALSE)
   }
-  url
+  stop(sprintf("%s is refused: %s ('%s')", what, why, url), call. = FALSE)
 }
 
+# TRUE when `host` (a bare host, with or without brackets) is one the
+# validator refuses: a loopback, private, link-local, metadata or local
+# name in any spelling. Kept for callers that classify hosts directly.
 #' @noRd
 .rmbl_private_host <- function(host) {
-  if (grepl("^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$", host)) {
-    o <- as.integer(strsplit(host, ".", fixed = TRUE)[[1L]])
-    return(o[1L] %in% c(0L, 10L, 127L) ||
-             (o[1L] == 169L && o[2L] == 254L) ||
-             (o[1L] == 172L && o[2L] >= 16L && o[2L] <= 31L) ||
-             (o[1L] == 192L && o[2L] == 168L) ||
-             (o[1L] == 100L && o[2L] >= 64L && o[2L] <= 127L))
-  }
-  # IPv6 literals: loopback, link-local, unique-local, mapped IPv4
-  grepl("^(fe[89ab][0-9a-f]:|f[cd][0-9a-f]{2}:|::1$|::ffff:|0:0:0:0:0:0:0:1$)", host)
+  host <- as.character(host)[1L]
+  if (is.na(host) || !nzchar(host)) return(TRUE)
+  h <- if (grepl(":", host, fixed = TRUE) && !startsWith(host, "[")) paste0("[", host, "]") else host
+  nzchar(.Call(C_rmbl_url_check, paste0("https://", h, "/"), FALSE, FALSE))
+}
+
+# In-process synthetic state: make_synthetic_csv() sets it, so a manifest
+# built in the same session says synthetic whether or not the environment
+# variable was set.
+#' @noRd
+.rmbl_synth_state <- new.env(parent = emptyenv())
+
+#' @noRd
+.rmbl_synthetic_flag <- function() {
+  .rmbl_synthetic_env() || isTRUE(.rmbl_synth_state$made)
 }
 
 # The package, not the analysis script, owns the synthetic flag: set by

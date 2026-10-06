@@ -154,6 +154,7 @@ extern SEXP C_rmbl_pbkdf2(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_os_random(SEXP);
 /* .Call wrappers (defined in rmbl_fetch.cpp) -- libcurl fetch + wayback */
 extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_url_check(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP);
 /* .Call wrappers (defined in rmbl_siu.cpp) -- vendored SIU parse/resolve */
 extern SEXP C_rmbl_siu_html_to_text(SEXP);
@@ -224,6 +225,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_sha512",         (DL_FUNC) &C_rmbl_sha512,         1},
     {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
     {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        2},
+    {"C_rmbl_url_check",      (DL_FUNC) &C_rmbl_url_check,      3},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},
     {"C_rmbl_siu_parse_html",        (DL_FUNC) &C_rmbl_siu_parse_html,        1},
     {"C_rmbl_siu_to_iso_date",       (DL_FUNC) &C_rmbl_siu_to_iso_date,       1},

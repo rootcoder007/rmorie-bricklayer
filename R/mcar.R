@@ -310,6 +310,11 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
   }
   out <- list(statistic = d2,
               df = df,
+              log_p_value = if (df > 0) {
+                stats::pchisq(d2, df, lower.tail = FALSE, log.p = TRUE)
+              } else {
+                NA_real_
+              },
               p_value = if (df > 0) {
                 stats::pchisq(d2, df, lower.tail = FALSE)
               } else {

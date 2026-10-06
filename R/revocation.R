@@ -160,6 +160,12 @@ revocation_fetch <- function(path, timeout = 10) {
   # errors out, which surfaces as a NOTE about foreign function calls
   # that says nothing about the call being wrong.
   no_fallback <- NA_character_
+  # the URL comes out of the certificate being verified -- the most
+  # attacker-controlled URL in the package
+  if (is.null(tryCatch(.rmbl_check_public_url(url, "the CRL/OCSP URL"),
+                       error = function(e) NULL))) {
+    return(NULL)
+  }
   got <- tryCatch(
     .Call(C_rmbl_fetch_fallback, url, no_fallback, tmp,
           as.integer(timeout)),

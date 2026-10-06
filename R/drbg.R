@@ -22,7 +22,9 @@
 #' `drbg_generate(d, 48)` gives the `seed` of their vector 0. AES runs in
 #' constant time: the S-box is computed (an inversion in GF(2^8) and the affine
 #' map) rather than looked up, and on x86-64 processors with AES-NI the rounds
-#' use those instructions.
+#' use those instructions. Both paths are checked under valgrind memcheck with
+#' the entropy input marked secret (`inst/ctcheck`, case `drbg-portable` and
+#' `drbg-aesni`).
 #'
 #' The generator is an object that changes as it is used: every
 #' [drbg_generate()] and
@@ -55,11 +57,15 @@
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
-#' suite, which establishes correctness, not resistance to side channels:
-#' no third-party security audit and no timing or leakage analysis has been
-#' done. Use it for provenance and research, and read any constant-time
-#' wording in this documentation as a design intent, not a verified
-#' property.
+#' suite. Side channels are checked, not assumed: `inst/ctcheck` runs every
+#' operation that touches a secret under valgrind memcheck with the secret
+#' marked undefined (the ctgrind method), so a branch or a memory address
+#' that depends on it is a reported error, and afterwards scans the dead
+#' stack for copies of the secret. Both checks run in CI on every change,
+#' with GCC and with Clang. They are checks of this code on those
+#' compilers, not of the hardware it runs on, and no third-party audit has
+#' been commissioned; the README's security section says exactly what is
+#' and is not covered.
 #' @export
 drbg_new <- function(entropy = NULL, personalization = NULL) {
   # the generator is an environment and is not meant to be serialised:

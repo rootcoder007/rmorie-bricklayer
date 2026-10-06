@@ -130,7 +130,7 @@ static int mldsa_mode(SEXP mode) {
 
 /* ML-DSA (FIPS 204) public interface. Sizes are fixed by the parameter
  * set and reported so a caller never has to guess. */
-SEXP C_rmbl_mldsa_sizes(SEXP mode) {
+SEXP C_rmbl_mldsa_sizes_impl(SEXP mode) {
     int pkb = 0, skb = 0, sgb = 0;
     switch (mldsa_mode(mode)) {
     case 44:
@@ -160,7 +160,7 @@ SEXP C_rmbl_mldsa_sizes(SEXP mode) {
     return out;
 }
 
-SEXP C_rmbl_mldsa_keypair(SEXP mode, SEXP seed) {
+SEXP C_rmbl_mldsa_keypair_impl(SEXP mode, SEXP seed) {
     if (TYPEOF(seed) != RAWSXP || XLENGTH(seed) != 32) {
         Rf_error("`seed` must be a raw vector of 32 bytes");
     }
@@ -180,7 +180,7 @@ SEXP C_rmbl_mldsa_keypair(SEXP mode, SEXP seed) {
     });
 }
 
-SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
+SEXP C_rmbl_mldsa_sign_impl(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
                        SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
@@ -214,7 +214,7 @@ SEXP C_rmbl_mldsa_sign(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
     });
 }
 
-SEXP C_rmbl_mldsa_verify(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
+SEXP C_rmbl_mldsa_verify_impl(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
                          SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
@@ -251,7 +251,7 @@ SEXP C_rmbl_mldsa_verify(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
  * the message can be streamed past a boundary the key does not cross.
  * mu still binds the public key (through tr) and the context, so it is
  * not a bare digest and cannot be moved between keys. */
-SEXP C_rmbl_mldsa_mu(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP prehash) {
+SEXP C_rmbl_mldsa_mu_impl(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         Rf_error("`ctx` must be a raw vector of at most 255 bytes");
@@ -280,7 +280,7 @@ SEXP C_rmbl_mldsa_mu(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP prehash) {
     });
 }
 
-SEXP C_rmbl_mldsa_sign_mu(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
+SEXP C_rmbl_mldsa_sign_mu_impl(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
     if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
         Rf_error("`mu` must be a raw vector of 64 bytes");
     }
@@ -299,7 +299,7 @@ SEXP C_rmbl_mldsa_sign_mu(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
     });
 }
 
-SEXP C_rmbl_mldsa_verify_mu(SEXP mode, SEXP pk, SEXP mu, SEXP sig) {
+SEXP C_rmbl_mldsa_verify_mu_impl(SEXP mode, SEXP pk, SEXP mu, SEXP sig) {
     if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
         return Rf_ScalarLogical(FALSE);
     }

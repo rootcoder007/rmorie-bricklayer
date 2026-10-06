@@ -1,3 +1,140 @@
+# rmoriebricklayer 0.5.7
+
+A release about measuring what the 0.5.6 README could only describe. Every
+claim in the new "Security posture" table is a check that runs in CI.
+
+* **Constant-time verification, every primitive.** `inst/ctcheck/` runs
+  ML-KEM, ML-DSA, SLH-DSA, HQC (v5 and round 4), XMSS, the CTR_DRBG, HMAC,
+  PBKDF2, keyed BLAKE2b, SHA-2, SHA-3 and the digest comparison under
+  valgrind memcheck with their secrets marked undefined (ctgrind), with GCC
+  and Clang; a branch or memory address that depends on a secret fails the
+  `constant-time` workflow. The run found and this release fixes: ML-KEM's
+  `ByteEncode` branched on every bit it packed (the secret key included);
+  the hex encoder used a table indexed by the secret nibble (every HMAC,
+  PBKDF2 and key output); ML-DSA's norm check returned at the first
+  offending coefficient; PBKDF2 round-tripped each MAC through hex and
+  branched on the characters; XMSS measured its hex-encoded seeds with
+  `strlen()`. The values the specifications publish (rejected samples, the
+  challenge, the hints, R) are declassified at one named line each.
+* **Secrets are wiped.** The same harness scans the dead stack after each
+  operation for copies of the seed, signing key or password. Every scheme
+  left at least one; all temporaries now clear on every return path
+  (`rmbl_ct::Guard`), and the scan is part of the gate.
+* **Wycheproof.** 1,247 Project Wycheproof vectors (ECDSA P-256/SHA-256,
+  P-384/SHA-384, RSASSA-PKCS1-v1_5 2048/SHA-256) run in the test suite.
+  They found that the DER parser accepted BER (long-form lengths below
+  128, lengths with leading zeros, non-minimal tags, end-of-contents
+  octets), that `ECDSA-Sig-Value` was accepted with extra elements,
+  padded or negative integers, and that a PKCS#1 block was checked field
+  by field rather than against RFC 8017's exact DigestInfo bytes. All
+  three are fixed; every valid vector verifies, every invalid and every
+  legacy "acceptable" one is refused.
+* **Fuzzing.** `inst/fuzz/` holds libFuzzer targets (ASan + UBSan) for the
+  DER parser and RSA arithmetic, the decimal-to-double conversion (compared
+  bit for bit with the C library), and the SIU report parsers, with seed
+  corpora; the `fuzz` workflow runs them on every change and for longer
+  weekly.
+* `SECURITY.md`: threat model, what each check catches and does not,
+  reporting. The README's "Security posture" is now that table.
+* `rmbl_hmac_sha256_raw()` joins the C API (the hex variant is a wrapper).
+
+The second review of 0.5.6 (2026-10-06) asked for each fix's neighbours.
+Every item below has a test in `tests/testthat/test-review2.R`.
+
+* **Every `.Call` entry point has the exception barrier**, not two of 110:
+  `src/rmbl_barrier.cpp`, generated from `init.c` by
+  `inst/scripts/gen_barrier.py`, wraps each entry so a C++ exception is an
+  R error raised after every destructor has run. Seven `NULL`s to
+  `hawkes_rescaled`, a 2 GB `shake`, mismatched `theil_sen` lengths (a
+  40 MB out-of-bounds read), a 4 TB `sen_slopes`, a 2^31 reservoir and an
+  INT_MAX PBKDF2 are all plain errors now; the quadratic loops and the RSA
+  arithmetic check for Ctrl-C; the RSA public exponent is capped at 64
+  bytes (1 KB took 1.2 s, 1 MB would have taken 20 minutes, from a
+  certificate); `shake` output and PBKDF2 iterations are capped; every
+  string argument goes through one `rmbl_str0()`; the DER tree is converted
+  under `R_UnwindProtect`, so an allocation failure cannot skip its
+  destructor either.
+* **SSRF gate rewritten, in the transport.** `src/rmbl_fetch.cpp` parses the
+  authority as a URL parser does (`#@` and `?@` no longer hide a host, any
+  userinfo is refused), reads IPv4 literals with `inet_aton`'s grammar
+  (`127.1`, `0177.0.0.1`, `2130706433`, `0x7f000001`), IPv6 with
+  `inet_pton` (mapped, NAT64, link-local, unique-local), refuses local
+  names by suffix (`localhost`, `.local`, `.internal`, `.localdomain`,
+  `.home.arpa`), resolves every hostname and tests every address, pins the
+  connection to those addresses (`CURLOPT_RESOLVE`, so DNS rebinding
+  cannot answer differently), follows redirects itself one checked hop at
+  a time (an `https` fetch cannot be bounced to `http` or to a private
+  host), and caps a chunked download. `bricklayer_fetch()`,
+  `.rmbl_read_json()`, the CRL/OCSP fetch, the Wayback resolver and the
+  hosted-model client all go through it. `.rmbl_check_public_url()` calls
+  the same C check.
+* `verify_capsule()`: `provenance_file` is contained like every other
+  path (a symlinked `data_provenance.json` verified tampered data as
+  intact); `data_not_synthetic` is a required row that always exists and
+  reads the sidecar, the manifest and the provenance; a `manifest.json` in
+  the capsule is checked by default and `manifest_consistent` /
+  `script_sha256` are required whenever they apply; a `sha256` or
+  `filename` that is not a single string, an unreadable file or a
+  directory are failed rows, not R errors.
+* `manifest_digest()` is injective again: the canonical encoder writes an
+  empty key as `""` (0.5.6 renamed it to its index, so `{"":"X"}` and
+  `{"1":"X"}` shared a digest and one attestation verified both). A list
+  with a names attribute is an object and is sorted, empty names included:
+  a manifest built with unnamed elements in a named list gets a different
+  digest from 0.5.5's, which never canonicalised such a level.
+  `make_manifest()` writes `meta$synthetic` only when it is `TRUE`, so a
+  real-data manifest keeps its pre-0.5.6 digest, and `make_synthetic_csv()`
+  sets the flag in-process.
+* JSON: string assembly is linear (250,000 escapes took 16 minutes); the
+  reformatter refuses NUL and lone surrogates as the parser does; parser
+  and encoder share one 100-level cap (the encoder used to hit the C stack
+  first); `bricklayer_json_base64_dec()` refuses characters outside the
+  alphabet instead of deleting them; whole numbers beyond 2^53 warn on the
+  decimal branch too; `bigint_warn = FALSE` and `duplicate_keys = "keep"`
+  are what the package's own API readers use; the gzip inflate cap is
+  64 MiB.
+* `capsule_drift()`: a character column of dates is compared as dates
+  (two disjoint years drift); a column with more than `identifier_levels`
+  distinct values, or one per five rows, is an identifier -- its
+  `unseen_share` is reported and `drifted` is `NA` (the 0.5.6 PSI over the
+  union of categories fired on every id and date column); PSI for the rest
+  is over the reference's categories with unseen mass pooled. The result
+  gains `type`, `unseen_share` and `note` columns.
+* `drift_homogeneity()` returns `p_value = NA` with
+  `method = "inapplicable: ..."` when the categories outnumber half the
+  observations (every table with those margins has the same statistic),
+  draws its Monte Carlo p-value under a local `seed` and restores the
+  caller's RNG, and like `drift_chisq()` refuses negative, NA and infinite
+  counts. All chi-square sites report `log_p_value` next to `p_value`: a
+  double has no number for exp(-2536), and the log says how far below
+  zero the tail is. `cramers_v()` drops an unused level (it returned NaN)
+  and takes a `seed` too.
+* `parse_bands()`: trailing units with punctuation ("18 to 24 (years)",
+  "5 to 9 years, inclusive") parse again; cue words are matched as words
+  ("overnight" is not "over") in the leading slot as well as the tail
+  ("under 18 to 24" is NA, not 18-24); a label with two numbers that is
+  not a range is NA ("more than 10 - 20"); thousands separators are
+  removed only from correctly grouped numbers ("12,34,567+" is NA); a
+  label with a decimal point is on a decimal scale; the dash family is
+  normalised byte-wise, so an en dash parses in a C locale.
+  `band_values()` guards the open-lower floor as it guards the cap, and
+  its default floor is `min(0, upper)`, so "under 0" has its midpoint
+  inside the band.
+* `trend_test()` reports `slope_ci_clamped = TRUE` exactly when a rank
+  is at an end, warns when `exact = TRUE` cannot be honoured (n > 8), and
+  memoises the tied exact null; `count_trend()` refuses an all-zero
+  series; `step_change()` and `count_trend()` refuse infinite values as
+  `trend_test()` does; `morans_i()` refuses negative weights and a
+  constant variable; `gini()`, `top_share()`, `lorenz()` and
+  `hill_tail_index()` refuse empty input; `hurwitz_zeta()` returns the
+  Bernoulli values at non-positive integers (zeta(0, 1) = -1/2); the
+  Benford first digit of a subnormal is read from the shortest
+  round-tripping decimal (1e-310 is 1, not 9).
+* Result changes from 0.5.6 that NEWS did not state: `morans_i()` excludes
+  self-neighbours from a weight matrix; `make_manifest()` no longer
+  changes the digest of a real-data manifest (0.5.6 did); the OTIS
+  full-verification workflow runs on demand only.
+
 # rmoriebricklayer 0.5.6
 
 A security and correctness release from a full external review of 0.5.5

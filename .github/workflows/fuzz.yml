@@ -1,0 +1,55 @@
+# Coverage-guided fuzzing of the parsers that read bytes from outside: the
+# DER parser and RSA arithmetic, the decimal-to-double conversion (checked
+# against the C library bit for bit), and the SIU report parsers. Built
+# with libFuzzer + AddressSanitizer + UndefinedBehaviorSanitizer; a crash,
+# a sanitizer report or a conversion mismatch fails the job and uploads
+# the reproducer. Sources and seed corpora: inst/fuzz/.
+name: fuzz
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'inst/fuzz/**', '.github/workflows/fuzz.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'inst/fuzz/**', '.github/workflows/fuzz.yml']
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: seconds per target
+        default: '120'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  libfuzzer:
+    name: libFuzzer + ASan + UBSan
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang r-base-dev
+      - name: Build the targets
+        run: bash inst/fuzz/build.sh
+      - name: Fuzz
+        env:
+          FUZZ_SECONDS: ${{ github.event.inputs.seconds || (github.event_name == 'schedule' && '600') || '120' }}
+        run: bash inst/fuzz/run.sh
+      - name: Reproducers and logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts
+          path: |
+            inst/fuzz/build/crash-*
+            inst/fuzz/build/fuzz-*.log

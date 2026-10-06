@@ -106,7 +106,9 @@ test_that("the JSON reader accepts a path, a string and a URL", {
   u <- rmoriebricklayer:::.rmbl_read_json("https://example.org/x.json")
   expect_equal(u$from, "url")
   expect_equal(seen, "https://example.org/x.json")
-  # http as well as https
+  # plain http only with the explicit option (the URL gate refuses it otherwise)
+  old <- options(rmoriebricklayer.allow_http = TRUE)
+  on.exit(options(old), add = TRUE)
   v <- rmoriebricklayer:::.rmbl_read_json("http://example.org/y.json")
   expect_equal(v$from, "url")
   expect_equal(seen, "http://example.org/y.json")

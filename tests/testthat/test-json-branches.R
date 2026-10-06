@@ -96,7 +96,9 @@ test_that("base64 edge cases", {
   expect_identical(bricklayer_json_base64_enc(raw(0)), "")
   expect_identical(bricklayer_json_base64_dec(""), raw(0))
   expect_identical(bricklayer_json_base64_dec(charToRaw("aGk=")), charToRaw("hi"))
-  expect_identical(bricklayer_json_base64_dec("@@@@"), raw(0)) # non-alphabet bytes are skipped, as jsonlite does
+  # a deliberate divergence from jsonlite, which skips foreign bytes: a corrupt
+  # body must not decode to a shorter valid-looking one
+  expect_error(bricklayer_json_base64_dec("@@@@"), "alphabet")
   expect_identical(bricklayer_json_base64url_enc(as.raw(c(251, 255))), "-_8")
   expect_identical(bricklayer_json_base64url_dec("-_8"), as.raw(c(251, 255)))
   expect_identical(bricklayer_json_base64url_dec("aGk"), charToRaw("hi"))

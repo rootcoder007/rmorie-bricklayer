@@ -321,7 +321,7 @@ test_that("the count trend survives a design it cannot solve", {
   flat <- count_trend(c(5L, 7L, 9L), x = rep(1, 3L))
   expect_true(is.na(flat$se) || !is.finite(flat$se))
   expect_true(is.finite(flat$rate_ratio))
-  # and a series of zeros has a rate ratio of one, there being no rate
-  z <- count_trend(rep(0L, 5L))
-  expect_true(is.finite(z$rate_ratio))
+  # and a series of zeros has no rate to fit a trend to: refused, not
+  # reported as a ratio of one with an infinite upper bound
+  expect_error(count_trend(rep(0L, 5L)), "every count is zero")
 })

@@ -244,7 +244,7 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
 #' Resolve a Wayback Machine snapshot URL
 #'
 #' Queries the Internet Archive availability API (
-#' \code{http://archive.org/wayback/available}) for the closest archived
+#' \code{https://archive.org/wayback/available}) for the closest archived
 #' snapshot of \code{url} and returns a directly-downloadable snapshot URL,
 #' or \code{NULL} if no snapshot exists or the lookup fails. This is the
 #' shared fetch failsafe the wider morie package family relies on: callers

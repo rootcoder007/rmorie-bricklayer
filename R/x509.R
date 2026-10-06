@@ -760,14 +760,32 @@ print.bricklayer_certpath_check <- function(x, ...) {
 # An ECDSA signature is SEQUENCE { INTEGER r, INTEGER s }.
 .rmbl_ecdsa_rs <- function(sig) {
   d <- tryCatch(.Call(C_rmbl_der_parse, sig), error = function(e) NULL)
-  if (is.null(d) || length(d$children) < 2L) {
+  # ECDSA-Sig-Value ::= SEQUENCE { r INTEGER, s INTEGER } and nothing else:
+  # an extra element, a different tag or a non-canonical INTEGER (a
+  # superfluous leading zero, or a negative value) is not a signature,
+  # however its r and s read. Wycheproof's malleability vectors are the
+  # test for exactly these.
+  if (is.null(d) || d$class != 0L || !isTRUE(d$constructed) || d$tag != 16 ||
+      length(d$children) != 2L) {
     return(NULL)
   }
-  strip <- function(v) {
-    while (length(v) > 1L && v[1] == as.raw(0)) v <- v[-1]
+  int_value <- function(nd) {
+    v <- nd$value
+    if (nd$class != 0L || isTRUE(nd$constructed) || nd$tag != 2 ||
+        length(v) == 0L) {
+      return(NULL)
+    }
+    if (as.integer(v[1]) >= 0x80L) return(NULL)                 # negative
+    if (length(v) > 1L && v[1] == as.raw(0) && as.integer(v[2]) < 0x80L) {
+      return(NULL)                                               # padded
+    }
+    if (length(v) > 1L && v[1] == as.raw(0)) v <- v[-1]
     v
   }
-  list(r = strip(d$children[[1]]$value), s = strip(d$children[[2]]$value))
+  r <- int_value(d$children[[1]])
+  s <- int_value(d$children[[2]])
+  if (is.null(r) || is.null(s)) return(NULL)
+  list(r = r, s = s)
 }
 
 # Revocation, against a CRL that was handed in. Nothing is fetched.

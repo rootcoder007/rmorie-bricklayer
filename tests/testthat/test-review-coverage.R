@@ -1,4 +1,4 @@
-# Branches the 0.5.6 review fixes added, and the pre-existing gaps in the same
+# Branches the review fixes added, and the pre-existing gaps in the same
 # files, each exercised through the public API (or a .Call for an entry-point
 # guard that the R wrappers never reach).
 
@@ -132,7 +132,7 @@ test_that("JSON serializer: namespaces and S4 .Data round-trip under trusted = T
   back <- bricklayer_json_unserialize(bricklayer_json_serialize(obj), trusted = TRUE)
   expect_s4_class(back, "RmblTmpNum")
   expect_equal(as.numeric(back), c(1, 2, 3))
-  expect_identical(bricklayer_json_base64_dec("@@@@"), raw(0))
+  expect_error(bricklayer_json_base64_dec("@@@@"), "alphabet")
 })
 
 test_that("entry points refuse a missing string and bad lengths", {

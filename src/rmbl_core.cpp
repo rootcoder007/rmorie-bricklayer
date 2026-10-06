@@ -27,6 +27,7 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 #include <R_ext/Rdynload.h>
 #include <cstring>
 #include <cstdint>
@@ -313,14 +314,14 @@ double rmbl_hawkes_nll(const double *t, R_xlen_t n, double T, int kernel,
 
 /* ---- .Call wrappers: bricklayer's own R-facing API ---- */
 
-SEXP C_rmbl_sd(SEXP x, SEXP ddof) {
+SEXP C_rmbl_sd_impl(SEXP x, SEXP ddof) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_sd(REAL(x), XLENGTH(x), Rf_asInteger(ddof));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_euclid(SEXP a, SEXP b) {
+SEXP C_rmbl_euclid_impl(SEXP a, SEXP b) {
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     b = PROTECT(Rf_coerceVector(b, REALSXP));
     if (XLENGTH(a) != XLENGTH(b)) {
@@ -332,7 +333,7 @@ SEXP C_rmbl_euclid(SEXP a, SEXP b) {
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_normal_logpdf(SEXP x, SEXP mu, SEXP sigma) {
+SEXP C_rmbl_normal_logpdf_impl(SEXP x, SEXP mu, SEXP sigma) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double m = Rf_asReal(mu), s = Rf_asReal(sigma);
     R_xlen_t n = XLENGTH(x);
@@ -343,7 +344,7 @@ SEXP C_rmbl_normal_logpdf(SEXP x, SEXP mu, SEXP sigma) {
     return out;
 }
 
-SEXP C_rmbl_ipw(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
+SEXP C_rmbl_ipw_impl(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
     treat = PROTECT(Rf_coerceVector(treat, REALSXP));
     propensity = PROTECT(Rf_coerceVector(propensity, REALSXP));
     R_xlen_t n = XLENGTH(treat);
@@ -358,7 +359,7 @@ SEXP C_rmbl_ipw(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
     return out;
 }
 
-SEXP C_rmbl_bootstrap_mean(SEXP x, SEXP B, SEXP seed) {
+SEXP C_rmbl_bootstrap_mean_impl(SEXP x, SEXP B, SEXP seed) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     R_xlen_t nb = (R_xlen_t) Rf_asReal(B);
     if (nb < 1) {
@@ -372,7 +373,7 @@ SEXP C_rmbl_bootstrap_mean(SEXP x, SEXP B, SEXP seed) {
     return out;
 }
 
-SEXP C_rmbl_gamma_cdf(SEXP shape, SEXP x) {
+SEXP C_rmbl_gamma_cdf_impl(SEXP shape, SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double a = Rf_asReal(shape);
     R_xlen_t n = XLENGTH(x);
@@ -390,7 +391,28 @@ SEXP C_rmbl_gamma_cdf(SEXP shape, SEXP x) {
  * cannot long-jump over a C++ destructor. */
 static int rmbl_hk_np(int kind) { return kind == 0 ? 1 : 2; }
 
-SEXP C_rmbl_hawkes_nll_grad(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi, SEXP method,
+/* An integer argument in [lo, hi], or an R error naming it: Rf_asInteger(NULL)
+ * is NA_INTEGER, which sized a std::vector by INT_MIN and ended the session. */
+static int rmbl_hk_int(SEXP x, const char *name, int lo, int hi) {
+    const int v = Rf_asInteger(x);
+    if (v == NA_INTEGER || v < lo || v > hi) {
+        Rf_error("`%s` must be an integer in %d..%d", name, lo, hi);
+    }
+    return v;
+}
+static double rmbl_hk_real(SEXP x, const char *name) {
+    const double v = Rf_asReal(x);
+    if (ISNAN(v)) Rf_error("`%s` must be a number", name);
+    return v;
+}
+static void rmbl_hk_len(SEXP x, const char *name, R_xlen_t need) {
+    if (XLENGTH(x) < need) {
+        Rf_error("`%s` must have at least %d element(s), has %d", name,
+                 static_cast<int>(need), static_cast<int>(XLENGTH(x)));
+    }
+}
+
+SEXP C_rmbl_hawkes_nll_grad_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi, SEXP method,
                             SEXP eps, SEXP soeR, SEXP soeDelta, SEXP wantGrad) {
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
@@ -413,38 +435,51 @@ SEXP C_rmbl_hawkes_nll_grad(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP k
     return out;
 }
 
-SEXP C_rmbl_hawkes_rescaled(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+SEXP C_rmbl_hawkes_rescaled_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+    const int bk = rmbl_hk_int(bkind, "bkind", 0, 2), k = rmbl_hk_int(kind, "kind", 0, 3);
+    const double Tv = rmbl_hk_real(T, "T"), etav = rmbl_hk_real(eta, "eta");
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    rmbl_hk_len(a, "a", morie::core::hawkes_baseline_n(bk));
+    rmbl_hk_len(psi, "psi", rmbl_hk_np(k));
     SEXP U = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
-    morie::core::hawkes_rescaled(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), Rf_asInteger(bkind),
-                                 REAL(a), Rf_asReal(eta), Rf_asInteger(kind), REAL(psi), REAL(U));
+    morie::core::hawkes_rescaled(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, bk,
+                                 REAL(a), etav, k, REAL(psi), REAL(U));
     UNPROTECT(4);
     return U;
 }
 
-SEXP C_rmbl_hawkes_intensity(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+SEXP C_rmbl_hawkes_intensity_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, SEXP kind, SEXP psi) {
+    const int bk = rmbl_hk_int(bkind, "bkind", 0, 2), k = rmbl_hk_int(kind, "kind", 0, 3);
+    const double Tv = rmbl_hk_real(T, "T"), etav = rmbl_hk_real(eta, "eta");
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
+    rmbl_hk_len(a, "a", morie::core::hawkes_baseline_n(bk));
+    rmbl_hk_len(psi, "psi", rmbl_hk_np(k));
     SEXP lam = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
-    morie::core::hawkes_intensity(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), Rf_asInteger(bkind),
-                                  REAL(a), Rf_asReal(eta), Rf_asInteger(kind), REAL(psi), REAL(lam));
+    morie::core::hawkes_intensity(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, bk,
+                                  REAL(a), etav, k, REAL(psi), REAL(lam));
     UNPROTECT(4);
     return lam;
 }
 
-SEXP C_rmbl_hawkes_em_pass(SEXP t, SEXP lamOld, SEXP etaOld, SEXP kind, SEXP psiOld, SEXP psiNew) {
+SEXP C_rmbl_hawkes_em_pass_impl(SEXP t, SEXP lamOld, SEXP etaOld, SEXP kind, SEXP psiOld, SEXP psiNew) {
+    const int k = rmbl_hk_int(kind, "kind", 0, 3), np = rmbl_hk_np(k);
+    const double etav = rmbl_hk_real(etaOld, "etaOld");
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     lamOld = PROTECT(Rf_coerceVector(lamOld, REALSXP));
     psiOld = PROTECT(Rf_coerceVector(psiOld, REALSXP));
     psiNew = PROTECT(Rf_coerceVector(psiNew, REALSXP));
-    const int k = Rf_asInteger(kind), np = rmbl_hk_np(k);
+    /* lamOld is read once per event: a shorter vector is an out-of-bounds read */
+    rmbl_hk_len(lamOld, "lamOld", XLENGTH(t));
+    rmbl_hk_len(psiOld, "psiOld", np);
+    rmbl_hk_len(psiNew, "psiNew", np);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 2 + np));
     double P = 0.0, dQ[2] = {0.0, 0.0};
     const double Q = morie::core::hawkes_em_pass(REAL(t), static_cast<std::size_t>(XLENGTH(t)), REAL(lamOld),
-                                                 Rf_asReal(etaOld), k, REAL(psiOld), REAL(psiNew), &P, dQ);
+                                                 etav, k, REAL(psiOld), REAL(psiNew), &P, dQ);
     REAL(out)[0] = Q;
     REAL(out)[1] = P;
     for (int q = 0; q < np; ++q) REAL(out)[2 + q] = dQ[q];
@@ -452,20 +487,22 @@ SEXP C_rmbl_hawkes_em_pass(SEXP t, SEXP lamOld, SEXP etaOld, SEXP kind, SEXP psi
     return out;
 }
 
-SEXP C_rmbl_hawkes_cdf_sum(SEXP t, SEXP T, SEXP kind, SEXP psi) {
+SEXP C_rmbl_hawkes_cdf_sum_impl(SEXP t, SEXP T, SEXP kind, SEXP psi) {
+    const int k = rmbl_hk_int(kind, "kind", 0, 3), np = rmbl_hk_np(k);
+    const double Tv = rmbl_hk_real(T, "T");
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
-    const int k = Rf_asInteger(kind), np = rmbl_hk_np(k);
+    rmbl_hk_len(psi, "psi", np);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 1 + np));
     double g[2] = {0.0, 0.0};
-    REAL(out)[0] = morie::core::hawkes_cdf_sum(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), k,
+    REAL(out)[0] = morie::core::hawkes_cdf_sum(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, k,
                                                REAL(psi), g);
     for (int q = 0; q < np; ++q) REAL(out)[1 + q] = g[q];
     UNPROTECT(3);
     return out;
 }
 
-SEXP C_rmbl_hawkes_fit_pbfgs(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method, SEXP eps, SEXP soeR,
+SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method, SEXP eps, SEXP soeR,
                              SEXP soeDelta, SEXP lo, SEXP hi, SEXP x0, SEXP maxiter, SEXP gtol) {
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     lo = PROTECT(Rf_coerceVector(lo, REALSXP));
@@ -490,7 +527,7 @@ SEXP C_rmbl_hawkes_fit_pbfgs(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP method,
     return out;
 }
 
-SEXP C_rmbl_uniforms(SEXP n, SEXP seed) {
+SEXP C_rmbl_uniforms_impl(SEXP n, SEXP seed) {
     const R_xlen_t m = static_cast<R_xlen_t>(Rf_asReal(n));
     const double sd = Rf_asReal(seed);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, m));
@@ -499,28 +536,28 @@ SEXP C_rmbl_uniforms(SEXP n, SEXP seed) {
     return out;
 }
 
-SEXP C_rmbl_mean(SEXP x) {
+SEXP C_rmbl_mean_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean(REAL(x), XLENGTH(x));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_mean_running(SEXP x) {
+SEXP C_rmbl_mean_running_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mean_running(REAL(x), XLENGTH(x));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_var(SEXP x) {
+SEXP C_rmbl_var_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_var(REAL(x), XLENGTH(x));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_cor(SEXP x, SEXP y) {
+SEXP C_rmbl_cor_impl(SEXP x, SEXP y) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     y = PROTECT(Rf_coerceVector(y, REALSXP));
     if (XLENGTH(x) != XLENGTH(y)) {
@@ -532,7 +569,7 @@ SEXP C_rmbl_cor(SEXP x, SEXP y) {
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_normal_pdf(SEXP x, SEXP mu, SEXP sigma) {
+SEXP C_rmbl_normal_pdf_impl(SEXP x, SEXP mu, SEXP sigma) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double m = Rf_asReal(mu), s = Rf_asReal(sigma);
     R_xlen_t n = XLENGTH(x);
@@ -543,7 +580,7 @@ SEXP C_rmbl_normal_pdf(SEXP x, SEXP mu, SEXP sigma) {
     return out;
 }
 
-SEXP C_rmbl_sha256(SEXP x) {
+SEXP C_rmbl_sha256_impl(SEXP x) {
     const unsigned char *data;
     size_t len;
     char out[65];

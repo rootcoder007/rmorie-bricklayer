@@ -56,8 +56,8 @@ test_that("core_moments survives the extremes and keeps its definitions", {
 test_that("json_gzip_decode refuses input that is not a gzip member", {
   expect_error(json_gzip_decode(""), "gzip member")
   expect_error(json_gzip_decode(raw(0)), "gzip member")
-  expect_error(json_gzip_decode(charToRaw("abc")), "gzip member")
-  expect_error(json_gzip_decode(-1), "gzip member")
+  expect_error(json_gzip_decode(charToRaw("abc")), "gzip member|base64")
+  expect_error(json_gzip_decode(-1), "gzip member|base64")
   enc <- json_gzip_encode(list(a = 1, b = "x"))
   expect_equal(json_gzip_decode(enc), list(a = 1, b = "x"))
 })

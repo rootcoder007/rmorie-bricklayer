@@ -680,35 +680,33 @@ print.bricklayer_timestamp <- function(x, ...) {
   }
   di <- em[(i + 1L):length(em)]
   want_digest <- .rmbl_ts_digest(alg, message)
-  # The DigestInfo is a SEQUENCE of the algorithm and the digest; the
-  # digest is compared rather than the whole encoding, so that an
-  # absent-versus-NULL parameters difference does not read as a forgery.
-  parsed <- tryCatch(.Call(C_rmbl_der_parse, di), error = function(e) NULL)
-  if (is.null(parsed) || length(parsed$children) < 2L) {
-    return(list(ok = FALSE, detail = "the recovered DigestInfo is malformed"))
-  }
-  got <- parsed$children[[2]]$value
-  oid <- .rmbl_oid_string(parsed$children[[1]]$children[[1]]$value)
-  if (!identical(.rmbl_ts_digest_name(oid), alg)) {
+  # RFC 8017 section 9.2 fixes DigestInfo to one DER encoding per hash
+  # (note 1 lists the bytes). The recovered block must be exactly that
+  # prefix followed by the digest: comparing bytes, rather than parsing
+  # and comparing fields, leaves no room for a forged block whose fields
+  # read right -- the Bleichenbacher 2006 e = 3 attack lived in that room.
+  # The AlgorithmIdentifier's NULL parameters are required (RFC 4055).
+  prefix <- .rmbl_pkcs1_prefix(alg)
+  if (is.null(prefix) || !identical(di, c(prefix, want_digest))) {
     return(list(
       ok = FALSE,
-      detail = sprintf(
-        "the signature is over %s, not %s",
-        .rmbl_ts_digest_name(oid), alg
-      )
-    ))
-  }
-  if (!identical(got, want_digest)) {
-    return(list(
-      ok = FALSE,
-      detail = sprintf(
-        "the signed digest is %s, the attributes ",
-        .rmbl_hexlify(got)
-      )
+      detail = sprintf("the recovered block is not DigestInfo(%s) of the signed bytes", alg)
     ))
   }
   list(
     ok = TRUE,
     detail = sprintf("RSA over %s of the signed attributes", alg)
   )
+}
+
+# The DER DigestInfo prefixes of RFC 8017 section 9.2, note 1.
+.rmbl_pkcs1_prefix <- function(alg) {
+  hex <- switch(alg,
+    sha1 = "3021300906052b0e03021a05000414",
+    sha256 = "3031300d060960864801650304020105000420",
+    sha384 = "3041300d060960864801650304020205000430",
+    sha512 = "3051300d060960864801650304020305000440",
+    NULL
+  )
+  if (is.null(hex)) NULL else .rmbl_hex_to_raw(hex)
 }
