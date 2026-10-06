@@ -88,7 +88,8 @@ test_that("native parser + simplifier match jsonlite::fromJSON", {
   run <- function(f, tx, o) tryCatch(do.call(f, c(list(tx), o)), error = function(e) "<<error>>")
   for (tx in texts) {
     for (o in dopts) {
-      expect_equal(run(bricklayer_json_from_json, tx, o), run(jsonlite::fromJSON, tx, o),
+      expect_equal(run(bricklayer_json_from_json, tx, c(o, list(bigint_warn = FALSE))),
+                   run(jsonlite::fromJSON, tx, o),
         label = paste0(tx, " / ", paste(names(o), unlist(o), collapse = ","))
       )
     }

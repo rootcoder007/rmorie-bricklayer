@@ -149,7 +149,9 @@ bool ipv4_literal(const std::string &h, uint32_t &out) {
     if (parts[n - 1] > maxlast) return false;
     uint32_t v = 0;
     for (size_t k = 0; k + 1 < n; ++k) v = (v << 8) | static_cast<uint32_t>(parts[k]);
-    v = (v << (8 * fill)) | static_cast<uint32_t>(parts[n - 1]);
+    /* fill == 4 only when the literal is one number: it is the whole address
+     * (a shift by 32 of a 32-bit value is undefined) */
+    v = (fill == 4) ? static_cast<uint32_t>(parts[0]) : ((v << (8 * fill)) | static_cast<uint32_t>(parts[n - 1]));
     out = v;
     return true;
 }

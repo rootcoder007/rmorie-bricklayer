@@ -391,6 +391,13 @@ SEXP C_rmbl_gamma_cdf_impl(SEXP shape, SEXP x) {
  * cannot long-jump over a C++ destructor. */
 static int rmbl_hk_np(int kind) { return kind == 0 ? 1 : 2; }
 
+/* The kernels poll this on their quadratic passes; it throws rmbl::Interrupt,
+ * which the entry-point barrier turns into R's own interrupt after every
+ * destructor has run. Installed once, when the shared object loads. */
+static void rmbl_core_interrupt_hook() { rmbl::check_interrupt(); }
+static const bool rmbl_core_hook_installed =
+    (morie::core::interrupt_hook() = rmbl_core_interrupt_hook, true);
+
 /* An integer argument in [lo, hi], or an R error naming it: Rf_asInteger(NULL)
  * is NA_INTEGER, which sized a std::vector by INT_MIN and ended the session. */
 static int rmbl_hk_int(SEXP x, const char *name, int lo, int hi) {

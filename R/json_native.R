@@ -812,11 +812,14 @@ bricklayer_json_unbox <- function(x) {
                              duplicate_keys = c("error", "keep")) {
   duplicate_keys <- match.arg(duplicate_keys)
   s <- paste(txt, collapse = "\n")
-  s <- enc2utf8(s)
+  # the byte-order mark is tested and removed on the BYTES, before any
+  # encoding conversion: substring(s, 2L) on a string a C locale has not
+  # marked as UTF-8 removed one of the mark's three bytes
   if (.rmbl_has_bom(s)) {
     warning("JSON string contains (illegal) UTF8 byte-order-mark!", call. = FALSE)
-    s <- substring(s, 2L)
+    s <- .rmbl_strip_bom(s)
   }
+  s <- enc2utf8(s)
   if (startsWith(s, "\x1e")) s <- substring(s, 2L)
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
@@ -898,22 +901,29 @@ bricklayer_json_unbox <- function(x) {
     t0 <- paste(ch[st:(i - 1L)], collapse = "")
     v <- .rmbl_strtod(t0)
     if (!isint && bigint_warn && !big_warned && is.finite(v) && v == trunc(v) &&
-        abs(v) >= 9007199254740992) {
-      # "9007199254740993.0" and "9.007199254740993e15" are whole numbers
-      # the double cannot hold either; only the digits written matter
-      digs <- gsub("[^0-9]", "", sub("[eE].*$", "", t0))
-      if (nchar(sub("^0+", "", digs)) > 15L) {
+        abs(v) >= 9007199254740992 && abs(v) < 18446744073709551616) {
+      # "9007199254740993.0" and "9.007199254740993e15" write an integer in
+      # the identifier range that the double does not hold: the digits
+      # written are compared with the integer the double actually is. A
+      # value beyond 2^64 (1.7976931348623157e308) is a magnitude, not an
+      # identifier, and is left alone.
+      written <- .rmbl_json_written_integer(t0)
+      if (!is.null(written) && !identical(written, sprintf("%.0f", abs(v)))) {
         big_warned <<- TRUE
         warning(sprintf(paste0("number %s is a whole number beyond 2^53 and cannot be held ",
                                "exactly in a double"), t0), call. = FALSE)
       }
     }
     if (isint) {
-      digs <- sub("^-", "", t0)
+      digs <- sub("^0+(?=[0-9])", "", sub("^-", "", t0), perl = TRUE)
       big <- nchar(digs) > 16L || (nchar(digs) == 16L && digs > "9007199254740992")
+      # inexact: the integer written is not the integer the double holds.
+      # 9007199254740994 is beyond 2^53 and exact (even); 9007199254740993
+      # is not. Only the second deserves a warning.
+      inexact <- big && is.finite(v) && !identical(sprintf("%.0f", abs(v)), digs)
       if (big) {
         if (bigint_as_char) return(t0)
-        if (!big_warned && bigint_warn) {
+        if (!big_warned && bigint_warn && inexact) {
           big_warned <<- TRUE
           warning(sprintf(paste0("integer %s exceeds 2^53 and cannot be held exactly ",
                                  "in a double; pass bigint_as_char = TRUE to keep it as text"),
@@ -1843,3 +1853,28 @@ bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
   .rmbl_json_unpack(.rmbl_json_parse(txt), trusted = isTRUE(trusted))
 }
 
+
+
+# The integer a decimal literal writes, as a digit string with no leading
+# zeros; NULL when the literal has a non-zero fractional part.
+#' @noRd
+.rmbl_json_written_integer <- function(t0) {
+  t <- sub("^[-+]", "", t0)
+  parts <- strsplit(t, "[eE]")[[1L]]
+  mant <- parts[1L]
+  e <- if (length(parts) > 1L) as.integer(parts[2L]) else 0L
+  if (is.na(e)) return(NULL)
+  mp <- strsplit(mant, ".", fixed = TRUE)[[1L]]
+  digits <- paste0(mp, collapse = "")
+  frac <- if (length(mp) > 1L) nchar(mp[2L]) else 0L
+  scale <- e - frac
+  if (scale >= 0L) {
+    digits <- paste0(digits, strrep("0", scale))
+  } else {
+    cut <- substr(digits, nchar(digits) + scale + 1L, nchar(digits))
+    if (grepl("[1-9]", cut)) return(NULL)
+    digits <- substr(digits, 1L, nchar(digits) + scale)
+  }
+  digits <- sub("^0+", "", digits)
+  if (!nzchar(digits)) "0" else digits
+}

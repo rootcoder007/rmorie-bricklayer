@@ -64,5 +64,5 @@ cran-comments.md
 .otis-input/
 tests/testthat/_problems/
 tests/testthat/testthat-problems.rds
-inst/ctcheck/build/
-inst/fuzz/build/
+inst/ctcheck/build*/
+inst/fuzz/build*/

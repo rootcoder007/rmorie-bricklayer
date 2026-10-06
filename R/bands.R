@@ -58,8 +58,7 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
   # normalise the dash family, which publishers mix freely. Byte-wise, so
   # the en dash -- the commonest published separator -- parses in a C
   # locale too, where a UTF-8 pattern aborted the call.
-  dashes <- paste(c("\xe2\x80\x90", "\xe2\x80\x91", "\xe2\x80\x92", "\xe2\x80\x93",
-                    "\xe2\x80\x94", "\xe2\x80\x95", "\xe2\x88\x92"), collapse = "|")
+  dashes <- .rmbl_dash_pattern()
   s <- gsub(dashes, "-", s, useBytes = TRUE, perl = TRUE)
   s <- gsub("\\s+", " ", s)
   # thousands separators ("1,000 to 2,499", the commonest published form):
@@ -402,4 +401,21 @@ expand_bands <- function(bands, counts, ..., drop_unparsed = FALSE) {
   }
   keep <- !is.na(bv$value) & !is.na(counts)
   rep(bv$value[keep], times = round(counts[keep]))
+}
+
+
+# U+2010..U+2015 and U+2212 as a byte-wise alternation, built from raw bytes
+# and marked "bytes": a string literal with those bytes is translated to the
+# native encoding when it is pasted, and in a C locale that translation is
+# a warning per call.
+#' @noRd
+.rmbl_dash_pattern <- function() {
+  one <- function(...) rawToChar(as.raw(c(...)))
+  parts <- c(one(0xe2, 0x80, 0x90), one(0xe2, 0x80, 0x91), one(0xe2, 0x80, 0x92),
+             one(0xe2, 0x80, 0x93), one(0xe2, 0x80, 0x94), one(0xe2, 0x80, 0x95),
+             one(0xe2, 0x88, 0x92))
+  out <- rawToChar(do.call(c, c(lapply(parts[-length(parts)], function(p) c(charToRaw(p), charToRaw("|"))),
+                                 list(charToRaw(parts[length(parts)])))))
+  Encoding(out) <- "bytes"
+  out
 }

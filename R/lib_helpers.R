@@ -206,9 +206,12 @@ ascii_fallback <- function(x, force = FALSE) {
 write_text_fallback <- function(text, path) {
   path <- .rmbl_string1(path, "path")
   ok <- tryCatch({
-    con <- file(path, open = "w", encoding = "UTF-8")
+    # the UTF-8 bytes go to a binary connection: a text connection with
+    # encoding = "UTF-8" re-encodes from the native locale, and in a C
+    # locale that is a warning per accented string
+    con <- file(path, open = "wb")
     on.exit(close(con), add = TRUE)
-    writeLines(enc2utf8(as.character(text)), con, useBytes = TRUE)
+    writeBin(charToRaw(paste0(paste(enc2utf8(as.character(text)), collapse = "\n"), "\n")), con)
     TRUE
   }, error = function(e) FALSE)
   if (!ok) writeLines(to_ascii(text), path) # nocov -- encoding-error retry
