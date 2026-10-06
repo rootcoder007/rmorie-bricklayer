@@ -1,20 +1,19 @@
-# The checks analysis.R keeps opt-in, run with everything on, once a week.
+# The checks analysis.R keeps opt-in, run with everything on, by hand (workflow_dispatch).
 #
 # Five environment variables gate the expensive verifications -- the 147
 # published year-over-year tables, the 108 rate tables, the census
 # division populations re-derived from Statistics Canada, and the
 # point-in-polygon recompute of the institution region map. All of them are
-# off by default and off in the push CI, so without this workflow
-# "verified" has no date attached. The downloads are cached; a run with a
-# warm cache is a few minutes.
+# off by default and off in the push CI. The full verification was run and
+# passed (2026-10-05, 4abd0a4); it is kept as a manual job for a re-release
+# of the OTIS tables, not as a schedule. The downloads are cached; a run
+# with a warm cache is a few minutes.
 #
 # OTIS_DML_RECOMPUTE is not set: the self-contained port takes about
 # twenty-five minutes and the fast path needs rmorie, which is not on CRAN.
 name: OTIS full verification
 
 on:
-  schedule:
-    - cron: '17 6 * * 1'
   workflow_dispatch:
 
 permissions:
