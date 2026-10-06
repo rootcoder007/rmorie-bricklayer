@@ -30,6 +30,11 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
   Logical; suppress progress output. Defaults to `FALSE`.
 
+- allow_file:
+
+  Accept a `file://` URL (default `FALSE`; an offline test passes
+  `TRUE`). Every URL must otherwise be `https` and public.
+
 ## Value
 
 The `target_path`, returned invisibly.

@@ -32,6 +32,11 @@ friendly_download(url, target_path, attempt_wayback = NULL, allow_file = FALSE)
   pass an explicit URL to override the lookup, or `""` (or `FALSE`) to
   disable the fallback entirely.
 
+- allow_file:
+
+  Accept a `file://` URL for `url` and `attempt_wayback` (default
+  `FALSE`; an offline test passes `TRUE`).
+
 ## Value
 
 `TRUE` if either the primary download or the Wayback fallback succeeds,
