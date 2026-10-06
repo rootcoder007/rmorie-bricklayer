@@ -272,14 +272,25 @@ make_synthetic_csv <- function(schema, out_path,
   # it is what says the rows were generated (seed, recipe digest), and
   # verify_capsule() refuses a capsule whose data file has one. Read back
   # with read.csv() alone the file was indistinguishable from real data.
-  recipe_sha256 <- core_sha256(bricklayer_json_to_json(
-    .rmbl_sort_keys(schema), auto_unbox = TRUE, digits = I(17)))
+  # This file is also sourced standalone inside a staged bundle, where only
+  # lib_*.R exist: base R only here (the bundle's lib_manifest.R supplies the
+  # digest when it is present; the sidecar is written either way).
+  recipe_sha256 <- if (exists("manifest_digest", mode = "function")) {
+    tryCatch(manifest_digest(schema), error = function(e) NA_character_)
+  } else {
+    NA_character_
+  }
   sidecar <- paste0(out_path, ".synthetic")
-  writeLines(bricklayer_json_to_json(
-    list(synthetic = TRUE, rows = nrow(out_df), seed = seed,
-         recipe_sha256 = recipe_sha256,
-         generated_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")),
-    auto_unbox = TRUE, pretty = TRUE), sidecar)
+  jstr <- function(x) paste0("\"", gsub("\"", "\\\\\"", as.character(x)), "\"")
+  writeLines(c(
+    "{",
+    "  \"synthetic\": true,",
+    sprintf("  \"rows\": %d,", nrow(out_df)),
+    sprintf("  \"seed\": %s,", format(seed)),
+    sprintf("  \"recipe_sha256\": %s,", if (is.na(recipe_sha256)) "null" else jstr(recipe_sha256)),
+    sprintf("  \"generated_utc\": %s", jstr(format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"))),
+    "}"
+  ), sidecar)
   res <- list(path = out_path, sidecar = sidecar, rows = nrow(out_df),
               seed = seed, recipe_sha256 = recipe_sha256)
   class(res) <- c("bricklayer_synthetic", "list")
