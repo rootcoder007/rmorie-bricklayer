@@ -32,10 +32,13 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     203), 'ML-DSA' (FIPS 204) and 'SLH-DSA' (FIPS 205), 'HQC' in two
     revisions, 'XMSS' (RFC 8391), the 'AES-256' 'CTR_DRBG' of SP 800-90A,
     'SHA-3' and 'SHAKE' (FIPS 202), 'BLAKE2b', 'PBKDF2', an ASN.1/DER parser
-    with 'ECDSA' (P-256, P-384, P-521) and 'RSA' signature verification, and
-    'X.509' chain, 'OCSP' and RFC 3161 timestamp verification. The standardised
-    schemes are checked byte for byte against 'OpenSSL' 3.5 and 'NIST'
-    known-answer vectors in the test suite; none of this code has had a
+    with 'ECDSA' (P-256, P-384, P-521) and 'RSA' (the 'Rivest-Shamir-Adleman'
+    cryptosystem) signature verification, and 'X.509' certificate chain,
+    'OCSP' (Online Certificate Status Protocol) and RFC 3161 timestamp
+    verification. The standardised
+    schemes are checked byte for byte against 'OpenSSL' 3.5 and the
+    known-answer vectors of 'NIST' (the US National Institute of Standards
+    and Technology) in the test suite; none of this code has had a
     third-party security audit or a side-channel evaluation, and it is
     offered for provenance and research use, not as a vetted security
     library. For the published administrative
