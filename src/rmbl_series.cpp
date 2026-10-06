@@ -624,9 +624,12 @@ R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n, double *population,
     return static_cast<R_xlen_t>(m) + 1;
 }
 
-/* Mann-Kendall S and its tie-corrected variance. */
-void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
-                       double *var, R_xlen_t *used) {
+/* Mann-Kendall S and its tie-corrected variance. The body with its buffers is
+ * `mann_kendall_inner` (returns 1 when a pending interrupt stopped it, with
+ * S and var set to NA); the exported wrapper raises only after the buffers
+ * are gone. */
+static int mann_kendall_inner(const double *y, R_xlen_t n, double *S,
+                              double *var, R_xlen_t *used) {
     std::vector<double> v;
     v.reserve(static_cast<size_t>(n));
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -634,13 +637,13 @@ void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
     }
     const R_xlen_t m = static_cast<R_xlen_t>(v.size());
     if (used != NULL) *used = m;
-    if (m < 2) { *S = NA_REAL; *var = NA_REAL; return; }
+    if (m < 2) { *S = NA_REAL; *var = NA_REAL; return 0; }
     double s = 0.0;
     for (R_xlen_t i = 0; i + 1 < m; ++i) {
         if ((i & 511) == 0 && rmbl_interrupt_pending()) {
             rmbl_kernel_interrupted = 1;
             *S = NA_REAL; *var = NA_REAL;
-            return;
+            return 1;
         }
         for (R_xlen_t j = i + 1; j < m; ++j) {
             const double d = v[static_cast<size_t>(j)] -
@@ -665,6 +668,12 @@ void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
     *S = s;
     *var = static_cast<double>(
         (nn * (nn - 1.0L) * (2.0L * nn + 5.0L) - tiesum) / 18.0L);
+    return 0;
+}
+
+void rmbl_mann_kendall(const double *y, R_xlen_t n, double *S,
+                       double *var, R_xlen_t *used) {
+    if (mann_kendall_inner(y, n, S, var, used) == 1) rmbl_interrupt_raise_unbarriered();
 }
 
 /* Hurwitz zeta, the normalising constant of the discrete power law. */

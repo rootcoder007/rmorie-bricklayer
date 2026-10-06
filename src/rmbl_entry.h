@@ -30,8 +30,12 @@ extern "C" {
 /* set by a kernel that stopped early on a pending interrupt; the entry
  * point's barrier clears it and raises the interrupt */
 extern int rmbl_kernel_interrupted;
-/* non-jumping test for a pending user interrupt */
+/* non-jumping test for a pending user interrupt (never raises) */
 int rmbl_interrupt_pending(void);
+/* an exported kernel that stopped on a pending interrupt calls this AFTER
+ * its buffers are released: with no barrier on the stack it raises R's
+ * interrupt from a frame with no C++ object; under a barrier it is a no-op */
+void rmbl_interrupt_raise_unbarriered(void);
 #ifdef __cplusplus
 }
 #endif

@@ -332,7 +332,10 @@ test_that("every SIU entry point reads its text through the same cap", {
   skip_if(is.na(d), "package sources not available from here")
   s <- readLines(file.path(d, "rmbl_siu.cpp"), warn = FALSE)
   entries <- grep("^SEXP C_rmbl_siu_[a-z_]+_impl\\(SEXP [a-z]+\\)", s)
-  expect_gte(length(entries), 4L)
+  # the enumeration, not a floor (a fifth string entry lands here by itself)
+  expect_setequal(sub("^SEXP (C_rmbl_siu_[a-z_]+)_impl.*$", "\\1", s[entries]),
+                  c("C_rmbl_siu_html_to_text", "C_rmbl_siu_parse_html", "C_rmbl_siu_to_iso_date",
+                    "C_rmbl_siu_resolve_so", "C_rmbl_siu_schema"))
   # each one-argument entry hands its argument to as_string() (the 2 MiB
   # cap) and nothing else reads CHAR() of it
   expect_identical(sum(grepl("CHAR(STRING_ELT", s, fixed = TRUE)), 1L)
@@ -344,4 +347,24 @@ test_that("every SIU entry point reads its text through the same cap", {
   # and no whole-document pass is a regex any more
   h <- p[grep("^std::string html_to_text", p):grep("return normalize_text(t);", p, fixed = TRUE)]
   expect_false(any(grepl("std::regex", h, fixed = TRUE)))
+  # No regex in EITHER SIU file may cross a line without a bound: a `[^...]` class that
+  # does not exclude \\n or \\s, or `[\\s\\S]`, followed by `*`, `+` or `{n,}`, recurses once
+  # per character of the whole document and the line cap cannot stop it (the SIU
+  # review found two in siu_resolve.cpp after 0.5.8 hardened siu_parse.cpp only).
+  rs <- readLines(file.path(d, "siu_resolve.cpp"), warn = FALSE)
+  # code only: the comments quote the regexes they replaced
+  src <- gsub("/\\*.*?\\*/", "", sub("//.*$", "", c(p, rs)))
+  classes <- unlist(regmatches(src, gregexpr("\\[\\^[^]]*\\](\\*|\\+|\\{[0-9]*,\\})", src)))
+  # a class that excludes \\n or \\s is bounded by the line
+  bad <- classes[!(grepl("\\n", classes, fixed = TRUE) | grepl("\\s", classes, fixed = TRUE))]
+  expect_identical(bad, character(0))
+  for (q in c("[\\s\\S]*", "[\\s\\S]+", "[\\s\\S]{")) {
+    expect_false(any(grepl(q, src, fixed = TRUE)), info = q)
+  }
+  # the boilerplate stripper is scans (its comments may name the regexes it replaced),
+  # and every SIU core pass polls for an interrupt
+  code_rs <- sub("//.*$", "", rs)
+  strip_fn <- grep("^static std::string strip_boilerplate_impl", rs):grep("^static SoResolution resolve_fr", rs)
+  expect_false(any(grepl("std::regex", code_rs[strip_fn], fixed = TRUE)))
+  expect_true(any(grepl("siu::interrupt_hook()", s, fixed = TRUE)))
 })

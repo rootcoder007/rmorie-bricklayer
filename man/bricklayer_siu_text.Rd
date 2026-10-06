@@ -15,6 +15,14 @@ A length-1 character vector of plain text.
 \description{
 Convert SIU report HTML to plain text
 }
+\section{Limits}{
+
+The input is capped at 2 MiB (a report page is a few hundred KB). Before
+the text is read, a line longer than 2000 characters is split at the
+sentence end nearest the cap (else at a space), and a warning says how
+many lines were split: a field that spans a split may be incomplete.
+}
+
 \examples{
 bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
 }

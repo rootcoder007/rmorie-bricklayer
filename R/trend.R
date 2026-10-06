@@ -208,13 +208,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     tot
   })
-  # a bounded memo: the exact distribution is only computed for short
-  # series, but a session that fits many of them would otherwise keep every
-  # table forever (92 MB after 300 distinct tied series, 0.5.7 review)
-  if (length(ls(.rmbl_mk_cache)) >= 32L) {
-    rm(list = ls(.rmbl_mk_cache), envir = .rmbl_mk_cache)
-  }
-  .rmbl_mk_cache[[key]] <- s
+  .rmbl_mk_remember(key, s)
   s
 }
 
@@ -236,13 +230,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     tot
   })
-  # a bounded memo: the exact distribution is only computed for short
-  # series, but a session that fits many of them would otherwise keep every
-  # table forever (92 MB after 300 distinct tied series, 0.5.7 review)
-  if (length(ls(.rmbl_mk_cache)) >= 32L) {
-    rm(list = ls(.rmbl_mk_cache), envir = .rmbl_mk_cache)
-  }
-  .rmbl_mk_cache[[key]] <- s
+  .rmbl_mk_remember(key, s)
   s
 }
 
@@ -555,4 +543,25 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
       "Poisson log-linear"
     }
   )
+}
+
+
+# A bounded memo for the exact Mann-Kendall distributions: at most 32 tables,
+# the OLDEST evicted when the 33rd arrives (0.5.8 flushed all 32 at once, so a
+# loop over 33 series got no reuse at all; its diff review). Insertion order is
+# kept beside the tables.
+.rmbl_mk_order <- new.env(parent = emptyenv())
+.rmbl_mk_remember <- function(key, value) {
+  keys <- get0("keys", envir = .rmbl_mk_order, inherits = FALSE, ifnotfound = character())
+  keys <- keys[keys %in% ls(.rmbl_mk_cache, all.names = TRUE)]
+  if (!key %in% keys) {
+    while (length(keys) >= 32L) {
+      rm(list = keys[[1L]], envir = .rmbl_mk_cache)
+      keys <- keys[-1L]
+    }
+    keys <- c(keys, key)
+  }
+  assign("keys", keys, envir = .rmbl_mk_order)
+  .rmbl_mk_cache[[key]] <- value
+  invisible(value)
 }

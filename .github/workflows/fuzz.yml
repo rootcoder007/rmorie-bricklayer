@@ -38,7 +38,7 @@ jobs:
       - name: Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang r-base-dev
+          sudo apt-get install -y --no-install-recommends clang r-base-dev libcurl4-openssl-dev
       - name: Build the targets
         run: bash inst/fuzz/build.sh
       - name: Fuzz
@@ -47,7 +47,7 @@ jobs:
         run: bash inst/fuzz/run.sh
       - name: Reproducers and logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fuzz-artifacts
           path: |

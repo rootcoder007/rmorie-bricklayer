@@ -129,9 +129,8 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
 #' @export
 capsule_bundle_read <- function(path) {
   path <- .rmbl_file1(path, "path")
-  b <- bricklayer_json_from_json(paste(readLines(path, warn = FALSE),
-                                       collapse = "\n"),
-                                 simplifyVector = FALSE)
+  b <- .rmbl_json_text(paste(readLines(path, warn = FALSE), collapse = "\n"),
+                       simplifyVector = FALSE)
   if (!is.list(b) || is.null(b$attestation) || is.null(b$files)) {
     stop("`path` is not a capsule bundle", call. = FALSE)
   }

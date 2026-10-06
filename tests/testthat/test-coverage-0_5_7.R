@@ -261,26 +261,26 @@ test_that("decimal conversion: the specials, the subnormal edge, a carried round
 })
 
 test_that("http entry points check their arguments before touching the network", {
-  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::1]:8080/", TRUE, FALSE),
+  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::1]:8080/", TRUE, FALSE, FALSE),
                    "a local or private address (::1)")
-  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::10.1.2.3]/", TRUE, FALSE),
+  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::10.1.2.3]/", TRUE, FALSE, FALSE),
                    "a local or private address (::10.1.2.3)")
-  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::8.8.8.8]/", TRUE, FALSE), "")
-  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::1]x/", TRUE, FALSE), "malformed authority")
+  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::8.8.8.8]/", TRUE, FALSE, FALSE), "")
+  expect_identical(.Call(C("C_rmbl_url_check"), "http://[::1]x/", TRUE, FALSE, FALSE), "malformed authority")
   expect_true(.rmbl_private_host(NA))
   expect_true(.rmbl_private_host(""))
   # extra headers are accepted; the refusal comes back as a status, not a crash
-  r <- .Call(C("C_rmbl_http_post"), "http://127.0.0.1/", raw(0), "text/plain", 1L, c("X-A: b"))
+  r <- .Call(C("C_rmbl_http_post"), "http://127.0.0.1/", raw(0), "text/plain", 1L, c("X-A: b"), FALSE)
   expect_identical(r$status, -1L)
   expect_match(r$error, "plain http is refused", fixed = TRUE)
-  expect_identical(msg(.Call(C("C_rmbl_http_post"), 1L, raw(0), "text/plain", 1L, NULL)),
+  expect_identical(msg(.Call(C("C_rmbl_http_post"), 1L, raw(0), "text/plain", 1L, NULL, FALSE)),
                    "`url` must be a single string")
-  expect_identical(msg(.Call(C("C_rmbl_http_post"), "https://a.example.org/", raw(0), 1L, 1L, NULL)),
+  expect_identical(msg(.Call(C("C_rmbl_http_post"), "https://a.example.org/", raw(0), 1L, 1L, NULL, FALSE)),
                    "`content_type` must be a single string")
-  expect_identical(msg(.Call(C("C_rmbl_http_post"), "https://a.example.org/", raw(0), "t", 1L, 1L)),
+  expect_identical(msg(.Call(C("C_rmbl_http_post"), "https://a.example.org/", raw(0), "t", 1L, 1L, FALSE)),
                    "`headers` must be a character vector or NULL")
-  expect_identical(msg(.Call(C("C_rmbl_http_get"), 1L, 1L, NULL)), "`url` must be a single string")
-  expect_identical(msg(.Call(C("C_rmbl_http_get"), "https://a.example.org/", 1L, 1L)),
+  expect_identical(msg(.Call(C("C_rmbl_http_get"), 1L, 1L, NULL, FALSE)), "`url` must be a single string")
+  expect_identical(msg(.Call(C("C_rmbl_http_get"), "https://a.example.org/", 1L, 1L, FALSE)),
                    "`headers` must be a character vector or NULL")
 })
 

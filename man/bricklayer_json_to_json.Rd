@@ -53,7 +53,9 @@ JSON null; \link{bricklayer_json_serialize} round-trips \code{NULL} exactly.}
 
 \item{force}{As in jsonlite.}
 
-\item{...}{As in jsonlite.}
+\item{...}{As in jsonlite, plus \code{keep_vec_names} (a named atomic
+vector is written as an object, as \code{manifest_canonical()} requires)
+and \code{quiet_vec_names} (no message when names cannot be kept).}
 }
 \value{
 a length-one character vector of class \code{json}.

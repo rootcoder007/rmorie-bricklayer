@@ -19,23 +19,46 @@ rt_tags <- function(...) {
 }
 rt_ns <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
+test_that("an endpoint of your own on a private LAN literal takes the local seam; names and link-local do not", {
+  rt_env()
+  withr::local_envvar(c(MORIE_LLM_BASE_URL = "http://10.0.0.5:8000", MORIE_LLM_API_KEY = "sk-own",
+                        MORIE_LLM_MODEL = "my-model"))
+  seen <- NULL
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(...) stop("a LAN endpoint must take the local seam"),
+    .bl_http_post_local = function(url, body, content_type, timeout, headers) {
+      seen <<- list(url = url, headers = headers)
+      rt_reply("lan says hi")
+    },
+    .package = "rmoriebricklayer")
+  expect_identical(bricklayer_llm_ask("hi"), "lan says hi")
+  expect_identical(seen$url, "http://10.0.0.5:8000/v1/chat/completions")
+  expect_identical(seen$headers, "Authorization: Bearer sk-own")
+  for (base in c("http://169.254.169.254/", "http://100.64.0.1:8000", "http://api.example.org/", "http://lmstudio/")) {
+    withr::local_envvar(c(MORIE_LLM_BASE_URL = base))
+    expect_error(bricklayer_llm_ask("hi"), "https://", info = base)
+  }
+})
+
 test_that("an endpoint of your own is the first route, with its key and model", {
   rt_env()
   withr::local_envvar(c(MORIE_LLM_BASE_URL = "https://api.example.org/v1/", MORIE_LLM_API_KEY = "sk-own",
                         MORIE_LLM_MODEL = "my-model"))
   seen <- NULL
-  testthat::local_mocked_bindings(.bl_http_post = function(url, body, content_type, timeout, headers) {
-    seen <<- list(url = url, headers = headers, body = rawToChar(body),
-                  loopback = getOption("rmoriebricklayer.allow_loopback"))
-    rt_reply("own says hi")
-  }, .package = "rmoriebricklayer")
+  # a REMOTE endpoint of your own goes through the ordinary POST seam: no loopback relaxation
+  testthat::local_mocked_bindings(
+    .bl_http_post = function(url, body, content_type, timeout, headers) {
+      seen <<- list(url = url, headers = headers, body = rawToChar(body), seam = "public")
+      rt_reply("own says hi")
+    },
+    .bl_http_post_local = function(...) stop("a remote endpoint must not take the loopback seam"),
+    .package = "rmoriebricklayer")
   expect_identical(bricklayer_llm_ask("hi"), "own says hi")
   expect_identical(seen$url, "https://api.example.org/v1/chat/completions")
   expect_identical(seen$headers, "Authorization: Bearer sk-own")
   expect_match(seen$body, "\"model\":\"my-model\"", fixed = TRUE)
-  # the relaxation is on for the duration of the call only
-  expect_true(isTRUE(seen$loopback))
-  expect_null(getOption("rmoriebricklayer.allow_loopback"))
+  expect_identical(seen$seam, "public")
+  withr::local_envvar(c(MORIE_LLM_BASE_URL = "https://api.example.org/v1/"))
   st <- bricklayer_llm_status()
   expect_identical(st$route, c("own endpoint", "local Ollama", "hosted MORIE tier"))
   expect_identical(st$status[1], "configured")
@@ -59,9 +82,9 @@ test_that("a local Ollama server is the second route; its first model is the def
   withr::local_envvar(c(OLLAMA_HOST = "127.0.0.1:11434"))  # the form Ollama itself uses
   calls <- list()
   testthat::local_mocked_bindings(
-    .bl_http_post = function(url, body, content_type, timeout, headers) {
-      calls$post <<- list(url = url, headers = headers, body = rawToChar(body),
-                          loopback = getOption("rmoriebricklayer.allow_loopback"))
+    .bl_http_post = function(...) stop("a loopback server takes the local seam"),
+    .bl_http_post_local = function(url, body, content_type, timeout, headers) {
+      calls$post <<- list(url = url, headers = headers, body = rawToChar(body))
       rt_reply("llama says hi")
     },
     .bl_http_get_local = function(url, timeout, headers) {
@@ -74,7 +97,6 @@ test_that("a local Ollama server is the second route; its first model is the def
   expect_null(calls$get$headers)
   expect_identical(calls$post$url, "http://127.0.0.1:11434/v1/chat/completions")
   expect_null(calls$post$headers)
-  expect_true(isTRUE(calls$post$loopback))
   expect_match(calls$post$body, "\"model\":\"llama3.2:latest\"", fixed = TRUE)
   withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", OLLAMA_API_KEY = "ok-1"))
   bricklayer_llm_ask("hi")
@@ -114,6 +136,7 @@ test_that("the order is own endpoint, then Ollama, then hosted; `route` insists 
   testthat::local_mocked_bindings(
     .bl_http_get_local = function(...) rt_tags("l"),
     .bl_http_post = function(url, ...) rt_reply(url),
+    .bl_http_post_local = function(url, ...) rt_reply(url),
     .package = "rmoriebricklayer")
   expect_match(bricklayer_llm_ask("x"), "^https://own.example.org/")
   expect_match(bricklayer_llm_ask("x", route = "ollama"), "^http://localhost:11434/")
@@ -159,34 +182,49 @@ test_that("the CLI doctor prints the three routes in order, and bundle fails wit
   expect_match(buf[1], "^Hosted MORIE tier: not logged in -- request a key at https://rmorie.com/access")
 })
 
-test_that("plain http is admitted on the loopback host only while the option is on", {
-  chk <- function(u, http = FALSE) .Call(rt_ns("C_rmbl_url_check"), u, http, FALSE)
-  expect_match(chk("http://localhost:11434/api/tags"), "plain http is refused")
-  expect_match(chk("http://127.0.0.1:11434/"), "plain http is refused")
-  expect_null(getOption("rmoriebricklayer.allow_loopback"))
+test_that("plain http is admitted on the loopback host only when the call asks for it", {
+  chk <- function(u, http = FALSE, lo = TRUE) .Call(rt_ns("C_rmbl_url_check"), u, http, FALSE, lo)
+  expect_match(chk("http://localhost:11434/api/tags", lo = FALSE), "plain http is refused")
+  expect_match(chk("http://127.0.0.1:11434/", lo = FALSE), "plain http is refused")
+  # the option of 0.5.8 is gone: it was a process-wide switch (fourth review)
   withr::local_options(rmoriebricklayer.allow_loopback = TRUE)
+  expect_match(chk("http://127.0.0.1:11434/", lo = FALSE), "plain http is refused")
   expect_identical(chk("http://localhost:11434/api/tags"), "")
   expect_identical(chk("http://LOCALHOST/"), "")
   expect_identical(chk("http://127.0.0.1:11434/"), "")
   expect_identical(chk("http://127.9.9.9/"), "")
   expect_identical(chk("http://[::1]:11434/"), "")
   expect_identical(chk("https://localhost/"), "")
-  # exactly loopback: every other private or plain-http address stays refused
-  expect_match(chk("http://10.0.0.1/"), "plain http is refused")
-  expect_match(chk("https://10.0.0.1/"), "local or private")
+  # loopback or a LITERAL private LAN address (D4); link-local, CGNAT, public
+  # plain-http and every name stay refused
+  expect_identical(chk("http://10.0.0.1/"), "")
+  expect_identical(chk("https://192.168.0.9:8443/"), "")
+  expect_identical(chk("http://[fd00::1]:8000/v1"), "")
+  expect_match(chk("http://100.64.0.1/"), "plain http is refused")
+  expect_match(chk("https://100.64.0.1/"), "local or private")
+  expect_match(chk("http://lmstudio.lan/"), "plain http is refused")
   expect_match(chk("https://169.254.169.254/"), "local or private")
   expect_match(chk("http://example.org/"), "plain http is refused")
   expect_match(chk("http://[fe80::1]/"), "plain http is refused")
   expect_match(chk("https://[::2]/"), "local or private")
   expect_match(chk("https://metadata.internal/"), "local or internal")
   expect_match(chk("ftp://localhost/"), "scheme ftp:// is refused")
-  # a redirect off the loopback host meets the ordinary rules
-  rc <- function(from, to) .Call(rt_ns("C_rmbl_redirect_check"), from, to, FALSE)
+  # a redirect off the loopback host meets the ordinary rules, and a remote origin
+  # can never redirect INTO the loopback host, relaxation or not
+  rc <- function(from, to) .Call(rt_ns("C_rmbl_redirect_check"), from, to, FALSE, TRUE)
   expect_false(rc("http://localhost:11434/v1/x", "http://10.0.0.1/y")$ok)
+  expect_false(rc("http://10.0.0.1:8000/v1/x", "http://localhost:11434/y")$ok)
+  expect_false(rc("http://localhost:11434/v1/x", "http://127.0.0.1:11434/y")$ok)
+  expect_true(rc("http://localhost:11434/v1/x", "http://localhost:11435/v2/y")$ok)
+  expect_true(rc("http://192.168.1.50:1234/v1/x", "http://192.168.1.50:1234/v1/y")$ok)
   expect_false(rc("http://localhost:11434/v1/x", "http://example.org/y")$ok)
   expect_true(rc("http://localhost:11434/v1/x", "https://example.org/y")$ok)
-  # the public-URL validator in R follows the same option
-  expect_identical(.rmbl_check_public_url("http://localhost:11434", "OLLAMA_HOST"), "http://localhost:11434")
+  expect_false(rc("https://evil.example.net/x", "http://127.0.0.1:11434/api/tags")$ok)
+  expect_false(rc("https://evil.example.net/x", "http://localhost/")$ok)
+  # the public-URL validator in R takes the same argument
+  expect_identical(.rmbl_check_public_url("http://localhost:11434", "OLLAMA_HOST", allow_loopback = TRUE),
+                   "http://localhost:11434")
+  expect_error(.rmbl_check_public_url("http://localhost:11434", "OLLAMA_HOST"), "https://")
 })
 
 test_that("the transport really reaches a plain-http loopback server under the option", {
@@ -211,7 +249,7 @@ test_that("the transport really reaches a plain-http loopback server under the o
   }
   skip_if(!up, "the loopback server did not come up")
   # without the option the C transport refuses before connecting
-  r <- .Call(rt_ns("C_rmbl_http_get"), paste0(base, "/api/tags"), 5L, NULL)
+  r <- .Call(rt_ns("C_rmbl_http_get"), paste0(base, "/api/tags"), 5L, NULL, FALSE)
   expect_identical(r$status, -1L)
   expect_match(r$error, "plain http is refused")
   # the Ollama probe path admits it, and reads the model list

@@ -91,7 +91,7 @@
 # is an argument so the tests can sign with a key of their own; every
 # exported path pins .rmbl_services_pubkey.
 .rmbl_services_verify <- function(doc_bytes, sig_json, pubkey = .rmbl_services_pubkey()) {
-  sig <- tryCatch(bricklayer_json_from_json(sig_json, simplifyVector = FALSE), error = function(e) NULL)
+  sig <- tryCatch(.rmbl_json_text(sig_json, simplifyVector = FALSE), error = function(e) NULL)
   if (is.null(sig) || !identical(sig$scheme, "ML-DSA-44") ||
       !identical(sig$context, .rmbl_services_context) ||
       !is.character(sig$signature) || length(sig$signature) != 1L) {
@@ -107,8 +107,7 @@
 
 # Parse and shape-check a verified document. NULL when it is not a v1 document.
 .rmbl_services_parse <- function(doc_bytes) {
-  d <- tryCatch(bricklayer_json_from_json(rawToChar(doc_bytes), simplifyVector = FALSE),
-                error = function(e) NULL)
+  d <- tryCatch(.rmbl_json_text(doc_bytes, simplifyVector = FALSE), error = function(e) NULL)
   if (!is.list(d) || !identical(as.integer(d$version), 1L)) return(NULL)
   mode_ok <- function(m) is.character(m) && length(m) == 1L && m %in% c("off", "key")
   url_ok <- function(u) {
@@ -165,6 +164,11 @@
 #' The hosted tier is a last resort: a local model or your own API key is
 #' always preferred where the caller offers the choice.
 #'
+#' The environment variable \code{MORIE_SERVICES_URL} points the fetch at a
+#' mirror of the document (its signature is fetched from the same place, with
+#' the suffix \code{.sig}); the signature check is unchanged, so a mirror can
+#' only serve a document the project signed.
+#'
 #' @param refresh \code{TRUE} to fetch the live document even when the
 #'   cached copy is fresh.
 #' @param max_age Seconds a cached copy is used without asking the site
@@ -206,7 +210,23 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
 
 .rmbl_services_resolve <- function(refresh, max_age, timeout, offline) {
   cache <- .rmbl_services_cache_path()
+  bundled <- .rmbl_services_read(.rmbl_services_bundled_path())
   cached <- .rmbl_services_read(cache)
+  # The floor every accepted document must reach: the copy shipped with the
+  # package. A validly signed but OLDER document (any one ever published) in
+  # the cache would otherwise pin a retired endpoint forever, and it is the
+  # endpoint that receives the user's key (fourth review).
+  # A cache earns its place only by being NEWER than the bundled copy: the same
+  # date adds nothing, and an older one is deleted.
+  if (!is.null(cached) && !is.null(bundled) &&
+      .rmbl_services_time(cached$issued) <= .rmbl_services_time(bundled$issued)) {
+    if (.rmbl_services_time(cached$issued) < .rmbl_services_time(bundled$issued)) {
+      unlink(c(cache, sub("[.]json$", ".sig", cache)))
+    }
+    cached <- NULL
+  }
+  floor <- max(c(-Inf, as.numeric(.rmbl_services_time(cached$issued)),
+                 as.numeric(.rmbl_services_time(bundled$issued))), na.rm = TRUE)
   fresh <- !is.null(cached) && !isTRUE(refresh) &&
     (as.numeric(Sys.time()) - as.numeric(file.mtime(cache))) < max_age
   if (!is.null(cached) && (fresh || isTRUE(offline))) {
@@ -214,15 +234,13 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
   }
   live <- if (isTRUE(offline)) NULL else .rmbl_services_fetch(timeout)
   if (!is.null(live)) {
-    # a document older than the one already held is a rollback, not an update
-    if (is.null(cached) || .rmbl_services_time(live$doc$issued) >= .rmbl_services_time(cached$issued)) {
+    # a document older than the one already held, or than the bundled one, is a rollback
+    if (as.numeric(.rmbl_services_time(live$doc$issued)) >= floor) {
       .rmbl_services_write(cache, live$bytes, live$sig)
       return(structure(live$doc, source = "live"))
     }
   }
   if (!is.null(cached)) return(structure(cached, source = "cache"))
-  bundled <- .rmbl_services_read(system.file("services", "morie-services.json",
-                                             package = "rmoriebricklayer"))
   if (!is.null(bundled)) return(structure(bundled, source = "bundled"))
   structure(.rmbl_services_off(), source = "off")
 }
@@ -242,7 +260,7 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
   # the stale endpoint list the signature and the issue date exist to refuse
   if (!identical(.rmbl_net_download(url, tmp_doc, timeout), 200L) ||
       !file.exists(tmp_doc) || file.size(tmp_doc) == 0) return(NULL)
-  if (!identical(.rmbl_net_download(sub("[.]json$", ".sig", url), tmp_sig, timeout), 200L) ||
+  if (!identical(.rmbl_net_download(.rmbl_services_sig_url(url), tmp_sig, timeout), 200L) ||
       !file.exists(tmp_sig) || file.size(tmp_sig) == 0) return(NULL)
   bytes <- readBin(tmp_doc, "raw", file.size(tmp_doc))
   sig <- paste(readLines(tmp_sig, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
@@ -254,7 +272,8 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
 
 # The download seam (one line, so the tests can serve a document of their own).
 .rmbl_net_download <- function(url, tmp, timeout) {
-  res <- .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL)
+  # 1 MiB is a large document
+  res <- .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL, 1048576, FALSE)
   res$status
 }
 
@@ -263,3 +282,16 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
 # refresh happens when bricklayer_services() is called for its own sake.
 .rmbl_services_llm <- function() bricklayer_services(offline = TRUE)$llm
 .rmbl_services_data <- function() bricklayer_services(offline = TRUE)$data
+
+
+# The signature sits beside the document: "x.json" -> "x.sig"; a mirror
+# without the suffix gets ".sig" appended (0.5.8 fetched the document as its
+# own signature and failed closed, silently).
+.rmbl_services_sig_url <- function(url) {
+  if (grepl("[.]json$", url)) sub("[.]json$", ".sig", url) else paste0(url, ".sig")
+}
+
+# The copy shipped with the package (one seam, so a test can stand in a bundled document).
+.rmbl_services_bundled_path <- function() {
+  system.file("services", "morie-services.json", package = "rmoriebricklayer")
+}

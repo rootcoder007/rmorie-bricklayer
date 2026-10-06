@@ -47,6 +47,11 @@ Every other MORIE package reads the same document through this function,
 so one sign-in and one document serve rmorie, rmoriedata and morie alike.
 The hosted tier is a last resort: a local model or your own API key is
 always preferred where the caller offers the choice.
+
+The environment variable \code{MORIE_SERVICES_URL} points the fetch at a
+mirror of the document (its signature is fetched from the same place, with
+the suffix \code{.sig}); the signature check is unchanged, so a mirror can
+only serve a document the project signed.
 }
 \examples{
 # Nothing is fetched here: the cached copy if there is one, else the

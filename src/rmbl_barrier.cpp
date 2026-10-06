@@ -37,13 +37,20 @@ extern "C" int rmbl_interrupt_pending(void) {
     /* R_CheckUserInterrupt() longjmps when one is pending; run it under
      * R_ToplevelExec so the jump is caught here. With a barrier active the
      * kernel stops, sets the flag and the barrier raises after its
-     * destructors ran. With none active (a direct LinkingTo call) nobody
-     * would raise it: raise it here, which is what R_CheckUserInterrupt()
-     * itself would have done, so a Ctrl-C is never swallowed and no
-     * caller gets an NA that looks like a result. */
+     * destructors ran. With none active (a direct LinkingTo call) the
+     * kernel returns its sentinel and then calls
+     * rmbl_interrupt_raise_unbarriered() with no buffer alive. */
     if (R_ToplevelExec(rmbl_chk_, nullptr)) return 0;
-    if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();
     return 1;
+}
+/* For an exported kernel called with no barrier on the stack (another
+ * package's .Call): raise R's interrupt NOW, from a frame that holds no
+ * C++ object. The kernel calls this after its own buffers are gone -- 0.5.8
+ * raised from inside rmbl_interrupt_pending(), over live std::vectors
+ * (the 0.5.8 diff review). With a barrier active it does nothing: the
+ * barrier raises after the entry point returned. */
+extern "C" void rmbl_interrupt_raise_unbarriered(void) {
+    if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();
 }
 
 template <class F>
@@ -90,10 +97,10 @@ SEXP C_rmbl_normal_pdf_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_sha256_impl(SEXP);
 SEXP C_rmbl_sha512_impl(SEXP);
 SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP);
-SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP);
-SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_wayback_impl(SEXP, SEXP);
-SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_siu_html_to_text_impl(SEXP);
 SEXP C_rmbl_siu_parse_html_impl(SEXP);
 SEXP C_rmbl_siu_to_iso_date_impl(SEXP);
@@ -150,8 +157,8 @@ SEXP C_rmbl_mgf1_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_ecdsa_verify_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_ec_mul_impl(SEXP, SEXP);
 SEXP C_rmbl_ec_order_impl(SEXP);
-SEXP C_rmbl_http_post_impl(SEXP, SEXP, SEXP, SEXP, SEXP);
-SEXP C_rmbl_http_get_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_http_post_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_http_get_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_der_parse_impl(SEXP);
 SEXP C_rmbl_rsa_recover_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_mlkem_sizes_impl(SEXP);
@@ -222,17 +229,17 @@ SEXP C_rmbl_sha512(SEXP a0) {
 SEXP C_rmbl_fetch_fallback(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_fetch_fallback", [&] { return C_rmbl_fetch_fallback_impl(a0, a1, a2, a3); });
 }
-SEXP C_rmbl_http_download(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4) {
-    return rmbl_guard("C_rmbl_http_download", [&] { return C_rmbl_http_download_impl(a0, a1, a2, a3, a4); });
+SEXP C_rmbl_http_download(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6) {
+    return rmbl_guard("C_rmbl_http_download", [&] { return C_rmbl_http_download_impl(a0, a1, a2, a3, a4, a5, a6); });
 }
-SEXP C_rmbl_redirect_check(SEXP a0, SEXP a1, SEXP a2) {
-    return rmbl_guard("C_rmbl_redirect_check", [&] { return C_rmbl_redirect_check_impl(a0, a1, a2); });
+SEXP C_rmbl_redirect_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_redirect_check", [&] { return C_rmbl_redirect_check_impl(a0, a1, a2, a3); });
 }
 SEXP C_rmbl_wayback(SEXP a0, SEXP a1) {
     return rmbl_guard("C_rmbl_wayback", [&] { return C_rmbl_wayback_impl(a0, a1); });
 }
-SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2) {
-    return rmbl_guard("C_rmbl_url_check", [&] { return C_rmbl_url_check_impl(a0, a1, a2); });
+SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_url_check", [&] { return C_rmbl_url_check_impl(a0, a1, a2, a3); });
 }
 SEXP C_rmbl_siu_html_to_text(SEXP a0) {
     return rmbl_guard("C_rmbl_siu_html_to_text", [&] { return C_rmbl_siu_html_to_text_impl(a0); });
@@ -402,11 +409,11 @@ SEXP C_rmbl_ec_mul(SEXP a0, SEXP a1) {
 SEXP C_rmbl_ec_order(SEXP a0) {
     return rmbl_guard("C_rmbl_ec_order", [&] { return C_rmbl_ec_order_impl(a0); });
 }
-SEXP C_rmbl_http_post(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4) {
-    return rmbl_guard("C_rmbl_http_post", [&] { return C_rmbl_http_post_impl(a0, a1, a2, a3, a4); });
+SEXP C_rmbl_http_post(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5) {
+    return rmbl_guard("C_rmbl_http_post", [&] { return C_rmbl_http_post_impl(a0, a1, a2, a3, a4, a5); });
 }
-SEXP C_rmbl_http_get(SEXP a0, SEXP a1, SEXP a2) {
-    return rmbl_guard("C_rmbl_http_get", [&] { return C_rmbl_http_get_impl(a0, a1, a2); });
+SEXP C_rmbl_http_get(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_http_get", [&] { return C_rmbl_http_get_impl(a0, a1, a2, a3); });
 }
 SEXP C_rmbl_der_parse(SEXP a0) {
     return rmbl_guard("C_rmbl_der_parse", [&] { return C_rmbl_der_parse_impl(a0); });
