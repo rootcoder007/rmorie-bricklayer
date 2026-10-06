@@ -1,5 +1,6 @@
 # rmoriebricklayer 0.5.8
 
+* SIU core: every string-to-integer conversion on a regex capture goes through one bounded helper (`small_int()`); `std::stoi` on a tag such as `SO #4444444444444444` threw `std::out_of_range` and aborted the process (found by the libFuzzer target; the input is in the fuzz corpus). Ported to the rmorie and morie copies.
 The third review of the hardening work (2026-10-06) found seven things,
 every one of them a fix that had landed at the site a reproducer named and
 not at its siblings. This release fixes each at every site of its kind and,

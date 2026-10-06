@@ -27,7 +27,9 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
     ampersands = 'strrep("&amp;", 1e5)',
     script = 'paste0("<script>", strrep("x", 3e5))',
     nbsp = 'strrep("\\u00a0", 2e5)',
-    date_words = 'strrep("January 5, 2023 ", 2e4)'
+    date_words = 'strrep("January 5, 2023 ", 2e4)',
+    # the fuzzer's find: std::stoi on a \\d+ capture past INT_MAX aborted the process
+    tag_overflow = 'paste0("Subject Officials\\nSO\\n#", strrep("4", 30), "\\nWitness Officials\\nWO #", strrep("9", 12))'
   )
   for (e in entries) {
     scr <- tempfile(fileext = ".R")
@@ -50,6 +52,10 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
   # in-process, the exported wrappers on the reproducer's own input
   expect_identical(bricklayer_siu_text(strrep(" ", 25000)), " ")
   expect_type(bricklayer_parse_siu(strrep(" ", 25000)), "character")
+  # an absurd tag number is noise, not a count, and the bare mention still counts one
+  f <- bricklayer_parse_siu(paste0("Subject Officials\nSO\n#", strrep("4", 30), "\nCivilian Witnesses\nCW #2\n"))
+  expect_identical(unname(f["number_of_subject_officials"]), "1")
+  expect_identical(unname(f["number_of_civilian_witnesses"]), "2")
   # the loops give the same text as the regex passes they replaced: the
   # reference below is the 0.5.7 pipeline, written with R's PCRE
   ref_text <- function(h) {
