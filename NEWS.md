@@ -1,3 +1,67 @@
+# rmoriebricklayer 0.5.8
+
+The third review of the hardening work (2026-10-06) found seven things,
+every one of them a fix that had landed at the site a reproducer named and
+not at its siblings. This release fixes each at every site of its kind and,
+where the siblings can be listed, puts the list in the tests
+(`test-review3.R`, `test-src-hygiene.R`), so a new one cannot appear
+unnoticed.
+
+* **`bricklayer_siu_text()` and `bricklayer_parse_siu()` killed R on 25 KB
+  of whitespace.** libstdc++'s regex executor recurses once per character a
+  repeated atom consumes, so `\s+` over a long run overflowed the C stack,
+  which no `tryCatch()` and no exception barrier can see. Every pass that
+  runs over a whole document (newline normalisation, script and style
+  removal, tags, entities, whitespace) is a plain loop now, byte-identical
+  to the regexes it replaced (the test keeps the old pipeline as an R
+  reference and compares); the text every field extractor sees has its
+  spaces collapsed and no line longer than 4,000 characters, so no remaining
+  regex can recurse further than that; the input cap of every SIU entry
+  point is 2 MiB (a report page is a few hundred KB). The guard is a test
+  that enumerates every one-string SIU entry point from the namespace and
+  runs ten hostile inputs through each in a subprocess. XMSS key generation
+  polls for Ctrl-C with the throwing check like the other ten sites.
+* **One attestation still verified two documents.** 0.5.7 wrote a level
+  whose names were all empty as an array, so `{"k":{"":"X"}}` and
+  `{"k":["X"]}` shared a digest. The names attribute, present or absent, is
+  now the one thing that tells an object from an array at every level,
+  empty names included, and a named atomic vector is an object too
+  (`{"a":1}` is not `[1]`). Attestations of documents whose fields are named
+  vectors change digest; capsules verified against a stored digest should be
+  re-attested.
+* **Every network byte goes through the compiled transport.**
+  `bricklayer_download()` gated with the validator and then transported with
+  base R's `url()`: no DNS check, no pin, no redirect re-validation, no size
+  cap on the package's own documented pipeline; `bricklayer_json_from_json()`
+  fetched a bare URL with no gate at all; `download_data()` wrapped
+  `download.file()`. All three use `src/rmbl_fetch.cpp`, with the live
+  progress bar driven by a callback from libcurl. The transport itself now
+  drops `Authorization`, `Cookie` and `Proxy-Authorization` on a cross-host
+  redirect, refuses a redirect from https to plain http even when the http
+  option is set, checks a URL before opening the destination and writes
+  beside it, moving the body into place only on a 2xx (a refused URL or a
+  404 no longer deletes a pre-existing file). The redirect rule is one pure
+  function with its own `.Call` entry and tests. A single-label hostname
+  (`metadata`, `instance-data`) is refused by shape, without DNS. A test
+  lists every network open in `R/` and allows exactly the two base-R
+  fallbacks a standalone capsule bundle needs.
+* **The interrupt flag.** The barrier cleared `rmbl_kernel_interrupted`
+  only on the normal path; it is cleared on entry and on every exit now, and
+  a kernel called with no barrier active (a sibling package's own `.Call`)
+  re-raises the pending interrupt instead of eating it and returning `NA`.
+  `rmbl_pbkdf2_sha256()` in the C API returns an int (0, or -1 for an
+  argument it refuses); an interrupt inside it is raised, never a zero key.
+* `capsule_drift()`'s identifier heuristic applies its ratio test from a
+  hundred rows a side: a five-level factor on ten rows gets a verdict again.
+* `mahalanobis_outliers()` carries `log_p_value`, the fifth chi-square site;
+  `log_p_value` is documented at every site. `drift_psi()` accepts any
+  `eps` in (0, 1) again (0.5.7 refused values above 0.01, a new hard error
+  on a previously accepted argument) and the help explains what the floor
+  does to the index.
+* The Mann-Kendall exact-distribution memo is bounded; hostnames may carry
+  underscores; `Makevars.win`'s libcurl fallback link line is wired in;
+  `rmbl_digest_equal()` gets the same value barrier as the ML-KEM select.
+
 # rmoriebricklayer 0.5.7
 
 A release about measuring what the 0.5.6 README could only describe. Every

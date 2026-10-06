@@ -469,18 +469,24 @@ static R_INLINE int rmbl_blake2b(const unsigned char *msg, size_t msglen,
     return fn(msg, msglen, key, keylen, outlen, out);
 }
 
-static R_INLINE void rmbl_pbkdf2_sha256(const unsigned char *pass,
-                                        size_t passlen,
-                                        const unsigned char *salt,
-                                        size_t saltlen, int iterations,
-                                        int dklen, unsigned char *out) {
-    static void (*fn)(const unsigned char *, size_t, const unsigned char *,
-                      size_t, int, int, unsigned char *) = NULL;
+/* PBKDF2-HMAC-SHA-256. Returns 0 with `out` filled, -1 for an invalid argument
+   (iterations or dklen below 1: nothing written). A pending user interrupt
+   inside the iteration loop is raised as R's interrupt (the call does not
+   return), exactly as R_CheckUserInterrupt() would; a return of 1 can only be
+   seen by rmoriebricklayer's own entry points, where the barrier raises it,
+   and then `out` is all zero and MUST NOT be used as a key. */
+static R_INLINE int rmbl_pbkdf2_sha256(const unsigned char *pass,
+                                       size_t passlen,
+                                       const unsigned char *salt,
+                                       size_t saltlen, int iterations,
+                                       int dklen, unsigned char *out) {
+    static int (*fn)(const unsigned char *, size_t, const unsigned char *,
+                     size_t, int, int, unsigned char *) = NULL;
     if (fn == NULL)
-        fn = (void (*)(const unsigned char *, size_t, const unsigned char *,
-                       size_t, int, int, unsigned char *))
+        fn = (int (*)(const unsigned char *, size_t, const unsigned char *,
+                      size_t, int, int, unsigned char *))
              R_GetCCallable("rmoriebricklayer", "rmbl_pbkdf2_sha256");
-    fn(pass, passlen, salt, saltlen, iterations, dklen, out);
+    return fn(pass, passlen, salt, saltlen, iterations, dklen, out);
 }
 
 /* Operating-system CSPRNG. Returns 0 on success; a non-zero return MUST

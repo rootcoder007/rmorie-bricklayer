@@ -208,15 +208,17 @@ resolve_via_ckan_search <- function(provenance) {
 
 #' Download a File
 #'
-#' Thin wrapper around
-#' [utils::download.file()] that returns
-#' the target path invisibly so it composes in pipelines.
+#' Downloads through the package's own transport,
+#' [bricklayer_download()]: the URL checked and pinned,
+#' every redirect hop re-checked, the body capped, a live
+#' progress bar. Returns the target path invisibly so it
+#' composes in pipelines.
 #'
 #' @param url URL to download.
 #' @param target_path Destination path on disk.
-#' @param mode Write mode passed to
-#' [utils::download.file()]; defaults to
-#' `"wb"` (binary) for cross-platform safety.
+#' @param mode Accepted for compatibility with the
+#' signature of `utils::download.file()`, which this
+#' function once wrapped; every transfer is binary.
 #' @param quiet Logical; suppress progress output. Defaults to
 #' `FALSE`.
 #' @return The `target_path`, returned invisibly.
@@ -237,7 +239,11 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
   url <- .rmbl_string1(url, "url")
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   target_path <- .rmbl_string1(target_path, "target_path")
-  utils::download.file(url, target_path, mode = mode, quiet = quiet)
+  if (!identical(mode, "wb") && !identical(mode, "w")) {
+    stop("`mode` must be \"wb\" (every transfer is binary)", call. = FALSE)
+  }
+  bricklayer_download(url, target_path, quiet = isTRUE(quiet),
+                      allow_file = allow_file)
   invisible(target_path)
 }
 

@@ -36,8 +36,9 @@
 #' `TRUE`) .
 #' @return A data frame of class `bricklayer_outliers` with
 #' `row`, `distance` (the square root of the squared Mahalanobis
-#' distance), `p_value` and `outlier`, ordered by descending
-#' distance.
+#' distance), `p_value`, `log_p_value` (the log of the chi-square upper
+#' tail, which keeps its information where `p_value` underflows to 0) and
+#' `outlier`, ordered by descending distance.
 #' @references Mahalanobis PC (1936). On the generalised distance in
 #' statistics. *Proceedings of the National Institute of Sciences of
 #' India* 2(1), 49--55.
@@ -139,13 +140,15 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
 
   out <- data.frame(row = which(ok), distance = sqrt(d2),
                     p_value = stats::pchisq(d2, p, lower.tail = FALSE),
+                    log_p_value = stats::pchisq(d2, p, lower.tail = FALSE,
+                                                log.p = TRUE),
                     stringsAsFactors = FALSE)
   out$outlier <- out$p_value < alpha
   skipped <- which(!ok)
   if (length(skipped) > 0L) {
     out <- rbind(out, data.frame(row = skipped, distance = NA_real_,
-                                 p_value = NA_real_, outlier = NA,
-                                 stringsAsFactors = FALSE))
+                                 p_value = NA_real_, log_p_value = NA_real_,
+                                 outlier = NA, stringsAsFactors = FALSE))
   }
   out <- out[order(-out$distance, na.last = TRUE), , drop = FALSE]
   rownames(out) <- NULL

@@ -93,7 +93,11 @@ drift_ks <- function(x, y) {
 #' Binned on the quantiles of `x`, so the reference defines the bins.
 #' @param bins Number of bins (default 10).
 #' @param eps Floor applied to empty bins in the PSI (default
-#' 1e-6).
+#' 1e-6), any value in (0, 1). An empty bin contributes
+#' \eqn{(p - eps)\log(p/eps)} to the index, so the floor is part of the
+#' statistic: the default reports the raw index, and a larger floor (0.01,
+#' 0.05) smooths an empty bin toward that share, which dampens the PSI.
+#' Compare runs only at one `eps`.
 #' @return A named length-2 numeric: `psi` and `js_divergence`.
 #' @references Wu D, Olson DL (2010). Enterprise risk management: coping
 #' with model risk in a large bank. *Journal of the Operational Research
@@ -133,8 +137,8 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
     stop("`bins` must be at least 2", call. = FALSE)
   }
   eps <- .rmbl_num(eps, "eps")
-  if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps > 0.01) {
-    stop("`eps` must be a small positive floor (0 < eps <= 0.01)", call. = FALSE)
+  if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps >= 1) {
+    stop("`eps` must be a positive floor below one (0 < eps < 1)", call. = FALSE)
   }
   # Values within a part in 1e12 of each other are the same value: cut()
   # is right-closed, and a float-formatting difference between two
@@ -187,8 +191,9 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
 #' @param expected Named numeric vector of reference counts
 #' or proportions, or a factor/character vector to be tabulated. Rescaled
 #' to the total of `observed`.
-#' @return A named length-3 numeric: `statistic`, `df`,
-#' `p_value`.
+#' @return A named length-4 numeric: `statistic`, `df`,
+#' `p_value` and `log_p_value`, the natural log of the upper tail, which
+#' keeps its information where `p_value` underflows to 0.
 #' @seealso [stats::chisq.test()] for the
 #' full test object.
 #' @examples
@@ -293,8 +298,13 @@ drift_chisq <- function(observed, expected) {
 #'
 #' @param x,y Factor or character vectors (or named count
 #' vectors) -- the reference and the new sample.
-#' @return A named length-3 numeric: `statistic`, `df`,
-#' `p_value`.
+#' @return A named length-4 numeric: `statistic`, `df`,
+#' `p_value` and `log_p_value`, the natural log of the upper tail, which
+#' keeps its information where `p_value` underflows to 0. On the Monte
+#' Carlo branch (sparse tables) `p_value` is floored at 1/(B+1) and
+#' `log_p_value` is its log, so it carries no extra range there. The
+#' attribute `method` names the branch, or says why the test was
+#' inapplicable (one category, no counts).
 #' @seealso
 #' [drift_chisq()] for a known reference
 #' distribution, [stats::chisq.test()] for
@@ -415,7 +425,9 @@ drift_homogeneity <- function(x, y, seed = 1L) {
 #' @param x Numeric vector.
 #' @return A list of class `bricklayer_benford`: `counts`
 #' (observed digit frequencies 1--9), `expected`, `proportion`,
-#' `statistic`, `df`, `p_value`, and `n`.
+#' `statistic`, `df`, `p_value`, `log_p_value` (the log of the upper
+#' tail, which keeps its information where `p_value` underflows to 0),
+#' and `n`.
 #' @references Benford F (1938). The law of anomalous numbers.
 #'   *Proceedings of the American Philosophical Society* 78(4), 551--572.
 #' @examples
@@ -624,7 +636,12 @@ capsule_drift <- function(reference, current, alpha = 0.01,
     # divergence over the union of categories read 8.8 and fired on every
     # such column. The share of current rows the reference never saw is
     # reported; the verdict is NA, not a guess.
-    if (n_lv > identifier_levels || n_lv > 0.2 * (length(av) + length(bv))) {
+    # The ratio test needs a sample behind it: on ten rows a five-level
+    # factor has "a value for every fifth row" and 0.5.7 returned no verdict
+    # for an ordinary small column. It applies from a hundred rows a side.
+    if (n_lv > identifier_levels ||
+        (length(av) >= 100L && length(bv) >= 100L &&
+           n_lv > 0.2 * (length(av) + length(bv)))) {
       return(row(nm, "identifier", unseen = unseen, drifted = NA,
                  note = sprintf("%d distinct values: distribution tests do not apply", n_lv)))
     }

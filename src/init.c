@@ -154,6 +154,8 @@ extern SEXP C_rmbl_pbkdf2(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_os_random(SEXP);
 /* .Call wrappers (defined in rmbl_fetch.cpp) -- libcurl fetch + wayback */
 extern SEXP C_rmbl_fetch_fallback(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_http_download(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_redirect_check(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_url_check(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_wayback(SEXP, SEXP);
 /* .Call wrappers (defined in rmbl_siu.cpp) -- vendored SIU parse/resolve */
@@ -207,7 +209,7 @@ extern void   rmbl_moments_merge(const double *, const double *, double *);
 extern int    rmbl_blake2b(const unsigned char *, size_t,
                            const unsigned char *, size_t, int,
                            unsigned char *);
-extern void   rmbl_pbkdf2_sha256(const unsigned char *, size_t,
+extern int    rmbl_pbkdf2_sha256(const unsigned char *, size_t,
                                  const unsigned char *, size_t, int, int,
                                  unsigned char *);
 extern int    rmbl_os_random(unsigned char *, size_t);
@@ -224,6 +226,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_sha256",         (DL_FUNC) &C_rmbl_sha256,         1},
     {"C_rmbl_sha512",         (DL_FUNC) &C_rmbl_sha512,         1},
     {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
+    {"C_rmbl_http_download",  (DL_FUNC) &C_rmbl_http_download,  5},
+    {"C_rmbl_redirect_check", (DL_FUNC) &C_rmbl_redirect_check, 3},
     {"C_rmbl_wayback",        (DL_FUNC) &C_rmbl_wayback,        2},
     {"C_rmbl_url_check",      (DL_FUNC) &C_rmbl_url_check,      3},
     {"C_rmbl_siu_html_to_text",      (DL_FUNC) &C_rmbl_siu_html_to_text,      1},

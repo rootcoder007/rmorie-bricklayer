@@ -15,8 +15,9 @@ or proportions, or a factor/character vector to be tabulated. Rescaled
 to the total of \code{observed}.}
 }
 \value{
-A named length-3 numeric: \code{statistic}, \code{df},
-\code{p_value}.
+A named length-4 numeric: \code{statistic}, \code{df},
+\code{p_value} and \code{log_p_value}, the natural log of the upper tail, which
+keeps its information where \code{p_value} underflows to 0.
 }
 \description{
 Pearson's chi-square goodness-of-fit statistic comparing observed
