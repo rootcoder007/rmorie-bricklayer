@@ -11,7 +11,7 @@ their counts."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,8 +77,13 @@ so the same inputs give the same p-value and nothing downstream moves.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named length-3 numeric: <code>statistic</code>, <code>df</code>,
-<code>p_value</code>.</p>
+    <p>A named length-4 numeric: <code>statistic</code>, <code>df</code>,
+<code>p_value</code> and <code>log_p_value</code>, the natural log of the upper tail, which
+keeps its information where <code>p_value</code> underflows to 0. On the Monte
+Carlo branch (sparse tables) <code>p_value</code> is floored at 1/(B+1) and
+<code>log_p_value</code> is its log, so it carries no extra range there. The
+attribute <code>method</code> names the branch, or says why the test was
+inapplicable (one category, no counts).</p>
     </div>
     <div class="section level2">
     <h2 id="why-this-and-not-drift-chisq-">Why this and not <code><a href="drift_chisq.html">drift_chisq()</a></code><a class="anchor" aria-label="anchor" href="#why-this-and-not-drift-chisq-"></a></h2>

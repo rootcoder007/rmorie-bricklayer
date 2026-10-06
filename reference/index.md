@@ -119,13 +119,16 @@ the rmoriebricklayer shell command.
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   : Agent-assisted reproducibility-bundle help
 - [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
-  : Ask the hosted MORIE language model
+  : Ask a language model
 - [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
   : Sign in to the hosted MORIE language model
 - [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
   : Forget the hosted MORIE language-model key
 - [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
   : Report the language-model routes available from this machine
+- [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)
+  : The hosted MORIE services, as the project site currently describes
+  them
 - [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
   : Models offered by the hosted MORIE LLM tier
 - [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)

@@ -15,7 +15,7 @@ marginal ranges and outside the cloud."><meta name="google-site-verification" co
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,9 @@ flagged by construction).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame of class <code>bricklayer_outliers</code> with
 <code>row</code>, <code>distance</code> (the square root of the squared Mahalanobis
-distance), <code>p_value</code> and <code>outlier</code>, ordered by descending
-distance.</p>
+distance), <code>p_value</code>, <code>log_p_value</code> (the log of the chi-square upper
+tail, which keeps its information where <code>p_value</code> underflows to 0) and
+<code>outlier</code>, ordered by descending distance.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -138,10 +139,10 @@ it into a validation rule.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ── Mahalanobis outliers (robust) ───────────────────────────────── </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   ! 1 of 3 rows beyond alpha = 0.001</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  row distance  p_value outlier</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    1     4.30 9.61e-05    TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   32     2.90   0.0149   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   14     2.81   0.0194   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  row distance  p_value log_p_value outlier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    1     4.30 9.61e-05   -9.249997    TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   32     2.90   0.0149   -4.204956   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   14     2.81   0.0194   -3.940191   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># It is flagged, although both values lie inside the other rows' ranges.</span></span></span>

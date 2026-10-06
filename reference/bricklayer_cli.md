@@ -4,9 +4,11 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `login [--token [KEY]] [--email ADDRESS [--code CODE]] [--no-browser]`:
 
-  sign in to the hosted MORIE LLM tier: the GitHub device flow by
-  default, a code sent to `--email`, or a key you paste with `--token`
-  (read from the terminal or a pipe when KEY is omitted)
+  sign in to the hosted MORIE tier (a last resort behind a local model
+  or your own endpoint; keys are issued on request at
+  <https://rmorie.com/access>): a key you paste with `--token` (read
+  from the terminal or a pipe when KEY is omitted), a code sent to
+  `--email`, or the GitHub device flow
 
 - `logout`:
 
@@ -14,7 +16,8 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `doctor`:
 
-  report the language-model routes available here
+  report the language-model routes available here (own endpoint, local
+  Ollama, hosted tier), in the order `ask` tries them
 
 - `models`:
 
@@ -83,7 +86,7 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.7
+#> rmoriebricklayer 0.5.8
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
@@ -92,7 +95,7 @@ bricklayer_cli("help")
 #>   logout                                    forget the hosted key
 #>   doctor                                    language-model routes available here
 #>   models                                    models the hosted tier offers your key
-#>   ask [--model NAME] PROMPT...              ask the model
+#>   ask [--model NAME] PROMPT...              ask a model (own endpoint, local Ollama, then the hosted tier)
 #>   bundle REQUEST...                         agent_bundle() from the shell
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function

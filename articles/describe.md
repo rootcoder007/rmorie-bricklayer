@@ -346,10 +346,10 @@ head(mahalanobis_outliers(people), 3)
 #> ── Mahalanobis outliers (robust) ───────────────────────────────── 
 #>   ! 1 of 3 rows beyond alpha = 0.001
 #> 
-#>  row distance p_value outlier
-#>    1    10.80  <2e-16    TRUE
-#>   59     3.14 0.00725   FALSE
-#>  203     2.91  0.0146   FALSE
+#>  row distance p_value log_p_value outlier
+#>    1    10.80  <2e-16  -58.355041    TRUE
+#>   59     3.14 0.00725   -4.926492   FALSE
+#>  203     2.91  0.0146   -4.227502   FALSE
 #> ──────────────────────────────────────────────────────────────────
 ```
 

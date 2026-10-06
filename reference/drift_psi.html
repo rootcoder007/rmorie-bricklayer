@@ -9,7 +9,7 @@ reference one."><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,11 @@ Binned on the quantiles of <code>x</code>, so the reference defines the bins.</p
 
 <dt id="arg-eps">eps<a class="anchor" aria-label="anchor" href="#arg-eps"></a></dt>
 <dd><p>Floor applied to empty bins in the PSI (default
-1e-6).</p></dd>
+1e-6), any value in (0, 1). An empty bin contributes
+\((p - eps)\log(p/eps)\) to the index, so the floor is part of the
+statistic: the default reports the raw index, and a larger floor (0.01,
+0.05) smooths an empty bin toward that share, which dampens the PSI.
+Compare runs only at one <code>eps</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

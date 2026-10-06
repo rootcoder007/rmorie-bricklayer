@@ -1,9 +1,15 @@
 # Sign in to the hosted MORIE language model
 
-Mints a personal key for <https://llm.rmorie.com> and stores it in
+Stores a personal key for the hosted MORIE tier in
 `$XDG_CONFIG_HOME/morie/credentials.json` (owner-only; the file the
-`morie` and `rmorie` packages read too, so one sign-in serves all
-three). Three ways in:
+`morie`, `rmorie` and `rmoriedata` packages read too, so one sign-in
+serves all of them). The tier is a last resort behind a local model or
+your own endpoint (see
+[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md));
+keys are personal and issued on request at <https://rmorie.com/access>.
+The sign-in addresses come from
+[`bricklayer_services`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md).
+Three ways in:
 
 - `token`: a key you already have, from the website or an email. It is
   checked with the gateway first and stored only when the gateway
@@ -33,7 +39,7 @@ bricklayer_llm_login(
 
 - token:
 
-  A key from <https://llm.rmorie.com>.
+  A key issued at <https://rmorie.com/access>.
 
 - email:
 
@@ -59,8 +65,8 @@ The key, invisibly.
 
 ``` r
 if (FALSE) { # \dontrun{
+bricklayer_llm_login(token = "<key issued at https://rmorie.com/access>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login() # GitHub device flow
-bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
 } # }
 ```

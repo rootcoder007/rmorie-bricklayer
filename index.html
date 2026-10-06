@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +86,7 @@
 <li>
 <strong>Categorical integrity</strong> — <code><a href="reference/guard_recode.html">guard_recode()</a></code>, <code><a href="reference/decode_codes.html">decode_codes()</a></code>, <code><a href="reference/guard_levels.html">guard_levels()</a></code>, <code><a href="reference/audit_categories.html">audit_categories()</a></code>, <code><a href="reference/verify_recode.html">verify_recode()</a></code>, <code><a href="reference/verify_marginals.html">verify_marginals()</a></code>, <code><a href="reference/odds_ratio_check.html">odds_ratio_check()</a></code>, <code><a href="reference/relabel.html">relabel()</a></code>, <code><a href="reference/decode_labelled.html">decode_labelled()</a></code>, <code><a href="reference/transfer_verify.html">transfer_verify()</a></code>, <code><a href="reference/relabel_forensics.html">relabel_forensics()</a></code> and a signed <code><a href="reference/recode_manifest.html">recode_manifest()</a></code>: recodes that refuse anything unmapped or positional, an SPSS/Stata/SAS import checked against the source code book and frequency table, reported odds ratios recomputed under every relabelling, and the mechanical step behind a permutation named, so a swapped label is fixed on the day, not blamed on the software.</li>
 <li>
-<strong>Asking a model</strong> — <code><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login()</a></code>, <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> and <code><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code> sign in to the hosted MORIE tier, list the models your key can use and put a question to one; the <code>rmoriebricklayer</code> launcher offers the same as shell verbs.</li>
+<strong>Asking a model</strong> — <code><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code> puts a question to the first language-model route that answers: an OpenAI-compatible endpoint of your own, a local Ollama server, then the hosted MORIE tier as a last resort (<code><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login()</a></code> stores its key, <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> lists its models, <code><a href="reference/bricklayer_llm_status.html">bricklayer_llm_status()</a></code> shows which route answers). The hosted addresses come from a signed services document (<code><a href="reference/bricklayer_services.html">bricklayer_services()</a></code>), so they can change without a release; the <code>rmoriebricklayer</code> launcher offers the same as shell verbs.</li>
 <li>
 <strong>Schema validation</strong> — <code><a href="reference/infer_schema.html">infer_schema()</a></code> derives a pinnable schema from data you trust; <code><a href="reference/validate_schema.html">validate_schema()</a></code> checks names, types, ranges, value sets and missingness against it; <code><a href="reference/rule.html">rule()</a></code> and the <code>rule_*()</code> library express the project-specific checks a generic schema cannot.</li>
 <li>
@@ -126,7 +126,7 @@
 <li>
 <strong>JSON without jsonlite</strong> — <code><a href="reference/bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code> and <code><a href="reference/bricklayer_json_from_json.html">bricklayer_json_from_json()</a></code> are jsonlite’s <code>toJSON()</code> and <code>fromJSON()</code>, natively: every option, the same defaults and the same bytes out. <code><a href="reference/rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> round-trips an R object with its type and attributes (exactly, doubles included, with <code>digits = I(17)</code>), with base64 and base64url codecs beside it.</li>
 <li>
-<strong>Curated tables</strong> — <code><a href="reference/bricklayer_data_manifest.html">bricklayer_data_tables()</a></code> lists the tables served at data.rmorie.com (161 databases and 203 tables on 2026-10-05, materialised from Google BigQuery public datasets), and <code>bricklayer_data_load("db/table")</code> opens one with your MORIE key, cached locally. <code><a href="reference/bricklayer_fetch.html">bricklayer_fetch()</a></code> downloads any URL with an Internet Archive fallback (libcurl).</li>
+<strong>Curated tables</strong> — <code><a href="reference/bricklayer_data_manifest.html">bricklayer_data_tables()</a></code> lists the tables served at data.rmorie.com (161 databases and 203 tables on 2026-10-05, materialised from Google BigQuery public datasets), and <code>bricklayer_data_load("db/table")</code> opens one with your MORIE key (issued on request at <a href="https://rmorie.com/access" class="external-link uri">https://rmorie.com/access</a>, under the terms at <a href="https://rmorie.com/data-license" class="external-link uri">https://rmorie.com/data-license</a>), cached locally. <code><a href="reference/bricklayer_fetch.html">bricklayer_fetch()</a></code> downloads any URL with an Internet Archive fallback (libcurl).</li>
 </ul>
 </div>
 <div class="section level2">
@@ -177,9 +177,9 @@
 </tr>
 <tr>
 <td>Survives hostile arguments</td>
-<td>Every one of the 111 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never <code>std::terminate</code>); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded</td>
+<td>Every one of the 113 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never <code>std::terminate</code>); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess</td>
 <td>
-<code>src/rmbl_barrier.cpp</code>, <code>inst/scripts/gen_barrier.R</code>, <code>tests/testthat/test-review2.R</code>
+<code>src/rmbl_barrier.cpp</code>, <code>inst/scripts/gen_barrier.R</code>, <code>tests/testthat/test-review2.R</code>, <code>tests/testthat/test-review3.R</code>
 </td>
 </tr>
 <tr>
@@ -328,52 +328,58 @@
 <div class="section level2">
 <h2 id="asking-a-model">Asking a model<a class="anchor" aria-label="anchor" href="#asking-a-model"></a>
 </h2>
-<p>The package can put a question to a language model, from R or from the shell, through the hosted MORIE tier at <code>https://llm.rmorie.com</code>. Nothing runs until you sign in; without a key every call returns empty.</p>
+<p>The package can put a question to a language model, from R or from the shell. Three routes are tried, in this order, and the first that answers is used:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>An endpoint of your own.</strong> Set <code>MORIE_LLM_BASE_URL</code> to any OpenAI-compatible server (with <code>MORIE_LLM_API_KEY</code> and <code>MORIE_LLM_MODEL</code> when it needs them).</li>
+<li>
+<strong>A local Ollama server.</strong> Found at <code>OLLAMA_HOST</code> (or <code>OLLAMA_BASE_URL</code>), default <code>http://localhost:11434</code>; the model is <code>OLLAMA_MODEL</code> or the first one the server lists. <code>OLLAMA_HOST=off</code> skips it.</li>
+<li>
+<strong>The hosted MORIE tier</strong>, a last resort for people who can run neither. Its address and model list come from the signed services document at <code>https://rmorie.com/.well-known/morie-services.json</code> (ML-DSA-44, the public key pinned in the package: <code><a href="reference/bricklayer_services.html">bricklayer_services()</a></code>), so the endpoint can move or be paused without a package release. Keys are personal, rate limited and issued on request at <a href="https://rmorie.com/access" class="external-link uri">https://rmorie.com/access</a>; a key is stored once, in <code>~/.config/morie/credentials.json</code>, and shared with rmorie, rmoriedata and the Python package morie.</li>
+</ol>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Sign in once. The device flow prints a link and a code to confirm in a</span></span>
-<span><span class="co"># browser; the email flow mails the code; a key you already hold can be</span></span>
-<span><span class="co"># pasted. The key is saved in ~/.config/morie/credentials.json, shared with</span></span>
-<span><span class="co"># rmorie and the Python package morie.</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>                                   <span class="co"># with a GitHub account (device flow)</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span><span class="op">)</span>           <span class="co"># no GitHub account: a code is emailed, then</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span>, code <span class="op">=</span> <span class="st">"123456"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span>                    <span class="co"># paste a key</span></span>
-<span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_status.html">bricklayer_llm_status</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># base URL, whether a key is stored, the default model</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># the models your key can use; attr(, "default")</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_status.html">bricklayer_llm_status</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># which route would answer from this machine, and why</span></span>
 <span><span class="fu"><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"Summarise what a Benford screen can and cannot show."</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"The same question, on the local model."</span>, route <span class="op">=</span> <span class="st">"ollama"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># The hosted tier: store the key you were issued, or sign in</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span>                    <span class="co"># the key from rmorie.com/access</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span><span class="op">)</span>           <span class="co"># or: a code is emailed, then</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.org"</span>, code <span class="op">=</span> <span class="st">"123456"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>                                   <span class="co"># or: GitHub device flow</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># the hosted models your key can use; attr(, "default")</span></span>
 <span><span class="fu"><a href="reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"Summarise what a Benford screen can and cannot show."</span>,</span>
-<span>                  model <span class="op">=</span> <span class="st">"gpt-oss-120b:cf"</span><span class="op">)</span>  <span class="co"># the same question, another model</span></span>
-<span><span class="fu"><a href="reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># forget the key</span></span></code></pre></div>
-<p><code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> lists the hosted tier only; a local Ollama server is not consulted here. <code>MORIE_HOSTED_KEY</code> in the environment overrides the stored key, and <code>MORIE_HOSTED_BASE_URL</code> points the package at another gateway (set it to <code>off</code> to disable the hosted tier).</p>
-<p>On 2026-10-05 the tier served 20 models, each of which answered: ollama.com cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud, glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud and gpt-oss:120b-cloud) and additional AI models (gpt-oss-120b:cf, gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf, gemma-4-26b:cf, kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf, deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf and glm-5.3-flash:cf). <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> reports what your key can use now.</p>
+<span>                  model <span class="op">=</span> <span class="st">"gpt-oss-120b:cf"</span>, route <span class="op">=</span> <span class="st">"hosted"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># forget the key</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/bricklayer_services.html">bricklayer_services</a></span><span class="op">(</span><span class="op">)</span>        <span class="co"># the signed document: endpoints, modes, models, notice</span></span></code></pre></div>
+<p><code>MORIE_HOSTED_KEY</code> in the environment overrides the stored key, and <code>MORIE_HOSTED_BASE_URL</code> points the package at another gateway (set it to <code>off</code> to disable the hosted tier). The hosted tier serves ollama.com cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud, glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud and gpt-oss:120b-cloud) and additional AI models; <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> reports what your key can use now.</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># with a GitHub account</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># no GitHub account: a code is emailed, type it at the prompt</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># paste a key you already have (or pipe it in)</span></span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># what you can ask, default marked</span></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the key</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, local Ollama, then the hosted tier</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># paste the key you were issued (or pipe it in)</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># hosted models your key can use, default marked</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the key</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">rmbl</span> login                                      <span class="co"># GitHub</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--email</span> you@example.com              <span class="co"># no GitHub account: type the emailed code at the prompt</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--no-browser</span>                         <span class="co"># server / SSH</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">rmbl</span> models</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>

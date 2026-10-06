@@ -22,7 +22,11 @@ drift_psi(x, y, bins = 10L, eps = 1e-06)
 
 - eps:
 
-  Floor applied to empty bins in the PSI (default 1e-6).
+  Floor applied to empty bins in the PSI (default 1e-6), any value in
+  (0, 1). An empty bin contributes \\(p - eps)\log(p/eps)\\ to the
+  index, so the floor is part of the statistic: the default reports the
+  raw index, and a larger floor (0.01, 0.05) smooths an empty bin toward
+  that share, which dampens the PSI. Compare runs only at one `eps`.
 
 ## Value
 

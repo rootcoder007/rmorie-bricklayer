@@ -1,8 +1,10 @@
 # Download a File
 
-Thin wrapper around
-[`utils::download.file()`](https://rdrr.io/r/utils/download.file.html)
-that returns the target path invisibly so it composes in pipelines.
+Downloads through the package's own transport,
+[`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md):
+the URL checked and pinned, every redirect hop re-checked, the body
+capped, a live progress bar. Returns the target path invisibly so it
+composes in pipelines.
 
 ## Usage
 
@@ -22,9 +24,9 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
 - mode:
 
-  Write mode passed to
-  [`utils::download.file()`](https://rdrr.io/r/utils/download.file.html);
-  defaults to `"wb"` (binary) for cross-platform safety.
+  Accepted for compatibility with the signature of
+  [`utils::download.file()`](https://rdrr.io/r/utils/download.file.html),
+  which this function once wrapped; every transfer is binary.
 
 - quiet:
 

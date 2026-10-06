@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,9 @@
 
 
 <dl><dt id="arg-txt">txt<a class="anchor" aria-label="anchor" href="#arg-txt"></a></dt>
-<dd><p>JSON text, a file path, or an http(s) URL.</p></dd>
+<dd><p>JSON text, a file path, or an http(s) URL. A URL goes through
+the same check and the same transport as every other fetch in the
+package (public https host, redirects re-checked, body capped).</p></dd>
 
 
 <dt id="arg-simplifyvector-simplifydataframe-simplifymatrix-flatten">simplifyVector, simplifyDataFrame, simplifyMatrix, flatten<a class="anchor" aria-label="anchor" href="#arg-simplifyvector-simplifydataframe-simplifymatrix-flatten"></a></dt>

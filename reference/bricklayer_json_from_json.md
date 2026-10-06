@@ -23,7 +23,9 @@ bricklayer_json_from_json(
 
 - txt:
 
-  JSON text, a file path, or an http(s) URL.
+  JSON text, a file path, or an http(s) URL. A URL goes through the same
+  check and the same transport as every other fetch in the package
+  (public https host, redirects re-checked, body capped).
 
 - simplifyVector, simplifyDataFrame, simplifyMatrix, flatten:
 

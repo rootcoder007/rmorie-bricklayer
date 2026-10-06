@@ -25,7 +25,13 @@ drift_homogeneity(x, y, seed = 1L)
 
 ## Value
 
-A named length-3 numeric: `statistic`, `df`, `p_value`.
+A named length-4 numeric: `statistic`, `df`, `p_value` and
+`log_p_value`, the natural log of the upper tail, which keeps its
+information where `p_value` underflows to 0. On the Monte Carlo branch
+(sparse tables) `p_value` is floored at 1/(B+1) and `log_p_value` is its
+log, so it carries no extra range there. The attribute `method` names
+the branch, or says why the test was inapplicable (one category, no
+counts).
 
 ## Why this and not [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)
 

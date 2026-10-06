@@ -23,7 +23,8 @@ benford_test(x)
 
 A list of class `bricklayer_benford`: `counts` (observed digit
 frequencies 1–9), `expected`, `proportion`, `statistic`, `df`,
-`p_value`, and `n`.
+`p_value`, `log_p_value` (the log of the upper tail, which keeps its
+information where `p_value` underflows to 0), and `n`.
 
 ## Details
 

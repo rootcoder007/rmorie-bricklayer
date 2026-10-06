@@ -28,7 +28,9 @@ drift_chisq(observed, expected)
 
 ## Value
 
-A named length-3 numeric: `statistic`, `df`, `p_value`.
+A named length-4 numeric: `statistic`, `df`, `p_value` and
+`log_p_value`, the natural log of the upper tail, which keeps its
+information where `p_value` underflows to 0.
 
 ## Details
 

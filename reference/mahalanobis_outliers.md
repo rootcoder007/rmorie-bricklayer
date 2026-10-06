@@ -31,8 +31,10 @@ mahalanobis_outliers(data, alpha = 0.001, robust = TRUE)
 ## Value
 
 A data frame of class `bricklayer_outliers` with `row`, `distance` (the
-square root of the squared Mahalanobis distance), `p_value` and
-`outlier`, ordered by descending distance.
+square root of the squared Mahalanobis distance), `p_value`,
+`log_p_value` (the log of the chi-square upper tail, which keeps its
+information where `p_value` underflows to 0) and `outlier`, ordered by
+descending distance.
 
 ## Details
 
@@ -82,10 +84,10 @@ head(out, 3)
 #> ── Mahalanobis outliers (robust) ───────────────────────────────── 
 #>   ! 1 of 3 rows beyond alpha = 0.001
 #> 
-#>  row distance  p_value outlier
-#>    1     4.30 9.61e-05    TRUE
-#>   32     2.90   0.0149   FALSE
-#>   14     2.81   0.0194   FALSE
+#>  row distance  p_value log_p_value outlier
+#>    1     4.30 9.61e-05   -9.249997    TRUE
+#>   32     2.90   0.0149   -4.204956   FALSE
+#>   14     2.81   0.0194   -3.940191   FALSE
 #> ────────────────────────────────────────────────────────────────── 
 
 # It is flagged, although both values lie inside the other rows' ranges.
