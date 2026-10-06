@@ -38,11 +38,13 @@ jobs:
       NOT_CRAN: "true"
     steps:
       - uses: actions/checkout@v7
+      # libuv for fs (a testthat dependency), libssl for openssl: the sanitizer image
+      # ships neither, and install.packages() warns rather than fails without them
       - name: System libraries
-        run: apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev
+        run: apt-get update && apt-get install -y --no-install-recommends libcurl4-openssl-dev libuv1-dev libssl-dev pkg-config
       - name: Test dependencies
         run: |
-          RDscript -e 'install.packages(c("testthat", "withr", "digest", "jsonlite", "openssl"), repos = "https://cloud.r-project.org")'
+          RDscript -e 'install.packages(c("testthat", "withr", "digest", "jsonlite", "openssl"), repos = "https://cloud.r-project.org"); for (p in c("testthat", "withr", "digest", "jsonlite", "openssl")) if (!requireNamespace(p, quietly = TRUE)) stop("could not install ", p)'
       - name: Install under the sanitizers
         run: RD CMD INSTALL --preclean .
       - name: Run the test suite under ASAN + UBSAN
