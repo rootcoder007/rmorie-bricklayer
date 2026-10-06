@@ -279,11 +279,12 @@ test_that("the interrupt test is the throwing one everywhere but the barrier", {
   skip_if(is.na(d), "package sources not available from here")
   files <- list.files(d, pattern = "[.](cpp|c|h)$", full.names = TRUE)
   files <- files[basename(files) != "rmbl_barrier.cpp"]
-  hits <- unlist(lapply(files, function(f) {
+  skip_if(!length(files), "no sources found")
+  hits <- as.character(unlist(lapply(files, function(f) {
     l <- readLines(f, warn = FALSE)
     i <- grep("R_CheckUserInterrupt\\s*\\(", l)
     if (length(i)) paste0(basename(f), ":", i) else character(0)
-  }))
+  })))
   # R_CheckUserInterrupt() longjmps over every live C++ object; the kernels
   # call rmbl::check_interrupt() (throws) or rmbl_interrupt_pending() (flag)
   expect_identical(hits, character(0))
@@ -305,16 +306,18 @@ test_that("the barrier clears the interrupt flag on every path and raises for an
 test_that("R code opens no network connection outside the compiled transport", {
   d <- r_dir()
   skip_if(is.na(d), "package sources not available from here")
+  # under covr the installed package has an R/ directory with no sources in it
   files <- list.files(d, pattern = "[.]R$", full.names = TRUE)
+  skip_if(!length(files), "no R sources found")
   pat <- paste0("(^|[^a-zA-Z_.])(base::)?url\\(|download\\.file\\(|curl::|",
                 "file\\(\"https?://|readLines\\(\"https?://|gzcon\\(url")
-  hits <- unlist(lapply(files, function(f) {
+  hits <- as.character(unlist(lapply(files, function(f) {
     l <- readLines(f, warn = FALSE)
     code <- sub("#.*$", "", l)          # not the comments
     code <- code[!grepl("^\\s*#'", l)]  # nor roxygen
     i <- grep(pat, code, perl = TRUE)
     if (length(i)) paste0(basename(f), ": ", trimws(code[i])) else character(0)
-  }))
+  })))
   # the two base-R fallbacks exist for a capsule bundle that copies one file
   # out of the package; inside the package `exists()` routes past them
   allowed <- c(
