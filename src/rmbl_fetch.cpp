@@ -756,7 +756,9 @@ long http_get_file(const std::string &url, const std::string &path, long timeout
     curl_easy_setopt(h, CURLOPT_USERAGENT, kUA);
     curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_file);
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &fs);
-    curl_easy_setopt(h, CURLOPT_MAXFILESIZE_LARGE, max_bytes);  /* when Content-Length is known */
+    /* the per-call cap is the sink's own byte count, the same on every libcurl and for a
+ * chunked body; CURLOPT_MAXFILESIZE_LARGE (set above for every handle) stays the hard
+ * 2 GiB ceiling that stops a declared giant before the first byte */
     char errbuf[CURL_ERROR_SIZE] = {0};
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
     Progress prog;
