@@ -153,19 +153,14 @@ test_that("the odds and ends: timeout range, single-label message, mirror .sig U
 test_that("Mann-Kendall interrupted inside the barrier raises R's interrupt, as PBKDF2 does (D2)", {
   skip_on_cran()
   skip_on_os("windows")
-  skip_if_sigint_ignored()
-  signal_sent <- tempfile("sigint-")
-  system2("bash", c("-c", shQuote(sprintf("sleep 1; kill -INT %d && touch %s", Sys.getpid(), signal_sent))),
-          wait = FALSE)
-  # 120k points: the pair loop runs for many seconds unless the poll (every 512 rows) sees the signal
-  y <- as.numeric(seq_len(120000L)) + rep(c(0.5, -0.5), 60000L)
-  got <- tryCatch({
-    .Call(r5("C_rmbl_mann_kendall"), y)
-    "returned"
-  }, interrupt = function(e) "interrupt")
-  for (i in 1:20) if (file.exists(signal_sent)) break else Sys.sleep(0.1)
-  skip_if(!file.exists(signal_sent) && identical(got, "returned"),
-          "the SIGINT helper did not run in time on this machine (inconclusive, not a failure)")
+  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
+  # 120k points: the pair loop runs for many seconds unless the poll (every 512 rows) sees the
+  # signal. The probe runs in a child with SIGINT reset to default, so it is conclusive even where
+  # this process inherited SIGINT as ignored (a background chain, covr)
+  got <- interrupt_probe(paste(
+    "y <- as.numeric(seq_len(120000L)) + rep(c(0.5, -0.5), 60000L);",
+    ".Call(rmoriebricklayer:::C_rmbl_mann_kendall, y)"))
+  skip_if(startsWith(got, "inconclusive"), got)
   expect_identical(got, "interrupt")
   # the next call starts clean and answers
   mk <- .Call(r5("C_rmbl_mann_kendall"), c(1, 3, 2, 5, 4, 6))

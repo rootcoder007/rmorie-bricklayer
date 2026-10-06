@@ -18,6 +18,7 @@ pkg_root_r4 <- function() {
 #   /endless     -> an unbounded chunked body
 #   /url-body    -> a body that is a bare URL
 #   /missing     -> 404 with an empty body
+#   /nowhere     -> 302 with no Location header (a final non-2xx answer)
 r4_server <- function(env = parent.frame()) {
   skip_on_cran()
   skip_on_os("windows")
@@ -51,6 +52,8 @@ r4_server <- function(env = parent.frame()) {
     "            try:",
     "                while True: self.wfile.write(b'%x\\r\\n' % len(chunk) + chunk + b'\\r\\n')",
     "            except Exception: return",
+    "        if p == '/nowhere':",
+    "            self.send_response(302); self.send_header('Content-Length', '0'); self.end_headers(); return",
     "        if p == '/missing':",
     "            self.send_response(404); self.send_header('Content-Length', '0'); self.end_headers(); return",
     "        if p == '/url-body':",
@@ -360,6 +363,12 @@ test_that("the file sink: a chunked body past max_bytes ends the transfer, a non
   expect_identical(as.integer(r$status), 404L)
   expect_match(r$error, "HTTP 404", fixed = TRUE)
   expect_false(file.exists(dest))
+  # a 302 with no Location is a final answer too: libcurl stops, the body is not a file
+  r <- .Call(dl, paste0(srv$base, "/nowhere"), dest, 20L, NULL, NULL, NULL, TRUE)
+  expect_identical(as.integer(r$status), 302L)
+  expect_match(r$error, "HTTP 302", fixed = TRUE)
+  expect_false(file.exists(dest))
+  expect_length(list.files(dirname(dest), pattern = paste0("^", basename(dest), "\\.rmbl-part")), 0L)
   # the two one-line network seams run for real against a refused address: a status, never a crash
   expect_false(identical(r4(".rmbl_net_download")("https://127.0.0.1:1/x.json", tempfile(), 2), 200L))
   post <- r4(".rmbl_net_post")("https://127.0.0.1:1/ocsp", raw(0), "application/ocsp-request", 2)
