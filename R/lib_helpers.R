@@ -258,10 +258,24 @@ write_text_fallback <- function(text, path) {
   parts <- strsplit(gsub("\\\\", "/", rel), "/", fixed = TRUE)[[1L]]
   if (any(parts %in% c("", ".", ".."))) return(NULL)
   full <- file.path(dir, rel)
-  d <- sub("/+$", "", normalizePath(dir, winslash = "/", mustWork = FALSE))
-  f <- normalizePath(full, winslash = "/", mustWork = FALSE)
+  d <- .rmbl_realpath(dir)
+  f <- .rmbl_realpath(full)
   if (!startsWith(f, paste0(d, "/"))) return(NULL)
   full
+}
+
+# normalizePath() only resolves paths that exist, so a missing leaf under a
+# symlinked tempdir (macOS /var -> /private/var) would never match its
+# resolved parent. Resolve the deepest existing ancestor and re-append the rest.
+#' @noRd
+.rmbl_realpath <- function(p) {
+  tail <- character()
+  while (!file.exists(p) && dirname(p) != p) {
+    tail <- c(basename(p), tail)
+    p <- dirname(p)
+  }
+  p <- sub("/+$", "", normalizePath(p, winslash = "/", mustWork = FALSE))
+  if (length(tail)) paste(c(p, tail), collapse = "/") else p
 }
 
 # A URL the package is about to fetch, or an error in words. Resolvers

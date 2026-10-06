@@ -119,7 +119,7 @@ hqc_keygen <- function(level = 3L, seed = NULL, version = c("v5", "round4")) {
   } else if (!is.raw(seed) || length(seed) != n) {
     stop(sprintf("`seed` must be a raw vector of %d bytes for HQC %s", n, version), call. = FALSE)
   }
-  res <- .Call(if (version == "v5") C_rmbl_hqc_keygen else C_rmbl_hqc4_keygen, level, seed)
+  res <- if (version == "v5") .Call(C_rmbl_hqc_keygen, level, seed) else .Call(C_rmbl_hqc4_keygen, level, seed)
   out <- list(public = .rmbl_hexlify(res$public),
               secret = .rmbl_hexlify(res$secret),
               level = level, version = version)
@@ -162,7 +162,8 @@ hqc_public_key <- function(key) {
 #' @export
 hqc_sizes <- function(level, version = c("v5", "round4")) {
   version <- match.arg(version)
-  .Call(if (version == "v5") C_rmbl_hqc_sizes else C_rmbl_hqc4_sizes, .rmbl_hqc_level(level))
+  lv <- .rmbl_hqc_level(level)
+  if (version == "v5") .Call(C_rmbl_hqc_sizes, lv) else .Call(C_rmbl_hqc4_sizes, lv)
 }
 
 #' Encapsulate a shared secret under an HQC key
@@ -216,7 +217,11 @@ hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
   } else if (!is.raw(salt) || length(salt) != 16L) {
     stop("`salt` must be a raw vector of 16 bytes", call. = FALSE)
   }
-  res <- .Call(if (version == "v5") C_rmbl_hqc_encaps else C_rmbl_hqc4_encaps, level, ek, m, salt)
+  res <- if (version == "v5") {
+    .Call(C_rmbl_hqc_encaps, level, ek, m, salt)
+  } else {
+    .Call(C_rmbl_hqc4_encaps, level, ek, m, salt)
+  }
   out <- list(ciphertext = .rmbl_hexlify(res$ciphertext),
               shared = .rmbl_hexlify(res$shared),
               level = level, version = version)
@@ -275,7 +280,8 @@ hqc_decapsulate <- function(key, ciphertext) {
     stop(sprintf("`ciphertext` must be %d bytes for HQC-%d",
                  sz[["ciphertext"]], level), call. = FALSE)
   }
-  .rmbl_hexlify(.Call(if (version == "v5") C_rmbl_hqc_decaps else C_rmbl_hqc4_decaps, level, dk, ct))
+  out <- if (version == "v5") .Call(C_rmbl_hqc_decaps, level, dk, ct) else .Call(C_rmbl_hqc4_decaps, level, dk, ct)
+  .rmbl_hexlify(out)
 }
 
 #' The compressed HQC decapsulation key

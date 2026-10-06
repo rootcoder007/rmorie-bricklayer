@@ -276,7 +276,6 @@ bricklayer_json_base64_dec <- function(input) {
   ch <- strsplit(gsub("[^A-Za-z0-9+/]", "", s), "")[[1]]
   if (!length(ch)) return(raw(0))
   v <- match(ch, .RMBL_JSON_B64) - 1L
-  if (anyNA(v)) stop("Error in base64 decode", call. = FALSE)
   nfull <- length(v) %/% 4L
   rem <- length(v) %% 4L
   out <- integer(0)
@@ -458,6 +457,10 @@ bricklayer_json_base64url_dec <- function(input) {
   # an S3 class none of the branches above know: jsonlite's ANY method tries
   # the remaining classes, then unclasses under force = TRUE, else errors
   if (!is.null(oldClass(x)) && !is.data.frame(x)) {
+    if (isS4(x)) {
+      if (isTRUE(o$force)) return(.rmbl_json_as(attributes(x), o, collapse, na, oldna, auto_unbox, indent))
+      stop("No method asJSON S4 class: ", cls, call. = FALSE)
+    }
     if (length(cls) > 1L) {
       class(x) <- cls[-1L]
       return(.rmbl_json_as(x, o, collapse, na, oldna, auto_unbox, indent))
@@ -481,10 +484,6 @@ bricklayer_json_base64url_dec <- function(input) {
   if (length(cls) > 1L) {
     class(x) <- cls[-1L]
     return(.rmbl_json_as(x, o, collapse, na, oldna, auto_unbox, indent))
-  }
-  if (isS4(x)) {
-    if (isTRUE(o$force)) return(.rmbl_json_as(attributes(x), o, collapse, na, oldna, auto_unbox, indent))
-    stop("No method for S4 class:", cls, call. = FALSE)
   }
   if (isTRUE(o$force)) {
     y <- unclass(x)

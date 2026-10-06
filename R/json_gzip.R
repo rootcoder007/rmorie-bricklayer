@@ -126,7 +126,7 @@ json_gzip_decode <- function(txt, raw = FALSE, ...) {
   }
   # The trailer's ISIZE (uncompressed length mod 2^32) is a free pre-check
   # against a decompression bomb from an untrusted field (gzip reaches
-  # ~1000:1), and a free integrity check afterwards.
+  # ~1000:1); zlib itself verifies the trailer while inflating.
   nb <- length(bytes)
   isize <- sum(as.numeric(as.integer(bytes[(nb - 3L):nb])) * 256^(0:3))
   if (isize > 512 * 1024^2) {
@@ -134,11 +134,6 @@ json_gzip_decode <- function(txt, raw = FALSE, ...) {
                         "refusing to inflate more than 512 MiB"), isize),
          call. = FALSE)
   }
-  inflated <- memDecompress(bytes, type = "gzip")
-  if (length(inflated) %% 2^32 != isize) {
-    stop("the gzip member is corrupt: its inflated size does not match the ISIZE trailer",
-         call. = FALSE)
-  }
-  json <- rawToChar(inflated)
+  json <- rawToChar(memDecompress(bytes, type = "gzip"))
   bricklayer_json_from_json(json, ...)
 }
