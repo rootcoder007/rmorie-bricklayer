@@ -249,10 +249,18 @@ test_that("decimal conversion: the specials, the subnormal edge, a carried round
                                      "2.4703282292062328e-324", paste0("1", strrep("0", 800)),
                                      "1.9999999999999999999", strrep("9", 800), " +0.1e1"))
   expect_identical(got, c(Inf, -Inf, NaN, NaN, 0, 2^-1074, 2^-1074, Inf, 2, Inf, 1))
-  # 1e-243 is the double just below the power of ten: seventeen digits
-  # round to 10.000..., which has to carry into the exponent
-  expect_identical(.Call(C("C_rmbl_dtoa17"), as.numeric("1e-243")), "1e-243")
-  expect_identical(sprintf("%.30e", as.numeric("1e-243")) > "9.9999", TRUE)
+  # The double just below 1e-243 reads 9.99999999999999961e-244 in full,
+  # yet its seventeen significant digits round to 1.0000000000000000e-243:
+  # the carry has to move into the exponent. R's own reader is not
+  # correctly rounded on every platform (macOS parsed "1e-243" to the
+  # neighbour below), so the value is picked by the C library's printf
+  # from the doubles around it rather than taken from as.numeric().
+  cands <- 1e-243 * (1 + (-3:3) * 2^-53)
+  carry <- cands[grepl("^1\\.0000000000000000e", sprintf("%.16e", cands)) &
+                   grepl("^9\\.9999", sprintf("%.30e", cands))]
+  expect_gte(length(carry), 1L)
+  expect_identical(.Call(C("C_rmbl_dtoa17"), carry[1]), sprintf("%.17g", carry[1]))
+  expect_identical(sprintf("%.17g", carry[1]), "1e-243")
 })
 
 test_that("http entry points check their arguments before touching the network", {
