@@ -30,6 +30,19 @@ inline void wipe(void *p, size_t n) {
     while (n--) *q++ = 0;
 }
 
+/* An opaque copy: the optimiser cannot prove anything about `x` afterwards,
+ * so a 0/all-ones mask stays arithmetic instead of becoming a branch (clang
+ * does that to ML-KEM's decapsulation select and HQC's Reed-Solomon masks). */
+inline unsigned long long barrier(unsigned long long x) {
+#if defined(__GNUC__) || defined(__clang__)
+    __asm__ volatile("" : "+r"(x));
+    return x;
+#else
+    volatile unsigned long long y = x;
+    return y;
+#endif
+}
+
 struct Guard {
     void *p;
     size_t n;

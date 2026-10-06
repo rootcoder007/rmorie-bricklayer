@@ -441,7 +441,9 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     nz |= nz >> 4;
     nz |= nz >> 2;
     nz |= nz >> 1;
-    const unsigned char mask = static_cast<unsigned char>(-(nz & 1u));
+    /* clang saw that the mask is 0 or 0xff and turned the select back into
+     * a branch on the secret; an opaque copy stops that reasoning */
+    const unsigned char mask = static_cast<unsigned char>(rmbl_ct::barrier(-(nz & 1u)));
     for (int i = 0; i < 32; ++i) {
         shared[i] = static_cast<unsigned char>(
             (g[i] & ~mask) | (kbar[i] & mask));

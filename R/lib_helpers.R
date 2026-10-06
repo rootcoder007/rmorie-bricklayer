@@ -221,7 +221,7 @@ write_text_fallback <- function(text, path) {
 # simplifyVector = FALSE), `simplify = TRUE` gives jsonlite's default
 # simplification. Errors propagate so callers' tryCatch() still applies.
 #' @noRd
-.rmbl_read_json <- function(x, simplify = TRUE) {
+.rmbl_read_json <- function(x, simplify = TRUE, strict = TRUE) {
   if (length(x) == 1L && grepl("^https?://", x)) {
     .rmbl_check_public_url(x, "url")
     dest <- tempfile(fileext = ".json")
@@ -231,12 +231,16 @@ write_text_fallback <- function(text, path) {
   }
   txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
-  # a portal's metadata is read the way jsonlite reads it: a repeated key
-  # keeps its last value and a long numeric id is not a warning. The
-  # package's own documents (provenance, manifests, bundles) keep the
-  # strict defaults.
-  bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify),
-                            duplicate_keys = "keep", bigint_warn = FALSE)
+  # strict = TRUE (the default, and the package's own documents: provenance,
+  # manifests, bundles): a repeated key is an error. strict = FALSE is for a
+  # portal's metadata, read the way jsonlite reads it: a repeated key is
+  # kept and a long numeric id is not a warning.
+  if (isTRUE(strict)) {
+    bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify))
+  } else {
+    bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify),
+                              duplicate_keys = "keep", bigint_warn = FALSE)
+  }
 }
 
 # The compiled fetcher inside the package; plain download.file when this

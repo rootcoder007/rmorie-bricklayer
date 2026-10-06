@@ -169,7 +169,8 @@ test_that("JSON strings are assembled in linear time, and the reformatter refuse
   expect_warning(bricklayer_json_from_json("[9007199254740993.0]"), "beyond 2\\^53")
   expect_warning(bricklayer_json_from_json("[9.007199254740993e15]"), "beyond 2\\^53")
   expect_silent(bricklayer_json_from_json("[9007199254740993.0]", bigint_warn = FALSE))
-  expect_silent(rmoriebricklayer:::.rmbl_read_json('{"id":9007199254740993,"a":1,"a":2}'))
+  expect_silent(rmoriebricklayer:::.rmbl_read_json('{"id":9007199254740993,"a":1,"a":2}', strict = FALSE))
+  expect_error(rmoriebricklayer:::.rmbl_read_json('{"a":1,"a":2}'), "duplicate key")
 })
 
 test_that("capsule_drift: identifier columns are not distributions, dates are numbers, same data is no drift", {
