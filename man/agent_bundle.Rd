@@ -31,7 +31,11 @@ agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud")
 }
 
-# With no key stored the call returns a setup hint, not an
-# error -- safe to run anywhere:
-if (!nzchar(Sys.getenv("MORIE_HOSTED_KEY"))) agent_bundle("hello")
+# With the hosted tier switched off the call returns a setup hint, not
+# an error, and reaches no network -- safe to run anywhere:
+old <- Sys.getenv("MORIE_HOSTED_BASE_URL", unset = NA)
+Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
+agent_bundle("hello")
+if (is.na(old)) Sys.unsetenv("MORIE_HOSTED_BASE_URL") else
+  Sys.setenv(MORIE_HOSTED_BASE_URL = old)
 }

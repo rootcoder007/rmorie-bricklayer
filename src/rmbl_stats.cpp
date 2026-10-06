@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstddef>
 #include <vector>
 
@@ -162,7 +163,6 @@ double rmbl_mad(const double *a, R_xlen_t n, double constant) {
     return constant * median_sorted(v);
 }
 
-double rmbl_mad_constant(void) { return kMadConstant; }
 
 /* Symmetric trimmed mean: drop floor(n * trim) values from each end,
  * matching base R's mean(x, trim = ). */
@@ -387,7 +387,18 @@ int rmbl_first_digit(double x) {
      * (R's own print precision). Repeated x10 / /10 accumulated an ulp of
      * error per step and misread 2e-300 as 1 and 7e120 as 6. */
     char buf[40];
-    std::snprintf(buf, sizeof buf, "%.14e", v);
+    if (v < 2.2250738585072014e-308) {
+        /* a subnormal holds fewer than 15 significant digits: 1e-310 is
+         * stored as 9.99999999999997e-311, and 15 digits read it as 9.
+         * The digit of the shortest decimal that round-trips to the same
+         * double -- what R prints -- is the one meant. */
+        for (int prec = 0; prec <= 16; ++prec) {
+            std::snprintf(buf, sizeof buf, "%.*e", prec, v);
+            if (std::strtod(buf, nullptr) == v) break;
+        }
+    } else {
+        std::snprintf(buf, sizeof buf, "%.14e", v);
+    }
     const int d = buf[0] - '0';
     return (d < 1) ? 1 : (d > 9) ? 9 : d;
 }
@@ -404,7 +415,7 @@ void rmbl_first_digit_counts(const double *a, R_xlen_t n, double *out) {
 /* .Call wrappers                                                    */
 /* ---------------------------------------------------------------- */
 
-SEXP C_rmbl_moments(SEXP x) {
+SEXP C_rmbl_moments_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 4));
     rmbl_moments(REAL(x), XLENGTH(x), REAL(out));
@@ -418,7 +429,7 @@ SEXP C_rmbl_moments(SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_quantile(SEXP x, SEXP probs) {
+SEXP C_rmbl_quantile_impl(SEXP x, SEXP probs) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     probs = PROTECT(Rf_coerceVector(probs, REALSXP));
     R_xlen_t np = XLENGTH(probs);
@@ -428,35 +439,35 @@ SEXP C_rmbl_quantile(SEXP x, SEXP probs) {
     return out;
 }
 
-SEXP C_rmbl_median(SEXP x) {
+SEXP C_rmbl_median_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_median(REAL(x), XLENGTH(x));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_mad(SEXP x, SEXP constant) {
+SEXP C_rmbl_mad_impl(SEXP x, SEXP constant) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_mad(REAL(x), XLENGTH(x), Rf_asReal(constant));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_trimmed_mean(SEXP x, SEXP trim) {
+SEXP C_rmbl_trimmed_mean_impl(SEXP x, SEXP trim) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_trimmed_mean(REAL(x), XLENGTH(x), Rf_asReal(trim));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_winsorized_mean(SEXP x, SEXP trim) {
+SEXP C_rmbl_winsorized_mean_impl(SEXP x, SEXP trim) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double r = rmbl_winsorized_mean(REAL(x), XLENGTH(x), Rf_asReal(trim));
     UNPROTECT(1);
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_weighted(SEXP x, SEXP w) {
+SEXP C_rmbl_weighted_impl(SEXP x, SEXP w) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     w = PROTECT(Rf_coerceVector(w, REALSXP));
     R_xlen_t n = XLENGTH(x);
@@ -471,7 +482,7 @@ SEXP C_rmbl_weighted(SEXP x, SEXP w) {
     return out;
 }
 
-SEXP C_rmbl_cor_spearman(SEXP x, SEXP y) {
+SEXP C_rmbl_cor_spearman_impl(SEXP x, SEXP y) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     y = PROTECT(Rf_coerceVector(y, REALSXP));
     if (XLENGTH(x) != XLENGTH(y)) {
@@ -483,7 +494,7 @@ SEXP C_rmbl_cor_spearman(SEXP x, SEXP y) {
     return Rf_ScalarReal(r);
 }
 
-SEXP C_rmbl_midranks(SEXP x) {
+SEXP C_rmbl_midranks_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     R_xlen_t n = XLENGTH(x);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
@@ -492,7 +503,7 @@ SEXP C_rmbl_midranks(SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_cov_matrix(SEXP x) {
+SEXP C_rmbl_cov_matrix_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     SEXP dim = Rf_getAttrib(x, R_DimSymbol);
     if (dim == R_NilValue || XLENGTH(dim) != 2) {
@@ -507,7 +518,7 @@ SEXP C_rmbl_cov_matrix(SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_ks(SEXP x, SEXP y) {
+SEXP C_rmbl_ks_impl(SEXP x, SEXP y) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     y = PROTECT(Rf_coerceVector(y, REALSXP));
     R_xlen_t nx = XLENGTH(x), ny = XLENGTH(y);
@@ -524,7 +535,7 @@ SEXP C_rmbl_ks(SEXP x, SEXP y) {
     return out;
 }
 
-SEXP C_rmbl_psi(SEXP p, SEXP q, SEXP eps) {
+SEXP C_rmbl_psi_impl(SEXP p, SEXP q, SEXP eps) {
     p = PROTECT(Rf_coerceVector(p, REALSXP));
     q = PROTECT(Rf_coerceVector(q, REALSXP));
     if (XLENGTH(p) != XLENGTH(q)) {
@@ -538,7 +549,7 @@ SEXP C_rmbl_psi(SEXP p, SEXP q, SEXP eps) {
     return out;
 }
 
-SEXP C_rmbl_first_digit_counts(SEXP x) {
+SEXP C_rmbl_first_digit_counts_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 9));
     rmbl_first_digit_counts(REAL(x), XLENGTH(x), REAL(out));

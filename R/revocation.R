@@ -51,7 +51,13 @@
 #' }
 #' @export
 revocation_fetch <- function(path, timeout = 10) {
-  path <- .rmbl_file1(path, "path")
+  if (!is.list(path) || !length(path) ||
+      !all(vapply(path, function(p) is.list(p) && is.raw(p$der), logical(1)))) {
+    stop("`path` must be a non-empty list of parsed certificates (cert_parse())",
+         call. = FALSE)
+  }
+  timeout <- .rmbl_num(timeout, "timeout")[1L]
+  if (is.na(timeout) || timeout <= 0) stop("`timeout` must be positive", call. = FALSE)
   .rmbl_revocation_fetch(path, timeout)
 }
 
@@ -160,10 +166,17 @@ revocation_fetch <- function(path, timeout = 10) {
   # errors out, which surfaces as a NOTE about foreign function calls
   # that says nothing about the call being wrong.
   no_fallback <- NA_character_
-  got <- tryCatch(
-    .Call(C_rmbl_fetch_fallback, url, no_fallback, tmp,
-          as.integer(timeout)),
-    error = function(e) NULL)
+  # the URL comes out of the certificate being verified -- the most
+  # attacker-controlled URL in the package. Plain http is what RFC 6960
+  # and RFC 5280 use for OCSP and CRL distribution (the answers are
+  # signed, so the transport adds nothing); the private-address and
+  # local-name refusals still apply.
+  if (is.null(tryCatch(.rmbl_check_public_url(url, "the CRL/OCSP URL",
+                                              allow_http = TRUE),
+                       error = function(e) NULL))) {
+    return(NULL)
+  }
+  got <- .rmbl_net_get_file(url, no_fallback, tmp, timeout)
   if (is.null(got) || !file.exists(tmp) || file.size(tmp) == 0) {
     return(NULL)
   }
@@ -180,6 +193,20 @@ revocation_fetch <- function(path, timeout = 10) {
                     error = function(e) NULL))
   }
   b
+}
+
+# The two network calls, each one line, so the protocol logic above and
+# below can be exercised against recorded answers.
+.rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
+  tryCatch(.Call(C_rmbl_fetch_fallback, url, fallback, tmp,
+                 as.integer(timeout)),
+           error = function(e) NULL)
+}
+
+.rmbl_net_post <- function(url, body, content_type, timeout) {
+  tryCatch(.Call(C_rmbl_http_post, url, body, content_type,
+                 as.integer(timeout), NULL),
+           error = function(e) NULL)
 }
 
 # ---------------------------------------------------------------- #
@@ -270,10 +297,7 @@ revocation_fetch <- function(path, timeout = 10) {
   # then fall back to the optional GET form. The other way round fails
   # against most responders, which refuse GET.
   body <- NULL
-  res <- tryCatch(.Call(C_rmbl_http_post, url, req,
-                        "application/ocsp-request", as.integer(timeout),
-                        NULL),
-                  error = function(e) NULL)
+  res <- .rmbl_net_post(url, req, "application/ocsp-request", timeout)
   if (!is.null(res) && identical(res$status, 200L) &&
       length(res$body) > 0L) {
     body <- res$body
@@ -403,12 +427,17 @@ revocation_fetch <- function(path, timeout = 10) {
                 detail = "the signed bytes could not be isolated"))
   }
   # A responder may sign with a certificate the path issued, carried in
-  # the answer; otherwise it must be one already in the path.
+  # the answer; otherwise it must be one already in the path. The
+  # certificates are the fourth element of BasicOCSPResponse ([0]
+  # EXPLICIT SEQUENCE OF Certificate), read by position: a tree search
+  # for a [0] lands on nextUpdate inside the SingleResponse first.
   candidates <- path
-  embedded <- .rmbl_der_find(basic, function(nd) {
-    identical(nd$class, 2L) && identical(nd$tag, 0) &&
-      isTRUE(nd$constructed)
-  })
+  embedded <- if (length(basic$children) >= 4L) basic$children[[4]] else NULL
+  if (!is.null(embedded) && !(identical(embedded$class, 2L) &&
+                              identical(embedded$tag, 0) &&
+                              isTRUE(embedded$constructed))) {
+    embedded <- NULL
+  }
   if (!is.null(embedded)) {
     for (c1 in embedded$children) {
       for (c2 in c1$children) {

@@ -55,7 +55,7 @@ void load(CtrDrbg &d, SEXP key, SEXP v) {
 
 extern "C" {
 
-SEXP C_rmbl_aes256_encrypt(SEXP key, SEXP blocks) {
+SEXP C_rmbl_aes256_encrypt_impl(SEXP key, SEXP blocks) {
     need_raw(key, 32, 32, "key");
     if (TYPEOF(blocks) != RAWSXP || XLENGTH(blocks) % 16 != 0) {
         Rf_error("`blocks` must be a raw vector whose length is a multiple of 16");
@@ -68,7 +68,7 @@ SEXP C_rmbl_aes256_encrypt(SEXP key, SEXP blocks) {
     return out;
 }
 
-SEXP C_rmbl_drbg_instantiate(SEXP entropy, SEXP pers) {
+SEXP C_rmbl_drbg_instantiate_impl(SEXP entropy, SEXP pers) {
     need_raw(entropy, SEEDLEN, SEEDLEN, "entropy");
     need_raw(pers, 0, SEEDLEN, "personalization");
     CtrDrbg d;
@@ -76,7 +76,7 @@ SEXP C_rmbl_drbg_instantiate(SEXP entropy, SEXP pers) {
     return state_list(d, R_NilValue);
 }
 
-SEXP C_rmbl_drbg_reseed(SEXP key, SEXP v, SEXP entropy, SEXP add) {
+SEXP C_rmbl_drbg_reseed_impl(SEXP key, SEXP v, SEXP entropy, SEXP add) {
     need_raw(entropy, SEEDLEN, SEEDLEN, "entropy");
     need_raw(add, 0, SEEDLEN, "additional");
     CtrDrbg d;
@@ -85,7 +85,7 @@ SEXP C_rmbl_drbg_reseed(SEXP key, SEXP v, SEXP entropy, SEXP add) {
     return state_list(d, R_NilValue);
 }
 
-SEXP C_rmbl_drbg_generate(SEXP key, SEXP v, SEXP n, SEXP add) {
+SEXP C_rmbl_drbg_generate_impl(SEXP key, SEXP v, SEXP n, SEXP add) {
     need_raw(add, 0, SEEDLEN, "additional");
     const int len = Rf_asInteger(n);
     if (len == NA_INTEGER || len < 1 || len > 65536) Rf_error("`n` must be between 1 and 65536 bytes");
@@ -99,7 +99,7 @@ SEXP C_rmbl_drbg_generate(SEXP key, SEXP v, SEXP n, SEXP add) {
 }
 
 /* "aesni" or "portable"; `portable = TRUE` forces the portable cipher (tests compare) */
-SEXP C_rmbl_aes_backend(SEXP portable) {
+SEXP C_rmbl_aes_backend_impl(SEXP portable) {
     if (TYPEOF(portable) == LGLSXP && XLENGTH(portable) == 1 && LOGICAL(portable)[0] != NA_LOGICAL) {
         rmbl_drbg::force_portable() = LOGICAL(portable)[0] ? 1 : 0;
     }

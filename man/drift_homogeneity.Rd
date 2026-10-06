@@ -4,11 +4,15 @@
 \alias{drift_homogeneity}
 \title{Chi-square test of homogeneity for two categorical samples}
 \usage{
-drift_homogeneity(x, y)
+drift_homogeneity(x, y, seed = 1L)
 }
 \arguments{
 \item{x, y}{Factor or character vectors (or named count
 vectors) -- the reference and the new sample.}
+
+\item{seed}{Seed for the Monte Carlo branch (small expected counts). The
+draw is made under this seed and the caller's RNG stream is restored,
+so the same inputs give the same p-value and nothing downstream moves.}
 }
 \value{
 A named length-3 numeric: \code{statistic}, \code{df},

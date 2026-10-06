@@ -9,7 +9,7 @@ band_values(
   rule = c("midpoint", "lower", "upper", "geometric"),
   open_upper_cap = NULL,
   open_upper_factor = 2,
-  open_lower_floor = 0
+  open_lower_floor = NULL
 )
 }
 \arguments{
@@ -30,7 +30,10 @@ open top band. The default multiplies the band's lower bound by
 \item{open_upper_factor}{Multiplier used when no
 cap is given.}
 
-\item{open_lower_floor}{Lower bound to assume
+\item{open_lower_floor}{Lower bound assumed for an open lower band
+("under 18"). \code{NULL}, the default, uses 0, or the band's own upper
+bound when that is below 0; an explicit floor above a band's upper
+bound is refused.
 for an open bottom band. Defaults to zero.}
 }
 \value{

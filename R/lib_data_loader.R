@@ -92,7 +92,7 @@ resolve_via_ckan <- function(provenance) {
     return(NULL)
   }
   api_url <- .rmbl_check_public_url(api_url, "ckan_api_endpoint")
-  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
+  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(resp) || !isTRUE(resp$success)) {
@@ -170,7 +170,7 @@ resolve_via_ckan_search <- function(provenance) {
     "%s/api/3/action/package_search?q=%s",
     base, utils::URLencode(q, reserved = TRUE)
   ), "the CKAN package_search URL")
-  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE),
+  resp <- tryCatch(.rmbl_read_json(api_url, simplify = FALSE, strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(resp)) {
@@ -244,7 +244,7 @@ download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
 #' Resolve a Wayback Machine snapshot URL
 #'
 #' Queries the Internet Archive availability API (
-#' \code{http://archive.org/wayback/available}) for the closest archived
+#' \code{https://archive.org/wayback/available}) for the closest archived
 #' snapshot of \code{url} and returns a directly-downloadable snapshot URL,
 #' or \code{NULL} if no snapshot exists or the lookup fails. This is the
 #' shared fetch failsafe the wider morie package family relies on: callers
@@ -271,7 +271,7 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
   if (!is.null(timestamp) && nzchar(timestamp)) {
     api <- paste0(api, "&timestamp=", timestamp)
   }
-  res <- tryCatch(.rmbl_read_json(api), error = function(e) NULL)
+  res <- tryCatch(.rmbl_read_json(api, strict = FALSE), error = function(e) NULL)
   snap <- tryCatch(res$archived_snapshots$closest, error = function(e) NULL)
   if (is.null(snap) || !isTRUE(snap$available) || is.null(snap$url)) {
     return(NULL)
@@ -746,7 +746,7 @@ resolve_via_socrata <- function(provenance) {
   }
   base <- .rmbl_check_public_url(paste0("https://", domain), "socrata_domain")
   meta_url <- paste0(base, "/api/views/", id, ".json")
-  meta <- tryCatch(.rmbl_read_json(meta_url), error = function(e) NULL)
+  meta <- tryCatch(.rmbl_read_json(meta_url, strict = FALSE), error = function(e) NULL)
   if (is.null(meta) || is.null(meta$id)) {
     return(NULL)
   }
@@ -788,7 +788,7 @@ resolve_via_arcgis <- function(provenance) {
     return(NULL)
   }
   layer <- .rmbl_check_public_url(sub("/+$", "", layer), "arcgis_layer_url")
-  meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json")),
+  meta <- tryCatch(.rmbl_read_json(paste0(layer, "?f=json"), strict = FALSE),
     error = function(e) NULL
   )
   if (is.null(meta) || !is.null(meta$error) || is.null(meta$name)) {

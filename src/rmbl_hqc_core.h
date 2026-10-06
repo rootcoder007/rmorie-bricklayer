@@ -904,12 +904,12 @@ template <class P>
 inline void z_poly(uint16_t *z, const uint16_t *sigma, uint16_t degree, const uint16_t *syn) {
     z[0] = 1;
     for (size_t i = 1; i < P::DELTA + 1; ++i) {
-        uint16_t mask = static_cast<uint16_t>(-(static_cast<uint16_t>(i - degree - 1) >> 15));
+        uint16_t mask = static_cast<uint16_t>(barrier(-(static_cast<uint16_t>(i - degree - 1) >> 15)));
         z[i] = mask & sigma[i];
     }
     z[1] ^= syn[0];
     for (size_t i = 2; i <= P::DELTA; ++i) {
-        uint16_t mask = static_cast<uint16_t>(-(static_cast<uint16_t>(i - degree - 1) >> 15));
+        uint16_t mask = static_cast<uint16_t>(barrier(-(static_cast<uint16_t>(i - degree - 1) >> 15)));
         z[i] ^= mask & syn[i - 1];
         for (size_t j = 1; j < i; ++j) z[i] ^= mask & gf::mul(sigma[j], syn[i - j - 1]);
     }
@@ -922,9 +922,9 @@ inline void error_values(uint16_t *ev, const uint16_t *z, const uint8_t *error) 
     uint16_t cnt = 0;
     for (size_t i = 0; i < P::N1; ++i) {
         uint16_t found = 0;
-        uint16_t m1 = static_cast<uint16_t>(-static_cast<int32_t>(error[i]) >> 31);
+        uint16_t m1 = static_cast<uint16_t>(barrier(-static_cast<int32_t>(error[i]) >> 31));
         for (size_t j = 0; j < D; ++j) {
-            uint16_t m2 = static_cast<uint16_t>(~static_cast<uint16_t>(-static_cast<int32_t>(j ^ cnt) >> 31));
+            uint16_t m2 = static_cast<uint16_t>(barrier(~static_cast<uint16_t>(-static_cast<int32_t>(j ^ cnt) >> 31)));
             beta_j[j] = static_cast<uint16_t>(beta_j[j] + (m1 & m2 & gf::T.exp[i]));
             found = static_cast<uint16_t>(found + (m1 & m2 & 1));
         }
@@ -940,15 +940,15 @@ inline void error_values(uint16_t *ev, const uint16_t *z, const uint8_t *error) 
             t1 ^= gf::mul(invp, z[j]);
         }
         for (size_t k = 1; k < D; ++k) t2 = gf::mul(t2, static_cast<uint16_t>(1 ^ gf::mul(inv, beta_j[(i + k) % D])));
-        uint16_t m1 = static_cast<uint16_t>((static_cast<int16_t>(i) - static_cast<int16_t>(real)) >> 15);
+        uint16_t m1 = static_cast<uint16_t>(barrier((static_cast<int16_t>(i) - static_cast<int16_t>(real)) >> 15));
         e_j[i] = m1 & gf::mul(t1, gf::inverse(t2));
     }
     cnt = 0;
     for (size_t i = 0; i < P::N1; ++i) {
         uint16_t found = 0;
-        uint16_t m1 = static_cast<uint16_t>(-static_cast<int32_t>(error[i]) >> 31);
+        uint16_t m1 = static_cast<uint16_t>(barrier(-static_cast<int32_t>(error[i]) >> 31));
         for (size_t j = 0; j < D; ++j) {
-            uint16_t m2 = static_cast<uint16_t>(~static_cast<uint16_t>(-static_cast<int32_t>(j ^ cnt) >> 31));
+            uint16_t m2 = static_cast<uint16_t>(barrier(~static_cast<uint16_t>(-static_cast<int32_t>(j ^ cnt) >> 31)));
             ev[i] = static_cast<uint16_t>(ev[i] + (m1 & m2 & e_j[j]));
             found = static_cast<uint16_t>(found + (m1 & m2 & 1));
         }

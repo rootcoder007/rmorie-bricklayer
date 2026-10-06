@@ -273,6 +273,11 @@ bricklayer_json_base64_dec <- function(input) {
   if (is.character(input)) input <- charToRaw(paste(input, collapse = "\n"))
   if (!is.raw(input)) stop("`input` must be a raw vector or text", call. = FALSE)
   s <- rawToChar(input)
+  # whitespace and padding may be dropped; anything else is not base64, and
+  # deleting it would decode a corrupt body into a shorter valid-looking one
+  if (grepl("[^A-Za-z0-9+/=[:space:]]", s)) {
+    stop("base64 input contains characters outside the alphabet", call. = FALSE)
+  }
   ch <- strsplit(gsub("[^A-Za-z0-9+/]", "", s), "")[[1]]
   if (!length(ch)) return(raw(0))
   v <- match(ch, .RMBL_JSON_B64) - 1L
@@ -356,7 +361,6 @@ bricklayer_json_base64url_dec <- function(input) {
   vals <- vals[keep]
   if (!length(vals)) return("{}")
   if (is.na(indent)) return(paste0("{", paste0(keys, ":", vals, collapse = ","), "}"))
-  if (!length(vals)) return("{}")
   ni <- as.integer(indent)
   sp <- abs(attr(indent, "indent_spaces"))
   paste0("{\n", paste0(.rmbl_json_ws(ni + sp, indent), keys, ": ", vals, collapse = ",\n"),
@@ -601,6 +605,10 @@ bricklayer_json_base64url_dec <- function(input) {
 }
 #' @noRd
 .rmbl_json_as_list <- function(x, o, collapse, na, oldna, auto_unbox, indent, is_df) {
+  # the same cap as the parser's, so what the parser reads the encoder can
+  # write back; the recursion used to run into the C stack ~100 levels down
+  o$depth <- (o$depth %||% 0L) + 1L
+  if (o$depth > 100L) stop("nesting deeper than 100 levels", call. = FALSE)
   if (identical(na, "NA")) na <- oldna
   if (is.pairlist(x)) x <- as.vector(x, mode = "list")
   inc <- .rmbl_json_indent_inc(indent)
@@ -610,7 +618,8 @@ bricklayer_json_base64url_dec <- function(input) {
     vapply(x, function(y) .rmbl_json_as(y, o, na = na, oldna = oldna, auto_unbox = auto_unbox, indent = inc), character(1))
   }
   if (!is.null(names(x))) {
-    keys <- .rmbl_json_esc(.rmbl_json_cleannames(names(x), o$no_dots))
+    keys <- if (isTRUE(o$keep_empty_names)) .rmbl_json_esc(names(x))
+            else .rmbl_json_esc(.rmbl_json_cleannames(names(x), o$no_dots))
     return(.rmbl_json_collapse_object(keys, unname(tmp), indent))
   }
   if (collapse) .rmbl_json_collapse(unname(tmp), inner = FALSE, indent = indent) else unname(tmp)
@@ -705,7 +714,8 @@ bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"
             rownames = dots$rownames, keep_vec_names = isTRUE(dots$keep_vec_names),
             json_verbatim = isTRUE(dots$json_verbatim), always_decimal = isTRUE(dots$always_decimal),
             time_format = dots$time_format, UTC = isTRUE(dots$UTC), no_dots = isTRUE(dots$no_dots),
-            hms = if (is.null(dots$hms)) "string" else match.arg(dots$hms, c("string", "secs")))
+            hms = if (is.null(dots$hms)) "string" else match.arg(dots$hms, c("string", "secs")),
+            keep_empty_names = isTRUE(dots$keep_empty_names), depth = 0L)
   na <- if (!missing(na)) match.arg(na) else NULL
   ans <- .rmbl_json_as(x, o, na = na, oldna = NULL, auto_unbox = o$auto_unbox, indent = o$indent)
   class(ans) <- "json"
@@ -797,15 +807,18 @@ bricklayer_json_unbox <- function(x) {
 # number on another, which for a format meant to be checked elsewhere
 # is a bug rather than a caveat. See src/rmbl_strtod.cpp.
 #' @noRd
-.rmbl_json_parse <- function(txt, bigint_as_char = FALSE,
+.rmbl_json_parse <- function(txt, bigint_as_char = FALSE, bigint_warn = TRUE,
                              duplicate_keys = c("error", "keep")) {
   duplicate_keys <- match.arg(duplicate_keys)
   s <- paste(txt, collapse = "\n")
-  s <- enc2utf8(s)
+  # the byte-order mark is tested and removed on the BYTES, before any
+  # encoding conversion: substring(s, 2L) on a string a C locale has not
+  # marked as UTF-8 removed one of the mark's three bytes
   if (.rmbl_has_bom(s)) {
     warning("JSON string contains (illegal) UTF8 byte-order-mark!", call. = FALSE)
-    s <- substring(s, 2L)
+    s <- .rmbl_strip_bom(s)
   }
+  s <- enc2utf8(s)
   if (startsWith(s, "\x1e")) s <- substring(s, 2L)
   ch <- strsplit(s, "", fixed = TRUE)[[1]]
   n <- length(ch)
@@ -817,16 +830,24 @@ bricklayer_json_unbox <- function(x) {
   str_ <- function() {
     i <<- i + 1L
     st <- i
-    parts <- character(0)
+    # pieces are appended into a doubling buffer: c(parts, ...) per escape
+    # was quadratic, and 532 bytes of gzip held 250,000 escapes
+    parts <- character(32L)
+    np <- 0L
+    push <- function(v) {
+      np <<- np + 1L
+      if (np > length(parts)) length(parts) <<- 2L * length(parts)
+      parts[np] <<- v
+    }
     repeat {
       if (i > n) bad("unterminated string")
       c0 <- ch[i]
       if (c0 == "\"") break
       if (c0 == "\\") {
-        if (i > st) parts <- c(parts, paste(ch[st:(i - 1L)], collapse = ""))
+        if (i > st) push(paste(ch[st:(i - 1L)], collapse = ""))
         i <<- i + 1L
         e <- ch[i]
-        parts <- c(parts, switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f",
+        push(switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f",
                                  "\"" = "\"", "\\" = "\\", "/" = "/",
                                  u = {
                                    cp <- strtoi(paste(ch[(i + 1L):(i + 4L)], collapse = ""), 16L)
@@ -853,9 +874,9 @@ bricklayer_json_unbox <- function(x) {
       if (utf8ToInt(c0) < 32L) bad("control character in string")
       i <<- i + 1L
     }
-    if (i > st) parts <- c(parts, paste(ch[st:(i - 1L)], collapse = ""))
+    if (i > st) push(paste(ch[st:(i - 1L)], collapse = ""))
     i <<- i + 1L
-    paste(parts, collapse = "")
+    paste(parts[seq_len(np)], collapse = "")
   }
   num_ <- function() {
     st <- i
@@ -878,12 +899,30 @@ bricklayer_json_unbox <- function(x) {
     }
     t0 <- paste(ch[st:(i - 1L)], collapse = "")
     v <- .rmbl_strtod(t0)
+    if (!isint && bigint_warn && !big_warned && is.finite(v) && v == trunc(v) &&
+        abs(v) >= 9007199254740992 && abs(v) < 18446744073709551616) {
+      # "9007199254740993.0" and "9.007199254740993e15" write an integer in
+      # the identifier range that the double does not hold: the digits
+      # written are compared with the integer the double actually is. A
+      # value beyond 2^64 (1.7976931348623157e308) is a magnitude, not an
+      # identifier, and is left alone.
+      written <- .rmbl_json_written_integer(t0)
+      if (!is.null(written) && !identical(written, sprintf("%.0f", abs(v)))) {
+        big_warned <<- TRUE
+        warning(sprintf(paste0("number %s is a whole number beyond 2^53 and cannot be held ",
+                               "exactly in a double"), t0), call. = FALSE)
+      }
+    }
     if (isint) {
-      digs <- sub("^-", "", t0)
+      digs <- sub("^0+(?=[0-9])", "", sub("^-", "", t0), perl = TRUE)
       big <- nchar(digs) > 16L || (nchar(digs) == 16L && digs > "9007199254740992")
+      # inexact: the integer written is not the integer the double holds.
+      # 9007199254740994 is beyond 2^53 and exact (even); 9007199254740993
+      # is not. Only the second deserves a warning.
+      inexact <- big && is.finite(v) && !identical(sprintf("%.0f", abs(v)), digs)
       if (big) {
         if (bigint_as_char) return(t0)
-        if (!big_warned) {
+        if (!big_warned && bigint_warn && inexact) {
           big_warned <<- TRUE
           warning(sprintf(paste0("integer %s exceeds 2^53 and cannot be held exactly ",
                                  "in a double; pass bigint_as_char = TRUE to keep it as text"),
@@ -897,7 +936,7 @@ bricklayer_json_unbox <- function(x) {
   }
   value <- function() {
     depth <<- depth + 1L
-    if (depth > 200L) bad("nesting deeper than 200 levels")
+    if (depth > 100L) bad("nesting deeper than 100 levels")
     on.exit(depth <<- depth - 1L)
     ws()
     if (i > n) bad("unexpected end of input")
@@ -1029,7 +1068,9 @@ bricklayer_json_unbox <- function(x) {
   for (el in x) {
     if (is.null(el)) next
     if (is.character(el) && length(el) && el[1L] == "NA") next
-    if (is.numeric(el) && inherits(el, "POSIXct")) status <- TRUE else return(FALSE)
+    # is.numeric() is FALSE for a POSIXct (it has an is.numeric method), so
+    # the class alone decides
+    if (inherits(el, "POSIXct")) status <- TRUE else return(FALSE)
   }
   status
 }
@@ -1168,6 +1209,9 @@ bricklayer_json_unbox <- function(x) {
 #' @param duplicate_keys What to do with an object that repeats a key:
 #' `"error"` (default) refuses the document, `"keep"` returns both
 #' values under the repeated name, as jsonlite does.
+#' @param bigint_warn warn (once per document) when a whole number beyond
+#'   2^53 is read into a double; the package's own readers of API payloads
+#'   turn this off, since long numeric identifiers are routine there.
 #' @param bigint_as_char integers beyond 2^53 come
 #' back as strings.
 #' @param simplify legacy: `FALSE` turns every
@@ -1183,7 +1227,8 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
                                    simplifyMatrix = simplifyVector,
                                    flatten = FALSE, bigint_as_char = FALSE,
                                    simplify = NULL,
-                                   duplicate_keys = c("error", "keep"), ...) {
+                                   duplicate_keys = c("error", "keep"),
+                                   bigint_warn = TRUE, ...) {
   if (identical(simplify, FALSE)) simplifyVector <- simplifyDataFrame <- simplifyMatrix <- FALSE
   if (!is.character(txt) && !inherits(txt, "connection"))
     stop("Argument 'txt' must be a JSON string, URL or file.", call. = FALSE)
@@ -1203,7 +1248,8 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
     }
     txt <- readLines(con, warn = FALSE, encoding = "UTF-8")
   }
-  obj <- .rmbl_json_parse(txt, bigint_as_char, match.arg(duplicate_keys))
+  obj <- .rmbl_json_parse(txt, bigint_as_char, bigint_warn,
+                          duplicate_keys = match.arg(duplicate_keys))
   if (any(isTRUE(simplifyVector), isTRUE(simplifyDataFrame), isTRUE(simplifyMatrix)))
     return(.rmbl_json_simplify(obj, simplifyVector = simplifyVector, simplifyDataFrame = simplifyDataFrame,
                             simplifyMatrix = simplifyMatrix, flatten = flatten))
@@ -1266,7 +1312,7 @@ bricklayer_json_validate <- function(txt) {
   if (.rmbl_has_bom(txt))
     return(structure(FALSE, err = "JSON string contains UTF8 byte-order-mark."))
   res <- tryCatch({
-    .rmbl_json_parse(txt)
+    .rmbl_json_parse(txt, bigint_warn = FALSE)
     TRUE
   }, error = function(e) e)
   if (isTRUE(res)) return(TRUE)
@@ -1314,14 +1360,20 @@ bricklayer_json_validate <- function(txt) {
   skip_ws <- function() while (i <= n && (ch[i] == " " || ch[i] == "\t" || ch[i] == "\n" || ch[i] == "\r")) i <<- i + 1L
   read_string <- function() {
     j <- i + 1L
-    parts <- character(0)
+    parts <- character(32L)
+    np <- 0L
+    push <- function(v) {
+      np <<- np + 1L
+      if (np > length(parts)) length(parts) <<- 2L * length(parts)
+      parts[np] <<- v
+    }
     st <- j
     repeat {
       if (j > n) bad("unterminated string")
       c0 <- ch[j]
       if (c0 == "\"") break
       if (c0 == "\\") {
-        if (j > st) parts <- c(parts, paste(ch[st:(j - 1L)], collapse = ""))
+        if (j > st) push(paste(ch[st:(j - 1L)], collapse = ""))
         j <- j + 1L
         e <- ch[j]
         if (e == "u") {
@@ -1335,9 +1387,11 @@ bricklayer_json_validate <- function(txt) {
               cp <- 0x10000 + (cp - 0xD800) * 1024 + (lo - 0xDC00)
             }
           }
-          parts <- c(parts, intToUtf8(cp))
+          if (cp == 0) bad("NUL in string")
+          if (cp >= 0xD800 && cp <= 0xDFFF) bad("lone surrogate escape")
+          push(intToUtf8(cp))
         } else {
-          parts <- c(parts, switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f", "\"" = "\"", "\\" = "\\", "/" = "/", bad("invalid escape")))
+          push(switch(e, n = "\n", t = "\t", r = "\r", b = "\b", f = "\f", "\"" = "\"", "\\" = "\\", "/" = "/", bad("invalid escape")))
         }
         j <- j + 1L
         st <- j
@@ -1345,9 +1399,9 @@ bricklayer_json_validate <- function(txt) {
       }
       j <- j + 1L
     }
-    if (j > st) parts <- c(parts, paste(ch[st:(j - 1L)], collapse = ""))
+    if (j > st) push(paste(ch[st:(j - 1L)], collapse = ""))
     i <<- j + 1L
-    paste(parts, collapse = "")
+    paste(parts[seq_len(np)], collapse = "")
   }
   encode_string <- function(v) {
     v <- gsub("\\", "\\\\", v, fixed = TRUE)
@@ -1800,3 +1854,28 @@ bricklayer_json_unserialize <- function(txt, trusted = FALSE) {
   .rmbl_json_unpack(.rmbl_json_parse(txt), trusted = isTRUE(trusted))
 }
 
+
+
+# The integer a decimal literal writes, as a digit string with no leading
+# zeros; NULL when the literal has a non-zero fractional part.
+#' @noRd
+.rmbl_json_written_integer <- function(t0) {
+  t <- sub("^[-+]", "", t0)
+  parts <- strsplit(t, "[eE]")[[1L]]
+  mant <- parts[1L]
+  e <- if (length(parts) > 1L) suppressWarnings(as.integer(parts[2L])) else 0L
+  if (is.na(e)) return(NULL)
+  mp <- strsplit(mant, ".", fixed = TRUE)[[1L]]
+  digits <- paste0(mp, collapse = "")
+  frac <- if (length(mp) > 1L) nchar(mp[2L]) else 0L
+  scale <- e - frac
+  if (scale >= 0L) {
+    digits <- paste0(digits, strrep("0", scale))
+  } else {
+    cut <- substr(digits, nchar(digits) + scale + 1L, nchar(digits))
+    if (grepl("[1-9]", cut)) return(NULL)
+    digits <- substr(digits, 1L, nchar(digits) + scale)
+  }
+  digits <- sub("^0+", "", digits)
+  if (!nzchar(digits)) "0" else digits
+}

@@ -117,6 +117,7 @@ inline const char *name_of(SEXP prehash) {
     if (TYPEOF(prehash) != STRSXP || XLENGTH(prehash) != 1) {
         Rf_error("`prehash` must be a single string");
     }
+    if (STRING_ELT(prehash, 0) == NA_STRING) Rf_error("`prehash` must not be NA");
     return CHAR(STRING_ELT(prehash, 0));
 }
 

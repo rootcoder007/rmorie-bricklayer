@@ -54,6 +54,9 @@
 #' @export
 gini <- function(x, na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
+  if (all(x == 0, na.rm = TRUE)) {
+    stop("every value is zero: the Gini coefficient of a zero total is undefined", call. = FALSE)
+  }
   .Call(C_rmbl_gini, x)
 }
 
@@ -78,15 +81,11 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 }
 
 .rmbl_conc_input <- function(x) {
-  x <- .rmbl_finite_input(x, "x", nonneg = TRUE)
-  if (!is.numeric(x)) {
-    stop("`x` must be numeric", call. = FALSE)
-  }
-  x <- .rmbl_num(x, "x")
-  # a negative value has no place in a share of a total, and treating it
-  # as zero would understate the concentration
-  if (any(x < 0, na.rm = TRUE)) {
-    stop("concentration measures need non-negative values", call. = FALSE)
+  # .rmbl_finite_input() has already refused non-numeric and negative
+  # values: a negative value has no place in a share of a total
+  x <- .rmbl_num(.rmbl_finite_input(x, "x", nonneg = TRUE), "x")
+  if (!any(!is.na(x))) {
+    stop("`x` has no values: a concentration measure of nothing is undefined", call. = FALSE)
   }
   x
 }
@@ -160,6 +159,9 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                             approx = FALSE, min_tail = 3L) {
   x <- .rmbl_num(x, "x")
   x <- x[is.finite(x) & x > 0]
+  if (!length(x)) {
+    stop("`x` has no positive finite values to fit a tail to", call. = FALSE)
+  }
   if (is.null(x_min)) {
     # enough of a tail to estimate from, or everything if there is not
     s <- sort(x, decreasing = TRUE)
@@ -357,8 +359,10 @@ hurwitz_zeta <- function(s, q = 1) {
 #' sparse <- rbind(c(3, 1), c(1, 3))
 #' c(raw = cramers_v(sparse, bias_correct = FALSE)$v,
 #'   corrected = cramers_v(sparse)$v)
+#' @param seed Seed for the Monte Carlo branch; the caller's RNG stream is
+#'   restored afterwards.
 #' @export
-cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5) {
+cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
   if (is.null(tbl) || !is.numeric(as.matrix(tbl)) ||
         any(!is.finite(as.matrix(tbl))) || any(as.matrix(tbl) < 0)) {
     stop("`tbl` must be a matrix or table of finite non-negative counts",
@@ -366,20 +370,21 @@ cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5) {
     )
   }
   m <- as.matrix(tbl)
+  # an unused factor level is an empty row or column: it carries no
+  # information and made every expected count on that margin zero (NaN
+  # statistic, NaN V). drift_homogeneity() already drops them; so does this.
+  dropped <- sum(rowSums(m) == 0) + sum(colSums(m) == 0)
+  m <- m[rowSums(m) > 0, colSums(m) > 0, drop = FALSE]
   if (any(dim(m) < 2L)) {
     return(list(v = NA_real_, chisq = NA_real_, df = NA_integer_,
                 p_value = NA_real_, n = sum(m), min_expected = NA_real_,
-                cells_below = NA_integer_, method = "table too small"))
+                cells_below = NA_integer_,
+                method = if (dropped) "table too small after dropping empty rows/columns"
+                         else "table too small"))
   }
-  if (any(m < 0, na.rm = TRUE)) {
-    stop("a contingency table cannot hold negative counts", call. = FALSE)
-  }
+  # negative counts were refused above, and a table with an empty margin
+  # has just been dropped, so what is left has a positive total
   n <- sum(m)
-  if (n == 0) {
-    return(list(v = NA_real_, chisq = NA_real_, df = NA_integer_,
-                p_value = NA_real_, n = 0, min_expected = NA_real_,
-                cells_below = NA_integer_, method = "empty table"))
-  }
   ct <- suppressWarnings(stats::chisq.test(m, correct = FALSE))
   chi <- as.numeric(ct$statistic)
   r <- nrow(m)
@@ -391,11 +396,12 @@ cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5) {
   method <- "chi-square approximation"
   p <- as.numeric(ct$p.value)
   if (below > 0L) {
-    sim <- suppressWarnings(stats::chisq.test(m, simulate.p.value = TRUE,
-                                              B = 10000L))
+    sim <- .rmbl_with_seed(seed, suppressWarnings(
+      stats::chisq.test(m, simulate.p.value = TRUE, B = 10000L)))
     p <- as.numeric(sim$p.value)
     method <- "Monte Carlo permutation (small expected counts)"
   }
+  if (dropped) method <- paste0(method, "; ", dropped, " empty row(s)/column(s) dropped")
   phi2 <- chi / n
   v <- if (isTRUE(bias_correct)) {
     # Bergsma (2013): correct phi-squared and the dimensions for the bias

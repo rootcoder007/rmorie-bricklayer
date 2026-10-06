@@ -90,7 +90,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "    const double probs[2] = {0.25, 0.75};",
     "    const double pp[3] = {0.2, 0.3, 0.5}, qq[3] = {0.3, 0.3, 0.4};",
     "    const double hpar[3] = {0.5, 0.3, 1.0};",
-    "    double out[48], tmp[64], pop[8], val[8], ma[8], mb[8], mm[8];",
+    "    double out[64], tmp[64], pop[8], val[8], ma[8], mb[8], mm[8];",
     "    double S = 0, var = 0, slope = 0, icpt = 0, d = 0;",
     "    R_xlen_t units = 0, used = 0, npts = 0;",
     "    unsigned char raw32[32], raw64[64];",
@@ -159,9 +159,33 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "    out[k++] = (double) raw64[0];",
     "    out[k++] = (double) rmbl_os_random(raw32, 32);",
     "    {",
-    "        volatile void *f1 = (volatile void *) &rmbl_fetch_with_fallback;",
-    "        volatile void *f2 = (volatile void *) &rmbl_wayback_snapshot;",
-    "        out[k++] = (f1 != NULL) + (f2 != NULL);",
+    "        /* called, not merely address-taken: an unresolvable host fails fast",
+    "         * and offline, which is the path a misregistered name would break */",
+    "        char snap[64];",
+    "        int code = rmbl_fetch_with_fallback(\"https://invalid.invalid/x\", \"\", \"/nonexistent/dir/x\", 2);",
+    "        int sn = rmbl_wayback_snapshot(\"https://invalid.invalid/x\", snap, (int) sizeof snap, 2);",
+    "        out[k++] = (code < 0) + (sn == 0);",
+    "    }",
+    "    {",
+    "        /* the Weibull, Lomax and gamma kernels take (a0, eta, p1, p2); an",
+    "         * infeasible set answers the 1e12 sentinel and too few parameters NaN */",
+    "        const double wpar[4] = {0.5, 0.3, 1.5, 2.0};",
+    "        const double lpar[4] = {0.5, 0.3, 2.5, 1.0};",
+    "        const double gpar[4] = {0.5, 0.3, 1.5, 0.8};",
+    "        const double bad[4] = {0.5, 5.0, 1.5, 2.0};",
+    "        const double xn[2] = {1.0, R_NaN};",
+    "        const double xi[2] = {1.0, R_PosInf};",
+    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, wpar, 4);",
+    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 2, lpar, 4);",
+    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 3, gpar, 4);",
+    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, bad, 4) + rmbl_hawkes_nll(x, 6, 10.0, 3, bad, 4);",
+    "        out[k++] = rmbl_hawkes_nll(x, 6, 10.0, 1, hpar, 3);",
+    "        rmbl_quantile(xn, 2, probs, 2, tmp);",
+    "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[1]);",
+    "        rmbl_cov_matrix(x, 1, 2, tmp);",
+    "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[3]);",
+    "        out[k++] = ISNAN(rmbl_ks_two_sample(xn, 2, y, 6));",
+    "        out[k++] = rmbl_mean(xi, 2) == R_PosInf;",
     "    }",
     "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
     "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
@@ -248,14 +272,14 @@ test_that("every published kernel compiles and resolves from a consumer", {
     as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
   )
   sha <- trimws(res[length(res)])
-  if (length(nums) != 43L) {
+  if (length(nums) != 52L) {
     fail(paste(
-      "the consumer did not print 43 numbers; it printed:",
+      "the consumer did not print 52 numbers; it printed:",
       paste(utils::tail(res, 10L), collapse = " | ")
     ))
     return(invisible(NULL))
   }
-  expect_length(nums, 43L)
+  expect_length(nums, 52L)
 
   # the kernels must agree with the R-level functions on the same input,
   # because they are supposed to be the same code
@@ -288,7 +312,32 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_equal(nums[43L], 2)   # both libcurl shims resolved
   # the Hawkes likelihood takes the kernel's own parameter layout; only
   # that it answered is asserted here, the value is pinned elsewhere
-  expect_true(all(is.finite(nums[-13L])))
+  expect_true(all(is.finite(nums[-c(13L, 48L)])))
+  # the three O(n^2) kernels against the same formulas written out in R
+  t6 <- x
+  hk <- function(dens, comp, p) {
+    nu <- exp(p[1])
+    s <- vapply(seq_along(t6), function(i) {
+      if (i == 1L) return(0)
+      sum(dens(t6[i] - t6[seq_len(i - 1L)]))
+    }, numeric(1))
+    -(sum(log(nu + p[2] * s)) - nu * 10 - p[2] * sum(comp(10 - t6)))
+  }
+  wb <- c(0.5, 0.3, 1.5, 2.0)
+  expect_equal(nums[44L], hk(
+    function(u) (wb[3] / wb[4]) * (u / wb[4])^(wb[3] - 1) * exp(-(u / wb[4])^wb[3]),
+    function(u) 1 - exp(-(u / wb[4])^wb[3]), wb))
+  lx <- c(0.5, 0.3, 2.5, 1.0)
+  expect_equal(nums[45L], hk(
+    function(u) (lx[3] - 1) * lx[4]^(lx[3] - 1) / (u + lx[4])^lx[3],
+    function(u) 1 - (lx[4] / (u + lx[4]))^(lx[3] - 1), lx))
+  gm <- c(0.5, 0.3, 1.5, 0.8)
+  expect_equal(nums[46L], hk(
+    function(u) stats::dgamma(u, shape = gm[3], rate = gm[4]),
+    function(u) stats::pgamma(u, shape = gm[3], rate = gm[4]), gm))
+  expect_identical(nums[47L], 2e12)      # eta = 5 is infeasible for both kernels
+  expect_true(is.nan(nums[48L]))         # three parameters where four are needed
+  expect_identical(nums[49:52], c(1, 1, 1, 1))
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, core_sha256("abc"))

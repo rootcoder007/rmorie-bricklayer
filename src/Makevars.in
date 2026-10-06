@@ -27,3 +27,9 @@ rmbl_slhdsa.o: rmbl_slhdsa_core.h rmbl_prehash.h rmbl_slhdsa_body.h
 rmbl_stats.o: morie_core.h
 siu_parse.o: siu_parse.h
 siu_resolve.o: siu_resolve.h
+
+# Every object depends on the shared helper headers: without these lines a
+# header fix leaves stale objects in a warm build (which is how a corrected
+# hex encoder tested as still broken on 2026-10-06).
+rmbl_asn1.o rmbl_core.o rmbl_digest.o rmbl_drbg.o rmbl_ecdsa.o rmbl_fetch.o rmbl_hqc.o rmbl_kdf.o rmbl_keccak.o rmbl_mgf1.o rmbl_mldsa_ntt.o rmbl_mlkem.o rmbl_pqc.o rmbl_series.o rmbl_siu.o rmbl_sketch.o rmbl_slhdsa.o rmbl_stats.o rmbl_strtod.o rmbl_barrier.o: rmbl_entry.h rmbl_ct.h
+rmbl_mldsa_ntt.o rmbl_mlkem.o rmbl_slhdsa.o rmbl_hqc.o rmbl_drbg.o: rmbl_ct.h

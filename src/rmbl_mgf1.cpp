@@ -20,6 +20,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_ct.h"
 
 extern "C" void rmbl_sha256_raw(const unsigned char *data, size_t len,
                                 unsigned char out[32]);
@@ -54,6 +55,7 @@ void rmbl_hmac_shax(int outlen, const unsigned char *key, size_t keylen,
                     unsigned char *out) {
     const size_t block = (outlen == 64) ? 128u : 64u;
     std::vector<unsigned char> k(block, 0);
+    rmbl_ct::Guard gk(k.data(), k.size());
     if (keylen > block) {
         shax(outlen, key, keylen, k.data());
     } else if (keylen > 0) {
@@ -64,13 +66,16 @@ void rmbl_hmac_shax(int outlen, const unsigned char *key, size_t keylen,
         inner[i] = static_cast<unsigned char>(k[i] ^ 0x36);
     }
     inner.insert(inner.end(), msg, msg + msglen);
+    rmbl_ct::Guard gi(inner.data(), block);
     unsigned char ih[64];
+    rmbl_ct::Guard gih(ih, sizeof ih);
     shax(outlen, inner.data(), inner.size(), ih);
     std::vector<unsigned char> outer(block);
     for (size_t i = 0; i < block; ++i) {
         outer[i] = static_cast<unsigned char>(k[i] ^ 0x5c);
     }
     outer.insert(outer.end(), ih, ih + outlen);
+    rmbl_ct::Guard go(outer.data(), block);
     shax(outlen, outer.data(), outer.size(), out);
 }
 
@@ -99,7 +104,7 @@ void rmbl_mgf1_shax(int hashlen, unsigned char *out, size_t outlen,
  * test suite rather than trusted. */
 /* Exposed so the FIPS 180-4 SHA-1 vectors can be asserted. Used only
  * for OCSP CertID, never for a signature. */
-SEXP C_rmbl_sha1(SEXP x) {
+SEXP C_rmbl_sha1_impl(SEXP x) {
     if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, 20));
     rmbl_sha1_raw(RAW(x), static_cast<size_t>(XLENGTH(x)), RAW(out));
@@ -108,7 +113,7 @@ SEXP C_rmbl_sha1(SEXP x) {
 }
 
 /* Exposed so the FIPS 180-4 SHA-384 vectors can be asserted. */
-SEXP C_rmbl_sha384(SEXP x) {
+SEXP C_rmbl_sha384_impl(SEXP x) {
     if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
     SEXP out = PROTECT(Rf_allocVector(RAWSXP, 48));
     rmbl_sha384_raw(RAW(x), static_cast<size_t>(XLENGTH(x)), RAW(out));
@@ -116,7 +121,7 @@ SEXP C_rmbl_sha384(SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_hmac_shax(SEXP bits, SEXP key, SEXP msg) {
+SEXP C_rmbl_hmac_shax_impl(SEXP bits, SEXP key, SEXP msg) {
     if (TYPEOF(bits) != INTSXP || XLENGTH(bits) != 1) {
         Rf_error("`bits` must be 256 or 512");
     }
@@ -134,7 +139,7 @@ SEXP C_rmbl_hmac_shax(SEXP bits, SEXP key, SEXP msg) {
     return out;
 }
 
-SEXP C_rmbl_mgf1(SEXP bits, SEXP seed, SEXP outlen) {
+SEXP C_rmbl_mgf1_impl(SEXP bits, SEXP seed, SEXP outlen) {
     if (TYPEOF(bits) != INTSXP || XLENGTH(bits) != 1) {
         Rf_error("`bits` must be 256 or 512");
     }

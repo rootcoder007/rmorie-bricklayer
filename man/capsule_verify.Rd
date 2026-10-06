@@ -33,7 +33,9 @@ A length-1 logical.
 }
 \description{
 Checks \code{signature} against \code{message}. For \code{"hmac"} the
-comparison is constant-time. For XMSS the Winternitz chains are walked
+comparison is constant-time (verified under valgrind memcheck in CI:
+\code{inst/ctcheck}, cases \code{digest-equal} and \code{hmac-sha256}). For XMSS the
+Winternitz chains are walked
 to their ends and the authentication path replayed to the Merkle root;
 the digest is bound to both the leaf index and the root, so a signature
 cannot be replayed at another index or under another key.

@@ -24,16 +24,11 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 /* The first element of a character argument, or an error in words: every
  * STRING_ELT(x, 0) below went through this once a length-0 or NA input
  * reached a .Call directly (the R wrappers guard; the entry points did not). */
-static const char *rmbl_str0(SEXP x, const char *name) {
-    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
-        Rf_error("`%s` must be a non-missing string", name);
-    }
-    return CHAR(STRING_ELT(x, 0));
-}
 
 namespace {
 
@@ -554,7 +549,7 @@ extern "C" {
  * of those is load-bearing -- s = 0 or a key off the curve are the two
  * classic ways a lax verifier accepts a forgery.
  */
-SEXP C_rmbl_ecdsa_verify(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
+SEXP C_rmbl_ecdsa_verify_impl(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
                          SEXP digest) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
         Rf_error("`curve` must be \"P-256\", \"P-384\" or \"P-521\"");
@@ -641,7 +636,7 @@ SEXP C_rmbl_ecdsa_verify(SEXP curve, SEXP qx, SEXP qy, SEXP r, SEXP s,
 /* The group order, so a test can multiply the base point by it and
  * confirm the result is the point at infinity -- the one check that
  * fails if the order is wrong, whatever else looks right. */
-SEXP C_rmbl_ec_order(SEXP curve) {
+SEXP C_rmbl_ec_order_impl(SEXP curve) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
         Rf_error("`curve` must be a single string");
     }
@@ -658,7 +653,7 @@ SEXP C_rmbl_ec_order(SEXP curve) {
 /* Exposed so the curve arithmetic can be checked against the published
  * base-point multiples rather than only through a signature. TRUE in
  * `infinity` means the scalar was a multiple of the order. */
-SEXP C_rmbl_ec_mul(SEXP curve, SEXP k) {
+SEXP C_rmbl_ec_mul_impl(SEXP curve, SEXP k) {
     if (TYPEOF(curve) != STRSXP || XLENGTH(curve) != 1) {
         Rf_error("`curve` must be a single string");
     }

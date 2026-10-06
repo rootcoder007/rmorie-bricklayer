@@ -89,6 +89,7 @@
 
 # The GET seam: the hosted tier's model list.
 .bl_http_get <- function(url, timeout, headers) {
+  .rmbl_check_public_url(url, "url")
   .Call(C_rmbl_http_get, url, as.integer(timeout), headers)
 }
 

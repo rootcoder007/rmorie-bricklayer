@@ -10,7 +10,9 @@ capsule_drift(
   alpha = 0.01,
   psi_threshold = 0.25,
   psi_min_n = 1000L,
-  bins = 10L
+  bins = 10L,
+  identifier_levels = 100L,
+  seed = 1L
 )
 }
 \arguments{
@@ -37,6 +39,17 @@ reported as an effect size.}
 
 \item{bins}{Bins passed to
 \code{\link[=drift_psi]{drift_psi()}} (default 10).}
+
+\item{identifier_levels}{A character column with more distinct values
+than this (or a distinct value for every fifth row) is an identifier,
+not a distribution: it gets \code{type = "identifier"}, its \code{unseen_share}
+(the fraction of current rows whose value the reference never had) and
+\code{drifted = NA}. Character columns that parse as dates are compared as
+dates (\code{type = "date"}).}
+
+\item{seed}{Seed for the Monte Carlo branch of the homogeneity test,
+\code{\link[=drift_homogeneity]{drift_homogeneity()}}. The caller's RNG stream is left
+untouched.}
 }
 \value{
 A list of class \code{bricklayer_drift}: \code{columns} (a data

@@ -55,6 +55,22 @@ static_assert(CHAR_BIT == 8,
 
 namespace morie::core {
 
+// An optional interrupt hook for the quadratic passes (the Hawkes kernels
+// over n events are O(n * window), and a window that covers everything --
+// a million identical timestamps -- is O(n^2)). The host installs a
+// function that checks for a pending interrupt and throws; with none
+// installed (the Python binding) the kernels run exactly as before.
+inline void (*&interrupt_hook())() {
+    static void (*hook)() = nullptr;
+    return hook;
+}
+inline void poll_interrupt(std::size_t i) {
+    if ((i & 1023) == 0) {
+        void (*h)() = interrupt_hook();
+        if (h) h();
+    }
+}
+
 inline const double kPi = 3.14159265358979323846;
 inline const double kInvSqrt2Pi = 1.0 / std::sqrt(2.0 * kPi);
 inline const double kLogSqrt2Pi = 0.5 * std::log(2.0 * kPi);
@@ -1186,6 +1202,7 @@ inline double hawkes_eval(const double *t, std::size_t n, double T, const double
         std::size_t lo = 0;
         for (std::size_t i = 1; i < n; ++i) {
             while (lo < i && t[i] - t[lo] > cut) ++lo;
+            poll_interrupt(i);
             double si = 0.0, d0 = 0.0, d1 = 0.0, g, a0, a1;
             for (std::size_t j = lo; j < i; ++j) {
                 if (k.dens(t[i] - t[j], g, a0, a1)) {
@@ -1340,6 +1357,7 @@ inline void hawkes_rescaled(const double *t, std::size_t n, double T, int bkind,
         std::size_t lo = 0;
         for (std::size_t i = 1; i < n; ++i) {
             while (lo < i && t[i] - t[lo] > cut) ++lo;
+            poll_interrupt(i);
             double q = 0.0, G, d0, d1;
             for (std::size_t j = lo; j < i; ++j) {
                 k.cdf(t[i] - t[j], G, d0, d1);
@@ -1411,6 +1429,7 @@ inline double hawkes_em_pass(const double *t, std::size_t n, const double *lam_o
     std::size_t lo = 0;
     for (std::size_t i = 1; i < n; ++i) {
         while (lo < i && t[i] - t[lo] > cut) ++lo;
+        poll_interrupt(i);
         const double inv = 1.0 / lam_old[i];
         for (std::size_t j = lo; j < i; ++j) {
             const double u = t[i] - t[j];

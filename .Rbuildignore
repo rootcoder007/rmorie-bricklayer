@@ -30,3 +30,7 @@
 ^templates$
 ^tools$
 ^vignettes/\.gitignore$
+^inst/ctcheck/build.*$
+^inst/fuzz/build.*$
+^tests/testthat/_problems$
+^SECURITY\.md$

@@ -21,13 +21,13 @@ test_that("bricklayer_fetch validates inputs before any network access", {
 
 test_that("bricklayer_fetch errors when live and fallback both fail", {
   expect_error(
-    bricklayer_fetch("http://127.0.0.1:9/a", tempfile(),
-                     wayback = "http://127.0.0.1:9/b", timeout = 3),
+    bricklayer_fetch("https://invalid.invalid/a", tempfile(),
+                     wayback = "https://invalid.invalid/b", timeout = 3),
     "Wayback fallback failed"
   )
   # No wayback pinned: same terminal error, shorter path.
   expect_error(
-    bricklayer_fetch("http://127.0.0.1:9/only", tempfile(), timeout = 3),
+    bricklayer_fetch("https://invalid.invalid/only", tempfile(), timeout = 3),
     "Wayback fallback failed"
   )
 })
@@ -66,7 +66,7 @@ test_that("bricklayer_fetch falls back to a pinned wayback URL", {
   skip_if_no_internet()
   dst <- tempfile(fileext = ".html")
   status <- bricklayer_fetch(
-    "http://127.0.0.1:9/never-there", dst,
+    "https://invalid.invalid/never-there", dst,
     wayback = "https://cloud.r-project.org/", timeout = 60)
   expect_identical(status, "wayback")
   expect_gt(file.size(dst), 500)
