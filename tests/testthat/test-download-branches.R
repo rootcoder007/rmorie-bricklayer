@@ -8,7 +8,8 @@ test_that("bricklayer_download draws a live bar on a terminal and a spinner with
   dest <- withr::local_tempfile(fileext = ".bin")
   withr::local_options(morie.progress = TRUE, morie.quiet = NULL)
   bar <- utils::capture.output(
-    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "two-mb", size = file.size(src), tty = TRUE),
+    bricklayer_download(paste0("file://", src), dest, allow_file = TRUE, label = "two-mb",
+                        size = file.size(src), tty = TRUE),
     type = "message"
   )
   expect_true(any(grepl("\r", bar, fixed = TRUE)) || any(grepl("%", bar, fixed = TRUE)))
