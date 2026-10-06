@@ -100,13 +100,13 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
   for (h in samples) {
     got <- bricklayer_siu_text(h)
     expect_identical(enc2utf8(got), ref_text(h))
-    expect_true(all(nchar(strsplit(got, "\n", fixed = TRUE)[[1]], type = "chars") <= 4000L))
+    expect_true(all(nchar(strsplit(got, "\n", fixed = TRUE)[[1]], type = "chars") <= 2000L))
   }
   # a line longer than the cap is broken at a space, so no extractor's regex
   # ever consumes more than kMaxLine characters at once
   long <- paste(rep("word", 1500), collapse = " ")
   out <- bricklayer_siu_text(paste0("<p>", long, "</p>"))
-  expect_true(all(nchar(strsplit(out, "\n", fixed = TRUE)[[1]]) <= 4000L))
+  expect_true(all(nchar(strsplit(out, "\n", fixed = TRUE)[[1]]) <= 2000L))
   expect_identical(trimws(gsub("\n", " ", out, fixed = TRUE)), long)
   expect_error(bricklayer_siu_text(strrep("a", 3e6)), "larger than 2 MiB")
 })

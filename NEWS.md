@@ -15,8 +15,10 @@ unnoticed.
   removal, tags, entities, whitespace) is a plain loop now, byte-identical
   to the regexes it replaced (the test keeps the old pipeline as an R
   reference and compares); the text every field extractor sees has its
-  spaces collapsed and no line longer than 4,000 characters, so no remaining
-  regex can recurse further than that; the input cap of every SIU entry
+  spaces collapsed and no line longer than 2,000 characters, so no remaining
+  regex can recurse further than that (and MSVC's regex, which has a step
+  budget instead of a stack, stays inside it -- the one time it did not, the
+  public entry points now answer "no match" instead of throwing); the input cap of every SIU entry
   point is 2 MiB (a report page is a few hundred KB). The guard is a test
   that enumerates every one-string SIU entry point from the namespace and
   runs ten hostile inputs through each in a subprocess. XMSS key generation
