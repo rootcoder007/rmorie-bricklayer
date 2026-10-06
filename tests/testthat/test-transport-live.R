@@ -63,3 +63,42 @@ test_that("bricklayer_json_from_json fetches a URL through the same transport", 
                "answered HTTP 404")
   expect_error(bricklayer_json_from_json("https://nonexistent.invalid/x.json"), "could not resolve")
 })
+
+test_that("a sized body drives the bar; a failing callback, an interrupt and an unmovable destination are named", {
+  skip_on_cran()
+  skip_if_not(online(), "no network")
+  url <- "https://cloud.r-project.org/favicon.ico"   # static, with a Content-Length
+  dest <- tempfile(fileext = ".ico")
+  msgs <- utils::capture.output(
+    bricklayer_download(url, dest, label = "icon", quiet = FALSE, tty = TRUE), type = "message")
+  expect_gt(file.size(dest), 0)
+  expect_true(any(grepl("icon:", msgs, fixed = TRUE)))
+  # a progress callback that errors ends the transfer and is reported as such
+  res <- .Call(C("C_rmbl_http_download"), url, tempfile(), 30L, NULL, function(now, total) stop("boom"))
+  expect_identical(res$status, -1L)
+  expect_identical(res$error, "the progress callback failed")
+  # a destination that cannot be replaced (a non-empty directory) is reported,
+  # and the body written beside it is removed
+  d <- tempfile()
+  dir.create(d)
+  writeLines("x", file.path(d, "inner"))
+  expect_error(bricklayer_download(url, d, quiet = TRUE), "cannot move the download into place")
+  expect_true(file.exists(file.path(d, "inner")))
+  expect_false(file.exists(paste0(d, ".rmbl-part")))
+})
+
+test_that("Ctrl-C during a transfer is R's interrupt, raised after the transport cleaned up", {
+  skip_on_cran()
+  skip_on_os("windows")
+  skip_if_not(online(), "no network")
+  dest <- tempfile()
+  # the progress callback sends the process its own SIGINT: the next poll
+  # sees it pending, the transfer stops, the barrier raises the interrupt
+  got <- tryCatch({
+    .Call(C("C_rmbl_http_download"), "https://cloud.r-project.org/favicon.ico", dest, 30L, NULL,
+          function(now, total) tools::pskill(Sys.getpid(), tools::SIGINT))
+    "returned"
+  }, interrupt = function(e) "interrupt")
+  expect_identical(got, "interrupt")
+  expect_false(file.exists(paste0(dest, ".rmbl-part")))
+})

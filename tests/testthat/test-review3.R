@@ -250,3 +250,20 @@ test_that("the Mann-Kendall exact-distribution memo is bounded", {
   .rmbl_mk_exact_values(c(1, 1, 2, 3))
   expect_lt(length(ls(.rmbl_mk_cache)), 40L)
 })
+
+test_that("N4: a kernel interrupted inside the barrier raises R's interrupt and leaves no stale flag", {
+  skip_on_cran()
+  skip_on_os("windows")
+  # PBKDF2 polls for an interrupt every 4096 iterations; a SIGINT sent to
+  # this process from a child a moment from now lands inside the loop
+  system2("bash", c("-c", shQuote(sprintf("sleep 1; kill -INT %d", Sys.getpid()))), wait = FALSE)
+  got <- tryCatch({
+    .Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 20000000L, 32L)
+    "returned"
+  }, interrupt = function(e) "interrupt")
+  expect_identical(got, "interrupt")
+  # the next call starts clean: the flag the kernel set was cleared by the barrier
+  expect_identical(.Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 1L, 4L),
+                   .Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 1L, 4L))
+  expect_identical(nchar(.Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 1L, 4L)), 8L)
+})
