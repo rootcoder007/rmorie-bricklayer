@@ -7,6 +7,38 @@ where the siblings can be listed, puts the list in the tests
 (`test-review3.R`, `test-src-hygiene.R`), so a new one cannot appear
 unnoticed.
 
+## Language-model routes and the signed services document
+
+* **`bricklayer_llm_ask()` tries an endpoint of your own, then a local
+  Ollama server, then the hosted MORIE tier.** `MORIE_LLM_BASE_URL` (with
+  `MORIE_LLM_API_KEY`, `MORIE_LLM_MODEL`) names any OpenAI-compatible
+  server; `OLLAMA_HOST` / `OLLAMA_BASE_URL` (default `http://localhost:11434`,
+  `off` to skip) a local Ollama, whose first listed model is the default
+  unless `OLLAMA_MODEL` says otherwise. `route = "own" | "ollama" | "hosted"`
+  insists on one. `bricklayer_llm_status()` and `rmoriebricklayer doctor`
+  report all three, in order; `agent_bundle()` follows the same order.
+* **The hosted tier's addresses come from a signed document, not from the
+  package.** `bricklayer_services()` reads
+  `https://rmorie.com/.well-known/morie-services.json` and its detached
+  ML-DSA-44 signature, verifies it against the public key pinned in the
+  package, caches it for a day under `tools::R_user_dir()`, refuses a
+  document older than the one it holds, and falls back to the cached copy,
+  then the copy bundled in `inst/services/`, then a document with every
+  service switched off. The endpoint, the model list, the sign-in address
+  and whether the tier is open can now change without a package release;
+  a document that does not verify is ignored. `MORIE_HOSTED_BASE_URL`,
+  `MORIE_HOSTED_AUTH_URL`, `MORIE_HOSTED_MODEL` and `MORIE_DATA_URL` still
+  override. The hosted tier is a last resort; keys are personal and issued on
+  request at <https://rmorie.com/access>, and every hint in the package says
+  so. The GitHub and emailed-code sign-ins keep working.
+* **Plain http on the loopback host is admitted for the local routes only.**
+  The URL policy that guards every other address refuses `http://` and
+  loopback twice over; the own-endpoint and Ollama calls set
+  `options(rmoriebricklayer.allow_loopback = TRUE)` for their own duration,
+  which admits exactly the loopback host (`localhost`, `127.0.0.0/8`,
+  `::1`), nothing else private, and a redirect off it meets the ordinary
+  rules (`test-llm-routes.R`).
+
 * SIU core: every string-to-integer conversion on a regex capture goes through one bounded helper (`small_int()`); `std::stoi` on a tag such as `SO #4444444444444444` threw `std::out_of_range` and aborted the process (found by the libFuzzer target; the input is in the fuzz corpus). Ported to the rmorie and morie copies.
 * **`bricklayer_siu_text()` and `bricklayer_parse_siu()` killed R on 25 KB
   of whitespace.** libstdc++'s regex executor recurses once per character a

@@ -264,6 +264,31 @@ bool allow_http_option() {
     return v != R_NilValue && Rf_asLogical(v) == TRUE;
 }
 
+/* A local model server (Ollama on 127.0.0.1:11434) is plain http on the
+ * loopback interface, which the policy refuses twice over. The R caller that
+ * KNOWS the address came from the user's own environment sets
+ * options(rmoriebricklayer.allow_loopback = TRUE) for the duration of that
+ * one call: exactly the loopback host is admitted, nothing else private, and
+ * a redirect off it meets the ordinary rules. */
+bool allow_loopback_option() {
+    SEXP v = Rf_GetOption1(Rf_install("rmoriebricklayer.allow_loopback"));
+    return v != R_NilValue && Rf_asLogical(v) == TRUE;
+}
+
+bool loopback_host(const UrlParts &u) {
+    if (u.bracketed) {
+        unsigned char b[16];
+        if (!ipv6_literal(u.host, b)) return false;
+        for (int i = 0; i < 15; ++i) if (b[i]) return false;
+        return b[15] == 1;
+    }
+    uint32_t a = 0;
+    if (ipv4_literal(u.host, a)) return (a >> 24) == 127u;
+    std::string h = u.host;
+    for (char &c : h) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return h == "localhost";
+}
+
 /* The whole check. `addrs` receives the dotted/colon addresses the host
  * resolved to (empty for a literal), for CURLOPT_RESOLVE. `resolve = false`
  * (the R validator's pre-flight) stops at the literal checks. Returns "" when
@@ -272,16 +297,21 @@ std::string url_check(const std::string &url, bool allow_http, bool resolve,
                       UrlParts *parts_out, std::vector<std::string> *addrs) {
     UrlParts u;
     std::string why;
+    std::string sch;
     {
         const size_t p = url.find("://");
-        std::string sch = p == std::string::npos ? "" : url.substr(0, p);
+        sch = p == std::string::npos ? "" : url.substr(0, p);
         for (char &c : sch) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        if (sch != "https" && !(allow_http && sch == "http")) {
-            return sch == "http" ? "plain http is refused (options(rmoriebricklayer.allow_http = TRUE) admits a trusted mirror)"
-                                 : "scheme " + sch + ":// is refused";
-        }
+        if (sch != "https" && sch != "http") return "scheme " + sch + ":// is refused";
     }
     if (!parse_url(url, u, why)) return why;
+    if (allow_loopback_option() && loopback_host(u)) {
+        if (parts_out) *parts_out = u;
+        return "";
+    }
+    if (sch == "http" && !allow_http) {
+        return "plain http is refused (options(rmoriebricklayer.allow_http = TRUE) admits a trusted mirror)";
+    }
     uint32_t v4 = 0;
     unsigned char v6[16];
     if (u.bracketed) {

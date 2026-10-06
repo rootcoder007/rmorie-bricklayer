@@ -263,11 +263,28 @@ test_that("N4: a kernel interrupted inside the barrier raises R's interrupt and 
   skip_on_os("windows")
   # PBKDF2 polls for an interrupt every 4096 iterations; a SIGINT sent to
   # this process from a child a moment from now lands inside the loop
-  system2("bash", c("-c", shQuote(sprintf("sleep 1; kill -INT %d", Sys.getpid()))), wait = FALSE)
+  # the helper leaves a marker once the signal is away: without it (a loaded runner that
+  # could not spawn bash in time) the run is inconclusive, which is not the same as a kernel
+  # that swallowed the interrupt
+  # a process started from a non-interactive shell's background job inherits SIGINT as
+  # ignored (POSIX), and R keeps an inherited SIG_IGN: the signal can then never arrive,
+  # which says nothing about the kernel. Linux shows the mask; elsewhere the run proceeds.
+  status <- tryCatch(readLines("/proc/self/status", warn = FALSE), error = function(e) character())
+  ign <- sub("^SigIgn:\\s*", "", grep("^SigIgn:", status, value = TRUE))
+  if (length(ign) == 1L && nzchar(ign)) {
+    low <- strtoi(substr(ign, nchar(ign), nchar(ign)), 16L)
+    skip_if(bitwAnd(low, 2L) == 2L, "SIGINT is ignored in this process (inherited from a background job)")
+  }
+  signal_sent <- tempfile("sigint-")
+  system2("bash", c("-c", shQuote(sprintf("sleep 1; kill -INT %d && touch %s", Sys.getpid(), signal_sent))),
+          wait = FALSE)
   got <- tryCatch({
     .Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 20000000L, 32L)
     "returned"
   }, interrupt = function(e) "interrupt")
+  for (i in 1:20) if (file.exists(signal_sent)) break else Sys.sleep(0.1)
+  skip_if(!file.exists(signal_sent) && identical(got, "returned"),
+          "the SIGINT helper did not run in time on this machine (inconclusive, not a failure)")
   expect_identical(got, "interrupt")
   # the next call starts clean: the flag the kernel set was cleared by the barrier
   expect_identical(.Call(C("C_rmbl_pbkdf2"), charToRaw("pw"), charToRaw("salt"), 1L, 4L),
