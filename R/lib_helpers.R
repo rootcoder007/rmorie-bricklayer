@@ -374,6 +374,11 @@ write_text_fallback <- function(text, path) {
 .rmbl_json_text <- function(txt, ...) {
   if (is.raw(txt)) txt <- rawToChar(txt)
   txt <- paste(as.character(txt), collapse = "\n")
-  if (!bricklayer_json_validate(txt)) stop("not JSON", call. = FALSE)
+  # the shape of a JSON value, never of an address or a path: that is the whole point
+  # of this entry (fourth review: a body that was a bare URL made the package fetch it)
+  shaped <- grepl("^\\s*([\\[{\"]|-?[0-9]|true|false|null)", txt)
+  if (!shaped) stop("not JSON", call. = FALSE)
+  # the parser itself refuses what is not JSON, with its own reasons (a repeated key, a
+  # bad escape, 100 levels), under whatever options the caller passes
   bricklayer_json_from_json(txt, ...)
 }

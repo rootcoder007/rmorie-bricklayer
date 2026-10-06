@@ -124,7 +124,7 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
   # a line longer than the cap is broken at a space, so no extractor's regex
   # ever consumes more than kMaxLine characters at once
   long <- paste(rep("word", 1500), collapse = " ")
-  out <- bricklayer_siu_text(paste0("<p>", long, "</p>"))
+  out <- suppressWarnings(bricklayer_siu_text(paste0("<p>", long, "</p>")))  # the split warning is expected
   expect_true(all(nchar(strsplit(out, "\n", fixed = TRUE)[[1]]) <= 2000L))
   expect_identical(trimws(gsub("\n", " ", out, fixed = TRUE)), long)
   expect_error(bricklayer_siu_text(strrep("a", 3e6)), "larger than 2 MiB")

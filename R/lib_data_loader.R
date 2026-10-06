@@ -220,6 +220,21 @@ resolve_via_ckan_search <- function(provenance) {
 #'   `"wb"` (or `"w"`) is accepted. Every transfer is binary and written
 #'   fresh through the package's own transport, so an append mode cannot be
 #'   honoured and is an error rather than a silent `"wb"`.
+#' @param quiet Logical; suppress progress output. Defaults to
+#' `FALSE`.
+#' @return The `target_path`, returned invisibly.
+#' @examples
+#' \donttest{
+#' # try(): a live download must fail gracefully on an offline check machine.
+#' dest <- try(download_data("https://cloud.r-project.org/",
+#'   tempfile(fileext = ".html"),
+#'   quiet = TRUE
+#' ))
+#' if (!inherits(dest, "try-error")) file.exists(dest)
+#' }
+#' @param allow_file Accept a `file://` URL (default `FALSE`; an offline
+#' test passes `TRUE`). Every URL must otherwise be `https` and public.
+#' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
                           allow_file = FALSE) {
   url <- .rmbl_string1(url, "url")

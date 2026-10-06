@@ -214,7 +214,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   bund_doc <- rawToChar(readBin(bundled, "raw", file.size(bundled)))
   bdir <- file.path(td, "bundled")
   dir.create(bdir)
-  writeLines(bund_doc, file.path(bdir, "morie-services.json"), sep = "")
+  writeBin(charToRaw(bund_doc), file.path(bdir, "morie-services.json"))  # exact bytes: Windows text mode would add CR
   writeLines(sig(bund_doc), file.path(bdir, "morie-services.sig"))
   testthat::local_mocked_bindings(
     .rmbl_services_pubkey = function() key$public,

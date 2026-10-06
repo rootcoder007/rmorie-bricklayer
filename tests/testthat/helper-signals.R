@@ -3,7 +3,8 @@
 # SIGINT can then never see the interrupt, which says nothing about the code under test.
 # Linux shows the mask in /proc; elsewhere the test proceeds.
 skip_if_sigint_ignored <- function() {
-  status <- tryCatch(readLines("/proc/self/status", warn = FALSE), error = function(e) character())
+  if (!file.exists("/proc/self/status")) return(invisible(TRUE))  # not Linux: nothing to read
+  status <- tryCatch(suppressWarnings(readLines("/proc/self/status", warn = FALSE)), error = function(e) character())
   ign <- sub("^SigIgn:\\s*", "", grep("^SigIgn:", status, value = TRUE))
   if (length(ign) == 1L && nzchar(ign)) {
     low <- strtoi(substr(ign, nchar(ign), nchar(ign)), 16L)
