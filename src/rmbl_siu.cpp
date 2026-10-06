@@ -23,9 +23,10 @@ std::string as_string(SEXP x, const char *what) {
         Rf_error("%s must be a single non-NA character string", what);
     }
     /* an SIU report page is a few hundred KB; the parsers run regular
-     * expressions over the whole input */
-    if (LENGTH(STRING_ELT(x, 0)) > (16 << 20)) {
-        Rf_error("%s is larger than 16 MiB: not a report page", what);
+     * expressions over lines of it (normalize_text() caps the lines), and
+     * the whole input is copied a dozen times on the way */
+    if (LENGTH(STRING_ELT(x, 0)) > (2 << 20)) {
+        Rf_error("%s is larger than 2 MiB: not a report page", what);
     }
     return std::string(CHAR(STRING_ELT(x, 0)));
 }
@@ -77,8 +78,10 @@ SEXP C_rmbl_siu_to_iso_date_impl(SEXP human) {
 }
 
 SEXP C_rmbl_siu_resolve_so_impl(SEXP text) {
+    /* plain text from the caller: the same whitespace/line discipline the
+     * HTML path gets, before any regex sees it */
     const siu::SoResolution res =
-        siu::resolve_subject_officials(as_string(text, "text"));
+        siu::resolve_subject_officials(siu::normalize_text(as_string(text, "text")));
     SEXP ans = PROTECT(Rf_allocVector(VECSXP, 2));
     SEXP nms = PROTECT(Rf_allocVector(STRSXP, 2));
     SET_STRING_ELT(nms, 0, Rf_mkChar("count"));

@@ -2,34 +2,52 @@
 % Please edit documentation in R/llm_native.R
 \name{bricklayer_llm_ask}
 \alias{bricklayer_llm_ask}
-\title{Ask the hosted MORIE language model}
+\title{Ask a language model}
 \usage{
-bricklayer_llm_ask(prompt, model = NULL, timeout = 120, system_prompt = NULL)
+bricklayer_llm_ask(
+  prompt,
+  model = NULL,
+  timeout = 120,
+  system_prompt = NULL,
+  route = NULL
+)
 }
 \arguments{
 \item{prompt}{Character scalar.}
 
-\item{model}{Model id; default \code{MORIE_HOSTED_MODEL} or
-\code{"minimax-m3:cloud"}.}
+\item{model}{Model id; default the route's own (see above).}
 
 \item{timeout}{Seconds to wait for the reply.}
 
 \item{system_prompt}{Optional system message.}
+
+\item{route}{\code{NULL} (the first that answers) or one of \code{"own"},
+\code{"ollama"}, \code{"hosted"} to insist on a route.}
 }
 \value{
-Character scalar with the reply. Errors when no key is stored,
-the tier is disabled (\code{MORIE_HOSTED_BASE_URL=off}) or the
-gateway answers with an error.
+Character scalar with the reply. Errors, saying what to set up,
+when no route answers, and when the server answers with an error.
 }
 \description{
-Sends one prompt to the MORIE LLM tier at
-\url{https://llm.rmorie.com} with the key stored by
-\code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}) and
-returns the reply.
+Sends one prompt to the first language-model route that answers from
+this machine and returns the reply. Routes, in order:
+\enumerate{
+\item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL},
+with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them;
+\item a local Ollama server: \code{OLLAMA_HOST} (or
+\code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
+\code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
+skips it;
+\item the hosted MORIE tier, a last resort for people who can run neither:
+its address comes from \code{\link{bricklayer_services}} and it needs the
+key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
+Keys are personal and issued on request at \url{https://rmorie.com/access}.
+}
+\code{\link{bricklayer_llm_status}} shows which route a question would take.
 }
 \examples{
 \dontrun{
-bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
+bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
 }
 }

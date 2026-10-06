@@ -115,7 +115,7 @@ test_that("resolve_via_ckan returns the first name-matched resource URL", {
     }
   )
   prov <- list(
-    dataset  = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
+    dataset  = list(ckan_api_endpoint = "https://portal.example.org/api/3/action/package_show?id=x"),
     resource = list(name_match_pattern = "2014")
   )
   expect_identical(resolve_via_ckan(prov), "https://example.org/2014.csv")
@@ -137,7 +137,7 @@ test_that("resolve_via_ckan_search matches resources and derives the query", {
     }
   )
   prov <- list(
-    dataset = list(ckan_api_endpoint = "https://portal/api/3/action/package_show?id=x"),
+    dataset = list(ckan_api_endpoint = "https://portal.example.org/api/3/action/package_show?id=x"),
     resource = list(
       name_match_pattern = "2014", search_query = "library stats",
       format = "CSV"
@@ -283,7 +283,7 @@ test_that("the CKAN resolvers return NULL for an empty endpoint, a failed call a
   skip_if_cannot_mock()
   prov <- list(dataset = list(ckan_api_endpoint = ""), resource = list(name_match_pattern = "x"))
   expect_null(resolve_via_ckan(prov))
-  prov$dataset$ckan_api_endpoint <- "https://portal/api/3/action/package_show?id=x"
+  prov$dataset$ckan_api_endpoint <- "https://portal.example.org/api/3/action/package_show?id=x"
   testthat::with_mocked_bindings(
     .rmbl_read_json = function(...) list(success = FALSE),
     expect_null(resolve_via_ckan(prov))

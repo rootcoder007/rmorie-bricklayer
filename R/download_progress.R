@@ -82,20 +82,18 @@ bricklayer_download <- function(url, dest, headers = NULL,
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
   size <- suppressWarnings(as.numeric(if (is.null(size)) NA else size[[1L]]))
   if (!is.finite(size) || size <= 0) size <- NA_real_
-  old <- options(timeout = max(getOption("timeout", 60), timeout))
-  on.exit(options(old), add = TRUE)
   if (is.null(tty)) tty <- isatty(stderr())
-  if (is.null(headers)) {
-    con <- url(url, open = "rb")
-  } else {
-    con <- url(url, open = "rb", headers = headers)
+  hdr_lines <- NULL
+  if (!is.null(headers)) {
+    if (!is.character(headers) || anyNA(headers) || is.null(names(headers)) ||
+        any(!nzchar(names(headers)))) {
+      stop("`headers` must be a named character vector", call. = FALSE)
+    }
+    hdr_lines <- paste0(names(headers), ": ", headers)
   }
-  on.exit(close(con), add = TRUE)
-  out <- file(dest, open = "wb")
-  on.exit(close(out), add = TRUE)
-  got <- 0
+  timeout <- suppressWarnings(as.numeric(timeout))[1L]
+  if (is.na(timeout) || timeout < 1) stop("`timeout` must be at least one second", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
-  last <- t0
   mile <- 0L
   spin <- 0L
   width <- 0L
@@ -104,34 +102,54 @@ bricklayer_download <- function(url, dest, headers = NULL,
                 if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""),
         file = stderr())
   }
-  repeat {
-    chunk <- readBin(con, what = "raw", n = 1048576L)
-    if (!length(chunk)) break
-    writeBin(chunk, out)
-    got <- got + length(chunk)
-    if (quiet) next
+  # The transport calls this about ten times a second with the bytes so far
+  # and the total the server announced (0 when it did not).
+  draw <- function(got, total) {
+    if (quiet) return(invisible(NULL))
+    if (is.na(size) && is.finite(total) && total > 0) size <<- total
     if (tty) {
-      now <- proc.time()[["elapsed"]]
-      # the first chunk draws at once, then ten frames a second
-      if (spin > 0L && now - last < 0.1) next
-      last <- now
-      spin <- spin + 1L
+      spin <<- spin + 1L
       line <- .bl_dl_line(label, got, size, t0, spin)
       pad <- strrep(" ", max(0L, width - nchar(line)))
       cat("\r", line, pad, sep = "", file = stderr())
-      width <- max(width, nchar(line))
+      width <<- max(width, nchar(line))
     } else {
-      if (is.finite(size)) {
-        step <- as.integer((10 * got) %/% size)
-      } else {
-        step <- as.integer(got %/% 52428800)
-      }
+      step <- if (is.finite(size)) as.integer((10 * got) %/% size) else
+        as.integer(got %/% 52428800)
       if (step > mile) {
-        mile <- step
-        line <- .bl_dl_line(label, got, size, t0, 0L)
-        cat("  ", line, "\n", sep = "", file = stderr())
+        mile <<- step
+        cat("  ", .bl_dl_line(label, got, size, t0, 0L), "\n", sep = "", file = stderr())
       }
     }
+    invisible(NULL)
+  }
+  if (grepl("^file://", url, ignore.case = TRUE)) {
+    # an offline test's local file, copied through the same bar
+    con <- file(sub("^file://", "", url, ignore.case = TRUE), open = "rb")
+    on.exit(close(con), add = TRUE)
+    out <- file(dest, open = "wb")
+    on.exit(close(out), add = TRUE)
+    got <- 0
+    repeat {
+      chunk <- readBin(con, what = "raw", n = 1048576L)
+      if (!length(chunk)) break
+      writeBin(chunk, out)
+      got <- got + length(chunk)
+      draw(got, if (is.na(size)) 0 else size)
+    }
+  } else {
+    # every network byte of the package goes through src/rmbl_fetch.cpp: the
+    # URL is checked again there, resolved and pinned, every redirect hop is
+    # re-checked (no https -> http, credentials dropped across hosts) and the
+    # body is capped; base R's url() did none of that (0.5.7 review)
+    res <- .Call(C_rmbl_http_download, url, dest, as.integer(timeout), hdr_lines, draw)
+    if (res$status < 0) {
+      stop(sprintf("%s: %s", url, res$error), call. = FALSE)
+    }
+    if (res$status >= 400) {
+      stop(sprintf("%s answered HTTP %d", url, res$status), call. = FALSE)
+    }
+    got <- res$bytes
   }
   if (!quiet) {
     if (tty) cat("\r", strrep(" ", width), "\r", sep = "", file = stderr())

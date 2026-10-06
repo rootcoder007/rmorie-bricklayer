@@ -2,6 +2,7 @@
 // Canonical home of the SIU parse/resolve core. rmorie (src/siu/) and morie
 // (morie.siu.native) carry ports of these sources; edit here first, then port.
 #include "siu_resolve.h"
+#include "siu_parse.h"
 
 #include <algorithm>
 #include <array>
@@ -23,7 +24,7 @@ int count_matches(const std::string& s, const std::regex& re) {
 
 }  // namespace
 
-std::string strip_boilerplate(const std::string& t) {
+static std::string strip_boilerplate_impl(const std::string& t) {
     // Reports mix in UTF-8 non-breaking spaces ("SO\u00A0#1"); \s never
     // matches them in byte-mode std::regex, so normalize to plain spaces
     // before any rule runs.
@@ -91,7 +92,7 @@ static SoResolution resolve_fr(const std::string& text) {
             int entries = 0, ord = 0;
             for (auto it = std::sregex_iterator(win.begin(), win.end(), kEntry); it != std::sregex_iterator(); ++it) {
                 ++entries;
-                if ((*it)[1].matched) ord = std::max(ord, std::stoi((*it)[1].str()));
+                if ((*it)[1].matched) ord = std::max(ord, small_int((*it)[1].str()));
             }
             const int n = std::max(entries, ord);
             if (n > 0) return {n, "section: max(ordinal " + std::to_string(ord) + ", entries " + std::to_string(entries) + ")"};
@@ -100,7 +101,7 @@ static SoResolution resolve_fr(const std::string& text) {
     int mo = 0;
     bool one = false;
     for (auto it = std::sregex_iterator(body.begin(), body.end(), kOrd); it != std::sregex_iterator(); ++it) {
-        const int k = std::stoi((*it)[1].str());
+        const int k = small_int((*it)[1].str());
         mo = std::max(mo, k);
         one = one || k == 1;
     }
@@ -110,7 +111,7 @@ static SoResolution resolve_fr(const std::string& text) {
     auto num = [&](std::string tok) {
         std::transform(tok.begin(), tok.end(), tok.begin(), ::tolower);
         const auto w = kFrNum.find(tok);
-        return w != kFrNum.end() ? w->second : std::stoi(tok);
+        return w != kFrNum.end() ? w->second : small_int(tok);
     };
     std::smatch m;
     if (mo > 0 && one) {
@@ -135,7 +136,7 @@ static SoResolution resolve_fr(const std::string& text) {
     return {std::nullopt, "UNRESOLVED (fr): 'l'AI'x" + std::to_string(the)};
 }
 
-SoResolution resolve_subject_officials(const std::string& report_text) {
+static SoResolution resolve_subject_officials_impl(const std::string& report_text) {
     const std::string body = strip_boilerplate(report_text);
     {
         static const std::regex kUes("\\bUES\\b"), kSiu("\\bSIU\\b");
@@ -156,7 +157,7 @@ SoResolution resolve_subject_officials(const std::string& report_text) {
         for (const auto* re : {&kOrdSo, &kOrdSpelled}) {
             for (auto it = std::sregex_iterator(s.begin(), s.end(), *re);
                  it != std::sregex_iterator(); ++it) {
-                mo = std::max(mo, std::stoi((*it)[1].str()));
+                mo = std::max(mo, small_int((*it)[1].str()));
             }
         }
         return mo;
@@ -223,7 +224,7 @@ SoResolution resolve_subject_officials(const std::string& report_text) {
         std::string low = tok;
         std::transform(low.begin(), low.end(), low.begin(), ::tolower);
         auto wit = kWordNum.find(low);
-        n = (wit != kWordNum.end()) ? wit->second : std::stoi(tok);
+        n = (wit != kWordNum.end()) ? wit->second : small_int(tok);
         return {n, "plural cue '" + m[0].str() + "'"};
     }
 
@@ -271,6 +272,27 @@ SoResolution resolve_subject_officials(const std::string& report_text) {
     // 5. Needs a human read.
     return {std::nullopt, "UNRESOLVED: 'the SO'x" + std::to_string(the_so) +
                               " 'the subj off'x" + std::to_string(the_subj)};
+}
+
+// The public entry points answer on any input (see siu_parse.cpp): a regex
+// engine that gives up on a pathological line yields "no resolution" rather
+// than an exception out of the resolver.
+std::string strip_boilerplate(const std::string& report_text) {
+    try {
+        return strip_boilerplate_impl(report_text);
+    } catch (const std::regex_error&) {
+        return report_text;
+    }
+}
+
+SoResolution resolve_subject_officials(const std::string& report_text) {
+    try {
+        return resolve_subject_officials_impl(report_text);
+    } catch (const std::regex_error&) {
+        SoResolution r;
+        r.reason = "the text defeated the regex engine: no resolution";
+        return r;
+    }
 }
 
 }  // namespace siu

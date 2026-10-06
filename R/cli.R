@@ -26,11 +26,14 @@
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 #' \describe{
 #'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
-#'     [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
-#'     device flow by default, a code sent to \code{--email}, or a key
-#'     you paste with \code{--token} (read from the terminal or a pipe when KEY is omitted)}
+#'     [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
+#'     a local model or your own endpoint; keys are issued on request at
+#'     \url{https://rmorie.com/access}): a key you paste with \code{--token}
+#'     (read from the terminal or a pipe when KEY is omitted), a code sent to
+#'     \code{--email}, or the GitHub device flow}
 #'   \item{\code{logout}}{forget the hosted key}
-#'   \item{\code{doctor}}{report the language-model routes available here}
+#'   \item{\code{doctor}}{report the language-model routes available here
+#'     (own endpoint, local Ollama, hosted tier), in the order \code{ask} tries them}
 #'   \item{\code{models}}{list the models the hosted tier offers your key
 #'     (default marked)}
 #'   \item{\code{data list}}{the curated tables at data.rmorie.com}
@@ -172,7 +175,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
           # with no language-model route agent_bundle() explains how to set one up: nothing was
           # produced, so the command fails
-          routed <- !is.null(.bl_hosted_base()) && !is.null(.bl_hosted_key())
+          routed <- !is.null(.bl_llm_route())
           out(paste0(agent_bundle(paste(rest, collapse = " ")), "\n"))
           if (!routed) status <- 1L
         },
@@ -230,7 +233,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           "available here\n",
           "  models                                    models the hosted tier ",
           "offers your key\n",
-          "  ask [--model NAME] PROMPT...              ask the model\n",
+          "  ask [--model NAME] PROMPT...              ask a model (own endpoint, ",
+          "local Ollama, then the hosted tier)\n",
           "  bundle REQUEST...                         agent_bundle() from ",
           "the ",
           "shell\n",
@@ -428,9 +432,9 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 # The models verb: the hosted tier's list for this key, default marked.
 .bl_cli_models <- function(out) {
   if (is.null(.bl_hosted_base())) {
-    out("Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
+    out(sprintf("Hosted MORIE tier: disabled (%s)\n", .bl_hosted_off_reason()))
   } else if (is.null(.bl_hosted_key())) {
-    out(sprintf("Hosted MORIE tier: not logged in -- %s login\n", .bl_prog()))
+    out(sprintf("Hosted MORIE tier: not logged in -- %s\n", .bl_access_hint()))
   } else {
     hm <- bricklayer_llm_models()
     state <- .bl_key_state(hm)

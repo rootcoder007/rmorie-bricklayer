@@ -363,7 +363,7 @@ void tree_root(const unsigned char *sk_seed, const unsigned char *pub_seed,
     for (size_t i = 0; i < nleaves; ++i) {
         /* height 16 is 65,536 WOTS+ key pairs (about 66M SHA-256 calls):
          * let the user interrupt it rather than SIGKILL R */
-        if ((i & 1023) == 1023) R_CheckUserInterrupt();
+        if ((i & 1023) == 1023) rmbl::check_interrupt();   /* throws: destructors run */
         compute_leaf(sk_seed, pub_seed, static_cast<uint32_t>(i),
                      lvl.data() + i * kN);
     }

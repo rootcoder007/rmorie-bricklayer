@@ -13,7 +13,7 @@ bricklayer_llm_login(
 )
 }
 \arguments{
-\item{token}{A key from \url{https://llm.rmorie.com}.}
+\item{token}{A key issued at \url{https://rmorie.com/access}.}
 
 \item{email}{Sign in with a code sent to this address.}
 
@@ -27,10 +27,13 @@ bricklayer_llm_login(
 The key, invisibly.
 }
 \description{
-Mints a personal key for \url{https://llm.rmorie.com} and stores it in
+Stores a personal key for the hosted MORIE tier in
 \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
-the \code{morie} and \code{rmorie} packages read too, so one sign-in
-serves all three). Three ways in:
+the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
+so one sign-in serves all of them). The tier is a last resort behind a
+local model or your own endpoint (see \code{\link{bricklayer_llm_ask}});
+keys are personal and issued on request at \url{https://rmorie.com/access}.
+The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 \itemize{
 \item \code{token}: a key you already have, from the website or an
 email. It is checked with the gateway first and stored only when
@@ -44,8 +47,8 @@ Nothing is written except by this explicit call.
 }
 \examples{
 \dontrun{
+bricklayer_llm_login(token = "<key issued at https://rmorie.com/access>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login() # GitHub device flow
-bricklayer_llm_login(token = "<key from https://llm.rmorie.com>")
 }
 }

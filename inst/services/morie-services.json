@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "issued": "2026-10-06T10:30:44Z",
+  "notice": "The hosted MORIE services are a last resort for people who cannot run a local model or bring their own API key. Keys are issued on request at https://rmorie.com/access.",
+  "llm": {
+    "mode": "key",
+    "base_url": "https://llm.rmorie.com",
+    "auth_url": "https://llm.rmorie.com/auth",
+    "default_model": "minimax-m3:cloud",
+    "models": [
+      "minimax-m3:cloud",
+      "minimax-m2.7:cloud",
+      "glm-5.2:cloud",
+      "deepseek-v4-pro:cloud",
+      "gemma4:31b-cloud",
+      "gpt-oss:20b-cloud",
+      "gpt-oss:120b-cloud"
+    ],
+    "request_access": "https://rmorie.com/access"
+  },
+  "data": {
+    "mode": "key",
+    "base_url": "https://data.rmorie.com",
+    "license": "https://rmorie.com/data-license",
+    "request_access": "https://rmorie.com/access"
+  }
+}

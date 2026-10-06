@@ -417,7 +417,9 @@ int rmbl_digest_equal(const char *a, const char *b, size_t n) {
             diff | (static_cast<unsigned char>(a[i]) ^
                     static_cast<unsigned char>(b[i])));
     }
-    return diff == 0 ? 1 : 0;
+    /* the barrier keeps the compiler from turning the accumulated OR into
+     * an early-exit branch (the same treatment the ML-KEM select has) */
+    return rmbl_ct::barrier(diff) == 0 ? 1 : 0;
 }
 
 }  // extern "C"

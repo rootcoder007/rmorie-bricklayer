@@ -51,7 +51,7 @@ test_that("a refused key is said as such, and the gateway's key fragment is neve
   local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) list(status = 401L, body = raw(0)))
   expect_match(.cap("models")$text, "rejected the stored key")
   st <- bricklayer_llm_status()
-  expect_match(st$detail[1], "key rejected by the gateway")
+  expect_match(st$detail[3], "key rejected by the gateway")
   res <- list(status = 401L, json = list(error = list(
     message = "Authentication Error, Received API Key = sk-...abcd, Key Hash (Token) =1234"
   )))

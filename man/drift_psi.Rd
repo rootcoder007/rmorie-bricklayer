@@ -13,7 +13,11 @@ Binned on the quantiles of \code{x}, so the reference defines the bins.}
 \item{bins}{Number of bins (default 10).}
 
 \item{eps}{Floor applied to empty bins in the PSI (default
-1e-6).}
+1e-6), any value in (0, 1). An empty bin contributes
+\eqn{(p - eps)\log(p/eps)} to the index, so the floor is part of the
+statistic: the default reports the raw index, and a larger floor (0.01,
+0.05) smooths an empty bin toward that share, which dampens the PSI.
+Compare runs only at one \code{eps}.}
 }
 \value{
 A named length-2 numeric: \code{psi} and \code{js_divergence}.

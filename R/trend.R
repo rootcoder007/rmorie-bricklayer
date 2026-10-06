@@ -208,6 +208,12 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     tot
   })
+  # a bounded memo: the exact distribution is only computed for short
+  # series, but a session that fits many of them would otherwise keep every
+  # table forever (92 MB after 300 distinct tied series, 0.5.7 review)
+  if (length(ls(.rmbl_mk_cache)) >= 32L) {
+    rm(list = ls(.rmbl_mk_cache), envir = .rmbl_mk_cache)
+  }
   .rmbl_mk_cache[[key]] <- s
   s
 }
@@ -230,6 +236,12 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     tot
   })
+  # a bounded memo: the exact distribution is only computed for short
+  # series, but a session that fits many of them would otherwise keep every
+  # table forever (92 MB after 300 distinct tied series, 0.5.7 review)
+  if (length(ls(.rmbl_mk_cache)) >= 32L) {
+    rm(list = ls(.rmbl_mk_cache), envir = .rmbl_mk_cache)
+  }
   .rmbl_mk_cache[[key]] <- s
   s
 }

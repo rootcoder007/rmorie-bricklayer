@@ -12,18 +12,18 @@ agent_bundle(request, model = NULL, backend = "auto")
 \item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"};
 \code{NULL} uses the default (\code{rmbl models} lists them).}
 
-\item{backend}{\code{"auto"} (default) or \code{"hosted"}: both send the
-request to the hosted MORIE tier.}
+\item{backend}{\code{"auto"} (default): the first route that answers;
+\code{"hosted"}: the hosted MORIE tier only.}
 }
 \value{
 Character scalar: the answer, or a message saying what to set
-up when no key is stored.
+up when no route answers.
 }
 \description{
 Sends a bundle-building request, with a rmoriebricklayer-focused
-preamble, to the hosted MORIE language model at
-\url{https://llm.rmorie.com} with the key stored by
-\code{\link{bricklayer_llm_login}} (\code{rmbl login} from the shell).
+preamble, to the first language-model route that answers (your own
+endpoint, a local Ollama server, then the hosted MORIE tier; see
+\code{\link{bricklayer_llm_ask}}).
 }
 \examples{
 \donttest{
@@ -31,11 +31,14 @@ agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
 agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud")
 }
 
-# With the hosted tier switched off the call returns a setup hint, not
-# an error, and reaches no network -- safe to run anywhere:
-old <- Sys.getenv("MORIE_HOSTED_BASE_URL", unset = NA)
-Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
+# With every route switched off the call returns a setup hint, not an
+# error, and reaches no network -- safe to run anywhere:
+routes <- c("MORIE_HOSTED_BASE_URL", "OLLAMA_HOST", "MORIE_LLM_BASE_URL")
+old <- Sys.getenv(routes, unset = NA)
+Sys.setenv(MORIE_HOSTED_BASE_URL = "off", OLLAMA_HOST = "off",
+           MORIE_LLM_BASE_URL = "off")
 agent_bundle("hello")
-if (is.na(old)) Sys.unsetenv("MORIE_HOSTED_BASE_URL") else
-  Sys.setenv(MORIE_HOSTED_BASE_URL = old)
+for (v in routes) {
+  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+}
 }

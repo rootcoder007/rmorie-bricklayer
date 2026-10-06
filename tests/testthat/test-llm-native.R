@@ -12,14 +12,16 @@
   old <- Sys.getenv(
     c(
       "XDG_CONFIG_HOME", "MORIE_HOSTED_KEY",
-      "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL"
+      "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL",
+      "MORIE_LLM_BASE_URL", "OLLAMA_HOST"
     ),
     unset = NA
   )
-  Sys.setenv(XDG_CONFIG_HOME = dir)
+  # the hosted route alone is under test here: no endpoint of our own, no local Ollama
+  Sys.setenv(XDG_CONFIG_HOME = dir, OLLAMA_HOST = "off")
   Sys.unsetenv(c(
     "MORIE_HOSTED_KEY", "MORIE_HOSTED_BASE_URL",
-    "MORIE_HOSTED_MODEL"
+    "MORIE_HOSTED_MODEL", "MORIE_LLM_BASE_URL"
   ))
   withr_restore <- function() {
     for (nm in names(old)) {
@@ -75,7 +77,7 @@ test_that("the environment key wins and off disables the tier", {
   expect_equal(.bl_hosted_key(), "env-key")
   Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
   expect_null(.bl_hosted_base())
-  expect_error(bricklayer_llm_ask("hi"), "disabled")
+  expect_error(bricklayer_llm_ask("hi"), "hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)", fixed = TRUE)
   Sys.setenv(MORIE_HOSTED_BASE_URL = "https://gw.example/")
   expect_equal(.bl_hosted_base(), "https://gw.example")
 })
@@ -142,10 +144,11 @@ test_that("agent_bundle() uses the hosted route when a key is stored", {
 test_that("bricklayer_llm_status() names the hosted route", {
   .sandbox()
   st <- bricklayer_llm_status()
-  expect_equal(st$route, "hosted MORIE tier")
-  expect_equal(st$status, "not logged in")
+  expect_equal(st$route, c("own endpoint", "local Ollama", "hosted MORIE tier"))
+  expect_equal(st$status[3], "not logged in")
+  expect_match(st$detail[3], "request a key at https://rmorie.com/access")
   suppressMessages(bricklayer_llm_login(token = "sk-abc"))
-  expect_equal(bricklayer_llm_status()$status[1], "key stored")
+  expect_equal(bricklayer_llm_status()$status[3], "key stored")
 })
 
 test_that("the command line dispatches its verbs", {
@@ -560,8 +563,8 @@ test_that("the status says when the tier is off, and an explicit model reaches t
   .sandbox()
   withr::local_envvar(MORIE_HOSTED_BASE_URL = "off")
   st <- bricklayer_llm_status()
-  expect_identical(st$status[1], "disabled")
-  expect_identical(st$detail[1], "MORIE_HOSTED_BASE_URL=off")
+  expect_identical(st$status[3], "disabled")
+  expect_identical(st$detail[3], "MORIE_HOSTED_BASE_URL=off")
 
   withr::local_envvar(MORIE_HOSTED_BASE_URL = "https://gw.example", MORIE_HOSTED_KEY = "sk-test")
   seen <- NULL

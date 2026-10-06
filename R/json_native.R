@@ -501,7 +501,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @noRd
 .rmbl_json_as_num <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
-    message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
+    if (!isTRUE(o$quiet_vec_names)) message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
     o$always_decimal <- FALSE
     return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
@@ -515,7 +515,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @noRd
 .rmbl_json_as_chr <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
-    message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
+    if (!isTRUE(o$quiet_vec_names)) message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
     return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
   tmp <- .rmbl_json_esc(as.character(x))
@@ -530,7 +530,7 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @noRd
 .rmbl_json_as_lgl <- function(x, o, collapse, na, auto_unbox, indent, keep_vec_names) {
   if (isTRUE(keep_vec_names) && length(names(x))) {
-    message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
+    if (!isTRUE(o$quiet_vec_names)) message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
     return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
   na <- if (is.null(na)) "null" else match.arg(na, c("null", "string", "NA"))
@@ -715,7 +715,8 @@ bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"
             json_verbatim = isTRUE(dots$json_verbatim), always_decimal = isTRUE(dots$always_decimal),
             time_format = dots$time_format, UTC = isTRUE(dots$UTC), no_dots = isTRUE(dots$no_dots),
             hms = if (is.null(dots$hms)) "string" else match.arg(dots$hms, c("string", "secs")),
-            keep_empty_names = isTRUE(dots$keep_empty_names), depth = 0L)
+            keep_empty_names = isTRUE(dots$keep_empty_names),
+            quiet_vec_names = isTRUE(dots$quiet_vec_names), depth = 0L)
   na <- if (!missing(na)) match.arg(na) else NULL
   ans <- .rmbl_json_as(x, o, na = na, oldna = NULL, auto_unbox = o$auto_unbox, indent = o$indent)
   class(ans) <- "json"
@@ -1204,7 +1205,9 @@ bricklayer_json_unbox <- function(x) {
 
 #' Parse JSON into R objects (jsonlite's fromJSON, natively)
 #'
-#' @param txt JSON text, a file path, or an http(s) URL.
+#' @param txt JSON text, a file path, or an http(s) URL. A URL goes through
+#' the same check and the same transport as every other fetch in the
+#' package (public https host, redirects re-checked, body capped).
 #' @param simplifyVector,simplifyDataFrame,simplifyMatrix,flatten as in jsonlite.
 #' @param duplicate_keys What to do with an object that repeats a key:
 #' `"error"` (default) refuses the document, `"keep"` returns both
@@ -1235,7 +1238,16 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
   if (is.character(txt) && length(txt) == 1L && nchar(txt, type = "bytes") < 2084 &&
       !bricklayer_json_validate(txt)) {
     if (grepl("^https?://", txt, useBytes = TRUE)) {
-      txt <- base::url(txt, headers = c(Accept = "application/json, text/*, */*"))
+      # the same gate and the same transport as every other fetch: base R's
+      # url() connected to 127.0.0.1 when asked (0.5.7 review)
+      txt <- .rmbl_check_public_url(txt, "txt")
+      tmp <- tempfile(fileext = ".json")
+      on.exit(unlink(tmp), add = TRUE)
+      res <- .Call(C_rmbl_http_download, txt, tmp, 60L,
+                   "Accept: application/json, text/*, */*", NULL)
+      if (res$status < 0) stop(sprintf("%s: %s", txt, res$error), call. = FALSE)
+      if (res$status >= 400) stop(sprintf("%s answered HTTP %d", txt, res$status), call. = FALSE)
+      txt <- file(tmp)
     } else if (file.exists(txt)) {
       txt <- file(txt)
     }

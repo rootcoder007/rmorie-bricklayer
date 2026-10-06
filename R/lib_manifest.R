@@ -256,10 +256,14 @@ manifest_canonical <- function(manifest) {
   if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
   # keep_empty_names: an empty-string key is written as "", not renamed to
   # its position, so two documents differing only there do not share a digest
+  # keep_vec_names: a named atomic vector is an object too ({"a":1} is not
+  # [1]); the names attribute, present or absent, is what tells an object
+  # from an array at every level, so the encoding is one-to-one
   bricklayer_json_to_json(.rmbl_sort_keys(manifest),
     auto_unbox = TRUE,
     pretty = FALSE, na = "null", null = "null",
-    digits = I(17), keep_empty_names = TRUE
+    digits = I(17), keep_empty_names = TRUE, keep_vec_names = TRUE,
+    quiet_vec_names = TRUE
   )
 }
 
@@ -295,9 +299,11 @@ manifest_digest <- function(manifest) {
   }
   # A list with a names attribute is a JSON object, and an empty string is
   # a legal key that sorts first: {"":"X"} and {"1":"X"} are different
-  # documents (the encoder writes "" as "", see manifest_canonical()). A
-  # level with no non-empty name at all is an array and keeps its order.
-  if (!any(nzchar(nm))) return(unname(x))
+  # documents (the encoder writes "" as "", see manifest_canonical()). That
+  # holds when EVERY name is empty too: {"":"X"} is not ["X"], and 0.5.7's
+  # "all names empty is an array" rule made one attestation verify both.
+  # The parser sets the names attribute on objects and never on arrays, so
+  # its presence is the distinction, not the names' contents.
   x[order(nm, method = "radix")]
 }
 
