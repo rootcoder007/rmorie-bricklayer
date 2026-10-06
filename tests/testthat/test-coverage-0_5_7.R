@@ -249,18 +249,15 @@ test_that("decimal conversion: the specials, the subnormal edge, a carried round
                                      "2.4703282292062328e-324", paste0("1", strrep("0", 800)),
                                      "1.9999999999999999999", strrep("9", 800), " +0.1e1"))
   expect_identical(got, c(Inf, -Inf, NaN, NaN, 0, 2^-1074, 2^-1074, Inf, 2, Inf, 1))
-  # The double just below 1e-243 reads 9.99999999999999961e-244 in full,
-  # yet its seventeen significant digits round to 1.0000000000000000e-243:
-  # the carry has to move into the exponent. R's own reader is not
-  # correctly rounded on every platform (macOS parsed "1e-243" to the
-  # neighbour below), so the value is picked by the C library's printf
-  # from the doubles around it rather than taken from as.numeric().
-  cands <- 1e-243 * (1 + (-3:3) * 2^-53)
-  carry <- cands[grepl("^1\\.0000000000000000e", sprintf("%.16e", cands)) &
-                   grepl("^9\\.9999", sprintf("%.30e", cands))]
-  expect_gte(length(carry), 1L)
-  expect_identical(.Call(C("C_rmbl_dtoa17"), carry[1]), sprintf("%.17g", carry[1]))
-  expect_identical(sprintf("%.17g", carry[1]), "1e-243")
+  # The nearest double to 1e-243 lies just below the power of ten: its
+  # seventeen significant digits round up to 1.0000000000000000e-243, so
+  # the carry has to move into the exponent. Both halves are this
+  # package's own correctly rounded code, so the check leans neither on
+  # R's reader (macOS parsed "1e-243" to the neighbour below) nor on the
+  # platform's printf (Windows arm64 does not print thirty exact digits).
+  v <- .Call(C("C_rmbl_strtod"), "1e-243")
+  expect_identical(.Call(C("C_rmbl_dtoa17"), v), "1e-243")
+  expect_identical(.Call(C("C_rmbl_strtod"), .Call(C("C_rmbl_dtoa17"), v)), v)
 })
 
 test_that("http entry points check their arguments before touching the network", {
