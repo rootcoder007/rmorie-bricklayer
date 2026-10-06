@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.5.6
+Version: 0.5.7
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -84,7 +84,6 @@ URL: https://github.com/rootcoder007/rmorie-bricklayer,
     https://rootcoder007.github.io/rmorie-bricklayer/
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3
-Config/roxygen2/version: 8.0.0
-RoxygenNote: 7.3.3
 SystemRequirements: C++17, libcurl (deb: libcurl4-openssl-dev, rpm:
     libcurl-devel, brew: curl).
+Config/roxygen2/version: 8.0.0

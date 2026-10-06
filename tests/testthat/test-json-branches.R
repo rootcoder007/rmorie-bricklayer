@@ -96,7 +96,9 @@ test_that("base64 edge cases", {
   expect_identical(bricklayer_json_base64_enc(raw(0)), "")
   expect_identical(bricklayer_json_base64_dec(""), raw(0))
   expect_identical(bricklayer_json_base64_dec(charToRaw("aGk=")), charToRaw("hi"))
-  expect_identical(bricklayer_json_base64_dec("@@@@"), raw(0)) # non-alphabet bytes are skipped, as jsonlite does
+  # a deliberate divergence from jsonlite, which skips foreign bytes: a corrupt
+  # body must not decode to a shorter valid-looking one
+  expect_error(bricklayer_json_base64_dec("@@@@"), "alphabet")
   expect_identical(bricklayer_json_base64url_enc(as.raw(c(251, 255))), "-_8")
   expect_identical(bricklayer_json_base64url_dec("-_8"), as.raw(c(251, 255)))
   expect_identical(bricklayer_json_base64url_dec("aGk"), charToRaw("hi"))
@@ -108,7 +110,10 @@ test_that("parser rejects what yajl rejects, with a position", {
     "\"abc", "\"a\\qb\"", "\"a\\u12G4\"", "\"a\\u0000\"", "\"tab\tin\"", "tru", "nul", "[1]x", "", "   "
   )
   for (b in bad) expect_error(bricklayer_json_from_json(b, simplifyVector = FALSE), "at character|end of input", label = b)
-  expect_warning(v <- bricklayer_json_from_json("\ufeff[1]"), "byte-order-mark")
+  # the literal lives in a variable: deparsing U+FEFF into a test label is
+  # itself a translation warning in a C locale
+  bom_txt <- paste0(rawToChar(as.raw(c(0xef, 0xbb, 0xbf))), "[1]")
+  expect_warning(v <- bricklayer_json_from_json(bom_txt), "byte-order-mark")
   expect_identical(v, 1L)
   expect_identical(bricklayer_json_from_json("\x1e[1]"), 1L)
   expect_identical(bricklayer_json_from_json("\"\\ud83d\\ude00\""), "\U0001F600")

@@ -225,7 +225,7 @@ int selftest(int trials, const uint8_t *seed) {
 
 extern "C" {
 
-SEXP C_rmbl_hqc_sizes(SEXP level) {
+SEXP C_rmbl_hqc_sizes_impl(SEXP level) {
     switch (hqc_level(level)) {
     case 1: return sizes<HQC1>();
     case 3: return sizes<HQC3>();
@@ -233,7 +233,7 @@ SEXP C_rmbl_hqc_sizes(SEXP level) {
     }
 }
 
-SEXP C_rmbl_hqc_keygen(SEXP level, SEXP seed) {
+SEXP C_rmbl_hqc_keygen_impl(SEXP level, SEXP seed) {
     switch (hqc_level(level)) {
     case 1: return keygen<HQC1>(seed);
     case 3: return keygen<HQC3>(seed);
@@ -241,7 +241,7 @@ SEXP C_rmbl_hqc_keygen(SEXP level, SEXP seed) {
     }
 }
 
-SEXP C_rmbl_hqc_encaps(SEXP level, SEXP ek, SEXP m, SEXP salt) {
+SEXP C_rmbl_hqc_encaps_impl(SEXP level, SEXP ek, SEXP m, SEXP salt) {
     switch (hqc_level(level)) {
     case 1: return encaps<HQC1>(ek, m, salt);
     case 3: return encaps<HQC3>(ek, m, salt);
@@ -249,7 +249,7 @@ SEXP C_rmbl_hqc_encaps(SEXP level, SEXP ek, SEXP m, SEXP salt) {
     }
 }
 
-SEXP C_rmbl_hqc_decaps(SEXP level, SEXP dk, SEXP ct) {
+SEXP C_rmbl_hqc_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     switch (hqc_level(level)) {
     case 1: return decaps<HQC1>(dk, ct);
     case 3: return decaps<HQC3>(dk, ct);
@@ -257,7 +257,7 @@ SEXP C_rmbl_hqc_decaps(SEXP level, SEXP dk, SEXP ct) {
     }
 }
 
-SEXP C_rmbl_hqc4_sizes(SEXP level) {
+SEXP C_rmbl_hqc4_sizes_impl(SEXP level) {
     switch (hqc_level(level)) {
     case 1: return sizes4<HQC1>();
     case 3: return sizes4<HQC3>();
@@ -265,7 +265,7 @@ SEXP C_rmbl_hqc4_sizes(SEXP level) {
     }
 }
 
-SEXP C_rmbl_hqc4_keygen(SEXP level, SEXP rnd) {
+SEXP C_rmbl_hqc4_keygen_impl(SEXP level, SEXP rnd) {
     switch (hqc_level(level)) {
     case 1: return keygen4<HQC1>(rnd);
     case 3: return keygen4<HQC3>(rnd);
@@ -273,7 +273,7 @@ SEXP C_rmbl_hqc4_keygen(SEXP level, SEXP rnd) {
     }
 }
 
-SEXP C_rmbl_hqc4_encaps(SEXP level, SEXP ek, SEXP m, SEXP salt) {
+SEXP C_rmbl_hqc4_encaps_impl(SEXP level, SEXP ek, SEXP m, SEXP salt) {
     switch (hqc_level(level)) {
     case 1: return encaps4<HQC1>(ek, m, salt);
     case 3: return encaps4<HQC3>(ek, m, salt);
@@ -281,7 +281,7 @@ SEXP C_rmbl_hqc4_encaps(SEXP level, SEXP ek, SEXP m, SEXP salt) {
     }
 }
 
-SEXP C_rmbl_hqc4_decaps(SEXP level, SEXP dk, SEXP ct) {
+SEXP C_rmbl_hqc4_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     switch (hqc_level(level)) {
     case 1: return decaps4<HQC1>(dk, ct);
     case 3: return decaps4<HQC3>(dk, ct);
@@ -291,7 +291,7 @@ SEXP C_rmbl_hqc4_decaps(SEXP level, SEXP dk, SEXP ct) {
 
 /* which multiplier runs: "pclmul" (x86-64), "pmull" (ARMv8 crypto) or
  * "portable"; `portable = TRUE` forces the portable one (tests compare) */
-SEXP C_rmbl_hqc_backend(SEXP portable) {
+SEXP C_rmbl_hqc_backend_impl(SEXP portable) {
     if (TYPEOF(portable) == LGLSXP && XLENGTH(portable) == 1 && LOGICAL(portable)[0] != NA_LOGICAL) {
         rmbl_hqc::gf2x::force_portable() = LOGICAL(portable)[0] ? 1 : 0;
     }
@@ -307,7 +307,7 @@ SEXP C_rmbl_hqc_backend(SEXP portable) {
     return Rf_mkString(name);
 }
 
-SEXP C_rmbl_hqc_selftest(SEXP level, SEXP trials, SEXP seed) {
+SEXP C_rmbl_hqc_selftest_impl(SEXP level, SEXP trials, SEXP seed) {
     need_raw(seed, 32, "seed");
     int n = Rf_asInteger(trials);
     if (n == NA_INTEGER || n < 0) Rf_error("`trials` must be a non-negative integer");

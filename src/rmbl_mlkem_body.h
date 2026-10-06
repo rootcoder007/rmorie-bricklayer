@@ -58,6 +58,13 @@ inline int16_t decompress(uint16_t x, int d) {
         ((static_cast<uint32_t>(x) * kQ) + (1u << (d - 1))) >> d);
 }
 
+/* Constant-time testing hook (inst/ctcheck): a value the specification
+ * publishes anyway -- the matrix seed rho, which is part of the encapsulation key -- is declared public to the checker here,
+ * so the branch that follows is not reported. A no-op in the package. */
+#ifndef RMBL_MLKEM_DECLASSIFY
+#define RMBL_MLKEM_DECLASSIFY(ptr, len) ((void)0)
+#endif
+
 /* ByteEncode_d / ByteDecode_d, for the widths ML-KEM uses. Written as a
  * bit cursor rather than per-width shifts: the widths are 1, 4, 5, 10,
  * 11 and 12 across the parameter sets, and six hand-unrolled pairs is
@@ -70,13 +77,12 @@ inline void byte_encode(unsigned char *out, const int16_t *a, int d,
         uint32_t v = canonical
             ? static_cast<uint32_t>(to_positive(barrett_reduce(a[i])))
             : static_cast<uint32_t>(a[i]) & ((1u << d) - 1u);
+        /* every bit is written, set or clear: a branch here would make
+         * the packing time of the secret key depend on its bits */
         for (int b = 0; b < d; ++b) {
-            if ((v >> b) & 1u) {
-                out[(bit + static_cast<size_t>(b)) >> 3] =
-                    static_cast<unsigned char>(
-                        out[(bit + static_cast<size_t>(b)) >> 3] |
-                        (1u << ((bit + static_cast<size_t>(b)) & 7u)));
-            }
+            const size_t p = bit + static_cast<size_t>(b);
+            out[p >> 3] = static_cast<unsigned char>(
+                out[p >> 3] | (((v >> b) & 1u) << (p & 7u)));
         }
         bit += static_cast<size_t>(d);
     }
@@ -152,9 +158,11 @@ inline void sample_cbd(int16_t a[256], const unsigned char *buf, int eta) {
 inline void prf_cbd(int16_t a[256], const unsigned char sigma[32],
                     unsigned char nonce, int eta) {
     unsigned char seed[33];
+    rmbl_ct::Guard gs(seed, sizeof seed);
     std::memcpy(seed, sigma, 32);
     seed[32] = nonce;
     std::vector<unsigned char> buf(static_cast<size_t>(64) * eta);
+    rmbl_ct::Guard gb(buf.data(), buf.size());
     rmbl_shake256(buf.data(), buf.size(), seed, 33);
     sample_cbd(a, buf.data(), eta);
 }
@@ -242,13 +250,16 @@ void pke_keygen(unsigned char *ek, unsigned char *dk,
     /* FIPS 203 appends k to d before hashing: without it the same seed
      * would give related keys at two different parameter sets. */
     unsigned char din[33];
+    rmbl_ct::Guard gg(g, sizeof g), gd(din, sizeof din);
     std::memcpy(din, d, 32);
     din[32] = static_cast<unsigned char>(kK);
     rmbl_sha3_512(g, din, 33);
+    RMBL_MLKEM_DECLASSIFY(g, 32); /* rho is published in ek */
     const unsigned char *rho = g;
     const unsigned char *sigma = g + 32;
 
     PolyVec mat[kK], s, e, t;
+    rmbl_ct::Guard gs(&s, sizeof s), ge(&e, sizeof e);
     matrix_expand(mat, rho, false);
     unsigned char nonce = 0;
     for (int i = 0; i < kK; ++i) prf_cbd(s.v[i], sigma, nonce++, kEta1);
@@ -284,6 +295,8 @@ int pke_encrypt(unsigned char *ct, const unsigned char *ek,
                 const unsigned char msg[32], const unsigned char coins[32]) {
     PolyVec mat[kK], t, r, e1, u;
     int16_t v[256], mp[256], e2[256];
+    rmbl_ct::Guard gr(&r, sizeof r), ge1(&e1, sizeof e1), ge2(e2, sizeof e2),
+        gmp(mp, sizeof mp), gv(v, sizeof v);
     for (int i = 0; i < kK; ++i) {
         byte_decode(t.v[i], ek + i * kPolyBytes, 12);
         for (int j = 0; j < 256; ++j) {
@@ -333,6 +346,7 @@ void pke_decrypt(unsigned char msg[32], const unsigned char *dk,
                  const unsigned char *ct) {
     PolyVec u, s;
     int16_t v[256], w[256];
+    rmbl_ct::Guard gs(&s, sizeof s), gw(w, sizeof w);
     for (int i = 0; i < kK; ++i) {
         int16_t c[256];
         byte_decode(c, ct + i * kPolyCompressedU, kDu);
@@ -377,6 +391,7 @@ void keygen(unsigned char *ek, unsigned char *dk,
 int encaps(unsigned char *ct, unsigned char shared[32],
            const unsigned char *ek, const unsigned char m[32]) {
     unsigned char g_in[64], g[64];
+    rmbl_ct::Guard gi(g_in, sizeof g_in), gg(g, sizeof g);
     std::memcpy(g_in, m, 32);
     rmbl_sha3_256(g_in + 32, ek, static_cast<size_t>(kEkBytes));
     rmbl_sha3_512(g, g_in, 64);
@@ -390,7 +405,12 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     const unsigned char *ek = dk + kDkPkeBytes;
     const unsigned char *h = dk + kDkPkeBytes + kEkBytes;
     const unsigned char *z = h + 32;
+    /* the decapsulation key carries the encapsulation key and its hash:
+     * both are the public key, so the modulus check re-encryption runs on
+     * them is not a branch on a secret */
+    RMBL_MLKEM_DECLASSIFY(const_cast<unsigned char *>(ek), static_cast<size_t>(kEkBytes) + 32);
     unsigned char mp[32], g_in[64], g[64], kbar[32];
+    rmbl_ct::Guard gm(mp, sizeof mp), gi(g_in, sizeof g_in), gg(g, sizeof g), gk(kbar, sizeof kbar);
     std::vector<unsigned char> ct2(static_cast<size_t>(kCtBytes));
 
     pke_decrypt(mp, dk, ct);
@@ -401,6 +421,7 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     /* K-bar = J(z || c): the shared secret returned when the ciphertext
      * does not re-encrypt to itself. */
     std::vector<unsigned char> jin(32 + static_cast<size_t>(kCtBytes));
+    rmbl_ct::Guard gj(jin.data(), 32); /* z, the implicit-rejection secret */
     std::memcpy(jin.data(), z, 32);
     std::memcpy(jin.data() + 32, ct, static_cast<size_t>(kCtBytes));
     rmbl_shake256(kbar, 32, jin.data(), jin.size());
@@ -420,7 +441,9 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     nz |= nz >> 4;
     nz |= nz >> 2;
     nz |= nz >> 1;
-    const unsigned char mask = static_cast<unsigned char>(-(nz & 1u));
+    /* clang saw that the mask is 0 or 0xff and turned the select back into
+     * a branch on the secret; an opaque copy stops that reasoning */
+    const unsigned char mask = static_cast<unsigned char>(rmbl_ct::barrier(-(nz & 1u)));
     for (int i = 0; i < 32; ++i) {
         shared[i] = static_cast<unsigned char>(
             (g[i] & ~mask) | (kbar[i] & mask));

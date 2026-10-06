@@ -27,6 +27,7 @@
  */
 
 #include "rmbl_slhdsa_core.h"
+#include "rmbl_entry.h"
 #include "rmbl_prehash.h"
 
 #define SLH_NS rmbl_slhdsa_shake_128s
@@ -317,10 +318,10 @@ static const char *slhdsa_set(SEXP set) {
     if (TYPEOF(set) != STRSXP || XLENGTH(set) != 1) {
         Rf_error("`set` must be a single parameter set name");
     }
-    return CHAR(STRING_ELT(set, 0));
+    return rmbl_str0(set, "set");
 }
 
-SEXP C_rmbl_slhdsa_sizes(SEXP set) {
+SEXP C_rmbl_slhdsa_sizes_impl(SEXP set) {
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         SEXP out = PROTECT(Rf_allocVector(INTSXP, 4));
         INTEGER(out)[0] = S::kPkBytes;
@@ -338,7 +339,7 @@ SEXP C_rmbl_slhdsa_sizes(SEXP set) {
     });
 }
 
-SEXP C_rmbl_slhdsa_keypair(SEXP set, SEXP seed) {
+SEXP C_rmbl_slhdsa_keypair_impl(SEXP set, SEXP seed) {
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         if (TYPEOF(seed) != RAWSXP || XLENGTH(seed) != 3 * S::kN) {
             Rf_error("`seed` must be a raw vector of %d bytes", 3 * S::kN);
@@ -358,7 +359,7 @@ SEXP C_rmbl_slhdsa_keypair(SEXP set, SEXP seed) {
     });
 }
 
-SEXP C_rmbl_slhdsa_sign(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
+SEXP C_rmbl_slhdsa_sign_impl(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
                         SEXP opt_rand, SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
@@ -389,7 +390,7 @@ SEXP C_rmbl_slhdsa_sign(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
     });
 }
 
-SEXP C_rmbl_slhdsa_verify(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
+SEXP C_rmbl_slhdsa_verify_impl(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
                           SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {

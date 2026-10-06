@@ -26,16 +26,11 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
 
 /* The first element of a character argument, or an error in words: every
  * STRING_ELT(x, 0) below went through this once a length-0 or NA input
  * reached a .Call directly (the R wrappers guard; the entry points did not). */
-static const char *rmbl_str0(SEXP x, const char *name) {
-    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
-        Rf_error("`%s` must be a non-missing string", name);
-    }
-    return CHAR(STRING_ELT(x, 0));
-}
 
 namespace {
 
@@ -291,23 +286,24 @@ void rmbl_sha3_512(unsigned char out[64], const unsigned char *in,
 
 /* R entry points, for testing the primitive directly against the
  * published vectors. */
-SEXP C_rmbl_shake(SEXP which, SEXP x, SEXP outlen) {
+SEXP C_rmbl_shake_impl(SEXP which, SEXP x, SEXP outlen) {
     const int w = Rf_asInteger(which);
-    const R_xlen_t n = Rf_asInteger(outlen);
-    if (n < 0) Rf_error("`outlen` must be non-negative");
+    const int nl = Rf_asInteger(outlen);
+    if (nl == NA_INTEGER || nl < 0) Rf_error("`outlen` must be non-negative");
+    /* 16 MiB is far beyond any digest or seed expansion; a 2 GB request
+     * was one allocation away from std::terminate() */
+    if (nl > (1 << 24)) Rf_error("`outlen` above 16 MiB is refused");
+    const R_xlen_t n = nl;
     /* every Rf_error() before the std::vectors below exist */
     if (w != 128 && w != 256 && w != 3256 && w != 3512) {
         Rf_error("unknown function selector");
     }
+    SEXP sx = PROTECT(TYPEOF(x) == RAWSXP ? x : Rf_coerceVector(x, STRSXP));
+    const char *sxs = TYPEOF(sx) == RAWSXP ? NULL : rmbl_str0(sx, "x");
     std::vector<unsigned char> in;
-    if (TYPEOF(x) == RAWSXP) {
-        in.assign(RAW(x), RAW(x) + XLENGTH(x));
-    } else {
-        SEXP sx = PROTECT(Rf_coerceVector(x, STRSXP));
-        const char *s = rmbl_str0(sx, "x");
-        in.assign(s, s + std::strlen(s));
-        UNPROTECT(1);
-    }
+    if (TYPEOF(sx) == RAWSXP) in.assign(RAW(sx), RAW(sx) + XLENGTH(sx));
+    else in.assign(sxs, sxs + std::strlen(sxs));
+    UNPROTECT(1);
     std::vector<unsigned char> out(static_cast<size_t>(n));
     if (w == 128) {
         rmbl_shake128(out.data(), out.size(), in.data(), in.size());

@@ -88,7 +88,8 @@ test_that("the chi-square drift statistic matches stats::chisq.test", {
   expect_equal(got[["statistic"]], as.numeric(want$statistic))
   expect_equal(got[["df"]], as.numeric(want$parameter))
   expect_equal(got[["p_value"]], want$p.value)
-  expect_named(got, c("statistic", "df", "p_value"))
+  expect_named(got, c("statistic", "df", "p_value", "log_p_value"))
+  expect_equal(exp(got[["log_p_value"]]), got[["p_value"]])
 
   # counts in the reference proportions have nothing to explain
   expect_equal(drift_chisq(c(a = 100, b = 60, c = 40), ref)[["statistic"]], 0)

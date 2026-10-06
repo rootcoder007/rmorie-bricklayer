@@ -135,7 +135,7 @@ void rmbl_moments_acc(const double *x, R_xlen_t n, double *out) {
     out[4] = M4;
 }
 
-SEXP C_rmbl_moments_acc(SEXP x) {
+SEXP C_rmbl_moments_acc_impl(SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     SEXP out = PROTECT(Rf_allocVector(REALSXP, 5));
     rmbl_moments_acc(REAL(x), XLENGTH(x), REAL(out));
@@ -143,7 +143,7 @@ SEXP C_rmbl_moments_acc(SEXP x) {
     return out;
 }
 
-SEXP C_rmbl_moments_merge(SEXP a, SEXP b) {
+SEXP C_rmbl_moments_merge_impl(SEXP a, SEXP b) {
     a = PROTECT(Rf_coerceVector(a, REALSXP));
     b = PROTECT(Rf_coerceVector(b, REALSXP));
     if (XLENGTH(a) != 5 || XLENGTH(b) != 5) {
@@ -159,12 +159,13 @@ SEXP C_rmbl_moments_merge(SEXP a, SEXP b) {
 /* Vitter's Algorithm R. Fills the reservoir with the first k items,
  * then replaces item j (0-based, j >= k) with probability k/(j+1).
  * Returns the 1-based indices of the retained items. */
-SEXP C_rmbl_reservoir(SEXP n_total, SEXP k, SEXP seed) {
-    const double nd = Rf_asReal(n_total);
+SEXP C_rmbl_reservoir_impl(SEXP n_total, SEXP k, SEXP seed) {
+    const double nd = Rf_asReal(n_total), kd = Rf_asReal(k);
+    if (!R_FINITE(nd) || nd < 0 || nd > 9007199254740992.0) Rf_error("`n` must be a non-negative count");
+    if (!R_FINITE(kd) || kd < 0) Rf_error("`k` must be a non-negative count");
+    if (kd > 100000000.0) Rf_error("`k` above 1e8 would need more memory than a sample should");
     const R_xlen_t n = static_cast<R_xlen_t>(nd);
-    R_xlen_t kk = static_cast<R_xlen_t>(Rf_asReal(k));
-    if (n < 0) Rf_error("`n` must be non-negative");
-    if (kk < 0) Rf_error("`k` must be non-negative");
+    R_xlen_t kk = static_cast<R_xlen_t>(kd);
     if (kk > n) kk = n;
 
     std::mt19937_64 rng(static_cast<unsigned long long>(Rf_asReal(seed)));
@@ -187,7 +188,7 @@ SEXP C_rmbl_reservoir(SEXP n_total, SEXP k, SEXP seed) {
 /* HyperLogLog registers for a character vector. `p` is the log2 of the
  * register count; the registers are returned so several chunks can be
  * merged by taking the element-wise maximum. */
-SEXP C_rmbl_hll_add(SEXP x, SEXP p_bits, SEXP regs_in) {
+SEXP C_rmbl_hll_add_impl(SEXP x, SEXP p_bits, SEXP regs_in) {
     x = PROTECT(Rf_coerceVector(x, STRSXP));
     const int p = Rf_asInteger(p_bits);
     if (p < 4 || p > 20) {
@@ -231,7 +232,7 @@ SEXP C_rmbl_hll_add(SEXP x, SEXP p_bits, SEXP regs_in) {
 
 /* Cardinality estimate from the registers, with linear counting in the
  * small range where the raw estimator is badly biased. */
-SEXP C_rmbl_hll_count(SEXP regs) {
+SEXP C_rmbl_hll_count_impl(SEXP regs) {
     regs = PROTECT(Rf_coerceVector(regs, INTSXP));
     const std::size_t m = static_cast<std::size_t>(XLENGTH(regs));
     if (m == 0) {

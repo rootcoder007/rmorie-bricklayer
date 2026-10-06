@@ -24,7 +24,11 @@ else
 fi
 
 if [ -z "$R_HOME" ]; then
-  R_HOME=`R RHOME`
+  R_HOME=`R RHOME 2>/dev/null`
+fi
+if [ -z "$R_HOME" ] || [ ! -x "${R_HOME}/bin/R" ]; then
+  echo "configure: R_HOME is not set and no R is on the PATH; run this through R CMD INSTALL" >&2
+  exit 1
 fi
 CC=`"${R_HOME}/bin/R" CMD config CC`
 CFLAGS=`"${R_HOME}/bin/R" CMD config CFLAGS`
@@ -49,6 +53,10 @@ if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest >/dev/
 fi
 rm -f conftest.c conftest
 
-sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|" -e "s|@CURL_LIBS@|$CURL_LIBS|" \
-    src/Makevars.in > src/Makevars
+if ! sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|" -e "s|@CURL_LIBS@|$CURL_LIBS|" \
+    src/Makevars.in > src/Makevars; then
+  echo "configure: could not write src/Makevars" >&2
+  rm -f src/Makevars
+  exit 1
+fi
 exit 0

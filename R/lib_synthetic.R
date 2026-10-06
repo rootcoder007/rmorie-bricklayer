@@ -280,6 +280,7 @@ make_synthetic_csv <- function(schema, out_path,
   } else {
     NA_character_
   }
+  .rmbl_synth_state$made <- TRUE
   sidecar <- paste0(out_path, ".synthetic")
   jstr <- function(x) paste0("\"", gsub("\"", "\\\\\"", as.character(x)), "\"")
   writeLines(c(

@@ -569,7 +569,7 @@ extern "C" {
  * asking the platform. NA_character_ and unparseable input give
  * NA_real_ rather than an error: this sits in a JSON parser, which
  * reports a bad document its own way. */
-SEXP C_rmbl_strtod(SEXP x) {
+SEXP C_rmbl_strtod_impl(SEXP x) {
     if (TYPEOF(x) != STRSXP) Rf_error("`x` must be a character vector");
     const R_xlen_t n = XLENGTH(x);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
@@ -594,7 +594,7 @@ SEXP C_rmbl_strtod(SEXP x) {
  * asking the platform. Non-finite input gives NA_character_: the JSON
  * writer renders Inf, -Inf, NaN and NA its own way before it gets
  * here. */
-SEXP C_rmbl_dtoa17(SEXP x) {
+SEXP C_rmbl_dtoa17_impl(SEXP x) {
     if (TYPEOF(x) != REALSXP) Rf_error("`x` must be a double vector");
     const R_xlen_t n = XLENGTH(x);
     const double *v = REAL(x);

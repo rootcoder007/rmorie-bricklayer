@@ -157,9 +157,9 @@ test_that("Gini is the mean absolute difference over twice the mean", {
   expect_equal(gini(x), gini(2 * x))
   expect_equal(gini(x), gini(1000 * x))
   expect_equal(gini(5), 0)
-  # a total of zero has no distribution to be unequal about
-  expect_true(is.na(gini(c(0, 0, 0))))
-  expect_true(is.na(gini(numeric(0))))
+  # a total of zero has no distribution to be unequal about: refused, not NA
+  expect_error(gini(c(0, 0, 0)), "every value is zero")
+  expect_error(gini(numeric(0)), "no values")
   expect_equal(gini(c(1, 2, 3, NA)), gini(c(1, 2, 3)))
   expect_error(gini(c(1, -1)), "non-negative")
   expect_error(gini(c("a", "b")), "must be numeric")
@@ -213,7 +213,7 @@ test_that("the top share counts whole units", {
   expect_true(all(diff(m$share) >= -1e-12))
   expect_true(is.na(top_share(x, 1.5)$share))
   expect_true(is.na(top_share(x, -0.1)$share))
-  expect_true(is.na(top_share(numeric(0), 0.1)$share))
+  expect_error(top_share(numeric(0), 0.1), "no values")
 })
 
 test_that("the Hurwitz zeta matches its published values", {
@@ -308,7 +308,7 @@ test_that("the tail index recovers an exponent it was given", {
   # below the minimum there is nothing to estimate from
   expect_true(is.na(hill_tail_index(c(3, 4), x_min = 3)$alpha))
   expect_match(hill_tail_index(c(3, 4), x_min = 3)$method, "too few")
-  expect_true(is.na(hill_tail_index(numeric(0), x_min = 1)$alpha))
+  expect_error(hill_tail_index(numeric(0), x_min = 1), "no positive")
   # and the minimum is settable
   expect_true(is.finite(hill_tail_index(c(3, 4), x_min = 3,
                                         min_tail = 2L)$alpha))

@@ -22,6 +22,11 @@ std::string as_string(SEXP x, const char *what) {
         STRING_ELT(x, 0) == NA_STRING) {
         Rf_error("%s must be a single non-NA character string", what);
     }
+    /* an SIU report page is a few hundred KB; the parsers run regular
+     * expressions over the whole input */
+    if (LENGTH(STRING_ELT(x, 0)) > (16 << 20)) {
+        Rf_error("%s is larger than 16 MiB: not a report page", what);
+    }
     return std::string(CHAR(STRING_ELT(x, 0)));
 }
 
@@ -29,7 +34,7 @@ std::string as_string(SEXP x, const char *what) {
 
 extern "C" {
 
-SEXP C_rmbl_siu_html_to_text(SEXP html) {
+SEXP C_rmbl_siu_html_to_text_impl(SEXP html) {
     const std::string out = siu::html_to_text(as_string(html, "html"));
     SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
     SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
@@ -37,7 +42,7 @@ SEXP C_rmbl_siu_html_to_text(SEXP html) {
     return ans;
 }
 
-SEXP C_rmbl_siu_parse_html(SEXP html) {
+SEXP C_rmbl_siu_parse_html_impl(SEXP html) {
     const siu::ParsedFields fields =
         siu::parse_report_html(as_string(html, "html"));
     const R_xlen_t n = static_cast<R_xlen_t>(fields.size());
@@ -54,15 +59,24 @@ SEXP C_rmbl_siu_parse_html(SEXP html) {
     return ans;
 }
 
-SEXP C_rmbl_siu_to_iso_date(SEXP human) {
-    const std::string out = siu::to_iso_date(as_string(human, "x"));
+SEXP C_rmbl_siu_to_iso_date_impl(SEXP human) {
+    const std::string in = as_string(human, "x");
+    /* a date string is a few dozen bytes; the regex engine is recursive and a
+     * 100,000-character input overflowed the C stack */
+    if (in.size() > 4096) {
+        SEXP ans0 = PROTECT(Rf_allocVector(STRSXP, 1));
+        SET_STRING_ELT(ans0, 0, Rf_mkCharCE("", CE_UTF8));
+        UNPROTECT(1);
+        return ans0;
+    }
+    const std::string out = siu::to_iso_date(in);
     SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
     SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
     UNPROTECT(1);
     return ans;
 }
 
-SEXP C_rmbl_siu_resolve_so(SEXP text) {
+SEXP C_rmbl_siu_resolve_so_impl(SEXP text) {
     const siu::SoResolution res =
         siu::resolve_subject_officials(as_string(text, "text"));
     SEXP ans = PROTECT(Rf_allocVector(VECSXP, 2));
@@ -80,7 +94,7 @@ SEXP C_rmbl_siu_resolve_so(SEXP text) {
     return ans;
 }
 
-SEXP C_rmbl_siu_schema(SEXP unused) {
+SEXP C_rmbl_siu_schema_impl(SEXP unused) {
     (void) unused;
     const auto &fields = siu::schema();
     const R_xlen_t n = static_cast<R_xlen_t>(fields.size());

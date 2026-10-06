@@ -37,7 +37,9 @@ is what makes \code{\link[=capsule_sign]{capsule_sign()}} 's
 \code{"hmac"} scheme meaningful.
 }
 \details{
-\code{core_digest_equal()} compares two digests in constant time. Use it
+\code{core_digest_equal()} compares two digests in constant time (verified
+under valgrind memcheck in CI with both inputs marked secret:
+\code{inst/ctcheck}, case \code{digest-equal}). Use it
 instead of \code{==} whenever the comparison is against a value an
 attacker supplied: a short-circuiting comparison leaks, through its own
 timing, how many leading characters were correct, which is enough to

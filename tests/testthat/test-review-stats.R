@@ -44,22 +44,25 @@ test_that("PSI sees a rescaled constant column and a rescaled zero-heavy tail", 
   expect_lt(drift_psi(ref, ref)[["psi"]], 1e-12)
 })
 
-test_that("drift_homogeneity has power on a high-cardinality column", {
+test_that("a shifted date column drifts, and the homogeneity test says it does not apply", {
   ref <- data.frame(d = as.character(as.Date("2020-01-01") + 1:400))
   cur <- data.frame(d = as.character(as.Date("2024-06-01") + 1:400))
-  set.seed(1)
   cd <- capsule_drift(ref, cur)$columns
-  expect_true(isTRUE(cd$drifted[1]))
-  expect_gt(cd$psi[1], 0.25)
+  # dates written as text are compared as dates
+  expect_identical(cd$type[1], "date")
+  expect_true(cd$drifted[1])
+  expect_lt(cd$p_value[1], 1e-6)
   # the chi-square of homogeneity conditions on the margins and has no
-  # power here (every value occurs once): it is reported as a Monte Carlo
-  # p-value, and the flag comes from the PSI and the unseen-category share
+  # power here (every value occurs once): that is reported as
+  # "inapplicable", not as p = 1
   h <- drift_homogeneity(ref$d, cur$d)
-  expect_match(attr(h, "method"), "Monte Carlo")
-  # half the current values in never-seen categories: still flagged
+  expect_true(is.na(h[["p_value"]]))
+  expect_match(attr(h, "method"), "inapplicable")
+  # half the current rows from a later period: drift, exactly
   half <- data.frame(d = c(ref$d[1:200], cur$d[1:200]))
-  expect_true(isTRUE(capsule_drift(ref, half)$columns$drifted[1]) ||
-                capsule_drift(ref, half)$columns$psi[1] > 0.25)
+  expect_true(capsule_drift(ref, half)$columns$drifted[1])
+  # and the same period twice is not drift
+  expect_false(capsule_drift(ref, ref)$columns$drifted[1])
 })
 
 test_that("morans_i honours the magnitudes of a weight matrix", {

@@ -253,9 +253,8 @@ test_that("Moran's I hits its known extremes on a line of areas", {
   }), n_perm = 999L)
   expect_equal(self$I, g$I)
 
-  # a constant variable has no variation to correlate
-  flat <- morans_i(rep(3, 6), nb, n_perm = 99L)
-  expect_true(is.na(flat$I))
+  # a constant variable has no variation to correlate: said, not NA
+  expect_error(morans_i(rep(3, 6), nb, n_perm = 99L), "constant")
 
   expect_error(morans_i(c(1, 2), nb), "at least three areas")
   expect_error(morans_i(c(1, 2, NA, 4, 5, 6), nb), "missing values")

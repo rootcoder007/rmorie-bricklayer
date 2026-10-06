@@ -94,3 +94,28 @@
   if (dir.exists(path)) stop(sprintf("`%s` is a directory, not a file: %s", what, path), call. = FALSE)
   path
 }
+
+
+# Evaluate `expr` under a fixed RNG seed and hand the caller's stream back
+# untouched: a drift report must not move the user's downstream draws.
+#' @noRd
+.rmbl_with_seed <- function(seed, expr) {
+  had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  old <- if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  on.exit({
+    if (had) assign(".Random.seed", old, envir = globalenv())
+    else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+      rm(".Random.seed", envir = globalenv())
+  }, add = TRUE)
+  set.seed(seed)
+  expr
+}
+
+# Finite, non-negative counts, or an error that names the argument.
+#' @noRd
+.rmbl_check_counts <- function(v, what) {
+  if (any(!is.finite(v)) || any(v < 0)) {
+    stop(sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
+  }
+  invisible(v)
+}

@@ -30,16 +30,12 @@
 #define R_NO_REMAP
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_entry.h"
+#include "rmbl_ct.h"
 
 /* The first element of a character argument, or an error in words: every
  * STRING_ELT(x, 0) below went through this once a length-0 or NA input
  * reached a .Call directly (the R wrappers guard; the entry points did not). */
-static const char *rmbl_str0(SEXP x, const char *name) {
-    if (TYPEOF(x) != STRSXP || XLENGTH(x) < 1 || STRING_ELT(x, 0) == NA_STRING) {
-        Rf_error("`%s` must be a non-missing string", name);
-    }
-    return CHAR(STRING_ELT(x, 0));
-}
 #include <R_ext/Rdynload.h>
 
 #include <cstdint>
@@ -54,13 +50,8 @@ extern "C" void rmbl_sha256_raw(const unsigned char *data, size_t len,
 
 namespace {
 
-const char kHex[] = "0123456789abcdef";
-
 inline void hexlify(const unsigned char *bytes, size_t n, char *out) {
-    for (size_t i = 0; i < n; ++i) {
-        out[i * 2] = kHex[(bytes[i] >> 4) & 0xf];
-        out[i * 2 + 1] = kHex[bytes[i] & 0xf];
-    }
+    rmbl_ct::hexlify(bytes, n, out);
     out[n * 2] = '\0';
 }
 
@@ -377,13 +368,15 @@ uint32_t rmbl_crc32(const unsigned char *data, size_t len) {
 /* HMAC-SHA-256 (RFC 2104): H((K' ^ opad) || H((K' ^ ipad) || msg)),
  * with K' the key hashed down to 32 bytes when longer than the 64-byte
  * block and zero-padded to 64 otherwise. */
-void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
+void rmbl_hmac_sha256_raw(const unsigned char *key, size_t keylen,
                           const unsigned char *msg, size_t msglen,
-                          char out[65]) {
+                          unsigned char out[32]) {
     unsigned char k0[64];
+    rmbl_ct::Guard gk(k0, sizeof k0);
     std::memset(k0, 0, sizeof(k0));
     if (keylen > 64) {
         unsigned char kh[32];
+        rmbl_ct::Guard gkh(kh, sizeof kh);
         rmbl_sha256_raw(key, keylen, kh);
         std::memcpy(k0, kh, 32);
     } else if (keylen > 0) {
@@ -393,16 +386,25 @@ void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
     }
 
     std::vector<unsigned char> inner(64 + msglen);
+    rmbl_ct::Guard gi(inner.data(), inner.size());
     for (int i = 0; i < 64; ++i) inner[static_cast<size_t>(i)] = k0[i] ^ 0x36;
     if (msglen > 0) std::memcpy(inner.data() + 64, msg, msglen);
     unsigned char ih[32];
+    rmbl_ct::Guard gih(ih, sizeof ih);
     rmbl_sha256_raw(inner.data(), inner.size(), ih);
 
     unsigned char outer[64 + 32];
+    rmbl_ct::Guard go(outer, sizeof outer);
     for (int i = 0; i < 64; ++i) outer[i] = k0[i] ^ 0x5c;
     std::memcpy(outer + 64, ih, 32);
+    rmbl_sha256_raw(outer, sizeof(outer), out);
+}
+
+void rmbl_hmac_sha256_hex(const unsigned char *key, size_t keylen,
+                          const unsigned char *msg, size_t msglen,
+                          char out[65]) {
     unsigned char oh[32];
-    rmbl_sha256_raw(outer, sizeof(outer), oh);
+    rmbl_hmac_sha256_raw(key, keylen, msg, msglen, oh);
     hexlify(oh, 32, out);
 }
 
@@ -478,7 +480,7 @@ void check_chunk_list(SEXP x) {
 
 extern "C" {
 
-SEXP C_rmbl_sha512(SEXP x) {
+SEXP C_rmbl_sha512_impl(SEXP x) {
     char out[129];
     if (TYPEOF(x) == RAWSXP) {
         rmbl_sha512_hex(RAW(x), static_cast<size_t>(XLENGTH(x)), out);
@@ -488,7 +490,7 @@ SEXP C_rmbl_sha512(SEXP x) {
     const R_xlen_t n = XLENGTH(x);
     SEXP res = PROTECT(Rf_allocVector(STRSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
-        const char *s = CHAR(STRING_ELT(x, i));
+        const char *s = rmbl_str_at(x, i, "x");
         rmbl_sha512_hex(reinterpret_cast<const unsigned char *>(s),
                         std::strlen(s), out);
         SET_STRING_ELT(res, i, Rf_mkChar(out));
@@ -497,7 +499,7 @@ SEXP C_rmbl_sha512(SEXP x) {
     return res;
 }
 
-SEXP C_rmbl_crc32(SEXP x) {
+SEXP C_rmbl_crc32_impl(SEXP x) {
     if (TYPEOF(x) == RAWSXP) {
         return Rf_ScalarReal(static_cast<double>(
             rmbl_crc32(RAW(x), static_cast<size_t>(XLENGTH(x)))));
@@ -506,7 +508,7 @@ SEXP C_rmbl_crc32(SEXP x) {
     const R_xlen_t n = XLENGTH(x);
     SEXP res = PROTECT(Rf_allocVector(REALSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
-        const char *s = CHAR(STRING_ELT(x, i));
+        const char *s = rmbl_str_at(x, i, "x");
         REAL(res)[i] = static_cast<double>(
             rmbl_crc32(reinterpret_cast<const unsigned char *>(s),
                        std::strlen(s)));
@@ -515,7 +517,10 @@ SEXP C_rmbl_crc32(SEXP x) {
     return res;
 }
 
-SEXP C_rmbl_hmac_sha256(SEXP key, SEXP msg) {
+SEXP C_rmbl_hmac_sha256_impl(SEXP key, SEXP msg) {
+    /* type checks first: an Rf_error() below would longjmp over the vectors */
+    if (TYPEOF(key) != RAWSXP) (void)rmbl_str0(key, "key");
+    if (TYPEOF(msg) != RAWSXP) (void)rmbl_str0(msg, "msg");
     std::vector<unsigned char> kb, mb;
     if (TYPEOF(key) == RAWSXP) {
         kb.assign(RAW(key), RAW(key) + XLENGTH(key));
@@ -538,7 +543,7 @@ SEXP C_rmbl_hmac_sha256(SEXP key, SEXP msg) {
     return Rf_mkString(out);
 }
 
-SEXP C_rmbl_digest_equal(SEXP a, SEXP b) {
+SEXP C_rmbl_digest_equal_impl(SEXP a, SEXP b) {
     a = PROTECT(Rf_coerceVector(a, STRSXP));
     b = PROTECT(Rf_coerceVector(b, STRSXP));
     const char *sa = rmbl_str0(a, "a");
@@ -551,7 +556,7 @@ SEXP C_rmbl_digest_equal(SEXP a, SEXP b) {
     return Rf_ScalarLogical(eq);
 }
 
-SEXP C_rmbl_merkle_root(SEXP x) {
+SEXP C_rmbl_merkle_root_impl(SEXP x) {
     check_chunk_list(x);
     if (XLENGTH(x) < 1) return Rf_ScalarString(NA_STRING);
     std::vector<unsigned char> lvl = leaves_from_chunks(x);
@@ -563,7 +568,7 @@ SEXP C_rmbl_merkle_root(SEXP x) {
 
 /* Leaf hashes, one per chunk -- the level-0 digests the root is built
  * from, so a caller can see WHICH chunk moved. */
-SEXP C_rmbl_merkle_leaves(SEXP x) {
+SEXP C_rmbl_merkle_leaves_impl(SEXP x) {
     check_chunk_list(x);
     const R_xlen_t n = XLENGTH(x);
     std::vector<unsigned char> lvl = leaves_from_chunks(x);
@@ -579,7 +584,7 @@ SEXP C_rmbl_merkle_leaves(SEXP x) {
 
 /* Inclusion proof for leaf `index` (1-based): the sibling digests from
  * the leaf up to the root, with the side each sibling sits on. */
-SEXP C_rmbl_merkle_proof(SEXP x, SEXP index) {
+SEXP C_rmbl_merkle_proof_impl(SEXP x, SEXP index) {
     check_chunk_list(x);
     const R_xlen_t n = XLENGTH(x);
     R_xlen_t pos = static_cast<R_xlen_t>(Rf_asInteger(index)) - 1;

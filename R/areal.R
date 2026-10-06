@@ -391,6 +391,10 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
   if (anyNA(x)) {
     stop("`x` must not contain missing values", call. = FALSE)
   }
+  if (length(unique(x)) < 2L) {
+    stop("`x` is constant: Moran's I is undefined (no variance to autocorrelate)",
+         call. = FALSE)
+  }
   nb <- .rmbl_neighbours(neighbours, n)
   # A weight matrix carries magnitudes (inverse distance, a
   # pre-standardised matrix); they are used as given under style "B" and
@@ -398,10 +402,16 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
   # matrix to which(w != 0) threw the magnitudes away and gave a wrong I
   # with no warning.
   w_in <- attr(nb, "weights")
+  if (!is.null(w_in) && any(unlist(w_in) < 0, na.rm = TRUE)) {
+    # a negative weight is not a spatial weight: under style "W" a row
+    # divided by its (negative) total flips sign, and negating a whole
+    # matrix left I unchanged
+    stop("spatial weights must be non-negative", call. = FALSE)
+  }
   wts <- if (!is.null(w_in)) {
     unlist(lapply(w_in, function(w) {
       if (!length(w)) numeric(0)
-      else if (identical(style, "W")) w / sum(w)
+      else if (identical(style, "W")) (if (sum(w) > 0) w / sum(w) else w * 0)
       else w
     }), use.names = FALSE)
   } else if (identical(style, "W")) {

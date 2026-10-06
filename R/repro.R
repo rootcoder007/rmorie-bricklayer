@@ -218,9 +218,14 @@ manifest_restore_seed <- function(manifest) {
     stop("this manifest carries no recorded generator state; ",
          "manifest_record_seed() adds one", call. = FALSE)
   }
+  # RNGkind() takes up to three names; a record with fewer leaves the
+  # rest of the generator settings as they are (NA is not a valid name)
   kind <- as.character(unlist(rng$kind))
-  if (length(kind) < 3L) kind <- c(kind, rep(NA_character_, 3L))[1:3]
-  suppressWarnings(RNGkind(kind[1], kind[2], kind[3]))
+  kind <- kind[!is.na(kind) & nzchar(kind)]
+  if (!length(kind)) {
+    stop("the recorded generator kind is empty", call. = FALSE)
+  }
+  suppressWarnings(do.call(RNGkind, as.list(kind[seq_len(min(3L, length(kind)))])))
   assign(".Random.seed", as.integer(unlist(rng$state)),
          envir = globalenv())
   invisible(manifest)

@@ -25,6 +25,8 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include <new>
+#include "rmbl_entry.h"
 
 namespace {
 
@@ -82,6 +84,8 @@ bool parse_one(const unsigned char *p, size_t n, size_t &pos, Node &out,
     unsigned long tag = id & 0x1f;
     if (tag == 0x1f) {                      /* high tag number form */
         tag = 0;
+        if (pos >= n) return false;
+        if ((p[pos] & 0x7f) == 0) return false;  /* a leading zero septet: not the shortest form */
         for (;;) {
             if (pos >= n) return false;
             const unsigned char b = p[pos++];
@@ -89,7 +93,11 @@ bool parse_one(const unsigned char *p, size_t n, size_t &pos, Node &out,
             tag = (tag << 7) | (b & 0x7f);
             if ((b & 0x80) == 0) break;
         }
+        if (tag < 0x1f) return false;       /* 0..30 must use the one-byte form */
     }
+    /* DER (X.690 10.1) has no end-of-contents octets, and a universal tag
+     * 0 is exactly that: a BER artefact, never a value */
+    if (out.tag_class == 0 && tag == 0) return false;
     out.tag = tag;
     if (pos >= n) return false;
     size_t len = p[pos++];
@@ -100,6 +108,12 @@ bool parse_one(const unsigned char *p, size_t n, size_t &pos, Node &out,
          * wrapped past every bound check below (a 22-byte file aborted R) */
         if (nbytes >= sizeof(size_t)) return false;
         if (nbytes > n - pos) return false;
+        /* DER demands the shortest length encoding: no leading zero byte,
+         * and the long form only for lengths of 128 and above. A verifier
+         * that accepts both encodings of one length accepts two different
+         * byte strings as the same signature. */
+        if (p[pos] == 0) return false;
+        if (nbytes == 1 && p[pos] < 0x80) return false;
         len = 0;
         for (size_t i = 0; i < nbytes; ++i) {
             len = (len << 8) | p[pos++];
@@ -295,12 +309,14 @@ Big mod(const Big &a, const Big &m) {
     return r;
 }
 
+static unsigned long rmbl_modexp_steps = 0;
 Big modexp(const Big &base, const Big &exp, const Big &m) {
     Big result;
     result.push_back(1);
     Big b = mod(base, m);
     const size_t nb = bit_length(exp);
     for (size_t i = nb; i-- > 0;) {
+        if ((++rmbl_modexp_steps & 63) == 0) rmbl::check_interrupt();
         result = mod(mul(result, result), m);
         if (bit(exp, i)) result = mod(mul(result, b), m);
     }
@@ -316,7 +332,21 @@ extern "C" {
  * caller's, which is the point -- the meaning of a field is a matter of
  * which specification you are reading, and that belongs in R next to
  * the OIDs it turns on. */
-SEXP C_rmbl_der_parse(SEXP x) {
+struct ConvCtx {
+    Node *root;
+    const unsigned char *base;
+};
+SEXP conv_run(void *d) {
+    ConvCtx *c = static_cast<ConvCtx *>(d);
+    return node_to_sexp(*c->root, c->base);
+}
+void conv_cleanup(void *d, Rboolean) {
+    ConvCtx *c = static_cast<ConvCtx *>(d);
+    delete c->root;
+    c->root = NULL;
+}
+
+SEXP C_rmbl_der_parse_impl(SEXP x) {
     if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
     const unsigned char *p = RAW(x);
     const size_t n = static_cast<size_t>(XLENGTH(x));
@@ -330,13 +360,18 @@ SEXP C_rmbl_der_parse(SEXP x) {
     char err[128];
     err[0] = '\0';
     SEXP out = R_NilValue;
+    /* The tree lives on the heap and is converted under R_UnwindProtect:
+     * node_to_sexp() allocates R vectors, and an allocation failure there is
+     * an R longjmp -- the cleanup deletes the tree on that path too, so no
+     * destructor is skipped whichever way the block is left. */
+    Node *root = new (std::nothrow) Node;
+    if (!root) Rf_error("DER parser: out of memory");
     {
         size_t pos = 0;
         size_t budget = kMaxNodes;
-        Node root;
         bool ok = false;
         try {
-            ok = parse_one(p, n, pos, root, 0, budget);
+            ok = parse_one(p, n, pos, *root, 0, budget);
         } catch (const std::exception &e) {
             std::snprintf(err, sizeof err, "DER parser: %s", e.what());
         } catch (...) {
@@ -349,16 +384,22 @@ SEXP C_rmbl_der_parse(SEXP x) {
                           "trailing bytes after the DER structure: %d of %d consumed",
                           static_cast<int>(pos), static_cast<int>(n));
         }
-        if (err[0] == '\0') out = node_to_sexp(root, p);
     }
-    if (err[0] != '\0') Rf_error("%s", err);
+    if (err[0] != '\0') {
+        delete root;
+        Rf_error("%s", err);
+    }
+    ConvCtx ctx;
+    ctx.root = root;
+    ctx.base = p;
+    out = R_UnwindProtect(conv_run, &ctx, conv_cleanup, &ctx, NULL);
     return out;
 }
 
 /* s^e mod n, with the result left-padded to the length of n. This is
  * the whole of the RSA operation for a verifier: the recovered block
  * comes back untouched for the caller to check. */
-SEXP C_rmbl_rsa_recover(SEXP sig, SEXP modulus, SEXP exponent) {
+SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
     if (TYPEOF(sig) != RAWSXP || TYPEOF(modulus) != RAWSXP ||
         TYPEOF(exponent) != RAWSXP) {
         Rf_error("`sig`, `modulus` and `exponent` must be raw vectors");
@@ -370,6 +411,14 @@ SEXP C_rmbl_rsa_recover(SEXP sig, SEXP modulus, SEXP exponent) {
     if (XLENGTH(modulus) > 1024) {
         Rf_error("the modulus is implausibly large (%d bytes)",
                  static_cast<int>(XLENGTH(modulus)));
+    }
+    /* modexp is linear in the exponent's bits. A public exponent is 3 or
+     * 65537 in every deployed key (RFC 8017 allows larger, nothing issues
+     * them); 64 bytes is already a thousand times that, and a megabyte
+     * delivered in a hostile certificate was hours of uninterruptible work. */
+    if (XLENGTH(exponent) > 64) {
+        Rf_error("the public exponent is implausibly large (%d bytes)",
+                 static_cast<int>(XLENGTH(exponent)));
     }
     /* the Big values are std::vectors: no Rf_error() while they live */
     const char *err = NULL;

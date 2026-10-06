@@ -7,15 +7,7 @@
 # which certificates are BAD is the part that matters -- a verifier that
 # accepts everything passes any test that only uses valid input.
 
-x509_fx <- function() {
-  fx <- readLines(test_path("x509-fixtures.txt"), warn = FALSE)
-  fx <- fx[!startsWith(fx, "#") & nzchar(fx)]
-  parts <- strsplit(fx, "|", fixed = TRUE)
-  stats::setNames(
-    lapply(parts, function(p) .rmbl_hex_to_raw(p[2L])),
-    vapply(parts, `[[`, character(1), 1L)
-  )
-}
+# x509_fx() lives in helper-x509.R
 
 test_that("name constraints are read out of the certificate", {
   f <- x509_fx()

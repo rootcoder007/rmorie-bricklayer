@@ -10,10 +10,10 @@ name: sanitizers
 on:
   push:
     branches: [main]
-    paths: ['src/**', 'tests/**', 'R/**', '.github/workflows/sanitizers.yml']
+    paths: ['src/**', 'inst/include/**', 'tests/**', 'R/**', 'configure', 'DESCRIPTION', '.github/workflows/sanitizers.yml']
   pull_request:
     branches: [main]
-    paths: ['src/**', 'tests/**', 'R/**', '.github/workflows/sanitizers.yml']
+    paths: ['src/**', 'inst/include/**', 'tests/**', 'R/**', 'configure', 'DESCRIPTION', '.github/workflows/sanitizers.yml']
   workflow_dispatch:
 
 permissions:
@@ -46,7 +46,14 @@ jobs:
         run: |
           RDscript -e 'install.packages(c("testthat", "withr", "digest", "jsonlite", "openssl"), repos = "https://cloud.r-project.org"); for (p in c("testthat", "withr", "digest", "jsonlite", "openssl")) if (!requireNamespace(p, quietly = TRUE)) stop("could not install ", p)'
       - name: Install under the sanitizers
-        run: RD CMD INSTALL --preclean .
+        shell: bash
+        run: |
+          set -o pipefail
+          RD CMD INSTALL --preclean . 2>&1 | tee install.log
+          if grep -E "runtime error:|ERROR: AddressSanitizer" install.log; then
+            echo "::error::sanitizer report during install (configure probe or load)"
+            exit 1
+          fi
       - name: Run the test suite under ASAN + UBSAN
         shell: bash
         run: |

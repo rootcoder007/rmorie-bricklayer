@@ -129,9 +129,9 @@ json_gzip_decode <- function(txt, raw = FALSE, ...) {
   # ~1000:1); zlib itself verifies the trailer while inflating.
   nb <- length(bytes)
   isize <- sum(as.numeric(as.integer(bytes[(nb - 3L):nb])) * 256^(0:3))
-  if (isize > 512 * 1024^2) {
+  if (isize > 64 * 1024^2) {
     stop(sprintf(paste0("`txt` declares %.0f uncompressed bytes (gzip ISIZE); ",
-                        "refusing to inflate more than 512 MiB"), isize),
+                        "refusing to inflate more than 64 MiB"), isize),
          call. = FALSE)
   }
   json <- rawToChar(memDecompress(bytes, type = "gzip"))

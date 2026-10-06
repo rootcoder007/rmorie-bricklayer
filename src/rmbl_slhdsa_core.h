@@ -42,6 +42,7 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include "rmbl_ct.h"
 
 /* the FIPS 202 sponge from rmbl_keccak.cpp */
 struct RmblKeccak {

@@ -65,23 +65,44 @@ verify_capsule <- function(capsule_dir,
     )
   }
 
-  prov <- load_provenance(file.path(capsule_dir, provenance_file))
+  # The provenance selects the digests everything else is checked against,
+  # so it is contained like every other path: a symlink out of the capsule,
+  # or a caller-supplied "../evil.json", pinned tampered bytes as intact.
+  ppath <- .rmbl_safe_rel(provenance_file, capsule_dir)
+  prov <- if (is.null(ppath)) NULL else load_provenance(ppath)
   note("provenance_readable", !is.null(prov),
-       file.path(capsule_dir, provenance_file))
+       if (is.null(ppath))
+         sprintf("'%s' is not a plain relative path inside the capsule",
+                 as.character(unlist(provenance_file))[1L])
+       else ppath)
+  # a field that should be one string: a nested object or an array in its
+  # place is a different document, not a value to take element 1 of
+  scalar <- function(v) {
+    if (is.null(v)) return(NULL)
+    if (is.list(v) && length(v) == 1L && !is.list(v[[1L]])) v <- v[[1L]]
+    if (!is.atomic(v) || length(v) != 1L || is.na(v)) return(NA_character_)
+    as.character(v)
+  }
 
   # Every check that cannot be made is a FAILED check, recorded as a row:
   # the former version appended nothing when a field was absent, and
   # all() of the surviving rows said a capsule with altered data (or a
   # provenance of exactly {}) was intact. These three rows must exist and
   # pass for `ok`.
-  required <- c("provenance_readable", "data_present", "data_sha256")
+  # the load-bearing rows; manifest_consistent and script_sha256 join them
+  # below whenever a manifest or a script is in play
+  required <- c("provenance_readable", "data_present", "data_sha256",
+                "data_not_synthetic")
 
   df <- NULL
   dpath <- NULL
-  data_file <- data_file %||% prov$resource$filename
+  data_file <- data_file %||% scalar(prov$resource$filename)
   if (is.null(data_file)) {
     note("data_present", FALSE,
          "no data file: the provenance records no resource$filename and none was given")
+  } else if (is.na(data_file)) {
+    note("data_present", FALSE,
+         "resource$filename is not a single string")
   } else {
     dpath <- .rmbl_safe_rel(data_file, capsule_dir)
     if (is.null(dpath)) {
@@ -89,25 +110,31 @@ verify_capsule <- function(capsule_dir,
            sprintf("'%s' is not a plain relative path inside the capsule",
                    as.character(unlist(data_file))[1L]))
     } else {
-      note("data_present", file.exists(dpath), dpath)
-      if (!file.exists(dpath)) dpath <- NULL
+      present <- file.exists(dpath) && !dir.exists(dpath)
+      note("data_present", present,
+           if (file.exists(dpath) && dir.exists(dpath))
+             sprintf("%s is a directory, not a data file", dpath) else dpath)
+      if (!present) dpath <- NULL
     }
   }
+  synth_sidecar <- !is.null(dpath) && file.exists(paste0(dpath, ".synthetic"))
   if (!is.null(dpath)) {
-    if (file.exists(paste0(dpath, ".synthetic"))) {
-      note("data_not_synthetic", FALSE,
-           sprintf("%s.synthetic is present: these data were generated, not fetched",
-                   basename(dpath)))
-    }
-    pinned <- prov$resource$sha256
+    pinned <- scalar(prov$resource$sha256)
     if (is.null(pinned)) {
       note("data_sha256", FALSE,
            "no sha256 recorded in the provenance: the data cannot be verified")
+    } else if (is.na(pinned) || !grepl("^[0-9a-fA-F]{64}$", trimws(pinned))) {
+      note("data_sha256", FALSE,
+           "resource$sha256 is not a single 64-character hex digest")
     } else {
-      v <- verify_sha256(dpath, pinned)
-      note("data_sha256", v$match,
-           if (v$match) v$actual else
-             sprintf("expected %s, got %s", v$expected, v$actual))
+      v <- tryCatch(verify_sha256(dpath, pinned), error = function(e) NULL)
+      if (is.null(v)) {
+        note("data_sha256", FALSE, "the data file could not be read")
+      } else {
+        note("data_sha256", v$match,
+             if (v$match) v$actual else
+               sprintf("expected %s, got %s", v$expected, v$actual))
+      }
     }
     if (!is.null(prov$resource$size_bytes)) {
       note("data_size_bytes",
@@ -148,7 +175,14 @@ verify_capsule <- function(capsule_dir,
   }
 
   manifest <- NULL
+  # a capsule that carries manifest.json is checked against it by default:
+  # verify_capsule(dir) used to open the data and never the manifest
+  if (is.null(manifest_file) &&
+      file.exists(file.path(capsule_dir, "manifest.json"))) {
+    manifest_file <- "manifest.json"
+  }
   if (!is.null(manifest_file)) {
+    required <- c(required, "manifest_consistent")
     mpath <- .rmbl_safe_rel(manifest_file, capsule_dir)
     if (is.null(mpath) || !file.exists(mpath)) {
       note("manifest_consistent", FALSE,
@@ -178,6 +212,7 @@ verify_capsule <- function(capsule_dir,
   script_file <- script_file %||% prov$script$filename %||%
     manifest$meta$script_file
   if (!is.null(script_file) || !is.null(pinned_script)) {
+    required <- c(required, "script_sha256")
     spath <- if (!is.null(script_file)) .rmbl_safe_rel(script_file, capsule_dir)
     if (is.null(spath) || !file.exists(spath)) {
       note("script_sha256", FALSE,
@@ -194,6 +229,21 @@ verify_capsule <- function(capsule_dir,
            actual)
     }
   }
+
+  # Synthetic data is a recorded, required verdict: the sidecar
+  # make_synthetic_csv() writes, the manifest's flag, or the provenance's
+  # own flag. The row exists whether or not any of them is present --
+  # deleting the sidecar used to delete the finding with it.
+  synth_manifest <- isTRUE(manifest$meta$synthetic)
+  synth_prov <- isTRUE(prov$synthetic) || isTRUE(prov$resource$synthetic)
+  note("data_not_synthetic", !(synth_sidecar || synth_manifest || synth_prov),
+       if (synth_sidecar)
+         sprintf("%s.synthetic is present: these data were generated, not fetched",
+                 basename(dpath))
+       else if (synth_manifest) "the manifest records synthetic = true"
+       else if (synth_prov) "the provenance records synthetic = true"
+       else if (is.null(dpath)) "no data file to check"
+       else "no synthetic marker: sidecar, manifest and provenance all say real data")
 
   checks <- do.call(rbind, checks)
   rownames(checks) <- NULL

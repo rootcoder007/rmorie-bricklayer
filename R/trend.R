@@ -138,6 +138,10 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   s <- mk$S
   npairs <- n * (n - 1) / 2
   tau <- s / npairs
+  if (isTRUE(exact) && n > 8L) {
+    warning(sprintf("exact = TRUE is available up to n = 8 (n = %d): using the normal approximation", n),
+            call. = FALSE)
+  }
   if (is.null(exact)) exact <- n <= 8L
   if (isTRUE(exact) && n <= 8L) {
     # With ties the null is over the orderings of the OBSERVED multiset,
@@ -211,8 +215,14 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 # S over every ordering of the observed values themselves (ties and all).
 .rmbl_mk_exact_values <- function(y) {
   n <- length(y)
+  # memoised on the observed multiset: a loop over short tied series paid
+  # 0.6 s per call for the same 40,320 orderings
+  key <- paste(c(n, sort(y)), collapse = ",")
+  if (!is.null(.rmbl_mk_cache[[key]])) {
+    return(.rmbl_mk_cache[[key]])
+  }
   perms <- .rmbl_permutations(n)
-  apply(perms, 1L, function(p) {
+  s <- apply(perms, 1L, function(p) {
     v <- y[p]
     tot <- 0
     for (i in seq_len(n - 1L)) {
@@ -220,6 +230,8 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
     }
     tot
   })
+  .rmbl_mk_cache[[key]] <- s
+  s
 }
 
 .rmbl_permutations <- function(n) {
@@ -260,7 +272,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
   # 0.999, at n = 3 both are off). The bound shown is then the extreme
   # slope and the true interval is wider; the result says so through
   # `slope_ci_clamped` rather than presenting the clamp as an interval.
-  clamped <- c(lo_rank < 1, hi_rank > m)
+  clamped <- c(lo_rank <= 1, hi_rank >= m)
   lo_rank <- max(1L, min(m, as.integer(lo_rank)))
   hi_rank <- max(1L, min(m, as.integer(hi_rank)))
   structure(c(slopes[lo_rank], slopes[hi_rank]), clamped = clamped)
@@ -305,6 +317,10 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
                         seed = 1L) {
   y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
+  if (any(is.infinite(y))) {
+    # a missing period is dropped; an infinite value is a data error
+    stop("`y` must not contain infinite values", call. = FALSE)
+  }
   ok <- is.finite(y)
   y <- y[ok]
   x <- x[ok]
@@ -433,6 +449,12 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   if (any(y < 0, na.rm = TRUE) ||
     any(abs(y - round(y)) > 1e-8, na.rm = TRUE)) {
     stop("`y` must be non-negative whole numbers", call. = FALSE)
+  }
+  if (any(is.infinite(x))) {
+    stop("`x` must not contain infinite values", call. = FALSE)
+  }
+  if (all(y == 0, na.rm = TRUE)) {
+    stop("every count is zero: there is no rate to fit a trend to", call. = FALSE)
   }
   logoff <- if (is.null(offset)) {
     rep(0, length(y))

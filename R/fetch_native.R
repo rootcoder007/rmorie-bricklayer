@@ -54,6 +54,9 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
   if (!grepl("^https?://", url, ignore.case = TRUE)) {
     stop(sprintf("bricklayer_fetch: '%s' is not an http(s) URL", url), call. = FALSE)
   }
+  # the same gate every other entry point has (the compiled layer checks
+  # again, resolves, pins and re-checks each redirect)
+  .rmbl_check_public_url(url, "url")
   d <- dirname(path.expand(dest))
   if (!dir.exists(d) || file.access(d, 2L) != 0L) {
     stop(sprintf("bricklayer_fetch: cannot write %s (%s)", dest,
@@ -108,6 +111,7 @@ wayback_snapshot_url_native <- function(url, timeout = 30L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
     stop("`url` must be a single non-empty string", call. = FALSE)
   }
+  .rmbl_check_public_url(url, "url")
   snap <- .Call(C_rmbl_wayback, url, as.integer(timeout))
   if (is.character(snap) && nzchar(snap)) snap else NULL
 }

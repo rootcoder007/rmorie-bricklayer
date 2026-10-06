@@ -53,6 +53,13 @@ const int kPolyW1Packed = 128;    /* gamma2 = (q-1)/32: 4 bits each */
 const int kPolyT1Packed = 320;    /* 10 bits each */
 const int kPolyT0Packed = 416;    /* 13 bits each */
 
+/* Constant-time testing hook (inst/ctcheck): a value the specification
+ * publishes anyway -- rho, the challenge, the hints and which samples were rejected -- is declared public to the checker here,
+ * so the branch that follows is not reported. A no-op in the package. */
+#ifndef RMBL_MLDSA_DECLASSIFY
+#define RMBL_MLDSA_DECLASSIFY(ptr, len) ((void)0)
+#endif
+
 /* a_i uniform on [0, q), three bytes at a time with the top bit
  * cleared. Returns how many coefficients were filled. */
 unsigned int rej_uniform(int32_t *a, unsigned int len,
@@ -79,18 +86,27 @@ unsigned int rej_eta(int32_t *a, unsigned int len,
     while (ctr < len && pos < buflen) {
         uint32_t t0 = buf[pos] & 0x0F;
         uint32_t t1 = buf[pos++] >> 4;
+        /* FIPS 204 RejBoundedPoly: whether a nibble is rejected is public
+         * (the rejected randomness is never used), the accepted value is
+         * not. Only the decision is declassified. */
 #if MLDSA_ETA == 2
-        if (t0 < 15) {
+        unsigned int ok0 = t0 < 15, ok1 = t1 < 15;
+        RMBL_MLDSA_DECLASSIFY(&ok0, sizeof ok0);
+        RMBL_MLDSA_DECLASSIFY(&ok1, sizeof ok1);
+        if (ok0) {
             t0 = t0 - (205 * t0 >> 10) * 5;
             a[ctr++] = 2 - static_cast<int32_t>(t0);
         }
-        if (t1 < 15 && ctr < len) {
+        if (ok1 && ctr < len) {
             t1 = t1 - (205 * t1 >> 10) * 5;
             a[ctr++] = 2 - static_cast<int32_t>(t1);
         }
 #else
-        if (t0 < 9) a[ctr++] = 4 - static_cast<int32_t>(t0);
-        if (t1 < 9 && ctr < len) a[ctr++] = 4 - static_cast<int32_t>(t1);
+        unsigned int ok0 = t0 < 9, ok1 = t1 < 9;
+        RMBL_MLDSA_DECLASSIFY(&ok0, sizeof ok0);
+        RMBL_MLDSA_DECLASSIFY(&ok1, sizeof ok1);
+        if (ok0) a[ctr++] = 4 - static_cast<int32_t>(t0);
+        if (ok1 && ctr < len) a[ctr++] = 4 - static_cast<int32_t>(t1);
 #endif
     }
     return ctr;
@@ -121,14 +137,17 @@ void poly_uniform(int32_t a[256], const unsigned char rho[32],
 void poly_uniform_eta(int32_t a[256], const unsigned char seed[64],
                       uint16_t nonce) {
     unsigned char ext[66];
+    rmbl_ct::Guard ge(ext, sizeof ext);
     std::memcpy(ext, seed, 64);
     ext[64] = static_cast<unsigned char>(nonce & 0xff);
     ext[65] = static_cast<unsigned char>(nonce >> 8);
     RmblKeccak st;
+    rmbl_ct::Guard gst(&st, sizeof st);
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, ext, 66);
     rmbl_keccak_finalize(&st);
     unsigned char buf[136 * 2];
+    rmbl_ct::Guard gb(buf, sizeof buf);
     rmbl_keccak_squeeze(&st, buf, sizeof buf);
     unsigned int ctr = rej_eta(a, 256, buf, sizeof buf);
     while (ctr < 256) {
@@ -286,12 +305,17 @@ inline int32_t use_hint(int32_t a, unsigned int hint) {
  * It is not a constant-time comparison and does not claim to be. */
 inline int poly_chknorm(const int32_t a[256], int32_t B) {
     if (B > (kQ - 1) / 8) return 1;
+    /* every coefficient is examined; an early return would tell a timing
+     * observer which coefficient of z (hence of the secret) was large */
+    uint32_t bad = 0;
     for (int i = 0; i < 256; ++i) {
         int32_t t = a[i] >> 31;
         t = a[i] - (t & 2 * a[i]);
-        if (t >= B) return 1;
+        bad |= static_cast<uint32_t>(B - 1 - t) >> 31; /* t >= B */
     }
-    return 0;
+    int rejected = bad != 0;
+    RMBL_MLDSA_DECLASSIFY(&rejected, sizeof rejected); /* the rejection itself is public */
+    return rejected;
 }
 
 /* ---------------------------------------------------------------------
@@ -774,6 +798,7 @@ void keypair_from_seed(unsigned char *pk, unsigned char *sk,
     pre[32] = static_cast<unsigned char>(kK);
     pre[33] = static_cast<unsigned char>(kL);
     rmbl_shake256(seedbuf, sizeof seedbuf, pre, 34);
+    RMBL_MLDSA_DECLASSIFY(seedbuf, 32); /* rho is published in pk */
     const unsigned char *rho = seedbuf;
     const unsigned char *rhoprime = seedbuf + 32;
     const unsigned char *key = rhoprime + 64;
@@ -797,6 +822,12 @@ void keypair_from_seed(unsigned char *pk, unsigned char *sk,
     rmbl_shake256(tr, static_cast<size_t>(kTrBytes), pk,
                   static_cast<size_t>(kPkBytes));
     pack_sk(sk, rho, tr, key, &t0, &s1, &s2);
+    rmbl_ct::wipe(seedbuf, sizeof seedbuf);
+    rmbl_ct::wipe(pre, sizeof pre);
+    rmbl_ct::wipe(&s1, sizeof s1);
+    rmbl_ct::wipe(&s2, sizeof s2);
+    rmbl_ct::wipe(&s1hat, sizeof s1hat);
+    rmbl_ct::wipe(&t0, sizeof t0);
 }
 
 /* `rnd` is the 32 bytes of per-signature randomness. Passing zeros
@@ -887,7 +918,11 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
     PolyVecL mat[kK], s1, y, z;
     PolyVecK t0, s2, w1, w0, h;
     int32_t cp[256];
+    rmbl_ct::Guard gkey(key, sizeof key), grp(rhoprime, sizeof rhoprime),
+        gs1(&s1, sizeof s1), gy(&y, sizeof y), gz(&z, sizeof z),
+        gt0(&t0, sizeof t0), gs2(&s2, sizeof s2), gw0(&w0, sizeof w0);
     unpack_sk(rho, tr, key, &t0, &s1, &s2, sk);
+    RMBL_MLDSA_DECLASSIFY(rho, 32); /* rho is published in pk */
     /* A key that is the right length but not a key: s1 and s2 are packed in
      * [-eta, eta], so a coefficient outside it can only come from corrupt
      * bytes. Signing with it would reject every candidate for ever. */
@@ -925,6 +960,7 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
                            static_cast<size_t>(kK * kPolyW1Packed));
         rmbl_keccak_finalize(&st);
         rmbl_keccak_squeeze(&st, sig, static_cast<size_t>(kCtildeBytes));
+        RMBL_MLDSA_DECLASSIFY(sig, static_cast<size_t>(kCtildeBytes)); /* c~ is the signature's first field */
 
         poly_challenge(cp, sig);
         ntt(cp);
@@ -947,7 +983,9 @@ int sign_mu(unsigned char *sig, const unsigned char mu[64],
         if (veck_chknorm(&h, kGamma2)) continue;
 
         veck_add(&w0, &w0, &h);
-        const unsigned int n = veck_make_hint(&h, &w0, &w1);
+        unsigned int n = veck_make_hint(&h, &w0, &w1);
+        RMBL_MLDSA_DECLASSIFY(&n, sizeof n); /* the hint count and positions are published */
+        RMBL_MLDSA_DECLASSIFY(&h, sizeof h);
         if (n > static_cast<unsigned int>(kOmega)) continue;
 
         pack_sig(sig, sig, &z, &h);
