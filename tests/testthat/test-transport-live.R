@@ -91,6 +91,7 @@ test_that("Ctrl-C during a transfer is R's interrupt, raised after the transport
   skip_on_cran()
   skip_on_os("windows")
   skip_if_not(online(), "no network")
+  skip_if_sigint_ignored()
   dest <- tempfile()
   # the progress callback sends the process its own SIGINT: the next poll
   # sees it pending, the transfer stops, the barrier raises the interrupt

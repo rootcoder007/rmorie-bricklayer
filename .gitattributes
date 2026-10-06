@@ -1,0 +1,4 @@
+# Signed service document: the detached ML-DSA-44 signature covers these exact bytes,
+# so no line-ending conversion on any platform (Windows checkouts default to autocrlf).
+inst/services/* -text
+*.sig -text
