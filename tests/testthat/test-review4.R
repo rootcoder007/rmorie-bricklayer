@@ -227,6 +227,14 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   expect_identical(s$llm$base_url, "https://llm.rmorie.com")
   expect_false(file.exists(file.path(td, "morie-services.json")))  # the stale cache is gone
   expect_false(file.exists(file.path(td, "morie-services.sig")))
+  # the same date as the bundled copy: the bundled copy serves and the cache stays (a
+  # cache earns its place only by being NEWER than what the package ships)
+  r4(".rmbl_services_write")(file.path(td, "morie-services.json"), charToRaw(bund_doc), sig(bund_doc))
+  r4(".rmbl_services_forget")()
+  s <- bricklayer_services(offline = TRUE)
+  expect_identical(attr(s, "source"), "bundled")
+  expect_true(file.exists(file.path(td, "morie-services.json")))
+  unlink(file.path(td, c("morie-services.json", "morie-services.sig")))
   # served live, the same old document is a rollback below the floor
   r4(".rmbl_services_forget")()
   testthat::local_mocked_bindings(.rmbl_net_download = function(url, tmp, timeout) {

@@ -277,14 +277,14 @@ test_that("every published kernel compiles and resolves from a consumer", {
     as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
   )
   sha <- trimws(res[length(res)])
-  if (length(nums) != 52L) {
+  if (length(nums) != 53L) {
     fail(paste(
-      "the consumer did not print 52 numbers; it printed:",
+      "the consumer did not print 53 numbers; it printed:",
       paste(utils::tail(res, 10L), collapse = " | ")
     ))
     return(invisible(NULL))
   }
-  expect_length(nums, 52L)
+  expect_length(nums, 53L)
 
   # the kernels must agree with the R-level functions on the same input,
   # because they are supposed to be the same code

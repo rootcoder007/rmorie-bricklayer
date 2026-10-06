@@ -216,9 +216,13 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
   # package. A validly signed but OLDER document (any one ever published) in
   # the cache would otherwise pin a retired endpoint forever, and it is the
   # endpoint that receives the user's key (fourth review).
+  # A cache earns its place only by being NEWER than the bundled copy: the same
+  # date adds nothing, and an older one is deleted.
   if (!is.null(cached) && !is.null(bundled) &&
-      .rmbl_services_time(cached$issued) < .rmbl_services_time(bundled$issued)) {
-    unlink(c(cache, sub("[.]json$", ".sig", cache)))
+      .rmbl_services_time(cached$issued) <= .rmbl_services_time(bundled$issued)) {
+    if (.rmbl_services_time(cached$issued) < .rmbl_services_time(bundled$issued)) {
+      unlink(c(cache, sub("[.]json$", ".sig", cache)))
+    }
     cached <- NULL
   }
   floor <- max(c(-Inf, as.numeric(.rmbl_services_time(cached$issued)),

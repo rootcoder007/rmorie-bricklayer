@@ -195,9 +195,14 @@ test_that("plain http is admitted on the loopback host only when the call asks f
   expect_identical(chk("http://127.9.9.9/"), "")
   expect_identical(chk("http://[::1]:11434/"), "")
   expect_identical(chk("https://localhost/"), "")
-  # exactly loopback: every other private or plain-http address stays refused
-  expect_match(chk("http://10.0.0.1/"), "plain http is refused")
-  expect_match(chk("https://10.0.0.1/"), "local or private")
+  # loopback or a LITERAL private LAN address (D4); link-local, CGNAT, public
+  # plain-http and every name stay refused
+  expect_identical(chk("http://10.0.0.1/"), "")
+  expect_identical(chk("https://192.168.0.9:8443/"), "")
+  expect_identical(chk("http://[fd00::1]:8000/v1"), "")
+  expect_match(chk("http://100.64.0.1/"), "plain http is refused")
+  expect_match(chk("https://100.64.0.1/"), "local or private")
+  expect_match(chk("http://lmstudio.lan/"), "plain http is refused")
   expect_match(chk("https://169.254.169.254/"), "local or private")
   expect_match(chk("http://example.org/"), "plain http is refused")
   expect_match(chk("http://[fe80::1]/"), "plain http is refused")
@@ -208,6 +213,10 @@ test_that("plain http is admitted on the loopback host only when the call asks f
   # can never redirect INTO the loopback host, relaxation or not
   rc <- function(from, to) .Call(rt_ns("C_rmbl_redirect_check"), from, to, FALSE, TRUE)
   expect_false(rc("http://localhost:11434/v1/x", "http://10.0.0.1/y")$ok)
+  expect_false(rc("http://10.0.0.1:8000/v1/x", "http://localhost:11434/y")$ok)
+  expect_false(rc("http://localhost:11434/v1/x", "http://127.0.0.1:11434/y")$ok)
+  expect_true(rc("http://localhost:11434/v1/x", "http://localhost:11435/v2/y")$ok)
+  expect_true(rc("http://192.168.1.50:1234/v1/x", "http://192.168.1.50:1234/v1/y")$ok)
   expect_false(rc("http://localhost:11434/v1/x", "http://example.org/y")$ok)
   expect_true(rc("http://localhost:11434/v1/x", "https://example.org/y")$ok)
   expect_false(rc("https://evil.example.net/x", "http://127.0.0.1:11434/api/tags")$ok)

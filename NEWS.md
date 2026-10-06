@@ -62,6 +62,9 @@ kind, pinned by `test-review5.R` and by fuzz seeds for every shape the reviewers
   documents `MORIE_SERVICES_URL`; `bricklayer_parse_siu()` and `bricklayer_siu_text()`
   document the 2 MiB cap and the line split; `capsule_drift()` documents the identifier
   gate; `bricklayer_download()` documents its `headers` and `timeout` ranges.
+* The services cache serves only when it is newer than the document bundled with the
+  package: a cache earns its place by being newer, the same date falls back to the
+  bundled copy, and an older one is deleted. morie's resolver gets the same floor.
 * Fuzzing: a `fuzz_url` target over `url_check()` and `redirect_policy()`, seeds for
   every shape the reviewers used, and the SIU target runs under an 8 MB stack like R's.
 
