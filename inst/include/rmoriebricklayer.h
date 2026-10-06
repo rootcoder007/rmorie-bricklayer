@@ -243,7 +243,11 @@ static R_INLINE R_xlen_t rmbl_lorenz(const double *x, R_xlen_t n,
 }
 
 /* Mann-Kendall S and its tie-corrected variance. `used` receives the
- * number of finite observations and may be NULL. */
+ * number of finite observations and may be NULL. NA-on-interrupt contract: a
+ * pending user interrupt inside the O(n^2) loop stops the kernel with S and
+ * var set to NA_REAL and raises R's interrupt (the call does not return);
+ * only rmoriebricklayer's own entry points, where the barrier raises instead,
+ * can observe the NA pair, and they never report it as a result. */
 static R_INLINE void rmbl_mann_kendall(const double *y, R_xlen_t n,
                                        double *S, double *var,
                                        R_xlen_t *used) {
@@ -472,9 +476,10 @@ static R_INLINE int rmbl_blake2b(const unsigned char *msg, size_t msglen,
 /* PBKDF2-HMAC-SHA-256. Returns 0 with `out` filled, -1 for an invalid argument
    (iterations or dklen below 1: nothing written). A pending user interrupt
    inside the iteration loop is raised as R's interrupt (the call does not
-   return), exactly as R_CheckUserInterrupt() would; a return of 1 can only be
-   seen by rmoriebricklayer's own entry points, where the barrier raises it,
-   and then `out` is all zero and MUST NOT be used as a key. */
+   return), exactly as R_CheckUserInterrupt() would, from a frame that holds
+   no buffer of the kernel's; a return of 1 can only be seen by
+   rmoriebricklayer's own entry points, where the barrier raises it, and then
+   `out` is all zero and MUST NOT be used as a key. */
 static R_INLINE int rmbl_pbkdf2_sha256(const unsigned char *pass,
                                        size_t passlen,
                                        const unsigned char *salt,

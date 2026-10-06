@@ -13,7 +13,7 @@ test_that("every entry point answers a hostile argument with an R error, never a
   expect_error(.Call(C("C_rmbl_pbkdf2"), "p", "s", 2147483647L, 16L), "2\\^26")
   expect_error(.Call(C("C_rmbl_hmac_sha256"), NA_character_, "m"), "non-missing")
   expect_error(.Call(C("C_rmbl_fetch_fallback"), NA_character_, "", tempfile(), 5L), "non-missing")
-  expect_identical(.Call(C("C_rmbl_siu_to_iso_date"), strrep("x", 100000)), "")
+  expect_error(.Call(C("C_rmbl_siu_to_iso_date"), strrep("x", 100000)), "longer than 4096 bytes")
   # the generator that keeps the barrier in step with init.c ships with the package
   expect_true(file.exists(system.file("scripts", "gen_barrier.R", package = "rmoriebricklayer")))
 })

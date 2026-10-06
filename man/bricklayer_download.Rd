@@ -13,7 +13,8 @@ bricklayer_download(
   timeout = 3600,
   quiet = NULL,
   tty = NULL,
-  allow_file = FALSE
+  allow_file = FALSE,
+  max_bytes = 2^31
 )
 }
 \arguments{
@@ -23,14 +24,17 @@ link-local or private address is refused.}
 
 \item{dest}{Path to write.}
 
-\item{headers}{Named character vector of request headers, or \code{NULL}.}
+\item{headers}{Character vector of request headers, every element named, or
+\code{NULL}.}
 
 \item{label}{Text shown in front of the bar; the file name by default.}
 
 \item{size}{Expected size in bytes when known (a percent bar instead of a
 spinner).}
 
-\item{timeout}{Seconds allowed for the whole transfer.}
+\item{timeout}{Seconds allowed for the whole transfer: a whole number from 1
+to 2147483647. A transfer slower than 64 bytes a second for 30 seconds is
+ended before that.}
 
 \item{quiet}{\code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
 session and options.}
@@ -39,6 +43,11 @@ session and options.}
 (\code{FALSE}); \code{NULL} asks whether stderr is a terminal.}
 
 \item{allow_file}{Accept a \code{file://} URL (default \code{FALSE}).}
+
+\item{max_bytes}{Most bytes the body may have (default 2 GiB, the
+transport's ceiling). A body past it, chunked or not, ends the transfer
+with an error and leaves nothing behind: a caller that expects a small
+file should say so.}
 }
 \value{
 \code{dest}, invisibly.

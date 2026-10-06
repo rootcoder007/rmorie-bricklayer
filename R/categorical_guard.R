@@ -719,10 +719,7 @@ write_recode_manifest <- function(manifest, path) {
 #' @export
 verify_recode_manifest <- function(path, original, recoded) {
   path <- .rmbl_file1(path, "path")
-  m <- bricklayer_json_from_json(paste(
-    readLines(path, warn = FALSE, encoding = "UTF-8"),
-    collapse = "\n"
-  ))
+  m <- .rmbl_json_text(paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n"))
   reasons <- character(0)
   mapping <- unlist(m$mapping)
   sha <- core_sha256(charToRaw(

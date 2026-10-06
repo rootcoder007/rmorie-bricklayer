@@ -30,7 +30,19 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
     date_words = 'strrep("January 5, 2023 ", 2e4)',
     # the fuzzer's find: std::stoi on a \\d+ capture past INT_MAX aborted the process
     tag_overflow = 'paste0("Subject Officials\\nSO\\n#", strrep("4", 30),
-                           "\\nWitness Officials\\nWO #", strrep("9", 12))'
+                           "\\nWitness Officials\\nWO #", strrep("9", 12))',
+    # the 0.5.8 reviews: whitespace bytes normalize_text() missed, and the two
+    # resolver regexes that crossed lines without a bound
+    formfeed = 'paste0("SO #1", strrep("\\f", 25000), "x")',
+    vtab = 'paste0("SO #1", strrep("\\v", 25000), "x")',
+    cr = 'paste0("SO #1", strrep("\\r", 25000), "x")',
+    boilerplate = 'paste0("this information may include", strrep("a b\\n", 15000), "affected person.")',
+    boilerplate_open = 'paste0("this information may include", strrep("a b\\n", 12500))',
+    glossary = 'paste0("who, in the opinion of the SIU Director, is not a subject officer ", strrep("a b\\n", 12500))',
+    boiler_html = 'paste0("<html><body><p>this information may include</p>",
+                          strrep("<li>a b</li>", 12000), "</body></html>")',
+    unclosed_script = 'strrep("<script>", 40000)',
+    bare_lt = 'strrep("<", 400000)'
   )
   for (e in entries) {
     scr <- tempfile(fileext = ".R")
@@ -112,7 +124,7 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
   # a line longer than the cap is broken at a space, so no extractor's regex
   # ever consumes more than kMaxLine characters at once
   long <- paste(rep("word", 1500), collapse = " ")
-  out <- bricklayer_siu_text(paste0("<p>", long, "</p>"))
+  out <- suppressWarnings(bricklayer_siu_text(paste0("<p>", long, "</p>")))  # the split warning is expected
   expect_true(all(nchar(strsplit(out, "\n", fixed = TRUE)[[1]]) <= 2000L))
   expect_identical(trimws(gsub("\n", " ", out, fixed = TRUE)), long)
   expect_error(bricklayer_siu_text(strrep("a", 3e6)), "larger than 2 MiB")
@@ -142,7 +154,7 @@ test_that("N2: manifest_canonical is one-to-one over objects and arrays, empty k
 })
 
 test_that("N3: the redirect rule is pure and tested; the download entry refuses before touching the disk", {
-  rc <- function(from, to, http = FALSE) .Call(C("C_rmbl_redirect_check"), from, to, http)
+  rc <- function(from, to, http = FALSE) .Call(C("C_rmbl_redirect_check"), from, to, http, FALSE)
   r <- rc("https://a.example.org/x", "https://b.example.org/y")
   expect_true(r$ok)
   expect_true(r$drop_auth)
@@ -163,15 +175,17 @@ test_that("N3: the redirect rule is pure and tested; the download entry refuses 
   # the destination is left alone when the URL is refused
   dest <- tempfile()
   writeLines("keep me", dest)
-  res <- .Call(C("C_rmbl_http_download"), "https://127.0.0.1/x", dest, 5L, NULL, NULL)
+  res <- .Call(C("C_rmbl_http_download"), "https://127.0.0.1/x", dest, 5L, NULL, NULL, NULL, FALSE)
   expect_identical(res$status, -1L)
   expect_match(res$error, "refused")
   expect_identical(readLines(dest), "keep me")
-  expect_false(file.exists(paste0(dest, ".rmbl-part")))
-  expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, NULL, 1),
+  expect_length(list.files(dirname(dest), pattern = paste0("^", basename(dest), "\\.rmbl-part")), 0L)
+  expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, NULL, 1, NULL, FALSE),
                "`progress` must be a function or NULL")
-  expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, 1L, NULL),
+  expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, 1L, NULL, NULL, FALSE),
                "`headers` must be a character vector or NULL")
+  expect_error(.Call(C("C_rmbl_http_download"), "https://a.example.org/x", dest, 5L, NULL, NULL, 0, FALSE),
+               "`max_bytes` must be")
   # every R-level entry gates and then uses the C transport: a blocked host
   # is refused before any connection, by name
   expect_error(bricklayer_json_from_json("http://127.0.0.1:1/secret"), "must be an https:// URL")
@@ -183,7 +197,7 @@ test_that("N3: the redirect rule is pure and tested; the download entry refuses 
   expect_error(bricklayer_download("https://example.org/x", tempfile(), timeout = 0, quiet = TRUE),
                "at least one second")
   # underscores in a deployed hostname are not a refusal
-  expect_identical(.Call(C("C_rmbl_url_check"), "https://my_host.example.org/", FALSE, FALSE), "")
+  expect_identical(.Call(C("C_rmbl_url_check"), "https://my_host.example.org/", FALSE, FALSE, FALSE), "")
 })
 
 test_that("N5: a small ordinary factor gets a verdict; identifiers still do not", {
@@ -202,14 +216,21 @@ test_that("N5: a small ordinary factor gets a verdict; identifiers still do not"
   cd <- capsule_drift(ids, ids2)$columns
   expect_identical(cd$type, "identifier")
   expect_true(is.na(cd$drifted))
-  # the ratio test applies from a hundred rows a side: 90 values on 240 rows
+  # the ratio test needs 20 distinct values behind it: 90 values on 240 rows
   x <- data.frame(g = as.character(rep(1:60, 2)))
   y <- data.frame(g = as.character(rep(31:90, 2)))
   expect_identical(capsule_drift(x, y)$columns$type, "identifier")
-  # ... and not below it: the same ratio on 40 rows is a categorical column
+  # ... and an 80-row near-unique id column is one too (0.5.8's hundred-row gate scored it
+  # categorical with a PSI of 5, its diff review)
+  a <- data.frame(id = sprintf("id%03d", 1:80))
+  b <- data.frame(id = sprintf("id%03d", 21:100))
+  expect_identical(capsule_drift(a, b)$columns$type, "identifier")
+  # ... while a 10-level factor on 40 rows is a categorical column with a verdict
   x <- data.frame(g = as.character(rep(1:10, 2)))
   y <- data.frame(g = as.character(rep(6:15, 2)))
-  expect_identical(capsule_drift(x, y)$columns$type, "categorical")
+  cd <- capsule_drift(x, y)$columns
+  expect_identical(cd$type, "categorical")
+  expect_false(is.na(cd$drifted))
 })
 
 test_that("N6/N7: log_p_value at the fifth chi-square site, and the documented eps bound", {
@@ -239,23 +260,23 @@ test_that("N6/N7: log_p_value at the fifth chi-square site, and the documented e
           collapse = "\n")
   }
   expect_match(gsub("\\s+", " ", txt("drift_psi.Rd")), "any value in (0, 1)", fixed = TRUE)
-  for (f in c("drift_chisq.Rd", "drift_homogeneity.Rd", "benford_test.Rd", "mahalanobis_outliers.Rd")) {
+  # all FIVE sites (0.5.8 listed four and missed mcar_test.Rd, its diff review)
+  for (f in c("drift_chisq.Rd", "drift_homogeneity.Rd", "benford_test.Rd", "mahalanobis_outliers.Rd", "mcar_test.Rd")) {
     expect_match(txt(f), "log_p_value", info = f)
   }
 })
 
-test_that("the Mann-Kendall exact-distribution memo is bounded", {
-  for (i in 1:40) assign(as.character(1000L + i), 1, envir = .rmbl_mk_cache)
-  # an entry other tests may already have cached would return before the
-  # eviction; drop it so this call computes and stores
-  if (exists("4", envir = .rmbl_mk_cache, inherits = FALSE)) rm("4", envir = .rmbl_mk_cache)
+test_that("the Mann-Kendall exact-distribution memo is bounded and evicts its oldest table", {
+  rm(list = ls(.rmbl_mk_cache, all.names = TRUE), envir = .rmbl_mk_cache)
+  for (i in 1:40) .rmbl_mk_remember(as.character(1000L + i), i)
+  # 32 kept, the OLDEST eight gone, the newest present (0.5.8 flushed all 32 at the 33rd)
+  expect_identical(length(ls(.rmbl_mk_cache)), 32L)
+  expect_false("1001" %in% ls(.rmbl_mk_cache))
+  expect_true(all(as.character(1009:1040) %in% ls(.rmbl_mk_cache)))
   .rmbl_mk_exact(4L)
-  expect_lt(length(ls(.rmbl_mk_cache)), 40L)
   expect_true("4" %in% ls(.rmbl_mk_cache))
-  # the tied-values memo shares the bound
-  for (i in 1:40) assign(as.character(2000L + i), 1, envir = .rmbl_mk_cache)
-  .rmbl_mk_exact_values(c(1, 1, 2, 3))
-  expect_lt(length(ls(.rmbl_mk_cache)), 40L)
+  expect_identical(length(ls(.rmbl_mk_cache)), 32L)
+  expect_false("1009" %in% ls(.rmbl_mk_cache))
 })
 
 test_that("N4: a kernel interrupted inside the barrier raises R's interrupt and leaves no stale flag", {

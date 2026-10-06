@@ -205,7 +205,7 @@ revocation_fetch <- function(path, timeout = 10) {
 
 .rmbl_net_post <- function(url, body, content_type, timeout) {
   tryCatch(.Call(C_rmbl_http_post, url, body, content_type,
-                 as.integer(timeout), NULL),
+                 as.integer(timeout), NULL, FALSE),
            error = function(e) NULL)
 }
 

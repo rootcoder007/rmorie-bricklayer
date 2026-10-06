@@ -21,7 +21,7 @@ bricklayer_llm_ask(
 
 \item{system_prompt}{Optional system message.}
 
-\item{route}{\code{NULL} (the first that answers) or one of \code{"own"},
+\item{route}{\code{NULL} (the first that is set up) or one of \code{"own"},
 \code{"ollama"}, \code{"hosted"} to insist on a route.}
 }
 \value{
@@ -29,11 +29,18 @@ Character scalar with the reply. Errors, saying what to set up,
 when no route answers, and when the server answers with an error.
 }
 \description{
-Sends one prompt to the first language-model route that answers from
-this machine and returns the reply. Routes, in order:
+Sends one prompt to the first language-model route that is set up on
+this machine and returns the reply. An endpoint of your own counts as set
+up when it is configured (it is not probed: a configured endpoint that is
+down is an error, not a silent hop to the hosted tier); a local Ollama
+counts when it answers; the hosted tier when a key is stored. Routes, in order:
 \enumerate{
 \item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL},
-with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them;
+with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them.
+An \code{https} address, or plain \code{http} to the loopback host or to a
+literal private LAN address (\code{10/8}, \code{172.16/12},
+\code{192.168/16}, \code{fc00::/7}: an LM Studio or vLLM box on your own
+network); a host name over plain http is refused;
 \item a local Ollama server: \code{OLLAMA_HOST} (or
 \code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
 \code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}

@@ -16,5 +16,9 @@ Printed by \code{rmoriebricklayer doctor}.
 Report the language-model routes available from this machine
 }
 \examples{
+# with the local route off the call reaches no network
+old <- Sys.getenv("OLLAMA_HOST", unset = NA)
+Sys.setenv(OLLAMA_HOST = "off")
 bricklayer_llm_status()
+if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 }

@@ -34,3 +34,6 @@
 ^inst/fuzz/build.*$
 ^tests/testthat/_problems$
 ^SECURITY\.md$
+^conftest\.dSYM$
+^conftest$
+^conftest\.c$

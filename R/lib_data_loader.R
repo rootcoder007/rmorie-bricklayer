@@ -216,9 +216,10 @@ resolve_via_ckan_search <- function(provenance) {
 #'
 #' @param url URL to download.
 #' @param target_path Destination path on disk.
-#' @param mode Accepted for compatibility with the
-#' signature of `utils::download.file()`, which this
-#' function once wrapped; every transfer is binary.
+#' @param mode Kept for the signature of `utils::download.file()`; only
+#'   `"wb"` (or `"w"`) is accepted. Every transfer is binary and written
+#'   fresh through the package's own transport, so an append mode cannot be
+#'   honoured and is an error rather than a silent `"wb"`.
 #' @param quiet Logical; suppress progress output. Defaults to
 #' `FALSE`.
 #' @return The `target_path`, returned invisibly.

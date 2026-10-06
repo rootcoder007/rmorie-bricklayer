@@ -152,7 +152,8 @@
 #' @param tol Convergence tolerance on the largest parameter
 #' change (default 1e-7).
 #' @return A list of class `bricklayer_mcar`: `statistic`,
-#' `df`, `p_value`, `n_patterns`, `n_used`,
+#' `df`, `p_value`, `log_p_value` (the log of `p_value`, finite where
+#' `p_value` underflows to 0), `n_patterns`, `n_used`,
 #' `n_vars`, `iterations`, `mu`, `sigma`, and
 #' `note` (a caveat when the test is degenerate). With complete data
 #' `df` is 0 and `p_value` is `NA` -- there is nothing to

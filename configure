@@ -39,7 +39,7 @@ cat > conftest.c <<'EOF'
 int main(void) { return curl_version() == 0; }
 EOF
 if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest >/dev/null 2>&1; then
-  rm -f conftest.c conftest
+  rm -rf conftest.c conftest conftest.dSYM
   echo "------------------------- ANTICONF ERROR ---------------------------"
   echo "Configuration failed: libcurl (headers and library) was not found."
   echo "Install the development package and try again:"
@@ -51,7 +51,7 @@ if ! $CC $CPPFLAGS $CFLAGS $CURL_CFLAGS conftest.c $CURL_LIBS -o conftest >/dev/
   echo "--------------------------------------------------------------------"
   exit 1
 fi
-rm -f conftest.c conftest
+rm -rf conftest.c conftest conftest.dSYM
 
 if ! sed -e "s|@CURL_CFLAGS@|$CURL_CFLAGS|" -e "s|@CURL_LIBS@|$CURL_LIBS|" \
     src/Makevars.in > src/Makevars; then
