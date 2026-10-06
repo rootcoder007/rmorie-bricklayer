@@ -29,7 +29,8 @@ test_that("N1: hostile text through EVERY one-string SIU entry point returns, in
     nbsp = 'strrep("\\u00a0", 2e5)',
     date_words = 'strrep("January 5, 2023 ", 2e4)',
     # the fuzzer's find: std::stoi on a \\d+ capture past INT_MAX aborted the process
-    tag_overflow = 'paste0("Subject Officials\\nSO\\n#", strrep("4", 30), "\\nWitness Officials\\nWO #", strrep("9", 12))'
+    tag_overflow = 'paste0("Subject Officials\\nSO\\n#", strrep("4", 30),
+                           "\\nWitness Officials\\nWO #", strrep("9", 12))'
   )
   for (e in entries) {
     scr <- tempfile(fileext = ".R")
