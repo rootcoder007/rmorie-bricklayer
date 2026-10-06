@@ -245,4 +245,8 @@ test_that("the Mann-Kendall exact-distribution memo is bounded", {
   .rmbl_mk_exact(4L)
   expect_lt(length(ls(.rmbl_mk_cache)), 40L)
   expect_true("4" %in% ls(.rmbl_mk_cache))
+  # the tied-values memo shares the bound
+  for (i in 1:40) assign(as.character(2000L + i), 1, envir = .rmbl_mk_cache)
+  .rmbl_mk_exact_values(c(1, 1, 2, 3))
+  expect_lt(length(ls(.rmbl_mk_cache)), 40L)
 })
