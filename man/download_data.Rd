@@ -17,6 +17,9 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
 \item{quiet}{Logical; suppress progress output. Defaults to
 \code{FALSE}.}
+
+\item{allow_file}{Accept a \verb{file://} URL (default \code{FALSE}; an offline
+test passes \code{TRUE}). Every URL must otherwise be \code{https} and public.}
 }
 \value{
 The \code{target_path}, returned invisibly.

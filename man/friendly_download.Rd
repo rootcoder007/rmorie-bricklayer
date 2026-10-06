@@ -17,6 +17,9 @@ URL tried as a fallback if the primary download fails. When \code{NULL}
 \code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}}; pass an
 explicit URL to override the lookup, or \code{""} (or \code{FALSE}) to disable
 the fallback entirely.}
+
+\item{allow_file}{Accept a \verb{file://} URL for \code{url} and
+\code{attempt_wayback} (default \code{FALSE}; an offline test passes \code{TRUE}).}
 }
 \value{
 \code{TRUE} if either the primary download or the Wayback

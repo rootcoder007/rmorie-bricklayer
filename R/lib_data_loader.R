@@ -229,6 +229,8 @@ resolve_via_ckan_search <- function(provenance) {
 #' ))
 #' if (!inherits(dest, "try-error")) file.exists(dest)
 #' }
+#' @param allow_file Accept a `file://` URL (default `FALSE`; an offline
+#' test passes `TRUE`). Every URL must otherwise be `https` and public.
 #' @export
 download_data <- function(url, target_path, mode = "wb", quiet = FALSE,
                           allow_file = FALSE) {
@@ -325,6 +327,8 @@ wayback_snapshot_url <- function(url, timestamp = NULL) {
 #' ) # disable the fallback
 #' ok
 #' }
+#' @param allow_file Accept a `file://` URL for `url` and
+#' `attempt_wayback` (default `FALSE`; an offline test passes `TRUE`).
 #' @export
 friendly_download <- function(url, target_path, attempt_wayback = NULL,
                               allow_file = FALSE) {
