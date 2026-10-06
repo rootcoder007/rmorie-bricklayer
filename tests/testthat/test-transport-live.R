@@ -7,7 +7,8 @@
 C <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
 online <- function() {
-  r <- tryCatch(.Call(C("C_rmbl_http_download"), "https://cloud.r-project.org/", tempfile(), 20L, NULL, NULL),
+  r <- tryCatch(.Call(C("C_rmbl_http_download"), "https://cloud.r-project.org/", tempfile(), 20L,
+                      NULL, NULL, NULL, FALSE),
                 error = function(e) NULL)
   !is.null(r) && identical(r$status, 200L)
 }
@@ -74,7 +75,7 @@ test_that("a sized body drives the bar; a failing callback, an interrupt and an 
   expect_gt(file.size(dest), 0)
   expect_true(any(grepl("icon:", msgs, fixed = TRUE)))
   # a progress callback that errors ends the transfer and is reported as such
-  res <- .Call(C("C_rmbl_http_download"), url, tempfile(), 30L, NULL, function(now, total) stop("boom"))
+  res <- .Call(C("C_rmbl_http_download"), url, tempfile(), 30L, NULL, function(now, total) stop("boom"), NULL, FALSE)
   expect_identical(res$status, -1L)
   expect_identical(res$error, "the progress callback failed")
   # a destination that cannot be replaced (a non-empty directory) is reported,
@@ -84,7 +85,7 @@ test_that("a sized body drives the bar; a failing callback, an interrupt and an 
   writeLines("x", file.path(d, "inner"))
   expect_error(bricklayer_download(url, d, quiet = TRUE), "cannot move the download into place")
   expect_true(file.exists(file.path(d, "inner")))
-  expect_false(file.exists(paste0(d, ".rmbl-part")))
+  expect_length(list.files(dirname(d), pattern = paste0("^", basename(d), "\\.rmbl-part")), 0L)
 })
 
 test_that("Ctrl-C during a transfer is R's interrupt, raised after the transport cleaned up", {
@@ -97,9 +98,9 @@ test_that("Ctrl-C during a transfer is R's interrupt, raised after the transport
   # sees it pending, the transfer stops, the barrier raises the interrupt
   got <- tryCatch({
     .Call(C("C_rmbl_http_download"), "https://cloud.r-project.org/favicon.ico", dest, 30L, NULL,
-          function(now, total) tools::pskill(Sys.getpid(), tools::SIGINT))
+          function(now, total) tools::pskill(Sys.getpid(), tools::SIGINT), NULL, FALSE)
     "returned"
   }, interrupt = function(e) "interrupt")
   expect_identical(got, "interrupt")
-  expect_false(file.exists(paste0(dest, ".rmbl-part")))
+  expect_length(list.files(dirname(dest), pattern = paste0("^", basename(dest), "\\.rmbl-part")), 0L)
 })

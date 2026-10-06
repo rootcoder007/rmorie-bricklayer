@@ -15,4 +15,6 @@ mkdir -p "$OUT"
 $CXX $FLAGS fuzz_der.cpp -o "$OUT/fuzz_der" $RLD
 $CXX $FLAGS fuzz_strtod.cpp -o "$OUT/fuzz_strtod" $RLD
 $CXX $FLAGS fuzz_siu.cpp ../../src/siu_parse.cpp ../../src/siu_resolve.cpp -o "$OUT/fuzz_siu"
-echo "built $OUT/fuzz_der $OUT/fuzz_strtod $OUT/fuzz_siu"
+# the URL policy needs libR only for Rf_GetOption1 (the allow_http option)
+$CXX $FLAGS -DRMBL_FUZZ_EXPORTS fuzz_url.cpp ../../src/rmbl_fetch.cpp -o "$OUT/fuzz_url" $RLD $(curl-config --libs 2>/dev/null || echo -lcurl)
+echo "built $OUT/fuzz_der $OUT/fuzz_strtod $OUT/fuzz_siu $OUT/fuzz_url"

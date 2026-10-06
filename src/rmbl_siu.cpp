@@ -14,8 +14,27 @@
 #include "siu_parse.h"
 #include "siu_resolve.h"
 #include "siu_schema.h"
+#include "rmbl_entry.h"
 
 namespace {
+
+// Every SIU entry runs under the barrier, so the core's interrupt hook may throw:
+// rmbl::Interrupt unwinds through the C++ frames (destructors run) and the barrier
+// raises R's interrupt. Installed once, when the shared object loads.
+static void siu_interrupt_hook() { rmbl::check_interrupt(); }
+static const bool siu_hook_installed = (siu::interrupt_hook() = siu_interrupt_hook, true);
+
+// The split count of the last normalize_text() as an attribute, for the R
+// wrapper to turn into a warning (a warning from here could longjmp over the
+// barrier's live objects).
+static SEXP with_split_attr(SEXP ans) {
+    if (siu::last_split_lines() > 0) {
+        PROTECT(ans);
+        Rf_setAttrib(ans, Rf_install("split_lines"), Rf_ScalarInteger(static_cast<int>(siu::last_split_lines())));
+        UNPROTECT(1);
+    }
+    return ans;
+}
 
 std::string as_string(SEXP x, const char *what) {
     if (TYPEOF(x) != STRSXP || Rf_xlength(x) != 1 ||
@@ -40,7 +59,7 @@ SEXP C_rmbl_siu_html_to_text_impl(SEXP html) {
     SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
     SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
     UNPROTECT(1);
-    return ans;
+    return with_split_attr(ans);
 }
 
 SEXP C_rmbl_siu_parse_html_impl(SEXP html) {
@@ -57,7 +76,7 @@ SEXP C_rmbl_siu_parse_html_impl(SEXP html) {
     }
     Rf_setAttrib(ans, R_NamesSymbol, nms);
     UNPROTECT(2);
-    return ans;
+    return with_split_attr(ans);
 }
 
 SEXP C_rmbl_siu_to_iso_date_impl(SEXP human) {
@@ -65,10 +84,8 @@ SEXP C_rmbl_siu_to_iso_date_impl(SEXP human) {
     /* a date string is a few dozen bytes; the regex engine is recursive and a
      * 100,000-character input overflowed the C stack */
     if (in.size() > 4096) {
-        SEXP ans0 = PROTECT(Rf_allocVector(STRSXP, 1));
-        SET_STRING_ELT(ans0, 0, Rf_mkCharCE("", CE_UTF8));
-        UNPROTECT(1);
-        return ans0;
+        /* an error, not "" -- a silent "" at a size boundary looked like "no date" (0.5.7 and 0.5.8 reviews) */
+        Rf_error("`x` is longer than 4096 bytes: not a date");
     }
     const std::string out = siu::to_iso_date(in);
     SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
@@ -94,7 +111,7 @@ SEXP C_rmbl_siu_resolve_so_impl(SEXP text) {
     SET_VECTOR_ELT(ans, 1, rsn);
     Rf_setAttrib(ans, R_NamesSymbol, nms);
     UNPROTECT(4);
-    return ans;
+    return with_split_attr(ans);
 }
 
 SEXP C_rmbl_siu_schema_impl(SEXP unused) {

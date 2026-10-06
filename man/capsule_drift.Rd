@@ -41,7 +41,8 @@ reported as an effect size.}
 \code{\link[=drift_psi]{drift_psi()}} (default 10).}
 
 \item{identifier_levels}{A character column with more distinct values
-than this (or a distinct value for every fifth row) is an identifier,
+than this (or at least 20 distinct values covering more than a fifth of
+the rows) is an identifier,
 not a distribution: it gets \code{type = "identifier"}, its \code{unseen_share}
 (the fraction of current rows whose value the reference never had) and
 \code{drifted = NA}. Character columns that parse as dates are compared as

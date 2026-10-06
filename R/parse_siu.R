@@ -25,12 +25,17 @@ bricklayer_siu_schema <- function() {
 #' Convert SIU report HTML to plain text
 #'
 #' @param html A length-1 character vector of raw report HTML.
+#' @section Limits:
+#' The input is capped at 2 MiB (a report page is a few hundred KB). Before
+#' the text is read, a line longer than 2000 characters is split at the
+#' sentence end nearest the cap (else at a space), and a warning says how
+#' many lines were split: a field that spans a split may be incomplete.
 #' @return A length-1 character vector of plain text.
 #' @examples
 #' bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
 #' @export
 bricklayer_siu_text <- function(html) {
-  .Call(C_rmbl_siu_html_to_text, html)
+  .bl_siu_split_warn(.Call(C_rmbl_siu_html_to_text, html))
 }
 
 #' Parse an SIU director's report into the schema fields
@@ -43,6 +48,11 @@ bricklayer_siu_text <- function(html) {
 #' @param html A length-1 character vector of raw report HTML,
 #' or the path to a saved report file (e.g. from
 #' [bricklayer_fetch_siu()]) .
+#' @section Limits:
+#' The input is capped at 2 MiB (a report page is a few hundred KB). Before
+#' the text is read, a line longer than 2000 characters is split at the
+#' sentence end nearest the cap (else at a space), and a warning says how
+#' many lines were split: a field that spans a split may be incomplete.
 #' @return A named character vector: the 16 schema fields plus
 #' `_language`.
 #' @examples
@@ -64,14 +74,15 @@ bricklayer_parse_siu <- function(html) {
     names(out) <- cols
     return(as.data.frame(out, stringsAsFactors = FALSE, check.names = FALSE))
   }
-  if (!grepl("<", html, fixed = TRUE) && file.exists(html)) {
+  # a path is short: file.exists() on a 4096-byte "path" warns (0.5.8 diff review)
+  if (!grepl("<", html, fixed = TRUE) && nchar(html, type = "bytes") < 1000L && file.exists(html)) {
     html <- paste(readLines(html, warn = FALSE, encoding = "UTF-8"),
                   collapse = "\n")
   } else if (!grepl("[<\n]", html) && grepl("\\.html?$|[/\\\\]", html, ignore.case = TRUE)) {
     # a mistyped path is not an empty report
     stop("`html`: no such file: ", html, call. = FALSE)
   }
-  .Call(C_rmbl_siu_parse_html, html)
+  .bl_siu_split_warn(.Call(C_rmbl_siu_parse_html, html))
 }
 
 #' Fetch and parse one SIU director's report
@@ -149,5 +160,21 @@ bricklayer_siu_resolve_so <- function(text) {
   if (!is.character(text) || length(text) != 1L || is.na(text)) {
     stop("`text` must be a single string of report text", call. = FALSE)
   }
-  .Call(C_rmbl_siu_resolve_so, text)
+  .bl_siu_split_warn(.Call(C_rmbl_siu_resolve_so, text))
+}
+
+
+# The core splits any line longer than 2000 characters before the extractors
+# run (their regexes recurse once per character); it prefers a sentence end
+# and counts what it split. A field spanning a split can come back incomplete,
+# so the count is said, never swallowed (the SIU review's silent truncation).
+.bl_siu_split_warn <- function(x) {
+  n <- attr(x, "split_lines", exact = TRUE)
+  if (!is.null(n)) {
+    attr(x, "split_lines") <- NULL
+    warning(sprintf(paste("%d line%s longer than 2000 characters %s split for extraction;",
+                          "a field spanning a split may be incomplete"),
+                    n, if (n == 1L) "" else "s", if (n == 1L) "was" else "were"), call. = FALSE)
+  }
+  x
 }

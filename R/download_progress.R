@@ -52,13 +52,20 @@
 #' @param url The URL: \code{https} (plain \code{http} only with
 #'   \code{options(rmoriebricklayer.allow_http = TRUE)}); a loopback,
 #'   link-local or private address is refused.
+#' @param max_bytes Most bytes the body may have (default 2 GiB, the
+#'   transport's ceiling). A body past it, chunked or not, ends the transfer
+#'   with an error and leaves nothing behind: a caller that expects a small
+#'   file should say so.
 #' @param allow_file Accept a \code{file://} URL (default \code{FALSE}).
 #' @param dest Path to write.
-#' @param headers Named character vector of request headers, or \code{NULL}.
+#' @param headers Character vector of request headers, every element named, or
+#'   \code{NULL}.
 #' @param label Text shown in front of the bar; the file name by default.
 #' @param size Expected size in bytes when known (a percent bar instead of a
 #'   spinner).
-#' @param timeout Seconds allowed for the whole transfer.
+#' @param timeout Seconds allowed for the whole transfer: a whole number from 1
+#'   to 2147483647. A transfer slower than 64 bytes a second for 30 seconds is
+#'   ended before that.
 #' @param quiet \code{TRUE}, \code{FALSE}, or \code{NULL} to follow the
 #'   session and options.
 #' @param tty Draw the live bar (\code{TRUE}) or print milestone lines
@@ -75,7 +82,7 @@
 bricklayer_download <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
                                 timeout = 3600, quiet = NULL, tty = NULL,
-                                allow_file = FALSE) {
+                                allow_file = FALSE, max_bytes = 2^31) {
   # the capsule path's transport: https only, never a local or private
   # address, and file:// only when the caller says so (an offline test)
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
@@ -93,6 +100,9 @@ bricklayer_download <- function(url, dest, headers = NULL,
   }
   timeout <- suppressWarnings(as.numeric(timeout))[1L]
   if (is.na(timeout) || timeout < 1) stop("`timeout` must be at least one second", call. = FALSE)
+  if (timeout > .Machine$integer.max) stop("`timeout` must be at most 2147483647 seconds", call. = FALSE)
+  max_bytes <- suppressWarnings(as.numeric(max_bytes))[1L]
+  if (is.na(max_bytes) || max_bytes < 1) stop("`max_bytes` must be a number of bytes, at least one", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
   mile <- 0L
   spin <- 0L
@@ -142,7 +152,7 @@ bricklayer_download <- function(url, dest, headers = NULL,
     # URL is checked again there, resolved and pinned, every redirect hop is
     # re-checked (no https -> http, credentials dropped across hosts) and the
     # body is capped; base R's url() did none of that (0.5.7 review)
-    res <- .Call(C_rmbl_http_download, url, dest, as.integer(timeout), hdr_lines, draw)
+    res <- .Call(C_rmbl_http_download, url, dest, as.integer(timeout), hdr_lines, draw, max_bytes, FALSE)
     if (res$status < 0) {
       stop(sprintf("%s: %s", url, res$error), call. = FALSE)
     }

@@ -18,7 +18,8 @@ change (default 1e-7).}
 }
 \value{
 A list of class \code{bricklayer_mcar}: \code{statistic},
-\code{df}, \code{p_value}, \code{n_patterns}, \code{n_used},
+\code{df}, \code{p_value}, \code{log_p_value} (the log of \code{p_value}, finite where
+\code{p_value} underflows to 0), \code{n_patterns}, \code{n_used},
 \code{n_vars}, \code{iterations}, \code{mu}, \code{sigma}, and
 \code{note} (a caveat when the test is degenerate). With complete data
 \code{df} is 0 and \code{p_value} is \code{NA} -- there is nothing to

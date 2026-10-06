@@ -84,7 +84,7 @@
 
 .bl_hosted_auth <- function() {
   v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_AUTH_URL", unset = "")))
-  if (nzchar(v)) return(v)
+  if (nzchar(v)) return(.rmbl_check_public_url(v, "MORIE_HOSTED_AUTH_URL"))  # a code and a key go there
   a <- .rmbl_services_llm()$auth_url %||% ""
   if (nzchar(a)) a else paste0(.bl_hosted_base() %||% "https://llm.rmorie.com", "/auth")
 }
@@ -113,20 +113,25 @@
 # The GET seam: the hosted tier's model list (a public https address, checked).
 .bl_http_get <- function(url, timeout, headers) {
   .rmbl_check_public_url(url, "url")
-  .Call(C_rmbl_http_get, url, as.integer(timeout), headers)
+  .Call(C_rmbl_http_get, url, as.integer(timeout), headers, FALSE)
 }
 
 # ---- the routes in front of the hosted tier -----------------------------------
 #
 # An endpoint of your own and a local Ollama server are addresses from your own
 # environment, not from a document, so the anti-SSRF policy that guards every
-# other URL is relaxed for them in one precise way: plain http on the loopback
-# interface is admitted while the call runs (options(rmoriebricklayer.allow_loopback)),
-# nothing else private, and a redirect off the loopback host meets the usual rules.
-.bl_with_local <- function(expr) {
-  old <- options(rmoriebricklayer.allow_loopback = TRUE)
-  on.exit(options(old), add = TRUE)
-  force(expr)
+# other URL is relaxed for them in one precise way: plain http to the loopback
+# host or to a LITERAL private LAN address (10/8, 172.16/12, 192.168/16,
+# fc00::/7: an LM Studio or vLLM box on your own network, diff review D4) is
+# admitted, as an argument of that one call (never an option: a global switch
+# relaxed every fetch in the process, fourth review), only when the address IS
+# such a literal, and a redirect off it meets the usual rules. Link-local
+# (169.254/16, the metadata range) and every name stay under the full policy.
+.bl_loopback_url <- function(url) {
+  host <- paste0("(localhost|127\\.[0-9.]+|10\\.[0-9.]+|192\\.168\\.[0-9.]+|",
+                 "172\\.(1[6-9]|2[0-9]|3[01])\\.[0-9.]+|\\[::1\\]|\\[::ffff:127\\.[0-9.]+\\]|",
+                 "\\[f[cd][0-9a-f]{2}:[0-9a-f:.]*\\])")
+  grepl(paste0("^https?://", host, "(:[0-9]+)?(/|$)"), url, ignore.case = TRUE)
 }
 
 .bl_own_base <- function() {
@@ -135,7 +140,10 @@
   if (!grepl("^https?://[^/[:space:]]+", v)) {
     stop("MORIE_LLM_BASE_URL must be an http(s):// URL (an OpenAI-compatible server)", call. = FALSE)
   }
-  sub("/v1$", "", v)  # the base, with or without the /v1 most servers document
+  v <- sub("/v1$", "", v)  # the base, with or without the /v1 most servers document
+  # your own server: a loopback or private-LAN literal over plain http, or a public https address
+  if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "MORIE_LLM_BASE_URL")
+  v
 }
 .bl_env1 <- function(name) {
   v <- trimws(Sys.getenv(name, unset = ""))
@@ -151,11 +159,15 @@
 
 .bl_bearer <- function(key) if (is.null(key)) NULL else paste("Authorization: Bearer", key)
 
-# GET for the local routes: the loopback relaxation on, the usual public-URL
-# pre-flight off (the address is the user's own). One seam, so tests can
-# stand in a server.
+# GET for the local routes: the loopback relaxation passed for a loopback
+# address, the usual checks for anything else. One seam, so tests can stand
+# in a server.
 .bl_http_get_local <- function(url, timeout, headers) {
-  .bl_with_local(.Call(C_rmbl_http_get, url, as.integer(timeout), headers))
+  .Call(C_rmbl_http_get, url, as.integer(timeout), headers, .bl_loopback_url(url))
+}
+# POST for the local routes, the same way.
+.bl_http_post_local <- function(url, body, content_type, timeout, headers) {
+  .Call(C_rmbl_http_post, url, body, content_type, as.integer(timeout), headers, .bl_loopback_url(url))
 }
 
 # The models a local Ollama server has (GET /api/tags): a character vector,
@@ -164,7 +176,7 @@
   res <- tryCatch(.bl_http_get_local(paste0(base, "/api/tags"), timeout, .bl_bearer(.bl_env1("OLLAMA_API_KEY"))),
                   error = function(e) NULL)
   if (is.null(res) || !identical(as.integer(res$status), 200L)) return(NULL)
-  parsed <- tryCatch(bricklayer_json_from_json(rawToChar(res$body), simplifyVector = FALSE),
+  parsed <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE),
                      error = function(e) NULL)
   nm <- vapply(parsed$models %||% list(), function(m) as.character(m$name %||% m$model %||% "")[1L], "")
   nm[nzchar(nm)]
@@ -179,7 +191,7 @@
         base <- .bl_own_base()
         if (!is.null(base)) {
           list(name = "own endpoint", base = base, key = .bl_env1("MORIE_LLM_API_KEY"),
-               model = .bl_env1("MORIE_LLM_MODEL"), local = TRUE)
+               model = .bl_env1("MORIE_LLM_MODEL"), local = .bl_loopback_url(base))
         }
       },
       ollama = {
@@ -188,7 +200,7 @@
         if (!is.null(tags)) {
           list(name = "local Ollama", base = base, key = .bl_env1("OLLAMA_API_KEY"),
                model = .bl_env1("OLLAMA_MODEL") %||% (if (length(tags)) tags[[1L]]),
-               local = TRUE, models = tags)
+               local = .bl_loopback_url(base), models = tags)
         }
       },
       hosted = {
@@ -257,7 +269,7 @@ bricklayer_llm_models <- function(timeout = 10) {
     return(structure(character(), default = NULL,
                      http_status = if (is.null(res)) NA_integer_ else as.integer(res$status)))
   }
-  parsed <- tryCatch(bricklayer_json_from_json(rawToChar(res$body), simplifyVector = FALSE),
+  parsed <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE),
     error = function(e) NULL
   )
   ids <- vapply(parsed$data %||% list(), function(m) as.character(m$id %||% ""), "")
@@ -302,7 +314,7 @@ bricklayer_llm_models <- function(timeout = 10) {
 .bl_http_post <- function(url, body, content_type, timeout, headers) {
   .Call(
     C_rmbl_http_post, url, body, content_type, as.integer(timeout),
-    headers
+    headers, FALSE
   )
 }
 
@@ -314,7 +326,7 @@ bricklayer_llm_models <- function(timeout = 10) {
     auto_unbox = TRUE
   )))
   res <- if (isTRUE(local)) {
-    .bl_with_local(.bl_http_post(url, raw, "application/json", timeout, headers))
+    .bl_http_post_local(url, raw, "application/json", timeout, headers)
   } else {
     .bl_http_post(url, raw, "application/json", timeout, headers)
   }
@@ -324,7 +336,7 @@ bricklayer_llm_models <- function(timeout = 10) {
   json <- NULL
   if (length(res$body)) {
     json <- tryCatch(
-      bricklayer_json_from_json(rawToChar(res$body),
+      .rmbl_json_text(res$body,
         simplifyVector = FALSE
       ),
       error = function(e) NULL
@@ -333,7 +345,7 @@ bricklayer_llm_models <- function(timeout = 10) {
   list(status = as.integer(res$status), json = json, error = res$error %||% "")
 }
 
-.bl_reply_error <- function(res, what) {
+.bl_reply_error <- function(res, what, secret = NULL) {
   if (!isTRUE(res$status > 0L)) {
     # libcurl gives -1 when no HTTP answer came at all; its own reason says which way it failed
     why <- if (nzchar(res$error %||% "")) res$error else "no network, or a proxy refused the connection"
@@ -348,11 +360,26 @@ bricklayer_llm_models <- function(timeout = 10) {
   if (is.list(msg)) msg <- msg$message
   detail <- ""
   if (is.character(msg) && length(msg) == 1L) {
-    # a gateway error can quote the key it was sent ("Received API Key = sk-...", a key hash): never print it
-    msg <- sub("(?i)[.,;]?\\s*(received api key|key hash).*$", "", msg, perl = TRUE)
-    detail <- paste0(": ", msg)
+    detail <- paste0(": ", .bl_redact(msg, secret))
   }
   stop(sprintf("%s answered %d%s", what, res$status, detail), call. = FALSE)
+}
+
+# The sign-in service names the page to open; only a public https address is
+# handed to the OS browser (the service could otherwise name any scheme).
+.bl_browsable <- function(uri) {
+  is.character(uri) && length(uri) == 1L && grepl("^https://", uri) &&
+    !inherits(tryCatch(.rmbl_check_public_url(uri, "verification_uri"), error = function(e) e), "error")
+}
+
+# A server's error text can quote the key it was sent, in any phrasing. The key
+# itself is redacted by value, the usual spellings of a bearer or an sk- key by
+# shape, and the two LiteLLM phrasings seen in the wild are cut as before.
+.bl_redact <- function(msg, secret = NULL) {
+  msg <- sub("(?i)[.,;]?\\s*(received api key|key hash).*$", "", msg, perl = TRUE)
+  for (sec in secret) if (is.character(sec) && nzchar(sec)) msg <- gsub(sec, "<key>", msg, fixed = TRUE)
+  msg <- gsub("(?i)bearer\\s+[A-Za-z0-9._~+/=-]{8,}", "Bearer <key>", msg, perl = TRUE)
+  gsub("\\bsk-[A-Za-z0-9._-]{6,}", "<key>", msg, perl = TRUE)
 }
 
 # The command name the user typed (the launchers set RMBL_PROG; rmbl and rmoriebricklayer are one command).
@@ -363,11 +390,18 @@ bricklayer_llm_models <- function(timeout = 10) {
 
 #' Ask a language model
 #'
-#' Sends one prompt to the first language-model route that answers from
-#' this machine and returns the reply. Routes, in order:
+#' Sends one prompt to the first language-model route that is set up on
+#' this machine and returns the reply. An endpoint of your own counts as set
+#' up when it is configured (it is not probed: a configured endpoint that is
+#' down is an error, not a silent hop to the hosted tier); a local Ollama
+#' counts when it answers; the hosted tier when a key is stored. Routes, in order:
 #' \enumerate{
 #'   \item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL},
-#'     with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them;
+#'     with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them.
+#'     An \code{https} address, or plain \code{http} to the loopback host or to a
+#'     literal private LAN address (\code{10/8}, \code{172.16/12},
+#'     \code{192.168/16}, \code{fc00::/7}: an LM Studio or vLLM box on your own
+#'     network); a host name over plain http is refused;
 #'   \item a local Ollama server: \code{OLLAMA_HOST} (or
 #'     \code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
 #'     \code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
@@ -383,7 +417,7 @@ bricklayer_llm_models <- function(timeout = 10) {
 #' @param model Model id; default the route's own (see above).
 #' @param timeout Seconds to wait for the reply.
 #' @param system_prompt Optional system message.
-#' @param route \code{NULL} (the first that answers) or one of \code{"own"},
+#' @param route \code{NULL} (the first that is set up) or one of \code{"own"},
 #'   \code{"ollama"}, \code{"hosted"} to insist on a route.
 #' @return Character scalar with the reply. Errors, saying what to set up,
 #'   when no route answers, and when the server answers with an error.
@@ -438,7 +472,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                      asked_model, .bl_prog(), length(have)), call. = FALSE)
       }
     }
-    .bl_reply_error(res, what)
+    .bl_reply_error(res, what, secret = rt$key)
   }
   txt <- res$json$choices[[1L]]$message$content
   if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
@@ -549,7 +583,7 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     "Sign in at %s and enter the code: %s",
     info$verification_uri, info$user_code
   ))
-  if (isTRUE(open_browser)) {
+  if (isTRUE(open_browser) && .bl_browsable(info$verification_uri)) {
     try(utils::browseURL(info$verification_uri), silent = TRUE)
   }
   interval <- as.numeric(if (is.null(info$interval)) 5 else info$interval)
@@ -617,7 +651,11 @@ bricklayer_llm_logout <- function() {
 #'   hosted MORIE tier): \code{route}, \code{status} and \code{detail}.
 #'   Printed by \code{rmoriebricklayer doctor}.
 #' @examples
+#' # with the local route off the call reaches no network
+#' old <- Sys.getenv("OLLAMA_HOST", unset = NA)
+#' Sys.setenv(OLLAMA_HOST = "off")
 #' bricklayer_llm_status()
+#' if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 #' @export
 bricklayer_llm_status <- function() {
   own <- .bl_own_base()

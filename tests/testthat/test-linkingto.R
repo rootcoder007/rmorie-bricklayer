@@ -186,6 +186,11 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "        out[k++] = ISNAN(tmp[0]) && ISNAN(tmp[3]);",
     "        out[k++] = ISNAN(rmbl_ks_two_sample(xn, 2, y, 6));",
     "        out[k++] = rmbl_mean(xi, 2) == R_PosInf;",
+    "        /* PBKDF2's int channel: 0 with the key written, -1 for an invalid argument */",
+    "        out[k++] = (double) rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
+    "                                               (const unsigned char *) \"salt\", 4, 1, 20, raw64)",
+    "                 + 10.0 * (rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
+    "                                              (const unsigned char *) \"salt\", 4, 0, 20, raw64) == -1);",
     "    }",
     "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
     "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
@@ -338,6 +343,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_identical(nums[47L], 2e12)      # eta = 5 is infeasible for both kernels
   expect_true(is.nan(nums[48L]))         # three parameters where four are needed
   expect_identical(nums[49:52], c(1, 1, 1, 1))
+  expect_identical(nums[53L], 10)         # pbkdf2: 0 on success, -1 on iterations = 0
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, core_sha256("abc"))

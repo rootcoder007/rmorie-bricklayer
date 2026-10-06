@@ -234,14 +234,16 @@ write_text_fallback <- function(text, path) {
   }
   txt <- if (length(x) == 1L && !grepl("^\\s*[\\[{\"]", x) && file.exists(x))
     paste(readLines(x, warn = FALSE, encoding = "UTF-8"), collapse = "\n") else x
+  # what came back is TEXT to parse, never a second address to fetch or a path to
+  # open (fourth review: a body that was a bare URL made the package fetch it)
   # strict = TRUE (the default, and the package's own documents: provenance,
   # manifests, bundles): a repeated key is an error. strict = FALSE is for a
   # portal's metadata, read the way jsonlite reads it: a repeated key is
   # kept and a long numeric id is not a warning.
   if (isTRUE(strict)) {
-    bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify))
+    .rmbl_json_text(txt, simplifyVector = isTRUE(simplify))
   } else {
-    bricklayer_json_from_json(txt, simplifyVector = isTRUE(simplify),
+    .rmbl_json_text(txt, simplifyVector = isTRUE(simplify),
                               duplicate_keys = "keep", bigint_warn = FALSE)
   }
 }
@@ -299,7 +301,7 @@ write_text_fallback <- function(text, path) {
 #' @noRd
 .rmbl_check_public_url <- function(url, what = "url", allow_file = FALSE,
                                    allow_http = getOption("rmoriebricklayer.allow_http", FALSE),
-                                   resolve = FALSE) {
+                                   resolve = FALSE, allow_loopback = FALSE) {
   url <- as.character(unlist(url))[1L]
   if (is.na(url) || !nzchar(url)) stop(sprintf("%s is empty", what), call. = FALSE)
   if (isTRUE(allow_file) && grepl("^file://", url, ignore.case = TRUE)) return(url)
@@ -312,7 +314,9 @@ write_text_fallback <- function(text, path) {
   # with inet_pton, local names are refused by suffix, and with `resolve`
   # every address the name resolves to is tested. The fetch layer always
   # resolves, and pins the connection to the addresses it checked.
-  why <- .Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve))
+  # `allow_loopback` is the local-model relaxation (plain http on the loopback host), an
+  # argument of this one call and never an option (fourth review)
+  why <- .Call(C_rmbl_url_check, url, isTRUE(allow_http), isTRUE(resolve), isTRUE(allow_loopback))
   if (!nzchar(why)) return(url)
   scheme <- tolower(sub("^([a-z][a-z0-9+.-]*)://.*$", "\\1", url, ignore.case = TRUE))
   if (startsWith(why, "plain http") || startsWith(why, "scheme ")) {
@@ -321,7 +325,7 @@ write_text_fallback <- function(text, path) {
                         "trusted plain-http mirror"), what, scheme, url),
          call. = FALSE)
   }
-  if (grepl("local|private|resolves", why)) {
+  if (grepl("local|private|resolves|single-label", why)) {
     stop(sprintf("%s points at a local or private address ('%s'): refused (%s)",
                  what, url, why), call. = FALSE)
   }
@@ -336,7 +340,7 @@ write_text_fallback <- function(text, path) {
   host <- as.character(host)[1L]
   if (is.na(host) || !nzchar(host)) return(TRUE)
   h <- if (grepl(":", host, fixed = TRUE) && !startsWith(host, "[")) paste0("[", host, "]") else host
-  nzchar(.Call(C_rmbl_url_check, paste0("https://", h, "/"), FALSE, FALSE))
+  nzchar(.Call(C_rmbl_url_check, paste0("https://", h, "/"), FALSE, FALSE, FALSE))
 }
 
 # In-process synthetic state: make_synthetic_csv() sets it, so a manifest
@@ -357,4 +361,19 @@ write_text_fallback <- function(text, path) {
 .rmbl_synthetic_env <- function() {
   v <- trimws(Sys.getenv("BRICKLAYER_SYNTHETIC", unset = ""))
   nzchar(v) && !tolower(v) %in% c("0", "false", "no", "off")
+}
+
+
+# Parse JSON TEXT and nothing else. bricklayer_json_from_json() also accepts a
+# URL or a file path, which is right for a user's argument and wrong for bytes a
+# server just sent: a body (or a signature file) that happens to be a bare URL
+# would make the package fetch it, and one that names a local path would open
+# it (fourth review). Every parse of network- or disk-delivered content goes
+# through here; the hygiene test enumerates the call sites.
+#' @noRd
+.rmbl_json_text <- function(txt, ...) {
+  if (is.raw(txt)) txt <- rawToChar(txt)
+  txt <- paste(as.character(txt), collapse = "\n")
+  if (!bricklayer_json_validate(txt)) stop("not JSON", call. = FALSE)
+  bricklayer_json_from_json(txt, ...)
 }

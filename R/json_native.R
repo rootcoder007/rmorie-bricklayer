@@ -688,7 +688,9 @@ bricklayer_json_base64url_dec <- function(input) {
 #' @param digits As in jsonlite.
 #' @param pretty As in jsonlite.
 #' @param force As in jsonlite.
-#' @param ... As in jsonlite.
+#' @param ... As in jsonlite, plus `keep_vec_names` (a named atomic
+#'   vector is written as an object, as `manifest_canonical()` requires)
+#'   and `quiet_vec_names` (no message when names cannot be kept).
 #' @return a length-one character vector of class `json`.
 #' @examples
 #' bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
@@ -1244,7 +1246,7 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
       tmp <- tempfile(fileext = ".json")
       on.exit(unlink(tmp), add = TRUE)
       res <- .Call(C_rmbl_http_download, txt, tmp, 60L,
-                   "Accept: application/json, text/*, */*", NULL)
+                   "Accept: application/json, text/*, */*", NULL, 16777216, FALSE)  # 16 MiB is a large JSON
       if (res$status < 0) stop(sprintf("%s: %s", txt, res$error), call. = FALSE)
       if (res$status >= 400) stop(sprintf("%s answered HTTP %d", txt, res$status), call. = FALSE)
       txt <- file(tmp)

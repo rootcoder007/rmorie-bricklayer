@@ -11,18 +11,10 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
 \item{target_path}{Destination path on disk.}
 
-\item{mode}{Accepted for compatibility with the
-signature of \code{utils::download.file()}, which this
-function once wrapped; every transfer is binary.}
-
-\item{quiet}{Logical; suppress progress output. Defaults to
-\code{FALSE}.}
-
-\item{allow_file}{Accept a \verb{file://} URL (default \code{FALSE}; an offline
-test passes \code{TRUE}). Every URL must otherwise be \code{https} and public.}
-}
-\value{
-The \code{target_path}, returned invisibly.
+\item{mode}{Kept for the signature of \code{utils::download.file()}; only
+\code{"wb"} (or \code{"w"}) is accepted. Every transfer is binary and written
+fresh through the package's own transport, so an append mode cannot be
+honoured and is an error rather than a silent \code{"wb"}.}
 }
 \description{
 Downloads through the package's own transport,
@@ -30,14 +22,4 @@ Downloads through the package's own transport,
 every redirect hop re-checked, the body capped, a live
 progress bar. Returns the target path invisibly so it
 composes in pipelines.
-}
-\examples{
-\donttest{
-# try(): a live download must fail gracefully on an offline check machine.
-dest <- try(download_data("https://cloud.r-project.org/",
-  tempfile(fileext = ".html"),
-  quiet = TRUE
-))
-if (!inherits(dest, "try-error")) file.exists(dest)
-}
 }

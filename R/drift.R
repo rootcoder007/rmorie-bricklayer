@@ -547,7 +547,8 @@ benford_test <- function(x) {
 #' # Structural changes are reported rather than tested.
 #' capsule_drift(ref, same[, c("value", "grade")])$removed
 #' @param identifier_levels A character column with more distinct values
-#'   than this (or a distinct value for every fifth row) is an identifier,
+#'   than this (or at least 20 distinct values covering more than a fifth of
+#'   the rows) is an identifier,
 #'   not a distribution: it gets `type = "identifier"`, its `unseen_share`
 #'   (the fraction of current rows whose value the reference never had) and
 #'   `drifted = NA`. Character columns that parse as dates are compared as
@@ -636,12 +637,13 @@ capsule_drift <- function(reference, current, alpha = 0.01,
     # divergence over the union of categories read 8.8 and fired on every
     # such column. The share of current rows the reference never saw is
     # reported; the verdict is NA, not a guess.
-    # The ratio test needs a sample behind it: on ten rows a five-level
-    # factor has "a value for every fifth row" and 0.5.7 returned no verdict
-    # for an ordinary small column. It applies from a hundred rows a side.
+    # The ratio test needs levels behind it, not rows: on ten rows a
+    # five-level factor has "a value for every fifth row" and 0.5.7 returned
+    # no verdict for an ordinary small column, while 0.5.8's hundred-row gate
+    # scored an 80-row id column as categorical with a PSI of 5 (its diff
+    # review). A column with fewer than 20 distinct values is a factor.
     if (n_lv > identifier_levels ||
-        (length(av) >= 100L && length(bv) >= 100L &&
-           n_lv > 0.2 * (length(av) + length(bv)))) {
+        (n_lv >= 20L && n_lv > 0.2 * (length(av) + length(bv)))) {
       return(row(nm, "identifier", unseen = unseen, drifted = NA,
                  note = sprintf("%d distinct values: distribution tests do not apply", n_lv)))
     }

@@ -208,8 +208,10 @@ int rmbl_blake2b(const unsigned char *msg, size_t msglen,
     return 0;
 }
 
-/* PBKDF2-HMAC-SHA256 (RFC 8018 section 5.2). */
-int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
+/* PBKDF2-HMAC-SHA256 (RFC 8018 section 5.2). The body with its buffers is
+ * `pbkdf2_inner`; the exported wrapper below raises a pending interrupt only
+ * after those buffers are gone. */
+static int pbkdf2_inner(const unsigned char *pass, size_t passlen,
                         const unsigned char *salt, size_t saltlen,
                         int iterations, int dklen, unsigned char *out) {
     const int hlen = 32;
@@ -244,8 +246,7 @@ int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
         std::memcpy(t, u, 32);
         for (int j = 1; j < iterations; ++j) {
             if ((j & 4095) == 0 && rmbl_interrupt_pending()) {
-                /* inside a barrier: stop, zero the output and report 1 (the
-                 * barrier raises); with no barrier the test above raised */
+                /* stop, zero the output and report 1; the wrapper raises */
                 rmbl_kernel_interrupted = 1;
                 std::memset(out, 0, static_cast<size_t>(dklen));
                 return 1;
@@ -258,6 +259,14 @@ int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
         std::memcpy(out + off, t, static_cast<size_t>(take));
     }
     return 0;
+}
+
+int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
+                        const unsigned char *salt, size_t saltlen,
+                        int iterations, int dklen, unsigned char *out) {
+    const int r = pbkdf2_inner(pass, passlen, salt, saltlen, iterations, dklen, out);
+    if (r == 1) rmbl_interrupt_raise_unbarriered();   /* no std::vector alive here */
+    return r;
 }
 
 /* Operating-system entropy. Returns 0 on success, -1 if no CSPRNG could

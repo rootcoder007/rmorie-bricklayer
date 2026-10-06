@@ -121,7 +121,7 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
   }
   fresh <- age < 86400
   if (refresh || !fresh) .bl_data_get("/manifest.json", p, timeout = 60)
-  bricklayer_json_from_json(paste(readLines(p, warn = FALSE), collapse = "\n"),
+  .rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"),
                             simplifyVector = FALSE)
 }
 
