@@ -9,6 +9,11 @@
 # half checked -- and bricklayer exists to be reached this way, so the
 # sibling packages are the ones that would find out.
 
+# The consumer the first test builds is reused by the second (the interrupt probe), which
+# removes both directories when it is done.
+consumer_dir <- file.path(tempdir(), paste0("rmblconsume", Sys.getpid()))
+consumer_lib <- file.path(tempdir(), paste0("rmbllib", Sys.getpid()))
+
 test_that("every published kernel compiles and resolves from a consumer", {
   skip_on_cran()
   # Windows is skipped deliberately, and the reason is not squeamishness
@@ -33,8 +38,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "package not installed with its include directory"
   )
 
-  dir <- file.path(tempdir(), paste0("rmblconsume", Sys.getpid()))
-  on.exit(unlink(dir, recursive = TRUE), add = TRUE)
+  dir <- consumer_dir
   dir.create(file.path(dir, "src"), recursive = TRUE, showWarnings = FALSE)
   dir.create(file.path(dir, "R"), recursive = TRUE, showWarnings = FALSE)
 
@@ -61,12 +65,14 @@ test_that("every published kernel compiles and resolves from a consumer", {
     c(
       "useDynLib(rmblconsume, .registration = TRUE)",
       "import(rmoriebricklayer)",
-      "export(consume_series)"
+      "export(consume_series)",
+      "export(consume_mk)"
     ),
     file.path(dir, "NAMESPACE")
   )
   writeLines(
-    "consume_series <- function() .Call(C_consume_series)",
+    c("consume_series <- function() .Call(C_consume_series)",
+      "consume_mk <- function(y) .Call(C_consume_mk, as.double(y))"),
     file.path(dir, "R", "consume.R")
   )
 
@@ -201,8 +207,18 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "    return res;",
     "}",
     "",
+    "/* the Mann-Kendall kernel on a caller-sized series, with no bricklayer barrier on",
+    " * the stack: the path the interrupt probe below exercises */",
+    "SEXP C_consume_mk(SEXP y) {",
+    "    double S = 0, var = 0;",
+    "    R_xlen_t used = 0;",
+    "    rmbl_mann_kendall(REAL(y), XLENGTH(y), &S, &var, &used);",
+    "    return Rf_ScalarReal(S);",
+    "}",
+    "",
     "static const R_CallMethodDef CallEntries[] = {",
     "    {\"C_consume_series\", (DL_FUNC) &C_consume_series, 0},",
+    "    {\"C_consume_mk\", (DL_FUNC) &C_consume_mk, 1},",
     "    {NULL, NULL, 0}",
     "};",
     "",
@@ -212,9 +228,8 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "}"
   ), file.path(dir, "src", "consume.c"))
 
-  lib <- file.path(tempdir(), paste0("rmbllib", Sys.getpid()))
+  lib <- consumer_lib
   dir.create(lib, showWarnings = FALSE)
-  on.exit(unlink(lib, recursive = TRUE), add = TRUE)
   out <- suppressWarnings(system2(
     file.path(R.home("bin"), "R"),
     c(
@@ -350,4 +365,24 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_identical(
     sha, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
   )
+})
+
+test_that("a pending interrupt stops the Mann-Kendall kernel called with no barrier (D2)", {
+  skip_on_cran()
+  skip_on_os("windows")
+  on.exit(unlink(c(consumer_dir, consumer_lib), recursive = TRUE), add = TRUE)
+  skip_if(!dir.exists(file.path(consumer_lib, "rmblconsume")), "the consumer was not built")
+  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
+  # Another package's .Call reaches rmbl_mann_kendall() with none of bricklayer's barriers
+  # active, so there is nothing to raise after the kernel returns: mann_kendall_inner() has
+  # to answer its sentinel on the poll, let its buffers go, and only then raise R's interrupt
+  # (0.5.8 raised from inside the poll, over live std::vectors -- the 0.5.8 diff review).
+  # 120k points keep the pair loop busy for many seconds unless the poll (every 512 rows)
+  # sees the signal; the probe child has SIGINT reset to the default, so it is conclusive
+  # where this process inherited SIGINT as ignored (a background chain, covr).
+  got <- interrupt_probe(paste0(
+    ".libPaths(c(", shQuote(consumer_lib), ", .libPaths())); library(rmblconsume);",
+    " consume_mk(as.numeric(seq_len(120000L)) + rep(c(0.5, -0.5), 60000L))"))
+  skip_if(startsWith(got, "inconclusive"), got)
+  expect_identical(got, "interrupt")
 })
