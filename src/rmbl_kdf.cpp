@@ -209,15 +209,15 @@ int rmbl_blake2b(const unsigned char *msg, size_t msglen,
 }
 
 /* PBKDF2-HMAC-SHA256 (RFC 8018 section 5.2). */
-void rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
+int rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
                         const unsigned char *salt, size_t saltlen,
                         int iterations, int dklen, unsigned char *out) {
     const int hlen = 32;
-    if (dklen < 1 || iterations < 1) return;
+    if (dklen < 1 || iterations < 1) return -1;   /* refused: nothing written */
     /* An explicit bound the compiler can see: without it saltlen + 4 is
      * an unprovable expression and the fortified memcpy warns. */
     const size_t kMaxSalt = 1u << 20;
-    if (saltlen > kMaxSalt) return;
+    if (saltlen > kMaxSalt) return -1;   /* refused: nothing written */
     const int blocks = (dklen + hlen - 1) / hlen;
 
     std::vector<unsigned char> block;
@@ -244,9 +244,11 @@ void rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
         std::memcpy(t, u, 32);
         for (int j = 1; j < iterations; ++j) {
             if ((j & 4095) == 0 && rmbl_interrupt_pending()) {
+                /* inside a barrier: stop, zero the output and report 1 (the
+                 * barrier raises); with no barrier the test above raised */
                 rmbl_kernel_interrupted = 1;
                 std::memset(out, 0, static_cast<size_t>(dklen));
-                return;
+                return 1;
             }
             hmac_raw(u, 32, u);
             for (int k = 0; k < 32; ++k) t[k] ^= u[k];
@@ -255,6 +257,7 @@ void rmbl_pbkdf2_sha256(const unsigned char *pass, size_t passlen,
         const int take = (dklen - off < hlen) ? (dklen - off) : hlen;
         std::memcpy(out + off, t, static_cast<size_t>(take));
     }
+    return 0;
 }
 
 /* Operating-system entropy. Returns 0 on success, -1 if no CSPRNG could

@@ -51,9 +51,13 @@ and a digest anyone can recompute says nothing about who produced the data.
   book and frequency table, reported odds ratios recomputed under every
   relabelling, and the mechanical step behind a permutation named, so a
   swapped label is fixed on the day, not blamed on the software.
-- **Asking a model** — `bricklayer_llm_login()`, `bricklayer_llm_models()`
-  and `bricklayer_llm_ask()` sign in to the hosted MORIE tier, list the
-  models your key can use and put a question to one; the
+- **Asking a model** — `bricklayer_llm_ask()` puts a question to the first
+  language-model route that answers: an OpenAI-compatible endpoint of your
+  own, a local Ollama server, then the hosted MORIE tier as a last resort
+  (`bricklayer_llm_login()` stores its key, `bricklayer_llm_models()` lists
+  its models, `bricklayer_llm_status()` shows which route answers). The
+  hosted addresses come from a signed services document
+  (`bricklayer_services()`), so they can change without a release; the
   `rmoriebricklayer` launcher offers the same as shell verbs.
 - **Schema validation** — `infer_schema()` derives a pinnable schema from
   data you trust; `validate_schema()` checks names, types, ranges, value
@@ -192,8 +196,9 @@ and a digest anyone can recompute says nothing about who produced the data.
 - **Curated tables** — `bricklayer_data_tables()` lists the tables served
   at data.rmorie.com (161 databases and 203 tables on 2026-10-05,
   materialised from Google BigQuery public datasets), and
-  `bricklayer_data_load("db/table")` opens one with your MORIE key, cached
-  locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
+  `bricklayer_data_load("db/table")` opens one with your MORIE key (issued
+  on request at <https://rmorie.com/access>, under the terms at
+  <https://rmorie.com/data-license>), cached locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture
@@ -211,7 +216,7 @@ by a check you can run yourself; none is a claim about the design.
 | Constant time | ctgrind: every operation that touches a secret runs under valgrind memcheck with the secret marked undefined, so a branch or a memory address depending on it is an error. 22 cases -- ML-KEM 512/768/1024 (keygen, encaps, decaps and implicit rejection), ML-DSA 44/65/87 (keygen, sign), SLH-DSA (SHAKE and SHA-2 families), HQC 1/3/5 and round 4, XMSS, CTR_DRBG on the portable and the AES-NI path, HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3, digest comparison -- all clean with GCC and with Clang. The only values the schemes branch on are the ones their specifications publish (a rejected sample, the challenge, the hints, R), each declassified at one named line | `inst/ctcheck/`, workflow `constant-time` |
 | Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
 | Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
-| Survives hostile arguments | Every one of the 111 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R` |
+| Survives hostile arguments | Every one of the 113 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
 | DER means DER | The parser refuses BER: long-form lengths below 128, lengths with leading zeros, non-minimal tags, end-of-contents octets, trailing bytes; `ECDSA-Sig-Value` must be exactly two canonical INTEGERs and the PKCS#1 block exactly the RFC 8017 DigestInfo | `src/rmbl_asn1.cpp`, `R/x509.R`, `R/timestamp.R` |
@@ -463,56 +468,67 @@ See `vignette("drift")` for the distributional checks and
 ## Asking a model
 
 The package can put a question to a language model, from R or from the
-shell, through the hosted MORIE tier at `https://llm.rmorie.com`. Nothing
-runs until you sign in; without a key every call returns empty.
+shell. Three routes are tried, in this order, and the first that answers
+is used:
+
+1. **An endpoint of your own.** Set `MORIE_LLM_BASE_URL` to any
+   OpenAI-compatible server (with `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL`
+   when it needs them).
+2. **A local Ollama server.** Found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`),
+   default `http://localhost:11434`; the model is `OLLAMA_MODEL` or the first
+   one the server lists. `OLLAMA_HOST=off` skips it.
+3. **The hosted MORIE tier**, a last resort for people who can run neither.
+   Its address and model list come from the signed services document at
+   `https://rmorie.com/.well-known/morie-services.json` (ML-DSA-44, the
+   public key pinned in the package: `bricklayer_services()`), so the
+   endpoint can move or be paused without a package release. Keys are
+   personal, rate limited and issued on request at
+   <https://rmorie.com/access>; a key is stored once, in
+   `~/.config/morie/credentials.json`, and shared with rmorie, rmoriedata and
+   the Python package morie.
 
 ```r
 library(rmoriebricklayer)
 
-# Sign in once. The device flow prints a link and a code to confirm in a
-# browser; the email flow mails the code; a key you already hold can be
-# pasted. The key is saved in ~/.config/morie/credentials.json, shared with
-# rmorie and the Python package morie.
-bricklayer_llm_login()                                   # with a GitHub account (device flow)
-bricklayer_llm_login(email = "you@example.org")           # no GitHub account: a code is emailed, then
-bricklayer_llm_login(email = "you@example.org", code = "123456")
-bricklayer_llm_login(token = "sk-...")                    # paste a key
-
-bricklayer_llm_status()      # base URL, whether a key is stored, the default model
-bricklayer_llm_models()      # the models your key can use; attr(, "default")
+bricklayer_llm_status()      # which route would answer from this machine, and why
 bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
+bricklayer_llm_ask("The same question, on the local model.", route = "ollama")
+
+# The hosted tier: store the key you were issued, or sign in
+bricklayer_llm_login(token = "sk-...")                    # the key from rmorie.com/access
+bricklayer_llm_login(email = "you@example.org")           # or: a code is emailed, then
+bricklayer_llm_login(email = "you@example.org", code = "123456")
+bricklayer_llm_login()                                   # or: GitHub device flow
+bricklayer_llm_models()      # the hosted models your key can use; attr(, "default")
 bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.",
-                  model = "gpt-oss-120b:cf")  # the same question, another model
+                  model = "gpt-oss-120b:cf", route = "hosted")
 bricklayer_llm_logout()      # forget the key
+
+bricklayer_services()        # the signed document: endpoints, modes, models, notice
 ```
 
-`bricklayer_llm_models()` lists the hosted tier only; a local Ollama
-server is not consulted here. `MORIE_HOSTED_KEY` in the environment
-overrides the stored key, and `MORIE_HOSTED_BASE_URL` points the package at
-another gateway (set it to `off` to disable the hosted tier).
-
-On 2026-10-05 the tier served 20 models, each of which answered:
-ollama.com cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud,
-glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud
-and gpt-oss:120b-cloud) and additional AI models (gpt-oss-120b:cf,
-gpt-oss-20b:cf, llama-4-scout:cf, qwen3.8-27b:cf, nemotron-3-120b:cf,
-gemma-4-26b:cf, kimi-k2.6:cf, kimi-k2.7-code:cf, deepseek-v4-pro:cf,
-deepseek-v4-flash:cf, glm-5.2:cf, glm-5.3:cf and glm-5.3-flash:cf).
-`bricklayer_llm_models()` reports what your key can use now.
+`MORIE_HOSTED_KEY` in the environment overrides the stored key, and
+`MORIE_HOSTED_BASE_URL` points the package at another gateway (set it to
+`off` to disable the hosted tier). The hosted tier serves ollama.com cloud
+models (minimax-m3:cloud, the default; minimax-m2.7:cloud, glm-5.2:cloud,
+deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud and
+gpt-oss:120b-cloud) and additional AI models; `bricklayer_llm_models()`
+reports what your key can use now.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
 
 ```sh
 Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
-rmoriebricklayer login                          # with a GitHub account
-rmoriebricklayer login --email you@example.com  # no GitHub account: a code is emailed, type it at the prompt
-rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
-rmoriebricklayer login --token                  # paste a key you already have (or pipe it in)
-rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
-rmoriebricklayer models                         # what you can ask, default marked
-rmoriebricklayer ask --model NAME "your question"
 rmoriebricklayer doctor                         # which routes answer from this machine
+rmoriebricklayer ask "your question"            # own endpoint, local Ollama, then the hosted tier
+rmoriebricklayer ask --model NAME "your question"
+rmoriebricklayer login --token                  # paste the key you were issued (or pipe it in)
+rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
+rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
+rmoriebricklayer login                          # or: GitHub device flow
+rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
+rmoriebricklayer models                         # hosted models your key can use, default marked
 rmoriebricklayer logout                         # forget the key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
@@ -526,12 +542,10 @@ rmoriebricklayer version
 `rmbl` is the same command under a short name; every verb works under either:
 
 ```sh
-rmbl login                                      # GitHub
-rmbl login --email you@example.com              # no GitHub account: type the emailed code at the prompt
-rmbl login --no-browser                         # server / SSH
-rmbl models
-rmbl ask "your question"
 rmbl doctor
+rmbl ask "your question"
+rmbl login --token
+rmbl models
 ```
 
 ## Part of the MORIE family

@@ -11,9 +11,9 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
 \item{target_path}{Destination path on disk.}
 
-\item{mode}{Write mode passed to
-\code{\link[utils:download.file]{utils::download.file()}}; defaults to
-\code{"wb"} (binary) for cross-platform safety.}
+\item{mode}{Accepted for compatibility with the
+signature of \code{utils::download.file()}, which this
+function once wrapped; every transfer is binary.}
 
 \item{quiet}{Logical; suppress progress output. Defaults to
 \code{FALSE}.}
@@ -25,9 +25,11 @@ test passes \code{TRUE}). Every URL must otherwise be \code{https} and public.}
 The \code{target_path}, returned invisibly.
 }
 \description{
-Thin wrapper around
-\code{\link[utils:download.file]{utils::download.file()}} that returns
-the target path invisibly so it composes in pipelines.
+Downloads through the package's own transport,
+\code{\link[=bricklayer_download]{bricklayer_download()}}: the URL checked and pinned,
+every redirect hop re-checked, the body capped, a live
+progress bar. Returns the target path invisibly so it
+composes in pipelines.
 }
 \examples{
 \donttest{

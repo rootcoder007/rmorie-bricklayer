@@ -12,7 +12,9 @@ benford_test(x)
 \value{
 A list of class \code{bricklayer_benford}: \code{counts}
 (observed digit frequencies 1--9), \code{expected}, \code{proportion},
-\code{statistic}, \code{df}, \code{p_value}, and \code{n}.
+\code{statistic}, \code{df}, \code{p_value}, \code{log_p_value} (the log of the upper
+tail, which keeps its information where \code{p_value} underflows to 0),
+and \code{n}.
 }
 \description{
 Compares the distribution of leading significant digits in \code{x} with

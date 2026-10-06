@@ -27,9 +27,13 @@ bricklayer_data_load(key, refresh = FALSE)
 The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
-tables from the edge. They open with the key
+tables from the edge, under the data access terms at
+\url{https://rmorie.com/data-license}. They open with the key
 \code{\link{bricklayer_llm_login}} stores, the same key rmorie and morie
-use. \code{bricklayer_data_manifest()} returns the gateway's manifest
+use; keys are personal and issued on request at
+\url{https://rmorie.com/access}. The service address comes from
+\code{\link{bricklayer_services}}.
+\code{bricklayer_data_manifest()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),
 kept for a day; \code{bricklayer_data_tables()} the same as a data frame;
 \code{bricklayer_data_load("db/table")} one table as a data frame, cached
@@ -41,7 +45,7 @@ From the shell: \code{rmoriebricklayer data list} and
 }
 \examples{
 \dontrun{
-bricklayer_llm_login()
+bricklayer_llm_login(token = "sk-...")  # a key issued at rmorie.com/access
 head(bricklayer_data_tables())
 df <- bricklayer_data_load("chicago_crime/incidents")
 }

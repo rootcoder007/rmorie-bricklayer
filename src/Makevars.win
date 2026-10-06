@@ -11,7 +11,7 @@ CURL_LIBS_FALLBACK = -lcurl -lssh2 -lssl -lcrypto -lgdi32 -lz -lzstd -lbrotlidec
 # -ladvapi32 -lws2_32 for RtlGenRandom (SystemFunction036), the Windows CSPRNG
 # that random_bytes() reads. Without it a signing key has no unguessable
 # source of bytes on Windows.
-PKG_LIBS = $(shell pkg-config --libs --static libcurl 2>/dev/null) -ladvapi32
+PKG_LIBS = $(or $(shell pkg-config --libs --static libcurl 2>/dev/null),$(CURL_LIBS_FALLBACK)) -ladvapi32
 
 # Header dependencies. R's default rules rebuild an object when its .cpp
 # changes but not when a header it includes changes; a warm build then

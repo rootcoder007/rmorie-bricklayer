@@ -19,11 +19,14 @@ The exit status, invisibly (0 on success).
 Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 \describe{
 \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
-    [--no-browser]}}{sign in to the hosted MORIE LLM tier: the GitHub
-device flow by default, a code sent to \code{--email}, or a key
-you paste with \code{--token} (read from the terminal or a pipe when KEY is omitted)}
+    [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
+a local model or your own endpoint; keys are issued on request at
+\url{https://rmorie.com/access}): a key you paste with \code{--token}
+(read from the terminal or a pipe when KEY is omitted), a code sent to
+\code{--email}, or the GitHub device flow}
 \item{\code{logout}}{forget the hosted key}
-\item{\code{doctor}}{report the language-model routes available here}
+\item{\code{doctor}}{report the language-model routes available here
+(own endpoint, local Ollama, hosted tier), in the order \code{ask} tries them}
 \item{\code{models}}{list the models the hosted tier offers your key
 (default marked)}
 \item{\code{data list}}{the curated tables at data.rmorie.com}

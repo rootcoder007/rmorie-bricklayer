@@ -21,8 +21,9 @@ flagged by construction).}
 \value{
 A data frame of class \code{bricklayer_outliers} with
 \code{row}, \code{distance} (the square root of the squared Mahalanobis
-distance), \code{p_value} and \code{outlier}, ordered by descending
-distance.
+distance), \code{p_value}, \code{log_p_value} (the log of the chi-square upper
+tail, which keeps its information where \code{p_value} underflows to 0) and
+\code{outlier}, ordered by descending distance.
 }
 \description{
 Ranks rows by how far they sit from the centre of the data ONCE THE

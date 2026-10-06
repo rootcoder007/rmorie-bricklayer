@@ -15,8 +15,13 @@ draw is made under this seed and the caller's RNG stream is restored,
 so the same inputs give the same p-value and nothing downstream moves.}
 }
 \value{
-A named length-3 numeric: \code{statistic}, \code{df},
-\code{p_value}.
+A named length-4 numeric: \code{statistic}, \code{df},
+\code{p_value} and \code{log_p_value}, the natural log of the upper tail, which
+keeps its information where \code{p_value} underflows to 0. On the Monte
+Carlo branch (sparse tables) \code{p_value} is floored at 1/(B+1) and
+\code{log_p_value} is its log, so it carries no extra range there. The
+attribute \code{method} names the branch, or says why the test was
+inapplicable (one category, no counts).
 }
 \description{
 Tests whether two SAMPLES were drawn from the same categorical

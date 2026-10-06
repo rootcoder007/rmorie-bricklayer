@@ -262,3 +262,86 @@ test_that("every exported topic is in the pkgdown reference index", {
   # failure the site build otherwise reports only after a push
   expect_no_error(pkgdown::check_pkgdown(root))
 })
+
+# ---- the sibling rules of the third review, as source properties ---------
+# A fix that lands at one site and not its siblings is the failure mode of
+# three review rounds. These enumerate the siblings mechanically.
+
+r_dir <- function() {
+  for (p in c("../../R", "../../../R", "R")) {
+    if (dir.exists(p)) return(normalizePath(p))
+  }
+  NA_character_
+}
+
+test_that("the interrupt test is the throwing one everywhere but the barrier", {
+  d <- src_dir()
+  skip_if(is.na(d), "package sources not available from here")
+  files <- list.files(d, pattern = "[.](cpp|c|h)$", full.names = TRUE)
+  files <- files[basename(files) != "rmbl_barrier.cpp"]
+  skip_if(!length(files), "no sources found")
+  hits <- as.character(unlist(lapply(files, function(f) {
+    l <- readLines(f, warn = FALSE)
+    i <- grep("R_CheckUserInterrupt\\s*\\(", l)
+    if (length(i)) paste0(basename(f), ":", i) else character(0)
+  })))
+  # R_CheckUserInterrupt() longjmps over every live C++ object; the kernels
+  # call rmbl::check_interrupt() (throws) or rmbl_interrupt_pending() (flag)
+  expect_identical(hits, character(0))
+})
+
+test_that("the barrier clears the interrupt flag on every path and raises for an unbarriered kernel", {
+  d <- src_dir()
+  skip_if(is.na(d), "package sources not available from here")
+  b <- readLines(file.path(d, "rmbl_barrier.cpp"), warn = FALSE)
+  expect_true(any(grepl("rmbl_kernel_interrupted = 0;   /* nothing from an earlier call may leak in */",
+                        b, fixed = TRUE)))
+  expect_true(any(grepl("if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();", b, fixed = TRUE)))
+  # the flag is cleared after the try block, before any longjmp
+  i <- grep("every path leaves the flag clear", b, fixed = TRUE)
+  expect_length(i, 1L)
+  expect_true(any(grepl("rmbl_kernel_interrupted = 0;", b[i + (1:3)], fixed = TRUE)))
+})
+
+test_that("R code opens no network connection outside the compiled transport", {
+  d <- r_dir()
+  skip_if(is.na(d), "package sources not available from here")
+  # under covr the installed package has an R/ directory with no sources in it
+  files <- list.files(d, pattern = "[.]R$", full.names = TRUE)
+  skip_if(!length(files), "no R sources found")
+  pat <- paste0("(^|[^a-zA-Z_.])(base::)?url\\(|download\\.file\\(|curl::|",
+                "file\\(\"https?://|readLines\\(\"https?://|gzcon\\(url")
+  hits <- as.character(unlist(lapply(files, function(f) {
+    l <- readLines(f, warn = FALSE)
+    code <- sub("#.*$", "", l)          # not the comments
+    code <- code[!grepl("^\\s*#'", l)]  # nor roxygen
+    i <- grep(pat, code, perl = TRUE)
+    if (length(i)) paste0(basename(f), ": ", trimws(code[i])) else character(0)
+  })))
+  # the two base-R fallbacks exist for a capsule bundle that copies one file
+  # out of the package; inside the package `exists()` routes past them
+  allowed <- c(
+    "lib_data_loader.R: utils::download.file(url, dest, mode = \"wb\", quiet = FALSE)",
+    "lib_helpers.R: utils::download.file(url, dest, mode = \"wb\", quiet = TRUE)"
+  )
+  expect_setequal(hits, allowed)
+})
+
+test_that("every SIU entry point reads its text through the same cap", {
+  d <- src_dir()
+  skip_if(is.na(d), "package sources not available from here")
+  s <- readLines(file.path(d, "rmbl_siu.cpp"), warn = FALSE)
+  entries <- grep("^SEXP C_rmbl_siu_[a-z_]+_impl\\(SEXP [a-z]+\\)", s)
+  expect_gte(length(entries), 4L)
+  # each one-argument entry hands its argument to as_string() (the 2 MiB
+  # cap) and nothing else reads CHAR() of it
+  expect_identical(sum(grepl("CHAR(STRING_ELT", s, fixed = TRUE)), 1L)
+  expect_true(any(grepl("(2 << 20)", s, fixed = TRUE)))
+  # html_to_text() and the plain-text entry both run normalize_text()
+  p <- readLines(file.path(d, "siu_parse.cpp"), warn = FALSE)
+  expect_true(any(grepl("return normalize_text(t);", p, fixed = TRUE)))
+  expect_true(any(grepl("siu::normalize_text(as_string(text", s, fixed = TRUE)))
+  # and no whole-document pass is a regex any more
+  h <- p[grep("^std::string html_to_text", p):grep("return normalize_text(t);", p, fixed = TRUE)]
+  expect_false(any(grepl("std::regex", h, fixed = TRUE)))
+})
