@@ -1,5 +1,153 @@
 # Changelog
 
+## rmoriebricklayer 0.5.9
+
+### The SIU parser, third pass
+
+Two further reviews of 0.5.8 (the diff review and a dedicated SIU
+review) showed the C-stack-overflow class still live from three sites
+the 0.5.8 rewrite did not reach, and a correctness cost of the fix it
+did make. All closed here, each at every site of its kind, pinned by
+`test-review5.R` and by fuzz seeds for every shape the reviewers used.
+
+- **25,000 form feeds (or vertical tabs, or carriage returns) through
+  the plain-text path killed R.** `normalize_text()` collapsed space and
+  tab only; `flatten_ws()` had the full six-character set 180 lines
+  away. The first pass now collapses every whitespace byte `\s` matches
+  except the newline the second pass bounds.
+- **`strip_boilerplate()` ran two unbounded, newline-crossing regexes
+  over the whole document** (`[\s\S]*?` to the privacy paragraph’s end,
+  `[^.]*` to the glossary sentence’s end); the line cap never bounded
+  them and 44 KB of period-free text after “this information may
+  include”, standard boilerplate in every real report, overflowed the
+  stack, from
+  [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md),
+  [`bricklayer_siu_resolve_so()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.md)
+  and the network path
+  [`bricklayer_fetch_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch_parse_siu.md).
+  Both passes are [`find()`](https://rdrr.io/r/utils/apropos.html) scans
+  now; no regex in either SIU file crosses a line without a bound, and
+  the hygiene test asserts it over the sources.
+- **The 2000-character line split is said, and placed better.** A line
+  longer than the cap is split at the last sentence end inside the
+  window when there is one, else at the last space; every split is
+  counted and
+  [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md),
+  [`bricklayer_siu_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.md)
+  and
+  [`bricklayer_siu_resolve_so()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_resolve_so.md)
+  warn how many lines were split, because a field spanning a split can
+  come back incomplete. 0.5.8 split at any space, silently.
+- **Two of the new regex-free passes were quadratic**
+  (`strip_elements()` rescanned to the end from every unclosed
+  `<script`, 40 minutes at the 2 MiB cap; `strip_tags()` rescanned for
+  `>` from every bare `<`). Both are linear, and the whole SIU path now
+  polls for a user interrupt through a hook the host installs
+  (`rmbl::check_interrupt()` here; rmorie’s and morie’s bindings install
+  their own).
+- **[`bricklayer_siu_iso_date()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.md)
+  errors past 4096 bytes** instead of returning `""`; `small_int()`
+  reads up to nine digits
+  (`SO `[`#1234567`](https://github.com/rootcoder007/rmorie-bricklayer/issues/1234567)
+  is 1234567 again, not 1); zero-padded numeric entities
+  (`&#0000000233;`) decode; named entities are case-sensitive, as in
+  HTML and in 0.5.7.
+
+### From the 0.5.8 diff review
+
+- `rmbl_pbkdf2_sha256()` and `rmbl_mann_kendall()`, the two LinkingTo
+  kernels that poll for an interrupt, raise it from a frame that holds
+  none of their buffers; 0.5.8 raised from inside the poll, over live
+  `std::vector`s. `rmbl_interrupt_pending()` never raises now;
+  `rmbl_interrupt_raise_unbarriered()` does, after the kernel returned.
+  The header documents `rmbl_mann_kendall()`’s NA-on-interrupt contract.
+- [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)’s
+  identifier heuristic gates on distinct values (20 or more), not on a
+  hundred rows a side: an 80-row id column is an identifier again, a
+  5-level factor on ten rows still gets its verdict.
+- The exact Mann-Kendall memo evicts its oldest table instead of
+  flushing all 32.
+- [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)’s
+  `log_p_value` is documented; `download_data(mode =)` says what it
+  accepts;
+  [`bricklayer_json_to_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_to_json.md)
+  names `keep_vec_names` and `quiet_vec_names`; `MORIE_SERVICES_URL` is
+  documented and a mirror without a `.json` suffix finds its `.sig`;
+  `bricklayer_download(timeout = 1e18)` is an error, not an undefined
+  cast; a single-label host name is reported as a local address;
+  [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)’s
+  help says an own endpoint is taken when configured, not probed, and
+  [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)’s
+  example switches the local route off.
+- An endpoint of your own (`MORIE_LLM_BASE_URL`) may be a literal
+  private LAN address over plain http (`10/8`, `172.16/12`,
+  `192.168/16`, `fc00::/7`: an LM Studio or vLLM box on your own
+  network, the documented use), through the same per-call relaxation the
+  loopback host has; the diff review (D4) found it refused by two
+  independent rules with no way through. Link-local addresses and host
+  names over plain http stay refused, and a redirect off such an address
+  meets the full policy.
+  [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)
+  documents `MORIE_SERVICES_URL`;
+  [`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+  and
+  [`bricklayer_siu_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_text.md)
+  document the 2 MiB cap and the line split;
+  [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+  documents the identifier gate;
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  documents its `headers` and `timeout` ranges.
+- The services cache serves only when it is newer than the document
+  bundled with the package: a cache earns its place by being newer, the
+  same date falls back to the bundled copy, and an older one is deleted.
+  morie’s resolver gets the same floor.
+- Fuzzing: a `fuzz_url` target over `url_check()` and
+  `redirect_policy()`, seeds for every shape the reviewers used, and the
+  SIU target runs under an 8 MB stack like R’s.
+
+The fourth review (network and service discovery, 2026-10-06) confirmed
+the 0.5.8 transport closes every bypass it was built for, then found
+eight things at its edges. Each is fixed at every site of its kind and
+pinned by `test-review4.R`.
+
+- **The loopback relaxation is an argument, not an option.**
+  `options(rmoriebricklayer.allow_loopback = TRUE)` relaxed every fetch
+  in the process; it is gone. The local-model routes pass
+  `allow_loopback` down one call, only when the address is the loopback
+  host, and a redirect from a remote origin into the loopback interface
+  is refused. An endpoint of your own is either the loopback host or a
+  public https address.
+- **Request headers do not follow a redirect to another origin unless
+  they are content negotiation.** The old rule dropped three named
+  credential headers and let everything else travel; `X-Api-Key`,
+  `api-key`, `X-Auth-Token` and the rest now stay with the first origin.
+  “Another origin” compares scheme, host and effective port, so a
+  redirect to another port on the same host drops them too.
+- **A signed document older than the copy shipped with the package is
+  refused.** A validly signed but retired document in the cache (or
+  served live) can no longer pin the hosted endpoint, which is where the
+  user’s key goes; the bundled document is the floor, and a stale cache
+  below it is deleted.
+- **Bytes a server sent are parsed as text, never as a second address.**
+  One helper, `.rmbl_json_text()`, parses every network body, cached
+  manifest and signature file; the URL and file branches of
+  [`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+  are for a user’s argument only. A body or a `.sig` that is a bare URL
+  is “not JSON”, not a fetch.
+- **Keys are redacted by value.** A gateway’s error text has the key
+  that was sent, any `Bearer` token and any `sk-` key removed before it
+  reaches an R condition.
+- **`MORIE_HOSTED_AUTH_URL` is validated like every other endpoint, and
+  the sign-in service’s `verification_uri` is opened in a browser only
+  when it is a public https address.**
+- **Resource limits.** A transfer under 64 bytes/s for 30 s is ended (it
+  used to hold the connection for the whole timeout); an in-memory reply
+  past 16 MiB is dropped, not handed back as a partial body;
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  has `max_bytes` (default 2 GiB) and the services document and JSON
+  fetches cap at 1 MiB and 16 MiB; the scratch file is private to the
+  call and the body is moved into place on a 2xx only.
+
 ## rmoriebricklayer 0.5.8
 
 The third review of the hardening work (2026-10-06) found seven things,

@@ -93,7 +93,11 @@ bricklayer_json_to_json(
 
 - ...:
 
-  As in jsonlite.
+  As in jsonlite, plus `keep_vec_names` (a named atomic vector is
+  written as an object, as
+  [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+  requires) and `quiet_vec_names` (no message when names cannot be
+  kept).
 
 ## Value
 

@@ -24,9 +24,11 @@ download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 
 - mode:
 
-  Accepted for compatibility with the signature of
-  [`utils::download.file()`](https://rdrr.io/r/utils/download.file.html),
-  which this function once wrapped; every transfer is binary.
+  Kept for the signature of
+  [`utils::download.file()`](https://rdrr.io/r/utils/download.file.html);
+  only `"wb"` (or `"w"`) is accepted. Every transfer is binary and
+  written fresh through the package's own transport, so an append mode
+  cannot be honoured and is an error rather than a silent `"wb"`.
 
 - quiet:
 

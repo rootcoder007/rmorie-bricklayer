@@ -27,9 +27,10 @@ mcar_test(data, max_iter = 500L, tol = 1e-07)
 ## Value
 
 A list of class `bricklayer_mcar`: `statistic`, `df`, `p_value`,
-`n_patterns`, `n_used`, `n_vars`, `iterations`, `mu`, `sigma`, and
-`note` (a caveat when the test is degenerate). With complete data `df`
-is 0 and `p_value` is `NA` – there is nothing to test.
+`log_p_value` (the log of `p_value`, finite where `p_value` underflows
+to 0), `n_patterns`, `n_used`, `n_vars`, `iterations`, `mu`, `sigma`,
+and `note` (a caveat when the test is degenerate). With complete data
+`df` is 0 and `p_value` is `NA` – there is nothing to test.
 
 ## Details
 

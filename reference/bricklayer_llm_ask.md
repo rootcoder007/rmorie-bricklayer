@@ -1,10 +1,18 @@
 # Ask a language model
 
-Sends one prompt to the first language-model route that answers from
-this machine and returns the reply. Routes, in order:
+Sends one prompt to the first language-model route that is set up on
+this machine and returns the reply. An endpoint of your own counts as
+set up when it is configured (it is not probed: a configured endpoint
+that is down is an error, not a silent hop to the hosted tier); a local
+Ollama counts when it answers; the hosted tier when a key is stored.
+Routes, in order:
 
 1.  an OpenAI-compatible endpoint of your own: `MORIE_LLM_BASE_URL`,
-    with `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL` when it needs them;
+    with `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL` when it needs them.
+    An `https` address, or plain `http` to the loopback host or to a
+    literal private LAN address (`10/8`, `172.16/12`, `192.168/16`,
+    `fc00::/7`: an LM Studio or vLLM box on your own network); a host
+    name over plain http is refused;
 
 2.  a local Ollama server: `OLLAMA_HOST` (or `OLLAMA_BASE_URL`), default
     `http://localhost:11434`, model `OLLAMA_MODEL` or the first one the
@@ -53,7 +61,7 @@ bricklayer_llm_ask(
 
 - route:
 
-  `NULL` (the first that answers) or one of `"own"`, `"ollama"`,
+  `NULL` (the first that is set up) or one of `"own"`, `"ollama"`,
   `"hosted"` to insist on a route.
 
 ## Value

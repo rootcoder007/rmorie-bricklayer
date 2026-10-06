@@ -9,7 +9,7 @@ to any value in the data, observed or not."><meta name="google-site-verification
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,8 @@ change (default 1e-7).</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>bricklayer_mcar</code>: <code>statistic</code>,
-<code>df</code>, <code>p_value</code>, <code>n_patterns</code>, <code>n_used</code>,
+<code>df</code>, <code>p_value</code>, <code>log_p_value</code> (the log of <code>p_value</code>, finite where
+<code>p_value</code> underflows to 0), <code>n_patterns</code>, <code>n_used</code>,
 <code>n_vars</code>, <code>iterations</code>, <code>mu</code>, <code>sigma</code>, and
 <code>note</code> (a caveat when the test is degenerate). With complete data
 <code>df</code> is 0 and <code>p_value</code> is <code>NA</code> – there is nothing to

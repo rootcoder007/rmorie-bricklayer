@@ -18,7 +18,8 @@ bricklayer_download(
   timeout = 3600,
   quiet = NULL,
   tty = NULL,
-  allow_file = FALSE
+  allow_file = FALSE,
+  max_bytes = 2^31
 )
 ```
 
@@ -36,7 +37,7 @@ bricklayer_download(
 
 - headers:
 
-  Named character vector of request headers, or `NULL`.
+  Character vector of request headers, every element named, or `NULL`.
 
 - label:
 
@@ -49,7 +50,9 @@ bricklayer_download(
 
 - timeout:
 
-  Seconds allowed for the whole transfer.
+  Seconds allowed for the whole transfer: a whole number from 1
+  to 2147483647. A transfer slower than 64 bytes a second for 30 seconds
+  is ended before that.
 
 - quiet:
 
@@ -63,6 +66,13 @@ bricklayer_download(
 - allow_file:
 
   Accept a `file://` URL (default `FALSE`).
+
+- max_bytes:
+
+  Most bytes the body may have (default 2 GiB, the transport's ceiling).
+  A body past it, chunked or not, ends the transfer with an error and
+  leaves nothing behind: a caller that expects a small file should say
+  so.
 
 ## Value
 

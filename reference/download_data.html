@@ -15,7 +15,7 @@ composes in pipelines."><meta name="google-site-verification" content="8ORzeHrfo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,9 +79,10 @@ composes in pipelines.</p>
 
 
 <dt id="arg-mode">mode<a class="anchor" aria-label="anchor" href="#arg-mode"></a></dt>
-<dd><p>Accepted for compatibility with the
-signature of <code><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">utils::download.file()</a></code>, which this
-function once wrapped; every transfer is binary.</p></dd>
+<dd><p>Kept for the signature of <code><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">utils::download.file()</a></code>; only
+<code>"wb"</code> (or <code>"w"</code>) is accepted. Every transfer is binary and written
+fresh through the package's own transport, so an append mode cannot be
+honoured and is an error rather than a silent <code>"wb"</code>.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>

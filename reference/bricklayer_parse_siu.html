@@ -13,7 +13,7 @@ state come back as "".'><meta name="google-site-verification" content="8ORzeHrfo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +77,15 @@ or the path to a saved report file (e.g. from
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A named character vector: the 16 schema fields plus
 <code>_language</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="limits">Limits<a class="anchor" aria-label="anchor" href="#limits"></a></h2>
+
+
+<p>The input is capped at 2 MiB (a report page is a few hundred KB). Before
+the text is read, a line longer than 2000 characters is split at the
+sentence end nearest the cap (else at a space), and a warning says how
+many lines were split: a field that spans a split may be incomplete.</p>
     </div>
 
     <div class="section level2">

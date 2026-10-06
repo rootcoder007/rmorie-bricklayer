@@ -15,7 +15,7 @@ options(morie.quiet = TRUE) or quiet = TRUE."><meta name="google-site-verificati
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,8 @@ lines when stderr is not a terminal, and nothing when
 <span>  timeout <span class="op">=</span> <span class="fl">3600</span>,</span>
 <span>  quiet <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  tty <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  allow_file <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  allow_file <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  max_bytes <span class="op">=</span> <span class="fl">2</span><span class="op">^</span><span class="fl">31</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -91,7 +92,8 @@ link-local or private address is refused.</p></dd>
 
 
 <dt id="arg-headers">headers<a class="anchor" aria-label="anchor" href="#arg-headers"></a></dt>
-<dd><p>Named character vector of request headers, or <code>NULL</code>.</p></dd>
+<dd><p>Character vector of request headers, every element named, or
+<code>NULL</code>.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -104,7 +106,9 @@ spinner).</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Seconds allowed for the whole transfer.</p></dd>
+<dd><p>Seconds allowed for the whole transfer: a whole number from 1
+to 2147483647. A transfer slower than 64 bytes a second for 30 seconds is
+ended before that.</p></dd>
 
 
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
@@ -119,6 +123,13 @@ session and options.</p></dd>
 
 <dt id="arg-allow-file">allow_file<a class="anchor" aria-label="anchor" href="#arg-allow-file"></a></dt>
 <dd><p>Accept a <code>file://</code> URL (default <code>FALSE</code>).</p></dd>
+
+
+<dt id="arg-max-bytes">max_bytes<a class="anchor" aria-label="anchor" href="#arg-max-bytes"></a></dt>
+<dd><p>Most bytes the body may have (default 2 GiB, the
+transport's ceiling). A body past it, chunked or not, ends the transfer
+with an error and leaves nothing behind: a caller that expects a small
+file should say so.</p></dd>
 
 </dl></div>
     <div class="section level2">

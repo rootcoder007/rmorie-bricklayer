@@ -23,7 +23,7 @@ network the cached copy is used, then the copy bundled with the package.'><meta 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,6 +121,10 @@ bundled one (what the examples and an offline session get).</p></dd>
 so one sign-in and one document serve rmorie, rmoriedata and morie alike.
 The hosted tier is a last resort: a local model or your own API key is
 always preferred where the caller offers the choice.</p>
+<p>The environment variable <code>MORIE_SERVICES_URL</code> points the fetch at a
+mirror of the document (its signature is fetched from the same place, with
+the suffix <code>.sig</code>); the signature check is unchanged, so a mirror can
+only serve a document the project signed.</p>
     </div>
 
     <div class="section level2">

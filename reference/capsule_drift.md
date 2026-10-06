@@ -64,12 +64,12 @@ capsule_drift(
 
 - identifier_levels:
 
-  A character column with more distinct values than this (or a distinct
-  value for every fifth row) is an identifier, not a distribution: it
-  gets `type = "identifier"`, its `unseen_share` (the fraction of
-  current rows whose value the reference never had) and `drifted = NA`.
-  Character columns that parse as dates are compared as dates
-  (`type = "date"`).
+  A character column with more distinct values than this (or at least 20
+  distinct values covering more than a fifth of the rows) is an
+  identifier, not a distribution: it gets `type = "identifier"`, its
+  `unseen_share` (the fraction of current rows whose value the reference
+  never had) and `drifted = NA`. Character columns that parse as dates
+  are compared as dates (`type = "date"`).
 
 - seed:
 
