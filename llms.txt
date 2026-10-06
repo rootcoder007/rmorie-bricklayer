@@ -390,6 +390,16 @@ signatures. OpenSSL’s keys and the digests of its signatures are
 embedded in the test suite, so the check needs no network and no system
 library.
 
+That cross-check is the claim, not reference parity. This implementation
+matched the pq-crystals and sphincsplus reference code byte for byte
+while disagreeing with the standards in two places – FIPS 204 and FIPS
+205 both prepend a context domain separator that the reference code
+omits, and FIPS 205 reads the FORS indices most significant bit first
+where SPHINCS+ read them least significant bit first. A signature scheme
+that verifies only its own output passes every security-property test
+there is, so only an independent implementation can find that class of
+bug.
+
 ML-KEM (FIPS 203) is here too, at all three levels, along with the
 pre-hashed variants of both signature standards and ML-DSA’s external-mu
 interface. ML-KEM keys generated from the same seed agree with OpenSSL’s
@@ -449,16 +459,6 @@ parameter set signs in about a second, down from seven, after the Keccak
 round was made branch-free, the tweakable hash stopped heap-allocating a
 few million times per signature, and the SHA-2 sets learned to resume
 from a cached midstate.
-
-That cross-check is the claim, not reference parity. This implementation
-matched the pq-crystals and sphincsplus reference code byte for byte
-while disagreeing with the standards in two places – FIPS 204 and FIPS
-205 both prepend a context domain separator that the reference code
-omits, and FIPS 205 reads the FORS indices most significant bit first
-where SPHINCS+ read them least significant bit first. A signature scheme
-that verifies only its own output passes every security-property test
-there is, so only an independent implementation can find that class of
-bug.
 
 It is also verified against its security properties: a valid signature
 verifies, and every tampering of the message, signature, authentication
