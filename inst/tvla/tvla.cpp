@@ -35,17 +35,21 @@
 static const uint64_t kBase = 0x20000000, kSize = 1u << 20;
 static const uint64_t kInput = kBase + 0xC0000;   /* input/output buffers */
 static const uint64_t kStack = kBase + kSize - 16;
+static const uint64_t kRand = kBase + 0x80000;   /* 256 KB of fresh randomness per trace */
 static const int16_t kQ = 3329;
 
 struct Run {
     uc_engine *uc = nullptr;
     std::vector<double> trace;
+    std::vector<uint32_t> pc;
     uint32_t last[13] = {0};
 };
 
 static inline int hw32(uint32_t x) { return __builtin_popcount(x); }
 
-static void on_code(uc_engine *uc, uint64_t, uint32_t, void *ud) {
+static std::vector<uint32_t> g_last_pc;   /* the program counter of every sample, last trace */
+
+static void on_code(uc_engine *uc, uint64_t addr, uint32_t, void *ud) {
     Run *r = static_cast<Run *>(ud);
     static const int regs[13] = {UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3, UC_ARM_REG_R4,
                                  UC_ARM_REG_R5, UC_ARM_REG_R6, UC_ARM_REG_R7, UC_ARM_REG_R8, UC_ARM_REG_R9,
@@ -59,8 +63,9 @@ static void on_code(uc_engine *uc, uint64_t, uint32_t, void *ud) {
         if (v[i] != r->last[i]) s += hw32(v[i]);
         r->last[i] = v[i];
     }
-    /* the sample for the instruction that just completed */
+    /* the sample for the instruction that just completed (the one before addr) */
     r->trace.push_back(s);
+    r->pc.push_back(static_cast<uint32_t>(addr));
 }
 
 static void on_write(uc_engine *, uc_mem_type, uint64_t, int size, int64_t value, void *ud) {
@@ -107,6 +112,7 @@ static std::vector<double> run_kernel(uint32_t entry, const std::vector<uint32_t
     const uc_err e = uc_emu_start(r.uc, entry | 1u, TVLA_HALT & ~1u, 0, 0);
     if (e != UC_ERR_OK) { std::fprintf(stderr, "emulation failed: %s\n", uc_strerror(e)); std::exit(2); }
     uc_close(r.uc);
+    g_last_pc = r.pc;
     return r.trace;
 }
 
@@ -157,7 +163,64 @@ static std::vector<double> k_ntt_masked(const std::vector<int16_t> &s, std::mt19
     return run_kernel(TVLA_MLKEM_NTT_MASKED, {uint32_t(a), uint32_t(a1)}, {{a, bytes16(s0)}, {a1, bytes16(s1)}});
 }
 
+/* ---- the masked gadgets: the secret is a byte string; class 0 fixed, class 1 random ---- */
+static std::vector<unsigned char> rnd_bytes(std::mt19937_64 &g, size_t n) {
+    std::vector<unsigned char> b(n);
+    for (auto &x : b) x = static_cast<unsigned char>(g());
+    return b;
+}
+/* decode: 32 coefficients in [0, q), as arithmetic shares (or share 1 zero for the control) */
+static std::vector<double> k_decode(const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<int16_t> a0(32), a1(32, 0);
+    for (int j = 0; j < 32; ++j) a0[j] = sec[j];
+    if (masked) {
+        for (int j = 0; j < 32; ++j) {
+            a1[j] = static_cast<int16_t>(g() % kQ);
+            a0[j] = static_cast<int16_t>(((sec[j] - a1[j]) % kQ + kQ) % kQ);
+        }
+    }
+    const uint64_t p0 = kInput, p1 = p0 + 64, o = p1 + 64;
+    return run_kernel(TVLA_DECODE, {uint32_t(p0), uint32_t(p1), uint32_t(kRand), uint32_t(o)},
+                      {{p0, bytes16(a0)}, {p1, bytes16(a1)}, {kRand, rnd_bytes(g, 65536)}});
+}
+static std::vector<double> k_decode_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_decode(s, g, false); }
+static std::vector<double> k_decode_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_decode(s, g, true); }
+/* Keccak-f[1600]: the secret is the 200-byte state (from the 256 coefficients' low bytes) */
+static std::vector<double> k_keccak(const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<unsigned char> st(200), m(200, 0);
+    for (int i = 0; i < 200; ++i) st[i] = static_cast<unsigned char>(sec[i]);
+    if (masked) {
+        m = rnd_bytes(g, 200);
+        for (int i = 0; i < 200; ++i) st[i] ^= m[i];
+    }
+    const uint64_t p0 = kInput, p1 = p0 + 200;
+    return run_kernel(TVLA_KECCAK, {uint32_t(p0), uint32_t(p1), uint32_t(kRand)},
+                      {{p0, st}, {p1, m}, {kRand, rnd_bytes(g, 24 * 25 * 8 + 64)}});
+}
+static std::vector<double> k_keccak_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_keccak(s, g, false); }
+static std::vector<double> k_keccak_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_keccak(s, g, true); }
+/* centred-binomial noise for 32 coefficients (eta = 2): the secret is the 16-byte PRF output */
+static std::vector<double> k_cbd(const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<unsigned char> b0(16), b1(16, 0);
+    for (int i = 0; i < 16; ++i) b0[i] = static_cast<unsigned char>(sec[i]);
+    if (masked) {
+        b1 = rnd_bytes(g, 16);
+        for (int i = 0; i < 16; ++i) b0[i] ^= b1[i];
+    }
+    const uint64_t p0 = kInput, p1 = p0 + 16, o = p1 + 16;
+    return run_kernel(TVLA_CBD, {uint32_t(p0), uint32_t(p1), uint32_t(kRand), uint32_t(o)},
+                      {{p0, b0}, {p1, b1}, {kRand, rnd_bytes(g, 65536)}});
+}
+static std::vector<double> k_cbd_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_cbd(s, g, false); }
+static std::vector<double> k_cbd_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_cbd(s, g, true); }
+
 static const Kernel kKernels[] = {
+    {"decode", "message decoding Compress_1, unmasked (control)", false, k_decode_plain},
+    {"decode_masked", "masked decoding (sec_decode1)", true, k_decode_masked},
+    {"keccak", "Keccak-f[1600] on a secret state, unmasked (control)", false, k_keccak_plain},
+    {"keccak_masked", "masked Keccak-f[1600] (chi through the masked AND)", true, k_keccak_masked},
+    {"cbd", "centred-binomial noise from a secret PRF output, unmasked (control)", false, k_cbd_plain},
+    {"cbd_masked", "masked noise sampling (sec_cbd32 with Boolean-to-arithmetic)", true, k_cbd_masked},
     {"mlkem_basemul", "ML-KEM secret-key product s*u (NTT domain), unmasked", false, k_basemul},
     {"mlkem_basemul_masked", "ML-KEM secret-key product, first-order arithmetic masking", true, k_basemul_masked},
     {"mlkem_ntt", "ML-KEM forward NTT of a secret polynomial, unmasked", false, k_ntt},
@@ -220,6 +283,16 @@ static int run(const Kernel &k, int traces, std::mt19937_64 &g) {
         if (m > tmax) { tmax = m; at = i; }
     }
     const bool leaks = both > 0;
+    if (leaks && at < g_last_pc.size()) {
+        /* sample i records the instruction completed just before pc[i] */
+        std::printf("  strongest leaking sample %zu: instruction before pc 0x%08x\n", at,
+                    at > 0 ? g_last_pc[at - 1] : 0u);
+        for (size_t i = 0; i < len && i < g_last_pc.size(); ++i) {
+            const double m = std::min(std::fabs(t1[i]), std::fabs(t2[i]));
+            if (m > 4.5 && (t1[i] > 0) == (t2[i] > 0) && k.masked)
+                std::printf("  leaking sample %zu: |t| %.1f, pc 0x%08x\n", i, m, i > 0 ? g_last_pc[i - 1] : 0u);
+        }
+    }
     std::printf("%-22s traces=2x%-5d samples=%-7zu min-of-two max|t|=%8.2f at %-6zu points leaking in both: %-6zu %s  (%s)\n",
                 k.name, traces, len, tmax, at, both, leaks ? "FIRST-ORDER LEAKAGE" : "no first-order leakage", k.what);
     std::fflush(stdout);

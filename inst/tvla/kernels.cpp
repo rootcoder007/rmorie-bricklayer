@@ -36,3 +36,55 @@ __attribute__((used, noinline)) void tvla_mlkem_ntt_masked(int16_t *r0, int16_t 
 __attribute__((used, noinline, naked)) void tvla_halt(void) { __asm__ volatile("b ."); }
 
 }
+
+/* ---- the masked gadgets of src/rmbl_masked.h (the masked decapsulation's building
+ * blocks). Randomness comes from a buffer the host fills afresh for every trace. Each
+ * gadget also runs as its own unmasked control: the same code with the second share zero,
+ * which is the plain computation on the secret. ---- */
+#include "../../src/rmbl_masked.h"
+
+static const uint32_t *g_rand;
+static uint32_t rand_fn(void *) { return *g_rand++; }
+
+extern "C" {
+
+__attribute__((used, noinline)) void tvla_decode(const int16_t *a0, const int16_t *a1, const uint32_t *rnd,
+                                                 uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::sec_decode1(out[0], out[1], a0, a1, rng);
+}
+
+__attribute__((used, noinline)) void tvla_keccak(uint64_t *s0, uint64_t *s1, const uint32_t *rnd) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::keccakf_masked(s0, s1, rng);
+}
+
+__attribute__((used, noinline)) void tvla_cbd(const unsigned char *b0, const unsigned char *b1, const uint32_t *rnd,
+                                              int16_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::sec_cbd32(out, out + 32, b0, b1, 0, 2, rng);
+}
+
+}
+
+/* no C library on the bare target: the two routines the compiler emits for struct copies */
+extern "C" __attribute__((used)) void *memcpy(void *d, const void *s, unsigned int n) {
+    unsigned char *dd = static_cast<unsigned char *>(d);
+    const unsigned char *ss = static_cast<const unsigned char *>(s);
+    while (n--) *dd++ = *ss++;
+    return d;
+}
+extern "C" __attribute__((used)) void *memset(void *d, int c, unsigned int n) {
+    unsigned char *dd = static_cast<unsigned char *>(d);
+    while (n--) *dd++ = static_cast<unsigned char>(c);
+    return d;
+}
