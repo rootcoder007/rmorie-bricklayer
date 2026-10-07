@@ -24,7 +24,7 @@ Routes, in order:
     and it needs the key stored by
     [`bricklayer_llm_login`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
     (or `MORIE_HOSTED_KEY`). Keys are personal and issued on request at
-    <https://rmorie.com/access/>.
+    <https://www.rmorie.com/access/>.
 
 [`bricklayer_llm_status`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
 shows which route a question would take.

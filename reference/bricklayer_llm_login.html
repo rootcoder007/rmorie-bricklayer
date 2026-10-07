@@ -4,7 +4,7 @@ $XDG_CONFIG_HOME/morie/credentials.json (owner-only; the file
 the morie, rmorie and rmoriedata packages read too,
 so one sign-in serves all of them). The tier is a last resort behind a
 local model or your own endpoint (see bricklayer_llm_ask);
-keys are personal and issued on request at https://rmorie.com/access/.
+keys are personal and issued on request at https://www.rmorie.com/access/.
 The sign-in addresses come from bricklayer_services. Three ways in:
 token: a key you already have, from the website or an
 email. It is checked with the gateway first and stored only when
@@ -18,7 +18,7 @@ $XDG_CONFIG_HOME/morie/credentials.json (owner-only; the file
 the morie, rmorie and rmoriedata packages read too,
 so one sign-in serves all of them). The tier is a last resort behind a
 local model or your own endpoint (see bricklayer_llm_ask);
-keys are personal and issued on request at https://rmorie.com/access/.
+keys are personal and issued on request at https://www.rmorie.com/access/.
 The sign-in addresses come from bricklayer_services. Three ways in:
 token: a key you already have, from the website or an
 email. It is checked with the gateway first and stored only when
@@ -78,7 +78,7 @@ Nothing is written except by this explicit call."><meta property="og:image" cont
 the <code>morie</code>, <code>rmorie</code> and <code>rmoriedata</code> packages read too,
 so one sign-in serves all of them). The tier is a last resort behind a
 local model or your own endpoint (see <code><a href="bricklayer_llm_ask.html">bricklayer_llm_ask</a></code>);
-keys are personal and issued on request at <a href="https://rmorie.com/access/" class="external-link">https://rmorie.com/access/</a>.
+keys are personal and issued on request at <a href="https://www.rmorie.com/access/" class="external-link">https://www.rmorie.com/access/</a>.
 The sign-in addresses come from <code><a href="bricklayer_services.html">bricklayer_services</a></code>. Three ways in:</p><ul><li><p><code>token</code>: a key you already have, from the website or an
 email. It is checked with the gateway first and stored only when
 the gateway accepts it; a refused key, or no answer, stores nothing.</p></li>
@@ -105,7 +105,7 @@ github.com, and the key arrives once you approve.</p></li>
 
 
 <dl><dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
-<dd><p>A key issued at <a href="https://rmorie.com/access/" class="external-link">https://rmorie.com/access/</a>.</p></dd>
+<dd><p>A key issued at <a href="https://www.rmorie.com/access/" class="external-link">https://www.rmorie.com/access/</a>.</p></dd>
 
 
 <dt id="arg-email">email<a class="anchor" aria-label="anchor" href="#arg-email"></a></dt>
@@ -132,7 +132,7 @@ github.com, and the key arrives once you approve.</p></li>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://rmorie.com/access/&gt;"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://www.rmorie.com/access/&gt;"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.com"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span><span class="op">)</span> <span class="co"># GitHub device flow</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
