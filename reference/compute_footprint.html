@@ -208,18 +208,18 @@ arXiv:1910.09700.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu">compute_footprint</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">2e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fp</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">total</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.684253e-08</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4.02638e-08</span>
 <span class="r-in"><span><span class="va">fp</span><span class="op">$</span><span class="va">co2e_g</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.441865e-06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3.662798e-06</span>
 <span class="r-in"><span><span class="va">fp</span><span class="op">$</span><span class="va">carbon_intensity</span><span class="op">$</span><span class="va">year</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2024</span>
 <span class="r-in"><span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2] "memory charged: the machine's total 15.6 GB"        </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Computation footprint (modelled): 0.002 s wall, 0.002 s CPU, utilisation 0.25 (process) on 4 cores</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   energy: 2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CO2e:   2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   energy: 4.03e-08 kWh (cpu 3.54e-08, memory 4.85e-09)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CO2e:   3.66e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB </span>
 <span class="r-in"><span><span class="co"># wherever you are, offline: the location is detected and recorded</span></span></span>
 <span class="r-in"><span><span class="fu">compute_footprint</span><span class="op">(</span><span class="fl">1</span> <span class="op">+</span> <span class="fl">1</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>, memory_gb <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">$</span><span class="va">assumptions</span></span></span>
