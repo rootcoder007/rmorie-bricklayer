@@ -33,8 +33,7 @@ fails.
 ``` r
 # \donttest{
 f <- try(bricklayer_fetch_parse_siu(648), silent = TRUE)
-#> Warning: 1 line longer than 2000 characters was split for extraction; a field spanning a split may be incomplete
 if (is.character(f)) f[["police_service"]]
-#> [1] "Peel Regional Police"
+#> [1] ""
 # }
 ```
