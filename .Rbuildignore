@@ -31,6 +31,7 @@
 ^tools$
 ^vignettes/\.gitignore$
 ^inst/ctcheck/build.*$
+^inst/dudect/build.*$
 ^inst/fuzz/build.*$
 ^tests/testthat/_problems$
 ^SECURITY\.md$
