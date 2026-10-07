@@ -6,7 +6,7 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
   sign in to the hosted MORIE tier (a last resort behind a local model
   or your own endpoint; keys are issued on request at
-  <https://rmorie.com/access>): a key you paste with `--token` (read
+  <https://rmorie.com/access/>): a key you paste with `--token` (read
   from the terminal or a pipe when KEY is omitted), a code sent to
   `--email`, or the GitHub device flow
 

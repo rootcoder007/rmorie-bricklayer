@@ -6,7 +6,7 @@ Stores a personal key for the hosted MORIE tier in
 serves all of them). The tier is a last resort behind a local model or
 your own endpoint (see
 [`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md));
-keys are personal and issued on request at <https://rmorie.com/access>.
+keys are personal and issued on request at <https://rmorie.com/access/>.
 The sign-in addresses come from
 [`bricklayer_services`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md).
 Three ways in:
@@ -39,7 +39,7 @@ bricklayer_llm_login(
 
 - token:
 
-  A key issued at <https://rmorie.com/access>.
+  A key issued at <https://rmorie.com/access/>.
 
 - email:
 
@@ -65,7 +65,7 @@ The key, invisibly.
 
 ``` r
 if (FALSE) { # \dontrun{
-bricklayer_llm_login(token = "<key issued at https://rmorie.com/access>")
+bricklayer_llm_login(token = "<key issued at https://rmorie.com/access/>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login() # GitHub device flow
 } # }

@@ -313,8 +313,8 @@ produced the data.
   lists the tables served at data.rmorie.com (161 databases and 203
   tables on 2026-10-05, materialised from Google BigQuery public
   datasets), and `bricklayer_data_load("db/table")` opens one with your
-  MORIE key (issued on request at <https://rmorie.com/access>, under the
-  terms at <https://rmorie.com/data-license>), cached locally.
+  MORIE key (issued on request at <https://rmorie.com/access/>, under
+  the terms at <https://rmorie.com/data-license/>), cached locally.
   [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
   downloads any URL with an Internet Archive fallback (libcurl).
 
@@ -626,7 +626,7 @@ is used:
     [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)),
     so the endpoint can move or be paused without a package release.
     Keys are personal, rate limited and issued on request at
-    <https://rmorie.com/access>; a key is stored once, in
+    <https://rmorie.com/access/>; a key is stored once, in
     `~/.config/morie/credentials.json`, and shared with rmorie,
     rmoriedata and the Python package morie.
 
