@@ -62,6 +62,16 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     time-rescaling residuals, and custodial populations are summarised by
     average daily population, average length of stay and stock-and-flow
     measures in the formulation of 'Lakner'.
+    Air pollution is followed from source to burden: 'Pasquill-Gifford'
+    dispersion coefficients with the 'Briggs' plume rise, Gaussian plume and puff,
+    Eulerian and Lagrangian models; concentration-response functions for PM2.5 and
+    NO2 (the WHO 2021 guideline review and the 'Burnett' integrated exposure-response
+    curve), the 'Levin' attributable fraction, displaced mortality, a cross-fitted
+    partially linear exposure-response estimator with a bootstrap, and the
+    'Wagstaff' concentration index of exposure by income; and the electricity and
+    carbon footprint of a computation, measured from the CPU's energy counters when
+    the operating system exposes them or modelled with the 'Green Algorithms'
+    method against a sourced carbon-intensity table.
 License: AGPL-3
 Encoding: UTF-8
 Language: en-US
@@ -72,6 +82,7 @@ Imports:
     graphics,
     grDevices,
     methods,
+    parallel,
     stats,
     tools,
     utils

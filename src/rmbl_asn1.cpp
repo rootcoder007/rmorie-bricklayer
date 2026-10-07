@@ -192,10 +192,9 @@ Big from_bytes(const unsigned char *p, size_t n) {
     /* big-endian in, little-endian limbs out */
     size_t i = n;
     while (i >= 4) {
-        a.push_back(static_cast<uint32_t>(p[i - 1]) |
-                    (static_cast<uint32_t>(p[i - 2]) << 8) |
-                    (static_cast<uint32_t>(p[i - 3]) << 16) |
-                    (static_cast<uint32_t>(p[i - 4]) << 24));
+        const uint32_t w = static_cast<uint32_t>(p[i - 1]) | (static_cast<uint32_t>(p[i - 2]) << 8) |
+                           (static_cast<uint32_t>(p[i - 3]) << 16) | (static_cast<uint32_t>(p[i - 4]) << 24);
+        a.push_back(w);
         i -= 4;
     }
     if (i > 0) {

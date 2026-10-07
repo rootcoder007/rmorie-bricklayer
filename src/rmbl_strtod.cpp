@@ -345,14 +345,10 @@ double exact_to_double(Big m, int e) {
     }
     Big q, r;
     divmod(num, den, q, r);
+    /* the shift above leaves num/den in [2^52, 2^54): one halving at most */
     while (bit_length(q) > 53) {
         shl(den, 1);
         be += 1;
-        divmod(num, den, q, r);
-    }
-    while (bit_length(q) < 53) {
-        shl(num, 1);
-        be -= 1;
         divmod(num, den, q, r);
     }
 

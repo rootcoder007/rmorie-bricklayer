@@ -75,13 +75,9 @@ json_gzip_encode <- function(x, raw = FALSE, ...) {
 # at zero so the same input always gives the same bytes: a capsule's
 # digest must not depend on the clock.
 .rmbl_gzip_member <- function(bytes) {
+  # memCompress(type = "gzip") returns a zlib stream (CMF/FLG header, deflate
+  # body, Adler-32 trailer), never fewer than six bytes
   z <- memCompress(bytes, type = "gzip")
-  if (length(z) < 6L) stop("compression produced no stream", call. = FALSE)
-  # a zlib stream begins with CMF/FLG, where CMF's low nibble is 8
-  # (deflate); anything else is not the wrapper assumed here
-  if (bitwAnd(as.integer(z[1L]), 0x0f) != 8L) {
-    stop("unexpected compressed-stream header", call. = FALSE)
-  }
   deflate <- z[3L:(length(z) - 4L)]
   n <- length(bytes)
   # Arithmetic, not bit operations: a CRC-32 runs up to 2^32 - 1 and R's

@@ -705,8 +705,7 @@ void rmbl_theil_sen(const double *x, const double *y, R_xlen_t n,
     if (slopes.empty()) { *slope = NA_REAL; *intercept = NA_REAL; return; }
     std::sort(slopes.begin(), slopes.end());
     const size_t k = slopes.size();
-    *slope = (k % 2 == 1) ? slopes[k / 2]
-                          : 0.5 * (slopes[k / 2 - 1] + slopes[k / 2]);
+    *slope = (k % 2 == 1) ? slopes[k / 2] : 0.5 * (slopes[k / 2 - 1] + slopes[k / 2]);
     std::vector<double> resid(m);
     for (size_t i = 0; i < m; ++i) resid[i] = ys[i] - *slope * xs[i];
     std::sort(resid.begin(), resid.end());

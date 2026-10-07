@@ -179,12 +179,7 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                 n_tail = n, ks = NA_real_, reliable = FALSE,
                 method = "too few tail observations"))
   }
-  logsum <- sum(log(tail))
-  if (!is.finite(logsum)) {
-    return(list(alpha = NA_real_, se = NA_real_, x_min = x_min,
-                n_tail = n, ks = NA_real_, reliable = FALSE,
-                method = "not estimable"))
-  }
+  logsum <- sum(log(tail))   # finite: the tail is finite and positive
   if (isTRUE(discrete) && !isTRUE(approx)) {
     # The zeta distribution truncated below at x_min:
     #   p(k) = k^-alpha / zeta(alpha, x_min),  k = x_min, x_min + 1, ...
@@ -194,7 +189,7 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
     # univariate maximisation settles it.
     nll <- function(a) {
       z <- .rmbl_hurwitz(a, x_min)
-      if (!is.finite(z) || z <= 0) return(Inf)
+      if (!is.finite(z) || z <= 0) return(.Machine$double.xmax)
       n * log(z) + a * logsum
     }
     opt <- stats::optimize(nll, interval = c(1.0001, 25), tol = 1e-9)

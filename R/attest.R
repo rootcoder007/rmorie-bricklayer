@@ -113,7 +113,7 @@ capsule_attest <- function(manifest, key, context = NULL,
   sig <- if (identical(scheme, "xmss-sha256")) {
     capsule_sign(signed, key, scheme = "xmss")
   } else {
-    capsule_sign(signed, key, context = context, prehash = prehash)
+    capsule_sign(signed, key, context = if (is.null(ctx)) NULL else payload$context, prehash = prehash)
   }
   out <- c(payload, list(signature = sig))
   class(out) <- c("bricklayer_attestation", "list")

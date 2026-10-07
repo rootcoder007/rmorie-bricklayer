@@ -96,6 +96,7 @@ SEXP C_rmbl_cor_impl(SEXP, SEXP);
 SEXP C_rmbl_normal_pdf_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_sha256_impl(SEXP);
 SEXP C_rmbl_sha512_impl(SEXP);
+SEXP C_rmbl_hash_two_part_impl(SEXP, SEXP);
 SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP, SEXP);
@@ -229,6 +230,9 @@ SEXP C_rmbl_sha256(SEXP a0) {
 }
 SEXP C_rmbl_sha512(SEXP a0) {
     return rmbl_guard("C_rmbl_sha512", [&] { return C_rmbl_sha512_impl(a0); });
+}
+SEXP C_rmbl_hash_two_part(SEXP a0, SEXP a1) {
+    return rmbl_guard("C_rmbl_hash_two_part", [&] { return C_rmbl_hash_two_part_impl(a0, a1); });
 }
 SEXP C_rmbl_fetch_fallback(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_fetch_fallback", [&] { return C_rmbl_fetch_fallback_impl(a0, a1, a2, a3); });

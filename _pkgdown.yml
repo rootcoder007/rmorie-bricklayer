@@ -60,6 +60,7 @@ articles:
       - banded-tables-and-concentration
       - stock-and-flow
       - falsification-and-power
+      - air-pollution-and-health
   - title: Data handling
     contents:
       - validation-rules-and-synthetic-data
@@ -403,6 +404,35 @@ reference:
       - trend_test
       - step_change
       - count_trend
+  - title: Air pollution, dispersion and health burden
+    desc: >
+      Pasquill-Gifford dispersion and Briggs plume rise, Gaussian plume and puff,
+      grid and particle models; concentration-response functions, attributable
+      fraction, displaced mortality, the burden chain per area, the concentration
+      index of exposure by income, a cross-fitted exposure-response estimator, and
+      the one-call pipeline with its assumption log.
+    contents:
+      - pg_sigmas
+      - crf_pm25
+      - attributable_fraction
+      - mortality_displaced
+      - pollution_burden
+      - pollution_burden_by_area
+      - plr_crossfit
+      - exposure_response_plr
+      - exposure_concentration_index
+      - verify_pollution
+  - title: The footprint of the computation
+    desc: >
+      Electricity and CO2-equivalent of an expression, measured from RAPL energy
+      counters where the operating system exposes them, otherwise modelled with the
+      Green Algorithms method, against a sourced carbon-intensity table.
+    contents:
+      - compute_footprint
+      - carbon_intensity
+      - detect_location
+      - rapl_available
+      - footprint_equivalents
   - title: Region-coded counts
     desc: >
       A region is an areal unit with a population, not a coordinate. Indirect

@@ -45,6 +45,8 @@ sha256_file <- function(path) {
 
 ## ----------------- Unicode-safe text with ASCII fallback -----------------
 
+.rmbl_has_stringi <- function() requireNamespace("stringi", quietly = TRUE)
+
 #' Transliterate Text to Plain ASCII
 #'
 #' Converts a character vector to plain 7-bit ASCII, transliterating
@@ -79,7 +81,7 @@ to_ascii <- function(x) {
   # of flagging them.
   inv <- !is.na(x) & !validUTF8(x)
   if (any(inv)) x[inv] <- iconv(x[inv], "UTF-8", "UTF-8", sub = "")
-  if (requireNamespace("stringi", quietly = TRUE)) {
+  if (.rmbl_has_stringi()) {
     # Best + platform-independent: romanize any script to Latin, then fold
     # Latin accents to ASCII. Handles far more than Latin accents
     # (e.g. Cyrillic, Greek), not just names like "Angela".

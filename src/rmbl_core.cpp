@@ -231,6 +231,18 @@ void rmbl_sha256_raw(const unsigned char *data, size_t len,
     sha256_final(&ctx, (uint8_t *) out);
 }
 
+/* The same digest fed in two pieces at `split`: the buffered-partial-block
+ * path of sha256_update(), which single-shot hashing never takes. */
+void rmbl_sha256_two_part(const unsigned char *data, size_t len, size_t split,
+                          unsigned char out[32]) {
+    if (split > len) split = len;
+    sha256_ctx ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, data, split);
+    sha256_update(&ctx, data + split, len - split);
+    sha256_final(&ctx, (uint8_t *) out);
+}
+
 /* SHA-224 (FIPS 180-4 section 5.3.2): the SHA-256 compression function
  * from its own initial state, truncated to 28 bytes. A FIPS 204/205
  * pre-hash choice. */

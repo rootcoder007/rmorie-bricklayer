@@ -506,6 +506,38 @@ void check_chunk_list(SEXP x) {
 
 extern "C" {
 
+extern "C" void rmbl_sha256_two_part(const unsigned char *, size_t, size_t, unsigned char[32]);
+
+/* Internal self-test: SHA-256 and SHA-512 of `x` fed in two pieces at
+ * `split`, as two hex strings. Equal to the one-shot digests when the
+ * partial-block buffering in each update() is right. */
+SEXP C_rmbl_hash_two_part_impl(SEXP x, SEXP split) {
+    if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
+    const int sp = Rf_asInteger(split);
+    if (sp == NA_INTEGER || sp < 0) Rf_error("`split` must be a non-negative integer");
+    const size_t len = static_cast<size_t>(XLENGTH(x));
+    size_t at = static_cast<size_t>(sp);
+    if (at > len) at = len;
+    unsigned char d256[32];
+    rmbl_sha256_two_part(RAW(x), len, at, d256);
+    sha512_ctx c;
+    sha512_init(&c);
+    sha512_update(&c, RAW(x), at);
+    sha512_update(&c, RAW(x) + at, len - at);
+    uint8_t d512[64];
+    sha512_final(&c, d512);
+    static const char hx[] = "0123456789abcdef";
+    char h256[65], h512[129];
+    for (int i = 0; i < 32; ++i) { h256[2 * i] = hx[d256[i] >> 4]; h256[2 * i + 1] = hx[d256[i] & 15]; }
+    for (int i = 0; i < 64; ++i) { h512[2 * i] = hx[d512[i] >> 4]; h512[2 * i + 1] = hx[d512[i] & 15]; }
+    h256[64] = 0; h512[128] = 0;
+    SEXP out = PROTECT(Rf_allocVector(STRSXP, 2));
+    SET_STRING_ELT(out, 0, Rf_mkChar(h256));
+    SET_STRING_ELT(out, 1, Rf_mkChar(h512));
+    UNPROTECT(1);
+    return out;
+}
+
 SEXP C_rmbl_sha512_impl(SEXP x) {
     char out[129];
     if (TYPEOF(x) == RAWSXP) {
