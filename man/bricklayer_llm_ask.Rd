@@ -48,7 +48,7 @@ skips it;
 \item the hosted MORIE tier, a last resort for people who can run neither:
 its address comes from \code{\link{bricklayer_services}} and it needs the
 key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
-Keys are personal and issued on request at \url{https://rmorie.com/access}.
+Keys are personal and issued on request at \url{https://rmorie.com/access/}.
 }
 \code{\link{bricklayer_llm_status}} shows which route a question would take.
 }
