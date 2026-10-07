@@ -1,6 +1,8 @@
 # Coverage-guided fuzzing of the parsers that read bytes from outside: the
 # DER parser and RSA arithmetic, the decimal-to-double conversion (checked
-# against the C library bit for bit), and the SIU report parsers. Built
+# against the C library bit for bit), and the SIU report parsers; and
+# differential fuzzing against OpenSSL 3.5 (fuzz_ossl: digests, HMAC, PBKDF2,
+# ML-KEM, ML-DSA, SLH-DSA must agree byte for byte or verdict for verdict). Built
 # with libFuzzer + AddressSanitizer + UndefinedBehaviorSanitizer; a crash,
 # a sanitizer report or a conversion mismatch fails the job and uploads
 # the reproducer. Sources and seed corpora: inst/fuzz/.
@@ -32,13 +34,17 @@ jobs:
   libfuzzer:
     name: libFuzzer + ASan + UBSan
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Debian 13 ships OpenSSL 3.5, which fuzz_ossl differs against (ML-KEM, ML-DSA, SLH-DSA)
+    container: debian:trixie
+    timeout-minutes: 60
+    env:
+      REQUIRE_OSSL35: "1"
     steps:
       - uses: actions/checkout@v7
       - name: Toolchain
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang r-base-dev libcurl4-openssl-dev
+          apt-get update
+          apt-get install -y --no-install-recommends clang libclang-rt-dev r-base-dev libcurl4-openssl-dev libssl-dev pkg-config ca-certificates
       - name: Build the targets
         run: bash inst/fuzz/build.sh
       - name: Fuzz
