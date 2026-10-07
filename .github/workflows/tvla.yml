@@ -1,0 +1,44 @@
+# Simulated power analysis (inst/tvla): the package's ML-KEM arithmetic cross-compiled for
+# a Cortex-M4, executed in unicorn under a Hamming-weight leakage model, and assessed with
+# TVLA (fixed-vs-random Welch t, two independent experiments). The unmasked kernels are the
+# positive controls and must leak; a masked kernel that leaks fails the job.
+name: tvla
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+  schedule:
+    - cron: '41 6 * * 4'
+  workflow_dispatch:
+    inputs:
+      traces:
+        description: traces per experiment
+        default: '5000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tvla-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tvla:
+    name: TVLA (emulated Cortex-M4, Hamming weight)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib libunicorn-dev
+      - name: Build
+        run: bash inst/tvla/build.sh
+      - name: Assess
+        working-directory: inst/tvla
+        run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}
