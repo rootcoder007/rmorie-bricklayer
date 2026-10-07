@@ -39,8 +39,8 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     schemes are checked byte for byte against 'OpenSSL' 3.5 and the
     known-answer vectors of 'NIST' (the US National Institute of Standards
     and Technology) in the test suite. Timing is measured on hardware,
-    power leakage is assessed in simulation, and 'ML-KEM' decapsulation
-    and 'ML-DSA' signing are first-order masked. For the published administrative
+    power leakage is assessed in simulation, and 'ML-KEM decapsulation' and
+    'ML-DSA' signing are first-order masked. For the published administrative
     tables these capsules usually hold, it computes period-over-period
     change matched on the period rather than the row, with the exact
     conditional-binomial interval for a ratio of counts and with a
