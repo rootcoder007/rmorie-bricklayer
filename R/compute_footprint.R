@@ -252,6 +252,14 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
   NA_real_
 }
 
+# CPU seconds between two proc.time() readings, children included. Windows
+# reports the child times as NA, which would have turned every figure NA.
+.rmbl_cpu_seconds <- function(t0, t1) {
+  parts <- c("user.self", "sys.self", "user.child", "sys.child")
+  d <- unname(t1[parts]) - unname(t0[parts])
+  max(sum(d[is.finite(d)]), 0)
+}
+
 .rmbl_cores <- function() {
   tryCatch(parallel::detectCores(logical = TRUE), error = function(e) NA_integer_)
 }
@@ -426,8 +434,7 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
   stat1 <- if (usage_mode == "machine") .proc_stat_cpu(proc_stat) else NULL
 
   wall <- max(unname(t1[["elapsed"]] - t0[["elapsed"]]), 0)
-  cpu_t <- max(unname((t1[["user.self"]] + t1[["sys.self"]] + t1[["user.child"]] + t1[["sys.child"]]) -
-                        (t0[["user.self"]] + t0[["sys.self"]] + t0[["user.child"]] + t0[["sys.child"]])), 0)
+  cpu_t <- .rmbl_cpu_seconds(t0, t1)
   hours <- wall / 3600
 
   if (is.null(cores)) {

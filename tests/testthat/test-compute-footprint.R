@@ -262,6 +262,19 @@ test_that("print and equivalents", {
   expect_error(footprint_equivalents(c(1, 2)), "single")
 })
 
+test_that("CPU seconds: children counted, NA child times (Windows) counted as zero", {
+  t0 <- structure(c(1, 0.5, 0, 2, 3), names = c("user.self", "sys.self", "elapsed", "user.child", "sys.child"))
+  t1 <- structure(c(3, 1, 10, 2.5, 3), names = c("user.self", "sys.self", "elapsed", "user.child", "sys.child"))
+  expect_equal(.rmbl_cpu_seconds(t0, t1), 3)
+  t0[c("user.child", "sys.child")] <- NA
+  t1[c("user.child", "sys.child")] <- NA
+  expect_equal(.rmbl_cpu_seconds(t0, t1), 2.5)
+  expect_equal(.rmbl_cpu_seconds(t1, t0), 0)
+  fp <- compute_footprint(sum(sqrt(seq_len(1e5))), location = "CA-ON", cpu_power_w = 45, memory_gb = 16)
+  expect_true(is.finite(fp$co2e_g) && fp$co2e_g >= 0)
+  expect_true(is.list(footprint_equivalents(fp$co2e_g * 1e4)))
+})
+
 test_that("seams: memory from /proc/meminfo or sysctl, core count fallback, assumptions printed", {
   mi <- tempfile("meminfo")
   writeLines(c("MemTotal:       16777216 kB", "MemFree:         1234 kB"), mi)
