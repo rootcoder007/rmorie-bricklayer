@@ -47,9 +47,8 @@ struct PolyVec { int16_t v[kK][256]; };
 inline uint16_t compress(int16_t x, int d) {
     uint32_t t = static_cast<uint32_t>(
         to_positive(barrett_reduce(x)));
-    /* (t << d) / q, rounded to nearest, via the reference's
-     * multiply-shift form */
-    t = (((t << d) + kQ / 2) / kQ) & ((1u << d) - 1u);
+    /* (t << d) / q, rounded to nearest; (t << d) + q/2 < 2^23 for d <= 11 */
+    t = rmbl_mlkem_core::div_q((t << d) + kQ / 2) & ((1u << d) - 1u);
     return static_cast<uint16_t>(t);
 }
 
@@ -640,8 +639,8 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
         int16_t c0[32], c1[32];
         rmbl_masked::sec_b2a(c0, c1, mb, rng);
         for (int j = 0; j < 32; ++j) {
-            v0[32 * g + j] = static_cast<int16_t>((v0[32 * g + j] + (static_cast<int32_t>(c0[j]) * ((kQ + 1) / 2)) % kQ) % kQ);
-            v1[32 * g + j] = static_cast<int16_t>((v1[32 * g + j] + (static_cast<int32_t>(c1[j]) * ((kQ + 1) / 2)) % kQ) % kQ);
+            v0[32 * g + j] = barrett_reduce(static_cast<int16_t>(v0[32 * g + j] + static_cast<int16_t>(rmbl_mlkem_core::mod_q(static_cast<uint32_t>(c0[j]) * ((kQ + 1) / 2)))));
+            v1[32 * g + j] = barrett_reduce(static_cast<int16_t>(v1[32 * g + j] + static_cast<int16_t>(rmbl_mlkem_core::mod_q(static_cast<uint32_t>(c1[j]) * ((kQ + 1) / 2)))));
         }
     }
     canon(v0);

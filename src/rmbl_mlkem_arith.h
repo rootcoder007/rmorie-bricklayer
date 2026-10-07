@@ -44,6 +44,17 @@ inline int16_t barrett_reduce(int16_t a) {
  * a CENTRED value, so what is needed here is to add q to the negative
  * ones -- not to subtract it, which is the same code with the sign the
  * other way round and silently encodes negative coefficients. */
+/* floor(n / q) and n mod q for 0 <= n < 2^23, by multiply-and-shift (Granlund and
+ * Montgomery 1994: m = ceil(2^35 / q), exact on that range; checked for every n). A
+ * written division by the constant q is turned into the same multiply only when the
+ * compiler optimises: at -O0, GCC emits a hardware divide, whose latency depends on the
+ * operand on many cores (KyberSlash, Bernstein et al. 2024). Secret-dependent code calls
+ * these instead. */
+inline uint32_t div_q(uint32_t n) {
+    return static_cast<uint32_t>((static_cast<uint64_t>(n) * 10321340u) >> 35);
+}
+inline uint32_t mod_q(uint32_t n) { return n - 3329u * div_q(n); }
+
 inline int16_t to_positive(int16_t a) {
     return static_cast<int16_t>(a + ((a >> 15) & kQ));
 }
