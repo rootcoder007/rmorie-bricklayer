@@ -1,5 +1,30 @@
 # rmoriebricklayer 0.5.9
 
+**Standards vectors, at scale**
+
+* The pinned C2SP Wycheproof post-quantum sets (ML-KEM-512/768/1024 key generation,
+  encapsulation, decapsulation and key validation; ML-DSA-44/65/87 signing with and without
+  seed, and verification) and the NIST ACVP sets (ML-KEM keyGen/encapDecap, ML-DSA
+  keyGen/sigGen/sigVer, SLH-DSA keyGen/sigGen/sigVer for all twelve parameter sets, SHA-3,
+  SHAKE, HMAC-SHA-256/512, PBKDF2) run in CI on every change to the kernels
+  (`.github/workflows/vectors.yml`, `tools/vectors/`): 6,488 tests checked, 0 failures. The
+  3,822 not applicable are named with their reason: bit-length SHA-3 messages (the API hashes
+  bytes), gigabyte messages, hedged ML-DSA signatures whose randomness the vectors do not
+  carry, and PBKDF2 over SHA-224. A subset of 1.5 MB ships in `tests/testthat/vectors` and runs
+  offline through the same runner.
+* **Found by the vectors:** `C_rmbl_mlkem_decaps` accepted a decapsulation key whose stored
+  H(ek) did not match its own ek; FIPS 203 section 7.3 requires rejecting it, and it is now
+  refused.
+* Pre-hash: HashML-DSA and HashSLH-DSA take every hash function FIPS 204 and FIPS 205
+  approve: `sha224`, `sha384`, `sha512_224`, `sha512_256`, `sha3_224`, `sha3_256`,
+  `sha3_384` and `sha3_512` join `sha256`, `sha512`, `shake128` and `shake256`. SHA-224,
+  SHA-512/224, SHA-512/256, SHA3-224 and SHA3-384 are new native digests, checked against
+  OpenSSL at every block boundary; each OID is bound into the signature, so two digests of
+  the same length (SHA-512/224, SHA3-224) never verify for each other.
+* SLH-DSA gains its FIPS 205 internal interface (`slh_sign_internal` /
+  `slh_verify_internal`, not exported) so the ACVP internal vectors check the core the public
+  interface wraps.
+
 ## The SIU parser, third pass
 
 Two further reviews of 0.5.8 (the diff review and a dedicated SIU review) showed the

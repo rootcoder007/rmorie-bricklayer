@@ -423,7 +423,9 @@ fips_sizes <- function(scheme) {
   if (is.null(prehash)) return("none")
   prehash <- as.character(prehash)[1L]
   if (is.na(prehash)) prehash <- "none"
-  match.arg(prehash, c("none", "sha256", "sha512", "shake128", "shake256"))
+  match.arg(prehash, c("none", "sha224", "sha256", "sha384", "sha512", "sha512_224",
+                     "sha512_256", "sha3_224", "sha3_256", "sha3_384", "sha3_512",
+                     "shake128", "shake256"))
 }
 
 # A context string is at most 255 bytes because the FIPS 204 and 205
@@ -700,8 +702,11 @@ signing_public_key <- function(key) {
 #' @param prehash For the standardised schemes, sign a
 #' digest of the message rather than the message itself -- HashML-DSA (FIPS
 #' 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-#' `"none"` (the default, the pure variants), `"sha256"`,
-#' `"sha512"`, `"shake128"` or `"shake256"`. The identifier
+#' `"none"` (the default, the pure variants) or any hash function the two
+#' standards approve: `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`,
+#' `"sha512_224"`, `"sha512_256"`, `"sha3_224"`, `"sha3_256"`,
+#' `"sha3_384"`, `"sha3_512"`, `"shake128"` (256-bit output) or
+#' `"shake256"` (512-bit output). The identifier
 #' of the pre-hash is bound into the signature, so a pre-hashed signature
 #' is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,

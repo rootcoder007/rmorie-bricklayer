@@ -231,6 +231,24 @@ void rmbl_sha256_raw(const unsigned char *data, size_t len,
     sha256_final(&ctx, (uint8_t *) out);
 }
 
+/* SHA-224 (FIPS 180-4 section 5.3.2): the SHA-256 compression function
+ * from its own initial state, truncated to 28 bytes. A FIPS 204/205
+ * pre-hash choice. */
+void rmbl_sha224_raw(const unsigned char *data, size_t len,
+                     unsigned char out[28]) {
+    static const uint32_t kIv[8] = {
+        0xc1059ed8u, 0x367cd507u, 0x3070dd17u, 0xf70e5939u,
+        0xffc00b31u, 0x68581511u, 0x64f98fa7u, 0xbefa4fa4u
+    };
+    sha256_ctx ctx;
+    uint8_t full[32];
+    sha256_init(&ctx);
+    std::memcpy(ctx.state, kIv, sizeof kIv);
+    sha256_update(&ctx, data, len);
+    sha256_final(&ctx, full);
+    std::memcpy(out, full, 28);
+}
+
 void rmbl_sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     sha256_ctx ctx;
     uint8_t hash[32];

@@ -141,6 +141,9 @@ SEXP C_rmbl_theil_sen_impl(SEXP, SEXP);
 SEXP C_rmbl_sen_slopes_impl(SEXP, SEXP);
 SEXP C_rmbl_hurwitz_zeta_impl(SEXP, SEXP);
 SEXP C_rmbl_shake_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_prehash_digest_impl(SEXP, SEXP);
+SEXP C_rmbl_slhdsa_sign_internal_impl(SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_slhdsa_verify_internal_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_mldsa_sizes_impl(SEXP);
 SEXP C_rmbl_mldsa_keypair_impl(SEXP, SEXP);
 SEXP C_rmbl_mldsa_sign_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -357,6 +360,15 @@ SEXP C_rmbl_sen_slopes(SEXP a0, SEXP a1) {
 }
 SEXP C_rmbl_hurwitz_zeta(SEXP a0, SEXP a1) {
     return rmbl_guard("C_rmbl_hurwitz_zeta", [&] { return C_rmbl_hurwitz_zeta_impl(a0, a1); });
+}
+SEXP C_rmbl_slhdsa_sign_internal(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_slhdsa_sign_internal", [&] { return C_rmbl_slhdsa_sign_internal_impl(a0, a1, a2, a3); });
+}
+SEXP C_rmbl_slhdsa_verify_internal(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
+    return rmbl_guard("C_rmbl_slhdsa_verify_internal", [&] { return C_rmbl_slhdsa_verify_internal_impl(a0, a1, a2, a3); });
+}
+SEXP C_rmbl_prehash_digest(SEXP a0, SEXP a1) {
+    return rmbl_guard("C_rmbl_prehash_digest", [&] { return C_rmbl_prehash_digest_impl(a0, a1); });
 }
 SEXP C_rmbl_shake(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_shake", [&] { return C_rmbl_shake_impl(a0, a1, a2); });

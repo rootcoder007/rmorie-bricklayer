@@ -41,8 +41,11 @@ context, which is what the standards' test vectors rely on.}
 \item{prehash}{For the standardised schemes, sign a
 digest of the message rather than the message itself -- HashML-DSA (FIPS
 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-\code{"none"} (the default, the pure variants), \code{"sha256"},
-\code{"sha512"}, \code{"shake128"} or \code{"shake256"}. The identifier
+\code{"none"} (the default, the pure variants) or any hash function the two
+standards approve: \code{"sha224"}, \code{"sha256"}, \code{"sha384"}, \code{"sha512"},
+\code{"sha512_224"}, \code{"sha512_256"}, \code{"sha3_224"}, \code{"sha3_256"},
+\code{"sha3_384"}, \code{"sha3_512"}, \code{"shake128"} (256-bit output) or
+\code{"shake256"} (512-bit output). The identifier
 of the pre-hash is bound into the signature, so a pre-hashed signature
 is never interchangeable with a pure one over the same digest.}
 }

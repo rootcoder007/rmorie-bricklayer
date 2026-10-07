@@ -280,6 +280,25 @@ SEXP C_rmbl_mldsa_mu_impl(SEXP mode, SEXP pk, SEXP msg, SEXP ctx, SEXP prehash) 
     });
 }
 
+/* The pre-hash digest alone, by the name capsule_sign() takes: what the
+ * NIST ACVP SHA-2 / SHA-3 vectors check, through the same table signing
+ * uses. Internal. */
+SEXP C_rmbl_prehash_digest_impl(SEXP name, SEXP msg) {
+    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    const char *nm = rmbl_prehash::name_of(name);
+    unsigned char out[rmbl_prehash::kMaxDigest];
+    size_t len = 0;
+    unsigned char arc = 0;
+    if (!rmbl_prehash::digest(nm, RAW(msg), static_cast<size_t>(XLENGTH(msg)),
+                              out, &len, &arc)) {
+        Rf_error("`prehash` must be one of " RMBL_PREHASH_NAMES);
+    }
+    SEXP r = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(len)));
+    std::memcpy(RAW(r), out, len);
+    UNPROTECT(1);
+    return r;
+}
+
 SEXP C_rmbl_mldsa_sign_mu_impl(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
     if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
         Rf_error("`mu` must be a raw vector of 64 bytes");

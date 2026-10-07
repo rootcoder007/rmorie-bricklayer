@@ -63,6 +63,9 @@ extern SEXP C_rmbl_sen_slopes(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 /* rmbl_keccak.cpp: FIPS 202 */
 extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_prehash_digest(SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_sign_internal(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_verify_internal(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -270,6 +273,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_sen_slopes",        (DL_FUNC) &C_rmbl_sen_slopes,        2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
     {"C_rmbl_shake",             (DL_FUNC) &C_rmbl_shake,             3},
+    {"C_rmbl_prehash_digest",    (DL_FUNC) &C_rmbl_prehash_digest,    2},
+    {"C_rmbl_slhdsa_sign_internal", (DL_FUNC) &C_rmbl_slhdsa_sign_internal, 4},
+    {"C_rmbl_slhdsa_verify_internal", (DL_FUNC) &C_rmbl_slhdsa_verify_internal, 4},
     {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
     {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
     {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        6},
