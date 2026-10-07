@@ -146,7 +146,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       98289a2348f81b955a184bdee8f2b46a5653187b79d8bf1fb3c80624c4fa01a2</span></span>
+<span><span class="co">#&gt;   root       c87f41810a66cf2ae314f2fc4996958a2dcaeaaf9f18644413feaf7db3780da4</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -159,7 +159,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    98289a2348f81b955a184bdee8f2b46a5653187b79d8bf1fb3c80624c4fa01a2</span></span>
+<span><span class="co">#&gt;   root    c87f41810a66cf2ae314f2fc4996958a2dcaeaaf9f18644413feaf7db3780da4</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -376,13 +376,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-07T13:58:52Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-07T14:07:01Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"by_year"</span>, <span class="st">"by_precinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-07T13:58:52Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-07T14:07:01Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): by_year, by_precinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -424,7 +424,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    5790a26105e3b46c84e3173ff0bee7a4db89</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    05b183b8813550b785794b546029c3632a25</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
