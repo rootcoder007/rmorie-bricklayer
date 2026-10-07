@@ -74,13 +74,11 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
           r <- tryCatch(
             {
               kp <- .Call(C("C_rmbl_mlkem_keygen"), lv, h(t$seed))
-              {
-                k <- .Call(C("C_rmbl_mlkem_decaps"), lv, kp[[2]], h(t$c))
-                if (!identical(k, .Call(C("C_rmbl_mlkem_decaps_masked"), lv, kp[[2]], h(t$c)))) {
-                  stop("masked decapsulation disagrees")
-                }
-                list(ek = kp[[1]], K = k)
+              k <- .Call(C("C_rmbl_mlkem_decaps"), lv, kp[[2]], h(t$c))
+              if (!identical(k, .Call(C("C_rmbl_mlkem_decaps_masked"), lv, kp[[2]], h(t$c)))) {
+                stop("masked decapsulation disagrees")
               }
+              list(ek = kp[[1]], K = k)
             },
             error = function(e) NULL
           )

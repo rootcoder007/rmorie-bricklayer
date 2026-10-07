@@ -1,16 +1,19 @@
 # Simulated power analysis (inst/tvla): the package's ML-KEM arithmetic cross-compiled for
 # a Cortex-M4, executed in unicorn under a Hamming-weight leakage model, and assessed with
 # TVLA (fixed-vs-random Welch t, two independent experiments). The unmasked kernels are the
-# positive controls and must leak; a masked kernel that leaks fails the job.
+# positive controls and must leak; a masked kernel that leaks fails the job. A second pass
+# under the transition (Hamming-distance) model is reported, not gated: the Boolean gadgets
+# compiled from C still let share 0 and share 1 meet in one register, which only
+# hand-allocated assembly rules out (inst/tvla/README.md).
 name: tvla
 
 on:
   push:
     branches: [main]
-    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
   pull_request:
     branches: [main]
-    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
   schedule:
     - cron: '41 6 * * 4'
   workflow_dispatch:
@@ -36,9 +39,16 @@ jobs:
       - name: Toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib libunicorn-dev
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi libstdc++-arm-none-eabi-newlib libunicorn-dev libcapstone-dev
       - name: Build
         run: bash inst/tvla/build.sh
       - name: Assess
         working-directory: inst/tvla
+        run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}
+      - name: Transition model (reported, not gated)
+        if: always()
+        continue-on-error: true
+        working-directory: inst/tvla
+        env:
+          TVLA_MODEL: hd
         run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}

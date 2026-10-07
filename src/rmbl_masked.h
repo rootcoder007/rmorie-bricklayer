@@ -56,13 +56,19 @@ struct Rng {
 
 const int16_t kQ = 3329;
 
-/* A uniform value in [0, q), by rejection on 12 random bits (the rejection depends on the
- * randomness only, never on a secret). */
+/* A value in [0, q) from 32 random bits by multiply-and-shift: no loop, so the running
+ * time never depends on the randomness (a rejection loop made the trace length vary). Its
+ * distance from uniform is at most q / 2^32 < 2^-20. */
 inline int16_t rand_q(Rng &rng) {
-    for (;;) {
-        const uint32_t r = rng.u32() & 0x0FFFu;
-        if (r < static_cast<uint32_t>(kQ)) return static_cast<int16_t>(r);
-    }
+    return static_cast<int16_t>((static_cast<uint64_t>(rng.u32()) * static_cast<uint64_t>(kQ)) >> 32);
+}
+
+/* v + q when v < 0, else v, for v in (-2^31, 2^31 - q): the sign becomes an all-ones or
+ * all-zero mask through opaque(), so the compiler cannot turn it back into a conditional
+ * (an IT block on Thumb-2 executes or skips the add depending on the share). */
+inline int32_t cadd_q(int32_t v) {
+    const uint32_t m = opaque(static_cast<uint32_t>(0u - (static_cast<uint32_t>(v) >> 31)));
+    return static_cast<int32_t>(static_cast<uint32_t>(v) + (static_cast<uint32_t>(kQ) & m));
 }
 
 /* Trichina's AND: (z0, z1) shares x & y. Each partial sum is masked by r before a cross
@@ -200,7 +206,7 @@ inline void sec_in_interval(uint32_t &o0, uint32_t &o1, const int16_t a0[32], co
     int16_t s0[32];
     for (int j = 0; j < 32; ++j) {
         int32_t v = static_cast<int32_t>(a0[j]) - lo[j];
-        v += kQ & -static_cast<int32_t>(v < 0);
+        v = cadd_q(v);
         s0[j] = static_cast<int16_t>(v);
     }
     Bs t;
@@ -300,7 +306,7 @@ inline void sec_cbd32(int16_t a0[32], int16_t a1[32], const unsigned char *buf0,
     sec_b2a(a0, a1, v, rng);
     for (int j = 0; j < 32; ++j) {                      /* undo the shift by eta, mod q */
         int32_t t = static_cast<int32_t>(a0[j]) - eta;
-        t += kQ & -static_cast<int32_t>(t < 0);
+        t = cadd_q(t);
         a0[j] = static_cast<int16_t>(t);
     }
 }

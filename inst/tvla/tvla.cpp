@@ -27,7 +27,9 @@
 #include <cstring>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
+#include <capstone/capstone.h>
 #include <unicorn/unicorn.h>
 
 #include "build/symbols.h"   /* addresses of the kernel entry points, from nm */
@@ -43,11 +45,60 @@ struct Run {
     std::vector<double> trace;
     std::vector<uint32_t> pc;
     uint32_t last[13] = {0};
+    uint64_t prev = 0;      /* the instruction executing since the last code hook, 0 = none yet */
+    double mem = 0;         /* what its memory writes contributed */
 };
 
 static inline int hw32(uint32_t x) { return __builtin_popcount(x); }
 
 static std::vector<uint32_t> g_last_pc;   /* the program counter of every sample, last trace */
+/* TVLA_MODEL=hd: the transition (Hamming-distance) model instead of the value model */
+static bool g_hd = false;
+/* TVLA_DUMP=i: print the values that make up sample i of every trace (debugging a leak) */
+static long g_dump = -1;
+static std::string g_dump_line;
+
+/* The general-purpose registers each instruction writes, from capstone, cached by address.
+ * Index i in 0..12 is r0..r12. Counting written registers (not registers whose value
+ * changed) matters: a register overwritten with an equal value is a write all the same,
+ * and skipping it would leak whether old == new, which is a transition effect, not a
+ * value one. */
+static csh g_cs;
+static std::unordered_map<uint64_t, std::vector<int>> g_writes;
+
+static int gpr_index(unsigned reg) {
+    const char *n = cs_reg_name(g_cs, reg);
+    if (!n) return -1;
+    static const char *names[] = {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12",
+                                  "sb", "sl", "fp", "ip"};
+    for (int i = 0; i < 17; ++i)
+        if (std::strcmp(n, names[i]) == 0) return i < 13 ? i : i - 4;
+    return -1;
+}
+
+static const std::vector<int> &written(uc_engine *uc, uint64_t addr) {
+    auto it = g_writes.find(addr);
+    if (it != g_writes.end()) return it->second;
+    std::vector<int> out;
+    unsigned char code[4];
+    uc_mem_read(uc, addr, code, 4);
+    cs_insn *insn = nullptr;
+    if (cs_disasm(g_cs, code, 4, addr, 1, &insn) == 1) {
+        cs_regs rr, ww;
+        uint8_t nr = 0, nw = 0;
+        if (cs_regs_access(g_cs, insn, rr, &nr, ww, &nw) == CS_ERR_OK) {
+            for (int k = 0; k < nw; ++k) {
+                const int i = gpr_index(ww[k]);
+                if (i >= 0 && std::find(out.begin(), out.end(), i) == out.end()) out.push_back(i);
+            }
+        }
+        cs_free(insn, 1);
+    } else {
+        std::fprintf(stderr, "capstone cannot decode the instruction at 0x%08llx\n", static_cast<unsigned long long>(addr));
+        std::exit(2);
+    }
+    return g_writes.emplace(addr, out).first->second;
+}
 
 static void on_code(uc_engine *uc, uint64_t addr, uint32_t, void *ud) {
     Run *r = static_cast<Run *>(ud);
@@ -58,21 +109,38 @@ static void on_code(uc_engine *uc, uint64_t addr, uint32_t, void *ud) {
     void *ptrs[13];
     for (int i = 0; i < 13; ++i) ptrs[i] = &v[i];
     uc_reg_read_batch(uc, const_cast<int *>(regs), ptrs, 13);
-    double s = 0;
-    for (int i = 0; i < 13; ++i) {
-        if (v[i] != r->last[i]) s += hw32(v[i]);
-        r->last[i] = v[i];
+    if (r->prev != 0) {
+        /* one sample per instruction: the one at prev, which has just completed */
+        double s = r->mem;
+        for (int i : written(uc, r->prev)) {
+            s += hw32(g_hd ? (v[i] ^ r->last[i]) : v[i]);
+            if (g_dump >= 0 && static_cast<long>(r->trace.size()) == g_dump) {
+                char b[40];
+                std::snprintf(b, sizeof b, " r%d=%08x(was %08x)", i, v[i], r->last[i]);
+                g_dump_line += b;
+            }
+        }
+        r->trace.push_back(s);
+        r->pc.push_back(static_cast<uint32_t>(r->prev));
     }
-    /* the sample for the instruction that just completed (the one before addr) */
-    r->trace.push_back(s);
-    r->pc.push_back(static_cast<uint32_t>(addr));
+    for (int i = 0; i < 13; ++i) r->last[i] = v[i];
+    r->prev = addr;
+    r->mem = 0;
 }
 
-static void on_write(uc_engine *, uc_mem_type, uint64_t, int size, int64_t value, void *ud) {
+static void on_write(uc_engine *uc, uc_mem_type, uint64_t address, int size, int64_t value, void *ud) {
     Run *r = static_cast<Run *>(ud);
     uint64_t v = static_cast<uint64_t>(value);
     if (size < 8) v &= (1ull << (8 * size)) - 1;
-    if (!r->trace.empty()) r->trace.back() += __builtin_popcountll(v);
+    uint64_t old = 0;
+    uc_mem_read(uc, address, &old, static_cast<size_t>(size));   /* the hook runs before the store */
+    r->mem += __builtin_popcountll(g_hd ? (v ^ old) : v);
+    if (g_dump >= 0 && static_cast<long>(r->trace.size()) == g_dump) {
+        char b[48];
+        std::snprintf(b, sizeof b, " w=%08llx(was %08llx)", static_cast<unsigned long long>(v),
+                      static_cast<unsigned long long>(old));
+        g_dump_line += b;
+    }
 }
 
 static std::vector<unsigned char> g_image;
@@ -105,7 +173,6 @@ static std::vector<double> run_kernel(uint32_t entry, const std::vector<uint32_t
     uc_reg_write(r.uc, UC_ARM_REG_SP, &sp);
     uint32_t lr = static_cast<uint32_t>(TVLA_HALT) | 1u;
     uc_reg_write(r.uc, UC_ARM_REG_LR, &lr);
-    uc_reg_read(r.uc, UC_ARM_REG_R0, &r.last[0]);
     uc_hook h1, h2;
     uc_hook_add(r.uc, &h1, UC_HOOK_CODE, reinterpret_cast<void *>(on_code), &r, 1, 0);
     uc_hook_add(r.uc, &h2, UC_HOOK_MEM_WRITE, reinterpret_cast<void *>(on_write), &r, 1, 0);
@@ -261,17 +328,21 @@ static int run(const Kernel &k, int traces, std::mt19937_64 &g) {
     const std::vector<int16_t> fixed = poly(g);
     Acc acc[2];
     size_t len = 0;
+    std::vector<uint32_t> first_pc;
     for (int e = 0; e < 2; ++e) {
         for (int i = 0; i < traces; ++i) {
             const int c = static_cast<int>(g() & 1u);
             const std::vector<double> t = k.trace(c == 0 ? fixed : poly(g), g);
-            if (len == 0) len = t.size();
+            if (len == 0) { len = t.size(); first_pc = g_last_pc; }
             if (t.size() != len) {
-                std::printf("%-22s trace length varies (%zu vs %zu): timing depends on the input\n", k.name,
-                            t.size(), len);
+                size_t d = 0;
+                while (d < first_pc.size() && d < g_last_pc.size() && first_pc[d] == g_last_pc[d]) ++d;
+                std::printf("%-22s trace length varies (%zu vs %zu): timing depends on the input; paths part after pc 0x%08x\n",
+                            k.name, t.size(), len, d > 0 ? first_pc[d - 1] : 0u);
                 return 1;
             }
             acc[e].push(t, c);
+            if (g_dump >= 0) { std::fprintf(stderr, "DUMP c=%d%s\n", c, g_dump_line.c_str()); g_dump_line.clear(); }
         }
     }
     const std::vector<double> t1 = tvec(acc[0], len), t2 = tvec(acc[1], len);
@@ -285,12 +356,11 @@ static int run(const Kernel &k, int traces, std::mt19937_64 &g) {
     const bool leaks = both > 0;
     if (leaks && at < g_last_pc.size()) {
         /* sample i records the instruction completed just before pc[i] */
-        std::printf("  strongest leaking sample %zu: instruction before pc 0x%08x\n", at,
-                    at > 0 ? g_last_pc[at - 1] : 0u);
+        std::printf("  strongest leaking sample %zu: instruction at pc 0x%08x\n", at, g_last_pc[at]);
         for (size_t i = 0; i < len && i < g_last_pc.size(); ++i) {
             const double m = std::min(std::fabs(t1[i]), std::fabs(t2[i]));
             if (m > 4.5 && (t1[i] > 0) == (t2[i] > 0) && k.masked)
-                std::printf("  leaking sample %zu: |t| %.1f, pc 0x%08x\n", i, m, i > 0 ? g_last_pc[i - 1] : 0u);
+                std::printf("  leaking sample %zu: |t| %.1f, pc 0x%08x\n", i, m, g_last_pc[i]);
         }
     }
     std::printf("%-22s traces=2x%-5d samples=%-7zu min-of-two max|t|=%8.2f at %-6zu points leaking in both: %-6zu %s  (%s)\n",
@@ -304,6 +374,13 @@ static int run(const Kernel &k, int traces, std::mt19937_64 &g) {
 }
 
 int main(int argc, char **argv) {
+    if (const char *d = std::getenv("TVLA_DUMP")) g_dump = std::atol(d);
+    if (const char *m = std::getenv("TVLA_MODEL")) g_hd = std::strcmp(m, "hd") == 0;
+    if (cs_open(CS_ARCH_ARM, static_cast<cs_mode>(CS_MODE_THUMB | CS_MODE_MCLASS), &g_cs) != CS_ERR_OK) {
+        std::fprintf(stderr, "cs_open failed\n");
+        return 2;
+    }
+    cs_option(g_cs, CS_OPT_DETAIL, CS_OPT_ON);
     const char *which = argc > 1 ? argv[1] : "all";
     const int traces = argc > 2 ? std::atoi(argv[2]) : 2000;
     if (std::strcmp(which, "list") == 0) {
@@ -313,7 +390,7 @@ int main(int argc, char **argv) {
     const char *img = std::getenv("TVLA_IMAGE");
     load_image(img ? img : "build/kernels.bin");
     std::random_device rd;
-    std::mt19937_64 g((static_cast<uint64_t>(rd()) << 32) ^ rd());
+    std::mt19937_64 g(std::getenv("TVLA_SEED") ? std::strtoull(std::getenv("TVLA_SEED"), nullptr, 10) : (static_cast<uint64_t>(rd()) << 32) ^ rd());
     g_public = poly(g);
     int bad = 0, ran = 0;
     for (const auto &k : kKernels) {

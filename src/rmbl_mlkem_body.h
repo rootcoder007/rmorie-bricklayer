@@ -528,7 +528,7 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
             const int16_t v = to_positive(barrett_reduce(raw[j]));
             const int16_t r = rmbl_masked::rand_q(rng);
             int32_t d = static_cast<int32_t>(v) - r;
-            d += kQ & -static_cast<int32_t>(d < 0);
+            d = rmbl_masked::cadd_q(d);
             s0.v[i][j] = r;
             s1.v[i][j] = static_cast<int16_t>(d);
         }
