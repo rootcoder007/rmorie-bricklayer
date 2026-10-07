@@ -58,10 +58,12 @@ capsule_sign(
   For the standardised schemes, sign a digest of the message rather than
   the message itself – HashML-DSA (FIPS 204 section 5.4) or HashSLH-DSA
   (FIPS 205 section 10.2.2). One of `"none"` (the default, the pure
-  variants), `"sha256"`, `"sha512"`, `"shake128"` or `"shake256"`. The
-  identifier of the pre-hash is bound into the signature, so a
-  pre-hashed signature is never interchangeable with a pure one over the
-  same digest.
+  variants) or any hash function the two standards approve: `"sha224"`,
+  `"sha256"`, `"sha384"`, `"sha512"`, `"sha512_224"`, `"sha512_256"`,
+  `"sha3_224"`, `"sha3_256"`, `"sha3_384"`, `"sha3_512"`, `"shake128"`
+  (256-bit output) or `"shake256"` (512-bit output). The identifier of
+  the pre-hash is bound into the signature, so a pre-hashed signature is
+  never interchangeable with a pure one over the same digest.
 
 ## Value
 
@@ -107,10 +109,11 @@ operation that touches a secret under valgrind memcheck with the secret
 marked undefined (the ctgrind method), so a branch or a memory address
 that depends on it is a reported error, and afterwards scans the dead
 stack for copies of the secret. Both checks run in CI on every change,
-with GCC and with Clang. They are checks of this code on those
-compilers, not of the hardware it runs on, and no third-party audit has
-been commissioned; the README's security section says exactly what is
-and is not covered.
+with GCC and with Clang. Timing is also measured on x86-64 and arm64
+hardware (`inst/dudect`), power leakage is assessed in simulation under
+the value and the transition models (`inst/tvla`), and ML-KEM
+decapsulation and ML-DSA signing are first-order masked by default; the
+README's security section lists what each check covers.
 
 ## See also
 
