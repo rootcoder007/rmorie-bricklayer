@@ -198,10 +198,12 @@ fail the same way:
 ``` r
 
 pub <- fips_public_key(key)
-bad <- sig; bad$signature <- paste0("ff", substring(bad$signature, 3))
+bad <- sig
+bad$signature <- paste0("ff", substring(bad$signature, 3))
 capsule_verify("a manifest digest", bad, pub)
 #> [1] FALSE
-trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
+trunc <- sig
+trunc$signature <- substring(sig$signature, 1, 64)
 capsule_verify("a manifest digest", trunc, pub)
 #> [1] FALSE
 capsule_verify("a manifest digest", sig, fips_public_key(fips_keygen("ML-DSA-65")))
