@@ -35,32 +35,41 @@ trace, which is how a leaking point is traced to an instruction and a value.
 ## Results (2 x 3,000 traces)
 
 Each masked kernel runs next to its unmasked control: the same code with the second share
-zero. A control that does not leak would mean the harness sees nothing.
+zero. A control that does not leak would mean the harness sees nothing. "Points" counts the
+samples where |t| > 4.5 in both experiments with the same sign.
 
 | kernel | what it is | value model | transition model |
 |---|---|---|---|
-| `mlkem_basemul` | s * u in the NTT domain, unmasked | leaks: 5,087 points, max \|t\| 131 | leaks: 5,667 points, max \|t\| 132 |
-| `mlkem_basemul_masked` | arithmetic shares | no leak, max \|t\| 2.4 | no leak, max \|t\| 3.0 |
-| `mlkem_ntt` | forward NTT, unmasked | leaks: 12,561 points, max \|t\| 162 | leaks: 12,392 points, max \|t\| 159 |
-| `mlkem_ntt_masked` | arithmetic shares | no leak, max \|t\| 2.8 | no leak, max \|t\| 2.9 |
-| `decode` | message decoding Compress_1, unmasked | leaks: 1,956 points, max \|t\| 100 | leaks: 2,001 points, max \|t\| 126 |
-| `decode_masked` | `sec_decode1` (Boolean shares) | no leak, max \|t\| 2.2 | leaks: 67 points, max \|t\| 62 |
-| `keccak` | Keccak-f[1600] on a secret state | leaks: 814 points, max \|t\| 134 | leaks: 2,561 points, max \|t\| 162 |
-| `keccak_masked` | chi through the masked AND | no leak, max \|t\| 2.9 | leaks: 1,712 points, max \|t\| 135 |
-| `cbd` | centred-binomial noise, unmasked | leaks: 626 points, max \|t\| 102 | leaks: 746 points, max \|t\| 109 |
-| `cbd_masked` | `sec_cbd32` with Boolean-to-arithmetic | no leak, max \|t\| 2.2 | leaks: 16 points, max \|t\| 94 |
+| `mlkem_basemul` | s * u in the NTT domain, unmasked | 5,081 points, max \|t\| 133 | 5,647 points, max \|t\| 153 |
+| `mlkem_basemul_masked` | arithmetic shares | none, max \|t\| 2.6 | none, max \|t\| 2.4 |
+| `mlkem_ntt` | forward NTT, unmasked | 12,367 points, max \|t\| 157 | 12,441 points, max \|t\| 163 |
+| `mlkem_ntt_masked` | arithmetic shares | none, max \|t\| 3.0 | none, max \|t\| 3.0 |
+| `decode` | ML-KEM message decoding Compress_1, unmasked | 1,939 points, max \|t\| 97 | 1,912 points, max \|t\| 134 |
+| `decode_masked` | `sec_decode1` | none, max \|t\| 2.4 | none, max \|t\| 2.6 |
+| `keccak` | Keccak-f[1600] on a secret state, unmasked | 1,006 points, max \|t\| 105 | 1,334 points, max \|t\| 122 |
+| `keccak_masked` | chi through the masked AND | none, max \|t\| 2.9 | none, max \|t\| 2.8 |
+| `cbd` | ML-KEM centred-binomial noise, unmasked | 668 points, max \|t\| 87 | 760 points, max \|t\| 107 |
+| `cbd_masked` | `sec_cbd32`, Boolean-to-arithmetic mod 3329 | none, max \|t\| 2.3 | none, max \|t\| 2.3 |
+| `dsa_b2a` | ML-DSA y: Boolean-to-arithmetic mod 8380417, unmasked | 2,987 points, max \|t\| 101 | 3,399 points, max \|t\| 110 |
+| `dsa_b2a_masked` | `sec_b2a` with the ML-DSA modulus | none, max \|t\| 2.5 | none, max \|t\| 2.7 |
+| `dsa_lowbits` | ML-DSA r0 window test, unmasked | 3,601 points, max \|t\| 128 | 3,677 points, max \|t\| 120 |
+| `dsa_lowbits_masked` | `dsa_bprime`, `dsa_lowbits_ok` | none, max \|t\| 2.5 | none, max \|t\| 2.4 |
+| `dsa_norm` | ML-DSA norm test of z, unmasked | 2,937 points, max \|t\| 101 | 3,178 points, max \|t\| 107 |
+| `dsa_norm_masked` | `dsa_norm_acc` | none, max \|t\| 2.3 | none, max \|t\| 2.5 |
 
-Under the value model every masked kernel is clean and every control leaks; CI fails on any
-masked leak there. Under the transition model the arithmetic kernels stay clean (each share
-is processed in its own pass, so no register ever goes from one share to the other), and the
-Boolean gadgets do not: their outputs come as pairs such as (r, r ^ x & y), and the compiler
-routes both through one register, so the switch between them is x & y itself. C does not
-control register allocation; closing that needs the gadgets written in assembly with the
-shares kept in disjoint registers, as the hardened Cortex-M4 implementations do. CI reports
-the transition model on every run without failing on it.
+Every masked kernel is clean under both models and every control leaks; CI fails on a masked
+leak under either. The transition model is the one C alone could not satisfy: the compiler
+moved one share into the register that held the other, and the switch between them was the
+secret. The gadgets now touch both shares only in assembly (Thumb-2 here, and the same
+sequences for x86-64 and aarch64 in the package), with each temporary and destination zeroed
+before use, a zero store between the share-0 and share-1 stores, and the registers scrubbed
+between passes that handle one share at a time.
 
 ## Found by this harness
 
+* Under the transition model the Boolean gadgets compiled from C leaked (masked decoding |t| 62,
+  masked Keccak 135, masked CBD 94): the compiler had put share 0 and then share 1 of one value
+  in the same register. Rewriting the share-pair operations in assembly closed it.
 * The model first counted registers whose value changed rather than registers written. A
   register rewritten with an equal value then dropped out of the sample, which leaked
   whether old equals new (a transition effect) and flagged `decode_masked` under a model

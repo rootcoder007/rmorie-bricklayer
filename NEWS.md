@@ -45,7 +45,7 @@
   arithmetic, compiled for a Cortex-M4 and run in an emulator, are assessed with TVLA
   (fixed-versus-random Welch t, two experiments) under two leakage models, the value
   (Hamming-weight) model and the transition (Hamming-distance) model. Every masked kernel shows
-  no first-order leakage under either, and every unmasked control leaks (|t| up to 162). CI
+  no first-order leakage under either, and every unmasked control leaks (|t| up to 163). CI
   fails on a masked leak under either model.
 * **The masking gadgets are assembly** for Cortex-M (Thumb-2), x86-64 and aarch64: every
   operation that touches both shares of a value (AND, XOR, the public-constant operations, the
