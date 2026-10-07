@@ -101,10 +101,11 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' marked undefined (the ctgrind method), so a branch or a memory address
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
-#' with GCC and with Clang. They are checks of this code on those
-#' compilers, not of the hardware it runs on, and no third-party audit has
-#' been commissioned; the README's security section says exactly what is
-#' and is not covered.
+#' with GCC and with Clang. Timing is also measured on x86-64 and arm64
+#' hardware (`inst/dudect`), power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`), and ML-KEM
+#' decapsulation and ML-DSA signing are first-order masked by default; the
+#' README's security section lists what each check covers.
 #' @export
 fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
@@ -297,8 +298,9 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE) {
          call. = FALSE)
   }
   rnd <- if (isTRUE(deterministic)) raw(32L) else random_bytes(32L)
+  # masked = TRUE: the first-order masked signer, same bytes for the same rnd
   sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
-              mu, rnd)
+              mu, rnd, TRUE)
   out <- list(scheme = scheme, signature = .rmbl_hexlify(sg))
   class(out) <- c("bricklayer_signature", "list")
   out
@@ -403,7 +405,7 @@ fips_sizes <- function(scheme) {
 .rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none") {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
-    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash))
+    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash, TRUE))
   }
   .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash)
 }
@@ -423,7 +425,9 @@ fips_sizes <- function(scheme) {
   if (is.null(prehash)) return("none")
   prehash <- as.character(prehash)[1L]
   if (is.na(prehash)) prehash <- "none"
-  match.arg(prehash, c("none", "sha256", "sha512", "shake128", "shake256"))
+  match.arg(prehash, c("none", "sha224", "sha256", "sha384", "sha512", "sha512_224",
+                     "sha512_256", "sha3_224", "sha3_256", "sha3_384", "sha3_512",
+                     "shake128", "shake256"))
 }
 
 # A context string is at most 255 bytes because the FIPS 204 and 205
@@ -471,10 +475,11 @@ fips_sizes <- function(scheme) {
 #' marked undefined (the ctgrind method), so a branch or a memory address
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
-#' with GCC and with Clang. They are checks of this code on those
-#' compilers, not of the hardware it runs on, and no third-party audit has
-#' been commissioned; the README's security section says exactly what is
-#' and is not covered.
+#' with GCC and with Clang. Timing is also measured on x86-64 and arm64
+#' hardware (`inst/dudect`), power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`), and ML-KEM
+#' decapsulation and ML-DSA signing are first-order masked by default; the
+#' README's security section lists what each check covers.
 #' @export
 oqs_keygen <- function(scheme = "ML-DSA-65") {
   .Deprecated("fips_keygen")
@@ -590,10 +595,11 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' marked undefined (the ctgrind method), so a branch or a memory address
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
-#' with GCC and with Clang. They are checks of this code on those
-#' compilers, not of the hardware it runs on, and no third-party audit has
-#' been commissioned; the README's security section says exactly what is
-#' and is not covered.
+#' with GCC and with Clang. Timing is also measured on x86-64 and arm64
+#' hardware (`inst/dudect`), power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`), and ML-KEM
+#' decapsulation and ML-DSA signing are first-order masked by default; the
+#' README's security section lists what each check covers.
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
@@ -700,8 +706,11 @@ signing_public_key <- function(key) {
 #' @param prehash For the standardised schemes, sign a
 #' digest of the message rather than the message itself -- HashML-DSA (FIPS
 #' 204 section 5.4) or HashSLH-DSA (FIPS 205 section 10.2.2). One of
-#' `"none"` (the default, the pure variants), `"sha256"`,
-#' `"sha512"`, `"shake128"` or `"shake256"`. The identifier
+#' `"none"` (the default, the pure variants) or any hash function the two
+#' standards approve: `"sha224"`, `"sha256"`, `"sha384"`, `"sha512"`,
+#' `"sha512_224"`, `"sha512_256"`, `"sha3_224"`, `"sha3_256"`,
+#' `"sha3_384"`, `"sha3_512"`, `"shake128"` (256-bit output) or
+#' `"shake256"` (512-bit output). The identifier
 #' of the pre-hash is bound into the signature, so a pre-hashed signature
 #' is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,
@@ -744,10 +753,11 @@ signing_public_key <- function(key) {
 #' marked undefined (the ctgrind method), so a branch or a memory address
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
-#' with GCC and with Clang. They are checks of this code on those
-#' compilers, not of the hardware it runs on, and no third-party audit has
-#' been commissioned; the README's security section says exactly what is
-#' and is not covered.
+#' with GCC and with Clang. Timing is also measured on x86-64 and arm64
+#' hardware (`inst/dudect`), power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`), and ML-KEM
+#' decapsulation and ML-DSA signing are first-order masked by default; the
+#' README's security section lists what each check covers.
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
                          deterministic = FALSE, prehash = "none") {

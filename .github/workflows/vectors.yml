@@ -1,0 +1,42 @@
+# The full pinned C2SP Wycheproof and NIST ACVP vector sets (tools/vectors), about
+# 10,000 tests over ML-KEM, ML-DSA, SLH-DSA, SHA-3/SHAKE, HMAC and PBKDF2.
+# The CRAN tarball carries no vectors (103 MB); tests/testthat runs a small bundled
+# subset offline, and this job runs every vector on every change to the kernels.
+name: vectors
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'R/**', 'tools/vectors/**', 'DESCRIPTION', '.github/workflows/vectors.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'R/**', 'tools/vectors/**', 'DESCRIPTION', '.github/workflows/vectors.yml']
+  schedule:
+    - cron: '41 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vectors-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vectors:
+    name: Wycheproof + ACVP (full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v7
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: System libraries
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libcurl4-openssl-dev
+      - name: Install the package
+        run: R CMD INSTALL --no-docs .
+      - name: Fetch the pinned vectors
+        run: bash tools/vectors/fetch.sh vectors
+      - name: Run every vector
+        run: Rscript tools/vectors/run.R vectors

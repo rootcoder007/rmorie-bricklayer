@@ -1,0 +1,61 @@
+# Timing measured on real CPUs: the dudect fixed-vs-random Welch test (inst/dudect) over
+# ML-KEM-768 decapsulation and encapsulation, HQC-1 decapsulation, the digest compare and
+# PBKDF2, on x86-64 and on two arm64 microarchitectures. A positive control (an early-exit
+# compare) runs first and must be flagged, so a clean result cannot come from a clock that
+# sees nothing. Complements inst/ctcheck, which proves the absence of secret-dependent
+# branches and memory addresses statically under valgrind.
+name: dudect
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'inst/dudect/**', '.github/workflows/dudect.yml']
+  pull_request:
+    branches: [main]
+    paths: ['src/**', 'inst/dudect/**', '.github/workflows/dudect.yml']
+  schedule:
+    - cron: '23 6 * * 3'
+  workflow_dispatch:
+    inputs:
+      measurements:
+        description: measurements per target
+        default: '300000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dudect-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dudect:
+    name: dudect (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+      - name: Build the harness
+        run: bash inst/dudect/build.sh
+      - name: Measure
+        id: plain
+        continue-on-error: ${{ runner.arch == 'ARM64' }}
+        env:
+          N: ${{ github.event.inputs.measurements || '300000' }}
+        run: bash inst/dudect/run.sh
+      # Arm guarantees data-independent timing for integer instructions only with
+      # PSTATE.DIT set (FEAT_DIT, Armv8.4+). The arm64 legs measure both ways; the
+      # DIT-on run is the gate there, the plain one is reported.
+      - name: Measure with DIT set (arm64)
+        if: runner.arch == 'ARM64'
+        env:
+          N: ${{ github.event.inputs.measurements || '300000' }}
+          DUDECT_DIT: "1"
+        run: bash inst/dudect/run.sh

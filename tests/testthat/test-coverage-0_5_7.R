@@ -287,7 +287,9 @@ test_that("http entry points check their arguments before touching the network",
 test_that("post-quantum entry points name the argument they refuse", {
   kp <- .Call(C("C_rmbl_mldsa_keypair"), 44L, raw(32))
   expect_identical(msg(.Call(C("C_rmbl_mldsa_mu"), 44L, kp[[1]], as.raw(1), raw(0), "foo")),
-                   "`prehash` must be one of none, sha256, sha512, shake128, shake256")
+                   paste("`prehash` must be one of none, sha224, sha256, sha384, sha512,",
+                         "sha512_224, sha512_256, sha3_224, sha3_256, sha3_384, sha3_512,",
+                         "shake128, shake256"))
   expect_identical(msg(.Call(C("C_rmbl_mldsa_mu"), 44L, kp[[1]], as.raw(1), raw(0), 1L)),
                    "`prehash` must be a single string")
   expect_identical(msg(.Call(C("C_rmbl_mldsa_mu"), 44L, kp[[1]], as.raw(1), raw(300), NULL)),

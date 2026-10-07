@@ -10,7 +10,8 @@
 # accident twice: that a pre-hashed signature is NOT interchangeable
 # with a pure one, and that mu is not a bare digest.
 
-PREHASHES <- c("sha256", "sha512", "shake128", "shake256")
+PREHASHES <- c("sha224", "sha256", "sha384", "sha512", "sha512_224", "sha512_256",
+               "sha3_224", "sha3_256", "sha3_384", "sha3_512", "shake128", "shake256")
 
 test_that("a pre-hashed signature round-trips for each pre-hash", {
   for (scheme in c(
@@ -89,7 +90,7 @@ test_that("an unknown pre-hash is refused", {
   expect_error(capsule_sign("m", key, prehash = "sha1"), "arg")
   # partial matching is match.arg's, so an unambiguous prefix is fine
   expect_true(capsule_verify(
-    "m", capsule_sign("m", key, prehash = "sha2"),
+    "m", capsule_sign("m", key, prehash = "shake2"),
     key
   ))
 })

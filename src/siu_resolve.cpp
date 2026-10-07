@@ -133,8 +133,10 @@ static std::string strip_boilerplate_impl(const std::string& t) {
     // both match \n, so the line cap never bounded them and 44,000 characters
     // of period-free text between the boilerplate and its terminator overflowed
     // the C stack (the SIU review, two sites). They are scans now.
-    std::string out = strip_span_icase(norm, "this information may include",
-                                       {"affected person", "evidence"});
+    // a named list, not a braced temporary: GCC 16 misreads the temporary
+    // array's destruction as freeing a non-heap pointer (-Wfree-nonheap-object)
+    static const std::vector<std::string> kPrivacyEnds = {"affected person", "evidence"};
+    std::string out = strip_span_icase(norm, "this information may include", kPrivacyEnds);
     // The witness-officer glossary note ("a witness officer is a police
     // officer who, in the opinion of the SIU Director, is involved in the
     // incident under investigation but is not a subject officer...") appears

@@ -170,10 +170,10 @@ test_that("entry points refuse a missing string and bad lengths", {
   expect_error(.Call(C("C_rmbl_mldsa_keypair"), 44L, raw(31)), "32 bytes")
   kp <- .Call(C("C_rmbl_mldsa_keypair"), 44L, as.raw(1:32))
   sk <- kp[[2]]
-  expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, raw(3), raw(256), raw(32), NULL), "at most 255")
-  expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, raw(3), raw(0), raw(31), NULL), "32 bytes")
-  expect_error(.Call(C("C_rmbl_mldsa_sign_mu"), 44L, sk, raw(63), raw(32)), "64 bytes")
-  expect_error(.Call(C("C_rmbl_mldsa_sign_mu"), 44L, sk, raw(64), raw(31)), "32 bytes")
+  expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, raw(3), raw(256), raw(32), NULL, TRUE), "at most 255")
+  expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, raw(3), raw(0), raw(31), NULL, TRUE), "32 bytes")
+  expect_error(.Call(C("C_rmbl_mldsa_sign_mu"), 44L, sk, raw(63), raw(32), TRUE), "64 bytes")
+  expect_error(.Call(C("C_rmbl_mldsa_sign_mu"), 44L, sk, raw(64), raw(31), TRUE), "32 bytes")
   expect_false(.Call(C("C_rmbl_mldsa_verify_mu"), 44L, kp[[1]], raw(63), raw(10)))
   expect_false(.Call(C("C_rmbl_mldsa_verify"), 44L, kp[[1]], raw(3), raw(0), raw(10), NULL))
   expect_false(.Call(C("C_rmbl_mldsa_verify"), 44L, kp[[1]], raw(3), raw(256), raw(10), NULL))
@@ -192,7 +192,7 @@ test_that("ML-DSA sampling refills its squeeze buffer across many seeds", {
   for (i in 1:40) {
     seed <- as.raw((i * 7 + 0:31) %% 256)
     kp <- .Call(C("C_rmbl_mldsa_keypair"), 87L, seed)
-    sig <- .Call(C("C_rmbl_mldsa_sign_mu"), 87L, kp[[2]], as.raw(1:64), seed)
+    sig <- .Call(C("C_rmbl_mldsa_sign_mu"), 87L, kp[[2]], as.raw(1:64), seed, TRUE)
     ok <- ok + .Call(C("C_rmbl_mldsa_verify_mu"), 87L, kp[[1]], as.raw(1:64), sig)
   }
   expect_identical(ok, 40L)

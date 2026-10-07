@@ -390,6 +390,41 @@ SEXP C_rmbl_slhdsa_sign_impl(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
     });
 }
 
+/* FIPS 205 slh_sign_internal / slh_verify_internal: M is signed as given,
+ * with no domain byte, context or OID in front of it. Not exported: the
+ * public interface always binds a context; these exist so the NIST ACVP
+ * "internal" vectors can check the core the public interface wraps. */
+SEXP C_rmbl_slhdsa_sign_internal_impl(SEXP set, SEXP sk, SEXP msg, SEXP opt_rand) {
+    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
+        if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != S::kSkBytes) {
+            Rf_error("`sk` must be a raw vector of %d bytes", S::kSkBytes);
+        }
+        if (TYPEOF(opt_rand) != RAWSXP || XLENGTH(opt_rand) != S::kN) {
+            Rf_error("`opt_rand` must be a raw vector of %d bytes", S::kN);
+        }
+        SEXP sig = PROTECT(Rf_allocVector(RAWSXP, S::kSigBytes));
+        S::sign(RAW(sig), RAW(msg), static_cast<size_t>(XLENGTH(msg)), NULL, 0,
+                RAW(opt_rand), RAW(sk), NULL, 0, true);
+        UNPROTECT(1);
+        return sig;
+    });
+}
+
+SEXP C_rmbl_slhdsa_verify_internal_impl(SEXP set, SEXP pk, SEXP msg, SEXP sig) {
+    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
+        if (TYPEOF(pk) != RAWSXP || XLENGTH(pk) != S::kPkBytes ||
+            TYPEOF(sig) != RAWSXP) {
+            return Rf_ScalarLogical(FALSE);
+        }
+        const int r = S::verify(RAW(sig), static_cast<size_t>(XLENGTH(sig)),
+                                RAW(msg), static_cast<size_t>(XLENGTH(msg)),
+                                NULL, 0, RAW(pk), NULL, 0, true);
+        return Rf_ScalarLogical(r == 0);
+    });
+}
+
 SEXP C_rmbl_slhdsa_verify_impl(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
                           SEXP prehash) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");

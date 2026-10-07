@@ -62,10 +62,11 @@
 #' marked undefined (the ctgrind method), so a branch or a memory address
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
-#' with GCC and with Clang. They are checks of this code on those
-#' compilers, not of the hardware it runs on, and no third-party audit has
-#' been commissioned; the README's security section says exactly what is
-#' and is not covered.
+#' with GCC and with Clang. Timing is also measured on x86-64 and arm64
+#' hardware (`inst/dudect`), power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`), and ML-KEM
+#' decapsulation and ML-DSA signing are first-order masked by default; the
+#' README's security section lists what each check covers.
 #' @export
 kem_keygen <- function(level = 768L, seed = NULL) {
   level <- .rmbl_kem_level(level)
@@ -178,10 +179,24 @@ kem_encapsulate <- function(key, m = NULL) {
 #' between the two sides' secrets is the signal that something was wrong,
 #' not an error from this function.
 #'
+#' Masked by default. With `masked = TRUE` every value that depends on the
+#' secret key is held as two random shares from the moment the key is read
+#' (first-order masking): decryption, the decoding of the message, the
+#' hashing, the re-encryption with its noise sampling, the comparison with
+#' the ciphertext and the choice between the real and the rejection secret.
+#' No single intermediate value then depends on the key, which is what defeats
+#' first-order power and electromagnetic analysis; `inst/tvla` checks the
+#' masked gadgets against that leakage model. The result is identical to the
+#' unmasked computation for every ciphertext; it costs about five times the
+#' time (well under a millisecond). `masked = FALSE` runs the plain
+#' constant-time decapsulation.
+#'
 #' @param key A key from
 #' [kem_keygen()], with its secret half.
 #' @param ciphertext Ciphertext from
 #' [kem_encapsulate()], hex or raw.
+#' @param masked `TRUE` (the default) for the first-order masked
+#' decapsulation, `FALSE` for the plain one. Both return the same secret.
 #' @return 64 hex characters: the 32-byte shared secret.
 #' @seealso [kem_encapsulate()].
 #' @examples
@@ -195,8 +210,14 @@ kem_encapsulate <- function(key, m = NULL) {
 #' other <- kem_decapsulate(key, bad)
 #' nchar(other) == 64L
 #' identical(other, sent$shared)
+#'
+#' # the masked and the plain decapsulation agree
+#' identical(kem_decapsulate(key, bad, masked = FALSE), other)
 #' @export
-kem_decapsulate <- function(key, ciphertext) {
+kem_decapsulate <- function(key, ciphertext, masked = TRUE) {
+  if (!isTRUE(masked) && !isFALSE(masked)) {
+    stop("`masked` must be TRUE or FALSE", call. = FALSE)
+  }
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {
     stop("decapsulation needs a key with its secret half", call. = FALSE)
@@ -213,7 +234,11 @@ kem_decapsulate <- function(key, ciphertext) {
     stop(sprintf("`ciphertext` must be %d bytes for ML-KEM-%d", n, level),
          call. = FALSE)
   }
-  .rmbl_hexlify(.Call(C_rmbl_mlkem_decaps, level, dk, ct))
+  .rmbl_hexlify(if (masked) {
+    .Call(C_rmbl_mlkem_decaps_masked, level, dk, ct)
+  } else {
+    .Call(C_rmbl_mlkem_decaps, level, dk, ct)
+  })
 }
 
 #' @export

@@ -171,6 +171,44 @@ SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
     });
 }
 
+#include "rmbl_mask_rng.h"
+
+/* First-order masked decapsulation (rmbl_mlkem_body.h, decaps_masked): the same shared
+ * secret as C_rmbl_mlkem_decaps, with every secret-dependent value held in two shares. */
+SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP level, SEXP dk, SEXP ct) {
+    RMBL_MLKEM_DISPATCH(mlkem_level(level), {
+        if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
+            Rf_error("`dk` must be a raw vector of %d bytes", M::kDkBytes);
+        }
+        if (TYPEOF(ct) != RAWSXP || XLENGTH(ct) != M::kCtBytes) {
+            Rf_error("`ct` must be a raw vector of %d bytes", M::kCtBytes);
+        }
+        {
+            unsigned char hk[32];
+            const unsigned char *ekp = RAW(dk) + M::kDkPkeBytes;
+            rmbl_sha3_256(hk, ekp, static_cast<size_t>(M::kEkBytes));
+            if (std::memcmp(hk, ekp + M::kEkBytes, 32) != 0) {
+                Rf_error("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
+            }
+        }
+        SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
+        bool failed = false;
+        {
+            MaskRng *mr = new MaskRng();
+            rmbl_masked::Rng rng;  /* assigned, not braced: a comma would split the macro argument */
+            rng.fn = mask_rng_u32;
+            rng.ctx = mr;
+            M::decaps_masked(RAW(ss), RAW(dk), RAW(ct), rng);
+            failed = mr->failed;
+            rmbl_ct::wipe(mr->buf, sizeof mr->buf);
+            delete mr;
+        }
+        UNPROTECT(1);
+        if (failed) Rf_error("the operating system's random source failed during masked decapsulation");
+        return ss;
+    });
+}
+
 SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
@@ -178,6 +216,20 @@ SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
         }
         if (TYPEOF(ct) != RAWSXP || XLENGTH(ct) != M::kCtBytes) {
             Rf_error("`ct` must be a raw vector of %d bytes", M::kCtBytes);
+        }
+        /* FIPS 203 section 7.3 input check, on the key (the ciphertext
+         * check is its length, above): the key embeds ek and H(ek), and a
+         * key whose stored hash does not match its own ek is not an ML-KEM
+         * decapsulation key. Both halves are public data, so the compare
+         * need not be constant time. Found by the NIST ACVP
+         * decapsulationKeyCheck vectors. */
+        {
+            unsigned char hk[32];
+            const unsigned char *ekp = RAW(dk) + M::kDkPkeBytes;
+            rmbl_sha3_256(hk, ekp, static_cast<size_t>(M::kEkBytes));
+            if (std::memcmp(hk, ekp + M::kEkBytes, 32) != 0) {
+                Rf_error("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
+            }
         }
         SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
         /* No failure path: FIPS 203 decapsulation ALWAYS returns a

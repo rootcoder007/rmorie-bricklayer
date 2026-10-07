@@ -611,16 +611,19 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
                         const unsigned char *opt_rand,
                         const unsigned char *ctxb, size_t ctxlen,
                         const unsigned char *m, size_t mlen,
-                        const unsigned char *oid, size_t oidlen) {
+                        const unsigned char *oid, size_t oidlen,
+                        bool internal = false) {
 #if SLH_SHA2
     /* HMAC, keyed with SK.prf, over opt_rand || M' */
     std::vector<unsigned char> msg;
     msg.reserve(static_cast<size_t>(kN) + 2 + ctxlen + oidlen + mlen);
     msg.insert(msg.end(), opt_rand, opt_rand + kN);
-    msg.push_back(oidlen > 0 ? 1 : 0);
-    msg.push_back(static_cast<unsigned char>(ctxlen));
-    msg.insert(msg.end(), ctxb, ctxb + ctxlen);
-    if (oidlen > 0) msg.insert(msg.end(), oid, oid + oidlen);
+    if (!internal) {
+        msg.push_back(oidlen > 0 ? 1 : 0);
+        msg.push_back(static_cast<unsigned char>(ctxlen));
+        msg.insert(msg.end(), ctxb, ctxb + ctxlen);
+        if (oidlen > 0) msg.insert(msg.end(), oid, oid + oidlen);
+    }
     msg.insert(msg.end(), m, m + mlen);
     unsigned char h[64];
     rmbl_ct::Guard gm(msg.data(), msg.size()), gh(h, sizeof h);
@@ -632,12 +635,14 @@ void gen_message_random(unsigned char *R, const unsigned char *sk_prf,
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, sk_prf, kN);
     rmbl_keccak_absorb(&st, opt_rand, kN);
-    unsigned char pre[2];
-    pre[0] = oidlen > 0 ? 1 : 0;
-    pre[1] = static_cast<unsigned char>(ctxlen);
-    rmbl_keccak_absorb(&st, pre, 2);
-    if (ctxlen > 0) rmbl_keccak_absorb(&st, ctxb, ctxlen);
-    if (oidlen > 0) rmbl_keccak_absorb(&st, oid, oidlen);
+    if (!internal) {
+        unsigned char pre[2];
+        pre[0] = oidlen > 0 ? 1 : 0;
+        pre[1] = static_cast<unsigned char>(ctxlen);
+        rmbl_keccak_absorb(&st, pre, 2);
+        if (ctxlen > 0) rmbl_keccak_absorb(&st, ctxb, ctxlen);
+        if (oidlen > 0) rmbl_keccak_absorb(&st, oid, oidlen);
+    }
     rmbl_keccak_absorb(&st, m, mlen);
     rmbl_keccak_finalize(&st);
     rmbl_keccak_squeeze(&st, R, kN);
@@ -648,7 +653,8 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
                   const unsigned char *R, const unsigned char *pk,
                   const unsigned char *ctxb, size_t ctxlen,
                   const unsigned char *m, size_t mlen,
-                  const unsigned char *oid, size_t oidlen) {
+                  const unsigned char *oid, size_t oidlen,
+                  bool internal = false) {
     unsigned char buf[kDgstBytes];
 #if SLH_SHA2
     /* SHA-2: the digest is MGF1 over R || PK.seed || H(R || PK || M'),
@@ -657,10 +663,12 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     inbuf.reserve(static_cast<size_t>(kN) + kPkBytes + 2 + ctxlen + mlen);
     inbuf.insert(inbuf.end(), R, R + kN);
     inbuf.insert(inbuf.end(), pk, pk + kPkBytes);
-    inbuf.push_back(oidlen > 0 ? 1 : 0);
-    inbuf.push_back(static_cast<unsigned char>(ctxlen));
-    inbuf.insert(inbuf.end(), ctxb, ctxb + ctxlen);
-    if (oidlen > 0) inbuf.insert(inbuf.end(), oid, oid + oidlen);
+    if (!internal) {
+        inbuf.push_back(oidlen > 0 ? 1 : 0);
+        inbuf.push_back(static_cast<unsigned char>(ctxlen));
+        inbuf.insert(inbuf.end(), ctxb, ctxb + ctxlen);
+        if (oidlen > 0) inbuf.insert(inbuf.end(), oid, oid + oidlen);
+    }
     inbuf.insert(inbuf.end(), m, m + mlen);
     std::vector<unsigned char> seed(static_cast<size_t>(2) * kN + kShaXOut);
     std::memcpy(seed.data(), R, kN);
@@ -676,12 +684,14 @@ void hash_message(unsigned char *digest, uint64_t *tree, uint32_t *leaf_idx,
     rmbl_keccak_init(&st, 136, 0x1f);
     rmbl_keccak_absorb(&st, R, kN);
     rmbl_keccak_absorb(&st, pk, kPkBytes);
-    unsigned char pre[2];
-    pre[0] = oidlen > 0 ? 1 : 0;
-    pre[1] = static_cast<unsigned char>(ctxlen);
-    rmbl_keccak_absorb(&st, pre, 2);
-    if (ctxlen > 0) rmbl_keccak_absorb(&st, ctxb, ctxlen);
-    if (oidlen > 0) rmbl_keccak_absorb(&st, oid, oidlen);
+    if (!internal) {
+        unsigned char pre[2];
+        pre[0] = oidlen > 0 ? 1 : 0;
+        pre[1] = static_cast<unsigned char>(ctxlen);
+        rmbl_keccak_absorb(&st, pre, 2);
+        if (ctxlen > 0) rmbl_keccak_absorb(&st, ctxb, ctxlen);
+        if (oidlen > 0) rmbl_keccak_absorb(&st, oid, oidlen);
+    }
     rmbl_keccak_absorb(&st, m, mlen);
     rmbl_keccak_finalize(&st);
     rmbl_keccak_squeeze(&st, buf, sizeof buf);
@@ -717,7 +727,7 @@ void seed_keypair(unsigned char *pk, unsigned char *sk,
 void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
           const unsigned char *ctxb, size_t ctxlen,
           const unsigned char *opt_rand, const unsigned char *sk,
-          const unsigned char *oid, size_t oidlen) {
+          const unsigned char *oid, size_t oidlen, bool internal = false) {
     Ctx ctx;
     rmbl_ct::Guard gctx(&ctx, sizeof ctx);
     const unsigned char *sk_prf = sk + kN;
@@ -733,10 +743,10 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
     ctx.prepare();
 
     gen_message_random(sig, sk_prf, opt_rand, ctxb, ctxlen, m, mlen,
-                       oid, oidlen);
+                       oid, oidlen, internal);
     RMBL_SLHDSA_DECLASSIFY(sig, kN); /* R is published; every index below derives from it */
     hash_message(mhash, &tree, &idx_leaf, sig, pk, ctxb, ctxlen, m, mlen,
-                 oid, oidlen);
+                 oid, oidlen, internal);
     sig += kN;
 
     Adrs wots_adrs, tree_adrs;
@@ -769,7 +779,7 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
 int verify(const unsigned char *sig, size_t siglen, const unsigned char *m,
            size_t mlen, const unsigned char *ctxb, size_t ctxlen,
            const unsigned char *pk, const unsigned char *oid,
-           size_t oidlen) {
+           size_t oidlen, bool internal = false) {
     if (siglen != static_cast<size_t>(kSigBytes)) return -1;
     Ctx ctx;
     const unsigned char *pub_root = pk + kN;
@@ -785,7 +795,7 @@ int verify(const unsigned char *sig, size_t siglen, const unsigned char *m,
     const unsigned char *R = sig;
     sig += kN;
     hash_message(mhash, &tree, &idx_leaf, R, pk, ctxb, ctxlen, m, mlen,
-                 oid, oidlen);
+                 oid, oidlen, internal);
 
     Adrs wots_adrs, tree_adrs, wots_pk_adrs;
     wots_adrs.set_type(kAddrTypeWots);

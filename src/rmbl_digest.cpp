@@ -315,6 +315,30 @@ void rmbl_sha384_raw(const unsigned char *data, size_t len,
     std::memcpy(out, full, 48);
 }
 
+/* SHA-512/t (FIPS 180-4 section 5.3.6) for t = 224 and 256: the SHA-512
+ * compression function from the initial state the standard derives for
+ * each t, truncated to t bits. `bits` is 224 or 256; out holds t/8 bytes. */
+void rmbl_sha512t_raw(int bits, const unsigned char *data, size_t len,
+                      unsigned char *out) {
+    static const uint64_t kIv224[8] = {
+        0x8C3D37C819544DA2ULL, 0x73E1996689DCD4D6ULL, 0x1DFAB7AE32FF9C82ULL,
+        0x679DD514582F9FCFULL, 0x0F6D2B697BD44DA8ULL, 0x77E36F7304C48942ULL,
+        0x3F9D85A86A1D36C8ULL, 0x1112E6AD91D692A1ULL
+    };
+    static const uint64_t kIv256[8] = {
+        0x22312194FC2BF72CULL, 0x9F555FA3C84C64C2ULL, 0x2393B86B6F53B151ULL,
+        0x963877195940EABDULL, 0x96283EE2A88EFFE3ULL, 0xBE5E1E2553863992ULL,
+        0x2B0199FC2C85B8AAULL, 0x0EB72DDC81C52CA2ULL
+    };
+    sha512_ctx c;
+    sha512_init(&c);
+    std::memcpy(c.h, bits == 224 ? kIv224 : kIv256, sizeof c.h);
+    unsigned char full[64];
+    sha512_update(&c, data, len);
+    sha512_final(&c, full);
+    std::memcpy(out, full, static_cast<size_t>(bits / 8));
+}
+
 void rmbl_sha512_midstate(const unsigned char block[128],
                           uint64_t state_out[8]) {
     sha512_ctx c;

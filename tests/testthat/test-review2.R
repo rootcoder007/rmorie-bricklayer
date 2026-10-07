@@ -312,10 +312,10 @@ test_that("ML-DSA refuses a corrupt secret key at once instead of looping on it"
   # [-eta, eta] encoding can only come from corruption
   sk[129:260] <- as.raw(0xff)
   t <- system.time(
-    expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, as.raw(1:3), raw(0), raw(32), NULL), "malformed")
+    expect_error(.Call(C("C_rmbl_mldsa_sign"), 44L, sk, as.raw(1:3), raw(0), raw(32), NULL, TRUE), "malformed")
   )[["elapsed"]]
   expect_lt(t, 1)
   # a sound key signs in well under the attempt cap
-  sig <- .Call(C("C_rmbl_mldsa_sign"), 44L, kp[[2]], as.raw(1:3), raw(0), raw(32), NULL)
+  sig <- .Call(C("C_rmbl_mldsa_sign"), 44L, kp[[2]], as.raw(1:3), raw(0), raw(32), NULL, TRUE)
   expect_true(.Call(C("C_rmbl_mldsa_verify"), 44L, kp[[1]], as.raw(1:3), raw(0), sig, NULL))
 })

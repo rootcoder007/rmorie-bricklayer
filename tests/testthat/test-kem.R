@@ -181,3 +181,19 @@ test_that("the printed forms withhold the secret", {
   expect_false(grepl(cap$shared, ctxt, fixed = TRUE))
   expect_output(print(cap), "Encapsulated shared secret")
 })
+
+test_that("kem_decapsulate(masked = FALSE) agrees with the masked default, and masked is checked", {
+  kp <- kem_keygen(768L)
+  cap <- kem_encapsulate(kp)
+  expect_identical(kem_decapsulate(kp, cap$ciphertext, masked = FALSE), cap$shared)
+  expect_identical(kem_decapsulate(kp, cap$ciphertext, masked = FALSE),
+                   kem_decapsulate(kp, cap$ciphertext))
+  # a tampered ciphertext: implicit rejection gives the same K-bar either way
+  ct <- cap$ciphertext
+  substr(ct, 1, 1) <- if (substr(ct, 1, 1) == "0") "1" else "0"
+  expect_identical(kem_decapsulate(kp, ct, masked = FALSE), kem_decapsulate(kp, ct))
+  expect_false(identical(kem_decapsulate(kp, ct), cap$shared))
+  for (bad in list(NA, "yes", c(TRUE, FALSE), 1L, NULL)) {
+    expect_error(kem_decapsulate(kp, cap$ciphertext, masked = bad), "`masked` must be TRUE or FALSE")
+  }
+})
