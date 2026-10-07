@@ -297,8 +297,9 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE) {
          call. = FALSE)
   }
   rnd <- if (isTRUE(deterministic)) raw(32L) else random_bytes(32L)
+  # masked = TRUE: the first-order masked signer, same bytes for the same rnd
   sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
-              mu, rnd)
+              mu, rnd, TRUE)
   out <- list(scheme = scheme, signature = .rmbl_hexlify(sg))
   class(out) <- c("bricklayer_signature", "list")
   out
@@ -403,7 +404,7 @@ fips_sizes <- function(scheme) {
 .rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none") {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
-    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash))
+    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash, TRUE))
   }
   .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash)
 }

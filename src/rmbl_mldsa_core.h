@@ -25,10 +25,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <vector>
 
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_ct.h"
+#include "rmbl_masked.h"
 
 /* the FIPS 202 sponge from rmbl_keccak.cpp */
 struct RmblKeccak {

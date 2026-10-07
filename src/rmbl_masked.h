@@ -54,22 +54,37 @@ struct Rng {
     }
 };
 
-const int16_t kQ = 3329;
+/* A modulus and the width of the bitsliced arithmetic that works on it: `bits` is the
+ * two's-complement width of a comparison, so every value compared (below 2q) and every
+ * constant must stay below 2^(bits - 1). */
+struct Mod {
+    int32_t q;
+    int bits;
+};
+const int16_t kQ = 3329;                     /* ML-KEM, FIPS 203 */
+const Mod kKem = {3329, 14};                 /* 2q < 2^13 */
+const Mod kDsa = {8380417, 25};              /* ML-DSA, FIPS 204: 2q < 2^24 */
 
-/* A value in [0, q) from 32 random bits by multiply-and-shift: no loop, so the running
- * time never depends on the randomness (a rejection loop made the trace length vary). Its
- * distance from uniform is at most q / 2^32 < 2^-20. */
-inline int16_t rand_q(Rng &rng) {
-    return static_cast<int16_t>((static_cast<uint64_t>(rng.u32()) * static_cast<uint64_t>(kQ)) >> 32);
+/* A value in [0, q) from 64 random bits by multiply-and-shift, floor(r q / 2^64) computed in
+ * 32-bit halves (no 128-bit type on a 32-bit target): no loop, so the running time never
+ * depends on the randomness (a rejection loop made the trace length vary). Its distance
+ * from uniform is below q / 2^64 + 2^-32. */
+inline int32_t rand_mod(Rng &rng, int32_t q) {
+    const uint64_t r = rng.u64();
+    const uint64_t lo = (static_cast<uint64_t>(static_cast<uint32_t>(r)) * static_cast<uint32_t>(q)) >> 32;
+    const uint64_t hi = static_cast<uint64_t>(static_cast<uint32_t>(r >> 32)) * static_cast<uint32_t>(q) + lo;
+    return static_cast<int32_t>(hi >> 32);
 }
+inline int16_t rand_q(Rng &rng) { return static_cast<int16_t>(rand_mod(rng, kQ)); }
 
 /* v + q when v < 0, else v, for v in (-2^31, 2^31 - q): the sign becomes an all-ones or
  * all-zero mask through opaque(), so the compiler cannot turn it back into a conditional
  * (an IT block on Thumb-2 executes or skips the add depending on the share). */
-inline int32_t cadd_q(int32_t v) {
+inline int32_t cadd_mod(int32_t v, int32_t q) {
     const uint32_t m = opaque(static_cast<uint32_t>(0u - (static_cast<uint32_t>(v) >> 31)));
-    return static_cast<int32_t>(static_cast<uint32_t>(v) + (static_cast<uint32_t>(kQ) & m));
+    return static_cast<int32_t>(static_cast<uint32_t>(v) + (static_cast<uint32_t>(q) & m));
 }
+inline int32_t cadd_q(int32_t v) { return cadd_mod(v, kQ); }
 
 /* Trichina's AND: (z0, z1) shares x & y. Each partial sum is masked by r before a cross
  * term joins it, so no intermediate depends on x or y. */
@@ -84,17 +99,18 @@ inline void sec_and(T &z0, T &z1, T x0, T x1, T y0, T y1, T r) {
 }
 
 /* ---- bitsliced Boolean numbers: 32 lanes, bit b of every lane in word w[share][b] ---- */
-const int kMaxBits = 16;
+const int kMaxBits = 26;
 struct Bs {
     uint32_t w[2][kMaxBits];
 };
 
 /* One share's 32 values, bitsliced: a function of that share alone. */
-inline void bitslice(uint32_t out[kMaxBits], const int16_t v[32], int bits) {
+template <class T>
+inline void bitslice(uint32_t out[kMaxBits], const T v[32], int bits) {
     for (int b = 0; b < bits; ++b) {
         uint32_t w = 0;
         for (int j = 0; j < 32; ++j) {
-            w |= (static_cast<uint32_t>(static_cast<uint16_t>(v[j]) >> b) & 1u) << j;
+            w |= ((static_cast<uint32_t>(v[j]) >> b) & 1u) << j;
         }
         out[b] = w;
     }
@@ -104,7 +120,8 @@ inline void bitslice(uint32_t out[kMaxBits], const int16_t v[32], int bits) {
 /* Boolean shares of one arithmetic share's values, re-masked with fresh randomness: two
  * arithmetic shares must never meet unmasked inside one Boolean sharing, or their XOR (a
  * function of the secret) would appear in a register. */
-inline void boolean_of_share(Bs &out, const int16_t v[32], int bits, Rng &rng) {
+template <class T>
+inline void boolean_of_share(Bs &out, const T v[32], int bits, Rng &rng) {
     uint32_t w[kMaxBits];
     bitslice(w, v, bits);
     for (int b = 0; b < bits; ++b) {
@@ -134,7 +151,8 @@ inline void sec_add(Bs &z, const Bs &x, const Bs &y, int bits, Rng &rng) {
 }
 
 /* z = x + c (mod 2^bits) for a public constant per lane. */
-inline void sec_add_public(Bs &z, const Bs &x, const int16_t c[32], int bits, Rng &rng) {
+template <class T>
+inline void sec_add_public(Bs &z, const Bs &x, const T c[32], int bits, Rng &rng) {
     uint32_t cw[kMaxBits];
     bitslice(cw, c, bits);
     uint32_t c0 = 0, c1 = 0;
@@ -154,26 +172,69 @@ inline void sec_add_public(Bs &z, const Bs &x, const int16_t c[32], int bits, Rn
     for (int i = bits; i < kMaxBits; ++i) z.w[0][i] = z.w[1][i] = 0;
 }
 
-/* Masked "x < c" per lane, for x in [0, 2^13) and a public c in [0, 2^14): the sign of
- * x - c in 14-bit two's complement. Shares (s0, s1) of a word whose bit j is lane j's
- * answer. */
-const int kCmpBits = 14;
-inline void sec_less(uint32_t &s0, uint32_t &s1, const Bs &x, const int16_t c[32], Rng &rng) {
-    int16_t neg[32];
-    for (int j = 0; j < 32; ++j) neg[j] = static_cast<int16_t>((1 << kCmpBits) - c[j]);
+/* Masked "x < c" per lane, for x and a public c both below 2^(bits - 1): the sign of x - c
+ * in `bits`-bit two's complement. Shares (s0, s1) of a word whose bit j is lane j's answer.
+ * The constant may be any integer type; it is taken modulo 2^bits. */
+template <class T>
+inline void sec_less(uint32_t &s0, uint32_t &s1, const Bs &x, const T c[32], Rng &rng, const Mod &M = kKem) {
+    int32_t neg[32];
+    for (int j = 0; j < 32; ++j) neg[j] = static_cast<int32_t>((1 << M.bits) - static_cast<int32_t>(c[j]));
     Bs d;
-    sec_add_public(d, x, neg, kCmpBits, rng);
-    s0 = d.w[0][kCmpBits - 1];
-    s1 = d.w[1][kCmpBits - 1];
+    sec_add_public(d, x, neg, M.bits, rng);
+    s0 = d.w[0][M.bits - 1];
+    s1 = d.w[1][M.bits - 1];
+}
+
+/* The same test against one constant for every lane. */
+inline void sec_less_const(uint32_t &s0, uint32_t &s1, const Bs &x, int32_t c, Rng &rng, const Mod &M) {
+    int32_t cs[32];
+    for (int j = 0; j < 32; ++j) cs[j] = c;
+    sec_less(s0, s1, x, cs, rng, M);
 }
 
 /* The integer sum T = a0 + a1 (in [0, 2q - 2]) of two arithmetic shares in [0, q), as
- * Boolean shares, 14 bits, 32 lanes. */
-inline void share_sum(Bs &t, const int16_t a0[32], const int16_t a1[32], Rng &rng) {
+ * Boolean shares, 32 lanes. */
+template <class T>
+inline void share_sum(Bs &t, const T a0[32], const T a1[32], Rng &rng, const Mod &M = kKem) {
     Bs x, y;
-    boolean_of_share(x, a0, kCmpBits, rng);
-    boolean_of_share(y, a1, kCmpBits, rng);
-    sec_add(t, x, y, kCmpBits, rng);
+    boolean_of_share(x, a0, M.bits, rng);
+    boolean_of_share(y, a1, M.bits, rng);
+    sec_add(t, x, y, M.bits, rng);
+}
+
+/* z = (s ? x : y) per lane, for shares (s0, s1) of a lane mask: y ^ (s & (x ^ y)). */
+inline void sec_select(Bs &z, uint32_t s0, uint32_t s1, const Bs &x, const Bs &y, int bits, Rng &rng) {
+    for (int b = 0; b < bits; ++b) {
+        uint32_t t0, t1;
+        sec_and(t0, t1, s0, s1, x.w[0][b] ^ y.w[0][b], x.w[1][b] ^ y.w[1][b], rng.u32());
+        z.w[0][b] = opaque(static_cast<uint32_t>(y.w[0][b] ^ t0));
+        z.w[1][b] = opaque(static_cast<uint32_t>(y.w[1][b] ^ t1));
+    }
+    for (int b = bits; b < kMaxBits; ++b) z.w[0][b] = z.w[1][b] = 0;
+}
+
+/* T mod q for T in [0, 2q), in the Boolean domain: T - q when T >= q. */
+inline void sec_reduce_q(Bs &out, const Bs &t, Rng &rng, const Mod &M) {
+    int32_t negq[32];
+    for (int j = 0; j < 32; ++j) negq[j] = (1 << M.bits) - M.q;
+    Bs tm;
+    sec_add_public(tm, t, negq, M.bits, rng);    /* T - q */
+    uint32_t s0, s1;
+    sec_less_const(s0, s1, t, M.q, rng, M);      /* T < q: keep T */
+    sec_select(out, s0, s1, t, tm, M.bits, rng);
+}
+
+/* Shares of the AND of all 32 lanes of a masked word, in bit 0: four halvings, each a
+ * masked AND of the word with itself shifted (the shift acts on each share). */
+inline void sec_all_lanes(uint32_t &o0, uint32_t &o1, uint32_t x0, uint32_t x1, Rng &rng) {
+    for (int k = 16; k >= 1; k >>= 1) {
+        uint32_t z0, z1;
+        sec_and(z0, z1, x0, x1, static_cast<uint32_t>(x0 >> k), static_cast<uint32_t>(x1 >> k), rng.u32());
+        x0 = z0;
+        x1 = z1;
+    }
+    o0 = x0 & 1u;
+    o1 = x1 & 1u;
 }
 
 /* Masked Compress_1 (FIPS 203 decoding of one message bit per coefficient): the bit is 1
@@ -183,14 +244,10 @@ inline void sec_decode1(uint32_t &b0, uint32_t &b1, const int16_t a0[32], const 
                         Rng &rng) {
     Bs t;
     share_sum(t, a0, a1, rng);
-    int16_t c[32];
     uint32_t l1[2], l2[2], l3[2], l4[2];
-    const int16_t k[4] = {833, 2497, 4162, 5826};
+    const int32_t k[4] = {833, 2497, 4162, 5826};
     uint32_t *outs[4] = {l1, l2, l3, l4};
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 32; ++j) c[j] = k[i];
-        sec_less(outs[i][0], outs[i][1], t, c, rng);
-    }
+    for (int i = 0; i < 4; ++i) sec_less_const(outs[i][0], outs[i][1], t, k[i], rng, kKem);
     /* [T >= 833] & [T < 2497]: the complement of a Boolean sharing flips one share */
     uint32_t p0, p1, q0, q1;
     sec_and(p0, p1, static_cast<uint32_t>(~l1[0]), l1[1], l2[0], l2[1], rng.u32());
@@ -199,69 +256,55 @@ inline void sec_decode1(uint32_t &b0, uint32_t &b1, const int16_t a0[32], const 
     b1 = opaque(static_cast<uint32_t>(p1 ^ q1));
 }
 
-/* Masked interval test for the ciphertext comparison: lane j's coefficient x (shares in
- * [0, q)) satisfies (x - lo_j) mod q < w_j. a0 is shifted by the public lo first. */
-inline void sec_in_interval(uint32_t &o0, uint32_t &o1, const int16_t a0[32], const int16_t a1[32],
-                            const int16_t lo[32], const int16_t w[32], Rng &rng) {
-    int16_t s0[32];
+/* Masked interval test: lane j's value x (shares in [0, q)) satisfies (x - lo_j) mod q < w_j,
+ * for 0 < w_j <= q. a0 is shifted by the public lo first. */
+template <class T, class C>
+inline void sec_in_interval(uint32_t &o0, uint32_t &o1, const T a0[32], const T a1[32],
+                            const C lo[32], const C w[32], Rng &rng, const Mod &M = kKem) {
+    T s0[32];
     for (int j = 0; j < 32; ++j) {
-        int32_t v = static_cast<int32_t>(a0[j]) - lo[j];
-        v = cadd_q(v);
-        s0[j] = static_cast<int16_t>(v);
+        s0[j] = static_cast<T>(cadd_mod(static_cast<int32_t>(a0[j]) - static_cast<int32_t>(lo[j]), M.q));
     }
     Bs t;
-    share_sum(t, s0, a1, rng);
-    int16_t cw[32], cq[32], cqw[32];
+    share_sum(t, s0, a1, rng, M);
+    int32_t cw[32], cqw[32];
     for (int j = 0; j < 32; ++j) {
-        cw[j] = w[j];
-        cq[j] = kQ;
-        cqw[j] = static_cast<int16_t>(kQ + w[j]);
+        cw[j] = static_cast<int32_t>(w[j]);
+        cqw[j] = M.q + static_cast<int32_t>(w[j]);
     }
     uint32_t a[2], b[2], c[2];
-    sec_less(a[0], a[1], t, cw, rng);   /* T < w */
-    sec_less(b[0], b[1], t, cq, rng);   /* T < q */
-    sec_less(c[0], c[1], t, cqw, rng);  /* T < q + w */
+    sec_less(a[0], a[1], t, cw, rng, M);        /* T < w */
+    sec_less_const(b[0], b[1], t, M.q, rng, M); /* T < q */
+    sec_less(c[0], c[1], t, cqw, rng, M);       /* T < q + w */
     uint32_t d0, d1;
     sec_and(d0, d1, static_cast<uint32_t>(~b[0]), b[1], c[0], c[1], rng.u32());
     o0 = opaque(static_cast<uint32_t>(a[0] ^ d0));
     o1 = opaque(static_cast<uint32_t>(a[1] ^ d1));
 }
 
-/* Boolean (bitsliced, `bits` wide, non-negative values below q) to arithmetic shares mod
- * q: a1 is a fresh uniform share; a0 = (v - a1) mod q is computed inside the Boolean
- * domain and only then recombined, which reveals a value uniform on its own. */
-inline void sec_b2a(int16_t a0[32], int16_t a1[32], const Bs &v, Rng &rng) {
-    int16_t r[32], nr[32];
+/* Boolean (bitsliced, non-negative values below q) to arithmetic shares mod q: a1 is a fresh
+ * uniform share; a0 = (v - a1) mod q is computed inside the Boolean domain and only then
+ * recombined, which reveals a value uniform on its own. */
+template <class T>
+inline void sec_b2a(T a0[32], T a1[32], const Bs &v, Rng &rng, const Mod &M = kKem) {
+    int32_t r[32], nr[32];
     for (int j = 0; j < 32; ++j) {
-        r[j] = rand_q(rng);
-        nr[j] = static_cast<int16_t>(kQ - r[j]);   /* in [1, q] */
+        r[j] = rand_mod(rng, M.q);
+        nr[j] = M.q - r[j];                          /* in [1, q] */
     }
     Bs m, y, z;
-    boolean_of_share(m, nr, kCmpBits, rng);
-    sec_add(y, v, m, kCmpBits, rng);              /* v + q - r, in [1, 2q) */
-    int16_t negq[32], cq[32];
-    for (int j = 0; j < 32; ++j) {
-        negq[j] = static_cast<int16_t>((1 << kCmpBits) - kQ);
-        cq[j] = kQ;
-    }
-    sec_add_public(z, y, negq, kCmpBits, rng);    /* y - q */
-    uint32_t s0, s1;
-    sec_less(s0, s1, y, cq, rng);                 /* y < q: keep y, else y - q */
-    for (int b = 0; b < kCmpBits; ++b) {
-        uint32_t t0, t1;
-        sec_and(t0, t1, s0, s1, y.w[0][b] ^ z.w[0][b], y.w[1][b] ^ z.w[1][b], rng.u32());
-        z.w[0][b] = opaque(static_cast<uint32_t>(z.w[0][b] ^ t0));
-        z.w[1][b] = opaque(static_cast<uint32_t>(z.w[1][b] ^ t1));
-    }
+    boolean_of_share(m, nr, M.bits, rng);
+    sec_add(y, v, m, M.bits, rng);                   /* v + q - r, in [1, 2q) */
+    sec_reduce_q(z, y, rng, M);
     /* recombine: (v - r) mod q is uniform whatever v is */
     for (int j = 0; j < 32; ++j) {
         uint32_t val = 0;
-        for (int b = 0; b < kCmpBits; ++b) {
+        for (int b = 0; b < M.bits; ++b) {
             const uint32_t bit = ((z.w[0][b] ^ z.w[1][b]) >> j) & 1u;
             val |= bit << b;
         }
-        a0[j] = static_cast<int16_t>(val);
-        a1[j] = r[j];
+        a0[j] = static_cast<T>(val);
+        a1[j] = static_cast<T>(r[j]);
     }
 }
 
@@ -305,9 +348,7 @@ inline void sec_cbd32(int16_t a0[32], int16_t a1[32], const unsigned char *buf0,
         for (int b = 4; b < kMaxBits; ++b) v.w[s][b] = 0;
     sec_b2a(a0, a1, v, rng);
     for (int j = 0; j < 32; ++j) {                      /* undo the shift by eta, mod q */
-        int32_t t = static_cast<int32_t>(a0[j]) - eta;
-        t = cadd_q(t);
-        a0[j] = static_cast<int16_t>(t);
+        a0[j] = static_cast<int16_t>(cadd_q(static_cast<int32_t>(a0[j]) - eta));
     }
 }
 

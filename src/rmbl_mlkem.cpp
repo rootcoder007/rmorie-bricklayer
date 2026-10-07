@@ -171,26 +171,7 @@ SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
     });
 }
 
-/* The masking gadgets draw from the operating system's CSPRNG through a buffer. A failed
- * read is recorded, not raised, so no Rf_error() longjmps over the decapsulation's
- * buffers; the entry point raises once they are gone. */
-extern "C" int rmbl_os_random(unsigned char *out, size_t n);
-struct MaskRng {
-    unsigned char buf[4096];
-    size_t pos = sizeof buf;
-    bool failed = false;
-};
-static uint32_t mask_rng_u32(void *ctx) {
-    MaskRng *m = static_cast<MaskRng *>(ctx);
-    if (m->pos + 4 > sizeof m->buf) {
-        if (rmbl_os_random(m->buf, sizeof m->buf) != 0) m->failed = true;
-        m->pos = 0;
-    }
-    uint32_t v;
-    std::memcpy(&v, m->buf + m->pos, 4);
-    m->pos += 4;
-    return v;
-}
+#include "rmbl_mask_rng.h"
 
 /* First-order masked decapsulation (rmbl_mlkem_body.h, decaps_masked): the same shared
  * secret as C_rmbl_mlkem_decaps, with every secret-dependent value held in two shares. */

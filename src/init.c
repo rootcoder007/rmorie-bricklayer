@@ -68,9 +68,9 @@ extern SEXP C_rmbl_slhdsa_sign_internal(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_slhdsa_verify_internal(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify_mu(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
@@ -279,9 +279,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_slhdsa_verify_internal", (DL_FUNC) &C_rmbl_slhdsa_verify_internal, 4},
     {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
     {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
-    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        6},
+    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        7},
     {"C_rmbl_mldsa_mu",          (DL_FUNC) &C_rmbl_mldsa_mu,          5},
-    {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     4},
+    {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     5},
     {"C_rmbl_mldsa_verify_mu",   (DL_FUNC) &C_rmbl_mldsa_verify_mu,   4},
     {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
     {"C_rmbl_strtod",             (DL_FUNC) &C_rmbl_strtod,             1},

@@ -140,13 +140,18 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
           sig <- tryCatch(
             {
               if (is.null(sk)) stop("no key")
-              if (!is.null(t$mu) && is.null(t$msg)) {
-                .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, h(t$mu), rnd)
-              } else if ("Internal" %in% flags) {
-                .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, h(t$mu), rnd)
-              } else {
-                .Call(C("C_rmbl_mldsa_sign"), mode, sk, h(t$msg), h(t$ctx), rnd, "none")
+              sgn <- function(masked) {
+                if (!is.null(t$mu) && is.null(t$msg)) {
+                  .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, h(t$mu), rnd, masked)
+                } else if ("Internal" %in% flags) {
+                  .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, h(t$mu), rnd, masked)
+                } else {
+                  .Call(C("C_rmbl_mldsa_sign"), mode, sk, h(t$msg), h(t$ctx), rnd, "none", masked)
+                }
               }
+              plain <- sgn(FALSE)
+              if (!identical(plain, sgn(TRUE))) stop("masked signing disagrees")
+              plain
             },
             error = function(e) NULL
           )

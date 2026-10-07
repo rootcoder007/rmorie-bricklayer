@@ -21,6 +21,7 @@
 
 #include "rmbl_mldsa_core.h"
 #include "rmbl_prehash.h"
+#include "rmbl_mask_rng.h"
 
 #define MLDSA_NS rmbl_mldsa44
 #define MLDSA_K 4
@@ -121,6 +122,15 @@ extern "C" {
         }                                                                \
     } while (0)
 
+/* `masked`: TRUE signs with the first-order masked signer (sign_mu_masked), FALSE with the
+ * plain one; the two return the same bytes for the same rnd. */
+static bool mldsa_masked(SEXP masked) {
+    if (TYPEOF(masked) != LGLSXP || XLENGTH(masked) != 1 || LOGICAL(masked)[0] == NA_LOGICAL) {
+        Rf_error("`masked` must be TRUE or FALSE");
+    }
+    return LOGICAL(masked)[0] != 0;
+}
+
 static int mldsa_mode(SEXP mode) {
     if (TYPEOF(mode) != INTSXP || XLENGTH(mode) != 1) {
         Rf_error("`mode` must be a single integer: 44, 65 or 87");
@@ -181,7 +191,7 @@ SEXP C_rmbl_mldsa_keypair_impl(SEXP mode, SEXP seed) {
 }
 
 SEXP C_rmbl_mldsa_sign_impl(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
-                       SEXP prehash) {
+                       SEXP prehash, SEXP masked) {
     if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         Rf_error("`ctx` must be a raw vector of at most 255 bytes");
@@ -189,6 +199,7 @@ SEXP C_rmbl_mldsa_sign_impl(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
     if (TYPEOF(rnd) != RAWSXP || XLENGTH(rnd) != 32) {
         Rf_error("`rnd` must be a raw vector of 32 bytes");
     }
+    const bool use_mask = mldsa_masked(masked);
     RMBL_MLDSA_DISPATCH(mldsa_mode(mode), {
         if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != M::kSkBytes) {
             Rf_error("`sk` must be a raw vector of %d bytes", M::kSkBytes);
@@ -198,7 +209,26 @@ SEXP C_rmbl_mldsa_sign_impl(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
                             static_cast<size_t>(XLENGTH(msg)), &ph);
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
         int rc;
-        if (ph.oid_len > 0) {
+        bool failed = false;
+        if (use_mask) {
+            MaskRng *mr = new MaskRng();
+            rmbl_masked::Rng rng;  /* assigned, not braced: a comma would split the macro argument */
+            rng.fn = mask_rng_u32;
+            rng.ctx = mr;
+            if (ph.oid_len > 0) {
+                rc = M::sign_prehash_masked(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
+                                            static_cast<size_t>(XLENGTH(ctx)), ph.oid,
+                                            ph.oid_len, RAW(rnd), RAW(sk), rng);
+            } else {
+                rc = M::sign_internal_masked(RAW(sig), RAW(msg),
+                                             static_cast<size_t>(XLENGTH(msg)), RAW(ctx),
+                                             static_cast<size_t>(XLENGTH(ctx)), RAW(rnd),
+                                             RAW(sk), rng);
+            }
+            failed = mr->failed;
+            rmbl_ct::wipe(mr->buf, sizeof mr->buf);
+            delete mr;
+        } else if (ph.oid_len > 0) {
             rc = M::sign_prehash(RAW(sig), ph.digest, ph.digest_len, RAW(ctx),
                                  static_cast<size_t>(XLENGTH(ctx)), ph.oid,
                                  ph.oid_len, RAW(rnd), RAW(sk));
@@ -209,6 +239,7 @@ SEXP C_rmbl_mldsa_sign_impl(SEXP mode, SEXP sk, SEXP msg, SEXP ctx, SEXP rnd,
                                   RAW(sk));
         }
         UNPROTECT(1);
+        if (failed) Rf_error("the operating system's random source failed during masked signing");
         if (rc != 0) Rf_error("%s", rmbl_mldsa_core::kSignFailed);
         return sig;
     });
@@ -299,20 +330,35 @@ SEXP C_rmbl_prehash_digest_impl(SEXP name, SEXP msg) {
     return r;
 }
 
-SEXP C_rmbl_mldsa_sign_mu_impl(SEXP mode, SEXP sk, SEXP mu, SEXP rnd) {
+SEXP C_rmbl_mldsa_sign_mu_impl(SEXP mode, SEXP sk, SEXP mu, SEXP rnd, SEXP masked) {
     if (TYPEOF(mu) != RAWSXP || XLENGTH(mu) != 64) {
         Rf_error("`mu` must be a raw vector of 64 bytes");
     }
     if (TYPEOF(rnd) != RAWSXP || XLENGTH(rnd) != 32) {
         Rf_error("`rnd` must be a raw vector of 32 bytes");
     }
+    const bool use_mask = mldsa_masked(masked);
     RMBL_MLDSA_DISPATCH(mldsa_mode(mode), {
         if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != M::kSkBytes) {
             Rf_error("`sk` must be a raw vector of %d bytes", M::kSkBytes);
         }
         SEXP sig = PROTECT(Rf_allocVector(RAWSXP, M::kSigBytes));
-        const int rc = M::sign_mu(RAW(sig), RAW(mu), RAW(rnd), RAW(sk));
+        int rc;
+        bool failed = false;
+        if (use_mask) {
+            MaskRng *mr = new MaskRng();
+            rmbl_masked::Rng rng;
+            rng.fn = mask_rng_u32;
+            rng.ctx = mr;
+            rc = M::sign_mu_masked(RAW(sig), RAW(mu), RAW(rnd), RAW(sk), rng);
+            failed = mr->failed;
+            rmbl_ct::wipe(mr->buf, sizeof mr->buf);
+            delete mr;
+        } else {
+            rc = M::sign_mu(RAW(sig), RAW(mu), RAW(rnd), RAW(sk));
+        }
         UNPROTECT(1);
+        if (failed) Rf_error("the operating system's random source failed during masked signing");
         if (rc != 0) Rf_error("%s", rmbl_mldsa_core::kSignFailed);
         return sig;
     });
