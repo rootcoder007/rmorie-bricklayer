@@ -28,7 +28,7 @@
 #'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
 #'     [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
 #'     a local model or your own endpoint; keys are issued on request at
-#'     \url{https://rmorie.com/access/}): a key you paste with \code{--token}
+#'     \url{https://www.rmorie.com/access/}): a key you paste with \code{--token}
 #'     (read from the terminal or a pipe when KEY is omitted), a code sent to
 #'     \code{--email}, or the GitHub device flow}
 #'   \item{\code{logout}}{forget the hosted key}

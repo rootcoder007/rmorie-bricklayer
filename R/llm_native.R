@@ -6,7 +6,7 @@
 # hosted tier's addresses come from the signed services document
 # (bricklayer_services()), never from a constant here, so they can move
 # without a package release; its key is personal, issued on request at
-# https://rmorie.com/access or minted by the GitHub / emailed-code sign-in,
+# https://www.rmorie.com/access or minted by the GitHub / emailed-code sign-in,
 # and stored in a credentials file the other MORIE packages read as well.
 # Every request goes through the package's own libcurl binding.
 
@@ -107,7 +107,7 @@
 .bl_access_hint <- function() {
   sprintf(paste("request a key at %s, then `%s login --token KEY` (R: bricklayer_llm_login(token = ));",
                 "`%s login` signs in with GitHub or an emailed code"),
-          .rmbl_services_llm()$request_access %||% "https://rmorie.com/access", .bl_prog(), .bl_prog())
+          .rmbl_services_llm()$request_access %||% "https://www.rmorie.com/access", .bl_prog(), .bl_prog())
 }
 
 # The GET seam: the hosted tier's model list (a public https address, checked).
@@ -409,7 +409,7 @@ bricklayer_llm_models <- function(timeout = 10) {
 #'   \item the hosted MORIE tier, a last resort for people who can run neither:
 #'     its address comes from \code{\link{bricklayer_services}} and it needs the
 #'     key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
-#'     Keys are personal and issued on request at \url{https://rmorie.com/access/}.
+#'     Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
 #' }
 #' \code{\link{bricklayer_llm_status}} shows which route a question would take.
 #'
@@ -491,7 +491,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
 #' so one sign-in serves all of them). The tier is a last resort behind a
 #' local model or your own endpoint (see \code{\link{bricklayer_llm_ask}});
-#' keys are personal and issued on request at \url{https://rmorie.com/access/}.
+#' keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
 #' The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an
@@ -504,7 +504,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' }
 #' Nothing is written except by this explicit call.
 #'
-#' @param token A key issued at \url{https://rmorie.com/access/}.
+#' @param token A key issued at \url{https://www.rmorie.com/access/}.
 #' @param email Sign in with a code sent to this address.
 #' @param code The emailed code, when you already have it.
 #' @param open_browser Open the GitHub page for the device flow.
@@ -512,7 +512,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' @return The key, invisibly.
 #' @examples
 #' \dontrun{
-#' bricklayer_llm_login(token = "<key issued at https://rmorie.com/access/>")
+#' bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 #' bricklayer_llm_login(email = "you@example.com")
 #' bricklayer_llm_login() # GitHub device flow
 #' }

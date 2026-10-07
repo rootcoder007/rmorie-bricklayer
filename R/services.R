@@ -82,9 +82,9 @@
        notice = paste0("The hosted MORIE services could not be verified from this machine. ",
                        "Local models and your own API keys keep working."),
        llm = list(mode = "off", base_url = "", auth_url = "", default_model = "",
-                  models = character(0), request_access = "https://rmorie.com/access"),
-       data = list(mode = "off", base_url = "", license = "https://rmorie.com/data-license",
-                   request_access = "https://rmorie.com/access"))
+                  models = character(0), request_access = "https://www.rmorie.com/access"),
+       data = list(mode = "off", base_url = "", license = "https://www.rmorie.com/data-license",
+                   request_access = "https://www.rmorie.com/access"))
 }
 
 # Verify the detached signature over the document's exact bytes. `pubkey`

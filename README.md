@@ -197,8 +197,8 @@ and a digest anyone can recompute says nothing about who produced the data.
   at data.rmorie.com (161 databases and 203 tables on 2026-10-05,
   materialised from Google BigQuery public datasets), and
   `bricklayer_data_load("db/table")` opens one with your MORIE key (issued
-  on request at <https://rmorie.com/access/>, under the terms at
-  <https://rmorie.com/data-license/>), cached locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
+  on request at <https://www.rmorie.com/access/>, under the terms at
+  <https://www.rmorie.com/data-license/>), cached locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture
@@ -486,7 +486,7 @@ is used:
    public key pinned in the package: `bricklayer_services()`), so the
    endpoint can move or be paused without a package release. Keys are
    personal, rate limited and issued on request at
-   <https://rmorie.com/access/>; a key is stored once, in
+   <https://www.rmorie.com/access/>; a key is stored once, in
    `~/.config/morie/credentials.json`, and shared with rmorie, rmoriedata and
    the Python package morie.
 
