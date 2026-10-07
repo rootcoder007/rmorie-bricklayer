@@ -1,0 +1,155 @@
+---
+title: "Validation rules, inferred schemas and synthetic stand-ins"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Validation rules, inferred schemas and synthetic stand-ins}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+A capsule says what shape its data must have. This vignette covers the three tools for
+stating and checking that shape: explicit **rules**, a **schema** inferred from a known-good
+table, and a **synthetic stand-in** generated from the schema when the portal is unreachable.
+
+## Rules
+
+A rule is a name, a predicate and optionally a column. Row-wise rules report how many rows
+fail and which; table-wise rules take the whole data frame. A `fatal` severity stops the
+pipeline; a `warning` is recorded.
+
+```{r rules}
+df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
+                 start = c(1, 5, 3), end = c(2, 4, 9))
+
+rules <- list(
+  rule("age_non_negative", function(v) v >= 0, column = "age"),
+  rule("id_unique", function(v) !anyDuplicated(v), column = "id", severity = "fatal"),
+  rule("dates_ordered", function(d) all(d$start <= d$end))
+)
+
+issues <- validate_rules(df, rules)
+names(issues)
+issues$age_non_negative$n_failed
+issues$age_non_negative$rows
+```
+
+Clean data produces nothing:
+
+```{r rules-clean}
+clean <- data.frame(id = 1:3, age = c(30, 31, 40), start = 1:3, end = 4:6)
+length(validate_rules(clean, rules))
+```
+
+Two behaviours matter for trust. A rule for an absent column is **skipped**, not failed: a
+missing column is the schema's finding to report. And a rule that *errors* is a **failure**,
+never a silent pass:
+
+```{r rules-edge}
+length(validate_rules(data.frame(id = 1:3), rules[1:2]))
+broken <- list(rule("bad", function(v) stop("boom"), column = "age"))
+validate_rules(clean, broken)$bad$message
+```
+
+### Ready-made rules
+
+Common checks have constructors so the intent is in the name:
+
+```{r ready}
+rules2 <- list(
+  rule_not_null("id"),
+  rule_unique("id", severity = "fatal"),
+  rule_between("age", 0, 120),
+  rule_in_set("grade", c("a", "b", "c")),
+  rule_regex("code", "^[A-Z]{2}-[0-9]{4}$"),
+  rule_within_n_mads("score", n = 3),
+  rule_col_count(6, severity = "fatal")
+)
+length(rules2)
+```
+
+`rule_increasing()`, `rule_distinct_rows()` and `rule_complete_rows()` complete the set.
+`apply_schema_validation()` runs a rule list and stops on any fatal issue, which is the call
+a pipeline makes.
+
+## Inferring a schema
+
+Given a table known to be right, `infer_schema()` pins what can be pinned: column names and
+types, numeric ranges with a little slack, and the level set of categorical columns (up to
+`max_levels`, so free text is not mistaken for a code list):
+
+```{r infer}
+set.seed(1)
+df <- data.frame(
+  id = 1:100,
+  score = stats::runif(100, 0, 10),
+  grade = sample(c("a", "b", "c"), 100, TRUE),
+  note = paste0("free text ", 1:100),
+  stringsAsFactors = FALSE
+)
+sch <- infer_schema(df)
+sch$expected_value_sets
+```
+
+It validates the table it was learned from, and catches a vanished column or a new
+category:
+
+```{r infer-check}
+length(validate_schema(df, list(schema = sch)))
+length(validate_schema(df[, -3], list(schema = sch))) > 0
+bad <- df
+bad$grade[1] <- "z"
+length(validate_schema(bad, list(schema = sch))) > 0
+```
+
+A schema goes into the capsule's provenance record; `validate_schema()` is what
+`verify_capsule()` runs on a fresh download.
+
+## Synthetic stand-ins
+
+When the portal is down, the pipeline should still run end to end on data of the right
+shape, clearly marked as synthetic. A recipe names each column's generator:
+
+```{r synthetic}
+recipe <- list(
+  n_rows = 20, seed = 42,
+  columns = list(
+    year   = list(type = "sample", values = list(2024, 2025)),
+    alert  = list(type = "bernoulli", p = 0.2),
+    visits = list(type = "poisson", lambda = 3, min = 1),
+    id     = list(type = "id_pattern", pattern = "p-{seq:05d}")
+  )
+)
+out <- tempfile(fileext = ".csv")
+res <- make_synthetic_csv(recipe, out)
+res$rows
+res$seed
+
+df <- utils::read.csv(out)
+dim(df)
+names(df)
+head(df, 3)
+```
+
+The seed makes the stand-in reproducible; `n_rows` overrides the recipe's own count. The
+written file carries a marker that identifies it as synthetic, so a synthetic run can never
+be mistaken for a result:
+
+```{r synthetic-mark}
+make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+```
+
+`make_synthetic_column()` generates one column from a spec, for building a table piece by
+piece or for testing a generator.
+
+## Putting them together
+
+1. On the first, trusted download: `infer_schema()`, then add the rules the schema cannot
+   express (ordering between columns, cross-table consistency) and pin both.
+2. On every later run: `validate_schema()` and `validate_rules()`; stop on `fatal`.
+3. When the source is unreachable: `make_synthetic_csv()` from the pinned schema, run the
+   pipeline, and let the synthetic marker say what the output is.

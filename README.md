@@ -33,6 +33,10 @@ and a digest anyone can recompute says nothing about who produced the data.
   `report_analysis()` writes it as Markdown or one HTML file and
   `use_capsule_template()` starts a capsule that runs as written. Start
   with `vignette("getting-started")`.
+  Topic guides: `vignette("post-quantum-signatures")`, `vignette("key-encapsulation")`,
+  `vignette("side-channel-assurance")`, `vignette("hawkes-processes")`,
+  `vignette("small-area-rates")`, `vignette("trends-and-change")`,
+  `vignette("stock-and-flow")` and the rest, grouped by topic on the package website.
 - **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.

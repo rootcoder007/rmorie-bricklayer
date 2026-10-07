@@ -1,0 +1,109 @@
+---
+title: "Stock and flow: population, admissions and length of stay"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Stock and flow: population, admissions and length of stay}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+A custodial or clinical population can be described two ways: the **stock** (how many are
+held on an average day) and the **flow** (how many pass through in a period). The two are
+linked by the length of stay, and a published table that reports one without the others is
+easy to misread. These functions implement the standard measures (Lakner's formulation, as
+used in the Canadian corrections statistics) with exact intervals.
+
+## Average daily population
+
+The stock. Detention days in a period divided by the days in the period:
+
+```{r adp}
+# Lakner's worked example: 3,000 inmates served 13,500 detention days in a year
+adp(13500)
+
+# per-person days over a 30-day period give the same total
+adp(c(10, 20, 30), t = 30)
+```
+
+`adp_from_counts()` estimates person-days from periodic headcounts (a monthly census) when
+daily data are not published.
+
+## Average length of stay
+
+Detention days divided by the number of people who completed a stay:
+
+```{r alos}
+# Lakner: 2,700 inmates admitted and released served 12,150 detention days
+alos(12150, 2700)
+```
+
+## Admissions implied by stock and stay
+
+Little's law ties the three together: in a stationary system, stock = flow × stay, so
+admissions = ADP × days / ALOS. Lakner (p. 20) runs it the other way: an average daily
+population of 25 and 1,750 admissions in a year imply a stay of 5.2 days, and back again:
+
+```{r admissions}
+alos_implied <- 25 * 365 / 1750
+round(alos_implied, 1)
+admissions(25, alos_implied)
+```
+
+## Stock and flow together
+
+`stock_flow()` takes detention days and people per period, with an exposure (the population
+at risk) to turn counts into rates, and reports how the stock, the flow and the stay moved
+between periods. The pattern it is built to surface: **fewer people, held longer**, so the
+flow falls while the stock rises.
+
+```{r stockflow}
+stock_flow(
+  days = c(115674, 126121), people = c(12647, 9608),
+  period = c("2023", "2025"),
+  exposure = c(15495050, 16256538)
+)
+```
+
+A table that reported only admissions would show a decline; one that reported only the
+daily count would show growth. Both are true, and the length of stay is the reason.
+
+## The distribution of stays
+
+The mean stay is pulled far above the median by a few long stays, so the summary that
+matters is the whole distribution:
+
+```{r stays}
+stays <- c(rep(1, 40), rep(3, 30), rep(10, 20), 60, 90, 120)
+stay_summary(stays)
+stay_summary(stays)[, c("mean", "median", "max")]
+```
+
+`stay_summary()` gives the mean with its interval, the quantiles and the maximum, so a
+report can say "half of stays were three days or less, and the longest was 120" instead of
+"the average stay was 9.6 days", which describes almost no one.
+
+## Periods and fiscal years
+
+Published series use fiscal years and uneven periods:
+
+```{r periods}
+period_days("2024-04-01", "2025-03-31")
+fiscal_year_label(2024)
+```
+
+## From a published table
+
+1. `adp()` for the stock from detention days, or `adp_from_counts()` from headcounts.
+2. `alos()` for the stay; `admissions()` to check the implied flow against the published one.
+3. `stock_flow()` across periods, with the population as exposure.
+4. `stay_summary()` whenever per-person stays are available, and report the median.
+
+## Reference
+
+Lakner, *A Manual of Correctional Statistics* (the ADP and ALOS worked examples at pp. 15
+and 17 are reproduced above).

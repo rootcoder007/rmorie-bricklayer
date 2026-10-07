@@ -1,0 +1,117 @@
+---
+title: "Banded tables and concentration: from '6 to 10' to a Gini"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Banded tables and concentration: from '6 to 10' to a Gini}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+Published frequency tables band their values: "1", "2 to 5", "6 to 10", "Greater than 10".
+To compute anything about the underlying distribution, the bands have to be parsed, given
+representative values, and expanded into per-unit values, and the result has to be checked
+against the one assumption that cannot be verified: what the open top band contains.
+
+## Parsing band labels
+
+```{r parse}
+parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+parse_bands(c("18 to 24", "25 to 49", "50+"))
+```
+
+An unrecognised label is reported as unparsed, never guessed at:
+
+```{r parse-bad}
+parse_bands(c("3", "unknown", "not stated"))
+```
+
+## Representative values
+
+Each band needs one value to stand for its members: the midpoint by default, or the lower
+or upper edge, or the geometric mean for skewed quantities. The open top band has no upper
+edge, so a cap or a factor on its lower edge is supplied explicitly:
+
+```{r values}
+b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
+band_values(b, rule = "midpoint", open_upper_cap = 20)
+band_values(b, rule = "geometric", open_upper_cap = 20)
+```
+
+## Expanding to per-unit values
+
+With counts per band, `expand_bands()` returns one value per unit, ready for any statistic:
+
+```{r expand}
+x <- expand_bands(c("1", "2 to 5", "Greater than 5"), counts = c(10, 4, 2),
+                  open_upper_cap = 12)
+table(x)
+gini(x)
+```
+
+## Concentration
+
+The **Gini coefficient** measures how unequally a total is spread across units: 0 when
+every unit holds the same, approaching 1 when one unit holds everything. `top_share()`
+reports what the most frequent few account for, and `lorenz()` gives the curve behind the
+Gini.
+
+```{r gini}
+gini(rep(1, 10))             # no concentration
+gini(c(rep(0, 9), 1))        # one unit holds everything
+1 - 1 / 10                   # the maximum for ten units
+
+placements <- c(rep(1, 1200), rep(3, 430), rep(8, 110), rep(20, 38))
+gini(placements)
+top_share(placements, c(0.01, 0.05, 0.1))
+head(lorenz(placements))
+```
+
+Here the top 1% of people account for a disproportionate share of placements: the
+substantive finding a banded table hides.
+
+## The assumption you cannot check: sensitivity to the open band
+
+Everything above depends on what the "Greater than 10" band is taken to contain. If the
+statistic barely moves as that assumption varies, it has been measured; if it swings, it
+has not, and the honest report says so. `band_sensitivity()` recomputes a statistic over a
+range of caps:
+
+```{r sens}
+counts <- c(1200, 430, 110, 38)
+band_sensitivity(b, counts)
+band_sensitivity(b, counts, statistic = mean)
+```
+
+## Heavy tails
+
+When the open band holds a long tail, the question is how heavy. The Hill estimator gives
+the tail index of a power law; for counts, the exact discrete likelihood matters, because
+the continuous closed form is badly biased at a threshold of one:
+
+```{r hill}
+k <- 1:10000
+p <- k^(-2.5) / sum(k^(-2.5))
+set.seed(2)
+z <- sample(k, 5000, replace = TRUE, prob = p)
+c(exact = round(hill_tail_index(z, x_min = 1)$alpha, 2),
+  approx = round(hill_tail_index(z, x_min = 1, approx = TRUE)$alpha, 2))
+```
+
+A short tail still returns an estimate, marked as not to be leaned on:
+
+```{r hill-short}
+short <- hill_tail_index(c(3, 4, 5, 9), x_min = 3)
+c(alpha = round(short$alpha, 2), n = short$n_tail, reliable = short$reliable)
+```
+
+## Workflow
+
+1. `parse_bands()`; stop if anything is unparsed.
+2. `band_values()` or `expand_bands()` with an explicit cap for the open band.
+3. The statistic: `gini()`, `top_share()`, `lorenz()`, `hill_tail_index()`.
+4. `band_sensitivity()` over the cap, and report the range, not the point.
