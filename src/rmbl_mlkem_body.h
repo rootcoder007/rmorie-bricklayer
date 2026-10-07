@@ -399,6 +399,34 @@ int encaps(unsigned char *ct, unsigned char shared[32],
     return 0;
 }
 
+/* The Fujisaki-Okamoto tail of decapsulation: shared = g when the re-encryption ct2 equals
+ * the ciphertext (and re-encryption did not fail), K-bar otherwise, with no branch and no
+ * early exit (inst/dudect times this function on its own). */
+inline void fo_select(unsigned char shared[32], const unsigned char g[32], const unsigned char kbar[32],
+                      const unsigned char *ct2, const unsigned char *ct, int bad) {
+    /* Constant-time selection, and no early exit: whether the
+     * re-encryption matched must not be observable in timing, because
+     * that single bit is exactly what a chosen-ciphertext attack needs. */
+    unsigned char diff = static_cast<unsigned char>(bad);
+    for (int i = 0; i < kCtBytes; ++i) {
+        diff = static_cast<unsigned char>(diff | (ct2[i] ^ ct[i]));
+    }
+    /* 0xff when any byte differed, 0x00 otherwise, computed by folding
+     * the bits down rather than comparing: a comparison here is a
+     * branch on secret data. */
+    unsigned int nz = diff;
+    nz |= nz >> 4;
+    nz |= nz >> 2;
+    nz |= nz >> 1;
+    /* clang saw that the mask is 0 or 0xff and turned the select back into
+     * a branch on the secret; an opaque copy stops that reasoning */
+    const unsigned char mask = static_cast<unsigned char>(rmbl_ct::barrier(-(nz & 1u)));
+    for (int i = 0; i < 32; ++i) {
+        shared[i] = static_cast<unsigned char>(
+            (g[i] & ~mask) | (kbar[i] & mask));
+    }
+}
+
 void decaps(unsigned char shared[32], const unsigned char *dk,
             const unsigned char *ct) {
     const unsigned char *ek = dk + kDkPkeBytes;
@@ -426,27 +454,7 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     rmbl_shake256(kbar, 32, jin.data(), jin.size());
 
     const int bad = pke_encrypt(ct2.data(), ek, mp, g + 32);
-    /* Constant-time selection, and no early exit: whether the
-     * re-encryption matched must not be observable in timing, because
-     * that single bit is exactly what a chosen-ciphertext attack needs. */
-    unsigned char diff = static_cast<unsigned char>(bad);
-    for (int i = 0; i < kCtBytes; ++i) {
-        diff = static_cast<unsigned char>(diff | (ct2[i] ^ ct[i]));
-    }
-    /* 0xff when any byte differed, 0x00 otherwise, computed by folding
-     * the bits down rather than comparing: a comparison here is a
-     * branch on secret data. */
-    unsigned int nz = diff;
-    nz |= nz >> 4;
-    nz |= nz >> 2;
-    nz |= nz >> 1;
-    /* clang saw that the mask is 0 or 0xff and turned the select back into
-     * a branch on the secret; an opaque copy stops that reasoning */
-    const unsigned char mask = static_cast<unsigned char>(rmbl_ct::barrier(-(nz & 1u)));
-    for (int i = 0; i < 32; ++i) {
-        shared[i] = static_cast<unsigned char>(
-            (g[i] & ~mask) | (kbar[i] & mask));
-    }
+    fo_select(shared, g, kbar, ct2.data(), ct, bad);
 }
 
 

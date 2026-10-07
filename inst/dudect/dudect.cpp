@@ -36,6 +36,9 @@ void dd_mlkem_prep(const unsigned char *seed64, const unsigned char *m32);
 void dd_mlkem_dec_fixed(unsigned char *in);
 void dd_mlkem_dec_run(const unsigned char *in);
 void dd_mlkem_enc_run(const unsigned char *m32);
+void dd_mlkem_pdec_run(const unsigned char *in);
+void dd_mlkem_sel_run(const unsigned char *in);
+void dd_mlkem_decm_run(const unsigned char *in);
 size_t dd_hqc_ct_bytes();
 size_t dd_hqc_k_bytes();
 size_t dd_hqc_salt_bytes();
@@ -175,6 +178,12 @@ static void __attribute__((noinline)) leaky_cmp_run(const unsigned char *in) {
 static const Target kTargets[] = {
     {"mlkem768_decaps", "ML-KEM-768 decapsulation: valid vs random ciphertext",
      dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_dec_run},
+    {"mlkem768_decaps_masked", "ML-KEM-768 masked decapsulation (the default): valid vs random ciphertext",
+     dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_decm_run},
+    {"mlkem768_pke_decrypt", "ML-KEM-768 decapsulation, K-PKE decryption alone: valid vs random ciphertext",
+     dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_pdec_run},
+    {"mlkem768_fo_select", "ML-KEM-768 decapsulation, compare and select alone: match vs mismatch",
+     dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_sel_run},
     {"mlkem768_encaps", "ML-KEM-768 encapsulation: fixed vs random message m",
      32, 1, mlkem_prep, mlkem_enc_fixed, dd_mlkem_enc_run},
     {"hqc1_decaps", "HQC-1 decapsulation: valid vs random ciphertext",
