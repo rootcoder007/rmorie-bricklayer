@@ -2,15 +2,31 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  attestations-bundles-chains: attestations-bundles-chains.html
+  banded-tables-and-concentration: banded-tables-and-concentration.html
   capsules: capsules.html
   categorical-integrity: categorical-integrity.html
   describe: describe.html
   drift: drift.html
+  falsification-and-power: falsification-and-power.html
   getting-started: getting-started.html
+  hashing-and-integrity: hashing-and-integrity.html
+  hawkes-processes: hawkes-processes.html
+  json-and-serialisation: json-and-serialisation.html
+  key-encapsulation: key-encapsulation.html
+  language-model-routes: language-model-routes.html
+  missingness-and-outliers: missingness-and-outliers.html
+  post-quantum-signatures: post-quantum-signatures.html
   provenance: provenance.html
+  side-channel-assurance: side-channel-assurance.html
+  siu-reports: siu-reports.html
+  small-area-rates: small-area-rates.html
+  stock-and-flow: stock-and-flow.html
   tables: tables.html
+  trends-and-change: trends-and-change.html
+  validation-rules-and-synthetic-data: validation-rules-and-synthetic-data.html
   yoy: yoy.html
-last_built: 2026-10-07T15:33Z
+last_built: 2026-10-07T16:37Z
 urls:
   reference: https://rootcoder007.github.io/rmorie-bricklayer/reference
   article: https://rootcoder007.github.io/rmorie-bricklayer/articles

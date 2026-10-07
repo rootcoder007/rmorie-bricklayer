@@ -29,6 +29,15 @@ produced the data.
   [`use_capsule_template()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/use_capsule_template.md)
   starts a capsule that runs as written. Start with
   [`vignette("getting-started")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/getting-started.md).
+  Topic guides:
+  [`vignette("post-quantum-signatures")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/post-quantum-signatures.md),
+  [`vignette("key-encapsulation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/key-encapsulation.md),
+  [`vignette("side-channel-assurance")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/side-channel-assurance.md),
+  [`vignette("hawkes-processes")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/hawkes-processes.md),
+  [`vignette("small-area-rates")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/small-area-rates.md),
+  [`vignette("trends-and-change")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/trends-and-change.md),
+  [`vignette("stock-and-flow")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/stock-and-flow.md)
+  and the rest, grouped by topic on the package website.
 - **CKAN resolution** —
   [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
   /

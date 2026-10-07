@@ -1,0 +1,206 @@
+# Side-channel assurance: constant time, timing tests, masking and simulated power analysis
+
+Correct cryptography can still leak its key through *how* it computes:
+how long an operation takes, how much power the chip draws while it
+runs, what it radiates. This vignette explains what the package does
+about each channel, how that was verified, and exactly what remains
+outside the verification. The harnesses live under `inst/` in the
+installed package and run in continuous integration on every change.
+
+``` r
+
+list.files(system.file(package = "rmoriebricklayer"), pattern = "^(ctcheck|dudect|tvla|fuzz)$")
+#> [1] "ctcheck" "dudect"  "fuzz"    "tvla"
+```
+
+## 1. Timing
+
+### The threat
+
+An operation’s duration depends on a secret when a branch condition
+depends on it, when a memory address depends on it (cache timing), or
+when an instruction’s latency depends on its operand (division on many
+cores). An attacker who can time the operation, locally or across a
+network, recovers the secret bit by bit.
+
+### Static proof: ctgrind (`inst/ctcheck`)
+
+The secret key is marked *undefined* to valgrind memcheck (Langley’s
+ctgrind, 2010). Memcheck then reports every conditional jump and every
+memory address that depends on undefined data, which is exactly the set
+a timing attacker can observe. A clean run is a proof for that binary,
+for every input of that length. The only branches allowed are the ones
+the standards publish by design (a rejected sample in ML-DSA, the
+challenge, the hints), each passed through an explicit declassification
+point. The harness is built from the package’s own sources with GCC and
+Clang, and it also scans the dead stack after each operation for
+surviving copies of the secret.
+
+``` sh
+bash inst/ctcheck/build.sh     # needs R, a C++17 compiler, valgrind headers
+bash inst/ctcheck/run.sh       # exit 0 = every case clean
+```
+
+### Measured on hardware: dudect (`inst/dudect`)
+
+Reparaz, Balasch and Verbauwhede’s *Dude, is my code constant time?*
+(DATE 2017): each measurement times the operation on an input drawn at
+random from a *fixed* class or a *random* class; Welch’s t compares the
+two timing distributions. \|t\| \> 10 is a real difference; \|t\| \< 4.5
+is none. A positive control, an early-exit comparison, must be flagged
+or the run is invalid. CI runs it on x86-64 Linux, arm64 Linux and Apple
+silicon.
+
+``` sh
+bash inst/dudect/build.sh
+N=300000 bash inst/dudect/run.sh     # exit 1 on any |t| > 10
+```
+
+### What this found
+
+ML-KEM compression divided by *q*; at `-O0` the compiler emitted a
+hardware divide whose latency depends on the operand (the KyberSlash
+class of bug). It is a multiply-and-shift now. Three “add *q* when
+negative” corrections had compiled to conditional execution on a secret
+share’s sign; they are branch-free masks now.
+
+## 2. Power and electromagnetic emanation
+
+### The threat
+
+A CMOS circuit draws power when its transistors switch. Under the
+**Hamming-weight model** a power sample is proportional to the number of
+1-bits in a value being written; under the **Hamming-distance model** it
+is proportional to the number of bits that *flip* in a register or bus
+between its old and new value. Either lets an attacker correlate
+recorded traces against hypotheses on a secret-dependent intermediate
+(differential and correlation power analysis). Constant-time code is
+fully exposed to this: the values are secret even when the timing is
+not. EM attacks read the same switching through a near-field probe.
+
+### The countermeasure: first-order masking
+
+Every secret-dependent intermediate *x* is split into two shares that
+are each uniformly random on their own, `x = x0 XOR x1` (Boolean) or
+`x = x0 + x1 mod q` (arithmetic). Linear operations act share by share;
+non-linear ones consume fresh randomness so that no single intermediate
+depends on the secret. In the probing model of Ishai, Sahai and Wagner
+(2003) this is *first-order security*: any one observed value is
+independent of the secret. The cost an attacker then pays grows
+exponentially in the masking order with the measurement noise as the
+base.
+
+ML-KEM decapsulation and ML-DSA signing are masked by default. The
+output is byte-identical to the unmasked computation, which the full
+vector suite checks on every vector:
+
+``` r
+
+key <- kem_keygen(512)
+sent <- kem_encapsulate(kem_public_key(key))
+identical(kem_decapsulate(key, sent$ciphertext, masked = TRUE),
+          kem_decapsulate(key, sent$ciphertext, masked = FALSE))
+#> [1] TRUE
+
+skey <- fips_keygen("ML-DSA-44")
+sig <- capsule_sign("manifest", skey, deterministic = TRUE)
+capsule_verify("manifest", sig, fips_public_key(skey))
+#> [1] TRUE
+```
+
+The gadgets (`src/rmbl_masked.h`) are the published ones: Trichina’s
+two-share AND; a bitsliced ripple-carry adder over Boolean shares
+(Goubin 2001; Bronchain and Cassiers 2022); arithmetic-to-Boolean
+conversion by the decoding of Bos et al. (TCHES 2021) and the
+decompressed ciphertext comparison of Bhasin et al. (TCHES 2021);
+Boolean-to-arithmetic conversion by masked modular subtraction; masked
+centred-binomial sampling; and the masked Keccak of Bertoni et
+al. (2010). For ML-DSA, `HighBits(w)` is public (it is hashed into the
+challenge) and is revealed one bit at a time; the three rejection tests
+reveal one bit each.
+
+### Why the share-pair operations are assembly
+
+A C compiler may place share 0 and then share 1 of one value in the same
+register. Under the Hamming-distance model that register’s flips are
+`HW(x0 XOR x1) = HW(x)`: the secret, in the clear. The simulator below
+showed exactly this for the C gadgets (\|t\| up to 135) while the
+Hamming-weight model reported them clean. So every operation that
+touches both shares is inline assembly (Thumb-2, x86-64, aarch64) with a
+fixed register order, every temporary and destination zeroed before use,
+a zero stored between the share-0 and share-1 stores, and the registers
+scrubbed between passes that handle one share at a time. On any other
+CPU the same operations run as plain C, with the same results and
+without the register discipline.
+
+### Simulated power analysis: TVLA (`inst/tvla`)
+
+The target is the Cortex-M4, the reference core of the embedded
+post-quantum literature. The package’s own headers are compiled for it
+and executed instruction by instruction in the unicorn emulator;
+capstone decodes which registers each instruction writes, and one sample
+per instruction is recorded under both leakage models. The statistic is
+TVLA (Goodwill et al. 2011; ISO/IEC 17825): a fixed secret against
+random secrets, Welch’s t at every sample, in two independent
+experiments; a point leaks when \|t\| \> 4.5 in both with the same sign.
+Each masked kernel runs beside its unmasked control (the same code with
+share 1 zero), because a control that does not leak means the harness
+sees nothing.
+
+``` sh
+bash inst/tvla/build.sh                 # arm-none-eabi-g++, unicorn, capstone
+cd inst/tvla && ./build/tvla all 5000   # Hamming-weight model
+TVLA_MODEL=hd ./build/tvla all 5000     # Hamming-distance model
+```
+
+At 2 x 3,000 traces every masked kernel is clean under both models (max
+\|t\| 3.0) and every unmasked control leaks (\|t\| 87 to 163). CI fails
+on a masked leak under either model. The full table is in
+`inst/tvla/README.md`.
+
+``` r
+
+readLines(system.file("tvla", "README.md", package = "rmoriebricklayer"), n = 12)
+#>  [1] "# Simulated power analysis (TVLA)"                                                         
+#>  [2] ""                                                                                          
+#>  [3] "`inst/ctcheck` shows no branch or memory address depends on a secret, and `inst/dudect`"   
+#>  [4] "measures that timing does not. Neither says anything about **power**: a CPU's power draw"  
+#>  [5] "depends on the values it handles even when its timing does not, and that is what power and"
+#>  [6] "electromagnetic attacks read."                                                             
+#>  [7] ""                                                                                          
+#>  [8] "This directory assesses the package's ML-KEM code for first-order power leakage before"    
+#>  [9] "silicon. `kernels.cpp` compiles the package's own `src/rmbl_mlkem_arith.h` and"            
+#> [10] "`src/rmbl_masked.h` for a Cortex-M4 (the reference target of the post-quantum embedded"    
+#> [11] "literature); `tvla.cpp` runs them instruction by instruction in unicorn and records one"   
+#> [12] "sample per instruction. Capstone decodes which registers each instruction writes, and the"
+```
+
+## 3. What is outside these checks
+
+Honesty about scope is part of the assurance. The checks do **not**
+model:
+
+- **Electromagnetic emanation** on a specific board. The simulation
+  models switching activity, which is the source of EM leakage too, but
+  a measurement needs a probe.
+- **Fault injection**: glitching the clock or voltage to skip an
+  instruction. The checks assume the program runs as written.
+- **Glitches and coupling** a leakage model omits: pipeline forwarding,
+  write-back buffers and capacitive coupling between wires, which can
+  combine shares (the MIRACLE study, TCHES 2021, catalogues them).
+- **Higher-order attacks**: two shares resist one probe; a second-order
+  attacker combines two leakage points.
+
+Each has a software route (richer fitted leakage models such as ELMO, a
+fault campaign in the same emulator, higher-order gadgets, formal
+verification of the gadgets with maskVerif) and, for EM and for
+confirming a given chip, a hardware route. The repository’s
+`SECURITY.md` states the current boundary; the release bundle includes
+ChipWhisperer firmware and a capture script for anyone with a board.
+
+## 4. Choosing the plain path
+
+Masking costs about 5x on decapsulation and 16x on signing (13 ms for
+ML-DSA-65 on a laptop). Where the threat model has no physical attacker,
+`kem_decapsulate(masked = FALSE)` keeps the plain path. Timing
+protections cannot be switched off; they are not optional.

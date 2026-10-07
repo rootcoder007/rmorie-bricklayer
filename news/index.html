@@ -18,14 +18,16 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
-    <li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
     <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
-    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
-    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
+    <li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -46,12 +48,16 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.9" id="rmoriebricklayer-059">rmoriebricklayer 0.5.9<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-059"></a></h2>
 <p><strong>Standards vectors, at scale</strong></p>
-<ul><li>The pinned C2SP Wycheproof post-quantum sets (ML-KEM-512/768/1024 key generation, encapsulation, decapsulation and key validation; ML-DSA-44/65/87 signing with and without seed, and verification) and the NIST ACVP sets (ML-KEM keyGen/encapDecap, ML-DSA keyGen/sigGen/sigVer, SLH-DSA keyGen/sigGen/sigVer for all twelve parameter sets, SHA-3, SHAKE, HMAC-SHA-256/512, PBKDF2) run in CI on every change to the kernels (<code>.github/workflows/vectors.yml</code>, <code>tools/vectors/</code>): 6,488 tests checked, 0 failures. The 3,822 not applicable are named with their reason: bit-length SHA-3 messages (the API hashes bytes), gigabyte messages, hedged ML-DSA signatures whose randomness the vectors do not carry, and PBKDF2 over SHA-224. A subset of 1.5 MB ships in <code>tests/testthat/vectors</code> and runs offline through the same runner.</li>
+<ul><li>The pinned C2SP Wycheproof post-quantum sets (ML-KEM-512/768/1024 key generation, encapsulation, decapsulation and key validation; ML-DSA-44/65/87 signing with and without seed, and verification) and the NIST ACVP sets (ML-KEM keyGen/encapDecap, ML-DSA keyGen/sigGen/sigVer, SLH-DSA keyGen/sigGen/sigVer for all twelve parameter sets, SHA-3, SHAKE, HMAC-SHA-256/512, PBKDF2) run in CI on every change to the kernels (<code>.github/workflows/vectors.yml</code>, <code>tools/vectors/</code>): 6,848 tests checked, 0 failures. The 3,822 not applicable are named with their reason: bit-length SHA-3 messages (the API hashes bytes), gigabyte messages, hedged ML-DSA signatures whose randomness the vectors do not carry, and PBKDF2 over SHA-224. A subset of 1.5 MB ships in <code>tests/testthat/vectors</code> and runs offline through the same runner.</li>
 <li>
 <strong>Found by the vectors:</strong> <code>C_rmbl_mlkem_decaps</code> accepted a decapsulation key whose stored H(ek) did not match its own ek; FIPS 203 section 7.3 requires rejecting it, and it is now refused.</li>
 <li>Pre-hash: HashML-DSA and HashSLH-DSA take every hash function FIPS 204 and FIPS 205 approve: <code>sha224</code>, <code>sha384</code>, <code>sha512_224</code>, <code>sha512_256</code>, <code>sha3_224</code>, <code>sha3_256</code>, <code>sha3_384</code> and <code>sha3_512</code> join <code>sha256</code>, <code>sha512</code>, <code>shake128</code> and <code>shake256</code>. SHA-224, SHA-512/224, SHA-512/256, SHA3-224 and SHA3-384 are new native digests, checked against OpenSSL at every block boundary; each OID is bound into the signature, so two digests of the same length (SHA-512/224, SHA3-224) never verify for each other.</li>
 <li>SLH-DSA gains its FIPS 205 internal interface (<code>slh_sign_internal</code> / <code>slh_verify_internal</code>, not exported) so the ACVP internal vectors check the core the public interface wraps.</li>
 </ul><div class="section level3">
+<h3 id="documentation-0-5-9">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-5-9"></a></h3>
+<ul><li>Sixteen new vignettes, each runnable offline: post-quantum signatures (ML-DSA, SLH-DSA, XMSS); key encapsulation (ML-KEM, HQC); hashing, keyed digests, key derivation and Merkle trees; attestations, signed bundles and tamper-evident chains; side-channel assurance (what is verified, how, and what is outside the checks); JSON parsing and exact serialisation; the language-model routes and the signed services document; trends and change in short count series; small-area rates (expected counts, empirical Bayes, funnel limits, Moran’s I); Hawkes processes; banded tables and concentration; stock and flow (average daily population, length of stay); falsification controls, power curves and the E-value; validation rules, inferred schemas and synthetic stand-ins; missingness, duplicates, outliers and distinct counts; and the SIU director’s-report parser. The package website groups them by topic.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="side-channels-timing-power-masking-0-5-9">Side channels: timing, power, masking<a class="anchor" aria-label="anchor" href="#side-channels-timing-power-masking-0-5-9"></a></h3>
 <ul><li>
 <strong>First-order masking, on by default.</strong> <code><a href="../reference/kem_decapsulate.html">kem_decapsulate()</a></code> (ML-KEM-512/768/1024) and every ML-DSA signature (<code><a href="../reference/capsule_sign.html">capsule_sign()</a></code> with an ML-DSA key, <code><a href="../reference/fips_mu.html">fips_sign_mu()</a></code>) run with each value that depends on the secret key held as two shares, refreshed with fresh randomness from the operating system for every call. The output is byte-identical to the unmasked computation: the full vector suite compares the two on every ML-KEM decapsulation and ML-DSA signing vector. <code>kem_decapsulate(masked = FALSE)</code> keeps the plain path. Cost: about 5 times the plain decapsulation and 16 times the plain signature (13 ms for ML-DSA-65 on a laptop).</li>

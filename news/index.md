@@ -11,7 +11,7 @@
   keyGen/sigGen/sigVer, SLH-DSA keyGen/sigGen/sigVer for all twelve
   parameter sets, SHA-3, SHAKE, HMAC-SHA-256/512, PBKDF2) run in CI on
   every change to the kernels (`.github/workflows/vectors.yml`,
-  `tools/vectors/`): 6,488 tests checked, 0 failures. The 3,822 not
+  `tools/vectors/`): 6,848 tests checked, 0 failures. The 3,822 not
   applicable are named with their reason: bit-length SHA-3 messages (the
   API hashes bytes), gigabyte messages, hedged ML-DSA signatures whose
   randomness the vectors do not carry, and PBKDF2 over SHA-224. A subset
@@ -31,6 +31,23 @@
 - SLH-DSA gains its FIPS 205 internal interface (`slh_sign_internal` /
   `slh_verify_internal`, not exported) so the ACVP internal vectors
   check the core the public interface wraps.
+
+### Documentation
+
+- Sixteen new vignettes, each runnable offline: post-quantum signatures
+  (ML-DSA, SLH-DSA, XMSS); key encapsulation (ML-KEM, HQC); hashing,
+  keyed digests, key derivation and Merkle trees; attestations, signed
+  bundles and tamper-evident chains; side-channel assurance (what is
+  verified, how, and what is outside the checks); JSON parsing and exact
+  serialisation; the language-model routes and the signed services
+  document; trends and change in short count series; small-area rates
+  (expected counts, empirical Bayes, funnel limits, Moran’s I); Hawkes
+  processes; banded tables and concentration; stock and flow (average
+  daily population, length of stay); falsification controls, power
+  curves and the E-value; validation rules, inferred schemas and
+  synthetic stand-ins; missingness, duplicates, outliers and distinct
+  counts; and the SIU director’s-report parser. The package website
+  groups them by topic.
 
 ### Side channels: timing, power, masking
 

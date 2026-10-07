@@ -16,16 +16,18 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
+<li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
-    <li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Your first capsule: a published table, analysed and recorded</a></li>
     <li><a class="dropdown-item" href="../articles/capsules.html">Building reproducible data capsules</a></li>
-    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
-    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/provenance.html">Provenance you can verify</a></li>
+    <li><a class="dropdown-item" href="../articles/describe.html">Look at the data first</a></li>
+    <li><a class="dropdown-item" href="../articles/categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></li>
+    <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -46,24 +48,72 @@
       <h3>Guides</h3>
       <div class="section-desc"></div>
 
-      <dl><dt><a href="categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></dt>
-        <dd>
-        </dd><dt><a href="getting-started.html">Your first capsule: a published table, analysed and recorded</a></dt>
+      <dl><dt><a href="getting-started.html">Your first capsule: a published table, analysed and recorded</a></dt>
         <dd>
         </dd><dt><a href="capsules.html">Building reproducible data capsules</a></dt>
         <dd>
+        </dd><dt><a href="provenance.html">Provenance you can verify</a></dt>
+        <dd>
         </dd><dt><a href="describe.html">Look at the data first</a></dt>
         <dd>
-        </dd><dt><a href="drift.html">Has the data changed?</a></dt>
+        </dd><dt><a href="categorical-integrity.html">Categorical integrity: labels that cannot be swapped quietly</a></dt>
         <dd>
-        </dd><dt><a href="provenance.html">Provenance you can verify</a></dt>
+        </dd><dt><a href="drift.html">Has the data changed?</a></dt>
         <dd>
         </dd><dt><a href="yoy.html">Year-over-year change, and the three ways it goes wrong</a></dt>
         <dd>
         </dd><dt><a href="tables.html">Statistics for a published administrative table</a></dt>
         <dd>
       </dd></dl></div>
-  </main></div>
+    <div class="section ">
+      <h3>Cryptography and assurance</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="post-quantum-signatures.html">Post-quantum signatures: ML-DSA, SLH-DSA and XMSS</a></dt>
+        <dd>
+        </dd><dt><a href="key-encapsulation.html">Key encapsulation: ML-KEM and HQC</a></dt>
+        <dd>
+        </dd><dt><a href="hashing-and-integrity.html">Hashing, keyed digests, key derivation and Merkle trees</a></dt>
+        <dd>
+        </dd><dt><a href="attestations-bundles-chains.html">Attestations, signed bundles and tamper-evident chains</a></dt>
+        <dd>
+        </dd><dt><a href="side-channel-assurance.html">Side-channel assurance: constant time, timing tests, masking and simulated power analysis</a></dt>
+        <dd>
+        </dd><dt><a href="json-and-serialisation.html">JSON without jsonlite: parsing, encoding and exact serialisation</a></dt>
+        <dd>
+        </dd><dt><a href="language-model-routes.html">Language-model routes and the signed services document</a></dt>
+        <dd>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Statistics for published tables</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="trends-and-change.html">Trends and change in short count series</a></dt>
+        <dd>
+        </dd><dt><a href="small-area-rates.html">Small-area rates: expected counts, shrinkage, funnels and spatial autocorrelation</a></dt>
+        <dd>
+        </dd><dt><a href="hawkes-processes.html">Hawkes processes: self-exciting event series</a></dt>
+        <dd>
+        </dd><dt><a href="banded-tables-and-concentration.html">Banded tables and concentration: from '6 to 10' to a Gini</a></dt>
+        <dd>
+        </dd><dt><a href="stock-and-flow.html">Stock and flow: population, admissions and length of stay</a></dt>
+        <dd>
+        </dd><dt><a href="falsification-and-power.html">Falsification controls and power curves: is the statistic real?</a></dt>
+        <dd>
+      </dd></dl></div>
+    <div class="section ">
+      <h3>Data handling</h3>
+      <div class="section-desc"></div>
+
+      <dl><dt><a href="validation-rules-and-synthetic-data.html">Validation rules, inferred schemas and synthetic stand-ins</a></dt>
+        <dd>
+        </dd><dt><a href="missingness-and-outliers.html">Missingness, duplicates, outliers and distinct counts</a></dt>
+        <dd>
+        </dd><dt><a href="siu-reports.html">Parsing SIU director's reports</a></dt>
+        <dd>
+      </dd></dl></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
