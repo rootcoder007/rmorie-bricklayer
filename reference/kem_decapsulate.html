@@ -119,7 +119,7 @@ constant-time decapsulation.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">other</span><span class="op">)</span> <span class="op">==</span> <span class="fl">64L</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="va">other</span>, <span class="va">sent</span><span class="op">$</span><span class="va">shared</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># the masked and the plain decapsulation agree</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">kem_decapsulate</span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">other</span><span class="op">)</span></span></span>

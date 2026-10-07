@@ -73,7 +73,7 @@ other <- kem_decapsulate(key, bad)
 nchar(other) == 64L
 #> [1] TRUE
 identical(other, sent$shared)
-#> [1] TRUE
+#> [1] FALSE
 
 # the masked and the plain decapsulation agree
 identical(kem_decapsulate(key, bad, masked = FALSE), other)
