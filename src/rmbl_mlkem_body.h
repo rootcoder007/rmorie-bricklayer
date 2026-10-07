@@ -450,4 +450,267 @@ void decaps(unsigned char shared[32], const unsigned char *dk,
     }
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Masked decapsulation: FIPS 203 ML-KEM.Decaps with every value that
+ * depends on the secret key held as two shares (first-order masking,
+ * rmbl_masked.h). The output is the same shared secret decaps() returns,
+ * for every ciphertext, valid or not.
+ *
+ *   s-hat       arithmetic shares, split afresh from the key on entry
+ *   w = v - s.u computed share by share (linear)
+ *   m'          Boolean shares, by masked decoding (Compress_1)
+ *   (K', r)     masked SHA3-512 of m' || h
+ *   K-bar       masked SHAKE256 of z || c, z split on entry
+ *   c'          re-encryption under masked r: masked PRF, masked
+ *               centred-binomial noise, share-by-share arithmetic,
+ *               m' brought back to arithmetic shares
+ *   c' == c     masked decompressed comparison: every coefficient of c'
+ *               is tested, in shares, against the public interval that
+ *               compresses to the ciphertext's value, and the answers are
+ *               ANDed in shares; the result is never unmasked
+ *   K           masked selection of K' or K-bar, unmasked as the output
+ *
+ * What is not masked: decoding the 12-bit key encoding into coefficients
+ * (the key arrives as plain bytes; masking starts from there), and the
+ * public values (u, v, A-hat, t-hat, h, the ciphertext).
+ * ------------------------------------------------------------------ */
+
+inline void canon(int16_t a[256]) {
+    for (int i = 0; i < 256; ++i) a[i] = to_positive(barrett_reduce(a[i]));
+}
+
+/* the cyclic interval of canonical x with Compress_d(x) == c, for every c */
+inline void compress_intervals(int16_t *lo, int16_t *w, int d) {
+    const int n = 1 << d;
+    for (int c = 0; c < n; ++c) { lo[c] = 0; w[c] = 0; }
+    for (int x = 0; x < kQ; ++x) {
+        const uint16_t c = compress(static_cast<int16_t>(x), d);
+        const uint16_t prev = compress(static_cast<int16_t>((x + kQ - 1) % kQ), d);
+        ++w[c];
+        if (prev != c) lo[c] = static_cast<int16_t>(x);
+    }
+}
+
+inline void masked_prf_cbd(int16_t p0[256], int16_t p1[256], const unsigned char sig0[32],
+                           const unsigned char sig1[32], unsigned char nonce, int eta,
+                           rmbl_masked::Rng &rng) {
+    unsigned char in0[33], in1[33], b0[192], b1[192];
+    std::memcpy(in0, sig0, 32);
+    std::memcpy(in1, sig1, 32);
+    in0[32] = nonce;
+    in1[32] = 0;
+    rmbl_masked::sponge_masked(b0, b1, static_cast<size_t>(64 * eta), in0, in1, 33, 136, 0x1f, rng);
+    for (int g = 0; g < 8; ++g) rmbl_masked::sec_cbd32(p0 + 32 * g, p1 + 32 * g, b0, b1, 32 * g, eta, rng);
+}
+
+/* AND a masked test word into the running masked "all equal" word */
+inline void and_into(uint32_t &a0, uint32_t &a1, uint32_t o0, uint32_t o1, rmbl_masked::Rng &rng) {
+    uint32_t t0, t1;
+    rmbl_masked::sec_and(t0, t1, a0, a1, o0, o1, rng.u32());
+    a0 = t0;
+    a1 = t1;
+}
+
+void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsigned char *ct,
+                   rmbl_masked::Rng &rng) {
+    const unsigned char *ek = dk + kDkPkeBytes;
+    const unsigned char *h = ek + kEkBytes;
+    const unsigned char *z = h + 32;
+    RMBL_MLKEM_DECLASSIFY(const_cast<unsigned char *>(ek), static_cast<size_t>(kEkBytes) + 32);
+
+    /* 1. the secret key, split into fresh arithmetic shares */
+    PolyVec s0, s1;
+    for (int i = 0; i < kK; ++i) {
+        int16_t raw[256];
+        byte_decode(raw, dk + i * kPolyBytes, 12);
+        for (int j = 0; j < 256; ++j) {
+            const int16_t v = to_positive(barrett_reduce(raw[j]));
+            const int16_t r = rmbl_masked::rand_q(rng);
+            int32_t d = static_cast<int32_t>(v) - r;
+            d += kQ & -static_cast<int32_t>(d < 0);
+            s0.v[i][j] = r;
+            s1.v[i][j] = static_cast<int16_t>(d);
+        }
+        rmbl_ct::wipe(raw, sizeof raw);
+    }
+
+    /* 2. the public ciphertext parts */
+    PolyVec u;
+    int16_t v[256];
+    for (int i = 0; i < kK; ++i) {
+        int16_t c[256];
+        byte_decode(c, ct + i * kPolyCompressedU, kDu);
+        for (int j = 0; j < 256; ++j) u.v[i][j] = decompress(static_cast<uint16_t>(c[j]), kDu);
+        ntt(u.v[i]);
+    }
+    {
+        int16_t c[256];
+        byte_decode(c, ct + kK * kPolyCompressedU, kDv);
+        for (int j = 0; j < 256; ++j) v[j] = decompress(static_cast<uint16_t>(c[j]), kDv);
+    }
+
+    /* 3. w = v - s.u, share by share */
+    int16_t w0[256], w1[256];
+    vec_dot(w0, &s0, &u);
+    invntt(w0);
+    poly_sub(w0, v, w0);
+    canon(w0);
+    vec_dot(w1, &s1, &u);
+    invntt(w1);
+    for (int j = 0; j < 256; ++j) w1[j] = static_cast<int16_t>(-w1[j]);
+    canon(w1);
+
+    /* 4. m' = Compress_1(w), as Boolean shares */
+    unsigned char m0[32], m1[32];
+    uint32_t mw0[8], mw1[8];
+    for (int g = 0; g < 8; ++g) {
+        rmbl_masked::sec_decode1(mw0[g], mw1[g], w0 + 32 * g, w1 + 32 * g, rng);
+        for (int t = 0; t < 4; ++t) {
+            m0[4 * g + t] = static_cast<unsigned char>(mw0[g] >> (8 * t));
+            m1[4 * g + t] = static_cast<unsigned char>(mw1[g] >> (8 * t));
+        }
+    }
+
+    /* 5. (K', r) = G(m' || h) */
+    unsigned char gi0[64], gi1[64], g0[64], g1[64];
+    std::memcpy(gi0, m0, 32);
+    std::memcpy(gi0 + 32, h, 32);
+    std::memcpy(gi1, m1, 32);
+    std::memset(gi1 + 32, 0, 32);
+    rmbl_masked::sponge_masked(g0, g1, 64, gi0, gi1, 64, 72, 0x06, rng);
+
+    /* 6. K-bar = J(z || c), z split afresh */
+    unsigned char kb0[32], kb1[32];
+    {
+        std::vector<unsigned char> j0(32 + static_cast<size_t>(kCtBytes)), j1(32 + static_cast<size_t>(kCtBytes), 0);
+        for (int i = 0; i < 32; ++i) {
+            const unsigned char r = static_cast<unsigned char>(rng.u32());
+            j0[static_cast<size_t>(i)] = static_cast<unsigned char>(z[i] ^ r);
+            j1[static_cast<size_t>(i)] = r;
+        }
+        std::memcpy(j0.data() + 32, ct, static_cast<size_t>(kCtBytes));
+        rmbl_masked::sponge_masked(kb0, kb1, 32, j0.data(), j1.data(), j0.size(), 136, 0x1f, rng);
+        rmbl_ct::wipe(j0.data(), 32);
+        rmbl_ct::wipe(j1.data(), 32);
+    }
+
+    /* 7. re-encryption of m' under r, in shares */
+    PolyVec mat[kK], t;
+    int bad = 0;
+    for (int i = 0; i < kK; ++i) {
+        byte_decode(t.v[i], ek + i * kPolyBytes, 12);
+        for (int j = 0; j < 256; ++j) bad |= t.v[i][j] >= kQ;
+    }
+    matrix_expand(mat, ek + kK * kPolyBytes, true);
+    PolyVec r0, r1, e10, e11;
+    int16_t e20[256], e21[256];
+    unsigned char nonce = 0;
+    for (int i = 0; i < kK; ++i) masked_prf_cbd(r0.v[i], r1.v[i], g0 + 32, g1 + 32, nonce++, kEta1, rng);
+    for (int i = 0; i < kK; ++i) masked_prf_cbd(e10.v[i], e11.v[i], g0 + 32, g1 + 32, nonce++, kEta2, rng);
+    masked_prf_cbd(e20, e21, g0 + 32, g1 + 32, nonce++, kEta2, rng);
+    for (int i = 0; i < kK; ++i) {
+        ntt(r0.v[i]);
+        ntt(r1.v[i]);
+    }
+    PolyVec u0, u1;
+    for (int i = 0; i < kK; ++i) {
+        vec_dot(u0.v[i], &mat[i], &r0);
+        invntt(u0.v[i]);
+        poly_add(u0.v[i], u0.v[i], e10.v[i]);
+        canon(u0.v[i]);
+        vec_dot(u1.v[i], &mat[i], &r1);
+        invntt(u1.v[i]);
+        poly_add(u1.v[i], u1.v[i], e11.v[i]);
+        canon(u1.v[i]);
+    }
+    int16_t v0[256], v1[256];
+    vec_dot(v0, &t, &r0);
+    invntt(v0);
+    poly_add(v0, v0, e20);
+    vec_dot(v1, &t, &r1);
+    invntt(v1);
+    poly_add(v1, v1, e21);
+    /* + Decompress_1(m'): m' back to arithmetic shares, times (q + 1) / 2 */
+    for (int g = 0; g < 8; ++g) {
+        rmbl_masked::Bs mb;
+        for (int b = 0; b < rmbl_masked::kMaxBits; ++b) mb.w[0][b] = mb.w[1][b] = 0;
+        mb.w[0][0] = mw0[g];
+        mb.w[1][0] = mw1[g];
+        int16_t c0[32], c1[32];
+        rmbl_masked::sec_b2a(c0, c1, mb, rng);
+        for (int j = 0; j < 32; ++j) {
+            v0[32 * g + j] = static_cast<int16_t>((v0[32 * g + j] + (static_cast<int32_t>(c0[j]) * ((kQ + 1) / 2)) % kQ) % kQ);
+            v1[32 * g + j] = static_cast<int16_t>((v1[32 * g + j] + (static_cast<int32_t>(c1[j]) * ((kQ + 1) / 2)) % kQ) % kQ);
+        }
+    }
+    canon(v0);
+    canon(v1);
+
+    /* 8. masked comparison of c' with c, decompressed */
+    uint32_t acc0 = 0xFFFFFFFFu, acc1 = 0;
+    {
+        std::vector<int16_t> lo(static_cast<size_t>(1) << kDu), wd(static_cast<size_t>(1) << kDu);
+        compress_intervals(lo.data(), wd.data(), kDu);
+        for (int i = 0; i < kK; ++i) {
+            int16_t c[256];
+            byte_decode(c, ct + i * kPolyCompressedU, kDu);
+            for (int g = 0; g < 8; ++g) {
+                int16_t l[32], w[32];
+                for (int j = 0; j < 32; ++j) {
+                    l[j] = lo[static_cast<size_t>(c[32 * g + j])];
+                    w[j] = wd[static_cast<size_t>(c[32 * g + j])];
+                }
+                uint32_t o0, o1;
+                rmbl_masked::sec_in_interval(o0, o1, u0.v[i] + 32 * g, u1.v[i] + 32 * g, l, w, rng);
+                and_into(acc0, acc1, o0, o1, rng);
+            }
+        }
+        std::vector<int16_t> lov(static_cast<size_t>(1) << kDv), wdv(static_cast<size_t>(1) << kDv);
+        compress_intervals(lov.data(), wdv.data(), kDv);
+        int16_t c[256];
+        byte_decode(c, ct + kK * kPolyCompressedU, kDv);
+        for (int g = 0; g < 8; ++g) {
+            int16_t l[32], w[32];
+            for (int j = 0; j < 32; ++j) {
+                l[j] = lov[static_cast<size_t>(c[32 * g + j])];
+                w[j] = wdv[static_cast<size_t>(c[32 * g + j])];
+            }
+            uint32_t o0, o1;
+            rmbl_masked::sec_in_interval(o0, o1, v0 + 32 * g, v1 + 32 * g, l, w, rng);
+            and_into(acc0, acc1, o0, o1, rng);
+        }
+    }
+    /* fold the 32 lanes into bit 0, refreshing the shifted copy before each AND */
+    for (int sh = 16; sh >= 1; sh >>= 1) {
+        const uint32_t r = rng.u32();
+        and_into(acc0, acc1, (acc0 >> sh) ^ r, (acc1 >> sh) ^ r, rng);
+    }
+    /* a non-canonical encapsulation key never re-encrypts (public) */
+    const uint32_t keep = static_cast<uint32_t>(bad) - 1u;   /* 0 when bad */
+    acc0 &= keep;
+    acc1 &= keep;
+
+    /* 9. K = ok ? K' : K-bar, selected in shares, then unmasked */
+    const uint32_t m_0 = 0u - (acc0 & 1u), m_1 = 0u - (acc1 & 1u);
+    for (int i = 0; i < 8; ++i) {
+        uint32_t kp0, kp1, kbw0, kbw1;
+        std::memcpy(&kp0, g0 + 4 * i, 4);
+        std::memcpy(&kp1, g1 + 4 * i, 4);
+        std::memcpy(&kbw0, kb0 + 4 * i, 4);
+        std::memcpy(&kbw1, kb1 + 4 * i, 4);
+        uint32_t t0, t1;
+        rmbl_masked::sec_and(t0, t1, m_0, m_1, kp0 ^ kbw0, kp1 ^ kbw1, rng.u32());
+        const uint32_t k0 = kbw0 ^ t0, k1 = kbw1 ^ t1;
+        const uint32_t out = k0 ^ k1;
+        std::memcpy(shared + 4 * i, &out, 4);
+    }
+    rmbl_ct::wipe(&s0, sizeof s0);
+    rmbl_ct::wipe(&s1, sizeof s1);
+    rmbl_ct::wipe(g0, sizeof g0);
+    rmbl_ct::wipe(g1, sizeof g1);
+    rmbl_ct::wipe(m0, sizeof m0);
+    rmbl_ct::wipe(m1, sizeof m1);
+}
+
 }  // namespace MLKEM_NS

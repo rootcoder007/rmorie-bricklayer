@@ -168,6 +168,7 @@ SEXP C_rmbl_mlkem_sizes_impl(SEXP);
 SEXP C_rmbl_mlkem_keygen_impl(SEXP, SEXP);
 SEXP C_rmbl_mlkem_encaps_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_mlkem_decaps_impl(SEXP, SEXP, SEXP);
+SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_hqc_sizes_impl(SEXP);
 SEXP C_rmbl_hqc_keygen_impl(SEXP, SEXP);
 SEXP C_rmbl_hqc_encaps_impl(SEXP, SEXP, SEXP, SEXP);
@@ -441,6 +442,9 @@ SEXP C_rmbl_mlkem_keygen(SEXP a0, SEXP a1) {
 }
 SEXP C_rmbl_mlkem_encaps(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_mlkem_encaps", [&] { return C_rmbl_mlkem_encaps_impl(a0, a1, a2); });
+}
+SEXP C_rmbl_mlkem_decaps_masked(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_mlkem_decaps_masked", [&] { return C_rmbl_mlkem_decaps_masked_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_mlkem_decaps(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_mlkem_decaps", [&] { return C_rmbl_mlkem_decaps_impl(a0, a1, a2); });

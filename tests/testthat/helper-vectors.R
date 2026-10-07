@@ -74,7 +74,13 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
           r <- tryCatch(
             {
               kp <- .Call(C("C_rmbl_mlkem_keygen"), lv, h(t$seed))
-              list(ek = kp[[1]], K = .Call(C("C_rmbl_mlkem_decaps"), lv, kp[[2]], h(t$c)))
+              {
+                k <- .Call(C("C_rmbl_mlkem_decaps"), lv, kp[[2]], h(t$c))
+                if (!identical(k, .Call(C("C_rmbl_mlkem_decaps_masked"), lv, kp[[2]], h(t$c)))) {
+                  stop("masked decapsulation disagrees")
+                }
+                list(ek = kp[[1]], K = k)
+              }
             },
             error = function(e) NULL
           )
@@ -92,6 +98,8 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
           }
         } else if (identical(g$type, "MLKEMDecapsValidationTest")) {
           r <- tryCatch(.Call(C("C_rmbl_mlkem_decaps"), lv, h(t$dk), h(t$c)), error = function(e) NULL)
+          rm_ <- tryCatch(.Call(C("C_rmbl_mlkem_decaps_masked"), lv, h(t$dk), h(t$c)), error = function(e) NULL)
+          if (!identical(r, rm_)) r <- "masked and plain decapsulation disagree"
           if (valid) {
             check(fn, t$tcId, !is.null(r) && eqhex(r, t$K), "decaps")
           } else {
@@ -186,7 +194,8 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
       },
       decapsulation = {
         k <- .Call(C("C_rmbl_mlkem_decaps"), lv, h(t$dk), h(t$c))
-        check(s, t$tcId, eqhex(k, e$k), "decapsulation")
+        km <- .Call(C("C_rmbl_mlkem_decaps_masked"), lv, h(t$dk), h(t$c))
+        check(s, t$tcId, eqhex(k, e$k) && identical(k, km), "decapsulation (plain and masked)")
       },
       encapsulationKeyCheck = {
         acc <- ok(.Call(C("C_rmbl_mlkem_encaps"), lv, h(t$ek), raw(32)))

@@ -26,6 +26,9 @@
 #include <string>
 #include <vector>
 #include <time.h>
+#if defined(__aarch64__) && defined(__linux__)
+#include <sys/auxv.h>
+#endif
 
 /* the kernels, from their own translation units */
 size_t dd_mlkem_ct_bytes();
@@ -62,6 +65,25 @@ static inline uint64_t ticks() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return static_cast<uint64_t>(ts.tv_sec) * 1000000000ull + static_cast<uint64_t>(ts.tv_nsec);
+#endif
+}
+
+/* ---- Arm data-independent timing (FEAT_DIT) ------------------------------------------- */
+/* On Armv8.4+ cores the architecture guarantees data-independent timing for the integer
+ * instructions only while PSTATE.DIT is set. DUDECT_DIT=1 sets it for the whole run, so CI
+ * can measure the kernels with and without it. Returns whether DIT is now set. */
+static bool set_dit() {
+#if defined(__aarch64__)
+#if defined(__linux__)
+    const unsigned long kHwcapDit = 1ul << 24;
+    if (!(getauxval(AT_HWCAP) & kHwcapDit)) return false;
+#endif
+    __asm__ volatile(".inst 0xd503415f");   /* msr DIT, #1 */
+    uint64_t v;
+    __asm__ volatile(".inst 0xd53b42a0\n\tmov %0, x0" : "=r"(v) :: "x0");   /* mrs x0, DIT */
+    return (v >> 24) & 1u;
+#else
+    return false;
 #endif
 }
 
@@ -238,6 +260,12 @@ int main(int argc, char **argv) {
     }
     std::random_device rd;
     std::mt19937_64 g((static_cast<uint64_t>(rd()) << 32) ^ rd());
+    const char *dit = std::getenv("DUDECT_DIT");
+    if (dit && std::strcmp(dit, "1") == 0) {
+        std::printf("DIT: %s\n", set_dit() ? "set (data-independent timing on)" : "not available on this CPU");
+    } else {
+        std::printf("DIT: not requested\n");
+    }
     int bad = 0, ran = 0;
     if (std::strcmp(which, "all") == 0 || std::strcmp(which, kControl.name) == 0) {
         /* the control must be flagged: if it is not, the measurement cannot see a leak here */

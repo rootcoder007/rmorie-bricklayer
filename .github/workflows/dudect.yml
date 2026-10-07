@@ -45,6 +45,17 @@ jobs:
       - name: Build the harness
         run: bash inst/dudect/build.sh
       - name: Measure
+        id: plain
+        continue-on-error: ${{ runner.arch == 'ARM64' }}
         env:
           N: ${{ github.event.inputs.measurements || '300000' }}
+        run: bash inst/dudect/run.sh
+      # Arm guarantees data-independent timing for integer instructions only with
+      # PSTATE.DIT set (FEAT_DIT, Armv8.4+). The arm64 legs measure both ways; the
+      # DIT-on run is the gate there, the plain one is reported.
+      - name: Measure with DIT set (arm64)
+        if: runner.arch == 'ARM64'
+        env:
+          N: ${{ github.event.inputs.measurements || '300000' }}
+          DUDECT_DIT: "1"
         run: bash inst/dudect/run.sh

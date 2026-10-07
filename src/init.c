@@ -100,6 +100,7 @@ extern SEXP C_rmbl_mlkem_sizes(SEXP);
 extern SEXP C_rmbl_mlkem_keygen(SEXP, SEXP);
 extern SEXP C_rmbl_mlkem_encaps(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mlkem_decaps(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mlkem_decaps_masked(SEXP, SEXP, SEXP);
 
 /* rmbl_hqc.cpp: HQC-KEM (code-based key encapsulation) */
 extern SEXP C_rmbl_hqc_sizes(SEXP);
@@ -300,6 +301,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mlkem_keygen",      (DL_FUNC) &C_rmbl_mlkem_keygen,      2},
     {"C_rmbl_mlkem_encaps",      (DL_FUNC) &C_rmbl_mlkem_encaps,      3},
     {"C_rmbl_mlkem_decaps",      (DL_FUNC) &C_rmbl_mlkem_decaps,      3},
+    {"C_rmbl_mlkem_decaps_masked", (DL_FUNC) &C_rmbl_mlkem_decaps_masked, 3},
     {"C_rmbl_hqc_sizes",         (DL_FUNC) &C_rmbl_hqc_sizes,         1},
     {"C_rmbl_hqc_keygen",        (DL_FUNC) &C_rmbl_hqc_keygen,        2},
     {"C_rmbl_hqc_encaps",        (DL_FUNC) &C_rmbl_hqc_encaps,        4},

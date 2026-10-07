@@ -52,5 +52,6 @@ extern "C" void rmbl_sha3_512(unsigned char *, const unsigned char *, size_t);
 /* the ring arithmetic, R-free so the simulated power analysis (inst/tvla) compiles the
  * same code for a Cortex-M target */
 #include "rmbl_mlkem_arith.h"
+#include "rmbl_masked.h"
 
 #endif

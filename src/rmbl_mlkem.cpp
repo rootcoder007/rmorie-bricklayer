@@ -171,6 +171,63 @@ SEXP C_rmbl_mlkem_encaps_impl(SEXP level, SEXP ek, SEXP m) {
     });
 }
 
+/* The masking gadgets draw from the operating system's CSPRNG through a buffer. A failed
+ * read is recorded, not raised, so no Rf_error() longjmps over the decapsulation's
+ * buffers; the entry point raises once they are gone. */
+extern "C" int rmbl_os_random(unsigned char *out, size_t n);
+struct MaskRng {
+    unsigned char buf[4096];
+    size_t pos = sizeof buf;
+    bool failed = false;
+};
+static uint32_t mask_rng_u32(void *ctx) {
+    MaskRng *m = static_cast<MaskRng *>(ctx);
+    if (m->pos + 4 > sizeof m->buf) {
+        if (rmbl_os_random(m->buf, sizeof m->buf) != 0) m->failed = true;
+        m->pos = 0;
+    }
+    uint32_t v;
+    std::memcpy(&v, m->buf + m->pos, 4);
+    m->pos += 4;
+    return v;
+}
+
+/* First-order masked decapsulation (rmbl_mlkem_body.h, decaps_masked): the same shared
+ * secret as C_rmbl_mlkem_decaps, with every secret-dependent value held in two shares. */
+SEXP C_rmbl_mlkem_decaps_masked_impl(SEXP level, SEXP dk, SEXP ct) {
+    RMBL_MLKEM_DISPATCH(mlkem_level(level), {
+        if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
+            Rf_error("`dk` must be a raw vector of %d bytes", M::kDkBytes);
+        }
+        if (TYPEOF(ct) != RAWSXP || XLENGTH(ct) != M::kCtBytes) {
+            Rf_error("`ct` must be a raw vector of %d bytes", M::kCtBytes);
+        }
+        {
+            unsigned char hk[32];
+            const unsigned char *ekp = RAW(dk) + M::kDkPkeBytes;
+            rmbl_sha3_256(hk, ekp, static_cast<size_t>(M::kEkBytes));
+            if (std::memcmp(hk, ekp + M::kEkBytes, 32) != 0) {
+                Rf_error("`dk` failed the FIPS 203 hash check: it is not an ML-KEM decapsulation key");
+            }
+        }
+        SEXP ss = PROTECT(Rf_allocVector(RAWSXP, 32));
+        bool failed = false;
+        {
+            MaskRng *mr = new MaskRng();
+            rmbl_masked::Rng rng;  /* assigned, not braced: a comma would split the macro argument */
+            rng.fn = mask_rng_u32;
+            rng.ctx = mr;
+            M::decaps_masked(RAW(ss), RAW(dk), RAW(ct), rng);
+            failed = mr->failed;
+            rmbl_ct::wipe(mr->buf, sizeof mr->buf);
+            delete mr;
+        }
+        UNPROTECT(1);
+        if (failed) Rf_error("the operating system's random source failed during masked decapsulation");
+        return ss;
+    });
+}
+
 SEXP C_rmbl_mlkem_decaps_impl(SEXP level, SEXP dk, SEXP ct) {
     RMBL_MLKEM_DISPATCH(mlkem_level(level), {
         if (TYPEOF(dk) != RAWSXP || XLENGTH(dk) != M::kDkBytes) {
