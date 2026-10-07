@@ -234,7 +234,7 @@
 </tr>
 <tr>
 <td>Masked by default</td>
-<td>First-order masking of ML-KEM decapsulation and ML-DSA signing; the gadgets touch the two shares only in assembly (Cortex-M, x86-64, aarch64) with a fixed register order and zeroed temporaries</td>
+<td>First-order masking of ML-KEM decapsulation and ML-DSA signing, output identical to the unmasked computation. Every operation that combines the two shares of a value runs in assembly (Cortex-M, x86-64, aarch64) with a fixed register order, zeroed temporaries and a zero store between the two shares; code that handles one share at a time runs each share in its own pass with the registers zeroed in between. Shares are recombined only for what the algorithm publishes (the shared secret, the signature)</td>
 <td><code>src/rmbl_masked.h</code></td>
 </tr>
 <tr>
