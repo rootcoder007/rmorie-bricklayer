@@ -38,7 +38,8 @@ Apple silicon, with a control that must be flagged); power leakage is assessed i
 (`inst/tvla`: the code compiled for a Cortex-M4 and run under the Hamming-weight and the
 Hamming-distance models, TVLA in two experiments); ML-KEM decapsulation and ML-DSA signing
 are first-order masked by default, with the masking gadgets written in assembly for
-Cortex-M, x86-64 and aarch64; and the standardised schemes are checked against the C2SP
+Cortex-M, x86-64 and aarch64 (on any other CPU the same operations run as plain C, with the
+same results and without the register discipline); and the standardised schemes are checked against the C2SP
 Wycheproof and NIST ACVP sets and differentially fuzzed against OpenSSL 3.5.
 
 Outside what these checks model: electromagnetic emanation and fault injection, glitches and
