@@ -13,10 +13,12 @@
 # Rscript, where readline() returns "" at once, so outside an interactive session read one line of
 # stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
 # history). Closed or empty stdin gives "".
-.bl_readline <- function(prompt) {
+.bl_readline <- function(prompt, con = NULL) {
   if (.bl_interactive()) return(trimws(readline(prompt)))
-  con <- file("stdin")
-  on.exit(close(con))
+  if (is.null(con)) {
+    con <- file("stdin")
+    on.exit(close(con))
+  }
   if (isatty(stdin())) cat(prompt, file = stderr())
   trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
 }
@@ -284,12 +286,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 # The Rd database of this package: the installed copy when there is one,
 # else the man/ directory of a source tree loaded with pkgload.
-.bl_rd_db <- function() {
-  db <- tryCatch(tools::Rd_db("rmoriebricklayer"), error = function(e) NULL)
+.bl_rd_db <- function(db = tryCatch(tools::Rd_db("rmoriebricklayer"), error = function(e) NULL),
+                      man = system.file("man", package = "rmoriebricklayer")) {
   if (length(db)) {
     return(db)
   }
-  man <- system.file("man", package = "rmoriebricklayer")
   if (nzchar(man)) {
     db <- tryCatch(tools::Rd_db(dir = dirname(man)), error = function(e) NULL)
   }

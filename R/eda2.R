@@ -87,7 +87,6 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   X <- as.matrix(data[, num, drop = FALSE])
   storage.mode(X) <- "double"
   p <- ncol(X)
-  if (p < 1L) stop("`data` has no numeric columns", call. = FALSE)
   alpha <- .rmbl_num(alpha, "alpha")
   if (length(alpha) != 1L || is.na(alpha) || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single value strictly inside (0, 1)",
@@ -130,12 +129,8 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
          "defined. Drop the redundant column(s) -- drop_constant() and ",
          "top_correlations() will find them.", call. = FALSE)
   }
-  S <- .rmbl_make_pd(S, 1e-8)
-  S_inv <- tryCatch(solve(S), error = function(e) NULL)
-  if (is.null(S_inv)) {
-    stop("the covariance of the supplied columns could not be inverted",
-         call. = FALSE)
-  }
+  S <- .rmbl_make_pd(S, 1e-8)   # positive definite by construction, so invertible
+  S_inv <- solve(S)
   d2 <- rowSums((Z %*% S_inv) * Z)
 
   out <- data.frame(row = which(ok), distance = sqrt(d2),

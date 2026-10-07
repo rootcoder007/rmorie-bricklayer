@@ -140,7 +140,6 @@
     digs <- c(as.character(frac %% 10), digs)
     frac <- frac %/% 10
   }
-  if (frac > 0) whole <- whole + 1
   s <- sprintf("%.0f", whole)
   if (length(digs)) s <- paste0(s, ".", paste(digs, collapse = ""))
   if (neg) s <- paste0("-", s)
@@ -485,16 +484,9 @@ bricklayer_json_base64url_dec <- function(input) {
   if (is.logical(x)) return(.rmbl_json_as_lgl(x, o, collapse, na, auto_unbox, indent, keep_vec_names))
   if (is.complex(x)) return(.rmbl_json_as_cplx(x, o, collapse, na, oldna, auto_unbox, indent))
   if (is.numeric(x)) return(.rmbl_json_as_num(x, o, collapse, na, auto_unbox, indent, keep_vec_names))
-  if (length(cls) > 1L) {
-    class(x) <- cls[-1L]
-    return(.rmbl_json_as(x, o, collapse, na, oldna, auto_unbox, indent))
-  }
-  if (isTRUE(o$force)) {
-    y <- unclass(x)
-    if (is.atomic(y) || is.list(y) || is.null(y))
-      return(.rmbl_json_as(y, o, collapse, na, oldna, auto_unbox, indent))
-    return(.rmbl_json_as(NULL, o))
-  }
+  # what is left has no class attribute and is not data: an environment, a
+  # symbol, a function, an external pointer
+  if (isTRUE(o$force)) return(.rmbl_json_as(NULL, o))
   stop("No method asJSON S3 class: ", cls, call. = FALSE)
 }
 

@@ -36,7 +36,8 @@ and a digest anyone can recompute says nothing about who produced the data.
   Topic guides: `vignette("post-quantum-signatures")`, `vignette("key-encapsulation")`,
   `vignette("side-channel-assurance")`, `vignette("hawkes-processes")`,
   `vignette("small-area-rates")`, `vignette("trends-and-change")`,
-  `vignette("stock-and-flow")` and the rest, grouped by topic on the package website.
+  `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")` and the rest,
+  grouped by topic on the package website.
 - **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
   locate resources through a portal's `package_show` / `package_search`
   endpoints.
@@ -154,6 +155,40 @@ and a digest anyone can recompute says nothing about who produced the data.
   `core_hawkes_jitter()` before the fit (Filimonov & Sornette 2015;
   `horizon =` keeps an event dated on the window's last day inside it), and
   the fit warns when it sees ties.
+- **Air pollution, from source to burden** — where a plume goes:
+  `pg_sigmas()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
+  urban), `briggs_plume_rise()` (buoyant and stable branches, transitional
+  rise), `gaussian_plume()` and `gaussian_puff()` (ground reflection,
+  mixing-lid images), `advection_diffusion_2d()` and `lagrangian_particles()`
+  (grid and particle models; the walk takes any normal generator). What a
+  concentration costs in lives: `crf_pm25()` and `crf_no2()` (the WHO 2021
+  review's pooled estimates, Chen & Hoek 2020 and Huangfu & Atkinson 2020,
+  and Burnett et al.'s 2014 integrated exposure-response curves per cause),
+  `attributable_fraction()` (Levin), `mortality_displaced()` (BenMAP),
+  `pollution_burden()` and `pollution_burden_by_area()` (the GBD chain, per
+  area, worst first). Who bears it: `exposure_concentration_index()`
+  (Wagstaff, Paci & van Doorslaer 1991). From your own data:
+  `plr_crossfit()` and `exposure_response_plr()` (Chernozhukov et al.'s 2018
+  partially linear model by cross-fitting, with a percentile bootstrap).
+  All of it in one call with an assumption log: `verify_pollution()` and
+  `pollution_report_text()`. Every coefficient cites its paper and is
+  asserted in the tests. `vignette("air-pollution-and-health")`.
+- **The footprint of the computation** — `compute_footprint()` reports
+  the electricity an expression used and the CO2-equivalent it implies:
+  measured from the CPU packages' RAPL energy counters where the operating
+  system exposes them (as codecarbon does on Linux; wrap-around handled,
+  subdomains not double-counted), otherwise modelled with the Green
+  Algorithms formula (Lannelongue, Grealey & Inouye 2021). Utilisation is
+  measured rather than assumed, per process or per whole machine (codecarbon's
+  two tracking modes), with Green Algorithms' linear or codecarbon's load
+  curves. `carbon_intensity()` and `carbon_intensity_table()` give the grid's
+  gCO2e/kWh offline for any country at its latest published year (Ember via
+  Our World in Data, 2024-25) and for sub-national zones (Electricity Maps
+  2024), each row with its year and source; `detect_location()` finds where
+  you are from the environment, time zone or locale, no network needed;
+  `rapl_available()` says which method you will get; `footprint_equivalents()`
+  turns grams into car-kilometres and tree-months. Every default that stood in
+  for a measurement is listed in the result.
 - **Post-quantum keys and signatures** — ML-KEM (`kem_keygen()`,
   `kem_encapsulate()`, `kem_decapsulate()`); ML-DSA and SLH-DSA keys from
   `fips_keygen()` and XMSS keys from `pqc_keygen()`, both signing through

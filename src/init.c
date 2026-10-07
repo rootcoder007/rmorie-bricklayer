@@ -52,6 +52,7 @@ extern SEXP C_rmbl_psi(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_first_digit_counts(SEXP);
 /* .Call wrappers (rmbl_digest.cpp) -- provenance digests */
 extern SEXP C_rmbl_sha512(SEXP);
+extern SEXP C_rmbl_hash_two_part(SEXP, SEXP);
 extern SEXP C_rmbl_crc32(SEXP);
 /* rmbl_series.cpp: concentration and short-series trend */
 extern SEXP C_rmbl_gini(SEXP);
@@ -229,6 +230,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_normal_pdf",     (DL_FUNC) &C_rmbl_normal_pdf,     3},
     {"C_rmbl_sha256",         (DL_FUNC) &C_rmbl_sha256,         1},
     {"C_rmbl_sha512",         (DL_FUNC) &C_rmbl_sha512,         1},
+    {"C_rmbl_hash_two_part",  (DL_FUNC) &C_rmbl_hash_two_part,  2},
     {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
     {"C_rmbl_http_download",  (DL_FUNC) &C_rmbl_http_download,  7},
     {"C_rmbl_redirect_check", (DL_FUNC) &C_rmbl_redirect_check, 4},

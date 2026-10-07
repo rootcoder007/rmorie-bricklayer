@@ -433,7 +433,6 @@ clean_column_names <- function(data, case = c("snake", "lower_camel",
   words <- strsplit(out, " ", fixed = TRUE)
   out <- vapply(words, function(w) {
     w <- w[nzchar(w)]
-    if (length(w) == 0L) return("x")
     switch(case,
       snake = paste(tolower(w), collapse = sep),
       screaming_snake = paste(toupper(w), collapse = sep),

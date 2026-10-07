@@ -277,8 +277,10 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   }
   cols <- vapply(seq_len(nrow(d)), function(r) {
     v <- d$verdict[r]
-    if (is.na(v)) pal$flat else if (v %in% c("worse", "up")) pal$bad
-    else if (v %in% c("better", "down")) pal$good else pal$flat
+    if (is.na(v)) return(pal$flat)
+    if (v %in% c("worse", "up")) return(pal$bad)
+    if (v %in% c("better", "down")) return(pal$good)
+    pal$flat
   }, "")
 
   # Paginate on the rows that fit, so a long table becomes several pages
@@ -360,8 +362,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
                      cex = 0.72,
                      col = if (last) cols[i] else graphics::par("fg"))
     }
-    y <- y - rowh
-    if (y < 0.06) break
+    y <- y - rowh   # the caller hands this page only the rows that fit
   }
   if (nzchar(pagelab)) {
     graphics::text(1, 0.02, pagelab, adj = c(1, 0), cex = 0.6,

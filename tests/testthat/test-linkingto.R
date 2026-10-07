@@ -197,6 +197,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
     "                                               (const unsigned char *) \"salt\", 4, 1, 20, raw64)",
     "                 + 10.0 * (rmbl_pbkdf2_sha256((const unsigned char *) \"password\", 8,",
     "                                              (const unsigned char *) \"salt\", 4, 0, 20, raw64) == -1);",
+    "        out[k++] = ISNAN(rmbl_hawkes_nll(x, 6, 10.0, 9, hpar, 3));   /* no such kernel: NaN */",
     "    }",
     "    SEXP res = PROTECT(Rf_allocVector(REALSXP, k));",
     "    for (int i = 0; i < k; ++i) REAL(res)[i] = out[i];",
@@ -292,14 +293,14 @@ test_that("every published kernel compiles and resolves from a consumer", {
     as.numeric(strsplit(trimws(res[length(res) - 1L]), ",")[[1L]])
   )
   sha <- trimws(res[length(res)])
-  if (length(nums) != 53L) {
+  if (length(nums) != 54L) {
     fail(paste(
-      "the consumer did not print 53 numbers; it printed:",
+      "the consumer did not print 54 numbers; it printed:",
       paste(utils::tail(res, 10L), collapse = " | ")
     ))
     return(invisible(NULL))
   }
-  expect_length(nums, 53L)
+  expect_length(nums, 54L)
 
   # the kernels must agree with the R-level functions on the same input,
   # because they are supposed to be the same code
@@ -359,6 +360,7 @@ test_that("every published kernel compiles and resolves from a consumer", {
   expect_true(is.nan(nums[48L]))         # three parameters where four are needed
   expect_identical(nums[49:52], c(1, 1, 1, 1))
   expect_identical(nums[53L], 10)         # pbkdf2: 0 on success, -1 on iterations = 0
+  expect_identical(nums[54L], 1)          # an unknown kernel code is NaN, not a number
   # and the digest kernel still matches its published vector, so a
   # regression in the older shims surfaces here too
   expect_identical(sha, core_sha256("abc"))

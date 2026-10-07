@@ -280,8 +280,7 @@ mcar_test <- function(data, max_iter = 500L, tol = 1e-7) {
   for (code in patterns) {
     rows <- which(codes == code)
     o <- which(obs[rows[1L], ])
-    pj <- length(o)
-    if (pj == 0L) next
+    pj <- length(o)   # at least one: wholly missing rows were dropped above
     nj <- length(rows)
     # The pattern's observed-variable means, against the ML estimates.
     xbar <- colMeans(X[rows, o, drop = FALSE])

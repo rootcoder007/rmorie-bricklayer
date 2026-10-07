@@ -398,8 +398,6 @@ void tree_root(const unsigned char *sk_seed, const unsigned char *pub_seed,
 
 extern "C" {
 
-int rmbl_xmss_len(void) { return kLen; }
-
 SEXP C_rmbl_xmss_keygen_impl(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     std::vector<unsigned char> sks, pubs;
     if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {

@@ -56,12 +56,8 @@
 drift_ks <- function(x, y) {
   x <- .rmbl_finite_input(x, "x", min_n = 1L)
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
-  x <- x[!is.na(x)]
+  x <- x[!is.na(x)]   # min_n = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
-  if (length(x) < 1L || length(y) < 1L) {
-    stop("both samples must have at least one non-missing value",
-         call. = FALSE)
-  }
   out <- .Call(C_rmbl_ks, x, y)
   names(out) <- c("statistic", "p_value", "n_eff")
   out
@@ -126,12 +122,8 @@ drift_ks <- function(x, y) {
 drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
   x <- .rmbl_finite_input(x, "x", min_n = 1L)
   y <- .rmbl_finite_input(y, "y", min_n = 1L)
-  x <- x[!is.na(x)]
+  x <- x[!is.na(x)]   # min_n = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
-  if (length(x) < 1L || length(y) < 1L) {
-    stop("both samples must have at least one non-missing value",
-         call. = FALSE)
-  }
   bins <- .rmbl_num(bins, "bins", integer = TRUE)
   if (is.na(bins) || bins < 2L) {
     stop("`bins` must be at least 2", call. = FALSE)
@@ -361,10 +353,7 @@ drift_homogeneity <- function(x, y, seed = 1L) {
   pooled <- (cx + cy) / (nx + ny)
   ex <- nx * pooled
   ey <- ny * pooled
-  keep <- pooled > 0
-  if (!any(keep)) {
-    stop("no category has a positive expected count", call. = FALSE)
-  }
+  keep <- pooled > 0   # nx, ny > 0 above: at least one category is kept
   stat <- sum((cx[keep] - ex[keep])^2 / ex[keep]) +
     sum((cy[keep] - ey[keep])^2 / ey[keep])
   df <- sum(keep) - 1L

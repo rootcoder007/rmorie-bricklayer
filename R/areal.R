@@ -76,9 +76,6 @@ expected_counts <- function(counts, population, area, strata = NULL) {
     stop("`counts`, `population` and `area` must be the same length",
          call. = FALSE)
   }
-  if (any(counts < 0, na.rm = TRUE)) {
-    stop("`counts` must be non-negative", call. = FALSE)
-  }
   if (any(population <= 0, na.rm = TRUE)) {
     stop("`population` must be positive", call. = FALSE)
   }
@@ -152,9 +149,6 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   if (length(expected) == 1L) expected <- rep(expected, length(observed))
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
-  }
-  if (any(observed < 0, na.rm = TRUE)) {
-    stop("`observed` must be non-negative", call. = FALSE)
   }
   if (any(expected <= 0, na.rm = TRUE)) {
     stop("`expected` must be positive", call. = FALSE)
