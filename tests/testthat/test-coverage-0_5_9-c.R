@@ -70,7 +70,10 @@ test_that("the decimal parser agrees with R on the awkward inputs: zero, subnorm
           "1.00000000000000011102230246251565404236316680908203125",
           "1.0000000000000001110223024625156540423631668090820312")
   got <- .rmbl_strtod(xs)
-  expect_equal(got, as.numeric(xs))
+  want <- as.numeric(xs)
+  # R's own parser on macOS reads the largest finite double as Inf; the correctly rounded value is DBL_MAX
+  want[xs == "1.7976931348623157e308"] <- .Machine$double.xmax
+  expect_equal(got, want)
 })
 
 test_that("SIU reports: a team size given as digits, and the French resolver without a roster section", {
