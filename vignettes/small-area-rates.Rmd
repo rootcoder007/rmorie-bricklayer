@@ -1,0 +1,141 @@
+---
+title: "Small-area rates: expected counts, shrinkage, funnels and spatial autocorrelation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Small-area rates: expected counts, shrinkage, funnels and spatial autocorrelation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 6, fig.height = 3.8)
+library(rmoriebricklayer)
+```
+
+Published tables often give a count per region, division or facility. Comparing those
+counts fairly needs three steps: adjust for the population each unit serves (and its
+composition), stabilise the ratios of small units, and judge each unit against limits
+that widen as its expected count shrinks. This vignette walks the four tools that do that.
+
+## Expected counts by indirect standardisation
+
+If the overall rate applied everywhere, how many events would each unit have? That is the
+*expected count*. Adjusting for size alone:
+
+```{r expected}
+d <- data.frame(
+  region = rep(c("North", "South", "East"), each = 2),
+  age = rep(c("18 to 24", "25 to 49"), 3),
+  n = c(30, 45, 12, 60, 8, 20),
+  pop = c(1000, 6000, 900, 9000, 400, 3500)
+)
+expected_counts(d$n, d$pop, d$region)
+```
+
+Adjusting for size **and** age composition is indirect standardisation: each stratum's
+overall rate is applied to the unit's population in that stratum, then summed. This is the
+comparison that says something about the unit rather than about who lives there:
+
+```{r expected-strata}
+expected_counts(d$n, d$pop, d$region, strata = d$age)
+```
+
+## Standardised ratios with exact intervals
+
+The ratio of observed to expected is the standardised incidence ratio (SIR). `sir()` gives
+the exact Poisson interval, which is what makes a small count honest:
+
+```{r sir}
+sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
+    area = c("North", "South", "East"))
+```
+
+An observed count of three carries almost no information, and the interval says so rather
+than hiding it:
+
+```{r sir3}
+sir(3, 5)
+```
+
+## Empirical Bayes shrinkage
+
+A tiny unit's raw ratio is extreme by chance. Empirical Bayes shrinks each ratio toward the
+overall experience in proportion to how little its own data say: the pooled ratios share a
+Gamma prior whose parameters are estimated from all units, and each unit's posterior mean
+is a weighted average of its own ratio and the prior mean, weighted by its expected count
+(Clayton and Kaldor 1987).
+
+```{r eb}
+eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
+         area = c("North", "South", "Tiny"))
+```
+
+The tiny area's raw ratio of 4 is pulled sharply toward 1; the large areas barely move.
+
+## Funnel plots
+
+A funnel plot draws control limits that narrow as the expected count grows (Spiegelhalter
+2005): a ratio of 2 means nothing at an expected count of 2 and a great deal at 200. Units
+outside the limits are the ones worth a second look; the rest are consistent with the
+common rate.
+
+```{r funnel}
+funnel_limits(c(2, 20, 200))
+```
+
+```{r funnel-plot}
+e <- seq(2, 200, length.out = 60)
+lim <- funnel_limits(e)
+plot(e, lim$upper_95, type = "l", ylim = c(0, 3), xlab = "expected count",
+     ylab = "observed / expected", main = "Funnel limits")
+lines(e, lim$lower_95)
+lines(e, lim$upper_998, lty = 2)
+lines(e, lim$lower_998, lty = 2)
+abline(h = 1, col = "grey")
+points(c(20, 14, 5), c(30, 12, 3) / c(20, 14, 5), pch = 19, col = 2)
+```
+
+The `levels` argument sets which limits are drawn; 95% and 99.8% (about two and three
+standard deviations) are the conventional pair.
+
+## Spatial autocorrelation
+
+Rates of neighbouring areas are rarely independent. Moran's *I* measures whether similar
+values cluster in space, against a permutation null; `neighbours` is a list giving each
+area's adjacent areas:
+
+```{r moran}
+nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)   # six areas in a line
+
+set.seed(1)
+morans_i(c(1, 2, 3, 4, 5, 6), nb, n_perm = 999L)[c("I", "p_value")]   # a gradient
+
+set.seed(1)
+morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]   # alternating
+```
+
+The null expectation of *I* is not zero but $-1/(n-1)$:
+
+```{r moran-null}
+-1 / (6 - 1)
+```
+
+Positive autocorrelation in the residual ratios means neighbouring units share something
+the standardisation did not capture, and a funnel that treats them as independent is
+optimistic.
+
+## From a published table to a judgement
+
+1. `expected_counts()` with the strata the table publishes.
+2. `sir()` for the ratios and their exact intervals.
+3. `eb_rates()` where small units dominate.
+4. `funnel_limits()` to see which units are outside the common experience.
+5. `morans_i()` on the residuals before trusting independence.
+
+## References
+
+Clayton, Kaldor (1987). Empirical Bayes estimates of age-standardized relative risks for
+use in disease mapping. *Biometrics* 43(3).
+Spiegelhalter (2005). Funnel plots for comparing institutional performance. *Statistics in
+Medicine* 24(8).
+Moran (1950). Notes on continuous stochastic phenomena. *Biometrika* 37(1/2).

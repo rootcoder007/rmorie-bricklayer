@@ -1,0 +1,124 @@
+---
+title: "JSON without jsonlite: parsing, encoding and exact serialisation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{JSON without jsonlite: parsing, encoding and exact serialisation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+Manifests, provenance records and signed documents are JSON. The package parses and writes
+JSON natively, in C, with jsonlite's conventions, so a capsule has no dependency on another
+package's parser and the parser can be held to the same standard as the cryptography.
+
+## Encoding R objects
+
+`bricklayer_json_to_json()` follows jsonlite's `toJSON()` conventions (data frames as rows,
+`auto_unbox`, `pretty`, `na` handling):
+
+```{r encode}
+bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
+bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
+```
+
+## Parsing JSON
+
+`bricklayer_json_from_json()` follows `fromJSON()`, with the simplification options:
+
+```{r parse}
+txt <- '{"id":[1,2,3],"name":["a","b","c"],"ok":true}'
+str(bricklayer_json_from_json(txt))
+str(bricklayer_json_from_json(txt, simplifyVector = FALSE))
+```
+
+### A repeated key is an error
+
+JSON permits duplicate keys and most parsers silently keep the last one, which has been the
+root of several real vulnerabilities (two parsers disagreeing about which value wins). Here a
+duplicate key is an error unless you ask to keep it:
+
+```{r dup}
+try(bricklayer_json_from_json('{"a":1,"a":2}'))
+bricklayer_json_from_json('{"a":1,"a":2}', duplicate_keys = "keep")
+```
+
+### Big integers
+
+Numbers beyond the exact range of a double are flagged, and can be returned as text so no
+digit is lost:
+
+```{r bigint}
+bricklayer_json_from_json('{"id": 9007199254740993}', bigint_as_char = TRUE)
+```
+
+## Exact serialisation: types and attributes included
+
+Data JSON loses R's structure: a factor becomes strings, a matrix becomes nested arrays, a
+`Date` becomes text. `bricklayer_json_serialize()` writes an object *with* its type and
+attributes, so the round trip is `identical()`:
+
+```{r serialize}
+f <- factor(c("b", "a", "b"), levels = c("a", "b", "c"))
+back <- bricklayer_json_unserialize(bricklayer_json_serialize(f))
+identical(back, f)
+
+m <- matrix(1:6, nrow = 2)
+identical(bricklayer_json_unserialize(bricklayer_json_serialize(m)), m)
+
+x <- list(a = 1:3, b = list(c = "x", d = NULL), e = TRUE)
+identical(bricklayer_json_unserialize(bricklayer_json_serialize(x)), x)
+```
+
+Plain data JSON does not keep either, which is the trade-off:
+
+```{r serialize-vs}
+bricklayer_json_to_json(f)
+```
+
+Doubles are rounded to `digits` by default; `I(17)` keeps them exact to the last bit:
+
+```{r digits}
+bricklayer_json_serialize(1 / 3)
+exact <- bricklayer_json_serialize(1 / 3, digits = I(17))
+identical(bricklayer_json_unserialize(exact), 1 / 3)
+```
+
+The serialised form is text, so it can be pinned like any other:
+
+```{r pin}
+core_sha256(bricklayer_json_serialize(m))
+```
+
+## Compressed, base64 JSON
+
+For embedding a table inside another document (a manifest field, a URL, a signed record),
+`json_gzip_encode()` gzips the JSON and base64-encodes the bytes:
+
+```{r gzip}
+x <- list(rows = data.frame(id = 1:50, value = round(stats::runif(50), 3)))
+enc <- json_gzip_encode(x)
+substring(enc, 1, 40)
+c(json = nchar(bricklayer_json_to_json(x)), gzip_b64 = nchar(enc))
+identical(json_gzip_decode(enc)$rows$id, 1:50)
+```
+
+Base64 and base64url are available on their own:
+
+```{r b64}
+bricklayer_json_base64_enc(charToRaw("manifest"))
+rawToChar(bricklayer_json_base64_dec("bWFuaWZlc3Q="))
+```
+
+## Why the parser is held to a security standard
+
+Every network body, cached manifest and signature file the package reads goes through this
+parser. It was reviewed for the classic parser failures and each is tested: duplicate keys
+(above), string assembly that was quadratic (250,000 escapes once took 16 minutes; it is
+linear now), nesting depth, numbers that are not numbers, bytes that are not UTF-8, and a
+body that is a bare URL, which is "not JSON", never a second fetch. The parser is also a
+libFuzzer target under AddressSanitizer and UndefinedBehaviorSanitizer.

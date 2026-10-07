@@ -35,15 +35,36 @@ articles:
   - title: Guides
     navbar: ~
     contents:
-      - categorical-integrity
-      - categorical-integrity
       - getting-started
       - capsules
-      - describe
-      - drift
       - provenance
+      - describe
+      - categorical-integrity
+      - drift
       - yoy
       - tables
+  - title: Cryptography and assurance
+    contents:
+      - post-quantum-signatures
+      - key-encapsulation
+      - hashing-and-integrity
+      - attestations-bundles-chains
+      - side-channel-assurance
+      - json-and-serialisation
+      - language-model-routes
+  - title: Statistics for published tables
+    contents:
+      - trends-and-change
+      - small-area-rates
+      - hawkes-processes
+      - banded-tables-and-concentration
+      - stock-and-flow
+      - falsification-and-power
+  - title: Data handling
+    contents:
+      - validation-rules-and-synthetic-data
+      - missingness-and-outliers
+      - siu-reports
 
 reference:
   - title: One call for a published table

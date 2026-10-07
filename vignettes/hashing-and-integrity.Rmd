@@ -1,0 +1,170 @@
+---
+title: "Hashing, keyed digests, key derivation and Merkle trees"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Hashing, keyed digests, key derivation and Merkle trees}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(rmoriebricklayer)
+```
+
+Everything a capsule pins is pinned by a digest. This vignette covers the hashing
+primitives, how to compare digests safely, how to derive a key from a passphrase, how to
+get randomness, and how a Merkle tree lets a large file be pinned and partially verified.
+
+## Digests of text and files
+
+```{r digests}
+core_sha256("hello capsule")
+core_sha512("hello capsule")
+core_blake2b("hello capsule")
+core_crc32("hello capsule")
+```
+
+Files are hashed in blocks, so a multi-gigabyte file does not need to fit in memory:
+
+```{r files}
+f <- tempfile()
+writeLines("hello capsule", f)
+sha256_file(f)
+sha512_file(f)
+crc32_file(f)
+
+before <- sha256_file(f)
+writeLines("hello capsule (edited)", f)
+sha256_file(f) == before
+```
+
+CRC-32 is a checksum, not a cryptographic hash: it detects accidental corruption and
+nothing more. SHA-256 and SHA-512 (FIPS 180-4) and BLAKE2b are collision-resistant;
+`verify_sha256()` checks a file against a pinned digest.
+
+## Digests of R objects
+
+`digest_object()` serialises an object canonically and hashes the bytes, so attributes,
+names and types are part of the identity:
+
+```{r objects}
+digest_object(list(a = 1L, b = "x"))
+identical(digest_object(1:10), digest_object(1:10))
+digest_object(1:10) == digest_object(1:11)
+digest_object(matrix(1:6, nrow = 2)) == digest_object(1:6)   # dimensions count
+digest_object(data.frame(x = 1:3))
+```
+
+## Keyed digests and constant-time comparison
+
+An HMAC (RFC 2104) is a digest that only the holder of the key can produce, so a manifest
+cannot be re-signed without the key:
+
+```{r hmac}
+core_hmac_sha256("Jefe", "what do ya want for nothing?")   # RFC 4231 test case 2
+core_hmac_sha256("key-a", "manifest")
+core_hmac_sha256("key-b", "manifest")
+```
+
+**Never compare a tag with `==`.** A string comparison stops at the first differing
+character, so its running time tells an attacker how many leading characters were right.
+`core_digest_equal()` compares every byte regardless and returns `FALSE` for a length
+mismatch without erroring:
+
+```{r ct}
+tag <- core_hmac_sha256("k", "m")
+core_digest_equal(tag, core_hmac_sha256("k", "m"))
+core_digest_equal(tag, core_hmac_sha256("k", "tampered"))
+core_digest_equal(tag, "too-short")
+```
+
+## Deriving a key from a passphrase
+
+A passphrase is not a key: it is short, low-entropy and chosen by a person. PBKDF2 (RFC
+8018) stretches it with a salt and an iteration count that makes each guess expensive:
+
+```{r pbkdf2}
+derive_key("password", "salt", iterations = 1)     # the published test vector
+identical(derive_key("pw", "s", 1000), derive_key("pw", "s", 1000))
+derive_key("pw", "salt-a", 1000) == derive_key("pw", "salt-b", 1000)
+```
+
+The salt must be random and stored beside the ciphertext or signature; the default of
+100,000 iterations is the floor for interactive use. A derived key signs a manifest
+symmetrically:
+
+```{r pbkdf2-sign}
+salt <- paste(format(random_bytes(16)), collapse = "")
+key <- derive_key("correct horse battery staple", salt)
+sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
+capsule_verify("manifest-digest", sig, key)
+```
+
+## Randomness
+
+`random_bytes()` draws from the operating system (`getrandom`, `BCryptGenRandom`) and does
+**not** consume R's seeded stream, so a reproducible analysis is unaffected by key
+generation happening beside it:
+
+```{r random}
+set.seed(1)
+a <- stats::runif(1)
+set.seed(1)
+invisible(random_bytes(32))
+identical(stats::runif(1), a)
+```
+
+For tests that need reproducible "random" bytes, the package's AES-256 CTR_DRBG (SP
+800-90A) gives the same bytes from the same seed, exactly as NIST's known-answer files use
+it; a personalization string separates streams:
+
+```{r drbg}
+d <- drbg_new(as.raw(0:47))
+drbg_generate(d, 16)
+a <- drbg_new(as.raw(1:48), personalization = charToRaw("session 1"))
+b <- drbg_new(as.raw(1:48), personalization = charToRaw("session 2"))
+identical(drbg_generate(a, 16), drbg_generate(b, 16))
+```
+
+## Merkle trees: pin a large file, verify a piece
+
+A Merkle tree hashes a file in chunks, then hashes pairs of digests up to one root. The root
+pins the whole file; a *proof* of `log2(n)` digests shows that one chunk belongs without
+holding the others, and a diff of the leaves names exactly which chunk changed.
+
+```{r merkle}
+chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
+root <- merkle_root(chunks)
+root
+
+before <- merkle_leaves(chunks)
+after <- merkle_leaves(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
+which(before != after)
+
+pr <- merkle_proof(chunks, 3)
+merkle_verify(chunks[3], pr, root)
+merkle_verify("row5,row6-EDITED", pr, root)
+```
+
+`chunk_file()` splits a real file into fixed-size chunks that concatenate back to its bytes:
+
+```{r chunkfile}
+p <- tempfile()
+writeLines(rep("some capsule content", 50), p)
+ch <- chunk_file(p, chunk_bytes = 128)
+length(ch)
+merkle_root(ch)
+identical(unlist(ch), readBin(p, "raw", file.size(p)))
+```
+
+This is how `capsule_bundle()` pins data files: a mismatch identifies which part of a capsule
+changed rather than only that something did.
+
+## How these implementations are checked
+
+The digests are compared with OpenSSL at every block boundary, run against the NIST ACVP
+sets for SHA-3, SHAKE, HMAC and PBKDF2, and fuzzed differentially against OpenSSL 3.5. The
+keyed-digest comparison and PBKDF2 run under valgrind with the key marked undefined to prove
+their timing does not depend on it, and dudect measures the comparison and PBKDF2 on real
+CPUs.

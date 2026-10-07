@@ -56,7 +56,12 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     scan and Poisson rate ratios; and region-coded counts by indirect
     standardisation, exact standardised incidence ratios, the empirical
     Bayes shrinkage of Clayton and 'Kaldor' (1987) <doi:10.2307/2532003>,
-    funnel-plot limits and Moran's I.
+    funnel-plot limits and Moran's I. Self-exciting event series are fitted
+    as 'Hawkes' processes (exponential, 'Weibull', gamma and 'Lomax' kernels,
+    constant or sinusoidal baseline) by exact maximum likelihood with
+    time-rescaling residuals, and custodial populations are summarised by
+    average daily population, average length of stay and stock-and-flow
+    measures in the formulation of 'Lakner'.
 License: AGPL-3
 Encoding: UTF-8
 Language: en-US
