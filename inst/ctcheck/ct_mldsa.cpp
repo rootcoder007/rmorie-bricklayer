@@ -1,6 +1,17 @@
 #include "ct_common.h"
 #include "../../src/rmbl_mldsa_ntt.cpp"
 
+/* Masking randomness for the masked signer, marked secret as it is produced. */
+static uint64_t ct_dsa_xs = 0x9E3779B97F4A7C15ull;
+static uint32_t ct_dsa_mask_u32(void *) {
+    ct_dsa_xs ^= ct_dsa_xs << 13;
+    ct_dsa_xs ^= ct_dsa_xs >> 7;
+    ct_dsa_xs ^= ct_dsa_xs << 17;
+    uint32_t v = static_cast<uint32_t>(ct_dsa_xs >> 32);
+    ct_secret(&v, sizeof v);
+    return v;
+}
+
 #define MLDSA_CASE(NS, FN)                                                         \
     int FN() {                                                                     \
         namespace M = NS;                                                          \
@@ -19,6 +30,14 @@
         if (rc != 0) return 1;                                                     \
         ct_public(sig.data(), sig.size()); /* the signature is published */        \
         if (M::verify_internal(sig.data(), msg, 33, ctx, 0, pk.data()) != 0) return 1; \
+        /* the masked signer: same bytes, and no branch on a key or mask bit */      \
+        std::vector<unsigned char> sig2(M::kSigBytes);                             \
+        rmbl_masked::Rng rng;                                                      \
+        rng.fn = ct_dsa_mask_u32;                                                  \
+        rng.ctx = nullptr;                                                         \
+        if (M::sign_internal_masked(sig2.data(), msg, 33, ctx, 0, rnd, sk.data(), rng) != 0) return 1; \
+        ct_public(sig2.data(), sig2.size());                                       \
+        if (sig2 != sig) return 1;                                                 \
         return rem ? 3 : 0;                                                        \
     }
 

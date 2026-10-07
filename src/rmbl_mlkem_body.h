@@ -511,14 +511,6 @@ inline void masked_prf_cbd(int16_t p0[256], int16_t p1[256], const unsigned char
     for (int g = 0; g < 8; ++g) rmbl_masked::sec_cbd32(p0 + 32 * g, p1 + 32 * g, b0, b1, 32 * g, eta, rng);
 }
 
-/* AND a masked test word into the running masked "all equal" word */
-inline void and_into(uint32_t &a0, uint32_t &a1, uint32_t o0, uint32_t o1, rmbl_masked::Rng &rng) {
-    uint32_t t0, t1;
-    rmbl_masked::sec_and(t0, t1, a0, a1, o0, o1, rng.u32());
-    a0 = t0;
-    a1 = t1;
-}
-
 void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsigned char *ct,
                    rmbl_masked::Rng &rng) {
     const unsigned char *ek = dk + kDkPkeBytes;
@@ -531,14 +523,14 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     for (int i = 0; i < kK; ++i) {
         int16_t raw[256];
         byte_decode(raw, dk + i * kPolyBytes, 12);
+        /* share 0 first (fresh randomness), then share 1 = v - share 0, in separate passes */
+        for (int j = 0; j < 256; ++j) s0.v[i][j] = rmbl_masked::rand_q(rng);
+        rmbl_masked::rmbl_mask_scrub();
         for (int j = 0; j < 256; ++j) {
             const int16_t v = to_positive(barrett_reduce(raw[j]));
-            const int16_t r = rmbl_masked::rand_q(rng);
-            int32_t d = static_cast<int32_t>(v) - r;
-            d = rmbl_masked::cadd_q(d);
-            s0.v[i][j] = r;
-            s1.v[i][j] = static_cast<int16_t>(d);
+            s1.v[i][j] = static_cast<int16_t>(rmbl_masked::cadd_q(static_cast<int32_t>(v) - s0.v[i][j]));
         }
+        rmbl_masked::rmbl_mask_scrub();
         rmbl_ct::wipe(raw, sizeof raw);
     }
 
@@ -563,26 +555,31 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     invntt(w0);
     poly_sub(w0, v, w0);
     canon(w0);
+    rmbl_masked::rmbl_mask_scrub();
     vec_dot(w1, &s1, &u);
     invntt(w1);
     for (int j = 0; j < 256; ++j) w1[j] = static_cast<int16_t>(-w1[j]);
     canon(w1);
+    rmbl_masked::rmbl_mask_scrub();
 
     /* 4. m' = Compress_1(w), as Boolean shares */
     unsigned char m0[32], m1[32];
     uint32_t mw0[8], mw1[8];
     for (int g = 0; g < 8; ++g) {
         rmbl_masked::sec_decode1(mw0[g], mw1[g], w0 + 32 * g, w1 + 32 * g, rng);
-        for (int t = 0; t < 4; ++t) {
-            m0[4 * g + t] = static_cast<unsigned char>(mw0[g] >> (8 * t));
-            m1[4 * g + t] = static_cast<unsigned char>(mw1[g] >> (8 * t));
-        }
     }
+    for (int g = 0; g < 8; ++g)
+        for (int t = 0; t < 4; ++t) m0[4 * g + t] = static_cast<unsigned char>(mw0[g] >> (8 * t));
+    rmbl_masked::rmbl_mask_scrub();
+    for (int g = 0; g < 8; ++g)
+        for (int t = 0; t < 4; ++t) m1[4 * g + t] = static_cast<unsigned char>(mw1[g] >> (8 * t));
+    rmbl_masked::rmbl_mask_scrub();
 
     /* 5. (K', r) = G(m' || h) */
     unsigned char gi0[64], gi1[64], g0[64], g1[64];
     std::memcpy(gi0, m0, 32);
     std::memcpy(gi0 + 32, h, 32);
+    rmbl_masked::rmbl_mask_scrub();
     std::memcpy(gi1, m1, 32);
     std::memset(gi1 + 32, 0, 32);
     rmbl_masked::sponge_masked(g0, g1, 64, gi0, gi1, 64, 72, 0x06, rng);
@@ -591,11 +588,10 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     unsigned char kb0[32], kb1[32];
     {
         std::vector<unsigned char> j0(32 + static_cast<size_t>(kCtBytes)), j1(32 + static_cast<size_t>(kCtBytes), 0);
-        for (int i = 0; i < 32; ++i) {
-            const unsigned char r = static_cast<unsigned char>(rng.u32());
-            j0[static_cast<size_t>(i)] = static_cast<unsigned char>(z[i] ^ r);
-            j1[static_cast<size_t>(i)] = r;
-        }
+        for (int i = 0; i < 32; ++i) j1[static_cast<size_t>(i)] = static_cast<unsigned char>(rng.u32());
+        rmbl_masked::rmbl_mask_scrub();
+        for (int i = 0; i < 32; ++i) j0[static_cast<size_t>(i)] = static_cast<unsigned char>(z[i] ^ j1[static_cast<size_t>(i)]);
+        rmbl_masked::rmbl_mask_scrub();
         std::memcpy(j0.data() + 32, ct, static_cast<size_t>(kCtBytes));
         rmbl_masked::sponge_masked(kb0, kb1, 32, j0.data(), j1.data(), j0.size(), 136, 0x1f, rng);
         rmbl_ct::wipe(j0.data(), 32);
@@ -616,25 +612,30 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     for (int i = 0; i < kK; ++i) masked_prf_cbd(r0.v[i], r1.v[i], g0 + 32, g1 + 32, nonce++, kEta1, rng);
     for (int i = 0; i < kK; ++i) masked_prf_cbd(e10.v[i], e11.v[i], g0 + 32, g1 + 32, nonce++, kEta2, rng);
     masked_prf_cbd(e20, e21, g0 + 32, g1 + 32, nonce++, kEta2, rng);
-    for (int i = 0; i < kK; ++i) {
-        ntt(r0.v[i]);
-        ntt(r1.v[i]);
-    }
+    for (int i = 0; i < kK; ++i) ntt(r0.v[i]);
+    rmbl_masked::rmbl_mask_scrub();
+    for (int i = 0; i < kK; ++i) ntt(r1.v[i]);
+    rmbl_masked::rmbl_mask_scrub();
     PolyVec u0, u1;
     for (int i = 0; i < kK; ++i) {
         vec_dot(u0.v[i], &mat[i], &r0);
         invntt(u0.v[i]);
         poly_add(u0.v[i], u0.v[i], e10.v[i]);
         canon(u0.v[i]);
+    }
+    rmbl_masked::rmbl_mask_scrub();
+    for (int i = 0; i < kK; ++i) {
         vec_dot(u1.v[i], &mat[i], &r1);
         invntt(u1.v[i]);
         poly_add(u1.v[i], u1.v[i], e11.v[i]);
         canon(u1.v[i]);
     }
+    rmbl_masked::rmbl_mask_scrub();
     int16_t v0[256], v1[256];
     vec_dot(v0, &t, &r0);
     invntt(v0);
     poly_add(v0, v0, e20);
+    rmbl_masked::rmbl_mask_scrub();
     vec_dot(v1, &t, &r1);
     invntt(v1);
     poly_add(v1, v1, e21);
@@ -642,20 +643,23 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     for (int g = 0; g < 8; ++g) {
         rmbl_masked::Bs mb;
         for (int b = 0; b < rmbl_masked::kMaxBits; ++b) mb.w[0][b] = mb.w[1][b] = 0;
-        mb.w[0][0] = mw0[g];
-        mb.w[1][0] = mw1[g];
+        rmbl_masked::m_pub(rmbl_masked::pz(&mb.w[0][0], &mb.w[1][0], &mw0[g], &mw1[g]), 0, 3);
         int16_t c0[32], c1[32];
         rmbl_masked::sec_b2a(c0, c1, mb, rng);
-        for (int j = 0; j < 32; ++j) {
+        for (int j = 0; j < 32; ++j)
             v0[32 * g + j] = barrett_reduce(static_cast<int16_t>(v0[32 * g + j] + static_cast<int16_t>(rmbl_mlkem_core::mod_q(static_cast<uint32_t>(c0[j]) * ((kQ + 1) / 2)))));
+        rmbl_masked::rmbl_mask_scrub();
+        for (int j = 0; j < 32; ++j)
             v1[32 * g + j] = barrett_reduce(static_cast<int16_t>(v1[32 * g + j] + static_cast<int16_t>(rmbl_mlkem_core::mod_q(static_cast<uint32_t>(c1[j]) * ((kQ + 1) / 2)))));
-        }
+        rmbl_masked::rmbl_mask_scrub();
     }
     canon(v0);
+    rmbl_masked::rmbl_mask_scrub();
     canon(v1);
+    rmbl_masked::rmbl_mask_scrub();
 
     /* 8. masked comparison of c' with c, decompressed */
-    uint32_t acc0 = 0xFFFFFFFFu, acc1 = 0;
+    rmbl_masked::AllOk all;
     {
         std::vector<int16_t> lo(static_cast<size_t>(1) << kDu), wd(static_cast<size_t>(1) << kDu);
         compress_intervals(lo.data(), wd.data(), kDu);
@@ -668,9 +672,9 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
                     l[j] = lo[static_cast<size_t>(c[32 * g + j])];
                     w[j] = wd[static_cast<size_t>(c[32 * g + j])];
                 }
-                uint32_t o0, o1;
-                rmbl_masked::sec_in_interval(o0, o1, u0.v[i] + 32 * g, u1.v[i] + 32 * g, l, w, rng);
-                and_into(acc0, acc1, o0, o1, rng);
+                uint32_t o[2];
+                rmbl_masked::sec_in_interval(o[0], o[1], u0.v[i] + 32 * g, u1.v[i] + 32 * g, l, w, rng);
+                all.add(o, rng);
             }
         }
         std::vector<int16_t> lov(static_cast<size_t>(1) << kDv), wdv(static_cast<size_t>(1) << kDv);
@@ -683,35 +687,42 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
                 l[j] = lov[static_cast<size_t>(c[32 * g + j])];
                 w[j] = wdv[static_cast<size_t>(c[32 * g + j])];
             }
-            uint32_t o0, o1;
-            rmbl_masked::sec_in_interval(o0, o1, v0 + 32 * g, v1 + 32 * g, l, w, rng);
-            and_into(acc0, acc1, o0, o1, rng);
+            uint32_t o[2];
+            rmbl_masked::sec_in_interval(o[0], o[1], v0 + 32 * g, v1 + 32 * g, l, w, rng);
+            all.add(o, rng);
         }
     }
-    /* fold the 32 lanes into bit 0, refreshing the shifted copy before each AND */
-    for (int sh = 16; sh >= 1; sh >>= 1) {
-        const uint32_t r = rng.u32();
-        and_into(acc0, acc1, (acc0 >> sh) ^ r, (acc1 >> sh) ^ r, rng);
-    }
+    /* fold the 32 lanes into bit 0 */
+    uint32_t ok[2];
+    rmbl_masked::sec_all_lanes(ok, all.a, rng);
     /* a non-canonical encapsulation key never re-encrypts (public) */
     const uint32_t keep = static_cast<uint32_t>(bad) - 1u;   /* 0 when bad */
-    acc0 &= keep;
-    acc1 &= keep;
+    rmbl_masked::m_pub(rmbl_masked::pz(ok, ok + 1, ok, ok + 1), keep & 1u, 1);
 
     /* 9. K = ok ? K' : K-bar, selected in shares, then unmasked */
-    const uint32_t m_0 = 0u - (acc0 & 1u), m_1 = 0u - (acc1 & 1u);
+    uint32_t msk[2];
+    rmbl_masked::m_pub(rmbl_masked::pz(msk, msk + 1, ok, ok + 1), 0, 4);   /* bit 0 -> all ones */
+    uint32_t kp[2][8], kbw[2][8];
     for (int i = 0; i < 8; ++i) {
-        uint32_t kp0, kp1, kbw0, kbw1;
-        std::memcpy(&kp0, g0 + 4 * i, 4);
-        std::memcpy(&kp1, g1 + 4 * i, 4);
-        std::memcpy(&kbw0, kb0 + 4 * i, 4);
-        std::memcpy(&kbw1, kb1 + 4 * i, 4);
-        uint32_t t0, t1;
-        rmbl_masked::sec_and(t0, t1, m_0, m_1, kp0 ^ kbw0, kp1 ^ kbw1, rng.u32());
-        const uint32_t k0 = kbw0 ^ t0, k1 = kbw1 ^ t1;
-        const uint32_t out = k0 ^ k1;
+        std::memcpy(&kp[0][i], g0 + 4 * i, 4);
+        std::memcpy(&kbw[0][i], kb0 + 4 * i, 4);
+    }
+    rmbl_masked::rmbl_mask_scrub();
+    for (int i = 0; i < 8; ++i) {
+        std::memcpy(&kp[1][i], g1 + 4 * i, 4);
+        std::memcpy(&kbw[1][i], kb1 + 4 * i, 4);
+    }
+    rmbl_masked::rmbl_mask_scrub();
+    for (int i = 0; i < 8; ++i) {
+        uint32_t d[2], t2[2], k[2];
+        rmbl_masked::m_xor(rmbl_masked::pz(d, d + 1, &kp[0][i], &kp[1][i], &kbw[0][i], &kbw[1][i]));
+        rmbl_masked::and2(t2, msk, d, rng.u32());
+        rmbl_masked::m_xor(rmbl_masked::pz(k, k + 1, &kbw[0][i], &kbw[1][i], t2, t2 + 1));
+        const uint32_t out = k[0] ^ k[1];   /* the shared secret, the output */
         std::memcpy(shared + 4 * i, &out, 4);
     }
+    rmbl_ct::wipe(kp, sizeof kp);
+    rmbl_ct::wipe(kbw, sizeof kbw);
     rmbl_ct::wipe(&s0, sizeof s0);
     rmbl_ct::wipe(&s1, sizeof s1);
     rmbl_ct::wipe(g0, sizeof g0);

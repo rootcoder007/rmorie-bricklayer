@@ -1025,7 +1025,6 @@ using rmbl_masked::Bs;
 using rmbl_masked::Rng;
 using rmbl_masked::kDsa;
 
-const int32_t kHigh = (kQ - 1) / (2 * kGamma2);   /* 44 or 16 values of HighBits */
 #if MLDSA_GAMMA1 == (1 << 17)
 const int kZBits = 18;
 #else
@@ -1045,11 +1044,11 @@ template <class V>
 inline void split(V *v0, V *v1, const V *v, Rng &rng) {
     const int32_t *p = &v->v[0][0];
     int32_t *p0 = &v0->v[0][0], *p1 = &v1->v[0][0];
-    for (size_t i = 0; i < sizeof(V) / sizeof(int32_t); ++i) {
-        const int32_t r = rmbl_masked::rand_mod(rng, kQ);
-        p0[i] = r;
-        p1[i] = rmbl_masked::cadd_mod(canon(p[i]) - r, kQ);
-    }
+    /* share 0 first (fresh randomness), then share 1 = v - share 0, in separate passes */
+    for (size_t i = 0; i < sizeof(V) / sizeof(int32_t); ++i) p0[i] = rmbl_masked::rand_mod(rng, kQ);
+    rmbl_masked::rmbl_mask_scrub();
+    for (size_t i = 0; i < sizeof(V) / sizeof(int32_t); ++i) p1[i] = rmbl_masked::cadd_mod(canon(p[i]) - p0[i], kQ);
+    rmbl_masked::rmbl_mask_scrub();
 }
 
 /* y for one polynomial from the masked rho'': SHAKE256(rho'' || nonce) through the masked
@@ -1069,6 +1068,7 @@ inline void poly_gamma1(int32_t *a0, int32_t *a1, const unsigned char rp0[64],
     for (int g = 0; g < 8; ++g) {
         Bs v;
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             const unsigned char *buf = s ? b1 : b0;
             for (int b = 0; b < kZBits; ++b) {
                 uint32_t w = 0;
@@ -1079,104 +1079,33 @@ inline void poly_gamma1(int32_t *a0, int32_t *a1, const unsigned char rp0[64],
                 v.w[s][b] = w;
             }
             for (int b = kZBits; b < rmbl_masked::kMaxBits; ++b) v.w[s][b] = 0;
+            rmbl_masked::rmbl_mask_scrub();   /* one share per pass */
         }
         int32_t c0[32], c1[32];
         rmbl_masked::sec_b2a(c0, c1, v, rng, kDsa);
-        for (int j = 0; j < 32; ++j) {
-            a0[32 * g + j] = rmbl_masked::cadd_mod(kGamma1 - c0[j], kQ);
-            a1[32 * g + j] = rmbl_masked::cadd_mod(-c1[j], kQ);
-        }
+        for (int j = 0; j < 32; ++j) a0[32 * g + j] = rmbl_masked::cadd_mod(kGamma1 - c0[j], kQ);
+        rmbl_masked::rmbl_mask_scrub();
+        for (int j = 0; j < 32; ++j) a1[32 * g + j] = rmbl_masked::cadd_mod(-c1[j], kQ);
+        rmbl_masked::rmbl_mask_scrub();
     }
 }
 
-/* b' for 32 lanes of a = a0 + a1 mod q, as Boolean shares: a + gamma2 - 1, less q - 1 when
- * that reaches q - 1. Then HighBits(a) = floor(b' / (2 gamma2)) for every a, the top
- * interval (which FIPS 204 Decompose folds to 0) included. */
-inline void bprime(Bs &bp, const int32_t *a0, const int32_t *a1, Rng &rng) {
-    Bs t, a, b, bm;
-    rmbl_masked::share_sum(t, a0, a1, rng, kDsa);
-    rmbl_masked::sec_reduce_q(a, t, rng, kDsa);
-    int32_t c[32], nc[32];
-    for (int j = 0; j < 32; ++j) {
-        c[j] = kGamma2 - 1;
-        nc[j] = (1 << kDsa.bits) - (kQ - 1);
-    }
-    rmbl_masked::sec_add_public(b, a, c, kDsa.bits, rng);
-    rmbl_masked::sec_add_public(bm, b, nc, kDsa.bits, rng);
-    uint32_t s0, s1;
-    rmbl_masked::sec_less_const(s0, s1, b, kQ - 1, rng, kDsa);
-    rmbl_masked::sec_select(bp, s0, s1, b, bm, kDsa.bits, rng);
+inline void bprime(rmbl_masked::Bs &bp, const int32_t *a0, const int32_t *a1, Rng &rng) {
+    rmbl_masked::dsa_bprime(bp, a0, a1, kGamma2, rng);
 }
-
-/* HighBits per lane, revealed by a binary search whose comparisons each reveal one bit of
- * the result and nothing else. */
-inline void reveal_highbits(int32_t *w1, const Bs &bp, Rng &rng) {
-    for (int j = 0; j < 32; ++j) w1[j] = 0;
-    for (int p = 32; p >= 1; p >>= 1) {
-        int32_t thr[32];
-        for (int j = 0; j < 32; ++j) {
-            const int32_t c = w1[j] + p;
-            thr[j] = c <= kHigh - 1 ? 2 * c * kGamma2 : (1 << (kDsa.bits - 1)) - 1;
-        }
-        uint32_t s0, s1;
-        rmbl_masked::sec_less(s0, s1, bp, thr, rng, kDsa);
-        uint32_t ge = ~(s0 ^ s1);   /* bits of w1, which the signature publishes */
-        RMBL_MLDSA_DECLASSIFY(&ge, sizeof ge);
-        for (int j = 0; j < 32; ++j) w1[j] += p & -static_cast<int32_t>((ge >> j) & 1u);
-    }
+inline void reveal_highbits(int32_t *w1, const rmbl_masked::Bs &bp, Rng &rng) {
+    rmbl_masked::dsa_reveal_highbits(w1, bp, kGamma2, rng);
 }
-
-/* Lane j set when LowBits(v) lies inside +-(gamma2 - beta - 1), given HighBits(v) == w1: the
- * r0 check of FIPS 204. If HighBits(v) differs from w1 the test fails, as the FIPS check
- * would (|LowBits| >= gamma2 - beta then). The top interval's low bits are one less than
- * b' - (gamma2 - 1) (Decompose subtracts one there), hence the bound beta + 1 at w1 = 0. */
-inline void lowbits_ok(uint32_t &o0, uint32_t &o1, const Bs &bp, const int32_t *w1, Rng &rng) {
-    int32_t lo[32], hi[32];
-    for (int j = 0; j < 32; ++j) {
-        const int32_t base = 2 * kGamma2 * w1[j];
-        lo[j] = base + (w1[j] == 0 ? kBeta + 1 : kBeta);
-        hi[j] = base + 2 * kGamma2 - kBeta - 1;
-    }
-    uint32_t a0, a1, b0, b1;
-    rmbl_masked::sec_less(a0, a1, bp, lo, rng, kDsa);
-    rmbl_masked::sec_less(b0, b1, bp, hi, rng, kDsa);
-    rmbl_masked::sec_and(o0, o1, static_cast<uint32_t>(~a0), a1, b0, b1, rng.u32());
+inline void lowbits_ok(uint32_t o[2], const rmbl_masked::Bs &bp, const int32_t *w1, Rng &rng) {
+    rmbl_masked::dsa_lowbits_ok(o, bp, w1, kGamma2, kBeta, rng);
 }
-
-/* Shares of an all-lanes AND accumulated over a whole vector; reveals the one bit. */
-struct AllOk {
-    uint32_t a0 = 0xffffffffu, a1 = 0;
-    void add(uint32_t o0, uint32_t o1, Rng &rng) {
-        uint32_t z0, z1;
-        rmbl_masked::sec_and(z0, z1, a0, a1, o0, o1, rng.u32());
-        a0 = z0;
-        a1 = z1;
-    }
-    int reveal(Rng &rng) const {
-        uint32_t b0, b1;
-        rmbl_masked::sec_all_lanes(b0, b1, a0, a1, rng);
-        int ok = static_cast<int>((b0 ^ b1) & 1u);
-        RMBL_MLDSA_DECLASSIFY(&ok, sizeof ok);   /* the accept/reject decision */
-        return ok;
-    }
-};
+using rmbl_masked::AllOk;
 
 /* ||a||_inf < B for every coefficient of a vector of shares */
 template <class V>
 inline int norm_ok(const V *m0, const V *m1, int32_t B, Rng &rng) {
-    int32_t lo[32], w[32];
-    for (int j = 0; j < 32; ++j) {
-        lo[j] = kQ - B + 1;
-        w[j] = 2 * B - 1;
-    }
     AllOk acc;
-    const int n = static_cast<int>(sizeof(V) / sizeof(int32_t));
-    const int32_t *p0 = &m0->v[0][0], *p1 = &m1->v[0][0];
-    for (int i = 0; i < n; i += 32) {
-        uint32_t o0, o1;
-        rmbl_masked::sec_in_interval(o0, o1, p0 + i, p1 + i, lo, w, rng, kDsa);
-        acc.add(o0, o1, rng);
-    }
+    rmbl_masked::dsa_norm_acc(acc, &m0->v[0][0], &m1->v[0][0], static_cast<int>(sizeof(V) / sizeof(int32_t)), B, rng);
     return acc.reveal(rng);
 }
 
@@ -1208,21 +1137,23 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
         msk::split(&W.s2[0], &W.s2[1], &s2, rng);
         msk::split(&W.t0[0], &W.t0[1], &t0, rng);
     }
-    for (int i = 0; i < 32; ++i) {
-        k0[i] = static_cast<unsigned char>(rng.u32());
-        k1[i] = static_cast<unsigned char>(key[i] ^ k0[i]);
-    }
+    for (int i = 0; i < 32; ++i) k0[i] = static_cast<unsigned char>(rng.u32());
+    rmbl_masked::rmbl_mask_scrub();
+    for (int i = 0; i < 32; ++i) k1[i] = static_cast<unsigned char>(key[i] ^ k0[i]);
+    rmbl_masked::rmbl_mask_scrub();
     rmbl_ct::wipe(key, sizeof key);
     /* rho'' = H(K || rnd || mu), K masked; rnd and mu ride on share 0 */
     std::memcpy(in0, k0, 32);
     std::memcpy(in0 + 32, rnd, 32);
     std::memcpy(in0 + 64, mu, 64);
+    rmbl_masked::rmbl_mask_scrub();
     std::memcpy(in1, k1, 32);
     std::memset(in1 + 32, 0, 96);
     rmbl_masked::sponge_masked(rp0, rp1, 64, in0, in1, 128, 136, 0x1f, rng);
 
     matrix_expand(mat.data(), rho);
     for (int s = 0; s < 2; ++s) {
+        rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
         vecl_ntt(&W.s1[s]);
         veck_ntt(&W.s2[s]);
         veck_ntt(&W.t0[s]);
@@ -1240,6 +1171,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
         }
         ++nonce;
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             W.z[s] = W.y[s];
             vecl_ntt(&W.z[s]);
             matrix_pointwise_montgomery(&W.w[s], mat.data(), &W.z[s]);
@@ -1266,6 +1198,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
 
         /* z = y + c s1 */
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             vecl_pointwise_poly(&W.z[s], cp, &W.s1[s]);
             vecl_invntt(&W.z[s]);
             vecl_add(&W.z[s], &W.z[s], &W.y[s]);
@@ -1275,6 +1208,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
 
         /* v = w - c s2, and its low bits */
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             veck_pointwise_poly(&W.v[s], cp, &W.s2[s]);
             veck_invntt(&W.v[s]);
             veck_sub(&W.v[s], &W.w[s], &W.v[s]);
@@ -1286,9 +1220,9 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
                 for (int g = 0; g < 8; ++g) {
                     rmbl_masked::Bs bp;
                     msk::bprime(bp, &W.v[0].v[i][32 * g], &W.v[1].v[i][32 * g], rng);
-                    uint32_t o0, o1;
-                    msk::lowbits_ok(o0, o1, bp, &w1.v[i][32 * g], rng);
-                    acc.add(o0, o1, rng);
+                    uint32_t o[2];
+                    msk::lowbits_ok(o, bp, &w1.v[i][32 * g], rng);
+                    acc.add(o, rng);
                 }
             }
             if (!acc.reveal(rng)) continue;
@@ -1296,6 +1230,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
 
         /* c t0 */
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             veck_pointwise_poly(&W.u[s], cp, &W.t0[s]);
             veck_invntt(&W.u[s]);
             msk::canon_all(&W.u[s]);
@@ -1304,6 +1239,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
 
         /* the hint: HighBits(w - c s2 + c t0) against w1 */
         for (int s = 0; s < 2; ++s) {
+            rmbl_masked::rmbl_mask_scrub();   /* the previous share's values leave the registers */
             veck_add(&W.u[s], &W.v[s], &W.u[s]);
             msk::canon_all(&W.u[s]);
         }

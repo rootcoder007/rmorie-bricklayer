@@ -30,6 +30,9 @@
 #include <R.h>
 #include <Rinternals.h>
 #include "rmbl_ct.h"
+#if defined(RMBL_MLDSA_DECLASSIFY) && !defined(RMBL_MASKED_DECLASSIFY)
+#define RMBL_MASKED_DECLASSIFY(ptr, len) RMBL_MLDSA_DECLASSIFY(ptr, len)
+#endif
 #include "rmbl_masked.h"
 
 /* the FIPS 202 sponge from rmbl_keccak.cpp */

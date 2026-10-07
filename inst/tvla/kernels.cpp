@@ -88,3 +88,59 @@ extern "C" __attribute__((used)) void *memset(void *d, int c, unsigned int n) {
     while (n--) *dd++ = static_cast<unsigned char>(c);
     return d;
 }
+
+/* ---- ML-DSA signing gadgets (q = 8380417), from the same header ---- */
+extern "C" {
+
+/* y's Boolean-to-arithmetic conversion: 32 values of 20 bits, packed as in polyz_unpack,
+ * b0 ^ b1 the secret; out = 32 arithmetic shares then 32 more */
+__attribute__((used, noinline)) void tvla_dsa_b2a(const unsigned char *b0, const unsigned char *b1,
+                                                  const uint32_t *rnd, int32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::Bs v;
+    for (int s = 0; s < 2; ++s) {
+        const unsigned char *buf = s ? b1 : b0;
+        for (int b = 0; b < 20; ++b) {
+            uint32_t w = 0;
+            for (int j = 0; j < 32; ++j) {
+                const unsigned pos = 20u * static_cast<unsigned>(j) + static_cast<unsigned>(b);
+                w |= static_cast<uint32_t>((buf[pos >> 3] >> (pos & 7u)) & 1u) << j;
+            }
+            v.w[s][b] = w;
+        }
+        for (int b = 20; b < rmbl_masked::kMaxBits; ++b) v.w[s][b] = 0;
+    }
+    rmbl_masked::sec_b2a(out, out + 32, v, rng, rmbl_masked::kDsa);
+}
+
+/* HighBits' operand b' and the r0 window test of 32 values a0 + a1 mod q (w1 = 0, gamma2 =
+ * (q - 1) / 32, beta = 196: ML-DSA-65); out = the test's two share words */
+__attribute__((used, noinline)) void tvla_dsa_lowbits(const int32_t *a0, const int32_t *a1, const uint32_t *rnd,
+                                                      uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::Bs bp;
+    rmbl_masked::dsa_bprime(bp, a0, a1, (8380417 - 1) / 32, rng);
+    int32_t w1[32];
+    for (int j = 0; j < 32; ++j) w1[j] = 0;
+    rmbl_masked::dsa_lowbits_ok(out, bp, w1, (8380417 - 1) / 32, 196, rng);
+}
+
+/* the masked norm test ||a|| < gamma1 - beta over 32 values, accumulated, not revealed */
+__attribute__((used, noinline)) void tvla_dsa_norm(const int32_t *a0, const int32_t *a1, const uint32_t *rnd,
+                                                   uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::AllOk acc;
+    rmbl_masked::dsa_norm_acc(acc, a0, a1, 32, (1 << 19) - 196, rng);
+    rmbl_masked::m_pub(rmbl_masked::pz(out, out + 1, acc.a, acc.a + 1), 0, 3);
+}
+
+}

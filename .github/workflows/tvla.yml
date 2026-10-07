@@ -1,10 +1,8 @@
 # Simulated power analysis (inst/tvla): the package's ML-KEM arithmetic cross-compiled for
 # a Cortex-M4, executed in unicorn under a Hamming-weight leakage model, and assessed with
 # TVLA (fixed-vs-random Welch t, two independent experiments). The unmasked kernels are the
-# positive controls and must leak; a masked kernel that leaks fails the job. A second pass
-# under the transition (Hamming-distance) model is reported, not gated: the Boolean gadgets
-# compiled from C still let share 0 and share 1 meet in one register, which only
-# hand-allocated assembly rules out (inst/tvla/README.md).
+# positive controls and must leak; a masked kernel that leaks fails the job, under the value
+# (Hamming-weight) model and under the transition (Hamming-distance) model both.
 name: tvla
 
 on:
@@ -31,7 +29,7 @@ concurrency:
 
 jobs:
   tvla:
-    name: TVLA (emulated Cortex-M4, Hamming weight)
+    name: TVLA (emulated Cortex-M4, Hamming weight and distance)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -45,9 +43,8 @@ jobs:
       - name: Assess
         working-directory: inst/tvla
         run: ./build/tvla all ${{ github.event.inputs.traces || '5000' }}
-      - name: Transition model (reported, not gated)
+      - name: Assess, transition model
         if: always()
-        continue-on-error: true
         working-directory: inst/tvla
         env:
           TVLA_MODEL: hd

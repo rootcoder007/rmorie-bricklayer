@@ -25,6 +25,54 @@
   `slh_verify_internal`, not exported) so the ACVP internal vectors check the core the public
   interface wraps.
 
+## Side channels: timing, power, masking
+
+* **First-order masking, on by default.** `kem_decapsulate()` (ML-KEM-512/768/1024) and every
+  ML-DSA signature (`capsule_sign()` with an ML-DSA key, `fips_sign_mu()`) run
+  with each value that depends on the secret key held as two shares, refreshed with fresh
+  randomness from the operating system for every call. The output is byte-identical to the
+  unmasked computation: the full vector suite compares the two on every ML-KEM decapsulation
+  and ML-DSA signing vector. `kem_decapsulate(masked = FALSE)` keeps the plain path. Cost:
+  about 5 times the plain decapsulation and 16 times the plain signature (13 ms for
+  ML-DSA-65 on a laptop).
+* The gadgets (`src/rmbl_masked.h`): Trichina's AND, a bitsliced Boolean adder,
+  arithmetic-to-Boolean and Boolean-to-arithmetic conversion modulo 3329 and 8380417, masked
+  Compress_1 and the decompressed ciphertext comparison (Bhasin et al. 2021), masked CBD
+  sampling, a masked Keccak, and for ML-DSA a masked SHAKE for rho'' and y, HighBits revealed
+  one bit at a time (w1 is public: it is hashed into the challenge), and the three rejection
+  tests revealing one bit each.
+* **Simulated power analysis** (`inst/tvla`, CI on every change): the gadgets and the ML-KEM
+  arithmetic, compiled for a Cortex-M4 and run in an emulator, are assessed with TVLA
+  (fixed-versus-random Welch t, two experiments) under two leakage models, the value
+  (Hamming-weight) model and the transition (Hamming-distance) model. Every masked kernel shows
+  no first-order leakage under either, and every unmasked control leaks (|t| up to 162). CI
+  fails on a masked leak under either model.
+* **The masking gadgets are assembly** for Cortex-M (Thumb-2), x86-64 and aarch64: every
+  operation that touches both shares of a value (AND, XOR, the public-constant operations, the
+  copies) loads, computes and stores in a fixed register order, zeroes each temporary before
+  it takes a new operand and each destination before it is written, and stores a zero between
+  the share-0 and share-1 stores; code that handles one share at a time runs each share in its
+  own pass with the general-purpose and SIMD registers zeroed in between. From C, the compiler
+  had moved one share into the register that held the other, which the transition model
+  showed as leakage (|t| up to 135) and the value model could not.
+* **Timing measured on hardware** (`inst/dudect`, CI on x86-64 and arm64 Linux and on
+  macOS): the dudect fixed-versus-random test on ML-KEM decapsulation (plain, masked, and
+  each phase on its own), encapsulation, HQC decapsulation, the digest comparison and PBKDF2,
+  with an early-exit comparison as the control that must be flagged. Decapsulation is also
+  measured valid-against-invalid with both classes varying (fresh valid ciphertexts against
+  random ones), so the only systematic difference is the rejection bit: an arm64 runner had
+  flagged the fixed-ciphertext test at under one tick in 65,000 on one pass and not on the
+  next, while every phase measured on its own was clean.
+* **Differential fuzzing against OpenSSL 3.5** (`inst/fuzz/fuzz_ossl.cpp`, libFuzzer): ML-KEM,
+  ML-DSA (valid and mutated signatures), SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests,
+  BLAKE2b-512, HMAC and PBKDF2 must agree with OpenSSL byte for byte.
+* **Found and fixed along the way:** compression divided by q with a hardware divide at -O0
+  (KyberSlash) and now multiplies; three "add q when negative" corrections compiled to Thumb-2
+  conditional execution on a share's sign and are branch-free; the masked share split drew by
+  rejection and now draws in constant time.
+* A hex logo (`man/figures/logo.png`, source `data-raw/hex_logo.svg`), on the README and the
+  package website.
+
 ## The SIU parser, third pass
 
 Two further reviews of 0.5.8 (the diff review and a dedicated SIU review) showed the

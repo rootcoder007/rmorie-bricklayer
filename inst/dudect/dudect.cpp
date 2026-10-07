@@ -39,6 +39,8 @@ void dd_mlkem_enc_run(const unsigned char *m32);
 void dd_mlkem_pdec_run(const unsigned char *in);
 void dd_mlkem_sel_run(const unsigned char *in);
 void dd_mlkem_decm_run(const unsigned char *in);
+void dd_mlkem_validity_prep();
+void dd_mlkem_valid_fixed(unsigned char *in);
 size_t dd_hqc_ct_bytes();
 size_t dd_hqc_k_bytes();
 size_t dd_hqc_salt_bytes();
@@ -133,6 +135,10 @@ static void mlkem_prep(std::mt19937_64 &g) {
     rnd_fill(g, m, 32);
     dd_mlkem_prep(seed, m);
 }
+static void mlkem_validity_prep(std::mt19937_64 &g) {
+    mlkem_prep(g);
+    dd_mlkem_validity_prep();
+}
 static unsigned char g_m_fixed[32] = {0x5a};
 static void mlkem_enc_fixed(unsigned char *in) { std::memcpy(in, g_m_fixed, 32); }
 
@@ -178,6 +184,10 @@ static void __attribute__((noinline)) leaky_cmp_run(const unsigned char *in) {
 static const Target kTargets[] = {
     {"mlkem768_decaps", "ML-KEM-768 decapsulation: valid vs random ciphertext",
      dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_dec_run},
+    {"mlkem768_decaps_validity", "ML-KEM-768 decapsulation: fresh valid vs random invalid ciphertexts (both classes vary)",
+     dd_mlkem_ct_bytes(), 1, mlkem_validity_prep, dd_mlkem_valid_fixed, dd_mlkem_dec_run},
+    {"mlkem768_decaps_masked_validity", "ML-KEM-768 masked decapsulation: fresh valid vs random invalid ciphertexts",
+     dd_mlkem_ct_bytes(), 1, mlkem_validity_prep, dd_mlkem_valid_fixed, dd_mlkem_decm_run},
     {"mlkem768_decaps_masked", "ML-KEM-768 masked decapsulation (the default): valid vs random ciphertext",
      dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_decm_run},
     {"mlkem768_pke_decrypt", "ML-KEM-768 decapsulation, K-PKE decryption alone: valid vs random ciphertext",

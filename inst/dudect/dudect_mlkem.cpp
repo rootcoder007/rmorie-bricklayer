@@ -52,3 +52,33 @@ void dd_mlkem_decm_run(const unsigned char *in) {
     rng.ctx = nullptr;
     rmbl_mlkem768::decaps_masked(sink, dk.data(), in, rng);
 }
+
+/* Valid against invalid, both varying: the fixed-input targets above repeat one ciphertext in
+ * their fixed class, so a difference there can come from the same bytes being decapsulated
+ * again and again (caches, predictors, data-dependent prefetch) rather than from validity.
+ * Here class 0 draws a fresh valid ciphertext from a pool of encapsulations and class 1 is
+ * random bytes (invalid), so the only systematic difference is the rejection bit, the one
+ * secret-dependent fact decapsulation must hide. */
+static std::vector<unsigned char> valid_pool;
+static size_t valid_next = 0;
+static const size_t kValidPool = 4096;
+void dd_mlkem_validity_prep() {
+    namespace M = rmbl_mlkem768;
+    valid_pool.assign(kValidPool * static_cast<size_t>(M::kCtBytes), 0);
+    uint64_t x = 0x243F6A8885A308D3ull;
+    for (size_t i = 0; i < kValidPool; ++i) {
+        unsigned char m[32], ss[32];
+        for (int k = 0; k < 32; ++k) {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            m[k] = static_cast<unsigned char>(x >> 56);
+        }
+        M::encaps(valid_pool.data() + i * static_cast<size_t>(M::kCtBytes), ss, ek.data(), m);
+    }
+    valid_next = 0;
+}
+void dd_mlkem_valid_fixed(unsigned char *in) {
+    const size_t n = static_cast<size_t>(rmbl_mlkem768::kCtBytes);
+    std::memcpy(in, valid_pool.data() + (valid_next++ % kValidPool) * n, n);
+}

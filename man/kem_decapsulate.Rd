@@ -4,7 +4,7 @@
 \alias{kem_decapsulate}
 \title{Recover a shared secret from an ML-KEM ciphertext}
 \usage{
-kem_decapsulate(key, ciphertext)
+kem_decapsulate(key, ciphertext, masked = TRUE)
 }
 \arguments{
 \item{key}{A key from

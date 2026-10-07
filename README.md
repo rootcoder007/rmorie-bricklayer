@@ -1,4 +1,4 @@
-# rmoriebricklayer
+# rmoriebricklayer <img src="man/figures/logo.png" align="right" height="139" alt="rmoriebricklayer hex logo" />
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/rmoriebricklayer)](https://CRAN.R-project.org/package=rmoriebricklayer)
@@ -219,14 +219,17 @@ by a check you can run yourself; none is a claim about the design.
 | Survives hostile arguments | Every one of the 113 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
+| Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE, HMAC and PBKDF2: 6,848 checks, 0 failures, each not-applicable vector named with its reason; the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
+| Agrees with OpenSSL on any input | libFuzzer differential fuzzing against OpenSSL 3.5: ML-KEM, ML-DSA, SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests, BLAKE2b, HMAC and PBKDF2 must agree byte for byte | `inst/fuzz/fuzz_ossl.cpp`, workflow `fuzz` |
+| Timing on hardware | dudect fixed-versus-random Welch t on x86-64 and arm64 Linux and on Apple silicon (with and without DIT): ML-KEM decapsulation plain and masked, valid against invalid with both classes varying, each phase alone, encapsulation, HQC decapsulation, the digest comparison, PBKDF2; an early-exit comparison is the control that must be flagged | `inst/dudect/`, workflow `dudect` |
+| Power, in simulation | TVLA on the code compiled for a Cortex-M4 and run in an emulator, under the Hamming-weight and the Hamming-distance models: every masked kernel shows no first-order leakage under either, every unmasked control leaks | `inst/tvla/`, workflow `tvla` |
+| Masked by default | First-order masking of ML-KEM decapsulation and ML-DSA signing; the gadgets touch the two shares only in assembly (Cortex-M, x86-64, aarch64) with a fixed register order and zeroed temporaries | `src/rmbl_masked.h` |
 | DER means DER | The parser refuses BER: long-form lengths below 128, lengths with leading zeros, non-minimal tags, end-of-contents octets, trailing bytes; `ECDSA-Sig-Value` must be exactly two canonical INTEGERs and the PKCS#1 block exactly the RFC 8017 DigestInfo | `src/rmbl_asn1.cpp`, `R/x509.R`, `R/timestamp.R` |
 
-What is not covered, stated as plainly: these are checks of this source on
-those compilers -- not of the machine code a different compiler, flag set or
-CPU microarchitecture produces, and not of physical side channels (power,
-EM, fault injection). No third-party audit has been commissioned; `SECURITY.md`
-has the threat model, the reporting address and the list of what each check
-would and would not catch. The checks are reproducible on any Linux machine
+Outside what these checks model: electromagnetic emanation, fault injection, glitches and
+coupling a leakage model omits, and higher-order attacks on two-share masking. `SECURITY.md`
+has the threat model, the reporting address and the list of what each check would and would
+not catch. The checks are reproducible on any Linux machine
 with valgrind and clang: `bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh`
 and `bash inst/fuzz/build.sh && bash inst/fuzz/run.sh`.
 

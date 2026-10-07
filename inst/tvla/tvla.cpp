@@ -280,6 +280,71 @@ static std::vector<double> k_cbd(const std::vector<int16_t> &sec, std::mt19937_6
 }
 static std::vector<double> k_cbd_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_cbd(s, g, false); }
 static std::vector<double> k_cbd_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_cbd(s, g, true); }
+/* ---- ML-DSA signing gadgets: q = 8380417 ---- */
+static const int32_t kDsaQ = 8380417;
+/* 32 secret values below 2^20 (y's packed fields), from the class's coefficients */
+static std::vector<uint32_t> dsa_fields(const std::vector<int16_t> &sec) {
+    std::vector<uint32_t> v(32);
+    for (int j = 0; j < 32; ++j) v[j] = (static_cast<uint32_t>(sec[j]) * 317u + static_cast<uint32_t>(sec[j + 32])) & 0xFFFFFu;
+    return v;
+}
+static std::vector<unsigned char> pack20(const std::vector<uint32_t> &v) {
+    std::vector<unsigned char> b(80, 0);
+    for (int j = 0; j < 32; ++j)
+        for (int k = 0; k < 20; ++k)
+            if ((v[j] >> k) & 1u) b[(20 * j + k) >> 3] |= static_cast<unsigned char>(1u << ((20 * j + k) & 7));
+    return b;
+}
+static std::vector<double> k_dsa_b2a(const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<uint32_t> v = dsa_fields(sec), m(32, 0);
+    if (masked) {
+        for (int j = 0; j < 32; ++j) {
+            m[j] = static_cast<uint32_t>(g()) & 0xFFFFFu;
+            v[j] ^= m[j];
+        }
+    }
+    const uint64_t p0 = kInput, p1 = p0 + 80, o = p1 + 80;
+    return run_kernel(TVLA_DSA_B2A, {uint32_t(p0), uint32_t(p1), uint32_t(kRand), uint32_t(o)},
+                      {{p0, pack20(v)}, {p1, pack20(m)}, {kRand, rnd_bytes(g, 65536)}});
+}
+static std::vector<double> k_dsa_b2a_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_dsa_b2a(s, g, false); }
+static std::vector<double> k_dsa_b2a_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_dsa_b2a(s, g, true); }
+/* 32 secret values mod q, as arithmetic shares (share 1 zero for the control) */
+static std::vector<double> dsa_arith(uint64_t entry, int32_t (*val)(const std::vector<int16_t> &, int),
+                                     const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<int32_t> a0(32), a1(32, 0);
+    for (int j = 0; j < 32; ++j) {
+        const int32_t a = val(sec, j);
+        if (masked) {
+            a1[j] = static_cast<int32_t>(g() % static_cast<uint64_t>(kDsaQ));
+            a0[j] = ((a - a1[j]) % kDsaQ + kDsaQ) % kDsaQ;
+        } else {
+            a0[j] = a;
+        }
+    }
+    auto bytes32 = [](const std::vector<int32_t> &v) {
+        std::vector<unsigned char> b(v.size() * 4);
+        std::memcpy(b.data(), v.data(), b.size());
+        return b;
+    };
+    const uint64_t p0 = kInput, p1 = p0 + 128, o = p1 + 128;
+    return run_kernel(entry, {uint32_t(p0), uint32_t(p1), uint32_t(kRand), uint32_t(o)},
+                      {{p0, bytes32(a0)}, {p1, bytes32(a1)}, {kRand, rnd_bytes(g, 65536)}});
+}
+/* w - c s2 near a multiple of 2 gamma2: some lanes pass the window, some do not */
+static int32_t dsa_val_w(const std::vector<int16_t> &sec, int j) {
+    return static_cast<int32_t>((static_cast<int64_t>(sec[j]) * 2521 + sec[j + 32]) % kDsaQ);
+}
+/* z = y + c s1, centred near the norm bound, both signs */
+static int32_t dsa_val_z(const std::vector<int16_t> &sec, int j) {
+    const int32_t d = static_cast<int32_t>(sec[j]) * 160 - 266320;   /* in about +-2^19 */
+    return d < 0 ? d + kDsaQ : d;
+}
+static std::vector<double> k_dsa_low_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_LOWBITS, dsa_val_w, s, g, false); }
+static std::vector<double> k_dsa_low_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_LOWBITS, dsa_val_w, s, g, true); }
+static std::vector<double> k_dsa_norm_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_NORM, dsa_val_z, s, g, false); }
+static std::vector<double> k_dsa_norm_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_NORM, dsa_val_z, s, g, true); }
+
 
 static const Kernel kKernels[] = {
     {"decode", "message decoding Compress_1, unmasked (control)", false, k_decode_plain},
@@ -288,6 +353,12 @@ static const Kernel kKernels[] = {
     {"keccak_masked", "masked Keccak-f[1600] (chi through the masked AND)", true, k_keccak_masked},
     {"cbd", "centred-binomial noise from a secret PRF output, unmasked (control)", false, k_cbd_plain},
     {"cbd_masked", "masked noise sampling (sec_cbd32 with Boolean-to-arithmetic)", true, k_cbd_masked},
+    {"dsa_b2a", "ML-DSA y: Boolean-to-arithmetic mod 8380417, unmasked (control)", false, k_dsa_b2a_plain},
+    {"dsa_b2a_masked", "ML-DSA y: masked Boolean-to-arithmetic (sec_b2a, kDsa)", true, k_dsa_b2a_masked},
+    {"dsa_lowbits", "ML-DSA r0 window test (b' and the bounds), unmasked (control)", false, k_dsa_low_plain},
+    {"dsa_lowbits_masked", "ML-DSA masked r0 window test (dsa_bprime, dsa_lowbits_ok)", true, k_dsa_low_masked},
+    {"dsa_norm", "ML-DSA norm test of z, unmasked (control)", false, k_dsa_norm_plain},
+    {"dsa_norm_masked", "ML-DSA masked norm test of z (dsa_norm_acc)", true, k_dsa_norm_masked},
     {"mlkem_basemul", "ML-KEM secret-key product s*u (NTT domain), unmasked", false, k_basemul},
     {"mlkem_basemul_masked", "ML-KEM secret-key product, first-order arithmetic masking", true, k_basemul_masked},
     {"mlkem_ntt", "ML-KEM forward NTT of a secret polynomial, unmasked", false, k_ntt},

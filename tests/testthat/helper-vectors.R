@@ -220,14 +220,19 @@ rmbl_run_vectors <- function(vec, per_group = NA_integer_, verbose = FALSE) {
     mode <- DSA(g$parameterSet)
     sk <- h(t$sk)
     rnd <- if (isTRUE(g$deterministic)) raw(32) else h(t$rnd)
-    if (identical(g$signatureInterface, "internal")) {
-      mu <- if (isTRUE(g$externalMu)) h(t$mu) else mldsa_mu(mldsa_tr_sk(sk), h(t$message))
-      sig <- .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, mu, rnd)
-    } else {
-      ph <- if (identical(g$preHash, "preHash")) PH[[t$hashAlg]] else "none"
-      sig <- .Call(C("C_rmbl_mldsa_sign"), mode, sk, h(t$message), h(t$context), rnd, ph)
+    sgn <- function(masked) {
+      if (identical(g$signatureInterface, "internal")) {
+        mu <- if (isTRUE(g$externalMu)) h(t$mu) else mldsa_mu(mldsa_tr_sk(sk), h(t$message))
+        .Call(C("C_rmbl_mldsa_sign_mu"), mode, sk, mu, rnd, masked)
+      } else {
+        ph <- if (identical(g$preHash, "preHash")) PH[[t$hashAlg]] else "none"
+        .Call(C("C_rmbl_mldsa_sign"), mode, sk, h(t$message), h(t$context), rnd, ph, masked)
+      }
     }
-    check(s, t$tcId, eqhex(sig, e$signature), paste(g$signatureInterface, g$preHash %||% "", t$hashAlg %||% ""))
+    sig <- sgn(FALSE)
+    what <- paste(g$signatureInterface, g$preHash %||% "", t$hashAlg %||% "")
+    check(s, t$tcId, eqhex(sig, e$signature), what)
+    check(s, t$tcId, identical(sig, sgn(TRUE)), paste("masked signing disagrees:", what))
   })
   run_set("ML-DSA-sigVer-FIPS204", function(s, g, t, e) {
     mode <- DSA(g$parameterSet)
