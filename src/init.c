@@ -63,11 +63,14 @@ extern SEXP C_rmbl_sen_slopes(SEXP, SEXP);
 extern SEXP C_rmbl_hurwitz_zeta(SEXP, SEXP);
 /* rmbl_keccak.cpp: FIPS 202 */
 extern SEXP C_rmbl_shake(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_prehash_digest(SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_sign_internal(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_slhdsa_verify_internal(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_sizes(SEXP);
 extern SEXP C_rmbl_mldsa_keypair(SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mldsa_sign_mu(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify_mu(SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mldsa_verify(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
@@ -97,6 +100,7 @@ extern SEXP C_rmbl_mlkem_sizes(SEXP);
 extern SEXP C_rmbl_mlkem_keygen(SEXP, SEXP);
 extern SEXP C_rmbl_mlkem_encaps(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_mlkem_decaps(SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_mlkem_decaps_masked(SEXP, SEXP, SEXP);
 
 /* rmbl_hqc.cpp: HQC-KEM (code-based key encapsulation) */
 extern SEXP C_rmbl_hqc_sizes(SEXP);
@@ -270,11 +274,14 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_sen_slopes",        (DL_FUNC) &C_rmbl_sen_slopes,        2},
     {"C_rmbl_hurwitz_zeta",      (DL_FUNC) &C_rmbl_hurwitz_zeta,      2},
     {"C_rmbl_shake",             (DL_FUNC) &C_rmbl_shake,             3},
+    {"C_rmbl_prehash_digest",    (DL_FUNC) &C_rmbl_prehash_digest,    2},
+    {"C_rmbl_slhdsa_sign_internal", (DL_FUNC) &C_rmbl_slhdsa_sign_internal, 4},
+    {"C_rmbl_slhdsa_verify_internal", (DL_FUNC) &C_rmbl_slhdsa_verify_internal, 4},
     {"C_rmbl_mldsa_sizes",       (DL_FUNC) &C_rmbl_mldsa_sizes,       1},
     {"C_rmbl_mldsa_keypair",     (DL_FUNC) &C_rmbl_mldsa_keypair,     2},
-    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        6},
+    {"C_rmbl_mldsa_sign",        (DL_FUNC) &C_rmbl_mldsa_sign,        7},
     {"C_rmbl_mldsa_mu",          (DL_FUNC) &C_rmbl_mldsa_mu,          5},
-    {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     4},
+    {"C_rmbl_mldsa_sign_mu",     (DL_FUNC) &C_rmbl_mldsa_sign_mu,     5},
     {"C_rmbl_mldsa_verify_mu",   (DL_FUNC) &C_rmbl_mldsa_verify_mu,   4},
     {"C_rmbl_mldsa_verify",      (DL_FUNC) &C_rmbl_mldsa_verify,      6},
     {"C_rmbl_strtod",             (DL_FUNC) &C_rmbl_strtod,             1},
@@ -294,6 +301,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_mlkem_keygen",      (DL_FUNC) &C_rmbl_mlkem_keygen,      2},
     {"C_rmbl_mlkem_encaps",      (DL_FUNC) &C_rmbl_mlkem_encaps,      3},
     {"C_rmbl_mlkem_decaps",      (DL_FUNC) &C_rmbl_mlkem_decaps,      3},
+    {"C_rmbl_mlkem_decaps_masked", (DL_FUNC) &C_rmbl_mlkem_decaps_masked, 3},
     {"C_rmbl_hqc_sizes",         (DL_FUNC) &C_rmbl_hqc_sizes,         1},
     {"C_rmbl_hqc_keygen",        (DL_FUNC) &C_rmbl_hqc_keygen,        2},
     {"C_rmbl_hqc_encaps",        (DL_FUNC) &C_rmbl_hqc_encaps,        4},

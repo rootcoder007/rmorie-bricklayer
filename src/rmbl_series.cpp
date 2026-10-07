@@ -449,6 +449,7 @@ SEXP C_rmbl_hurwitz_zeta_impl(SEXP s_, SEXP q_) {
  */
 SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
                      SEXP wts_, SEXP nperm_, SEXP seed_) {
+    (void)seed_;  /* kept for the registered arity: the permutations draw from R's stream, set.seed() governs it */
     const R_xlen_t n = XLENGTH(x_);
     const double *x = REAL(x_);
     const int *idx = INTEGER(idx_);

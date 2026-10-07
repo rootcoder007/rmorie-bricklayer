@@ -1,0 +1,146 @@
+/* Cortex-M4 kernels for the simulated power analysis (tvla.cpp). Freestanding: no library,
+ * no startup code; the host sets the stack and calls each entry point directly. The
+ * arithmetic is the package's own (src/rmbl_mlkem_arith.h), not a copy.
+ *
+ * Unmasked entries take the secret as it is. Masked entries take it as two arithmetic
+ * shares, s = s0 + s1 mod q, freshly split for every execution, and never combine them:
+ * every intermediate value is a function of one share, which on its own is uniform and
+ * independent of s. That is first-order masking of the linear part of decapsulation. */
+#include "../../src/rmbl_mlkem_arith.h"
+
+using namespace rmbl_mlkem_core;
+
+extern "C" {
+
+/* s^T u in the NTT domain for one polynomial: the secret-key product at the heart of
+ * ML-KEM decryption (FIPS 203 K-PKE.Decrypt), with u public. */
+__attribute__((used, noinline)) void tvla_mlkem_basemul(const int16_t *s, const int16_t *u, int16_t *out) {
+    poly_basemul(out, s, u);
+}
+
+__attribute__((used, noinline)) void tvla_mlkem_basemul_masked(const int16_t *s0, const int16_t *s1,
+                                                                const int16_t *u, int16_t *out0, int16_t *out1) {
+    poly_basemul(out0, s0, u);
+    poly_basemul(out1, s1, u);
+}
+
+/* The forward NTT of a secret polynomial (ML-KEM key generation transforms s and e). */
+__attribute__((used, noinline)) void tvla_mlkem_ntt(int16_t *r) { ntt(r); }
+
+__attribute__((used, noinline)) void tvla_mlkem_ntt_masked(int16_t *r0, int16_t *r1) {
+    ntt(r0);
+    ntt(r1);
+}
+
+/* the return trap: the host stops emulation when execution reaches here */
+__attribute__((used, noinline, naked)) void tvla_halt(void) { __asm__ volatile("b ."); }
+
+}
+
+/* ---- the masked gadgets of src/rmbl_masked.h (the masked decapsulation's building
+ * blocks). Randomness comes from a buffer the host fills afresh for every trace. Each
+ * gadget also runs as its own unmasked control: the same code with the second share zero,
+ * which is the plain computation on the secret. ---- */
+#include "../../src/rmbl_masked.h"
+
+static const uint32_t *g_rand;
+static uint32_t rand_fn(void *) { return *g_rand++; }
+
+extern "C" {
+
+__attribute__((used, noinline)) void tvla_decode(const int16_t *a0, const int16_t *a1, const uint32_t *rnd,
+                                                 uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::sec_decode1(out[0], out[1], a0, a1, rng);
+}
+
+__attribute__((used, noinline)) void tvla_keccak(uint64_t *s0, uint64_t *s1, const uint32_t *rnd) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::keccakf_masked(s0, s1, rng);
+}
+
+__attribute__((used, noinline)) void tvla_cbd(const unsigned char *b0, const unsigned char *b1, const uint32_t *rnd,
+                                              int16_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::sec_cbd32(out, out + 32, b0, b1, 0, 2, rng);
+}
+
+}
+
+/* no C library on the bare target: the two routines the compiler emits for struct copies */
+extern "C" __attribute__((used)) void *memcpy(void *d, const void *s, unsigned int n) {
+    unsigned char *dd = static_cast<unsigned char *>(d);
+    const unsigned char *ss = static_cast<const unsigned char *>(s);
+    while (n--) *dd++ = *ss++;
+    return d;
+}
+extern "C" __attribute__((used)) void *memset(void *d, int c, unsigned int n) {
+    unsigned char *dd = static_cast<unsigned char *>(d);
+    while (n--) *dd++ = static_cast<unsigned char>(c);
+    return d;
+}
+
+/* ---- ML-DSA signing gadgets (q = 8380417), from the same header ---- */
+extern "C" {
+
+/* y's Boolean-to-arithmetic conversion: 32 values of 20 bits, packed as in polyz_unpack,
+ * b0 ^ b1 the secret; out = 32 arithmetic shares then 32 more */
+__attribute__((used, noinline)) void tvla_dsa_b2a(const unsigned char *b0, const unsigned char *b1,
+                                                  const uint32_t *rnd, int32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::Bs v;
+    for (int s = 0; s < 2; ++s) {
+        const unsigned char *buf = s ? b1 : b0;
+        for (int b = 0; b < 20; ++b) {
+            uint32_t w = 0;
+            for (int j = 0; j < 32; ++j) {
+                const unsigned pos = 20u * static_cast<unsigned>(j) + static_cast<unsigned>(b);
+                w |= static_cast<uint32_t>((buf[pos >> 3] >> (pos & 7u)) & 1u) << j;
+            }
+            v.w[s][b] = w;
+        }
+        for (int b = 20; b < rmbl_masked::kMaxBits; ++b) v.w[s][b] = 0;
+    }
+    rmbl_masked::sec_b2a(out, out + 32, v, rng, rmbl_masked::kDsa);
+}
+
+/* HighBits' operand b' and the r0 window test of 32 values a0 + a1 mod q (w1 = 0, gamma2 =
+ * (q - 1) / 32, beta = 196: ML-DSA-65); out = the test's two share words */
+__attribute__((used, noinline)) void tvla_dsa_lowbits(const int32_t *a0, const int32_t *a1, const uint32_t *rnd,
+                                                      uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::Bs bp;
+    rmbl_masked::dsa_bprime(bp, a0, a1, (8380417 - 1) / 32, rng);
+    int32_t w1[32];
+    for (int j = 0; j < 32; ++j) w1[j] = 0;
+    rmbl_masked::dsa_lowbits_ok(out, bp, w1, (8380417 - 1) / 32, 196, rng);
+}
+
+/* the masked norm test ||a|| < gamma1 - beta over 32 values, accumulated, not revealed */
+__attribute__((used, noinline)) void tvla_dsa_norm(const int32_t *a0, const int32_t *a1, const uint32_t *rnd,
+                                                   uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    rmbl_masked::AllOk acc;
+    rmbl_masked::dsa_norm_acc(acc, a0, a1, 32, (1 << 19) - 196, rng);
+    rmbl_masked::m_pub(rmbl_masked::pz(out, out + 1, acc.a, acc.a + 1), 0, 3);
+}
+
+}

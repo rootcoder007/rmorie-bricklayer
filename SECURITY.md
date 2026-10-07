@@ -33,11 +33,18 @@ Every item runs in CI on every change; `README.md` has the table.
 | ASan + UBSan over the test suite | Out-of-bounds access, use-after-free, signed overflow, misaligned access on the paths the tests exercise | Paths no test exercises |
 | libFuzzer (`inst/fuzz`) | Crashes and sanitizer reports on inputs no test thought of; a decimal conversion that disagrees with the C library | Logic errors that do not crash; the fuzzers run for minutes per change and hours weekly, not indefinitely |
 
-What has not been done: no third-party security audit, and no measurement
-on hardware (power, EM, fault injection). The package is written for
-provenance and research records; if you deploy it where a key's secrecy
-protects something else, read the table above as the exact list of what
-has and has not been verified.
+Beyond the table: timing is measured on real CPUs (`inst/dudect`: x86-64 and arm64 Linux,
+Apple silicon, with a control that must be flagged); power leakage is assessed in simulation
+(`inst/tvla`: the code compiled for a Cortex-M4 and run under the Hamming-weight and the
+Hamming-distance models, TVLA in two experiments); ML-KEM decapsulation and ML-DSA signing
+are first-order masked by default, with the masking gadgets written in assembly for
+Cortex-M, x86-64 and aarch64; and the standardised schemes are checked against the C2SP
+Wycheproof and NIST ACVP sets and differentially fuzzed against OpenSSL 3.5.
+
+Outside what these checks model: electromagnetic emanation and fault injection, glitches and
+coupling a leakage model omits, and higher-order attacks on two-share masking. The secret key
+is stored in the standard byte formats of FIPS 203 and FIPS 204, so it is split into shares
+when an operation starts; reading it from memory is outside the masked computation.
 
 ## Supported versions
 

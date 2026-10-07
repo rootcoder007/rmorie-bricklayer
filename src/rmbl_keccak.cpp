@@ -276,6 +276,22 @@ void rmbl_sha3_256(unsigned char out[32], const unsigned char *in,
     rmbl_keccak_squeeze(&st, out, 32);
 }
 
+void rmbl_sha3_224(unsigned char out[28], const unsigned char *in,
+                   size_t inlen) {
+    RmblKeccak st;
+    rmbl_keccak_init(&st, 144, 0x06);
+    rmbl_keccak_absorb(&st, in, inlen);
+    rmbl_keccak_squeeze(&st, out, 28);
+}
+
+void rmbl_sha3_384(unsigned char out[48], const unsigned char *in,
+                   size_t inlen) {
+    RmblKeccak st;
+    rmbl_keccak_init(&st, 104, 0x06);
+    rmbl_keccak_absorb(&st, in, inlen);
+    rmbl_keccak_squeeze(&st, out, 48);
+}
+
 void rmbl_sha3_512(unsigned char out[64], const unsigned char *in,
                    size_t inlen) {
     RmblKeccak st;
