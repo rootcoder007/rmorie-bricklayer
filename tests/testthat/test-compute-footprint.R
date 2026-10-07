@@ -2,6 +2,7 @@
 # mocked powercap tree, and every fallback named in the assumptions.
 
 mock_rapl <- function(uj = 1e6, max_uj = 2^32, name = "package-0") {
+  skip_on_os("windows")   # the Linux domain names carry a colon, which Windows paths cannot
   d <- tempfile("powercap")
   dir.create(file.path(d, "intel-rapl:0"), recursive = TRUE)
   dir.create(file.path(d, "intel-rapl:0:0"), recursive = TRUE)      # a subdomain: must be ignored
