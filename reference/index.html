@@ -1568,6 +1568,129 @@
         </dt>
         <dd>Trend in a count series, as a rate ratio per period</dd>
       </dl></div><div class="section level2">
+      <h2 id="air-pollution-dispersion-and-health-burden">Air pollution, dispersion and health burden<a class="anchor" aria-label="anchor" href="#air-pollution-dispersion-and-health-burden"></a></h2>
+
+      <div class="section-desc"><p>Pasquill-Gifford dispersion and Briggs plume rise, Gaussian plume and puff, grid and particle models; concentration-response functions, attributable fraction, displaced mortality, the burden chain per area, the concentration index of exposure by income, a cross-fitted exposure-response estimator, and the one-call pipeline with its assumption log.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="pg_sigmas.html">pg_sigmas()</a></code> <code><a href="pg_sigmas.html">briggs_plume_rise()</a></code> <code><a href="pg_sigmas.html">gaussian_plume()</a></code> <code><a href="pg_sigmas.html">gaussian_puff()</a></code> <code><a href="pg_sigmas.html">advection_diffusion_2d()</a></code> <code><a href="pg_sigmas.html">lagrangian_particles()</a></code>
+
+        </dt>
+        <dd>Atmospheric dispersion: sigmas, plume rise, plume, puff, grid and particles</dd>
+
+        <dt>
+
+          <code><a href="crf_pm25.html">crf_pm25()</a></code> <code><a href="crf_pm25.html">crf_no2()</a></code>
+
+        </dt>
+        <dd>Concentration-response functions for PM2.5 and NO2</dd>
+
+        <dt>
+
+          <code><a href="attributable_fraction.html">attributable_fraction()</a></code>
+
+        </dt>
+        <dd>Population attributable fraction</dd>
+
+        <dt>
+
+          <code><a href="mortality_displaced.html">mortality_displaced()</a></code>
+
+        </dt>
+        <dd>Deaths avoided under a counterfactual exposure reduction</dd>
+
+        <dt>
+
+          <code><a href="pollution_burden.html">pollution_burden()</a></code>
+
+        </dt>
+        <dd>End-to-end pollution burden</dd>
+
+        <dt>
+
+          <code><a href="pollution_burden_by_area.html">pollution_burden_by_area()</a></code>
+
+        </dt>
+        <dd>Per-area pollution burden</dd>
+
+        <dt>
+
+          <code><a href="plr_crossfit.html">plr_crossfit()</a></code>
+
+        </dt>
+        <dd>Cross-fitted partially linear regression (double machine learning)</dd>
+
+        <dt>
+
+          <code><a href="exposure_response_plr.html">exposure_response_plr()</a></code>
+
+        </dt>
+        <dd>Exposure-response estimate with a bootstrap sensitivity interval</dd>
+
+        <dt>
+
+          <code><a href="exposure_concentration_index.html">exposure_concentration_index()</a></code>
+
+        </dt>
+        <dd>Concentration index of exposure by income</dd>
+
+        <dt>
+
+          <code><a href="verify_pollution.html">verify_pollution()</a></code> <code><a href="verify_pollution.html">pollution_report_text()</a></code>
+
+        </dt>
+        <dd>Run the pollution-to-health pipeline and report it</dd>
+      </dl></div><div class="section level2">
+      <h2 id="the-footprint-of-the-computation">The footprint of the computation<a class="anchor" aria-label="anchor" href="#the-footprint-of-the-computation"></a></h2>
+
+      <div class="section-desc"><p>Electricity and CO2-equivalent of an expression, measured from RAPL energy counters where the operating system exposes them, otherwise modelled with the Green Algorithms method, against a sourced carbon-intensity table.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="compute_footprint.html">compute_footprint()</a></code>
+
+        </dt>
+        <dd>Energy and carbon footprint of a computation</dd>
+
+        <dt>
+
+          <code><a href="carbon_intensity.html">carbon_intensity()</a></code> <code><a href="carbon_intensity.html">carbon_intensity_table()</a></code>
+
+        </dt>
+        <dd>Carbon intensity of electricity by location, offline, anywhere</dd>
+
+        <dt>
+
+          <code><a href="detect_location.html">detect_location()</a></code>
+
+        </dt>
+        <dd>Where is this computation running?</dd>
+
+        <dt>
+
+          <code><a href="rapl_available.html">rapl_available()</a></code>
+
+        </dt>
+        <dd>Is CPU energy measurable here?</dd>
+
+        <dt>
+
+          <code><a href="footprint_equivalents.html">footprint_equivalents()</a></code>
+
+        </dt>
+        <dd>Everyday equivalents of a quantity of CO2-equivalent</dd>
+      </dl></div><div class="section level2">
       <h2 id="region-coded-counts">Region-coded counts<a class="anchor" aria-label="anchor" href="#region-coded-counts"></a></h2>
 
       <div class="section-desc"><p>A region is an areal unit with a population, not a coordinate. Indirect standardisation removes the part of a difference explained by who the area holds; empirical Bayes stops a small area’s noise from ranking it to the top or bottom; a funnel plot shows the reader the same thing directly.</p></div>

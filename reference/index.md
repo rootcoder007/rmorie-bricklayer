@@ -619,6 +619,63 @@ maximum over splits, not from the best split’s own test.
 - [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
   : Trend in a count series, as a rate ratio per period
 
+## Air pollution, dispersion and health burden
+
+Pasquill-Gifford dispersion and Briggs plume rise, Gaussian plume and
+puff, grid and particle models; concentration-response functions,
+attributable fraction, displaced mortality, the burden chain per area,
+the concentration index of exposure by income, a cross-fitted
+exposure-response estimator, and the one-call pipeline with its
+assumption log.
+
+- [`pg_sigmas()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  [`briggs_plume_rise()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  : Atmospheric dispersion: sigmas, plume rise, plume, puff, grid and
+  particles
+- [`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  : Concentration-response functions for PM2.5 and NO2
+- [`attributable_fraction()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+  : Population attributable fraction
+- [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+  : Deaths avoided under a counterfactual exposure reduction
+- [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+  : End-to-end pollution burden
+- [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)
+  : Per-area pollution burden
+- [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
+  : Cross-fitted partially linear regression (double machine learning)
+- [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md)
+  : Exposure-response estimate with a bootstrap sensitivity interval
+- [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+  : Concentration index of exposure by income
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  : Run the pollution-to-health pipeline and report it
+
+## The footprint of the computation
+
+Electricity and CO2-equivalent of an expression, measured from RAPL
+energy counters where the operating system exposes them, otherwise
+modelled with the Green Algorithms method, against a sourced
+carbon-intensity table.
+
+- [`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)
+  : Energy and carbon footprint of a computation
+- [`carbon_intensity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md)
+  [`carbon_intensity_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md)
+  : Carbon intensity of electricity by location, offline, anywhere
+- [`detect_location()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/detect_location.md)
+  : Where is this computation running?
+- [`rapl_available()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rapl_available.md)
+  : Is CPU energy measurable here?
+- [`footprint_equivalents()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/footprint_equivalents.md)
+  : Everyday equivalents of a quantity of CO2-equivalent
+
 ## Region-coded counts
 
 A region is an areal unit with a population, not a coordinate. Indirect

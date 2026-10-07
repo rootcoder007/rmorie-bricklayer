@@ -34,20 +34,154 @@
 
 ### Documentation
 
-- Sixteen new vignettes, each runnable offline: post-quantum signatures
-  (ML-DSA, SLH-DSA, XMSS); key encapsulation (ML-KEM, HQC); hashing,
-  keyed digests, key derivation and Merkle trees; attestations, signed
-  bundles and tamper-evident chains; side-channel assurance (what is
-  verified, how, and what is outside the checks); JSON parsing and exact
-  serialisation; the language-model routes and the signed services
+- Seventeen new vignettes, each runnable offline: post-quantum
+  signatures (ML-DSA, SLH-DSA, XMSS); key encapsulation (ML-KEM, HQC);
+  hashing, keyed digests, key derivation and Merkle trees; attestations,
+  signed bundles and tamper-evident chains; side-channel assurance (what
+  is verified, how, and what is outside the checks); JSON parsing and
+  exact serialisation; the language-model routes and the signed services
   document; trends and change in short count series; small-area rates
   (expected counts, empirical Bayes, funnel limits, Moran’s I); Hawkes
   processes; banded tables and concentration; stock and flow (average
   daily population, length of stay); falsification controls, power
   curves and the E-value; validation rules, inferred schemas and
   synthetic stand-ins; missingness, duplicates, outliers and distinct
-  counts; and the SIU director’s-report parser. The package website
-  groups them by topic.
+  counts; and the SIU director’s-report parser; and air pollution from
+  dispersion to health burden, equity and the footprint of the
+  computation. The package website groups them by topic.
+
+### Coverage to the last line, and what it turned up
+
+- Every line codecov reported unreached at the previous commit (204
+  lines in 53 files) was given a test that reaches it with a real input,
+  removed as a guard no input can reach, or is named below as unreached
+  by design. The tests run from the OCSP responder paths and the DER OID
+  encoder’s multi-byte arcs to the JSON encoder’s class fallbacks, the
+  SIU parser’s French team counts, the ECDSA verifier’s
+  digest-longer-than-order shift, and the CLI’s stdin reader. Where a
+  branch could not be reached from any input, the guard was removed
+  rather than excluded:
+  [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+  and
+  [`sir()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sir.md)
+  re-checked a sign the input guard had already refused,
+  [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md)
+  tested for a condition its earlier check made impossible,
+  [`mahalanobis_outliers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md)
+  re-checked a column count and inverted a matrix it had just made
+  positive definite,
+  [`clean_column_names()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clean_column_names.md)
+  handled an empty word list it had already replaced,
+  [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  tested the finiteness of a sum of finite logs, and the gzip writer
+  re-validated
+  [`memCompress()`](https://rdrr.io/r/base/memCompress.html) output.
+- Two real defects surfaced on the way.
+  [`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+  with a raw `context` signed the raw bytes but recorded them as hex, so
+  [`capsule_check_attestation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+  could never verify such an attestation; it now signs what it records.
+  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  and the other dispersion models read a plain-vector `receptors`
+  argument column-wise, so `c(x1, y1, z1, x2, y2, z2)` was scrambled; it
+  is now read as the x, y, z triples the documentation describes.
+- A self-test entry hashes a message in two pieces at every split around
+  the block boundary and compares with the one-shot digest, exercising
+  the partial-block buffering in the SHA-256 and SHA-512 cores that
+  single-shot hashing never reaches (`C_rmbl_hash_two_part`, internal).
+  The uncalled C symbol `rmbl_xmss_len()` was removed. `.bl_rd_db()` and
+  [`to_ascii()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/to_ascii.md)
+  gained seams so their fallbacks can be tested;
+  [`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)’s
+  memory and core detection likewise.
+- Still unreached, by design: the `getrandom()` EINTR/ENOSYS and
+  `/dev/urandom` failure paths; the barrier’s `Rf_error()` after an
+  interrupt (unwinds first) and its C++-exception branch (no kernel
+  throws); the ECDSA curve-width assertion and the point-at-infinity sum
+  (prime-order curve); the ML-DSA rejection-sampling refills, which a
+  seed reaches with probability below 1e-5; `small_int()`’s non-digit
+  branch (every caller passes a `\d` capture); and `hexval()`’s
+  upper-case branch (the curve constants are lower-case). Each is named
+  here rather than hidden behind an exclusion.
+
+### Air pollution, from source to burden, and the footprint of the computation
+
+- **Atmospheric dispersion**
+  ([`pg_sigmas()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`briggs_plume_rise()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)):
+  the Pasquill-Gifford coefficients with Briggs’s fits, Briggs plume
+  rise (buoyant and stable branches, transitional rise), the Gaussian
+  plume with ground reflection and mixing-lid images, an instantaneous
+  puff, an explicit upwind-advection/central-diffusion grid and a
+  Lagrangian random walk with a counting grid. Formula for formula the
+  same as rmorie’s `AirDispersion` module; the particle walk takes any
+  normal generator through `normals=`, so rmorie’s Philox paths can be
+  reproduced exactly, and defaults to the package’s shared uniform
+  stream. Every formula is recomputed in the tests.
+- **Concentration-response and burden**
+  ([`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md),
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md),
+  [`attributable_fraction()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md),
+  [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md),
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
+  [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)):
+  the WHO 2021 review’s pooled estimates (Chen and Hoek 2020, RR 1.08
+  per 10 ug/m3 PM2.5; Huangfu and Atkinson 2020, RR 1.02 per 10 ug/m3
+  NO2), Burnett et al.’s (2014) integrated exposure-response curves for
+  IHD and stroke, Levin’s attributable fraction, the BenMAP
+  displaced-mortality function and the GBD burden chain, each citing its
+  source and each coefficient asserted in the tests. Mirrors rmorie’s
+  `envhealth` module.
+- **Exposure-response estimation**
+  ([`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md),
+  [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md)):
+  the partially linear model of Chernozhukov et al. (2018) by DML2
+  cross-fitting with ordinary-least-squares nuisances and a sandwich
+  standard error, deterministic from its seed and recomputed step by
+  step in the tests, plus a percentile bootstrap; any estimator with the
+  same interface (rmorie’s `morie_estimate_double_ml()` among them) can
+  be passed.
+- **Equity**
+  ([`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)):
+  the Wagstaff, Paci and van Doorslaer
+  1991. concentration index of exposure by income.
+- **The pipeline**
+  ([`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md),
+  [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)):
+  demo data, a CSV, a NAPS pull (NO2 ppb converted at 1.88) or scalars;
+  an assumption log; one reference concentration throughout; avoided
+  deaths counted over the exposed share; exit statuses 0/1/2 for
+  scripts.
+- **The footprint of the computation**
+  ([`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md),
+  [`carbon_intensity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md),
+  [`carbon_intensity_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md),
+  [`detect_location()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/detect_location.md),
+  [`rapl_available()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rapl_available.md),
+  [`footprint_equivalents()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/footprint_equivalents.md)):
+  the electricity an expression used and the CO2-equivalent it implies,
+  measured from the CPU packages’ RAPL energy counters where the
+  operating system exposes them (codecarbon’s Linux method; wrap-around
+  handled, subdomains not double-counted), otherwise modelled with the
+  Green Algorithms formula (Lannelongue, Grealey and Inouye 2021). The
+  utilisation is measured, per process (this R process’s CPU time,
+  codecarbon’s process mode) or per machine (`/proc/stat`, codecarbon’s
+  machine mode), or fixed by number; `load_curve` applies Green
+  Algorithms’ linear scaling or codecarbon’s curves. The grid’s carbon
+  intensity comes from a table bundled for offline use anywhere: every
+  country at the latest year Our World in Data publishes from Ember’s
+  yearly data (2024 or 2025), sub-national zones from Electricity Maps’
+  2024 yearly data via Green Algorithms data v3.1, and the world
+  average, each row with its year and source; a location is matched by
+  code, alpha-3 code or name, an unknown zone falls back to its country,
+  and `location = NULL` detects it offline from the environment, time
+  zone or locale and records how. Every default that stood in for a
+  measurement is listed in the result. Cross-checked against codecarbon
+  3.3.1 and against rmorie’s pollution module.
 
 ### Side channels: timing, power, masking
 

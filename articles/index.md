@@ -51,6 +51,9 @@
   stay](https://rootcoder007.github.io/rmorie-bricklayer/articles/stock-and-flow.md):
 - [Falsification controls and power curves: is the statistic
   real?](https://rootcoder007.github.io/rmorie-bricklayer/articles/falsification-and-power.md):
+- [Air pollution: dispersion, health burden, equity, and the footprint
+  of the
+  computation](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md):
 
 ### Data handling
 

@@ -2,6 +2,7 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  air-pollution-and-health: air-pollution-and-health.html
   attestations-bundles-chains: attestations-bundles-chains.html
   banded-tables-and-concentration: banded-tables-and-concentration.html
   capsules: capsules.html
@@ -26,7 +27,7 @@ articles:
   trends-and-change: trends-and-change.html
   validation-rules-and-synthetic-data: validation-rules-and-synthetic-data.html
   yoy: yoy.html
-last_built: 2026-10-07T16:37Z
+last_built: 2026-10-07T18:51Z
 urls:
   reference: https://rootcoder007.github.io/rmorie-bricklayer/reference
   article: https://rootcoder007.github.io/rmorie-bricklayer/articles
