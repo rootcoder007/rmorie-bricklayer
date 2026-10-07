@@ -28,10 +28,10 @@ The MORIE project keeps databases materialised from Google BigQuery
 public datasets (Chicago crime, EPA air quality, US census, FEC, FDA,
 NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
-\url{https://rmorie.com/data-license}. They open with the key
+\url{https://rmorie.com/data-license/}. They open with the key
 \code{\link{bricklayer_llm_login}} stores, the same key rmorie and morie
 use; keys are personal and issued on request at
-\url{https://rmorie.com/access}. The service address comes from
+\url{https://rmorie.com/access/}. The service address comes from
 \code{\link{bricklayer_services}}.
 \code{bricklayer_data_manifest()} returns the gateway's manifest
 (every table with rows, columns, size, SHA-256 and its BigQuery source),

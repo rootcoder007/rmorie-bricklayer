@@ -13,7 +13,7 @@ bricklayer_llm_login(
 )
 }
 \arguments{
-\item{token}{A key issued at \url{https://rmorie.com/access}.}
+\item{token}{A key issued at \url{https://rmorie.com/access/}.}
 
 \item{email}{Sign in with a code sent to this address.}
 
@@ -32,7 +32,7 @@ Stores a personal key for the hosted MORIE tier in
 the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
 so one sign-in serves all of them). The tier is a last resort behind a
 local model or your own endpoint (see \code{\link{bricklayer_llm_ask}});
-keys are personal and issued on request at \url{https://rmorie.com/access}.
+keys are personal and issued on request at \url{https://rmorie.com/access/}.
 The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 \itemize{
 \item \code{token}: a key you already have, from the website or an
@@ -47,7 +47,7 @@ Nothing is written except by this explicit call.
 }
 \examples{
 \dontrun{
-bricklayer_llm_login(token = "<key issued at https://rmorie.com/access>")
+bricklayer_llm_login(token = "<key issued at https://rmorie.com/access/>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login() # GitHub device flow
 }
