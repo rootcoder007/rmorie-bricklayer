@@ -43,6 +43,6 @@ prov <- list(
   resource = list(name_match_pattern = "2014")
 )
 resolve_via_ckan(prov)
-#> [1] "https://web.archive.org/web/20210509203852/http://files.ontario.ca/ontario_public_library_statistics_2014_open_data_csv_february_17_2016.csv"
+#> [1] "https://files.ontario.ca/ontario_public_library_statistics_2014_open_data_csv_february_17_2016.csv"
 # }
 ```
