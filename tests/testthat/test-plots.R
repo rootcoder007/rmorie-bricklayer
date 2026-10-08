@@ -282,3 +282,23 @@ test_that("a long axis title shrinks or wraps instead of overrunning", {
   expect_null(rmoriebricklayer:::.bl_xlab(NULL))
   grDevices::dev.off()
 })
+
+test_that("an empty title draws nothing and string width falls back without a device", {
+  expect_null(rmoriebricklayer:::.bl_title(NULL))
+  expect_equal(rmoriebricklayer:::.bl_title(""), "")
+  grDevices::pdf(NULL)
+  w <- rmoriebricklayer:::.bl_strwidth("abcd")
+  grDevices::dev.off()
+  expect_true(is.finite(w) && w > 0)
+  # strwidth() cannot answer (no device, or a device that returns no width): the width
+  # comes from the character height instead
+  grDevices::pdf(NULL)
+  testthat::local_mocked_bindings(strwidth = function(...) stop("no device"), .package = "graphics")
+  f <- rmoriebricklayer:::.bl_strwidth("abcd", cex = 2)
+  testthat::local_mocked_bindings(strwidth = function(...) NA_real_, .package = "graphics")
+  g <- rmoriebricklayer:::.bl_strwidth("abcd", cex = 2)
+  csi <- graphics::par("csi")
+  grDevices::dev.off()
+  expect_equal(f, 4 * 0.55 * csi * 2)
+  expect_equal(g, f)
+})
