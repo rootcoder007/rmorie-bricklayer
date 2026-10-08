@@ -39,3 +39,4 @@
 ^conftest\.dSYM$
 ^conftest$
 ^conftest\.c$
+^conftest\.gcno$

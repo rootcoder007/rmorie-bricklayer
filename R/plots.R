@@ -102,8 +102,9 @@ bricklayer_plot_options <- function(...) {
   n <- length(est)
   op <- .bl_par()
   on.exit(graphics::par(op), add = TRUE)
-  rng <- range(c(est, lower, upper, ref), na.rm = TRUE, finite = TRUE)
-  if (!all(is.finite(rng))) rng <- c(0, 1)
+  vals <- c(est, lower, upper, ref)
+  vals <- vals[is.finite(vals)]
+  rng <- if (length(vals)) range(vals) else c(0, 1)
   if (diff(rng) == 0) rng <- rng + c(-1, 1)
   graphics::plot(est, seq_len(n), xlim = rng, ylim = c(0.5, n + 0.5), yaxt = "n",
                  ylab = "", xlab = xlab, main = main, type = "n", ...)
