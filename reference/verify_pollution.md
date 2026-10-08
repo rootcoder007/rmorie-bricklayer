@@ -19,7 +19,7 @@ verify_pollution(
   exposure_csv = NULL,
   exposure_mean = 0,
   exposure_prevalence = 0,
-  reference = 5.8,
+  reference = NULL,
   baseline_rate = 500,
   population = 1e+06
 )
@@ -31,11 +31,12 @@ pollution_report_text(report)
 
 - pollutant:
 
-  `"no2"` or `"pm25"`.
+  `"no2"` or `"pm25"` (also `"PM2.5"`), in either case.
 
 - outcome:
 
-  Outcome key for the concentration-response function.
+  Outcome key for the concentration-response function; the mortality
+  outcomes count deaths, `"childhood_asthma"` incident cases.
 
 - region, years:
 
@@ -48,25 +49,35 @@ pollution_report_text(report)
 - exposure_csv:
 
   Path of a CSV with an `exposure` column in micrograms per cubic metre,
-  or a `value` column with a `unit` column (NO2 in ppb is converted at
-  1.88 micrograms per cubic metre per ppb, the WHO 2021 conversion at 25
-  C and 1 atm).
+  or a NAPS pull with a `value` column and a `unit` column (required
+  with `value`): each row is converted by its own unit, NO2 in ppb at
+  1.88 micrograms per cubic metre per ppb (the WHO 2021 conversion at 25
+  C and 1 atm), and any other unit is an error. With a CSV or the demo
+  data the exposed are the rows above `reference`: `exposure_prevalence`
+  is their share and `exposure_mean` their mean, so Levin's formula is
+  not diluted twice.
 
 - exposure_mean, exposure_prevalence:
 
-  Scalar inputs used when neither `demo` nor `exposure_csv` is given.
+  Scalar inputs used when neither `demo` nor `exposure_csv` is given:
+  the mean exposure among the exposed and the share of the population
+  exposed.
 
 - reference:
 
-  Counterfactual reference concentration.
+  Counterfactual reference concentration; `NULL` takes the pollutant's
+  default (PM2.5 5.8, NO2 10; see
+  [`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)).
 
 - baseline_rate:
 
-  Baseline outcome rate per 100,000 per year.
+  Baseline outcome rate per 100,000 per year (unlike
+  [`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
+  which takes a rate per person-year).
 
 - population:
 
-  Population at risk.
+  Population at risk (persons).
 
 - report:
 
@@ -74,10 +85,12 @@ pollution_report_text(report)
 
 ## Value
 
-`verify_pollution()`: the report as a list; its `status` is `"ok"`,
-`"assumption_failure"` or `"error"`, and the attribute `exit_status`
-carries a command-line exit code (0, 1 or 2). `pollution_report_text()`:
-a character string.
+`verify_pollution()`: the report as a list of class
+`rmbl_pollution_report`
+([`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws it); its
+`status` is `"ok"`, `"assumption_failure"` or `"error"`, and the
+attribute `exit_status` carries a command-line exit code (0, 1 or 2).
+`pollution_report_text()`: a character string.
 
 ## Examples
 
@@ -86,7 +99,7 @@ r <- verify_pollution("no2", demo = TRUE)
 r$status
 #> [1] "ok"
 r$pipeline$paf
-#> [1] 0.03533756
+#> [1] 0.02733115
 cat(pollution_report_text(r))
 #> ==================================================================
 #>   verify-pollution -- NO2 -> all_cause_mortality
@@ -94,33 +107,34 @@ cat(pollution_report_text(r))
 #> ==================================================================
 #> 
 #> Inputs
-#>   exposure mean:      23.968
-#>   exposure prevalence:1.000
+#>   exposure mean:      24.261
+#>   exposure prevalence:0.981
 #>   baseline rate/100k: 500.00
-#>   population:         1,000,000
-#>   reference conc:     5.8
+#>   population:         1e+06
+#>   reference conc:     10
 #> 
 #> Assumption log
-#>   [PASS] exposure > reference -- mean 23.96781213 vs ref 5.8 -- CRF is monotonic only when exposure exceeds the counterfactual floor.
-#>   [PASS] prevalence in [0,1] -- exposure_prevalence=1
-#>   [PASS] baseline_rate non-negative -- baseline_rate=500 per 100k per year
-#>   [PASS] population positive -- population=1000000
+#>   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10
+#>   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981
+#>   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year
+#>   [PASS] population finite and positive -- population=1e+06
+#>   [PASS] reference finite and non-negative -- reference=10
 #>   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.
 #> 
 #> Concentration-response
-#>   RR:       1.0366
+#>   RR:       1.0286
 #>   source:   Huangfu & Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines
 #> 
-#> Attributable fraction (PAF): 0.0353
+#> Attributable fraction (PAF): 0.0273
 #> 
 #> Mortality displaced
-#>   expected avoided deaths: 176.7
+#>   expected avoided deaths: 136.6
 #> 
 #> Burden of pollution
-#>   attributable deaths:   176.7
+#>   attributable deaths:   136.7
 #> 
 #> Equity analysis
-#>   concentration index: -0.0668
+#>   concentration index: -0.0647
 #> 
 #> STATUS: ok
 ```

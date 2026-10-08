@@ -11,7 +11,7 @@ the key and has not been altered since."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ the key and has not been altered since."><meta property="og:image" content="http
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -64,7 +65,8 @@ the key and has not been altered since.</p>
 <span>  scheme <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  context <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  deterministic <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  prehash <span class="op">=</span> <span class="st">"none"</span></span>
+<span>  prehash <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  masked <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"rmoriebricklayer.masked"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -118,6 +120,20 @@ standards approve: <code>"sha224"</code>, <code>"sha256"</code>, <code>"sha384"<
 of the pre-hash is bound into the signature, so a pre-hashed signature
 is never interchangeable with a pure one over the same digest.</p></dd>
 
+
+<dt id="arg-masked">masked<a class="anchor" aria-label="anchor" href="#arg-masked"></a></dt>
+<dd><p><code>TRUE</code> (the default) for the first-order masked ML-DSA
+signer, <code>FALSE</code> for the plain constant-time one; both give the same
+signature for the same randomness. The option
+<code>rmoriebricklayer.masked</code> sets the default for a session, so
+chain- and bundle-heavy code that has no physical attacker in its threat
+model can take the plain path everywhere with
+<code>options(rmoriebricklayer.masked = FALSE)</code>. SLH-DSA and XMSS
+signing are not masked and ignore it. Masking costs about 3 to 12 times
+the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+ML-DSA-65), depending on the CPU.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -167,8 +183,10 @@ stack for copies of the secret. Both checks run in CI on every change,
 with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (<code>inst/dudect</code>), power leakage is assessed in simulation under
 the value and the transition models (<code>inst/tvla</code>), and ML-KEM
-decapsulation and ML-DSA signing are first-order masked by default; the
-README's security section lists what each check covers.</p>
+decapsulation and ML-DSA signing are first-order masked by default. These
+are checks of this code on those compilers and under those leakage
+models; no third-party security audit has been commissioned, and the
+README's security section lists what each check does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

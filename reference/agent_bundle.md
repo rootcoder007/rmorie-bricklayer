@@ -36,9 +36,12 @@ route answers.
 
 ``` r
 # \donttest{
-agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
+# Needs a language-model route: a stored key (bricklayer_llm_login()), your
+# own endpoint or a local Ollama. try() keeps the example graceful when no
+# route answers or the hosted tier is slow.
+try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
 #> [1] "No language-model route is set up on this machine:\n  own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL) to any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or point OLLAMA_HOST at a server)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code"
-agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud")
+try(agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud"))
 #> [1] "No language-model route is set up on this machine:\n  own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL) to any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or point OLLAMA_HOST at a server)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code"
 # }
 

@@ -37,7 +37,8 @@ produced the data.
   [`vignette("small-area-rates")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/small-area-rates.md),
   [`vignette("trends-and-change")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/trends-and-change.md),
   [`vignette("stock-and-flow")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/stock-and-flow.md),
-  [`vignette("air-pollution-and-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md)
+  [`vignette("air-pollution-and-health")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md),
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
   and the rest, grouped by topic on the package website.
 - **CKAN resolution** —
   [`resolve_via_ckan()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/resolve_via_ckan.md)
@@ -249,6 +250,28 @@ produced the data.
   before the fit (Filimonov & Sornette 2015; `horizon =` keeps an event
   dated on the window’s last day inside it), and the fit warns when it
   sees ties.
+- **Every result draws itself** —
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on anything
+  the package returns: stock and flow, period-over-period change with
+  its intervals, rates and shares, drift by column, Benford digits,
+  power curves, outliers, correlations, permutation nulls, rounding
+  envelopes, concentration-response curves, burdens, concentration
+  curves, the footprint, plume fields and particle clouds, trends, and a
+  whole-table analysis one panel at a time. Base graphics only (no new
+  dependency), one shared look, and the same customisation on every
+  method: `main`, `col` or `palette`, `grid`, `...` for the base call,
+  [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  for the session and
+  [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  for colour-blind-safe colours.
+  [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+  evaluates a plume on a grid for the image;
+  [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  and
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  cover the results that are plain data frames. Every method returns the
+  numbers it drew.
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
 - **Air pollution, from source to burden** — where a plume goes:
   [`pg_sigmas()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
   (Pasquill-Gifford coefficients with Briggs’s fits, rural and urban),
@@ -418,15 +441,17 @@ about the design.
 | Agrees with OpenSSL on any input | libFuzzer differential fuzzing against OpenSSL 3.5: ML-KEM, ML-DSA, SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests, BLAKE2b, HMAC and PBKDF2 must agree byte for byte | `inst/fuzz/fuzz_ossl.cpp`, workflow `fuzz` |
 | Timing on hardware | dudect fixed-versus-random Welch t on x86-64 and arm64 Linux and on Apple silicon (with and without DIT): ML-KEM decapsulation plain and masked, valid against invalid with both classes varying, each phase alone, encapsulation, HQC decapsulation, the digest comparison, PBKDF2; an early-exit comparison is the control that must be flagged | `inst/dudect/`, workflow `dudect` |
 | Power, in simulation | TVLA on the code compiled for a Cortex-M4 and run in an emulator, under the Hamming-weight and the Hamming-distance models: every masked kernel shows no first-order leakage under either, every unmasked control leaks | `inst/tvla/`, workflow `tvla` |
-| Masked by default | First-order masking of ML-KEM decapsulation and ML-DSA signing, output identical to the unmasked computation. Every operation that combines the two shares of a value runs in assembly (Cortex-M, x86-64, aarch64) with a fixed register order, zeroed temporaries and a zero store between the two shares; code that handles one share at a time runs each share in its own pass with the registers zeroed in between. Shares are recombined only for what the algorithm publishes (the shared secret, the signature) | `src/rmbl_masked.h` |
+| Masked by default | First-order masking of ML-KEM decapsulation and ML-DSA signing, output identical to the unmasked computation. The share-combining gadgets run in assembly on Cortex-M, x86-64 and aarch64 (plain C elsewhere, with the same results) with a fixed register order, zeroed temporaries and a zero store between the two shares; code that handles one share at a time runs each share in its own pass with the registers zeroed in between. Shares are recombined for what the algorithm publishes: the shared secret, the signature and, during signing, the public high bits, the hint and the rejection decision (on rejected attempts too, as FIPS 204 reveals them) | `src/rmbl_masked.h` |
 | DER means DER | The parser refuses BER: long-form lengths below 128, lengths with leading zeros, non-minimal tags, end-of-contents octets, trailing bytes; `ECDSA-Sig-Value` must be exactly two canonical INTEGERs and the PKCS#1 block exactly the RFC 8017 DigestInfo | `src/rmbl_asn1.cpp`, `R/x509.R`, `R/timestamp.R` |
 
 Outside what these checks model: electromagnetic emanation, fault
 injection, glitches and coupling a leakage model omits, and higher-order
-attacks on two-share masking. `SECURITY.md` has the threat model, the
-reporting address and the list of what each check would and would not
-catch. The checks are reproducible on any Linux machine with valgrind
-and clang: `bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh` and
+attacks on two-share masking. No third-party security audit has been
+commissioned, and the power assessment is a simulation, not a capture
+from a board. `SECURITY.md` has the threat model, the reporting address
+and the list of what each check would and would not catch. The checks
+are reproducible on any Linux machine with valgrind and clang:
+`bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh` and
 `bash inst/fuzz/build.sh && bash inst/fuzz/run.sh`.
 
 ## Verification
@@ -1472,6 +1497,8 @@ assumption log.
 - [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
   [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
   : Run the pollution-to-health pipeline and report it
+- [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+  : A Gaussian-plume concentration field on a grid
 
 ## The footprint of the computation
 
@@ -1647,6 +1674,47 @@ Printed reports for the objects the package returns.
   [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   : Printed reports for bricklayer objects
 
+## Plots
+
+Every result draws itself with plot(), on base graphics, with one shared
+look and the same customisation everywhere; palettes and session
+options; Lorenz and funnel plots for results that are plain data frames.
+
+- [`plot(`*`<rmbl_stock_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_rate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_share>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_rate_change>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_drift_calibration>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_freq>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_missingness>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_region_coverage>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_outliers>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_correlations>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_cortable>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_bounds>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_crf>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_burden>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_equity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_pollution_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_footprint>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_field>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_particles>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_count_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_analysis>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  : Plot methods for the package's results
+- [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  : Plot styling for the package's plot methods
+- [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  : Lorenz and funnel plots
+
 # Articles
 
 ### Guides
@@ -1667,6 +1735,8 @@ Printed reports for the objects the package returns.
   wrong](https://rootcoder007.github.io/rmorie-bricklayer/articles/yoy.md):
 - [Statistics for a published administrative
   table](https://rootcoder007.github.io/rmorie-bricklayer/articles/tables.md):
+- [Plotting
+  results](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md):
 
 ### Cryptography and assurance
 

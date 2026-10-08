@@ -5,7 +5,11 @@ Returns the 32-byte shared secret the ciphertext carries, as hex.
 ## Usage
 
 ``` r
-kem_decapsulate(key, ciphertext, masked = TRUE)
+kem_decapsulate(
+  key,
+  ciphertext,
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+)
 ```
 
 ## Arguments
@@ -24,8 +28,9 @@ kem_decapsulate(key, ciphertext, masked = TRUE)
 
 - masked:
 
-  `TRUE` (the default) for the first-order masked decapsulation, `FALSE`
-  for the plain one. Both return the same secret.
+  `TRUE` (the default, or the option `rmoriebricklayer.masked`) for the
+  first-order masked decapsulation, `FALSE` for the plain one. Both
+  return the same secret.
 
 ## Value
 
@@ -51,8 +56,10 @@ No single intermediate value then depends on the key, which is what
 defeats first-order power and electromagnetic analysis; `inst/tvla`
 checks the masked gadgets against that leakage model. The result is
 identical to the unmasked computation for every ciphertext; it costs
-about five times the time (well under a millisecond). `masked = FALSE`
-runs the plain constant-time decapsulation.
+about 3 to 12 times the plain time depending on the CPU (4 ms for
+ML-KEM-768 on this package's test machine against 1.2 ms plain).
+`masked = FALSE` runs the plain constant-time decapsulation, and the
+option `rmoriebricklayer.masked` sets the default for a session.
 
 ## See also
 

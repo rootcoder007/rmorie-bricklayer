@@ -1,9 +1,10 @@
 # JSON without jsonlite: parsing, encoding and exact serialisation
 
 Manifests, provenance records and signed documents are JSON. The package
-parses and writes JSON natively, in C, with jsonlite’s conventions, so a
-capsule has no dependency on another package’s parser and the parser can
-be held to the same standard as the cryptography.
+parses and writes JSON natively, in R with no parser dependency, with
+jsonlite’s conventions, so a capsule has no dependency on another
+package’s parser and the parser can be held to the same standard as the
+cryptography.
 
 ## Encoding R objects
 
@@ -174,5 +175,6 @@ failures and each is tested: duplicate keys (above), string assembly
 that was quadratic (250,000 escapes once took 16 minutes; it is linear
 now), nesting depth, numbers that are not numbers, bytes that are not
 UTF-8, and a body that is a bare URL, which is “not JSON”, never a
-second fetch. The parser is also a libFuzzer target under
-AddressSanitizer and UndefinedBehaviorSanitizer.
+second fetch. The parser and the encoder are R code (see below), so they
+run under R’s own memory management rather than a sanitizer; the test
+suite carries the corpus of malformed inputs the review produced.

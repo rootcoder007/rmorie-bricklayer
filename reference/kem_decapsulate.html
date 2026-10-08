@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -52,7 +53,11 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">kem_decapsulate</span><span class="op">(</span><span class="va">key</span>, <span class="va">ciphertext</span>, masked <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">kem_decapsulate</span><span class="op">(</span></span>
+<span>  <span class="va">key</span>,</span>
+<span>  <span class="va">ciphertext</span>,</span>
+<span>  masked <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"rmoriebricklayer.masked"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,8 +75,9 @@
 
 
 <dt id="arg-masked">masked<a class="anchor" aria-label="anchor" href="#arg-masked"></a></dt>
-<dd><p><code>TRUE</code> (the default) for the first-order masked
-decapsulation, <code>FALSE</code> for the plain one. Both return the same secret.</p></dd>
+<dd><p><code>TRUE</code> (the default, or the option <code>rmoriebricklayer.masked</code>)
+for the first-order masked decapsulation, <code>FALSE</code> for the plain one. Both
+return the same secret.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -96,9 +102,11 @@ the ciphertext and the choice between the real and the rejection secret.
 No single intermediate value then depends on the key, which is what defeats
 first-order power and electromagnetic analysis; <code>inst/tvla</code> checks the
 masked gadgets against that leakage model. The result is identical to the
-unmasked computation for every ciphertext; it costs about five times the
-time (well under a millisecond). <code>masked = FALSE</code> runs the plain
-constant-time decapsulation.</p>
+unmasked computation for every ciphertext; it costs about 3 to 12 times
+the plain time depending on the CPU (4 ms for ML-KEM-768 on this
+package's test machine against 1.2 ms plain). <code>masked = FALSE</code> runs the
+plain constant-time decapsulation, and the option
+<code>rmoriebricklayer.masked</code> sets the default for a session.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

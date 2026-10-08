@@ -9,7 +9,12 @@ value mu that is the only thing ML-DSA signing actually consumes;
 ``` r
 fips_mu(key, message, context = NULL, prehash = "none")
 
-fips_sign_mu(key, mu, deterministic = FALSE)
+fips_sign_mu(
+  key,
+  mu,
+  deterministic = FALSE,
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+)
 
 fips_verify_mu(key, mu, signature)
 ```
@@ -47,6 +52,19 @@ fips_verify_mu(key, mu, signature)
 
   As in
   [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md).
+
+- masked:
+
+  `TRUE` (the default) for the first-order masked ML-DSA signer, `FALSE`
+  for the plain constant-time one; both give the same signature for the
+  same randomness. The option `rmoriebricklayer.masked` sets the default
+  for a session, so chain- and bundle-heavy code that has no physical
+  attacker in its threat model can take the plain path everywhere with
+  `options(rmoriebricklayer.masked = FALSE)`. SLH-DSA and XMSS signing
+  are not masked and ignore it. Masking costs about 3 to 12 times the
+  plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+  package's test machine) and 13 to 24 times on ML-DSA signing (26 ms
+  for ML-DSA-65), depending on the CPU.
 
 - signature:
 

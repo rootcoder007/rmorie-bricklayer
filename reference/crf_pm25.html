@@ -35,7 +35,7 @@ relative risks under extra$rr_per_unit."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,6 +54,7 @@ relative risks under extra$rr_per_unit."><meta property="og:image" content="http
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -115,14 +116,18 @@ scalar or a vector.</p></dd>
 
 <dt id="arg-outcome">outcome<a class="anchor" aria-label="anchor" href="#arg-outcome"></a></dt>
 <dd><p>PM2.5: <code>"all_cause_mortality"</code>, <code>"ihd"</code> or
-<code>"stroke"</code>. NO2: <code>"all_cause_mortality"</code>, <code>"respiratory"</code>
-or <code>"childhood_asthma"</code>.</p></dd>
+<code>"stroke"</code> (deaths). NO2: <code>"all_cause_mortality"</code> and
+<code>"respiratory"</code> (deaths; Huangfu and Atkinson 2020, RR 1.02 and
+1.03 per 10 micrograms per cubic metre) or <code>"childhood_asthma"</code>
+(incident cases, not deaths; Khreis et al. 2017, OR 1.05 per 4
+micrograms per cubic metre, scaled to per 10).</p></dd>
 
 
 <dt id="arg-reference-conc">reference_conc<a class="anchor" aria-label="anchor" href="#arg-reference-conc"></a></dt>
 <dd><p>Counterfactual concentration below which no excess
-risk is assumed (PM2.5 default 5.8, NO2 default 10, the WHO 2021
-guideline values).</p></dd>
+risk is assumed. PM2.5 default 5.8, the lower bound of the GBD 2019
+theoretical minimum risk exposure level (the WHO 2021 guideline is 5);
+NO2 default 10, the WHO 2021 guideline.</p></dd>
 
 
 <dt id="arg-beta-per-">beta_per_10<a class="anchor" aria-label="anchor" href="#arg-beta-per-"></a></dt>
@@ -143,7 +148,11 @@ all-cause and cause-specific mortality: a systematic review and
 meta-analysis. Environment International 143, 105974. Huangfu, P. and
 Atkinson, R. (2020). Long-term exposure to NO2 and O3 and all-cause and
 respiratory mortality: a systematic review and meta-analysis. Environment
-International 144, 105998. Burnett, R. T. et al. (2014). An integrated
+International 144, 105998. Khreis, H. et al. (2017). Exposure to
+traffic-related air pollution and risk of development of childhood
+asthma: a systematic review and meta-analysis. Environment International
+100, 1-31. GBD 2019 Risk Factors Collaborators (2020). The Lancet
+396(10258), 1223-1249. Burnett, R. T. et al. (2014). An integrated
 risk function for estimating the global burden of disease attributable to
 ambient fine particulate matter exposure. Environmental Health
 Perspectives 122(4), 397-403. WHO (2021). Global Air Quality Guidelines.</p>
@@ -156,7 +165,7 @@ Perspectives 122(4), 397-403. WHO (2021). Global Air Quality Guidelines.</p>
 <span class="r-in"><span><span class="fu">crf_pm25</span><span class="op">(</span><span class="fl">12</span>, outcome <span class="op">=</span> <span class="st">"ihd"</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.553634</span>
 <span class="r-in"><span><span class="fu">crf_no2</span><span class="op">(</span><span class="fl">25</span>, outcome <span class="op">=</span> <span class="st">"respiratory"</span><span class="op">)</span><span class="op">$</span><span class="va">rr</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.04446</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.045336</span>
 <span class="r-in"><span><span class="fu">crf_pm25</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">12</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">extra</span><span class="op">$</span><span class="va">rr_per_unit</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.000000 1.048873 1.115480</span>
 </code></pre></div>

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -174,7 +175,7 @@ machine holding the secret never needs to see the message:</p>
 <span><span class="co"># the same signature verifies the ordinary way</span></span>
 <span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"a manifest digest"</span>, <span class="va">sig3</span>, <span class="va">key</span>, context <span class="op">=</span> <span class="st">"release"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p>Since 0.5.9, ML-DSA signing runs <strong>first-order masked</strong>
+<p>Since 0.5.10, ML-DSA signing runs <strong>first-order masked</strong>
 by default (see the <em>Side-channel assurance</em> vignette): every
 secret-dependent value is held as two random shares. The signatures are
 byte-identical to the unmasked computation; only the cost differs.</p>
@@ -249,9 +250,12 @@ signature; reusing an index would break security, so always carry
 <div class="section level2">
 <h2 id="every-way-of-being-wrong-returns-false">Every way of being wrong returns FALSE<a class="anchor" aria-label="anchor" href="#every-way-of-being-wrong-returns-false"></a>
 </h2>
-<p>Verification never errors on malformed input; it returns
-<code>FALSE</code>. A truncated or edited signature, a foreign key and
-an edited message all fail the same way:</p>
+<p>Verification returns <code>FALSE</code> for every signature of the
+right shape that does not verify: a truncated or edited signature, a
+foreign key and an edited message all fail the same way. (An object that
+is not a signature at all, a key of the wrong class or a missing message
+is an error, because that is a programming mistake rather than a
+tampered artefact.)</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pub</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fips_keygen.html">fips_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span></span>
 <span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="va">sig</span></span>
@@ -268,13 +272,15 @@ an edited message all fail the same way:</p>
 <div class="section level2">
 <h2 id="how-these-implementations-are-checked">How these implementations are checked<a class="anchor" aria-label="anchor" href="#how-these-implementations-are-checked"></a>
 </h2>
-<p>Every scheme is compared byte for byte with OpenSSL 3.5 and run
-against the NIST ACVP and C2SP Wycheproof vector sets on every change
-(6,848 checks, 0 failures at 0.5.9), fuzzed differentially against
-OpenSSL, and run under valgrind with the secret key marked undefined to
-prove no branch or memory address depends on it.
-<code>SECURITY.md</code> in the package repository has the full table of
-what each check catches and what it does not.</p>
+<p>ML-DSA and SLH-DSA are compared byte for byte with OpenSSL 3.5 and
+run against the NIST ACVP and C2SP Wycheproof vector sets on every
+change (6,848 checks, 0 failures at 0.5.10), and fuzzed differentially
+against OpenSSL; XMSS, which OpenSSL does not implement, is checked
+against the RFC 8391 vectors. Every signer runs under valgrind with the
+secret key marked undefined, a dynamic check that no executed branch or
+memory address depends on it. <code>SECURITY.md</code> in the package
+repository has the full table of what each check catches and what it
+does not.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

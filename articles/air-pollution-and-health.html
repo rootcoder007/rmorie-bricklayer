@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -297,33 +298,34 @@ here:</p>
 <span><span class="co">#&gt; ==================================================================</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Inputs</span></span>
-<span><span class="co">#&gt;   exposure mean:      23.968</span></span>
-<span><span class="co">#&gt;   exposure prevalence:1.000</span></span>
+<span><span class="co">#&gt;   exposure mean:      24.261</span></span>
+<span><span class="co">#&gt;   exposure prevalence:0.981</span></span>
 <span><span class="co">#&gt;   baseline rate/100k: 500.00</span></span>
-<span><span class="co">#&gt;   population:         1,000,000</span></span>
-<span><span class="co">#&gt;   reference conc:     5.8</span></span>
+<span><span class="co">#&gt;   population:         1e+06</span></span>
+<span><span class="co">#&gt;   reference conc:     10</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Assumption log</span></span>
-<span><span class="co">#&gt;   [PASS] exposure &gt; reference -- mean 23.96781213 vs ref 5.8 -- CRF is monotonic only when exposure exceeds the counterfactual floor.</span></span>
-<span><span class="co">#&gt;   [PASS] prevalence in [0,1] -- exposure_prevalence=1</span></span>
-<span><span class="co">#&gt;   [PASS] baseline_rate non-negative -- baseline_rate=500 per 100k per year</span></span>
-<span><span class="co">#&gt;   [PASS] population positive -- population=1000000</span></span>
+<span><span class="co">#&gt;   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10</span></span>
+<span><span class="co">#&gt;   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981</span></span>
+<span><span class="co">#&gt;   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year</span></span>
+<span><span class="co">#&gt;   [PASS] population finite and positive -- population=1e+06</span></span>
+<span><span class="co">#&gt;   [PASS] reference finite and non-negative -- reference=10</span></span>
 <span><span class="co">#&gt;   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Concentration-response</span></span>
-<span><span class="co">#&gt;   RR:       1.0366</span></span>
+<span><span class="co">#&gt;   RR:       1.0286</span></span>
 <span><span class="co">#&gt;   source:   Huangfu &amp; Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attributable fraction (PAF): 0.0353</span></span>
+<span><span class="co">#&gt; Attributable fraction (PAF): 0.0273</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Mortality displaced</span></span>
-<span><span class="co">#&gt;   expected avoided deaths: 176.7</span></span>
+<span><span class="co">#&gt;   expected avoided deaths: 136.6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Burden of pollution</span></span>
-<span><span class="co">#&gt;   attributable deaths:   176.7</span></span>
+<span><span class="co">#&gt;   attributable deaths:   136.7</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Equity analysis</span></span>
-<span><span class="co">#&gt;   concentration index: -0.0668</span></span>
+<span><span class="co">#&gt;   concentration index: -0.0647</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; STATUS: ok</span></span></code></pre></div>
 <p>An input that violates an assumption stops the pipeline and says why,
@@ -331,9 +333,9 @@ with a non-zero exit status for scripts:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/verify_pollution.html">verify_pollution</a></span><span class="op">(</span><span class="st">"pm25"</span>, exposure_mean <span class="op">=</span> <span class="fl">3</span>, exposure_prevalence <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">bad</span><span class="op">$</span><span class="va">status</span></span>
-<span><span class="co">#&gt; [1] "assumption_failure"</span></span>
+<span><span class="co">#&gt; [1] "ok"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bad</span>, <span class="st">"exit_status"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0</span></span></code></pre></div>
 <p>A CSV with an <code>exposure</code> column (and optionally
 <code>income</code>) replaces the demo data; a NAPS pull with
 <code>value</code> in ppb is converted to µg/m³ at 1.88 for NO2.</p>
@@ -355,9 +357,9 @@ Every default that stood in for a measurement is listed:</p>
 <span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>,</span>
 <span>                        memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Computation footprint (modelled): 0.004 s wall, 0.003 s CPU, utilisation 0.19 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 1.6e-08 kWh (cpu 9.38e-09, memory 6.62e-09)</span></span>
-<span><span class="co">#&gt;   CO2e:   1.46e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span><span class="co">#&gt; Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
+<span><span class="co">#&gt;   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)</span></span>
+<span><span class="co">#&gt;   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <div class="section level3">
@@ -387,9 +389,9 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span>                       usage <span class="op">=</span> <span class="st">"machine"</span>, load_curve <span class="op">=</span> <span class="st">"codecarbon"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>process_linear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
 <span>      machine_codecarbon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                        usage   cpu_kwh</span></span>
-<span><span class="co">#&gt; process_linear     0.2500000 9.375e-09</span></span>
-<span><span class="co">#&gt; machine_codecarbon 0.3333333 2.500e-08</span></span>
+<span><span class="co">#&gt;                    usage   cpu_kwh</span></span>
+<span><span class="co">#&gt; process_linear      0.25 9.375e-09</span></span>
+<span><span class="co">#&gt; machine_codecarbon  0.20 1.876e-08</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usage_mode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
@@ -429,12 +431,12 @@ so; a number of your own is accepted when you have a better figure:</p>
 <span><span class="co">#&gt; [1] "no row for zone CA-XX; its country CA used"</span></span>
 <span><span class="va">tab</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/carbon_intensity.html">carbon_intensity_table</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tab</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 380</span></span>
+<span><span class="co">#&gt; [1] 379</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">tab</span><span class="op">$</span><span class="va">location</span><span class="op">)</span> <span class="op">==</span> <span class="fl">2</span>, <span class="va">tab</span><span class="op">$</span><span class="va">year</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2024"</span>, <span class="st">"2025"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt;        </span></span>
 <span><span class="co">#&gt;         2024 2025</span></span>
-<span><span class="co">#&gt;   FALSE  156    4</span></span>
-<span><span class="co">#&gt;   TRUE   126   90</span></span></code></pre></div>
+<span><span class="co">#&gt;   FALSE  156    3</span></span>
+<span><span class="co">#&gt;   TRUE   125   91</span></span></code></pre></div>
 <p>With <code>location = NULL</code> (the default) the location is
 detected offline, in order, from the <code>RMBL_LOCATION</code>
 environment variable, codecarbon’s
@@ -464,10 +466,10 @@ are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/footprint_equivalents.html">footprint_equivalents</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2e_g</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
 <span><span class="co">#&gt; $car_km</span></span>
-<span><span class="co">#&gt; [1] 8.315813e-05</span></span>
+<span><span class="co">#&gt; [1] 7.455208e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $tree_months</span></span>
-<span><span class="co">#&gt; [1] 1.586987e-05</span></span>
+<span><span class="co">#&gt; [1] 1.42275e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sources</span></span>
 <span><span class="co">#&gt;                                                                  car </span></span>

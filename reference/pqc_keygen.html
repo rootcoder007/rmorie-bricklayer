@@ -13,7 +13,7 @@ Shor's algorithm breaks."><meta property="og:image" content="https://rootcoder00
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,7 @@ Shor's algorithm breaks."><meta property="og:image" content="https://rootcoder00
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -124,10 +125,12 @@ marked undefined (the ctgrind method), so a branch or a memory address
 that depends on it is a reported error, and afterwards scans the dead
 stack for copies of the secret. Both checks run in CI on every change,
 with GCC and with Clang. Timing is also measured on x86-64 and arm64
-hardware (<code>inst/dudect</code>), power leakage is assessed in simulation under
-the value and the transition models (<code>inst/tvla</code>), and ML-KEM
-decapsulation and ML-DSA signing are first-order masked by default; the
-README's security section lists what each check covers.</p>
+hardware (<code>inst/dudect</code>) and power leakage is assessed in simulation under
+the value and the transition models (<code>inst/tvla</code>) for the masked ML-KEM
+and ML-DSA kernels; this scheme is not masked. These are checks of this
+code on those compilers; no third-party security audit has been
+commissioned, and the README's security section lists what each check
+does and does not cover.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

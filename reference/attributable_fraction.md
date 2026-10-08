@@ -14,7 +14,9 @@ attributable_fraction(rr, exposure_prevalence)
 
 - rr:
 
-  Relative risk at the observed exposure level.
+  Relative risk among the exposed, a single finite positive number. A
+  relative risk below 1 gives a negative fraction (a protective
+  exposure); 0, negative, infinite and missing values are errors.
 
 - exposure_prevalence:
 

@@ -54,8 +54,10 @@ stack for copies of the secret. Both checks run in CI on every change,
 with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (`inst/dudect`), power leakage is assessed in simulation under
 the value and the transition models (`inst/tvla`), and ML-KEM
-decapsulation and ML-DSA signing are first-order masked by default; the
-README's security section lists what each check covers.
+decapsulation and ML-DSA signing are first-order masked by default.
+These are checks of this code on those compilers and under those leakage
+models; no third-party security audit has been commissioned, and the
+README's security section lists what each check does and does not cover.
 
 ## References
 

@@ -83,8 +83,8 @@ v$ok
 
 ``` r
 
-capsule_bundle_read(attr(b, "path"))$note
-#> NULL
+capsule_bundle_read(attr(b, "path"))$attestation$note
+#> [1] "as published"
 unlink(dir, recursive = TRUE)
 ```
 
@@ -170,7 +170,12 @@ chain_seal(dropped)
   at each release.
 
 All three accept any signing key the package knows: ML-DSA and SLH-DSA
-([`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)),
-XMSS
+([`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md))
+or XMSS
 ([`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
-with the key state carried forward), or a shared secret for HMAC.
+with the key state carried forward). A shared secret from
+[`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md)
+is for keyed digests
+([`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)),
+not for attestations: an attestation names a public key, and a shared
+secret has none.

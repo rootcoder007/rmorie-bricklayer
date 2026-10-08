@@ -66,9 +66,9 @@ identical(other, got)        # but not the one the sender has
 ### Masked decapsulation (the default)
 
 Decapsulation is the operation that uses the secret key, so it is the
-one a power or electromagnetic side channel would target. Since 0.5.9 it
-runs **first-order masked** by default: every value that depends on the
-secret key is held as two random shares that are refreshed from the
+one a power or electromagnetic side channel would target. Since 0.5.10
+it runs **first-order masked** by default: every value that depends on
+the secret key is held as two random shares that are refreshed from the
 operating system’s randomness on every call, and the re-encryption
 comparison of the FO transform is done on shares (the decompressed
 comparison of Bhasin et al., TCHES 2021). The result is byte-identical
@@ -131,9 +131,10 @@ identical(hqc_decapsulate(old, cap$ciphertext), cap$shared)
 
 ### Reproducible keys for tests
 
-Both KEMs accept a 32-byte seed so a test can regenerate the same key.
-Never use this outside tests: a key derived from a guessable seed is no
-key at all.
+Both KEMs accept a seed so a test can regenerate the same key: 64 bytes
+for ML-KEM (FIPS 203’s `d || z`) and 32 bytes for HQC v5 (its
+`seed_KEM`). Never use this outside tests: a key derived from a
+guessable seed is no key at all.
 
 ``` r
 

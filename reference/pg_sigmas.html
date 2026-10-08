@@ -16,8 +16,17 @@ lid, n_images pairs of image terms.
 gaussian_puff(): an instantaneous release with sigma_x = sigma_y
 evaluated at the travel distance u t.
 advection_diffusion_2d(): explicit upwind advection, central
-diffusion, forward Euler, zero boundaries; stable when the reported
-cfl is below 1 and diffusion_number below 1.
+diffusion, forward Euler, zero boundaries. The explicit scheme is stable
+when |u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) &amp;lt;= 1
+(the von Neumann bound for upwind advection with forward-time
+centred-space diffusion); that sum is returned as
+stability_number with stable. A call outside the bound is
+not run as given: each step is split into enough sub-steps of a smaller
+dt to satisfy it (reported as substeps and dt),
+with a warning, so the field is a solution over the same physical time
+rather than a numerical explosion. The separate cfl and
+diffusion_number are reported for reference; each below 1 is
+necessary, not sufficient.
 lagrangian_particles(): the random walk
 x + u dt + sqrt(2 K dt) xi (Thomson 1987) with an optional counting
 grid."><meta property="og:description" content="pg_sigmas(): Briggs (1973) fits of the Pasquill-Gifford dispersion
@@ -37,8 +46,17 @@ lid, n_images pairs of image terms.
 gaussian_puff(): an instantaneous release with sigma_x = sigma_y
 evaluated at the travel distance u t.
 advection_diffusion_2d(): explicit upwind advection, central
-diffusion, forward Euler, zero boundaries; stable when the reported
-cfl is below 1 and diffusion_number below 1.
+diffusion, forward Euler, zero boundaries. The explicit scheme is stable
+when |u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) &amp;lt;= 1
+(the von Neumann bound for upwind advection with forward-time
+centred-space diffusion); that sum is returned as
+stability_number with stable. A call outside the bound is
+not run as given: each step is split into enough sub-steps of a smaller
+dt to satisfy it (reported as substeps and dt),
+with a warning, so the field is a solution over the same physical time
+rather than a numerical explosion. The separate cfl and
+diffusion_number are reported for reference; each below 1 is
+necessary, not sufficient.
 lagrangian_particles(): the random walk
 x + u dt + sqrt(2 K dt) xi (Thomson 1987) with an optional counting
 grid."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
@@ -49,7 +67,7 @@ grid."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,6 +86,7 @@ grid."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -106,8 +125,17 @@ lid, <code>n_images</code> pairs of image terms.
 <code>gaussian_puff()</code>: an instantaneous release with <code>sigma_x = sigma_y</code>
 evaluated at the travel distance <code>u t</code>.
 <code>advection_diffusion_2d()</code>: explicit upwind advection, central
-diffusion, forward Euler, zero boundaries; stable when the reported
-<code>cfl</code> is below 1 and <code>diffusion_number</code> below 1.
+diffusion, forward Euler, zero boundaries. The explicit scheme is stable
+when <code>|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) &lt;= 1</code>
+(the von Neumann bound for upwind advection with forward-time
+centred-space diffusion); that sum is returned as
+<code>stability_number</code> with <code>stable</code>. A call outside the bound is
+not run as given: each step is split into enough sub-steps of a smaller
+<code>dt</code> to satisfy it (reported as <code>substeps</code> and <code>dt</code>),
+with a warning, so the field is a solution over the same physical time
+rather than a numerical explosion. The separate <code>cfl</code> and
+<code>diffusion_number</code> are reported for reference; each below 1 is
+necessary, not sufficient.
 <code>lagrangian_particles()</code>: the random walk
 <code>x + u dt + sqrt(2 K dt) xi</code> (Thomson 1987) with an optional counting
 grid.</p>
@@ -294,7 +322,16 @@ paths differ from the default here; pass its generator to reproduce them.</p></d
 <code>x_final</code> and <code>rise</code> (at each <code>x</code>). <code>gaussian_plume()</code>
 and <code>gaussian_puff()</code>: a numeric vector of concentrations, one per
 receptor. <code>advection_diffusion_2d()</code>: a list with <code>field</code>,
-<code>mass</code>, <code>cfl</code> and <code>diffusion_number</code>.
+<code>mass</code>, <code>cfl</code>, <code>diffusion_number</code>,
+<code>stability_number</code>, <code>stable</code>, <code>dt</code>, <code>substeps</code> and
+the axes, as a list of class <code>rmbl_field</code> that <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>
+draws as an image; <code>lagrangian_particles()</code> a list of class
+<code>rmbl_particles</code> (positions, means and the counting grid) that
+<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws as points. Every physical input is
+checked: emission rates, masses, heights and distances are non-negative,
+wind speed, travel time and grid steps positive, <code>n_images</code> a
+whole number, the stack hotter than the air, and <code>x0</code>, <code>y0</code>
+single numbers; a release above <code>mixing_height</code> warns.
 <code>lagrangian_particles()</code>: a list with <code>x</code>, <code>y</code>,
 <code>mean_x</code>, <code>mean_y</code> and, with a grid, <code>concentration</code>.</p>
     </div>

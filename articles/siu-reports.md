@@ -11,8 +11,15 @@ a fixed, panel-reviewed schema with a parser written for hostile input.
 ``` r
 
 sch <- bricklayer_siu_schema()
-head(sch$field, 20)
-#> NULL
+head(sch$name, 20)
+#>  [1] "police_service"                "date_of_incident_iso"         
+#>  [3] "date_siu_notified_iso"         "date_of_director_decision_iso"
+#>  [5] "siu_investigators"             "siu_forensics_investigators"  
+#>  [7] "number_of_witness_officials"   "number_of_civilian_witnesses" 
+#>  [9] "number_of_subject_officials"   "age_affected"                 
+#> [11] "sex_gender_affected"           "charges_recommended"          
+#> [13] "directors_name"                "location_of_call"             
+#> [15] "specific_injuries"             "relevant_legislation"
 nrow(sch)
 #> [1] 16
 ```
@@ -87,7 +94,8 @@ pinned by a test over the sources:
   come back incomplete.
 - **Numbers are bounded.** Every string-to-integer conversion goes
   through one helper that reads up to nine digits; `SO #1234567` is
-  1234567, and `SO #4444444444444444` is an error, not an overflow.
+  1234567, and `SO #4444444444444444` is ignored as a tag (the count
+  falls back to the other cues), not an overflow.
 - **The user can interrupt.** The whole path polls for an interrupt
   through a hook the host installs, and raises it only from a frame that
   owns no live C++ objects.

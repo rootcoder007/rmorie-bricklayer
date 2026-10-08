@@ -15,10 +15,18 @@ vertical term with ground reflection and, under a mixing lid, `n_images`
 pairs of image terms. `gaussian_puff()`: an instantaneous release with
 `sigma_x = sigma_y` evaluated at the travel distance `u t`.
 `advection_diffusion_2d()`: explicit upwind advection, central
-diffusion, forward Euler, zero boundaries; stable when the reported
-`cfl` is below 1 and `diffusion_number` below 1.
-`lagrangian_particles()`: the random walk `x + u dt + sqrt(2 K dt) xi`
-(Thomson 1987) with an optional counting grid.
+diffusion, forward Euler, zero boundaries. The explicit scheme is stable
+when `|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) <= 1` (the von
+Neumann bound for upwind advection with forward-time centred-space
+diffusion); that sum is returned as `stability_number` with `stable`. A
+call outside the bound is not run as given: each step is split into
+enough sub-steps of a smaller `dt` to satisfy it (reported as `substeps`
+and `dt`), with a warning, so the field is a solution over the same
+physical time rather than a numerical explosion. The separate `cfl` and
+`diffusion_number` are reported for reference; each below 1 is
+necessary, not sufficient. `lagrangian_particles()`: the random walk
+`x + u dt + sqrt(2 K dt) xi` (Thomson 1987) with an optional counting
+grid.
 
 ## Usage
 
@@ -199,9 +207,19 @@ lagrangian_particles(
 `briggs_plume_rise()`: a list with `flux`, `final_rise`, `x_final` and
 `rise` (at each `x`). `gaussian_plume()` and `gaussian_puff()`: a
 numeric vector of concentrations, one per receptor.
-`advection_diffusion_2d()`: a list with `field`, `mass`, `cfl` and
-`diffusion_number`. `lagrangian_particles()`: a list with `x`, `y`,
-`mean_x`, `mean_y` and, with a grid, `concentration`.
+`advection_diffusion_2d()`: a list with `field`, `mass`, `cfl`,
+`diffusion_number`, `stability_number`, `stable`, `dt`, `substeps` and
+the axes, as a list of class `rmbl_field` that
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws as an
+image; `lagrangian_particles()` a list of class `rmbl_particles`
+(positions, means and the counting grid) that
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws as
+points. Every physical input is checked: emission rates, masses, heights
+and distances are non-negative, wind speed, travel time and grid steps
+positive, `n_images` a whole number, the stack hotter than the air, and
+`x0`, `y0` single numbers; a release above `mixing_height` warns.
+`lagrangian_particles()`: a list with `x`, `y`, `mean_x`, `mean_y` and,
+with a grid, `concentration`.
 
 ## References
 

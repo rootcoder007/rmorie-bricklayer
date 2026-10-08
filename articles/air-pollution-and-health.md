@@ -245,33 +245,34 @@ cat(pollution_report_text(r))
 #> ==================================================================
 #> 
 #> Inputs
-#>   exposure mean:      23.968
-#>   exposure prevalence:1.000
+#>   exposure mean:      24.261
+#>   exposure prevalence:0.981
 #>   baseline rate/100k: 500.00
-#>   population:         1,000,000
-#>   reference conc:     5.8
+#>   population:         1e+06
+#>   reference conc:     10
 #> 
 #> Assumption log
-#>   [PASS] exposure > reference -- mean 23.96781213 vs ref 5.8 -- CRF is monotonic only when exposure exceeds the counterfactual floor.
-#>   [PASS] prevalence in [0,1] -- exposure_prevalence=1
-#>   [PASS] baseline_rate non-negative -- baseline_rate=500 per 100k per year
-#>   [PASS] population positive -- population=1000000
+#>   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10
+#>   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981
+#>   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year
+#>   [PASS] population finite and positive -- population=1e+06
+#>   [PASS] reference finite and non-negative -- reference=10
 #>   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.
 #> 
 #> Concentration-response
-#>   RR:       1.0366
+#>   RR:       1.0286
 #>   source:   Huangfu & Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines
 #> 
-#> Attributable fraction (PAF): 0.0353
+#> Attributable fraction (PAF): 0.0273
 #> 
 #> Mortality displaced
-#>   expected avoided deaths: 176.7
+#>   expected avoided deaths: 136.6
 #> 
 #> Burden of pollution
-#>   attributable deaths:   176.7
+#>   attributable deaths:   136.7
 #> 
 #> Equity analysis
-#>   concentration index: -0.0668
+#>   concentration index: -0.0647
 #> 
 #> STATUS: ok
 ```
@@ -283,9 +284,9 @@ with a non-zero exit status for scripts:
 
 bad <- verify_pollution("pm25", exposure_mean = 3, exposure_prevalence = 0.5)
 bad$status
-#> [1] "assumption_failure"
+#> [1] "ok"
 attr(bad, "exit_status")
-#> [1] 1
+#> [1] 0
 ```
 
 A CSV with an `exposure` column (and optionally `income`) replaces the
@@ -310,9 +311,9 @@ rapl_available()
 fp <- compute_footprint(sum(sqrt(seq_len(3e5))), location = "CA-ON", cpu_power_w = 45,
                         memory_gb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.004 s wall, 0.003 s CPU, utilisation 0.19 (process) on 4 cores
-#>   energy: 1.6e-08 kWh (cpu 9.38e-09, memory 6.62e-09)
-#>   CO2e:   1.46e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)
+#>   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 fp$assumptions
 #> character(0)
 ```
@@ -342,9 +343,9 @@ b <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb =
                        usage = "machine", load_curve = "codecarbon")
 rbind(process_linear = c(usage = a$usage, cpu_kwh = a$energy_kwh$cpu),
       machine_codecarbon = c(usage = b$usage, cpu_kwh = b$energy_kwh$cpu))
-#>                        usage   cpu_kwh
-#> process_linear     0.2500000 9.375e-09
-#> machine_codecarbon 0.3333333 2.500e-08
+#>                    usage   cpu_kwh
+#> process_linear      0.25 9.375e-09
+#> machine_codecarbon  0.20 1.876e-08
 b$usage_mode
 #> [1] "machine"
 ```
@@ -386,12 +387,12 @@ carbon_intensity("CA-XX")$note
 #> [1] "no row for zone CA-XX; its country CA used"
 tab <- carbon_intensity_table()
 nrow(tab)
-#> [1] 380
+#> [1] 379
 table(nchar(tab$location) == 2, tab$year)[, c("2024", "2025")]
 #>        
 #>         2024 2025
-#>   FALSE  156    4
-#>   TRUE   126   90
+#>   FALSE  156    3
+#>   TRUE   125   91
 ```
 
 With `location = NULL` (the default) the location is detected offline,
@@ -427,10 +428,10 @@ the two the Green Algorithms calculator prints:
 
 footprint_equivalents(fp$co2e_g * 1e4)   # if this ran ten thousand times
 #> $car_km
-#> [1] 8.315813e-05
+#> [1] 7.455208e-05
 #> 
 #> $tree_months
-#> [1] 1.586987e-05
+#> [1] 1.42275e-05
 #> 
 #> $sources
 #>                                                                  car 

@@ -164,8 +164,9 @@ head(df, 3)
 ```
 
 The seed makes the stand-in reproducible; `n_rows` overrides the
-recipe’s own count. The written file carries a marker that identifies it
-as synthetic, so a synthetic run can never be mistaken for a result:
+recipe’s own count. A `<path>.synthetic` sidecar file is written beside
+the CSV (the file itself stays a plain table), and the capsule checks
+read that marker, so a synthetic run can never be mistaken for a result:
 
 ``` r
 

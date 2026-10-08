@@ -49,7 +49,7 @@ the table as a data frame.
 
 ``` r
 if (FALSE) { # \dontrun{
-bricklayer_llm_login(token = "sk-...")  # a key issued at rmorie.com/access
+bricklayer_llm_login(token = "sk-...")  # a key issued at www.rmorie.com/access/
 head(bricklayer_data_tables())
 df <- bricklayer_data_load("chicago_crime/incidents")
 } # }

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -91,8 +92,15 @@ hostile input.</p>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_siu_schema.html">bricklayer_siu_schema</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sch</span><span class="op">$</span><span class="va">field</span>, <span class="fl">20</span><span class="op">)</span></span>
-<span><span class="co">#&gt; NULL</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sch</span><span class="op">$</span><span class="va">name</span>, <span class="fl">20</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "police_service"                "date_of_incident_iso"         </span></span>
+<span><span class="co">#&gt;  [3] "date_siu_notified_iso"         "date_of_director_decision_iso"</span></span>
+<span><span class="co">#&gt;  [5] "siu_investigators"             "siu_forensics_investigators"  </span></span>
+<span><span class="co">#&gt;  [7] "number_of_witness_officials"   "number_of_civilian_witnesses" </span></span>
+<span><span class="co">#&gt;  [9] "number_of_subject_officials"   "age_affected"                 </span></span>
+<span><span class="co">#&gt; [11] "sex_gender_affected"           "charges_recommended"          </span></span>
+<span><span class="co">#&gt; [13] "directors_name"                "location_of_call"             </span></span>
+<span><span class="co">#&gt; [15] "specific_injuries"             "relevant_legislation"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sch</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 16</span></span></code></pre></div>
 </div>
@@ -161,7 +169,8 @@ split can come back incomplete.</li>
 <strong>Numbers are bounded.</strong> Every string-to-integer
 conversion goes through one helper that reads up to nine digits;
 <code>SO #1234567</code> is 1234567, and
-<code>SO #4444444444444444</code> is an error, not an overflow.</li>
+<code>SO #4444444444444444</code> is ignored as a tag (the count falls
+back to the other cues), not an overflow.</li>
 <li>
 <strong>The user can interrupt.</strong> The whole path polls for an
 interrupt through a hook the host installs, and raises it only from a

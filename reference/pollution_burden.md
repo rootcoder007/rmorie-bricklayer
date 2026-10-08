@@ -22,32 +22,38 @@ pollution_burden(
 
 - exposure_mean:
 
-  Population-mean exposure (micrograms per cubic metre).
+  Mean exposure among the exposed (micrograms per cubic metre). With
+  `exposure_prevalence = 1` that is the population mean.
 
 - exposure_prevalence:
 
-  Proportion of the population at that level (1 for ambient air).
+  Proportion of the population at that level (1 for ambient air), in
+  `[0, 1]`.
 
 - baseline_rate:
 
-  Cases per person-year in the unexposed scenario.
+  Cases per person-year in the unexposed scenario (a rate per person,
+  not per 100,000: 0.008 is 800 per 100,000).
 
 - population:
 
-  At-risk population.
+  At-risk population (persons; any non-negative number).
 
 - pollutant:
 
-  `"PM2.5"` or `"NO2"`.
+  `"PM2.5"` (also written `"PM25"`) or `"NO2"`, in either case.
 
 - outcome:
 
-  Outcome key passed to the concentration-response function.
+  Outcome key passed to the concentration-response function;
+  `extra$unit` says whether the attributable count is deaths or incident
+  cases.
 
 - reference_conc:
 
-  Counterfactual concentration; `NULL` takes the pollutant's WHO 2021
-  guideline value.
+  Counterfactual concentration; `NULL` takes the pollutant's default
+  (PM2.5 5.8, NO2 10; see
+  [`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)).
 
 ## Value
 

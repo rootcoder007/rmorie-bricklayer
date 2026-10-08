@@ -3,7 +3,8 @@
 location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
-data (2024 or 2025 as of this release), sub-national zones from Electricity
+data (the latest year each grid reports: 2025 or 2024 for nearly all, older
+for a few small grids, named in year), sub-national zones from Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
 Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -12,7 +13,8 @@ systems, ...), and the world average. All figures are lifecycle intensities
 location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
-data (2024 or 2025 as of this release), sub-national zones from Electricity
+data (the latest year each grid reports: 2025 or 2024 for nearly all, older
+for a few small grids, named in year), sub-national zones from Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
 Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -25,7 +27,7 @@ systems, ...), and the world average. All figures are lifecycle intensities
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +46,7 @@ systems, ...), and the world average. All figures are lifecycle intensities
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -69,7 +72,8 @@ systems, ...), and the world average. All figures are lifecycle intensities
 location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
-data (2024 or 2025 as of this release), sub-national zones from Electricity
+data (the latest year each grid reports: 2025 or 2024 for nearly all, older
+for a few small grids, named in <code>year</code>), sub-national zones from Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
 Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -109,6 +113,20 @@ frame with the same columns plus <code>iso3</code>.</p>
 name (<code>"Canada"</code>), case-insensitively. An unknown sub-national code
 falls back to its country and says so in <code>note</code>. <code>NULL</code> detects
 the location with <code><a href="detect_location.html">detect_location</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="provenance-and-licence-of-the-table">Provenance and licence of the table<a class="anchor" aria-label="anchor" href="#provenance-and-licence-of-the-table"></a></h2>
+
+
+<p>The country rows are Ember's yearly electricity data as published by Our
+World in Data (CC BY 4.0); the sub-national zones and the Canadian
+provinces come from the Electricity Maps yearly files redistributed in
+the Green Algorithms data repository (v3.1), under that repository's
+terms, and the default PUE from the same repository. Every row names its
+source and year. Values are reproduced unchanged: Ember reports three
+small diesel grids (Montserrat, Saint Helena, Uzbekistan) at exactly
+1000 gCO2e/kWh and Turkmenistan's gas fleet at 1306, and the table does
+not round or cap them. Kosovo appears once, under the code <code>XK</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -151,7 +169,7 @@ Advanced Science 8(12), 2100707.</p>
 <span class="r-in"><span><span class="fu">carbon_intensity</span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">$</span><span class="va">source</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "user-supplied carbon intensity"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu">carbon_intensity_table</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 380</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 379</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

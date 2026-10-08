@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -216,9 +217,10 @@ each column’s generator:</p>
 <span><span class="co">#&gt; 2 2024    No      7 p-00002</span></span>
 <span><span class="co">#&gt; 3 2024   Yes      4 p-00003</span></span></code></pre></div>
 <p>The seed makes the stand-in reproducible; <code>n_rows</code>
-overrides the recipe’s own count. The written file carries a marker that
-identifies it as synthetic, so a synthetic run can never be mistaken for
-a result:</p>
+overrides the recipe’s own count. A <code>&lt;path&gt;.synthetic</code>
+sidecar file is written beside the CSV (the file itself stays a plain
+table), and the capsule checks read that marker, so a synthetic run can
+never be mistaken for a result:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/make_synthetic_csv.html">make_synthetic_csv</a></span><span class="op">(</span><span class="va">recipe</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>, n_rows <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">$</span><span class="va">rows</span></span>
 <span><span class="co">#&gt; [1] 5</span></span></code></pre></div>

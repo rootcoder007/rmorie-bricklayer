@@ -20,6 +20,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/key-encapsulation.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/language-model-routes.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/missingness-and-outliers.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/post-quantum-signatures.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/provenance.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/articles/side-channel-assurance.html</loc></url>
@@ -59,6 +60,7 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_siu_iso_date.html</loc></url>
@@ -175,7 +177,10 @@
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/period_days.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.html</loc></url>
+<url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.html</loc></url>
 <url><loc>https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.html</loc></url>

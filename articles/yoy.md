@@ -285,7 +285,7 @@ for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
 #> tsv      931 bytes
 #> json    3374 bytes
 #> md      1630 bytes
-#> html    6852 bytes
+#> html    6853 bytes
 #> pdf     5104 bytes
 ```
 

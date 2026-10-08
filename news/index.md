@@ -1,5 +1,202 @@
 # Changelog
 
+## rmoriebricklayer 0.5.10
+
+**A version of its own.** The build tagged 0.5.9 on 2026-10-07 (29ff122)
+and the one that followed it the same day (dcb3cb9) shared a version
+number while differing in the masking defaults, the FIPS 203 section 7.3
+key check, `capsule_attest(context = raw)` and the whole air-pollution
+feature. The stress test of dcb3cb9 (2026-10-08) asked for a number that
+tells them apart, and for the fixes below; this is both.
+
+### Every result draws itself
+
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods for
+  every result the package returns, on base graphics only: stock and
+  flow
+  ([`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md),
+  one panel per measure), period-over-period change with intervals
+  ([`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)),
+  rates, shares and rate change, band sensitivity, drift by column
+  ([`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md),
+  [`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md)),
+  Benford digits, power curves, frequencies, missingness patterns,
+  region coverage, Mahalanobis outliers, correlations, permutation
+  nulls, rounding envelopes, concentration-response curves, burdens,
+  concentration curves, the whole
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  report on one page, the footprint with its equivalents, concentration
+  fields and particle clouds, count trends, and
+  [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  one panel at a time. The same customisation everywhere (`main`, `col`
+  or `palette`, `grid`, `...` to the base call),
+  [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  for the session,
+  [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  with four colour-blind-safe palettes, and every method returns the
+  data it drew.
+  [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+  evaluates a plume on a grid;
+  [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  and
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  serve the results that are plain data frames.
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
+- To carry what the plots need,
+  [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+  records its concentration curve,
+  [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+  its data,
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  returns class `rmbl_pollution_report`,
+  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  class `rmbl_field` and
+  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  class `rmbl_particles` (all still plain lists underneath).
+
+### Air pollution and dispersion, after the stress test
+
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  applied the PM2.5 counterfactual (5.8) to NO2, overstating NO2 deaths
+  by 27%; `reference` now defaults per pollutant (NO2 10, PM2.5 5.8), as
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+  always did.
+- Levin’s formula was diluted twice when prevalence was below 1: the
+  relative risk was taken at the population mean, which already includes
+  the unexposed, and then multiplied by the prevalence again. With a CSV
+  or the demo data the exposed are the rows above the counterfactual
+  floor: `exposure_mean` is their mean and `exposure_prevalence` their
+  share, and the scalar arguments are documented the same way.
+- [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  documented a stability criterion that was false (cfl below 1 and
+  diffusion number below 1); the explicit upwind-plus-FTCS scheme needs
+  `|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) <= 1`, and a run
+  outside it reached 10^10 from a unit pulse while reporting itself
+  stable. The bound is returned as `stability_number` and `stable`; a
+  call outside it is taken in enough sub-steps of a smaller `dt` to
+  satisfy it (reported, with a warning), so the field is a solution over
+  the same physical time rather than an explosion.
+- Physical guards throughout the dispersion code, on the package’s own
+  input helpers: emission rates, masses, heights and distances
+  non-negative, wind speed, travel time and grid steps positive,
+  `n_images` a whole number (2.5 was truncated silently), the stack
+  hotter than the air for Briggs’ rise (a cooler stack returned NaN),
+  `x0` and `y0` single numbers (a vector doubled `mean_x`), and a
+  warning when the release is above the mixing height.
+  `gaussian_plume(q = -100)` returned a negative concentration and
+  `u = 0` returned Inf; `gaussian_puff(t = -100)` a negative one;
+  `pg_sigmas(-500)` a negative sigma.
+- [`attributable_fraction()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+  returned 2 for RR = -1, 0 for RR = 0 and NaN for RR = Inf, and coerced
+  text; it now requires a single finite positive RR and a prevalence in
+  \[0, 1\].
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
+  [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+  and the CRFs check their inputs the same way; population is kept as a
+  number (8e9 is no longer NA); `"PM2.5"`, `"PM25"` and `"pm2.5"` are
+  accepted everywhere.
+- A NAPS pull is converted row by row: a file mixing ppb and micrograms
+  per cubic metre no longer has every row multiplied by 1.88, a `value`
+  column without a `unit` column is an error rather than assumed, and
+  any other unit is an error.
+- The concentration index uses mid-ranks, so tied incomes no longer make
+  the index depend on the row order (all incomes equal gives exactly 0).
+- Citations: 5.8 is the lower bound of the GBD 2019 theoretical minimum
+  risk exposure level, not “the WHO 2021 guideline” (that is 5); the NO2
+  respiratory coefficient is Huangfu and Atkinson’s RR 1.03 per 10
+  micrograms per cubic metre; childhood asthma is an incidence
+  coefficient (Khreis et al. 2017, OR 1.05 per 4 micrograms per cubic
+  metre, scaled to per
+  10. and its burden is reported as incident cases, not deaths. Units
+      are stated on every page:
+      [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+      takes a rate per person-year,
+      [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+      per 100,000.
+- Exposure at or below the counterfactual floor is a result (PAF and
+  cases 0), not an assumption failure; an infinite or missing input is
+  one (the status contract holds).
+- The carbon-intensity table has one Kosovo row (`XK`), documents its
+  provenance and licences, and says which values Ember reports as
+  exactly 1000 or above it. The time-zone table is rebuilt from the IANA
+  `zone.tab` (one country per zone) plus every alias in `backward`, 549
+  zones: `Europe/Stockholm`, `US/Eastern`, `Asia/Calcutta`,
+  `America/Montreal` and about 130 other common names were missing and
+  fell through to the locale, so an English (US) locale in Stockholm got
+  the US grid. Every geographic zone in
+  [`OlsonNames()`](https://rdrr.io/r/base/timezones.html) now resolves,
+  and the `posix/` and `right/` prefixes are stripped.
+  [`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)
+  checks every argument before it runs `expr` (a negative `memory_gb` no
+  longer gives negative CO2e after the computation has been paid for).
+
+### Cryptography
+
+- Masked ML-KEM decapsulation left both shares of the decrypted message,
+  the hash input and K-bar on the dead stack after returning (the plain
+  path guarded them); every share pair is now wiped.
+- Masked ML-DSA signing can be switched off:
+  `capsule_sign(masked = FALSE)`, `fips_sign_mu(masked = FALSE)`, and
+  the option `rmoriebricklayer.masked` sets the default for all three
+  masked operations in a session (a chain or bundle signs many times).
+  The documented cost was understated: masking takes about 3 to 12 times
+  the plain time on decapsulation and 13 to 24 times on ML-DSA signing,
+  depending on the CPU (4 ms and 26 ms on this package’s test machine).
+- The TVLA workflow also runs on changes to `rmbl_mlkem_body.h` and
+  `rmbl_mldsa_body.h`, where the composed masked algorithms live; the
+  dudect runner re-measures an “inconclusive” target (4.5 \< \|t\|
+  \< 10) with three times the samples and fails if it stays there. The
+  ACVP PBKDF sample exercises SHA-224 only; PBKDF2-SHA256 is checked
+  against OpenSSL and RFC 6070, and the README now says so.
+- `C_rmbl_hash_two_part` (an internal self-test entry) refuses a
+  non-integer or logical `split` instead of coercing it.
+
+### Documentation
+
+- The statement that no third-party security audit has been commissioned
+  had been removed from `DESCRIPTION`, `SECURITY.md`, the README and
+  seven help pages without one having taken place; it is back in all of
+  them, and the masking sentence no longer appears on the pages of HQC,
+  XMSS and the DRBG, which are not masked.
+- Vignette corrections: no ChipWhisperer firmware ships (the power
+  figures are from the emulator); ML-KEM takes a 64-byte seed and HQC v5
+  a 32-byte one; attestations take a signing key, not a shared secret; a
+  bundle’s note is `$attestation$note`; the JSON codec is R, not C, and
+  is not a fuzz target; Windows randomness is `RtlGenRandom`;
+  [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  pins whole files, the Merkle tree pins parts of one file; there is no
+  separate cloud-keys route;
+  [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+  has no `context` argument; the SIU schema column is `name` and an
+  oversize tag is ignored, not an error; the synthetic marker is the
+  `.synthetic` sidecar; XMSS is not compared with OpenSSL; verification
+  errors on an object that is not a signature; ctgrind is a dynamic
+  check, not a proof; the share recombination sentence in the README
+  names what signing publishes.
+- [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  drew rows off the page when `height` was not 8.5: the row height
+  follows the page height, as the pagination already did.
+  `rmbl_barrier.cpp` is regenerated from its generator. The
+  `www.rmorie.com` move reaches `data_hub.R` and the services fallback,
+  with the trailing slashes the site expects. The offline vector subset
+  is 3 MB, not 1.5.
+
+### Pre-existing, found by the stress test
+
+- The French SIU resolver was about 100 times slower than the English
+  one (115 microseconds per character: a 2 MiB page would have taken
+  four minutes) because its legal-sentence filter re-scanned each
+  sentence from every position. Sentences are now split once and tested
+  once.
+- [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  on a tail of identical values reported alpha = 25 (the optimiser’s
+  bound) as reliable; such a tail is “not estimable”, and an alpha at
+  either bound is flagged unreliable.
+- `mahalanobis_outliers(robust = FALSE)` called columns of very
+  different scale (1e160 against 1) collinear; the classical path
+  standardises by the classical scale first (the distance is affine
+  invariant, so nothing else changes).
+
 ## rmoriebricklayer 0.5.9
 
 **Standards vectors, at scale**
@@ -14,9 +211,10 @@
   `tools/vectors/`): 6,848 tests checked, 0 failures. The 3,822 not
   applicable are named with their reason: bit-length SHA-3 messages (the
   API hashes bytes), gigabyte messages, hedged ML-DSA signatures whose
-  randomness the vectors do not carry, and PBKDF2 over SHA-224. A subset
-  of 1.5 MB ships in `tests/testthat/vectors` and runs offline through
-  the same runner.
+  randomness the vectors do not carry, and PBKDF2 over SHA-224 (the only
+  hash the published ACVP PBKDF sample exercises; PBKDF2-SHA256 is
+  checked against OpenSSL and RFC 6070 instead). A subset of 3 MB ships
+  in `tests/testthat/vectors` and runs offline through the same runner.
 - **Found by the vectors:** `C_rmbl_mlkem_decaps` accepted a
   decapsulation key whose stored H(ek) did not match its own ek; FIPS
   203 section 7.3 requires rejecting it, and it is now refused.

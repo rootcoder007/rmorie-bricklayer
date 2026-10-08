@@ -130,9 +130,10 @@ capsule_verify("manifest-digest", sig, key)
 ## Randomness
 
 [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
-draws from the operating system (`getrandom`, `BCryptGenRandom`) and
-does **not** consume R’s seeded stream, so a reproducible analysis is
-unaffected by key generation happening beside it:
+draws from the operating system (`getrandom` or `/dev/urandom` on Unix,
+`RtlGenRandom` on Windows) and does **not** consume R’s seeded stream,
+so a reproducible analysis is unaffected by key generation happening
+beside it:
 
 ``` r
 
@@ -203,10 +204,11 @@ identical(unlist(ch), readBin(p, "raw", file.size(p)))
 #> [1] TRUE
 ```
 
-This is how
 [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
-pins data files: a mismatch identifies which part of a capsule changed
-rather than only that something did.
+pins each data file by one whole-file digest
+([`sha256_file()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/sha256_file.md));
+the Merkle tree is for pinning the parts of a large file, so a mismatch
+identifies which part of it changed rather than only that something did.
 
 ## How these implementations are checked
 

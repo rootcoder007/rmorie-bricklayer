@@ -17,7 +17,7 @@ pollution_report_text() renders the result as plain text."><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,7 @@ pollution_report_text() renders the result as plain text."><meta property="og:im
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -76,7 +77,7 @@ attributable-fraction, displaced-mortality, burden and equity stages.
 <span>  exposure_csv <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  exposure_mean <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  exposure_prevalence <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  reference <span class="op">=</span> <span class="fl">5.8</span>,</span>
+<span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  baseline_rate <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  population <span class="op">=</span> <span class="fl">1e+06</span></span>
 <span><span class="op">)</span></span>
@@ -89,11 +90,14 @@ attributable-fraction, displaced-mortality, burden and equity stages.
 
 
 <dl><dt id="arg-pollutant">pollutant<a class="anchor" aria-label="anchor" href="#arg-pollutant"></a></dt>
-<dd><p><code>"no2"</code> or <code>"pm25"</code>.</p></dd>
+<dd><p><code>"no2"</code> or <code>"pm25"</code> (also <code>"PM2.5"</code>), in
+either case.</p></dd>
 
 
 <dt id="arg-outcome">outcome<a class="anchor" aria-label="anchor" href="#arg-outcome"></a></dt>
-<dd><p>Outcome key for the concentration-response function.</p></dd>
+<dd><p>Outcome key for the concentration-response function; the
+mortality outcomes count deaths, <code>"childhood_asthma"</code> incident
+cases.</p></dd>
 
 
 <dt id="arg-region-years">region, years<a class="anchor" aria-label="anchor" href="#arg-region-years"></a></dt>
@@ -106,26 +110,33 @@ attributable-fraction, displaced-mortality, burden and equity stages.
 
 <dt id="arg-exposure-csv">exposure_csv<a class="anchor" aria-label="anchor" href="#arg-exposure-csv"></a></dt>
 <dd><p>Path of a CSV with an <code>exposure</code> column in
-micrograms per cubic metre, or a <code>value</code> column with a <code>unit</code>
-column (NO2 in ppb is converted at 1.88 micrograms per cubic metre per
-ppb, the WHO 2021 conversion at 25 C and 1 atm).</p></dd>
+micrograms per cubic metre, or a NAPS pull with a <code>value</code> column
+and a <code>unit</code> column (required with <code>value</code>): each row is
+converted by its own unit, NO2 in ppb at 1.88 micrograms per cubic metre
+per ppb (the WHO 2021 conversion at 25 C and 1 atm), and any other unit
+is an error. With a CSV or the demo data the exposed are the rows above
+<code>reference</code>: <code>exposure_prevalence</code> is their share and
+<code>exposure_mean</code> their mean, so Levin's formula is not diluted twice.</p></dd>
 
 
 <dt id="arg-exposure-mean-exposure-prevalence">exposure_mean, exposure_prevalence<a class="anchor" aria-label="anchor" href="#arg-exposure-mean-exposure-prevalence"></a></dt>
 <dd><p>Scalar inputs used when neither
-<code>demo</code> nor <code>exposure_csv</code> is given.</p></dd>
+<code>demo</code> nor <code>exposure_csv</code> is given: the mean exposure among
+the exposed and the share of the population exposed.</p></dd>
 
 
 <dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
-<dd><p>Counterfactual reference concentration.</p></dd>
+<dd><p>Counterfactual reference concentration; <code>NULL</code> takes
+the pollutant's default (PM2.5 5.8, NO2 10; see <code><a href="crf_pm25.html">crf_pm25</a></code>).</p></dd>
 
 
 <dt id="arg-baseline-rate">baseline_rate<a class="anchor" aria-label="anchor" href="#arg-baseline-rate"></a></dt>
-<dd><p>Baseline outcome rate per 100,000 per year.</p></dd>
+<dd><p>Baseline outcome rate per 100,000 per year (unlike
+<code><a href="pollution_burden.html">pollution_burden</a></code>, which takes a rate per person-year).</p></dd>
 
 
 <dt id="arg-population">population<a class="anchor" aria-label="anchor" href="#arg-population"></a></dt>
-<dd><p>Population at risk.</p></dd>
+<dd><p>Population at risk (persons).</p></dd>
 
 
 <dt id="arg-report">report<a class="anchor" aria-label="anchor" href="#arg-report"></a></dt>
@@ -134,7 +145,8 @@ ppb, the WHO 2021 conversion at 25 C and 1 atm).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>verify_pollution()</code>: the report as a list; its <code>status</code>
+    <p><code>verify_pollution()</code>: the report as a list of class
+<code>rmbl_pollution_report</code> (<code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws it); its <code>status</code>
 is <code>"ok"</code>, <code>"assumption_failure"</code> or <code>"error"</code>, and the
 attribute <code>exit_status</code> carries a command-line exit code (0, 1 or
 2). <code>pollution_report_text()</code>: a character string.</p>
@@ -146,7 +158,7 @@ attribute <code>exit_status</code> carries a command-line exit code (0, 1 or
 <span class="r-in"><span><span class="va">r</span><span class="op">$</span><span class="va">status</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "ok"</span>
 <span class="r-in"><span><span class="va">r</span><span class="op">$</span><span class="va">pipeline</span><span class="op">$</span><span class="va">paf</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.03533756</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.02733115</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu">pollution_report_text</span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================================================================</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   verify-pollution -- NO2 -&gt; all_cause_mortality</span>
@@ -154,33 +166,34 @@ attribute <code>exit_status</code> carries a command-line exit code (0, 1 or
 <span class="r-out co"><span class="r-pr">#&gt;</span> ==================================================================</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Inputs</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   exposure mean:      23.968</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   exposure prevalence:1.000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   exposure mean:      24.261</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   exposure prevalence:0.981</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   baseline rate/100k: 500.00</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   population:         1,000,000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   reference conc:     5.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   population:         1e+06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   reference conc:     10</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Assumption log</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] exposure &gt; reference -- mean 23.96781213 vs ref 5.8 -- CRF is monotonic only when exposure exceeds the counterfactual floor.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] prevalence in [0,1] -- exposure_prevalence=1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] baseline_rate non-negative -- baseline_rate=500 per 100k per year</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] population positive -- population=1000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] population finite and positive -- population=1e+06</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] reference finite and non-negative -- reference=10</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Concentration-response</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   RR:       1.0366</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   RR:       1.0286</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source:   Huangfu &amp; Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Attributable fraction (PAF): 0.0353</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Attributable fraction (PAF): 0.0273</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Mortality displaced</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   expected avoided deaths: 176.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   expected avoided deaths: 136.6</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Burden of pollution</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   attributable deaths:   176.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   attributable deaths:   136.7</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Equity analysis</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   concentration index: -0.0668</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   concentration index: -0.0647</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> STATUS: ok</span>
 </code></pre></div>

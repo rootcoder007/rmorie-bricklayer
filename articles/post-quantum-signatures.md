@@ -105,7 +105,7 @@ capsule_verify("a manifest digest", sig3, key, context = "release")
 #> [1] TRUE
 ```
 
-Since 0.5.9, ML-DSA signing runs **first-order masked** by default (see
+Since 0.5.10, ML-DSA signing runs **first-order masked** by default (see
 the *Side-channel assurance* vignette): every secret-dependent value is
 held as two random shares. The signatures are byte-identical to the
 unmasked computation; only the cost differs.
@@ -191,9 +191,11 @@ capsule_verify("manifest-1", s2, signing_public_key(xkey))
 
 ## Every way of being wrong returns FALSE
 
-Verification never errors on malformed input; it returns `FALSE`. A
-truncated or edited signature, a foreign key and an edited message all
-fail the same way:
+Verification returns `FALSE` for every signature of the right shape that
+does not verify: a truncated or edited signature, a foreign key and an
+edited message all fail the same way. (An object that is not a signature
+at all, a key of the wrong class or a missing message is an error,
+because that is a programming mistake rather than a tampered artefact.)
 
 ``` r
 
@@ -212,10 +214,11 @@ capsule_verify("a manifest digest", sig, fips_public_key(fips_keygen("ML-DSA-65"
 
 ## How these implementations are checked
 
-Every scheme is compared byte for byte with OpenSSL 3.5 and run against
-the NIST ACVP and C2SP Wycheproof vector sets on every change (6,848
-checks, 0 failures at 0.5.9), fuzzed differentially against OpenSSL, and
-run under valgrind with the secret key marked undefined to prove no
-branch or memory address depends on it. `SECURITY.md` in the package
-repository has the full table of what each check catches and what it
-does not.
+ML-DSA and SLH-DSA are compared byte for byte with OpenSSL 3.5 and run
+against the NIST ACVP and C2SP Wycheproof vector sets on every change
+(6,848 checks, 0 failures at 0.5.10), and fuzzed differentially against
+OpenSSL; XMSS, which OpenSSL does not implement, is checked against the
+RFC 8391 vectors. Every signer runs under valgrind with the secret key
+marked undefined, a dynamic check that no executed branch or memory
+address depends on it. `SECURITY.md` in the package repository has the
+full table of what each check catches and what it does not.

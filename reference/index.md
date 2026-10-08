@@ -656,6 +656,8 @@ assumption log.
 - [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
   [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
   : Run the pollution-to-health pipeline and report it
+- [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+  : A Gaussian-plume concentration field on a grid
 
 ## The footprint of the computation
 
@@ -830,3 +832,44 @@ Printed reports for the objects the package returns.
   [`print(`*`<bricklayer_certificate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   [`print(`*`<bricklayer_certpath_check>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_print_methods.md)
   : Printed reports for bricklayer objects
+
+## Plots
+
+Every result draws itself with plot(), on base graphics, with one shared
+look and the same customisation everywhere; palettes and session
+options; Lorenz and funnel plots for results that are plain data frames.
+
+- [`plot(`*`<rmbl_stock_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_rate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_share>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_rate_change>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_band_sensitivity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_drift_calibration>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_drift>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_benford>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_power>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_freq>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_missingness>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_region_coverage>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_outliers>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_correlations>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_cortable>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_falsification>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_bounds>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_crf>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_burden>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_equity>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_pollution_report>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_footprint>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_field>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_particles>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_count_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<bricklayer_analysis>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  : Plot methods for the package's results
+- [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
+  : Plot styling for the package's plot methods
+- [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  : Lorenz and funnel plots

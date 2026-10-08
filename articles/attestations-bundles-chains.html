@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -147,8 +148,8 @@ names the file:</p>
 <span><span class="va">v</span><span class="op">$</span><span class="va">ok</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/capsule_bundle.html">capsule_bundle_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">b</span>, <span class="st">"path"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">note</span></span>
-<span><span class="co">#&gt; NULL</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/capsule_bundle.html">capsule_bundle_read</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">b</span>, <span class="st">"path"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">attestation</span><span class="op">$</span><span class="va">note</span></span>
+<span><span class="co">#&gt; [1] "as published"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -215,8 +216,11 @@ completeness matter: <code><a href="../reference/rmbl_chain.html">chain_append()
 <code><a href="../reference/rmbl_chain.html">chain_seal()</a></code> at each release.</li>
 </ul>
 <p>All three accept any signing key the package knows: ML-DSA and
-SLH-DSA (<code><a href="../reference/fips_keygen.html">fips_keygen()</a></code>), XMSS (<code><a href="../reference/pqc_keygen.html">pqc_keygen()</a></code>,
-with the key state carried forward), or a shared secret for HMAC.</p>
+SLH-DSA (<code><a href="../reference/fips_keygen.html">fips_keygen()</a></code>) or XMSS (<code><a href="../reference/pqc_keygen.html">pqc_keygen()</a></code>,
+with the key state carried forward). A shared secret from
+<code><a href="../reference/derive_key.html">derive_key()</a></code> is for keyed digests
+(<code><a href="../reference/rmbl_keyed_digest.html">core_hmac_sha256()</a></code>), not for attestations: an attestation
+names a public key, and a shared secret has none.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -1646,6 +1647,13 @@
 
         </dt>
         <dd>Run the pollution-to-health pipeline and report it</dd>
+
+        <dt>
+
+          <code><a href="plume_field.html">plume_field()</a></code>
+
+        </dt>
+        <dd>A Gaussian-plume concentration field on a grid</dd>
       </dl></div><div class="section level2">
       <h2 id="the-footprint-of-the-computation">The footprint of the computation<a class="anchor" aria-label="anchor" href="#the-footprint-of-the-computation"></a></h2>
 
@@ -1961,6 +1969,36 @@
 
         </dt>
         <dd>Printed reports for bricklayer objects</dd>
+      </dl></div><div class="section level2">
+      <h2 id="plots">Plots<a class="anchor" aria-label="anchor" href="#plots"></a></h2>
+
+      <div class="section-desc"><p>Every result draws itself with plot(), on base graphics, with one shared look and the same customisation everywhere; palettes and session options; Lorenz and funnel plots for results that are plain data frames.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="plot-methods.html">plot(<i>&lt;rmbl_stock_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_drift_calibration&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_freq&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_missingness&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_region_coverage&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_outliers&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_correlations&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_cortable&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_crf&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_burden&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_equity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_pollution_report&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_footprint&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_field&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_particles&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_count_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_analysis&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Plot methods for the package's results</dd>
+
+        <dt>
+
+          <code><a href="bricklayer_palette.html">bricklayer_palette()</a></code> <code><a href="bricklayer_palette.html">bricklayer_plot_options()</a></code>
+
+        </dt>
+        <dd>Plot styling for the package's plot methods</dd>
+
+        <dt>
+
+          <code><a href="plot_lorenz.html">plot_lorenz()</a></code> <code><a href="plot_lorenz.html">plot_funnel()</a></code>
+
+        </dt>
+        <dd>Lorenz and funnel plots</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

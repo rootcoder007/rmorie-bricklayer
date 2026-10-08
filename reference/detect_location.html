@@ -4,7 +4,7 @@ network access, in this order: the RMBL_LOCATION environment
 variable (any code or name the table knows); codecarbon's
 CODECARBON_COUNTRY_ISO_CODE (alpha-3), so a machine already
 configured for codecarbon needs nothing more; the system time zone, mapped
-to its country through the IANA zone table (America/Toronto is
+to its country through the IANA zone tables (America/Toronto is
 Canada, Europe/Berlin Germany); the territory in the locale
 (en_CA.UTF-8 is Canada). When none of these yields a location in
 the table the answer is &quot;WORLD&quot;, and the method says so, so a report
@@ -13,7 +13,7 @@ network access, in this order: the RMBL_LOCATION environment
 variable (any code or name the table knows); codecarbon's
 CODECARBON_COUNTRY_ISO_CODE (alpha-3), so a machine already
 configured for codecarbon needs nothing more; the system time zone, mapped
-to its country through the IANA zone table (America/Toronto is
+to its country through the IANA zone tables (America/Toronto is
 Canada, Europe/Berlin Germany); the territory in the locale
 (en_CA.UTF-8 is Canada). When none of these yields a location in
 the table the answer is &quot;WORLD&quot;, and the method says so, so a report
@@ -25,7 +25,7 @@ never silently applies one country's grid to another's computation."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,7 @@ never silently applies one country's grid to another's computation."><meta prope
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -70,7 +71,7 @@ network access, in this order: the <code>RMBL_LOCATION</code> environment
 variable (any code or name the table knows); codecarbon's
 <code>CODECARBON_COUNTRY_ISO_CODE</code> (alpha-3), so a machine already
 configured for codecarbon needs nothing more; the system time zone, mapped
-to its country through the IANA zone table (<code>America/Toronto</code> is
+to its country through the IANA zone tables (<code>America/Toronto</code> is
 Canada, <code>Europe/Berlin</code> Germany); the territory in the locale
 (<code>en_CA.UTF-8</code> is Canada). When none of these yields a location in
 the table the answer is <code>"WORLD"</code>, and the method says so, so a report
@@ -100,6 +101,19 @@ caller or a test can supply them; the defaults read the running session.</p></dd
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>location</code> (a code present in
 <code><a href="carbon_intensity.html">carbon_intensity_table()</a></code>) and <code>method</code> (how it was found).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The zone table (<code>inst/extdata/timezone_countries.csv</code>, built by
+<code>tools/build_timezones.R</code> from the IANA database) holds every zone
+of <code>zone.tab</code>, which names exactly one country per zone
+(<code>Europe/Stockholm</code> is Sweden even though the database now keeps
+its rules under <code>Europe/Berlin</code>), plus every alias and old name in
+the <code>backward</code> file (<code>US/Eastern</code>, <code>Asia/Calcutta</code>,
+<code>America/Montreal</code>) under the country of the zone it links to.
+Every geographic zone <code><a href="https://rdrr.io/r/base/timezones.html" class="external-link">OlsonNames()</a></code> lists resolves; the
+<code>Etc/</code>, <code>UTC</code> and fixed-offset zones name no country and fall
+through to the locale.</p>
     </div>
 
     <div class="section level2">

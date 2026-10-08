@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -188,9 +189,10 @@ interactive use. A derived key signs a manifest symmetrically:</p>
 <h2 id="randomness">Randomness<a class="anchor" aria-label="anchor" href="#randomness"></a>
 </h2>
 <p><code><a href="../reference/random_bytes.html">random_bytes()</a></code> draws from the operating system
-(<code>getrandom</code>, <code>BCryptGenRandom</code>) and does
-<strong>not</strong> consume R’s seeded stream, so a reproducible
-analysis is unaffected by key generation happening beside it:</p>
+(<code>getrandom</code> or <code>/dev/urandom</code> on Unix,
+<code>RtlGenRandom</code> on Windows) and does <strong>not</strong>
+consume R’s seeded stream, so a reproducible analysis is unaffected by
+key generation happening beside it:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">a</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
@@ -247,9 +249,10 @@ that concatenate back to its bytes:</p>
 <span><span class="co">#&gt; [1] "c4cb691d88a0dbf1dad9767c19095d54ac6958e6411e06d81dced0dba895c382"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">readBin</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p>This is how <code><a href="../reference/capsule_bundle.html">capsule_bundle()</a></code> pins data files: a mismatch
-identifies which part of a capsule changed rather than only that
-something did.</p>
+<p><code><a href="../reference/capsule_bundle.html">capsule_bundle()</a></code> pins each data file by one whole-file
+digest (<code><a href="../reference/sha256_file.html">sha256_file()</a></code>); the Merkle tree is for pinning the
+parts of a large file, so a mismatch identifies which part of it changed
+rather than only that something did.</p>
 </div>
 <div class="section level2">
 <h2 id="how-these-implementations-are-checked">How these implementations are checked<a class="anchor" aria-label="anchor" href="#how-these-implementations-are-checked"></a>

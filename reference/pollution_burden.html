@@ -11,7 +11,7 @@ factor estimates do (GBD 2019 Risk Factors Collaborators 2020)."><meta property=
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ factor estimates do (GBD 2019 Risk Factors Collaborators 2020)."><meta property=
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul></li>
@@ -74,33 +75,38 @@ factor estimates do (GBD 2019 Risk Factors Collaborators 2020).</p>
 
 
 <dl><dt id="arg-exposure-mean">exposure_mean<a class="anchor" aria-label="anchor" href="#arg-exposure-mean"></a></dt>
-<dd><p>Population-mean exposure (micrograms per cubic metre).</p></dd>
+<dd><p>Mean exposure among the exposed (micrograms per cubic
+metre). With <code>exposure_prevalence = 1</code> that is the population mean.</p></dd>
 
 
 <dt id="arg-exposure-prevalence">exposure_prevalence<a class="anchor" aria-label="anchor" href="#arg-exposure-prevalence"></a></dt>
 <dd><p>Proportion of the population at that level (1
-for ambient air).</p></dd>
+for ambient air), in <code>[0, 1]</code>.</p></dd>
 
 
 <dt id="arg-baseline-rate">baseline_rate<a class="anchor" aria-label="anchor" href="#arg-baseline-rate"></a></dt>
-<dd><p>Cases per person-year in the unexposed scenario.</p></dd>
+<dd><p>Cases per person-year in the unexposed scenario (a
+rate per person, not per 100,000: 0.008 is 800 per 100,000).</p></dd>
 
 
 <dt id="arg-population">population<a class="anchor" aria-label="anchor" href="#arg-population"></a></dt>
-<dd><p>At-risk population.</p></dd>
+<dd><p>At-risk population (persons; any non-negative number).</p></dd>
 
 
 <dt id="arg-pollutant">pollutant<a class="anchor" aria-label="anchor" href="#arg-pollutant"></a></dt>
-<dd><p><code>"PM2.5"</code> or <code>"NO2"</code>.</p></dd>
+<dd><p><code>"PM2.5"</code> (also written <code>"PM25"</code>) or
+<code>"NO2"</code>, in either case.</p></dd>
 
 
 <dt id="arg-outcome">outcome<a class="anchor" aria-label="anchor" href="#arg-outcome"></a></dt>
-<dd><p>Outcome key passed to the concentration-response function.</p></dd>
+<dd><p>Outcome key passed to the concentration-response function;
+<code>extra$unit</code> says whether the attributable count is deaths or
+incident cases.</p></dd>
 
 
 <dt id="arg-reference-conc">reference_conc<a class="anchor" aria-label="anchor" href="#arg-reference-conc"></a></dt>
 <dd><p>Counterfactual concentration; <code>NULL</code> takes the
-pollutant's WHO 2021 guideline value.</p></dd>
+pollutant's default (PM2.5 5.8, NO2 10; see <code><a href="crf_pm25.html">crf_pm25</a></code>).</p></dd>
 
 </dl></div>
     <div class="section level2">

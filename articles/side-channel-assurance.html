@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -103,7 +104,7 @@ cores). An attacker who can time the operation, locally or across a
 network, recovers the secret bit by bit.</p>
 </div>
 <div class="section level3">
-<h3 id="static-proof-ctgrind-instctcheck">Static proof: ctgrind (<code>inst/ctcheck</code>)<a class="anchor" aria-label="anchor" href="#static-proof-ctgrind-instctcheck"></a>
+<h3 id="dynamic-check-ctgrind-instctcheck">Dynamic check: ctgrind (<code>inst/ctcheck</code>)<a class="anchor" aria-label="anchor" href="#dynamic-check-ctgrind-instctcheck"></a>
 </h3>
 <p>The secret key is marked <em>undefined</em> to valgrind memcheck
 (Langley’s ctgrind, 2010). Memcheck then reports every conditional jump
@@ -273,17 +274,26 @@ a second-order attacker combines two leakage points.</li>
 a fault campaign in the same emulator, higher-order gadgets, formal
 verification of the gadgets with maskVerif) and, for EM and for
 confirming a given chip, a hardware route. The repository’s
-<code>SECURITY.md</code> states the current boundary; the release bundle
-includes ChipWhisperer firmware and a capture script for anyone with a
-board.</p>
+<code>SECURITY.md</code> states the current boundary. The side-channel
+review bundle distributed alongside the release (a separate archive, not
+part of the package) carries firmware for a ChipWhisperer Cortex-M4
+target (CW-Lite Arm, CW308 STM32F3) running the same kernels, and a
+fixed-versus-random capture script; no capture has been run yet, and
+every power figure above comes from the emulator.</p>
 </div>
 <div class="section level2">
 <h2 id="choosing-the-plain-path">4. Choosing the plain path<a class="anchor" aria-label="anchor" href="#choosing-the-plain-path"></a>
 </h2>
-<p>Masking costs about 5x on decapsulation and 16x on signing (13 ms for
-ML-DSA-65 on a laptop). Where the threat model has no physical attacker,
-<code>kem_decapsulate(masked = FALSE)</code> keeps the plain path.
-Timing protections cannot be switched off; they are not optional.</p>
+<p>Masking costs about 3 to 12 times the plain time on decapsulation (4
+ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and 13
+to 24 times on signing (26 ms for ML-DSA-65 against 2 ms), depending on
+the CPU. Where the threat model has no physical attacker,
+<code>kem_decapsulate(masked = FALSE)</code>,
+<code>capsule_sign(masked = FALSE)</code> and
+<code>fips_sign_mu(masked = FALSE)</code> keep the plain path, and
+<code>options(rmoriebricklayer.masked = FALSE)</code> makes that the
+default for a session (a chain or bundle signs many times). Timing
+protections cannot be switched off; they are not optional.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

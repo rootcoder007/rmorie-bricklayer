@@ -17,6 +17,7 @@ articles:
   key-encapsulation: key-encapsulation.html
   language-model-routes: language-model-routes.html
   missingness-and-outliers: missingness-and-outliers.html
+  plotting-results: plotting-results.html
   post-quantum-signatures: post-quantum-signatures.html
   provenance: provenance.html
   side-channel-assurance: side-channel-assurance.html
@@ -27,7 +28,7 @@ articles:
   trends-and-change: trends-and-change.html
   validation-rules-and-synthetic-data: validation-rules-and-synthetic-data.html
   yoy: yoy.html
-last_built: 2026-10-07T21:35Z
+last_built: 2026-10-08T06:40Z
 urls:
   reference: https://rootcoder007.github.io/rmorie-bricklayer/reference
   article: https://rootcoder007.github.io/rmorie-bricklayer/articles

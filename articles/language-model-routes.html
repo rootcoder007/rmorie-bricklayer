@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -100,11 +101,10 @@ configured, not probed.</li>
 <code>localhost:11434</code>); <code>OLLAMA_HOST=off</code> disables the
 probe.</li>
 <li>
-<strong>Your own cloud keys</strong>: Gemini, OpenAI or an
-OpenAI-compatible provider, from their usual environment variables.</li>
-<li>
 <strong>The hosted MORIE tier</strong>, last, and only with a
-personal key issued on request at <a href="https://www.rmorie.com/access/" class="external-link uri">https://www.rmorie.com/access/</a>.</li>
+personal key issued on request at <a href="https://www.rmorie.com/access/" class="external-link uri">https://www.rmorie.com/access/</a>. A cloud provider’s own
+API (Gemini, OpenAI) is reached through route 1 when its endpoint speaks
+the OpenAI protocol; there is no separate route.</li>
 </ol>
 <p><code><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status()</a></code> reports what is available from
 this machine. With the local route off the call reaches no network:</p>
@@ -127,7 +127,9 @@ this machine. With the local route off the call reaches no network:</p>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"In one sentence, what does a Merkle root pin?"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"Summarise this table"</span>, context <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                         collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span>,</span>
+<span>                   system_prompt <span class="op">=</span> <span class="st">"Answer in two sentences."</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> uses the same route to explain a
 reproducibility bundle’s verification output in plain language, when a
 key is stored and only then.</p>
@@ -164,7 +166,7 @@ and an older cache is deleted;</li>
 <div class="section level2">
 <h2 id="what-the-package-will-not-do-on-the-network">What the package will not do on the network<a class="anchor" aria-label="anchor" href="#what-the-package-will-not-do-on-the-network"></a>
 </h2>
-<p>The 0.5.8 and 0.5.9 reviews closed every bypass of the transport and
+<p>The 0.5.8 to 0.5.10 reviews closed every bypass of the transport and
 these rules now hold for every byte the package sends or receives:</p>
 <ul>
 <li>An endpoint of your own is either the loopback host, a literal

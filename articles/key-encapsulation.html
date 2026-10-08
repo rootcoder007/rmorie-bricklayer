@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,6 +47,7 @@
     <li><a class="dropdown-item" href="../articles/drift.html">Has the data changed?</a></li>
     <li><a class="dropdown-item" href="../articles/yoy.html">Year-over-year change, and the three ways it goes wrong</a></li>
     <li><a class="dropdown-item" href="../articles/tables.html">Statistics for a published administrative table</a></li>
+    <li><a class="dropdown-item" href="../articles/plotting-results.html">Plotting results</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
@@ -140,8 +141,8 @@ way.</p>
 <h3 id="masked-decapsulation-the-default">Masked decapsulation (the default)<a class="anchor" aria-label="anchor" href="#masked-decapsulation-the-default"></a>
 </h3>
 <p>Decapsulation is the operation that uses the secret key, so it is the
-one a power or electromagnetic side channel would target. Since 0.5.9 it
-runs <strong>first-order masked</strong> by default: every value that
+one a power or electromagnetic side channel would target. Since 0.5.10
+it runs <strong>first-order masked</strong> by default: every value that
 depends on the secret key is held as two random shares that are
 refreshed from the operating system’s randomness on every call, and the
 re-encryption comparison of the FO transform is done on shares (the
@@ -198,9 +199,10 @@ and the version is recorded in the key:</p>
 <div class="section level3">
 <h3 id="reproducible-keys-for-tests">Reproducible keys for tests<a class="anchor" aria-label="anchor" href="#reproducible-keys-for-tests"></a>
 </h3>
-<p>Both KEMs accept a 32-byte seed so a test can regenerate the same
-key. Never use this outside tests: a key derived from a guessable seed
-is no key at all.</p>
+<p>Both KEMs accept a seed so a test can regenerate the same key: 64
+bytes for ML-KEM (FIPS 203’s <code>d || z</code>) and 32 bytes for HQC
+v5 (its <code>seed_KEM</code>). Never use this outside tests: a key
+derived from a guessable seed is no key at all.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span>,</span>
 <span>          <span class="fu"><a href="../reference/hqc_keygen.html">hqc_keygen</a></span><span class="op">(</span><span class="fl">1</span>, seed <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">32</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">public</span><span class="op">)</span></span>
