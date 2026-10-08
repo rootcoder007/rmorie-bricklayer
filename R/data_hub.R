@@ -1,6 +1,6 @@
 # Curated datasets at data.rmorie.com (the address comes from the signed
 # services document), opened by the MORIE key this package stores with
-# bricklayer_llm_login(); keys are issued on request at rmorie.com/access.
+# bricklayer_llm_login(); keys are issued on request at www.rmorie.com/access/.
 # The same tables rmorie and morie pull;
 # a manifest lists every table with its rows, columns, SHA-256 and the
 # BigQuery public dataset it was built from.
@@ -24,7 +24,7 @@
     notice <- bricklayer_services(offline = TRUE)$notice %||% ""
     stop("the curated-data service is not available right now",
          if (nzchar(notice)) paste0(": ", notice) else "",
-         sprintf(" (see %s)", svc$request_access %||% "https://www.rmorie.com/access"), call. = FALSE)
+         sprintf(" (see %s)", svc$request_access %||% "https://www.rmorie.com/access/"), call. = FALSE)
   }
   svc$base_url
 }
@@ -48,7 +48,7 @@
   old <- options(timeout = max(getOption("timeout", 60), timeout))
   on.exit(options(old), add = TRUE)
   hdr <- c(Authorization = paste("Bearer", key),
-           "User-Agent" = "rmoriebricklayer/1 (+https://rmorie.com)")
+           "User-Agent" = "rmoriebricklayer/1 (+https://www.rmorie.com)")
   label <- sub("^/", "", path)
   size <- NULL
   if (grepl("\\.csv\\.gz$", path)) {
@@ -106,7 +106,7 @@
 #'   \code{bricklayer_data_load()}: the table as a data frame.
 #' @examples
 #' \dontrun{
-#' bricklayer_llm_login(token = "sk-...")  # a key issued at rmorie.com/access
+#' bricklayer_llm_login(token = "sk-...")  # a key issued at www.rmorie.com/access/
 #' head(bricklayer_data_tables())
 #' df <- bricklayer_data_load("chicago_crime/incidents")
 #' }

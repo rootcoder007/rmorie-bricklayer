@@ -72,7 +72,7 @@ v$ok
 ```
 
 ```{r bundle-read}
-capsule_bundle_read(attr(b, "path"))$note
+capsule_bundle_read(attr(b, "path"))$attestation$note
 unlink(dir, recursive = TRUE)
 ```
 
@@ -136,5 +136,7 @@ chain_seal(dropped)
 * A series of runs, releases or data refreshes where order and completeness matter:
   `chain_append()` after each, sign `chain_seal()` at each release.
 
-All three accept any signing key the package knows: ML-DSA and SLH-DSA (`fips_keygen()`),
-XMSS (`pqc_keygen()`, with the key state carried forward), or a shared secret for HMAC.
+All three accept any signing key the package knows: ML-DSA and SLH-DSA (`fips_keygen()`)
+or XMSS (`pqc_keygen()`, with the key state carried forward). A shared secret from
+`derive_key()` is for keyed digests (`core_hmac_sha256()`), not for attestations: an
+attestation names a public key, and a shared secret has none.

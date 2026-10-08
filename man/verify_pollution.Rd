@@ -14,7 +14,7 @@ verify_pollution(
   exposure_csv = NULL,
   exposure_mean = 0,
   exposure_prevalence = 0,
-  reference = 5.8,
+  reference = NULL,
   baseline_rate = 500,
   population = 1e+06
 )
@@ -22,32 +22,43 @@ verify_pollution(
 pollution_report_text(report)
 }
 \arguments{
-\item{pollutant}{\code{"no2"} or \code{"pm25"}.}
+\item{pollutant}{\code{"no2"} or \code{"pm25"} (also \code{"PM2.5"}), in
+either case.}
 
-\item{outcome}{Outcome key for the concentration-response function.}
+\item{outcome}{Outcome key for the concentration-response function; the
+mortality outcomes count deaths, \code{"childhood_asthma"} incident
+cases.}
 
 \item{region, years}{Labels for the report.}
 
 \item{demo}{Use synthetic demo data.}
 
 \item{exposure_csv}{Path of a CSV with an \code{exposure} column in
-micrograms per cubic metre, or a \code{value} column with a \code{unit}
-column (NO2 in ppb is converted at 1.88 micrograms per cubic metre per
-ppb, the WHO 2021 conversion at 25 C and 1 atm).}
+micrograms per cubic metre, or a NAPS pull with a \code{value} column
+and a \code{unit} column (required with \code{value}): each row is
+converted by its own unit, NO2 in ppb at 1.88 micrograms per cubic metre
+per ppb (the WHO 2021 conversion at 25 C and 1 atm), and any other unit
+is an error. With a CSV or the demo data the exposed are the rows above
+\code{reference}: \code{exposure_prevalence} is their share and
+\code{exposure_mean} their mean, so Levin's formula is not diluted twice.}
 
 \item{exposure_mean, exposure_prevalence}{Scalar inputs used when neither
-\code{demo} nor \code{exposure_csv} is given.}
+\code{demo} nor \code{exposure_csv} is given: the mean exposure among
+the exposed and the share of the population exposed.}
 
-\item{reference}{Counterfactual reference concentration.}
+\item{reference}{Counterfactual reference concentration; \code{NULL} takes
+the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 
-\item{baseline_rate}{Baseline outcome rate per 100,000 per year.}
+\item{baseline_rate}{Baseline outcome rate per 100,000 per year (unlike
+\code{\link{pollution_burden}}, which takes a rate per person-year).}
 
-\item{population}{Population at risk.}
+\item{population}{Population at risk (persons).}
 
 \item{report}{A result of \code{verify_pollution()}.}
 }
 \value{
-\code{verify_pollution()}: the report as a list; its \code{status}
+\code{verify_pollution()}: the report as a list of class
+\code{rmbl_pollution_report} (\code{plot()} draws it); its \code{status}
 is \code{"ok"}, \code{"assumption_failure"} or \code{"error"}, and the
 attribute \code{exit_status} carries a command-line exit code (0, 1 or
 2). \code{pollution_report_text()}: a character string.

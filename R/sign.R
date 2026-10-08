@@ -104,8 +104,10 @@ pqc_backends <- function() .Call(C_rmbl_pqc_backends)
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
 #' hardware (`inst/dudect`), power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' decapsulation and ML-DSA signing are first-order masked by default. These
+#' are checks of this code on those compilers and under those leakage
+#' models; no third-party security audit has been commissioned, and the
+#' README's security section lists what each check does and does not cover.
 #' @export
 fips_keygen <- function(scheme = "ML-DSA-65", seed = NULL) {
   scheme <- .rmbl_fips_scheme(scheme)
@@ -240,6 +242,17 @@ fips_key <- function(scheme, public, secret = NULL) {
 #' @param prehash Pre-hash function, as in
 #' [capsule_sign()].
 #' @param mu The 64 raw bytes from `fips_mu()`.
+#' @param masked \code{TRUE} (the default) for the first-order masked ML-DSA
+#'   signer, \code{FALSE} for the plain constant-time one; both give the same
+#'   signature for the same randomness. The option
+#'   \code{rmoriebricklayer.masked} sets the default for a session, so
+#'   chain- and bundle-heavy code that has no physical attacker in its threat
+#'   model can take the plain path everywhere with
+#'   \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
+#'   signing are not masked and ignore it. Masking costs about 3 to 12 times
+#'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+#'   package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+#'   ML-DSA-65), depending on the CPU.
 #' @param deterministic As in
 #' [capsule_sign()].
 #' @param signature A signature from `fips_sign_mu()`
@@ -283,7 +296,9 @@ fips_mu <- function(key, message, context = NULL, prehash = "none") {
 
 #' @rdname fips_mu
 #' @export
-fips_sign_mu <- function(key, mu, deterministic = FALSE) {
+fips_sign_mu <- function(key, mu, deterministic = FALSE,
+                         masked = getOption("rmoriebricklayer.masked", TRUE)) {
+  masked <- .rmbl_masked_flag(masked)
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
@@ -300,7 +315,7 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE) {
   rnd <- if (isTRUE(deterministic)) raw(32L) else random_bytes(32L)
   # masked = TRUE: the first-order masked signer, same bytes for the same rnd
   sg <- .Call(C_rmbl_mldsa_sign_mu, mode, .rmbl_hex_to_raw(key$secret),
-              mu, rnd, TRUE)
+              mu, rnd, masked)
   out <- list(scheme = scheme, signature = .rmbl_hexlify(sg))
   class(out) <- c("bricklayer_signature", "list")
   out
@@ -402,12 +417,22 @@ fips_sizes <- function(scheme) {
   .Call(C_rmbl_slhdsa_keypair, scheme, seed)
 }
 
-.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none") {
+.rmbl_fips_sign <- function(scheme, sk, msg, ctx, rnd, prehash = "none", masked = TRUE) {
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (!is.na(mode)) {
-    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash, TRUE))
+    return(.Call(C_rmbl_mldsa_sign, mode, sk, msg, ctx, rnd, prehash, masked))
   }
   .Call(C_rmbl_slhdsa_sign, scheme, sk, msg, ctx, rnd, prehash)
+}
+
+# TRUE or FALSE for the `masked` argument of the three masked operations; the
+# option rmoriebricklayer.masked sets the default for a whole session.
+.rmbl_masked_flag <- function(masked) {
+  if (!isTRUE(masked) && !isFALSE(masked)) {
+    stop("`masked` must be TRUE or FALSE (option rmoriebricklayer.masked sets the default)",
+         call. = FALSE)
+  }
+  masked
 }
 
 .rmbl_fips_verify <- function(scheme, pk, msg, ctx, sig,
@@ -478,8 +503,10 @@ fips_sizes <- function(scheme) {
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
 #' hardware (`inst/dudect`), power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' decapsulation and ML-DSA signing are first-order masked by default. These
+#' are checks of this code on those compilers and under those leakage
+#' models; no third-party security audit has been commissioned, and the
+#' README's security section lists what each check does and does not cover.
 #' @export
 oqs_keygen <- function(scheme = "ML-DSA-65") {
   .Deprecated("fips_keygen")
@@ -596,10 +623,12 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
-#' hardware (`inst/dudect`), power leakage is assessed in simulation under
-#' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' hardware (`inst/dudect`) and power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`) for the masked ML-KEM
+#' and ML-DSA kernels; this scheme is not masked. These are checks of this
+#' code on those compilers; no third-party security audit has been
+#' commissioned, and the README's security section lists what each check
+#' does and does not cover.
 #' @export
 pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
                        sk_prf = NULL) {
@@ -699,6 +728,17 @@ signing_public_key <- function(key) {
 #' others. FIPS 204 and FIPS 205 both bind it into the message encoding, so
 #' a signature made under one context does not verify under another --
 #' which is how the same key is safely used for two purposes.
+#' @param masked \code{TRUE} (the default) for the first-order masked ML-DSA
+#'   signer, \code{FALSE} for the plain constant-time one; both give the same
+#'   signature for the same randomness. The option
+#'   \code{rmoriebricklayer.masked} sets the default for a session, so
+#'   chain- and bundle-heavy code that has no physical attacker in its threat
+#'   model can take the plain path everywhere with
+#'   \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
+#'   signing are not masked and ignore it. Masking costs about 3 to 12 times
+#'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+#'   package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+#'   ML-DSA-65), depending on the CPU.
 #' @param deterministic For the standardised schemes,
 #' use the deterministic variant rather than drawing fresh randomness per
 #' signature. The signature then depends only on the key, message and
@@ -756,11 +796,15 @@ signing_public_key <- function(key) {
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
 #' hardware (`inst/dudect`), power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' decapsulation and ML-DSA signing are first-order masked by default. These
+#' are checks of this code on those compilers and under those leakage
+#' models; no third-party security audit has been commissioned, and the
+#' README's security section lists what each check does and does not cover.
 #' @export
 capsule_sign <- function(message, key, scheme = NULL, context = NULL,
-                         deterministic = FALSE, prehash = "none") {
+                         deterministic = FALSE, prehash = "none",
+                         masked = getOption("rmoriebricklayer.masked", TRUE)) {
+  masked <- .rmbl_masked_flag(masked)
   message <- .rmbl_text_input(message, "message")
   if (inherits(key, "bricklayer_oqs_key")) {
     msg <- .rmbl_sign_message(message)
@@ -776,7 +820,7 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
       random_bytes(sz[["opt_rand"]])
     }
     ph <- .rmbl_fips_prehash(prehash)
-    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), msg,
+    sg <- .rmbl_fips_sign(key$scheme, .rmbl_hex_to_raw(key$secret), msg, masked = masked,
                           ctx, rnd, ph)
     out <- list(scheme = key$scheme, signature = .rmbl_hexlify(sg),
                 context = ctx, prehash = ph)

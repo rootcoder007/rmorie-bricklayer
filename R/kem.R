@@ -65,8 +65,10 @@
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
 #' hardware (`inst/dudect`), power leakage is assessed in simulation under
 #' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' decapsulation and ML-DSA signing are first-order masked by default. These
+#' are checks of this code on those compilers and under those leakage
+#' models; no third-party security audit has been commissioned, and the
+#' README's security section lists what each check does and does not cover.
 #' @export
 kem_keygen <- function(level = 768L, seed = NULL) {
   level <- .rmbl_kem_level(level)
@@ -187,16 +189,19 @@ kem_encapsulate <- function(key, m = NULL) {
 #' No single intermediate value then depends on the key, which is what defeats
 #' first-order power and electromagnetic analysis; `inst/tvla` checks the
 #' masked gadgets against that leakage model. The result is identical to the
-#' unmasked computation for every ciphertext; it costs about five times the
-#' time (well under a millisecond). `masked = FALSE` runs the plain
-#' constant-time decapsulation.
+#' unmasked computation for every ciphertext; it costs about 3 to 12 times
+#' the plain time depending on the CPU (4 ms for ML-KEM-768 on this
+#' package's test machine against 1.2 ms plain). `masked = FALSE` runs the
+#' plain constant-time decapsulation, and the option
+#' `rmoriebricklayer.masked` sets the default for a session.
 #'
 #' @param key A key from
 #' [kem_keygen()], with its secret half.
 #' @param ciphertext Ciphertext from
 #' [kem_encapsulate()], hex or raw.
-#' @param masked `TRUE` (the default) for the first-order masked
-#' decapsulation, `FALSE` for the plain one. Both return the same secret.
+#' @param masked `TRUE` (the default, or the option `rmoriebricklayer.masked`)
+#' for the first-order masked decapsulation, `FALSE` for the plain one. Both
+#' return the same secret.
 #' @return 64 hex characters: the 32-byte shared secret.
 #' @seealso [kem_encapsulate()].
 #' @examples
@@ -214,10 +219,8 @@ kem_encapsulate <- function(key, m = NULL) {
 #' # the masked and the plain decapsulation agree
 #' identical(kem_decapsulate(key, bad, masked = FALSE), other)
 #' @export
-kem_decapsulate <- function(key, ciphertext, masked = TRUE) {
-  if (!isTRUE(masked) && !isFALSE(masked)) {
-    stop("`masked` must be TRUE or FALSE", call. = FALSE)
-  }
+kem_decapsulate <- function(key, ciphertext, masked = getOption("rmoriebricklayer.masked", TRUE)) {
+  masked <- .rmbl_masked_flag(masked)
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {
     stop("decapsulation needs a key with its secret half", call. = FALSE)

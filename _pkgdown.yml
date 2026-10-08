@@ -43,6 +43,7 @@ articles:
       - drift
       - yoy
       - tables
+      - plotting-results
   - title: Cryptography and assurance
     contents:
       - post-quantum-signatures
@@ -422,6 +423,7 @@ reference:
       - exposure_response_plr
       - exposure_concentration_index
       - verify_pollution
+      - plume_field
   - title: The footprint of the computation
     desc: >
       Electricity and CO2-equivalent of an expression, measured from RAPL energy
@@ -507,3 +509,12 @@ reference:
     desc: Printed reports for the objects the package returns.
     contents:
       - rmbl_print_methods
+  - title: Plots
+    desc: >
+      Every result draws itself with plot(), on base graphics, with one shared
+      look and the same customisation everywhere; palettes and session options;
+      Lorenz and funnel plots for results that are plain data frames.
+    contents:
+      - plot-methods
+      - bricklayer_palette
+      - plot_lorenz

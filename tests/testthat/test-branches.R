@@ -258,14 +258,14 @@ test_that("the tail index reports when there is nothing to estimate", {
   expect_true(is.na(flat$alpha))
   expect_match(flat$method, "not estimable")
   expect_false(flat$reliable)
-  # The approximate discrete branch does return a number here, because
-  # its continuity correction divides by x_min - 0.5 rather than by
-  # x_min, so the log ratios are not zero. That the two branches
-  # disagree about whether there is anything to estimate is itself the
-  # argument for the exact one.
+  # The approximate discrete branch used to return a number here, because
+  # its continuity correction divides by x_min - 0.5 rather than by x_min,
+  # so the log ratios were not zero. Since 0.5.10 a tail of identical
+  # values is "not estimable" on every branch: there is no slope to fit.
   fa <- hill_tail_index(rep(5, 20L), x_min = 5, approx = TRUE)
-  expect_true(is.finite(fa$alpha))
-  expect_match(fa$method, "approximate")
+  expect_true(is.na(fa$alpha))
+  expect_match(fa$method, "not estimable")
+  expect_false(fa$reliable)
   # and with a threshold at or below a half there is no correction left
   # to make, so it reports the same nothing
   fb <- hill_tail_index(rep(0.4, 20L), x_min = 0.4, approx = TRUE)

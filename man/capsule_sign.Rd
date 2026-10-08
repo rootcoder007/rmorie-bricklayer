@@ -10,7 +10,8 @@ capsule_sign(
   scheme = NULL,
   context = NULL,
   deterministic = FALSE,
-  prehash = "none"
+  prehash = "none",
+  masked = getOption("rmoriebricklayer.masked", TRUE)
 )
 }
 \arguments{
@@ -48,6 +49,18 @@ standards approve: \code{"sha224"}, \code{"sha256"}, \code{"sha384"}, \code{"sha
 \code{"shake256"} (512-bit output). The identifier
 of the pre-hash is bound into the signature, so a pre-hashed signature
 is never interchangeable with a pure one over the same digest.}
+
+\item{masked}{\code{TRUE} (the default) for the first-order masked ML-DSA
+signer, \code{FALSE} for the plain constant-time one; both give the same
+signature for the same randomness. The option
+\code{rmoriebricklayer.masked} sets the default for a session, so
+chain- and bundle-heavy code that has no physical attacker in its threat
+model can take the plain path everywhere with
+\code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
+signing are not masked and ignore it. Masking costs about 3 to 12 times
+the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+ML-DSA-65), depending on the CPU.}
 }
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},
@@ -99,8 +112,10 @@ stack for copies of the secret. Both checks run in CI on every change,
 with GCC and with Clang. Timing is also measured on x86-64 and arm64
 hardware (\code{inst/dudect}), power leakage is assessed in simulation under
 the value and the transition models (\code{inst/tvla}), and ML-KEM
-decapsulation and ML-DSA signing are first-order masked by default; the
-README's security section lists what each check covers.
+decapsulation and ML-DSA signing are first-order masked by default. These
+are checks of this code on those compilers and under those leakage
+models; no third-party security audit has been commissioned, and the
+README's security section lists what each check does and does not cover.
 }
 
 \examples{

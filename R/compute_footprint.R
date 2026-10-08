@@ -55,7 +55,8 @@
 #' location, with the year and source of the figure. The table is bundled with
 #' the package, so it works offline in any country: every country at the
 #' latest year published by Our World in Data from Ember's yearly electricity
-#' data (2024 or 2025 as of this release), sub-national zones from Electricity
+#' data (the latest year each grid reports: 2025 or 2024 for nearly all, older
+#' for a few small grids, named in \code{year}), sub-national zones from Electricity
 #' Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 #' v3.1 (Canadian provinces and territories, US balancing authorities,
 #' Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -67,6 +68,17 @@
 #' name (\code{"Canada"}), case-insensitively. An unknown sub-national code
 #' falls back to its country and says so in \code{note}. \code{NULL} detects
 #' the location with \code{\link{detect_location}}.
+#'
+#' @section Provenance and licence of the table:
+#' The country rows are Ember's yearly electricity data as published by Our
+#' World in Data (CC BY 4.0); the sub-national zones and the Canadian
+#' provinces come from the Electricity Maps yearly files redistributed in
+#' the Green Algorithms data repository (v3.1), under that repository's
+#' terms, and the default PUE from the same repository. Every row names its
+#' source and year. Values are reproduced unchanged: Ember reports three
+#' small diesel grids (Montserrat, Saint Helena, Uzbekistan) at exactly
+#' 1000 gCO2e/kWh and Turkmenistan's gas fleet at 1306, and the table does
+#' not round or cap them. Kosovo appears once, under the code \code{XK}.
 #'
 #' @param location A location code, alpha-3 code or name; a number in
 #'   gCO2e/kWh, returned as a user-supplied value; or \code{NULL} to detect
@@ -138,11 +150,22 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 #' variable (any code or name the table knows); codecarbon's
 #' \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), so a machine already
 #' configured for codecarbon needs nothing more; the system time zone, mapped
-#' to its country through the IANA zone table (\code{America/Toronto} is
+#' to its country through the IANA zone tables (\code{America/Toronto} is
 #' Canada, \code{Europe/Berlin} Germany); the territory in the locale
 #' (\code{en_CA.UTF-8} is Canada). When none of these yields a location in
 #' the table the answer is \code{"WORLD"}, and the method says so, so a report
 #' never silently applies one country's grid to another's computation.
+#'
+#' The zone table (\code{inst/extdata/timezone_countries.csv}, built by
+#' \code{tools/build_timezones.R} from the IANA database) holds every zone
+#' of \code{zone.tab}, which names exactly one country per zone
+#' (\code{Europe/Stockholm} is Sweden even though the database now keeps
+#' its rules under \code{Europe/Berlin}), plus every alias and old name in
+#' the \code{backward} file (\code{US/Eastern}, \code{Asia/Calcutta},
+#' \code{America/Montreal}) under the country of the zone it links to.
+#' Every geographic zone \code{OlsonNames()} lists resolves; the
+#' \code{Etc/}, \code{UTC} and fixed-offset zones name no country and fall
+#' through to the locale.
 #'
 #' @param env_location,codecarbon_location,tz,locale The inputs, exposed so a
 #'   caller or a test can supply them; the defaults read the running session.
@@ -169,7 +192,9 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
   if (!is.na(loc)) return(list(location = loc, method = "CODECARBON_COUNTRY_ISO_CODE environment variable"))
   if (length(tz) == 1L && !is.na(tz) && nzchar(tz)) {
     tzt <- .rmbl_tz_table()
-    loc <- known(tzt$location[match(tz, tzt$tz)])
+    # the posix/ and right/ trees repeat every zone; strip them before the lookup
+    key <- sub("^(posix|right)/", "", tz)
+    loc <- known(tzt$location[match(key, tzt$tz)])
     if (!is.na(loc)) return(list(location = loc, method = sprintf("system time zone %s", tz)))
   }
   if (length(locale) == 1L && !is.na(locale)) {
@@ -397,8 +422,27 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
   method <- match.arg(method)
   load_curve <- match.arg(load_curve)
   ci <- carbon_intensity(location)
+  # every argument is checked before `expr` runs, so a bad argument never costs the computation
   if (!is.numeric(pue) || length(pue) != 1L || !is.finite(pue) || pue < 1) {
     stop("`pue` must be a single number >= 1", call. = FALSE)
+  }
+  num_arg <- function(x, what, positive = FALSE) {
+    if (is.null(x)) return(NULL)
+    if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < 0 || (positive && x <= 0)) {
+      stop(sprintf("`%s` must be a single %s number", what, if (positive) "positive" else "non-negative"),
+           call. = FALSE)
+    }
+    as.numeric(x)
+  }
+  cpu_power_w <- num_arg(cpu_power_w, "cpu_power_w", positive = TRUE)
+  cores <- num_arg(cores, "cores", positive = TRUE)
+  memory_gb <- num_arg(memory_gb, "memory_gb")
+  memory_power_w_per_gb <- num_arg(memory_power_w_per_gb, "memory_power_w_per_gb")
+  if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {
+    stop("`rapl_dir` must be a single path", call. = FALSE)
+  }
+  if (!is.character(proc_stat) || length(proc_stat) != 1L || is.na(proc_stat)) {
+    stop("`proc_stat` must be a single path", call. = FALSE)
   }
   if (is.null(usage)) usage <- "process"
   if (is.character(usage)) {
@@ -479,9 +523,7 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
       assumptions <- c(assumptions, "CPU power unknown: 85 W x 50% (codecarbon fallback)")
       e_cpu_kwh <- hours * cpu_power_w / 1000
     } else {
-      if (!is.numeric(cpu_power_w) || length(cpu_power_w) != 1L || cpu_power_w <= 0) {
-        stop("`cpu_power_w` must be a single positive number of watts", call. = FALSE)
-      }
+      # cpu_power_w was checked (single, finite, positive) before `expr` ran
       e_cpu_kwh <- hours * .cpu_load_power(cpu_power_w, usage, load_curve, usage_mode) / 1000
       if (load_curve == "codecarbon") {
         assumptions <- c(assumptions, sprintf("codecarbon %s load curve applied to the CPU power",

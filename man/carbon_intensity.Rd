@@ -26,7 +26,8 @@ The grams of CO2-equivalent emitted per kilowatt-hour of electricity at a
 location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
-data (2024 or 2025 as of this release), sub-national zones from Electricity
+data (the latest year each grid reports: 2025 or 2024 for nearly all, older
+for a few small grids, named in \code{year}), sub-national zones from Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
 Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -40,6 +41,19 @@ name (\code{"Canada"}), case-insensitively. An unknown sub-national code
 falls back to its country and says so in \code{note}. \code{NULL} detects
 the location with \code{\link{detect_location}}.
 }
+\section{Provenance and licence of the table}{
+
+The country rows are Ember's yearly electricity data as published by Our
+World in Data (CC BY 4.0); the sub-national zones and the Canadian
+provinces come from the Electricity Maps yearly files redistributed in
+the Green Algorithms data repository (v3.1), under that repository's
+terms, and the default PUE from the same repository. Every row names its
+source and year. Values are reproduced unchanged: Ember reports three
+small diesel grids (Montserrat, Saint Helena, Uzbekistan) at exactly
+1000 gCO2e/kWh and Turkmenistan's gas fleet at 1306, and the table does
+not round or cap them. Kosovo appears once, under the code \code{XK}.
+}
+
 \examples{
 carbon_intensity("CA-ON")
 carbon_intensity("Canada")$year

@@ -15,21 +15,26 @@ pollution_burden(
 )
 }
 \arguments{
-\item{exposure_mean}{Population-mean exposure (micrograms per cubic metre).}
+\item{exposure_mean}{Mean exposure among the exposed (micrograms per cubic
+metre). With \code{exposure_prevalence = 1} that is the population mean.}
 
 \item{exposure_prevalence}{Proportion of the population at that level (1
-for ambient air).}
+for ambient air), in \code{[0, 1]}.}
 
-\item{baseline_rate}{Cases per person-year in the unexposed scenario.}
+\item{baseline_rate}{Cases per person-year in the unexposed scenario (a
+rate per person, not per 100,000: 0.008 is 800 per 100,000).}
 
-\item{population}{At-risk population.}
+\item{population}{At-risk population (persons; any non-negative number).}
 
-\item{pollutant}{\code{"PM2.5"} or \code{"NO2"}.}
+\item{pollutant}{\code{"PM2.5"} (also written \code{"PM25"}) or
+\code{"NO2"}, in either case.}
 
-\item{outcome}{Outcome key passed to the concentration-response function.}
+\item{outcome}{Outcome key passed to the concentration-response function;
+\code{extra$unit} says whether the attributable count is deaths or
+incident cases.}
 
 \item{reference_conc}{Counterfactual concentration; \code{NULL} takes the
-pollutant's WHO 2021 guideline value.}
+pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 }
 \value{
 A list of class \code{rmbl_burden} with \code{paf},

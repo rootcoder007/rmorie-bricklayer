@@ -721,12 +721,25 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
         const uint32_t out = k[0] ^ k[1];   /* the shared secret, the output */
         std::memcpy(shared + 4 * i, &out, 4);
     }
+    /* every share pair that touched m', K' or K-bar: the two halves of a value are
+     * as sensitive as the value, and a memory-disclosure elsewhere must not find
+     * either half (the plain path guards m' and K-bar the same way) */
     rmbl_ct::wipe(kp, sizeof kp);
     rmbl_ct::wipe(kbw, sizeof kbw);
     rmbl_ct::wipe(&s0, sizeof s0);
     rmbl_ct::wipe(&s1, sizeof s1);
+    rmbl_ct::wipe(&u, sizeof u);
+    rmbl_ct::wipe(v, sizeof v);
+    rmbl_ct::wipe(w0, sizeof w0);
+    rmbl_ct::wipe(w1, sizeof w1);
+    rmbl_ct::wipe(mw0, sizeof mw0);
+    rmbl_ct::wipe(mw1, sizeof mw1);
+    rmbl_ct::wipe(gi0, sizeof gi0);
+    rmbl_ct::wipe(gi1, sizeof gi1);
     rmbl_ct::wipe(g0, sizeof g0);
     rmbl_ct::wipe(g1, sizeof g1);
+    rmbl_ct::wipe(kb0, sizeof kb0);
+    rmbl_ct::wipe(kb1, sizeof kb1);
     rmbl_ct::wipe(m0, sizeof m0);
     rmbl_ct::wipe(m1, sizeof m1);
 }

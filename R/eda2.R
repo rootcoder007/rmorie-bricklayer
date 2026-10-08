@@ -112,8 +112,13 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
     S <- core_cov(Z)
   } else {
     centre <- colMeans(Xc)
-    scales <- rep(1, p)
-    Z <- sweep(Xc, 2L, centre, "-")
+    # the distance is affine invariant, so standardising by the classical
+    # scale changes nothing except the conditioning: columns of wildly
+    # different scale (1e160 against 1) are no longer read as collinear
+    # the range, not the standard deviation: squaring 1e160 overflows
+    scales <- apply(Xc, 2L, function(v) diff(range(v)))
+    scales <- ifelse(is.finite(scales) & scales > 0, scales, 1)
+    Z <- sweep(sweep(Xc, 2L, centre, "-"), 2L, scales, "/")
     S <- core_cov(Z)
   }
   # Check the rank BEFORE repairing the covariance. .rmbl_make_pd floors

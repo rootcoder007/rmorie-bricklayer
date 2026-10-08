@@ -47,6 +47,12 @@ coupling a leakage model omits, and higher-order attacks on two-share masking. T
 is stored in the standard byte formats of FIPS 203 and FIPS 204, so it is split into shares
 when an operation starts; reading it from memory is outside the masked computation.
 
+What has not been done: no third-party security audit has been commissioned, and no
+measurement on hardware beyond timing (no power or electromagnetic capture; the leakage
+assessment is a simulation). The package is written for provenance and research records; if
+you deploy it where a key's secrecy protects something else, read the table above as the
+exact list of what has been checked.
+
 ## Supported versions
 
 The current release on CRAN and on r-universe receives fixes. Older

@@ -180,6 +180,13 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                 method = "too few tail observations"))
   }
   logsum <- sum(log(tail))   # finite: the tail is finite and positive
+  if (length(unique(tail)) == 1L) {
+    # every tail value equal: no slope to fit, and the zeta likelihood just
+    # pushes alpha to the optimiser's bound
+    return(list(alpha = NA_real_, se = NA_real_, x_min = x_min,
+                n_tail = n, ks = NA_real_, reliable = FALSE,
+                method = "not estimable: every tail value equals x_min"))
+  }
   if (isTRUE(discrete) && !isTRUE(approx)) {
     # The zeta distribution truncated below at x_min:
     #   p(k) = k^-alpha / zeta(alpha, x_min),  k = x_min, x_min + 1, ...
@@ -192,8 +199,10 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
       if (!is.finite(z) || z <= 0) return(.Machine$double.xmax)
       n * log(z) + a * logsum
     }
-    opt <- stats::optimize(nll, interval = c(1.0001, 25), tol = 1e-9)
+    bounds <- c(1.0001, 25)
+    opt <- stats::optimize(nll, interval = bounds, tol = 1e-9)
     alpha <- opt$minimum
+    at_bound <- alpha <= bounds[1L] + 1e-3 || alpha >= bounds[2L] - 1e-3
     # the observed information, by a central difference on the score:
     # the second derivative of the log-likelihood has no simple form
     # because it needs the zeta's derivatives in the exponent
@@ -214,19 +223,17 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
       }, 0)
     }
     ks <- .rmbl_ks_discrete(tail, cdf)
+    if (at_bound) method <- paste0(method, " (alpha at the optimiser bound; not a fit)")
     return(list(alpha = alpha, se = se, x_min = x_min, n_tail = n,
-                ks = ks, reliable = n >= 50L, method = method))
+                ks = ks, reliable = n >= 50L && !at_bound, method = method))
   }
   # the continuous Hill estimator, and its continuity-corrected discrete
   # cousin: closed form, exact for a continuous Pareto tail, and only
   # asymptotically right in x_min for a discrete one
   denom <- if (isTRUE(discrete) && x_min > 0.5) x_min - 0.5 else x_min
+  # the tail is finite, positive, at or above x_min and not all equal (caught above),
+  # so the log-ratio sum is finite and positive
   ssum <- sum(log(tail / denom))
-  if (!is.finite(ssum) || ssum <= 0) {
-    return(list(alpha = NA_real_, se = NA_real_, x_min = x_min,
-                n_tail = n, ks = NA_real_, reliable = FALSE,
-                method = "not estimable"))
-  }
   alpha <- 1 + n / ssum
   # the asymptotic standard error of the Hill estimator
   se <- (alpha - 1) / sqrt(n)

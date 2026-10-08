@@ -525,7 +525,7 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
   } else {
     stats::qnorm(1 - (1 - conf_level) / 2)
   }
-  list(
+  structure(list(
     rate_ratio = exp(beta[2L]),
     lower = if (is.finite(se_use)) exp(beta[2L] - z * se_use) else NA_real_,
     upper = if (is.finite(se_use)) exp(beta[2L] + z * se_use) else NA_real_,
@@ -537,12 +537,13 @@ count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
     },
     log_slope = beta[2L], se = se_use, fitted = mu,
     dispersion = disp, overdispersed = over, n = n,
+    data = list(x = x, y = y),
     method = if (over) {
       "quasi-Poisson (dispersion above 1.5)"
     } else {
       "Poisson log-linear"
     }
-  )
+  ), class = c("rmbl_count_trend", "list"))
 }
 
 

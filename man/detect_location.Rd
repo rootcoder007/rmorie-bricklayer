@@ -25,11 +25,23 @@ network access, in this order: the \code{RMBL_LOCATION} environment
 variable (any code or name the table knows); codecarbon's
 \code{CODECARBON_COUNTRY_ISO_CODE} (alpha-3), so a machine already
 configured for codecarbon needs nothing more; the system time zone, mapped
-to its country through the IANA zone table (\code{America/Toronto} is
+to its country through the IANA zone tables (\code{America/Toronto} is
 Canada, \code{Europe/Berlin} Germany); the territory in the locale
 (\code{en_CA.UTF-8} is Canada). When none of these yields a location in
 the table the answer is \code{"WORLD"}, and the method says so, so a report
 never silently applies one country's grid to another's computation.
+}
+\details{
+The zone table (\code{inst/extdata/timezone_countries.csv}, built by
+\code{tools/build_timezones.R} from the IANA database) holds every zone
+of \code{zone.tab}, which names exactly one country per zone
+(\code{Europe/Stockholm} is Sweden even though the database now keeps
+its rules under \code{Europe/Berlin}), plus every alias and old name in
+the \code{backward} file (\code{US/Eastern}, \code{Asia/Calcutta},
+\code{America/Montreal}) under the country of the zone it links to.
+Every geographic zone \code{OlsonNames()} lists resolves; the
+\code{Etc/}, \code{UTC} and fixed-offset zones name no country and fall
+through to the locale.
 }
 \examples{
 detect_location()
