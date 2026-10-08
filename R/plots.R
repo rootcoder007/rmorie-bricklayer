@@ -820,7 +820,7 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
   burden <- structure(p$burden, class = "rmbl_burden")
   d2 <- plot(burden, col = col, palette = palette, ...)
   if (n == 3L) plot(structure(p$equity, class = "rmbl_equity"), col = col, palette = palette, ...)
-  graphics::mtext(if (is.null(main)) sprintf("%s, %s: %s", toupper(x$pollutant), x$outcome, x$data_source) else main,
+  graphics::mtext(if (is.null(main)) sprintf("%s, %s", toupper(x$pollutant), gsub("_", " ", x$outcome)) else main,
                   outer = TRUE, cex = 1.1, font = 2)
   key <- .bl_panels_end()
   invisible(list(crf = d1, burden = d2, panel_key = key))
