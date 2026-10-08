@@ -136,6 +136,12 @@ Every result the package returns draws itself with \code{plot()}: no
 arguments beyond the object are needed, and every method takes the same
 customisation (\code{main}, \code{col} or \code{palette}, \code{...} for
 the base-graphics call, the grid from the session option; see
+\code{\link{bricklayer_plot_options}}). Titles fit their panel: a title
+too wide for it is drawn a step smaller, and in a panel set one that still
+does not fit becomes a letter with the key printed under the panels (the
+returned data carry it as the \code{panel_key} attribute); the left margin
+is sized from the widest tick label, so an axis title never overlaps the
+numbers. (Session defaults: see
 \code{\link{bricklayer_plot_options}} for the session defaults). Each
 method returns the data it drew, invisibly, as a data frame.
 }

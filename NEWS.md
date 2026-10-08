@@ -21,6 +21,10 @@ number that tells them apart, and for the fixes below; this is both.
   `bricklayer_palette()` with four colour-blind-safe palettes, and every method returns the
   data it drew. `plume_field()` evaluates a plume on a grid; `plot_lorenz()` and
   `plot_funnel()` serve the results that are plain data frames. `vignette("plotting-results")`.
+  Titles fit their panel: a title too wide is drawn a step smaller, in a panel set one that
+  still does not fit becomes a letter with the key printed under the panels (returned as the
+  `panel_key` attribute), long axis titles shrink or wrap, and the left margin is sized from
+  the widest tick label so an axis title never overlaps the numbers.
 * To carry what the plots need, `exposure_concentration_index()` records its concentration
   curve, `count_trend()` its data, `verify_pollution()` returns class
   `rmbl_pollution_report`, `advection_diffusion_2d()` class `rmbl_field` and
