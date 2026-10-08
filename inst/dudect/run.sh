@@ -16,6 +16,14 @@ log=$(mktemp)
 "$OUT/dudect" all "$N" | tee "$log"
 rc=${PIPESTATUS[0]}
 if [ "$rc" -eq 3 ]; then rm -f "$log"; echo "::error::positive control not detected"; exit 3; fi
+# Arm promises data-independent timing for these instructions only with PSTATE.DIT set.
+# When DIT was asked for and the CPU cannot set it (no FEAT_DIT), the run is the plain
+# measurement again: it is reported with its numbers, and it cannot be the gate.
+gate=1
+if [ "${DUDECT_DIT:-0}" = 1 ] && grep -q "DIT: not available" "$log"; then
+  gate=0
+  echo "::warning::DIT requested but this CPU has no FEAT_DIT: Arm gives no data-independent-timing guarantee here, so this run is reported, not gating"
+fi
 again=$(awk '(/inconclusive/ || /LEAKAGE/) && !/control/ {print $1}' "$log")
 rm -f "$log"
 status=0
@@ -24,7 +32,8 @@ if [ -n "$again" ]; then
   for t in $again; do
     line=$("$OUT/dudect" "$t" "$((3 * N))" | tee /dev/stderr)
     if echo "$line" | grep -q "LEAKAGE"; then
-      echo "::error::$t: |t| > 10 after re-measurement: $line"; status=1
+      if [ "$gate" = 1 ]; then echo "::error::$t: |t| > 10 after re-measurement: $line"; status=1
+      else echo "::warning::$t: |t| > 10 after re-measurement on a CPU without DIT (reported, not gating): $line"; fi
     elif ! echo "$line" | grep -q "no evidence of leakage"; then
       echo "::warning::$t stays in dudect's inconclusive band (4.5 < |t| < 10) after re-measurement: $line"
     fi
