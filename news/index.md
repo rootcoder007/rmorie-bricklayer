@@ -42,6 +42,11 @@ tells them apart, and for the fixes below; this is both.
   [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
   serve the results that are plain data frames.
   [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
+  Titles fit their panel: a title too wide is drawn a step smaller, in a
+  panel set one that still does not fit becomes a letter with the key
+  printed under the panels (returned as the `panel_key` attribute), long
+  axis titles shrink or wrap, and the left margin is sized from the
+  widest tick label so an axis title never overlaps the numbers.
 - To carry what the plots need,
   [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
   records its concentration curve,

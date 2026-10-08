@@ -5,6 +5,13 @@ Every result the package returns draws itself with
 beyond the object are needed, and every method takes the same
 customisation (`main`, `col` or `palette`, `...` for the base-graphics
 call, the grid from the session option; see
+[`bricklayer_plot_options`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)).
+Titles fit their panel: a title too wide for it is drawn a step smaller,
+and in a panel set one that still does not fit becomes a letter with the
+key printed under the panels (the returned data carry it as the
+`panel_key` attribute); the left margin is sized from the widest tick
+label, so an axis title never overlaps the numbers. (Session defaults:
+see
 [`bricklayer_plot_options`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
 for the session defaults). Each method returns the data it drew,
 invisibly, as a data frame.
