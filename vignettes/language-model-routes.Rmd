@@ -23,10 +23,9 @@ order, the document, and what the package will and will not do on the network.
    `MORIE_LLM_MODEL`), any OpenAI-compatible server. Taken when configured, not probed.
 2. **A local Ollama** at `OLLAMA_HOST` (default `localhost:11434`); `OLLAMA_HOST=off`
    disables the probe.
-3. **Your own cloud keys**: Gemini, OpenAI or an OpenAI-compatible provider, from their
-   usual environment variables.
-4. **The hosted MORIE tier**, last, and only with a personal key issued on request at
-   <https://www.rmorie.com/access/>.
+3. **The hosted MORIE tier**, last, and only with a personal key issued on request at
+   <https://www.rmorie.com/access/>. A cloud provider's own API (Gemini, OpenAI) is reached
+   through route 1 when its endpoint speaks the OpenAI protocol; there is no separate route.
 
 `bricklayer_llm_status()` reports what is available from this machine. With the local route
 off the call reaches no network:
@@ -42,7 +41,9 @@ if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 
 ```{r ask, eval = FALSE}
 bricklayer_llm_ask("In one sentence, what does a Merkle root pin?")
-bricklayer_llm_ask("Summarise this table", context = capture.output(print(head(mtcars))))
+bricklayer_llm_ask(paste(c("Summarise this table:", capture.output(print(head(mtcars)))),
+                         collapse = "\n"),
+                   system_prompt = "Answer in two sentences.")
 ```
 
 `agent_bundle()` uses the same route to explain a reproducibility bundle's verification
@@ -73,7 +74,7 @@ What the verifier enforces, each with a test:
 
 ## What the package will not do on the network
 
-The 0.5.8 and 0.5.9 reviews closed every bypass of the transport and these rules now hold
+The 0.5.8 to 0.5.10 reviews closed every bypass of the transport and these rules now hold
 for every byte the package sends or receives:
 
 * An endpoint of your own is either the loopback host, a literal private LAN address

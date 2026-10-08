@@ -8,7 +8,12 @@
 \usage{
 fips_mu(key, message, context = NULL, prehash = "none")
 
-fips_sign_mu(key, mu, deterministic = FALSE)
+fips_sign_mu(
+  key,
+  mu,
+  deterministic = FALSE,
+  masked = getOption("rmoriebricklayer.masked", TRUE)
+)
 
 fips_verify_mu(key, mu, signature)
 }
@@ -31,6 +36,18 @@ randomness that the signer chooses.}
 
 \item{deterministic}{As in
 \code{\link[=capsule_sign]{capsule_sign()}}.}
+
+\item{masked}{\code{TRUE} (the default) for the first-order masked ML-DSA
+signer, \code{FALSE} for the plain constant-time one; both give the same
+signature for the same randomness. The option
+\code{rmoriebricklayer.masked} sets the default for a session, so
+chain- and bundle-heavy code that has no physical attacker in its threat
+model can take the plain path everywhere with
+\code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
+signing are not masked and ignore it. Masking costs about 3 to 12 times
+the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
+package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+ML-DSA-65), depending on the CPU.}
 
 \item{signature}{A signature from \code{fips_sign_mu()}
 or \code{\link[=capsule_sign]{capsule_sign()}}.}

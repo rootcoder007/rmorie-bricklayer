@@ -112,10 +112,12 @@
 #' that depends on it is a reported error, and afterwards scans the dead
 #' stack for copies of the secret. Both checks run in CI on every change,
 #' with GCC and with Clang. Timing is also measured on x86-64 and arm64
-#' hardware (`inst/dudect`), power leakage is assessed in simulation under
-#' the value and the transition models (`inst/tvla`), and ML-KEM
-#' decapsulation and ML-DSA signing are first-order masked by default; the
-#' README's security section lists what each check covers.
+#' hardware (`inst/dudect`) and power leakage is assessed in simulation under
+#' the value and the transition models (`inst/tvla`) for the masked ML-KEM
+#' and ML-DSA kernels; this scheme is not masked. These are checks of this
+#' code on those compilers; no third-party security audit has been
+#' commissioned, and the README's security section lists what each check
+#' does and does not cover.
 #' @export
 hqc_keygen <- function(level = 3L, seed = NULL, version = c("v5", "round4")) {
   level <- .rmbl_hqc_level(level)

@@ -303,7 +303,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
     .yoy_pdf_page(hdr, body[pages[[pg]], , drop = FALSE],
                   cols[pages[[pg]]], title, subtitle, pal,
                   if (npg > 1L) sprintf("page %d of %d", pg, npg) else "",
-                  if (pg == npg) notes else NULL)
+                  if (pg == npg) notes else NULL, height = height)
   }
   invisible(file)
 }
@@ -325,7 +325,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
 }
 
 .yoy_pdf_page <- function(hdr, body, cols, title, subtitle, pal,
-                          pagelab, notes) {
+                          pagelab, notes, height = 8.5) {
   ncol <- length(hdr)
   op <- graphics::par(mar = c(0.6, 0.6, 0.6, 0.6))
   on.exit(graphics::par(op), add = TRUE)
@@ -341,7 +341,9 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   w[seq_len(max(1L, numeric_from - 1L))] <- 1.3
   xs <- cumsum(c(0, w / sum(w)))
   top <- 0.88
-  rowh <- 0.22 / 8.5
+  # 0.22 inch per row in page units, the same figure the pagination used, so
+  # every row handed to this page lands on it whatever the page height
+  rowh <- 0.22 / height
   graphics::segments(0, top + rowh * 0.6, 1, top + rowh * 0.6,
                      col = pal$flat, lwd = 0.7)
   for (j in seq_len(ncol)) {
@@ -362,7 +364,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
                      cex = 0.72,
                      col = if (last) cols[i] else graphics::par("fg"))
     }
-    y <- y - rowh   # the caller hands this page only the rows that fit
+    y <- y - rowh   # the caller hands this page only the rows that fit at this height
   }
   if (nzchar(pagelab)) {
     graphics::text(1, 0.02, pagelab, adj = c(1, 0), cex = 0.6,

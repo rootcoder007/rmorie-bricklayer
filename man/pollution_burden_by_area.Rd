@@ -15,7 +15,9 @@ pollution_burden_by_area(
 )
 }
 \arguments{
-\item{area_table}{A data frame with one row per area.}
+\item{area_table}{A data frame with one row per area; the exposure in
+micrograms per cubic metre, the population in persons and the baseline
+rate per person-year.}
 
 \item{area_col, exposure_col, population_col, baseline_rate_col}{Column names.}
 

@@ -38,6 +38,7 @@
  * reached a .Call directly (the R wrappers guard; the entry points did not). */
 #include <R_ext/Rdynload.h>
 
+#include <cmath>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
@@ -513,6 +514,13 @@ extern "C" void rmbl_sha256_two_part(const unsigned char *, size_t, size_t, unsi
  * partial-block buffering in each update() is right. */
 SEXP C_rmbl_hash_two_part_impl(SEXP x, SEXP split) {
     if (TYPEOF(x) != RAWSXP) Rf_error("`x` must be a raw vector");
+    if (XLENGTH(split) != 1 || (TYPEOF(split) != INTSXP && TYPEOF(split) != REALSXP))
+        Rf_error("`split` must be a single non-negative integer");
+    if (TYPEOF(split) == REALSXP) {
+        const double d = REAL(split)[0];
+        if (!(d >= 0) || d != std::floor(d) || d > 2147483647.0)
+            Rf_error("`split` must be a single non-negative integer");
+    }
     const int sp = Rf_asInteger(split);
     if (sp == NA_INTEGER || sp < 0) Rf_error("`split` must be a non-negative integer");
     const size_t len = static_cast<size_t>(XLENGTH(x));

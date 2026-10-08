@@ -7,7 +7,9 @@
 attributable_fraction(rr, exposure_prevalence)
 }
 \arguments{
-\item{rr}{Relative risk at the observed exposure level.}
+\item{rr}{Relative risk among the exposed, a single finite positive
+number. A relative risk below 1 gives a negative fraction (a protective
+exposure); 0, negative, infinite and missing values are errors.}
 
 \item{exposure_prevalence}{Proportion of the population exposed, in
 \code{[0, 1]}.}

@@ -1,6 +1,6 @@
 Package: rmoriebricklayer
 Title: Reproducible Data Capsules with Provenance and Fallback
-Version: 0.5.9
+Version: 0.5.10
 Authors@R:
     person("Vansh Singh", "Ruhela", email = "vsruhela@proton.me",
            role = c("aut", "cre"),
@@ -40,7 +40,9 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     known-answer vectors of 'NIST' (the US National Institute of Standards
     and Technology) in the test suite. Timing is measured on hardware,
     power leakage is assessed in simulation, and 'ML-KEM decapsulation' and
-    'ML-DSA' signing are first-order masked. For the published administrative
+    'ML-DSA' signing are first-order masked; none of this code has had a
+    third-party security audit, and it is offered for provenance and
+    research use, not as a vetted security library. For the published administrative
     tables these capsules usually hold, it computes period-over-period
     change matched on the period rather than the row, with the exact
     conditional-binomial interval for a ratio of counts and with a

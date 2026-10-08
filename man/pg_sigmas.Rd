@@ -131,7 +131,16 @@ paths differ from the default here; pass its generator to reproduce them.}
 \code{x_final} and \code{rise} (at each \code{x}). \code{gaussian_plume()}
 and \code{gaussian_puff()}: a numeric vector of concentrations, one per
 receptor. \code{advection_diffusion_2d()}: a list with \code{field},
-\code{mass}, \code{cfl} and \code{diffusion_number}.
+\code{mass}, \code{cfl}, \code{diffusion_number},
+\code{stability_number}, \code{stable}, \code{dt}, \code{substeps} and
+the axes, as a list of class \code{rmbl_field} that \code{plot()}
+draws as an image; \code{lagrangian_particles()} a list of class
+\code{rmbl_particles} (positions, means and the counting grid) that
+\code{plot()} draws as points. Every physical input is
+checked: emission rates, masses, heights and distances are non-negative,
+wind speed, travel time and grid steps positive, \code{n_images} a
+whole number, the stack hotter than the air, and \code{x0}, \code{y0}
+single numbers; a release above \code{mixing_height} warns.
 \code{lagrangian_particles()}: a list with \code{x}, \code{y},
 \code{mean_x}, \code{mean_y} and, with a grid, \code{concentration}.
 }
@@ -153,8 +162,17 @@ lid, \code{n_images} pairs of image terms.
 \code{gaussian_puff()}: an instantaneous release with \code{sigma_x = sigma_y}
 evaluated at the travel distance \code{u t}.
 \code{advection_diffusion_2d()}: explicit upwind advection, central
-diffusion, forward Euler, zero boundaries; stable when the reported
-\code{cfl} is below 1 and \code{diffusion_number} below 1.
+diffusion, forward Euler, zero boundaries. The explicit scheme is stable
+when \code{|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) <= 1}
+(the von Neumann bound for upwind advection with forward-time
+centred-space diffusion); that sum is returned as
+\code{stability_number} with \code{stable}. A call outside the bound is
+not run as given: each step is split into enough sub-steps of a smaller
+\code{dt} to satisfy it (reported as \code{substeps} and \code{dt}),
+with a warning, so the field is a solution over the same physical time
+rather than a numerical explosion. The separate \code{cfl} and
+\code{diffusion_number} are reported for reference; each below 1 is
+necessary, not sufficient.
 \code{lagrangian_particles()}: the random walk
 \code{x + u dt + sqrt(2 K dt) xi} (Thomson 1987) with an optional counting
 grid.

@@ -35,8 +35,8 @@ test_that("NO2 log-linear: doubling the increment doubles log-RR, outcome table,
   expect_equal(a$log_rr, log(1.02))  # RR 1.02 per 10 ug/m3 (Huangfu & Atkinson 2020)
   expect_equal(b$log_rr, 2 * a$log_rr)
   expect_equal(crf_no2(20, beta_per_10 = 0.1)$log_rr, 0.1)
-  expect_equal(crf_no2(20, outcome = "respiratory")$log_rr, 0.029)
-  expect_equal(crf_no2(20, outcome = "childhood_asthma")$log_rr, 0.039)
+  expect_equal(crf_no2(20, outcome = "respiratory")$log_rr, log(1.03))   # Huangfu & Atkinson 2020
+  expect_equal(crf_no2(20, outcome = "childhood_asthma")$log_rr, log(1.05) * 10 / 4)   # Khreis 2017, per 4 -> per 10
   expect_equal(crf_no2(20, outcome = "anything", beta_per_10 = 0.05)$log_rr, 0.05)
   expect_error(crf_no2(20, outcome = "nope"), "Unknown outcome")
   expect_error(crf_no2(20, beta_per_10 = c(1, 2)), "beta_per_10")
@@ -48,7 +48,7 @@ test_that("attributable_fraction: Levin's formula and its boundaries", {
   expect_equal(attributable_fraction(2, 1), 1 - 1 / 2)
   expect_equal(attributable_fraction(1.5, 0.4), 0.4 * 0.5 / (1 + 0.4 * 0.5))
   expect_true(attributable_fraction(1.5, 0.6) > attributable_fraction(1.5, 0.3))
-  expect_equal(attributable_fraction(0, 1), 0)   # den = 1 + 1 * (0 - 1) = 0 -> 0 by definition
+  expect_error(attributable_fraction(0, 1), "positive")   # RR = 0 is not a relative risk
   expect_error(attributable_fraction(1.5, 1.2), "must be in")
   expect_error(attributable_fraction(c(1, 2), 0.5), "single")
 })
@@ -195,7 +195,7 @@ test_that("verify_pollution: ok, one reference, avoided deaths over the exposed 
   ok <- verify_pollution("no2", exposure_mean = 25, exposure_prevalence = 0.9)
   expect_equal(ok$status, "ok")
   expect_equal(attr(ok, "exit_status"), 0L)
-  expect_equal(ok$pipeline$crf$rr, exp(log(1.02) * (25 - 5.8) / 10))
+  expect_equal(ok$pipeline$crf$rr, exp(log(1.02) * (25 - 10) / 10))   # the NO2 counterfactual, 10
   expect_equal(ok$pipeline$paf, attributable_fraction(ok$pipeline$crf$rr, 0.9))
   expect_equal(ok$pipeline$displaced$deaths_displaced, 500 / 1e5 * 1e6 * 0.9 * (1 - 1 / ok$pipeline$crf$rr))
   expect_null(ok$pipeline$equity)
@@ -207,7 +207,13 @@ test_that("verify_pollution: ok, one reference, avoided deaths over the exposed 
   expect_equal(r$pipeline$burden$reference_conc, 5.8)
   expect_equal(r$pipeline$burden$attributable_cases, paf * 500 / 1e5 * 1e6, tolerance = 1e-9)
   expect_equal(r$pipeline$displaced$deaths_displaced, 500 / 1e5 * 1e6 * 0.5 * (1 - 1 / rr), tolerance = 1e-9)
-  bad <- verify_pollution("pm25", exposure_mean = 2, exposure_prevalence = 0.5)
+  # exposure at or below the counterfactual floor is a zero result, not a failed assumption
+  low <- verify_pollution("pm25", exposure_mean = 2, exposure_prevalence = 0.5)
+  expect_equal(low$status, "ok")
+  expect_equal(attr(low, "exit_status"), 0L)
+  expect_equal(low$pipeline$paf, 0)
+  expect_equal(low$pipeline$burden$attributable_cases, 0)
+  bad <- verify_pollution("pm25", exposure_mean = NA, exposure_prevalence = 0.5)
   expect_equal(bad$status, "assumption_failure")
   expect_equal(attr(bad, "exit_status"), 1L)
   expect_true(bad$pipeline$skipped)
@@ -233,7 +239,9 @@ test_that("verify_pollution: ok, one reference, avoided deaths over the exposed 
   # a NAPS pull: NO2 in ppb is converted at 1.88; another unit is refused
   utils::write.csv(data.frame(station_id = 1, value = c(5, 10), unit = "ppb"), f, row.names = FALSE)
   expect_message(naps <- verify_pollution("no2", exposure_csv = f, reference = 10), "x 1.88")
-  expect_equal(naps$inputs$exposure_mean, 7.5 * 1.88)
+  # 5 and 10 ppb are 9.4 and 18.8 ug/m3; only the second is above the floor of 10
+  expect_equal(naps$inputs$exposure_mean, 10 * 1.88)
+  expect_equal(naps$inputs$exposure_prevalence, 0.5)
   writeLines(c("station_id,value,unit", "1,0.5,ppm"), f)
   expect_equal(verify_pollution("no2", exposure_csv = f)$status, "error")
   utils::write.csv(data.frame(value = c(12, 14), unit = "ug/m3"), f, row.names = FALSE)
@@ -261,8 +269,11 @@ test_that("pollution_report_text renders ok, failure and error reports", {
   expect_match(txt, "attributable deaths:   [0-9.]+")
   expect_match(txt, "concentration index: -?[0-9.]+")
   expect_match(txt, "STATUS: ok")
-  bad <- pollution_report_text(verify_pollution("pm25", exposure_mean = 2, exposure_prevalence = 0.5))
-  expect_match(bad, "\\[FAIL\\] exposure > reference")
+  low <- pollution_report_text(verify_pollution("pm25", exposure_mean = 2, exposure_prevalence = 0.5))
+  expect_match(low, "\\[PASS\\] exposure finite and non-negative -- mean 2 is at or below the counterfactual floor")
+  expect_match(low, "attributable deaths:   0.0", fixed = TRUE)
+  bad <- pollution_report_text(verify_pollution("pm25", exposure_mean = Inf, exposure_prevalence = 0.5))
+  expect_match(bad, "\\[FAIL\\] exposure finite and non-negative")
   expect_match(bad, "STATUS: assumption_failure")
   err <- pollution_report_text(verify_pollution("no2", exposure_csv = tempfile()))
   expect_match(err, "^ERROR: exposure CSV not found")

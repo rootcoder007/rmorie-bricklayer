@@ -19,12 +19,16 @@ crf_no2(
 scalar or a vector.}
 
 \item{outcome}{PM2.5: \code{"all_cause_mortality"}, \code{"ihd"} or
-\code{"stroke"}. NO2: \code{"all_cause_mortality"}, \code{"respiratory"}
-or \code{"childhood_asthma"}.}
+\code{"stroke"} (deaths). NO2: \code{"all_cause_mortality"} and
+\code{"respiratory"} (deaths; Huangfu and Atkinson 2020, RR 1.02 and
+1.03 per 10 micrograms per cubic metre) or \code{"childhood_asthma"}
+(incident cases, not deaths; Khreis et al. 2017, OR 1.05 per 4
+micrograms per cubic metre, scaled to per 10).}
 
 \item{reference_conc}{Counterfactual concentration below which no excess
-risk is assumed (PM2.5 default 5.8, NO2 default 10, the WHO 2021
-guideline values).}
+risk is assumed. PM2.5 default 5.8, the lower bound of the GBD 2019
+theoretical minimum risk exposure level (the WHO 2021 guideline is 5);
+NO2 default 10, the WHO 2021 guideline.}
 
 \item{beta_per_10}{Optional log-RR per 10 units overriding the NO2 outcome
 table.}
@@ -63,7 +67,11 @@ all-cause and cause-specific mortality: a systematic review and
 meta-analysis. Environment International 143, 105974. Huangfu, P. and
 Atkinson, R. (2020). Long-term exposure to NO2 and O3 and all-cause and
 respiratory mortality: a systematic review and meta-analysis. Environment
-International 144, 105998. Burnett, R. T. et al. (2014). An integrated
+International 144, 105998. Khreis, H. et al. (2017). Exposure to
+traffic-related air pollution and risk of development of childhood
+asthma: a systematic review and meta-analysis. Environment International
+100, 1-31. GBD 2019 Risk Factors Collaborators (2020). The Lancet
+396(10258), 1223-1249. Burnett, R. T. et al. (2014). An integrated
 risk function for estimating the global burden of disease attributable to
 ambient fine particulate matter exposure. Environmental Health
 Perspectives 122(4), 397-403. WHO (2021). Global Air Quality Guidelines.

@@ -21,7 +21,7 @@ parses them into a fixed, panel-reviewed schema with a parser written for hostil
 
 ```{r schema}
 sch <- bricklayer_siu_schema()
-head(sch$field, 20)
+head(sch$name, 20)
 nrow(sch)
 ```
 
@@ -76,7 +76,8 @@ and tested the following, each pinned by a test over the sources:
   window, else the last space; the functions warn how many lines were split, because a field
   spanning a split can come back incomplete.
 * **Numbers are bounded.** Every string-to-integer conversion goes through one helper that
-  reads up to nine digits; `SO #1234567` is 1234567, and `SO #4444444444444444` is an error,
+  reads up to nine digits; `SO #1234567` is 1234567, and `SO #4444444444444444` is ignored
+  as a tag (the count falls back to the other cues),
   not an overflow.
 * **The user can interrupt.** The whole path polls for an interrupt through a hook the host
   installs, and raises it only from a frame that owns no live C++ objects.

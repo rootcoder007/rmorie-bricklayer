@@ -8,10 +8,10 @@ name: tvla
 on:
   push:
     branches: [main]
-    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_mlkem_body.h', 'src/rmbl_mldsa_body.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
   pull_request:
     branches: [main]
-    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
+    paths: ['src/rmbl_mlkem_arith.h', 'src/rmbl_mlkem_core.h', 'src/rmbl_mlkem_body.h', 'src/rmbl_mldsa_body.h', 'src/rmbl_masked.h', 'inst/tvla/**', '.github/workflows/tvla.yml']
   schedule:
     - cron: '41 6 * * 4'
   workflow_dispatch:

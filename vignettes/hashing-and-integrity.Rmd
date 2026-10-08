@@ -103,7 +103,8 @@ capsule_verify("manifest-digest", sig, key)
 
 ## Randomness
 
-`random_bytes()` draws from the operating system (`getrandom`, `BCryptGenRandom`) and does
+`random_bytes()` draws from the operating system (`getrandom` or `/dev/urandom` on Unix,
+`RtlGenRandom` on Windows) and does
 **not** consume R's seeded stream, so a reproducible analysis is unaffected by key
 generation happening beside it:
 
@@ -158,7 +159,8 @@ merkle_root(ch)
 identical(unlist(ch), readBin(p, "raw", file.size(p)))
 ```
 
-This is how `capsule_bundle()` pins data files: a mismatch identifies which part of a capsule
+`capsule_bundle()` pins each data file by one whole-file digest (`sha256_file()`); the
+Merkle tree is for pinning the parts of a large file, so a mismatch identifies which part of it
 changed rather than only that something did.
 
 ## How these implementations are checked

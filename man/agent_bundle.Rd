@@ -27,8 +27,11 @@ endpoint, a local Ollama server, then the hosted MORIE tier; see
 }
 \examples{
 \donttest{
-agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
-agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud")
+# Needs a language-model route: a stored key (bricklayer_llm_login()), your
+# own endpoint or a local Ollama. try() keeps the example graceful when no
+# route answers or the hosted tier is slow.
+try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
+try(agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud"))
 }
 
 # With every route switched off the call returns a setup hint, not an

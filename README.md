@@ -36,7 +36,8 @@ and a digest anyone can recompute says nothing about who produced the data.
   Topic guides: `vignette("post-quantum-signatures")`, `vignette("key-encapsulation")`,
   `vignette("side-channel-assurance")`, `vignette("hawkes-processes")`,
   `vignette("small-area-rates")`, `vignette("trends-and-change")`,
-  `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")` and the rest,
+  `vignette("stock-and-flow")`, `vignette("air-pollution-and-health")`,
+  `vignette("plotting-results")` and the rest,
   grouped by topic on the package website.
 - **CKAN resolution** — `resolve_via_ckan()` / `resolve_via_ckan_search()`
   locate resources through a portal's `package_show` / `package_search`
@@ -155,6 +156,19 @@ and a digest anyone can recompute says nothing about who produced the data.
   `core_hawkes_jitter()` before the fit (Filimonov & Sornette 2015;
   `horizon =` keeps an event dated on the window's last day inside it), and
   the fit warns when it sees ties.
+- **Every result draws itself** — `plot()` on anything the package returns:
+  stock and flow, period-over-period change with its intervals, rates and
+  shares, drift by column, Benford digits, power curves, outliers,
+  correlations, permutation nulls, rounding envelopes, concentration-response
+  curves, burdens, concentration curves, the footprint, plume fields and
+  particle clouds, trends, and a whole-table analysis one panel at a time.
+  Base graphics only (no new dependency), one shared look, and the same
+  customisation on every method: `main`, `col` or `palette`, `grid`, `...`
+  for the base call, `bricklayer_plot_options()` for the session and
+  `bricklayer_palette()` for colour-blind-safe colours. `plume_field()`
+  evaluates a plume on a grid for the image; `plot_lorenz()` and
+  `plot_funnel()` cover the results that are plain data frames. Every
+  method returns the numbers it drew. `vignette("plotting-results")`.
 - **Air pollution, from source to burden** — where a plume goes:
   `pg_sigmas()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
   urban), `briggs_plume_rise()` (buoyant and stable branches, transitional
@@ -262,11 +276,13 @@ by a check you can run yourself; none is a claim about the design.
 | Agrees with OpenSSL on any input | libFuzzer differential fuzzing against OpenSSL 3.5: ML-KEM, ML-DSA, SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests, BLAKE2b, HMAC and PBKDF2 must agree byte for byte | `inst/fuzz/fuzz_ossl.cpp`, workflow `fuzz` |
 | Timing on hardware | dudect fixed-versus-random Welch t on x86-64 and arm64 Linux and on Apple silicon (with and without DIT): ML-KEM decapsulation plain and masked, valid against invalid with both classes varying, each phase alone, encapsulation, HQC decapsulation, the digest comparison, PBKDF2; an early-exit comparison is the control that must be flagged | `inst/dudect/`, workflow `dudect` |
 | Power, in simulation | TVLA on the code compiled for a Cortex-M4 and run in an emulator, under the Hamming-weight and the Hamming-distance models: every masked kernel shows no first-order leakage under either, every unmasked control leaks | `inst/tvla/`, workflow `tvla` |
-| Masked by default | First-order masking of ML-KEM decapsulation and ML-DSA signing, output identical to the unmasked computation. Every operation that combines the two shares of a value runs in assembly (Cortex-M, x86-64, aarch64) with a fixed register order, zeroed temporaries and a zero store between the two shares; code that handles one share at a time runs each share in its own pass with the registers zeroed in between. Shares are recombined only for what the algorithm publishes (the shared secret, the signature) | `src/rmbl_masked.h` |
+| Masked by default | First-order masking of ML-KEM decapsulation and ML-DSA signing, output identical to the unmasked computation. The share-combining gadgets run in assembly on Cortex-M, x86-64 and aarch64 (plain C elsewhere, with the same results) with a fixed register order, zeroed temporaries and a zero store between the two shares; code that handles one share at a time runs each share in its own pass with the registers zeroed in between. Shares are recombined for what the algorithm publishes: the shared secret, the signature and, during signing, the public high bits, the hint and the rejection decision (on rejected attempts too, as FIPS 204 reveals them) | `src/rmbl_masked.h` |
 | DER means DER | The parser refuses BER: long-form lengths below 128, lengths with leading zeros, non-minimal tags, end-of-contents octets, trailing bytes; `ECDSA-Sig-Value` must be exactly two canonical INTEGERs and the PKCS#1 block exactly the RFC 8017 DigestInfo | `src/rmbl_asn1.cpp`, `R/x509.R`, `R/timestamp.R` |
 
 Outside what these checks model: electromagnetic emanation, fault injection, glitches and
-coupling a leakage model omits, and higher-order attacks on two-share masking. `SECURITY.md`
+coupling a leakage model omits, and higher-order attacks on two-share masking. No third-party
+security audit has been commissioned, and the power assessment is a simulation, not a
+capture from a board. `SECURITY.md`
 has the threat model, the reporting address and the list of what each check would and would
 not catch. The checks are reproducible on any Linux machine
 with valgrind and clang: `bash inst/ctcheck/build.sh && bash inst/ctcheck/run.sh`
