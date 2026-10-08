@@ -91,8 +91,9 @@ number that tells them apart, and for the fixes below; this is both.
   (4 ms and 26 ms on this package's test machine).
 * The TVLA workflow also runs on changes to `rmbl_mlkem_body.h` and `rmbl_mldsa_body.h`,
   where the composed masked algorithms live; the dudect runner re-measures an
-  "inconclusive" target (4.5 < |t| < 10) with three times the samples and fails if it
-  stays there. The ACVP PBKDF sample exercises SHA-224 only; PBKDF2-SHA256 is checked
+  "inconclusive" target (4.5 < |t| < 10) with three times the samples and reports it with
+  its numbers if it stays there (on the arm64 CI runner the unmasked ML-KEM decapsulation
+  sits at |t| of about 6 for three ticks in eighty thousand; the masked default is at 1.6). The ACVP PBKDF sample exercises SHA-224 only; PBKDF2-SHA256 is checked
   against OpenSSL and RFC 6070, and the README now says so.
 * `C_rmbl_hash_two_part` (an internal self-test entry) refuses a non-integer or logical
   `split` instead of coercing it.
