@@ -113,7 +113,9 @@ test_that("a local Ollama server is the second route; its first model is the def
   # a server with no models pulled yet
   testthat::local_mocked_bindings(.bl_http_get_local = function(...) rt_tags(), .package = "rmoriebricklayer")
   withr::local_envvar(c(OLLAMA_MODEL = NA))
-  expect_error(bricklayer_llm_ask("hi"), "local Ollama has no model to use")
+  expect_error(bricklayer_llm_ask("hi", route = "ollama"), "local Ollama has no model to use")
+  # left to choose, an empty Ollama is passed over rather than stopping the call
+  expect_error(bricklayer_llm_ask("hi"), "No language-model route")
   expect_identical(bricklayer_llm_status()$status[2], "no models")
   # nothing listening: the route is skipped, and status says so
   testthat::local_mocked_bindings(
@@ -145,14 +147,14 @@ test_that("the order is own endpoint, then Ollama, then hosted; `route` insists 
   expect_match(bricklayer_llm_ask("x"), "^http://localhost:11434/")
   withr::local_envvar(c(OLLAMA_HOST = "off"))
   expect_match(bricklayer_llm_ask("x"), "^https://llm.rmorie.com/")
-  expect_error(bricklayer_llm_ask("x", route = "own"), "own endpoint: set MORIE_LLM_BASE_URL")
+  expect_error(bricklayer_llm_ask("x", route = "own"), "own endpoint: `[a-z]+ config set own.url URL`")
   expect_error(bricklayer_llm_ask("x", route = "ollama"), "local Ollama: OLLAMA_HOST=off")
   expect_error(bricklayer_llm_ask("x", route = "nope"), "should be one of")
   expect_error(rt_ns(".bl_llm_route")("nope"), "unknown route 'nope'")
   withr::local_envvar(c(MORIE_HOSTED_KEY = NA))
   e <- tryCatch(bricklayer_llm_ask("x"), error = function(e) conditionMessage(e))
   expect_match(e, "^No language-model route is set up on this machine:")
-  expect_match(e, "own endpoint: set MORIE_LLM_BASE_URL")
+  expect_match(e, "own endpoint: `[a-z]+ config set own.url URL`")
   expect_match(e, "local Ollama: OLLAMA_HOST=off")
   expect_match(e, "hosted MORIE tier: no key stored; request a key at https://rmorie.com/access")
   expect_match(agent_bundle("x"), "rmorie.com/access")
