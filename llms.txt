@@ -579,15 +579,11 @@ path, index or key fails.
 
 ## Installation
 
-Released version from
-[CRAN](https://CRAN.R-project.org/package=rmoriebricklayer):
-
-``` r
-
-install.packages("rmoriebricklayer")
-```
-
-Latest build from r-universe (tracks `main` ahead of CRAN):
+Current release from r-universe (prebuilt binaries for macOS and
+Windows, a source build on Linux). Keep the `repos` argument: without it
+`Rscript` stops with “trying to use CRAN without setting a mirror”, and
+the [CRAN](https://CRAN.R-project.org/package=rmoriebricklayer) release
+lags this one by several versions.
 
 ``` r
 
@@ -598,12 +594,12 @@ install.packages(
 )
 ```
 
-Development version from GitHub:
+Development version from GitHub (a source build; needs a C++ toolchain):
 
 ``` r
 
-# install.packages("remotes")
-remotes::install_github("rootcoder007/rmorie-bricklayer")
+install.packages("remotes", repos = "https://cloud.r-project.org")
+remotes::install_github("rootcoder007/rmorie-bricklayer", upgrade = "always")
 ```
 
 ## Quick example
