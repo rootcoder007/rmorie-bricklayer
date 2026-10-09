@@ -33,8 +33,9 @@
   if (is.list(out)) out else list()
 }
 
-.bl_write_credentials <- function(data) {
-  p <- .bl_credentials_path()
+.bl_write_credentials <- function(data) .bl_write_private_json(.bl_credentials_path(), data)
+
+.bl_write_private_json <- function(p, data) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- paste0(p, ".tmp")
   # created empty and made private BEFORE the key is written, so no umask
@@ -71,12 +72,13 @@
 # to ""); otherwise the signed services document decides, and a document
 # with the tier switched off disables it here too.
 .bl_hosted_base <- function() {
-  if (!"MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv())) {
+  saved <- .bl_config_value("MORIE_HOSTED_BASE_URL")
+  if (!"MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv()) && is.null(saved)) {
     svc <- .rmbl_services_llm()
     if (!identical(svc$mode, "key") || !nzchar(svc$base_url %||% "")) return(NULL)
     return(svc$base_url)
   }
-  v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_BASE_URL")))
+  v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_BASE_URL", unset = saved %||% "")))
   if (!nzchar(v) || tolower(v) %in% c("off", "none", "disabled")) return(NULL)
   # the bearer key is sent to this endpoint: https and a public address
   .rmbl_check_public_url(v, "MORIE_HOSTED_BASE_URL")
@@ -90,8 +92,8 @@
 }
 
 .bl_hosted_model <- function() {
-  v <- trimws(Sys.getenv("MORIE_HOSTED_MODEL", unset = ""))
-  if (nzchar(v)) return(v)
+  v <- .bl_env1("MORIE_HOSTED_MODEL")
+  if (!is.null(v)) return(v)
   m <- .rmbl_services_llm()$default_model %||% ""
   if (nzchar(m)) m else "minimax-m3:cloud"
 }
@@ -99,6 +101,7 @@
 # Why the hosted tier is off, for messages.
 .bl_hosted_off_reason <- function() {
   if ("MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv())) return("MORIE_HOSTED_BASE_URL=off")
+  if (!is.null(.bl_config_value("MORIE_HOSTED_BASE_URL"))) return("hosted.url = off (rmbl config)")
   notice <- bricklayer_services(offline = TRUE)$notice %||% ""
   paste0("switched off in the services document", if (nzchar(notice)) paste0(": ", notice))
 }
@@ -135,7 +138,7 @@
 }
 
 .bl_own_base <- function() {
-  v <- sub("/+$", "", trimws(Sys.getenv("MORIE_LLM_BASE_URL", unset = "")))
+  v <- sub("/+$", "", .bl_env1("MORIE_LLM_BASE_URL") %||% "")
   if (!nzchar(v) || tolower(v) %in% c("off", "none", "disabled")) return(NULL)
   if (!grepl("^https?://[^/[:space:]]+", v)) {
     stop("MORIE_LLM_BASE_URL must be an http(s):// URL (an OpenAI-compatible server)", call. = FALSE)
@@ -145,9 +148,10 @@
   if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "MORIE_LLM_BASE_URL")
   v
 }
+# An environment variable, else the value saved under it by bricklayer_llm_config().
 .bl_env1 <- function(name) {
   v <- trimws(Sys.getenv(name, unset = ""))
-  if (nzchar(v)) v else NULL
+  if (nzchar(v)) v else .bl_config_value(name)
 }
 
 .bl_ollama_base <- function() {
@@ -185,6 +189,11 @@
 # The route a question takes: list(name, base, key, model, local), or NULL
 # when nothing answers. `route` forces one of "own", "ollama", "hosted".
 .bl_llm_route <- function(route = NULL, probe_timeout = 2) {
+  if (is.null(route)) {
+    # a route saved with `rmbl config set route ...` (or MORIE_LLM_ROUTE)
+    saved <- tolower(.bl_env1("MORIE_LLM_ROUTE") %||% "auto")
+    if (saved %in% c("own", "ollama", "hosted")) route <- saved
+  }
   for (r in route %||% c("own", "ollama", "hosted")) {
     hit <- switch(r,
       own = {
@@ -197,7 +206,10 @@
       ollama = {
         base <- .bl_ollama_base()
         tags <- if (!is.null(base)) .bl_ollama_tags(base, probe_timeout)
-        if (!is.null(tags)) {
+        # a server with nothing pulled cannot answer: when picking the route
+        # (not forced), fall through to the hosted tier instead of stopping here
+        usable <- length(tags) > 0L || !is.null(.bl_env1("OLLAMA_MODEL")) || identical(route, "ollama")
+        if (!is.null(tags) && usable) {
           list(name = "local Ollama", base = base, key = .bl_env1("OLLAMA_API_KEY"),
                model = .bl_env1("OLLAMA_MODEL") %||% (if (length(tags)) tags[[1L]]),
                local = .bl_loopback_url(base), models = tags)
@@ -229,15 +241,20 @@
   ollama_line <- if (is.null(ollama)) {
     "local Ollama: OLLAMA_HOST=off"
   } else {
-    sprintf("local Ollama: nothing answers at %s (install Ollama and pull a model, or point OLLAMA_HOST at a server)",
-            ollama)
+    if (is.null(.bl_ollama_tags(ollama))) {
+      sprintf("local Ollama: nothing answers at %s (install Ollama and pull a model, or `%s config set ollama.url ADDRESS`)",
+              ollama, .bl_prog())
+    } else {
+      sprintf("local Ollama: no model pulled at %s (`ollama pull NAME`)", ollama)
+    }
   }
-  own_line <- paste("own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL)",
-                    "to any OpenAI-compatible server")
+  own_line <- sprintf("own endpoint: `%s config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server",
+                      .bl_prog())
   lines <- switch(route %||% "any",
     own = own_line, ollama = ollama_line, hosted = hosted_line,
     c(own_line, ollama_line, hosted_line))
-  paste(c("No language-model route is set up on this machine:", paste0("  ", lines)), collapse = "\n")
+  paste(c("No language-model route is set up on this machine:", paste0("  ", lines),
+          sprintf("`%s config setup` walks through every setting.", .bl_prog())), collapse = "\n")
 }
 
 #' Models offered by the hosted MORIE LLM tier
@@ -437,8 +454,11 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   asked_model <- model
   model <- model %||% rt$model
   if (is.null(model) || !nzchar(model)) {
-    stop(sprintf("%s has no model to use: pull one (`ollama pull NAME`) or set %s", rt$name,
-                 if (identical(rt$name, "own endpoint")) "MORIE_LLM_MODEL" else "OLLAMA_MODEL"), call. = FALSE)
+    own <- identical(rt$name, "own endpoint")
+    stop(sprintf("%s has no model to use: %s, or `%s config set route hosted` to use the hosted tier", rt$name,
+                 if (own) sprintf("`%s config set own.model NAME`", .bl_prog())
+                 else sprintf("pull one (`ollama pull NAME`) or `%s config set ollama.model NAME`", .bl_prog()),
+                 .bl_prog()), call. = FALSE)
   }
   msgs <- list()
   if (!is.null(system_prompt)) {
