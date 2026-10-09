@@ -1,5 +1,29 @@
 # Changelog
 
+## rmoriebricklayer 0.5.11
+
+### Language models: set everything from the shell or R
+
+- A stored hosted key is used even when a local Ollama server is running
+  with no model pulled. The automatic route used to stop at that empty
+  server (“local Ollama has no model to use”), so a user who had logged
+  in, and whose `doctor` listed every hosted model, could not reach any
+  of them. An empty Ollama is now passed over unless `OLLAMA_MODEL` is
+  set or the Ollama route is asked for.
+- [`bricklayer_llm_config()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_config.md)
+  and `rmbl config` show and save every language-model setting: the
+  route `ask` takes (`auto`, `own`, `ollama`, `hosted`) and the address,
+  key and model of your own server, of Ollama and of the hosted tier.
+  `rmbl config setup` walks through them. Settings are saved in
+  `~/.config/morie/llm.json` (mode 0600); an environment variable that
+  is set still wins.
+- `rmbl ask --route ROUTE` picks the route for one call.
+- `rmbl doctor` ends with the route and model `ask` will use, and how to
+  change it.
+- `rmbl help` is a guide: the verbs by area, and `help start`,
+  `help llm`, `help config` and `help r` pages with examples. Error
+  messages name the `config` command that fixes them.
+
 ## rmoriebricklayer 0.5.10
 
 **A version of its own.** The build tagged 0.5.9 on 2026-10-07 (29ff122)

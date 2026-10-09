@@ -158,9 +158,9 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
 fp$energy_kwh$total
-#> [1] 4.02635e-08
+#> [1] 4.02638e-08
 fp$co2e_g
-#> [1] 3.662771e-06
+#> [1] 3.662798e-06
 fp$carbon_intensity$year
 #> [1] 2024
 fp$assumptions

@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -408,31 +408,104 @@
 <span><span class="fu"><a href="reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>      <span class="co"># forget the key</span></span>
 <span></span>
 <span><span class="fu"><a href="reference/bricklayer_services.html">bricklayer_services</a></span><span class="op">(</span><span class="op">)</span>        <span class="co"># the signed document: endpoints, modes, models, notice</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="choosing-the-route-and-model">Choosing the route and model<a class="anchor" aria-label="anchor" href="#choosing-the-route-and-model"></a>
+</h3>
+<p>Every setting can be saved once, from R or the shell, without touching the environment or the source. Saved settings live in <code>~/.config/morie/llm.json</code> (private to you); an environment variable that is set still wins for that session.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span><span class="op">)</span>                                        <span class="co"># every setting, its value and source</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span>route <span class="op">=</span> <span class="st">"hosted"</span><span class="op">)</span>                        <span class="co"># always the hosted tier</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span>hosted.model <span class="op">=</span> <span class="st">"gpt-oss-120b:cf"</span><span class="op">)</span>        <span class="co"># its default model</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span>ollama.url <span class="op">=</span> <span class="st">"http://192.168.1.20:11434"</span>, ollama.model <span class="op">=</span> <span class="st">"qwen3:8b"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span>own.url <span class="op">=</span> <span class="st">"http://localhost:1234/v1"</span>, own.model <span class="op">=</span> <span class="st">"my-model"</span>, own.key <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/bricklayer_llm_config.html">bricklayer_llm_config</a></span><span class="op">(</span>route <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>                            <span class="co"># back to the automatic order</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th>Setting</th>
+<th>What it does</th>
+<th>Environment variable</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>route</code></td>
+<td>
+<code>auto</code> (own endpoint, Ollama, then hosted), <code>own</code>, <code>ollama</code> or <code>hosted</code>
+</td>
+<td><code>MORIE_LLM_ROUTE</code></td>
+</tr>
+<tr>
+<td>
+<code>own.url</code>, <code>own.model</code>, <code>own.key</code>
+</td>
+<td>your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a provider)</td>
+<td>
+<code>MORIE_LLM_BASE_URL</code>, <code>MORIE_LLM_MODEL</code>, <code>MORIE_LLM_API_KEY</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>ollama.url</code>, <code>ollama.model</code>, <code>ollama.key</code>
+</td>
+<td>an Ollama server here or on your network; <code>ollama.url off</code> skips it</td>
+<td>
+<code>OLLAMA_HOST</code>, <code>OLLAMA_MODEL</code>, <code>OLLAMA_API_KEY</code>
+</td>
+</tr>
+<tr>
+<td>
+<code>hosted.url</code>, <code>hosted.model</code>, <code>hosted.key</code>
+</td>
+<td>the hosted tier; the key is checked, then stored like <code>login --token</code>
+</td>
+<td>
+<code>MORIE_HOSTED_BASE_URL</code>, <code>MORIE_HOSTED_MODEL</code>, <code>MORIE_HOSTED_KEY</code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>route = "auto"</code>, a local Ollama server that has no model pulled is passed over, so a stored hosted key is used rather than an empty Ollama.</p>
 <p><code>MORIE_HOSTED_KEY</code> in the environment overrides the stored key, and <code>MORIE_HOSTED_BASE_URL</code> points the package at another gateway (set it to <code>off</code> to disable the hosted tier). The hosted tier serves ollama.com cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud, glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud and gpt-oss:120b-cloud) and additional AI models; <code><a href="reference/bricklayer_llm_models.html">bricklayer_llm_models()</a></code> reports what your key can use now.</p>
 <p>The same verbs exist on the command line once the launcher is on your <code>PATH</code>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer from this machine</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, local Ollama, then the hosted tier</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># paste the key you were issued (or pipe it in)</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># hosted models your key can use, default marked</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the key</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'rmoriebricklayer::install_cli()'</span>   <span class="co"># links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> help                           <span class="co"># every verb; `help start`, `help llm`, `help config`, `help r`</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor                         <span class="co"># which routes answer here, and the one ask will use</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, local Ollama, then the hosted tier</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> hosted <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># a few questions that set them all</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route hosted        <span class="co"># always the hosted tier</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set hosted.model gpt-oss-120b:cf</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># paste the key you were issued (or pipe it in)</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models                         <span class="co"># hosted models your key can use, default marked</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the key</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="part-of-the-morie-family">Part of the MORIE family<a class="anchor" aria-label="anchor" href="#part-of-the-morie-family"></a>
@@ -447,12 +520,12 @@
 <p>Ruhela, V. S. (2026). <em>rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback.</em> <a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link uri">https://github.com/rootcoder007/rmorie-bricklayer</a></p>
 </blockquote>
 <p>BibTeX (or run <code>citation("rmoriebricklayer")</code> after installation for the entry stamped with the exact installed version, sourced from <code>inst/CITATION</code>):</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode bibtex"><code class="sourceCode bibtex"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="va">@Manual</span>{<span class="ot">ruhela_rmoriebricklayer_2026</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="dt">title</span>  = {rmoriebricklayer: Reproducible Data Capsules with Provenance and Fallback},</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="dt">author</span> = {Ruhela, Vansh Singh},</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="dt">year</span>   = {2026},</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="dt">url</span>    = {https://github.com/rootcoder007/rmorie-bricklayer}</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>}</span></code></pre></div>
 <p>See <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/CITATION.cff" class="external-link"><code>CITATION.cff</code></a> for the machine-readable metadata GitHub’s “Cite this repository” button uses.</p>
 </div>
 <div class="section level2">

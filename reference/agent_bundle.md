@@ -40,9 +40,9 @@ route answers.
 # own endpoint or a local Ollama. try() keeps the example graceful when no
 # route answers or the hosted tier is slow.
 try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL) to any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or point OLLAMA_HOST at a server)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code"
+#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or `rmoriebricklayer config set ollama.url ADDRESS`)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
 try(agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud"))
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL) to any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or point OLLAMA_HOST at a server)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code"
+#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or `rmoriebricklayer config set ollama.url ADDRESS`)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
 # }
 
 # With every route switched off the call returns a setup hint, not an
@@ -52,7 +52,7 @@ old <- Sys.getenv(routes, unset = NA)
 Sys.setenv(MORIE_HOSTED_BASE_URL = "off", OLLAMA_HOST = "off",
            MORIE_LLM_BASE_URL = "off")
 agent_bundle("hello")
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: set MORIE_LLM_BASE_URL (and MORIE_LLM_API_KEY, MORIE_LLM_MODEL) to any OpenAI-compatible server\n  local Ollama: OLLAMA_HOST=off\n  hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off); request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code"
+#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: OLLAMA_HOST=off\n  hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off); request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
 for (v in routes) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }

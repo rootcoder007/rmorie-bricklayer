@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,21 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.11" id="rmoriebricklayer-0511">rmoriebricklayer 0.5.11<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0511"></a></h2>
+<div class="section level3">
+<h3 id="language-models-set-everything-from-the-shell-or-r-0-5-11">Language models: set everything from the shell or R<a class="anchor" aria-label="anchor" href="#language-models-set-everything-from-the-shell-or-r-0-5-11"></a></h3>
+<ul><li>A stored hosted key is used even when a local Ollama server is running with no model pulled. The automatic route used to stop at that empty server (“local Ollama has no model to use”), so a user who had logged in, and whose <code>doctor</code> listed every hosted model, could not reach any of them. An empty Ollama is now passed over unless <code>OLLAMA_MODEL</code> is set or the Ollama route is asked for.</li>
+<li>
+<code><a href="../reference/bricklayer_llm_config.html">bricklayer_llm_config()</a></code> and <code>rmbl config</code> show and save every language-model setting: the route <code>ask</code> takes (<code>auto</code>, <code>own</code>, <code>ollama</code>, <code>hosted</code>) and the address, key and model of your own server, of Ollama and of the hosted tier. <code>rmbl config setup</code> walks through them. Settings are saved in <code>~/.config/morie/llm.json</code> (mode 0600); an environment variable that is set still wins.</li>
+<li>
+<code>rmbl ask --route ROUTE</code> picks the route for one call.</li>
+<li>
+<code>rmbl doctor</code> ends with the route and model <code>ask</code> will use, and how to change it.</li>
+<li>
+<code>rmbl help</code> is a guide: the verbs by area, and <code>help start</code>, <code>help llm</code>, <code>help config</code> and <code>help r</code> pages with examples. Error messages name the <code>config</code> command that fixes them.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.10" id="rmoriebricklayer-0510">rmoriebricklayer 0.5.10<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0510"></a></h2>
 <p><strong>A version of its own.</strong> The build tagged 0.5.9 on 2026-10-07 (29ff122) and the one that followed it the same day (dcb3cb9) shared a version number while differing in the masking defaults, the FIPS 203 section 7.3 key check, <code>capsule_attest(context = raw)</code> and the whole air-pollution feature. The stress test of dcb3cb9 (2026-10-08) asked for a number that tells them apart, and for the fixes below; this is both.</p>

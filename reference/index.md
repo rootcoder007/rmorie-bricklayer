@@ -120,6 +120,8 @@ the rmoriebricklayer shell command.
   : Agent-assisted reproducibility-bundle help
 - [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
   : Ask a language model
+- [`bricklayer_llm_config()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_config.md)
+  : Show or save the language-model settings
 - [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
   : Sign in to the hosted MORIE language model
 - [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)

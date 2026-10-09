@@ -25,9 +25,15 @@ the curated tables at data.rmorie.com
 data pull db/table
 download one table as CSV
 
-ask [--model NAME] PROMPT...
+config [setup | set KEY VALUE | unset KEY | get KEY | help]
+show
+or change the language-model settings (bricklayer_llm_config):
+the route ask uses and the address, key and model of each route;
+setup walks through them
+
+ask [--route ROUTE] [--model NAME] PROMPT...
 send a prompt to the model
-(or the named one) and print the
+(or the named one, on the named route) and print the
 reply
 
 bundle REQUEST...
@@ -79,9 +85,15 @@ the curated tables at data.rmorie.com
 data pull db/table
 download one table as CSV
 
-ask [--model NAME] PROMPT...
+config [setup | set KEY VALUE | unset KEY | get KEY | help]
+show
+or change the language-model settings (bricklayer_llm_config):
+the route ask uses and the address, key and model of each route;
+setup walks through them
+
+ask [--route ROUTE] [--model NAME] PROMPT...
 send a prompt to the model
-(or the named one) and print the
+(or the named one, on the named route) and print the
 reply
 
 bundle REQUEST...
@@ -115,7 +127,7 @@ this list
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.10</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -181,9 +193,15 @@ a local model or your own endpoint; keys are issued on request at
 <dt><code>data pull db/table</code></dt>
 <dd><p>download one table as CSV</p></dd>
 
-<dt><code>ask [--model NAME] PROMPT...</code></dt>
+<dt><code>config [setup | set KEY VALUE | unset KEY | get KEY | help]</code></dt>
+<dd><p>show
+or change the language-model settings (<code><a href="bricklayer_llm_config.html">bricklayer_llm_config</a></code>):
+the route <code>ask</code> uses and the address, key and model of each route;
+<code>setup</code> walks through them</p></dd>
+
+<dt><code>ask [--route ROUTE] [--model NAME] PROMPT...</code></dt>
 <dd><p>send a prompt to the model
-(or the named one) and print the
+(or the named one, on the named route) and print the
 reply</p></dd>
 
 <dt><code>bundle REQUEST...</code></dt>
@@ -236,23 +254,36 @@ console).</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"version"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> rmoriebricklayer 0.5.11</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="st">"help"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> usage: rmoriebricklayer &lt;verb&gt; [options]   (rmbl is the same command as rmoriebricklayer)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   login [--email ADDRESS] [--token [KEY]]   sign in to the hosted MORIE LLM tier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Language models</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   doctor                                    what is set up, and which route ask will use</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config                                    show every language-model setting</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config setup                              answer a few questions to set them all</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   config set KEY VALUE | unset KEY          change one (keys: config help)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   login [--token [KEY]] [--email ADDRESS]   sign in to the hosted MORIE tier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         [--code CODE] [--no-browser]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   logout                                    forget the hosted key</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   doctor                                    language-model routes available here</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   models                                    models the hosted tier offers your key</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ask [--model NAME] PROMPT...              ask a model (own endpoint, local Ollama, then the hosted tier)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bundle REQUEST...                         agent_bundle() from the shell</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Data and functions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   data list                                 curated tables at data.rmorie.com</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   functions [PATTERN]                       exported functions and their titles</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   describe NAME                             help page of one function</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   examples NAME                             its examples</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   data list                                 curated tables at data.rmorie.com</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   version                                   package version</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> More help</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rmoriebricklayer help start      getting started, step by step</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rmoriebricklayer help llm        every way to point ask at a model (hosted, Ollama, your own server)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rmoriebricklayer help config     every setting, its environment variable, and examples</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rmoriebricklayer help r          the same from R and Rscript</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rmoriebricklayer VERB --help     one verb's usage</span>
 <span class="r-in"><span><span class="fu">bricklayer_cli</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"functions"</span>, <span class="st">"json"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bricklayer_json_base64_dec     Base64 encoding</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   bricklayer_json_base64_enc     Base64 encoding</span>

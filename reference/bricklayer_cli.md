@@ -31,9 +31,17 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
   download one table as CSV
 
-- `ask [--model NAME] PROMPT...`:
+- `config [setup | set KEY VALUE | unset KEY | get KEY | help]`:
 
-  send a prompt to the model (or the named one) and print the reply
+  show or change the language-model settings
+  ([`bricklayer_llm_config`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_config.md)):
+  the route `ask` uses and the address, key and model of each route;
+  `setup` walks through them
+
+- `ask [--route ROUTE] [--model NAME] PROMPT...`:
+
+  send a prompt to the model (or the named one, on the named route) and
+  print the reply
 
 - `bundle REQUEST...`:
 
@@ -86,23 +94,36 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.10
+#> rmoriebricklayer 0.5.11
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
-#>   login [--email ADDRESS] [--token [KEY]]   sign in to the hosted MORIE LLM tier
+#> Language models
+#>   ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply
+#>   doctor                                    what is set up, and which route ask will use
+#>   config                                    show every language-model setting
+#>   config setup                              answer a few questions to set them all
+#>   config set KEY VALUE | unset KEY          change one (keys: config help)
+#>   login [--token [KEY]] [--email ADDRESS]   sign in to the hosted MORIE tier
 #>         [--code CODE] [--no-browser]
 #>   logout                                    forget the hosted key
-#>   doctor                                    language-model routes available here
 #>   models                                    models the hosted tier offers your key
-#>   ask [--model NAME] PROMPT...              ask a model (own endpoint, local Ollama, then the hosted tier)
 #>   bundle REQUEST...                         agent_bundle() from the shell
+#> 
+#> Data and functions
+#>   data list                                 curated tables at data.rmorie.com
+#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function
 #>   examples NAME                             its examples
-#>   data list                                 curated tables at data.rmorie.com
-#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)
 #>   version                                   package version
+#> 
+#> More help
+#>   rmoriebricklayer help start      getting started, step by step
+#>   rmoriebricklayer help llm        every way to point ask at a model (hosted, Ollama, your own server)
+#>   rmoriebricklayer help config     every setting, its environment variable, and examples
+#>   rmoriebricklayer help r          the same from R and Rscript
+#>   rmoriebricklayer VERB --help     one verb's usage
 bricklayer_cli(c("functions", "json"))
 #>   bricklayer_json_base64_dec     Base64 encoding
 #>   bricklayer_json_base64_enc     Base64 encoding
