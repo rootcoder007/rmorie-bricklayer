@@ -224,7 +224,8 @@ test_that("models lists the hosted tier's models and ask --model names one", {
   expect_equal(asked, "a:cloud")
   expect_equal(cap("ask", "hi")$text, "echo\n")
   expect_null(asked)
-  expect_match(cap("ask", "--help")$text, "usage: rmoriebricklayer ask \\[--model NAME\\]")
+  expect_match(cap("ask", "--help")$text,
+               "usage: rmoriebricklayer ask \\[--route own\\|ollama\\|hosted\\|auto\\] \\[--model NAME\\]")
 })
 
 test_that("the email sign-in requests a code and exchanges it for a key", {

@@ -31,8 +31,12 @@ a local model or your own endpoint; keys are issued on request at
 (default marked)}
 \item{\code{data list}}{the curated tables at data.rmorie.com}
 \item{\code{data pull db/table}}{download one table as CSV}
-\item{\code{ask [--model NAME] PROMPT...}}{send a prompt to the model
-(or the named one) and print the
+\item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
+or change the language-model settings (\code{\link{bricklayer_llm_config}}):
+the route \code{ask} uses and the address, key and model of each route;
+\code{setup} walks through them}
+\item{\code{ask [--route ROUTE] [--model NAME] PROMPT...}}{send a prompt to the model
+(or the named one, on the named route) and print the
 reply}
 \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 shell}

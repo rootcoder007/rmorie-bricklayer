@@ -587,6 +587,32 @@ bricklayer_llm_logout()      # forget the key
 bricklayer_services()        # the signed document: endpoints, modes, models, notice
 ```
 
+### Choosing the route and model
+
+Every setting can be saved once, from R or the shell, without touching the
+environment or the source. Saved settings live in
+`~/.config/morie/llm.json` (private to you); an environment variable that is
+set still wins for that session.
+
+```r
+bricklayer_llm_config()                                        # every setting, its value and source
+bricklayer_llm_config(route = "hosted")                        # always the hosted tier
+bricklayer_llm_config(hosted.model = "gpt-oss-120b:cf")        # its default model
+bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
+bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
+bricklayer_llm_config(route = NULL)                            # back to the automatic order
+```
+
+| Setting | What it does | Environment variable |
+|---|---|---|
+| `route` | `auto` (own endpoint, Ollama, then hosted), `own`, `ollama` or `hosted` | `MORIE_LLM_ROUTE` |
+| `own.url`, `own.model`, `own.key` | your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a provider) | `MORIE_LLM_BASE_URL`, `MORIE_LLM_MODEL`, `MORIE_LLM_API_KEY` |
+| `ollama.url`, `ollama.model`, `ollama.key` | an Ollama server here or on your network; `ollama.url off` skips it | `OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_API_KEY` |
+| `hosted.url`, `hosted.model`, `hosted.key` | the hosted tier; the key is checked, then stored like `login --token` | `MORIE_HOSTED_BASE_URL`, `MORIE_HOSTED_MODEL`, `MORIE_HOSTED_KEY` |
+
+With `route = "auto"`, a local Ollama server that has no model pulled is
+passed over, so a stored hosted key is used rather than an empty Ollama.
+
 `MORIE_HOSTED_KEY` in the environment overrides the stored key, and
 `MORIE_HOSTED_BASE_URL` points the package at another gateway (set it to
 `off` to disable the hosted tier). The hosted tier serves ollama.com cloud
@@ -600,9 +626,18 @@ The same verbs exist on the command line once the launcher is on your
 
 ```sh
 Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
-rmoriebricklayer doctor                         # which routes answer from this machine
+rmoriebricklayer help                           # every verb; `help start`, `help llm`, `help config`, `help r`
+rmoriebricklayer doctor                         # which routes answer here, and the one ask will use
 rmoriebricklayer ask "your question"            # own endpoint, local Ollama, then the hosted tier
 rmoriebricklayer ask --model NAME "your question"
+rmoriebricklayer ask --route hosted "your question"   # one route, this time
+rmoriebricklayer config                         # every language-model setting and where it comes from
+rmoriebricklayer config setup                   # a few questions that set them all
+rmoriebricklayer config set route hosted        # always the hosted tier
+rmoriebricklayer config set hosted.model gpt-oss-120b:cf
+rmoriebricklayer config set ollama.url http://192.168.1.20:11434
+rmoriebricklayer config set own.url http://localhost:1234/v1
+rmoriebricklayer config unset route             # back to the automatic order
 rmoriebricklayer login --token                  # paste the key you were issued (or pipe it in)
 rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
 rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
@@ -622,7 +657,9 @@ rmoriebricklayer version
 `rmbl` is the same command under a short name; every verb works under either:
 
 ```sh
+rmbl help
 rmbl doctor
+rmbl config setup
 rmbl ask "your question"
 rmbl login --token
 rmbl models

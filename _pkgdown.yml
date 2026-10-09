@@ -143,6 +143,7 @@ reference:
     contents:
       - agent_bundle
       - bricklayer_llm_ask
+      - bricklayer_llm_config
       - bricklayer_llm_login
       - bricklayer_llm_logout
       - bricklayer_llm_status
