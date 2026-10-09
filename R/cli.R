@@ -107,7 +107,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     return(invisible(0L))
   }
   # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
-  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"), data = "--out")
+  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
+                data = "--out")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out"), function(f) {
     i <- match(f, rest)
@@ -519,7 +520,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     sprintf("     %s doctor\n", prog),
     "2. Pick a model source (any one is enough):\n",
     sprintf("     hosted MORIE tier   %s login                  (GitHub or an emailed code)\n", prog),
-    sprintf("                         %s login --token KEY      (a key issued at https://www.rmorie.com/access)\n", prog),
+    sprintf("                         %s login --token KEY      (a key from https://www.rmorie.com/access)\n", prog),
     "     local Ollama        ollama pull qwen3:8b      (https://ollama.com)\n",
     sprintf("     your own server     %s config set own.url http://localhost:1234/v1\n", prog),
     sprintf("   or answer a few questions instead:  %s config setup\n", prog),

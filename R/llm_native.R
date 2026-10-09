@@ -242,14 +242,14 @@
     "local Ollama: OLLAMA_HOST=off"
   } else {
     if (is.null(.bl_ollama_tags(ollama))) {
-      sprintf("local Ollama: nothing answers at %s (install Ollama and pull a model, or `%s config set ollama.url ADDRESS`)",
-              ollama, .bl_prog())
+      sprintf(paste("local Ollama: nothing answers at %s (install Ollama and pull a model,",
+                    "or `%s config set ollama.url ADDRESS`)"), ollama, .bl_prog())
     } else {
       sprintf("local Ollama: no model pulled at %s (`ollama pull NAME`)", ollama)
     }
   }
-  own_line <- sprintf("own endpoint: `%s config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server",
-                      .bl_prog())
+  own_line <- sprintf(paste("own endpoint: `%s config set own.url URL` (and own.model, own.key)",
+                            "for any OpenAI-compatible server"), .bl_prog())
   lines <- switch(route %||% "any",
     own = own_line, ollama = ollama_line, hosted = hosted_line,
     c(own_line, ollama_line, hosted_line))

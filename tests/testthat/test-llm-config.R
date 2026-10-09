@@ -144,8 +144,8 @@ test_that("`config` from the shell: show, help, set, get, unset, path; doctor na
   # doctor: no route yet, then the hosted one with its model
   expect_match(cf_out("doctor")$text, "ask has no route yet")
   withr::local_envvar(c(MORIE_HOSTED_KEY = "sk-h"))
-  testthat::local_mocked_bindings(.bl_http_get = function(...) list(status = 200L, body = charToRaw(
-    '{"data":[{"id":"minimax-m3:cloud"},{"id":"gpt-oss-120b:cf"}]}')), .package = "rmoriebricklayer")
+  models_reply <- list(status = 200L, body = charToRaw('{"data":[{"id":"minimax-m3:cloud"},{"id":"gpt-oss-120b:cf"}]}'))
+  testthat::local_mocked_bindings(.bl_http_get = function(...) models_reply, .package = "rmoriebricklayer")
   cf_out(c("config", "set", "hosted.model", "gpt-oss-120b:cf"))
   expect_match(cf_out("doctor")$text, "ask uses: hosted MORIE tier, model gpt-oss-120b:cf")
 })
