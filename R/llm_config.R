@@ -39,8 +39,7 @@
 .bl_read_config <- function() {
   p <- .bl_config_path()
   if (!file.exists(p)) return(list())
-  out <- tryCatch(bricklayer_json_from_json(paste(readLines(p, warn = FALSE), collapse = "\n"),
-                                            simplifyVector = TRUE),
+  out <- tryCatch(.rmbl_json_text(readLines(p, warn = FALSE), simplifyVector = TRUE),
                   error = function(e) NULL)
   if (is.list(out)) out else list()
 }
