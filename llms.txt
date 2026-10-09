@@ -589,7 +589,7 @@ compiler output hidden unless a build fails, and the named packages
 always upgraded to the current release). Keep the `repos` arguments as
 written: under `Rscript` there is no mirror chooser, so a bare
 [`install.packages()`](https://rdrr.io/r/utils/install.packages.html)
-stops with “trying to use CRAN without setting a mirror”, and CRAN
+stops with “trying to use CRAN without setting a mirror”, and if CRAN
 carries older versions than r-universe.
 
 ``` r
