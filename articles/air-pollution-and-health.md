@@ -343,9 +343,9 @@ b <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb =
                        usage = "machine", load_curve = "codecarbon")
 rbind(process_linear = c(usage = a$usage, cpu_kwh = a$energy_kwh$cpu),
       machine_codecarbon = c(usage = b$usage, cpu_kwh = b$energy_kwh$cpu))
-#>                    usage      cpu_kwh
-#> process_linear      0.25 6.250000e-09
-#> machine_codecarbon  0.25 1.283203e-08
+#>                        usage      cpu_kwh
+#> process_linear     0.1250000 3.125000e-09
+#> machine_codecarbon 0.3333333 1.333333e-08
 b$usage_mode
 #> [1] "machine"
 ```
