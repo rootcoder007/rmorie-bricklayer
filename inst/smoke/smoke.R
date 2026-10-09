@@ -50,6 +50,19 @@ cases <- list(
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
     df <- bricklayer_data_load("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "bricklayer_data_load")
   },
+  config = function() {
+    r <- run("config"); check(r$status == 0 && grepl("route", r$text, fixed = TRUE), r$text)
+    check(run("config", "help")$status == 0, "config help")
+    r <- run("config", "set", "ollama.model", "smoke-model:1"); check(r$status == 0, r$text)
+    r <- run("config", "get", "ollama.model"); check(r$status == 0 && grepl("smoke-model:1", r$text, fixed = TRUE), r$text)
+    r <- run("config", "unset", "ollama.model"); check(r$status == 0, r$text)
+    check(run("config", "set", "route", "nowhere")$status != 0L, "config set accepted a bad route")
+    # a stored key is shown only as set / (not set), never any of its characters
+    if (nzchar(key)) check(!grepl(substr(key, nchar(key) - 5L, nchar(key)), run("config")$text, fixed = TRUE), "config printed part of the key")
+  },
+  help = function() {
+    for (p in c("start", "llm", "config", "r")) { r <- run("help", p); check(r$status == 0 && nzchar(r$text), paste("help", p)) }
+  },
   capsule = function() {
     dir <- file.path(home, "cap"); dir.create(dir)
     utils::write.csv(data.frame(x = 1:3), file.path(dir, "data.csv"), row.names = FALSE)
@@ -61,7 +74,8 @@ cases <- list(
 )
 help_text <- run("help")$text
 verbs <- trimws(unique(regmatches(help_text, gregexpr("(?m)^  ([a-z][a-z-]*)", help_text, perl = TRUE))[[1]]))
-missing <- setdiff(verbs, c(names(cases), "help"))
+# "rmoriebricklayer help start" and friends are help pages (the help case), not verbs
+missing <- setdiff(verbs, c(names(cases), "rmoriebricklayer"))
 if (length(missing)) { cat("VERBS WITHOUT A SMOKE CASE:", paste(missing, collapse = ", "), "\n"); quit(status = 2) }
 failed <- 0L
 for (n in names(cases)) {
