@@ -405,25 +405,49 @@ path, index or key fails.
 ## Installation
 
 Current release from r-universe (prebuilt binaries for macOS and Windows, a
-source build on Linux). Keep the `repos` argument: without it `Rscript` stops
-with "trying to use CRAN without setting a mirror", and the
+source build on Linux); the
 [CRAN](https://CRAN.R-project.org/package=rmoriebricklayer) release lags this
 one by several versions.
 
-```r
-install.packages(
-  "rmoriebricklayer",
-  repos = c("https://rootcoder007.r-universe.dev",
-            "https://cloud.r-project.org")
-)
-```
-
-Development version from GitHub (a source build; needs a C++ toolchain):
+With [pak](https://pak.r-lib.org) (progress bars, parallel downloads, compiler
+output hidden unless a build fails, and the named packages always upgraded to
+the current release). Keep the `repos` arguments as written: under `Rscript`
+there is no mirror chooser, so a bare `install.packages()` stops with "trying to
+use CRAN without setting a mirror", and CRAN carries older versions than
+r-universe.
 
 ```r
-install.packages("remotes", repos = "https://cloud.r-project.org")
-remotes::install_github("rootcoder007/rmorie-bricklayer", upgrade = "always")
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak", repos = "https://cloud.r-project.org")
+}
+pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev")
+pak::pkg_install("rmoriebricklayer")
 ```
+
+From a terminal (single quotes outside, double quotes inside, so the shell
+passes the R code through untouched):
+
+```sh
+Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rmoriebricklayer")'
+```
+
+Without pak, plain `install.packages()` does the same with R's own output:
+
+```sh
+Rscript -e 'install.packages("rmoriebricklayer", repos = c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"))'
+```
+
+Development version from GitHub (a source build; needs a C/C++ toolchain):
+
+```sh
+Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak", repos = "https://cloud.r-project.org"); pak::repo_add(rootcoder007 = "https://rootcoder007.r-universe.dev"); pak::pkg_install("rootcoder007/rmorie-bricklayer")'
+# without pak
+Rscript -e 'repos <- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'
+```
+
+On macOS, CRAN's R (from <https://cloud.r-project.org/bin/macosx/>) installs
+r-universe's prebuilt binaries in seconds. Homebrew's R cannot use them, so
+there every package is compiled from source.
 
 ## Quick example
 
