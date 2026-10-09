@@ -167,7 +167,7 @@ fp$assumptions
 #> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"
 #> [2] "memory charged: the machine's total 15.6 GB"        
 print(fp)
-#> Computation footprint (modelled): 0.002 s wall, 0.002 s CPU, utilisation 0.25 (process) on 4 cores
+#> Computation footprint (modelled): 0.002 s wall, 0.003 s CPU, utilisation 0.38 (process) on 4 cores
 #>   energy: 2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)
 #>   CO2e:   2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 #>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB 
