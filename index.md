@@ -594,12 +594,24 @@ install.packages(
 )
 ```
 
+The same from a terminal (single quotes outside, double quotes inside,
+so the shell passes the R code through untouched):
+
+``` sh
+Rscript -e 'install.packages("rmoriebricklayer", repos = c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"))'
+```
+
 Development version from GitHub (a source build; needs a C++ toolchain):
 
 ``` r
 
-install.packages("remotes", repos = "https://cloud.r-project.org")
-remotes::install_github("rootcoder007/rmorie-bricklayer", upgrade = "always")
+repos <- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org")
+install.packages("remotes", repos = repos)
+remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")
+```
+
+``` sh
+Rscript -e 'repos <- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'
 ```
 
 ## Quick example
