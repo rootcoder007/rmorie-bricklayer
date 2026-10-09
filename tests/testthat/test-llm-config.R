@@ -195,3 +195,69 @@ test_that("`help` lists the verbs and has a page per topic", {
   expect_match(cf_out(c("help", "ask"))$text, "usage: .* ask \\[--route")
   expect_equal(cf_out(c("help", "nonsense"))$status, 2L)
 })
+
+test_that("`config setup` on auto covers the hosted key, its model and your own server", {
+  cf_env()
+  checked <- NULL
+  answers <- c("auto", "sk-typed-key-1234", "glm-5.2:cf", "off", "",
+               "http://localhost:1234/v1", "local-model", "sk-own-key-5678")
+  testthat::local_mocked_bindings(
+    .bl_readline = function(prompt, con = NULL) {
+      a <- answers[1L]
+      answers <<- answers[-1L]
+      if (is.na(a)) "" else a
+    },
+    .bl_check_token = function(token) checked <<- token,
+    .bl_http_get = function(...) list(status = 200L, body = charToRaw('{"data":[{"id":"glm-5.2:cf"}]}')),
+    .bl_http_get_local = function(...) list(status = -1L, body = raw()),
+    .package = "rmoriebricklayer")
+  r <- suppressMessages(cf_out(c("config", "setup")))
+  expect_equal(r$status, 0L)
+  expect_identical(checked, "sk-typed-key-1234")
+  expect_match(r$text, "Models: glm-5.2:cf", fixed = TRUE)
+  tab <- bricklayer_llm_config()
+  val <- function(k) tab$value[tab$key == k]
+  expect_identical(val("route"), "auto")
+  expect_identical(val("hosted.model"), "glm-5.2:cf")
+  expect_identical(val("ollama.url"), "off")
+  expect_identical(val("own.url"), "http://localhost:1234/v1")
+  expect_identical(val("own.model"), "local-model")
+  expect_identical(val("own.key"), "sk-o...5678")
+  expect_match(r$text, "ask uses: own endpoint, model local-model")
+  # an unknown route answer falls back to auto
+  answers <- c("cloud", "", "", "", "")
+  cf_out(c("config", "setup"))
+  expect_identical(bricklayer_llm_config()$value[1], "auto")
+})
+
+test_that("config refuses a malformed Ollama address and names settings it does not know", {
+  cf_env()
+  expect_error(bricklayer_llm_config(ollama.url = "local host"), "ollama.url must be")
+  expect_error(bricklayer_llm_config(route = c("a", "b")), "route takes one value")
+  bricklayer_llm_config(hosted.url = "https://llm.example.org/", route = "HOSTED")
+  expect_identical(rmoriebricklayer:::.bl_hosted_base(), "https://llm.example.org")
+  expect_identical(bricklayer_llm_config()$value[1], "hosted")
+  expect_identical(rmoriebricklayer:::.bl_config_value("NOT_A_SETTING"), NULL)
+  # a damaged file reads as no settings rather than an error
+  writeLines("not json at all", rmoriebricklayer:::.bl_config_path())
+  expect_identical(rmoriebricklayer:::.bl_read_config(), list())
+  # `config get` and `config set` of a key that is not there
+  expect_equal(cf_out(c("config", "get"))$status, 2L)
+  expect_equal(cf_out(c("config", "unset", "nope"))$status, 2L)
+  # a secret typed at the prompt when no value is given
+  testthat::local_mocked_bindings(.bl_readline = function(prompt, con = NULL) "sk-prompted-9999",
+                                  .package = "rmoriebricklayer")
+  expect_match(cf_out(c("config", "set", "own.key"))$text, "own.key = sk-p...9999")
+  # an environment variable set over a saved one is reported from the shell, not raised
+  withr::local_envvar(c(OLLAMA_MODEL = "env-model"))
+  expect_match(cf_out(c("config", "set", "ollama.model", "saved-model"))$text,
+               "OLLAMA_MODEL is set in the environment")
+})
+
+test_that("doctor says why ask would fail when a saved address is unusable", {
+  cf_env()
+  withr::local_envvar(c(OLLAMA_HOST = "off"))
+  testthat::local_mocked_bindings(.bl_llm_route = function(...) stop("bad address"),
+                                  .package = "rmoriebricklayer")
+  expect_match(cf_out("doctor")$text, "ask would fail: bad address")
+})
