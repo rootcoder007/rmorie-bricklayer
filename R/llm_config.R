@@ -19,7 +19,7 @@
     secret = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE),
     help = c(
       "which route `ask` uses: auto (own endpoint, then Ollama, then hosted), own, ollama or hosted",
-      "your own OpenAI-compatible server, e.g. http://localhost:1234/v1 (LM Studio) or https://api.example.org/v1",
+      "your own OpenAI-compatible server, e.g. http://localhost:1234/v1 (LM Studio), http://localhost:8080/v1 (llama-server -m /path/model.gguf) or https://api.example.org/v1",
       "API key for your own server (sent as a Bearer token)",
       "model name on your own server",
       "your Ollama server, e.g. http://localhost:11434 or 192.168.1.20:11434; off to skip Ollama",
