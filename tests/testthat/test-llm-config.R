@@ -66,7 +66,7 @@ test_that("settings are saved privately, shown with their source, and the enviro
   expect_identical(row("route")$source, "saved")
   expect_identical(row("hosted.model")$value, "gpt-oss-120b:cf")
   expect_identical(row("ollama.url")$value, "http://192.168.1.20:11434")
-  expect_identical(row("own.key")$value, "sk-o...-key")  # keys are never printed whole
+  expect_identical(row("own.key")$value, "set")  # no character of a key is ever shown
   expect_identical(rmoriebricklayer:::.bl_ollama_base(), "http://192.168.1.20:11434")
   expect_identical(rmoriebricklayer:::.bl_hosted_model(), "gpt-oss-120b:cf")
   # an environment variable that is set wins, and says so
@@ -222,7 +222,7 @@ test_that("`config setup` on auto covers the hosted key, its model and your own 
   expect_identical(val("ollama.url"), "off")
   expect_identical(val("own.url"), "http://localhost:1234/v1")
   expect_identical(val("own.model"), "local-model")
-  expect_identical(val("own.key"), "sk-o...5678")
+  expect_identical(val("own.key"), "set")
   expect_match(r$text, "ask uses: own endpoint, model local-model")
   # an unknown route answer falls back to auto
   answers <- c("cloud", "", "", "", "")
@@ -247,7 +247,7 @@ test_that("config refuses a malformed Ollama address and names settings it does 
   # a secret typed at the prompt when no value is given
   testthat::local_mocked_bindings(.bl_readline = function(prompt, con = NULL) "sk-prompted-9999",
                                   .package = "rmoriebricklayer")
-  expect_match(cf_out(c("config", "set", "own.key"))$text, "own.key = sk-p...9999")
+  expect_match(cf_out(c("config", "set", "own.key"))$text, "own.key = set", fixed = TRUE)
   # an environment variable set over a saved one is reported from the shell, not raised
   withr::local_envvar(c(OLLAMA_MODEL = "env-model"))
   expect_match(cf_out(c("config", "set", "ollama.model", "saved-model"))$text,
