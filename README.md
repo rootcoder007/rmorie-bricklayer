@@ -413,7 +413,7 @@ With [pak](https://pak.r-lib.org) (progress bars, parallel downloads, compiler
 output hidden unless a build fails, and the named packages always upgraded to
 the current release). Keep the `repos` arguments as written: under `Rscript`
 there is no mirror chooser, so a bare `install.packages()` stops with "trying to
-use CRAN without setting a mirror", and CRAN carries older versions than
+use CRAN without setting a mirror", and if CRAN carries older versions than
 r-universe.
 
 ```r
