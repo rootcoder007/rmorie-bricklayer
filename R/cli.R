@@ -450,9 +450,10 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 .bl_cli_data <- function(rest, flag, out) {
   sub <- if (length(rest)) rest[[1L]] else "list"
   if (identical(sub, "list")) {
-    tables <- bricklayer_data_tables()
-    tbl <- utils::capture.output(print(tables, row.names = FALSE))
-    out(paste0(paste(tbl, collapse = "\n"), "\n"))
+    out(.bl_format_data_tables(
+      bricklayer_data_tables(),
+      hint = sprintf("`%s data pull KEY` downloads one (your MORIE key)", .bl_prog())
+    ))
   } else if (identical(sub, "pull") && length(rest) >= 2L) {
     dest <- flag("--out") %||%
       paste0(gsub("[^A-Za-z0-9_.-]", "_", rest[[2L]]), ".csv")

@@ -24,7 +24,13 @@ cases <- list(
     if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no additional AI model (:cf) listed:", r$text))
   },
   ask = function() {
-    r <- run_llm("ask", "hello"); check(r$status == 0, r$text)
+    r <- run_llm("ask", "hello")
+    if (!nzchar(key) && r$status != 0) {
+      # no key and no local model: the honest answer is the list of routes to set up
+      check(grepl("No language-model route is set up", r$text, fixed = TRUE), r$text)
+      return(message("  ask: SKIP (no language-model route here; MORIE_SMOKE_KEY unlocks it)"))
+    }
+    check(r$status == 0, r$text)
     # one of the additional models, named per call
     r <- run_llm("ask", "--model", "gpt-oss-120b:cf", "Reply with the single word pong.")
     check(r$status == 0 && nzchar(trimws(r$text)), r$text)
@@ -78,8 +84,13 @@ verbs <- trimws(unique(regmatches(help_text, gregexpr("(?m)^  ([a-z][a-z-]*)", h
 missing <- setdiff(verbs, c(names(cases), "rmoriebricklayer"))
 if (length(missing)) { cat("VERBS WITHOUT A SMOKE CASE:", paste(missing, collapse = ", "), "\n"); quit(status = 2) }
 failed <- 0L
+# a failure's message in full when short, else cut at a space (a fixed cut left "https://rmorie.co")
+clip <- function(msg, n = 600L) {
+  if (nchar(msg) <= n) return(msg)
+  paste0(sub("\\s+\\S*$", "", substr(msg, 1L, n)), " ...")
+}
 for (n in names(cases)) {
-  out <- tryCatch({ cases[[n]](); "OK" }, error = function(e) { failed <<- failed + 1L; paste("FAIL", substr(conditionMessage(e), 1, 400)) })
+  out <- tryCatch({ cases[[n]](); "OK" }, error = function(e) { failed <<- failed + 1L; paste("FAIL", clip(conditionMessage(e))) })
   cat(sprintf("[%s] %s\n", substr(out, 1, 4), n)); if (startsWith(out, "FAIL")) cat("      ", out, "\n")
 }
 cat(sprintf("\nsmoke (rmoriebricklayer): %d ok, %d failed\n", length(cases) - failed, failed))

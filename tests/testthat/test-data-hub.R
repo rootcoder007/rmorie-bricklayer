@@ -55,3 +55,31 @@ test_that("data hub: key, manifest cache, table cache, CLI verbs", {
   bricklayer_cli("help", out = function(s) helptext <<- c(helptext, s))
   expect_match(paste(helptext, collapse = ""), "data pull")
 })
+
+test_that("the table list prints left-aligned, one line per table, in R and in the CLI", {
+  t <- .bl_data_tables_df(
+    c("bbc_news/articles", "a/b"),
+    c("BBC News reference corpus with 2,225 articles across five categories, a common benchmark", "Short"),
+    c(2225L, NA), c("", "")
+  )
+  expect_s3_class(t, "data.frame")
+  txt <- .bl_format_data_tables(t, width = 60L)
+  lines <- strsplit(txt, "\n", fixed = TRUE)[[1L]]
+  expect_match(lines[[1L]], "^key +rows  name$")
+  expect_match(lines[[2L]], "^bbc_news/articles  2,225  BBC News")
+  expect_match(lines[[3L]], "^a/b +-  Short$")
+  expect_true(all(nchar(lines[2:3]) <= 60L))
+  expect_match(lines[[2L]], "[.][.][.]$")
+  printed <- utils::capture.output(print(t))
+  expect_match(printed[[1L]], "^key +rows  name$")
+  expect_true(any(grepl("bricklayer_data_load", printed, fixed = TRUE)))
+  expect_match(utils::capture.output(print(t[, c("key", "source")]))[[1L]], "key")
+  expect_match(.bl_format_data_tables(t[0L, ]), "no curated tables")
+})
+
+test_that("a table with a blank description and source is named by its key", {
+  otis <- list(key = "otis/otis_main", source = "", meta = list(description = ""))
+  expect_identical(.bl_data_name(otis), "otis/otis_main")
+  expect_identical(.bl_data_name(list(key = "a/b", source = "src", meta = list(description = " "))), "src")
+  expect_identical(.bl_data_name(list(key = "a/b", source = "src", meta = list(description = "Desc"))), "Desc")
+})
