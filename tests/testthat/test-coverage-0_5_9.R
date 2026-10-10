@@ -78,6 +78,13 @@ test_that("cli: reading a line from a non-interactive stdin, the Rd database sea
   on.exit(close(tc), add = TRUE)
   local_mocked_bindings(.bl_interactive = function() FALSE)
   expect_equal(.bl_readline("p> ", con = tc), "typed")
+  # at a terminal the prompt goes to stderr, so a piped stdout stays clean
+  tc2 <- textConnection("  at a tty  ")
+  on.exit(close(tc2), add = TRUE)
+  local_mocked_bindings(.bl_stdin_tty = function() TRUE)
+  err <- utils::capture.output(got <- .bl_readline("key> ", con = tc2), type = "message")
+  expect_equal(got, "at a tty")
+  expect_identical(err, "key> ")
   # no installed Rd database: the man/ directory of a source tree
   pkg <- tempfile("pkg")
   man <- file.path(pkg, "man")

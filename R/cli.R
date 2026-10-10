@@ -8,6 +8,7 @@
 
 # interactive() is a primitive: tests cannot mock it in the installed package, so they mock this
 .bl_interactive <- function() interactive()
+.bl_stdin_tty <- function() isatty(stdin())
 
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
 # Rscript, where readline() returns "" at once, so outside an interactive session read one line of
@@ -19,7 +20,7 @@
     con <- file("stdin")
     on.exit(close(con))
   }
-  if (isatty(stdin())) cat(prompt, file = stderr())
+  if (.bl_stdin_tty()) cat(prompt, file = stderr())
   trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
 }
 
