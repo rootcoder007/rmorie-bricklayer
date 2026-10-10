@@ -357,9 +357,9 @@ Every default that stood in for a measurement is listed:</p>
 <span><span class="va">fp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_footprint.html">compute_footprint</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fl">3e5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, location <span class="op">=</span> <span class="st">"CA-ON"</span>, cpu_power_w <span class="op">=</span> <span class="fl">45</span>,</span>
 <span>                        memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Computation footprint (modelled): 0.001 s wall, 0.002 s CPU, utilisation 0.50 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 7.91e-09 kWh (cpu 6.25e-09, memory 1.66e-09)</span></span>
-<span><span class="co">#&gt;   CO2e:   7.19e-07 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
+<span><span class="co">#&gt; Computation footprint (modelled): 0.001 s wall, 0.003 s CPU, utilisation 0.75 (process) on 4 cores</span></span>
+<span><span class="co">#&gt;   energy: 1.1e-08 kWh (cpu 9.38e-09, memory 1.66e-09)</span></span>
+<span><span class="co">#&gt;   CO2e:   1e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <div class="section level3">
@@ -390,8 +390,8 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span>process_linear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">a</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span>,</span>
 <span>      machine_codecarbon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                    usage      cpu_kwh</span></span>
-<span><span class="co">#&gt; process_linear      0.25 3.125000e-09</span></span>
-<span><span class="co">#&gt; machine_codecarbon  0.25 1.140625e-08</span></span>
+<span><span class="co">#&gt; process_linear      0.50 6.250000e-09</span></span>
+<span><span class="co">#&gt; machine_codecarbon  0.25 1.283203e-08</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usage_mode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
@@ -466,10 +466,10 @@ are the two the Green Algorithms calculator prints:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/footprint_equivalents.html">footprint_equivalents</a></span><span class="op">(</span><span class="va">fp</span><span class="op">$</span><span class="va">co2e_g</span> <span class="op">*</span> <span class="fl">1e4</span><span class="op">)</span>   <span class="co"># if this ran ten thousand times</span></span>
 <span><span class="co">#&gt; $car_km</span></span>
-<span><span class="co">#&gt; [1] 4.109534e-05</span></span>
+<span><span class="co">#&gt; [1] 5.733998e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $tree_months</span></span>
-<span><span class="co">#&gt; [1] 7.842621e-06</span></span>
+<span><span class="co">#&gt; [1] 1.094274e-05</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $sources</span></span>
 <span><span class="co">#&gt;                                                                  car </span></span>
