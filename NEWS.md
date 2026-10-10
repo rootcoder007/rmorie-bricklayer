@@ -27,9 +27,9 @@
   returns the full data frame (with `source`); only its printing changed.
 * A table whose manifest entry has a blank description and source (the otis tables) is
   named by its key instead of by an empty string.
-* The smoke suite (`inst/smoke/smoke.R`) prints a failing case's message whole when it is
-  short and cuts long ones at a space. The fixed 400-character cut had shortened
-  "https://rmorie.com/access" to "https://rmorie.co".
+* The smoke suite (`inst/smoke/smoke.R`) prints a failing case's message in full. It cut
+  them at 400 characters, which shortened "https://rmorie.com/access" in the no-route
+  message of `ask` to "https://rmorie.co".
 
 # rmoriebricklayer 0.5.10
 
