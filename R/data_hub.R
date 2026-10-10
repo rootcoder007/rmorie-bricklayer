@@ -102,7 +102,9 @@
 #' @param key A \code{db/table} key from the manifest.
 #' @return \code{bricklayer_data_manifest()}: a list;
 #'   \code{bricklayer_data_tables()}: a data frame with \code{key},
-#'   \code{name}, \code{rows} and \code{source};
+#'   \code{name}, \code{rows} and \code{source} (class
+#'   \code{bricklayer_data_tables}, which prints one left-aligned line per
+#'   table, cut to the console width);
 #'   \code{bricklayer_data_load()}: the table as a data frame.
 #' @examples
 #' \dontrun{
@@ -125,8 +127,13 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
                             simplifyVector = FALSE)
 }
 
+# the description, else the source, else the key: the first that is set and not blank (the otis
+# tables carry "" for both, which printed as an empty name)
 .bl_data_name <- function(d) {
-  (d$meta$description %||% d$source %||% d$key)[[1L]]
+  for (v in list(d$meta$description, d$source, d$key)) {
+    if (length(v) && nzchar(trimws(v[[1L]]))) return(v[[1L]])
+  }
+  ""
 }
 
 #' @rdname bricklayer_data_manifest
@@ -134,15 +141,59 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
 bricklayer_data_tables <- function(refresh = FALSE) {
   ds <- bricklayer_data_manifest(refresh = refresh)$datasets
   if (!length(ds)) {
-    return(data.frame(key = character(), name = character(), rows = integer(),
-                      source = character(), stringsAsFactors = FALSE))
+    return(.bl_data_tables_df(character(), character(), integer(), character()))
   }
   keys <- vapply(ds, function(d) d$key, "")
   names <- vapply(ds, .bl_data_name, "")
   rows <- vapply(ds, function(d) as.integer(d$rows %||% NA), 1L)
   sources <- vapply(ds, function(d) (d$source %||% "")[[1L]], "")
-  data.frame(key = keys, name = names, rows = rows, source = sources,
-             stringsAsFactors = FALSE)
+  .bl_data_tables_df(keys, names, rows, sources)
+}
+
+.bl_data_tables_df <- function(key, name, rows, source) {
+  df <- data.frame(key = key, name = name, rows = rows, source = source,
+                   stringsAsFactors = FALSE)
+  class(df) <- c("bricklayer_data_tables", "data.frame")
+  df
+}
+
+# One line per table, key and row count first and the name after, all left-aligned and cut to
+# the width (print.data.frame right-aligned the names and, once a line was wider than the
+# console, put each column in a block of its own). Shared by print() and `rmbl data list`.
+.bl_format_data_tables <- function(tables, width = NULL,
+                                   hint = "bricklayer_data_load(\"KEY\") loads one") {
+  if (!nrow(tables)) {
+    return("no curated tables are listed at data.rmorie.com right now\n")
+  }
+  if (is.null(width)) {
+    width <- suppressWarnings(as.integer(Sys.getenv("COLUMNS", "")))
+    if (is.na(width) || width < 40L) width <- max(80L, as.integer(getOption("width", 80L)))
+  }
+  rows <- ifelse(is.na(tables$rows), "-", formatC(tables$rows, format = "d", big.mark = ","))
+  name <- gsub("[[:space:]]+", " ", trimws(tables$name))
+  name[!nzchar(name) | name == tables$key] <- "-"
+  kw <- max(nchar("key"), nchar(tables$key))
+  rw <- max(nchar("rows"), nchar(rows))
+  room <- max(20L, width - kw - rw - 4L)
+  cut <- nchar(name) > room
+  name[cut] <- paste0(trimws(substr(name[cut], 1L, room - 3L)), "...")
+  line <- function(k, r, n) {
+    sprintf("%s  %s  %s", formatC(k, width = -kw), formatC(r, width = rw), n)
+  }
+  paste0(
+    line("key", "rows", "name"), "\n",
+    paste(line(tables$key, rows, name), collapse = "\n"), "\n\n",
+    sprintf("%d tables; %s\n", nrow(tables), hint)
+  )
+}
+
+#' @export
+print.bricklayer_data_tables <- function(x, ...) {
+  if (!all(c("key", "name", "rows") %in% names(x))) {
+    return(NextMethod())
+  }
+  cat(.bl_format_data_tables(x))
+  invisible(x)
 }
 
 #' @rdname bricklayer_data_manifest

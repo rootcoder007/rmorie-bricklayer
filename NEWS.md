@@ -17,6 +17,20 @@
 * `rmbl help` is a guide: the verbs by area, and `help start`, `help llm`, `help config` and
   `help r` pages with examples. Error messages name the `config` command that fixes them.
 
+## The table list reads left to right
+
+* `rmbl data list` and printing `bricklayer_data_tables()` in R show one line per table:
+  the key, the row count and the name, left-aligned and cut to the terminal or console
+  width. They went through `print.data.frame`, which right-aligned the names and, once the
+  descriptions made a line wider than the terminal, printed every key, then every name,
+  then every row count and source as separate blocks. `bricklayer_data_tables()` still
+  returns the full data frame (with `source`); only its printing changed.
+* A table whose manifest entry has a blank description and source (the otis tables) is
+  named by its key instead of by an empty string.
+* The smoke suite (`inst/smoke/smoke.R`) prints a failing case's message whole when it is
+  short and cuts long ones at a space. The fixed 400-character cut had shortened
+  "https://rmorie.com/access" to "https://rmorie.co".
+
 # rmoriebricklayer 0.5.10
 
 **A version of its own.** The build tagged 0.5.9 on 2026-10-07 (29ff122) and the one
