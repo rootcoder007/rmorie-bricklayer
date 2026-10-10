@@ -82,4 +82,6 @@ test_that("a table with a blank description and source is named by its key", {
   expect_identical(.bl_data_name(otis), "otis/otis_main")
   expect_identical(.bl_data_name(list(key = "a/b", source = "src", meta = list(description = " "))), "src")
   expect_identical(.bl_data_name(list(key = "a/b", source = "src", meta = list(description = "Desc"))), "Desc")
+  expect_identical(.bl_data_name(list(key = "", source = NULL, meta = list(description = " "))), "")
+  expect_identical(.bl_data_name(list()), "")
 })
