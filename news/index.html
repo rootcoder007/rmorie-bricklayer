@@ -60,6 +60,13 @@
 <li>
 <code>rmbl help</code> is a guide: the verbs by area, and <code>help start</code>, <code>help llm</code>, <code>help config</code> and <code>help r</code> pages with examples. Error messages name the <code>config</code> command that fixes them.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="the-table-list-reads-left-to-right-0-5-11">The table list reads left to right<a class="anchor" aria-label="anchor" href="#the-table-list-reads-left-to-right-0-5-11"></a></h3>
+<ul><li>
+<code>rmbl data list</code> and printing <code><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_tables()</a></code> in R show one line per table: the key, the row count and the name, left-aligned and cut to the terminal or console width. They went through <code>print.data.frame</code>, which right-aligned the names and, once the descriptions made a line wider than the terminal, printed every key, then every name, then every row count and source as separate blocks. <code><a href="../reference/bricklayer_data_manifest.html">bricklayer_data_tables()</a></code> still returns the full data frame (with <code>source</code>); only its printing changed.</li>
+<li>A table whose manifest entry has a blank description and source (the otis tables) is named by its key instead of by an empty string.</li>
+<li>The smoke suite (<code>inst/smoke/smoke.R</code>) prints a failing case’s message in full. It cut them at 400 characters, which shortened “<a href="https://rmorie.com/access" class="external-link uri">https://rmorie.com/access</a>” in the no-route message of <code>ask</code> to “<a href="https://rmorie.co" class="external-link uri">https://rmorie.co</a>”.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.10" id="rmoriebricklayer-0510">rmoriebricklayer 0.5.10<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0510"></a></h2>

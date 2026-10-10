@@ -42,8 +42,10 @@ bricklayer_data_load(key, refresh = FALSE)
 ## Value
 
 `bricklayer_data_manifest()`: a list; `bricklayer_data_tables()`: a data
-frame with `key`, `name`, `rows` and `source`; `bricklayer_data_load()`:
-the table as a data frame.
+frame with `key`, `name`, `rows` and `source` (class
+`bricklayer_data_tables`, which prints one left-aligned line per table,
+cut to the console width); `bricklayer_data_load()`: the table as a data
+frame.
 
 ## Examples
 
