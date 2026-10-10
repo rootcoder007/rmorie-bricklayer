@@ -358,7 +358,7 @@ Every default that stood in for a measurement is listed:</p>
 <span>                        memory_gb <span class="op">=</span> <span class="fl">16</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">fp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores</span></span>
-<span><span class="co">#&gt;   energy: 1.43e-08 kWh (cpu 9.37e-09, memory 4.97e-09)</span></span>
+<span><span class="co">#&gt;   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)</span></span>
 <span><span class="co">#&gt;   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)</span></span>
 <span><span class="va">fp</span><span class="op">$</span><span class="va">assumptions</span></span>
 <span><span class="co">#&gt; character(0)</span></span></code></pre></div>
@@ -391,7 +391,7 @@ for a machine, so a figure can be made comparable with either tool:</p>
 <span>      machine_codecarbon <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>usage <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">usage</span>, cpu_kwh <span class="op">=</span> <span class="va">b</span><span class="op">$</span><span class="va">energy_kwh</span><span class="op">$</span><span class="va">cpu</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                        usage  cpu_kwh</span></span>
 <span><span class="co">#&gt; process_linear     0.1666667 6.25e-09</span></span>
-<span><span class="co">#&gt; machine_codecarbon 0.2000000 2.01e-08</span></span>
+<span><span class="co">#&gt; machine_codecarbon 0.3333333 2.00e-08</span></span>
 <span><span class="va">b</span><span class="op">$</span><span class="va">usage_mode</span></span>
 <span><span class="co">#&gt; [1] "machine"</span></span></code></pre></div>
 </div>
