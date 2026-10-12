@@ -497,3 +497,78 @@ test_that("section 1 leftovers: no cliff at ambient temperature; the island prox
   expect_gte(rmoriebricklayer:::.yoy_note_line(2), 0.1)
   expect_equal(rmoriebricklayer:::.yoy_note_line(8.5), 0.153)
 })
+
+test_that("the branch's refusals that codecov found untested are exercised", {
+  # the cap's own argument
+  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1, max_work = -1), "max_work")
+  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1, max_work = c(1, 2)), "max_work")
+  # the member scanner on every malformed shape
+  scan <- rmoriebricklayer:::.bl_json_top_members
+  expect_null(scan('{"a": "unterminated'))
+  expect_null(scan('{"a": [1, 2'))
+  expect_null(scan('{"a'))
+  expect_null(scan('{"a" 1}'))
+  expect_null(scan('{"a": '))
+  expect_null(scan('{"a": 1'))
+  expect_null(scan('{"a": {"b": "x"'))
+  expect_error(rmoriebricklayer:::.bl_credentials_text_set("[1]", "k", "v"), "not a JSON object")
+  # the raw credentials reader with and without a file
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  expect_identical(rmoriebricklayer:::.bl_credentials_raw(), list())
+  cred <- rmoriebricklayer:::.bl_credentials_path()
+  dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
+  writeLines('{"hosted_key": "sk-1", "n": null}', cred)
+  raw <- rmoriebricklayer:::.bl_credentials_raw()
+  expect_identical(raw$hosted_key, "sk-1")
+  expect_true("n" %in% names(raw))
+  # the CSV reader's edges
+  f <- withr::local_tempfile(fileext = ".csv")
+  file.create(f)
+  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 0L)
+  writeLines(c("", "   "), f)
+  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 0L)
+  con <- file(f, "wb")
+  writeBin(c(as.raw(c(0xff, 0xfe)), as.raw(c(0x41, 0x00, 0x42))), con)   # a UTF-16 BOM with an odd byte count
+  close(con)
+  expect_error(rmoriebricklayer:::.pollution_read_csv(f), "decoded|UTF-16|incomplete")
+  # a signature whose height was edited does not advance the key
+  withr::local_options(rmoriebricklayer.xmss_index_file = withr::local_tempfile(fileext = ".txt"))
+  k <- pqc_keygen(height = 2)
+  s <- capsule_sign("m", k)
+  bad <- s
+  bad$height <- 3L
+  expect_error(xmss_advance(k, bad), "heights differ")
+  # the record reader: blank lines only, and a key listed twice keeps its highest index
+  rec <- withr::local_tempfile(fileext = ".txt")
+  writeLines(c("", "  ", ""), rec)
+  expect_identical(rmoriebricklayer:::.rmbl_xmss_record_read(rec), integer(0))
+  kid <- paste0(k$root, ":", k$pub_seed)
+  writeLines(c(paste(kid, 0L, sep = "\t"), paste(kid, 3L, sep = "\t"), paste(kid, 1L, sep = "\t")), rec)
+  got <- rmoriebricklayer:::.rmbl_xmss_record_read(rec)
+  expect_identical(unname(got), 3L)
+  expect_identical(names(got), kid)
+})
+
+test_that("a rename that fails is an error for the record, the credentials file and the settings reset", {
+  testthat::local_mocked_bindings(file.rename = function(from, to) FALSE, .package = "base")
+  rec <- withr::local_tempfile(fileext = ".txt")
+  expect_error(rmoriebricklayer:::.rmbl_xmss_record_write(rec, stats::setNames(1L, "k")), "could not write")
+  cred <- withr::local_tempfile(fileext = ".json")
+  expect_error(rmoriebricklayer:::.bl_write_private_text(cred, "{}"), "could not write")
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  p <- rmoriebricklayer:::.bl_config_path()
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  writeLines("[1]", p)
+  expect_error(rmoriebricklayer:::.bl_config_reset(), "could not move")
+})
+
+test_that("a live lock held by another process is waited for and then reported", {
+  skip_on_cran()
+  rec <- withr::local_tempfile(fileext = ".txt")
+  lock <- paste0(rec, ".lock")
+  dir.create(lock)
+  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+  t0 <- Sys.time()
+  expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE), "could not lock")
+  expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 9)
+})
