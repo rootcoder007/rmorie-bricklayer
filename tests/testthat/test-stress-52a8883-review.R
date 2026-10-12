@@ -202,20 +202,19 @@ test_that("B3: a write that does not reach the disk leaves the record as it was 
   expect_identical(readBin(ok, "raw", 100), charToRaw("a\tb\n"))
   expect_error(.Call(w, tmp, ok, "not raw"), "raw vector")
   # a file-size limit stands in for a full disk: the write fails (EFBIG), the old record stays.
-  # Not under covr: the child's own coverage trace would hit the same limit and break the merge
-  skip_if(identical(Sys.getenv("R_COVR"), "true"))
+  # The child loads only the shared library, not the package's R code, so under covr it adds C
+  # coverage and writes no R trace (an R trace written under the same limit broke covr's merge)
   sh <- Sys.which("sh")
   rscript <- file.path(R.home("bin"), "Rscript")
-  skip_if(!nzchar(sh) || !file.exists(rscript))
-  lib <- paste(.libPaths(), collapse = .Platform$path.sep)
-  code <- sprintf(paste0(".libPaths(strsplit('%s', '%s', fixed = TRUE)[[1]]); library(rmoriebricklayer); ",
-                         "cat(.Call(rmoriebricklayer:::C_rmbl_write_file_checked, '%s', '%s',",
-                         " as.raw(rep(65L, 200000))))"),
-                  lib, .Platform$path.sep, tempfile(tmpdir = dirname(target)), target)
-  out <- suppressWarnings(system2(sh, c("-c", shQuote(sprintf("trap '' XFSZ; ulimit -f 64; exec %s -e %s",
+  so <- file.path(system.file("libs", package = "rmoriebricklayer"), paste0("rmoriebricklayer", .Platform$dynlib.ext))
+  skip_if(!nzchar(sh) || !file.exists(rscript) || !file.exists(so))
+  code <- sprintf(paste0("d <- dyn.load('%s'); f <- getNativeSymbolInfo('C_rmbl_write_file_checked', d); ",
+                         "cat(.Call(f, '%s', '%s', as.raw(rep(65L, 16e6))))"),
+                  so, tempfile(tmpdir = dirname(target)), target)
+  out <- suppressWarnings(system2(sh, c("-c", shQuote(sprintf("trap '' XFSZ; ulimit -f 8192; exec %s --vanilla -e %s",
                                                                   shQuote(rscript), shQuote(code)))),
                                   stdout = TRUE, stderr = TRUE))
-  expect_match(paste(out, collapse = " "), "did not complete|did not reach the disk|not the size written")
+  expect_match(paste(out, collapse = " "), "the write did not complete")
   expect_identical(readLines(target), "k:old")
 })
 
