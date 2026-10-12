@@ -83,6 +83,20 @@ __attribute__((used, noinline)) void tvla_cbd(const unsigned char *b0, const uns
  * permutation over a state seeded with the message shares (the first block of G). The ML-DSA
  * one is the signer's z path for 32 coefficients: y from Boolean shares (sec_b2a), z = y + c s1
  * share by share, the masked norm test, then the masked low-bits test on w - c s2. ---- */
+/* Conditional subtraction of q, computed from the sign of (x - q): the mask is an arithmetic
+   shift, never a compare-and-branch. */
+static inline int32_t csub_q(int32_t x, int32_t q) {
+    const int32_t t = x - q;
+    return t + (q & (t >> 31));
+}
+
+/* Zero the caller-saved registers between two share passes so the next pass never overwrites a
+   register still holding the other share (the transition model measures that overwrite). */
+static inline void scrub_regs() {
+    __asm__ __volatile__("mov r0, #0\n\tmov r1, #0\n\tmov r2, #0\n\tmov r3, #0\n\tmov r12, #0"
+                         : : : "r0", "r1", "r2", "r3", "r12", "memory");
+}
+
 extern "C" {
 
 __attribute__((used, noinline)) void tvla_mlkem_decaps_composed(const int16_t *s0, const int16_t *s1,
@@ -92,28 +106,37 @@ __attribute__((used, noinline)) void tvla_mlkem_decaps_composed(const int16_t *s
     rmbl_masked::Rng rng;
     rng.fn = rand_fn;
     rng.ctx = 0;
+    /* the glue between gadgets handles one share per pass with the registers scrubbed in
+       between: a loop that touched w0[j] and w1[j] in one iteration put both shares through
+       the same register back to back, which the transition (Hamming-distance) model sees as
+       their XOR -- 174 leaking points on the first measurement, none of them in a gadget */
     int16_t w0[256], w1[256];
     poly_basemul(w0, s0, u);
     invntt(w0);
     for (int j = 0; j < 256; ++j) w0[j] = static_cast<int16_t>(v[j] - w0[j]);
+    for (int j = 0; j < 256; ++j) w0[j] = to_positive(barrett_reduce(w0[j]));
+    scrub_regs();
     poly_basemul(w1, s1, u);
     invntt(w1);
     for (int j = 0; j < 256; ++j) w1[j] = static_cast<int16_t>(-w1[j]);
-    for (int j = 0; j < 256; ++j) {
-        w0[j] = to_positive(barrett_reduce(w0[j]));
-        w1[j] = to_positive(barrett_reduce(w1[j]));
-    }
+    for (int j = 0; j < 256; ++j) w1[j] = to_positive(barrett_reduce(w1[j]));
+    scrub_regs();
     uint32_t m0[8], m1[8];
     for (int g = 0; g < 8; ++g) rmbl_masked::sec_decode1(m0[g], m1[g], w0 + 32 * g, w1 + 32 * g, rng);
     uint64_t st0[25], st1[25];
-    for (int i = 0; i < 25; ++i) { st0[i] = 0; st1[i] = 0; }
-    for (int g = 0; g < 8; g += 2) {
-        st0[g / 2] = static_cast<uint64_t>(m0[g]) | (static_cast<uint64_t>(m0[g + 1]) << 32);
-        st1[g / 2] = static_cast<uint64_t>(m1[g]) | (static_cast<uint64_t>(m1[g + 1]) << 32);
-    }
+    for (int i = 0; i < 25; ++i) st0[i] = 0;
+    for (int i = 0; i < 25; ++i) st1[i] = 0;
+    for (int g = 0; g < 8; g += 2) st0[g / 2] = static_cast<uint64_t>(m0[g]) | (static_cast<uint64_t>(m0[g + 1]) << 32);
+    scrub_regs();
+    for (int g = 0; g < 8; g += 2) st1[g / 2] = static_cast<uint64_t>(m1[g]) | (static_cast<uint64_t>(m1[g + 1]) << 32);
+    scrub_regs();
     rmbl_masked::keccakf_masked(st0, st1, rng);
-    for (int g = 0; g < 8; ++g) { out[g] = m0[g]; out[8 + g] = m1[g]; }
+    for (int g = 0; g < 8; ++g) out[g] = m0[g];
+    scrub_regs();
+    for (int g = 0; g < 8; ++g) out[8 + g] = m1[g];
+    scrub_regs();
     out[16] = static_cast<uint32_t>(st0[0]);
+    scrub_regs();
     out[17] = static_cast<uint32_t>(st1[0]);
 }
 
@@ -140,11 +163,13 @@ __attribute__((used, noinline)) void tvla_dsa_sign_composed(const unsigned char 
     }
     int32_t z0[32], z1[32];
     rmbl_masked::sec_b2a(z0, z1, yb, rng, rmbl_masked::kDsa);
-    /* z = y + c s1, share by share, reduced into [0, q) */
-    for (int j = 0; j < 32; ++j) {
-        z0[j] += cs1_0[j]; z0[j] -= q & -static_cast<int32_t>(z0[j] >= q);
-        z1[j] += cs1_1[j]; z1[j] -= q & -static_cast<int32_t>(z1[j] >= q);
-    }
+    /* z = y + c s1, one share per pass, reduced into [0, q) without a branch: the earlier
+       `z -= q & -(z >= q)` compiled to a conditional block, so the trace length varied with
+       the secret and the t-test could not even be formed */
+    for (int j = 0; j < 32; ++j) z0[j] = csub_q(z0[j] + cs1_0[j], q);
+    scrub_regs();
+    for (int j = 0; j < 32; ++j) z1[j] = csub_q(z1[j] + cs1_1[j], q);
+    scrub_regs();
     rmbl_masked::AllOk acc;
     rmbl_masked::dsa_norm_acc(acc, z0, z1, 32, (1 << 19) - 196, rng);
     rmbl_masked::Bs bp;

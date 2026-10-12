@@ -123,10 +123,12 @@ static std::string strip_sentences_with(const std::string& s, const std::regex& 
         if (end == std::string::npos) end = s.size();
         const std::string sentence = s.substr(start, end - start);
         if (std::regex_search(sentence, cue)) {
-            // the sentence goes, and its terminator with it: a roster entry that follows on the
-            // same line ("... n'est pas divulgu\xc3\xa9. AI no 3 A particip\xc3\xa9") must still
-            // start a line, as it did before the one-pass rewrite kept the '.'
-            out += '\n';
+            // the sentence goes, and its terminator with it, replaced by one space: a line break
+            // here turned the rest of the line into a roster line of its own, so boilerplate in
+            // the middle of a line created officers (0.5.12 counted 3 where every earlier version
+            // counted 1); a roster entry after the sentence still starts its line because the
+            // line starts are matched after trimming
+            out += ' ';
         } else {
             out += sentence;
             if (end < s.size()) out += s[end];

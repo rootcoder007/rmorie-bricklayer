@@ -169,7 +169,10 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 #' (\code{Asia/Calcutta}, \code{US/Eastern}), and a reviewed list for the
 #' rest (\code{Atlantic/Jan_Mayen}, \code{America/Coral_Harbour},
 #' \code{Canada/Eastern}). Every geographic zone \code{OlsonNames()} lists
-#' resolves; the \code{Etc/}, \code{UTC}, fixed-offset and generic zones
+#' resolves to a country or territory; a territory the carbon table has no
+#' row of its own for (Monaco, Jersey, Vaduz, the Antarctic stations) uses
+#' the grid of the country it draws on or the world average, and the method
+#' says which. The \code{Etc/}, \code{UTC}, fixed-offset and generic zones
 #' (\code{CET}, \code{EST}, \code{WET}) name no country and fall through
 #' to the locale.
 #'
@@ -204,8 +207,20 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
     tzt <- .rmbl_tz_table()
     # the posix/ and right/ trees repeat every zone; strip them before the lookup
     key <- sub("^(posix|right)/", "", tz)
-    loc <- known(tzt$location[match(key, tzt$tz)])
+    terr <- tzt$location[match(key, tzt$tz)]
+    loc <- known(terr)
     if (!is.na(loc)) return(list(location = loc, method = sprintf("system time zone %s", tz)))
+    # the zone resolves to a territory the carbon table has no row for (Monaco, Jersey, the
+    # Antarctic stations): the territory's grid is its administering or neighbouring country's,
+    # or the world average, never the locale's country
+    if (length(terr) == 1L && !is.na(terr)) {
+      proxy <- .rmbl_territory_proxy[terr]
+      loc <- if (is.na(proxy)) "WORLD" else known(proxy)
+      if (is.na(loc)) loc <- "WORLD"
+      return(list(location = loc,
+                  method = sprintf("system time zone %s (territory %s has no row of its own; %s)", tz, terr,
+                                   if (identical(loc, "WORLD")) "world average" else paste("grid of", loc))))
+    }
   }
   if (length(locale) == 1L && !is.na(locale)) {
     m <- regmatches(locale, regexpr("^[A-Za-z]{2,3}_[A-Z]{2}", locale))
@@ -216,6 +231,16 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
   }
   list(location = "WORLD", method = "fallback, no location found in environment, time zone or locale")
 }
+
+# Territories the time-zone table names that the carbon-intensity table has no row for, with
+# the country whose grid they draw on (an enclave or dependency) or none (an island state and
+# Antarctica take the world average).
+.rmbl_territory_proxy <- c(
+  AD = "ES", AI = "GB", BL = "FR", BQ = "NL", CC = "AU", CX = "AU", GG = "GB", IM = "GB", IO = "GB",
+  JE = "GB", LI = "CH", MC = "FR", MF = "FR", MP = "US", NF = "AU", PN = "GB", SJ = "NO", SM = "IT",
+  SX = "NL", TF = "FR", UM = "US", VA = "IT", WF = "FR",
+  AQ = NA_character_, MH = NA_character_, NU = NA_character_, TK = NA_character_, TV = NA_character_
+)
 
 # ---- RAPL -------------------------------------------------------------------
 
@@ -456,6 +481,9 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
     stop("`proc_stat` must be a single path", call. = FALSE)
   }
   if (is.null(usage)) usage <- "process"
+  if (length(usage) != 1L) {
+    stop("`usage` takes one value: \"process\", \"machine\" or a single number in [0, 1]", call. = FALSE)
+  }
   if (is.character(usage)) {
     usage_mode <- match.arg(usage, c("process", "machine"))
   } else if (is.numeric(usage) && length(usage) == 1L && is.finite(usage) && usage >= 0 && usage <= 1) {

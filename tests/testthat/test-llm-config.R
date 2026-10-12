@@ -238,10 +238,10 @@ test_that("config refuses a malformed Ollama address and names settings it does 
   expect_identical(rmoriebricklayer:::.bl_hosted_base(), "https://llm.example.org")
   expect_identical(bricklayer_llm_config()$value[1], "hosted")
   expect_identical(rmoriebricklayer:::.bl_config_value("NOT_A_SETTING"), NULL)
-  # a damaged file reads as no settings rather than an error, and says so once; it is never
+  # a damaged file is an error (the saved route must not be silently dropped); it is never
   # written over, so it is removed before the settings below are saved
   writeLines("not json at all", rmoriebricklayer:::.bl_config_path())
-  expect_warning(expect_identical(rmoriebricklayer:::.bl_read_config(), list()), "not valid JSON")
+  expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
   unlink(rmoriebricklayer:::.bl_config_path())
   # `config get` and `config set` of a key that is not there
   expect_equal(cf_out(c("config", "get"))$status, 2L)

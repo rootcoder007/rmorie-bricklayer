@@ -26,11 +26,23 @@
   if (!file.exists(p)) {
     return(list())
   }
+  out <- .bl_credentials_object(p)
+  if (is.null(out)) {
+    # the file is shared with morie and rmorie: a file that does not parse is said, not read as
+    # "no key" and then written over by the next login (which deleted the other entries)
+    stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
+         call. = FALSE)
+  }
+  out
+}
+
+# The credentials file as a named list, or NULL when it is not a JSON object.
+.bl_credentials_object <- function(p) {
   txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
-  out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE),
-    error = function(e) NULL
-  )
-  if (is.list(out)) out else list()
+  if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
+  out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE), error = function(e) NULL)
+  if (!is.list(out) || is.data.frame(out) || (length(out) && is.null(names(out)))) return(NULL)
+  out
 }
 
 .bl_write_credentials <- function(data) .bl_write_private_json(.bl_credentials_path(), data)
@@ -51,6 +63,11 @@
 }
 
 .bl_store_key <- function(key, user = NULL) {
+  p <- .bl_credentials_path()
+  if (file.exists(p) && is.null(.bl_credentials_object(p))) {
+    stop(sprintf(paste("%s is not a JSON object; fix or remove it before a key is saved",
+                       "(writing over it would drop the entries it holds)"), p), call. = FALSE)
+  }
   data <- .bl_read_credentials()
   data$hosted_key <- key
   if (!is.null(user)) data$hosted_user <- user
@@ -63,8 +80,18 @@
   if (nzchar(env)) {
     return(env)
   }
-  key <- .bl_read_credentials()$hosted_key
-  if (is.character(key) && length(key) == 1L && nzchar(key)) key else NULL
+  cred <- .bl_read_credentials()
+  key <- cred$hosted_key
+  if (!is.character(key) || length(key) != 1L || !nzchar(key)) return(NULL)
+  # the key was issued for the address it was saved with: an address set afterwards in the
+  # environment or the config gets no key, the same rule as the own and Ollama keys
+  saved_for <- cred$hosted_base_url
+  now <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
+  if (is.character(saved_for) && length(saved_for) == 1L && nzchar(saved_for) && !is.null(now) &&
+        !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
+    return(NULL)
+  }
+  key
 }
 
 # The hosted endpoint, or NULL when disabled. MORIE_HOSTED_BASE_URL overrides
@@ -108,8 +135,8 @@
 
 # How to get a key, in one line.
 .bl_access_hint <- function() {
-  sprintf(paste("request a key at %s, then `%s login --token KEY` (R: bricklayer_llm_login(token = ));",
-                "`%s login` signs in with GitHub or an emailed code"),
+  sprintf(paste("request a key at %s, then `%s login --token` and paste it when asked",
+                "(R: bricklayer_llm_login(token = )); `%s login` signs in with GitHub or an emailed code"),
           .rmbl_services_llm()$request_access %||% "https://www.rmorie.com/access", .bl_prog(), .bl_prog())
 }
 
@@ -159,6 +186,11 @@
   if (tolower(v) %in% c("off", "none", "disabled")) return(NULL)
   if (!grepl("^https?://", v)) v <- paste0("http://", v)  # OLLAMA_HOST is often host:port
   sub("/+$", "", v)
+}
+
+# Ollama was pointed at on purpose (environment or saved setting), not the default address.
+.bl_ollama_configured <- function() {
+  !is.null(.bl_env1("OLLAMA_HOST")) || !is.null(.bl_env1("OLLAMA_BASE_URL"))
 }
 
 .bl_bearer <- function(key) if (is.null(key)) NULL else paste("Authorization: Bearer", key)
@@ -220,6 +252,12 @@
         usable <- length(tags) > 0L || !is.null(.bl_env1("OLLAMA_MODEL")) || identical(route, "ollama")
         if (!is.null(tags) && !usable) {
           skipped <- c(skipped, sprintf("local Ollama at %s has no model pulled", base))
+        }
+        # a configured server that does not answer is skipped out loud too: the prompt is about
+        # to leave the machine, and "a prompt never leaves silently" has to hold for a dead
+        # server as much as for an empty one
+        if (!is.null(base) && is.null(tags) && .bl_ollama_configured()) {
+          skipped <- c(skipped, sprintf("local Ollama at %s is not answering", base))
         }
         if (!is.null(tags) && usable) {
           list(name = "local Ollama", base = base, key = .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST"),
@@ -401,7 +439,7 @@ bricklayer_llm_models <- function(timeout = 10) {
   }
   if (identical(what, "the hosted MORIE LLM tier") && isTRUE(res$status %in% c(401L, 403L))) {
     stop(sprintf(paste("the hosted MORIE LLM tier rejected your key (HTTP %d):",
-                       "run `%s login` again, or `%s login --token KEY`"),
+                       "run `%s login` again, or `%s login --token` and paste the key"),
                  res$status, .bl_prog(), .bl_prog()), call. = FALSE)
   }
   msg <- res$json$error
@@ -747,7 +785,8 @@ bricklayer_llm_status <- function() {
     hm <- bricklayer_llm_models()
     c("hosted MORIE tier", "key stored", switch(.bl_key_state(hm),
       ok = sprintf("%s  models: %s (default %s)", base, paste(hm, collapse = ", "), attr(hm, "default")),
-      rejected = sprintf("%s  (key rejected by the gateway -- run `%s login` again, or `%s login --token KEY`)",
+      rejected = sprintf(paste("%s  (key rejected by the gateway -- run `%s login` again,",
+                               "or `%s login --token` and paste the key)"),
                          base, .bl_prog(), .bl_prog()),
       sprintf("%s  (gateway not reachable)", base)
     ))

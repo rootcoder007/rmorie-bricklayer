@@ -227,7 +227,9 @@ bricklayer_plot_options <- function(...) {
     if (!length(y)) return(4.5)
     txt <- format(pretty(y), trim = TRUE)
   }
+  txt <- txt[!is.na(txt)]
   w <- max(.bl_strwidth(txt, cex = 0.9), 0)
+  if (!is.finite(w)) w <- 0
   lines <- w / graphics::par("csi")
   min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), 14)
 }
@@ -1012,6 +1014,15 @@ plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
 plot_lorenz <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   d <- if (is.data.frame(x) && all(c("population", "value") %in% names(x))) x else lorenz(x)
   g <- if (is.data.frame(x)) NA_real_ else gini(x)
+  if (is.data.frame(x)) {
+    # a Lorenz curve runs from the origin along increasing shares; a hand-made frame in any
+    # other order drew a zig-zag
+    d <- d[order(d$population, d$value), , drop = FALSE]
+    if (any(diff(d$value) < 0) || any(d$population < 0 | d$population > 1 | d$value < 0 | d$value > 1, na.rm = TRUE)) {
+      stop("`x` must be a Lorenz frame: cumulative population and value shares in [0, 1], both non-decreasing",
+           call. = FALSE)
+    }
+  }
   # lorenz() starts its curve at the origin; a hand-made frame may not
   if (!nrow(d) || d$population[1L] != 0 || d$value[1L] != 0) {
     d <- rbind(data.frame(population = 0, value = 0), d)

@@ -61,7 +61,15 @@ Two composed kernels (0.5.12) run several gadgets in one trace, so a value one g
 in a register or a stack slot for the next is measured as well: `mlkem_decaps_composed`
 (s*u, w = v - su, Compress_1, one Keccak permutation over the message shares) and
 `dsa_sign_composed` (y from Boolean shares, z = y + c s1, the norm test, the low-bits test),
-each next to its unmasked control. Their numbers come from the `tvla` workflow of each run.
+each next to its unmasked control. The first harness never ran them (it wrote only the fifth
+argument to the stack, so the six-argument kernels faulted), and the first measurement after the
+fix put 174 and 34 transition-model leaks in the kernels' own glue, where one loop handled both
+shares in the same iteration; the glue now takes one share per pass with the registers scrubbed
+between passes, and the ML-DSA conditional subtraction is an arithmetic-shift mask instead of a
+branch (its trace length varied with the secret). Measured on 2 x 1,500 traces (2026-10-12):
+`dsa_sign_composed_masked` max |t| 2.62 (value) and 2.66 (transition), `mlkem_decaps_composed_masked`
+2.89 (value) and 3.27 (transition), no leaking point under either model; the `tvla` workflow
+re-measures both on every change.
 
 Every masked kernel is clean under both models and every control leaks; CI fails on a masked
 leak under either. The transition model is the one C alone could not satisfy: the compiler

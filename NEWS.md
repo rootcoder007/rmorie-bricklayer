@@ -1,7 +1,80 @@
 # rmoriebricklayer 0.5.12
 
-The 0.5.11 stress round (commit a5a4d10): every finding fixed, the partial fixes of the
-previous round completed, and the claims the earlier fixes overstated corrected.
+The 0.5.11 stress round (commit a5a4d10) and the review of this release's own branch (head
+6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
+claims the earlier fixes overstated corrected.
+
+## Review of the 0.5.12 branch
+
+* **An XMSS attestation carried the signer's private key.** `capsule_attest()` embedded the
+  whole signature object, and an XMSS signature carries `key_state` (the advanced key, with
+  `sk_seed` and `sk_prf`) so the signer can save it. Anyone given such an attestation could
+  attest anything under the victim's public key. The key is stripped before the signature is
+  embedded (as the recode manifest already did), and a test checks no attestation carries a
+  secret. **If you shared an XMSS attestation made by 0.5.11 or earlier, treat that key as
+  compromised: generate a new one and re-attest.** HMAC and ML-DSA attestations were never
+  affected.
+* The composed TVLA kernels never ran: the harness wrote only the fifth argument to the
+  stack, so the six-argument kernels faulted before a trace was taken, and the ML-DSA kernel's
+  conditional subtraction compiled to a branch, so its trace length varied. Fixed: every
+  stack argument is written per the AAPCS, the subtraction is an arithmetic-shift mask, and
+  the kernels' glue handles one share per pass with the registers scrubbed between passes
+  (the first measurement put 174 and 34 transition-model leaks in that glue, none in a
+  gadget). The 0.5.12 note below says what the measurement now shows.
+* The French SIU boilerplate fix overshot: a stripped sentence was replaced by a line break,
+  so boilerplate in the middle of a roster line turned the rest of the line into a line of
+  its own and counted 3 officers where every earlier version counted 1 (147 new divergences
+  on a 6,017-input fuzz). The sentence is replaced by a space, the two 0.5.11 cases still
+  count, and a property test inserts the boilerplate at every position of a line and checks
+  the count never moves.
+* `verify_pollution(exposure_mean = 0, exposure_prevalence = 1)` and `(25, 0)` are valid
+  runs with zero attributable cases again; "no data" is now only a call that passed neither.
+  Every pipeline stage runs inside the status contract (a text `income` column, all-zero
+  exposure, one row and a per-100,000 `baseline_rate` are reports, not raw errors); a factor
+  argument is refused; the assumption log prints `population=1,000,000`.
+* The baseline-rate check went into `pollution_burden()` and `pollution_burden_by_area()`
+  (800 per 100,000 taken per person-year gave 110 million deaths from a million people), and
+  the message says which function takes the per-100,000 form. `crf_no2()` refuses a logical
+  or factor `beta_per_10` (TRUE gave a relative risk of e). `n_bootstrap` must be whole.
+* `apply_schema_validation()` refuses a list that mixes rules with anything else, a nested
+  rule list and a data frame, instead of falling through to the provenance checker and
+  passing.
+* `advection_diffusion_2d()` caps the work (cells x steps x sub-steps, 10 million, about five seconds) rather
+  than the sub-step count: a 5 x 5 grid at 10,001 sub-steps runs in a tenth of a second
+  and is allowed, a 201 x 201 grid at 9,999 for 100 steps would take hours and is refused.
+  The cap no longer rounds 10,000 up to 10,001. A negative `source` and a logical `u` are
+  refused; a receptor below ground or above the mixing lid is warned about; the open
+  boundary is documented.
+* A configured Ollama server that does not answer is skipped with a message, like one with
+  no model pulled, so a prompt reaching the hosted tier is always said. `credentials.json`
+  (shared with morie and rmorie) that does not parse is an error and is never written over;
+  `llm.json` that is not a JSON object (`[]`, `"x"`, `5`) is an error too, not a warning
+  that fired once and then let a saved route be dropped. The hosted key is tied to the
+  address it was saved for; a new `own.url` or `ollama.url` drops the key saved for the old
+  server; `ollama.url` refuses a metadata or link-local address when saved.
+* `bricklayer_data_load()` checks the manifest's SHA-256 of a cached or downloaded table and
+  deletes and refuses one that does not match.
+* `fips_verify_mu()` answers FALSE to a length-2 `signature` field (the shared hex helper
+  takes one string); an XMSS signature whose `index` or `height` is not a whole number, or
+  whose `root`, `height`, `wire` or `randomizer` was removed, is not verified, and a missing
+  randomiser is FALSE rather than an error.
+* Time zones of territories the carbon table has no row for (Monaco, Vaduz, Andorra, the
+  Channel Islands, the Antarctic stations: 41 zones) resolve to the grid of the country they
+  draw on or to the world average, with the method saying so; they fell through to the
+  locale, which made them the United States under `en_US`.
+* `rmbl data list` keeps accents in a C locale (control characters only are stripped);
+  `rmbl ask -- --like-this` passes a prompt that starts with `--`; `inst/bin/rmbl` is
+  executable in git; the help and the vignette suggest `login --token` with the key pasted
+  at the prompt, never on the command line.
+* `yoy_pdf()` sizes its notes to the line allowance the pagination made, and many notes go
+  on pages of their own (30 notes on a 5-inch page lost notes 24 to 30).
+* `plot_lorenz()` sorts a hand-made frame and refuses one that is not a Lorenz curve; an
+  all-NA axis no longer breaks the margin computation. `lagrangian_particles(n = 2.7)` and
+  `compute_footprint(usage = c(...))` are refused.
+* Documentation: masking costs the measured 2.3 to 3.4 times on decapsulation and 7 to 10
+  times on signing (the help said 3 to 12 and 13 to 24). `location = "GLOBAL"` is an error
+  since the duplicate row went (use `"WORLD"`); the rows older than 2024 include Ukraine
+  (2022).
 
 ## Cryptography
 
@@ -10,16 +83,20 @@ previous round completed, and the claims the earlier fixes overstated corrected.
   PRF's input and output buffers (whose sum is the coins `G(m' || h)[32..64]`). Summing the
   two halves of `r-hat` recovers `m'` from the public key and ciphertext alone, so a memory
   disclosure anywhere in the process was a decryption oracle for an attacker-chosen
-  ciphertext. Every one of them is wiped now, with the per-group and per-word temporaries.
-  The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
+  ciphertext. Every pair the scanner can see is wiped now, with the per-group and per-word
+  temporaries; two gadget-internal 32-coefficient pairs (`sec_in_interval`, `sec_b2a`)
+  remain on the dead stack and recover nothing, and one `dsa_bprime` pair remains on
+  clang -O2. The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
 * Masked ML-DSA signing wipes the bitsliced share temporaries of every 32-coefficient chunk
   (the low-bits test of `v = w - c s2`, the high bits of `w` and of the hint) as it goes; one
   chunk of `v` survived on some builds and revealed part of `c t0`.
 * Two composed TVLA kernels, next to the single gadgets: the ML-KEM decapsulation spine
   (`s*u`, `w = v - su`, `Compress_1`, a Keccak permutation over the message shares) and the
   ML-DSA z path (`y` from Boolean shares, `z = y + c s1`, the norm test, the low-bits test),
-  so the hand-over between gadgets is measured too. The dudect gate on a DIT-capable CPU is
-  the no-evidence line (|t| > 4.5 after the tripled re-measurement fails), not |t| > 10.
+  so the hand-over between gadgets is measured too (the harness fix that let them run is
+  above; the `tvla` workflow reports the value-model and transition-model t-statistics). The
+  dudect gate on a DIT-capable CPU is the no-evidence line (|t| > 4.5 after the tripled
+  re-measurement fails), not |t| > 10.
 * The ctcheck harness scans the dead stack for share pairs, not only for copies of a secret:
   any two windows whose coefficient-wise sum mod q (or XOR, for Boolean shares) is a known
   value count as a remnant. The ML-KEM case recomputes `r-hat` and `m'` from the message it
@@ -46,7 +123,8 @@ previous round completed, and the claims the earlier fixes overstated corrected.
   instead of silently moving on to the time zone.
 * `compute_footprint()` rejects a fractional `cores`.
 * The duplicate `GLOBAL` row (480 gCO2e/kWh from the Green Algorithms file) is gone from
-  the carbon-intensity table; `WORLD` (Ember, 458.29) is the world average. The documentation
+  the carbon-intensity table; `WORLD` (Ember, 458.29) is the world average, and
+  `location = "GLOBAL"` is now an error. The documentation
   no longer claims every row is from 2024 or 2025.
 
 ## Air pollution and dispersion
@@ -86,12 +164,13 @@ previous round completed, and the claims the earlier fixes overstated corrected.
 
 ## Language models
 
-* In the automatic order, a local Ollama server that answers with no model pulled is
-  skipped with a message naming the route taken instead ("local Ollama at ... has no model
-  pulled; using the hosted MORIE tier"), so a prompt never leaves the machine silently.
-* A malformed `llm.json` is reported (once per change) and treated as empty, and no setting
-  is written over it: the next `config set` used to rewrite the file with only the new
-  value, deleting the saved keys and addresses.
+* In the automatic order, a local Ollama server that answers with no model pulled, or a
+  configured one that does not answer, is skipped with a message naming the route taken
+  instead ("local Ollama at ... has no model pulled; using the hosted MORIE tier"), so a
+  prompt never leaves the machine silently.
+* A malformed `llm.json` is an error and no setting is written over it: the next
+  `config set` used to rewrite the file with only the new value, deleting the saved keys and
+  addresses.
 * A saved key belongs to the address it was saved with: `MORIE_LLM_BASE_URL=...` or
   `OLLAMA_HOST=...` set for one call receives the environment's key or none, never the key
   saved for another server (the `/api/tags` probe included).
@@ -109,10 +188,11 @@ previous round completed, and the claims the earlier fixes overstated corrected.
 * `apply_schema_validation()` accepts a rule list and runs it with `validate_rules()` under
   the same stop-on-fatal contract; it used to ignore a rule list in its second argument and
   report a pass, which is what the vignette told readers to do.
-* The French SIU resolver: a stripped boilerplate sentence ends its line, so a roster entry
-  after it on the same line ("... n'est pas divulgué. AI no 3 A participé") is counted
-  again; the 0.5.11 speed rewrite kept the sentence's terminator and lost those entries (an
-  unresolved report and a count of 1 instead of 3 on the two cases now pinned as tests).
+* The French SIU resolver: a stripped boilerplate sentence is replaced by a space, so a
+  roster entry after it on the same line ("... n'est pas divulgué. AI no 3 A participé") is
+  counted again; the 0.5.11 speed rewrite kept the sentence's terminator and lost those
+  entries (an unresolved report and a count of 1 instead of 3 on the two cases now pinned
+  as tests).
 * Plot state is reset when a panel plot errors (the next plot's title showed as "A").
   `plot_funnel()` requires one `area` label per point. An empty `frequency_table()` draws an
   empty page with a title, and `plume_field()` requires increasing coordinates, with

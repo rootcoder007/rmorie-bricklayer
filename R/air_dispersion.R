@@ -6,6 +6,7 @@
 
 # One finite number (or a vector of them) for the dispersion inputs.
 .ad_num <- function(x, what, min = -Inf, positive = FALSE, scalar = TRUE, whole = FALSE) {
+  if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
   v <- .rmbl_num_input(x, what, allow_null = FALSE)
   if (scalar && length(v) != 1L) {
     stop(sprintf("`%s` must be a single number", what), call. = FALSE)
@@ -19,6 +20,22 @@
     stop(sprintf("`%s` must be a whole number", what), call. = FALSE)
   }
   v
+}
+
+# A receptor below the ground or above the mixing lid is outside the model: the reflection
+# images still return a number there, so it is said.
+.ad_receptor_heights <- function(R, mixing_height) {
+  z <- R[, 3L]
+  if (any(z < 0)) {
+    warning(sprintf(paste("%d receptor(s) below ground level (z < 0): the plume is reflected at the ground,",
+                          "so these values are mirror images"), sum(z < 0)), call. = FALSE)
+  }
+  if (is.finite(mixing_height) && any(z > mixing_height)) {
+    warning(sprintf(paste("%d receptor(s) above the mixing height %s: the lid reflects the plume,",
+                          "so these values are not concentrations in the free atmosphere"),
+                    sum(z > mixing_height), format(mixing_height)), call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 .ad_lid <- function(mixing_height, h) {
@@ -244,6 +261,7 @@ gaussian_plume <- function(q, u, h, receptors, stability = "D", setting = "rural
   n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
   mixing_height <- .ad_lid(mixing_height, h)
   R <- .ad_rec(receptors)
+  .ad_receptor_heights(R, mixing_height)
   vapply(seq_len(nrow(R)), function(i) {
     x <- R[i, 1L]
     if (x <= 0) return(0)
@@ -277,6 +295,12 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
 }
 
 #' @rdname pg_sigmas
+#' @section Boundary: the outermost ring of cells is held at zero (an open boundary): mass
+#'   that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
+#'   empty cells so the plume of interest stays inside the ring.
+#' @section Boundary: the outermost ring of cells is held at zero (an open boundary): mass
+#'   that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
+#'   empty cells so the plume of interest stays inside the ring.
 #' @export
 advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL) {
   if (!is.matrix(c0) || !is.numeric(c0)) {
@@ -295,6 +319,9 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   if (!is.null(source) && (!is.numeric(source) || anyNA(source) || any(!is.finite(as.numeric(source))))) {
     stop("`source` must be a finite numeric matrix", call. = FALSE)
   }
+  if (!is.null(source) && any(as.numeric(source) < 0)) {
+    stop("`source` must be non-negative: it is an emission rate, like `c0`", call. = FALSE)
+  }
   u <- .ad_num(u, "u")
   v <- .ad_num(v, "v")
   kx <- .ad_num(kx, "kx", min = 0)
@@ -310,19 +337,26 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   # the explicit upwind + FTCS scheme is stable when the advection and diffusion
   # numbers together stay within the unit interval; cfl < 1 alone is not enough
   stab <- abs(ax) + abs(ay) + 2 * (dxn + dyn)
-  # sub-stepping makes a run outside the bound a solution rather than an explosion, but a
-  # bound crossed ten-thousandfold is a wrong dt, not a case to grind through for hours
-  if (!is.finite(stab) || stab > 1e4) {
-    stop(sprintf(paste("explicit scheme would need %s sub-steps per step to stay stable",
-                       "(|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) = %s, limit 10,000):",
-                       "pass a smaller dt or a finer grid"),
-                 format(ceiling(stab), big.mark = ","), format(stab, digits = 4)), call. = FALSE)
+  if (!is.finite(stab)) stop("the stability number is not finite: check u, v, kx, ky, dx, dy and dt", call. = FALSE)
+  # the sub-steps that satisfy the bound; the fudge that rounded 10,000 up to 10,001 is gone
+  substeps <- if (stab > 1) max(1, ceiling(stab)) else 1
+  if (stab > 1 && stab / substeps > 1) substeps <- substeps + 1
+  # sub-stepping makes a run outside the bound a solution rather than an explosion, but the cost
+  # is the work, cells x steps x sub-steps, not the sub-step count alone: a 5 x 5 grid at 10,001
+  # sub-steps runs in a tenth of a second and a 201 x 201 grid at 9,999 takes hours; the limit
+  # is about five seconds of the explicit loop
+  work <- as.numeric(nx) * ny * n_steps * substeps
+  if (!is.finite(work) || work > 1e7) {
+    stop(sprintf(paste("this run would update %s cells x steps x sub-steps (%d x %d cells, %s steps,",
+                       "%s sub-steps per step from a stability number of %s; limit 10 million):",
+                       "pass a smaller dt, a coarser grid or fewer steps"),
+                 format(work, big.mark = ", ", scientific = FALSE), nx, ny, format(n_steps, big.mark = ","),
+                 format(substeps, big.mark = ","), format(stab, digits = 4)), call. = FALSE)
   }
-  substeps <- 1L
+  substeps <- as.integer(substeps)
   if (stab > 1) {
     # the same physical time, taken in enough sub-steps to satisfy the bound:
     # the result is then a solution rather than a numerical explosion
-    substeps <- as.integer(ceiling(stab * (1 + 1e-9)))
     warning(sprintf(paste("explicit scheme outside its stability bound",
                           "(|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) = %.3f > 1):",
                           "each step is taken as %d sub-steps of dt/%d; pass a smaller dt to silence this"),
@@ -373,10 +407,7 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
 #' @export
 lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0, grid = NULL,
                                  normals = NULL) {
-  n <- as.integer(n)
-  if (length(n) != 1L || is.na(n) || n < 1L) {
-    stop("`n` must be a positive number of particles", call. = FALSE)
-  }
+  n <- as.integer(.ad_num(n, "n", positive = TRUE, whole = TRUE))
   x0 <- .ad_num(x0, "x0")
   y0 <- .ad_num(y0, "y0")
   u <- .ad_num(u, "u")

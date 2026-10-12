@@ -113,5 +113,5 @@ The same routes serve the CLI installed by `install_cli()`:
 ```sh
 rmoriebricklayer status
 rmoriebricklayer ask "what does capsule_bundle() cover?"
-rmoriebricklayer login --token KEY
+rmoriebricklayer login --token      # paste the key when asked; it never sits in the shell history
 ```

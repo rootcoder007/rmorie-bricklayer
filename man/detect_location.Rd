@@ -44,7 +44,10 @@ link target's country when that target serves a single country
 (\code{Asia/Calcutta}, \code{US/Eastern}), and a reviewed list for the
 rest (\code{Atlantic/Jan_Mayen}, \code{America/Coral_Harbour},
 \code{Canada/Eastern}). Every geographic zone \code{OlsonNames()} lists
-resolves; the \code{Etc/}, \code{UTC}, fixed-offset and generic zones
+resolves to a country or territory; a territory the carbon table has no
+row of its own for (Monaco, Jersey, Vaduz, the Antarctic stations) uses
+the grid of the country it draws on or the world average, and the method
+says which. The \code{Etc/}, \code{UTC}, fixed-offset and generic zones
 (\code{CET}, \code{EST}, \code{WET}) name no country and fall through
 to the locale.
 }

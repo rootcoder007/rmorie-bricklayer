@@ -70,7 +70,8 @@
     msg <- conditionMessage(rc)
     if (grepl("401|403|Unauthorized|Forbidden", msg)) {
       stop("the curated-data service rejected the stored key; ",
-           sprintf("run bricklayer_llm_login() again (or `%s login --token KEY`).", .bl_prog()), call. = FALSE)
+           sprintf("run bricklayer_llm_login() again (or `%s login --token` and paste the key).", .bl_prog()),
+           call. = FALSE)
     }
     stop("data.rmorie.com: ", msg, call. = FALSE)
   }
@@ -150,6 +151,36 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   .bl_data_tables_df(keys, names, rows, sources)
 }
 
+# The manifest's SHA-256 for a table, when it lists one (the field may be named sha256 or
+# sha256_gz, of the compressed file as served).
+.bl_data_manifest_sha <- function(key) {
+  ds <- tryCatch(bricklayer_data_manifest()$datasets, error = function(e) NULL)
+  for (d in ds) {
+    if (identical(d$key, key)) {
+      for (f in c("sha256_gz", "sha256", "sha")) {
+        v <- d[[f]]
+        if (is.character(v) && length(v) == 1L && grepl("^[0-9a-fA-F]{64}$", v)) return(tolower(v))
+      }
+    }
+  }
+  NULL
+}
+
+# A cached or freshly downloaded file that does not match the manifest's SHA-256 is deleted and
+# refused: a tampered cache, a truncated download or a table rebuilt upstream all look the same.
+.bl_data_check_sha <- function(key, dest) {
+  want <- .bl_data_manifest_sha(key)
+  if (is.null(want)) return(invisible(TRUE))
+  have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
+  if (!identical(have, want)) {
+    unlink(dest)
+    stop(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
+                       "run again to download it, and if it still fails the table was rebuilt or tampered with"),
+                 key, substr(have, 1L, 12L), substr(want, 1L, 12L)), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 .bl_data_tables_df <- function(key, name, rows, source) {
   df <- data.frame(key = key, name = name, rows = rows, source = source,
                    stringsAsFactors = FALSE)
@@ -172,7 +203,7 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   rows <- ifelse(is.na(tables$rows), "-", formatC(tables$rows, format = "d", big.mark = ","))
   # the manifest is fetched text: control characters (an ANSI escape, a carriage return)
   # must not reach the terminal
-  printable <- function(x) gsub("[^[:print:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
+  printable <- function(x) gsub("[[:cntrl:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
   tables$key <- printable(tables$key)
   name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))
   name[!nzchar(name) | name == tables$key] <- "-"
@@ -221,5 +252,6 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
     rest <- paste(parts[-1L], collapse = "/")
     .bl_data_get(sprintf("/%s/%s.csv.gz", parts[[1L]], rest), dest)
   }
+  .bl_data_check_sha(key, dest)
   utils::read.csv(gzfile(dest), stringsAsFactors = FALSE, skipNul = TRUE)  # some sources carry NUL bytes
 }

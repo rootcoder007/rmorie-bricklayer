@@ -27,7 +27,7 @@ test_that("N1: time-zone aliases map to their own country, generic zones to none
   expect_true(all(nchar(tz$location) == 2L))
 })
 
-test_that("N2: a run that would need more than 10,000 sub-steps is refused, as is an overflowed count", {
+test_that("N2: a run whose work (cells x steps x sub-steps) is out of reach is refused, as is an overflowed count", {
   c0 <- matrix(0, 11, 11)
   c0[6, 6] <- 1
   expect_error(advection_diffusion_2d(c0, u = 1e10, v = 0, kx = .1, ky = .1, 1, 1, 1, 2), "sub-steps")
@@ -126,16 +126,15 @@ test_that("L1/L4: an empty local Ollama is skipped with a message in the automat
   expect_error(rmoriebricklayer:::.bl_llm_route(NULL), "must be auto, own, ollama or hosted")
 })
 
-test_that("L2: a malformed llm.json is reported, ignored, and never written over", {
+test_that("L2: a malformed llm.json is an error and never written over", {
   dir <- withr::local_tempdir()
   cfg <- file.path(dir, "llm.json")
   writeLines('{"route": "ollama",}', cfg)
   testthat::local_mocked_bindings(.bl_config_path = function() cfg, .package = "rmoriebricklayer")
-  assign("warned", NULL, envir = rmoriebricklayer:::.bl_cfg_state)
-  expect_warning(v <- rmoriebricklayer:::.bl_read_config(), "not valid JSON")
-  expect_identical(v, list())
-  expect_silent(rmoriebricklayer:::.bl_read_config())   # once per change
-  expect_error(bricklayer_llm_config(route = "hosted"), "not valid JSON")
+  # the review of 0.5.12: an unreadable settings file is an error every time, not a warning
+  # once per change that then let the saved route be dropped
+  expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
+  expect_error(bricklayer_llm_config(route = "hosted"), "not a JSON object")
   expect_identical(readLines(cfg), '{"route": "ollama",}')
 })
 
