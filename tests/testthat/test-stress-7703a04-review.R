@@ -335,3 +335,14 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
   expect_true("sh" %in% calls)
   expect_true(any(grepl("key>", msg, fixed = TRUE)))
 })
+
+test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is verified with a warning", {
+  k <- pqc_keygen(height = 2)
+  s <- capsule_sign("m", k)
+  s$key_state <- list(sk_seed = k$sk_seed, sk_prf = k[["sk_prf"]], next_index = 1L)
+  expect_warning(ok <- capsule_verify("m", s, signing_public_key(k)), "carries the signer")
+  expect_true(ok)
+  a <- capsule_attest(list(n = 1), xmss_advance(k, s))
+  a$signature$key_state <- s$key_state
+  expect_warning(capsule_check_attestation(a, list(n = 1)), "carries the signer")
+})

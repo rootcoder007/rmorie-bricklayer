@@ -74,7 +74,8 @@ claims the earlier fixes overstated corrected.
   flux and zero rise (a cooler stack is refused); Ctrl-C at the `rmbl login --token` prompt
   interrupts at once (the terminal line is read by a shell child, so the interrupt is not held
   until Enter); the `yoy_pdf()` notes test asserts the page rule instead of comparing a value
-  with itself; the dead-stack note on the two gadget pairs says what they hold.
+  with itself; the dead-stack note on the two gadget pairs says what they hold. Verifying an XMSS
+  signature or attestation that still carries `key_state` warns that the key is compromised.
 
 ## Review of the 0.5.12 branch
 

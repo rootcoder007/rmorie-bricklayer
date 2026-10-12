@@ -1034,6 +1034,13 @@ capsule_verify <- function(message, signature, key, context = NULL,
     if (!is.character(sg) || length(sg) != 1L || is.na(sg) || !grepl("^[0-9a-fA-F]{64}$", sg)) return(FALSE)
     return(tryCatch(core_digest_equal(core_hmac_sha256(key, message), sg), error = function(e) FALSE))
   }
+  # an XMSS object written by 0.5.9 to 7703a04 carries the signer's private key in `key_state`:
+  # whoever holds it can sign under this root, so the reader is told, every time
+  if (!is.null(signature[["key_state"]])) {
+    warning(paste0("this XMSS signature carries the signer's private key (`key_state`, written by ",
+                   "rmoriebricklayer 0.5.9 to 7703a04): treat that key as compromised, generate a new ",
+                   "one with pqc_keygen() and sign again"), call. = FALSE)
+  }
   one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
   whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
   # the signature's own shape comes first: an HMAC signature whose scheme was edited to
