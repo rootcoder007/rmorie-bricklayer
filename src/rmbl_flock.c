@@ -144,12 +144,11 @@ SEXP C_rmbl_path_kind(SEXP path) {
     return mkString("other");
 }
 
-/* `tmp` is created here (O_EXCL), so the cleanup below only ever removes a file this call made.
- * Write `bytes` to `tmp`, flush it to the disk (fsync / FlushFileBuffers), read the size back,
- * and only then rename it over `path`. A short write, a full disk (ENOSPC, which a delayed
- * allocation may report only at fsync or close) or a failed rename removes `tmp` and returns a
- * message; NULL on success. The used-index record is never replaced by a partial file
- * (review of 52a8883, B3). */
+/* Write `bytes` to `tmp`, flush it to the disk (fsync / FlushFileBuffers) and only then rename it
+ * over `path`; NULL on success, else a message. `tmp` is created here (O_EXCL), so the cleanup
+ * only ever removes a file this call made. A short write, a full disk (ENOSPC, which a delayed
+ * allocation may report only at fsync or close) or a failed rename takes the one exit at the end:
+ * `tmp` removed, the old record untouched (review of 52a8883, B3). */
 SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
     if (TYPEOF(bytes) != RAWSXP) error("`bytes` must be a raw vector");
     char tmp[4096], path[4096];
@@ -171,53 +170,36 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
         snprintf(msg, sizeof msg, "cannot create %s: %s", tmp, strerror(errno));
         return mkString(msg);
     }
+    const char *why = NULL;
+    int err = 0;
     size_t off = 0;
-    while (off < n) {
+    while (off < n && why == NULL) {
 #ifdef _WIN32
         int w = _write(fd, b + off, (unsigned int) (n - off > 1048576 ? 1048576 : n - off));
 #else
         ssize_t w = write(fd, b + off, n - off);
 #endif
-        if (w < 0 && errno == EINTR) continue;
-        if (w <= 0) {
-            snprintf(msg, sizeof msg, "the write did not complete: %s", w < 0 ? strerror(errno) : "no progress");
-            RMBL_CLOSE(fd);
-            remove(tmp);
-            return mkString(msg);
-        }
-        off += (size_t) w;
+        if (w > 0) off += (size_t) w;
+        else if (!(w < 0 && errno == EINTR)) { why = "the write did not complete"; err = w < 0 ? errno : ENOSPC; }
     }
 #ifdef _WIN32
-    int synced = FlushFileBuffers((HANDLE) _get_osfhandle(fd)) ? 0 : -1;
+    if (why == NULL && !FlushFileBuffers((HANDLE) _get_osfhandle(fd))) { why = "the write did not reach the disk"; err = EIO; }
 #else
-    int synced = fsync(fd);
+    if (why == NULL && fsync(fd) != 0) { why = "the write did not reach the disk"; err = errno; }
 #endif
-    int serr = errno;
-    int closed = RMBL_CLOSE(fd);
-    int cerr = errno;
-    if (synced != 0 || closed != 0) {
-        snprintf(msg, sizeof msg, "the write did not reach the disk: %s", strerror(synced != 0 ? serr : cerr));
-        remove(tmp);
-        return mkString(msg);
-    }
-    struct stat st;
-    if (stat(tmp, &st) != 0 || (size_t) st.st_size != n) {
-        remove(tmp);
-        return mkString("the file on disk is not the size written: is the disk full?");
-    }
+    if (RMBL_CLOSE(fd) != 0 && why == NULL) { why = "the write did not reach the disk"; err = errno; }
 #ifdef _WIN32
-    if (!MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
-        snprintf(msg, sizeof msg, "the new record could not replace the old one (Windows error %lu)",
-                 (unsigned long) GetLastError());
-        remove(tmp);
-        return mkString(msg);
+    if (why == NULL && !MoveFileExA(tmp, path, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        why = "the new record could not replace the old one";
+        err = EACCES;
     }
 #else
-    if (rename(tmp, path) != 0) {
-        snprintf(msg, sizeof msg, "the new record could not replace the old one: %s", strerror(errno));
+    if (why == NULL && rename(tmp, path) != 0) { why = "the new record could not replace the old one"; err = errno; }
+#endif
+    if (why != NULL) {
+        snprintf(msg, sizeof msg, "%s: %s", why, strerror(err));
         remove(tmp);
         return mkString(msg);
     }
-#endif
     return R_NilValue;
 }
