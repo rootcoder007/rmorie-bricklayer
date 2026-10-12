@@ -194,7 +194,7 @@ test_that("every leaf of the tree signs under one public root", {
     expect_true(capsule_verify(paste0("manifest-", i), s, pub))
     sigs[[i]] <- s
     # the returned state is what advances the index
-    key <- s$key_state
+    key <- xmss_advance(key, s)
     expect_equal(key$next_index, i)
   }
   # the key is now exhausted, and says so rather than wrapping around and
@@ -215,7 +215,7 @@ test_that("every leaf of the tree signs under one public root", {
     paste(rep("02", 32), collapse = "")
   )
   a <- capsule_sign("same", k2)
-  b <- capsule_sign("same", a$key_state)
+  b <- capsule_sign("same", xmss_advance(k2, a))
   expect_false(identical(a$signature, b$signature))
   expect_true(capsule_verify("same", a, signing_public_key(k2)))
   expect_true(capsule_verify("same", b, signing_public_key(k2)))
@@ -232,7 +232,7 @@ test_that("signing rejects the inputs it cannot honour", {
   sig <- capsule_sign("m", key)
   expect_error(capsule_verify("m", sig, "not-a-key"), "pqc_keygen")
   # a raw message signs and verifies on the next unused leaf
-  r <- capsule_sign(charToRaw("abc"), sig$key_state)
+  r <- capsule_sign(charToRaw("abc"), xmss_advance(key, sig))
   expect_equal(r$index, 1L)
   expect_true(capsule_verify(charToRaw("abc"), r, signing_public_key(key)))
 })
@@ -260,7 +260,7 @@ test_that("a signed manifest digest is the intended end-to-end use", {
   # the same flow with a Merkle root over the data's chunks
   chunks <- c("the,data", "1,2", "3,4")
   root <- merkle_root(chunks)
-  rsig <- capsule_sign(root, sig$key_state)
+  rsig <- capsule_sign(root, xmss_advance(key, sig))
   expect_true(capsule_verify(root, rsig, pub))
   expect_false(capsule_verify(merkle_root(c(chunks[1:2], "3,5")), rsig, pub))
 })
@@ -271,11 +271,11 @@ test_that("an XMSS index never signs twice: one key object, or a stale copy, is 
   expect_identical(s1$index, 0L)
   # the same key object again: index 0 is spent
   expect_error(capsule_sign("message two", key), "index 0 of this key was already used")
-  s2 <- capsule_sign("message two", s1$key_state)
+  s2 <- capsule_sign("message two", xmss_advance(key, s1))
   expect_identical(s2$index, 1L)
   # a stale copy (the state after the first signature) is refused too
-  expect_error(capsule_sign("message three", s1$key_state), "index 1 of this key was already used")
-  s3 <- capsule_sign("message three", s2$key_state)
+  expect_error(capsule_sign("message three", xmss_advance(key, s1)), "index 1 of this key was already used")
+  s3 <- capsule_sign("message three", xmss_advance(key, s2))
   expect_identical(s3$index, 2L)
   pub <- signing_public_key(key)
   expect_true(all(c(capsule_verify("message one", s1, pub), capsule_verify("message two", s2, pub),

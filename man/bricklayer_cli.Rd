@@ -18,7 +18,7 @@ The exit status, invisibly (0 on success).
 \description{
 Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 \describe{
-\item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
+\item{\code{login [--token] [--email ADDRESS [--code CODE]]
     [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
 a local model or your own endpoint; keys are issued on request at
 \url{https://www.rmorie.com/access/}): a key you paste with \code{--token}

@@ -46,8 +46,10 @@ bricklayer_llm_ask(paste(c("Summarise this table:", capture.output(print(head(mt
                    system_prompt = "Answer in two sentences.")
 ```
 
-`agent_bundle()` uses the same route to explain a reproducibility bundle's verification
-output in plain language, when a key is stored and only then.
+`agent_bundle()` sends its request over the same route (`backend = "auto"` takes the saved
+route or the first that answers; `backend = "hosted"` goes straight to the hosted tier) and
+explains a reproducibility bundle's verification output in plain language; with no route it
+returns the setup hint and `rmbl bundle` exits 1.
 
 ## The signed services document
 

@@ -168,8 +168,8 @@ power figure above comes from the emulator.
 ## 4. Choosing the plain path
 
 Masking costs about 2.3 to 3.4 times the plain time on decapsulation (4 ms for ML-KEM-768
-against 1.2 ms on this package's test machine) and 7 to 10 times on signing (26 ms for
-ML-DSA-65 against 2 ms), depending on the CPU. Where the threat model has no physical
+against 1.2 ms on this package's test machine) and 7 to 10 times on signing (17 ms for
+ML-DSA-65 against 2.4 ms), depending on the CPU. Where the threat model has no physical
 attacker, `kem_decapsulate(masked = FALSE)`, `capsule_sign(masked = FALSE)` and
 `fips_sign_mu(masked = FALSE)` keep the plain path, and
 `options(rmoriebricklayer.masked = FALSE)` makes that the default for a session (a chain or

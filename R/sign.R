@@ -701,17 +701,17 @@ signing_public_key <- function(key) {
 #' post-quantum one-time signature under the key's Merkle root. Asymmetric:
 #' a verifier holding only the public root cannot forge.
 #'
-#' # The returned key state must be carried forward
+#' # The key must be advanced after every signature
 #'
-#' An XMSS signature consumes a leaf. The returned object therefore carries
-#' `key_state`, the key with `next_index` advanced, and
-#' **subsequent signing must use that** -- reusing an index breaks the
-#' scheme. The key is an R value, so `capsule_sign()` cannot advance the
-#' caller's copy; instead it remembers, for the session, the highest index
-#' each key has signed with and refuses that index or an earlier one (signing
-#' twice with one key object, or with a stale copy). Across sessions the
-#' saved key must be the latest `key_state`: save it after every signature.
-#' Passing an exhausted key is an error, not a silent wrap-around.
+#' An XMSS signature consumes a leaf, and **subsequent signing must use the
+#' advanced key** -- reusing an index breaks the scheme. The signature object
+#' carries no key material (it is what verifiers are handed); the advanced
+#' key is `xmss_advance(key, signature)`, and that is what to save. The key is
+#' an R value, so `capsule_sign()` cannot advance the caller's copy; instead it
+#' remembers, for the session (and across sessions when the index file of
+#' [xmss_advance()] is enabled), the highest index each key has signed with and
+#' refuses that index or an earlier one. Passing an exhausted key is an error,
+#' not a silent wrap-around.
 #'
 #' @param message Length-1 character vector (or raw vector)
 #' to sign.
@@ -755,7 +755,7 @@ signing_public_key <- function(key) {
 #' is never interchangeable with a pure one over the same digest.
 #' @return A list of class `bricklayer_signature`: `scheme`,
 #' `signature`, and for XMSS also `auth`, `index`,
-#' `root`, `height`, `key_state`, `randomizer` (the
+#' `root`, `height`, `randomizer` (the
 #' per-signature `R` of RFC 8391, which a verifier needs and which
 #' therefore travels with the signature) and `wire` -- the signature
 #' in the RFC's own byte order, `index || R || WOTS || auth`,
@@ -777,8 +777,8 @@ signing_public_key <- function(key) {
 #' s1 <- capsule_sign("manifest-1", key)
 #' capsule_verify("manifest-1", s1, signing_public_key(key))
 #'
-#' # Carry the advanced key state forward for the next signature.
-#' key <- s1$key_state
+#' # Advance the key past the signature before signing again.
+#' key <- xmss_advance(key, s1)
 #' key$next_index
 #' s2 <- capsule_sign("manifest-2", key)
 #' capsule_verify("manifest-2", s2, signing_public_key(key))
@@ -870,24 +870,69 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   # copied value, so this session remembers the highest index each key has used and refuses
   # an older state -- signing twice with one key object, or with a stale copy
   kid <- paste0(key$root, ":", key$pub_seed)
+  .rmbl_xmss_used_load()
   used <- .rmbl_xmss_used[[kid]]
   if (!is.null(used) && idx <= used) {
-    stop(sprintf(paste0("index %d of this key was already used in this session: signing it again ",
-                        "would break the scheme. Carry the key forward with the `key_state` of ",
-                        "its last signature (next index %d)."), idx, used + 1L), call. = FALSE)
+    stop(sprintf(paste0("index %d of this key was already used: signing it again would break the ",
+                        "scheme. Carry the key forward with xmss_advance(key, signature) after every ",
+                        "signature (next index %d)."), idx, used + 1L), call. = FALSE)
   }
   # retire the index before the signature exists (RFC 8391's order)
   assign(kid, idx, envir = .rmbl_xmss_used)
+  .rmbl_xmss_used_save()
   res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
                as.integer(key$height), idx, message)
-  advanced <- key
-  advanced$next_index <- idx + 1L
+  # the signature carries no key material: the object is what verifiers are handed, and the
+  # 0.5.9-0.5.12 objects carried the advanced key (sk_seed and sk_prf) inside it, so every
+  # shared XMSS signature, attestation and bundle file handed out the private key. The next
+  # key state is derived from the signature with xmss_advance().
   out <- list(scheme = "xmss-sha256", signature = res$wots, auth = res$auth,
               index = idx, root = res$root, height = key$height,
-              randomizer = res$randomizer, wire = res$wire,
-              key_state = advanced)
+              randomizer = res$randomizer, wire = res$wire)
   class(out) <- c("bricklayer_signature", "list")
   out
+}
+
+#' Advance an XMSS key past a signature it made
+#'
+#' An XMSS signature consumes one leaf, so the key that made it must not sign at that index
+#' again. This returns the key with \code{next_index} set to one past the signature's index
+#' (refusing a signature that was not made by this key), which is the key to save and to use
+#' for the next signature. The signature object itself carries no key material.
+#'
+#' Within one R session the package also remembers the highest index each key has used and
+#' refuses it again; across sessions it can only do so when the index file is enabled (the
+#' option \code{rmoriebricklayer.xmss_index_file}, a path, or the environment variable
+#' \code{RMBL_XMSS_INDEX_FILE}), because a package may not write to a user's home directory
+#' unasked. Without it, a key reloaded from disk signs again from the saved
+#' \code{next_index}, so save the advanced key after every signature.
+#'
+#' @param key The \code{bricklayer_signing_key} that made \code{signature}.
+#' @param signature The XMSS signature it made (from [capsule_sign()] or inside an attestation).
+#' @return The key with \code{next_index} advanced.
+#' @examples
+#' key <- pqc_keygen(height = 2)
+#' s1 <- capsule_sign("manifest-1", key)
+#' key <- xmss_advance(key, s1)
+#' key$next_index
+#' s2 <- capsule_sign("manifest-2", key)
+#' capsule_verify("manifest-2", s2, signing_public_key(key))
+#' @seealso [capsule_sign()], [xmss_forget_used_indices()]
+#' @export
+xmss_advance <- function(key, signature) {
+  if (!inherits(key, "bricklayer_signing_key")) {
+    stop("`key` must be a signing key from pqc_keygen()", call. = FALSE)
+  }
+  if (!inherits(signature, "bricklayer_signature") || !identical(signature$scheme, "xmss-sha256")) {
+    stop("`signature` must be an XMSS signature from capsule_sign()", call. = FALSE)
+  }
+  if (!identical(tolower(as.character(signature$root)), tolower(as.character(key$root)))) {
+    stop("this signature was not made by this key (the roots differ)", call. = FALSE)
+  }
+  idx <- as.integer(signature$index)
+  if (length(idx) != 1L || is.na(idx) || idx < 0L) stop("the signature has no valid index", call. = FALSE)
+  key$next_index <- max(as.integer(key$next_index), idx + 1L)
+  key
 }
 
 #' Verify a capsule manifest signature
@@ -973,8 +1018,10 @@ capsule_verify <- function(message, signature, key, context = NULL,
     return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg, ph))
   }
   if (identical(signature$scheme, "hmac")) {
-    return(core_digest_equal(core_hmac_sha256(key, message),
-                             signature$signature))
+    # an edited field (two strings, a number, a short or non-hex digest) is "not verified"
+    sg <- signature$signature
+    if (!is.character(sg) || length(sg) != 1L || is.na(sg) || !grepl("^[0-9a-fA-F]{64}$", sg)) return(FALSE)
+    return(tryCatch(core_digest_equal(core_hmac_sha256(key, message), sg), error = function(e) FALSE))
   }
   if (!inherits(key, c("bricklayer_public_key", "bricklayer_signing_key"))) {
     stop("verifying an XMSS signature needs a key from pqc_keygen() or ",
@@ -1075,3 +1122,46 @@ capsule_verify <- function(message, signature, key, context = NULL,
 
 # the highest XMSS index each key (root:pub_seed) has signed with in this session
 .rmbl_xmss_used <- new.env(parent = emptyenv())
+
+# The optional index file: the option, then the environment variable, else none (a package
+# may not write into a home directory unasked).
+.rmbl_xmss_index_file <- function() {
+  p <- getOption("rmoriebricklayer.xmss_index_file", NULL)
+  if (is.null(p)) p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = "")
+  p <- as.character(p)[1L]
+  if (is.na(p) || !nzchar(p)) NULL else path.expand(p)
+}
+
+.rmbl_xmss_used_load <- function() {
+  p <- .rmbl_xmss_index_file()
+  if (is.null(p) || !file.exists(p)) return(invisible(FALSE))
+  rec <- tryCatch(bricklayer_json_from_json(paste(readLines(p, warn = FALSE), collapse = "\n"),
+                                            simplifyVector = TRUE), error = function(e) NULL)
+  if (!is.list(rec)) stop(sprintf("%s (the XMSS index file) is not a JSON object; fix or remove it", p), call. = FALSE)
+  for (k in names(rec)) {
+    v <- suppressWarnings(as.integer(rec[[k]]))
+    if (length(v) == 1L && !is.na(v)) {
+      cur <- .rmbl_xmss_used[[k]]
+      if (is.null(cur) || v > cur) assign(k, v, envir = .rmbl_xmss_used)
+    }
+  }
+  invisible(TRUE)
+}
+
+.rmbl_xmss_used_save <- function() {
+  p <- .rmbl_xmss_index_file()
+  if (is.null(p)) return(invisible(FALSE))
+  rec <- mget(ls(.rmbl_xmss_used, all.names = TRUE), envir = .rmbl_xmss_used)
+  .bl_write_private_json(p, rec)
+  invisible(TRUE)
+}
+
+
+#' @rdname xmss_advance
+#' @export
+xmss_forget_used_indices <- function() {
+  rm(list = ls(.rmbl_xmss_used, all.names = TRUE), envir = .rmbl_xmss_used)
+  p <- .rmbl_xmss_index_file()
+  if (!is.null(p) && file.exists(p)) unlink(p)
+  invisible(NULL)
+}

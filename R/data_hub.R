@@ -29,6 +29,20 @@
   svc$base_url
 }
 
+# The hosted key for the data service: to the address the signed services document names, never
+# to an address set in MORIE_DATA_URL (a key that belongs to one service does not follow a URL).
+.bl_data_key <- function() {
+  key <- .bl_hosted_key()
+  if (is.null(key)) return(NULL)
+  env <- sub("/+$", "", trimws(Sys.getenv("MORIE_DATA_URL", unset = "")))
+  if (!nzchar(env)) return(key)
+  doc <- sub("/+$", "", .rmbl_services_data()$base_url %||% "")
+  if (nzchar(doc) && identical(env, doc)) return(key)
+  message(sprintf(paste("MORIE_DATA_URL=%s is not the curated-data address of the services document;",
+                        "the stored key is not sent to it"), env))
+  NULL
+}
+
 .bl_data_cache_dir <- function() {
   d <- getOption("rmoriebricklayer.data_cache", NULL)
   if (is.null(d) || !nzchar(d)) {
@@ -39,7 +53,7 @@
 }
 
 .bl_data_get <- function(path, dest, timeout = 600) {
-  key <- .bl_hosted_key()
+  key <- .bl_data_key()
   if (is.null(key)) {
     stop("the curated tables need your MORIE key: run ",
          sprintf("bricklayer_llm_login() (or `%s login`) once; %s.", .bl_prog(), .bl_access_hint()),
@@ -153,13 +167,18 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 
 # The manifest's SHA-256 for a table, when it lists one (the field may be named sha256 or
 # sha256_gz, of the compressed file as served).
-.bl_data_manifest_sha <- function(key) {
-  ds <- tryCatch(bricklayer_data_manifest()$datasets, error = function(e) NULL)
+.bl_data_manifest_sha <- function(key, refresh = FALSE) {
+  ds <- tryCatch(bricklayer_data_manifest(refresh = refresh)$datasets, error = function(e) NULL)
   for (d in ds) {
     if (identical(d$key, key)) {
       for (f in c("sha256_gz", "sha256", "sha")) {
         v <- d[[f]]
-        if (is.character(v) && length(v) == 1L && grepl("^[0-9a-fA-F]{64}$", v)) return(tolower(v))
+        if (is.null(v)) next
+        v <- sub("^sha256:", "", as.character(v)[1L])
+        if (length(v) == 1L && !is.na(v) && grepl("^[0-9a-fA-F]{64}$", v)) return(tolower(v))
+        # a digest field that is not a digest is not "no digest": the file cannot be trusted
+        stop(sprintf("the manifest's %s for %s is not a SHA-256 hex digest (%s)", f, key, as.character(v)[1L]),
+             call. = FALSE)
       }
     }
   }
@@ -168,14 +187,19 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 
 # A cached or freshly downloaded file that does not match the manifest's SHA-256 is deleted and
 # refused: a tampered cache, a truncated download or a table rebuilt upstream all look the same.
-.bl_data_check_sha <- function(key, dest) {
-  want <- .bl_data_manifest_sha(key)
+.bl_data_check_sha <- function(key, dest, retried = FALSE) {
+  want <- .bl_data_manifest_sha(key, refresh = retried)
   if (is.null(want)) return(invisible(TRUE))
   have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
+    if (!retried) {
+      # a table rebuilt upstream has a new digest in a new manifest: fetch the manifest again
+      # before calling the file bad, so a stale cached manifest does not refuse every call
+      return(.bl_data_check_sha(key, dest, retried = TRUE))
+    }
     unlink(dest)
     stop(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
-                       "run again to download it, and if it still fails the table was rebuilt or tampered with"),
+                       "run again to download it, and if it still fails the file was tampered with in transit"),
                  key, substr(have, 1L, 12L), substr(want, 1L, 12L)), call. = FALSE)
   }
   invisible(TRUE)
@@ -203,7 +227,14 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   rows <- ifelse(is.na(tables$rows), "-", formatC(tables$rows, format = "d", big.mark = ","))
   # the manifest is fetched text: control characters (an ANSI escape, a carriage return)
   # must not reach the terminal
-  printable <- function(x) gsub("[[:cntrl:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
+  printable <- function(x) {
+    x <- gsub("[[:cntrl:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
+    # the C1 controls (U+0080-U+009F, the 8-bit CSI among them) and the bidirectional and
+    # zero-width format characters (U+200B-U+200F, U+202A-U+202E, U+2066-U+2069), removed as
+    # UTF-8 bytes so a C locale cannot let them through
+    x <- enc2utf8(x)
+    gsub("(*UTF)[\\x{80}-\\x{9f}\\x{200b}-\\x{200f}\\x{202a}-\\x{202e}\\x{2066}-\\x{2069}]", "", x, perl = TRUE)
+  }
   tables$key <- printable(tables$key)
   name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))
   name[!nzchar(name) | name == tables$key] <- "-"

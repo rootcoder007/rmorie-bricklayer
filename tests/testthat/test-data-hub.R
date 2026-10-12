@@ -12,7 +12,7 @@ test_that("data hub: key, manifest cache, table cache, CLI verbs", {
     '{"generated_utc":"2026-10-01T00:00:00Z",',
     '"datasets":[{"db":"chicago_crime",',
     '"table":"incidents","key":"chicago_crime/incidents","rows":3,',
-    '"columns":["id","type"],"bytes_gz":10,"sha256":"x",',
+    '"columns":["id","type"],"bytes_gz":10,',
     '"source":"bigquery-public-data.chicago_crime.crime",',
     '"meta":{"description":"Chicago Police incidents"}}]}'
   )

@@ -76,6 +76,7 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
                       na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
   f <- as.numeric(fractions)
+  if (!length(f) || anyNA(f) || any(f <= 0 | f > 1)) stop("`fractions` must be shares in (0, 1]", call. = FALSE)
   r <- .Call(C_rmbl_top_share, x, f)
   data.frame(fraction = f, units = r$units, share = r$share)
 }
@@ -167,7 +168,8 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
     s <- sort(x, decreasing = TRUE)
     x_min <- if (length(s) >= 50L) s[50L] else if (length(s)) min(s) else NA_real_
   }
-  x_min <- .rmbl_num(x_min, "x_min")[1L]
+  x_min <- .rmbl_num(x_min, "x_min")
+  if (length(x_min) != 1L) stop("`x_min` must be a single threshold", call. = FALSE)
   if (is.na(x_min) || x_min <= 0) {
     stop("`x_min` must be positive", call. = FALSE)
   }
@@ -288,7 +290,14 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 hurwitz_zeta <- function(s, q = 1) {
   q <- .rmbl_num_input(q, "q", allow_null = FALSE)
   if (length(q) != 1L || !is.finite(q)) stop("`q` must be a single finite number", call. = FALSE)
-  .rmbl_hurwitz(.rmbl_num_input(s, "s"), q)
+  s <- .rmbl_num_input(s, "s")
+  if (q > 0) return(.rmbl_hurwitz(s, q))
+  # q <= 0: the series has terms (n + q)^-s with n + q <= 0, a pole at a non-positive integer
+  # and otherwise the finite sum of those terms plus zeta(s, q + m) with q + m in (0, 1]
+  if (q == round(q)) return(rep(NA_real_, length(s)))  # a pole, like s = 1: no value to return
+  m <- ceiling(-q)
+  head <- vapply(s, function(si) sum((q + seq_len(m) - 1)^(-si)), numeric(1))
+  head + .rmbl_hurwitz(s, q + m)
 }
 
 .rmbl_hurwitz <- function(s, q) {

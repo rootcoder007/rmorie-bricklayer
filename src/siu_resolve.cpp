@@ -123,12 +123,11 @@ static std::string strip_sentences_with(const std::string& s, const std::regex& 
         if (end == std::string::npos) end = s.size();
         const std::string sentence = s.substr(start, end - start);
         if (std::regex_search(sentence, cue)) {
-            // the sentence goes, and its terminator with it, replaced by one space: a line break
-            // here turned the rest of the line into a roster line of its own, so boilerplate in
-            // the middle of a line created officers (0.5.12 counted 3 where every earlier version
-            // counted 1); a roster entry after the sentence still starts its line because the
-            // line starts are matched after trimming
-            out += ' ';
+            // the sentence goes; a '.' or ';' terminator goes with it, replaced by one space (a
+            // line break there turned the rest of the line into a roster line of its own and
+            // created officers), but a '\n' terminator is the line's own end and stays, or the
+            // next roster line and the next section header would be glued onto this one
+            if (end < s.size() && s[end] == '\n') out += '\n'; else out += ' ';
         } else {
             out += sentence;
             if (end < s.size()) out += s[end];

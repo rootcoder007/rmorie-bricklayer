@@ -168,7 +168,7 @@ test_that("the optional inputs each switch on their own check", {
   expect_match(paste(format(good), collapse = "\n"), "verified")
 
   # a signature over something else does not, and that is a warning
-  wrong <- capsule_sign("a different digest", sig$key_state)
+  wrong <- capsule_sign("a different digest", xmss_advance(key, sig))
   bad <- capsule_report(ref,
     signature = wrong,
     key = signing_public_key(key)

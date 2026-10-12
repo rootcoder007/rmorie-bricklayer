@@ -150,6 +150,7 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 }
 
 .pollution_exposure <- function(exposure) {
+  if (is.logical(exposure)) stop("`exposure` must be numeric, not logical", call. = FALSE)
   z <- .rmbl_num_input(exposure, "exposure", allow_null = FALSE)
   if (!length(z) || anyNA(z) || any(!is.finite(z))) {
     stop("`exposure` must be one or more finite concentrations, with no missing values",
@@ -513,6 +514,9 @@ exposure_concentration_index <- function(data, exposure, income) {
   if (n < 2L) stop("Need at least 2 rows to compute concentration index.", call. = FALSE)
   h <- .rmbl_num_input(df[[exposure]], exposure, allow_null = FALSE)
   inc <- .rmbl_num_input(df[[income]], income, allow_null = FALSE)
+  if (any(!is.finite(h)) || any(!is.finite(inc))) {
+    stop(sprintf("`%s` and `%s` must be finite", exposure, income), call. = FALSE)
+  }
   if (any(h < 0)) stop(sprintf("`%s` must be non-negative: an exposure is a concentration", exposure), call. = FALSE)
   mu <- mean(h)
   if (mu <= 0) stop("Mean exposure is zero; concentration index undefined.", call. = FALSE)
@@ -624,17 +628,27 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
   fin <- function(x) length(x) == 1L && is.finite(x)
   list(
     row("exposure finite and non-negative", fin(exposure_mean) && exposure_mean >= 0,
-        if (isTRUE(fin(exposure_mean) && exposure_mean <= reference)) {
+        if (!fin(exposure_mean) || exposure_mean < 0) {
+          sprintf("exposure_mean=%s is not a finite non-negative concentration", format(exposure_mean))
+        } else if (exposure_mean <= reference) {
           sprintf("mean %s is at or below the counterfactual floor %s: no excess risk, PAF and cases are 0.",
                   format(exposure_mean, digits = 10), format(reference))
         } else {
           sprintf("mean %s vs ref %s", format(exposure_mean, digits = 10), format(reference))
         }),
+    row("exposure within the concentration-response range (at most 10,000 ug/m3)",
+        fin(exposure_mean) && exposure_mean <= 1e4,
+        sprintf("exposure_mean=%s", format(exposure_mean))),
     row("prevalence in [0,1]", fin(exposure_prevalence) && exposure_prevalence >= 0 && exposure_prevalence <= 1,
         sprintf("exposure_prevalence=%s", format(exposure_prevalence))),
-    row("baseline_rate finite, between 0 and 100,000 per 100k",
-        fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5,
-        sprintf("baseline_rate=%s per 100k per year", format(baseline_rate))),
+    row("baseline_rate finite, between 0.01 and 100,000 per 100k",
+        fin(baseline_rate) && baseline_rate >= 0.01 && baseline_rate <= 1e5,
+        if (fin(baseline_rate) && baseline_rate < 0.01 && baseline_rate > 0) {
+          sprintf("baseline_rate=%s per 100k looks like a rate per person-year (0.008 is 800 per 100k)",
+                  format(baseline_rate))
+        } else {
+          sprintf("baseline_rate=%s per 100k per year", format(baseline_rate))
+        }),
     row("population finite and positive", fin(population) && population > 0,
         sprintf("population=%s", format(population, big.mark = ",", scientific = FALSE))),
     row("reference finite and non-negative", fin(reference) && reference >= 0,
@@ -686,7 +700,9 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   vector where a single number is expected, an unknown outcome, a missing
 #'   reference, a directory as \code{exposure_csv}) is an \code{"error"}
 #'   report with exit status 2, never a raw R error; an exposure at or below
-#'   the reference is a valid run with zero attributable cases.
+#'   the reference is a valid run with zero attributable cases, and the
+#'   scalar inputs \code{exposure_mean} and \code{exposure_prevalence} go
+#'   together (one without the other is an error report).
 #'   \code{pollution_report_text()}: a character string.
 #' @examples
 #' r <- verify_pollution("no2", demo = TRUE)
@@ -696,7 +712,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #' @export
 verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region = NULL,
                              years = NULL, demo = FALSE, exposure_csv = NULL,
-                             exposure_mean = 0, exposure_prevalence = 0, reference = NULL,
+                             exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
                              baseline_rate = 500, population = 1e6) {
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
@@ -709,19 +725,23 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # "error" report with exit status 2, never a raw stop() or a silently truncated vector
   if (!is.logical(demo) || length(demo) != 1L || is.na(demo)) return(fail("demo must be TRUE or FALSE"))
   if (is.null(reference)) reference <- if (identical(pollutant, "no2")) 10 else 5.8
+  # the scalar inputs go together: a mean without a prevalence (or the reverse) is not a run
+  # with the other at zero, it is half of the data
+  no_scalar_data <- is.null(exposure_mean) && is.null(exposure_prevalence)
+  if (xor(is.null(exposure_mean), is.null(exposure_prevalence))) {
+    return(fail("exposure_mean and exposure_prevalence go together: pass both (a zero is a measurement), or neither"))
+  }
   for (nm in c("reference", "exposure_mean", "exposure_prevalence", "baseline_rate", "population")) {
     v <- get(nm, inherits = FALSE)
+    if (is.null(v)) next
     if (length(v) != 1L) return(fail(sprintf("%s must be a single number, not %d values", nm, length(v))))
-    # a flag or text is not a number; a missing value (NA) is logged as a failed assumption below
-    if ((is.logical(v) && !is.na(v)) || is.factor(v) ||
+    # a flag, text, a date or a factor is not a number; a missing value (NA) is logged as a
+    # failed assumption below
+    if ((is.logical(v) && !is.na(v)) || is.factor(v) || inherits(v, c("Date", "POSIXt", "difftime")) ||
           (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
       return(fail(sprintf("%s must be a single number", nm)))
     }
   }
-  # a mean or prevalence the caller did not pass at all is no data; a zero the caller passed is
-  # a measurement (an exposure at or below the reference, or nobody exposed: a valid run with
-  # zero attributable cases, as the documentation says)
-  no_scalar_data <- missing(exposure_mean) && missing(exposure_prevalence)
   reference <- suppressWarnings(as.numeric(reference))
   if (!is.character(outcome) || length(outcome) != 1L || is.na(outcome)) {
     return(fail("outcome must be a single outcome name"))
@@ -749,7 +769,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (dir.exists(exposure_csv)) return(fail(sprintf("exposure CSV is a directory, not a file: %s", exposure_csv)))
     empty <- sprintf("%s is empty (expected a column exposure in ug/m3, or a NAPS pull's value + unit)", exposure_csv)
     if (isTRUE(file.size(exposure_csv) == 0)) return(fail(empty))
-    df <- utils::read.csv(exposure_csv, stringsAsFactors = FALSE)
+    df <- utils::read.csv(exposure_csv, stringsAsFactors = FALSE, fileEncoding = "UTF-8-BOM")
     if (!nrow(df)) return(fail(empty))
     if (!"exposure" %in% names(df) && "value" %in% names(df)) {
       # a NAPS pull: hourly `value` in `unit`, converted row by row; NO2 is reported in ppb
@@ -775,6 +795,10 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
       return(fail("CSV missing 'exposure' column (ug/m3); a NAPS pull's 'value' column also works."))
     }
     df$exposure <- suppressWarnings(as.numeric(df$exposure))
+    if (any(df$exposure < 0, na.rm = TRUE)) {
+      n_neg <- sum(df$exposure < 0, na.rm = TRUE)
+      return(fail(sprintf("%d exposure value(s) are negative: a concentration cannot be", n_neg)))
+    }
     es <- exposed_summary(df$exposure)
     exposure_mean <- es$mean
     exposure_prevalence <- es$prevalence
@@ -789,9 +813,8 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     exposure_mean <- as.numeric(exposure_mean)
     exposure_prevalence <- as.numeric(exposure_prevalence)
     data_source <- "scalar arguments"
-    # the defaults (a mean of 0, a prevalence of 0) are no data at all: a call with nothing to
-    # verify, not a clean run with zero deaths; a missing or negative value is a failed
-    # assumption, logged below
+    # neither given is no data at all: a call with nothing to verify, not a clean run with zero
+    # deaths; a missing or negative value is a failed assumption, logged below
     if (no_scalar_data) {
       return(fail(paste("no exposure data: pass exposure_csv, or exposure_mean and exposure_prevalence,",
                         "or demo = TRUE")))
@@ -821,9 +844,11 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     },
     error = function(e) e)
   if (inherits(crf, "error")) return(fail(conditionMessage(crf)))
-  paf <- attributable_fraction(crf$rr, exposure_prevalence,
-                               rr_lower = if (is.finite(crf$rr_lower)) crf$rr_lower,
-                               rr_upper = if (is.finite(crf$rr_upper)) crf$rr_upper)
+  paf <- tryCatch(attributable_fraction(crf$rr, exposure_prevalence,
+                                        rr_lower = if (is.finite(crf$rr_lower)) crf$rr_lower,
+                                        rr_upper = if (is.finite(crf$rr_upper)) crf$rr_upper),
+                  error = function(e) e)
+  if (inherits(paf, "error")) return(fail(conditionMessage(paf)))
   paf_ci <- attr(paf, "ci")
   baseline_per_person <- baseline_rate / 1e5
   exposure_delta <- max(0, exposure_mean - reference)

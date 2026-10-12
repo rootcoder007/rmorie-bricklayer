@@ -677,7 +677,6 @@ recode_manifest <- function(original, recoded, mapping, published = NULL,
   body$body_sha256 <- core_sha256(charToRaw(bricklayer_json_to_json(body)))
   if (!is.null(key)) {
     sig <- capsule_sign(body$body_sha256, key)
-    sig$key_state <- NULL
     body$signature <- unclass(sig)
     body$public_key <- unclass(if (inherits(key, "bricklayer_signing_key")) {
       signing_public_key(key)
