@@ -907,8 +907,9 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' which is where CRAN policy lets a package keep its own configuration. A key reloaded
 #' from disk with a stale \code{next_index} is therefore refused on this machine. Another
 #' path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
-#' environment variable \code{RMBL_XMSS_INDEX_FILE}; \code{""} or \code{FALSE} turns the
-#' file off (the session record stays). The record does not travel with the key, so a key
+#' environment variable \code{RMBL_XMSS_INDEX_FILE}; the option \code{FALSE} (or, except on
+#' Windows, where an empty environment variable is an unset one, the value \code{""}) turns
+#' the file off (the session record stays). The record does not travel with the key, so a key
 #' copied to another machine is not protected by it: save the advanced key after every
 #' signature.
 #'

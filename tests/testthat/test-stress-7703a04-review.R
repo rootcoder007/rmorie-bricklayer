@@ -290,8 +290,10 @@ test_that("Y2b: the XMSS index record persists by default, in the package config
   withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
   expect_identical(rmoriebricklayer:::.rmbl_xmss_index_file(),
                    path.expand(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_index.json")))
-  withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
-  expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+  if (.Platform$OS.type != "windows") {   # Windows unsets an environment variable set to ""
+    withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
+    expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+  }
   withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
   expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
   # the file written by one "session" is read by the next: a reloaded stale key is refused
@@ -345,4 +347,54 @@ test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is ver
   a <- capsule_attest(list(n = 1), xmss_advance(k, s))
   a$signature$key_state <- s$key_state
   expect_warning(capsule_check_attestation(a, list(n = 1)), "carries the signer")
+})
+
+test_that("the refusals of the third pass are exercised: work, keys, credentials, stages", {
+  # a step count that overflows the work estimate is refused before any loop runs
+  expect_error(advection_diffusion_2d(matrix(1, 4, 4), 0, 0, 1, 1, 1, 1, 0.1, 1e308), "not finite")
+  # xmss_advance() refuses what is not a key, not an XMSS signature, or has no index
+  k <- pqc_keygen(height = 2)
+  s <- capsule_sign("m", k)
+  expect_error(xmss_advance(list(), s), "signing key")
+  expect_error(xmss_advance(k, "x"), "XMSS signature")
+  bad <- s
+  bad$index <- NA_integer_
+  expect_error(xmss_advance(k, bad), "no valid index")
+  # with the index file off, signing still works and nothing is saved
+  withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
+  expect_false(rmoriebricklayer:::.rmbl_xmss_used_save())
+  expect_s3_class(capsule_sign("m2", xmss_advance(k, s)), "bricklayer_signature")
+  # a FIPS public-key object is compared by its `public` field
+  a <- capsule_attest(list(n = 1), pqc_keygen(height = 2))
+  fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
+  chk <- capsule_check_attestation(a, list(n = 1), key_expected = fk)
+  expect_false(chk$checks$ok[chk$checks$check == "key_as_expected"])
+})
+
+test_that("the data key follows the services document address; a credentials file that is not an object is reported", {
+  testthat::local_mocked_bindings(.bl_hosted_key = function(...) "sk-data",
+                                  .rmbl_services_data = function(...) list(base_url = "https://data.example.org/"))
+  withr::local_envvar(MORIE_DATA_URL = "https://data.example.org")
+  expect_identical(rmoriebricklayer:::.bl_data_key(), "sk-data")
+  withr::local_envvar(MORIE_DATA_URL = "https://other.example.org")
+  expect_message(expect_null(rmoriebricklayer:::.bl_data_key()), "not sent")
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  cred <- rmoriebricklayer:::.bl_credentials_path()
+  dir.create(dirname(cred), recursive = TRUE, showWarnings = FALSE)
+  writeLines("[1, 2]", cred)
+  expect_error(rmoriebricklayer:::.bl_credentials_raw(), "not a JSON object")
+})
+
+test_that("verify_pollution() turns a failure in the attributable fraction or the burden stage into an error report", {
+  testthat::local_mocked_bindings(attributable_fraction = function(...) stop("paf exploded"))
+  v <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1)
+  expect_identical(v$status, "error")
+  expect_match(v$error, "paf exploded")
+})
+
+test_that("verify_pollution() turns a failure in the burden stage into an error report", {
+  testthat::local_mocked_bindings(mortality_displaced = function(...) stop("stage exploded"))
+  v <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1)
+  expect_identical(v$status, "error")
+  expect_match(v$error, "stage exploded")
 })

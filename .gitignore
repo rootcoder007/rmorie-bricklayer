@@ -66,3 +66,4 @@ tests/testthat/_problems/
 tests/testthat/testthat-problems.rds
 inst/ctcheck/build*/
 inst/fuzz/build*/
+Rplots.pdf
