@@ -140,8 +140,8 @@ test_that("M6: a logical or factor beta is refused by crf_no2 (and every polluti
 test_that("M7: the sub-step cap is on the work, cells x steps x sub-steps, with no off-by-one", {
   small <- matrix(1, 5, 5)
   # 5 x 5 cells needing about 10,001 sub-steps: a tenth of a second of work, so it runs
-  r <- advection_diffusion_2d(small, u = 1e4 + 1, v = 0, kx = 0, ky = 0, dx = 1, dy = 1, dt = 1,
-                              n_steps = 1)
+  r <- suppressWarnings(advection_diffusion_2d(small, u = 1e4 + 1, v = 0, kx = 0, ky = 0, dx = 1, dy = 1, dt = 1,
+                                               n_steps = 1))
   expect_s3_class(r, "rmbl_field")
   expect_equal(r$substeps, 10001L)
   r2 <- suppressWarnings(advection_diffusion_2d(small, u = 1e4, v = 0, kx = 0, ky = 0, dx = 1, dy = 1,
@@ -332,8 +332,11 @@ test_that("D4: thirty notes on a five-inch page all land on the page, on pages o
   f <- withr::local_tempfile(fileext = ".pdf")
   notes <- sprintf("note %d of thirty, a footnote that explains one row of the table", 1:30)
   yoy_pdf(y, f, notes = notes, height = 5)
-  txt <- readLines(f, warn = FALSE, encoding = "latin1")
-  pages <- sum(grepl("/Type /Page$", txt) | grepl("/Type /Page ", txt))
+  # count the page objects from the bytes: readLines() of a PDF stops early on some platforms
+  bytes <- readBin(f, "raw", file.size(f))
+  bytes[bytes == as.raw(0L)] <- as.raw(32L)
+  txt <- rawToChar(bytes)
+  pages <- length(gregexpr("/Type /Page[^s]", txt, useBytes = TRUE)[[1L]])
   expect_gte(pages, 2L)
   # the table rows do not shrink to make room: the notes took pages of their own
   expect_equal(rmoriebricklayer:::.yoy_rows_per_page(5, 0L), rmoriebricklayer:::.yoy_rows_per_page(5, 0L))
@@ -356,6 +359,7 @@ test_that("CLI: a prompt after a bare -- may start with --, and the launcher is 
   expect_identical(seen, "--model")
   launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")
   skip_if(!nzchar(launcher))
+  skip_on_os("windows")  # no execute bit there
   expect_true(file.access(launcher, 1L) == 0L)
 })
 
@@ -367,4 +371,26 @@ test_that("the help never suggests a key on the command line", {
   out <- character()
   bricklayer_cli(c("login", "--help"), out = function(s) out <<- c(out, s))
   expect_false(any(grepl("login --token KEY", out, fixed = TRUE)))
+})
+
+test_that("patch coverage: the territory fallback, an overflowed stability number, a non-object settings file", {
+  known <- function(k) if (identical(k, "FR")) "FR" else NA_character_
+  expect_identical(rmoriebricklayer:::.rmbl_territory_location("MC", known), "FR")
+  expect_identical(rmoriebricklayer:::.rmbl_territory_location("AQ", known), "WORLD")
+  expect_identical(rmoriebricklayer:::.rmbl_territory_location("MC", known, proxies = c(MC = "ZZ")), "WORLD")
+  expect_identical(rmoriebricklayer:::.rmbl_territory_location("MC", known, proxies = c(XX = "FR")), "WORLD")
+  expect_error(advection_diffusion_2d(matrix(1, 4, 4), u = 1e308, v = 0, kx = 0, ky = 0, dx = 1e-308, dy = 1,
+                                      dt = 1e308, n_steps = 1), "not finite")
+  cf_env2()
+  cfg <- rmoriebricklayer:::.bl_config_path()
+  dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)
+  writeLines("{\"route\": \"hosted\"}", cfg)
+  expect_identical(rmoriebricklayer:::.bl_config_object(cfg)$route, "hosted")
+  writeLines("{", cfg)
+  expect_null(rmoriebricklayer:::.bl_config_object(cfg))
+  cred <- rmoriebricklayer:::.bl_credentials_path()
+  writeLines("{\"hosted_key\": \"k\"}", cred)
+  expect_identical(rmoriebricklayer:::.bl_credentials_object(cred)$hosted_key, "k")
+  writeLines("{", cred)
+  expect_null(rmoriebricklayer:::.bl_credentials_object(cred))
 })

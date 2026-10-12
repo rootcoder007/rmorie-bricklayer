@@ -51,7 +51,7 @@
   # `[]`, `"x"` and `5` parse, and an empty array reads as an empty list: only an object will do
   if (!startsWith(trimws(paste(lines, collapse = "")), "{")) return(NULL)
   out <- tryCatch(.rmbl_json_text(lines, simplifyVector = TRUE), error = function(e) NULL)
-  if (!is.list(out) || is.data.frame(out) || (length(out) && is.null(names(out)))) return(NULL)
+  if (!is.list(out)) return(NULL)
   out
 }
 

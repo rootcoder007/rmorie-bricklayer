@@ -339,8 +339,8 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   stab <- abs(ax) + abs(ay) + 2 * (dxn + dyn)
   if (!is.finite(stab)) stop("the stability number is not finite: check u, v, kx, ky, dx, dy and dt", call. = FALSE)
   # the sub-steps that satisfy the bound; the fudge that rounded 10,000 up to 10,001 is gone
-  substeps <- if (stab > 1) max(1, ceiling(stab)) else 1
-  if (stab > 1 && stab / substeps > 1) substeps <- substeps + 1
+  # ceiling(stab) sub-steps of dt / ceiling(stab) give a stability number stab / ceiling(stab) <= 1
+  substeps <- if (stab > 1) ceiling(stab) else 1
   # sub-stepping makes a run outside the bound a solution rather than an explosion, but the cost
   # is the work, cells x steps x sub-steps, not the sub-step count alone: a 5 x 5 grid at 10,001
   # sub-steps runs in a tenth of a second and a 201 x 201 grid at 9,999 takes hours; the limit
