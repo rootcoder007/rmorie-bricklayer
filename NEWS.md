@@ -4,6 +4,77 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Review of 52a8883 (the fifth pass over the branch)
+
+* **A tampered cached table no longer loads when the manifest cannot be fetched at all.** The
+  fourth pass covered only the retry: when the cached manifest was over a day old (or absent)
+  and the server was down, the first manifest read failed, that failure counted as "no digest",
+  and the tampered file loaded and stayed. Now a manifest that cannot be had is never "no
+  digest": the check falls back on the last manifest on disk, however old, and with no copy at
+  all the table cannot be verified and is not kept. A refreshed manifest is written beside the
+  cached one and moved over it only once it parses, so a failed refresh no longer destroys the
+  copy the fallback needs. The fourth pass's NEWS item below overstated what it covered.
+* **The XMSS used-index record is locked by the operating system.** The lock directory of the
+  fourth pass was taken over after 60 s by check-then-delete, which let two signers hold it at
+  once and sign one index (reproduced 1 time in 60), and spun for ever on a lock it could not
+  delete. The record is now locked with `flock()` (Unix) or `LockFileEx()` (Windows) on
+  `xmss_used_indices.txt.flock`, in C: the kernel releases the lock when the process ends, so a
+  crashed session leaves nothing to take over, and the 10 s wait is bounded and draws no random
+  numbers (lock contention no longer moves `set.seed()` streams). A read-only directory is said
+  as such.
+* **The record is written in C and checked.** It is written to a temporary file, flushed to the
+  disk with `fsync()`, size-checked and only then renamed over the old one; a full disk stops
+  the signature and leaves the old record in place (it emptied the record before).
+* **A key's record id is a fingerprint of its secret seed**, not the `root` field it carries: a
+  stale copy whose `root` was upper-cased, padded or swapped is still the same key, and a
+  signature whose `root` does not match the seeds is withheld (its index stays retired).
+* **A key built from given seeds is not registered at birth**: it may have signed elsewhere, so
+  it signs from index 0 only after `xmss_register_key()` vouches for it.
+* **The record of the releases before 0.5.12 is migrated**: `xmss_index.json` next to the record
+  is read and merged, and kept as `xmss_index.json.migrated` once the new record is written; an
+  unreadable one stops signing. Lines of the 0.5.12 pre-release format are read as well.
+* **The record path must be an absolute path to a regular file** (or to one that does not exist
+  yet): `/dev/null`, a directory, `"none"`, `"-"` and relative paths are refused.
+* `xmss_advance()` without `message` accepts a signature index only up to the highest index the
+  record shows this key has used here, so an edited index cannot burn the leaves in between; a
+  bundle is accepted as documented; a damaged `next_index` is a clear error.
+  `xmss_forget_used_indices(key)` takes the signing key (the record is keyed by its seed).
+  The help says what to do in CI or a container with a fresh home directory.
+* `verify_pollution()` reads gzip, bzip2 and xz CSVs again (the byte reader of the fourth pass
+  refused them as "NUL bytes"), decodes UTF-16 without a byte-order mark, and stops on a parse
+  problem such as an unbalanced quote instead of returning the rows before it (status ok with
+  mean 12.2 instead of 36). The decoded text is parsed from a file, not a text connection, so a
+  large file is no longer several times slower, and it is held once rather than with a
+  file-sized logical vector beside it.
+* A baseline rate below one per 100,000 is accepted when its unit is given
+  (`baseline_rate_per = 1e5` for a rare outcome, `1` for a rate per person-year); the note now
+  says which to pass. Exposure cells that are text rather than numbers (`"<2"`) stop the run and
+  are named, since dropping them biased the mean and the prevalence; empty and missing cells are
+  dropped and the report prints how many. `exposure_csv` with `demo = TRUE`, a population above
+  ten billion and an empty income column are handled with a reason.
+* `credentials.json` is validated with the real parser before it is edited, and the edited text
+  is parsed again before it is written: bare words, missing or trailing commas, trailing
+  garbage and duplicate keys are refused instead of written into (every later read failed).
+* `rmbl config setup` reads the MORIE key and your own API key without echo, and the echo is
+  switched off and on by the shell child itself, so Ctrl-C cannot leave the terminal silent;
+  Ctrl-C at any prompt exits 130. A key given on the command line (`login --token KEY`) is
+  warned about. `data list`, `data pull`, `functions`, `config path` and `config setup` refuse
+  extra arguments. `config reset` moves a readable file only with `--force`, never overwrites an
+  earlier backup, and is listed in the help.
+* `hurwitz_zeta()` sums a negative `q` in closed form: no cap, no billion-term sum, and none of
+  the cancellation that returned 0 for `s = 5` at `q = -99999.5`; below `s = 1` it returns the
+  analytic continuation (`hurwitz_zeta(0.5, 0.5)` is -0.6049).
+* `lagrangian_particles()` has the `max_work` cap of `advection_diffusion_2d()` (particles x
+  steps); `gaussian_plume()` and `gaussian_puff()` take at most 1,000 lid image pairs; a step
+  count above 2^31 no longer fails in the report title.
+* Bar labels cut to fit stay distinct (a number tells apart levels the cut made identical), a
+  real level named `(missing)` keeps its name, and labels are cut to the device's width.
+* `print()` of an attestation or bundle written by 0.5.9 to 7703a04 warns that it carries the
+  signer's private key. `fips_verify_mu()` returns `FALSE` for an edited verifier key instead of
+  an error, and a scheme given as two names is refused. `hill_tail_index(x_min = factor(...))`,
+  `cramers_v(bias_correct = "abc")`, `cramers_v(min_expected = NA)`, `plot_funnel()` with a bad
+  `levels` or `target` and `pollution_report_text()` of a non-report are refused with a reason.
+
 ## Review of fcdce03 (the fourth pass over the branch)
 
 * **A tampered cached table loaded when the manifest could not be re-read.** The digest retry
@@ -27,8 +98,8 @@ claims the earlier fixes overstated corrected.
   forget one key and is documented as removing the protection. Examples and vignettes point
   the record at a temporary file so checks and builds leave the configuration directory alone.
 * `verify_pollution()` reads the exposure CSV whole: UTF-16 is decoded, a UTF-8 BOM dropped, a
-  file that is not UTF-8 read as Latin-1 and said, NUL bytes refused; nothing stops part-way
-  and reports the rows before the stop as the data. `population = NULL` or `baseline_rate =
+  file that is not UTF-8 read as Latin-1 and said, NUL bytes refused (the fifth pass found a
+  quote that swallowed the rest of the file still did, and that compressed files were refused). `population = NULL` or `baseline_rate =
   NULL` is an error report with a reason. `baseline_rate` may be zero (a measured zero);
   a value between 0 and 1 per 100,000 fails the assumption and suggests `baseline_rate_per =
   1`, the new argument for a rate quoted per person-year.

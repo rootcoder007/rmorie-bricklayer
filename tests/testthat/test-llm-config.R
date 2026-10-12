@@ -166,7 +166,7 @@ test_that("`config setup` walks through the settings and saves the answers", {
   cf_env()
   answers <- c("ollama", "http://192.168.1.20:11434", "qwen3:8b")
   testthat::local_mocked_bindings(
-    .bl_readline = function(prompt, con = NULL) {
+    .bl_readline = function(prompt, con = NULL, ...) {
       a <- answers[1L]
       answers <<- answers[-1L]
       if (is.na(a)) "" else a
@@ -202,7 +202,7 @@ test_that("`config setup` on auto covers the hosted key, its model and your own 
   answers <- c("auto", "sk-typed-key-1234", "glm-5.2:cf", "off", "",
                "http://localhost:1234/v1", "local-model", "sk-own-key-5678")
   testthat::local_mocked_bindings(
-    .bl_readline = function(prompt, con = NULL) {
+    .bl_readline = function(prompt, con = NULL, ...) {
       a <- answers[1L]
       answers <<- answers[-1L]
       if (is.na(a)) "" else a

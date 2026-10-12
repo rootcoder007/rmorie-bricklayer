@@ -326,9 +326,11 @@ bricklayer_llm_config <- function(...) {
       out(paste0(.bl_config_effective(k), "\n"))
     },
     reset = {
-      moved <- .bl_config_reset()
+      force <- identical(args, "--force")
+      if (length(args) && !force) usage_error(sprintf("usage: %s config reset [--force]", prog))
+      moved <- .bl_config_reset(force = force)
       out(if (is.null(moved)) "no settings file to move aside\n" else
-            sprintf("moved the unreadable settings aside to %s; the defaults apply until you set something\n", moved))
+            sprintf("moved the settings aside to %s; the defaults apply until you set something\n", moved))
     },
     set = {
       k <- need_key()
@@ -347,9 +349,16 @@ bricklayer_llm_config <- function(...) {
       do.call(bricklayer_llm_config, stats::setNames(list(NULL), k))
       out(sprintf("%s = %s\n", k, .bl_config_effective(k)))
     },
-    path = out(paste0(.bl_config_path(), "\n")),
-    setup = .bl_config_setup(out),
-    usage_error(sprintf("usage: %s config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path]", prog))
+    path = {
+      if (length(args)) usage_error(sprintf("usage: %s config path", prog))
+      out(paste0(.bl_config_path(), "\n"))
+    },
+    setup = {
+      if (length(args)) usage_error(sprintf("usage: %s config setup", prog))
+      .bl_config_setup(out)
+    },
+    usage_error(sprintf(paste("usage: %s config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path |",
+                              "reset [--force]]"), prog))
   )
   invisible(0L)
 }
@@ -357,8 +366,9 @@ bricklayer_llm_config <- function(...) {
 # `rmbl config setup`: one question per route, Enter keeps what is there.
 .bl_config_setup <- function(out) {
   prog <- .bl_prog()
-  ask <- function(q, current = "") {
-    a <- .bl_readline(sprintf("%s%s: ", q, if (nzchar(current)) sprintf(" [%s]", current) else ""))
+  ask <- function(q, current = "", secret = FALSE) {
+    # a key is typed without echo, like `login --token` (review of 52a8883, B6)
+    a <- .bl_readline(sprintf("%s%s: ", q, if (nzchar(current)) sprintf(" [%s]", current) else ""), secret = secret)
     if (nzchar(a)) a else current
   }
   set <- function(...) bricklayer_llm_config(...)
@@ -370,7 +380,7 @@ bricklayer_llm_config <- function(...) {
     if (is.null(.bl_hosted_key())) {
       out(sprintf("\nThe hosted tier needs a MORIE key: `%s login` (GitHub or an emailed code),\n", prog))
       out("or paste one issued at https://www.rmorie.com/access here.\n")
-      k <- ask("MORIE key (Enter to skip)")
+      k <- ask("MORIE key (Enter to skip)", secret = TRUE)
       if (nzchar(k)) set(hosted.key = k)
     }
     if (!is.null(.bl_hosted_key())) {
@@ -392,7 +402,7 @@ bricklayer_llm_config <- function(...) {
     set(own.url = u)
     if (nzchar(u)) {
       set(own.model = ask("Model on that server", .bl_env1("MORIE_LLM_MODEL") %||% ""))
-      k <- ask("API key for it (Enter for none or to keep)")
+      k <- ask("API key for it (Enter for none or to keep)", secret = TRUE)
       if (nzchar(k)) set(own.key = k)
     }
   }
@@ -423,10 +433,27 @@ bricklayer_llm_config <- function(...) {
 
 # The recovery path for a settings file the package refuses to read: it is moved aside, never
 # deleted, and the path of the copy is returned (NULL when there is no file).
-.bl_config_reset <- function() {
+.bl_config_reset <- function(force = FALSE) {
   p <- .bl_config_path()
   if (!file.exists(p)) return(NULL)
-  aside <- paste0(p, ".broken-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+  readable <- tryCatch({
+    .bl_read_config()
+    TRUE
+  }, error = function(e) FALSE)
+  # a file that reads fine holds settings someone chose: it is moved only when asked twice
+  if (readable && !isTRUE(force)) {
+    stop(sprintf(paste("%s reads fine; `config reset` moves aside only a file that cannot be read.",
+                       "To start from the defaults anyway: %s config reset --force"), p, .bl_prog()), call. = FALSE)
+  }
+  stamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
+  base <- paste0(p, if (readable) ".reset-" else ".broken-", stamp)
+  aside <- base
+  k <- 1L
+  # two resets in one second: the second backup gets its own name, the first is not overwritten
+  while (file.exists(aside)) {
+    aside <- paste0(base, "-", k)
+    k <- k + 1L
+  }
   if (!isTRUE(file.rename(p, aside))) stop(sprintf("could not move %s aside", p), call. = FALSE)
   aside
 }

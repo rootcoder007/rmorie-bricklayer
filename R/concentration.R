@@ -165,7 +165,10 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
     v <- get(flag, inherits = FALSE)
     if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", flag), call. = FALSE)
   }
-  if (is.logical(x_min)) stop("`x_min` must be numeric, not logical", call. = FALSE)
+  # a factor's level code is not a threshold (x_min = factor("3") fitted from 1, review of 52a8883)
+  if (is.logical(x_min) || is.factor(x_min) || is.character(x_min)) {
+    stop("`x_min` must be numeric, not logical, a factor or text", call. = FALSE)
+  }
   x <- .rmbl_num(x, "x")
   x <- x[is.finite(x) & x > 0]
   if (!length(x)) {
@@ -268,9 +271,12 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 #' at `q`, which is why it is here; `zeta(s, 1)` is the Riemann
 #' zeta.
 #'
-#' @param s Exponent, which must exceed 1 for the series to
-#' converge.
-#' @param q Lower limit, which must be positive.
+#' @param s Exponent. The series converges for \code{s > 1}; below 1 the value is
+#' the analytic continuation (so \code{hurwitz_zeta(0.5, 0.5)} is \eqn{-0.6049}), and
+#' \code{s = 1} is a pole (\code{NA}).
+#' @param q Lower limit: any real number but zero or a negative integer (poles, \code{NA}).
+#' For a negative non-integer \code{q} the value is real only for a whole \code{s}; a
+#' fractional \code{s} gives \code{NA}.
 #' @return A numeric vector the length of `s`.
 #' @references
 #' The Euler-Maclaurin expansion used here -- direct terms to `q + N`,
@@ -300,18 +306,52 @@ hurwitz_zeta <- function(s, q = 1) {
   q <- .rmbl_num_input(q, "q", allow_null = FALSE)
   if (length(q) != 1L || !is.finite(q)) stop("`q` must be a single finite number", call. = FALSE)
   s <- .rmbl_num_input(s, "s")
-  if (q > 0) return(.rmbl_hurwitz(s, q))
-  # q <= 0: the series has terms (n + q)^-s with n + q <= 0, a pole at a non-positive integer
-  # and otherwise the finite sum of those terms plus zeta(s, q + m) with q + m in (0, 1]
+  if (q > 0) return(.rmbl_hurwitz_any(s, q))
   if (q == round(q)) return(rep(NA_real_, length(s)))  # a pole, like s = 1: no value to return
-  m <- ceiling(-q)
-  # the recurrence sums m = ceiling(-q) terms: a q of -1e9 would ask for a billion of them
-  if (m > 1e6) {
-    stop(sprintf("`q` = %s is below -1e6: the recurrence to a positive argument would sum %s terms", format(q),
-                 format(m, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  # q = -N + f with 0 < f < 1. The terms (q + n)^-s with q + n < 0 have absolute values
+  # 1 - f, 2 - f, ..., N - f, so for a whole s their sum is (-1)^s (zeta(s, 1 - f) -
+  # zeta(s, N + 1 - f)) and the rest is zeta(s, f): no billion-term sum, and none of the
+  # cancellation that summed the terms one by one lost every digit (s = 5 at q = -99999.5 came
+  # back as 0, review of 52a8883, A7). For a fractional s a negative base has a complex power.
+  f <- q - floor(q)
+  N <- -floor(q)
+  vapply(s, function(si) {
+    if (!is.finite(si) || si != round(si) || si == 1) return(NA_real_)
+    sgn <- if (si %% 2 == 0) 1 else -1
+    # the two terms that cancel (exactly, for an odd s at f = 1/2) are added first, the small tail last
+    (.rmbl_hurwitz_any(si, f) + sgn * .rmbl_hurwitz_any(si, 1 - f)) - sgn * .rmbl_hurwitz_any(si, N + 1 - f)
+  }, numeric(1))
+}
+
+# zeta(s, q) for q > 0 and every s but the pole s = 1: the C series for s > 1, and below 1 the
+# analytic continuation by Euler-Maclaurin (shift M terms, then the integral, the half term and
+# twelve Bernoulli corrections; exact for a non-positive integer s once M exceeds |s|).
+.rmbl_hurwitz_any <- function(s, q) {
+  out <- rep(NA_real_, length(s))
+  hi <- is.finite(s) & s > 1
+  if (any(hi)) out[hi] <- .rmbl_hurwitz(s[hi], q)
+  lo <- which(is.finite(s) & s < 1)
+  if (length(lo)) {
+    from_c <- .rmbl_hurwitz(s[lo], q)
+    out[lo] <- from_c
+    lo <- lo[is.na(from_c)]
   }
-  head <- vapply(s, function(si) sum((q + seq_len(m) - 1)^(-si)), numeric(1))
-  head + .rmbl_hurwitz(s, q + m)
+  b2k <- c(1 / 6, -1 / 30, 1 / 42, -1 / 30, 5 / 66, -691 / 2730, 7 / 6, -3617 / 510, 43867 / 798,
+           -174611 / 330, 854513 / 138, -236364091 / 2730)
+  for (i in lo) {
+    si <- s[[i]]
+    M <- max(20, ceiling(abs(si)) + 20)
+    x <- q + M
+    val <- sum((q + seq_len(M) - 1)^(-si)) + x^(1 - si) / (si - 1) + x^(-si) / 2
+    poch <- si
+    for (k in seq_along(b2k)) {
+      j <- 2 * k
+      if (k > 1) poch <- poch * (si + j - 3) * (si + j - 2)
+      val <- val + b2k[[k]] / factorial(j) * poch * x^(-si - j + 1)
+    }
+    out[[i]] <- val
+  }
+  out
 }
 
 .rmbl_hurwitz <- function(s, q) {
@@ -390,6 +430,13 @@ hurwitz_zeta <- function(s, q = 1) {
 #'   restored afterwards.
 #' @export
 cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
+  # "abc" silently meant FALSE, and an NA threshold failed deep inside (review of 52a8883)
+  if (!is.logical(bias_correct) || length(bias_correct) != 1L || is.na(bias_correct)) {
+    stop("`bias_correct` must be TRUE or FALSE", call. = FALSE)
+  }
+  if (!is.numeric(min_expected) || length(min_expected) != 1L || !is.finite(min_expected) || min_expected < 0) {
+    stop("`min_expected` must be a single non-negative number", call. = FALSE)
+  }
   if (is.null(tbl) || !is.numeric(as.matrix(tbl)) ||
         any(!is.finite(as.matrix(tbl))) || any(as.matrix(tbl) < 0)) {
     stop("`tbl` must be a matrix or table of finite non-negative counts",

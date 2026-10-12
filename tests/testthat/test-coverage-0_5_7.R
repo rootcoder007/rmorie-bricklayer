@@ -600,7 +600,7 @@ test_that("signing helpers: keys without halves, contexts, pre-hash names", {
   sg2$signature <- NULL
   expect_false(fips_verify_mu(mk, fips_mu(mk, "m"), sg2))
   slh <- fips_keygen("SLH-DSA-SHAKE-128f")
-  expect_error(fips_verify_mu(slh, raw(64), sg), "ML-DSA interface")
+  expect_false(fips_verify_mu(slh, raw(64), sg))   # not an ML-DSA key: not verified (review of 52a8883)
   expect_identical(.rmbl_fips_prehash(NULL), "none")
   expect_identical(.rmbl_fips_context(as.raw(1:3)), as.raw(1:3))
   kk <- kem_keygen(512L)

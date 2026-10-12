@@ -72,7 +72,8 @@ lagrangian_particles(
   n_steps,
   seed = 0,
   grid = NULL,
-  normals = NULL
+  normals = NULL,
+  max_work = 1e+08
 )
 }
 \arguments{
@@ -123,7 +124,8 @@ vectors.}
 
 \item{source}{Source grid (concentration per unit time), or \code{NULL}.}
 
-\item{max_work}{The most cell updates (cells x steps x sub-steps) a run may take, 100
+\item{max_work}{The most cell updates (cells x steps x sub-steps; for
+\code{lagrangian_particles()}, particles x steps) a run may take, 100
 million by default (a few minutes of the explicit loop); \code{Inf} lifts it. The
 same physical run costs the same whether the caller sub-steps it or the scheme does,
 so the cap reads the same either way.}
@@ -158,7 +160,8 @@ draws as an image; \code{lagrangian_particles()} a list of class
 \code{plot()} draws as points. Every physical input is
 checked: emission rates, masses, heights and distances are non-negative,
 wind speed, travel time and grid steps positive, \code{n_images} a
-whole number, the stack hotter than the air, and \code{x0}, \code{y0}
+whole number up to 1,000, the stack as hot as the air or hotter,
+and \code{x0}, \code{y0}
 single numbers; a release above \code{mixing_height} warns.
 \code{lagrangian_particles()}: a list with \code{x}, \code{y},
 \code{mean_x}, \code{mean_y} and, with a grid, \code{concentration}.

@@ -239,7 +239,7 @@ test_that("the Hurwitz zeta matches its published values", {
   expect_equal(hurwitz_zeta(60), 1, tolerance = 1e-12)
   # outside the domain of convergence there is no value to return
   expect_true(is.na(hurwitz_zeta(1)))
-  expect_true(is.na(hurwitz_zeta(0.5)))
+  expect_true(isTRUE(all.equal(hurwitz_zeta(0.5), -1.4603545088095868)))
   expect_true(is.na(hurwitz_zeta(2, 0)))
   expect_true(is.na(hurwitz_zeta(2, -1)))
 })

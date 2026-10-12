@@ -154,6 +154,13 @@ capsule_verify("manifest-2", s2, signing_public_key(xkey))
 capsule_verify("manifest-1", s2, signing_public_key(xkey))
 ```
 
+The key is a value, so an old copy of it still says an old `next_index`. The package therefore
+also keeps a record of the highest index each key has used on this machine (`?xmss_advance`
+says where), and refuses a used index even from a stale copy. A key generated here is entered
+at birth; a key from another machine, one rebuilt from its seeds, or one used in a CI job or a
+container with a fresh home directory is unknown to the record and must be vouched for once
+with `xmss_register_key(key)` before it signs from index 0.
+
 ## Every way of being wrong returns FALSE
 
 Verification returns `FALSE` for every signature of the right shape that does not verify: a

@@ -75,7 +75,7 @@ test_that("Z8: two processes signing with copies of one key cannot both take an 
   kf <- withr::local_tempfile(fileext = ".rds")
   k0 <- pqc_keygen(height = 3)
   saveRDS(k0, kf)
-  kid0 <- paste0(k0$root, ":", k0$pub_seed)
+  kid0 <- xmss_kid(k0)
   lib <- paste(.libPaths(), collapse = .Platform$path.sep)
   child <- function(key_file, msg, expr) {
     sprintf(paste0("suppressMessages(library(rmoriebricklayer, lib.loc = strsplit('%s', '%s', fixed = TRUE)[[1]]));",
@@ -108,7 +108,7 @@ test_that("Z8: two processes signing with copies of one key cannot both take an 
   }
   expect_true(wait_for(outs))
   rec <- rmoriebricklayer:::.rmbl_xmss_record_read(idx)
-  kids <- c(paste0(k1$root, ":", k1$pub_seed), paste0(k2$root, ":", k2$pub_seed))
+  kids <- c(xmss_kid(k1), xmss_kid(k2))
   expect_true(all(kids %in% names(rec)))   # neither process wiped the other's line
   expect_identical(unname(rec[kids]), c(0L, 0L))
 })
@@ -118,7 +118,7 @@ test_that("Z2 and Z3: the record fails closed; the off switch warns; a non-path 
   withr::local_options(rmoriebricklayer.xmss_index_file = f)
   k <- pqc_keygen(height = 2)
   s1 <- capsule_sign("first", k)
-  kid <- paste0(k$root, ":", k$pub_seed)
+  kid <- xmss_kid(k)
   expect_identical(rmoriebricklayer:::.rmbl_xmss_record_read(f), stats::setNames(0L, kid))
   bad_records <- list(sprintf('{"%s": "abc"}', kid), paste0(kid, "\tabc"), paste0(kid, "\t-2"),
                       paste0(kid, "\t1e10"), paste0(kid, "\t[5, 9]"), "{}")
@@ -137,24 +137,23 @@ test_that("Z2 and Z3: the record fails closed; the off switch warns; a non-path 
   expect_false(file.exists(f))
   elsewhere <- withr::with_options(list(rmoriebricklayer.xmss_index_file = withr::local_tempfile(fileext = ".txt")),
                                    pqc_keygen(height = 2))
-  rm(list = paste0(elsewhere$root, ":", elsewhere$pub_seed), envir = rmoriebricklayer:::.rmbl_xmss_used)
+  rm(list = xmss_kid(elsewhere), envir = rmoriebricklayer:::.rmbl_xmss_used)
   expect_error(capsule_sign("x", elsewhere), "not in the used-index record")
   expect_identical(xmss_register_key(elsewhere), elsewhere)
   expect_identical(as.integer(capsule_sign("x", elsewhere)$index), 0L)
   expect_error(xmss_register_key(elsewhere), "has signed here before")
   expect_error(xmss_register_key("x"), "signing key")
   writeLines(paste(kid, 0L, sep = "\t"), f)
-  # the lock is released after a refusal and after a signature
-  expect_false(dir.exists(paste0(f, ".lock")))
+  # the operating-system lock is released after a refusal and after a signature: the next one
+  # takes it at once
   k2 <- xmss_advance(k, s1)
   expect_identical(as.integer(capsule_sign("second", k2)$index), 1L)
-  expect_false(dir.exists(paste0(f, ".lock")))
-  # a lock left by a dead process is taken over
+  # a lock directory left by 0.5.12-pre is not the lock any more and stops nothing
   dir.create(paste0(f, ".lock"))
   Sys.setFileTime(paste0(f, ".lock"), Sys.time() - 3600)
   k3 <- xmss_advance(k2, s1)
   expect_identical(as.integer(capsule_sign("third", k3)$index), 2L)
-  expect_false(dir.exists(paste0(f, ".lock")))
+  expect_true(file.exists(paste0(f, ".flock")))
   # off: every signature warns, and the session alone remembers
   withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
   k4 <- pqc_keygen(height = 2)
@@ -195,10 +194,10 @@ test_that("xmss_advance() checks what it is given and consults the record", {
   capsule_sign("o", other)
   xmss_forget_used_indices(k)
   rec <- rmoriebricklayer:::.rmbl_xmss_record_read(f)
-  expect_identical(rec[[paste0(other$root, ":", other$pub_seed)]], 0L)
-  expect_identical(rec[[paste0(k$root, ":", k$pub_seed)]], -1L)
+  expect_identical(rec[[xmss_kid(other)]], 0L)
+  expect_identical(rec[[xmss_kid(k)]], -1L)
   expect_identical(as.integer(capsule_sign("again", k)$index), 0L)
-  expect_error(xmss_forget_used_indices("x"), "must be an XMSS key")
+  expect_error(xmss_forget_used_indices("x"), "must be the signing key")
 })
 
 test_that("Z11: every example and vignette that signs with XMSS points the record at a temporary file", {
@@ -259,8 +258,10 @@ test_that("Z4: a Latin-1 or UTF-16 exposure CSV is read whole, never cut at the 
 })
 
 test_that("Z9 and Z7: hurwitz_zeta() refuses a q below -1e6 at once; the sibling guards refuse flags and factors", {
+  # a q far below zero is summed in closed form now: fast, and to full precision (review of 52a8883)
   t0 <- Sys.time()
-  expect_error(hurwitz_zeta(2, q = -1e9 + 0.5), "below -1e6")
+  closed <- hurwitz_zeta(2, 0.5) + hurwitz_zeta(2, 0.5) - hurwitz_zeta(2, 1e9 + 0.5)
+  expect_equal(hurwitz_zeta(2, q = -1e9 + 0.5), closed, tolerance = 1e-12)
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 2)
   expect_equal(hurwitz_zeta(2, q = -0.5), 8.934802200544679, tolerance = 1e-9)
   expect_error(hurwitz_zeta(2, q = TRUE), "logical")
@@ -387,10 +388,13 @@ test_that("section 1 leftovers: verify_pollution() takes one exposure source and
   v <- verify_pollution("pm25", exposure_mean = 25 + 0i, exposure_prevalence = 1)
   expect_identical(v$status, "error")
   f <- withr::local_tempfile(fileext = ".csv")
-  writeLines(c("exposure,income", "30,1", "n/a,2", "40,3", "forty,4"), f)
-  expect_message(v <- verify_pollution("pm25", exposure_csv = f), "2 exposure row")
+  # a missing value is dropped and counted; text that is not a number stops the run (52a8883)
+  writeLines(c("exposure,income", "30,1", "n/a,2", "40,3", ",4"), f)
+  expect_message(v <- verify_pollution("pm25", exposure_csv = f), "2 row\\(s\\) have no exposure value")
   expect_identical(v$status, "ok")
   expect_identical(v$inputs$dropped_rows, 2L)
+  writeLines(c("exposure,income", "30,1", "forty,4"), f)
+  expect_match(verify_pollution("pm25", exposure_csv = f)$error, "are text")
   # income on one row only: the equity index is skipped, the report still comes
   writeLines(c("exposure,income", "30,1", "40,NA", "35,NA"), f)
   v <- verify_pollution("pm25", exposure_csv = f)
@@ -542,7 +546,7 @@ test_that("the branch's refusals that codecov found untested are exercised", {
   rec <- withr::local_tempfile(fileext = ".txt")
   writeLines(c("", "  ", ""), rec)
   expect_identical(rmoriebricklayer:::.rmbl_xmss_record_read(rec), integer(0))
-  kid <- paste0(k$root, ":", k$pub_seed)
+  kid <- xmss_kid(k)
   writeLines(c(paste(kid, 0L, sep = "\t"), paste(kid, 3L, sep = "\t"), paste(kid, 1L, sep = "\t")), rec)
   got <- rmoriebricklayer:::.rmbl_xmss_record_read(rec)
   expect_identical(unname(got), 3L)
@@ -550,9 +554,12 @@ test_that("the branch's refusals that codecov found untested are exercised", {
 })
 
 test_that("a rename that fails is an error for the record, the credentials file and the settings reset", {
-  testthat::local_mocked_bindings(file.rename = function(from, to) FALSE, .package = "base")
+  # the record is replaced in C (rmbl_flock.c): a non-empty directory in its place cannot be
+  # renamed over, a real failure rather than a mocked one
   rec <- withr::local_tempfile(fileext = ".txt")
+  dir.create(file.path(rec, "inside"), recursive = TRUE)
   expect_error(rmoriebricklayer:::.rmbl_xmss_record_write(rec, stats::setNames(1L, "k")), "could not write")
+  testthat::local_mocked_bindings(file.rename = function(from, to) FALSE, .package = "base")
   cred <- withr::local_tempfile(fileext = ".json")
   expect_error(rmoriebricklayer:::.bl_write_private_text(cred, "{}"), "could not write")
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
@@ -560,15 +567,25 @@ test_that("a rename that fails is an error for the record, the credentials file 
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   writeLines("[1]", p)
   expect_error(rmoriebricklayer:::.bl_config_reset(), "could not move")
+  expect_error(rmoriebricklayer:::.bl_config_reset(force = TRUE), "could not move")
 })
 
 test_that("a live lock held by another process is waited for and then reported", {
   skip_on_cran()
+  skip_on_os("windows")
   rec <- withr::local_tempfile(fileext = ".txt")
-  lock <- paste0(rec, ".lock")
-  dir.create(lock)
-  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+  ready <- withr::local_tempfile()
+  # another process holds the operating-system lock for longer than the 10 s wait
+  job <- parallel::mcparallel({
+    fd <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, paste0(rec, ".flock"), 0L)
+    file.create(ready)
+    Sys.sleep(14)
+    .Call(rmoriebricklayer:::C_rmbl_flock_release, fd)
+  })
+  for (i in 1:250) if (!file.exists(ready)) Sys.sleep(0.02)
   t0 <- Sys.time()
   expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE), "could not lock")
   expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 9)
+  parallel::mccollect(job, wait = TRUE)
+  expect_true(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE))
 })
