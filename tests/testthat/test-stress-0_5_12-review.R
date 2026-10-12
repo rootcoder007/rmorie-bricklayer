@@ -338,8 +338,12 @@ test_that("D4: thirty notes on a five-inch page all land on the page, on pages o
   txt <- rawToChar(bytes)
   pages <- length(gregexpr("/Type /Page[^s]", txt, useBytes = TRUE)[[1L]])
   expect_gte(pages, 2L)
-  # the table rows do not shrink to make room: the notes took pages of their own
-  expect_equal(rmoriebricklayer:::.yoy_rows_per_page(5, 0L), rmoriebricklayer:::.yoy_rows_per_page(5, 0L))
+  # the table rows do not shrink to make room: thirty notes on a 5-inch page would leave
+  # room for fewer rows than the table has, so they took pages of their own and the table
+  # kept the rows of a note-free page, which hold all ten
+  expect_lt(rmoriebricklayer:::.yoy_rows_per_page(5, 30L), nrow(d))
+  expect_gte(rmoriebricklayer:::.yoy_rows_per_page(5, 0L), nrow(d))
+  expect_gt(rmoriebricklayer:::.yoy_rows_per_page(5, 0L), rmoriebricklayer:::.yoy_rows_per_page(5, 30L))
 })
 
 test_that("CLI: a prompt after a bare -- may start with --, and the launcher is executable", {

@@ -183,9 +183,9 @@ briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient
          call. = FALSE)
   }
   g <- .ad_num(g, "g", positive = TRUE)
-  if (stack_temp <= ambient_temp) {
-    stop("`stack_temp` must exceed `ambient_temp`: Briggs' formulas describe a buoyant plume, ",
-         "and a stack cooler than the air has no buoyancy flux", call. = FALSE)
+  if (stack_temp < ambient_temp) {
+    stop("`stack_temp` is below `ambient_temp`: Briggs' formulas describe a buoyant plume, so ",
+         "the stack must be as hot as the air or hotter (equal gives no rise)", call. = FALSE)
   }
   if (!is.null(dtheta_dz)) dtheta_dz <- .ad_num(dtheta_dz, "dtheta_dz", positive = TRUE)
   F_ <- g * exit_velocity * diameter^2 * (stack_temp - ambient_temp) / (4 * stack_temp)

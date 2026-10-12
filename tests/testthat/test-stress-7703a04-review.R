@@ -242,6 +242,8 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   expect_equal(hurwitz_zeta(2, q = -0.5), 8.934802200544679, tolerance = 1e-9)
   expect_true(is.na(hurwitz_zeta(2, q = -1)))
   expect_error(top_share(c(1, 2, 3), fractions = 1.5), "shares in")
+  expect_identical(top_share(c(1, 2, 3), fractions = 0)$units, 0L)
+  expect_true(apply_schema_validation(data.frame(a = 1), NULL))
   expect_error(hill_tail_index(c(1, 5, 9, 20, 50), x_min = c(1, 2)), "single threshold")
   expect_error(rapl_available(NA), "single directory")
 })
@@ -257,4 +259,79 @@ test_that("the earlier round's weak tests, sharpened", {
   expect_identical(length(gregexpr("/Type /Page[^s]", rawToChar(bytes), useBytes = TRUE)[[1L]]), 2L)
   # plots: the frequency path with an NA level (above) and the margin helper
   expect_true(is.finite(rmoriebricklayer:::.bl_left_margin(labels = c(NA, "a"))))
+})
+
+test_that("stress battery on 4b4af29: scheme edits on an HMAC secret, recorded FIPS fields, a missing reference", {
+  s <- capsule_sign("m", "secret", scheme = "hmac")
+  for (bad in list(NULL, "xmss-sha256", "ML-DSA-44", 5, NA)) {
+    t <- s
+    t$scheme <- bad
+    expect_false(capsule_verify("m", t, "secret"), info = deparse(bad))
+  }
+  f <- fips_keygen("ML-DSA-44")
+  fs <- capsule_sign("m", f)
+  expect_true(capsule_verify("m", fs, f))
+  for (bad in list(5, c("a", "b"), list(1), NA_character_)) {
+    t <- fs
+    t$context <- bad
+    expect_false(capsule_verify("m", t, f), info = deparse(bad))
+    t <- fs
+    t$prehash <- bad
+    expect_false(capsule_verify("m", t, f), info = deparse(bad))
+  }
+  for (r in list(NA, NaN)) {
+    v <- verify_pollution("no2", exposure_mean = 25, exposure_prevalence = 1, reference = r)
+    expect_identical(v$status, "assumption_failure")
+  }
+})
+
+test_that("Y2b: the XMSS index record persists by default, in the package config directory", {
+  withr::local_options(rmoriebricklayer.xmss_index_file = NULL)
+  withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
+  expect_identical(rmoriebricklayer:::.rmbl_xmss_index_file(),
+                   path.expand(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_index.json")))
+  withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
+  expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+  withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
+  expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
+  # the file written by one "session" is read by the next: a reloaded stale key is refused
+  f <- withr::local_tempfile(fileext = ".json")
+  withr::local_options(rmoriebricklayer.xmss_index_file = f)
+  k <- pqc_keygen(height = 2)
+  saved <- k
+  a <- capsule_attest(list(n = 1), k)
+  expect_true(file.exists(f))
+  xmss_forget_used_indices()   # removes the file too; recreate the record as another session would
+  rmoriebricklayer:::.bl_write_private_json(f, setNames(list(a$signature$index), paste0(k$root, ":", k$pub_seed)))
+  expect_error(capsule_attest(list(n = 2), saved), "already used")
+  expect_s3_class(capsule_attest(list(n = 2), xmss_advance(saved, a$signature)), "bricklayer_attestation")
+  # a file that is not a JSON object is reported, not read around
+  xmss_forget_used_indices()
+  writeLines("[1, 2]", f)
+  expect_error(capsule_sign("m", pqc_keygen(height = 2)), "not a JSON object")
+  xmss_forget_used_indices()
+})
+
+test_that("a stack at ambient temperature has no buoyancy and no rise, a cooler one is refused", {
+  r <- briggs_plume_rise(c(0, 100, 1000), 3, 2, 10, 290, 290)
+  expect_identical(r$flux, 0)
+  expect_identical(r$rise, c(0, 0, 0))
+  expect_error(briggs_plume_rise(100, 3, 2, 10, 280, 290), "hotter")
+})
+
+test_that("a line typed at a terminal in a non-interactive session is read by a shell child, so Ctrl-C lands", {
+  skip_on_os("windows")
+  calls <- character()
+  testthat::local_mocked_bindings(.bl_interactive = function() FALSE, .bl_stdin_tty = function() TRUE)
+  testthat::local_mocked_bindings(
+    system2 = function(command, args = character(), ...) {
+      calls <<- c(calls, command)
+      if (identical(command, "sh")) " sk-typed " else invisible(0L)
+    },
+    .package = "base"
+  )
+  msg <- utils::capture.output(got <- .bl_readline("key> "), type = "message")
+  expect_equal(got, "sk-typed")
+  expect_true("sh" %in% calls)
+  expect_true(any(grepl("key>", msg, fixed = TRUE)))
 })

@@ -722,7 +722,7 @@ apply_schema_validation <- function(df_raw, provenance) {
   if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(names(provenance))) {
     stop("`provenance` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
   }
-  if (!is_rule_list && !is.list(provenance)) {
+  if (!is_rule_list && !is.null(provenance) && !is.list(provenance)) {
     stop("`provenance` must be a provenance list or a list of rules", call. = FALSE)
   }
   if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(provenance$schema)) {

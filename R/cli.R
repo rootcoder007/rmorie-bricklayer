@@ -27,6 +27,15 @@
     }, add = TRUE)
   }
   if (.bl_interactive()) return(trimws(readline(prompt)))
+  if (is.null(con) && .bl_stdin_tty() && .Platform$OS.type == "unix" && nzchar(Sys.which("sh"))) {
+    # R's blocking read of a terminal ignores Ctrl-C until Enter: a shell `read` child sees the
+    # terminal's interrupt at once (and R with it), and Ctrl-D ends it with an empty line. the
+    # line comes back over a pipe, never through a shell argument or the history
+    cat(prompt, file = stderr())
+    l <- suppressWarnings(system2("sh", c("-c", shQuote("IFS= read -r l; printf '%s' \"$l\"")),
+                                  stdout = TRUE, stderr = FALSE))
+    return(trimws(paste(as.character(l), collapse = "")))
+  }
   if (is.null(con)) {
     con <- file("stdin")
     on.exit(close(con), add = TRUE)

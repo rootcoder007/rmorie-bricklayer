@@ -17,10 +17,12 @@ claims the earlier fixes overstated corrected.
   under 0.5.9 to 7703a04 as compromised: generate a new key and sign again.** A test checks
   that no signature, attestation, bundle, JSON or serialisation of any scheme contains
   private-key bytes.
-* XMSS index reuse across sessions: the in-session registry can now persist (the option
-  `rmoriebricklayer.xmss_index_file` or `RMBL_XMSS_INDEX_FILE` names the file; off by default,
-  because a package may not write into a home directory unasked), so a key reloaded from disk
-  cannot sign at an index the file has seen. Without it, save the advanced key after every
+* XMSS index reuse across sessions: the registry of used indices now persists in
+  `xmss_index.json` under `tools::R_user_dir("rmoriebricklayer", "config")` (the directory CRAN
+  policy sets aside for a package's own configuration), so a key reloaded from disk with a
+  stale `next_index` is refused on the same machine, in a fresh session too. The option
+  `rmoriebricklayer.xmss_index_file` or `RMBL_XMSS_INDEX_FILE` moves the file; `""` or `FALSE`
+  turns it off. The record does not travel with the key: save the advanced key after every
   signature, as before.
 * `verify_pollution()` with a mean but no prevalence (or the reverse) is an error report (exit
   2), not "ok, 0 cases": the first pass's zero-exposure fix had made the omitted input a
@@ -58,10 +60,21 @@ claims the earlier fixes overstated corrected.
   New Caledonia's, Saipan Guam's; Kerguelen the world average. The carbon-intensity note names
   Ukraine (2022) among the older rows.
 * `hurwitz_zeta()` handles a non-positive non-integer `q` (8.93 at `q = -0.5` for `s = 2`) and
-  refuses a pole; `top_share()` refuses a fraction outside (0, 1]; `hill_tail_index()` refuses a
+  refuses a pole; `top_share()` refuses a fraction outside [0, 1] (0 is a share of nothing); `hill_tail_index()` refuses a
   vector `x_min`; `rapl_available()` refuses a non-path; `exposure_concentration_index()` refuses
   an infinite exposure. The masking-cost sentence of the side-channel vignette carries the
   measured 17 ms against 2.4 ms. `crf_pm25()` and `crf_no2()` refuse a logical exposure.
+* Third pass over the branch (4b4af29): `top_share(x, 0)` is zero units again and
+  `apply_schema_validation(data, NULL)` means nothing to validate (two guards of the second
+  pass overshot and turned CI red); `capsule_verify()` checks the shape of a signature before
+  the type of the key, so an HMAC signature whose scheme was edited to XMSS is FALSE while a
+  real XMSS signature with a string for a key is still an error; a FIPS signature whose recorded
+  `context` or `prehash` is not a string is FALSE; `verify_pollution()` with a missing
+  `reference` is a report, not a crash; `briggs_plume_rise()` at ambient temperature has zero
+  flux and zero rise (a cooler stack is refused); Ctrl-C at the `rmbl login --token` prompt
+  interrupts at once (the terminal line is read by a shell child, so the interrupt is not held
+  until Enter); the `yoy_pdf()` notes test asserts the page rule instead of comparing a value
+  with itself; the dead-stack note on the two gadget pairs says what they hold.
 
 ## Review of the 0.5.12 branch
 
@@ -144,7 +157,8 @@ claims the earlier fixes overstated corrected.
   disclosure anywhere in the process was a decryption oracle for an attacker-chosen
   ciphertext. Every pair the scanner can see is wiped now, with the per-group and per-word
   temporaries; two gadget-internal 32-coefficient pairs (`sec_in_interval`, `sec_b2a`)
-  remain on the dead stack and recover nothing, and one `dsa_bprime` pair remains on
+  remain on the dead stack (they hold `e2 + eta` and `v' - lo`, secret noise terms: partial
+  leakage, no key or message recovery shown), and one `dsa_bprime` pair remains on
   clang -O2. The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
 * Masked ML-DSA signing wipes the bitsliced share temporaries of every 32-coefficient chunk
   (the low-bits test of `v = w - c s2`, the high bits of `w` and of the hint) as it goes; one

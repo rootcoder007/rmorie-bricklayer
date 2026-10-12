@@ -211,8 +211,8 @@ test_that("the top share counts whole units", {
   expect_equal(top_share(x, 0)$share, 0)
   m <- top_share(x, seq(0.05, 1, by = 0.05))
   expect_true(all(diff(m$share) >= -1e-12))
-  expect_true(is.na(top_share(x, 1.5)$share))
-  expect_true(is.na(top_share(x, -0.1)$share))
+  expect_error(top_share(x, 1.5), "shares in \\[0, 1\\]")
+  expect_error(top_share(x, -0.1), "shares in \\[0, 1\\]")
   expect_error(top_share(numeric(0), 0.1), "no values")
 })
 

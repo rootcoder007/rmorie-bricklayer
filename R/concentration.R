@@ -76,7 +76,7 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
                       na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
   f <- as.numeric(fractions)
-  if (!length(f) || anyNA(f) || any(f <= 0 | f > 1)) stop("`fractions` must be shares in (0, 1]", call. = FALSE)
+  if (!length(f) || anyNA(f) || any(f < 0 | f > 1)) stop("`fractions` must be shares in [0, 1]", call. = FALSE)
   r <- .Call(C_rmbl_top_share, x, f)
   data.frame(fraction = f, units = r$units, share = r$share)
 }

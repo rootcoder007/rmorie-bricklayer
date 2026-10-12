@@ -12,7 +12,8 @@ xmss_forget_used_indices()
 \arguments{
 \item{key}{The \code{bricklayer_signing_key} that made \code{signature}.}
 
-\item{signature}{The XMSS signature it made (from \code{\link[=capsule_sign]{capsule_sign()}} or inside an attestation).}
+\item{signature}{The XMSS signature it made, from
+\code{\link[=capsule_sign]{capsule_sign()}} or inside an attestation.}
 }
 \value{
 The key with \code{next_index} advanced.
@@ -24,12 +25,16 @@ again. This returns the key with \code{next_index} set to one past the signature
 for the next signature. The signature object itself carries no key material.
 }
 \details{
-Within one R session the package also remembers the highest index each key has used and
-refuses it again; across sessions it can only do so when the index file is enabled (the
-option \code{rmoriebricklayer.xmss_index_file}, a path, or the environment variable
-\code{RMBL_XMSS_INDEX_FILE}), because a package may not write to a user's home directory
-unasked. Without it, a key reloaded from disk signs again from the saved
-\code{next_index}, so save the advanced key after every signature.
+The package also records the highest index each key has signed with, and refuses that
+index again, within the session and across sessions: the record is the file
+\code{xmss_index.json} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
+which is where CRAN policy lets a package keep its own configuration. A key reloaded
+from disk with a stale \code{next_index} is therefore refused on this machine. Another
+path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
+environment variable \code{RMBL_XMSS_INDEX_FILE}; \code{""} or \code{FALSE} turns the
+file off (the session record stays). The record does not travel with the key, so a key
+copied to another machine is not protected by it: save the advanced key after every
+signature.
 }
 \examples{
 key <- pqc_keygen(height = 2)
@@ -40,5 +45,6 @@ s2 <- capsule_sign("manifest-2", key)
 capsule_verify("manifest-2", s2, signing_public_key(key))
 }
 \seealso{
-\code{\link[=capsule_sign]{capsule_sign()}}, \code{\link[=xmss_forget_used_indices]{xmss_forget_used_indices()}}
+\code{\link[=capsule_sign]{capsule_sign()}},
+\code{\link[=xmss_forget_used_indices]{xmss_forget_used_indices()}}
 }

@@ -278,6 +278,7 @@ reference:
       - cert_chain_verify
       - revocation_fetch
       - capsule_sign
+      - xmss_advance
       - capsule_verify
       - pqc_keygen
       - signing_public_key
