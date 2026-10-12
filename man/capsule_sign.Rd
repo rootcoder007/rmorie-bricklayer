@@ -94,8 +94,9 @@ advanced key} -- reusing an index breaks the scheme. The signature object
 carries no key material (it is what verifiers are handed); the advanced
 key is \code{xmss_advance(key, signature)}, and that is what to save. The key is
 an R value, so \code{capsule_sign()} cannot advance the caller's copy; instead it
-remembers, for the session (and across sessions when the index file of
-\code{\link[=xmss_advance]{xmss_advance()}} is enabled), the highest index each key has signed with and
+records, in the session and in the index file described under
+\code{\link[=xmss_advance]{xmss_advance()}},
+the highest index each key has signed with, and
 refuses that index or an earlier one. Passing an exhausted key is an error,
 not a silent wrap-around.
 }

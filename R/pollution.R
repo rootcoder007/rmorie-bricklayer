@@ -630,7 +630,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
     row("exposure finite and non-negative", fin(exposure_mean) && exposure_mean >= 0,
         if (!fin(exposure_mean) || exposure_mean < 0) {
           sprintf("exposure_mean=%s is not a finite non-negative concentration", format(exposure_mean))
-        } else if (exposure_mean <= reference) {
+        } else if (isTRUE(exposure_mean <= reference)) {
           sprintf("mean %s is at or below the counterfactual floor %s: no excess risk, PAF and cases are 0.",
                   format(exposure_mean, digits = 10), format(reference))
         } else {
@@ -750,7 +750,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # relative risk among them and their share, not the population mean twice over
   exposed_summary <- function(x) {
     x <- x[!is.na(x)]
-    above <- x[x > reference]
+    above <- if (is.finite(reference)) x[x > reference] else x
     list(mean = if (length(above)) mean(above) else if (length(x)) mean(x) else NA_real_,
          prevalence = if (length(x)) length(above) / length(x) else NA_real_)
   }

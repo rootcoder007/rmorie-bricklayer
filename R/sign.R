@@ -708,8 +708,9 @@ signing_public_key <- function(key) {
 #' carries no key material (it is what verifiers are handed); the advanced
 #' key is `xmss_advance(key, signature)`, and that is what to save. The key is
 #' an R value, so `capsule_sign()` cannot advance the caller's copy; instead it
-#' remembers, for the session (and across sessions when the index file of
-#' [xmss_advance()] is enabled), the highest index each key has signed with and
+#' records, in the session and in the index file described under
+#' [xmss_advance()],
+#' the highest index each key has signed with, and
 #' refuses that index or an earlier one. Passing an exhausted key is an error,
 #' not a silent wrap-around.
 #'
@@ -900,15 +901,20 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' (refusing a signature that was not made by this key), which is the key to save and to use
 #' for the next signature. The signature object itself carries no key material.
 #'
-#' Within one R session the package also remembers the highest index each key has used and
-#' refuses it again; across sessions it can only do so when the index file is enabled (the
-#' option \code{rmoriebricklayer.xmss_index_file}, a path, or the environment variable
-#' \code{RMBL_XMSS_INDEX_FILE}), because a package may not write to a user's home directory
-#' unasked. Without it, a key reloaded from disk signs again from the saved
-#' \code{next_index}, so save the advanced key after every signature.
+#' The package also records the highest index each key has signed with, and refuses that
+#' index again, within the session and across sessions: the record is the file
+#' \code{xmss_index.json} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
+#' which is where CRAN policy lets a package keep its own configuration. A key reloaded
+#' from disk with a stale \code{next_index} is therefore refused on this machine. Another
+#' path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
+#' environment variable \code{RMBL_XMSS_INDEX_FILE}; \code{""} or \code{FALSE} turns the
+#' file off (the session record stays). The record does not travel with the key, so a key
+#' copied to another machine is not protected by it: save the advanced key after every
+#' signature.
 #'
 #' @param key The \code{bricklayer_signing_key} that made \code{signature}.
-#' @param signature The XMSS signature it made (from [capsule_sign()] or inside an attestation).
+#' @param signature The XMSS signature it made, from
+#'   [capsule_sign()] or inside an attestation.
 #' @return The key with \code{next_index} advanced.
 #' @examples
 #' key <- pqc_keygen(height = 2)
@@ -917,7 +923,8 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' key$next_index
 #' s2 <- capsule_sign("manifest-2", key)
 #' capsule_verify("manifest-2", s2, signing_public_key(key))
-#' @seealso [capsule_sign()], [xmss_forget_used_indices()]
+#' @seealso [capsule_sign()],
+#'   [xmss_forget_used_indices()]
 #' @export
 xmss_advance <- function(key, signature) {
   if (!inherits(key, "bricklayer_signing_key")) {
@@ -1001,6 +1008,10 @@ capsule_verify <- function(message, signature, key, context = NULL,
     # a signature field that is not exactly one string is not a signature: reading its first
     # element would verify c(valid, "anything")
     if (!is.character(signature$signature) || length(signature$signature) != 1L) return(FALSE)
+    rec <- signature[["context"]]
+    if (!is.null(rec) && !is.raw(rec) && !(is.character(rec) && length(rec) == 1L && !is.na(rec))) return(FALSE)
+    recp <- signature[["prehash"]]
+    if (!is.null(recp) && !(is.character(recp) && length(recp) == 1L && !is.na(recp))) return(FALSE)
     pk <- .rmbl_hex_or_null(key$public)
     sg <- .rmbl_hex_or_null(signature$signature)
     if (is.null(pk) || is.null(sg)) return(FALSE)
@@ -1023,6 +1034,22 @@ capsule_verify <- function(message, signature, key, context = NULL,
     if (!is.character(sg) || length(sg) != 1L || is.na(sg) || !grepl("^[0-9a-fA-F]{64}$", sg)) return(FALSE)
     return(tryCatch(core_digest_equal(core_hmac_sha256(key, message), sg), error = function(e) FALSE))
   }
+  one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+  whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
+  # the signature's own shape comes first: an HMAC signature whose scheme was edited to
+  # "xmss-sha256" (and the shared secret offered as its key) is "not verified", not a request
+  # for an XMSS key. every field the verifier reads is checked here, and a signature whose own
+  # root, height or wire form disagrees with the key or with its parts is "not verified": those
+  # fields travel with the signature so a reader can check them, not so an editor can change
+  # them. every signature this package has produced since 0.5.0 carries index, root, height
+  # and wire as numbers and strings; an index of 0.5 or "0", a height of 4.5, a field removed
+  # or no randomiser (a pre-RFC 8391 signature) is an edited object, and an edited object is
+  # not verified
+  if (!one_string(signature$signature) || !one_string(signature$auth) ||
+        !one_string(signature[["randomizer"]]) || !whole(signature$index) ||
+        !whole(signature$height) || !one_string(signature$root) || !one_string(signature$wire)) {
+    return(FALSE)
+  }
   if (!inherits(key, c("bricklayer_public_key", "bricklayer_signing_key"))) {
     stop("verifying an XMSS signature needs a key from pqc_keygen() or ",
          "signing_public_key()", call. = FALSE)
@@ -1038,21 +1065,6 @@ capsule_verify <- function(message, signature, key, context = NULL,
       stop("`message` must be a length-1 character vector or a raw vector",
            call. = FALSE)
     }
-  }
-  # no randomiser (a pre-RFC 8391 signature, or an edited one): not verified, not an error
-  if (is.null(signature[["randomizer"]])) return(FALSE)
-  one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
-  whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
-  # every field the verifier reads is checked here, and a signature whose own root, height
-  # or wire form disagrees with the key or with its parts is "not verified": those fields
-  # travel with the signature so a reader can check them, not so an editor can change them
-  # every signature this package has produced since 0.5.0 carries index, root, height and wire
-  # as numbers and strings; an index of 0.5 or "0", a height of 4.5, or a field removed is an
-  # edited object, and an edited object is not verified
-  if (!one_string(signature$signature) || !one_string(signature$auth) ||
-        !one_string(signature[["randomizer"]]) || !whole(signature$index) ||
-        !whole(signature$height) || !one_string(signature$root) || !one_string(signature$wire)) {
-    return(FALSE)
   }
   same <- function(a, b) identical(tolower(as.character(a)), tolower(as.character(b)))
   if (!same(signature$root, key$root)) return(FALSE)
@@ -1127,16 +1139,19 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # may not write into a home directory unasked).
 .rmbl_xmss_index_file <- function() {
   p <- getOption("rmoriebricklayer.xmss_index_file", NULL)
-  if (is.null(p)) p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = "")
+  if (is.null(p)) p <- Sys.getenv("RMBL_XMSS_INDEX_FILE", unset = NA_character_)
+  if (isFALSE(p)) return(NULL)
   p <- as.character(p)[1L]
-  if (is.na(p) || !nzchar(p)) NULL else path.expand(p)
+  # unset: the package's own config directory (the place CRAN policy sets aside for this)
+  if (is.na(p)) p <- file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_index.json")
+  if (!nzchar(p)) NULL else path.expand(p)
 }
 
 .rmbl_xmss_used_load <- function() {
   p <- .rmbl_xmss_index_file()
   if (is.null(p) || !file.exists(p)) return(invisible(FALSE))
-  rec <- tryCatch(bricklayer_json_from_json(paste(readLines(p, warn = FALSE), collapse = "\n"),
-                                            simplifyVector = TRUE), error = function(e) NULL)
+  txt <- tryCatch(readChar(p, file.size(p), useBytes = TRUE), error = function(e) "")
+  rec <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE), error = function(e) NULL)
   if (!is.list(rec)) stop(sprintf("%s (the XMSS index file) is not a JSON object; fix or remove it", p), call. = FALSE)
   for (k in names(rec)) {
     v <- suppressWarnings(as.integer(rec[[k]]))

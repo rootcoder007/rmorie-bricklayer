@@ -445,7 +445,7 @@ Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak"
 Rscript -e 'repos <- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'
 ```
 
-On macOS, CRAN's R (from <https://cloud.r-project.org/bin/macosx/>) installs
+On macOS, CRAN's R (from <https://CRAN.R-project.org/bin/macosx/>) installs
 r-universe's prebuilt binaries in seconds. Homebrew's R cannot use them, so
 there every package is compiled from source.
 
