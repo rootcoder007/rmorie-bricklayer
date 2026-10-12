@@ -24,7 +24,7 @@
 .bl_readline <- function(prompt, con = NULL, secret = FALSE) {
   # a key typed at a terminal is not echoed (stty, where there is one); elsewhere it is
   # read as any other line, which is what piping `echo KEY |` relies on
-  hide <- isTRUE(secret) && is.null(con) && .Platform$OS.type == "unix" && isatty(stdin()) &&
+  hide <- isTRUE(secret) && is.null(con) && .Platform$OS.type == "unix" && .bl_stdin_tty() &&
     nzchar(Sys.which("stty"))
   if (.bl_interactive()) {
     if (hide) {

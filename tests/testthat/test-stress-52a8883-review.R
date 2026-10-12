@@ -581,6 +581,16 @@ test_that("an interrupt nobody handles is an error; the shell read reports Ctrl-
   expect_identical(got, "interrupt")
   local_mocked_bindings(system2 = function(...) "typed-line", .package = "base")
   expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), "typed-line")
+  # a secret is read by the shell with the echo switched off inside it (the trap restores it)
+  skip_if_not(nzchar(Sys.which("stty")))
+  seen <- NULL
+  local_mocked_bindings(system2 = function(command, args, ...) {
+    seen <<- args[[2L]]
+    "sk-typed"
+  }, .package = "base")
+  expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = TRUE), "sk-typed")
+  expect_match(seen, "stty -echo", fixed = TRUE)
+  expect_match(seen, "trap 'stty echo; exit 130'", fixed = TRUE)
 })
 
 test_that("a manifest that cannot be stored is an error and the old copy stays", {
@@ -607,6 +617,10 @@ test_that("an edit that would damage credentials.json is refused and the file is
   # an editor that leaves the text as it was: the new key is not in what would be written
   local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) txt)
   expect_error(rmoriebricklayer:::.bl_store_key("sk-NEW"), "without damaging it")
+  # an editor whose result is not valid JSON at all is refused the same way
+  local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) paste0(txt, " junk"))
+  expect_error(rmoriebricklayer:::.bl_store_key("sk-NEW"), "without damaging it")
+  local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) txt)
   expect_error(bricklayer_llm_logout(), "without damaging it")
   expect_identical(readLines(p), '{"hosted_key": "sk-OLD"}')
 })
