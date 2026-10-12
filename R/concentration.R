@@ -75,6 +75,9 @@ lorenz <- function(x, na.rm = TRUE) {
 top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
                       na.rm = TRUE) {
   x <- .rmbl_conc_input(x)
+  if (is.factor(fractions) || is.character(fractions) || is.logical(fractions) || !is.numeric(fractions)) {
+    stop("`fractions` must be numeric shares in [0, 1]", call. = FALSE)
+  }
   f <- as.numeric(fractions)
   if (!length(f) || anyNA(f) || any(f < 0 | f > 1)) stop("`fractions` must be shares in [0, 1]", call. = FALSE)
   r <- .Call(C_rmbl_top_share, x, f)
@@ -158,6 +161,11 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 #' @export
 hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                             approx = FALSE, min_tail = 3L) {
+  for (flag in c("discrete", "approx")) {
+    v <- get(flag, inherits = FALSE)
+    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", flag), call. = FALSE)
+  }
+  if (is.logical(x_min)) stop("`x_min` must be numeric, not logical", call. = FALSE)
   x <- .rmbl_num(x, "x")
   x <- x[is.finite(x) & x > 0]
   if (!length(x)) {
@@ -288,6 +296,7 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 #' hurwitz_zeta(1)
 #' @export
 hurwitz_zeta <- function(s, q = 1) {
+  if (is.logical(q) || is.logical(s)) stop("`s` and `q` must be numeric, not logical", call. = FALSE)
   q <- .rmbl_num_input(q, "q", allow_null = FALSE)
   if (length(q) != 1L || !is.finite(q)) stop("`q` must be a single finite number", call. = FALSE)
   s <- .rmbl_num_input(s, "s")
@@ -296,6 +305,11 @@ hurwitz_zeta <- function(s, q = 1) {
   # and otherwise the finite sum of those terms plus zeta(s, q + m) with q + m in (0, 1]
   if (q == round(q)) return(rep(NA_real_, length(s)))  # a pole, like s = 1: no value to return
   m <- ceiling(-q)
+  # the recurrence sums m = ceiling(-q) terms: a q of -1e9 would ask for a billion of them
+  if (m > 1e6) {
+    stop(sprintf("`q` = %s is below -1e6: the recurrence to a positive argument would sum %s terms", format(q),
+                 format(m, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  }
   head <- vapply(s, function(si) sum((q + seq_len(m) - 1)^(-si)), numeric(1))
   head + .rmbl_hurwitz(s, q + m)
 }

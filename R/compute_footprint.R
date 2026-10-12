@@ -57,7 +57,8 @@
 #' the package, so it works offline in any country: every country at the
 #' latest year published by Our World in Data from Ember's yearly electricity
 #' data (the latest year each grid reports: 2025 or 2024 for nearly all, older
-#' for a few small grids, named in \code{year}), sub-national zones from Electricity
+#' for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones from
+#' Electricity
 #' Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 #' v3.1 (Canadian provinces and territories, US balancing authorities,
 #' Australian states, Indian and Japanese regions, Brazilian and Chilean
@@ -234,8 +235,8 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 # the country whose grid they draw on (an enclave or dependency) or none (an island state and
 # Antarctica take the world average).
 .rmbl_territory_proxy <- c(
-  AD = "ES", AI = "GB", BL = "GP", BQ = "NL", CC = "AU", CX = "AU", GG = "GB", IM = "GB", IO = "GB",
-  JE = "GB", LI = "CH", MC = "FR", MF = "GP", MP = "GU", NF = "AU", PN = "GB", SJ = "NO", SM = "IT",
+  AD = "ES", AI = "AG", BL = "GP", BQ = "NL", CC = "AU", CX = "AU", GG = "FR", IM = "GB", IO = "GB",
+  JE = "FR", LI = "CH", MC = "FR", MF = "GP", MP = "GU", NF = "AU", PN = "GB", SJ = "NO", SM = "IT",
   SX = "NL", UM = "US", VA = "IT", WF = "NC",
   AQ = NA_character_, MH = NA_character_, NU = NA_character_, TF = NA_character_, TK = NA_character_,
   TV = NA_character_

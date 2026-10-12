@@ -560,6 +560,9 @@ validate_schema <- function(df_raw, provenance) {
     return(issues)
   }
   sch <- provenance$schema
+  if (!is.list(sch)) {
+    stop(sprintf("`provenance$schema` must be a list (from infer_schema()), not %s", class(sch)[1L]), call. = FALSE)
+  }
 
   ## --- Required columns ---
   if (!is.null(sch$expected_columns)) {

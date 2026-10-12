@@ -245,8 +245,8 @@ b$usage_mode
 
 The carbon intensity comes from a table bundled with the package, so nothing is fetched
 and it works in any country: every country at the latest year Our World in Data publishes
-from Ember's yearly electricity data (2024 or 2025 at this release for all but a few small
-territories whose latest row is older; every row carries its year), sub-national zones
+from Ember's yearly electricity data (2024 or 2025 at this release for all but a few grids
+whose latest row is older, Ukraine's 2022 among them; every row carries its year), sub-national zones
 from Electricity Maps' 2024 yearly data as redistributed by Green Algorithms (Canadian
 provinces, US balancing authorities, Australian states, Indian and Japanese regions, ...),
 and the world average. Each row carries its year and source, so a report can cite them. A

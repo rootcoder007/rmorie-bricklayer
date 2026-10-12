@@ -174,10 +174,19 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
           out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
         },
-        logout = bricklayer_llm_logout(),
-        doctor = .bl_cli_doctor(out),
+        logout = {
+          if (length(c(rest, tail_args))) usage_error("logout takes no arguments")
+          bricklayer_llm_logout()
+        },
+        doctor = {
+          if (length(c(rest, tail_args))) usage_error("doctor takes no arguments")
+          .bl_cli_doctor(out)
+        },
         config = .bl_cli_config(rest, out, usage_error),
-        models = .bl_cli_models(out),
+        models = {
+          if (length(c(rest, tail_args))) usage_error("models takes no arguments")
+          .bl_cli_models(out)
+        },
         ask = {
           for (f in c("--model", "--route")) {
             if (sum(rest == f) > 1L) {
@@ -257,9 +266,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         data = status <- .bl_cli_data(rest, flag, out),
         `--version` = ,
         `-v` = ,
-        version = out(sprintf("rmoriebricklayer %s\n", as.character(
-          utils::packageVersion("rmoriebricklayer")
-        ))),
+        version = {
+          if (length(c(rest, tail_args))) usage_error("version takes no arguments")
+          out(sprintf("rmoriebricklayer %s\n", as.character(utils::packageVersion("rmoriebricklayer"))))
+        },
         help = ,
         `--help` = ,
         `-h` = status <- .bl_cli_help(rest, out),
@@ -269,6 +279,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     error = function(e) {
       out(paste0(prog, ": ", conditionMessage(e), "\n"))
       status <<- if (inherits(e, "bl_usage")) 2L else 1L
+    },
+    interrupt = function(e) {
+      # Ctrl-C at a prompt: the shell convention, 128 + SIGINT, not a usage error
+      out(paste0(prog, ": interrupted\n"))
+      status <<- 130L
     }
   )
   invisible(status)
@@ -285,7 +300,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     doctor = "doctor   report the language-model routes available here",
     models = "models   the models the hosted tier offers your key (default marked)",
     ask = "ask [--route own|ollama|hosted|auto] [--model NAME] PROMPT...   ask the model",
-    config = paste("config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path]",
+    config = paste("config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path | reset]",
                    "  show or change the language-model settings (route, addresses, keys, models)"),
     bundle = "bundle REQUEST...   agent_bundle() from the shell",
     functions = "functions [PATTERN]   exported functions and their titles",

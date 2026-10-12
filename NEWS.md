@@ -4,6 +4,61 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Review of fcdce03 (the fourth pass over the branch)
+
+* **A tampered cached table loaded when the manifest could not be re-read.** The digest retry
+  of the second pass re-fetched the manifest on a mismatch and, when that fetch failed, had no
+  digest left to compare and accepted the file. The digest the check started with now stands
+  unless a refreshed manifest is actually fetched and lists another; a failed refresh refuses
+  the file. A manifest digest that is a list, or not a digest, refuses the file and removes it
+  from the cache; a `MORIE_DATA_URL` that is not the document's address is named in the error.
+* **The XMSS used-index record is locked and fails closed.** Every reservation runs under an
+  exclusive lock directory next to the record, so two processes signing with copies of one key
+  cannot both take an index (and two keys cannot wipe each other's lines); the record is one
+  line per key (`xmss_used_indices.txt`), written through a unique temporary name whose rename
+  is checked; a malformed line stops signing until the file is repaired or removed; the off
+  switch warns on every signature; a value that is not a path (`TRUE`, `"0"`) is refused.
+  `pqc_keygen()` registers every key in the record at birth, so a key the record does not
+  know that claims never to have signed is refused (a deleted record, or a key from another
+  machine) until `xmss_register_key()` vouches for it or `xmss_advance()` carries it forward.
+  `xmss_advance()` checks the index against the key's height, verifies the signature when the
+  message is given, never advances below what the record knows, accepts an attestation, bundle
+  or recode manifest, and warns when the key is exhausted; `xmss_forget_used_indices()` can
+  forget one key and is documented as removing the protection. Examples and vignettes point
+  the record at a temporary file so checks and builds leave the configuration directory alone.
+* `verify_pollution()` reads the exposure CSV whole: UTF-16 is decoded, a UTF-8 BOM dropped, a
+  file that is not UTF-8 read as Latin-1 and said, NUL bytes refused; nothing stops part-way
+  and reports the rows before the stop as the data. `population = NULL` or `baseline_rate =
+  NULL` is an error report with a reason. `baseline_rate` may be zero (a measured zero);
+  a value between 0 and 1 per 100,000 fails the assumption and suggests `baseline_rate_per =
+  1`, the new argument for a rate quoted per person-year.
+* `hurwitz_zeta()` refuses `q` below -1e6 instead of allocating the recurrence's billion terms;
+  logical `q`, `x_min`, `fractions` and non-logical `discrete`/`approx` are refused.
+* `advection_diffusion_2d()` has one cap for every run, `max_work` (100 million cell updates,
+  `Inf` lifts it): the same physics costs the same whether the caller sub-steps it or the
+  scheme does, so a run cannot be refused in one spelling and accepted in another.
+* `credentials.json` is edited as text: login and logout touch only this package's three
+  members and every other byte (another package's floats, large integers, empty keys,
+  non-ASCII text) stays as it was.
+* The review's section-1 leftovers: `print()` and `capsule_bundle_read()` warn about an old
+  object that carries `key_state`; an edited verifier key object is "not verified", not an
+  error; `verify_pollution()` refuses scalars beside a CSV or the demo, refuses list and
+  complex scalars, says how many non-numeric exposure rows it dropped and skips the equity
+  index when fewer than two rows have an income; bar labels over 28 characters are cut so a
+  long level cannot make the figure margins too large; own-endpoint settings without an
+  address are said when the hosted tier is used instead; `OLLAMA_BASE_URL` in the environment
+  wins over a saved address; `own.key` and `own.url` in one call keep the key; `rmbl config
+  reset` moves an unreadable settings file aside and `doctor` reports the file instead of
+  failing; verbs that take no arguments refuse extra ones and Ctrl-C exits 130; U+061C,
+  U+2028 and U+2029 are stripped from listings; a `schema` that is not a list is a clear
+  error; a stack within half a kelvin of the air has zero rise (no cliff); Anguilla uses
+  Antigua's grid and Jersey and Guernsey France's; Ukraine's 2022 row is named as such; a
+  note line is never under a tenth of an inch and one inline note no longer shrinks every
+  page of a `yoy_pdf()`.
+* Tests: a tampered cache with a failed refresh, two processes signing with one key, a
+  malformed and a deleted record, the off switch, Latin-1 and UTF-16 CSVs, the large negative
+  `q`, the cap's consistency, and the credentials bytes.
+
 ## Review of 7703a04 (the second pass over the branch)
 
 * **The XMSS signature object carried the private key too.** The attestation fix of the first
@@ -47,7 +102,7 @@ claims the earlier fixes overstated corrected.
   (`route: 5`, an array, `true`, `""`) is an error, not "auto"; a credentials file without
   `hosted_base_url` (morie writes one) sends the key only to the services document's address;
   `MORIE_DATA_URL` receives the stored key only when it is the document's curated-data address;
-  login and logout keep another package's entries (arrays, nulls, large integers) as they were;
+  login and logout keep another package's entries byte for byte (the file is edited as text);
   a saved address may not contain whitespace, a fragment or user information.
 * `rmbl data list` strips the C1 controls and the bidirectional format characters as bytes, in
   any locale; the help never shows `--token KEY`.
@@ -94,7 +149,8 @@ claims the earlier fixes overstated corrected.
   the kernels' glue handles one share per pass with the registers scrubbed between passes
   (the first measurement put 174 and 34 transition-model leaks in that glue, none in a
   gadget). The 0.5.12 note below says what the measurement now shows.
-* The French SIU boilerplate fix overshot: a stripped sentence was replaced by a line break,
+* (Superseded by the second pass above, which keeps the line break.) The French SIU boilerplate
+  fix overshot: a stripped sentence was replaced by a line break,
   so boilerplate in the middle of a roster line turned the rest of the line into a line of
   its own and counted 3 officers where every earlier version counted 1 (147 new divergences
   on a 6,017-input fuzz). The sentence is replaced by a space, the two 0.5.11 cases still
@@ -119,7 +175,8 @@ claims the earlier fixes overstated corrected.
   refused; a receptor below ground or above the mixing lid is warned about; the open
   boundary is documented.
 * A configured Ollama server that does not answer is skipped with a message, like one with
-  no model pulled, so a prompt reaching the hosted tier is always said. `credentials.json`
+  no model pulled, so a prompt that leaves for the hosted tier because a local route failed is
+  always said. `credentials.json`
   (shared with morie and rmorie) that does not parse is an error and is never written over;
   `llm.json` that is not a JSON object (`[]`, `"x"`, `5`) is an error too, not a warning
   that fired once and then let a saved route be dropped. The hosted key is tied to the
@@ -158,8 +215,9 @@ claims the earlier fixes overstated corrected.
   disclosure anywhere in the process was a decryption oracle for an attacker-chosen
   ciphertext. Every pair the scanner can see is wiped now, with the per-group and per-word
   temporaries; two gadget-internal 32-coefficient pairs (`sec_in_interval`, `sec_b2a`)
-  remain on the dead stack (they hold `e2 + eta` and `v' - lo`, secret noise terms: partial
-  leakage, no key or message recovery shown), and one `dsa_bprime` pair remains on
+  remain on the dead stack (they hold `e2 + eta` and `v' - lo`; `v'` contains Decompress(m'), so
+  the second pair also encodes 32 bits of m' for a chosen ciphertext: partial leakage, no key
+  recovery shown), and one `dsa_bprime` pair remains on
   clang -O2. The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
 * Masked ML-DSA signing wipes the bitsliced share temporaries of every 32-coefficient chunk
   (the low-bits test of `v = w - c s2`, the high bits of `w` and of the hint) as it goes; one

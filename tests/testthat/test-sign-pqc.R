@@ -273,8 +273,12 @@ test_that("an XMSS index never signs twice: one key object, or a stale copy, is 
   expect_error(capsule_sign("message two", key), "index 0 of this key was already used")
   s2 <- capsule_sign("message two", xmss_advance(key, s1))
   expect_identical(s2$index, 1L)
-  # a stale copy (the state after the first signature) is refused too
-  expect_error(capsule_sign("message three", xmss_advance(key, s1)), "index 1 of this key was already used")
+  # a stale copy (the state after the first signature) is refused too; advancing it with
+  # xmss_advance() consults the record and moves it past every used index instead
+  stale <- key
+  stale$next_index <- 1L
+  expect_error(capsule_sign("message three", stale), "index 1 of this key was already used")
+  expect_identical(xmss_advance(key, s1)$next_index, 2L)
   s3 <- capsule_sign("message three", xmss_advance(key, s2))
   expect_identical(s3$index, 2L)
   pub <- signing_public_key(key)

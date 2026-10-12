@@ -46,7 +46,19 @@ gaussian_puff(
   n_images = 3
 )
 
-advection_diffusion_2d(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL)
+advection_diffusion_2d(
+  c0,
+  u,
+  v,
+  kx,
+  ky,
+  dx,
+  dy,
+  dt,
+  n_steps,
+  source = NULL,
+  max_work = 1e+08
+)
 
 lagrangian_particles(
   n,
@@ -73,7 +85,9 @@ lagrangian_particles(
 \item{u}{Wind speed in m/s (the x velocity for the grid models).}
 
 \item{diameter, exit_velocity, stack_temp, ambient_temp}{Stack diameter (m),
-exit velocity (m/s), stack gas and ambient temperatures (K).}
+exit velocity (m/s), stack gas and ambient temperatures (K).
+Only buoyant rise is modelled: a stack at the air's temperature (within half a
+kelvin) has zero rise, and momentum rise from the exit velocity is not added.}
 
 \item{dtheta_dz}{Potential temperature gradient (K/m) for the stable
 classes; the defaults are 0.020 (E) and 0.035 (F).}
@@ -108,6 +122,11 @@ vectors.}
 \item{n_steps}{Number of steps.}
 
 \item{source}{Source grid (concentration per unit time), or \code{NULL}.}
+
+\item{max_work}{The most cell updates (cells x steps x sub-steps) a run may take, 100
+million by default (a few minutes of the explicit loop); \code{Inf} lifts it. The
+same physical run costs the same whether the caller sub-steps it or the scheme does,
+so the cap reads the same either way.}
 
 \item{n}{Number of particles.}
 

@@ -72,6 +72,8 @@ does and does not cover.
 }
 
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 # A small key, to keep the example quick.
 key <- pqc_keygen(height = 3)
 key$capacity            # 8 signatures
@@ -85,6 +87,7 @@ names(pub)
 s1 <- paste(rep("11", 32), collapse = "")
 s2 <- paste(rep("22", 32), collapse = "")
 identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
+options(op)
 }
 \seealso{
 \code{\link[=capsule_sign]{capsule_sign()}},

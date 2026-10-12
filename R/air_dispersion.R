@@ -89,6 +89,8 @@
 #' @param u Wind speed in m/s (the x velocity for the grid models).
 #' @param diameter,exit_velocity,stack_temp,ambient_temp Stack diameter (m),
 #'   exit velocity (m/s), stack gas and ambient temperatures (K).
+#'   Only buoyant rise is modelled: a stack at the air's temperature (within half a
+#'   kelvin) has zero rise, and momentum rise from the exit velocity is not added.
 #' @param dtheta_dz Potential temperature gradient (K/m) for the stable
 #'   classes; the defaults are 0.020 (E) and 0.035 (F).
 #' @param g Gravitational acceleration.
@@ -107,6 +109,10 @@
 #' @param dt Time step.
 #' @param n_steps Number of steps.
 #' @param source Source grid (concentration per unit time), or \code{NULL}.
+#' @param max_work The most cell updates (cells x steps x sub-steps) a run may take, 100
+#'   million by default (a few minutes of the explicit loop); \code{Inf} lifts it. The
+#'   same physical run costs the same whether the caller sub-steps it or the scheme does,
+#'   so the cap reads the same either way.
 #' @param n Number of particles.
 #' @param x0,y0 Release point.
 #' @param seed Seed of the particle random walk.
@@ -183,10 +189,12 @@ briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient
          call. = FALSE)
   }
   g <- .ad_num(g, "g", positive = TRUE)
-  if (stack_temp < ambient_temp) {
+  if (stack_temp < ambient_temp - 0.5) {
     stop("`stack_temp` is below `ambient_temp`: Briggs' formulas describe a buoyant plume, so ",
          "the stack must be as hot as the air or hotter (equal gives no rise)", call. = FALSE)
   }
+  # within half a kelvin of the air there is no buoyancy to speak of: zero rise, not a cliff
+  if (stack_temp < ambient_temp) stack_temp <- ambient_temp
   if (!is.null(dtheta_dz)) dtheta_dz <- .ad_num(dtheta_dz, "dtheta_dz", positive = TRUE)
   F_ <- g * exit_velocity * diameter^2 * (stack_temp - ambient_temp) / (4 * stack_temp)
   if (cls %in% c("E", "F")) {
@@ -300,7 +308,7 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
 #'   that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
 #'   empty cells so the plume of interest stays inside the ring.
 #' @export
-advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL) {
+advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL, max_work = 1e8) {
   if (!is.matrix(c0) || !is.numeric(c0)) {
     stop("`c0` must be a numeric matrix (one row per x cell, one column per y cell)", call. = FALSE)
   }
@@ -339,21 +347,25 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   # the sub-steps that satisfy the bound; the fudge that rounded 10,000 up to 10,001 is gone
   # ceiling(stab) sub-steps of dt / ceiling(stab) give a stability number stab / ceiling(stab) <= 1
   substeps <- if (stab > 1) ceiling(stab) else 1
-  # sub-stepping makes a run outside the bound a solution rather than an explosion, but the cost
-  # is the work, cells x steps x sub-steps, not the sub-step count alone: a 5 x 5 grid at 10,001
-  # sub-steps runs in a tenth of a second and a 201 x 201 grid at 9,999 takes hours; the limit
-  # is about five seconds of the explicit loop
+  # the cost of a run is its work, cells x steps x sub-steps, whether the caller wrote the small
+  # time step or the stability bound forced it: the same physics costs the same, so one cap
+  # applies to every run and reads the same for both spellings of it
   work <- as.numeric(nx) * ny * n_steps * substeps
   if (!is.finite(work)) stop("the amount of work is not finite: check n_steps and the grid", call. = FALSE)
-  # a run the caller sized is theirs to wait for (a 1001 x 1001 grid for 10 stable steps takes
-  # seconds); the cap is for the run sub-stepping has inflated past what the caller asked for
-  if (substeps > 1 && work > 1e7) {
-    stop(sprintf(paste("sub-stepping would make this run update %s cells x steps x sub-steps (%d x %d cells,",
-                       "%s steps, %s sub-steps per step from a stability number of %s; limit 10 million):",
-                       "a smaller dt lowers the stability number and the sub-step count, or use a coarser",
-                       "grid or fewer steps"),
-                 format(work, big.mark = ",", scientific = FALSE), nx, ny, format(n_steps, big.mark = ","),
-                 format(substeps, big.mark = ","), format(stab, digits = 4)), call. = FALSE)
+  if (!is.numeric(max_work) || length(max_work) != 1L || is.na(max_work) || max_work <= 0) {
+    stop("`max_work` must be a single positive number (Inf lifts the cap)", call. = FALSE)
+  }
+  if (work > max_work) {
+    minutes <- work / 8e5 / 60   # about 0.8 million cell updates a second in the explicit loop
+    stop(sprintf(paste("this run updates %s cells x steps x sub-steps (%d x %d cells, %s steps, %s sub-steps per",
+                       "step%s), above max_work = %s: about %s minutes of the explicit loop. Pass max_work = Inf",
+                       "to run it anyway, or use a coarser grid, fewer steps or a shorter total time"),
+                 format(work, big.mark = ",", scientific = FALSE), nx, ny,
+                 format(n_steps, big.mark = ",", scientific = FALSE),
+                 format(substeps, big.mark = ",", scientific = FALSE),
+                 if (substeps > 1) sprintf(" from a stability number of %s", format(stab, digits = 4)) else "",
+                 format(max_work, big.mark = ",", scientific = FALSE),
+                 format(round(minutes, 1), big.mark = ",")), call. = FALSE)
   }
   substeps <- as.integer(substeps)
   if (stab > 1) {

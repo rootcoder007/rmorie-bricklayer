@@ -27,7 +27,8 @@ location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
 data (the latest year each grid reports: 2025 or 2024 for nearly all, older
-for a few small grids, named in \code{year}), sub-national zones from Electricity
+for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones from
+Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
 Australian states, Indian and Japanese regions, Brazilian and Chilean

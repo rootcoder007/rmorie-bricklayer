@@ -287,8 +287,8 @@ test_that("N1b: a territory the carbon table lacks uses its country's grid or th
   expect_match(loc("Europe/Monaco")$method, "territory MC")
   expect_identical(loc("Europe/Vaduz")$location, "CH")
   expect_identical(loc("Europe/Andorra")$location, "ES")
-  expect_identical(loc("Europe/Jersey")$location, "GB")
-  expect_identical(loc("Europe/Guernsey")$location, "GB")
+  expect_identical(loc("Europe/Jersey")$location, "FR")      # the islands import from France
+  expect_identical(loc("Europe/Guernsey")$location, "FR")
   expect_identical(loc("Antarctica/McMurdo")$location, "WORLD")
   expect_match(loc("Antarctica/McMurdo")$method, "world average")
   # every geographic zone resolves to a row of the carbon table or to WORLD by this path
@@ -337,7 +337,15 @@ test_that("D4: thirty notes on a five-inch page all land on the page, on pages o
   bytes[bytes == as.raw(0L)] <- as.raw(32L)
   txt <- rawToChar(bytes)
   pages <- length(gregexpr("/Type /Page[^s]", txt, useBytes = TRUE)[[1L]])
-  expect_gte(pages, 2L)
+  # exactly: one table page (ten rows fit) plus the notes pages of 42 lines each
+  per_note_page <- as.integer(floor(0.76 * 5 / rmoriebricklayer:::.yoy_note_line(5)))
+  expect_identical(pages, 1L + as.integer(ceiling(30 / per_note_page)))
+  f2 <- withr::local_tempfile(fileext = ".pdf")
+  yoy_pdf(y, f2, notes = sprintf("note %d", 1:200), height = 5)
+  bytes2 <- readBin(f2, "raw", file.size(f2))
+  bytes2[bytes2 == as.raw(0L)] <- as.raw(32L)
+  pages2 <- length(gregexpr("/Type /Page[^s]", rawToChar(bytes2), useBytes = TRUE)[[1L]])
+  expect_identical(pages2, 1L + as.integer(ceiling(200 / per_note_page)))
   # the table rows do not shrink to make room: thirty notes on a 5-inch page would leave
   # room for fewer rows than the table has, so they took pages of their own and the table
   # kept the rows of a note-free page, which hold all ten

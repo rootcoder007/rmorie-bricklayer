@@ -90,7 +90,7 @@ test_that("Y4: a cue sentence ended by a newline keeps the line break", {
   }
 })
 
-test_that("Y5: a stable run of any size is the caller's to wait for; only sub-stepped runs are capped", {
+test_that("Y5 and Z5: one work cap for every run, the same for both spellings of the same physics", {
   c0 <- matrix(0, 301, 301)
   c0[151, 151] <- 1
   r <- advection_diffusion_2d(c0, u = 0.5, v = 0, kx = 0, ky = 0, 1, 1, 1, 2)
@@ -98,9 +98,24 @@ test_that("Y5: a stable run of any size is the caller's to wait for; only sub-st
   expect_equal(r$mass, 1, tolerance = 1e-12)
   err <- tryCatch(advection_diffusion_2d(matrix(1, 201, 201), u = 9999, v = 0, kx = 0, ky = 0, 1, 1, 1, 100),
                   error = function(e) conditionMessage(e))
-  expect_match(err, "sub-stepping would make this run")
+  expect_match(err, "above max_work")
+  # the hourly run written two ways: sub-stepped by the scheme, or stepped by the caller
+  c1 <- matrix(0, 5, 5)
+  c1[3, 3] <- 1
+  a <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1)
+  b <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 0.5, 7200)
+  expect_equal(a$field, b$field, tolerance = 1e-12)
+  msg <- function(e) conditionMessage(e)
+  ea <- tryCatch(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = 1e5), error = msg)
+  eb <- tryCatch(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 0.5, 7200, max_work = 1e5), error = msg)
+  expect_match(ea, "above max_work")
+  expect_match(eb, "above max_work")
+  expect_s3_class(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = Inf), "rmbl_field")
+  # a stable run is capped too: no run is unbounded
+  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e9), "above max_work")
+  expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e300), "max_work|not finite")
   expect_false(grepl(", 0", err, fixed = TRUE))
-  expect_match(err, "smaller dt lowers")
+  expect_match(err, "Pass max_work = Inf")
   expect_error(lagrangian_particles(n = 1e300, x0 = 0, y0 = 0, u = 1, v = 0, kx = 1, ky = 1, dt = 1, n_steps = 1),
                "at most 100 million")
   expect_warning(gaussian_puff(mass = 1, u = 2, h = 10, receptors = cbind(100, 0, -1), t = 10), "below ground")
@@ -210,7 +225,10 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
   testthat::local_mocked_bindings(bricklayer_data_manifest = man("not-a-digest"), .package = "rmoriebricklayer")
   expect_error(rmoriebricklayer:::.bl_data_check_sha("db/t", f), "not a SHA-256")
-  expect_true(file.exists(f))
+  expect_false(file.exists(f))   # the unverified file does not stay in the cache
+  con <- gzfile(f, "wb")
+  writeLines("a,b\n1,2", con)
+  close(con)
   # a rebuilt table: the first manifest is stale, the refreshed one matches
   calls <- 0L
   testthat::local_mocked_bindings(bricklayer_data_manifest = function(refresh = FALSE) {
@@ -289,7 +307,7 @@ test_that("Y2b: the XMSS index record persists by default, in the package config
   withr::local_options(rmoriebricklayer.xmss_index_file = NULL)
   withr::local_envvar(RMBL_XMSS_INDEX_FILE = NA)
   expect_identical(rmoriebricklayer:::.rmbl_xmss_index_file(),
-                   path.expand(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_index.json")))
+                   path.expand(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt")))
   if (.Platform$OS.type != "windows") {   # Windows unsets an environment variable set to ""
     withr::local_envvar(RMBL_XMSS_INDEX_FILE = "")
     expect_null(rmoriebricklayer:::.rmbl_xmss_index_file())
@@ -304,13 +322,13 @@ test_that("Y2b: the XMSS index record persists by default, in the package config
   a <- capsule_attest(list(n = 1), k)
   expect_true(file.exists(f))
   xmss_forget_used_indices()   # removes the file too; recreate the record as another session would
-  rmoriebricklayer:::.bl_write_private_json(f, setNames(list(a$signature$index), paste0(k$root, ":", k$pub_seed)))
+  writeLines(paste(paste0(k$root, ":", k$pub_seed), a$signature$index, sep = "\t"), f)
   expect_error(capsule_attest(list(n = 2), saved), "already used")
   expect_s3_class(capsule_attest(list(n = 2), xmss_advance(saved, a$signature)), "bricklayer_attestation")
-  # a file that is not a JSON object is reported, not read around
+  # a record the package cannot read stops signing, it is not read around
   xmss_forget_used_indices()
   writeLines("[1, 2]", f)
-  expect_error(capsule_sign("m", pqc_keygen(height = 2)), "not a JSON object")
+  expect_error(capsule_sign("m", pqc_keygen(height = 2)), "malformed line")
   xmss_forget_used_indices()
 })
 
@@ -362,8 +380,8 @@ test_that("the refusals of the third pass are exercised: work, keys, credentials
   expect_error(xmss_advance(k, bad), "no valid index")
   # with the index file off, signing still works and nothing is saved
   withr::local_options(rmoriebricklayer.xmss_index_file = FALSE)
-  expect_false(rmoriebricklayer:::.rmbl_xmss_used_save())
-  expect_s3_class(capsule_sign("m2", xmss_advance(k, s)), "bricklayer_signature")
+  expect_warning(s2 <- capsule_sign("m2", xmss_advance(k, s)), "record is off")
+  expect_s3_class(s2, "bricklayer_signature")
   # a FIPS public-key object is compared by its `public` field
   a <- capsule_attest(list(n = 1), pqc_keygen(height = 2))
   fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
