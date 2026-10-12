@@ -388,6 +388,13 @@ test_that("patch coverage: the territory fallback, an overflowed stability numbe
   expect_identical(rmoriebricklayer:::.bl_config_object(cfg)$route, "hosted")
   writeLines("{", cfg)
   expect_null(rmoriebricklayer:::.bl_config_object(cfg))
+  # the writer's own guard, for callers that write without reading first
+  writeLines("[]", cfg)
+  expect_error(rmoriebricklayer:::.bl_write_config(list(route = "hosted")), "not valid JSON")
+  expect_identical(readLines(cfg, warn = FALSE), "[]")
+  unlink(cfg)
+  rmoriebricklayer:::.bl_write_config(list(route = "hosted"))
+  expect_identical(rmoriebricklayer:::.bl_read_config()$route, "hosted")
   cred <- rmoriebricklayer:::.bl_credentials_path()
   writeLines("{\"hosted_key\": \"k\"}", cred)
   expect_identical(rmoriebricklayer:::.bl_credentials_object(cred)$hosted_key, "k")

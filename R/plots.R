@@ -229,7 +229,6 @@ bricklayer_plot_options <- function(...) {
   }
   txt <- txt[!is.na(txt)]
   w <- max(.bl_strwidth(txt, cex = 0.9), 0)
-  if (!is.finite(w)) w <- 0
   lines <- w / graphics::par("csi")
   min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), 14)
 }
