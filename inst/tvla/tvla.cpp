@@ -164,9 +164,15 @@ static std::vector<double> run_kernel(uint32_t entry, const std::vector<uint32_t
     for (const auto &m : mem) uc_mem_write(r.uc, m.first, m.second.data(), m.second.size());
     uint32_t sp = static_cast<uint32_t>(kStack);
     if (args.size() > 4) {
-        sp -= 8;
-        uint32_t a4 = args[4];
-        uc_mem_write(r.uc, sp, &a4, 4);
+        /* AAPCS: the fifth argument and up sit at sp, sp+4, ... with sp 8-byte aligned; the
+           first version wrote only args[4], so the six-argument composed kernels read a null
+           `out` and faulted (UC_ERR_WRITE_UNMAPPED) before a trace was ever taken */
+        const size_t extra = args.size() - 4;
+        sp -= static_cast<uint32_t>(((extra * 4 + 7) / 8) * 8);
+        for (size_t i = 0; i < extra; ++i) {
+            uint32_t a = args[4 + i];
+            uc_mem_write(r.uc, sp + 4 * i, &a, 4);
+        }
     }
     const int ar[4] = {UC_ARM_REG_R0, UC_ARM_REG_R1, UC_ARM_REG_R2, UC_ARM_REG_R3};
     for (size_t i = 0; i < args.size() && i < 4; ++i) { uint32_t a = args[i]; uc_reg_write(r.uc, ar[i], &a); }

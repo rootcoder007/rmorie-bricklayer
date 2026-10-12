@@ -357,6 +357,10 @@ test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
   p <- .bl_credentials_path()
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   writeLines("{not json", p)
+  # the file is shared with morie and rmorie: unreadable is an error, never "no key"
+  expect_error(.bl_read_credentials(), "not a JSON object")
+  expect_error(.bl_hosted_key(), "not a JSON object")
+  unlink(p)
   expect_equal(.bl_read_credentials(), list())
   expect_null(.bl_hosted_key())
   Sys.setenv(MORIE_HOSTED_AUTH_URL = "https://auth.example/x/")

@@ -192,11 +192,11 @@ test_that("the conformant signature still verifies, and still refuses", {
   badpub$root <- paste0("00", substr(pub$root, 3L, 64L))
   expect_false(capsule_verify(msg, sig, badpub))
 
-  # R is part of the signature now, so a signature without one cannot be
-  # verified rather than being verified against the wrong digest
+  # R is part of the signature now, so a signature without one is not verified (FALSE, not an
+  # error: an edited object is a verification failure like any other)
   stripped <- sig
   stripped$randomizer <- NULL
-  expect_error(capsule_verify(msg, stripped, pub), "no RFC 8391 randomiser")
+  expect_false(capsule_verify(msg, stripped, pub))
 
   # and a key without SK_PRF cannot sign
   oldkey <- key

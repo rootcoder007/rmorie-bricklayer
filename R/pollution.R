@@ -131,10 +131,8 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
     beta <- betas[[outcome]]
     ci <- betas_ci[[outcome]]
   } else {
-    beta <- as.numeric(beta_per_10)
-    if (length(beta) != 1L || !is.finite(beta)) {
-      stop("`beta_per_10` must be a single finite number", call. = FALSE)
-    }
+    # the same guard as every other scalar: TRUE is not a log relative risk of 1
+    beta <- .pollution_scalar(beta_per_10, "beta_per_10", nonneg = FALSE)
   }
   reference_conc <- .pollution_scalar(reference_conc, "reference_conc")
   z <- .pollution_exposure(exposure)
@@ -162,9 +160,17 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 }
 
 # One finite number, optionally non-negative: the scalar inputs of the burden functions.
+.pollution_rate_msg <- function(rate) {
+  sprintf(paste("`baseline_rate` is a rate per person-year, between 0 and 1 (0.008 is 800 per 100,000);",
+                "%s looks like a rate per 100,000, which only verify_pollution() takes"), format(rate))
+}
+
 .pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
   # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE is a typo
   if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
+  if (is.factor(x)) {
+    stop(sprintf("`%s` must be numeric, not a factor (its level codes are not values)", what), call. = FALSE)
+  }
   v <- .rmbl_num_input(x, what, allow_null = FALSE)
   if (length(v) != 1L || is.na(v) || !is.finite(v)) {
     stop(sprintf("`%s` must be a single finite number", what), call. = FALSE)
@@ -254,11 +260,7 @@ mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_
   exposure_delta <- .pollution_scalar(exposure_delta, "exposure_delta", nonneg = FALSE)
   population <- .pollution_scalar(population, "population")
   baseline_rate <- .pollution_scalar(baseline_rate, "baseline_rate")
-  if (baseline_rate > 1) {
-    stop(sprintf(paste("`baseline_rate` is a rate per person-year, between 0 and 1; %s looks like a rate",
-                       "per 100,000 (verify_pollution() and pollution_burden() take that form)"),
-                 format(baseline_rate)), call. = FALSE)
-  }
+  if (baseline_rate > 1) stop(.pollution_rate_msg(baseline_rate), call. = FALSE)
   beta_per_unit <- .pollution_scalar(beta_per_unit, "beta_per_unit", nonneg = FALSE)
   baseline_rate * population * (1 - exp(-beta_per_unit * exposure_delta))
 }
@@ -304,6 +306,9 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, 
   exposure_mean <- .pollution_scalar(exposure_mean, "exposure_mean")
   exposure_prevalence <- .pollution_scalar(exposure_prevalence, "exposure_prevalence")
   baseline_rate <- .pollution_scalar(baseline_rate, "baseline_rate")
+  # the same check mortality_displaced() makes: 800 is a rate per 100,000, and taken per
+  # person-year it gave 110 million attributable deaths from a million people
+  if (baseline_rate > 1) stop(.pollution_rate_msg(baseline_rate), call. = FALSE)
   population <- .pollution_scalar(population, "population")
   if (!is.null(reference_conc)) {
     reference_conc <- .pollution_scalar(reference_conc, "reference_conc")
@@ -444,6 +449,9 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
 exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootstrap = 100L,
                                   random_state = 42L, estimator = plr_crossfit) {
   estimator <- match.fun(estimator)
+  n_bootstrap <- .pollution_scalar(n_bootstrap, "n_bootstrap")
+  if (n_bootstrap != round(n_bootstrap)) stop("`n_bootstrap` must be a whole number of resamples", call. = FALSE)
+  n_bootstrap <- as.integer(n_bootstrap)
   base <- estimator(data, outcome, exposure, confounders)
   ate <- as.numeric(base$ate)
   se_analytic <- as.numeric(base$se)
@@ -624,10 +632,11 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
         }),
     row("prevalence in [0,1]", fin(exposure_prevalence) && exposure_prevalence >= 0 && exposure_prevalence <= 1,
         sprintf("exposure_prevalence=%s", format(exposure_prevalence))),
-    row("baseline_rate finite and non-negative", fin(baseline_rate) && baseline_rate >= 0,
+    row("baseline_rate finite, between 0 and 100,000 per 100k",
+        fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5,
         sprintf("baseline_rate=%s per 100k per year", format(baseline_rate))),
     row("population finite and positive", fin(population) && population > 0,
-        sprintf("population=%s", format(population))),
+        sprintf("population=%s", format(population, big.mark = ",", scientific = FALSE))),
     row("reference finite and non-negative", fin(reference) && reference >= 0,
         sprintf("reference=%s", format(reference))),
     row("pollutant supported by the CRFs", !is.na(.pollution_pollutant(pollutant)),
@@ -704,10 +713,15 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     v <- get(nm, inherits = FALSE)
     if (length(v) != 1L) return(fail(sprintf("%s must be a single number, not %d values", nm, length(v))))
     # a flag or text is not a number; a missing value (NA) is logged as a failed assumption below
-    if ((is.logical(v) && !is.na(v)) || (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
+    if ((is.logical(v) && !is.na(v)) || is.factor(v) ||
+          (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
       return(fail(sprintf("%s must be a single number", nm)))
     }
   }
+  # a mean or prevalence the caller did not pass at all is no data; a zero the caller passed is
+  # a measurement (an exposure at or below the reference, or nobody exposed: a valid run with
+  # zero attributable cases, as the documentation says)
+  no_scalar_data <- missing(exposure_mean) && missing(exposure_prevalence)
   reference <- suppressWarnings(as.numeric(reference))
   if (!is.character(outcome) || length(outcome) != 1L || is.na(outcome)) {
     return(fail("outcome must be a single outcome name"))
@@ -764,7 +778,12 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     es <- exposed_summary(df$exposure)
     exposure_mean <- es$mean
     exposure_prevalence <- es$prevalence
-    if ("income" %in% names(df)) equity_df <- df
+    if ("income" %in% names(df)) {
+      if (!is.numeric(df$income)) {
+        return(fail("the income column must be numeric (a quintile or an amount); text cannot be ranked"))
+      }
+      equity_df <- df
+    }
     data_source <- exposure_csv
   } else {
     exposure_mean <- as.numeric(exposure_mean)
@@ -773,9 +792,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     # the defaults (a mean of 0, a prevalence of 0) are no data at all: a call with nothing to
     # verify, not a clean run with zero deaths; a missing or negative value is a failed
     # assumption, logged below
-    if (isTRUE(exposure_mean == 0) || isTRUE(exposure_prevalence == 0)) {
-      return(fail(paste("no exposure data: pass exposure_csv, or exposure_mean and exposure_prevalence",
-                        "(both above zero), or demo = TRUE")))
+    if (no_scalar_data) {
+      return(fail(paste("no exposure data: pass exposure_csv, or exposure_mean and exposure_prevalence,",
+                        "or demo = TRUE")))
     }
   }
   baseline_rate <- as.numeric(baseline_rate)
@@ -811,14 +830,27 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   beta_per_unit <- log(crf$rr) / max(exposure_delta, 1e-9)
   # the deaths displaced by removing the excess exposure are counted over the exposed share of the
   # population, and the burden uses the same reference concentration as the RR printed above it
-  displaced <- mortality_displaced(exposure_delta, population * exposure_prevalence,
-                                   baseline_per_person, beta_per_unit)
-  burden <- pollution_burden(exposure_mean, exposure_prevalence, baseline_per_person, population,
-                             pollutant = if (pollutant == "pm25") "PM2.5" else "NO2",
-                             outcome = outcome, reference_conc = reference)
-  equity <- if (!is.null(equity_df) && "income" %in% names(equity_df)) {
-    exposure_concentration_index(equity_df, "exposure", "income")
-  }
+  # every stage runs inside the status contract: what it refuses is an "error" report, never a
+  # raw condition out of verify_pollution()
+  staged <- tryCatch({
+    displaced <- mortality_displaced(exposure_delta, population * exposure_prevalence,
+                                     baseline_per_person, beta_per_unit)
+    burden <- pollution_burden(exposure_mean, exposure_prevalence, baseline_per_person, population,
+                               pollutant = if (pollutant == "pm25") "PM2.5" else "NO2",
+                               outcome = outcome, reference_conc = reference)
+    equity <- if (!is.null(equity_df) && "income" %in% names(equity_df)) {
+      if (nrow(equity_df) < 2L || !any(equity_df$exposure > 0, na.rm = TRUE)) {
+        NULL  # one row, or no exposure anywhere: there is no gradient to measure
+      } else {
+        exposure_concentration_index(equity_df, "exposure", "income")
+      }
+    }
+    list(displaced = displaced, burden = burden, equity = equity)
+  }, error = function(e) e)
+  if (inherits(staged, "error")) return(fail(conditionMessage(staged)))
+  displaced <- staged$displaced
+  burden <- staged$burden
+  equity <- staged$equity
   report$status <- "ok"
   report$pipeline <- list(
     crf = unclass(crf), paf = as.numeric(paf), paf_ci = paf_ci,

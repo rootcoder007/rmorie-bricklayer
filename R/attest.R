@@ -115,6 +115,9 @@ capsule_attest <- function(manifest, key, context = NULL,
   } else {
     capsule_sign(signed, key, context = if (is.null(ctx)) NULL else payload$context, prehash = prehash)
   }
+  # an XMSS signature carries the advanced key (`key_state`, with sk_seed and sk_prf) so the
+  # signer can save it; an attestation is the object handed to verifiers, and the key stays home
+  sig$key_state <- NULL
   out <- c(payload, list(signature = sig))
   class(out) <- c("bricklayer_attestation", "list")
   out

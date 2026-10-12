@@ -249,9 +249,9 @@ fips_key <- function(scheme, public, secret = NULL) {
 #'   chain- and bundle-heavy code that has no physical attacker in its threat
 #'   model can take the plain path everywhere with
 #'   \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
-#'   signing are not masked and ignore it. Masking costs about 3 to 12 times
+#'   signing are not masked and ignore it. Masking costs about 2.3 to 3.4 times
 #'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-#'   package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+#'   package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 #'   ML-DSA-65), depending on the CPU.
 #' @param deterministic As in
 #' [capsule_sign()].
@@ -735,9 +735,9 @@ signing_public_key <- function(key) {
 #'   chain- and bundle-heavy code that has no physical attacker in its threat
 #'   model can take the plain path everywhere with
 #'   \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
-#'   signing are not masked and ignore it. Masking costs about 3 to 12 times
+#'   signing are not masked and ignore it. Masking costs about 2.3 to 3.4 times
 #'   the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-#'   package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+#'   package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 #'   ML-DSA-65), depending on the CPU.
 #' @param deterministic For the standardised schemes,
 #' use the deterministic variant rather than drawing fresh randomness per
@@ -992,28 +992,27 @@ capsule_verify <- function(message, signature, key, context = NULL,
            call. = FALSE)
     }
   }
-  if (is.null(signature[["randomizer"]])) {
-    stop(paste0("this signature carries no RFC 8391 randomiser and cannot ",
-                "be verified; it was produced by an earlier, ",
-                "non-conformant version"), call. = FALSE)
-  }
+  # no randomiser (a pre-RFC 8391 signature, or an edited one): not verified, not an error
+  if (is.null(signature[["randomizer"]])) return(FALSE)
   one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+  whole <- function(x) is.numeric(x) && length(x) == 1L && !is.na(x) && is.finite(x) && x == trunc(x) && x >= 0
   # every field the verifier reads is checked here, and a signature whose own root, height
   # or wire form disagrees with the key or with its parts is "not verified": those fields
   # travel with the signature so a reader can check them, not so an editor can change them
+  # every signature this package has produced since 0.5.0 carries index, root, height and wire
+  # as numbers and strings; an index of 0.5 or "0", a height of 4.5, or a field removed is an
+  # edited object, and an edited object is not verified
   if (!one_string(signature$signature) || !one_string(signature$auth) ||
-        !one_string(signature[["randomizer"]]) || length(signature$index) != 1L ||
-        is.na(suppressWarnings(as.integer(signature$index)))) {
+        !one_string(signature[["randomizer"]]) || !whole(signature$index) ||
+        !whole(signature$height) || !one_string(signature$root) || !one_string(signature$wire)) {
     return(FALSE)
   }
   same <- function(a, b) identical(tolower(as.character(a)), tolower(as.character(b)))
-  if (!is.null(signature$root) && !same(signature$root, key$root)) return(FALSE)
-  if (!is.null(signature$height) && !identical(as.integer(signature$height), as.integer(key$height))) return(FALSE)
-  if (!is.null(signature$wire)) {
-    expected_wire <- paste0(sprintf("%08x", as.integer(signature$index)), signature[["randomizer"]],
-                            signature$signature, signature$auth)
-    if (!identical(tolower(as.character(signature$wire)), tolower(expected_wire))) return(FALSE)
-  }
+  if (!same(signature$root, key$root)) return(FALSE)
+  if (!identical(as.integer(signature$height), as.integer(key$height))) return(FALSE)
+  expected_wire <- paste0(sprintf("%08x", as.integer(signature$index)), signature[["randomizer"]],
+                          signature$signature, signature$auth)
+  if (!same(signature$wire, expected_wire)) return(FALSE)
   .Call(C_rmbl_xmss_verify, key$pub_seed, key$root, as.integer(key$height),
         as.integer(signature$index), message, signature$signature,
         signature$auth, signature[["randomizer"]])
@@ -1028,7 +1027,9 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # Hex bytes, or NULL if the string is not an even-length run of hex
 # digits. as.raw(strtoi(...)) would quietly map a non-hex pair to 00.
 .rmbl_hex_or_null <- function(hex) {
-  hex <- as.character(hex)[1L]
+  # one string, not the first of several: a length-2 `signature` field is a tampered object
+  if (is.null(hex) || length(hex) != 1L) return(NULL)
+  hex <- as.character(hex)
   if (is.na(hex) || nchar(hex) %% 2L != 0L) return(NULL)
   if (!grepl("^[0-9a-fA-F]*$", hex)) return(NULL)
   .rmbl_hex_to_raw(hex)

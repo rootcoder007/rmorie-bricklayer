@@ -41,25 +41,31 @@
 # TRUE when the settings file parses; a file that does not is reported once per change and
 # treated as empty for reading, and is never written over (its saved keys would be lost)
 .bl_config_parses <- function(p) {
-  !inherits(tryCatch(.rmbl_json_text(readLines(p, warn = FALSE), simplifyVector = TRUE),
-                     error = function(e) e), "error")
+  !is.null(.bl_config_object(p))
+}
+
+# The settings file as a named list, or NULL when it is not a JSON object ([], "x", 5 and a
+# syntax error alike).
+.bl_config_object <- function(p) {
+  lines <- readLines(p, warn = FALSE)
+  # `[]`, `"x"` and `5` parse, and an empty array reads as an empty list: only an object will do
+  if (!startsWith(trimws(paste(lines, collapse = "")), "{")) return(NULL)
+  out <- tryCatch(.rmbl_json_text(lines, simplifyVector = TRUE), error = function(e) NULL)
+  if (!is.list(out) || is.data.frame(out) || (length(out) && is.null(names(out)))) return(NULL)
+  out
 }
 
 .bl_read_config <- function() {
   p <- .bl_config_path()
   if (!file.exists(p)) return(list())
-  out <- tryCatch(.rmbl_json_text(readLines(p, warn = FALSE), simplifyVector = TRUE),
-                  error = function(e) NULL)
+  out <- .bl_config_object(p)
   if (is.null(out)) {
-    stamp <- as.character(file.mtime(p))
-    if (!identical(.bl_cfg_state$warned, stamp)) {
-      .bl_cfg_state$warned <- stamp
-      warning(sprintf("%s is not valid JSON and is ignored (the saved route and keys do not apply); fix or remove it",
-                      p), call. = FALSE)
-    }
-    return(list())
+    # a saved route or key that is silently dropped sends a prompt where the user said not to
+    # send it; a settings file that cannot be read stops the call until it is fixed
+    stop(sprintf("%s is not a JSON object and the saved route and keys cannot be read; fix or remove it", p),
+         call. = FALSE)
   }
-  if (is.list(out)) out else list()
+  out
 }
 
 .bl_write_config <- function(data) {
@@ -136,6 +142,9 @@
       if (grepl("[[:space:]]", value) || (has_scheme && !grepl("^https?://", value, ignore.case = TRUE))) {
         stop("ollama.url must be an http(s):// address such as http://localhost:11434 (or host:port)", call. = FALSE)
       }
+      # the same check own.url gets: a metadata or link-local address is refused when saved
+      v <- sub("/+$", "", if (has_scheme) value else paste0("http://", value))
+      if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "ollama.url")
     },
     NULL
   )
@@ -206,6 +215,15 @@ bricklayer_llm_config <- function(...) {
       if (nzchar(v)) {
         if (identical(k, "route")) v <- tolower(v)
         .bl_config_check(k, v)
+        # a key belongs to the server it was saved for: a new address drops the old key rather
+        # than sending it to the new server
+        key_of <- c(own.url = "own.key", ollama.url = "ollama.key")[k]
+        moved <- !is.na(key_of) && !is.null(data[[key_of]]) &&
+          !identical(sub("/+$", "", v), sub("/+$", "", data[[k]] %||% ""))
+        if (moved) {
+          data[[key_of]] <- NULL
+          message(sprintf("%s changed: the saved %s was dropped (set it again for the new server)", k, key_of))
+        }
         data[[k]] <- v
       } else {
         data[[k]] <- NULL

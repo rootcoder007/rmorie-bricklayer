@@ -93,6 +93,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
   rest <- args[-1L]
+  # everything after a bare `--` is positional: a prompt or request that itself starts with --
+  dd <- match("--", rest)
+  tail_args <- if (is.na(dd)) character() else rest[-seq_len(dd)]
+  if (!is.na(dd)) rest <- rest[seq_len(dd - 1L)]
   prog <- .bl_prog()
   usage_error <- function(msg) {
     stop(structure(class = c("bl_usage", "error", "condition"), list(message = msg, call = NULL)))
@@ -181,10 +185,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             }
             # "auto" is passed through: it means the automatic order this time, over a saved route
           }
-          if (!length(rest)) {
-            usage_error(sprintf("usage: %s ask [--route ROUTE] [--model NAME] PROMPT...", prog))
+          if (!length(rest) && !length(tail_args)) {
+            usage_error(sprintf("usage: %s ask [--route ROUTE] [--model NAME] [--] PROMPT...", prog))
           } else {
-            prompt <- paste(rest, collapse = " ")
+            prompt <- paste(c(rest, tail_args), collapse = " ")
             if (!nzchar(trimws(prompt))) {
               usage_error(sprintf("the prompt is empty (usage: %s ask [--route ROUTE] [--model NAME] PROMPT...)", prog))
             }
@@ -192,6 +196,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
         },
         bundle = {
+          rest <- c(rest, tail_args)
           if (!length(rest)) {
             usage_error(sprintf("usage: %s bundle REQUEST...", prog))
           }
@@ -265,7 +270,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # One usage line per verb, for `VERB --help`; NULL for a verb that does not exist.
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
   u <- c(
-    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token KEY",
+    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token [KEY]",
                   "  sign in to the hosted MORIE LLM tier"),
     logout = "logout   forget the hosted key",
     doctor = "doctor   report the language-model routes available here",
@@ -538,7 +543,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     sprintf("     %s doctor\n", prog),
     "2. Pick a model source (any one is enough):\n",
     sprintf("     hosted MORIE tier   %s login                  (GitHub or an emailed code)\n", prog),
-    sprintf("                         %s login --token KEY      (a key from https://www.rmorie.com/access)\n", prog),
+    sprintf("                         %s login --token          (paste a key from www.rmorie.com/access)\n", prog),
     "     local Ollama        ollama pull qwen3:8b      (https://ollama.com)\n",
     sprintf("     your own server     %s config set own.url http://localhost:1234/v1\n", prog),
     sprintf("   or answer a few questions instead:  %s config setup\n", prog),
@@ -557,7 +562,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     sprintf("`%s doctor` shows each one and the route ask will take.\n\n", prog),
     "Hosted MORIE tier (the :cloud and :cf models)\n",
     sprintf("  %s login                              sign in (GitHub, or --email ADDRESS for a code)\n", prog),
-    sprintf("  %s login --token KEY                  paste a key; it is checked before it is saved\n", prog),
+    sprintf("  %s login --token                      paste a key when asked; it is checked before it is saved\n", prog),
     sprintf("  %s models                             the models your key can use\n", prog),
     sprintf("  %s config set route hosted            always use it, even with Ollama running\n", prog),
     sprintf("  %s config set hosted.model NAME       its default model\n\n", prog),

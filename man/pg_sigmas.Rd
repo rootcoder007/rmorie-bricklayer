@@ -177,6 +177,16 @@ necessary, not sufficient.
 \code{x + u dt + sqrt(2 K dt) xi} (Thomson 1987) with an optional counting
 grid.
 }
+\section{Boundary}{
+ the outermost ring of cells is held at zero (an open boundary): mass
+that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
+empty cells so the plume of interest stays inside the ring.
+
+ the outermost ring of cells is held at zero (an open boundary): mass
+that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
+empty cells so the plume of interest stays inside the ring.
+}
+
 \examples{
 pg_sigmas(1000, "D")
 gaussian_plume(100, 5, 50, rbind(c(1000, 0, 0)))

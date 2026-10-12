@@ -44,9 +44,9 @@ signature for the same randomness. The option
 chain- and bundle-heavy code that has no physical attacker in its threat
 model can take the plain path everywhere with
 \code{options(rmoriebricklayer.masked = FALSE)}. SLH-DSA and XMSS
-signing are not masked and ignore it. Masking costs about 3 to 12 times
+signing are not masked and ignore it. Masking costs about 2.3 to 3.4 times
 the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 ML-DSA-65), depending on the CPU.}
 
 \item{signature}{A signature from \code{fips_sign_mu()}

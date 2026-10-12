@@ -708,9 +708,20 @@ validate_schema <- function(df_raw, provenance) {
 #' try(apply_schema_validation(data.frame(x = 1), prov))
 #' @export
 apply_schema_validation <- function(df_raw, provenance) {
-  is_rule_list <- inherits(provenance, "bricklayer_rule") ||
-    (is.list(provenance) && length(provenance) &&
-       all(vapply(provenance, inherits, logical(1), "bricklayer_rule")))
+  if (is.data.frame(provenance)) {
+    stop("`provenance` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
+  }
+  is_rule <- vapply(provenance, inherits, logical(1), "bricklayer_rule")
+  is_rule_list <- inherits(provenance, "bricklayer_rule") || (is.list(provenance) && length(provenance) && all(is_rule))
+  if (!is_rule_list && is.list(provenance) && any(is_rule)) {
+    # a list that mixes rules with anything else (a number, a nested list of rules) would fall
+    # through to validate_schema() and pass silently; it is neither contract, so it is refused
+    stop(sprintf(paste("`provenance` mixes rules with other elements (element %d is not a rule):",
+                       "pass rules only, or a provenance list"), which(!is_rule)[[1L]]), call. = FALSE)
+  }
+  if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(names(provenance))) {
+    stop("`provenance` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
+  }
   issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
   for (nm in names(issues)) {
     iss <- issues[[nm]]
