@@ -143,7 +143,19 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
     Inf
   }
   fresh <- age < 86400
-  if (refresh || !fresh) .bl_data_get("/manifest.json", p, timeout = 60)
+  if (refresh || !fresh) {
+    # fetched beside the cached copy and moved over it only once it parses: a refresh that fails
+    # leaves the last good manifest in place, and the digest check falls back on it
+    tmp <- paste0(p, ".part")
+    on.exit(unlink(tmp), add = TRUE)
+    .bl_data_get("/manifest.json", tmp, timeout = 60)
+    m <- .rmbl_json_text(paste(readLines(tmp, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
+    if (!is.list(m) || (length(m) && is.null(names(m)))) {
+      stop("the manifest fetched from data.rmorie.com is not a JSON object", call. = FALSE)
+    }
+    if (!isTRUE(file.rename(tmp, p))) stop(sprintf("could not store the manifest in %s", p), call. = FALSE)
+    return(m)
+  }
   .rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"),
                             simplifyVector = FALSE)
 }
@@ -172,9 +184,9 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 }
 
 # The manifest's SHA-256 for a table, when it lists one (the field may be named sha256 or
-# sha256_gz, of the compressed file as served).
-.bl_data_manifest_sha <- function(key, refresh = FALSE) {
-  ds <- tryCatch(bricklayer_data_manifest(refresh = refresh)$datasets, error = function(e) NULL)
+# sha256_gz, of the compressed file as served). NULL when the manifest lists none; a digest
+# field that is not a digest is an error of class bl_bad_digest.
+.bl_manifest_digest <- function(ds, key) {
   for (d in ds) {
     if (identical(d$key, key)) {
       for (f in c("sha256_gz", "sha256", "sha")) {
@@ -185,24 +197,54 @@ bricklayer_data_tables <- function(refresh = FALSE) {
         v <- if (one) sub("^sha256:", "", as.character(v)) else NA_character_
         if (length(v) == 1L && !is.na(v) && grepl("^[0-9a-fA-F]{64}$", v)) return(tolower(v))
         # a digest field that is not a digest is not "no digest": the file cannot be trusted
-        stop(sprintf("the manifest's %s for %s is not a SHA-256 hex digest (%s)", f, key, as.character(v)[1L]),
-             call. = FALSE)
+        stop(structure(class = c("bl_bad_digest", "error", "condition"),
+                       list(message = sprintf("the manifest's %s for %s is not a SHA-256 hex digest (%s)", f, key,
+                                              as.character(v)[1L]), call = NULL)))
       }
     }
   }
   NULL
 }
 
+# The digest from the manifest as bricklayer_data_manifest() returns it (re-fetched when the
+# cached copy is over a day old). A manifest that cannot be had is an error here, never "no
+# digest" (review of 52a8883, B1).
+.bl_data_manifest_sha <- function(key, refresh = FALSE) {
+  .bl_manifest_digest(bricklayer_data_manifest(refresh = refresh)$datasets, key)
+}
+
+# The digest from the manifest copy on disk, however old: NA when there is no usable copy.
+.bl_data_cached_digest <- function(key) {
+  p <- file.path(.bl_data_cache_dir(), "manifest.json")
+  if (!file.exists(p)) return(NA)
+  m <- tryCatch(.rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE),
+                error = function(e) NULL)
+  if (!is.list(m)) return(NA)
+  d <- .bl_manifest_digest(m$datasets, key)
+  if (is.null(d)) NA else d
+}
+
 # A cached or freshly downloaded file that does not match the manifest's SHA-256 is deleted and
 # refused: a tampered cache, a truncated download or a table rebuilt upstream all look the same.
-# The digest the manifest held when the check started stands unless a refreshed manifest is
-# actually fetched and lists a different one; a refresh that fails changes nothing, so a file
-# that does not match is never accepted because the manifest could not be re-read.
+# When the manifest cannot be fetched, the last copy on disk (however old) still holds the digest
+# the table had and is used; with no copy at all the file cannot be verified and is not kept. A
+# mismatch triggers one refresh of the manifest (a table rebuilt upstream has a new digest), and
+# a refresh that fails changes nothing.
 .bl_data_check_sha <- function(key, dest) {
+  refuse <- function(msg) {
+    unlink(dest)
+    stop(msg, call. = FALSE)
+  }
   want <- tryCatch(.bl_data_manifest_sha(key), error = function(e) e)
+  if (inherits(want, "bl_bad_digest")) refuse(conditionMessage(want))
   if (inherits(want, "error")) {
-    unlink(dest)   # a digest that is not a digest: the unverified file does not stay in the cache
-    stop(want)
+    want <- tryCatch(.bl_data_cached_digest(key), error = function(e) e)
+    if (inherits(want, "error")) refuse(conditionMessage(want))
+    if (identical(want, NA)) {
+      refuse(sprintf(paste("%s cannot be verified: the manifest could not be fetched from data.rmorie.com (%s)",
+                           "and no earlier copy lists its digest, so the file was not kept; run again when",
+                           "the service answers"), key, "offline or an error"))
+    }
   }
   if (is.null(want)) return(invisible(TRUE))
   have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
@@ -212,10 +254,9 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     fresh <- tryCatch(.bl_data_manifest_sha(key, refresh = TRUE), error = function(e) NULL)
     if (is.character(fresh) && length(fresh) == 1L && !is.na(fresh)) want <- fresh
     if (!identical(have, want)) {
-      unlink(dest)
-      stop(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
-                         "run again to download it, and if it still fails the file was tampered with in transit"),
-                   key, substr(have, 1L, 12L), substr(want, 1L, 12L)), call. = FALSE)
+      refuse(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
+                           "run again to download it, and if it still fails the file was tampered with in transit"),
+                     key, substr(have, 1L, 12L), substr(want, 1L, 12L)))
     }
   }
   invisible(TRUE)

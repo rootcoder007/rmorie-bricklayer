@@ -148,6 +148,20 @@
   out
 }
 
+# The whole file as the real parser reads it, before a byte is edited: the member scanner alone
+# accepted bare words, missing commas, trailing garbage and duplicate keys, wrote the key into
+# such a file and every later read failed (review of 52a8883, B5). A key listed twice is refused:
+# morie reads the last and this package edited the first.
+.bl_credentials_text_ok <- function(txt) {
+  mem <- .bl_json_top_members(txt)
+  if (is.null(mem)) return(FALSE)
+  obj <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = FALSE, bigint_as_char = TRUE),
+                  error = function(e) NULL)
+  if (!is.list(obj) || (length(obj) && is.null(names(obj)))) return(FALSE)
+  keys <- vapply(mem, function(m) m$key, "")
+  !anyDuplicated(keys) && length(obj) == length(mem)
+}
+
 # Set (value a string) or remove (value NULL) one top-level member by editing the text.
 .bl_credentials_text_set <- function(txt, key, value) {
   mem <- .bl_json_top_members(txt)
@@ -192,15 +206,20 @@
 .bl_store_key <- function(key, user = NULL) {
   p <- .bl_credentials_path()
   txt <- if (file.exists(p)) .bl_read_text(p) else "{}"
-  if (is.null(.bl_json_top_members(txt))) {
-    stop(sprintf(paste("%s is not a JSON object; fix or remove it before a key is saved",
-                       "(writing over it would drop the entries it holds)"), p), call. = FALSE)
+  if (!.bl_credentials_text_ok(txt)) {
+    stop(sprintf(paste("%s is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it",
+                       "before a key is saved (writing into it would leave a file no package can read)"), p),
+         call. = FALSE)
   }
   # the file is edited as text: this package's three members are set, every other byte stays
-  txt <- .bl_credentials_text_set(txt, "hosted_key", key)
-  if (!is.null(user)) txt <- .bl_credentials_text_set(txt, "hosted_user", user)
-  txt <- .bl_credentials_text_set(txt, "hosted_base_url", .bl_hosted_base())
-  .bl_write_private_text(p, txt)
+  new <- .bl_credentials_text_set(txt, "hosted_key", key)
+  if (!is.null(user)) new <- .bl_credentials_text_set(new, "hosted_user", user)
+  new <- .bl_credentials_text_set(new, "hosted_base_url", .bl_hosted_base())
+  back <- if (.bl_credentials_text_ok(new)) bricklayer_json_from_json(new, simplifyVector = FALSE) else NULL
+  if (!identical(back$hosted_key, key)) {
+    stop(sprintf("could not store the key in %s without damaging it; the file was left as it was", p), call. = FALSE)
+  }
+  .bl_write_private_text(p, new)
 }
 
 .bl_hosted_key <- function() {
@@ -873,14 +892,18 @@ bricklayer_llm_logout <- function() {
   had <- FALSE
   if (file.exists(p)) {
     txt <- .bl_read_text(p)
-    mem <- .bl_json_top_members(txt)
-    if (is.null(mem)) {
-      stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
-           call. = FALSE)
+    if (!.bl_credentials_text_ok(txt)) {
+      stop(sprintf(paste("%s is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it",
+                         "(it is shared with morie and rmorie)"), p), call. = FALSE)
     }
+    mem <- .bl_json_top_members(txt)
     had <- any(vapply(mem, function(m) identical(m$key, "hosted_key"), logical(1)))
     for (k in c("hosted_key", "hosted_user", "hosted_base_url")) txt <- .bl_credentials_text_set(txt, k, NULL)
     left <- .bl_json_top_members(txt)
+    if (!.bl_credentials_text_ok(txt) || "hosted_key" %in% vapply(left, function(m) m$key, "")) {
+      stop(sprintf("could not remove the key from %s without damaging it; the file was left as it was", p),
+           call. = FALSE)
+    }
     if (length(left)) .bl_write_private_text(p, txt) else unlink(p)
   }
   message(if (had) {

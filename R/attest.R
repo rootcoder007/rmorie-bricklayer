@@ -236,6 +236,7 @@ format.bricklayer_attestation <- function(x, ...) {
 #' @rdname rmbl_print_methods
 #' @export
 print.bricklayer_attestation <- function(x, ...) {
+  if (is.list(x$signature) && !is.null(x$signature$key_state)) warning(.rmbl_key_state_warning(), call. = FALSE)
   cat(format(x), sep = "\n")
   invisible(x)
 }

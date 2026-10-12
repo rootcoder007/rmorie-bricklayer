@@ -222,7 +222,17 @@ extern int    rmbl_os_random(unsigned char *, size_t);
 extern int  rmbl_fetch_with_fallback(const char *, const char *, const char *, int);
 extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
 
+/* the used-index record's file lock (rmbl_flock.c) */
+extern SEXP C_rmbl_flock_acquire(SEXP, SEXP);
+extern SEXP C_rmbl_flock_release(SEXP);
+extern SEXP C_rmbl_path_kind(SEXP);
+extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
+    {"C_rmbl_flock_acquire",  (DL_FUNC) &C_rmbl_flock_acquire,  2},
+    {"C_rmbl_flock_release",  (DL_FUNC) &C_rmbl_flock_release,  1},
+    {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
+    {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_mean",           (DL_FUNC) &C_rmbl_mean,           1},
     {"C_rmbl_mean_running",   (DL_FUNC) &C_rmbl_mean_running,   1},
     {"C_rmbl_var",            (DL_FUNC) &C_rmbl_var,            1},

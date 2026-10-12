@@ -7,10 +7,13 @@
 hurwitz_zeta(s, q = 1)
 }
 \arguments{
-\item{s}{Exponent, which must exceed 1 for the series to
-converge.}
+\item{s}{Exponent. The series converges for \code{s > 1}; below 1 the value is
+the analytic continuation (so \code{hurwitz_zeta(0.5, 0.5)} is \eqn{-0.6049}), and
+\code{s = 1} is a pole (\code{NA}).}
 
-\item{q}{Lower limit, which must be positive.}
+\item{q}{Lower limit: any real number but zero or a negative integer (poles, \code{NA}).
+For a negative non-integer \code{q} the value is real only for a whole \code{s}; a
+fractional \code{s} gives \code{NA}.}
 }
 \value{
 A numeric vector the length of \code{s}.

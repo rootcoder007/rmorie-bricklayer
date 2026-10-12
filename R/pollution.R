@@ -623,7 +623,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 }
 
 .pollution_assumptions <- function(pollutant, exposure_mean, exposure_prevalence,
-                                   baseline_rate, population, reference) {
+                                   baseline_rate, population, reference, rate_unit_given = FALSE) {
   row <- function(name, ok, note) list(assumption = name, ok = isTRUE(ok), note = note)
   fin <- function(x) length(x) == 1L && is.finite(x)
   list(
@@ -641,19 +641,30 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
         sprintf("exposure_mean=%s", format(exposure_mean))),
     row("prevalence in [0,1]", fin(exposure_prevalence) && exposure_prevalence >= 0 && exposure_prevalence <= 1,
         sprintf("exposure_prevalence=%s", format(exposure_prevalence))),
-    row("baseline_rate finite: zero, or between 1 and 100,000 per 100k",
-        fin(baseline_rate) && (baseline_rate == 0 || (baseline_rate >= 1 && baseline_rate <= 1e5)),
-        if (fin(baseline_rate) && baseline_rate < 1 && baseline_rate > 0) {
-          sprintf(paste("baseline_rate=%s per 100k is below one case per 100,000: a rate per person-year",
-                        "(0.012 is 1,200 per 100k)? pass baseline_rate_per = 1 if so"),
-                  format(baseline_rate))
+    # a rate below one per 100,000 is real for a rare outcome, and is also what a rate per
+    # person-year passed as per 100k looks like: with the unit given it is taken as stated,
+    # without it the caller is asked which it is (review of 52a8883, A6)
+    row(if (rate_unit_given) "baseline_rate finite and between 0 and 100,000 per 100k" else
+          "baseline_rate finite: zero, or between 1 and 100,000 per 100k (below 1 when its unit is given)",
+        fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5 &&
+          (rate_unit_given || baseline_rate == 0 || baseline_rate >= 1),
+        if (fin(baseline_rate) && baseline_rate < 1 && baseline_rate > 0 && !rate_unit_given) {
+          sprintf(paste("baseline_rate=%s per 100k is below one case per 100,000. If it is a rate per person-year",
+                        "(0.012 is 1,200 per 100k), pass baseline_rate_per = 1; if it really is %s per 100,000",
+                        "(a rare outcome), say so with baseline_rate_per = 1e5"),
+                  format(baseline_rate), format(baseline_rate))
         } else if (fin(baseline_rate) && baseline_rate == 0) {
           "baseline_rate=0: a measured zero rate, so no cases"
         } else {
           sprintf("baseline_rate=%s per 100k per year", format(baseline_rate))
         }),
-    row("population finite and positive", fin(population) && population > 0,
-        sprintf("population=%s", format(population, big.mark = ",", scientific = FALSE))),
+    row("population finite, positive and at most 10 billion", fin(population) && population > 0 && population <= 1e10,
+        if (fin(population) && population > 1e10) {
+          sprintf("population=%s is more people than live on Earth",
+                  format(population, big.mark = ",", scientific = FALSE))
+        } else {
+          sprintf("population=%s", format(population, big.mark = ",", scientific = FALSE))
+        }),
     row("reference finite and non-negative", fin(reference) && reference >= 0,
         sprintf("reference=%s", format(reference))),
     row("pollutant supported by the CRFs", !is.na(.pollution_pollutant(pollutant)),
@@ -721,6 +732,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                              years = NULL, demo = FALSE, exposure_csv = NULL,
                              exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
                              baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6) {
+  rate_unit_given <- !missing(baseline_rate_per)
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
   equity_df <- NULL
@@ -736,6 +748,10 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # with the other at zero, it is half of the data
   no_scalar_data <- is.null(exposure_mean) && is.null(exposure_prevalence)
   # one source of exposure: a CSV or the demo with scalars beside it is two answers to one question
+  if (isTRUE(demo) && !is.null(exposure_csv)) {
+    return(fail(paste("exposure_csv and demo = TRUE are two sources of exposure: pass one",
+                      "(the demo was used silently before)")))
+  }
   if ((isTRUE(demo) || !is.null(exposure_csv)) && !no_scalar_data) {
     return(fail(paste("exposure_mean / exposure_prevalence cannot be combined with exposure_csv or demo:",
                       "pass one source of exposure")))
@@ -817,12 +833,25 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (!"exposure" %in% names(df)) {
       return(fail("CSV missing 'exposure' column (ug/m3); a NAPS pull's 'value' column also works."))
     }
-    raw_exposure <- df$exposure
+    raw_exposure <- trimws(as.character(df$exposure))
     df$exposure <- suppressWarnings(as.numeric(df$exposure))
-    # rows whose exposure is not a number are dropped, and the report says how many
-    dropped_rows <- sum(is.na(df$exposure) & !is.na(raw_exposure) & nzchar(trimws(as.character(raw_exposure))))
+    # an empty cell or a missing-value token is a row without a measurement: dropped, and the
+    # report says how many. Text that is not a number ("<2", a detection-limit flag) is a
+    # measurement the reader cannot use: dropping it biased the mean and the prevalence (60% of
+    # rows dropped and status ok, review of 52a8883), so the run stops and names them
+    missing_tok <- is.na(raw_exposure) |
+      tolower(raw_exposure) %in% c("", "na", "n/a", "nan", "null", "-", ".", "missing")
+    text_rows <- is.na(df$exposure) & !missing_tok
+    if (any(text_rows)) {
+      ex <- utils::head(unique(raw_exposure[text_rows]), 3L)
+      return(fail(sprintf(paste("%d exposure value(s) are text, not numbers (%s): a censored value such as \"<2\"",
+                                "is a measurement, and dropping it would bias the mean and the prevalence; replace",
+                                "them (for example with half the detection limit) or remove those rows"),
+                          sum(text_rows), paste(sprintf("\"%s\"", ex), collapse = ", "))))
+    }
+    dropped_rows <- sum(is.na(df$exposure))
     if (dropped_rows > 0L) {
-      message(sprintf("note: %d exposure row(s) are not numbers and were dropped", dropped_rows))
+      message(sprintf("note: %d row(s) have no exposure value and were dropped", dropped_rows))
     }
     if (any(df$exposure < 0, na.rm = TRUE)) {
       n_neg <- sum(df$exposure < 0, na.rm = TRUE)
@@ -831,6 +860,10 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     es <- exposed_summary(df$exposure)
     exposure_mean <- es$mean
     exposure_prevalence <- es$prevalence
+    if ("income" %in% names(df) && all(is.na(df$income))) {
+      message("note: the income column is empty: no equity analysis")
+      df$income <- NULL
+    }
     if ("income" %in% names(df)) {
       if (!is.numeric(df$income)) {
         return(fail("the income column must be numeric (a quintile or an amount); text cannot be ranked"))
@@ -852,7 +885,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   baseline_rate <- as.numeric(baseline_rate) * 1e5 / baseline_rate_per   # per 100,000 from here on
   population <- as.numeric(population)
   assumptions <- .pollution_assumptions(pollutant, exposure_mean, exposure_prevalence,
-                                        baseline_rate, population, reference)
+                                        baseline_rate, population, reference, rate_unit_given)
   report <- list(
     command = "verify-pollution", pollutant = pollutant, outcome = outcome,
     region = region, years = years, data_source = data_source,
@@ -924,6 +957,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
 #' @rdname verify_pollution
 #' @export
 pollution_report_text <- function(report) {
+  if (!inherits(report, "rmbl_pollution_report") && !(is.list(report) && is.character(report$status))) {
+    stop("`report` must be a report from verify_pollution()", call. = FALSE)
+  }
   bar <- strrep("=", 66)
   if (identical(report$status, "error")) return(paste0("ERROR: ", report$error, "\n"))
   lines <- c(bar, sprintf("  %s -- %s -> %s", report$command, toupper(report$pollutant), report$outcome))
@@ -936,6 +972,9 @@ pollution_report_text <- function(report) {
              sprintf("  baseline rate/100k: %.2f", inp$baseline_rate_per_100k),
              sprintf("  population:         %s", format(inp$population, big.mark = ",", scientific = FALSE)),
              sprintf("  reference conc:     %s", format(inp$reference_conc)),
+             if (isTRUE(inp$dropped_rows > 0)) {
+               sprintf("  rows dropped:       %d (no exposure value)", inp$dropped_rows)
+             },
              "", "Assumption log")
   for (a in report$assumptions) {
     lines <- c(lines, sprintf("  [%s] %s -- %s", if (a$ok) "PASS" else "FAIL", a$assumption, a$note))
@@ -960,26 +999,93 @@ pollution_report_text <- function(report) {
   paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: ok\n")
 }
 
-# The exposure CSV as text the parser can read whole: a UTF-16 file is decoded, a UTF-8 BOM
-# is dropped, a file that is not UTF-8 is read as Latin-1 (and said), NUL bytes are refused.
-# Nothing here can stop part-way through a file and hand back the rows before the stop.
+# The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as read.csv did
+# before 0.5.12, review of 52a8883, A4), a UTF-16 file is decoded with or without its byte-order
+# mark, a UTF-8 BOM is dropped, a file that is not UTF-8 is read as Latin-1 (and said), other NUL
+# bytes are refused. A parse that reports a problem (an unbalanced quote that swallowed the rest
+# of the file, A5) stops with the parser's own message instead of returning the rows before it.
 .pollution_read_csv <- function(path) {
-  raw <- readBin(path, "raw", file.size(path))
-  if (!length(raw)) return(data.frame())
-  if (length(raw) >= 2L && (identical(raw[1:2], as.raw(c(0xff, 0xfe))) || identical(raw[1:2], as.raw(c(0xfe, 0xff))))) {
-    from <- if (raw[[1L]] == as.raw(0xff)) "UTF-16LE" else "UTF-16BE"
-    txt <- iconv(list(raw[-(1:2)]), from = from, to = "UTF-8")[[1L]]
-    if (is.null(txt) || is.na(txt)) stop(sprintf("cannot be decoded as %s", from), call. = FALSE)
+  head <- readBin(path, "raw", 6L)
+  compressed <- length(head) >= 2L && (identical(head[1:2], as.raw(c(0x1f, 0x8b))) ||
+    (length(head) >= 3L && identical(head[1:3], charToRaw("BZh"))) ||
+    (length(head) >= 6L && identical(head[1:6], as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))))
+  if (compressed) {
+    con <- gzfile(path, "rb")   # gzfile() reads gzip, bzip2 and xz alike
+    chunks <- list()
+    repeat {
+      b <- readBin(con, "raw", 4194304L)
+      if (!length(b)) break
+      chunks[[length(chunks) + 1L]] <- b
+    }
+    close(con)
+    raw <- do.call(c, chunks)
+    rm(chunks)
   } else {
-    if (length(raw) >= 3L && identical(raw[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) raw <- raw[-(1:3)]
-    if (any(raw == as.raw(0L))) stop("contains NUL bytes: not a text CSV", call. = FALSE)
+    raw <- readBin(path, "raw", file.size(path))
+  }
+  if (!length(raw)) return(data.frame())
+  note <- NULL
+  utf16 <- NULL
+  if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xff, 0xfe)))) {
+    utf16 <- "UTF-16LE"
+    raw <- raw[-(1:2)]
+  } else if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xfe, 0xff)))) {
+    utf16 <- "UTF-16BE"
+    raw <- raw[-(1:2)]
+  } else if (length(grepRaw(as.raw(0L), raw, fixed = TRUE))) {
+    # UTF-16 without a byte-order mark: ASCII text puts a NUL in every other byte
+    probe <- raw[seq_len(min(length(raw), 2000L))]
+    odd <- probe[seq(1L, length(probe), by = 2L)]
+    even <- probe[seq(2L, length(probe), by = 2L)]
+    if (mean(even == as.raw(0L)) > 0.9 && mean(odd == as.raw(0L)) < 0.1) {
+      utf16 <- "UTF-16LE"
+    } else if (mean(odd == as.raw(0L)) > 0.9 && mean(even == as.raw(0L)) < 0.1) {
+      utf16 <- "UTF-16BE"
+    } else {
+      stop("contains NUL bytes and is not UTF-16 text: not a text CSV", call. = FALSE)
+    }
+    note <- sprintf("note: %s has no byte-order mark; read as %s", basename(path), utf16)
+  }
+  transformed <- compressed || !is.null(utf16)
+  if (!is.null(utf16)) {
+    txt <- iconv(list(raw), from = utf16, to = "UTF-8")[[1L]]
+    if (is.null(txt) || is.na(txt)) stop(sprintf("cannot be decoded as %s", utf16), call. = FALSE)
+  } else {
+    if (length(raw) >= 3L && identical(raw[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) {
+      raw <- raw[-(1:3)]
+      transformed <- TRUE
+    }
     txt <- rawToChar(raw)
     if (!validUTF8(txt)) {
       txt <- iconv(txt, from = "latin1", to = "UTF-8")
-      message(sprintf("note: %s is not UTF-8; read as Latin-1 (ISO-8859-1)", basename(path)))
+      note <- sprintf("note: %s is not UTF-8; read as Latin-1 (ISO-8859-1)", basename(path))
+      transformed <- TRUE
     }
   }
+  rm(raw)
+  if (!is.null(note)) message(note)
   Encoding(txt) <- "UTF-8"
   if (!nzchar(trimws(txt))) return(data.frame())
-  utils::read.csv(text = txt, stringsAsFactors = FALSE, encoding = "UTF-8")
+  src <- path
+  if (transformed) {
+    # the decoded text goes through a file, which read.csv parses in C: text = goes through a
+    # text connection, several times slower on a large file
+    src <- tempfile(fileext = ".csv")
+    on.exit(unlink(src), add = TRUE)
+    writeLines(txt, src, useBytes = TRUE)
+  }
+  rm(txt)
+  problems <- character()
+  df <- withCallingHandlers(
+    utils::read.csv(src, stringsAsFactors = FALSE, encoding = "UTF-8"),
+    warning = function(w) {
+      m <- conditionMessage(w)
+      if (!grepl("incomplete final line", m, fixed = TRUE)) problems <<- c(problems, m)
+      invokeRestart("muffleWarning")
+    })
+  if (length(problems)) {
+    stop(sprintf("could not be read cleanly (%s): no rows are used from a file the parser stopped part-way through",
+                 problems[[1L]]), call. = FALSE)
+  }
+  df
 }

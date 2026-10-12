@@ -8,6 +8,13 @@
 
 # interactive() is a primitive: tests cannot mock it in the installed package, so they mock this
 .bl_interactive <- function() interactive()
+
+# Ctrl-C at a prompt read by a shell child: the same condition R raises for its own interrupt,
+# so the command exits 130 (128 + SIGINT) and not as a usage error
+.bl_signal_interrupt <- function() {
+  signalCondition(structure(class = c("interrupt", "condition"), list(message = "interrupted", call = NULL)))
+  stop("interrupted", call. = FALSE)
+}
 .bl_stdin_tty <- function() isatty(stdin())
 
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
@@ -19,21 +26,31 @@
   # read as any other line, which is what piping `echo KEY |` relies on
   hide <- isTRUE(secret) && is.null(con) && .Platform$OS.type == "unix" && isatty(stdin()) &&
     nzchar(Sys.which("stty"))
-  if (hide) {
-    system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
-    on.exit({
-      system2("stty", "echo", stdout = FALSE, stderr = FALSE)
-      cat("\n", file = stderr())
-    }, add = TRUE)
+  if (.bl_interactive()) {
+    if (hide) {
+      system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
+      on.exit({
+        system2("stty", "echo", stdout = FALSE, stderr = FALSE)
+        cat("\n", file = stderr())
+      }, add = TRUE)
+    }
+    return(trimws(readline(prompt)))
   }
-  if (.bl_interactive()) return(trimws(readline(prompt)))
   if (is.null(con) && .bl_stdin_tty() && .Platform$OS.type == "unix" && nzchar(Sys.which("sh"))) {
     # R's blocking read of a terminal ignores Ctrl-C until Enter: a shell `read` child sees the
-    # terminal's interrupt at once (and R with it), and Ctrl-D ends it with an empty line. the
-    # line comes back over a pipe, never through a shell argument or the history
+    # terminal's interrupt at once, and Ctrl-D ends it with an empty line. the line comes back
+    # over a pipe, never through a shell argument or the history. The echo is switched off and
+    # back on by the shell itself, with a trap, so Ctrl-C cannot leave the terminal silent
+    # (review of 52a8883, B6); an interrupted read exits 130 and is an interrupt here too
     cat(prompt, file = stderr())
-    l <- suppressWarnings(system2("sh", c("-c", shQuote("IFS= read -r l; printf '%s' \"$l\"")),
-                                  stdout = TRUE, stderr = FALSE))
+    script <- if (hide) {
+      "trap 'stty echo; exit 130' INT TERM HUP; stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\""
+    } else {
+      "trap 'exit 130' INT TERM HUP; IFS= read -r l; printf '%s' \"$l\""
+    }
+    l <- suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE))
+    if (hide) cat("\n", file = stderr())
+    if (identical(as.integer(attr(l, "status")), 130L)) .bl_signal_interrupt()
     return(trimws(paste(as.character(l), collapse = "")))
   }
   if (is.null(con)) {
@@ -133,7 +150,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   }
   # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
-                data = "--out")
+                data = "--out", config = "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out"), function(f) {
     i <- match(f, rest)
@@ -153,6 +170,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
+            if (nzchar(tok)) {
+              out(sprintf(paste("%s: a key given on the command line stays in the shell history and is visible",
+                                "to other users in the process list; `%s login --token` with no value asks for it\n"),
+                          prog, prog))
+            }
             if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ", secret = TRUE)
             if (!nzchar(tok)) {
               usage_error("--token needs a key: run `login --token` and paste it when asked")
@@ -228,6 +250,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (!routed) status <- 1L
         },
         functions = {
+          if (length(rest) > 1L) usage_error(sprintf("usage: %s functions [PATTERN]", prog))
           tab <- .bl_function_index(if (length(rest)) rest[[1L]] else NULL)
           if (!nrow(tab)) {
             out("no exported function matches\n")
@@ -495,6 +518,14 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 # The data verb: the curated tables at data.rmorie.com.
 .bl_cli_data <- function(rest, flag, out) {
   sub <- if (length(rest)) rest[[1L]] else "list"
+  # the positional words, without --out and its value: an extra word was silently ignored
+  pos <- rest
+  i <- match("--out", pos)
+  if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  if ((identical(sub, "list") && length(pos) > 1L) || (identical(sub, "pull") && length(pos) > 2L)) {
+    out(sprintf("usage: %s data list | data pull db/table [--out FILE.csv]  (one table per pull)\n", .bl_prog()))
+    return(2L)
+  }
   if (identical(sub, "list")) {
     out(.bl_format_data_tables(
       bricklayer_data_tables(),
@@ -542,6 +573,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  config                                    show every language-model setting\n",
     "  config setup                              answer a few questions to set them all\n",
     "  config set KEY VALUE | unset KEY          change one (keys: config help)\n",
+    "  config reset [--force]                    move an unreadable settings file aside\n",
     "  login [--token] [--email ADDRESS]         sign in to the hosted MORIE tier\n",
     "        [--code CODE] [--no-browser]\n",
     "  logout                                    forget the hosted key\n",

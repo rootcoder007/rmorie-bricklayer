@@ -223,9 +223,31 @@ bricklayer_plot_options <- function(...) {
 # does not fit a figure ("figure margins too large"), and a label that long is not read anyway.
 .bl_short_label <- function(x, max_chars = 28L) {
   x <- as.character(x)
+  max_chars <- max(8L, as.integer(max_chars))
+  out <- x
   long <- !is.na(x) & nchar(x) > max_chars
-  x[long] <- paste0(substr(x[long], 1L, max_chars - 3L), "...")
-  x
+  out[long] <- paste0(substr(x[long], 1L, max_chars - 3L), "...")
+  # distinct levels the cut made identical are told apart by a number: a 40-column missingness
+  # pattern collapsed four patterns into one label (review of 52a8883)
+  for (lab in unique(out[!is.na(out) & duplicated(out)])) {
+    w <- which(out == lab)
+    orig <- unique(x[w])
+    if (length(orig) < 2L) next
+    k <- match(x[w], orig)
+    out[w] <- paste0(substr(x[w], 1L, max_chars - 4L - nchar(k)), "...#", k)
+  }
+  out
+}
+
+# Labels and the left margin they need, on the device as it is: a margin wider than the device
+# failed with "figure margins too large" on a 2-3 inch plot, so long labels are cut to fit.
+.bl_label_fit <- function(labels) {
+  din <- tryCatch(graphics::par("din")[1L], error = function(e) 7)
+  csi <- tryCatch(graphics::par("csi"), error = function(e) 0.2)
+  max_lines <- max(4.5, 0.45 * din / csi)
+  chars <- max(8L, min(28L, as.integer(floor((max_lines - 1) / 0.55))))
+  labels <- .bl_short_label(labels, chars)
+  list(labels = labels, mar = min(max_lines, max(4.5, 0.55 * max(nchar(labels), 4) + 1)))
 }
 
 .bl_left_margin <- function(y = NULL, labels = NULL) {
@@ -602,10 +624,14 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 
 .bl_hbars <- function(values, labels, xlab, main, cols, ...) {
   labels <- as.character(labels)
-  labels[is.na(labels)] <- "(missing)"   # a frequency table counts NA as a level of its own
-  labels <- .bl_short_label(labels)
+  # a frequency table counts NA as a level of its own; a real level called "(missing)" keeps
+  # its name and the NA level is told apart
+  na_lab <- if ("(missing)" %in% labels) "(NA)" else "(missing)"
+  labels[is.na(labels)] <- na_lab
+  fit <- .bl_label_fit(labels)
+  labels <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = c(4.2, max(4.5, 0.55 * max(nchar(labels), 4) + 1), 3, 1))
+                      mar = c(4.2, fit$mar, 3, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(rev(values), names.arg = rev(labels), horiz = TRUE, col = rev(cols),
                     border = NA, xlab = xlab, main = main, ...)
@@ -675,9 +701,10 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(is.na(r), pal[2L], ifelse(r > 0, pal[3L], pal[1L]))
   if (!is.null(col)) cols <- rep_len(col, length(r))
-  label <- .bl_short_label(label)
+  fit <- .bl_label_fit(label)
+  label <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = c(4.2, max(4.5, 0.55 * max(nchar(label), 4) + 1), 3, 1))
+                      mar = c(4.2, fit$mar, 3, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(rev(ifelse(is.na(r), 0, r)), names.arg = rev(label), horiz = TRUE, col = rev(cols),
                     border = NA, xlim = c(-1, 1), xlab = "Correlation", main = main, ...)
@@ -1060,6 +1087,13 @@ plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998)
                         main = NULL, col = NULL, palette = NULL) {
   observed <- .rmbl_finite_input(observed, "observed", nonneg = TRUE, min_n = 1L)
   expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
+  if (any(expected <= 0)) stop("`expected` must be positive", call. = FALSE)
+  if (!is.numeric(levels) || !length(levels) || any(!is.finite(levels)) || any(levels <= 0 | levels >= 1)) {
+    stop("`levels` must be probabilities strictly between 0 and 1", call. = FALSE)
+  }
+  if (!is.numeric(target) || length(target) != 1L || !is.finite(target) || target <= 0) {
+    stop("`target` must be a single positive number", call. = FALSE)
+  }
   if (length(observed) != length(expected)) stop("`observed` and `expected` must be the same length", call. = FALSE)
   if (!is.null(area) && length(area) != length(observed)) {
     stop("`area` must have one label per point (recycling would mislabel the areas)", call. = FALSE)

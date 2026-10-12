@@ -109,7 +109,8 @@
 #' @param dt Time step.
 #' @param n_steps Number of steps.
 #' @param source Source grid (concentration per unit time), or \code{NULL}.
-#' @param max_work The most cell updates (cells x steps x sub-steps) a run may take, 100
+#' @param max_work The most cell updates (cells x steps x sub-steps; for
+#'   \code{lagrangian_particles()}, particles x steps) a run may take, 100
 #'   million by default (a few minutes of the explicit loop); \code{Inf} lifts it. The
 #'   same physical run costs the same whether the caller sub-steps it or the scheme does,
 #'   so the cap reads the same either way.
@@ -137,7 +138,8 @@
 #'   \code{plot()} draws as points. Every physical input is
 #'   checked: emission rates, masses, heights and distances are non-negative,
 #'   wind speed, travel time and grid steps positive, \code{n_images} a
-#'   whole number, the stack hotter than the air, and \code{x0}, \code{y0}
+#'   whole number up to 1,000, the stack as hot as the air or hotter,
+#'   and \code{x0}, \code{y0}
 #'   single numbers; a release above \code{mixing_height} warns.
 #'   \code{lagrangian_particles()}: a list with \code{x}, \code{y},
 #'   \code{mean_x}, \code{mean_y} and, with a grid, \code{concentration}.
@@ -266,7 +268,7 @@ gaussian_plume <- function(q, u, h, receptors, stability = "D", setting = "rural
   q <- .ad_num(q, "q", min = 0)
   u <- .ad_num(u, "u", positive = TRUE)
   h <- .ad_num(h, "h", min = 0)
-  n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
+  n_images <- .ad_check_images(n_images)
   mixing_height <- .ad_lid(mixing_height, h)
   R <- .ad_rec(receptors)
   .ad_receptor_heights(R, mixing_height)
@@ -289,7 +291,7 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
   u <- .ad_num(u, "u", positive = TRUE)
   h <- .ad_num(h, "h", min = 0)
   t <- .ad_num(t, "t", positive = TRUE)
-  n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
+  n_images <- .ad_check_images(n_images)
   mixing_height <- .ad_lid(mixing_height, h)
   .ad_receptor_heights(.ad_rec(receptors), mixing_height)
   R <- .ad_rec(receptors)
@@ -402,7 +404,8 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
                  dt = dt, substeps = substeps,
                  x = seq_len(nx) * dx, y = seq_len(ny) * dy, dx = dx, dy = dy,
                  units = "concentration",
-                 title = sprintf("Advection-diffusion after %d steps of dt = %s", n_steps, format(dt))),
+                 title = sprintf("Advection-diffusion after %s steps of dt = %s",
+                                 format(n_steps, big.mark = ",", scientific = FALSE), format(dt))),
             class = "rmbl_field")
 }
 
@@ -420,7 +423,7 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
 #' @rdname pg_sigmas
 #' @export
 lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0, grid = NULL,
-                                 normals = NULL) {
+                                 normals = NULL, max_work = 1e8) {
   n <- .ad_num(n, "n", positive = TRUE, whole = TRUE)
   if (n > 1e8) stop("`n` must be at most 100 million particles", call. = FALSE)
   n <- as.integer(n)
@@ -432,12 +435,24 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
   ky <- .ad_num(ky, "ky", min = 0)
   dt <- .ad_num(dt, "dt", positive = TRUE)
   n_steps <- .ad_num(n_steps, "n_steps", min = 0, whole = TRUE)
+  if (!is.numeric(max_work) || length(max_work) != 1L || is.na(max_work) || max_work <= 0) {
+    stop("`max_work` must be a single positive number (Inf lifts the cap)", call. = FALSE)
+  }
+  # the same cap as advection_diffusion_2d(): particles x steps (n_steps = 1e9 built a 7.5 GB
+  # index vector and would have run for about 32 hours, review of 52a8883)
+  if (n * n_steps > max_work) {
+    stop(sprintf(paste("this run moves %s particles x %s steps, above max_work = %s; pass max_work = Inf",
+                       "to run it anyway"), format(n, big.mark = ","),
+                 format(n_steps, big.mark = ",", scientific = FALSE),
+                 format(max_work, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  }
   draw <- if (is.null(normals)) .rmbl_normals else match.fun(normals)
   xs <- rep(x0, n)
   ys <- rep(y0, n)
   fx <- sqrt(2 * kx * dt)
   fy <- sqrt(2 * ky * dt)
-  for (k in seq_len(n_steps) - 1) {
+  for (step in seq_len(n_steps)) {
+    k <- step - 1
     xs <- xs + u * dt + fx * draw(n, seed, 2 * k)
     ys <- ys + v * dt + fy * draw(n, seed, 2 * k + 1)
   }
@@ -462,4 +477,14 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
     out$concentration <- conc
   }
   structure(out, class = c("rmbl_particles", "list"))
+}
+
+# the lid's image terms shrink geometrically: past a few pairs they add nothing but time, and
+# 1e9 of them took about 480 s per receptor (review of 52a8883)
+.ad_check_images <- function(n_images) {
+  n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
+  if (n_images > 1000) {
+    stop("`n_images` must be at most 1,000: the image terms decay geometrically and more add only time", call. = FALSE)
+  }
+  n_images
 }

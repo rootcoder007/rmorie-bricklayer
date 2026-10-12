@@ -324,22 +324,23 @@ fips_sign_mu <- function(key, mu, deterministic = FALSE,
 #' @rdname fips_mu
 #' @export
 fips_verify_mu <- function(key, mu, signature) {
-  scheme <- .rmbl_fips_key_scheme(key)
-  mode <- .rmbl_fips_mldsa_mode(scheme)
-  if (is.na(mode)) {
-    stop("external mu is an ML-DSA interface; ", scheme,
-         " has no equivalent", call. = FALSE)
-  }
+  if (!is.list(key)) stop("`key` must come from fips_keygen() or fips_key()", call. = FALSE)
   if (!inherits(signature, "bricklayer_signature")) {
     stop("`signature` must come from fips_sign_mu() or capsule_sign()",
          call. = FALSE)
   }
+  # a verifier key whose class, scheme or bytes were edited is "not verified", like an edited
+  # signature (capsule_verify's rule): only a key that is plainly of another kind is an error
+  scheme <- tryCatch(.rmbl_fips_key_scheme(key), error = function(e) NULL)
+  if (is.null(scheme)) return(FALSE)
+  mode <- .rmbl_fips_mldsa_mode(scheme)
+  if (is.na(mode)) return(FALSE)
   if (!identical(signature$scheme, scheme)) return(FALSE)
   if (!is.raw(mu) || length(mu) != 64L) return(FALSE)
   pk <- .rmbl_hex_or_null(key$public)
   sg <- .rmbl_hex_or_null(signature$signature)
   if (is.null(pk) || is.null(sg)) return(FALSE)
-  .Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg)
+  isTRUE(.Call(C_rmbl_mldsa_verify_mu, mode, pk, mu, sg))
 }
 
 # The scheme a key object names, refusing anything that is not one of
@@ -391,7 +392,8 @@ fips_sizes <- function(scheme) {
 # A typo must fail here rather than silently selecting a default, since
 # the scheme is baked into every signature the key goes on to produce.
 .rmbl_fips_scheme <- function(scheme) {
-  scheme <- as.character(scheme)[1L]
+  # one name: a vector of two was read as its first (review of 52a8883)
+  if (!is.character(scheme) || length(scheme) != 1L) stop("`scheme` must be a single non-empty string", call. = FALSE)
   if (is.na(scheme) || !nzchar(scheme)) {
     stop("`scheme` must be a non-empty string", call. = FALSE)
   }
@@ -612,7 +614,9 @@ print.bricklayer_oqs_public_key <- function(x, ...) {
 #' pub <- signing_public_key(key)
 #' names(pub)
 #'
-#' # Deterministic seeds reproduce the same key -- for tests only.
+#' # Deterministic seeds reproduce the same key -- for tests only. A key built from given
+#' # seeds is not entered in the used-index record (it may have signed elsewhere): it signs
+#' # only after xmss_register_key() vouches that it never has.
 #' s1 <- paste(rep("11", 32), collapse = "")
 #' s2 <- paste(rep("22", 32), collapse = "")
 #' identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
@@ -639,6 +643,8 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
   if (length(height) != 1L || is.na(height) || height < 1L || height > 16L) {
     stop("`height` must be a single integer between 1 and 16", call. = FALSE)
   }
+  # a key built from given seeds may be one that has signed elsewhere: it is not registered
+  seeded <- !is.null(sk_seed)
   sk_seed <- if (is.null(sk_seed)) .rmbl_random_seed_hex() else
     .rmbl_check_seed(sk_seed, "sk_seed")
   pub_seed <- if (is.null(pub_seed)) .rmbl_random_seed_hex() else
@@ -655,9 +661,11 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
               capacity = bitwShiftL(1L, height),
               scheme = "xmss-sha256")
   class(out) <- c("bricklayer_signing_key", "list")
-  # the record learns the key at birth: a key it has never heard of that claims index 0 later
-  # is either from another machine or a copy whose record was deleted, and is refused
-  .rmbl_xmss_register(out, fresh = TRUE)
+  # the record learns a key at birth when the birth is here: fresh randomness cannot have
+  # signed anywhere. A key regenerated from given seeds may have (on another machine, or before
+  # the record was lost), so it is not entered; it signs from index 0 only after
+  # xmss_register_key() vouches for it (review of 52a8883, A2)
+  if (!seeded) .rmbl_xmss_register(out, fresh = TRUE)
   out
 }
 
@@ -882,11 +890,17 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   # an index must never sign twice (RFC 8391; NIST SP 800-208 section 8.1): the key is a
   # copied value, so this session remembers the highest index each key has used and refuses
   # an older state -- signing twice with one key object, or with a stale copy
-  kid <- paste0(key$root, ":", key$pub_seed)
+  # the record id is a fingerprint of the secret seed the signer uses, not the `root` field the
+  # key carries: an edited root made a stale copy a "new" key (review of 52a8883, A1)
+  ids <- .rmbl_xmss_ids(key)
   # retire the index before the signature exists (RFC 8391's order), under the record's lock
-  .rmbl_xmss_reserve(kid, idx)
+  .rmbl_xmss_reserve(ids, idx)
   res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
                as.integer(key$height), idx, message)
+  if (!identical(tolower(as.character(res$root)), ids$root)) {
+    stop(sprintf(paste("this key's `root` does not match its seeds: the key object was edited. No signature",
+                       "is returned, and index %d stays retired"), idx), call. = FALSE)
+  }
   # the signature carries no key material: the object is what verifiers are handed, and the
   # 0.5.9-0.5.12 objects carried the advanced key (sk_seed and sk_prf) inside it, so every
   # shared XMSS signature, attestation and bundle file handed out the private key. The next
@@ -906,32 +920,43 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' for the next signature. The signature object itself carries no key material.
 #'
 #' The package records the highest index each key has signed with and refuses that index
-#' again, within the session and across sessions on this machine: the record is the file
+#' again, within the session and across sessions on this machine. The record is the file
 #' \code{xmss_used_indices.txt} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
-#' which is where CRAN policy lets a package keep its own configuration; one line per key,
-#' \code{root:pub_seed<TAB>highest index} (\code{-1} for a key generated here that has not
-#' signed yet:
-#' [pqc_keygen()] registers every key at birth,
-#' so a key the record does not know
-#' that claims index 0 is refused until
-#' [xmss_register_key()] vouches for it, which is how a
-#' deleted record or a key from another machine fails closed).
-#' Every reservation runs under an exclusive lock
-#' (a lock directory next to the file), so two processes signing with copies of one key
-#' cannot both take the same index; a line the package cannot read makes it refuse to sign
-#' until the file is repaired or removed, rather than guess. A key reloaded from disk with
-#' a stale \code{next_index} is therefore refused here. Another path can be set with the
-#' option \code{rmoriebricklayer.xmss_index_file} or the environment variable
-#' \code{RMBL_XMSS_INDEX_FILE}. The option \code{FALSE} (or, except on Windows, where an
-#' empty environment variable is an unset one, the value \code{""}) turns the file off:
-#' then only the session remembers, every signature warns, and a stale copy of the key
-#' reloaded elsewhere signs a used index again. The record does not travel with the key and
-#' is lost if the file is deleted, so a key copied to another machine is protected only by
-#' the \code{next_index} you saved: save the advanced key after every signature. Examples
-#' and vignettes point the record at a temporary file so that checks and builds leave the
-#' configuration directory alone. The record keeps one line per key for good (an exhausted
-#' key's line is what stops a stale copy of it), and is read whole at every signature: under
-#' half a second per hundred thousand keys.
+#' which is where CRAN policy lets a package keep its own configuration. A key is entered
+#' under a fingerprint of its secret seed (\code{sk_seed}), not under the \code{root} it
+#' carries, so editing a stale copy's \code{root} does not make it a new key, and a signature
+#' whose \code{root} does not match the seeds is withheld.
+#' [pqc_keygen()]
+#' registers a key it generates from fresh randomness. A key built from given
+#' seeds is not registered, because it may be one that has signed elsewhere: it signs from
+#' index 0 only after
+#' [xmss_register_key()]
+#' vouches for it, and the same holds for any key
+#' the record does not know (from another machine, or whose record was deleted).
+#' Every reservation runs under an operating-system file lock (\code{flock} on Unix,
+#' \code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock}, which the system
+#' releases when the process ends, so a crashed session leaves no lock for another process to
+#' take over. A record that cannot be read, or that cannot be written in full (a full disk),
+#' stops the signature. The record of the releases before 0.5.12 (\code{xmss_index.json} in
+#' the same directory) is read and merged, and kept as \code{xmss_index.json.migrated} once
+#' the new record has been written.
+#' Another path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
+#' environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file, or
+#' to one that does not exist yet (a device such as \code{/dev/null}, a directory or a
+#' relative path is refused). The option \code{FALSE} (or, except on Windows, where an empty
+#' environment variable is an unset one, the value \code{""}) turns the file off: then only
+#' the session remembers, every signature warns, and a stale copy of the key reloaded
+#' elsewhere signs a used index again. The record does not travel with the key and is lost if
+#' the file is deleted, so a key copied to another machine is protected only by the
+#' \code{next_index} you saved: save the advanced key after every signature. In CI or a
+#' container with a fresh home directory, a key that was not generated in that run is unknown
+#' to the record: register it once with
+#' [xmss_register_key()],
+#' or point the record at a file that persists. Examples and vignettes point the record
+#' at a temporary file so that checks and builds leave the configuration directory alone.
+#' The record keeps one line per key for good (an exhausted key's line is what stops a
+#' stale copy of it), and is read whole at every signature: under half a second per hundred
+#' thousand keys.
 #'
 #' [xmss_forget_used_indices()]
 #' resets one key's entry, or removes the whole record, and with it
@@ -940,10 +965,12 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' @param key The \code{bricklayer_signing_key} that made \code{signature}.
 #' @param signature The XMSS signature it made, from
 #'   [capsule_sign()],
-#'   or the attestation, bundle or recode manifest that carries it
-#'   (their \code{$signature}).
+#'   or the attestation, bundle or recode manifest that carries it.
 #' @param message The message the signature was made over; when given, the signature is
 #'   verified against the key first, so an edited or foreign signature cannot advance it.
+#'   Without it, the signature's index is accepted only up to the highest index the record
+#'   shows this key has used here, so an edited index cannot burn the key's remaining leaves;
+#'   a signature made on another machine needs \code{message}.
 #' @return The key with \code{next_index} advanced past the signature's index and past
 #'   every index the record knows this key has used.
 #' @examples
@@ -963,13 +990,20 @@ xmss_advance <- function(key, signature, message = NULL) {
   if (!inherits(key, "bricklayer_signing_key")) {
     stop("`key` must be a signing key from pqc_keygen()", call. = FALSE)
   }
-  if (inherits(signature, "bricklayer_attestation") ||
-        (is.list(signature) && !is.null(signature$signature) && is.list(signature$signature))) {
-    signature <- signature$signature   # an attestation, bundle or recode manifest: the signature inside
+  if (is.list(signature) && is.list(signature$attestation) && is.list(signature$attestation$signature)) {
+    signature <- signature$attestation$signature   # a bundle: the attestation's signature
+  } else if (inherits(signature, "bricklayer_attestation") ||
+               (is.list(signature) && !is.null(signature$signature) && is.list(signature$signature))) {
+    signature <- signature$signature   # an attestation or recode manifest: the signature inside
   }
   if (!is.list(signature) || !identical(signature$scheme, "xmss-sha256")) {
     stop("`signature` must be an XMSS signature from capsule_sign() (or the attestation, bundle or ",
          "recode manifest that carries it)", call. = FALSE)
+  }
+  nx <- key$next_index
+  if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx)) {
+    stop("this key's `next_index` is not a whole number >= 0: the key state is damaged; do not hand-edit it",
+         call. = FALSE)
   }
   if (!identical(tolower(as.character(signature$root)), tolower(as.character(key$root)))) {
     stop("this signature was not made by this key (the roots differ)", call. = FALSE)
@@ -988,11 +1022,18 @@ xmss_advance <- function(key, signature, message = NULL) {
          "cannot advance the key", call. = FALSE)
   }
   # the record knows what this key has used, which an edited index or a stale copy does not
-  kid <- paste0(key$root, ":", key$pub_seed)
+  ids <- .rmbl_xmss_ids(key)
   p <- .rmbl_xmss_index_file()
   rec <- if (is.null(p)) integer(0) else .rmbl_xmss_record_read(p)
-  hi <- .rmbl_xmss_highest(kid, rec)
-  key$next_index <- max(as.integer(key$next_index), idx + 1L, hi + 1L)
+  hi <- .rmbl_xmss_highest(ids, rec)
+  if (is.null(message) && idx > hi) {
+    # every index signed here was reserved first, so an index above the record's is either an
+    # edited signature (which would burn the leaves in between) or one made elsewhere
+    stop(sprintf(paste("the signature's index %d is above the highest index this key has signed with here (%d):",
+                       "an edited signature, or one made on another machine. Pass message = (what was signed)",
+                       "so the signature is verified before the key moves past it"), idx, hi), call. = FALSE)
+  }
+  key$next_index <- max(as.integer(nx), idx + 1L, hi + 1L)
   if (key$next_index >= leaves) {
     warning(sprintf("this key has used all %d of its one-time indices: generate a new one with pqc_keygen()",
                     leaves), call. = FALSE)
@@ -1211,13 +1252,30 @@ capsule_verify <- function(message, signature, key, context = NULL,
          "one with pqc_keygen() and sign again")
 }
 
-# the highest XMSS index each key (root:pub_seed) has signed with in this session
+# the highest XMSS index each key has signed with in this session, by record id
 .rmbl_xmss_used <- new.env(parent = emptyenv())
+
+# A key's ids in the record: `id` a fingerprint of the secret seed the signer actually uses
+# (so a stale copy whose `root` field was edited is still the same key), `legacy` the
+# root:pub_seed id the records of 0.5.12-pre and fcdce03 used, consulted and never written.
+.rmbl_xmss_ids <- function(key) {
+  sk <- .rmbl_check_seed(key$sk_seed, "sk_seed")
+  ps <- .rmbl_check_seed(key$pub_seed, "pub_seed")
+  root <- if (is.character(key$root) && length(key$root) == 1L) tolower(key$root) else NA_character_
+  if (is.na(root) || !grepl("^[0-9a-f]{64}$", root)) {
+    stop("this key's `root` is not 64 hex characters: the key object was edited; do not hand-edit it",
+         call. = FALSE)
+  }
+  list(id = paste0("k:", tolower(core_sha256(charToRaw(paste0("rmoriebricklayer xmss record\n", sk))))),
+       legacy = paste0(root, ":", ps), root = root)
+}
 
 # The used-index record: the option, then the environment variable, else the package's own
 # configuration directory (tools::R_user_dir, the place CRAN policy sets aside for it).
 # FALSE or "" turns the file off (the session record stays); a value that is plainly not a
-# path ("TRUE", "0", ...) is refused rather than used as a file name.
+# path ("TRUE", "0", ...), a relative path (it would follow the working directory) and a path
+# that is not a regular file (a device such as /dev/null, which the rename replaced when run
+# as root, or a directory) are refused (review of 52a8883, B7).
 .rmbl_xmss_index_file <- function() {
   p <- getOption("rmoriebricklayer.xmss_index_file", NULL)
   from <- "the option rmoriebricklayer.xmss_index_file"
@@ -1229,94 +1287,155 @@ capsule_verify <- function(message, signature, key, context = NULL,
   if (!is.character(p) || length(p) != 1L) {
     stop(sprintf("%s must be a file path, \"\" or FALSE", from), call. = FALSE)
   }
-  if (is.na(p)) return(file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt"))
-  p <- trimws(p)
-  if (!nzchar(p)) return(NULL)
-  if (toupper(p) %in% c("TRUE", "FALSE", "T", "F", "0", "1", "NULL", "NA", "YES", "NO", "ON", "OFF")) {
-    stop(sprintf("%s is \"%s\", which is not a file path: give a path, or \"\" / FALSE to turn the file off", from, p),
+  if (is.na(p)) {
+    p <- file.path(tools::R_user_dir("rmoriebricklayer", "config"), "xmss_used_indices.txt")
+  } else {
+    p <- trimws(p)
+    if (!nzchar(p)) return(NULL)
+    if (toupper(p) %in% c("TRUE", "FALSE", "T", "F", "0", "1", "NULL", "NA", "YES", "NO", "ON", "OFF")) {
+      stop(sprintf("%s is \"%s\", which is not a file path: give a path, or \"\" / FALSE to turn the file off",
+                   from, p), call. = FALSE)
+    }
+    p <- path.expand(p)
+    if (!grepl("^(/|[A-Za-z]:[/\\\\]|[/\\\\]{2})", p)) {
+      stop(sprintf(paste("%s is \"%s\", a relative path, which would follow the working directory: give an",
+                         "absolute path, or \"\" / FALSE to turn the file off"), from, p), call. = FALSE)
+    }
+  }
+  kind <- .Call(C_rmbl_path_kind, p)
+  if (!kind %in% c("missing", "regular")) {
+    stop(sprintf("%s: %s is a %s, not a regular file, and the record would be written over it", from, p,
+                 if (identical(kind, "directory")) "directory" else "device or other special file"), call. = FALSE)
+  }
+  if (!.Call(C_rmbl_path_kind, dirname(p)) %in% c("missing", "directory")) {
+    stop(sprintf("%s: %s is not a directory", from, dirname(p)), call. = FALSE)
+  }
+  p
+}
+
+# One line per key, `k:<fingerprint><TAB>highest index used` (or a legacy `root:pub_seed` line
+# from 0.5.12-pre). A line that is not that is an error, not a line to skip: a record that
+# cannot be read cannot be trusted. The fcdce03 record next to it is merged in.
+.rmbl_xmss_record_read <- function(p) {
+  ids <- character()
+  idx <- integer()
+  if (file.exists(p)) {
+    lines <- readLines(p, warn = FALSE, encoding = "UTF-8")
+    lines <- lines[nzchar(trimws(lines))]
+    ok <- grepl("^(k:[0-9a-f]{64}|[0-9a-f]{64}:[0-9a-f]{64})\t(-1|[0-9]{1,9})$", lines, perl = TRUE)
+    if (!all(ok)) {
+      stop(sprintf(paste("%s (the XMSS used-index record) has %d malformed line(s), the first at line %d: a record",
+                         "that cannot be read cannot be trusted, so no XMSS signature is made until the file is",
+                         "repaired or removed (xmss_forget_used_indices() removes it, and with it the protection",
+                         "against re-signing an index)"), p, sum(!ok), which(!ok)[[1L]]), call. = FALSE)
+    }
+    ids <- sub("\t.*$", "", lines)
+    idx <- as.integer(sub("^[^\t]*\t", "", lines))
+  }
+  legacy <- .rmbl_xmss_legacy_json(p)
+  if (length(legacy)) {
+    ids <- c(ids, names(legacy))
+    idx <- c(idx, unname(legacy))
+  }
+  if (!length(ids)) return(integer(0))
+  # a key listed twice keeps its highest index
+  o <- order(ids, idx)
+  ids <- ids[o]
+  idx <- idx[o]
+  keep <- !duplicated(ids, fromLast = TRUE)
+  stats::setNames(idx[keep], ids[keep])
+}
+
+# The record of the releases before 0.5.12, `xmss_index.json` (key root:pub_seed -> highest
+# index used), in the same directory: read and merged, so an upgrade does not forget which
+# indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
+.rmbl_xmss_legacy_json <- function(p) {
+  j <- file.path(dirname(p), "xmss_index.json")
+  if (!file.exists(j)) return(integer(0))
+  bad <- function() {
+    stop(sprintf(paste("%s (the XMSS index record written before 0.5.12) cannot be read: no XMSS signature is",
+                       "made until it is repaired or removed, since it may list indices that were used"), j),
          call. = FALSE)
   }
-  path.expand(p)
+  txt <- tryCatch(readChar(j, file.size(j), useBytes = TRUE), error = function(e) NULL)
+  rec <- if (is.null(txt)) NULL else tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE),
+                                               error = function(e) NULL)
+  if (!is.list(rec) || (length(rec) && is.null(names(rec)))) bad()
+  out <- integer()
+  for (k in names(rec)) {
+    v <- rec[[k]]
+    kk <- tolower(k)
+    if (!grepl("^[0-9a-f]{64}:[0-9a-f]{64}$", kk) || length(v) != 1L || !is.numeric(v) || is.na(v) ||
+          v < -1 || v != round(v)) {
+      bad()
+    }
+    out[kk] <- max(as.integer(v), if (kk %in% names(out)) out[[kk]] else -1L)
+  }
+  out
 }
 
-# One line per key, `root:pub_seed<TAB>highest index used`. A line that is not that is an
-# error, not a line to skip: a record that cannot be read cannot be trusted.
-.rmbl_xmss_record_read <- function(p) {
-  if (!file.exists(p)) return(integer(0))
-  lines <- readLines(p, warn = FALSE, encoding = "UTF-8")
-  lines <- lines[nzchar(trimws(lines))]
-  if (!length(lines)) return(integer(0))
-  ok <- grepl("^[0-9a-f]{64}:[0-9a-f]{64}\t(-1|[0-9]{1,9})$", lines, perl = TRUE)
-  if (!all(ok)) {
-    stop(sprintf(paste("%s (the XMSS used-index record) has %d malformed line(s), the first at line %d: a record",
-                       "that cannot be read cannot be trusted, so no XMSS signature is made until the file is",
-                       "repaired or removed (xmss_forget_used_indices() removes it, and with it the protection",
-                       "against re-signing an index)"), p, sum(!ok), which(!ok)[[1L]]), call. = FALSE)
-  }
-  # the format is fixed, so the key is the first 129 characters and the index what follows the tab
-  kid <- substr(lines, 1L, 129L)
-  idx <- as.integer(substring(lines, 131L))
-  if (anyDuplicated(kid)) {
-    # a key listed twice keeps its highest index
-    o <- order(kid, idx)
-    kid <- kid[o]
-    idx <- idx[o]
-    keep <- !duplicated(kid, fromLast = TRUE)
-    kid <- kid[keep]
-    idx <- idx[keep]
-  }
-  stats::setNames(idx, kid)
-}
-
+# The whole record, written to a temporary file that is read back before it replaces the old
+# one: a write that did not complete (a full disk) stops the signature instead of renaming an
+# empty file over the record (review of 52a8883, B3).
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- tempfile(pattern = "xmss-", tmpdir = dirname(p), fileext = ".tmp")
-  file.create(tmp)
-  Sys.chmod(tmp, mode = "0600")
-  writeLines(if (length(rec)) paste(names(rec), rec, sep = "\t") else character(), tmp, useBytes = TRUE)
-  if (!isTRUE(file.rename(tmp, p))) {
+  fail <- function(why) {
     unlink(tmp)
-    stop(sprintf("could not write the XMSS used-index record %s", p), call. = FALSE)
+    stop(sprintf("could not write the XMSS used-index record %s (%s): no signature is made", p, why), call. = FALSE)
   }
+  body <- if (length(rec)) paste0(paste(names(rec), rec, sep = "\t"), "\n", collapse = "") else ""
+  # written, flushed to the disk, size-checked and renamed in C (rmbl_flock.c): a short write or
+  # a full disk leaves the old record in place and stops the signature
+  why <- .Call(C_rmbl_write_file_checked, tmp, p, charToRaw(body))
+  if (!is.null(why)) fail(why)
+  # the record of the releases before 0.5.12 is merged into what was just written: keep it,
+  # under a name that is no longer read
+  j <- file.path(dirname(p), "xmss_index.json")
+  if (file.exists(j)) file.rename(j, paste0(j, ".migrated"))
   invisible(p)
 }
 
-# An exclusive lock around read -> check -> write: a directory is created atomically by the
-# file system, so two processes signing with copies of one key cannot both see the index free.
-# A lock older than a minute belongs to a process that died and is taken over.
+# An exclusive operating-system lock around read -> check -> write (flock on Unix, LockFileEx on
+# Windows; rmbl_flock.c). The kernel releases it when the process exits, so no lock is ever
+# taken over: the lock directory of 0.5.12-pre was, by check-then-delete, which let two signers
+# hold it at once and sign one index (review of 52a8883, B2), and spun for ever on a lock it
+# could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
 .rmbl_xmss_with_lock <- function(p, f) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  lock <- paste0(p, ".lock")
-  deadline <- Sys.time() + 10
-  repeat {
-    if (isTRUE(suppressWarnings(dir.create(lock, showWarnings = FALSE)))) break
-    age <- tryCatch(as.numeric(difftime(Sys.time(), file.info(lock)$mtime, units = "secs")),
-                    error = function(e) 0)
-    if (isTRUE(age > 60)) {
-      unlink(lock, recursive = TRUE)
-      next
-    }
-    if (Sys.time() > deadline) {
-      stop(sprintf("could not lock the XMSS used-index record %s within 10 s (another process holds %s)", p, lock),
-           call. = FALSE)
-    }
-    Sys.sleep(stats::runif(1, 0.01, 0.05))
+  lock <- paste0(p, ".flock")
+  fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 10000L),
+                 error = function(e) {
+                   m <- conditionMessage(e)
+                   hint <- if (grepl("Permission denied|Read-only", m)) " (is the directory read-only?)" else ""
+                   stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
+                 })
+  if (identical(fd, -1L)) {
+    stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
+         call. = FALSE)
   }
-  on.exit(unlink(lock, recursive = TRUE), add = TRUE)
+  on.exit(.Call(C_rmbl_flock_release, fd), add = TRUE)
   f()
 }
 
-# The highest index this key is known to have used: the record on disk and this session.
-.rmbl_xmss_highest <- function(kid, rec) {
+# The highest index this key is known to have used: the record on disk (its id, and the legacy
+# id of the older records) and this session.
+.rmbl_xmss_highest <- function(ids, rec) {
   cand <- -1L
-  if (length(rec) && kid %in% names(rec)) cand <- max(cand, rec[[kid]])
-  mem <- .rmbl_xmss_used[[kid]]
+  for (k in c(ids$id, ids$legacy)) {
+    if (length(rec) && k %in% names(rec)) cand <- max(cand, rec[[k]])
+  }
+  mem <- .rmbl_xmss_used[[ids$id]]
   if (!is.null(mem)) cand <- max(cand, mem)
   cand
 }
 
+.rmbl_xmss_known <- function(ids, rec) {
+  any(c(ids$id, ids$legacy) %in% names(rec)) || !is.null(.rmbl_xmss_used[[ids$id]])
+}
+
 # Retire `idx` for this key before the signature is made (RFC 8391's order), under the lock.
-.rmbl_xmss_reserve <- function(kid, idx) {
+.rmbl_xmss_reserve <- function(ids, idx) {
   p <- .rmbl_xmss_index_file()
   refuse <- function(hi) {
     stop(sprintf(paste0("index %d of this key was already used: signing it again would break the ",
@@ -1324,9 +1443,9 @@ capsule_verify <- function(message, signature, key, context = NULL,
                         "signature (next index %d)."), idx, hi + 1L), call. = FALSE)
   }
   if (is.null(p)) {
-    hi <- .rmbl_xmss_highest(kid, integer(0))
+    hi <- .rmbl_xmss_highest(ids, integer(0))
     if (idx <= hi) refuse(hi)
-    assign(kid, idx, envir = .rmbl_xmss_used)
+    assign(ids$id, idx, envir = .rmbl_xmss_used)
     warning(paste("the XMSS used-index record is off (rmoriebricklayer.xmss_index_file / RMBL_XMSS_INDEX_FILE):",
                   "only this session remembers which indices this key has used, so a stale copy of the key",
                   "reloaded elsewhere will sign a used index again. Turn the record on unless you keep the",
@@ -1335,41 +1454,43 @@ capsule_verify <- function(message, signature, key, context = NULL,
   }
   .rmbl_xmss_with_lock(p, function() {
     rec <- .rmbl_xmss_record_read(p)
-    hi <- .rmbl_xmss_highest(kid, rec)
+    hi <- .rmbl_xmss_highest(ids, rec)
     if (idx <= hi) refuse(hi)
-    known <- kid %in% names(rec) || !is.null(.rmbl_xmss_used[[kid]])
-    if (!known && idx == 0L) {
+    if (!.rmbl_xmss_known(ids, rec) && idx == 0L) {
       stop(paste("this XMSS key is not in the used-index record on this machine, and it claims never to have",
-                 "signed (next_index 0): it was generated elsewhere, or the record was deleted. If it has never",
-                 "signed, register it with xmss_register_key(key); if it has, carry it forward with",
-                 "xmss_advance(key, its_last_signature), or generate a new key with pqc_keygen()"), call. = FALSE)
+                 "signed (next_index 0): it was generated elsewhere or from given seeds, or the record was",
+                 "deleted. If it has never signed, register it with xmss_register_key(key); if it has, carry",
+                 "it forward with xmss_advance(key, its_last_signature, message), or generate a new key with",
+                 "pqc_keygen()"), call. = FALSE)
     }
-    rec[kid] <- idx
-    assign(kid, idx, envir = .rmbl_xmss_used)
+    rec[ids$id] <- idx
     .rmbl_xmss_record_write(p, rec)
+    assign(ids$id, idx, envir = .rmbl_xmss_used)
   })
   invisible(TRUE)
 }
 
 # Add a key to the record as "registered, nothing used" (-1), never lowering an entry.
 .rmbl_xmss_register <- function(key, fresh = FALSE) {
-  kid <- paste0(key$root, ":", key$pub_seed)
+  ids <- .rmbl_xmss_ids(key)
   p <- .rmbl_xmss_index_file()
   if (is.null(p)) {
-    if (is.null(.rmbl_xmss_used[[kid]])) assign(kid, -1L, envir = .rmbl_xmss_used)
+    if (is.null(.rmbl_xmss_used[[ids$id]])) assign(ids$id, -1L, envir = .rmbl_xmss_used)
     return(invisible(FALSE))
   }
   .rmbl_xmss_with_lock(p, function() {
     rec <- .rmbl_xmss_record_read(p)
-    if (!kid %in% names(rec)) {
-      rec[kid] <- -1L
-      .rmbl_xmss_record_write(p, rec)
-    } else if (!fresh && rec[[kid]] >= 0L) {
+    hi <- .rmbl_xmss_highest(ids, rec)
+    if (!fresh && hi >= 0L) {
       stop(sprintf(paste("this key is already in the record with index %d used: it has signed here before,",
-                         "so carry it forward with xmss_advance() instead of registering it"), rec[[kid]]),
+                         "so carry it forward with xmss_advance() instead of registering it"), hi),
            call. = FALSE)
     }
-    if (is.null(.rmbl_xmss_used[[kid]])) assign(kid, max(-1L, rec[[kid]]), envir = .rmbl_xmss_used)
+    if (!ids$id %in% names(rec)) {
+      rec[ids$id] <- max(-1L, hi)
+      .rmbl_xmss_record_write(p, rec)
+    }
+    if (is.null(.rmbl_xmss_used[[ids$id]])) assign(ids$id, max(-1L, hi), envir = .rmbl_xmss_used)
   })
   invisible(TRUE)
 }
@@ -1377,8 +1498,9 @@ capsule_verify <- function(message, signature, key, context = NULL,
 #' @rdname xmss_advance
 #' @param key_to_register For
 #'   [xmss_register_key()]: a signing key generated on another
-#'   machine (or whose record was deleted) that has never signed; it is added to the record so
-#'   that it may sign from \code{next_index}. A key the record shows has signed is refused.
+#'   machine, regenerated from given seeds, or whose record was deleted, that has never
+#'   signed; it is added to the record so that it may sign from \code{next_index}. A key
+#'   the record shows has signed is refused.
 #' @export
 xmss_register_key <- function(key_to_register) {
   if (!inherits(key_to_register, "bricklayer_signing_key")) {
@@ -1391,27 +1513,34 @@ xmss_register_key <- function(key_to_register) {
 #' @rdname xmss_advance
 #' @param key_to_forget For
 #'   [xmss_forget_used_indices()]:
-#'   a signing or public key whose
+#'   a signing key (the record is keyed by its secret seed) whose
 #'   entry alone is reset to "nothing used" (it may sign from index 0 again); \code{NULL}
-#'   removes the whole record (every key), after which only keys generated afterwards, or
-#'   vouched for by [xmss_register_key()], may sign.
+#'   removes the whole record (every key, and the record of the releases before 0.5.12),
+#'   after which only keys generated afterwards, or vouched for by
+#'   [xmss_register_key()], may sign.
 #' @export
 xmss_forget_used_indices <- function(key_to_forget = NULL) {
   p <- .rmbl_xmss_index_file()
   if (is.null(key_to_forget)) {
     rm(list = ls(.rmbl_xmss_used, all.names = TRUE), envir = .rmbl_xmss_used)
-    if (!is.null(p) && file.exists(p)) unlink(p)
+    if (!is.null(p)) {
+      for (f in c(p, file.path(dirname(p), c("xmss_index.json", "xmss_index.json.migrated")))) {
+        if (file.exists(f)) unlink(f)
+      }
+    }
     return(invisible(NULL))
   }
-  if (!inherits(key_to_forget, c("bricklayer_signing_key", "bricklayer_public_key"))) {
-    stop("`key_to_forget` must be an XMSS key from pqc_keygen() or signing_public_key()", call. = FALSE)
+  if (!inherits(key_to_forget, "bricklayer_signing_key")) {
+    stop("`key_to_forget` must be the signing key from pqc_keygen() (the record is keyed by its secret seed)",
+         call. = FALSE)
   }
-  kid <- paste0(key_to_forget$root, ":", key_to_forget$pub_seed)
-  assign(kid, -1L, envir = .rmbl_xmss_used)   # known, nothing used: it may sign from index 0 again
+  ids <- .rmbl_xmss_ids(key_to_forget)
+  assign(ids$id, -1L, envir = .rmbl_xmss_used)   # known, nothing used: it may sign from index 0 again
   if (!is.null(p)) {
     .rmbl_xmss_with_lock(p, function() {
       rec <- .rmbl_xmss_record_read(p)
-      rec[kid] <- -1L
+      rec <- rec[!names(rec) %in% c(ids$id, ids$legacy)]
+      rec[ids$id] <- -1L
       .rmbl_xmss_record_write(p, rec)
     })
   }

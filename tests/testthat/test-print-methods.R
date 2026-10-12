@@ -98,6 +98,7 @@ test_that("keys and signatures print without ever showing the secret", {
   s1 <- paste(rep("11", 32), collapse = "")
   s2 <- paste(rep("22", 32), collapse = "")
   key <- pqc_keygen(height = 2, sk_seed = s1, pub_seed = s2)
+  xmss_register_key(key)   # a key from given seeds is not registered at birth (review of 52a8883)
 
   txt <- paste(format(key), collapse = "\n")
   expect_match(txt, "Signing key")

@@ -103,6 +103,7 @@ test_that("a post-quantum signature verifies and resists every forgery", {
     height = 3, sk_seed = paste(rep("aa", 32), collapse = ""),
     pub_seed = paste(rep("bb", 32), collapse = "")
   )
+  xmss_register_key(key)   # a key from given seeds is not registered at birth (review of 52a8883)
   pub <- signing_public_key(key)
   msg <- "capsule manifest sha256:deadbeef"
   sig <- capsule_sign(msg, key)
@@ -183,6 +184,7 @@ test_that("every leaf of the tree signs under one public root", {
     height = 3, sk_seed = paste(rep("0f", 32), collapse = ""),
     pub_seed = paste(rep("f0", 32), collapse = "")
   )
+  xmss_register_key(key)   # a key from given seeds is not registered at birth (review of 52a8883)
   pub <- signing_public_key(key)
   root <- key$root
 
@@ -214,6 +216,7 @@ test_that("every leaf of the tree signs under one public root", {
     2, paste(rep("01", 32), collapse = ""),
     paste(rep("02", 32), collapse = "")
   )
+  xmss_register_key(k2)
   a <- capsule_sign("same", k2)
   b <- capsule_sign("same", xmss_advance(k2, a))
   expect_false(identical(a$signature, b$signature))
@@ -226,6 +229,7 @@ test_that("signing rejects the inputs it cannot honour", {
     height = 1, sk_seed = paste(rep("07", 32), collapse = ""),
     pub_seed = paste(rep("70", 32), collapse = "")
   )
+  xmss_register_key(key)   # a key from given seeds is not registered at birth (review of 52a8883)
   expect_error(capsule_sign(c("a", "b"), key), "length-1")
   expect_error(capsule_sign("m", list(), scheme = "xmss"), "pqc_keygen")
   expect_error(capsule_verify("m", list(), key), "capsule_sign")
