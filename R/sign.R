@@ -1380,8 +1380,8 @@ capsule_verify <- function(message, signature, key, context = NULL,
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- tempfile(pattern = "xmss-", tmpdir = dirname(p), fileext = ".tmp")
+  # the C writer removes only a temporary file it created itself: nothing is unlinked here
   fail <- function(why) {
-    unlink(tmp)
     stop(sprintf("could not write the XMSS used-index record %s (%s): no signature is made", p, why), call. = FALSE)
   }
   body <- if (length(rec)) paste0(paste(names(rec), rec, sep = "\t"), "\n", collapse = "") else ""

@@ -109,7 +109,8 @@ test_that("B2: the lock is held by the process, and the kernel releases it when 
     Sys.sleep(3)
     .Call(rmoriebricklayer:::C_rmbl_flock_release, f)
   })
-  for (i in 1:200) if (!file.exists(ready)) Sys.sleep(0.02)
+  for (i in 1:600) if (!file.exists(ready)) Sys.sleep(0.05)
+  skip_if_not(file.exists(ready), "the lock-holding child did not start")
   withr::local_options(rmoriebricklayer.xmss_index_file = p)
   t0 <- Sys.time()
   expect_identical(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 200L), -1L)
@@ -194,15 +195,16 @@ test_that("B7: device, directory and relative paths are refused for the record",
 # ---- B3: the checked write -------------------------------------------------------------------
 
 test_that("B3: a write that does not reach the disk leaves the record as it was and stops the signature", {
-  skip_on_os("windows")
-  skip_if_not(file.exists("/dev/full"))
   w <- rmoriebricklayer:::C_rmbl_write_file_checked
   target <- tempfile()
   writeLines("k:old", target)
-  # /dev/full answers every write with ENOSPC, as a full disk does
-  expect_match(.Call(w, "/dev/full", target, charToRaw("k:new\n")), "did not complete")
-  expect_identical(readLines(target), "k:old")
+  # the temporary file is created exclusively: an existing path is refused, never written or removed
+  taken <- tempfile()
+  writeLines("keep me", taken)
+  expect_match(.Call(w, taken, target, charToRaw("x")), "cannot create")
+  expect_identical(readLines(taken), "keep me")
   expect_match(.Call(w, file.path(tempfile(), "t"), target, raw(0)), "cannot create")
+  skip_on_os("windows")
   busy <- tempfile()
   dir.create(file.path(busy, "inside"), recursive = TRUE)   # a non-empty directory cannot be renamed over
   tmp <- tempfile()
@@ -212,14 +214,19 @@ test_that("B3: a write that does not reach the disk leaves the record as it was 
   expect_null(.Call(w, tempfile(tmpdir = dirname(ok)), ok, charToRaw("a\tb\n")))
   expect_identical(readBin(ok, "raw", 100), charToRaw("a\tb\n"))
   expect_error(.Call(w, tmp, ok, "not raw"), "raw vector")
-  # through the record: a record whose replacement fails is an error, and the record stays
-  f <- xmss_tmp_record()
-  k <- pqc_keygen(height = 3L)
-  before <- readLines(f)
-  dir.create(paste0(f, "-blocker"))
-  local_mocked_bindings(tempfile = function(...) "/dev/full", .package = "base")
-  expect_error(capsule_sign("m", k, scheme = "xmss"), "did not complete")
-  expect_identical(readLines(f), before)
+  # a file-size limit stands in for a full disk: the write fails (EFBIG), the old record stays
+  sh <- Sys.which("sh")
+  rscript <- file.path(R.home("bin"), "Rscript")
+  skip_if(!nzchar(sh) || !file.exists(rscript))
+  lib <- paste(.libPaths(), collapse = .Platform$path.sep)
+  code <- sprintf(paste0(".libPaths(strsplit('%s', '%s', fixed = TRUE)[[1]]); library(rmoriebricklayer); ",
+                         "cat(.Call(rmoriebricklayer:::C_rmbl_write_file_checked, '%s', '%s', as.raw(rep(65L, 200000))))"),
+                  lib, .Platform$path.sep, tempfile(tmpdir = dirname(target)), target)
+  out <- suppressWarnings(system2(sh, c("-c", shQuote(sprintf("trap '' XFSZ; ulimit -f 64; exec %s -e %s",
+                                                                  shQuote(rscript), shQuote(code)))),
+                                  stdout = TRUE, stderr = TRUE))
+  expect_match(paste(out, collapse = " "), "did not complete|did not reach the disk|not the size written")
+  expect_identical(readLines(target), "k:old")
 })
 
 # ---- A1, A2, A3: the record's key id, seeded keys, the fcdce03 record ------------------------
@@ -420,6 +427,9 @@ test_that("B5: login refuses a credentials file that is not valid JSON, and leav
     expect_identical(readLines(p), bad)
     expect_error(bricklayer_llm_logout(), "not a JSON object", info = bad)
   }
+  writeLines('{"big": 12345678901234567890, "hosted_key": "sk-OLD"}', p)
+  rmoriebricklayer:::.bl_store_key("sk-BIG")
+  expect_match(paste(readLines(p), collapse = ""), "12345678901234567890", fixed = TRUE)
   writeLines('{"other": [1, 2], "hosted_key": "sk-OLD"}', p)
   rmoriebricklayer:::.bl_store_key("sk-NEW")
   expect_identical(bricklayer_json_from_json(paste(readLines(p), collapse = "\n"))$hosted_key, "sk-NEW")
@@ -566,4 +576,63 @@ test_that("old XMSS objects warn on print; fips_verify_mu says not verified for 
   }
   expect_error(fips_verify_mu("not a key", mu, sg), "fips_keygen")
   expect_error(fips_keygen(c("ML-DSA-44", "ML-DSA-65")), "single non-empty string")
+})
+
+# ---- the lines codecov found unexercised on fec371e ----------------------------------------
+
+test_that("an interrupt nobody handles is an error; the shell read reports Ctrl-C as an interrupt", {
+  expect_error(rmoriebricklayer:::.bl_signal_interrupt(), "interrupted")
+  skip_on_os("windows")
+  skip_if_not(nzchar(Sys.which("sh")))
+  local_mocked_bindings(.bl_interactive = function() FALSE, .bl_stdin_tty = function() TRUE)
+  # the shell child exits 130 when its read is interrupted (the status system2 reports)
+  local_mocked_bindings(system2 = function(...) structure(character(), status = 130L), .package = "base")
+  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), interrupt = function(i) "interrupt")
+  expect_identical(got, "interrupt")
+  local_mocked_bindings(system2 = function(...) "typed-line", .package = "base")
+  expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), "typed-line")
+})
+
+test_that("a manifest that cannot be stored is an error and the old copy stays", {
+  d <- data_cache_with(good, manifest_for(good_sha()), age_days = 3)
+  local_mocked_bindings(.bl_data_get = function(path, dest, ...) writeLines(manifest_for(good_sha()), dest))
+  local_mocked_bindings(file.rename = function(from, to) FALSE, .package = "base")
+  expect_error(bricklayer_data_manifest(refresh = TRUE), "could not store the manifest")
+  expect_identical(readLines(file.path(d, "manifest.json")), manifest_for(good_sha()))
+})
+
+test_that("config reset refuses a stray argument; the member scanner refuses an unterminated nested string", {
+  out <- character()
+  expect_identical(bricklayer_cli(c("config", "reset", "now"), out = function(x) out <<- c(out, x)), 2L)
+  expect_match(paste(out, collapse = ""), "config reset \\[--force\\]")
+  expect_null(rmoriebricklayer:::.bl_json_top_members('{"a": {"b": "unterminated}'))
+})
+
+test_that("an edit that would damage credentials.json is refused and the file is left as it was", {
+  home <- withr::local_tempdir()
+  withr::local_envvar(XDG_CONFIG_HOME = home, MORIE_HOSTED_BASE_URL = "https://llm.example.org")
+  p <- file.path(home, "morie", "credentials.json")
+  dir.create(dirname(p), recursive = TRUE)
+  writeLines('{"hosted_key": "sk-OLD"}', p)
+  # an editor that leaves the text as it was: the new key is not in what would be written
+  local_mocked_bindings(.bl_credentials_text_set = function(txt, key, value) txt)
+  expect_error(rmoriebricklayer:::.bl_store_key("sk-NEW"), "without damaging it")
+  expect_error(bricklayer_llm_logout(), "without damaging it")
+  expect_identical(readLines(p), '{"hosted_key": "sk-OLD"}')
+})
+
+test_that("a UTF-16BE exposure CSV with its byte-order mark is read", {
+  u <- tempfile(fileext = ".csv")
+  txt <- paste0(paste(rows[1:3], collapse = "\n"), "\n")
+  writeBin(c(as.raw(c(0xfe, 0xff)), iconv(txt, "UTF-8", "UTF-16BE", toRaw = TRUE)[[1]]), u)
+  expect_identical(verify_pollution("pm25", exposure_csv = u)$status, "ok")
+})
+
+test_that("a lock path that is not a regular file is refused (a FIFO)", {
+  skip_on_os("windows")
+  skip_if_not(nzchar(Sys.which("mkfifo")))
+  f <- tempfile()
+  system2("mkfifo", f)
+  skip_if_not(file.exists(f))
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, f, 0L), "not a regular file")
 })

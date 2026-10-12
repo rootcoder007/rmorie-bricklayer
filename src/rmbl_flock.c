@@ -133,7 +133,8 @@ SEXP C_rmbl_path_kind(SEXP path) {
     return mkString("other");
 }
 
-/* Write `bytes` to `tmp`, flush it to the disk (fsync / FlushFileBuffers), read the size back,
+/* `tmp` is created here (O_EXCL), so the cleanup below only ever removes a file this call made.
+ * Write `bytes` to `tmp`, flush it to the disk (fsync / FlushFileBuffers), read the size back,
  * and only then rename it over `path`. A short write, a full disk (ENOSPC, which a delayed
  * allocation may report only at fsync or close) or a failed rename removes `tmp` and returns a
  * message; NULL on success. The used-index record is never replaced by a partial file
@@ -151,9 +152,9 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
     size_t n = (size_t) XLENGTH(bytes);
     char msg[512];
 #ifdef _WIN32
-    int fd = _open(tmp, _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY | _O_NOINHERIT, _S_IREAD | _S_IWRITE);
+    int fd = _open(tmp, _O_WRONLY | _O_CREAT | _O_EXCL | _O_BINARY | _O_NOINHERIT, _S_IREAD | _S_IWRITE);
 #else
-    int fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW, 0600);
+    int fd = open(tmp, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
 #endif
     if (fd < 0) {
         snprintf(msg, sizeof msg, "cannot create %s: %s", tmp, strerror(errno));

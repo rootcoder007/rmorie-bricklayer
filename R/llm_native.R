@@ -215,7 +215,11 @@
   new <- .bl_credentials_text_set(txt, "hosted_key", key)
   if (!is.null(user)) new <- .bl_credentials_text_set(new, "hosted_user", user)
   new <- .bl_credentials_text_set(new, "hosted_base_url", .bl_hosted_base())
-  back <- if (.bl_credentials_text_ok(new)) bricklayer_json_from_json(new, simplifyVector = FALSE) else NULL
+  back <- if (.bl_credentials_text_ok(new)) {
+    bricklayer_json_from_json(new, simplifyVector = FALSE, bigint_as_char = TRUE)
+  } else {
+    NULL
+  }
   if (!identical(back$hosted_key, key)) {
     stop(sprintf("could not store the key in %s without damaging it; the file was left as it was", p), call. = FALSE)
   }

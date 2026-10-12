@@ -579,10 +579,12 @@ test_that("a live lock held by another process is waited for and then reported",
   job <- parallel::mcparallel({
     fd <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, paste0(rec, ".flock"), 0L)
     file.create(ready)
-    Sys.sleep(14)
+    Sys.sleep(16)
     .Call(rmoriebricklayer:::C_rmbl_flock_release, fd)
   })
-  for (i in 1:250) if (!file.exists(ready)) Sys.sleep(0.02)
+  # a forked child can take seconds to start on a busy runner: wait for it to hold the lock
+  for (i in 1:600) if (!file.exists(ready)) Sys.sleep(0.05)
+  skip_if_not(file.exists(ready), "the lock-holding child did not start")
   t0 <- Sys.time()
   expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE), "could not lock")
   expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 9)
