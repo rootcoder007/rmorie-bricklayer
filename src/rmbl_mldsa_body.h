@@ -1184,6 +1184,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
                 rmbl_masked::Bs bp;
                 msk::bprime(bp, &W.w[0].v[i][32 * g], &W.w[1].v[i][32 * g], rng);
                 msk::reveal_highbits(&w1.v[i][32 * g], bp, rng);
+                rmbl_ct::wipe(&bp, sizeof bp);   /* the bitsliced shares of this chunk of w */
             }
         }
         veck_pack_w1(sig, &w1);
@@ -1223,6 +1224,10 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
                     uint32_t o[2];
                     msk::lowbits_ok(o, bp, &w1.v[i][32 * g], rng);
                     acc.add(o, rng);
+                    /* the bitsliced shares of this chunk of v = w - c s2 stayed on the stack
+                     * on some builds and reveal part of c t0 */
+                    rmbl_ct::wipe(&bp, sizeof bp);
+                    rmbl_ct::wipe(o, sizeof o);
                 }
             }
             if (!acc.reveal(rng)) continue;
@@ -1249,6 +1254,7 @@ int sign_mu_masked(unsigned char *sig, const unsigned char mu[64],
                 rmbl_masked::Bs bp;
                 msk::bprime(bp, &W.u[0].v[i][32 * g], &W.u[1].v[i][32 * g], rng);
                 msk::reveal_highbits(&hu.v[i][32 * g], bp, rng);
+                rmbl_ct::wipe(&bp, sizeof bp);
             }
             for (int j = 0; j < 256; ++j) {
                 h.v[i][j] = hu.v[i][j] != w1.v[i][j] ? 1 : 0;

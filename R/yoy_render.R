@@ -289,8 +289,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   # the bottom 6, each row 0.22 inch, and the notes on the last page 0.018 of the height per
   # line; the old flat allowance (height - 2.4) overflowed on tall pages (24 inch: 98 rows
   # planned, 88 fit)
-  notes_in <- if (length(notes)) 0.018 * height * (length(notes) + 1L) else 0
-  per_page <- max(5L, floor((0.82 * height - 0.22 * 1.1 - notes_in) / 0.22))
+  per_page <- .yoy_rows_per_page(height, length(notes))
   pages <- split(seq_len(nrow(body)),
                  ceiling(seq_len(nrow(body)) / per_page))
   # The PDF device's default Type 1 fonts have no em dash or arrows, and
@@ -327,6 +326,14 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
     out <- matrix(out, nrow = nrow(x), dimnames = dimnames(x))
   }
   out
+}
+
+# Rows that fit one page of `height` inches: the title block takes the top 12 percent of the
+# page and the page label the bottom 6, every row 0.22 inch, and the notes (last page)
+# 0.018 of the height per line. .yoy_pdf_page() draws with the same figures.
+.yoy_rows_per_page <- function(height, n_notes = 0L) {
+  notes_in <- if (n_notes > 0L) 0.018 * height * (n_notes + 1L) else 0
+  max(5L, as.integer(floor((0.82 * height - 0.22 * 1.1 - notes_in) / 0.22)))
 }
 
 .yoy_pdf_page <- function(hdr, body, cols, title, subtitle, pal,

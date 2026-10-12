@@ -7,10 +7,15 @@
 # mirror rmorie's envhealth module (and morie's Python envhealth) formula for
 # formula; see exposure_response_plr() for the one seam that differs.
 
-.crf_object <- function(rr, log_rr, z, scalar, reference_conc, pollutant, citation, extra) {
+.crf_object <- function(rr, log_rr, z, scalar, reference_conc, pollutant, citation, extra,
+                        rr_lower = NA_real_, rr_upper = NA_real_) {
   structure(list(
     rr = if (scalar) rr[[1L]] else mean(rr),
     log_rr = if (scalar) log_rr[[1L]] else mean(log_rr),
+    # the published 95 percent limits of the relative risk, carried through the same curve
+    # (NA for the IER forms, whose papers give no interval on the pooled parameters)
+    rr_lower = if (scalar) rr_lower[[1L]] else mean(rr_lower),
+    rr_upper = if (scalar) rr_upper[[1L]] else mean(rr_upper),
     reference_conc = reference_conc,
     exposure_conc = if (scalar) z[[1L]] else mean(z),
     pollutant = pollutant,
@@ -76,6 +81,7 @@
 crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 5.8) {
   # all-cause: RR 1.08 (95% CI 1.06-1.09) per 10 ug/m3, Chen and Hoek (2020), the WHO 2021 review
   loglinear <- c(all_cause_mortality = log(1.08))
+  loglinear_ci <- list(all_cause_mortality = log(c(1.06, 1.09)))
   # GBD 2013 cause-specific IER triples (alpha, gamma, delta), Burnett et al. (2014)
   ier <- list(ihd = c(1.91, 0.14, 0.49), stroke = c(1.46, 0.13, 0.61))
   if (!is.character(outcome) || length(outcome) != 1L ||
@@ -91,9 +97,11 @@ crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc =
   if (outcome %in% names(loglinear)) {
     beta <- loglinear[[outcome]]
     log_rr <- beta * excess / 10
+    ci <- loglinear_ci[[outcome]]
     return(.crf_object(exp(log_rr), log_rr, z, scalar, reference_conc, "PM2.5",
                        "Chen & Hoek (2020) Environ Int 143:105974; WHO (2021) Global AQ Guidelines",
-                       list(beta_per_10 = beta, form = "log-linear", outcome = outcome)))
+                       list(beta_per_10 = beta, beta_per_10_ci = ci, form = "log-linear", outcome = outcome),
+                       rr_lower = exp(ci[[1L]] * excess / 10), rr_upper = exp(ci[[2L]] * excess / 10)))
   }
   p <- ier[[outcome]]
   rr <- 1 + p[1L] * (1 - exp(-p[2L] * excess^p[3L]))
@@ -111,6 +119,9 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
   # (1.02-1.07) per 4 ug/m3, Khreis et al. (2017), scaled to per 10 ug/m3
   betas <- c(all_cause_mortality = log(1.02), respiratory = log(1.03),
              childhood_asthma = log(1.05) * 10 / 4)
+  betas_ci <- list(all_cause_mortality = log(c(1.01, 1.04)), respiratory = log(c(1.00, 1.05)),
+                   childhood_asthma = log(c(1.02, 1.07)) * 10 / 4)
+  ci <- c(NA_real_, NA_real_)
   if (is.null(beta_per_10)) {
     if (!is.character(outcome) || length(outcome) != 1L || !outcome %in% names(betas)) {
       stop(sprintf("Unknown outcome '%s'. Available: %s or pass beta_per_10 explicitly.",
@@ -118,6 +129,7 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
            call. = FALSE)
     }
     beta <- betas[[outcome]]
+    ci <- betas_ci[[outcome]]
   } else {
     beta <- as.numeric(beta_per_10)
     if (length(beta) != 1L || !is.finite(beta)) {
@@ -134,7 +146,9 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
     "Huangfu & Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines"
   }
   .crf_object(exp(log_rr), log_rr, z, scalar, reference_conc, "NO2", cite,
-              list(beta_per_10 = beta, outcome = outcome))
+              list(beta_per_10 = beta, beta_per_10_ci = ci, outcome = outcome),
+              rr_lower = exp(ci[[1L]] * pmax(z - reference_conc, 0) / 10),
+              rr_upper = exp(ci[[2L]] * pmax(z - reference_conc, 0) / 10))
 }
 
 .pollution_exposure <- function(exposure) {
@@ -186,7 +200,12 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 #'   exposure); 0, negative, infinite and missing values are errors.
 #' @param exposure_prevalence Proportion of the population exposed, in
 #'   \code{[0, 1]}.
-#' @return A number in \code{[0, 1)} for \code{rr >= 1}.
+#' @param rr_lower,rr_upper Optional confidence limits of \code{rr}; when
+#'   both are given the fraction carries the limits that the same formula
+#'   gives at them (Levin's formula is monotone in the relative risk, so the
+#'   interval of the fraction is the image of the interval of the risk).
+#' @return A number in \code{[0, 1)} for \code{rr >= 1}, with an attribute
+#'   \code{ci} (\code{lower}, \code{upper}) when the limits were given.
 #' @references Rothman, K. J., Greenland, S. and Lash, T. L. (2008). Modern
 #'   Epidemiology, 3rd ed., chapter 5. Levin, M. L. (1953). The occurrence of
 #'   lung cancer in man. Acta Unio Internationalis Contra Cancrum 9, 531-541.
@@ -194,15 +213,22 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 #' attributable_fraction(1.5, 0.4)
 #' attributable_fraction(2, 1)      # everyone exposed: 1 - 1/RR
 #' @export
-attributable_fraction <- function(rr, exposure_prevalence) {
+attributable_fraction <- function(rr, exposure_prevalence, rr_lower = NULL, rr_upper = NULL) {
   rr <- .pollution_scalar(rr, "rr", nonneg = FALSE, positive = TRUE)
   p <- .pollution_scalar(exposure_prevalence, "exposure_prevalence")
   if (p > 1) {
     stop(sprintf("exposure_prevalence must be in [0,1]; got %s", format(p)), call. = FALSE)
   }
-  num <- p * (rr - 1)
-  den <- 1 + p * (rr - 1)   # positive: rr > 0 and p <= 1
-  num / den
+  levin <- function(r) p * (r - 1) / (1 + p * (r - 1))   # the denominator is positive: r > 0, p <= 1
+  paf <- levin(rr)
+  if (!is.null(rr_lower) || !is.null(rr_upper)) {
+    if (is.null(rr_lower) || is.null(rr_upper)) stop("rr_lower and rr_upper go together", call. = FALSE)
+    lo <- .pollution_scalar(rr_lower, "rr_lower", nonneg = FALSE, positive = TRUE)
+    hi <- .pollution_scalar(rr_upper, "rr_upper", nonneg = FALSE, positive = TRUE)
+    if (lo > rr || hi < rr) stop("rr must lie between rr_lower and rr_upper", call. = FALSE)
+    attr(paf, "ci") <- c(lower = levin(lo), upper = levin(hi))
+  }
+  paf
 }
 
 #' Deaths avoided under a counterfactual exposure reduction
@@ -776,7 +802,10 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     },
     error = function(e) e)
   if (inherits(crf, "error")) return(fail(conditionMessage(crf)))
-  paf <- attributable_fraction(crf$rr, exposure_prevalence)
+  paf <- attributable_fraction(crf$rr, exposure_prevalence,
+                               rr_lower = if (is.finite(crf$rr_lower)) crf$rr_lower,
+                               rr_upper = if (is.finite(crf$rr_upper)) crf$rr_upper)
+  paf_ci <- attr(paf, "ci")
   baseline_per_person <- baseline_rate / 1e5
   exposure_delta <- max(0, exposure_mean - reference)
   beta_per_unit <- log(crf$rr) / max(exposure_delta, 1e-9)
@@ -792,12 +821,17 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   }
   report$status <- "ok"
   report$pipeline <- list(
-    crf = unclass(crf), paf = paf,
+    crf = unclass(crf), paf = as.numeric(paf), paf_ci = paf_ci,
     displaced = list(deaths_displaced = displaced, exposure_delta = exposure_delta,
                      beta_per_unit = beta_per_unit, unit = .pollution_outcome_unit(outcome)),
     burden = unclass(burden),
     equity = if (is.null(equity)) NULL else unclass(equity))
   structure(report, exit_status = 0L, class = c("rmbl_pollution_report", "list"))
+}
+
+.pollution_paf_ci_text <- function(ci) {
+  if (is.null(ci)) return("")
+  sprintf("  (95%% CI %.4f to %.4f, from the risk's limits)", ci[["lower"]], ci[["upper"]])
 }
 
 #' @rdname verify_pollution
@@ -825,7 +859,7 @@ pollution_report_text <- function(report) {
   p <- report$pipeline
   lines <- c(lines, "", "Concentration-response", sprintf("  RR:       %.4f", p$crf$rr),
              sprintf("  source:   %s", p$crf$citation),
-             "", sprintf("Attributable fraction (PAF): %.4f", p$paf),
+             "", sprintf("Attributable fraction (PAF): %.4f%s", p$paf, .pollution_paf_ci_text(p$paf_ci)),
              "", if (identical(p$displaced$unit, "deaths")) "Mortality displaced" else "Cases displaced",
              sprintf("  expected avoided %s: %.1f", p$displaced$unit %||% "deaths",
                      p$displaced$deaths_displaced),

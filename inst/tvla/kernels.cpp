@@ -76,6 +76,89 @@ __attribute__((used, noinline)) void tvla_cbd(const unsigned char *b0, const uns
 
 }
 
+/* ---- composed kernels: several gadgets in one trace, so the hand-over between them (a
+ * register or stack slot one gadget leaves for the next) is measured too. The ML-KEM one is
+ * the decapsulation's secret-dependent spine for one polynomial: w = v - s*u (basemul,
+ * inverse NTT, share by share), Compress_1 of w by the masked decoder, then one Keccak
+ * permutation over a state seeded with the message shares (the first block of G). The ML-DSA
+ * one is the signer's z path for 32 coefficients: y from Boolean shares (sec_b2a), z = y + c s1
+ * share by share, the masked norm test, then the masked low-bits test on w - c s2. ---- */
+extern "C" {
+
+__attribute__((used, noinline)) void tvla_mlkem_decaps_composed(const int16_t *s0, const int16_t *s1,
+                                                                 const int16_t *u, const int16_t *v,
+                                                                 const uint32_t *rnd, uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    int16_t w0[256], w1[256];
+    poly_basemul(w0, s0, u);
+    invntt(w0);
+    for (int j = 0; j < 256; ++j) w0[j] = static_cast<int16_t>(v[j] - w0[j]);
+    poly_basemul(w1, s1, u);
+    invntt(w1);
+    for (int j = 0; j < 256; ++j) w1[j] = static_cast<int16_t>(-w1[j]);
+    for (int j = 0; j < 256; ++j) {
+        w0[j] = to_positive(barrett_reduce(w0[j]));
+        w1[j] = to_positive(barrett_reduce(w1[j]));
+    }
+    uint32_t m0[8], m1[8];
+    for (int g = 0; g < 8; ++g) rmbl_masked::sec_decode1(m0[g], m1[g], w0 + 32 * g, w1 + 32 * g, rng);
+    uint64_t st0[25], st1[25];
+    for (int i = 0; i < 25; ++i) { st0[i] = 0; st1[i] = 0; }
+    for (int g = 0; g < 8; g += 2) {
+        st0[g / 2] = static_cast<uint64_t>(m0[g]) | (static_cast<uint64_t>(m0[g + 1]) << 32);
+        st1[g / 2] = static_cast<uint64_t>(m1[g]) | (static_cast<uint64_t>(m1[g + 1]) << 32);
+    }
+    rmbl_masked::keccakf_masked(st0, st1, rng);
+    for (int g = 0; g < 8; ++g) { out[g] = m0[g]; out[8 + g] = m1[g]; }
+    out[16] = static_cast<uint32_t>(st0[0]);
+    out[17] = static_cast<uint32_t>(st1[0]);
+}
+
+__attribute__((used, noinline)) void tvla_dsa_sign_composed(const unsigned char *y0, const unsigned char *y1,
+                                                             const int32_t *cs1_0, const int32_t *cs1_1,
+                                                             const uint32_t *rnd, uint32_t *out) {
+    g_rand = rnd;
+    rmbl_masked::Rng rng;
+    rng.fn = rand_fn;
+    rng.ctx = 0;
+    const int32_t q = 8380417;
+    rmbl_masked::Bs yb;
+    for (int s = 0; s < 2; ++s) {
+        const unsigned char *buf = s ? y1 : y0;
+        for (int b = 0; b < 20; ++b) {
+            uint32_t w = 0;
+            for (int j = 0; j < 32; ++j) {
+                const unsigned pos = 20u * static_cast<unsigned>(j) + static_cast<unsigned>(b);
+                w |= static_cast<uint32_t>((buf[pos >> 3] >> (pos & 7u)) & 1u) << j;
+            }
+            yb.w[s][b] = w;
+        }
+        for (int b = 20; b < rmbl_masked::kMaxBits; ++b) yb.w[s][b] = 0;
+    }
+    int32_t z0[32], z1[32];
+    rmbl_masked::sec_b2a(z0, z1, yb, rng, rmbl_masked::kDsa);
+    /* z = y + c s1, share by share, reduced into [0, q) */
+    for (int j = 0; j < 32; ++j) {
+        z0[j] += cs1_0[j]; z0[j] -= q & -static_cast<int32_t>(z0[j] >= q);
+        z1[j] += cs1_1[j]; z1[j] -= q & -static_cast<int32_t>(z1[j] >= q);
+    }
+    rmbl_masked::AllOk acc;
+    rmbl_masked::dsa_norm_acc(acc, z0, z1, 32, (1 << 19) - 196, rng);
+    rmbl_masked::Bs bp;
+    rmbl_masked::dsa_bprime(bp, z0, z1, (8380417 - 1) / 32, rng);
+    int32_t w1[32];
+    for (int j = 0; j < 32; ++j) w1[j] = 0;
+    uint32_t o[2];
+    rmbl_masked::dsa_lowbits_ok(o, bp, w1, (8380417 - 1) / 32, 196, rng);
+    acc.add(o, rng);
+    rmbl_masked::m_pub(rmbl_masked::pz(out, out + 1, acc.a, acc.a + 1), 0, 3);
+}
+
+}
+
 /* no C library on the bare target: the two routines the compiler emits for struct copies */
 extern "C" __attribute__((used)) void *memcpy(void *d, const void *s, unsigned int n) {
     unsigned char *dd = static_cast<unsigned char *>(d);

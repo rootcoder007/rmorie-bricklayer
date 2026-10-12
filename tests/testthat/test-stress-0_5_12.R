@@ -262,3 +262,90 @@ test_that("tamper: a verifier answers FALSE to edited or malformed signature fie
   fs2$signature <- c(fs2$signature, "zz")
   expect_false(capsule_verify("m", fs2, ok))
 })
+
+test_that("P5: the relative risk's confidence limits propagate through the attributable fraction", {
+  p <- 0.4
+  levin <- function(r) p * (r - 1) / (1 + p * (r - 1))
+  paf <- attributable_fraction(1.5, p, rr_lower = 1.2, rr_upper = 1.9)
+  expect_equal(as.numeric(paf), levin(1.5))
+  expect_equal(attr(paf, "ci"), c(lower = levin(1.2), upper = levin(1.9)))
+  expect_null(attr(attributable_fraction(1.5, p), "ci"))
+  expect_error(attributable_fraction(1.5, p, rr_lower = 1.2), "go together")
+  expect_error(attributable_fraction(1.5, p, rr_lower = 1.6, rr_upper = 1.9), "between")
+  # the PM2.5 all-cause curve carries Chen and Hoek's 1.06 to 1.09 per 10 ug/m3
+  crf <- crf_pm25(15.8)
+  expect_equal(crf$rr, 1.08)
+  expect_equal(crf$rr_lower, 1.06)
+  expect_equal(crf$rr_upper, 1.09)
+  n <- crf_no2(20)
+  expect_equal(c(n$rr_lower, n$rr_upper), c(1.01, 1.04))
+  expect_true(is.na(crf_pm25(20, outcome = "ihd")$rr_lower))
+  r <- verify_pollution("pm25", exposure_mean = 15.8, exposure_prevalence = 0.5)
+  expect_equal(r$pipeline$paf, 0.5 * 0.08 / (1 + 0.5 * 0.08))
+  expect_equal(unname(r$pipeline$paf_ci), c(0.5 * 0.06 / (1 + 0.5 * 0.06), 0.5 * 0.09 / (1 + 0.5 * 0.09)))
+  expect_match(pollution_report_text(r), "95% CI", fixed = TRUE)
+})
+
+test_that("D4: the rows a PDF page holds leave room for the title block, the page label and the notes", {
+  rows <- rmoriebricklayer:::.yoy_rows_per_page
+  for (h in c(5, 8.5, 11, 17, 24)) {
+    n <- rows(h, 0L)
+    # the rows drawn from 0.88 down by 0.22 inch each end above the page label at 0.06
+    expect_lte(0.88 - 1.1 * 0.22 / h - (n - 1) * 0.22 / h, 0.88)
+    expect_gte(0.88 - 1.1 * 0.22 / h - n * 0.22 / h, 0.06 - 1e-9)
+    expect_gt(rows(h, 0L), rows(h, 3L))
+  }
+  expect_equal(rows(24, 0L), 88L)
+  expect_equal(rows(8.5, 0L), 30L)
+  expect_equal(rows(1, 0L), 5L)
+})
+
+test_that("PBKDF2-HMAC-SHA256 matches the RFC 7914 vectors (ACVP's PBKDF set is SHA2-224 only)", {
+  expect_identical(derive_key("passwd", "salt", 1L, 64L),
+                   paste0("55ac046e56e3089fec1691c22544b605f94185216dde0465e68b9d57c20dacbc",
+                          "49ca9cccf179b645991664b39d77ef317c71b845b1e30bd509112041d3a19783"))
+  expect_identical(derive_key("Password", "NaCl", 80000L, 64L),
+                   paste0("4ddcd8f60b98be21830cee5ef22701f9641a4418d04c0414aeff08876b34ab56",
+                          "a1d425a1225833549adb841b51c9b3176a272bdebba1d078478f62b397f33c8d"))
+})
+
+test_that("a secret typed at a terminal is read with echo off and the echo restored", {
+  skip_on_os("windows")
+  calls <- character()
+  testthat::local_mocked_bindings(.bl_interactive = function() TRUE)
+  testthat::local_mocked_bindings(
+    isatty = function(con) TRUE,
+    readline = function(prompt = "") " sk-hidden ",
+    system2 = function(command, args = character(), ...) {
+      calls <<- c(calls, paste(command, args))
+      invisible(0L)
+    },
+    .package = "base"
+  )
+  msg <- utils::capture.output(got <- .bl_readline("key> ", secret = TRUE), type = "message")
+  expect_equal(got, "sk-hidden")
+  if (nzchar(Sys.which("stty"))) {
+    expect_equal(calls, c("stty -echo", "stty echo"))
+    expect_true(any(msg == ""))
+  }
+})
+
+test_that("ask refuses a repeated --model or --route instead of folding one into the prompt", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, RMBL_PROG = "rmbl")
+  txt <- character()
+  st <- bricklayer_cli(c("ask", "--model", "a", "--model", "b", "hi"), out = function(s) txt <<- c(txt, s))
+  expect_equal(st, 2L)
+  expect_match(paste(txt, collapse = ""), "--model may be given once", fixed = TRUE)
+  txt <- character()
+  st <- bricklayer_cli(c("ask", "--route", "own", "--route", "hosted", "hi"), out = function(s) txt <<- c(txt, s))
+  expect_equal(st, 2L)
+  expect_match(paste(txt, collapse = ""), "--route may be given once", fixed = TRUE)
+})
+
+test_that("verify_pollution wants one outcome name, not a vector or a number", {
+  for (bad in list(c("a", "b"), 3, NA_character_)) {
+    r <- verify_pollution("no2", outcome = bad, exposure_mean = 20, exposure_prevalence = 0.5)
+    expect_equal(attr(r, "exit_status"), 2L)
+    expect_match(r$error, "outcome must be a single outcome name", fixed = TRUE)
+  }
+})
