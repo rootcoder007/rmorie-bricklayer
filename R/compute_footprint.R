@@ -214,9 +214,7 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
     # Antarctic stations): the territory's grid is its administering or neighbouring country's,
     # or the world average, never the locale's country
     if (length(terr) == 1L && !is.na(terr)) {
-      proxy <- .rmbl_territory_proxy[terr]
-      loc <- if (is.na(proxy)) "WORLD" else known(proxy)
-      if (is.na(loc)) loc <- "WORLD"
+      loc <- .rmbl_territory_location(terr, known)
       return(list(location = loc,
                   method = sprintf("system time zone %s (territory %s has no row of its own; %s)", tz, terr,
                                    if (identical(loc, "WORLD")) "world average" else paste("grid of", loc))))
@@ -241,6 +239,14 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
   SX = "NL", TF = "FR", UM = "US", VA = "IT", WF = "FR",
   AQ = NA_character_, MH = NA_character_, NU = NA_character_, TK = NA_character_, TV = NA_character_
 )
+
+# The grid a territory draws on: its proxy country when the carbon table has that row, the world
+# average when the territory has no proxy or the proxy itself is missing from the table.
+.rmbl_territory_location <- function(terr, known, proxies = .rmbl_territory_proxy) {
+  proxy <- proxies[terr]
+  loc <- if (is.na(proxy)) NA_character_ else known(unname(proxy))
+  if (is.na(loc)) "WORLD" else loc
+}
 
 # ---- RAPL -------------------------------------------------------------------
 

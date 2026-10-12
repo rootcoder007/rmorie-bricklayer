@@ -41,7 +41,7 @@
   txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
   if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
   out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE), error = function(e) NULL)
-  if (!is.list(out) || is.data.frame(out) || (length(out) && is.null(names(out)))) return(NULL)
+  if (!is.list(out)) return(NULL)
   out
 }
 
