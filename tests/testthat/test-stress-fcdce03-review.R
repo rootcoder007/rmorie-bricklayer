@@ -576,18 +576,15 @@ test_that("a live lock held by another process is waited for and then reported",
   rec <- withr::local_tempfile(fileext = ".txt")
   ready <- withr::local_tempfile()
   # another process holds the operating-system lock for longer than the 10 s wait
-  job <- parallel::mcparallel({
-    fd <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, paste0(rec, ".flock"), 0L)
-    file.create(ready)
-    Sys.sleep(16)
-    .Call(rmoriebricklayer:::C_rmbl_flock_release, fd)
-  })
-  # a forked child can take seconds to start on a busy runner: wait for it to hold the lock
-  for (i in 1:600) if (!file.exists(ready)) Sys.sleep(0.05)
-  skip_if_not(file.exists(ready), "the lock-holding child did not start")
+  done <- withr::local_tempfile()
+  rscript_bg(sprintf(paste0("f <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, '%s', 0L); ",
+                            "writeLines('held', '%s'); Sys.sleep(16); ",
+                            ".Call(rmoriebricklayer:::C_rmbl_flock_release, f); writeLines('done', '%s')"),
+                     paste0(rec, ".flock"), ready, done))
+  skip_if_not(wait_files(ready), "the lock-holding process did not start")
   t0 <- Sys.time()
   expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE), "could not lock")
   expect_gte(as.numeric(difftime(Sys.time(), t0, units = "secs")), 9)
-  parallel::mccollect(job, wait = TRUE)
+  expect_true(wait_files(done))
   expect_true(rmoriebricklayer:::.rmbl_xmss_with_lock(rec, function() TRUE))
 })
