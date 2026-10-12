@@ -4,6 +4,65 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Review of 7703a04 (the second pass over the branch)
+
+* **The XMSS signature object carried the private key too.** The attestation fix of the first
+  pass stripped `key_state` from attestations only; `capsule_sign()` itself still returned the
+  advanced key, with `sk_seed` and `sk_prf`, inside every XMSS signature, so every shared
+  signature, bundle JSON file, chain and report made with XMSS from 0.5.9 to 7703a04 handed
+  out the private key, and anyone holding one could attest or sign anything under the
+  victim's root. The signature object now carries no key material of any scheme, and the next
+  key state is `xmss_advance(key, signature)` (new, exported, with `xmss_forget_used_indices()`).
+  **Treat every XMSS key whose signature, attestation, bundle or report left your machine
+  under 0.5.9 to 7703a04 as compromised: generate a new key and sign again.** A test checks
+  that no signature, attestation, bundle, JSON or serialisation of any scheme contains
+  private-key bytes.
+* XMSS index reuse across sessions: the in-session registry can now persist (the option
+  `rmoriebricklayer.xmss_index_file` or `RMBL_XMSS_INDEX_FILE` names the file; off by default,
+  because a package may not write into a home directory unasked), so a key reloaded from disk
+  cannot sign at an index the file has seen. Without it, save the advanced key after every
+  signature, as before.
+* `verify_pollution()` with a mean but no prevalence (or the reverse) is an error report (exit
+  2), not "ok, 0 cases": the first pass's zero-exposure fix had made the omitted input a
+  silent zero. Both scalar defaults are now `NULL`. A per-100,000 `baseline_rate` below 0.01
+  fails an assumption as a per-person rate typed in the wrong box; an exposure above
+  10,000 ug/m3 fails the range assumption instead of throwing; a UTF-8 BOM, a negative row and
+  a date are handled; the attributable-fraction step is inside the report contract.
+* The French SIU resolver keeps a line break that ends a stripped boilerplate sentence (the
+  first pass replaced it with a space and glued the next roster line, or the next section
+  header, onto it); the property test now inserts the sentence at the line end too.
+* `advection_diffusion_2d()` caps only runs that sub-stepping inflates: a large stable run is
+  the caller's to wait for. The number in the message is formatted properly and the advice is
+  correct (a smaller dt lowers the sub-step count). `lagrangian_particles()` refuses more than
+  100 million particles; `gaussian_puff()` warns about receptors below ground or above the lid.
+* `plot()` of a frequency table with a missing level draws it as "(missing)" instead of failing
+  on the margin (broken since 0.5.11).
+* HMAC `capsule_verify()` answers FALSE to any edited `signature` field; `capsule_check_attestation()`
+  accepts a public-key object as `key_expected` (for XMSS the root and seed both) and reports a
+  missing digest instead of throwing.
+* Language models: a local Ollama selected by model or key at the default address that does not
+  answer is announced before the hosted tier is used; a setting of the wrong type in `llm.json`
+  (`route: 5`, an array, `true`, `""`) is an error, not "auto"; a credentials file without
+  `hosted_base_url` (morie writes one) sends the key only to the services document's address;
+  `MORIE_DATA_URL` receives the stored key only when it is the document's curated-data address;
+  login and logout keep another package's entries (arrays, nulls, large integers) as they were;
+  a saved address may not contain whitespace, a fragment or user information.
+* `rmbl data list` strips the C1 controls and the bidirectional format characters as bytes, in
+  any locale; the help never shows `--token KEY`.
+* `bricklayer_data_load()` refuses a manifest digest that is not a digest (a `sha256:` prefix is
+  accepted), and a mismatch refreshes the manifest once before calling the file bad, so a table
+  rebuilt upstream does not fail until the cached manifest expires.
+* `apply_schema_validation()` warns when the provenance list has no `schema` (a typo such as
+  `scheme` is no longer silent) and refuses an environment.
+* Territory proxies: Saint-Barthélemy and Saint-Martin use Guadeloupe's grid, Wallis and Futuna
+  New Caledonia's, Saipan Guam's; Kerguelen the world average. The carbon-intensity note names
+  Ukraine (2022) among the older rows.
+* `hurwitz_zeta()` handles a non-positive non-integer `q` (8.93 at `q = -0.5` for `s = 2`) and
+  refuses a pole; `top_share()` refuses a fraction outside (0, 1]; `hill_tail_index()` refuses a
+  vector `x_min`; `rapl_available()` refuses a non-path; `exposure_concentration_index()` refuses
+  an infinite exposure. The masking-cost sentence of the side-channel vignette carries the
+  measured 17 ms against 2.4 ms. `crf_pm25()` and `crf_no2()` refuse a logical exposure.
+
 ## Review of the 0.5.12 branch
 
 * **An XMSS attestation carried the signer's private key.** `capsule_attest()` embedded the

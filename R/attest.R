@@ -115,9 +115,6 @@ capsule_attest <- function(manifest, key, context = NULL,
   } else {
     capsule_sign(signed, key, context = if (is.null(ctx)) NULL else payload$context, prehash = prehash)
   }
-  # an XMSS signature carries the advanced key (`key_state`, with sk_seed and sk_prf) so the
-  # signer can save it; an attestation is the object handed to verifiers, and the key stays home
-  sig$key_state <- NULL
   out <- c(payload, list(signature = sig))
   class(out) <- c("bricklayer_attestation", "list")
   out
@@ -148,25 +145,29 @@ capsule_check_attestation <- function(attestation, manifest,
   )
 
   got <- tryCatch(manifest_digest(manifest), error = function(e) NA_character_)
+  attested <- attestation$digest %||% "(missing)"
   note_row(
     "manifest_digest", identical(got, attestation$digest),
     if (identical(got, attestation$digest)) {
       got
     } else {
-      sprintf(
-        "attested %s, manifest is %s", attestation$digest,
-        got
-      )
+      sprintf("attested %s, manifest is %s", as.character(attested)[1L], got)
     }
   )
 
   if (!is.null(key_expected)) {
+    # a public-key object is accepted as well as the hex it carries: for XMSS the attestation's
+    # `public` is root || pub_seed, and signing_public_key() has both
+    expected_hex <- if (inherits(key_expected, c("bricklayer_public_key", "bricklayer_signing_key"))) {
+      paste0(key_expected$root, key_expected$pub_seed)
+    } else if (inherits(key_expected, c("bricklayer_oqs_key", "bricklayer_oqs_public_key"))) {
+      key_expected$public
+    } else {
+      as.character(key_expected)[1L]
+    }
     note_row(
       "key_as_expected",
-      identical(
-        tolower(as.character(key_expected)[1L]),
-        tolower(attestation$public)
-      ),
+      identical(tolower(as.character(expected_hex)), tolower(as.character(attestation$public %||% ""))),
       "the attestation carries the key it was checked against"
     )
   }

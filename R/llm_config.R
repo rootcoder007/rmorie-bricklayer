@@ -65,6 +65,16 @@
     stop(sprintf("%s is not a JSON object and the saved route and keys cannot be read; fix or remove it", p),
          call. = FALSE)
   }
+  # a setting of the wrong type (route: 5, [..], true, "") would be read as unset and the call
+  # would go hosted; it is an error in the file, said as one
+  spec <- .bl_config_spec()
+  for (k in intersect(names(out), spec$key)) {
+    v <- out[[k]]
+    if (!is.character(v) || length(v) != 1L || is.na(v) || !nzchar(trimws(v))) {
+      stop(sprintf("%s: `%s` must be a non-empty string, not %s; fix or remove it", p, k,
+                   if (is.null(v)) "null" else paste(class(v)[1L], "of length", length(v))), call. = FALSE)
+    }
+  }
   out
 }
 
@@ -120,7 +130,18 @@
   )
 }
 
+# An address that is saved must be one address: no whitespace, no `#fragment`, no `user@`.
+.bl_url_sane <- function(value, key) {
+  if (grepl("[[:space:][:cntrl:]#@]", value)) {
+    stop(sprintf("%s must be a plain address with no spaces, fragment or user information", key), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 .bl_config_check <- function(key, value) {
+  if (key %in% c("own.url", "ollama.url", "hosted.url") && !tolower(value) %in% c("off", "none", "disabled")) {
+    .bl_url_sane(value, key)
+  }
   switch(key,
     route = if (!value %in% c("auto", "own", "ollama", "hosted")) {
       stop("route must be one of: auto, own, ollama, hosted", call. = FALSE)

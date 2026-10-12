@@ -592,6 +592,8 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 # ---- bars: frequencies, missingness, coverage ----------------------------------------
 
 .bl_hbars <- function(values, labels, xlab, main, cols, ...) {
+  labels <- as.character(labels)
+  labels[is.na(labels)] <- "(missing)"   # a frequency table counts NA as a level of its own
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
                       mar = c(4.2, max(4.5, 0.55 * max(nchar(labels), 4) + 1), 3, 1))
   on.exit(graphics::par(op), add = TRUE)

@@ -39,7 +39,7 @@
 #'
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 #' \describe{
-#'   \item{\code{login [--token [KEY]] [--email ADDRESS [--code CODE]]
+#'   \item{\code{login [--token] [--email ADDRESS [--code CODE]]
 #'     [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
 #'     a local model or your own endpoint; keys are issued on request at
 #'     \url{https://www.rmorie.com/access/}): a key you paste with \code{--token}
@@ -146,7 +146,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
             if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ", secret = TRUE)
             if (!nzchar(tok)) {
-              usage_error("--token needs a value: login --token KEY, or paste the key when asked")
+              usage_error("--token needs a key: run `login --token` and paste it when asked")
             }
             bricklayer_llm_login(token = tok)
           } else {
@@ -270,7 +270,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # One usage line per verb, for `VERB --help`; NULL for a verb that does not exist.
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
   u <- c(
-    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token [KEY]",
+    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token",
                   "  sign in to the hosted MORIE LLM tier"),
     logout = "logout   forget the hosted key",
     doctor = "doctor   report the language-model routes available here",
@@ -518,7 +518,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  config                                    show every language-model setting\n",
     "  config setup                              answer a few questions to set them all\n",
     "  config set KEY VALUE | unset KEY          change one (keys: config help)\n",
-    "  login [--token [KEY]] [--email ADDRESS]   sign in to the hosted MORIE tier\n",
+    "  login [--token] [--email ADDRESS]         sign in to the hosted MORIE tier\n",
     "        [--code CODE] [--no-browser]\n",
     "  logout                                    forget the hosted key\n",
     "  models                                    models the hosted tier offers your key\n",

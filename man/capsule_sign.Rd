@@ -65,7 +65,7 @@ ML-DSA-65), depending on the CPU.}
 \value{
 A list of class \code{bricklayer_signature}: \code{scheme},
 \code{signature}, and for XMSS also \code{auth}, \code{index},
-\code{root}, \code{height}, \code{key_state}, \code{randomizer} (the
+\code{root}, \code{height}, \code{randomizer} (the
 per-signature \code{R} of RFC 8391, which a verifier needs and which
 therefore travels with the signature) and \code{wire} -- the signature
 in the RFC's own byte order, \code{index || R || WOTS || auth},
@@ -88,16 +88,16 @@ With \code{scheme = "xmss"} the \code{key} is a
 post-quantum one-time signature under the key's Merkle root. Asymmetric:
 a verifier holding only the public root cannot forge.
 }
-\section{The returned key state must be carried forward}{
-An XMSS signature consumes a leaf. The returned object therefore carries
-\code{key_state}, the key with \code{next_index} advanced, and
-\strong{subsequent signing must use that} -- reusing an index breaks the
-scheme. The key is an R value, so \code{capsule_sign()} cannot advance the
-caller's copy; instead it remembers, for the session, the highest index
-each key has signed with and refuses that index or an earlier one (signing
-twice with one key object, or with a stale copy). Across sessions the
-saved key must be the latest \code{key_state}: save it after every signature.
-Passing an exhausted key is an error, not a silent wrap-around.
+\section{The key must be advanced after every signature}{
+An XMSS signature consumes a leaf, and \strong{subsequent signing must use the
+advanced key} -- reusing an index breaks the scheme. The signature object
+carries no key material (it is what verifiers are handed); the advanced
+key is \code{xmss_advance(key, signature)}, and that is what to save. The key is
+an R value, so \code{capsule_sign()} cannot advance the caller's copy; instead it
+remembers, for the session (and across sessions when the index file of
+\code{\link[=xmss_advance]{xmss_advance()}} is enabled), the highest index each key has signed with and
+refuses that index or an earlier one. Passing an exhausted key is an error,
+not a silent wrap-around.
 }
 
 \section{Security}{
@@ -130,8 +130,8 @@ key <- pqc_keygen(height = 2)
 s1 <- capsule_sign("manifest-1", key)
 capsule_verify("manifest-1", s1, signing_public_key(key))
 
-# Carry the advanced key state forward for the next signature.
-key <- s1$key_state
+# Advance the key past the signature before signing again.
+key <- xmss_advance(key, s1)
 key$next_index
 s2 <- capsule_sign("manifest-2", key)
 capsule_verify("manifest-2", s2, signing_public_key(key))

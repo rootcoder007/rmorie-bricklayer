@@ -722,6 +722,13 @@ apply_schema_validation <- function(df_raw, provenance) {
   if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(names(provenance))) {
     stop("`provenance` must be a named provenance list (with `schema`) or a list of rules", call. = FALSE)
   }
+  if (!is_rule_list && !is.list(provenance)) {
+    stop("`provenance` must be a provenance list or a list of rules", call. = FALSE)
+  }
+  if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(provenance$schema)) {
+    warning(sprintf("`provenance` has no `schema` element (it has %s): nothing was validated",
+                    paste(names(provenance), collapse = ", ")), call. = FALSE)
+  }
   issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
   for (nm in names(issues)) {
     iss <- issues[[nm]]

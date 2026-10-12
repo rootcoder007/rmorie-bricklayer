@@ -37,11 +37,25 @@
 }
 
 # The credentials file as a named list, or NULL when it is not a JSON object.
-.bl_credentials_object <- function(p) {
+.bl_credentials_object <- function(p, simplify = TRUE) {
   txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
   if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
-  out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = TRUE), error = function(e) NULL)
+  out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = simplify, bigint_as_char = TRUE),
+                  error = function(e) NULL)
   if (!is.list(out)) return(NULL)
+  out
+}
+
+# The file as written: no vector simplification, so another package's arrays, nulls and large
+# integers come back out as they went in (the file is shared with morie and rmorie).
+.bl_credentials_raw <- function() {
+  p <- .bl_credentials_path()
+  if (!file.exists(p)) return(list())
+  out <- .bl_credentials_object(p, simplify = FALSE)
+  if (is.null(out)) {
+    stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
+         call. = FALSE)
+  }
   out
 }
 
@@ -55,7 +69,7 @@
   file.create(tmp)
   Sys.chmod(tmp, mode = "0600")
   writeLines(
-    bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE),
+    bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
     tmp
   )
   file.rename(tmp, p)
@@ -68,7 +82,7 @@
     stop(sprintf(paste("%s is not a JSON object; fix or remove it before a key is saved",
                        "(writing over it would drop the entries it holds)"), p), call. = FALSE)
   }
-  data <- .bl_read_credentials()
+  data <- .bl_credentials_raw()
   data$hosted_key <- key
   if (!is.null(user)) data$hosted_user <- user
   data$hosted_base_url <- .bl_hosted_base()
@@ -86,9 +100,14 @@
   # the key was issued for the address it was saved with: an address set afterwards in the
   # environment or the config gets no key, the same rule as the own and Ollama keys
   saved_for <- cred$hosted_base_url
+  if (!is.character(saved_for) || length(saved_for) != 1L || !nzchar(saved_for)) {
+    # a file without the address (morie writes one): the key was issued by the hosted tier, so
+    # it goes to the signed services document's address and nowhere else
+    saved_for <- .rmbl_services_llm()$base_url %||% ""
+  }
   now <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
-  if (is.character(saved_for) && length(saved_for) == 1L && nzchar(saved_for) && !is.null(now) &&
-        !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
+  if (nzchar(saved_for) && !is.null(now) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
+    message(sprintf("the stored hosted key was issued for %s and is not sent to %s", saved_for, now))
     return(NULL)
   }
   key
@@ -190,7 +209,8 @@
 
 # Ollama was pointed at on purpose (environment or saved setting), not the default address.
 .bl_ollama_configured <- function() {
-  !is.null(.bl_env1("OLLAMA_HOST")) || !is.null(.bl_env1("OLLAMA_BASE_URL"))
+  !is.null(.bl_env1("OLLAMA_HOST")) || !is.null(.bl_env1("OLLAMA_BASE_URL")) ||
+    !is.null(.bl_env1("OLLAMA_MODEL")) || !is.null(.bl_env1("OLLAMA_API_KEY"))
 }
 
 .bl_bearer <- function(key) if (is.null(key)) NULL else paste("Authorization: Bearer", key)
@@ -718,7 +738,7 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 #' }
 #' @export
 bricklayer_llm_logout <- function() {
-  data <- .bl_read_credentials()
+  data <- .bl_credentials_raw()
   had <- !is.null(data$hosted_key)
   data$hosted_key <- NULL
   data$hosted_user <- NULL

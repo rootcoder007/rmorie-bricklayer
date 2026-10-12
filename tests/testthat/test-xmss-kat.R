@@ -205,7 +205,7 @@ test_that("the conformant signature still verifies, and still refuses", {
 
   # the randomiser is per-index, so two signatures under one key differ
   s0 <- sig  # index 0 is used: the next signature must come from its key state
-  s1 <- capsule_sign(msg, s0$key_state)
+  s1 <- capsule_sign(msg, xmss_advance(key, s0))
   expect_false(identical(s0$randomizer, s1$randomizer))
   expect_true(capsule_verify(msg, s1, pub))
 })

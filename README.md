@@ -207,7 +207,7 @@ and a digest anyone can recompute says nothing about who produced the data.
   `kem_encapsulate()`, `kem_decapsulate()`); ML-DSA and SLH-DSA keys from
   `fips_keygen()` and XMSS keys from `pqc_keygen()`, both signing through
   `capsule_sign()` (an XMSS index never signs twice: carry each
-  signature's `key_state` forward); and HQC-KEM in both revisions:
+  key forward with `xmss_advance()`); and HQC-KEM in both revisions:
   `hqc_keygen(version = "v5")`, the default (specification of
   2025-08-22, 32-byte shared secret), and `hqc_keygen(version = "round4")`
   (the fourth-round submission of 2023-04-30 — the HQC of liboqs up to
@@ -539,7 +539,7 @@ digest <- sha256_file(file.path(tempdir(), "manifest.json"))
 key <- pqc_keygen()                       # post-quantum, hash-based
 sig <- capsule_sign(digest, key)
 capsule_verify(digest, sig, signing_public_key(key))
-key <- sig$key_state                     # the next signature must use this
+key <- xmss_advance(key, sig)            # the next signature must use this
 ```
 
 See `vignette("drift")` for the distributional checks and

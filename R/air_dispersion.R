@@ -283,6 +283,7 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
   t <- .ad_num(t, "t", positive = TRUE)
   n_images <- .ad_num(n_images, "n_images", min = 0, whole = TRUE)
   mixing_height <- .ad_lid(mixing_height, h)
+  .ad_receptor_heights(.ad_rec(receptors), mixing_height)
   R <- .ad_rec(receptors)
   s <- pg_sigmas(u * t, stability, setting)
   sy <- s$sigma_y
@@ -295,9 +296,6 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
 }
 
 #' @rdname pg_sigmas
-#' @section Boundary: the outermost ring of cells is held at zero (an open boundary): mass
-#'   that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
-#'   empty cells so the plume of interest stays inside the ring.
 #' @section Boundary: the outermost ring of cells is held at zero (an open boundary): mass
 #'   that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
 #'   empty cells so the plume of interest stays inside the ring.
@@ -346,11 +344,15 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   # sub-steps runs in a tenth of a second and a 201 x 201 grid at 9,999 takes hours; the limit
   # is about five seconds of the explicit loop
   work <- as.numeric(nx) * ny * n_steps * substeps
-  if (!is.finite(work) || work > 1e7) {
-    stop(sprintf(paste("this run would update %s cells x steps x sub-steps (%d x %d cells, %s steps,",
-                       "%s sub-steps per step from a stability number of %s; limit 10 million):",
-                       "pass a smaller dt, a coarser grid or fewer steps"),
-                 format(work, big.mark = ", ", scientific = FALSE), nx, ny, format(n_steps, big.mark = ","),
+  if (!is.finite(work)) stop("the amount of work is not finite: check n_steps and the grid", call. = FALSE)
+  # a run the caller sized is theirs to wait for (a 1001 x 1001 grid for 10 stable steps takes
+  # seconds); the cap is for the run sub-stepping has inflated past what the caller asked for
+  if (substeps > 1 && work > 1e7) {
+    stop(sprintf(paste("sub-stepping would make this run update %s cells x steps x sub-steps (%d x %d cells,",
+                       "%s steps, %s sub-steps per step from a stability number of %s; limit 10 million):",
+                       "a smaller dt lowers the stability number and the sub-step count, or use a coarser",
+                       "grid or fewer steps"),
+                 format(work, big.mark = ",", scientific = FALSE), nx, ny, format(n_steps, big.mark = ","),
                  format(substeps, big.mark = ","), format(stab, digits = 4)), call. = FALSE)
   }
   substeps <- as.integer(substeps)
@@ -407,7 +409,9 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
 #' @export
 lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0, grid = NULL,
                                  normals = NULL) {
-  n <- as.integer(.ad_num(n, "n", positive = TRUE, whole = TRUE))
+  n <- .ad_num(n, "n", positive = TRUE, whole = TRUE)
+  if (n > 1e8) stop("`n` must be at most 100 million particles", call. = FALSE)
+  n <- as.integer(n)
   x0 <- .ad_num(x0, "x0")
   y0 <- .ad_num(y0, "y0")
   u <- .ad_num(u, "u")

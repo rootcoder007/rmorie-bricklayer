@@ -11,7 +11,7 @@
 # Carbon intensity of electricity, gCO2e/kWh, bundled for offline use in
 # inst/extdata/carbon_intensity.csv: every country at the latest year Our
 # World in Data publishes (Ember yearly electricity data, 2024 or 2025 for
-# all but a few small territories whose latest row is older; each row carries its year),
+# all but a few rows whose latest year is older, among them Ukraine (2022); each row carries its year),
 # sub-national zones (Canadian provinces, US balancing authorities,
 # Australian states, Indian and Japanese regions, ...) from Electricity Maps'
 # 2024 yearly file as redistributed by Green Algorithms data v3.1, and the
@@ -234,10 +234,11 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 # the country whose grid they draw on (an enclave or dependency) or none (an island state and
 # Antarctica take the world average).
 .rmbl_territory_proxy <- c(
-  AD = "ES", AI = "GB", BL = "FR", BQ = "NL", CC = "AU", CX = "AU", GG = "GB", IM = "GB", IO = "GB",
-  JE = "GB", LI = "CH", MC = "FR", MF = "FR", MP = "US", NF = "AU", PN = "GB", SJ = "NO", SM = "IT",
-  SX = "NL", TF = "FR", UM = "US", VA = "IT", WF = "FR",
-  AQ = NA_character_, MH = NA_character_, NU = NA_character_, TK = NA_character_, TV = NA_character_
+  AD = "ES", AI = "GB", BL = "GP", BQ = "NL", CC = "AU", CX = "AU", GG = "GB", IM = "GB", IO = "GB",
+  JE = "GB", LI = "CH", MC = "FR", MF = "GP", MP = "GU", NF = "AU", PN = "GB", SJ = "NO", SM = "IT",
+  SX = "NL", UM = "US", VA = "IT", WF = "NC",
+  AQ = NA_character_, MH = NA_character_, NU = NA_character_, TF = NA_character_, TK = NA_character_,
+  TV = NA_character_
 )
 
 # The grid a territory draws on: its proxy country when the carbon table has that row, the world
@@ -297,6 +298,9 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #' rapl_available()
 #' @export
 rapl_available <- function(rapl_dir = "/sys/class/powercap") {
+  if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {
+    stop("`rapl_dir` must be a single directory path", call. = FALSE)
+  }
   !is.null(.rapl_read(.rapl_domains(rapl_dir)))
 }
 

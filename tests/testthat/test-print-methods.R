@@ -116,7 +116,7 @@ test_that("keys and signatures print without ever showing the secret", {
 
   # the usage counter advances in the rendering as leaves are consumed
   sig <- capsule_sign("m", key)
-  expect_match(paste(format(sig$key_state), collapse = "\n"),
+  expect_match(paste(format(xmss_advance(key, sig)), collapse = "\n"),
                "1 of 4 signatures")
 
   # a signature prints its index and an abbreviated body, not 2 KB of hex

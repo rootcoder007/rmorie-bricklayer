@@ -12,8 +12,8 @@ verify_pollution(
   years = NULL,
   demo = FALSE,
   exposure_csv = NULL,
-  exposure_mean = 0,
-  exposure_prevalence = 0,
+  exposure_mean = NULL,
+  exposure_prevalence = NULL,
   reference = NULL,
   baseline_rate = 500,
   population = 1e+06
@@ -65,7 +65,9 @@ attribute \code{exit_status} carries a command-line exit code (0, 1 or
 vector where a single number is expected, an unknown outcome, a missing
 reference, a directory as \code{exposure_csv}) is an \code{"error"}
 report with exit status 2, never a raw R error; an exposure at or below
-the reference is a valid run with zero attributable cases.
+the reference is a valid run with zero attributable cases, and the
+scalar inputs \code{exposure_mean} and \code{exposure_prevalence} go
+together (one without the other is an error report).
 \code{pollution_report_text()}: a character string.
 }
 \description{

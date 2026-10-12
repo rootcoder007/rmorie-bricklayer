@@ -181,10 +181,6 @@ grid.
  the outermost ring of cells is held at zero (an open boundary): mass
 that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
 empty cells so the plume of interest stays inside the ring.
-
- the outermost ring of cells is held at zero (an open boundary): mass
-that reaches it leaves the domain and \code{mass} falls accordingly. Pad \code{c0} with
-empty cells so the plume of interest stays inside the ring.
 }
 
 \examples{
