@@ -220,7 +220,8 @@ test_that("B3: a write that does not reach the disk leaves the record as it was 
   skip_if(!nzchar(sh) || !file.exists(rscript))
   lib <- paste(.libPaths(), collapse = .Platform$path.sep)
   code <- sprintf(paste0(".libPaths(strsplit('%s', '%s', fixed = TRUE)[[1]]); library(rmoriebricklayer); ",
-                         "cat(.Call(rmoriebricklayer:::C_rmbl_write_file_checked, '%s', '%s', as.raw(rep(65L, 200000))))"),
+                         "cat(.Call(rmoriebricklayer:::C_rmbl_write_file_checked, '%s', '%s',",
+                         " as.raw(rep(65L, 200000))))"),
                   lib, .Platform$path.sep, tempfile(tmpdir = dirname(target)), target)
   out <- suppressWarnings(system2(sh, c("-c", shQuote(sprintf("trap '' XFSZ; ulimit -f 64; exec %s -e %s",
                                                                   shQuote(rscript), shQuote(code)))),
