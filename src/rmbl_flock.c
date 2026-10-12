@@ -52,6 +52,18 @@ static void rmbl_sleep_ms(int ms) {
 #endif
 }
 
+/* Milliseconds on a monotonic clock: the wait is measured, not counted. Counting 20 ms per poll
+ * let a "10 s" wait run past 16 s on macOS, whose sleeps overshoot (review CI, f38cfb1). */
+static double rmbl_now_ms(void) {
+#ifdef _WIN32
+    return (double) GetTickCount64();
+#else
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double) ts.tv_sec * 1000.0 + (double) ts.tv_nsec / 1e6;
+#endif
+}
+
 static const char *rmbl_path_arg(SEXP path) {
     if (!isString(path) || XLENGTH(path) != 1 || STRING_ELT(path, 0) == NA_STRING)
         error("`path` must be a single file path");
@@ -77,7 +89,7 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
         RMBL_CLOSE(fd);
         error("the lock file %s is not a regular file", p);
     }
-    int waited = 0;
+    double start = rmbl_now_ms();
     for (;;) {
 #ifdef _WIN32
         HANDLE h = (HANDLE) _get_osfhandle(fd);
@@ -97,12 +109,11 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
             error("cannot lock %s: %s", p, strerror(e));
         }
 #endif
-        if (waited >= tmo) {
+        if (rmbl_now_ms() - start >= (double) tmo) {
             RMBL_CLOSE(fd);
             return ScalarInteger(-1);
         }
         rmbl_sleep_ms(20);
-        waited += 20;
     }
     return ScalarInteger(fd);
 }

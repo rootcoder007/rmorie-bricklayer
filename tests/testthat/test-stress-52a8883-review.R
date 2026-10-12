@@ -107,8 +107,10 @@ test_that("B2: the lock is held by the process, and the kernel releases it when 
                      lock, ready, done))
   skip_if_not(wait_files(ready), "the lock-holding process did not start")
   t0 <- Sys.time()
-  expect_identical(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 200L), -1L)
-  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 2)
+  expect_identical(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 1000L), -1L)
+  waited <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  expect_gte(waited, 0.95)
+  expect_lt(waited, 2)
   expect_true(wait_files(done))
   expect_true(file.exists(lock))
 })
@@ -199,7 +201,9 @@ test_that("B3: a write that does not reach the disk leaves the record as it was 
   expect_null(.Call(w, tempfile(tmpdir = dirname(ok)), ok, charToRaw("a\tb\n")))
   expect_identical(readBin(ok, "raw", 100), charToRaw("a\tb\n"))
   expect_error(.Call(w, tmp, ok, "not raw"), "raw vector")
-  # a file-size limit stands in for a full disk: the write fails (EFBIG), the old record stays
+  # a file-size limit stands in for a full disk: the write fails (EFBIG), the old record stays.
+  # Not under covr: the child's own coverage trace would hit the same limit and break the merge
+  skip_if(identical(Sys.getenv("R_COVR"), "true"))
   sh <- Sys.which("sh")
   rscript <- file.path(R.home("bin"), "Rscript")
   skip_if(!nzchar(sh) || !file.exists(rscript))
