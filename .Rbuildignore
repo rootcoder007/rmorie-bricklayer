@@ -40,3 +40,4 @@
 ^conftest$
 ^conftest\.c$
 ^conftest\.gcno$
+^.*Rplots\.pdf$
