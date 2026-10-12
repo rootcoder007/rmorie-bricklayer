@@ -177,7 +177,8 @@
 # The models a local Ollama server has (GET /api/tags): a character vector,
 # or NULL when nothing answers there.
 .bl_ollama_tags <- function(base, timeout = 2) {
-  res <- tryCatch(.bl_http_get_local(paste0(base, "/api/tags"), timeout, .bl_bearer(.bl_env1("OLLAMA_API_KEY"))),
+  key <- .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST")
+  res <- tryCatch(.bl_http_get_local(paste0(base, "/api/tags"), timeout, .bl_bearer(key)),
                   error = function(e) NULL)
   if (is.null(res) || !identical(as.integer(res$status), 200L)) return(NULL)
   parsed <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE),
@@ -189,17 +190,25 @@
 # The route a question takes: list(name, base, key, model, local), or NULL
 # when nothing answers. `route` forces one of "own", "ollama", "hosted".
 .bl_llm_route <- function(route = NULL, probe_timeout = 2) {
-  if (is.null(route)) {
+  if (identical(route, "auto")) {
+    # asked for the automatic order this time, whatever is saved
+    route <- NULL
+  } else if (is.null(route)) {
     # a route saved with `rmbl config set route ...` (or MORIE_LLM_ROUTE)
     saved <- tolower(.bl_env1("MORIE_LLM_ROUTE") %||% "auto")
+    if (!saved %in% c("auto", "own", "ollama", "hosted")) {
+      stop(sprintf("MORIE_LLM_ROUTE (or the saved route) must be auto, own, ollama or hosted, not '%s'", saved),
+           call. = FALSE)
+    }
     if (saved %in% c("own", "ollama", "hosted")) route <- saved
   }
+  skipped <- character()
   for (r in route %||% c("own", "ollama", "hosted")) {
     hit <- switch(r,
       own = {
         base <- .bl_own_base()
         if (!is.null(base)) {
-          list(name = "own endpoint", base = base, key = .bl_env1("MORIE_LLM_API_KEY"),
+          list(name = "own endpoint", base = base, key = .bl_key_for("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"),
                model = .bl_env1("MORIE_LLM_MODEL"), local = .bl_loopback_url(base))
         }
       },
@@ -209,8 +218,11 @@
         # a server with nothing pulled cannot answer: when picking the route
         # (not forced), fall through to the hosted tier instead of stopping here
         usable <- length(tags) > 0L || !is.null(.bl_env1("OLLAMA_MODEL")) || identical(route, "ollama")
+        if (!is.null(tags) && !usable) {
+          skipped <- c(skipped, sprintf("local Ollama at %s has no model pulled", base))
+        }
         if (!is.null(tags) && usable) {
-          list(name = "local Ollama", base = base, key = .bl_env1("OLLAMA_API_KEY"),
+          list(name = "local Ollama", base = base, key = .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST"),
                model = .bl_env1("OLLAMA_MODEL") %||% (if (length(tags)) tags[[1L]]),
                local = .bl_loopback_url(base), models = tags)
         }
@@ -224,9 +236,28 @@
       },
       stop(sprintf("unknown route '%s' (own, ollama or hosted)", r), call. = FALSE)
     )
-    if (!is.null(hit)) return(hit)
+    if (!is.null(hit)) {
+      # a prompt that leaves the machine because a local server was skipped is said out loud
+      if (length(skipped)) message(sprintf("%s; using the %s", paste(skipped, collapse = "; "), hit$name))
+      return(hit)
+    }
   }
   NULL
+}
+
+# A saved key belongs to the address it was saved with: a one-off address in the environment
+# (MORIE_LLM_BASE_URL=..., OLLAMA_HOST=...) gets the environment's key or none, never the key
+# saved for another server.
+.bl_key_for <- function(key_env, url_env) {
+  env_key <- trimws(Sys.getenv(key_env, unset = ""))
+  if (nzchar(env_key)) return(env_key)
+  env_url <- trimws(Sys.getenv(url_env, unset = ""))
+  if (identical(url_env, "OLLAMA_HOST") && !nzchar(env_url)) {
+    env_url <- trimws(Sys.getenv("OLLAMA_BASE_URL", unset = ""))
+  }
+  saved_url <- .bl_config_value(url_env)
+  if (nzchar(env_url) && !identical(sub("/+$", "", env_url), sub("/+$", "", saved_url %||% ""))) return(NULL)
+  .bl_config_value(key_env)
 }
 
 # What to set up, when no route (or the one asked for) answers.
@@ -422,7 +453,10 @@ bricklayer_llm_models <- function(timeout = 10) {
 #'   \item a local Ollama server: \code{OLLAMA_HOST} (or
 #'     \code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
 #'     \code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
-#'     skips it;
+#'     skips it. In the automatic order a server that answers but has no model
+#'     pulled is skipped with a message naming the route taken instead, so a
+#'     prompt never leaves the machine silently; \code{route = "ollama"} keeps
+#'     it local and errors instead;
 #'   \item the hosted MORIE tier, a last resort for people who can run neither:
 #'     its address comes from \code{\link{bricklayer_services}} and it needs the
 #'     key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
@@ -434,8 +468,9 @@ bricklayer_llm_models <- function(timeout = 10) {
 #' @param model Model id; default the route's own (see above).
 #' @param timeout Seconds to wait for the reply.
 #' @param system_prompt Optional system message.
-#' @param route \code{NULL} (the first that is set up) or one of \code{"own"},
-#'   \code{"ollama"}, \code{"hosted"} to insist on a route.
+#' @param route \code{NULL} (the saved route, else the first that is set up),
+#'   \code{"auto"} (the automatic order this time, ignoring a saved route) or
+#'   one of \code{"own"}, \code{"ollama"}, \code{"hosted"} to insist on a route.
 #' @return Character scalar with the reply. Errors, saying what to set up,
 #'   when no route answers, and when the server answers with an error.
 #' @examples
@@ -447,7 +482,7 @@ bricklayer_llm_models <- function(timeout = 10) {
 bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
                                system_prompt = NULL, route = NULL) {
   prompt <- .rmbl_string1(prompt, "prompt")
-  if (!is.null(route)) route <- match.arg(route, c("own", "ollama", "hosted"))
+  if (!is.null(route)) route <- match.arg(route, c("own", "ollama", "hosted", "auto"))
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
   what <- if (identical(rt$name, "hosted MORIE tier")) "the hosted MORIE LLM tier" else paste("the", rt$name)

@@ -184,12 +184,17 @@ cat(pollution_report_text(r))
 ```
 
 An input that violates an assumption stops the pipeline and says why, with a non-zero exit
-status for scripts:
+status for scripts (a negative exposure here); an exposure at or below the reference is a
+valid run with zero attributable cases, and a call with no exposure data at all is an
+error, not a clean zero:
 
 ```{r verify-fail}
-bad <- verify_pollution("pm25", exposure_mean = 3, exposure_prevalence = 0.5)
+bad <- verify_pollution("pm25", exposure_mean = -3, exposure_prevalence = 0.5)
 bad$status
 attr(bad, "exit_status")
+none <- verify_pollution("pm25")
+none$status
+attr(none, "exit_status")
 ```
 
 A CSV with an `exposure` column (and optionally `income`) replaces the demo data; a NAPS
@@ -240,7 +245,8 @@ b$usage_mode
 
 The carbon intensity comes from a table bundled with the package, so nothing is fetched
 and it works in any country: every country at the latest year Our World in Data publishes
-from Ember's yearly electricity data (2024 or 2025 at this release), sub-national zones
+from Ember's yearly electricity data (2024 or 2025 at this release for all but a few small
+territories whose latest row is older; every row carries its year), sub-national zones
 from Electricity Maps' 2024 yearly data as redistributed by Green Algorithms (Canadian
 provinces, US balancing authorities, Australian states, Indian and Japanese regions, ...),
 and the world average. Each row carries its year and source, so a report can cite them. A

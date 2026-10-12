@@ -13,15 +13,18 @@ exposure_concentration_index(data, exposure, income)
 }
 \value{
 A list of class \code{rmbl_equity} with \code{concentration_index},
-\code{interpretation}, \code{n_quintiles}, \code{exposure_mean},
-\code{citation} and \code{extra}.
+\code{interpretation}, \code{exposure_mean}, \code{citation} and
+\code{extra} (\code{n}, the covariance and the concentration curve).
 }
 \description{
 Wagstaff, Paci and van Doorslaer (1991):
 \deqn{CI = (2 / \mu) \, \mathrm{cov}(h_i, R_i)}
-with \eqn{R_i = (rank_i - 0.5) / n} the fractional income rank (ties kept
-in input order, as a stable sort does) and the population covariance.
-Negative values mean lower-income units bear more exposure.
+with \eqn{R_i = (rank_i - 0.5) / n} the fractional income rank (tied incomes
+share their average rank, so the index does not depend on row order) and
+the population covariance. Negative values mean lower-income units bear
+more exposure. Both columns must be numeric: a factor or character income
+is refused rather than ranked by its level codes, and exposures must be
+non-negative.
 }
 \examples{
 d <- data.frame(exposure = c(30, 25, 20, 15, 10), income = 1:5)

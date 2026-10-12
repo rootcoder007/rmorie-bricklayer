@@ -170,7 +170,11 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     if (is.na(width) || width < 40L) width <- max(80L, as.integer(getOption("width", 80L)))
   }
   rows <- ifelse(is.na(tables$rows), "-", formatC(tables$rows, format = "d", big.mark = ","))
-  name <- gsub("[[:space:]]+", " ", trimws(tables$name))
+  # the manifest is fetched text: control characters (an ANSI escape, a carriage return)
+  # must not reach the terminal
+  printable <- function(x) gsub("[^[:print:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
+  tables$key <- printable(tables$key)
+  name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))
   name[!nzchar(name) | name == tables$key] <- "-"
   kw <- max(nchar("key"), nchar(tables$key))
   rw <- max(nchar("rows"), nchar(rows))

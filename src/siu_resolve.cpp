@@ -122,8 +122,15 @@ static std::string strip_sentences_with(const std::string& s, const std::regex& 
         size_t end = s.find_first_of(".;\n", start);
         if (end == std::string::npos) end = s.size();
         const std::string sentence = s.substr(start, end - start);
-        if (std::regex_search(sentence, cue)) out += ' '; else out += sentence;
-        if (end < s.size()) out += s[end];
+        if (std::regex_search(sentence, cue)) {
+            // the sentence goes, and its terminator with it: a roster entry that follows on the
+            // same line ("... n'est pas divulgu\xc3\xa9. AI no 3 A particip\xc3\xa9") must still
+            // start a line, as it did before the one-pass rewrite kept the '.'
+            out += '\n';
+        } else {
+            out += sentence;
+            if (end < s.size()) out += s[end];
+        }
         start = end + 1;
     }
     return out;

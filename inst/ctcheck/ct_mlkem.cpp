@@ -34,6 +34,32 @@ static uint32_t ct_mask_u32(void *) {
         rng.fn = ct_mask_u32;                                                     \
         rng.ctx = nullptr;                                                        \
         M::decaps_masked(ss4, dk.data(), ct.data(), rng);                         \
+        {                                                                         \
+            /* what the masked path must not leave behind as a share pair: r-hat (the  \
+             * re-encryption noise in the NTT domain) and m' (Boolean shares). Both are  \
+             * recomputed here from m, which this harness knows. */                      \
+            const unsigned char *h = dk.data() + M::kDkPkeBytes + M::kEkBytes;    \
+            unsigned char gin[64], g[64];                                         \
+            std::memcpy(gin, m, 32);                                              \
+            std::memcpy(gin + 32, h, 32);                                         \
+            rmbl_sha3_512(g, gin, 64);                                            \
+            M::PolyVec r;                                                         \
+            unsigned char nonce = 0;                                              \
+            for (int i = 0; i < M::kK; ++i) {                                     \
+                M::prf_cbd(r.v[i], g + 32, nonce++, M::kEta1);                    \
+                M::ntt(r.v[i]);                                                   \
+                for (int j = 0; j < 256; ++j) {                                   \
+                    int32_t c = r.v[i][j] % M::kQ;                                \
+                    if (c < 0) c += M::kQ;                                        \
+                    r.v[i][j] = static_cast<int16_t>(c);                          \
+                }                                                                 \
+                rem += ct_stack_share_pairs(r.v[i], 256, M::kQ, "ML-KEM masked r-hat"); \
+            }                                                                     \
+            int16_t mw[16];                                                       \
+            std::memcpy(mw, m, 32);                                               \
+            rem += ct_stack_share_pairs(mw, 16, 0, "ML-KEM masked m'");           \
+            ct_secret(gin, 64); ct_secret(g, 64);                                 \
+        }                                                                         \
         ct[0] ^= 1; /* implicit rejection must take the same path */              \
         M::decaps(ss3, dk.data(), ct.data());                                     \
         M::decaps_masked(ss5, dk.data(), ct.data(), rng);                         \

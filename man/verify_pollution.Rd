@@ -31,7 +31,7 @@ cases.}
 
 \item{region, years}{Labels for the report.}
 
-\item{demo}{Use synthetic demo data.}
+\item{demo}{Use synthetic demo data (\code{TRUE} or \code{FALSE}).}
 
 \item{exposure_csv}{Path of a CSV with an \code{exposure} column in
 micrograms per cubic metre, or a NAPS pull with a \code{value} column
@@ -61,7 +61,12 @@ the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 \code{rmbl_pollution_report} (\code{plot()} draws it); its \code{status}
 is \code{"ok"}, \code{"assumption_failure"} or \code{"error"}, and the
 attribute \code{exit_status} carries a command-line exit code (0, 1 or
-2). \code{pollution_report_text()}: a character string.
+2). An argument the pipeline cannot use (no exposure data at all, a
+vector where a single number is expected, an unknown outcome, a missing
+reference, a directory as \code{exposure_csv}) is an \code{"error"}
+report with exit status 2, never a raw R error; an exposure at or below
+the reference is a valid run with zero attributable cases.
+\code{pollution_report_text()}: a character string.
 }
 \description{
 Resolves the exposure (synthetic demo data, a CSV with an \code{exposure}

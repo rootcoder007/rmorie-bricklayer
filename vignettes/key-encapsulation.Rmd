@@ -69,7 +69,8 @@ identical(kem_decapsulate(key, sent$ciphertext, masked = FALSE), got)
 identical(kem_decapsulate(key, bad, masked = FALSE), other)
 ```
 
-`masked = FALSE` is about five times faster and is the right choice where no physical
+`masked = FALSE` is three to four times faster for decapsulation (seven to eleven for ML-DSA
+signing) and is the right choice where no physical
 attacker is in the threat model (a server in a locked room). The *Side-channel assurance*
 vignette explains what the masking defends against and how it was verified.
 

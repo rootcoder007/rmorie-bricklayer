@@ -238,14 +238,16 @@ test_that("config refuses a malformed Ollama address and names settings it does 
   expect_identical(rmoriebricklayer:::.bl_hosted_base(), "https://llm.example.org")
   expect_identical(bricklayer_llm_config()$value[1], "hosted")
   expect_identical(rmoriebricklayer:::.bl_config_value("NOT_A_SETTING"), NULL)
-  # a damaged file reads as no settings rather than an error
+  # a damaged file reads as no settings rather than an error, and says so once; it is never
+  # written over, so it is removed before the settings below are saved
   writeLines("not json at all", rmoriebricklayer:::.bl_config_path())
-  expect_identical(rmoriebricklayer:::.bl_read_config(), list())
+  expect_warning(expect_identical(rmoriebricklayer:::.bl_read_config(), list()), "not valid JSON")
+  unlink(rmoriebricklayer:::.bl_config_path())
   # `config get` and `config set` of a key that is not there
   expect_equal(cf_out(c("config", "get"))$status, 2L)
   expect_equal(cf_out(c("config", "unset", "nope"))$status, 2L)
   # a secret typed at the prompt when no value is given
-  testthat::local_mocked_bindings(.bl_readline = function(prompt, con = NULL) "sk-prompted-9999",
+  testthat::local_mocked_bindings(.bl_readline = function(prompt, con = NULL, ...) "sk-prompted-9999",
                                   .package = "rmoriebricklayer")
   expect_match(cf_out(c("config", "set", "own.key"))$text, "own.key = set", fixed = TRUE)
   # an environment variable set over a saved one is reported from the shell, not raised

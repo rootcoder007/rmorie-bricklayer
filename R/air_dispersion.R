@@ -160,6 +160,11 @@ briggs_plume_rise <- function(x, u, diameter, exit_velocity, stack_temp, ambient
   exit_velocity <- .ad_num(exit_velocity, "exit_velocity", positive = TRUE)
   stack_temp <- .ad_num(stack_temp, "stack_temp", positive = TRUE)
   ambient_temp <- .ad_num(ambient_temp, "ambient_temp", positive = TRUE)
+  if (stack_temp < 150 || ambient_temp < 150) {
+    stop(sprintf(paste("temperatures are in kelvin: stack_temp %s and ambient_temp %s look like degrees",
+                       "Celsius (ambient air is about 290 K)"), format(stack_temp), format(ambient_temp)),
+         call. = FALSE)
+  }
   g <- .ad_num(g, "g", positive = TRUE)
   if (stack_temp <= ambient_temp) {
     stop("`stack_temp` must exceed `ambient_temp`: Briggs' formulas describe a buoyant plume, ",
@@ -274,14 +279,21 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
 #' @rdname pg_sigmas
 #' @export
 advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL) {
-  cm <- unname(as.matrix(c0)) * 1
-  if (!is.numeric(cm) || anyNA(cm) || any(!is.finite(cm))) {
+  if (!is.matrix(c0) || !is.numeric(c0)) {
+    stop("`c0` must be a numeric matrix (one row per x cell, one column per y cell)", call. = FALSE)
+  }
+  cm <- unname(c0) * 1
+  if (anyNA(cm) || any(!is.finite(cm))) {
     stop("`c0` must be a finite numeric matrix", call. = FALSE)
   }
+  if (any(cm < 0)) stop("`c0` must be non-negative: it is a concentration field", call. = FALSE)
   nx <- nrow(cm)
   ny <- ncol(cm)
   if (!is.null(source) && !identical(dim(as.matrix(source)), dim(cm))) {
     stop("`source` must have the dimensions of `c0`", call. = FALSE)
+  }
+  if (!is.null(source) && (!is.numeric(source) || anyNA(source) || any(!is.finite(as.numeric(source))))) {
+    stop("`source` must be a finite numeric matrix", call. = FALSE)
   }
   u <- .ad_num(u, "u")
   v <- .ad_num(v, "v")
@@ -298,6 +310,14 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
   # the explicit upwind + FTCS scheme is stable when the advection and diffusion
   # numbers together stay within the unit interval; cfl < 1 alone is not enough
   stab <- abs(ax) + abs(ay) + 2 * (dxn + dyn)
+  # sub-stepping makes a run outside the bound a solution rather than an explosion, but a
+  # bound crossed ten-thousandfold is a wrong dt, not a case to grind through for hours
+  if (!is.finite(stab) || stab > 1e4) {
+    stop(sprintf(paste("explicit scheme would need %s sub-steps per step to stay stable",
+                       "(|u dt/dx| + |v dt/dy| + 2 (kx dt/dx^2 + ky dt/dy^2) = %s, limit 10,000):",
+                       "pass a smaller dt or a finer grid"),
+                 format(ceiling(stab), big.mark = ","), format(stab, digits = 4)), call. = FALSE)
+  }
   substeps <- 1L
   if (stab > 1) {
     # the same physical time, taken in enough sub-steps to satisfy the bound:
@@ -377,6 +397,11 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
   out <- list(x = xs, y = ys, mean_x = sum(xs) / n, mean_y = sum(ys) / n, grid = grid)
   if (!is.null(grid)) {
     if (length(grid) != 6L) stop("`grid` must be c(x_min, x_max, y_min, y_max, nx, ny)", call. = FALSE)
+    grid <- .ad_num(grid, "grid", scalar = FALSE)
+    if (grid[2L] <= grid[1L] || grid[4L] <= grid[3L] || grid[5L] < 1 || grid[6L] < 1 ||
+          grid[5L] != round(grid[5L]) || grid[6L] != round(grid[6L])) {
+      stop("`grid` needs x_min < x_max, y_min < y_max and whole positive nx, ny", call. = FALSE)
+    }
     wx <- (grid[2L] - grid[1L]) / grid[5L]
     wy <- (grid[4L] - grid[3L]) / grid[6L]
     conc <- matrix(0, grid[5L], grid[6L])

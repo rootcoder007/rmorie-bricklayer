@@ -36,12 +36,17 @@ The zone table (\code{inst/extdata/timezone_countries.csv}, built by
 \code{tools/build_timezones.R} from the IANA database) holds every zone
 of \code{zone.tab}, which names exactly one country per zone
 (\code{Europe/Stockholm} is Sweden even though the database now keeps
-its rules under \code{Europe/Berlin}), plus every alias and old name in
-the \code{backward} file (\code{US/Eastern}, \code{Asia/Calcutta},
-\code{America/Montreal}) under the country of the zone it links to.
-Every geographic zone \code{OlsonNames()} lists resolves; the
-\code{Etc/}, \code{UTC} and fixed-offset zones name no country and fall
-through to the locale.
+its rules under \code{Europe/Berlin}), plus the aliases and old names of
+the \code{backward} file under their own country: the country of the zone
+the alias stood for before the database merged it (\code{Iceland} is
+\code{Atlantic/Reykjavik}, Iceland, not Abidjan's Ivory Coast), the
+link target's country when that target serves a single country
+(\code{Asia/Calcutta}, \code{US/Eastern}), and a reviewed list for the
+rest (\code{Atlantic/Jan_Mayen}, \code{America/Coral_Harbour},
+\code{Canada/Eastern}). Every geographic zone \code{OlsonNames()} lists
+resolves; the \code{Etc/}, \code{UTC}, fixed-offset and generic zones
+(\code{CET}, \code{EST}, \code{WET}) name no country and fall through
+to the locale.
 }
 \examples{
 detect_location()

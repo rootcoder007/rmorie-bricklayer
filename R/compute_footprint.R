@@ -10,7 +10,8 @@
 
 # Carbon intensity of electricity, gCO2e/kWh, bundled for offline use in
 # inst/extdata/carbon_intensity.csv: every country at the latest year Our
-# World in Data publishes (Ember yearly electricity data, 2024 or 2025),
+# World in Data publishes (Ember yearly electricity data, 2024 or 2025 for
+# all but a few small territories whose latest row is older; each row carries its year),
 # sub-national zones (Canadian provinces, US balancing authorities,
 # Australian states, Indian and Japanese regions, ...) from Electricity Maps'
 # 2024 yearly file as redistributed by Green Algorithms data v3.1, and the
@@ -160,12 +161,17 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 #' \code{tools/build_timezones.R} from the IANA database) holds every zone
 #' of \code{zone.tab}, which names exactly one country per zone
 #' (\code{Europe/Stockholm} is Sweden even though the database now keeps
-#' its rules under \code{Europe/Berlin}), plus every alias and old name in
-#' the \code{backward} file (\code{US/Eastern}, \code{Asia/Calcutta},
-#' \code{America/Montreal}) under the country of the zone it links to.
-#' Every geographic zone \code{OlsonNames()} lists resolves; the
-#' \code{Etc/}, \code{UTC} and fixed-offset zones name no country and fall
-#' through to the locale.
+#' its rules under \code{Europe/Berlin}), plus the aliases and old names of
+#' the \code{backward} file under their own country: the country of the zone
+#' the alias stood for before the database merged it (\code{Iceland} is
+#' \code{Atlantic/Reykjavik}, Iceland, not Abidjan's Ivory Coast), the
+#' link target's country when that target serves a single country
+#' (\code{Asia/Calcutta}, \code{US/Eastern}), and a reviewed list for the
+#' rest (\code{Atlantic/Jan_Mayen}, \code{America/Coral_Harbour},
+#' \code{Canada/Eastern}). Every geographic zone \code{OlsonNames()} lists
+#' resolves; the \code{Etc/}, \code{UTC}, fixed-offset and generic zones
+#' (\code{CET}, \code{EST}, \code{WET}) name no country and fall through
+#' to the locale.
 #'
 #' @param env_location,codecarbon_location,tz,locale The inputs, exposed so a
 #'   caller or a test can supply them; the defaults read the running session.
@@ -188,6 +194,10 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
   }
   loc <- known(env_location)
   if (!is.na(loc)) return(list(location = loc, method = "RMBL_LOCATION environment variable"))
+  if (length(env_location) == 1L && !is.na(env_location) && nzchar(env_location)) {
+    warning(sprintf(paste("RMBL_LOCATION='%s' is not a location carbon_intensity_table() knows",
+                          "(code, alpha-3 or name); it is ignored"), env_location), call. = FALSE)
+  }
   loc <- known(codecarbon_location)
   if (!is.na(loc)) return(list(location = loc, method = "CODECARBON_COUNTRY_ISO_CODE environment variable"))
   if (length(tz) == 1L && !is.na(tz) && nzchar(tz)) {
@@ -436,6 +446,7 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
   }
   cpu_power_w <- num_arg(cpu_power_w, "cpu_power_w", positive = TRUE)
   cores <- num_arg(cores, "cores", positive = TRUE)
+  if (!is.null(cores) && cores != round(cores)) stop("`cores` must be a whole number", call. = FALSE)
   memory_gb <- num_arg(memory_gb, "memory_gb")
   memory_power_w_per_gb <- num_arg(memory_power_w_per_gb, "memory_power_w_per_gb")
   if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {

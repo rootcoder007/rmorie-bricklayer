@@ -5,7 +5,8 @@ every operation touching a secret under **valgrind memcheck** with the secret
 marked undefined (the ctgrind method, Langley 2010). Memcheck then reports
 every conditional jump and every memory address that depends on the secret:
 exactly the set of secret-dependent branches and table lookups a timing
-attacker can observe. A clean run is a proof for this binary, for every input
+attacker can observe. A clean run is evidence for this binary on the inputs the harness
+runs (every branch and address that depended on the secret would show), not a proof for every input
 of that length. The same run scans the dead stack after each operation for
 copies of the secret (zeroisation).
 

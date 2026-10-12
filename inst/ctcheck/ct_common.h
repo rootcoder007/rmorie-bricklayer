@@ -41,4 +41,7 @@ inline void ct_fill(unsigned char *p, size_t n, unsigned seed) {
 /* Scan the dead stack below this frame for copies of a secret: a wipe that
  * the optimiser dropped, or a temporary that was never wiped, shows up here. */
 int ct_stack_remnants(const unsigned char *needle, size_t n, const char *what);
+/* The same scan for a masked value: any two windows whose sum mod `modulus` (or XOR when
+ * modulus is 0) is the target. */
+int ct_stack_share_pairs(const int16_t *target, size_t n, int modulus, const char *what);
 int ct_running_memcheck();

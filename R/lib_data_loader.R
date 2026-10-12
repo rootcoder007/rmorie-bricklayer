@@ -695,7 +695,10 @@ validate_schema <- function(df_raw, provenance) {
 #'
 #' @param df_raw The data frame to validate.
 #' @param provenance A provenance list as returned by
-#' [load_provenance()].
+#' [load_provenance()], or a rule list from
+#' [rule()] and the `rule_*()` constructors, run
+#' with [validate_rules()] under the same
+#' stop-on-fatal contract.
 #' @return Invisibly, `TRUE` if no issues were found and `FALSE`
 #' otherwise. Errors if any fatal issue is present.
 #' @examples
@@ -705,7 +708,10 @@ validate_schema <- function(df_raw, provenance) {
 #' try(apply_schema_validation(data.frame(x = 1), prov))
 #' @export
 apply_schema_validation <- function(df_raw, provenance) {
-  issues <- validate_schema(df_raw, provenance)
+  is_rule_list <- inherits(provenance, "bricklayer_rule") ||
+    (is.list(provenance) && length(provenance) &&
+       all(vapply(provenance, inherits, logical(1), "bricklayer_rule")))
+  issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
   for (nm in names(issues)) {
     iss <- issues[[nm]]
     if (iss$severity == "fatal") stop(iss$message, call. = FALSE)

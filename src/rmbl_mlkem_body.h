@@ -509,6 +509,12 @@ inline void masked_prf_cbd(int16_t p0[256], int16_t p1[256], const unsigned char
     in1[32] = 0;
     rmbl_masked::sponge_masked(b0, b1, static_cast<size_t>(64 * eta), in0, in1, 33, 136, 0x1f, rng);
     for (int g = 0; g < 8; ++g) rmbl_masked::sec_cbd32(p0 + 32 * g, p1 + 32 * g, b0, b1, 32 * g, eta, rng);
+    /* the PRF input shares carry the coins G(m' || h)[32..64] and the output shares the
+     * centred-binomial samples: both halves of each are as sensitive as the value */
+    rmbl_ct::wipe(in0, sizeof in0);
+    rmbl_ct::wipe(in1, sizeof in1);
+    rmbl_ct::wipe(b0, sizeof b0);
+    rmbl_ct::wipe(b1, sizeof b1);
 }
 
 void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsigned char *ct,
@@ -652,6 +658,9 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
         for (int j = 0; j < 32; ++j)
             v1[32 * g + j] = barrett_reduce(static_cast<int16_t>(v1[32 * g + j] + static_cast<int16_t>(rmbl_mlkem_core::mod_q(static_cast<uint32_t>(c1[j]) * ((kQ + 1) / 2)))));
         rmbl_masked::rmbl_mask_scrub();
+        rmbl_ct::wipe(c0, sizeof c0);
+        rmbl_ct::wipe(c1, sizeof c1);
+        rmbl_ct::wipe(&mb, sizeof mb);
     }
     canon(v0);
     rmbl_masked::rmbl_mask_scrub();
@@ -675,6 +684,7 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
                 uint32_t o[2];
                 rmbl_masked::sec_in_interval(o[0], o[1], u0.v[i] + 32 * g, u1.v[i] + 32 * g, l, w, rng);
                 all.add(o, rng);
+                rmbl_ct::wipe(o, sizeof o);
             }
         }
         std::vector<int16_t> lov(static_cast<size_t>(1) << kDv), wdv(static_cast<size_t>(1) << kDv);
@@ -690,6 +700,7 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
             uint32_t o[2];
             rmbl_masked::sec_in_interval(o[0], o[1], v0 + 32 * g, v1 + 32 * g, l, w, rng);
             all.add(o, rng);
+            rmbl_ct::wipe(o, sizeof o);
         }
     }
     /* fold the 32 lanes into bit 0 */
@@ -720,6 +731,9 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
         rmbl_masked::m_xor(rmbl_masked::pz(k, k + 1, &kbw[0][i], &kbw[1][i], t2, t2 + 1));
         const uint32_t out = k[0] ^ k[1];   /* the shared secret, the output */
         std::memcpy(shared + 4 * i, &out, 4);
+        rmbl_ct::wipe(d, sizeof d);
+        rmbl_ct::wipe(t2, sizeof t2);
+        rmbl_ct::wipe(k, sizeof k);
     }
     /* every share pair that touched m', K' or K-bar: the two halves of a value are
      * as sensitive as the value, and a memory-disclosure elsewhere must not find
@@ -742,6 +756,23 @@ void decaps_masked(unsigned char shared[32], const unsigned char *dk, const unsi
     rmbl_ct::wipe(kb1, sizeof kb1);
     rmbl_ct::wipe(m0, sizeof m0);
     rmbl_ct::wipe(m1, sizeof m1);
+    /* the re-encryption shares: r is the coins' noise, and summing the two halves of r-hat
+     * recovers m' from the public key and ciphertext alone (Compress_1(v - t^T r-hat)), so a
+     * memory disclosure that found both would decrypt the ciphertext */
+    rmbl_ct::wipe(&r0, sizeof r0);
+    rmbl_ct::wipe(&r1, sizeof r1);
+    rmbl_ct::wipe(&e10, sizeof e10);
+    rmbl_ct::wipe(&e11, sizeof e11);
+    rmbl_ct::wipe(e20, sizeof e20);
+    rmbl_ct::wipe(e21, sizeof e21);
+    rmbl_ct::wipe(&u0, sizeof u0);
+    rmbl_ct::wipe(&u1, sizeof u1);
+    rmbl_ct::wipe(v0, sizeof v0);
+    rmbl_ct::wipe(v1, sizeof v1);
+    /* the FO-check shares and their lane accumulator */
+    rmbl_ct::wipe(ok, sizeof ok);
+    rmbl_ct::wipe(msk, sizeof msk);
+    rmbl_ct::wipe(&all, sizeof all);
 }
 
 }  // namespace MLKEM_NS

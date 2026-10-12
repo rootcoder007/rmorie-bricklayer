@@ -36,16 +36,38 @@
 
 .bl_config_path <- function() file.path(dirname(.bl_credentials_path()), "llm.json")
 
+.bl_cfg_state <- new.env(parent = emptyenv())
+
+# TRUE when the settings file parses; a file that does not is reported once per change and
+# treated as empty for reading, and is never written over (its saved keys would be lost)
+.bl_config_parses <- function(p) {
+  !inherits(tryCatch(.rmbl_json_text(readLines(p, warn = FALSE), simplifyVector = TRUE),
+                     error = function(e) e), "error")
+}
+
 .bl_read_config <- function() {
   p <- .bl_config_path()
   if (!file.exists(p)) return(list())
   out <- tryCatch(.rmbl_json_text(readLines(p, warn = FALSE), simplifyVector = TRUE),
                   error = function(e) NULL)
+  if (is.null(out)) {
+    stamp <- as.character(file.mtime(p))
+    if (!identical(.bl_cfg_state$warned, stamp)) {
+      .bl_cfg_state$warned <- stamp
+      warning(sprintf("%s is not valid JSON and is ignored (the saved route and keys do not apply); fix or remove it",
+                      p), call. = FALSE)
+    }
+    return(list())
+  }
   if (is.list(out)) out else list()
 }
 
 .bl_write_config <- function(data) {
   p <- .bl_config_path()
+  if (file.exists(p) && !.bl_config_parses(p)) {
+    stop(sprintf(paste("%s is not valid JSON; fix or remove it before saving a setting",
+                       "(writing over it would drop the keys it holds)"), p), call. = FALSE)
+  }
   if (!length(data)) {
     if (file.exists(p)) unlink(p)
     return(invisible(p))
@@ -97,14 +119,23 @@
     route = if (!value %in% c("auto", "own", "ollama", "hosted")) {
       stop("route must be one of: auto, own, ollama, hosted", call. = FALSE)
     },
-    own.url = if (!tolower(value) %in% c("off", "none", "disabled") && !grepl("^https?://[^/[:space:]]+", value)) {
-      stop("own.url must be an http(s):// address, e.g. http://localhost:1234/v1", call. = FALSE)
+    own.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
+      if (!grepl("^https?://[^/[:space:]]+", value)) {
+        stop("own.url must be an http(s):// address, e.g. http://localhost:1234/v1", call. = FALSE)
+      }
+      # the same check the address gets when it is used: a metadata or link-local address is
+      # refused when it is saved, not only later
+      v <- sub("/v1$", "", sub("/+$", "", value))
+      if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "own.url")
     },
     hosted.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
       .rmbl_check_public_url(sub("/+$", "", value), "hosted.url")
     },
-    ollama.url = if (grepl("[[:space:]]", value)) {
-      stop("ollama.url must be an address such as http://localhost:11434", call. = FALSE)
+    ollama.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
+      has_scheme <- grepl("^[a-z][a-z0-9+.-]*://", value, ignore.case = TRUE)
+      if (grepl("[[:space:]]", value) || (has_scheme && !grepl("^https?://", value, ignore.case = TRUE))) {
+        stop("ollama.url must be an http(s):// address such as http://localhost:11434 (or host:port)", call. = FALSE)
+      }
     },
     NULL
   )
@@ -242,7 +273,7 @@ bricklayer_llm_config <- function(...) {
         sprintf("  %s config set ollama.url http://192.168.1.20:11434  Ollama on another machine\n", prog),
         sprintf("  %s config set ollama.model qwen3:8b\n", prog),
         sprintf("  %s config set own.url http://localhost:1234/v1     LM Studio, vLLM, llama.cpp ...\n", prog),
-        sprintf("  %s config set own.key KEY\n", prog),
+        sprintf("  %s config set own.key              (asks for the key: nothing in the shell history)\n", prog),
         sprintf("  %s config unset route                              back to the automatic order\n", prog)
       ))
     },
@@ -253,7 +284,7 @@ bricklayer_llm_config <- function(...) {
     set = {
       k <- need_key()
       v <- if (length(args) >= 2L) paste(args[-1L], collapse = " ") else ""
-      if (!nzchar(v) && spec$secret[match(k, spec$key)]) v <- .bl_readline(sprintf("%s: ", k))
+      if (!nzchar(v) && spec$secret[match(k, spec$key)]) v <- .bl_readline(sprintf("%s: ", k), secret = TRUE)
       if (!nzchar(v)) usage_error(sprintf("usage: %s config set %s VALUE", prog, k))
       withCallingHandlers(do.call(bricklayer_llm_config, stats::setNames(list(v), k)),
         warning = function(w) {
