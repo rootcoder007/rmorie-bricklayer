@@ -31,7 +31,7 @@ jobs:
   tvla:
     name: TVLA (emulated Cortex-M4, Hamming weight and distance)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 180  # the two composed kernels (695k samples each, both models) take about an hour by themselves
     steps:
       - uses: actions/checkout@v7
       - name: Toolchain
