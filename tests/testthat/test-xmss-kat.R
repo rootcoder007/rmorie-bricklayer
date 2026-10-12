@@ -127,7 +127,7 @@ test_that("the signature is byte-identical to the RFC 8391 reference", {
     "9d898033e37af48e6a116f8b15651cc26773467007ad19375d38c23c690c3483"
   )
 
-  xmss_forget_used_indices()  # the reference vector is index 0 of this published key
+  xmss_forget_used_indices(key)  # the reference vector is index 0 of this published key
   sig <- capsule_sign(as.raw(c(1, 2, 3)), key)
 
   # R is the PRF of SK_PRF over the 32-byte index
@@ -165,7 +165,7 @@ test_that("the conformant signature still verifies, and still refuses", {
     sk_prf = hx(32, 63)
   )
   msg <- charToRaw("a manifest")
-  xmss_forget_used_indices()  # fixed reference seeds: other tests may have signed this key
+  xmss_forget_used_indices(key)  # fixed reference seeds: other tests may have signed this key
   sig <- capsule_sign(msg, key)
   pub <- signing_public_key(key)
   expect_true(capsule_verify(msg, sig, pub))

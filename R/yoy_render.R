@@ -290,11 +290,16 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   # line; the old flat allowance (height - 2.4) overflowed on tall pages (24 inch: 98 rows
   # planned, 88 fit)
   # notes that would take more than half the last page go on pages of their own after the table
-  notes_in <- 0.018 * height * (length(notes) + 1L)
-  notes_own_pages <- length(notes) && notes_in > 0.4 * height
-  per_page <- .yoy_rows_per_page(height, if (notes_own_pages) 0L else length(notes))
+  line_in <- .yoy_note_line(height)
+  notes_in <- line_in * (length(notes) + 1L)
+  # the rows a page holds never shrink for the notes: they share the last page only when they fit
+  # under its rows, and otherwise take pages of their own after the table
+  per_page <- .yoy_rows_per_page(height, 0L)
   pages <- split(seq_len(nrow(body)),
                  ceiling(seq_len(nrow(body)) / per_page))
+  n_last <- if (length(pages)) length(pages[[length(pages)]]) else 0L
+  room_in <- (per_page - n_last) * 0.22
+  notes_own_pages <- length(notes) > 0L && notes_in > room_in
   # The PDF device's default Type 1 fonts have no em dash or arrows, and
   # substitute them with a warning per cell. The table says the same
   # thing in the encoding the font can actually draw.
@@ -306,7 +311,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
                  title = title, onefile = TRUE)
   on.exit(grDevices::dev.off(), add = TRUE)
   note_pages <- if (notes_own_pages) {
-    per_note_page <- max(1L, as.integer(floor(0.76 / 0.018)))
+    per_note_page <- max(1L, as.integer(floor(0.76 * height / line_in)))
     split(notes, ceiling(seq_along(notes) / per_note_page))
   } else {
     list()
@@ -346,9 +351,13 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
 # page and the page label the bottom 6, every row 0.22 inch, and the notes (last page)
 # 0.018 of the height per line. .yoy_pdf_page() draws with the same figures.
 .yoy_rows_per_page <- function(height, n_notes = 0L) {
-  notes_in <- if (n_notes > 0L) 0.018 * height * (n_notes + 1L) else 0
+  notes_in <- if (n_notes > 0L) .yoy_note_line(height) * (n_notes + 1L) else 0
   max(5L, as.integer(floor((0.82 * height - 0.22 * 1.1 - notes_in) / 0.22)))
 }
+
+# The height of one note line: 0.018 of the page, but never under a tenth of an inch (about
+# seven points), so a short page does not print its notes at a size nobody can read.
+.yoy_note_line <- function(height) max(0.018 * height, 0.1)
 
 .yoy_pdf_page <- function(hdr, body, cols, title, subtitle, pal,
                           pagelab, notes, height = 8.5, notes_only = FALSE) {
@@ -399,8 +408,9 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   if (length(notes)) {
     # one line per 0.018 of the page height, the allowance the pagination made: the text size
     # follows the page, so 30 notes on a 5-inch page fit instead of running off the bottom
-    cex_n <- min(0.62, 0.018 * height / graphics::par("csi") * 0.95)
-    top_n <- if (notes_only) 0.88 else 0.04 + 0.018 * length(notes)
+    line_in <- .yoy_note_line(height)
+    cex_n <- min(0.62, line_in / graphics::par("csi") * 0.95)
+    top_n <- if (notes_only) 0.88 else 0.04 + line_in * length(notes) / height
     graphics::text(0, top_n, paste(notes, collapse = "\n"), adj = c(0, 1),
                    cex = cex_n, col = pal$flat)
   }

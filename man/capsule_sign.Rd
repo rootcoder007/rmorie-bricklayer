@@ -120,6 +120,8 @@ README's security section lists what each check does and does not cover.
 }
 
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 # Symmetric: one shared secret.
 sig <- capsule_sign("sha256:abc123", key = "shared-secret",
                     scheme = "hmac")
@@ -139,6 +141,7 @@ capsule_verify("manifest-2", s2, signing_public_key(key))
 
 # A signature does not transfer to another message.
 capsule_verify("manifest-1", s2, signing_public_key(key))
+options(op)
 }
 \seealso{
 \code{\link[=capsule_verify]{capsule_verify()}},

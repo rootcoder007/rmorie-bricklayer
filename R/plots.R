@@ -219,6 +219,15 @@ bricklayer_plot_options <- function(...) {
 
 # a left margin (in lines) wide enough for the tick labels of `y`, or for `labels`,
 # plus the axis title
+# A bar label longer than 28 characters is cut with an ellipsis: the margin it would ask for
+# does not fit a figure ("figure margins too large"), and a label that long is not read anyway.
+.bl_short_label <- function(x, max_chars = 28L) {
+  x <- as.character(x)
+  long <- !is.na(x) & nchar(x) > max_chars
+  x[long] <- paste0(substr(x[long], 1L, max_chars - 3L), "...")
+  x
+}
+
 .bl_left_margin <- function(y = NULL, labels = NULL) {
   if (!is.null(labels)) {
     txt <- as.character(labels)
@@ -594,6 +603,7 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 .bl_hbars <- function(values, labels, xlab, main, cols, ...) {
   labels <- as.character(labels)
   labels[is.na(labels)] <- "(missing)"   # a frequency table counts NA as a level of its own
+  labels <- .bl_short_label(labels)
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
                       mar = c(4.2, max(4.5, 0.55 * max(nchar(labels), 4) + 1), 3, 1))
   on.exit(graphics::par(op), add = TRUE)
@@ -665,6 +675,7 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(is.na(r), pal[2L], ifelse(r > 0, pal[3L], pal[1L]))
   if (!is.null(col)) cols <- rep_len(col, length(r))
+  label <- .bl_short_label(label)
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
                       mar = c(4.2, max(4.5, 0.55 * max(nchar(label), 4) + 1), 3, 1))
   on.exit(graphics::par(op), add = TRUE)

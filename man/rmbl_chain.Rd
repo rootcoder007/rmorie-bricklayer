@@ -73,6 +73,8 @@ consistent, because recomputing every link is cheap.
 }
 
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 ch <- chain_new()
 ch <- chain_append(ch, "manifest for run 1", label = "run-1")
 ch <- chain_append(ch, "manifest for run 2", label = "run-2")
@@ -106,6 +108,7 @@ capsule_verify(chain_seal(truncated), sig, signing_public_key(key))
 
 # A chain whose links disagree has no seal to present at all.
 chain_seal(dropped)
+options(op)
 }
 \seealso{
 \code{\link[=capsule_sign]{capsule_sign()}} to sign the head,

@@ -641,11 +641,14 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
         sprintf("exposure_mean=%s", format(exposure_mean))),
     row("prevalence in [0,1]", fin(exposure_prevalence) && exposure_prevalence >= 0 && exposure_prevalence <= 1,
         sprintf("exposure_prevalence=%s", format(exposure_prevalence))),
-    row("baseline_rate finite, between 0.01 and 100,000 per 100k",
-        fin(baseline_rate) && baseline_rate >= 0.01 && baseline_rate <= 1e5,
-        if (fin(baseline_rate) && baseline_rate < 0.01 && baseline_rate > 0) {
-          sprintf("baseline_rate=%s per 100k looks like a rate per person-year (0.008 is 800 per 100k)",
+    row("baseline_rate finite: zero, or between 1 and 100,000 per 100k",
+        fin(baseline_rate) && (baseline_rate == 0 || (baseline_rate >= 1 && baseline_rate <= 1e5)),
+        if (fin(baseline_rate) && baseline_rate < 1 && baseline_rate > 0) {
+          sprintf(paste("baseline_rate=%s per 100k is below one case per 100,000: a rate per person-year",
+                        "(0.012 is 1,200 per 100k)? pass baseline_rate_per = 1 if so"),
                   format(baseline_rate))
+        } else if (fin(baseline_rate) && baseline_rate == 0) {
+          "baseline_rate=0: a measured zero rate, so no cases"
         } else {
           sprintf("baseline_rate=%s per 100k per year", format(baseline_rate))
         }),
@@ -686,8 +689,12 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #' @param exposure_mean,exposure_prevalence Scalar inputs used when neither
 #'   \code{demo} nor \code{exposure_csv} is given: the mean exposure among
 #'   the exposed and the share of the population exposed.
+#'   A wrapper must never default one of them to zero: a prevalence of zero silently zeroes
+#'   the burden, which is why the two are required together.
 #' @param reference Counterfactual reference concentration; \code{NULL} takes
 #'   the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).
+#' @param baseline_rate_per The denominator \code{baseline_rate} is quoted per: 100,000
+#'   (the default), or 1 for a rate per person-year such as a crude death rate of 0.012.
 #' @param baseline_rate Baseline outcome rate per 100,000 per year (unlike
 #'   \code{\link{pollution_burden}}, which takes a rate per person-year).
 #' @param population Population at risk (persons).
@@ -713,7 +720,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region = NULL,
                              years = NULL, demo = FALSE, exposure_csv = NULL,
                              exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
-                             baseline_rate = 500, population = 1e6) {
+                             baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6) {
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
   equity_df <- NULL
@@ -728,8 +735,21 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # the scalar inputs go together: a mean without a prevalence (or the reverse) is not a run
   # with the other at zero, it is half of the data
   no_scalar_data <- is.null(exposure_mean) && is.null(exposure_prevalence)
+  # one source of exposure: a CSV or the demo with scalars beside it is two answers to one question
+  if ((isTRUE(demo) || !is.null(exposure_csv)) && !no_scalar_data) {
+    return(fail(paste("exposure_mean / exposure_prevalence cannot be combined with exposure_csv or demo:",
+                      "pass one source of exposure")))
+  }
   if (xor(is.null(exposure_mean), is.null(exposure_prevalence))) {
     return(fail("exposure_mean and exposure_prevalence go together: pass both (a zero is a measurement), or neither"))
+  }
+  # the two population inputs have defaults, not an "absent" value: NULL is a wrong call
+  if (is.null(population)) return(fail("population must be a single number (persons at risk), not NULL"))
+  if (is.null(baseline_rate)) return(fail("baseline_rate must be a single number, not NULL"))
+  if (!is.numeric(baseline_rate_per) || length(baseline_rate_per) != 1L || !is.finite(baseline_rate_per) ||
+        baseline_rate_per <= 0) {
+    return(fail(paste("baseline_rate_per must be a single positive number",
+                      "(100000 for a rate per 100,000, 1 per person-year)")))
   }
   for (nm in c("reference", "exposure_mean", "exposure_prevalence", "baseline_rate", "population")) {
     v <- get(nm, inherits = FALSE)
@@ -737,6 +757,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (length(v) != 1L) return(fail(sprintf("%s must be a single number, not %d values", nm, length(v))))
     # a flag, text, a date or a factor is not a number; a missing value (NA) is logged as a
     # failed assumption below
+    if (is.list(v) || is.complex(v)) return(fail(sprintf("%s must be a single number, not a %s", nm, class(v)[1L])))
     if ((is.logical(v) && !is.na(v)) || is.factor(v) || inherits(v, c("Date", "POSIXt", "difftime")) ||
           (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
       return(fail(sprintf("%s must be a single number", nm)))
@@ -754,6 +775,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     list(mean = if (length(above)) mean(above) else if (length(x)) mean(x) else NA_real_,
          prevalence = if (length(x)) length(above) / length(x) else NA_real_)
   }
+  dropped_rows <- 0L
   if (isTRUE(demo)) {
     df <- .pollution_demo_data(pollutant)
     es <- exposed_summary(df$exposure)
@@ -769,7 +791,8 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (dir.exists(exposure_csv)) return(fail(sprintf("exposure CSV is a directory, not a file: %s", exposure_csv)))
     empty <- sprintf("%s is empty (expected a column exposure in ug/m3, or a NAPS pull's value + unit)", exposure_csv)
     if (isTRUE(file.size(exposure_csv) == 0)) return(fail(empty))
-    df <- utils::read.csv(exposure_csv, stringsAsFactors = FALSE, fileEncoding = "UTF-8-BOM")
+    df <- tryCatch(.pollution_read_csv(exposure_csv), error = function(e) e)
+    if (inherits(df, "error")) return(fail(sprintf("%s: %s", exposure_csv, conditionMessage(df))))
     if (!nrow(df)) return(fail(empty))
     if (!"exposure" %in% names(df) && "value" %in% names(df)) {
       # a NAPS pull: hourly `value` in `unit`, converted row by row; NO2 is reported in ppb
@@ -794,7 +817,13 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (!"exposure" %in% names(df)) {
       return(fail("CSV missing 'exposure' column (ug/m3); a NAPS pull's 'value' column also works."))
     }
+    raw_exposure <- df$exposure
     df$exposure <- suppressWarnings(as.numeric(df$exposure))
+    # rows whose exposure is not a number are dropped, and the report says how many
+    dropped_rows <- sum(is.na(df$exposure) & !is.na(raw_exposure) & nzchar(trimws(as.character(raw_exposure))))
+    if (dropped_rows > 0L) {
+      message(sprintf("note: %d exposure row(s) are not numbers and were dropped", dropped_rows))
+    }
     if (any(df$exposure < 0, na.rm = TRUE)) {
       n_neg <- sum(df$exposure < 0, na.rm = TRUE)
       return(fail(sprintf("%d exposure value(s) are negative: a concentration cannot be", n_neg)))
@@ -820,7 +849,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                         "or demo = TRUE")))
     }
   }
-  baseline_rate <- as.numeric(baseline_rate)
+  baseline_rate <- as.numeric(baseline_rate) * 1e5 / baseline_rate_per   # per 100,000 from here on
   population <- as.numeric(population)
   assumptions <- .pollution_assumptions(pollutant, exposure_mean, exposure_prevalence,
                                         baseline_rate, population, reference)
@@ -829,7 +858,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     region = region, years = years, data_source = data_source,
     inputs = list(exposure_mean = exposure_mean, exposure_prevalence = exposure_prevalence,
                   baseline_rate_per_100k = baseline_rate, population = population,
-                  reference_conc = reference),
+                  reference_conc = reference, dropped_rows = dropped_rows),
     assumptions = assumptions)
   if (!all(vapply(assumptions, function(a) a$ok, logical(1)))) {
     report$status <- "assumption_failure"
@@ -864,8 +893,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                                pollutant = if (pollutant == "pm25") "PM2.5" else "NO2",
                                outcome = outcome, reference_conc = reference)
     equity <- if (!is.null(equity_df) && "income" %in% names(equity_df)) {
-      if (nrow(equity_df) < 2L || !any(equity_df$exposure > 0, na.rm = TRUE)) {
-        NULL  # one row, or no exposure anywhere: there is no gradient to measure
+      complete <- sum(is.finite(equity_df$exposure) & is.finite(suppressWarnings(as.numeric(equity_df$income))))
+      if (complete < 2L || !any(equity_df$exposure > 0, na.rm = TRUE)) {
+        NULL  # one usable row, or no exposure anywhere: there is no gradient to measure
       } else {
         exposure_concentration_index(equity_df, "exposure", "income")
       }
@@ -928,4 +958,28 @@ pollution_report_text <- function(report) {
                sprintf("  concentration index: %.4f", p$equity$concentration_index))
   }
   paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: ok\n")
+}
+
+# The exposure CSV as text the parser can read whole: a UTF-16 file is decoded, a UTF-8 BOM
+# is dropped, a file that is not UTF-8 is read as Latin-1 (and said), NUL bytes are refused.
+# Nothing here can stop part-way through a file and hand back the rows before the stop.
+.pollution_read_csv <- function(path) {
+  raw <- readBin(path, "raw", file.size(path))
+  if (!length(raw)) return(data.frame())
+  if (length(raw) >= 2L && (identical(raw[1:2], as.raw(c(0xff, 0xfe))) || identical(raw[1:2], as.raw(c(0xfe, 0xff))))) {
+    from <- if (raw[[1L]] == as.raw(0xff)) "UTF-16LE" else "UTF-16BE"
+    txt <- iconv(list(raw[-(1:2)]), from = from, to = "UTF-8")[[1L]]
+    if (is.null(txt) || is.na(txt)) stop(sprintf("cannot be decoded as %s", from), call. = FALSE)
+  } else {
+    if (length(raw) >= 3L && identical(raw[1:3], as.raw(c(0xef, 0xbb, 0xbf)))) raw <- raw[-(1:3)]
+    if (any(raw == as.raw(0L))) stop("contains NUL bytes: not a text CSV", call. = FALSE)
+    txt <- rawToChar(raw)
+    if (!validUTF8(txt)) {
+      txt <- iconv(txt, from = "latin1", to = "UTF-8")
+      message(sprintf("note: %s is not UTF-8; read as Latin-1 (ISO-8859-1)", basename(path)))
+    }
+  }
+  Encoding(txt) <- "UTF-8"
+  if (!nzchar(trimws(txt))) return(data.frame())
+  utils::read.csv(text = txt, stringsAsFactors = FALSE, encoding = "UTF-8")
 }

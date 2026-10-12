@@ -159,6 +159,8 @@ format.bricklayer_drift <- function(x, ...) {
 #' @return `format()` methods return a character vector;
 #' `print()` methods return `x` invisibly.
 #' @examples
+#' op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+#' # one-time index record out of your configuration directory; leave the default in use
 #' set.seed(7)
 #' ref <- data.frame(v = stats::rnorm(200),
 #'                   g = sample(c("a", "b"), 200, TRUE))
@@ -178,6 +180,7 @@ format.bricklayer_drift <- function(x, ...) {
 #' key <- pqc_keygen(height = 2)
 #' key
 #' capsule_sign("a-manifest", key)
+#' options(op)
 #' @name rmbl_print_methods
 #' @export
 print.bricklayer_drift <- function(x, ...) {
@@ -298,6 +301,9 @@ print.bricklayer_public_key <- function(x, ...) {
 #' @export
 format.bricklayer_signature <- function(x, ...) {
   pairs <- list(scheme = x$scheme)
+  if (!is.null(x$key_state)) {
+    pairs$WARNING <- "carries the signer's private key (key_state, 0.5.9 to 7703a04): the key is compromised"
+  }
   if (identical(x$scheme, "hmac")) {
     pairs$tag <- x$signature
   } else if (is.null(x$auth)) {

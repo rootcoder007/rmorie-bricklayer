@@ -61,6 +61,119 @@
 
 .bl_write_credentials <- function(data) .bl_write_private_json(.bl_credentials_path(), data)
 
+# The file as text, bytes kept (the file is shared with morie and rmorie, whose numbers,
+# arrays and non-ASCII text must come back out exactly as they went in).
+.bl_read_text <- function(p) {
+  txt <- readChar(p, file.size(p), useBytes = TRUE)
+  Encoding(txt) <- "UTF-8"
+  txt
+}
+
+.bl_write_private_text <- function(p, txt) {
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  tmp <- tempfile(pattern = ".cred-", tmpdir = dirname(p), fileext = ".tmp")
+  file.create(tmp)
+  Sys.chmod(tmp, mode = "0600")
+  writeLines(txt, tmp, useBytes = TRUE, sep = "")
+  if (!isTRUE(file.rename(tmp, p))) {
+    unlink(tmp)
+    stop(sprintf("could not write %s", p), call. = FALSE)
+  }
+  invisible(p)
+}
+
+# The top-level members of a JSON object as character spans: the key's opening quote, where
+# the value starts and where it ends. With them the file is edited as text, so every byte
+# that is not one of this package's own members stays exactly as it was. NULL when the text
+# is not a JSON object.
+.bl_json_top_members <- function(txt) {
+  ch <- strsplit(txt, "", fixed = TRUE)[[1L]]
+  n <- length(ch)
+  ws <- c(" ", "\t", "\r", "\n")
+  skip_ws <- function(i) {
+    while (i <= n && ch[[i]] %in% ws) i <- i + 1L
+    i
+  }
+  scan_string <- function(i) {   # ch[i] is the opening quote; the index of the closing one
+    i <- i + 1L
+    while (i <= n) {
+      if (ch[[i]] == "\\") i <- i + 2L else if (ch[[i]] == "\"") return(i) else i <- i + 1L
+    }
+    NA_integer_
+  }
+  scan_value <- function(i) {    # the index of the value's last character
+    c0 <- ch[[i]]
+    if (c0 == "\"") return(scan_string(i))
+    if (c0 %in% c("{", "[")) {
+      depth <- 0L
+      while (i <= n) {
+        if (ch[[i]] == "\"") {
+          i <- scan_string(i)
+          if (is.na(i)) return(NA_integer_)
+        } else if (ch[[i]] %in% c("{", "[")) {
+          depth <- depth + 1L
+        } else if (ch[[i]] %in% c("}", "]")) {
+          depth <- depth - 1L
+          if (depth == 0L) return(i)
+        }
+        i <- i + 1L
+      }
+      return(NA_integer_)
+    }
+    while (i <= n && !ch[[i]] %in% c(",", "}", ws)) i <- i + 1L
+    i - 1L
+  }
+  i <- skip_ws(1L)
+  if (i > n || ch[[i]] != "{") return(NULL)
+  out <- list()
+  i <- skip_ws(i + 1L)
+  while (i <= n && ch[[i]] != "}") {
+    if (ch[[i]] != "\"") return(NULL)
+    ks <- i
+    ke <- scan_string(i)
+    if (is.na(ke)) return(NULL)
+    key <- if (ke > ks + 1L) paste(ch[(ks + 1L):(ke - 1L)], collapse = "") else ""
+    i <- skip_ws(ke + 1L)
+    if (i > n || ch[[i]] != ":") return(NULL)
+    i <- skip_ws(i + 1L)
+    if (i > n) return(NULL)
+    vs <- i
+    ve <- scan_value(i)
+    if (is.na(ve) || ve < vs) return(NULL)
+    out[[length(out) + 1L]] <- list(key = key, start = ks, vstart = vs, end = ve)
+    i <- skip_ws(ve + 1L)
+    if (i <= n && ch[[i]] == ",") i <- skip_ws(i + 1L)
+  }
+  if (i > n) return(NULL)
+  out
+}
+
+# Set (value a string) or remove (value NULL) one top-level member by editing the text.
+.bl_credentials_text_set <- function(txt, key, value) {
+  mem <- .bl_json_top_members(txt)
+  if (is.null(mem)) stop("the credentials file is not a JSON object", call. = FALSE)
+  nch <- nchar(txt)
+  hit <- Filter(function(m) identical(m$key, key), mem)
+  lit <- if (is.null(value)) NULL else as.character(bricklayer_json_to_json(value, auto_unbox = TRUE))
+  if (length(hit)) {
+    m <- hit[[1L]]
+    if (is.null(value)) {
+      before <- substr(txt, 1L, m$start - 1L)
+      after <- substr(txt, m$end + 1L, nch)
+      if (grepl("^[ \t\r\n]*,", after)) {
+        after <- sub("^[ \t\r\n]*,[ \t]*", "", after)      # the comma that led to the next member
+      } else {
+        before <- sub(",[ \t\r\n]*$", "\n", before)         # the comma that led from the previous one
+      }
+      return(paste0(before, after))
+    }
+    return(paste0(substr(txt, 1L, m$vstart - 1L), lit, substr(txt, m$end + 1L, nch)))
+  }
+  if (is.null(value)) return(txt)
+  open <- regexpr("{", txt, fixed = TRUE)
+  paste0(substr(txt, 1L, open), "\n  \"", key, "\": ", lit, if (length(mem)) "," else "", substr(txt, open + 1L, nch))
+}
+
 .bl_write_private_json <- function(p, data) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   tmp <- paste0(p, ".tmp")
@@ -78,15 +191,16 @@
 
 .bl_store_key <- function(key, user = NULL) {
   p <- .bl_credentials_path()
-  if (file.exists(p) && is.null(.bl_credentials_object(p))) {
+  txt <- if (file.exists(p)) .bl_read_text(p) else "{}"
+  if (is.null(.bl_json_top_members(txt))) {
     stop(sprintf(paste("%s is not a JSON object; fix or remove it before a key is saved",
                        "(writing over it would drop the entries it holds)"), p), call. = FALSE)
   }
-  data <- .bl_credentials_raw()
-  data$hosted_key <- key
-  if (!is.null(user)) data$hosted_user <- user
-  data$hosted_base_url <- .bl_hosted_base()
-  .bl_write_credentials(data)
+  # the file is edited as text: this package's three members are set, every other byte stays
+  txt <- .bl_credentials_text_set(txt, "hosted_key", key)
+  if (!is.null(user)) txt <- .bl_credentials_text_set(txt, "hosted_user", user)
+  txt <- .bl_credentials_text_set(txt, "hosted_base_url", .bl_hosted_base())
+  .bl_write_private_text(p, txt)
 }
 
 .bl_hosted_key <- function() {
@@ -201,13 +315,25 @@
 }
 
 .bl_ollama_base <- function() {
-  v <- .bl_env1("OLLAMA_HOST") %||% .bl_env1("OLLAMA_BASE_URL") %||% "http://localhost:11434"
+  # the environment wins over the saved setting, whichever of the two names it uses
+  env <- function(n) {
+    v <- trimws(Sys.getenv(n, unset = ""))
+    if (nzchar(v)) v else NULL
+  }
+  v <- env("OLLAMA_HOST") %||% env("OLLAMA_BASE_URL") %||% .bl_config_value("OLLAMA_HOST") %||%
+    .bl_config_value("OLLAMA_BASE_URL") %||% "http://localhost:11434"
   if (tolower(v) %in% c("off", "none", "disabled")) return(NULL)
   if (!grepl("^https?://", v)) v <- paste0("http://", v)  # OLLAMA_HOST is often host:port
   sub("/+$", "", v)
 }
 
 # Ollama was pointed at on purpose (environment or saved setting), not the default address.
+# Own-endpoint settings without an address: a model or key alone cannot be a route, and saying
+# so is what keeps "a prompt never leaves the machine silently" true for this case too.
+.bl_own_configured <- function() {
+  !is.null(.bl_env1("MORIE_LLM_MODEL")) || !is.null(.bl_env1("MORIE_LLM_API_KEY"))
+}
+
 .bl_ollama_configured <- function() {
   !is.null(.bl_env1("OLLAMA_HOST")) || !is.null(.bl_env1("OLLAMA_BASE_URL")) ||
     !is.null(.bl_env1("OLLAMA_MODEL")) || !is.null(.bl_env1("OLLAMA_API_KEY"))
@@ -262,6 +388,11 @@
         if (!is.null(base)) {
           list(name = "own endpoint", base = base, key = .bl_key_for("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"),
                model = .bl_env1("MORIE_LLM_MODEL"), local = .bl_loopback_url(base))
+        } else {
+          if (.bl_own_configured()) {
+            skipped <- c(skipped, "own endpoint: a model or key is set but no address (MORIE_LLM_BASE_URL or own.url)")
+          }
+          NULL
         }
       },
       ollama = {
@@ -738,16 +869,19 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 #' }
 #' @export
 bricklayer_llm_logout <- function() {
-  data <- .bl_credentials_raw()
-  had <- !is.null(data$hosted_key)
-  data$hosted_key <- NULL
-  data$hosted_user <- NULL
-  data$hosted_base_url <- NULL
   p <- .bl_credentials_path()
-  if (length(data)) {
-    .bl_write_credentials(data)
-  } else if (file.exists(p)) {
-    unlink(p)
+  had <- FALSE
+  if (file.exists(p)) {
+    txt <- .bl_read_text(p)
+    mem <- .bl_json_top_members(txt)
+    if (is.null(mem)) {
+      stop(sprintf("%s is not a JSON object; fix or remove it (it is shared with morie and rmorie)", p),
+           call. = FALSE)
+    }
+    had <- any(vapply(mem, function(m) identical(m$key, "hosted_key"), logical(1)))
+    for (k in c("hosted_key", "hosted_user", "hosted_base_url")) txt <- .bl_credentials_text_set(txt, k, NULL)
+    left <- .bl_json_top_members(txt)
+    if (length(left)) .bl_write_private_text(p, txt) else unlink(p)
   }
   message(if (had) {
     "Logged out of the hosted MORIE LLM tier."
@@ -771,6 +905,16 @@ bricklayer_llm_logout <- function() {
 #' if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 #' @export
 bricklayer_llm_status <- function() {
+  # a settings file the package cannot read is reported as a row, so `doctor` still answers
+  cfg_err <- tryCatch({
+    .bl_read_config()
+    NULL
+  }, error = function(e) conditionMessage(e))
+  if (!is.null(cfg_err)) {
+    return(data.frame(route = "settings", status = "unreadable",
+                      detail = sprintf("%s; `%s config reset` moves the file aside", cfg_err, .bl_prog()),
+                      stringsAsFactors = FALSE))
+  }
   own <- .bl_own_base()
   own_row <- if (is.null(own)) {
     c("own endpoint", "not set",

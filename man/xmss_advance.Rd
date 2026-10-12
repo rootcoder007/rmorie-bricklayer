@@ -2,21 +2,42 @@
 % Please edit documentation in R/sign.R
 \name{xmss_advance}
 \alias{xmss_advance}
+\alias{xmss_register_key}
 \alias{xmss_forget_used_indices}
 \title{Advance an XMSS key past a signature it made}
 \usage{
-xmss_advance(key, signature)
+xmss_advance(key, signature, message = NULL)
 
-xmss_forget_used_indices()
+xmss_register_key(key_to_register)
+
+xmss_forget_used_indices(key_to_forget = NULL)
 }
 \arguments{
 \item{key}{The \code{bricklayer_signing_key} that made \code{signature}.}
 
 \item{signature}{The XMSS signature it made, from
-\code{\link[=capsule_sign]{capsule_sign()}} or inside an attestation.}
+\code{\link[=capsule_sign]{capsule_sign()}},
+or the attestation, bundle or recode manifest that carries it
+(their \code{$signature}).}
+
+\item{message}{The message the signature was made over; when given, the signature is
+verified against the key first, so an edited or foreign signature cannot advance it.}
+
+\item{key_to_register}{For
+\code{\link[=xmss_register_key]{xmss_register_key()}}: a signing key generated on another
+machine (or whose record was deleted) that has never signed; it is added to the record so
+that it may sign from \code{next_index}. A key the record shows has signed is refused.}
+
+\item{key_to_forget}{For
+\code{\link[=xmss_forget_used_indices]{xmss_forget_used_indices()}}:
+a signing or public key whose
+entry alone is reset to "nothing used" (it may sign from index 0 again); \code{NULL}
+removes the whole record (every key), after which only keys generated afterwards, or
+vouched for by \code{\link[=xmss_register_key]{xmss_register_key()}}, may sign.}
 }
 \value{
-The key with \code{next_index} advanced.
+The key with \code{next_index} advanced past the signature's index and past
+every index the record knows this key has used.
 }
 \description{
 An XMSS signature consumes one leaf, so the key that made it must not sign at that index
@@ -25,25 +46,48 @@ again. This returns the key with \code{next_index} set to one past the signature
 for the next signature. The signature object itself carries no key material.
 }
 \details{
-The package also records the highest index each key has signed with, and refuses that
-index again, within the session and across sessions: the record is the file
-\code{xmss_index.json} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
-which is where CRAN policy lets a package keep its own configuration. A key reloaded
-from disk with a stale \code{next_index} is therefore refused on this machine. Another
-path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
-environment variable \code{RMBL_XMSS_INDEX_FILE}; the option \code{FALSE} (or, except on
-Windows, where an empty environment variable is an unset one, the value \code{""}) turns
-the file off (the session record stays). The record does not travel with the key, so a key
-copied to another machine is not protected by it: save the advanced key after every
-signature.
+The package records the highest index each key has signed with and refuses that index
+again, within the session and across sessions on this machine: the record is the file
+\code{xmss_used_indices.txt} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
+which is where CRAN policy lets a package keep its own configuration; one line per key,
+\code{root:pub_seed<TAB>highest index} (\code{-1} for a key generated here that has not
+signed yet:
+\code{\link[=pqc_keygen]{pqc_keygen()}} registers every key at birth,
+so a key the record does not know
+that claims index 0 is refused until
+\code{\link[=xmss_register_key]{xmss_register_key()}} vouches for it, which is how a
+deleted record or a key from another machine fails closed).
+Every reservation runs under an exclusive lock
+(a lock directory next to the file), so two processes signing with copies of one key
+cannot both take the same index; a line the package cannot read makes it refuse to sign
+until the file is repaired or removed, rather than guess. A key reloaded from disk with
+a stale \code{next_index} is therefore refused here. Another path can be set with the
+option \code{rmoriebricklayer.xmss_index_file} or the environment variable
+\code{RMBL_XMSS_INDEX_FILE}. The option \code{FALSE} (or, except on Windows, where an
+empty environment variable is an unset one, the value \code{""}) turns the file off:
+then only the session remembers, every signature warns, and a stale copy of the key
+reloaded elsewhere signs a used index again. The record does not travel with the key and
+is lost if the file is deleted, so a key copied to another machine is protected only by
+the \code{next_index} you saved: save the advanced key after every signature. Examples
+and vignettes point the record at a temporary file so that checks and builds leave the
+configuration directory alone. The record keeps one line per key for good (an exhausted
+key's line is what stops a stale copy of it), and is read whole at every signature: under
+half a second per hundred thousand keys.
+
+\code{\link[=xmss_forget_used_indices]{xmss_forget_used_indices()}}
+resets one key's entry, or removes the whole record, and with it
+the protection against re-signing: use it for test keys only.
 }
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 key <- pqc_keygen(height = 2)
 s1 <- capsule_sign("manifest-1", key)
 key <- xmss_advance(key, s1)
 key$next_index
 s2 <- capsule_sign("manifest-2", key)
 capsule_verify("manifest-2", s2, signing_public_key(key))
+options(op)
 }
 \seealso{
 \code{\link[=capsule_sign]{capsule_sign()}},

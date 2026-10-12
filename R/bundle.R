@@ -136,6 +136,7 @@ capsule_bundle_read <- function(path) {
   }
   class(b$attestation) <- c("bricklayer_attestation", "list")
   class(b$attestation$signature) <- c("bricklayer_signature", "list")
+  if (!is.null(b$attestation$signature$key_state)) warning(.rmbl_key_state_warning(), call. = FALSE)
   class(b) <- c("bricklayer_bundle", "list")
   attr(b, "path") <- normalizePath(path, winslash = "/", mustWork = FALSE)
   b

@@ -8,6 +8,8 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+# the one-time index record of this vignette stays out of the reader's configuration directory
+options(rmoriebricklayer.xmss_index_file = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
@@ -132,7 +134,7 @@ capsule_verify("a large artifact", p, key, prehash = "sha3_512")
 ## XMSS: hash-based, stateful
 
 An XMSS key of height *h* signs 2^h messages. The package stores the next index in the key
-and returns the advanced key with every signature; reusing an index would break security,
+and `xmss_advance(key, signature)` gives the advanced key after every signature; reusing an index would break security,
 so always advance the key with `xmss_advance()` and save that:
 
 ```{r xmss}

@@ -16,6 +16,7 @@ verify_pollution(
   exposure_prevalence = NULL,
   reference = NULL,
   baseline_rate = 500,
+  baseline_rate_per = 1e+05,
   population = 1e+06
 )
 
@@ -44,13 +45,18 @@ is an error. With a CSV or the demo data the exposed are the rows above
 
 \item{exposure_mean, exposure_prevalence}{Scalar inputs used when neither
 \code{demo} nor \code{exposure_csv} is given: the mean exposure among
-the exposed and the share of the population exposed.}
+the exposed and the share of the population exposed.
+A wrapper must never default one of them to zero: a prevalence of zero silently zeroes
+the burden, which is why the two are required together.}
 
 \item{reference}{Counterfactual reference concentration; \code{NULL} takes
 the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 
 \item{baseline_rate}{Baseline outcome rate per 100,000 per year (unlike
 \code{\link{pollution_burden}}, which takes a rate per person-year).}
+
+\item{baseline_rate_per}{The denominator \code{baseline_rate} is quoted per: 100,000
+(the default), or 1 for a rate per person-year such as a crude death rate of 0.012.}
 
 \item{population}{Population at risk (persons).}
 

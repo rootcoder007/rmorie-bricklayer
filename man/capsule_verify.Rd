@@ -46,6 +46,8 @@ signature: a verifier must treat unparseable input as "not verified",
 never as an exception to be caught and ignored.
 }
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 key <- pqc_keygen(height = 2)
 sig <- capsule_sign("pinned-manifest", key)
 pub <- signing_public_key(key)
@@ -62,4 +64,5 @@ capsule_verify("pinned-manifest", sig,
 # A truncated signature is not verified, and does not error.
 trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 capsule_verify("pinned-manifest", trunc, pub)
+options(op)
 }

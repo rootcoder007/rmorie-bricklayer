@@ -20,6 +20,8 @@ this; never the object returned by
 \code{\link[=pqc_keygen]{pqc_keygen()}}.
 }
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 key <- pqc_keygen(height = 2)
 pub <- signing_public_key(key)
 
@@ -29,4 +31,5 @@ is.null(pub$sk_seed)
 # And verification works from the public half alone.
 sig <- capsule_sign("manifest-digest", key)
 capsule_verify("manifest-digest", sig, pub)
+options(op)
 }

@@ -62,7 +62,8 @@
   if (is.null(out)) {
     # a saved route or key that is silently dropped sends a prompt where the user said not to
     # send it; a settings file that cannot be read stops the call until it is fixed
-    stop(sprintf("%s is not a JSON object and the saved route and keys cannot be read; fix or remove it", p),
+    stop(sprintf(paste("%s is not a JSON object and the saved route and keys cannot be read; fix or remove it",
+                       "(`rmbl config reset` moves it aside)"), p),
          call. = FALSE)
   }
   # a setting of the wrong type (route: 5, [..], true, "") would be read as unset and the call
@@ -71,7 +72,8 @@
   for (k in intersect(names(out), spec$key)) {
     v <- out[[k]]
     if (!is.character(v) || length(v) != 1L || is.na(v) || !nzchar(trimws(v))) {
-      stop(sprintf("%s: `%s` must be a non-empty string, not %s; fix or remove it", p, k,
+      stop(sprintf(paste("%s: `%s` must be a non-empty string, not %s; fix or remove it",
+                         "(`rmbl config reset` moves it aside)"), p, k,
                    if (is.null(v)) "null" else paste(class(v)[1L], "of length", length(v))), call. = FALSE)
     }
   }
@@ -81,7 +83,8 @@
 .bl_write_config <- function(data) {
   p <- .bl_config_path()
   if (file.exists(p) && !.bl_config_parses(p)) {
-    stop(sprintf(paste("%s is not valid JSON; fix or remove it before saving a setting",
+    stop(sprintf(paste("%s is not valid JSON; fix or remove it (`rmbl config reset` moves it aside)",
+                       "before saving a setting",
                        "(writing over it would drop the keys it holds)"), p), call. = FALSE)
   }
   if (!length(data)) {
@@ -225,6 +228,8 @@ bricklayer_llm_config <- function(...) {
            call. = FALSE)
     }
     data <- .bl_read_config()
+    # an address before its key in one call, so the key is saved for the new server, not dropped
+    nm <- c(intersect(c("own.url", "ollama.url"), nm), setdiff(nm, c("own.url", "ollama.url")))
     for (k in nm) {
       v <- args[[k]]
       v <- if (is.null(v) || (length(v) == 1L && is.na(v))) "" else trimws(as.character(v))
@@ -320,6 +325,11 @@ bricklayer_llm_config <- function(...) {
       k <- need_key()
       out(paste0(.bl_config_effective(k), "\n"))
     },
+    reset = {
+      moved <- .bl_config_reset()
+      out(if (is.null(moved)) "no settings file to move aside\n" else
+            sprintf("moved the unreadable settings aside to %s; the defaults apply until you set something\n", moved))
+    },
     set = {
       k <- need_key()
       v <- if (length(args) >= 2L) paste(args[-1L], collapse = " ") else ""
@@ -409,4 +419,14 @@ bricklayer_llm_config <- function(...) {
                   sprintf("  (route = %s)", .bl_config_effective("route"))))
   }
   out(sprintf("  change it: %s config set route hosted|ollama|own|auto  (all settings: %s config)\n", prog, prog))
+}
+
+# The recovery path for a settings file the package refuses to read: it is moved aside, never
+# deleted, and the path of the copy is returned (NULL when there is no file).
+.bl_config_reset <- function() {
+  p <- .bl_config_path()
+  if (!file.exists(p)) return(NULL)
+  aside <- paste0(p, ".broken-", format(Sys.time(), "%Y%m%d-%H%M%S"))
+  if (!isTRUE(file.rename(p, aside))) stop(sprintf("could not move %s aside", p), call. = FALSE)
+  aside
 }

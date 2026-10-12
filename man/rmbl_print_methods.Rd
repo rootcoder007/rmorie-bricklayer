@@ -137,6 +137,8 @@ environment variable \code{RMBL_ASCII_ONLY} to force the ASCII form,
 which is what to do when capturing output into a fixed-width log.
 }
 \examples{
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 set.seed(7)
 ref <- data.frame(v = stats::rnorm(200),
                   g = sample(c("a", "b"), 200, TRUE))
@@ -156,4 +158,5 @@ benford_test(10^stats::runif(500, 0, 5))
 key <- pqc_keygen(height = 2)
 key
 capsule_sign("a-manifest", key)
+options(op)
 }

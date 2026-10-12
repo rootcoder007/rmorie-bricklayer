@@ -55,6 +55,12 @@
 .bl_data_get <- function(path, dest, timeout = 600) {
   key <- .bl_data_key()
   if (is.null(key)) {
+    env <- trimws(Sys.getenv("MORIE_DATA_URL", unset = ""))
+    if (nzchar(env) && !is.null(.bl_hosted_key())) {
+      stop(sprintf(paste("MORIE_DATA_URL=%s is not the curated-data address of the signed services document,",
+                         "so the stored key is not sent to it: unset MORIE_DATA_URL (the address comes from the",
+                         "document)"), env), call. = FALSE)
+    }
     stop("the curated tables need your MORIE key: run ",
          sprintf("bricklayer_llm_login() (or `%s login`) once; %s.", .bl_prog(), .bl_access_hint()),
          call. = FALSE)
@@ -174,7 +180,9 @@ bricklayer_data_tables <- function(refresh = FALSE) {
       for (f in c("sha256_gz", "sha256", "sha")) {
         v <- d[[f]]
         if (is.null(v)) next
-        v <- sub("^sha256:", "", as.character(v)[1L])
+        # one digest, not a list whose first element happens to be one
+        one <- length(v) == 1L && (is.character(v) || is.na(v))
+        v <- if (one) sub("^sha256:", "", as.character(v)) else NA_character_
         if (length(v) == 1L && !is.na(v) && grepl("^[0-9a-fA-F]{64}$", v)) return(tolower(v))
         # a digest field that is not a digest is not "no digest": the file cannot be trusted
         stop(sprintf("the manifest's %s for %s is not a SHA-256 hex digest (%s)", f, key, as.character(v)[1L]),
@@ -187,20 +195,28 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 
 # A cached or freshly downloaded file that does not match the manifest's SHA-256 is deleted and
 # refused: a tampered cache, a truncated download or a table rebuilt upstream all look the same.
-.bl_data_check_sha <- function(key, dest, retried = FALSE) {
-  want <- .bl_data_manifest_sha(key, refresh = retried)
+# The digest the manifest held when the check started stands unless a refreshed manifest is
+# actually fetched and lists a different one; a refresh that fails changes nothing, so a file
+# that does not match is never accepted because the manifest could not be re-read.
+.bl_data_check_sha <- function(key, dest) {
+  want <- tryCatch(.bl_data_manifest_sha(key), error = function(e) e)
+  if (inherits(want, "error")) {
+    unlink(dest)   # a digest that is not a digest: the unverified file does not stay in the cache
+    stop(want)
+  }
   if (is.null(want)) return(invisible(TRUE))
   have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
-    if (!retried) {
-      # a table rebuilt upstream has a new digest in a new manifest: fetch the manifest again
-      # before calling the file bad, so a stale cached manifest does not refuse every call
-      return(.bl_data_check_sha(key, dest, retried = TRUE))
+    # a table rebuilt upstream has a new digest in a new manifest: fetch the manifest again
+    # before calling the file bad, so a stale cached manifest does not refuse every call
+    fresh <- tryCatch(.bl_data_manifest_sha(key, refresh = TRUE), error = function(e) NULL)
+    if (is.character(fresh) && length(fresh) == 1L && !is.na(fresh)) want <- fresh
+    if (!identical(have, want)) {
+      unlink(dest)
+      stop(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
+                         "run again to download it, and if it still fails the file was tampered with in transit"),
+                   key, substr(have, 1L, 12L), substr(want, 1L, 12L)), call. = FALSE)
     }
-    unlink(dest)
-    stop(sprintf(paste("%s does not match the manifest's SHA-256 (%s... vs %s...): the cached file was deleted;",
-                       "run again to download it, and if it still fails the file was tampered with in transit"),
-                 key, substr(have, 1L, 12L), substr(want, 1L, 12L)), call. = FALSE)
   }
   invisible(TRUE)
 }
@@ -233,7 +249,8 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     # zero-width format characters (U+200B-U+200F, U+202A-U+202E, U+2066-U+2069), removed as
     # UTF-8 bytes so a C locale cannot let them through
     x <- enc2utf8(x)
-    gsub("(*UTF)[\\x{80}-\\x{9f}\\x{200b}-\\x{200f}\\x{202a}-\\x{202e}\\x{2066}-\\x{2069}]", "", x, perl = TRUE)
+    gsub("(*UTF)[\\x{80}-\\x{9f}\\x{061c}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}\\x{2066}-\\x{2069}]", "", x,
+         perl = TRUE)
   }
   tables$key <- printable(tables$key)
   name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))

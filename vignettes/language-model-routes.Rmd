@@ -8,6 +8,8 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+# the one-time index record of this vignette stays out of the reader's configuration directory
+options(rmoriebricklayer.xmss_index_file = tempfile())
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
