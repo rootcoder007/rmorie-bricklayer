@@ -340,6 +340,43 @@ static int32_t dsa_val_z(const std::vector<int16_t> &sec, int j) {
     const int32_t d = static_cast<int32_t>(sec[j]) * 160 - 266320;   /* in about +-2^19 */
     return d < 0 ? d + kDsaQ : d;
 }
+/* ---- composed kernels: the secret is a whole polynomial (ML-KEM) or 32 y fields and 32
+ * values of c s1 (ML-DSA); the control runs the same code with the second share zero ---- */
+static std::vector<double> k_kem_composed(const std::vector<int16_t> &s, std::mt19937_64 &g, bool masked) {
+    std::vector<int16_t> s0 = s, s1(256, 0);
+    if (masked) { s1 = poly(g); s0 = sub_mod(s, s1); }
+    /* v: a fixed public operand too, derived from u so every class sees the same one */
+    std::vector<int16_t> v(256);
+    for (int j = 0; j < 256; ++j) v[j] = static_cast<int16_t>((g_public[j] * 7 + 11) % kQ);
+    const uint64_t a0 = kInput, a1 = a0 + 512, pu = a1 + 512, pv = pu + 512, o = pv + 512;
+    return run_kernel(TVLA_MLKEM_DECAPS_COMPOSED, {uint32_t(a0), uint32_t(a1), uint32_t(pu), uint32_t(pv), uint32_t(kRand), uint32_t(o)},
+                      {{a0, bytes16(s0)}, {a1, bytes16(s1)}, {pu, bytes16(g_public)}, {pv, bytes16(v)}, {kRand, rnd_bytes(g, 65536)}});
+}
+static std::vector<double> k_kem_composed_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_kem_composed(s, g, false); }
+static std::vector<double> k_kem_composed_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_kem_composed(s, g, true); }
+static std::vector<double> k_dsa_composed(const std::vector<int16_t> &sec, std::mt19937_64 &g, bool masked) {
+    std::vector<uint32_t> y = dsa_fields(sec), m(32, 0);
+    std::vector<int32_t> c0(32), c1(32, 0);
+    for (int j = 0; j < 32; ++j) c0[j] = dsa_val_z(sec, j);   /* c s1 for this class */
+    if (masked) {
+        for (int j = 0; j < 32; ++j) {
+            m[j] = static_cast<uint32_t>(g()) & 0xFFFFFu;
+            y[j] ^= m[j];
+            c1[j] = static_cast<int32_t>(g() % static_cast<uint64_t>(kDsaQ));
+            c0[j] = ((c0[j] - c1[j]) % kDsaQ + kDsaQ) % kDsaQ;
+        }
+    }
+    auto bytes32 = [](const std::vector<int32_t> &v) {
+        std::vector<unsigned char> b(v.size() * 4);
+        std::memcpy(b.data(), v.data(), b.size());
+        return b;
+    };
+    const uint64_t p0 = kInput, p1 = p0 + 80, q0 = p1 + 80, q1 = q0 + 128, o = q1 + 128;
+    return run_kernel(TVLA_DSA_SIGN_COMPOSED, {uint32_t(p0), uint32_t(p1), uint32_t(q0), uint32_t(q1), uint32_t(kRand), uint32_t(o)},
+                      {{p0, pack20(y)}, {p1, pack20(m)}, {q0, bytes32(c0)}, {q1, bytes32(c1)}, {kRand, rnd_bytes(g, 65536)}});
+}
+static std::vector<double> k_dsa_composed_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_dsa_composed(s, g, false); }
+static std::vector<double> k_dsa_composed_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return k_dsa_composed(s, g, true); }
 static std::vector<double> k_dsa_low_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_LOWBITS, dsa_val_w, s, g, false); }
 static std::vector<double> k_dsa_low_masked(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_LOWBITS, dsa_val_w, s, g, true); }
 static std::vector<double> k_dsa_norm_plain(const std::vector<int16_t> &s, std::mt19937_64 &g) { return dsa_arith(TVLA_DSA_NORM, dsa_val_z, s, g, false); }
@@ -363,6 +400,10 @@ static const Kernel kKernels[] = {
     {"mlkem_basemul_masked", "ML-KEM secret-key product, first-order arithmetic masking", true, k_basemul_masked},
     {"mlkem_ntt", "ML-KEM forward NTT of a secret polynomial, unmasked", false, k_ntt},
     {"mlkem_ntt_masked", "ML-KEM forward NTT, first-order arithmetic masking", true, k_ntt_masked},
+    {"mlkem_decaps_composed", "ML-KEM decapsulation spine: s*u, w = v - su, Compress_1, Keccak, unmasked", false, k_kem_composed_plain},
+    {"mlkem_decaps_composed_masked", "the same spine in shares: basemul, inverse NTT, sec_decode1, keccakf_masked, hand-overs included", true, k_kem_composed_masked},
+    {"dsa_sign_composed", "ML-DSA z path: y, z = y + c s1, norm test, low-bits test, unmasked", false, k_dsa_composed_plain},
+    {"dsa_sign_composed_masked", "the same path in shares: sec_b2a, share-wise add, dsa_norm_acc, dsa_bprime, dsa_lowbits_ok", true, k_dsa_composed_masked},
 };
 
 struct Acc {

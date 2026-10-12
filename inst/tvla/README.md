@@ -57,6 +57,12 @@ samples where |t| > 4.5 in both experiments with the same sign.
 | `dsa_norm` | ML-DSA norm test of z, unmasked | 2,937 points, max \|t\| 101 | 3,178 points, max \|t\| 107 |
 | `dsa_norm_masked` | `dsa_norm_acc` | none, max \|t\| 2.3 | none, max \|t\| 2.5 |
 
+Two composed kernels (0.5.12) run several gadgets in one trace, so a value one gadget leaves
+in a register or a stack slot for the next is measured as well: `mlkem_decaps_composed`
+(s*u, w = v - su, Compress_1, one Keccak permutation over the message shares) and
+`dsa_sign_composed` (y from Boolean shares, z = y + c s1, the norm test, the low-bits test),
+each next to its unmasked control. Their numbers come from the `tvla` workflow of each run.
+
 Every masked kernel is clean under both models and every control leaks; CI fails on a masked
 leak under either. The transition model is the one C alone could not satisfy: the compiler
 moved one share into the register that held the other, and the switch between them was the

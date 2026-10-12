@@ -4,7 +4,12 @@
 \alias{attributable_fraction}
 \title{Population attributable fraction}
 \usage{
-attributable_fraction(rr, exposure_prevalence)
+attributable_fraction(
+  rr,
+  exposure_prevalence,
+  rr_lower = NULL,
+  rr_upper = NULL
+)
 }
 \arguments{
 \item{rr}{Relative risk among the exposed, a single finite positive
@@ -13,9 +18,15 @@ exposure); 0, negative, infinite and missing values are errors.}
 
 \item{exposure_prevalence}{Proportion of the population exposed, in
 \code{[0, 1]}.}
+
+\item{rr_lower, rr_upper}{Optional confidence limits of \code{rr}; when
+both are given the fraction carries the limits that the same formula
+gives at them (Levin's formula is monotone in the relative risk, so the
+interval of the fraction is the image of the interval of the risk).}
 }
 \value{
-A number in \code{[0, 1)} for \code{rr >= 1}.
+A number in \code{[0, 1)} for \code{rr >= 1}, with an attribute
+\code{ci} (\code{lower}, \code{upper}) when the limits were given.
 }
 \description{
 Levin's formula (Rothman, Greenland and Lash 2008, chapter 5):

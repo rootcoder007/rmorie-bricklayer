@@ -12,6 +12,14 @@ previous round completed, and the claims the earlier fixes overstated corrected.
   disclosure anywhere in the process was a decryption oracle for an attacker-chosen
   ciphertext. Every one of them is wiped now, with the per-group and per-word temporaries.
   The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
+* Masked ML-DSA signing wipes the bitsliced share temporaries of every 32-coefficient chunk
+  (the low-bits test of `v = w - c s2`, the high bits of `w` and of the hint) as it goes; one
+  chunk of `v` survived on some builds and revealed part of `c t0`.
+* Two composed TVLA kernels, next to the single gadgets: the ML-KEM decapsulation spine
+  (`s*u`, `w = v - su`, `Compress_1`, a Keccak permutation over the message shares) and the
+  ML-DSA z path (`y` from Boolean shares, `z = y + c s1`, the norm test, the low-bits test),
+  so the hand-over between gadgets is measured too. The dudect gate on a DIT-capable CPU is
+  the no-evidence line (|t| > 4.5 after the tripled re-measurement fails), not |t| > 10.
 * The ctcheck harness scans the dead stack for share pairs, not only for copies of a secret:
   any two windows whose coefficient-wise sum mod q (or XOR, for Boolean shares) is a known
   value count as a remnant. The ML-KEM case recomputes `r-hat` and `m'` from the message it
@@ -71,6 +79,10 @@ previous round completed, and the claims the earlier fixes overstated corrected.
   exposure, population and baseline columns. The index's `n_quintiles` field, a constant
   5, is gone, and the documentation says ties share their average rank.
 * `hurwitz_zeta()` takes one `q`.
+* `attributable_fraction(rr_lower =, rr_upper =)` carries the relative risk's confidence limits
+  through Levin's formula; `crf_pm25()` and `crf_no2()` carry the published 95 percent limits
+  of their risks (`rr_lower`, `rr_upper`; NA for the IER forms), and `verify_pollution()`
+  reports the fraction's interval.
 
 ## Language models
 
@@ -106,7 +118,10 @@ previous round completed, and the claims the earlier fixes overstated corrected.
   empty page with a title, and `plume_field()` requires increasing coordinates, with
   messages of their own instead of errors from inside the palette or base graphics.
 * `yoy_pdf()` paginates on the rows that fit the page height after the title block, the page
-  label and the notes; a 24-inch page planned 98 rows where 88 fit and dropped the last rows.
+  label and the notes (`.yoy_rows_per_page()`, with a test); a 24-inch page planned 98 rows
+  where 88 fit and dropped the last rows.
+* PBKDF2-HMAC-SHA256 is checked against the RFC 7914 vectors; the `agent_bundle()` help says
+  which route the request takes.
 
 ## Packaging
 

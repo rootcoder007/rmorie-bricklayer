@@ -5,8 +5,9 @@
 # before it is judged: a shared CI runner moves a target by several units of t between two
 # consecutive passes (the arm64 runner put the unmasked ML-KEM decapsulation at 6, 9.7 and
 # 10.6 within one hour for a difference of seven ticks in eighty-four thousand). The
-# re-measurement decides: |t| > 10 fails the job, 4.5 < |t| < 10 is reported as a warning
-# with its numbers, below 4.5 passes.
+# re-measurement decides: on a CPU that honours DIT, |t| > 4.5 after the re-measurement fails
+# the job (the inconclusive band is not a pass once the samples are tripled); on a CPU without
+# FEAT_DIT the run is reported with its numbers and cannot gate.
 #   N=200000 bash inst/dudect/run.sh
 set -uo pipefail
 cd "$(dirname "$0")"
@@ -35,7 +36,8 @@ if [ -n "$again" ]; then
       if [ "$gate" = 1 ]; then echo "::error::$t: |t| > 10 after re-measurement: $line"; status=1
       else echo "::warning::$t: |t| > 10 after re-measurement on a CPU without DIT (reported, not gating): $line"; fi
     elif ! echo "$line" | grep -q "no evidence of leakage"; then
-      echo "::warning::$t stays in dudect's inconclusive band (4.5 < |t| < 10) after re-measurement: $line"
+      if [ "$gate" = 1 ]; then echo "::error::$t stays above dudect's no-evidence line (|t| > 4.5) after re-measurement: $line"; status=1
+      else echo "::warning::$t stays above dudect's no-evidence line after re-measurement on a CPU without DIT (reported, not gating): $line"; fi
     fi
   done
 fi

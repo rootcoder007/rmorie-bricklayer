@@ -12,8 +12,8 @@ agent_bundle(request, model = NULL, backend = "auto")
 \item{model}{Optional model id, e.g. \code{"minimax-m3:cloud"};
 \code{NULL} uses the default (\code{rmbl models} lists them).}
 
-\item{backend}{\code{"auto"} (default): the first route that answers;
-\code{"hosted"}: the hosted MORIE tier only.}
+\item{backend}{\code{"auto"} (default): the saved route, else the first
+that is set up; \code{"hosted"}: the hosted MORIE tier only.}
 }
 \value{
 Character scalar: the answer, or a message saying what to set
@@ -21,9 +21,10 @@ up when no route answers.
 }
 \description{
 Sends a bundle-building request, with a rmoriebricklayer-focused
-preamble, to the first language-model route that answers (your own
-endpoint, a local Ollama server, then the hosted MORIE tier; see
-\code{\link{bricklayer_llm_ask}}).
+preamble, to the language-model route \code{\link{bricklayer_llm_ask}}
+takes: the route saved with \code{rmbl config set route}, else the first
+that is set up in the automatic order (your own endpoint, a local Ollama
+server with a model pulled, then the hosted MORIE tier).
 }
 \examples{
 \donttest{
