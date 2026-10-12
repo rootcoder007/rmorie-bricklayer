@@ -9,3 +9,23 @@ options(rmoriebricklayer.xmss_index_file = tempfile("xmss-index-", fileext = ".j
 
 # the id a key has in the used-index record: a fingerprint of its secret seed (review of 52a8883)
 xmss_kid <- function(k) rmoriebricklayer:::.rmbl_xmss_ids(k)$id
+
+# R code in a separate Rscript process, not a fork: a forked child of a covr-instrumented session
+# that is killed leaves a partial coverage trace (covr's merge then fails), and forked children
+# on macOS can die soon after they start. `out` captures the child's standard output.
+rscript_bg <- function(code, wait = FALSE, out = FALSE) {
+  rscript <- file.path(R.home("bin"), "Rscript")
+  lib <- paste(.libPaths(), collapse = .Platform$path.sep)
+  pre <- sprintf(paste0(".libPaths(strsplit('%s', '%s', fixed = TRUE)[[1]]); ",
+                        "suppressMessages(library(rmoriebricklayer)); "), lib, .Platform$path.sep)
+  system2(rscript, c("-e", shQuote(paste0(pre, code))), wait = wait, stdout = out, stderr = FALSE)
+}
+
+# wait until every file exists and is not empty
+wait_files <- function(files, seconds = 60) {
+  for (w in seq_len(seconds * 10)) {
+    if (all(file.exists(files)) && all(file.size(files) > 0)) return(TRUE)
+    Sys.sleep(0.1)
+  }
+  FALSE
+}

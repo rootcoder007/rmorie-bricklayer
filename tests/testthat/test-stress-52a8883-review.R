@@ -92,30 +92,24 @@ test_that("B2: the lock is held by the process, and the kernel releases it when 
   expect_identical(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 60L), -1L)
   invisible(.Call(rmoriebricklayer:::C_rmbl_flock_release, fd))
   expect_null(.Call(rmoriebricklayer:::C_rmbl_flock_release, -1L))
-  # a child takes the lock and dies without releasing it (a crashed session): the lock is free
-  job <- parallel::mcparallel({
-    .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 0L)
-    tools::pskill(Sys.getpid(), tools::SIGKILL)
-  })
-  parallel::mccollect(job, wait = TRUE)
+  # another process takes the lock and dies without releasing it (a crashed session): it is free
+  rscript_bg(sprintf(".Call(rmoriebricklayer:::C_rmbl_flock_acquire, '%s', 0L); tools::pskill(Sys.getpid(), 9L)",
+                     lock), wait = TRUE)
   fd2 <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 2000L)
   expect_true(fd2 >= 0L)
   .Call(rmoriebricklayer:::C_rmbl_flock_release, fd2)
   # a live holder: the waiter is told after its timeout, nothing is deleted
   ready <- tempfile()
-  job <- parallel::mcparallel({
-    f <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 0L)
-    file.create(ready)
-    Sys.sleep(3)
-    .Call(rmoriebricklayer:::C_rmbl_flock_release, f)
-  })
-  for (i in 1:600) if (!file.exists(ready)) Sys.sleep(0.05)
-  skip_if_not(file.exists(ready), "the lock-holding child did not start")
-  withr::local_options(rmoriebricklayer.xmss_index_file = p)
+  done <- tempfile()
+  rscript_bg(sprintf(paste0("f <- .Call(rmoriebricklayer:::C_rmbl_flock_acquire, '%s', 0L); ",
+                            "writeLines('held', '%s'); Sys.sleep(3); ",
+                            ".Call(rmoriebricklayer:::C_rmbl_flock_release, f); writeLines('done', '%s')"),
+                     lock, ready, done))
+  skip_if_not(wait_files(ready), "the lock-holding process did not start")
   t0 <- Sys.time()
   expect_identical(.Call(rmoriebricklayer:::C_rmbl_flock_acquire, lock, 200L), -1L)
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 2)
-  parallel::mccollect(job, wait = TRUE)
+  expect_true(wait_files(done))
   expect_true(file.exists(lock))
 })
 
@@ -124,31 +118,22 @@ test_that("B2: six processes signing with copies of one key never share an index
   skip_on_cran()
   f <- xmss_tmp_record()
   k <- pqc_keygen(height = 5L)
+  kf <- tempfile(fileext = ".rds")
+  saveRDS(k, kf)
   # a crashed signer: it held the lock when it was killed (the case that left a stale lock dir)
-  job <- parallel::mcparallel({
-    .Call(rmoriebricklayer:::C_rmbl_flock_acquire, paste0(f, ".flock"), 0L)
-    tools::pskill(Sys.getpid(), tools::SIGKILL)
-  })
-  parallel::mccollect(job, wait = TRUE)
-  for (trial in 1:3) {
-    signer <- function(i) {
-      kk <- k
-      out <- NA_integer_
-      for (j in 0:31) {
-        kk$next_index <- j
-        s <- tryCatch(capsule_sign(paste("m", i, j), kk, scheme = "xmss"), error = function(e) NULL)
-        if (!is.null(s)) {
-          out <- as.integer(s$index)
-          break
-        }
-      }
-      out
-    }
-    jobs <- lapply(1:6, function(i) {
-      parallel::mcparallel(signer(i))
-    })
-    got <- unlist(parallel::mccollect(jobs, wait = TRUE))
-    got <- got[!is.na(got)]
+  rscript_bg(sprintf(".Call(rmoriebricklayer:::C_rmbl_flock_acquire, '%s', 0L); tools::pskill(Sys.getpid(), 9L)",
+                     paste0(f, ".flock")), wait = TRUE)
+  signer <- paste0("options(rmoriebricklayer.xmss_index_file = '%s'); k <- readRDS('%s'); out <- -1L; ",
+                   "for (j in 0:31) { k$next_index <- j; s <- tryCatch(capsule_sign(paste('m', %d, j), k, ",
+                   "scheme = 'xmss'), error = function(e) NULL); if (!is.null(s)) { out <- s$index; break } }; ",
+                   "writeLines(as.character(out), '%s')")
+  for (trial in 1:2) {
+    outs <- vapply(1:6, function(i) tempfile(fileext = ".out"), "")
+    for (i in 1:6) rscript_bg(sprintf(signer, f, kf, i, outs[i]))
+    expect_true(wait_files(outs, 120))
+    got <- as.integer(vapply(outs, function(o) readLines(o)[1], ""))
+    got <- got[got >= 0L]
+    expect_length(got, 6L)
     expect_false(anyDuplicated(got) > 0)
   }
 })
