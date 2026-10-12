@@ -33,8 +33,10 @@ across a network, recovers the secret bit by bit.
 ### Dynamic check: ctgrind (`inst/ctcheck`)
 The secret key is marked *undefined* to valgrind memcheck (Langley's ctgrind, 2010).
 Memcheck then reports every conditional jump and every memory address that depends on
-undefined data, which is exactly the set a timing attacker can observe. A clean run is a
-proof for that binary, for every input of that length. The only branches allowed are the
+undefined data, which is exactly the set a timing attacker can observe. A clean run shows
+that, for the inputs the harness exercised, no branch or address of that binary depended on
+the secret; it is evidence about that binary and those inputs, not a proof over every input
+of that length. The only branches allowed are the
 ones the standards publish by design (a rejected sample in ML-DSA, the challenge, the
 hints), each passed through an explicit declassification point. The harness is built from
 the package's own sources with GCC and Clang, and it also scans the dead stack after each
@@ -157,11 +159,11 @@ Honesty about scope is part of the assurance. The checks do **not** model:
 Each has a software route (richer fitted leakage models such as ELMO, a fault campaign in
 the same emulator, higher-order gadgets, formal verification of the gadgets with maskVerif)
 and, for EM and for confirming a given chip, a hardware route. The repository's
-`SECURITY.md` states the current boundary. The side-channel review bundle distributed
-alongside the release (a separate archive, not part of the package) carries firmware for a
-ChipWhisperer Cortex-M4 target (CW-Lite Arm, CW308 STM32F3) running the same kernels, and
-a fixed-versus-random capture script; no capture has been run yet, and every power figure
-above comes from the emulator.
+`SECURITY.md` states the current boundary. The package itself ships no firmware; the
+side-channel review bundle distributed alongside the release (a separate archive) carries
+firmware for a ChipWhisperer Cortex-M4 target (CW-Lite Arm, CW308 STM32F3) running the
+same kernels, and a fixed-versus-random capture script. No capture has been run, and every
+power figure above comes from the emulator.
 
 ## 4. Choosing the plain path
 

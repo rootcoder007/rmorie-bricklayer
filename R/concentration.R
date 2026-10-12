@@ -286,7 +286,9 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 #' hurwitz_zeta(1)
 #' @export
 hurwitz_zeta <- function(s, q = 1) {
-  .rmbl_hurwitz(.rmbl_num_input(s, "s"), as.numeric(q)[1L])
+  q <- .rmbl_num_input(q, "q", allow_null = FALSE)
+  if (length(q) != 1L || !is.finite(q)) stop("`q` must be a single finite number", call. = FALSE)
+  .rmbl_hurwitz(.rmbl_num_input(s, "s"), q)
 }
 
 .rmbl_hurwitz <- function(s, q) {

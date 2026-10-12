@@ -1,5 +1,6 @@
 #include "ct_common.h"
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 int ct_running_memcheck() { return RUNNING_ON_VALGRIND != 0; }
@@ -23,6 +24,61 @@ __attribute__((noinline)) int ct_stack_remnants(const unsigned char *needle, siz
         if (std::memcmp(probe + i, needle, w) == 0) ++hits;
     }
     if (hits) std::fprintf(stderr, "ZEROISATION: %d cop%s of %s left on the dead stack\n", hits, hits == 1 ? "y" : "ies", what);
+    return hits;
+}
+
+/* Scan the dead stack for a PAIR of windows whose coefficient-wise sum mod q (or XOR, for
+ * Boolean shares) is a known secret: a masked value whose two shares were both left behind
+ * is as exposed as the value itself. The needle scan above cannot see this, which is how a
+ * missing wipe of the re-encryption shares of ML-KEM got through 0.5.10 and 0.5.11. Every
+ * 2-byte-aligned window of `n` coefficients is a candidate; the complement each one needs is
+ * looked up in a hash of all windows, so the scan is linear in the probe. */
+__attribute__((noinline)) int ct_stack_share_pairs(const int16_t *target, size_t n, int modulus, const char *what) {
+    unsigned char probe[1 << 16];
+    __asm__ volatile("" : : "r"(probe) : "memory");
+    ct_public(probe, sizeof probe);
+    ct_public(target, n * sizeof(int16_t));
+    const size_t w = n < 16 ? n : 16;           /* the first 16 coefficients identify a window */
+    const size_t bytes = w * sizeof(int16_t);
+    /* a window in canonical form: coefficients reduced into [0, q) for arithmetic shares (the
+     * kernels leave shares in (-q, q) after the NTT), bytes as they are for Boolean shares */
+    auto canon = [&](const unsigned char *at, int16_t *out) {
+        const int16_t *x = reinterpret_cast<const int16_t *>(at);
+        bool nonzero = false;
+        for (size_t k = 0; k < w; ++k) {
+            int32_t c = x[k];
+            if (modulus > 0) { c %= modulus; if (c < 0) c += modulus; }
+            out[k] = static_cast<int16_t>(c);
+            nonzero = nonzero || out[k] != 0;
+        }
+        return nonzero;
+    };
+    int16_t tgt[16];
+    for (size_t k = 0; k < w; ++k) tgt[k] = target[k];
+    const std::string target_key(reinterpret_cast<const char *>(tgt), bytes);
+    std::unordered_map<std::string, size_t> seen;
+    for (size_t i = 0; i + bytes <= sizeof probe; i += 2) {
+        int16_t c[16];
+        if (!canon(probe + i, c)) continue;                     /* a zero window pairs with the value itself */
+        const std::string key(reinterpret_cast<const char *>(c), bytes);
+        if (key == target_key) continue;                        /* the harness's own copy of the value */
+        seen.emplace(key, i);
+    }
+    int hits = 0;
+    for (const auto &kv : seen) {
+        const int16_t *x = reinterpret_cast<const int16_t *>(kv.first.data());
+        int16_t need[16];
+        for (size_t k = 0; k < w; ++k) {
+            int32_t d = modulus > 0 ? (static_cast<int32_t>(tgt[k]) - x[k]) % modulus
+                                    : (static_cast<int32_t>(tgt[k]) ^ x[k]);
+            if (modulus > 0 && d < 0) d += modulus;
+            need[k] = static_cast<int16_t>(d);
+        }
+        const auto it = seen.find(std::string(reinterpret_cast<const char *>(need), bytes));
+        if (it != seen.end() && it->second != kv.second) ++hits;
+    }
+    hits /= 2;                                                  /* each pair is met from both sides */
+    if (hits) std::fprintf(stderr, "ZEROISATION: %d share pair%s of %s left on the dead stack\n", hits, hits == 1 ? "" : "s", what);
     return hits;
 }
 

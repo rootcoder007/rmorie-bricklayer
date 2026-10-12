@@ -32,7 +32,7 @@ test_that("usage errors exit 2, an unknown function 1", {
   expect_match(r$text, "no help page for 'nosuchfn'")
   expect_equal(.cap("examples", "nosuchfn")$status, 1L)
   expect_equal(.cap("login", "--code", "123456")$status, 2L)
-  testthat::local_mocked_bindings(.bl_readline = function(prompt) "")
+  testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "")
   expect_equal(.cap("login", "--token")$status, 2L)
 })
 
@@ -217,7 +217,7 @@ test_that("an email sign-in with no code typed says how to finish instead of pos
       calls <<- c(calls, sub(".*(/email/[a-z]+)$", "\\1", url))
       list(status = 200L, body = charToRaw("{}"))
     },
-    .bl_readline = function(prompt) ""
+    .bl_readline = function(prompt, ...) ""
   )
   expect_error(suppressMessages(bricklayer_llm_login(email = "vee@example.com")),
                "no code entered; finish with `.* login --email vee@example.com --code CODE`")

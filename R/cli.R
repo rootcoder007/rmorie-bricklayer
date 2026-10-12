@@ -14,11 +14,22 @@
 # Rscript, where readline() returns "" at once, so outside an interactive session read one line of
 # stdin: typed at a terminal, or piped (`echo KEY | rmbl login --token` keeps the key out of the shell
 # history). Closed or empty stdin gives "".
-.bl_readline <- function(prompt, con = NULL) {
+.bl_readline <- function(prompt, con = NULL, secret = FALSE) {
+  # a key typed at a terminal is not echoed (stty, where there is one); elsewhere it is
+  # read as any other line, which is what piping `echo KEY |` relies on
+  hide <- isTRUE(secret) && is.null(con) && .Platform$OS.type == "unix" && isatty(stdin()) &&
+    nzchar(Sys.which("stty"))
+  if (hide) {
+    system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
+    on.exit({
+      system2("stty", "echo", stdout = FALSE, stderr = FALSE)
+      cat("\n", file = stderr())
+    }, add = TRUE)
+  }
   if (.bl_interactive()) return(trimws(readline(prompt)))
   if (is.null(con)) {
     con <- file("stdin")
-    on.exit(close(con))
+    on.exit(close(con), add = TRUE)
   }
   if (.bl_stdin_tty()) cat(prompt, file = stderr())
   trimws(paste(readLines(con, n = 1L, warn = FALSE), collapse = ""))
@@ -129,7 +140,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (has("--token")) {
             i <- match("--token", rest)
             tok <- if (i < length(rest)) rest[[i + 1L]] else ""
-            if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ")
+            if (!nzchar(tok)) tok <- .bl_readline("Paste your MORIE key: ", secret = TRUE)
             if (!nzchar(tok)) {
               usage_error("--token needs a value: login --token KEY, or paste the key when asked")
             }
@@ -155,6 +166,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         config = .bl_cli_config(rest, out, usage_error),
         models = .bl_cli_models(out),
         ask = {
+          for (f in c("--model", "--route")) {
+            if (sum(rest == f) > 1L) {
+              usage_error(sprintf("%s may be given once (the second would become part of the prompt)", f))
+            }
+          }
           mdl <- flag("--model")
           if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
           rte <- flag("--route")
@@ -163,7 +179,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             if (!rte %in% c("own", "ollama", "hosted", "auto")) {
               usage_error("--route takes own, ollama, hosted or auto")
             }
-            if (identical(rte, "auto")) rte <- NULL
+            # "auto" is passed through: it means the automatic order this time, over a saved route
           }
           if (!length(rest)) {
             usage_error(sprintf("usage: %s ask [--route ROUTE] [--model NAME] PROMPT...", prog))

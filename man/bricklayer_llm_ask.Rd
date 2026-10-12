@@ -21,8 +21,9 @@ bricklayer_llm_ask(
 
 \item{system_prompt}{Optional system message.}
 
-\item{route}{\code{NULL} (the first that is set up) or one of \code{"own"},
-\code{"ollama"}, \code{"hosted"} to insist on a route.}
+\item{route}{\code{NULL} (the saved route, else the first that is set up),
+\code{"auto"} (the automatic order this time, ignoring a saved route) or
+one of \code{"own"}, \code{"ollama"}, \code{"hosted"} to insist on a route.}
 }
 \value{
 Character scalar with the reply. Errors, saying what to set up,
@@ -44,7 +45,10 @@ network); a host name over plain http is refused;
 \item a local Ollama server: \code{OLLAMA_HOST} (or
 \code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
 \code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
-skips it;
+skips it. In the automatic order a server that answers but has no model
+pulled is skipped with a message naming the route taken instead, so a
+prompt never leaves the machine silently; \code{route = "ollama"} keeps
+it local and errors instead;
 \item the hosted MORIE tier, a last resort for people who can run neither:
 its address comes from \code{\link{bricklayer_services}} and it needs the
 key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).

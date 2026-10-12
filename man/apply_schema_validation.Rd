@@ -10,7 +10,10 @@ apply_schema_validation(df_raw, provenance)
 \item{df_raw}{The data frame to validate.}
 
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}.}
+\code{\link[=load_provenance]{load_provenance()}}, or a rule list from
+\code{\link[=rule]{rule()}} and the \verb{rule_*()} constructors, run
+with \code{\link[=validate_rules]{validate_rules()}} under the same
+stop-on-fatal contract.}
 }
 \value{
 Invisibly, \code{TRUE} if no issues were found and \code{FALSE}

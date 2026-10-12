@@ -417,7 +417,7 @@ test_that("the email flow asks for the code when none is given and reports error
       list(status = 200L, body = charToRaw("{\"api_key\":\"sk-typed\"}"))
     }
   )
-  testthat::local_mocked_bindings(.bl_readline = function(prompt) "654321")
+  testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "654321")
   msgs <- testthat::capture_messages(
     key <- bricklayer_llm_login(email = "vee@example.com")
   )
@@ -508,7 +508,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  testthat::local_mocked_bindings(.bl_readline = function(prompt) "sk-prompted")
+  testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "sk-prompted")
   testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)

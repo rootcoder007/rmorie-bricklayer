@@ -83,6 +83,8 @@ crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc =
     stop(sprintf("Unknown outcome '%s'. Available: %s", paste(outcome, collapse = ","),
                  paste(c(names(loglinear), names(ier)), collapse = ", ")), call. = FALSE)
   }
+  # one reference for every exposure: a vector would recycle against z, an NA would give NA risks
+  reference_conc <- .pollution_scalar(reference_conc, "reference_conc")
   z <- .pollution_exposure(exposure)
   scalar <- length(z) == 1L
   excess <- pmax(z - reference_conc, 0)
@@ -122,6 +124,7 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
       stop("`beta_per_10` must be a single finite number", call. = FALSE)
     }
   }
+  reference_conc <- .pollution_scalar(reference_conc, "reference_conc")
   z <- .pollution_exposure(exposure)
   scalar <- length(z) == 1L
   log_rr <- beta * pmax(z - reference_conc, 0) / 10
@@ -146,6 +149,8 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
 
 # One finite number, optionally non-negative: the scalar inputs of the burden functions.
 .pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
+  # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE is a typo
+  if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
   v <- .rmbl_num_input(x, what, allow_null = FALSE)
   if (length(v) != 1L || is.na(v) || !is.finite(v)) {
     stop(sprintf("`%s` must be a single finite number", what), call. = FALSE)
@@ -223,6 +228,11 @@ mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_
   exposure_delta <- .pollution_scalar(exposure_delta, "exposure_delta", nonneg = FALSE)
   population <- .pollution_scalar(population, "population")
   baseline_rate <- .pollution_scalar(baseline_rate, "baseline_rate")
+  if (baseline_rate > 1) {
+    stop(sprintf(paste("`baseline_rate` is a rate per person-year, between 0 and 1; %s looks like a rate",
+                       "per 100,000 (verify_pollution() and pollution_burden() take that form)"),
+                 format(baseline_rate)), call. = FALSE)
+  }
   beta_per_unit <- .pollution_scalar(beta_per_unit, "beta_per_unit", nonneg = FALSE)
   baseline_rate * population * (1 - exp(-beta_per_unit * exposure_delta))
 }
@@ -338,8 +348,13 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
   if (length(missing)) stop(sprintf("data is missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
   df <- data[stats::complete.cases(data[, cols, drop = FALSE]), cols, drop = FALSE]
   n <- nrow(df)
-  k_folds <- as.integer(k_folds)
-  if (is.na(k_folds) || k_folds < 2L) stop("`k_folds` must be at least 2", call. = FALSE)
+  k_folds <- as.integer(.rmbl_num(k_folds, "k_folds", integer = TRUE))
+  if (length(k_folds) != 1L || is.na(k_folds) || k_folds < 2L) stop("`k_folds` must be at least 2", call. = FALSE)
+  for (cl in cols) {
+    if (!is.numeric(df[[cl]])) {
+      stop(sprintf("column `%s` must be numeric (a factor or character column is not a code)", cl), call. = FALSE)
+    }
+  }
   if (n < 2L * k_folds) {
     stop(sprintf("need at least %d complete rows for %d folds; have %d", 2L * k_folds, k_folds, n),
          call. = FALSE)
@@ -436,15 +451,18 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
 #'
 #' Wagstaff, Paci and van Doorslaer (1991):
 #' \deqn{CI = (2 / \mu) \, \mathrm{cov}(h_i, R_i)}
-#' with \eqn{R_i = (rank_i - 0.5) / n} the fractional income rank (ties kept
-#' in input order, as a stable sort does) and the population covariance.
-#' Negative values mean lower-income units bear more exposure.
+#' with \eqn{R_i = (rank_i - 0.5) / n} the fractional income rank (tied incomes
+#' share their average rank, so the index does not depend on row order) and
+#' the population covariance. Negative values mean lower-income units bear
+#' more exposure. Both columns must be numeric: a factor or character income
+#' is refused rather than ranked by its level codes, and exposures must be
+#' non-negative.
 #'
 #' @param data A data frame.
 #' @param exposure,income Column names.
 #' @return A list of class \code{rmbl_equity} with \code{concentration_index},
-#'   \code{interpretation}, \code{n_quintiles}, \code{exposure_mean},
-#'   \code{citation} and \code{extra}.
+#'   \code{interpretation}, \code{exposure_mean}, \code{citation} and
+#'   \code{extra} (\code{n}, the covariance and the concentration curve).
 #' @references Wagstaff, A., Paci, P. and van Doorslaer, E. (1991). On the
 #'   measurement of inequalities in health. Social Science and Medicine 33(5),
 #'   545-557.
@@ -459,10 +477,11 @@ exposure_concentration_index <- function(data, exposure, income) {
   df <- df[stats::complete.cases(df), , drop = FALSE]
   n <- nrow(df)
   if (n < 2L) stop("Need at least 2 rows to compute concentration index.", call. = FALSE)
-  h <- as.numeric(df[[exposure]])
-  inc <- as.numeric(df[[income]])
+  h <- .rmbl_num_input(df[[exposure]], exposure, allow_null = FALSE)
+  inc <- .rmbl_num_input(df[[income]], income, allow_null = FALSE)
+  if (any(h < 0)) stop(sprintf("`%s` must be non-negative: an exposure is a concentration", exposure), call. = FALSE)
   mu <- mean(h)
-  if (mu == 0) stop("Mean exposure is zero; concentration index undefined.", call. = FALSE)
+  if (mu <= 0) stop("Mean exposure is zero; concentration index undefined.", call. = FALSE)
   # mid-ranks, so tied incomes share a rank and the index does not depend on
   # the order the rows arrived in (all incomes equal gives exactly 0)
   ranks <- rank(inc, ties.method = "average")
@@ -486,7 +505,6 @@ exposure_concentration_index <- function(data, exposure, income) {
   structure(list(
     concentration_index = ci,
     interpretation = interp,
-    n_quintiles = 5L,
     exposure_mean = mu,
     citation = "Wagstaff, Paci & van Doorslaer (1991) Soc Sci Med 33(5):545-557",
     extra = list(n = n, cov_h_R = cov_hr, curve = curve)
@@ -521,6 +539,11 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
     stop(sprintf("area_table missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
   }
   if (!nrow(area_table)) stop("area_table has no rows", call. = FALSE)
+  for (cl in c(exposure_col, population_col, baseline_rate_col)) {
+    if (!is.numeric(area_table[[cl]])) {
+      stop(sprintf("column `%s` must be numeric (a factor or character column is not a count)", cl), call. = FALSE)
+    }
+  }
   rows <- lapply(seq_len(nrow(area_table)), function(i) {
     r <- pollution_burden(
       exposure_mean = as.numeric(area_table[[exposure_col]][i]),
@@ -567,7 +590,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
   fin <- function(x) length(x) == 1L && is.finite(x)
   list(
     row("exposure finite and non-negative", fin(exposure_mean) && exposure_mean >= 0,
-        if (fin(exposure_mean) && exposure_mean <= reference) {
+        if (isTRUE(fin(exposure_mean) && exposure_mean <= reference)) {
           sprintf("mean %s is at or below the counterfactual floor %s: no excess risk, PAF and cases are 0.",
                   format(exposure_mean, digits = 10), format(reference))
         } else {
@@ -602,7 +625,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   mortality outcomes count deaths, \code{"childhood_asthma"} incident
 #'   cases.
 #' @param region,years Labels for the report.
-#' @param demo Use synthetic demo data.
+#' @param demo Use synthetic demo data (\code{TRUE} or \code{FALSE}).
 #' @param exposure_csv Path of a CSV with an \code{exposure} column in
 #'   micrograms per cubic metre, or a NAPS pull with a \code{value} column
 #'   and a \code{unit} column (required with \code{value}): each row is
@@ -624,7 +647,12 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   \code{rmbl_pollution_report} (\code{plot()} draws it); its \code{status}
 #'   is \code{"ok"}, \code{"assumption_failure"} or \code{"error"}, and the
 #'   attribute \code{exit_status} carries a command-line exit code (0, 1 or
-#'   2). \code{pollution_report_text()}: a character string.
+#'   2). An argument the pipeline cannot use (no exposure data at all, a
+#'   vector where a single number is expected, an unknown outcome, a missing
+#'   reference, a directory as \code{exposure_csv}) is an \code{"error"}
+#'   report with exit status 2, never a raw R error; an exposure at or below
+#'   the reference is a valid run with zero attributable cases.
+#'   \code{pollution_report_text()}: a character string.
 #' @examples
 #' r <- verify_pollution("no2", demo = TRUE)
 #' r$status
@@ -637,12 +665,26 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                              baseline_rate = 500, population = 1e6) {
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
-  if (is.null(reference)) reference <- if (identical(pollutant, "no2")) 10 else 5.8
-  reference <- suppressWarnings(as.numeric(reference))[1L]
   equity_df <- NULL
   fail <- function(msg) {
     structure(list(status = "error", error = msg), exit_status = 2L,
               class = c("rmbl_pollution_report", "list"))
+  }
+  # the input contract is part of the report: an argument the pipeline cannot use is an
+  # "error" report with exit status 2, never a raw stop() or a silently truncated vector
+  if (!is.logical(demo) || length(demo) != 1L || is.na(demo)) return(fail("demo must be TRUE or FALSE"))
+  if (is.null(reference)) reference <- if (identical(pollutant, "no2")) 10 else 5.8
+  for (nm in c("reference", "exposure_mean", "exposure_prevalence", "baseline_rate", "population")) {
+    v <- get(nm, inherits = FALSE)
+    if (length(v) != 1L) return(fail(sprintf("%s must be a single number, not %d values", nm, length(v))))
+    # a flag or text is not a number; a missing value (NA) is logged as a failed assumption below
+    if ((is.logical(v) && !is.na(v)) || (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
+      return(fail(sprintf("%s must be a single number", nm)))
+    }
+  }
+  reference <- suppressWarnings(as.numeric(reference))
+  if (!is.character(outcome) || length(outcome) != 1L || is.na(outcome)) {
+    return(fail("outcome must be a single outcome name"))
   }
   # the exposed are the rows above the counterfactual floor: Levin's formula wants the
   # relative risk among them and their share, not the population mean twice over
@@ -660,7 +702,11 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     equity_df <- df
     data_source <- "demo (synthetic)"
   } else if (!is.null(exposure_csv)) {
+    if (!is.character(exposure_csv) || length(exposure_csv) != 1L || is.na(exposure_csv)) {
+      return(fail("exposure_csv must be a single file path"))
+    }
     if (!file.exists(exposure_csv)) return(fail(sprintf("exposure CSV not found: %s", exposure_csv)))
+    if (dir.exists(exposure_csv)) return(fail(sprintf("exposure CSV is a directory, not a file: %s", exposure_csv)))
     empty <- sprintf("%s is empty (expected a column exposure in ug/m3, or a NAPS pull's value + unit)", exposure_csv)
     if (isTRUE(file.size(exposure_csv) == 0)) return(fail(empty))
     df <- utils::read.csv(exposure_csv, stringsAsFactors = FALSE)
@@ -695,12 +741,19 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if ("income" %in% names(df)) equity_df <- df
     data_source <- exposure_csv
   } else {
-    exposure_mean <- suppressWarnings(as.numeric(exposure_mean))[1L]
-    exposure_prevalence <- suppressWarnings(as.numeric(exposure_prevalence))[1L]
+    exposure_mean <- as.numeric(exposure_mean)
+    exposure_prevalence <- as.numeric(exposure_prevalence)
     data_source <- "scalar arguments"
+    # the defaults (a mean of 0, a prevalence of 0) are no data at all: a call with nothing to
+    # verify, not a clean run with zero deaths; a missing or negative value is a failed
+    # assumption, logged below
+    if (isTRUE(exposure_mean == 0) || isTRUE(exposure_prevalence == 0)) {
+      return(fail(paste("no exposure data: pass exposure_csv, or exposure_mean and exposure_prevalence",
+                        "(both above zero), or demo = TRUE")))
+    }
   }
-  baseline_rate <- suppressWarnings(as.numeric(baseline_rate))[1L]
-  population <- suppressWarnings(as.numeric(population))[1L]
+  baseline_rate <- as.numeric(baseline_rate)
+  population <- as.numeric(population)
   assumptions <- .pollution_assumptions(pollutant, exposure_mean, exposure_prevalence,
                                         baseline_rate, population, reference)
   report <- list(
@@ -715,11 +768,14 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     report$pipeline <- list(skipped = TRUE, reason = "assumptions")
     return(structure(report, exit_status = 1L, class = c("rmbl_pollution_report", "list")))
   }
-  crf <- if (pollutant == "no2") {
-    crf_no2(exposure_mean, outcome = outcome, reference_conc = reference)
-  } else {
-    crf_pm25(exposure_mean, outcome = outcome, reference_conc = reference)
-  }
+  crf <- tryCatch(
+    if (pollutant == "no2") {
+      crf_no2(exposure_mean, outcome = outcome, reference_conc = reference)
+    } else {
+      crf_pm25(exposure_mean, outcome = outcome, reference_conc = reference)
+    },
+    error = function(e) e)
+  if (inherits(crf, "error")) return(fail(conditionMessage(crf)))
   paf <- attributable_fraction(crf$rr, exposure_prevalence)
   baseline_per_person <- baseline_rate / 1e5
   exposure_delta <- max(0, exposure_mean - reference)
@@ -757,7 +813,7 @@ pollution_report_text <- function(report) {
              sprintf("  exposure mean:      %.3f", inp$exposure_mean),
              sprintf("  exposure prevalence:%.3f", inp$exposure_prevalence),
              sprintf("  baseline rate/100k: %.2f", inp$baseline_rate_per_100k),
-             sprintf("  population:         %s", format(inp$population, big.mark = ",")),
+             sprintf("  population:         %s", format(inp$population, big.mark = ",", scientific = FALSE)),
              sprintf("  reference conc:     %s", format(inp$reference_conc)),
              "", "Assumption log")
   for (a in report$assumptions) {

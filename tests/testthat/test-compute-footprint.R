@@ -82,7 +82,10 @@ test_that("detect_location: environment, codecarbon's variable, time zone, local
   expect_equal(d$location, "GB")
   expect_match(d$method, "locale en_GB")
   expect_equal(detect_location("", "", tz = "", locale = "fr_CA")$location, "CA")
-  d <- detect_location(env_location = "Atlantis", codecarbon_location = "", tz = "UTC", locale = "C.UTF-8")
+  # an unknown RMBL_LOCATION is said so, not skipped in silence
+  expect_warning(d <- detect_location(env_location = "Atlantis", codecarbon_location = "", tz = "UTC",
+                                      locale = "C.UTF-8"),
+                 "Atlantis")
   expect_equal(d$location, "WORLD")
   expect_match(d$method, "fallback")
   expect_equal(detect_location("", "", tz = NA_character_, locale = NA_character_)$location, "WORLD")

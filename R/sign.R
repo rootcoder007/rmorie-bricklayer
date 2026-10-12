@@ -953,6 +953,9 @@ capsule_verify <- function(message, signature, key, context = NULL,
     # an error: a verifier treats unparseable input as failure. Decoding
     # it loosely would turn a stray character into a zero byte and hand
     # the C layer something it never received.
+    # a signature field that is not exactly one string is not a signature: reading its first
+    # element would verify c(valid, "anything")
+    if (!is.character(signature$signature) || length(signature$signature) != 1L) return(FALSE)
     pk <- .rmbl_hex_or_null(key$public)
     sg <- .rmbl_hex_or_null(signature$signature)
     if (is.null(pk) || is.null(sg)) return(FALSE)
@@ -962,10 +965,12 @@ capsule_verify <- function(message, signature, key, context = NULL,
     ph <- if (is.null(prehash)) {
       if (is.null(signature[["prehash"]])) "none" else signature$prehash
     } else {
-      .rmbl_fips_prehash(prehash)
+      prehash
     }
-    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg,
-                             .rmbl_fips_prehash(ph)))
+    # an unknown pre-hash name in the signature (or asked for) is "not verified", not an error
+    ph <- tryCatch(.rmbl_fips_prehash(ph), error = function(e) NULL)
+    if (is.null(ph)) return(FALSE)
+    return(.rmbl_fips_verify(key$scheme, pk, msg, ctx, sg, ph))
   }
   if (identical(signature$scheme, "hmac")) {
     return(core_digest_equal(core_hmac_sha256(key, message),
@@ -991,6 +996,23 @@ capsule_verify <- function(message, signature, key, context = NULL,
     stop(paste0("this signature carries no RFC 8391 randomiser and cannot ",
                 "be verified; it was produced by an earlier, ",
                 "non-conformant version"), call. = FALSE)
+  }
+  one_string <- function(x) is.character(x) && length(x) == 1L && !is.na(x) && nzchar(x)
+  # every field the verifier reads is checked here, and a signature whose own root, height
+  # or wire form disagrees with the key or with its parts is "not verified": those fields
+  # travel with the signature so a reader can check them, not so an editor can change them
+  if (!one_string(signature$signature) || !one_string(signature$auth) ||
+        !one_string(signature[["randomizer"]]) || length(signature$index) != 1L ||
+        is.na(suppressWarnings(as.integer(signature$index)))) {
+    return(FALSE)
+  }
+  same <- function(a, b) identical(tolower(as.character(a)), tolower(as.character(b)))
+  if (!is.null(signature$root) && !same(signature$root, key$root)) return(FALSE)
+  if (!is.null(signature$height) && !identical(as.integer(signature$height), as.integer(key$height))) return(FALSE)
+  if (!is.null(signature$wire)) {
+    expected_wire <- paste0(sprintf("%08x", as.integer(signature$index)), signature[["randomizer"]],
+                            signature$signature, signature$auth)
+    if (!identical(tolower(as.character(signature$wire)), tolower(expected_wire))) return(FALSE)
   }
   .Call(C_rmbl_xmss_verify, key$pub_seed, key$root, as.integer(key$height),
         as.integer(signature$index), message, signature$signature,

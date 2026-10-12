@@ -1,3 +1,123 @@
+# rmoriebricklayer 0.5.12
+
+The 0.5.11 stress round (commit a5a4d10): every finding fixed, the partial fixes of the
+previous round completed, and the claims the earlier fixes overstated corrected.
+
+## Cryptography
+
+* Masked ML-KEM decapsulation left the re-encryption shares on the dead stack: `r0/r1`,
+  `e10/e11`, `e20/e21`, `u0/u1`, `v0/v1`, the FO-check shares `ok`/`msk` and the masked
+  PRF's input and output buffers (whose sum is the coins `G(m' || h)[32..64]`). Summing the
+  two halves of `r-hat` recovers `m'` from the public key and ciphertext alone, so a memory
+  disclosure anywhere in the process was a decryption oracle for an attacker-chosen
+  ciphertext. Every one of them is wiped now, with the per-group and per-word temporaries.
+  The 0.5.10 note that "every share pair is now wiped" was false and is corrected.
+* The ctcheck harness scans the dead stack for share pairs, not only for copies of a secret:
+  any two windows whose coefficient-wise sum mod q (or XOR, for Boolean shares) is a known
+  value count as a remnant. The ML-KEM case recomputes `r-hat` and `m'` from the message it
+  encapsulated and scans for both after the masked decapsulation; this is the check that
+  would have caught the gap above.
+* `capsule_verify()` answers `FALSE`, not an error, for a signature whose `signature` field
+  is not one string, whose `prehash` names no digest, or whose XMSS `auth`, `randomizer` or
+  `index` is missing; and an XMSS signature whose own `root`, `height` or `wire` disagrees
+  with the key or with its parts no longer verifies (verification used the key's values and
+  ignored the edited fields).
+
+## Location, emissions
+
+* Time-zone aliases map to their own country. The table gave every `backward` alias the
+  country of the zone it links to, which is wrong whenever the link crosses a border:
+  `Iceland` was Ivory Coast (Africa/Abidjan), `Atlantic/Jan_Mayen` Germany,
+  `America/Coral_Harbour` Panama, `Africa/Asmera` Kenya, `Pacific/Truk` Papua New Guinea.
+  The builder now reads the `#=` annotation of the IANA `backward` file (the zone the alias
+  stood for before the merge), takes the target's country only when that target serves a
+  single country in `zone1970.tab`, and keeps a reviewed table (`tools/timezone_alias_countries.csv`)
+  for the remaining cross-border aliases; the generic zones `CET`, `EET`, `MET`, `WET`,
+  `EST`, `HST`, `MST` and the `*ST*DT` names resolve to no country. Rebuilt from tzdata 2026e.
+* `detect_location()` warns when `RMBL_LOCATION` names a location the table does not know
+  instead of silently moving on to the time zone.
+* `compute_footprint()` rejects a fractional `cores`.
+* The duplicate `GLOBAL` row (480 gCO2e/kWh from the Green Algorithms file) is gone from
+  the carbon-intensity table; `WORLD` (Ember, 458.29) is the world average. The documentation
+  no longer claims every row is from 2024 or 2025.
+
+## Air pollution and dispersion
+
+* `verify_pollution()` with no exposure data at all (no CSV, no demo, mean and prevalence
+  both zero) is an `"error"` report with exit status 2, not a clean run with zero deaths;
+  an exposure at or below the reference stays a valid run with zero attributable cases. The
+  input contract is enforced in the report rather than as raw R errors: a vector where a
+  single number is expected, a missing or negative `reference`, an unknown `outcome`, a
+  non-logical `demo`, a directory as `exposure_csv`. The report prints the population as
+  `1,000,000`, not `1e+06`. The vignette's failure demo fails again.
+* `advection_diffusion_2d()` refuses a run that would need more than 10,000 sub-steps per
+  step (`dt = 1e5` on the previous round's reproducer meant 7.8 million sub-steps, with the
+  warning deferred until the end) and a wind that overflowed the sub-step count to `NA`;
+  `c0` must be a non-negative numeric matrix (a vector gave a field of mass 0) and `source`
+  finite.
+* `briggs_plume_rise()` rejects temperatures below 150 K, which are Celsius values typed
+  where kelvin is expected (111 m of rise instead of 51).
+* `lagrangian_particles()` rejects a `grid` whose bounds are reversed or whose cell counts
+  are not whole (it gave a negative concentration).
+* `crf_pm25()` and `crf_no2()` take exactly one finite `reference_conc` (a vector recycled
+  against the exposures; `NA` gave `NA` risks). `attributable_fraction()` rejects a logical
+  relative risk. `mortality_displaced()` rejects a baseline rate above 1 (a per-100,000
+  figure passed where a per person-year rate is expected gave 23 million deaths from a
+  million people).
+* `plr_crossfit()` requires a whole `k_folds` (2.7 ran with 2) and numeric columns (a factor
+  outcome was analysed by its level codes).
+* `exposure_concentration_index()` refuses a factor or character income instead of ranking
+  level codes, and negative exposures; `pollution_burden_by_area()` requires numeric
+  exposure, population and baseline columns. The index's `n_quintiles` field, a constant
+  5, is gone, and the documentation says ties share their average rank.
+* `hurwitz_zeta()` takes one `q`.
+
+## Language models
+
+* In the automatic order, a local Ollama server that answers with no model pulled is
+  skipped with a message naming the route taken instead ("local Ollama at ... has no model
+  pulled; using the hosted MORIE tier"), so a prompt never leaves the machine silently.
+* A malformed `llm.json` is reported (once per change) and treated as empty, and no setting
+  is written over it: the next `config set` used to rewrite the file with only the new
+  value, deleting the saved keys and addresses.
+* A saved key belongs to the address it was saved with: `MORIE_LLM_BASE_URL=...` or
+  `OLLAMA_HOST=...` set for one call receives the environment's key or none, never the key
+  saved for another server (the `/api/tags` probe included).
+* `rmbl ask --model x --model y ...` is a usage error instead of sending "--model y" in the
+  prompt; `--route auto` takes the automatic order over a saved route; an invalid
+  `MORIE_LLM_ROUTE` is an error, not silently "auto".
+* `config set own.url` runs the same address check as use (a metadata or link-local address
+  is refused when saved); `ollama.url` must be http(s).
+* A key typed at a terminal prompt is not echoed (where `stty` exists), and the help no
+  longer suggests putting the key on the command line.
+* `rmbl data list` strips control characters from the manifest before printing.
+
+## Data validation, plots, reports
+
+* `apply_schema_validation()` accepts a rule list and runs it with `validate_rules()` under
+  the same stop-on-fatal contract; it used to ignore a rule list in its second argument and
+  report a pass, which is what the vignette told readers to do.
+* The French SIU resolver: a stripped boilerplate sentence ends its line, so a roster entry
+  after it on the same line ("... n'est pas divulgué. AI no 3 A participé") is counted
+  again; the 0.5.11 speed rewrite kept the sentence's terminator and lost those entries (an
+  unresolved report and a count of 1 instead of 3 on the two cases now pinned as tests).
+* Plot state is reset when a panel plot errors (the next plot's title showed as "A").
+  `plot_funnel()` requires one `area` label per point. An empty `frequency_table()` draws an
+  empty page with a title, and `plume_field()` requires increasing coordinates, with
+  messages of their own instead of errors from inside the palette or base graphics.
+* `yoy_pdf()` paginates on the rows that fit the page height after the title block, the page
+  label and the notes; a 24-inch page planned 98 rows where 88 fit and dropped the last rows.
+
+## Packaging
+
+* The rOpenSci `pkgcheck` workflow fails when pkgcheck does, and no longer asks for
+  `issues: write`.
+* Text corrections: 118 registered entry points (not 113); the ACVP PBKDF set is SHA2-224
+  only and does not cover PBKDF2-HMAC-SHA256; the plain path's speed advantage is three to
+  four times for decapsulation and seven to eleven for signing (not "about five"); a clean
+  ctgrind run is evidence for that binary on the inputs run, not a proof for every input;
+  the ChipWhisperer firmware is in the separate review archive, not in the package.
+
 # rmoriebricklayer 0.5.11
 
 ## Language models: set everything from the shell or R
@@ -118,8 +238,8 @@ number that tells them apart, and for the fixes below; this is both.
 ## Cryptography
 
 * Masked ML-KEM decapsulation left both shares of the decrypted message, the hash input
-  and K-bar on the dead stack after returning (the plain path guarded them); every share
-  pair is now wiped.
+  and K-bar on the dead stack after returning (the plain path guarded them); those share
+  pairs were wiped (the re-encryption and comparison shares were not: see 0.5.12).
 * Masked ML-DSA signing can be switched off: `capsule_sign(masked = FALSE)`,
   `fips_sign_mu(masked = FALSE)`, and the option `rmoriebricklayer.masked` sets the
   default for all three masked operations in a session (a chain or bundle signs many

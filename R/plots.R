@@ -118,6 +118,13 @@ bricklayer_plot_options <- function(...) {
   invisible(keys)
 }
 
+# an error inside a panel set must not leave the next single plot titled "A"
+.bl_panels_abort <- function() {
+  .bl_state$active <- FALSE
+  .bl_state$keys <- character()
+  invisible(NULL)
+}
+
 # the width of a string in inches on the open device, with a fallback before any
 # plot exists (0.55 of a character height per character)
 .bl_strwidth <- function(x, cex = 1, font = 1) {
@@ -368,6 +375,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
                       mar = c(4.2, 4.5, 3, 1))
   op2 <- .bl_panels_begin(length(what))
   on.exit(graphics::par(op2), add = TRUE)
+  on.exit(.bl_panels_abort(), add = TRUE)
   on.exit(graphics::par(op), add = TRUE)
   xs <- seq_len(nrow(x))
   for (i in seq_along(what)) {
@@ -595,6 +603,11 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_freq <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  if (!nrow(x)) {
+    graphics::plot.new()
+    graphics::title(main = if (is.null(main)) "Nothing to draw: no values" else main)
+    return(invisible(x))
+  }
   d <- as.data.frame(x)
   cols <- .bl_cols(nrow(d), col, if (is.null(palette) && is.null(col)) "sequential" else palette)
   if (is.null(col) && is.null(palette)) cols <- rev(cols)
@@ -815,6 +828,7 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
   op <- .bl_panels_begin(n)
   graphics::par(oma = c(1.4, 0, 2, 0))
   on.exit(graphics::par(op), add = TRUE)
+  on.exit(.bl_panels_abort(), add = TRUE)
   crf <- structure(p$crf, class = "rmbl_crf")
   d1 <- plot(crf, col = col, palette = palette, ...)
   burden <- structure(p$burden, class = "rmbl_burden")
@@ -872,6 +886,9 @@ plume_field <- function(q, u, h, x, y, z = 0, stability = "D", setting = "rural"
                         mixing_height = NULL, n_images = 3) {
   x <- .ad_num(x, "x", scalar = FALSE)
   y <- .ad_num(y, "y", scalar = FALSE)
+  if (is.unsorted(x, strictly = TRUE) || is.unsorted(y, strictly = TRUE)) {
+    stop("`x` and `y` must be strictly increasing receptor coordinates", call. = FALSE)
+  }
   z <- .ad_num(z, "z", min = 0)
   rc <- expand.grid(x = x, y = y)
   rc$z <- z
@@ -962,6 +979,7 @@ plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
   }
   op <- .bl_panels_begin(length(parts))
   on.exit(graphics::par(op), add = TRUE)
+  on.exit(.bl_panels_abort(), add = TRUE)
   out <- lapply(parts, function(p) plot(p, ..., main = main))
   attr(out, "panel_key") <- .bl_panels_end()
   invisible(out)
@@ -1020,6 +1038,9 @@ plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998)
   observed <- .rmbl_finite_input(observed, "observed", nonneg = TRUE, min_n = 1L)
   expected <- .rmbl_finite_input(expected, "expected", min_n = 1L)
   if (length(observed) != length(expected)) stop("`observed` and `expected` must be the same length", call. = FALSE)
+  if (!is.null(area) && length(area) != length(observed)) {
+    stop("`area` must have one label per point (recycling would mislabel the areas)", call. = FALSE)
+  }
   lim <- funnel_limits(sort(unique(expected)), target = target, levels = levels)
   ratio <- observed / expected
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)

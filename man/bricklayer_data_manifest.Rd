@@ -20,7 +20,9 @@ bricklayer_data_load(key, refresh = FALSE)
 \value{
 \code{bricklayer_data_manifest()}: a list;
 \code{bricklayer_data_tables()}: a data frame with \code{key},
-\code{name}, \code{rows} and \code{source};
+\code{name}, \code{rows} and \code{source} (class
+\code{bricklayer_data_tables}, which prints one left-aligned line per
+table, cut to the console width);
 \code{bricklayer_data_load()}: the table as a data frame.
 }
 \description{
