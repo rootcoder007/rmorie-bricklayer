@@ -349,3 +349,9 @@ test_that("verify_pollution wants one outcome name, not a vector or a number", {
     expect_match(r$error, "outcome must be a single outcome name", fixed = TRUE)
   }
 })
+
+test_that("the PAF confidence text is empty without limits and quotes them otherwise", {
+  expect_equal(rmoriebricklayer:::.pollution_paf_ci_text(NULL), "")
+  expect_equal(rmoriebricklayer:::.pollution_paf_ci_text(c(lower = 0.1234, upper = 0.2)),
+               "  (95% CI 0.1234 to 0.2000, from the risk's limits)")
+})
