@@ -329,7 +329,8 @@ hurwitz_zeta <- function(s, q = 1) {
 #      zeta(s, f) = 2 Gamma(t) / (2 pi)^t * sum_k cos(pi (2 k f - t / 2)) / k^t,
 #    which converges absolutely and fast; cospi() keeps the exact zeros (zeta(-2n) = 0).
 #  * -5 < s < 1: Hermite's integral at 1 <= q < 2,
-#      zeta(s, q) = q^-s / 2 + q^(1 - s) / (s - 1) + 2 int_0^Inf sin(s atan(t / q)) (q^2 + t^2)^(-s / 2) / (e^(2 pi t) - 1) dt,
+#      zeta(s, q) is q^-s / 2 plus q^(1 - s) / (s - 1) plus twice the integral over t from 0 to
+#      infinity of sin(s atan(t / q)) (q^2 + t^2)^(-s / 2) / (e^(2 pi t) - 1),
 #    whose integrand is smooth and small there.
 #  Any other q is moved into range first: up by zeta(s, q) = q^-s + zeta(s, q + 1), down by
 #  zeta(s, q) = zeta(s, f) - sum_{j < N} (f + j)^-s (the sum dominates, nothing cancels), and past
@@ -355,14 +356,17 @@ hurwitz_zeta <- function(s, q = 1) {
   }
   if (q >= max(40, 2 * abs(si))) return(.rmbl_hurwitz_em(si, q, 0))
   if (si <= -5) {
-    N <- ceiling(q) - 1; f <- q - N                    # 0 < f <= 1
+    N <- ceiling(q) - 1
+    f <- q - N                    # 0 < f <= 1
     return(.rmbl_hurwitz_fourier(si, f) - if (N > 0) sum((f + (seq_len(N) - 1))^(-si)) else 0)
   }
   if (q < 1) {                                         # step up into [1, 2)
-    n <- ceiling(1 - q); up <- q + (seq_len(n) - 1)
+    n <- ceiling(1 - q)
+    up <- q + (seq_len(n) - 1)
     return(sum(up^(-si)) + .rmbl_hurwitz_hermite(si, q + n))
   }
-  N <- floor(q) - 1; f <- q - N                        # 1 <= f < 2
+  N <- floor(q) - 1
+  f <- q - N                        # 1 <= f < 2
   .rmbl_hurwitz_hermite(si, f) - if (N > 0) sum((f + (seq_len(N) - 1))^(-si)) else 0
 }
 

@@ -353,7 +353,9 @@ test_that("knox_test(): observed and expected counts match a brute-force count o
   y <- stats::runif(n, 0, 2000)
   t <- sample(0:90, n, replace = TRUE)
   # a coincident pair and a same-day pair land in the first bands
-  x[2] <- x[1]; y[2] <- y[1]; t[2] <- t[1]
+  x[2] <- x[1]
+  y[2] <- y[1]
+  t[2] <- t[1]
   sb <- c(150, 300, 600)
   tb <- c(3, 10, 30)
   kn <- knox_test(x, y, t, sb, tb, nsim = 99, seed = 3, coords = "planar")

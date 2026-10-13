@@ -315,7 +315,9 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     # with the rest of Unicode's default-ignorable code points, which print as nothing and hide
     # text in a table name (U+00AD, U+034F, U+115F, U+3164, U+180E, U+FEFF, U+FFF9-FFFB, the tag
     # characters U+E0000-E007F; review of 02a38be)
-    gsub("(*UTF)[\\x{80}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}\\x{17b4}\\x{17b5}\\x{180b}-\\x{180f}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}\\x{2060}-\\x{206f}\\x{3164}\\x{fe00}-\\x{fe0f}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}\\x{e0000}-\\x{e0fff}]", "", x,
+    gsub(paste0("(*UTF)[\\x{80}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}\\x{17b4}\\x{17b5}",
+                "\\x{180b}-\\x{180f}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}\\x{2060}-\\x{206f}\\x{3164}",
+                "\\x{fe00}-\\x{fe0f}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}\\x{e0000}-\\x{e0fff}]"), "", x,
          perl = TRUE)
   }
   tables$key <- printable(tables$key)
