@@ -65,7 +65,8 @@ the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 per year. Without it a rate that converts to less than that is an assumption failure,
 because it is also what a rate per person-year passed as per 100,000 looks like (0.008
 per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
-small). The check is on the converted rate, so it holds whatever \code{baseline_rate_per} is.}
+small). The check is on the converted rate, so it holds whatever
+\code{baseline_rate_per} is.}
 
 \item{report}{A result of \code{verify_pollution()}.}
 }

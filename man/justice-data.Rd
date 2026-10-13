@@ -52,9 +52,11 @@ the nearest intersection). One occurrence has no location.}
 }
 }
 \examples{
-f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv", package = "rmoriebricklayer"))
+f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
+                          package = "rmoriebricklayer"))
 head(f)
-c <- read.csv(system.file("extdata", "ocj_courts.csv", package = "rmoriebricklayer"))
+c <- read.csv(system.file("extdata", "ocj_courts.csv",
+                          package = "rmoriebricklayer"))
 tapply(c$disposed, c$year, sum)
 }
 \seealso{

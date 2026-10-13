@@ -50,11 +50,13 @@
 
 \method{plot}{rmbl_disposition_mix}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_density}(x, ..., points = TRUE, main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_density}(x, ..., points = TRUE, main = NULL,
+  col = NULL, palette = NULL)
 
 \method{plot}{rmbl_knox}(x, ..., main = NULL, col = NULL, palette = NULL)
 
-\method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL, main = NULL, col = NULL, palette = NULL)
+\method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
+  main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_stock_flow}(
   x,
