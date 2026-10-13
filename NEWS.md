@@ -4,6 +4,20 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## A new look for every plot
+
+* **One theme across all 33 plot methods.** The plot region is a tinted panel crossed by white
+  major and minor grid lines (`bricklayer_plot_options(panel = )`, `NA` for none), with no box and
+  softer axes. Intervals are translucent bands with haloed points; lines carry a soft fill to the
+  axis and a labelled, emphasised last value; bars sit on the panel with a sheen along the
+  leading edge and their value at the end; the sequential palette runs deeper for fields and
+  heatmaps. Drift calibration draws each column's false-alarm rate with its exact interval over
+  the splits (an all-zero result drew an empty frame). Axis titles, row notes and panel keys
+  shrink and wrap to fit; labels that fit are not cut.
+* **Every plot is in the examples.** `?plot-methods` draws every class, the courts and crime
+  plots on the shipped data included, and `vignette("plotting-results")` gains a courts and crime
+  section.
+
 ## Small bases compute
 
 * **`yoy()` and `rate_change()` report every percent change.** A small base no longer withholds

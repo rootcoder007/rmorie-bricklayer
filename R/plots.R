@@ -23,7 +23,9 @@
 #' @param n Number of colours; the categorical palettes recycle, the
 #'   sequential and diverging ones interpolate.
 #' @param ... For \code{bricklayer_plot_options()}, named options to set
-#'   (\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg});
+#'   (\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg},
+#'   \code{panel}: the plot region's fill behind white grid lines, \code{NA}
+#'   for none);
 #'   none to read the current values.
 #' @return \code{bricklayer_palette()}: a character vector of colours.
 #'   \code{bricklayer_plot_options()}: the options in force, invisibly when
@@ -39,7 +41,7 @@ bricklayer_palette <- function(name = c("okabe", "diverging", "sequential", "gre
   base <- switch(name,
     okabe = c("#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"),
     diverging = c("#2166AC", "#8C8C8C", "#D6604D"),
-    sequential = c("#DEEBF7", "#9ECAE1", "#4292C6", "#08519C"),
+    sequential = c("#C6DBEF", "#6BAED6", "#2171B5", "#08306B", "#041E42"),
     grey = c("#252525", "#636363", "#969696", "#BDBDBD", "#D9D9D9"))
   if (is.null(n)) return(base)
   n <- as.integer(n)[1L]
@@ -66,7 +68,7 @@ bricklayer_plot_options <- function(...) {
 }
 
 .bl_plot_opts <- function() {
-  d <- list(palette = "okabe", grid = TRUE, cex = 1, las = 1, bg = "white")
+  d <- list(palette = "okabe", grid = TRUE, cex = 1, las = 1, bg = "white", panel = "#EEF1F6")
   o <- getOption("rmoriebricklayer.plot")
   if (is.list(o)) d[names(o)] <- o
   d
@@ -78,18 +80,119 @@ bricklayer_plot_options <- function(...) {
   bricklayer_palette(if (is.null(palette)) .bl_plot_opts()$palette else palette, n)
 }
 
-# a horizontal reference grid behind the data, when the option says so
+# The panel behind the data: the plot region filled with the session's panel colour and crossed
+# by white grid lines, major ones along `side` (the axis values are read against) and fainter
+# ones across, with minor lines halfway between. A method that has already drawn its bars
+# (.bl_barplot) drew the panel first, and the call that follows is skipped.
 .bl_grid <- function(grid = NULL, side = "y") {
-  on <- if (is.null(grid)) .bl_plot_opts()$grid else isTRUE(grid)
-  if (on) graphics::grid(nx = if (side == "y") NA else NULL, ny = if (side == "y") NULL else NA,
-                         col = "#DDDDDD", lty = 1)
+  if (isTRUE(.bl_state$panel_done)) {
+    .bl_state$panel_done <- FALSE
+    return(invisible(TRUE))
+  }
+  o <- .bl_plot_opts()
+  on <- if (is.null(grid)) o$grid else isTRUE(grid)
+  usr <- graphics::par("usr")
+  fill <- o$panel %||% NA
+  if (!is.na(fill)) graphics::rect(usr[1L], usr[3L], usr[2L], usr[4L], col = fill, border = NA)
+  if (on) {
+    line <- if (is.na(fill)) "#DDDDDD" else "white"
+    xt <- graphics::axTicks(1L)
+    yt <- graphics::axTicks(2L)
+    half <- function(t) if (length(t) > 1L) t[-1L] - diff(t) / 2 else numeric()
+    if (side == "y") {
+      graphics::abline(h = half(yt), col = line, lwd = 0.6)
+      graphics::abline(h = yt, col = line, lwd = 1.4)
+      graphics::abline(v = xt, col = line, lwd = 0.6)
+    } else {
+      graphics::abline(v = half(xt), col = line, lwd = 0.6)
+      graphics::abline(v = xt, col = line, lwd = 1.4)
+      graphics::abline(h = yt, col = line, lwd = 0.6)
+    }
+  }
   invisible(on)
+}
+
+# Bars on the panel, not under it: the frame is set up with invisible bars, the panel drawn,
+# then the bars, each with a soft highlight along its leading edge and its value at its end
+# (when there are few enough bars to label). Takes barplot()'s arguments; returns the midpoints.
+.bl_barplot <- function(height, ..., col = NULL, horiz = FALSE, labels = TRUE) {
+  args <- list(...)
+  args$border <- NULL
+  h <- as.numeric(height)
+  # room past the longest bar for its value
+  lim <- if (horiz) "xlim" else "ylim"
+  if (is.null(args[[lim]]) && any(is.finite(h))) {
+    r <- range(c(0, h), finite = TRUE)
+    args[[lim]] <- r + c(-1, 1) * 0.14 * diff(r) * c(any(h < 0), 1)
+  }
+  first <- utils::modifyList(args, list(col = NA, border = NA, axes = FALSE, axisnames = FALSE, horiz = horiz))
+  do.call(graphics::barplot, c(list(height), first))
+  .bl_grid(NULL, side = if (horiz) "x" else "y")
+  .bl_state$panel_done <- TRUE
+  mids <- do.call(graphics::barplot, c(list(height), utils::modifyList(args, list(col = col, border = NA,
+                                                                                   horiz = horiz, add = TRUE))))
+  w <- 0.5 * (args$width %||% 1)
+  ok <- is.finite(h) & h != 0
+  # the sheen: a white band fading out across the first third of each bar
+  for (k in 1:16) {
+    a <- 0.022 * (17 - k) / 4
+    f0 <- (k - 1) / 40
+    f1 <- k / 40
+    if (horiz) {
+      graphics::rect(0, mids[ok] + w - 2 * w * f1, h[ok], mids[ok] + w - 2 * w * f0,
+                     col = grDevices::adjustcolor("white", a), border = NA)
+    } else {
+      graphics::rect(mids[ok] - w + 2 * w * f0, 0, mids[ok] - w + 2 * w * f1, h[ok],
+                     col = grDevices::adjustcolor("white", a), border = NA)
+    }
+  }
+  if (isTRUE(labels) && length(h) <= 25L) {
+    say <- is.finite(h)
+    txt <- trimws(formatC(h[say], digits = 3, format = "fg", big.mark = ","))
+    if (horiz) {
+      graphics::text(h[say], mids[say], txt, pos = ifelse(h[say] < 0, 2, 4), cex = 0.75, col = "#3D4350", xpd = NA)
+    } else {
+      graphics::text(mids[say], h[say], txt, pos = ifelse(h[say] < 0, 1, 3), cex = 0.75, col = "#3D4350", xpd = NA)
+    }
+  }
+  invisible(mids)
+}
+
+# A series drawn as a line over a soft fill down to the axis, with haloed points and its last
+# value emphasised and labelled.
+.bl_line <- function(x, y, col, fill = TRUE, label = TRUE, points = TRUE) {
+  ok <- is.finite(x) & is.finite(y)
+  x <- x[ok]
+  y <- y[ok]
+  if (!length(x)) return(invisible(NULL))
+  usr <- graphics::par("usr")
+  base <- max(usr[3L], min(0, usr[4L]))
+  if (fill && length(x) > 1L) {
+    graphics::polygon(c(x[1L], x, x[length(x)]), c(base, y, base), col = grDevices::adjustcolor(col, 0.16),
+                      border = NA)
+  }
+  graphics::lines(x, y, col = grDevices::adjustcolor(col, 0.25), lwd = 6)
+  graphics::lines(x, y, col = col, lwd = 2.4)
+  n <- length(x)
+  # a dense curve (a concentration curve over every person) is drawn as a line: haloed points
+  # that close together merge into a white band
+  if (points && n <= 30L) {
+    graphics::points(x, y, pch = 21, bg = col, col = "white", lwd = 1.5, cex = 1.3)
+    graphics::points(x[n], y[n], pch = 21, bg = col, col = "white", lwd = 2, cex = 2)
+  }
+  if (points && n > 30L) graphics::points(x[n], y[n], pch = 21, bg = col, col = "white", lwd = 2, cex = 2)
+  if (label) {
+    graphics::text(x[n], y[n], trimws(formatC(y[n], digits = 3, format = "fg", big.mark = ",")), pos = 3, offset = 0.7,
+                   cex = 0.8, font = 2, col = col, xpd = NA)
+  }
+  invisible(NULL)
 }
 
 .bl_par <- function(y = NULL, labels = NULL) {
   o <- .bl_plot_opts()
   left <- if (is.null(y) && is.null(labels)) 4.5 else .bl_left_margin(y, labels)
-  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg, mar = .bl_safe_mar(c(4.2, left, 3, 1), o$cex))
+  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg, mar = .bl_safe_mar(c(4.2, left, 3, 1), o$cex),
+                      bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0), col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   op
 }
 
@@ -108,7 +211,8 @@ bricklayer_plot_options <- function(...) {
   .bl_state$n <- n
   .bl_state$next_letter <- 1L
   .bl_state$keys <- character()
-  graphics::par(mfrow = .bl_panel_grid(n), oma = c(2.4, 0, 0, 0))
+  graphics::par(mfrow = .bl_panel_grid(n), oma = c(2.4, 0, 0, 0),
+                bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0), col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
 }
 
 # Rows and columns for n panels on the device as it is: always one row squeezed four panels into
@@ -297,7 +401,7 @@ bricklayer_plot_options <- function(...) {
     if (length(lines) == 1L || length(lines) * step <= room - 0.2) break
   }
   for (i in seq_along(lines)) {
-    graphics::mtext(lines[i], side = 1, outer = TRUE, line = (i - 1) * step, cex = cex, adj = 0)
+    graphics::mtext(lines[i], side = 1, outer = TRUE, line = (i - 1) * step, cex = cex, adj = 0, col = "#3D4350")
   }
   invisible(lines)
 }
@@ -411,8 +515,11 @@ bricklayer_plot_options <- function(...) {
   .bl_grid(NULL, side = "x")
   if (!is.null(ref)) graphics::abline(v = ref, col = "#8C8C8C", lty = 2)
   ok <- is.finite(lower) & is.finite(upper)
-  graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 2)
-  graphics::points(est, seq_len(n), pch = 19, col = cols, cex = 1.2)
+  cols <- rep_len(cols, n)
+  graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok],
+                     col = grDevices::adjustcolor(cols[ok], 0.28), lwd = 9, lend = 1)
+  graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 1.6, lend = 1)
+  graphics::points(est, seq_len(n), pch = 21, bg = cols, col = "white", lwd = 1.6, cex = 1.7)
   graphics::axis(2, at = seq_len(n), labels = label, tick = FALSE, cex.axis = 0.85)
   # a row with no estimate says why (a suppressed percentage, the first period), so an empty
   # row never reads as a missing drawing
@@ -610,7 +717,7 @@ bricklayer_plot_options <- function(...) {
 #' set.seed(1)
 #' dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
 #' plot(capsule_drift(dd, transform(dd, a = a + 3)))
-#' plot(drift_calibrate(dd, n = 3L))
+#' plot(drift_calibrate(dd, n = 20L))
 #' # describing a table
 #' plot(frequency_table(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
 #' plot(missingness_pattern(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
@@ -665,8 +772,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
     .bl_ylab(labs[[what[i]]])
     .bl_title(.bl_main(main, labs[[what[i]]]))
     .bl_grid(NULL)
-    graphics::lines(xs, v, col = cols[i], lwd = 2)
-    graphics::points(xs, v, pch = 19, col = cols[i], cex = 1.2)
+    .bl_line(xs, v, cols[i])
     graphics::axis(1, at = xs, labels = x$period)
   }
   key <- .bl_panels_end()
@@ -726,13 +832,11 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
       gc <- .bl_cols(length(unique(g)), col, palette)
       for (k in seq_along(unique(g))) {
         idx <- g == unique(g)[k]
-        graphics::lines(xs[idx], d$value[idx], col = gc[k], lwd = 2)
-        graphics::points(xs[idx], d$value[idx], col = gc[k], pch = 19)
+        .bl_line(xs[idx], d$value[idx], gc[k], fill = FALSE)
       }
       graphics::legend("topleft", legend = unique(g), col = gc, lwd = 2, bty = "n", cex = 0.8)
     } else {
-      graphics::lines(xs, d$value, col = pal[1L], lwd = 2)
-      graphics::points(xs, d$value, col = pal[1L], pch = 19)
+      .bl_line(xs, d$value, pal[1L])
     }
     graphics::axis(1, at = xs, labels = label, cex.axis = 0.8)
     invisible(data.frame(label = label, value = d$value, stringsAsFactors = FALSE))
@@ -805,8 +909,7 @@ plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette 
   .bl_ylab("Statistic")
   .bl_xlab("Cap applied to the open band")
   .bl_grid(NULL)
-  graphics::lines(d$cap, d$value, col = cols, lwd = 2)
-  graphics::points(d$cap, d$value, col = cols, pch = 19)
+  .bl_line(d$cap, d$value, cols, fill = FALSE)
   invisible(d[c("cap", "value")])
 }
 
@@ -814,19 +917,24 @@ plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette 
 #' @export
 plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   d <- x$columns
-  cols <- .bl_cols(1, col, palette)
-  op <- .bl_par(d$false_alarm_rate)
-  on.exit(graphics::par(op), add = TRUE)
-  bp <- graphics::barplot(d$false_alarm_rate, names.arg = d$column, col = cols, border = NA,
-                          ylab = "", ylim = c(0, max(c(d$false_alarm_rate, x$alpha * 2), na.rm = TRUE)),
-                          main = if (is.null(main)) sprintf("Drift false alarms over %d random splits", x$n) else main,
-                          ...)
-  # each rate printed over its bar: a rate of 0 (the test never cried wolf) drew no bar at all
-  graphics::text(bp, d$false_alarm_rate, sprintf("%.3g", d$false_alarm_rate), pos = 3, cex = 0.85, xpd = NA)
-  .bl_ylab("False-alarm rate")
-  .bl_grid(NULL)
-  graphics::abline(h = x$alpha, col = "#8C8C8C", lty = 2)
-  invisible(d)
+  # each column's false-alarm rate with its exact (Clopper-Pearson) interval over the splits, and
+  # the rate at which any column flagged: bars of height 0 (no false alarm in 3 splits) drew an
+  # empty frame, though "0 of 3" still allows a rate up to 0.71
+  lab <- c(d$column, "any column")
+  rate <- c(d$false_alarm_rate, x$any_flag)
+  k <- round(rate * x$n)
+  ci <- t(vapply(k, function(ki) stats::binom.test(ki, x$n)$conf.int, numeric(2)))
+  pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
+  cols <- ifelse(ci[, 1L] > x$alpha, pal[1L], pal[3L])
+  cols[length(cols)] <- "#4D4D4D"
+  if (!is.null(col)) cols <- rep_len(col, length(lab))
+  lab <- sprintf("%s (%d of %d)", lab, k, x$n)
+  .bl_dot_interval(lab, rate, ci[, 1L], ci[, 2L],
+                   .bl_main(main, sprintf("Drift false alarms over %d random splits", x$n)),
+                   sprintf("False-alarm rate, with exact interval (dashed: alpha %g)", x$alpha),
+                   cols, ref = x$alpha, ...)
+  invisible(data.frame(column = c(d$column, "any column"), false_alarm_rate = rate, lower = ci[, 1L],
+                       upper = ci[, 2L], stringsAsFactors = FALSE))
 }
 
 #' @rdname plot-methods
@@ -839,7 +947,7 @@ plot.bricklayer_drift <- function(x, ..., main = NULL, col = NULL, palette = NUL
   op <- .bl_par(d$psi)
   on.exit(graphics::par(op), add = TRUE)
   psi <- ifelse(is.finite(d$psi), d$psi, 0)
-  graphics::barplot(psi, names.arg = d$column, col = cols, border = NA,
+  .bl_barplot(psi, names.arg = d$column, col = cols, border = NA,
                     ylab = "",
                     main = "",
                     ...)
@@ -857,7 +965,7 @@ plot.bricklayer_benford <- function(x, ..., main = NULL, col = NULL, palette = N
   on.exit(graphics::par(op), add = TRUE)
   obs <- as.numeric(x$proportion)
   exp_ <- as.numeric(x$expected) / x$n
-  mids <- graphics::barplot(obs, names.arg = 1:9, col = cols[1L], border = NA,
+  mids <- .bl_barplot(obs, names.arg = 1:9, col = cols[1L], border = NA, labels = FALSE,
                             ylim = c(0, max(c(obs, exp_), na.rm = TRUE) * 1.15),
                             xlab = "First digit", ylab = "",
                             main = "",
@@ -865,8 +973,7 @@ plot.bricklayer_benford <- function(x, ..., main = NULL, col = NULL, palette = N
   .bl_ylab("Proportion")
   .bl_title(.bl_main(main, sprintf("First digits against Benford (p = %.3g)", x$p_value)))
   .bl_grid(NULL)
-  graphics::lines(mids, exp_, col = cols[2L], lwd = 2)
-  graphics::points(mids, exp_, col = cols[2L], pch = 19)
+  .bl_line(mids, exp_, cols[2L], fill = FALSE, label = FALSE)
   graphics::legend("topright", legend = c("observed", "Benford"), fill = c(cols[1L], NA),
                    border = NA, col = c(NA, cols[2L]), lwd = c(NA, 2), bty = "n", cex = 0.8)
   invisible(data.frame(digit = 1:9, observed = obs, expected = exp_))
@@ -886,8 +993,7 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
   .bl_xlab("Injected effect size")
   .bl_grid(NULL)
   graphics::abline(h = c(x$alpha, 0.8), col = "#8C8C8C", lty = 2)
-  graphics::lines(d$size, d$rate, col = cols, lwd = 2)
-  graphics::points(d$size, d$rate, col = cols, pch = 19)
+  .bl_line(d$size, d$rate, cols)
   invisible(d)
 }
 
@@ -909,10 +1015,11 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
   fit <- .bl_label_fit(labels)
   labels <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)))
+                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)), bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
+                      col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
-  graphics::barplot(rev(values), names.arg = rev(labels), horiz = TRUE, col = rev(cols),
-                    border = NA, xlab = xlab, main = main, ...)
+  .bl_barplot(rev(values), names.arg = rev(labels), horiz = TRUE, col = rev(cols),
+              border = NA, xlab = xlab, main = main, ...)
   .bl_grid(NULL, side = "x")
   invisible(NULL)
 }
@@ -972,7 +1079,10 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   .bl_ylab("Mahalanobis distance")
   .bl_title(.bl_main(main, sprintf("Outliers: %d of %d rows", sum(d$outlier, na.rm = TRUE), nrow(d))))
   .bl_grid(NULL)
-  graphics::points(d$row, d$distance, col = cols, pch = ifelse(!is.na(d$outlier) & d$outlier, 17, 19))
+  out <- !is.na(d$outlier) & d$outlier
+  graphics::points(d$row, d$distance, pch = 21, bg = grDevices::adjustcolor(cols, 0.75), col = "white", lwd = 1,
+                   cex = ifelse(out, 2, 1.1))
+  if (any(out)) graphics::text(d$row[out], d$distance[out], d$row[out], pos = 4, cex = 0.8, font = 2, col = cols[out])
   invisible(d[c("row", "distance", "outlier")])
 }
 
@@ -983,10 +1093,11 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   fit <- .bl_label_fit(label)
   label <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)))
+                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)), bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
+                      col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
-  graphics::barplot(rev(ifelse(is.na(r), 0, r)), names.arg = rev(label), horiz = TRUE, col = rev(cols),
-                    border = NA, xlim = c(-1, 1), xlab = "Correlation", main = main, ...)
+  .bl_barplot(rev(ifelse(is.na(r), 0, r)), names.arg = rev(label), horiz = TRUE, col = rev(cols),
+              border = NA, xlim = c(-1, 1), xlab = "Correlation", main = main, ...)
   .bl_grid(NULL, side = "x")
   graphics::abline(v = 0, col = "#8C8C8C")
   invisible(NULL)
@@ -1027,10 +1138,12 @@ plot.bricklayer_falsification <- function(x, ..., main = NULL, col = NULL, palet
     graphics::title(main = if (is.null(main)) "No finite permutation statistics" else main)
     return(invisible(data.frame(statistic = numeric(0))))
   }
-  graphics::hist(null, breaks = "FD", col = cols[1L], border = "white",
-                 xlim = range(c(null, x$observed), finite = TRUE), xlab = "",
-                 main = "",
-                 ...)
+  h <- graphics::hist(null, breaks = "FD", plot = FALSE)
+  graphics::plot(h, col = NA, border = NA, xlim = range(c(null, x$observed), finite = TRUE), xlab = "",
+                 main = "", ...)
+  .bl_grid(NULL)
+  .bl_state$panel_done <- TRUE
+  graphics::rect(h$breaks[-length(h$breaks)], 0, h$breaks[-1L], h$counts, col = cols[1L], border = "white")
   .bl_xlab("Statistic under permutation")
   .bl_title(.bl_main(main, sprintf("Permutation null (n = %d) and the observed value", length(null))))
   .bl_grid(NULL)
@@ -1088,8 +1201,11 @@ plot.rmbl_crf <- function(x, ..., exposure = NULL, main = NULL, col = NULL, pale
                                                x$extra$outcome %||% "")))
   .bl_grid(NULL)
   graphics::abline(v = x$reference_conc, col = "#8C8C8C", lty = 2)
-  graphics::lines(d$exposure, d$rr, col = cols[1L], lwd = 2)
-  graphics::points(x$exposure_conc, x$rr, col = cols[2L], pch = 19, cex = 1.3)
+  .bl_line(d$exposure, d$rr, cols[1L], label = FALSE, points = FALSE)
+  graphics::points(x$exposure_conc, x$rr, pch = 21, bg = cols[2L], col = "white", lwd = 2, cex = 2)
+  # under the point, where the rising curve leaves room in any panel width
+  graphics::text(x$exposure_conc, x$rr, sprintf("RR %.3f", x$rr), pos = 1, offset = 0.9, cex = 0.8, font = 2,
+                 col = cols[2L])
   invisible(d)
 }
 
@@ -1101,7 +1217,7 @@ plot.rmbl_burden <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   on.exit(graphics::par(op), add = TRUE)
   vals <- c(baseline = x$baseline_cases, attributable = x$attributable_cases)
   unit <- x$extra$unit %||% "cases"
-  graphics::barplot(vals, col = cols, border = NA, ylab = "",
+  .bl_barplot(vals, col = cols, border = NA, ylab = "",
                     main = "",
                     ...)
   .bl_ylab(paste("Annual", unit))
@@ -1128,7 +1244,7 @@ plot.rmbl_equity <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .bl_title(.bl_main(main, sprintf("Concentration curve (index %.3f)", x$concentration_index)))
   .bl_grid(NULL)
   graphics::abline(0, 1, col = "#8C8C8C", lty = 2)
-  graphics::lines(c(0, cv$population), c(0, cv$exposure), col = cols, lwd = 2)
+  .bl_line(c(0, cv$population), c(0, cv$exposure), cols, label = FALSE)
   invisible(cv)
 }
 
@@ -1165,7 +1281,7 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
   d2 <- plot(burden, col = col, palette = palette, ...)
   if (n == 3L) plot(structure(p$equity, class = "rmbl_equity"), col = col, palette = palette, ...)
   graphics::mtext(if (is.null(main)) sprintf("%s, %s", toupper(x$pollutant), gsub("_", " ", x$outcome)) else main,
-                  outer = TRUE, cex = 1.1, font = 2)
+                  outer = TRUE, cex = 1.1, font = 2, col = "#1F2430")
   key <- .bl_panels_end()
   invisible(list(crf = d1, burden = d2, panel_key = key))
 }
@@ -1205,8 +1321,8 @@ plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL)
                                      x$cpu_time_s %||% 0), cex = 0.85, col = "#555555")
     return(invisible(data.frame(quantity = names(comp), value = unname(comp), unit = "g", stringsAsFactors = FALSE)))
   }
-  graphics::barplot(vals, horiz = TRUE, col = cols[seq_along(vals)], border = NA, names.arg = names(vals),
-                    xlab = "", main = "", ...)
+  .bl_barplot(vals, horiz = TRUE, col = cols[seq_along(vals)], border = NA, names.arg = names(vals),
+              xlab = "", main = "", ...)
   .bl_title(title)
   .bl_xlab(sprintf("%s CO2e", unit))
   .bl_grid(NULL, side = "x")
@@ -1321,8 +1437,9 @@ plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NUL
   .bl_title(.bl_main(main, sprintf("Trend: rate ratio %.3f per period (%.3f to %.3f)",
                                                x$rate_ratio, x$lower, x$upper)))
   .bl_grid(NULL)
-  graphics::points(d$x, d$y, pch = 19, col = cols[1L])
-  graphics::lines(d$x, x$fitted, col = cols[2L], lwd = 2)
+  graphics::lines(d$x, x$fitted, col = grDevices::adjustcolor(cols[2L], 0.25), lwd = 7)
+  graphics::lines(d$x, x$fitted, col = cols[2L], lwd = 2.4)
+  graphics::points(d$x, d$y, pch = 21, bg = cols[1L], col = "white", lwd = 1.5, cex = 1.5)
   invisible(data.frame(x = d$x, y = d$y, fitted = x$fitted))
 }
 
@@ -1397,7 +1514,7 @@ plot_lorenz <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .bl_title(.bl_main(main, if (is.na(g)) "Lorenz curve" else sprintf("Lorenz curve (Gini %.3f)", g)))
   .bl_grid(NULL)
   graphics::abline(0, 1, col = "#8C8C8C", lty = 2)
-  graphics::lines(d$population, d$value, col = cols, lwd = 2)
+  .bl_line(d$population, d$value, cols, label = FALSE, points = FALSE)
   invisible(d)
 }
 
@@ -1441,7 +1558,7 @@ plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998)
     graphics::lines(l$expected, l$lower, col = "#8C8C8C", lty = if (lv == max(lim$level)) 1 else 2)
     graphics::lines(l$expected, l$upper, col = "#8C8C8C", lty = if (lv == max(lim$level)) 1 else 2)
   }
-  graphics::points(expected, ratio, pch = 19, col = cols)
+  graphics::points(expected, ratio, pch = 21, bg = cols, col = "white", lwd = 1.2, cex = 1.4)
   if (!is.null(area) && any(out)) {
     graphics::text(expected[out], ratio[out], labels = as.character(area)[out], pos = 3, cex = 0.75)
   }
