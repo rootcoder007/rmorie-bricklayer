@@ -381,7 +381,7 @@ bricklayer_plot_options <- function(...) {
 }
 
 # dots with an interval per row: the chart most of the tabular results want
-.bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, ...) {
+.bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, note = NULL, ...) {
   n <- length(est)
   op <- .bl_par(labels = label)
   on.exit(graphics::par(op), add = TRUE)
@@ -399,6 +399,15 @@ bricklayer_plot_options <- function(...) {
   graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 2)
   graphics::points(est, seq_len(n), pch = 19, col = cols, cex = 1.2)
   graphics::axis(2, at = seq_len(n), labels = label, tick = FALSE, cex.axis = 0.85)
+  # a row with no estimate says why (a suppressed percentage, the first period), so an empty
+  # row never reads as a missing drawing
+  if (!is.null(note)) {
+    say <- !is.finite(est) & !is.na(note) & nzchar(note)
+    if (any(say)) {
+      graphics::text(if (is.null(ref)) mean(rng) else ref, seq_len(n)[say], note[say], col = "#6E6E6E",
+                     cex = 0.8, font = 3)
+    }
+  }
   invisible(NULL)
 }
 
@@ -484,6 +493,11 @@ bricklayer_plot_options <- function(...) {
 #'     incidents as a heat map, with the highest-density regions outlined.}
 #'   \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
 #'     distance-by-time cell, coloured on a log scale around 1.}
+#'   \item{\code{rmbl_clearance_decomposition}}{(\code{\link{clearance_decomposition}})
+#'     the parts' rates in both comparisons with the aggregate on top, where the
+#'     workload moved (coloured by whether a part clears above or below the
+#'     average), and the change as a waterfall of rate and mix effects: the
+#'     pictures that show a Simpson's-paradox reversal and why it happened.}
 #' }
 #'
 #' @param x The result.
@@ -498,7 +512,9 @@ bricklayer_plot_options <- function(...) {
 #'   each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
 #'   \code{"days"}, \code{"flow_rate"}, \code{"stock_rate"}. For
 #'   \code{rmbl_yoy}, \code{"pct_change"} or \code{"value"}. For
-#'   \code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}.
+#'   \code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}; for
+#'   \code{rmbl_clearance_decomposition}, any of \code{"rates"}, \code{"mix"} and
+#'   \code{"effects"} (the default fits the device).
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
@@ -575,9 +591,12 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
                  ifelse(verdict %in% c("worse", "down"), pal[1L], pal[2L]))
   if (!is.null(col)) cols <- rep_len(col, nrow(d))
   if (what == "pct_change") {
+    why <- ifelse(is.na(d$previous), "first period: nothing to compare with",
+                  ifelse(!is.na(d$flag) & nzchar(as.character(d$flag)),
+                         paste("no percentage:", as.character(d$flag)), "no percentage"))
     .bl_dot_interval(label, d$pct_change, d$pct_lower, d$pct_upper,
                      if (is.null(main)) "Period-over-period change (%)" else main,
-                     "Percent change, with interval", cols, ref = 0, ...)
+                     "Percent change, with interval", cols, ref = 0, note = why, ...)
     invisible(data.frame(label = label, pct_change = d$pct_change, lower = d$pct_lower,
                          upper = d$pct_upper, verdict = verdict, stringsAsFactors = FALSE))
   } else {

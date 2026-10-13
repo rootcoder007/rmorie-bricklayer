@@ -313,10 +313,13 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
     ty <- withr::local_tempfile(fileext = ".typescript")
     cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s %s > /dev/null 2>&1",
                    shQuote(paste("sh", shQuote(launcher), args)), shQuote(ty))
-    # R CMD check sets R_TESTS=startup.Rs for the test run; the launcher's Rscript inherited it,
-    # failed to source it and exited 1 before the prompt (every Linux CI leg, fc5ccfc)
+    # R CMD check sets R_TESTS=startup.Rs for the test run, which the launcher's Rscript inherited
+    # and failed to source; and --as-cran puts a decoy `Rscript` first on PATH that refuses to run
+    # ("should not be used without a path"), so the launcher starts this R's own (every Linux CI
+    # leg, fc5ccfc and d6f3616; the transcript showed the second)
     st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":"),
-                               R_TESTS = NA),
+                               R_TESTS = NA,
+                               PATH = paste(R.home("bin"), Sys.getenv("PATH"), sep = .Platform$path.sep)),
                              system(cmd))
     seen <- if (file.exists(ty)) utils::tail(gsub("\r", "", readLines(ty, warn = FALSE)), 15L) else "(no transcript)"
     expect_identical(as.integer(st), 130L, info = paste(c(args, seen), collapse = "\n"))

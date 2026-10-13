@@ -615,7 +615,11 @@ test_that("clearance_decomposition(): the plot adapts to the device and draws wh
   for (sz in list(c(3.5, 3), c(5, 4), c(9, 5))) {
     grDevices::pdf(NULL, width = sz[1], height = sz[2])
     expect_no_warning(drawn <- plot(cd))
-    expect_equal(drawn$rate_b, cd$groups$rate_b)
+    # drawn in order of rate (lowest at the bottom); the same parts, the same values
+    expect_equal(drawn$rate_b[match(cd$groups$group, drawn$group)], cd$groups$rate_b)
+    expect_identical(drawn$group, drawn$group[order((drawn$rate_a + drawn$rate_b) / 2)])
+    expect_no_warning(plot(cd, what = "mix"))
+    expect_no_warning(plot(cd, what = c("rates", "mix", "effects")))
     expect_no_warning(plot(cd, what = "effects", main = "Effects"))
     expect_no_warning(plot(cd, what = "rates", main = "Rates"))
     expect_no_warning(plot(cd, what = c("rates", "effects")))
@@ -659,4 +663,56 @@ test_that("a subset of a case-flow or life-table result prints as a plain table"
   expect_output(print(cf[2:3, c("period", "clearance")]), "clearance")
   lt <- life_table(c(0, 1, 2), c(3, 4))
   expect_output(print(lt[1, c("lower", "survival")]), "survival")
+})
+
+
+test_that("clearance_decomposition(): many parts are drawn as the ones that moved it most, the rest summed", {
+  c <- ext("ocj_courts.csv")
+  c <- stats::aggregate(cbind(received, disposed) ~ year + court_series, c, sum)
+  c <- c[c$year %in% c(2012, 2024), ]
+  c <- c[c$court_series %in% names(which(table(c$court_series) == 2)), ]
+  cc <- clearance_decomposition(c$disposed, c$received, c$court_series, c$year)
+  grDevices::pdf(NULL, width = 12, height = 5.5)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  drawn <- plot(cc, max_parts = 10)
+  expect_identical(nrow(drawn), 10L)
+  other <- drawn[grepl("^Other parts", drawn$group), ]
+  expect_identical(other$group, sprintf("Other parts (%d)", nrow(cc$groups) - 9L))
+  # the summed row's rate comes from the summed counts, not an average of rates
+  rest <- cc$groups[!cc$groups$group %in% drawn$group, ]
+  expect_equal(other$rate_a, sum(rest$numerator_a) / sum(rest$denominator_a))
+  expect_equal(other$rate_effect, sum(rest$rate_effect))
+  # the shown parts are the ones with the largest contributions
+  kept <- setdiff(drawn$group, other$group)
+  big <- cc$groups$group[order(-(abs(cc$groups$rate_effect) + abs(cc$groups$mix_effect)))][1:9]
+  expect_setequal(kept, big)
+  # a small device shows fewer parts than max_parts asks for
+  grDevices::pdf(NULL, width = 3.5, height = 3)
+  small <- plot(cc)
+  grDevices::dev.off()
+  expect_lt(nrow(small), 20L)
+  expect_error(plot(cc, max_parts = 1), "at least 2")
+})
+
+test_that("row labels shrink before they are cut, and are cut only past the room", {
+  grDevices::pdf(NULL, width = 3.5, height = 3)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  f <- rmoriebricklayer:::.jx_row_labels(c("Crimes Against the Person", "Federal Statute"), 30)
+  expect_identical(f$labels, c("Crimes Against the Person", "Federal Statute"))
+  expect_lt(f$cex, 1)
+  g <- rmoriebricklayer:::.jx_row_labels(c(strrep("verylongword", 8), "b"), 30)
+  expect_match(g$labels[1], "[.][.][.]")
+})
+
+test_that("a period-over-period plot says why a row has no percentage", {
+  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year")
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  drawn <- plot(y)
+  expect_true(all(is.na(drawn$pct_change)))
+  calls <- character()
+  local_mocked_bindings(text = function(x, y, labels, ...) calls <<- c(calls, labels), .package = "graphics")
+  plot(y)
+  expect_true(any(grepl("first period", calls)))
+  expect_true(any(grepl("no percentage: base below 20", calls)))
 })

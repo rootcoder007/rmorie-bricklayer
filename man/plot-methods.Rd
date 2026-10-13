@@ -56,7 +56,7 @@
 \method{plot}{rmbl_knox}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
-  main = NULL, col = NULL, palette = NULL)
+  max_parts = 20L, main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_stock_flow}(
   x,
@@ -137,7 +137,9 @@ panel's method.}
 each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
 \code{"days"}, \code{"flow_rate"}, \code{"stock_rate"}. For
 \code{rmbl_yoy}, \code{"pct_change"} or \code{"value"}. For
-\code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}.}
+\code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}; for
+\code{rmbl_clearance_decomposition}, any of \code{"rates"}, \code{"mix"} and
+\code{"effects"} (the default fits the device).}
 
 \item{main}{Title; each method has a default.}
 
@@ -148,6 +150,9 @@ session option.}
 
 \item{points}{For \code{rmbl_density}, whether to draw the incidents
 over the surface.}
+
+\item{max_parts}{For \code{rmbl_clearance_decomposition}, the most parts drawn: past it,
+the parts that moved the aggregate most, and the rest summed into one row.}
 
 \item{exposure}{For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 range to draw the curve over; the default runs from 0 to 1.5 times the
@@ -242,6 +247,11 @@ shares of each outcome over the periods, stacked.}
 incidents as a heat map, with the highest-density regions outlined.}
 \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
 distance-by-time cell, coloured on a log scale around 1.}
+\item{\code{rmbl_clearance_decomposition}}{(\code{\link{clearance_decomposition}})
+the parts' rates in both comparisons with the aggregate on top, where the
+workload moved (coloured by whether a part clears above or below the
+average), and the change as a waterfall of rate and mix effects: the
+pictures that show a Simpson's-paradox reversal and why it happened.}
 }
 }
 \examples{

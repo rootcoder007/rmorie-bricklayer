@@ -73,7 +73,7 @@ with_fake <- function(s, code) {
       s$clock <- s$clock + seconds
       invisible(a)
     },
-    .env = asNamespace("rmoriebricklayer"), .package = "rmoriebricklayer"
+    .package = "rmoriebricklayer", .env = environment()
   )
   force(code)
 }
@@ -224,4 +224,19 @@ test_that("rmbl wayback: archives a file of URLs and reports, with usage for mis
   expect_identical(bricklayer_cli(c("wayback", "help"), out = function(x) NULL), 0L)
   expect_identical(bricklayer_cli(c("wayback", "/nonexistent/urls.txt"), out = function(x) NULL), 1L)
   expect_identical(bricklayer_cli(c("wayback", f, "--bogus"), out = function(x) NULL), 2L)
+})
+
+test_that("the transport seams reach archive.org (live)", {
+  skip_on_cran()
+  expect_true(is.numeric(rmoriebricklayer:::.bl_wb_now()))
+  # no key: archive.org answers with a refusal, through the package's own transport
+  r <- rmoriebricklayer:::.bl_wb_get("/save/status/user", "Accept: application/json")
+  skip_if(r$status < 0L, "archive.org is not reachable from here")
+  expect_true(r$status %in% c(-1L, 200L, 401L, 403L, 429L, 502L, 503L, 520L, 523L))
+  p <- rmoriebricklayer:::.bl_wb_post("url=https%3A%2F%2Fexample.org%2F", "Accept: application/json")
+  expect_true(p$status %in% c(-1L, 200L, 401L, 403L, 429L, 502L, 503L, 520L, 523L))
+  s <- rmoriebricklayer:::.bl_wb_lookup("https://www.r-project.org/")
+  expect_true(is.null(s) || grepl("^https?://web.archive.org/web/", s))
+  expect_null(rmoriebricklayer:::.bl_wb_json(list(body = raw(0))))
+  expect_null(rmoriebricklayer:::.bl_wb_json(list(body = charToRaw("<html>no</html>"))))
 })
