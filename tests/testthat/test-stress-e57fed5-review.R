@@ -406,3 +406,19 @@ test_that("the status of a key stored for another address says so", {
   ns(".bl_cli_models")(function(x) out <<- c(out, x))
   expect_match(out, "issued for https://a.example")
 })
+
+
+test_that("replicate columns without names, rscales checked, a design from before the data check", {
+  s <- svy_data()
+  rep_df <- as.data.frame(s$reps)
+  names(rep_df) <- rep("", ncol(rep_df))
+  des <- survey_design(s$d, weights = "w", replicates = rep_df)
+  expect_length(des$reps, 20L)
+  expect_error(survey_design(s$d, weights = "w", replicates = s$reps, type = "jkn", rscales = rep(1, 3)),
+               "20 finite non-negative numbers")
+  expect_error(survey_design(s$d, weights = "w", replicates = s$reps, rscales = rep(-1, 20)), "non-negative")
+  # an object saved before 0.5.12 carries no data check: it is taken as it is
+  old <- survey_design(s$d, weights = "w", replicates = s$reps)
+  old$check <- NULL
+  expect_equal(survey_estimate(old, s$d, "y")$se, survey_estimate(des, s$d, "y")$se)
+})

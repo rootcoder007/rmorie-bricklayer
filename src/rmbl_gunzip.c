@@ -28,17 +28,15 @@
 
 /* zlib's word for a member it refused, said in the reader's terms */
 static const char *rmbl_gunzip_why(int rc, const char *msg) {
-    if (rc == Z_DATA_ERROR) {
-        if (msg && strstr(msg, "incorrect data check")) return "fails its CRC-32 check (the file is damaged)";
-        if (msg && strstr(msg, "incorrect length check")) {
-            return "has a length trailer that does not match its data (the file is damaged)";
-        }
-        if (msg && strstr(msg, "header")) return "has a damaged gzip header";
-        return "is not valid gzip data (the file is damaged)";
-    }
     if (rc == Z_MEM_ERROR) return "ran out of memory while decompressing";
     if (rc == Z_BUF_ERROR) return "is truncated: the gzip stream ends before its last block and checksum";
-    return "could not be decompressed";
+    /* Z_DATA_ERROR: what zlib says of a stream it cannot read (the other codes cannot arise in gzip mode) */
+    if (msg && strstr(msg, "incorrect data check")) return "fails its CRC-32 check (the file is damaged)";
+    if (msg && strstr(msg, "incorrect length check")) {
+        return "has a length trailer that does not match its data (the file is damaged)";
+    }
+    if (msg && strstr(msg, "header")) return "has a damaged gzip header";
+    return "is not valid gzip data (the file is damaged)";
 }
 
 /* One pass over every member. With `dst` NULL the output goes to `scratch` and is only counted

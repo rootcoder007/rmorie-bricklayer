@@ -48,8 +48,8 @@
 #' is caught instead of being averaged in as one more replicate.
 #'
 #' The design's degrees of freedom (`df = "design"` in
-#' [survey_estimate()]) are PSUs less strata under linearization;
-#' for replicate weights, the rank of the replicate weight matrix
+#' [survey_estimate()]) are PSUs less strata under
+#' linearization; for replicate weights, the rank of the replicate weight matrix
 #' less one, as the `survey` package computes them (twelve BRR
 #' half-samples of an eight-stratum design have 8, not 11), or
 #' `degf` when given.
@@ -177,12 +177,13 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         if (anyDuplicated(replicates[[id]])) stop("`id` repeats in `replicates`", call. = FALSE)
         m <- match(data[[id]], replicates[[id]])
         if (anyNA(m)) stop(sprintf("%d row(s) of `data` have no replicate weights", sum(is.na(m))), call. = FALSE)
-        replicates <- replicates[m, setdiff(names(replicates), id), drop = FALSE]
+        # by position, not by name: replicate columns may be unnamed or share a name
+        replicates <- replicates[m, names(replicates) != id, drop = FALSE]
       }
       # the full weight named in `weights`, shipped beside the replicates (CSUS's bootstrap file carries
       # WGT_PUMF), is the weight and not a replicate
       if (is.character(weights) && length(weights) == 1L) {
-        replicates <- replicates[setdiff(names(replicates), weights)]
+        replicates <- replicates[, names(replicates) != weights, drop = FALSE]
       }
       if (nrow(replicates) != n) {
         stop(sprintf("`replicates` must have one row per row of `data` (%d)", n), call. = FALSE)

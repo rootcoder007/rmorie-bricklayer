@@ -112,8 +112,8 @@ in a Hadamard order (2, or a multiple of 4), so a stray column
 is caught instead of being averaged in as one more replicate.
 
 The design's degrees of freedom (\code{df = "design"} in
-\code{\link[=survey_estimate]{survey_estimate()}}) are PSUs less strata under linearization;
-for replicate weights, the rank of the replicate weight matrix
+\code{\link[=survey_estimate]{survey_estimate()}}) are PSUs less strata under
+linearization; for replicate weights, the rank of the replicate weight matrix
 less one, as the \code{survey} package computes them (twelve BRR
 half-samples of an eight-stratum design have 8, not 11), or
 \code{degf} when given.
