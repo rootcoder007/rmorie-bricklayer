@@ -18,59 +18,67 @@ wayback_save(
 )
 }
 \arguments{
-\item{urls}{Character vector of \code{http} or \code{https} URLs.
-Duplicates, \code{NA} and empty strings are dropped.}
+\item{urls}{Character vector of \code{http} or \code{https}
+URLs. Duplicates, \code{NA} and empty strings are dropped.}
 
-\item{access_key, secret_key}{Your archive.org S3-like API keys
-(\url{https://archive.org/account/s3.php}). By default they are read from
-the environment variables \code{IA_S3_ACCESS_KEY} and
-\code{IA_S3_SECRET_KEY}, or from the files named by
-\code{IA_S3_ACCESS_KEY_FILE} and \code{IA_S3_SECRET_KEY_FILE}. They are
-sent to web.archive.org only and never printed.}
+\item{access_key, secret_key}{Your archive.org S3-like API
+keys (\url{https://archive.org/account/s3.php}). By default
+they are read from the environment variables
+\code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or from
+the files named by \code{IA_S3_ACCESS_KEY_FILE} and
+\code{IA_S3_SECRET_KEY_FILE}. They are sent to
+web.archive.org only and never printed.}
 
-\item{within}{Keep a capture made within this long instead of making a new
-one: a number followed by \code{s}, \code{m}, \code{h} or \code{d}
-(default \code{"30d"}); \code{"0"} always captures.}
+\item{within}{Keep a capture made within this long instead of
+making a new one: a number followed by \code{s}, \code{m},
+\code{h} or \code{d} (default \code{"30d"}); \code{"0"}
+always captures.}
 
 \item{jobs}{Captures in flight at once, 1 to 12. Default 4.}
 
-\item{output}{Optional path of a JSON Lines file: one line per URL, written
-as each finishes, and read at the start so a run can be resumed.}
+\item{output}{Optional path of a JSON Lines file: one line
+per URL, written as each finishes, and read at the start so a
+run can be resumed.}
 
-\item{poll}{Seconds between status checks of a capture. Default 10.}
+\item{poll}{Seconds between status checks of a capture.
+Default 10.}
 
-\item{max_wait}{Seconds a capture may take before it is given up as failed.
-Default 600.}
+\item{max_wait}{Seconds a capture may take before it is given
+up as failed. Default 600.}
 
-\item{capture_all}{Also capture error pages (4xx and 5xx); default
-\code{FALSE}.}
+\item{capture_all}{Also capture error pages (4xx and 5xx);
+default \code{FALSE}.}
 
-\item{quiet}{\code{TRUE} for no progress output; the default shows it while
-a person is watching.}
+\item{quiet}{\code{TRUE} for no progress output; the default
+shows it while a person is watching.}
 }
 \value{
-A data frame of class \code{rmbl_wayback_save}, one row per URL:
-\code{url}, \code{status} (\code{"saved"}, a new capture;
-\code{"existing"}, a capture already there; or \code{"failed"}),
-\code{timestamp} (\code{YYYYMMDDhhmmss}), \code{snapshot} (the archived
-copy's address) and \code{message} (archive.org's reason, for a failure).
+A data frame of class \code{rmbl_wayback_save}, one
+row per URL: \code{url}, \code{status} (\code{"saved"}, a new
+capture; \code{"existing"}, a capture already there; or
+\code{"failed"}), \code{timestamp} (\code{YYYYMMDDhhmmss}),
+\code{snapshot} (the archived copy's address) and
+\code{message} (archive.org's reason, for a failure).
 }
 \description{
-Saves every URL in the Internet Archive's Wayback Machine with Save Page
-Now 2, the API archive.org offers to account holders, keeping several
-captures in flight at once. A page archived recently is kept as it is
-(\code{within}); a page archive.org has already captured today (its
-daily limit) is recorded with that capture. Each result is written to
-\code{output} as it arrives, so an interrupted run started again with the
-same \code{output} carries on where it stopped. A live progress bar shows
-the run while a person is watching.
+Saves every URL in the Internet Archive's Wayback Machine
+with Save Page Now 2, the API archive.org offers to account
+holders, keeping several captures in flight at once. A page
+archived recently is kept as it is (\code{within}); a page
+archive.org has already captured today (its daily limit) is
+recorded with that capture. Each result is written to
+\code{output} as it arrives, so an interrupted run started
+again with the same \code{output} carries on where it
+stopped. A live progress bar shows the run while a person is
+watching.
 }
 \details{
-A rate limit (HTTP 429) or a server error is retried with exponential
-back-off, up to six times per URL; a refused key (HTTP 401 or 403) stops
-the run. The archive's own limits apply: an account may run a limited
-number of captures at once and capture a URL a limited number of times a
-day, so more \code{jobs} than the account allows only adds retries.
+A rate limit (HTTP 429) or a server error is retried
+with exponential back-off, up to six times per URL; a refused
+key (HTTP 401 or 403) stops the run. The archive's own limits
+apply: an account may run a limited number of captures at
+once and capture a URL a limited number of times a day, so
+more \code{jobs} than the account allows only adds retries.
 }
 \examples{
 \dontrun{
@@ -83,10 +91,12 @@ res
 }
 }
 \references{
-Internet Archive. Save Page Now 2 (SPN2) public API.
+Internet Archive. Save Page Now 2 (SPN2) public
+API.
 \url{https://archive.org/details/spn-2-public-api-page-docs}.
 }
 \seealso{
 \code{\link{wayback_snapshot_url_native}} to look up an existing
-capture; \code{rmbl wayback FILE} runs this from the command line.
+capture; \code{rmbl wayback FILE} runs this from the
+command line.
 }

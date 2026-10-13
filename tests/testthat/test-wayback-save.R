@@ -240,3 +240,73 @@ test_that("the transport seams reach archive.org (live)", {
   expect_null(rmoriebricklayer:::.bl_wb_json(list(body = raw(0))))
   expect_null(rmoriebricklayer:::.bl_wb_json(list(body = charToRaw("<html>no</html>"))))
 })
+
+test_that("wayback_retry(): failures are looked up, captured again, and gone pages left alone", {
+  withr::local_envvar(keys)
+  out <- withr::local_tempfile(fileext = ".jsonl")
+  urls <- sprintf("https://e.org/%d", 1:4)
+  s1 <- fake_spn2(list("https://e.org/2" = list(kind = "joberr"), "https://e.org/3" = list(kind = "down"),
+                       "https://e.org/4" = list(kind = "daily")))
+  r1 <- with_fake(s1, wayback_save(urls, output = out, quiet = TRUE))
+  expect_identical(r1$status, c("saved", "failed", "failed", "failed"))
+  # the next day: the daily-limited page has a capture (another run made it), the server is back
+  s2 <- fake_spn2(lookup = function(u) if (u == "https://e.org/4") .bl_wb_snapshot("20261013090000", u) else NULL)
+  r2 <- with_fake(s2, wayback_retry(out, quiet = TRUE))
+  st <- stats::setNames(r2$status, r2$url)
+  expect_identical(unname(st[urls]), c("saved", "failed", "saved", "existing"))
+  expect_equal(attr(r2, "retry"), data.frame(failed = 3L, found_by_lookup = 1L, captured_again = 1L, left_as_gone = 1L))
+  expect_match(r2$message[r2$url == "https://e.org/4"], "found on retry")
+  # only the server-error URL was sent again: the gone page and the finished ones were not
+  expect_identical(s2$posts, paste0("url=", utils::URLencode("https://e.org/3", reserved = TRUE),
+                                    sub("^url=[^&]*", "", s1$posts[1])))
+  # include_gone sends the gone page too
+  s3 <- fake_spn2()
+  r3 <- with_fake(s3, wayback_retry(out, include_gone = TRUE, lookup = FALSE, quiet = TRUE))
+  expect_identical(r3$status[r3$url == "https://e.org/2"], "saved")
+  expect_equal(attr(r3, "retry")$captured_again, 1L)
+  # nothing left to retry: nothing is sent
+  s4 <- fake_spn2()
+  r4 <- with_fake(s4, wayback_retry(out, quiet = TRUE))
+  expect_length(s4$posts, 0L)
+  expect_equal(attr(r4, "retry")$failed, 0L)
+  expect_s3_class(r4, "rmbl_wayback_save")
+})
+
+test_that("wayback_retry(): what counts as gone, and bad input refused", {
+  gone <- rmoriebricklayer:::.bl_wb_gone
+  expect_true(all(gone(c("HTTP 404", "HTTP 410", "Server returned 404",
+                         "The target server cannot find https://x", "error:not-found"))))
+  expect_false(any(gone(c("HTTP 502", "could not connect", "This URL has been already captured 1 times today",
+                          "gave up after retries"))))
+  out <- withr::local_tempfile(fileext = ".jsonl")
+  expect_error(wayback_retry(out), "no results file")
+  writeLines("{\"url\": \"https://e.org/1\", \"status\": \"failed\", \"message\": \"x\"}", out)
+  expect_error(wayback_retry(out, include_gone = NA), "TRUE or FALSE")
+  expect_error(wayback_retry(out, lookup = "yes"), "TRUE or FALSE")
+})
+
+test_that("rmbl wayback --retry: retries the failures of a results file", {
+  withr::local_envvar(keys)
+  f <- withr::local_tempfile(fileext = ".txt")
+  writeLines(c("https://e.org/1", "https://e.org/2"), f)
+  s1 <- fake_spn2(list("https://e.org/2" = list(kind = "down")))
+  with_fake(s1, bricklayer_cli(c("wayback", f), out = function(x) NULL))
+  res <- paste0(f, ".wayback.jsonl")
+  s2 <- fake_spn2()
+  outl <- character()
+  st <- with_fake(s2, bricklayer_cli(c("wayback", "--retry", res, "--jobs", "2"),
+                                     out = function(x) outl <<- c(outl, x)))
+  expect_identical(st, 0L)
+  expect_true(any(grepl("1 failures: 0 found already archived, 1 captured again, 0 left as gone; now 2 saved", outl)))
+  expect_identical(bricklayer_cli(c("wayback", "--retry", "/nonexistent.jsonl"), out = function(x) NULL), 1L)
+  expect_identical(bricklayer_cli(c("wayback", "--retry"), out = function(x) NULL), 2L)
+  # a gone page left by the retry exits 1, and --include-gone sends it
+  s3 <- fake_spn2(list("https://e.org/1" = list(kind = "joberr")))
+  f2 <- withr::local_tempfile(fileext = ".txt")
+  writeLines("https://e.org/1", f2)
+  with_fake(s3, bricklayer_cli(c("wayback", f2), out = function(x) NULL))
+  r2 <- paste0(f2, ".wayback.jsonl")
+  expect_identical(with_fake(fake_spn2(), bricklayer_cli(c("wayback", "--retry", r2), out = function(x) NULL)), 1L)
+  expect_identical(with_fake(fake_spn2(), bricklayer_cli(c("wayback", "--retry", r2, "--include-gone"),
+                                                           out = function(x) NULL)), 0L)
+})

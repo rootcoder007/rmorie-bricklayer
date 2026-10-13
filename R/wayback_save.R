@@ -47,54 +47,63 @@
 
 #' Archive many pages in the Wayback Machine
 #'
-#' Saves every URL in the Internet Archive's Wayback Machine with Save Page
-#' Now 2, the API archive.org offers to account holders, keeping several
-#' captures in flight at once. A page archived recently is kept as it is
-#' (\code{within}); a page archive.org has already captured today (its
-#' daily limit) is recorded with that capture. Each result is written to
-#' \code{output} as it arrives, so an interrupted run started again with the
-#' same \code{output} carries on where it stopped. A live progress bar shows
-#' the run while a person is watching.
+#' Saves every URL in the Internet Archive's Wayback Machine
+#' with Save Page Now 2, the API archive.org offers to account
+#' holders, keeping several captures in flight at once. A page
+#' archived recently is kept as it is (\code{within}); a page
+#' archive.org has already captured today (its daily limit) is
+#' recorded with that capture. Each result is written to
+#' \code{output} as it arrives, so an interrupted run started
+#' again with the same \code{output} carries on where it
+#' stopped. A live progress bar shows the run while a person is
+#' watching.
 #'
-#' @param urls Character vector of \code{http} or \code{https} URLs.
-#'   Duplicates, \code{NA} and empty strings are dropped.
-#' @param access_key,secret_key Your archive.org S3-like API keys
-#'   (\url{https://archive.org/account/s3.php}). By default they are read from
-#'   the environment variables \code{IA_S3_ACCESS_KEY} and
-#'   \code{IA_S3_SECRET_KEY}, or from the files named by
-#'   \code{IA_S3_ACCESS_KEY_FILE} and \code{IA_S3_SECRET_KEY_FILE}. They are
-#'   sent to web.archive.org only and never printed.
-#' @param within Keep a capture made within this long instead of making a new
-#'   one: a number followed by \code{s}, \code{m}, \code{h} or \code{d}
-#'   (default \code{"30d"}); \code{"0"} always captures.
+#' @param urls Character vector of \code{http} or \code{https}
+#'   URLs. Duplicates, \code{NA} and empty strings are dropped.
+#' @param access_key,secret_key Your archive.org S3-like API
+#'   keys (\url{https://archive.org/account/s3.php}). By default
+#'   they are read from the environment variables
+#'   \code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or from
+#'   the files named by \code{IA_S3_ACCESS_KEY_FILE} and
+#'   \code{IA_S3_SECRET_KEY_FILE}. They are sent to
+#'   web.archive.org only and never printed.
+#' @param within Keep a capture made within this long instead of
+#'   making a new one: a number followed by \code{s}, \code{m},
+#'   \code{h} or \code{d} (default \code{"30d"}); \code{"0"}
+#'   always captures.
 #' @param jobs Captures in flight at once, 1 to 12. Default 4.
-#' @param output Optional path of a JSON Lines file: one line per URL, written
-#'   as each finishes, and read at the start so a run can be resumed.
-#' @param poll Seconds between status checks of a capture. Default 10.
-#' @param max_wait Seconds a capture may take before it is given up as failed.
-#'   Default 600.
-#' @param capture_all Also capture error pages (4xx and 5xx); default
-#'   \code{FALSE}.
-#' @param quiet \code{TRUE} for no progress output; the default shows it while
-#'   a person is watching.
+#' @param output Optional path of a JSON Lines file: one line
+#'   per URL, written as each finishes, and read at the start so a
+#'   run can be resumed.
+#' @param poll Seconds between status checks of a capture.
+#'   Default 10.
+#' @param max_wait Seconds a capture may take before it is given
+#'   up as failed. Default 600.
+#' @param capture_all Also capture error pages (4xx and 5xx);
+#'   default \code{FALSE}.
+#' @param quiet \code{TRUE} for no progress output; the default
+#'   shows it while a person is watching.
 #'
-#' @return A data frame of class \code{rmbl_wayback_save}, one row per URL:
-#'   \code{url}, \code{status} (\code{"saved"}, a new capture;
-#'   \code{"existing"}, a capture already there; or \code{"failed"}),
-#'   \code{timestamp} (\code{YYYYMMDDhhmmss}), \code{snapshot} (the archived
-#'   copy's address) and \code{message} (archive.org's reason, for a failure).
+#' @return A data frame of class \code{rmbl_wayback_save}, one
+#'   row per URL: \code{url}, \code{status} (\code{"saved"}, a new
+#'   capture; \code{"existing"}, a capture already there; or
+#'   \code{"failed"}), \code{timestamp} (\code{YYYYMMDDhhmmss}),
+#'   \code{snapshot} (the archived copy's address) and
+#'   \code{message} (archive.org's reason, for a failure).
 #'
-#' @details
-#' A rate limit (HTTP 429) or a server error is retried with exponential
-#' back-off, up to six times per URL; a refused key (HTTP 401 or 403) stops
-#' the run. The archive's own limits apply: an account may run a limited
-#' number of captures at once and capture a URL a limited number of times a
-#' day, so more \code{jobs} than the account allows only adds retries.
+#' @details A rate limit (HTTP 429) or a server error is retried
+#'   with exponential back-off, up to six times per URL; a refused
+#'   key (HTTP 401 or 403) stops the run. The archive's own limits
+#'   apply: an account may run a limited number of captures at
+#'   once and capture a URL a limited number of times a day, so
+#'   more \code{jobs} than the account allows only adds retries.
 #'
-#' @references Internet Archive. Save Page Now 2 (SPN2) public API.
+#' @references Internet Archive. Save Page Now 2 (SPN2) public
+#'   API.
 #'   \url{https://archive.org/details/spn-2-public-api-page-docs}.
 #' @seealso \code{\link{wayback_snapshot_url_native}} to look up an existing
-#'   capture; \code{rmbl wayback FILE} runs this from the command line.
+#'   capture; \code{rmbl wayback FILE} runs this from the
+#'   command line.
 #' @examples
 #' \dontrun{
 #' Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
@@ -282,4 +291,98 @@ print.rmbl_wayback_save <- function(x, ...) {
   .rmbl_print_table("Wayback Machine captures", utils::head(show, 20L), notes = notes,
                     footer = if (nrow(x) > 20L) sprintf("... and %d more rows", nrow(x) - 20L), ...)
   invisible(x)
+}
+
+# The results of a run as they stand on disk: the last line written for each URL wins (a retry
+# appends, so a later "saved" replaces an earlier "failed").
+.bl_wb_read <- function(output) {
+  rows <- list()
+  for (l in readLines(output, warn = FALSE)) {
+    r <- tryCatch(.rmbl_json_parse(l), error = function(e) NULL)
+    if (is.list(r) && is.character(r$url) && identical(length(r$url), 1L)) rows[[r$url]] <- r
+  }
+  out <- data.frame(url = vapply(rows, function(r) r$url, ""),
+                    status = vapply(rows, function(r) as.character(r$status %||% NA_character_), ""),
+                    timestamp = vapply(rows, function(r) as.character(r$timestamp %||% NA_character_), ""),
+                    snapshot = vapply(rows, function(r) as.character(r$snapshot %||% NA_character_), ""),
+                    message = vapply(rows, function(r) as.character(r$message %||% ""), ""),
+                    stringsAsFactors = FALSE, row.names = NULL)
+  class(out) <- c("rmbl_wayback_save", "data.frame")
+  out
+}
+
+# a failure that a new capture cannot fix: the page is gone from its source
+.bl_wb_gone <- function(msg) {
+  grepl("HTTP 404|HTTP 410|returned 404|returned 410|cannot find|not found|error:not-found", msg, ignore.case = TRUE)
+}
+
+#' Retry the failures of a bulk Wayback run
+#'
+#' Reads the results file a \code{\link{wayback_save}} run wrote
+#' and tries again every URL whose latest result is
+#' \code{"failed"}, so nobody has to dig the failures out by
+#' hand. Each failed URL is first looked up in the Wayback
+#' Machine: a capture made at any time (an earlier one of a page
+#' that has since gone, or one made today by another run when
+#' the daily limit refused this one) is recorded as
+#' \code{"existing"} without capturing again. What is left is
+#' captured again with \code{wayback_save()}, appending to the
+#' same file. A page its source no longer has (HTTP 404 or 410,
+#' "cannot find") is not sent again unless \code{include_gone =
+#' TRUE}: a new capture would only archive the error.
+#'
+#' @param output The JSON Lines results file of an earlier
+#'   \code{wayback_save()} run (or of \code{rmbl wayback});
+#'   results of the retry are appended to it.
+#' @param include_gone Also capture again the pages whose
+#'   failure says the page is gone.
+#' @param lookup Look each failure up in the Wayback Machine
+#'   before capturing again.
+#' @param ... Passed to \code{wayback_save()}: \code{jobs},
+#'   \code{within}, the keys, \code{quiet}.
+#' @return The whole run as it now stands, one row per URL (a
+#'   data frame of class \code{rmbl_wayback_save}), with the
+#'   attribute \code{retry}: how many failures there were, how
+#'   many a lookup found, how many were captured again, and how
+#'   many were left as gone.
+#' @seealso \code{\link{wayback_save}}; \code{rmbl wayback
+#'   --retry FILE.jsonl} from the command line.
+#' @examples
+#' \dontrun{
+#' res <- wayback_save(urls, output = "snapshots.jsonl")
+#' # later, or the next day once the daily capture limits have reset:
+#' res <- wayback_retry("snapshots.jsonl")
+#' attr(res, "retry")
+#' }
+#' @export
+wayback_retry <- function(output, include_gone = FALSE, lookup = TRUE, ...) {
+  output <- .rmbl_string1(output, "output")
+  if (!file.exists(output)) stop(sprintf("no results file at %s", output), call. = FALSE)
+  for (a in c("include_gone", "lookup")) {
+    v <- get(a)
+    if (!is.logical(v) || length(v) != 1L || is.na(v)) stop(sprintf("`%s` must be TRUE or FALSE", a), call. = FALSE)
+  }
+  now <- .bl_wb_read(output)
+  failed <- now[now$status == "failed", , drop = FALSE]
+  found <- 0L
+  if (lookup && nrow(failed)) {
+    for (i in seq_len(nrow(failed))) {
+      s <- .bl_wb_lookup(failed$url[i])
+      if (is.null(s)) next
+      rec <- list(url = failed$url[i], status = "existing",
+                  timestamp = sub("^.*/web/([0-9]{14})[^/]*/.*$", "\\1", s), snapshot = s,
+                  message = paste("found on retry;", failed$message[i]))
+      cat(bricklayer_json_to_json(rec, auto_unbox = TRUE), "\n", sep = "", file = output, append = TRUE)
+      found <- found + 1L
+      failed$status[i] <- "existing"
+    }
+  }
+  left <- failed[failed$status == "failed", , drop = FALSE]
+  gone <- if (include_gone) rep(FALSE, nrow(left)) else .bl_wb_gone(left$message)
+  todo <- left$url[!gone]
+  if (length(todo)) wayback_save(todo, output = output, ...)
+  out <- .bl_wb_read(output)
+  attr(out, "retry") <- data.frame(failed = nrow(failed), found_by_lookup = found, captured_again = length(todo),
+                                   left_as_gone = sum(gone))
+  out
 }
