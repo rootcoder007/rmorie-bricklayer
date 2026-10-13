@@ -51,13 +51,23 @@ test_that("stock and flow", {
 })
 
 test_that("period-over-period change", {
-  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year")
-  d <- with_dev(plot(y))
+  # bases large enough for a percentage change
+  big <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n", period = "year")
+  d <- with_dev(plot(big))
   expect_equal(nrow(d), 5L)
-  expect_equal(d$pct_change, y$pct_change)
+  expect_equal(d$pct_change, big$pct_change)
+  expect_true(any(is.finite(d$pct_change)))
+  # small counts draw their percentages like any other
+  small <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year")
+  ds <- with_dev(plot(small))
+  expect_equal(ds$pct_change, small$pct_change)
+  expect_identical(is.finite(ds$pct_change), c(FALSE, TRUE, TRUE, TRUE, TRUE))
+  # only zero bases leave no percentage at all: the counts are drawn instead of an empty frame
+  y <- yoy(data.frame(year = 2019:2021, n = c(0, 0, 5)), value = "n", period = "year")
+  expect_equal(with_dev(plot(y))$value, y$value)
   v <- with_dev(plot(y, what = "value", col = "black"))
   expect_equal(v$value, y$value)
-  seg <- data.frame(year = rep(2021:2023, 2), g = rep(c("a", "b"), each = 3), n = c(5, 6, 7, 9, 8, 10))
+  seg <- data.frame(year = rep(2021:2023, 2), g = rep(c("a", "b"), each = 3), n = c(500, 600, 700, 900, 800, 1000))
   yg <- yoy(seg, value = "n", period = "year", by = "g")
   dg <- with_dev(plot(yg))
   expect_true(all(grepl("^(a|b): ", dg$label)))
@@ -179,10 +189,18 @@ test_that("air pollution: curve, burden, equity, report", {
 })
 
 test_that("the footprint", {
-  fp <- compute_footprint(sum(1:10), location = "CA", cpu_power_w = 45, memory_gb = 8)
+  # long enough to measure: the CPU and memory emissions add to the total, all in grams
+  fp <- compute_footprint(for (i in 1:30) sum(sqrt(seq_len(2e5))), location = "CA", cpu_power_w = 45,
+                          memory_gb = 8)
   d <- with_dev(plot(fp))
-  expect_equal(d$value[1], fp$co2e_g)
-  expect_equal(d$value[2], 1000 * fp$co2e_g / 175)
+  expect_identical(d$quantity, c("CPU", "memory", "total"))
+  expect_equal(d$value[d$quantity == "total"], fp$co2e_g)
+  expect_equal(sum(d$value[d$quantity != "total"]), fp$co2e_g, tolerance = 1e-8)
+  # too short to time: the plot says so instead of drawing empty bars
+  z <- fp
+  z$co2e_g <- 0
+  z$energy_kwh <- list(cpu = 0, memory = 0, total = 0)
+  expect_equal(with_dev(plot(z))$value, c(0, 0, 0))
 })
 
 test_that("fields and particles", {
@@ -301,4 +319,63 @@ test_that("an empty title draws nothing and string width falls back without a de
   grDevices::dev.off()
   expect_equal(f, 4 * 0.55 * csi * 2)
   expect_equal(g, f)
+})
+
+test_that("axis titles wrap and shrink until every line fits, never cut", {
+  grDevices::pdf(NULL, width = 2.2, height = 3)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  graphics::plot(1:2)
+  got <- NULL
+  local_mocked_bindings(title = function(xlab = NULL, cex.lab = 1, ...) got <<- list(xlab, cex.lab),
+                        .package = "graphics")
+  rmoriebricklayer:::.bl_xlab("NO2 (micrograms per cubic metre) over the whole study period")
+  lines <- strsplit(got[[1]], "\n", fixed = TRUE)[[1]]
+  # every word is kept
+  expect_identical(paste(lines, collapse = " "), "NO2 (micrograms per cubic metre) over the whole study period")
+  expect_lte(length(lines), 3L)  # two where they fit; a 2-inch panel needs three
+  expect_true(all(graphics::strwidth(lines, units = "inches", cex = got[[2]]) <= graphics::par("pin")[1] * 0.98))
+})
+
+test_that("a row note fits its panel, falling back to the part before the colon", {
+  grDevices::pdf(NULL, width = 2, height = 3)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  said <- NULL
+  local_mocked_bindings(text = function(x, y, labels, cex = 1, ...) said <<- list(labels, cex), .package = "graphics")
+  rmoriebricklayer:::.bl_dot_interval(c("a", "b"), c(NA, 5), c(NA, 1), c(NA, 9), "m", "x",
+                                      c("red", "blue"), ref = 0,
+                                      note = c("first period: nothing to compare with", NA))
+  expect_identical(said[[1]], "first period")
+  expect_gte(said[[2]], 0.6)
+})
+
+test_that("a drift calibration with no false alarms still draws its zeros", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  cal <- structure(list(columns = data.frame(column = c("a", "b"), false_alarm_rate = c(0, 0)),
+                        alpha = 0.01, n = 3L), class = "rmbl_drift_calibration")
+  said <- NULL
+  local_mocked_bindings(text = function(x, y, labels, ...) said <<- labels, .package = "graphics")
+  plot(cal)
+  expect_identical(said, c("0", "0"))
+})
+
+test_that("a label that fits is never cut, however long", {
+  grDevices::pdf(NULL, width = 12, height = 5)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  lab <- "withdrawn stayed before trial"  # 29 characters
+  expect_identical(rmoriebricklayer:::.bl_label_fit(lab, cex = 0.75)$labels, lab)
+})
+
+test_that("a panel key that wraps stays inside the outer margin", {
+  grDevices::pdf(NULL, width = 5, height = 4)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  graphics::par(mfrow = c(1, 3), oma = c(2.4, 0, 0, 0))
+  at <- numeric()
+  local_mocked_bindings(mtext = function(text, side, outer, line, cex, ...) {
+    at <<- c(at, line + cex / graphics::par("cex"))
+  },
+  .package = "graphics")
+  rmoriebricklayer:::.bl_panel_key(c("A: Concentration-response, NO2 (all_cause_mortality)",
+                                     "B: NO2: PAF 2.7%, 137 attributable", "C: Concentration curve (index -0.065)"))
+  expect_true(all(at <= 2.4))
 })

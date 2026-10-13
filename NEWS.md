@@ -4,6 +4,19 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Small bases compute
+
+* **`yoy()` and `rate_change()` report every percent change.** A small base no longer withholds
+  the percent: 2 to 20 reports +900% with its exact rate-ratio interval, and a change of a few
+  tenths of a percent off a base of 15 is reported as such. `min_base` now defaults to 0 for every
+  unit and, when set, only adds a "small base" note; `min_count` likewise notes without hiding.
+  Only a zero base has no percent change. Printed, CSV, Markdown and HTML footers say "note" where
+  they said "percent withheld", and the period-over-period plot draws small-base percentages.
+* **`compute_footprint()` no longer reads 0 g for fast work.** A call shorter than the elapsed
+  clock's resolution had 0 s of wall time and so 0 energy; the duration is now at least the CPU
+  time spread over the cores. `plot()` of a footprint shows CPU, memory and total in one unit
+  chosen to fit (kg to micrograms), and says "Too short to measure" when even CPU time is 0.
+
 ## Archiving in bulk, and animated progress
 
 * **New: `wayback_save()` and `rmbl wayback FILE`.** Save many URLs in the Wayback Machine with

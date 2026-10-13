@@ -203,20 +203,26 @@ bricklayer_plot_options <- function(...) {
       return(invisible(xlab))
     }
   }
+  # wrapped onto two lines, a step smaller each time until both fit: keeping only the first two
+  # lines cut "Percent change, with interval" to "Percent change, with", and a word wider than
+  # the panel ("NO2 (micrograms per cubic metre)") ran past the panel's edge
   words <- strsplit(xlab, " ", fixed = TRUE)[[1L]]
-  lines <- character()
-  cur <- ""
-  for (w in words) {
-    cand <- if (nzchar(cur)) paste(cur, w) else w
-    if (nzchar(cur) && .bl_strwidth(cand, cex = 0.85) > width) {
-      lines <- c(lines, cur)
-      cur <- w
-    } else {
-      cur <- cand
+  for (cex in c(0.85, 0.75, 0.65, 0.55)) {
+    lines <- character()
+    cur <- ""
+    for (w in words) {
+      cand <- if (nzchar(cur)) paste(cur, w) else w
+      if (nzchar(cur) && .bl_strwidth(cand, cex = cex) > width) {
+        lines <- c(lines, cur)
+        cur <- w
+      } else {
+        cur <- cand
+      }
     }
+    lines <- c(lines, cur)
+    if (length(lines) <= 2L && all(.bl_strwidth(lines, cex = cex) <= width)) break
   }
-  lines <- c(lines, cur)
-  graphics::title(xlab = paste(utils::head(lines, 2L), collapse = "\n"), cex.lab = 0.85, line = 3.2)
+  graphics::title(xlab = paste(lines, collapse = "\n"), cex.lab = cex, line = 3.2)
   invisible(xlab)
 }
 
@@ -268,21 +274,30 @@ bricklayer_plot_options <- function(...) {
   # mtext()'s cex is absolute and strwidth()'s is scaled by par("cex"), which a panel grid
   # lowers to 0.83 or 0.66: measured at 0.8 the key was drawn wider than measured and ran off
   # the device
-  rel <- 0.8 / graphics::par("cex")
-  lines <- character()
-  cur <- ""
-  for (k in keys) {
-    cand <- if (nzchar(cur)) paste(cur, k, sep = "    ") else k
-    if (nzchar(cur) && .bl_strwidth(cand, cex = rel) > width) {
-      lines <- c(lines, cur)
-      cur <- k
-    } else {
-      cur <- cand
+  # a key that wraps to more lines than the outer margin holds is drawn smaller: a third line
+  # fell below the device
+  room <- graphics::par("oma")[1L]
+  for (cex in c(0.8, 0.7, 0.6, 0.5)) {
+    rel <- cex / graphics::par("cex")
+    lines <- character()
+    cur <- ""
+    for (k in keys) {
+      cand <- if (nzchar(cur)) paste(cur, k, sep = "    ") else k
+      if (nzchar(cur) && .bl_strwidth(cand, cex = rel) > width) {
+        lines <- c(lines, cur)
+        cur <- k
+      } else {
+        cur <- cand
+      }
     }
+    lines <- c(lines, cur)
+    # an outer-margin line is scaled by the panel grid's lower par("cex") and the key's cex is
+    # absolute, so one line of key text takes cex / par("cex") margin lines
+    step <- 1.1 * cex / graphics::par("cex")
+    if (length(lines) == 1L || length(lines) * step <= room - 0.2) break
   }
-  lines <- c(lines, cur)
   for (i in seq_along(lines)) {
-    graphics::mtext(lines[i], side = 1, outer = TRUE, line = i - 1, cex = 0.8, adj = 0)
+    graphics::mtext(lines[i], side = 1, outer = TRUE, line = (i - 1) * step, cex = cex, adj = 0)
   }
   invisible(lines)
 }
@@ -320,7 +335,7 @@ bricklayer_plot_options <- function(...) {
   csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * cex
   room <- 0.45 * fin - csi
   fit <- NULL
-  for (k in 28:8) {
+  for (k in max(28L, nchar(labels), na.rm = TRUE):8) {
     cand <- .bl_short_label(labels, k)
     w <- max(.bl_strwidth(cand[!is.na(cand)], cex = cex), 0)
     fit <- list(labels = cand, w = w)
@@ -404,8 +419,19 @@ bricklayer_plot_options <- function(...) {
   if (!is.null(note)) {
     say <- !is.finite(est) & !is.na(note) & nzchar(note)
     if (any(say)) {
-      graphics::text(if (is.null(ref)) mean(rng) else ref, seq_len(n)[say], note[say], col = "#6E6E6E",
-                     cex = 0.8, font = 3)
+      # from the left edge and sized to the plot: centred on the reference line, a long note
+      # ran off the panel ("othing to compare")
+      usr <- graphics::par("usr")
+      room <- graphics::par("pin")[1L] * 0.9
+      txt <- note[say]
+      cex <- min(0.8, 0.8 * room / max(.bl_strwidth(txt, cex = 0.8, font = 3)))
+      # too small to read in a narrow panel: the part before the colon ("first period")
+      if (cex < 0.6) {
+        txt <- sub(":.*$", "", txt)
+        cex <- min(0.8, 0.8 * room / max(.bl_strwidth(txt, cex = 0.8, font = 3)))
+      }
+      graphics::text(usr[1L] + 0.02 * (usr[2L] - usr[1L]), seq_len(n)[say], txt, col = "#6E6E6E",
+                     cex = cex, font = 3, adj = c(0, 0.5))
     }
   }
   invisible(NULL)
@@ -472,7 +498,9 @@ bricklayer_plot_options <- function(...) {
 #'     concentration curve of exposure over income rank; and, for a report,
 #'     all three on one page.}
 #'   \item{\code{rmbl_footprint}}{(\code{\link{compute_footprint}}) the
-#'     emission with its car-kilometre and tree-month equivalents.}
+#'     CPU, memory and total emission in one unit chosen to fit, with the
+#'     car-kilometre and tree-month equivalents as a caption; "Too short to
+#'     measure" when the work took no measurable time.}
 #'   \item{\code{rmbl_field}, \code{rmbl_particles}}{
 #'     (\code{\link{plume_field}}, \code{\link{advection_diffusion_2d}},
 #'     \code{\link{lagrangian_particles}}) a concentration field as an
@@ -528,12 +556,87 @@ bricklayer_plot_options <- function(...) {
 #'                  period = 2021:2023)
 #' plot(sf)
 #' plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
-#' y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
+#' y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n",
 #'          period = "year")
 #' plot(y)
+#' # small counts: each percentage carries its exact interval
+#' plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
+#'          period = "year"))
 #' plot(benford_test(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
 #' plot(crf_no2(25))
-#' plot(compute_footprint(sum(1:10), location = "CA", cpu_power_w = 45, memory_gb = 8))
+#' plot(compute_footprint(for (i in 1:20) sum(sqrt(seq_len(2e5))), location = "CA",
+#'                        cpu_power_w = 45, memory_gb = 8))
+#' # the courts and crime data shipped with the package
+#' ext <- function(f) {
+#'   read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+#' }
+#' fl <- ext("ocj_flow_ontario.csv")
+#' plot(case_flow(fl$received, fl$disposed, pending = fl$pending, period = fl$month))
+#' td <- ext("ocj_time_to_disposition.csv")
+#' open <- unlist(td[nrow(td), 2:5]) * fl$disposed[nrow(fl)]
+#' plot(life_table(c(0, 10, 15, 18, Inf), open))
+#' dm <- ext("ocj_dispositions.csv")
+#' plot(disposition_mix(dm[, -(1:2)], period = dm$year))
+#' og <- ext("ocj_offence_groups.csv")
+#' og <- og[og$year %in% c(2014, 2022), ]
+#' plot(clearance_decomposition(og$disposed, og$received, og$offence_group, og$year))
+#' be <- ext("tps_break_enter_d14_2024.csv")
+#' be <- be[!is.na(be$lon), ]
+#' plot(crime_density(be$lon, be$lat, n_grid = 60))
+#' \donttest{
+#' plot(knox_test(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
+#'                nsim = 99, seed = 1))
+#' }
+#' # rates, shares and the change in a rate
+#' rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
+#'                  stops = c(120, 90, 60, 150, 85, 70),
+#'                  residents = rep(c(1e4, 8e3, 5e3), 2))
+#' r23 <- rt[rt$year == 2023, ]
+#' plot(rate(r23, count = "stops", population = "residents", by = "division"))
+#' plot(share(r23, count = "stops", by = "division"))
+#' plot(rate_change(rt, count = "stops", population = "residents", period = "year",
+#'                  by = "division"))
+#' # a published table in one call: change, rates and rate change
+#' tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
+#'                   n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
+#' plot(analyse_table(tab, value = "n", period = "year", by = "g", population = "pop"))
+#' plot(count_trend(c(21000, 23000, 22000, 25000, 24000)))
+#' # banded tables
+#' plot(band_sensitivity(parse_bands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
+#'                       caps = c(60, 70, 80, 90)))
+#' plot(published_bounds(c(10, 20), rounding = 5))
+#' plot(region_coverage(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
+#' # drift between two extracts, and how often the test cries wolf
+#' set.seed(1)
+#' dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
+#' plot(capsule_drift(dd, transform(dd, a = a + 3)))
+#' plot(drift_calibrate(dd, n = 3L))
+#' # describing a table
+#' plot(frequency_table(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
+#' plot(missingness_pattern(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
+#' hw <- data.frame(h = rnorm(100), w = rnorm(100))
+#' hw$h[1] <- 15
+#' plot(mahalanobis_outliers(hw))
+#' sq <- data.frame(a = 1:20, b = (1:20)^2, c = rev(1:20))
+#' plot(top_correlations(sq))
+#' plot(correlation_table(sq))
+#' # power and falsification of a statistic
+#' xy <- data.frame(x = rnorm(60), y = rnorm(60))
+#' shift <- function(z, s) {
+#'   z$y <- z$y + s * z$x
+#'   z
+#' }
+#' plot(capsule_power(xy, function(z) cor(z$x, z$y), inject = shift, treatment = "x",
+#'                    sizes = c(0, 0.25, 0.5), n = 19, reps = 3, seed = 1))
+#' plot(capsule_falsify(xy, function(z) cor(z$x, z$y), treatment = "x", n = 29, seed = 1))
+#' # air pollution: burden, equity, and the full report
+#' plot(pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2"))
+#' plot(exposure_concentration_index(data.frame(exposure = c(4, 1, 8, 2),
+#'                                              income = c(2, 1, 4, 3)),
+#'                                   "exposure", "income"))
+#' plot(verify_pollution("no2", demo = TRUE))
+#' plot(lagrangian_particles(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
+#'                           grid = c(-10, 40, -15, 25, 10, 8)))
 #' plot(plume_field(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
 #'                  y = seq(-300, 300, by = 50)))
 #' @name plot-methods
@@ -590,6 +693,17 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
   cols <- ifelse(verdict %in% c("better", "up"), pal[3L],
                  ifelse(verdict %in% c("worse", "down"), pal[1L], pal[2L]))
   if (!is.null(col)) cols <- rep_len(col, nrow(d))
+  # no percentage anywhere (zero bases, or one period): the counts are drawn instead, and the title says why,
+  # rather than an empty frame of notes
+  if (what == "pct_change" && !any(is.finite(d$pct_change))) {
+    why <- unique(stats::na.omit(as.character(d$flag)))
+    why <- why[nzchar(why)]
+    what <- "value"
+    if (is.null(main)) {
+      main <- sprintf("Counts by period (no percentage change: %s)",
+                      if (length(why)) paste(why, collapse = "; ") else "nothing to compare")
+    }
+  }
   if (what == "pct_change") {
     why <- ifelse(is.na(d$previous), "first period: nothing to compare with",
                   ifelse(!is.na(d$flag) & nzchar(as.character(d$flag)),
@@ -603,8 +717,8 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
     op <- .bl_par(d$value)
     on.exit(graphics::par(op), add = TRUE)
     xs <- seq_len(nrow(d))
-    graphics::plot(xs, d$value, type = "n", xaxt = "n", xlab = "", ylab = "",
-                   main = if (is.null(main)) "Value by period" else main, ...)
+    graphics::plot(xs, d$value, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+    .bl_title(.bl_main(main, "Value by period"))
     .bl_ylab("Value")
     .bl_grid(NULL)
     if (length(by)) {
@@ -703,9 +817,12 @@ plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette
   cols <- .bl_cols(1, col, palette)
   op <- .bl_par(d$false_alarm_rate)
   on.exit(graphics::par(op), add = TRUE)
-  graphics::barplot(d$false_alarm_rate, names.arg = d$column, col = cols, border = NA,
-                    ylab = "", ylim = c(0, max(c(d$false_alarm_rate, x$alpha * 2), na.rm = TRUE)),
-                    main = if (is.null(main)) sprintf("Drift false alarms over %d random splits", x$n) else main, ...)
+  bp <- graphics::barplot(d$false_alarm_rate, names.arg = d$column, col = cols, border = NA,
+                          ylab = "", ylim = c(0, max(c(d$false_alarm_rate, x$alpha * 2), na.rm = TRUE)),
+                          main = if (is.null(main)) sprintf("Drift false alarms over %d random splits", x$n) else main,
+                          ...)
+  # each rate printed over its bar: a rate of 0 (the test never cried wolf) drew no bar at all
+  graphics::text(bp, d$false_alarm_rate, sprintf("%.3g", d$false_alarm_rate), pos = 3, cex = 0.85, xpd = NA)
   .bl_ylab("False-alarm rate")
   .bl_grid(NULL)
   graphics::abline(h = x$alpha, col = "#8C8C8C", lty = 2)
@@ -961,11 +1078,12 @@ plot.rmbl_crf <- function(x, ..., exposure = NULL, main = NULL, col = NULL, pale
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(d$rr)
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(d$exposure, d$rr, type = "n", xlab = sprintf("%s (micrograms per cubic metre)", x$pollutant),
+  graphics::plot(d$exposure, d$rr, type = "n", xlab = "",
                  ylab = "",
                  main = "",
                  ...)
   .bl_ylab("Relative risk")
+  .bl_xlab(sprintf("%s (micrograms per cubic metre)", x$pollutant))
   .bl_title(.bl_main(main, sprintf("Concentration-response, %s (%s)", x$pollutant,
                                                x$extra$outcome %||% "")))
   .bl_grid(NULL)
@@ -1038,7 +1156,7 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
   p <- x$pipeline
   n <- if (is.null(p$equity)) 2L else 3L
   op <- .bl_panels_begin(n)
-  graphics::par(oma = c(1.4, 0, 2, 0))
+  graphics::par(oma = c(2.4, 0, 2, 0))
   on.exit(graphics::par(op), add = TRUE)
   on.exit(.bl_panels_abort(), add = TRUE)
   crf <- structure(p$crf, class = "rmbl_crf")
@@ -1057,21 +1175,46 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
 #' @rdname plot-methods
 #' @export
 plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
-  eq <- footprint_equivalents(x$co2e_g)
-  cols <- .bl_cols(3, col, palette)
-  op <- .bl_par(c(x$co2e_g, 1000 * eq$car_km, 24 * 30 * eq$tree_months))
-  on.exit(graphics::par(op), add = TRUE)
-  vals <- c("gCO2e" = x$co2e_g, "car metres" = 1000 * eq$car_km, "tree hours" = 24 * 30 * eq$tree_months)
-  graphics::barplot(vals, col = cols, border = NA, ylab = "",
-                    main = "",
-                    ...)
+  # one quantity in one unit: the emission of the CPU, of the memory and in all, in the unit that
+  # suits its size (kg, g, mg or micrograms); the everyday equivalents are written under it. The
+  # three bars of g, car-metres and tree-hours on one axis mixed three units, and a computation
+  # too short to time drew three empty bars.
   kwh <- x$energy_kwh
-  kwh <- if (!is.null(names(kwh)) && "total" %in% names(kwh)) kwh[["total"]] else sum(kwh)
-  .bl_title(.bl_main(main, sprintf("%.3g gCO2e (%s, %s, %.3g kWh, %s)", x$co2e_g,
-                                   x$carbon_intensity$location %||% "", x$method, kwh,
-                                   x$usage_mode)))
-  .bl_grid(NULL)
-  invisible(data.frame(quantity = names(vals), value = unname(vals), stringsAsFactors = FALSE))
+  parts <- if (is.list(kwh)) unlist(kwh) else kwh
+  tot_kwh <- if ("total" %in% names(parts)) parts[["total"]] else sum(parts)
+  gpk <- x$carbon_intensity$g_per_kwh %||% if (tot_kwh > 0) x$co2e_g / tot_kwh else NA_real_
+  comp <- c(CPU = if ("cpu" %in% names(parts)) parts[["cpu"]] * gpk else NA_real_,
+            memory = if ("memory" %in% names(parts)) parts[["memory"]] * gpk else NA_real_,
+            total = x$co2e_g)
+  comp <- comp[is.finite(comp)]
+  scale <- c(kg = 1e3, g = 1, mg = 1e-3, "\u00b5g" = 1e-6)
+  big <- max(comp, 0)
+  unit <- names(scale)[which(big >= scale)[1L]]
+  if (is.na(unit)) unit <- "\u00b5g"
+  vals <- comp / scale[[unit]]
+  cols <- .bl_cols(3, col, palette)
+  op <- .bl_par(labels = names(vals))
+  on.exit(graphics::par(op), add = TRUE)
+  where <- x$carbon_intensity$location %||% ""
+  title <- .bl_main(main, sprintf("Emissions of the computation (%s, %s)", where, x$usage_mode %||% ""))
+  if (big <= 0) {
+    graphics::plot.new()
+    .bl_title(title)
+    graphics::text(0.5, 0.55, "Too short to measure", cex = 1.2, font = 2)
+    graphics::text(0.5, 0.4, sprintf("%.3g s of CPU time recorded: no energy above the timer's resolution",
+                                     x$cpu_time_s %||% 0), cex = 0.85, col = "#555555")
+    return(invisible(data.frame(quantity = names(comp), value = unname(comp), unit = "g", stringsAsFactors = FALSE)))
+  }
+  graphics::barplot(vals, horiz = TRUE, col = cols[seq_along(vals)], border = NA, names.arg = names(vals),
+                    xlab = "", main = "", ...)
+  .bl_title(title)
+  .bl_xlab(sprintf("%s CO2e", unit))
+  .bl_grid(NULL, side = "x")
+  eq <- footprint_equivalents(x$co2e_g)
+  graphics::mtext(sprintf("%.3g kWh at %.0f g/kWh; about %.3g m by car, %.3g tree-hours", tot_kwh, gpk,
+                          1000 * eq$car_km, 24 * 30 * eq$tree_months),
+                  side = 3, line = 0.2, cex = 0.75 * graphics::par("cex"), col = "#555555")
+  invisible(data.frame(quantity = names(comp), value = unname(comp), unit = "g", stringsAsFactors = FALSE))
 }
 
 # ---- dispersion ------------------------------------------------------------------------

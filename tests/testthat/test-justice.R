@@ -705,14 +705,15 @@ test_that("row labels shrink before they are cut, and are cut only past the room
 })
 
 test_that("a period-over-period plot says why a row has no percentage", {
-  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year")
+  # the first period and a zero base have no percentage; every other row has one, small bases included
+  y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 420, 0, 450)), value = "n", period = "year")
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   drawn <- plot(y)
-  expect_true(all(is.na(drawn$pct_change)))
+  expect_identical(is.finite(drawn$pct_change), c(FALSE, TRUE, TRUE, TRUE, FALSE))
   calls <- character()
   local_mocked_bindings(text = function(x, y, labels, ...) calls <<- c(calls, labels), .package = "graphics")
   plot(y)
   expect_true(any(grepl("first period", calls)))
-  expect_true(any(grepl("no percentage: base below 20", calls)))
+  expect_true(any(grepl("no percentage: previous period is zero", calls)))
 })

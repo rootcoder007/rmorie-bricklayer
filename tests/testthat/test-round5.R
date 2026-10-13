@@ -269,9 +269,9 @@ test_that("an unknown hosted table is named before anything downloads; refresh m
 test_that("the yoy print is plain ASCII where the console cannot render UTF-8", {
   withr::local_envvar(RMBL_ASCII_ONLY = "1")
   out <- utils::capture.output(print(yoy(
-    data.frame(year = 2020:2022, n = c(10, 20, 30)), value = "n", period = "year")))
+    data.frame(year = 2020:2022, n = c(0, 20, 30)), value = "n", period = "year")))
   expect_true(all(!grepl("[^\x01-\x7f]", out, perl = TRUE)))
-  expect_true(any(grepl("percent withheld", out, fixed = TRUE)))
+  expect_true(any(grepl("note: previous period is zero", out, fixed = TRUE)))
 })
 
 test_that("an option a verb does not take is refused and nothing runs", {

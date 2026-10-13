@@ -37,6 +37,13 @@ y <- yoy(data.frame(year = 2018:2023, n = c(40, 44, 41, 55, 52, 61)), value = "n
 plot(y)
 ```
 
+Small counts get their percentages too: each comes with its exact interval, as wide as the base
+is small. Only a zero base has no percentage, and its row says so.
+
+```{r yoy-small}
+plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n", period = "year"))
+```
+
 Rates with their intervals, and the change in a rate:
 
 ```{r rates}
@@ -85,10 +92,62 @@ plot(lagrangian_particles(500, 0, 0, u = 2, v = 0.5, kx = 1, ky = 1, dt = 1, n_s
                           grid = c(0, 200, -60, 100, 40, 32)))
 ```
 
-The footprint of a computation, with its equivalents:
+The footprint of a computation: CPU, memory and the total in one unit chosen to fit, with
+its everyday equivalents under the bars:
 
 ```{r footprint}
-plot(compute_footprint(sum(sqrt(1:1e5)), location = "CA", cpu_power_w = 45, memory_gb = 8))
+plot(compute_footprint(for (i in 1:20) sum(sqrt(seq_len(2e5))), location = "CA",
+                       cpu_power_w = 45, memory_gb = 8))
+```
+
+## Courts and crime
+
+The Ontario Court of Justice and Toronto Police Service data shipped with the package (see
+`vignette("courts-and-crime")` for the analysis behind each one):
+
+```{r courts-data}
+ext <- function(f) read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+f <- ext("ocj_flow_ontario.csv")
+d <- ext("ocj_time_to_disposition.csv")
+x <- ext("ocj_dispositions.csv")
+g <- ext("ocj_offence_groups.csv")
+g <- g[g$year %in% c(2014, 2022), ]
+b <- ext("tps_break_enter_d14_2024.csv")
+b <- b[!is.na(b$lon), ]
+```
+
+Cases received and disposed, and the clearance rate:
+
+```{r case-flow, fig.height = 5}
+plot(case_flow(f$received, f$disposed, pending = f$pending, period = f$month))
+```
+
+How long cases stay open, from the published time-to-disposition bands:
+
+```{r life-table}
+last <- nrow(d)
+plot(life_table(c(0, 10, 15, 18, Inf), unlist(d[last, 2:5]) * f$disposed[last]))
+```
+
+The mix of outcomes over the years:
+
+```{r disposition-mix}
+plot(disposition_mix(x[, -(1:2)], period = x$year))
+```
+
+A Simpson's-paradox check: the parts' rates, where the work moved, and the change split into
+rate and mix effects:
+
+```{r simpson, fig.height = 5.5}
+plot(clearance_decomposition(g$disposed, g$received, g$offence_group, g$year))
+```
+
+Where break-and-enters cluster, and whether they repeat near each other soon after:
+
+```{r density, fig.height = 5}
+plot(crime_density(b$lon, b$lat, n_grid = 120))
+plot(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(100, 200, 400), c(7, 14, 28),
+               nsim = 99, seed = 1))
 ```
 
 ## Customising

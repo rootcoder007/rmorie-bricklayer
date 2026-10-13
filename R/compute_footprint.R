@@ -538,6 +538,13 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
       assumptions <- c(assumptions, "core count unknown; 1 assumed")
     }
   }
+  # a run faster than the elapsed clock's resolution read 0 s of wall time against a millisecond of
+  # CPU time, and its energy came out exactly 0: the work took at least its CPU time spread over
+  # the cores
+  if (is.finite(cpu_t) && cpu_t > 0) {
+    wall <- max(wall, cpu_t / max(1, cores))
+    hours <- wall / 3600
+  }
   if (usage_mode == "machine") {
     if (is.null(stat1)) {
       usage_mode <- "process"

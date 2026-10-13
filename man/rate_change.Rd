@@ -46,8 +46,8 @@ comparison instead of a silent comparison against the wrong year.}
 \item{conf_level}{Confidence level for the interval.}
 
 \item{min_count}{Comparisons where the earlier count is at or below
-this are flagged and their percent change withheld, the way
-\code{\link[=yoy]{yoy()}} withholds a percent change off a tiny base.}
+this are flagged as resting on a small count; the percent change and
+its exact interval are still reported, as \code{\link[=yoy]{yoy()}} does.}
 }
 \value{
 A data frame of class

@@ -91,27 +91,31 @@ test_that("the count interval is exactly poisson.test's", {
   expect_true(all(got$pct_upper[ok] >= got$pct_change[ok]))
 })
 
-test_that("a percent off a small base is withheld, not printed", {
-  # two placements becoming twenty is a 900% rise and also nothing at
-  # all; the number describes the denominator's smallness
+test_that("a percent off a small base is computed, with its exact interval", {
+  # two placements becoming twenty is a 900% rise; the exact interval
+  # carries how little a base of two supports, so nothing is withheld
   d <- data.frame(year = 2019:2021, n = c(2, 20, 25))
   got <- as.data.frame(yoy(d, value = "n", period = "year"))
-  expect_true(is.na(got$pct_change[got$year == 2020]))
-  expect_match(got$flag[got$year == 2020], "base below 20")
-  # and the interval is withheld with it, since it would be as wide as
-  # the percent is unstable
-  expect_true(is.na(got$pct_lower[got$year == 2020]))
-  # the change itself is NOT withheld: 18 more is a fact
+  expect_equal(got$pct_change[got$year == 2020], 900)
+  expect_true(is.na(got$flag[got$year == 2020]))
+  # the interval is the exact one: conditional on 22 events, 20 fall in the later period
+  ci <- stats::binom.test(20, 22)$conf.int
+  expect_equal(got$pct_lower[got$year == 2020], 100 * (ci[1] / (1 - ci[1]) - 1))
+  expect_equal(got$pct_upper[got$year == 2020], 100 * (ci[2] / (1 - ci[2]) - 1))
+  # wide, as a base of two must be, and it contains the estimate
+  expect_lt(got$pct_lower[got$year == 2020], 900)
+  expect_gt(got$pct_upper[got$year == 2020], 900)
   expect_equal(got$change[got$year == 2020], 18)
-  # nor is the direction, which is the one thing not in question
   expect_identical(got$verdict[got$year == 2020], "up")
-  # a base above the gate reports normally
-  expect_false(is.na(got$pct_change[got$year == 2021]))
-  # the gate can be lowered or removed
-  loose <- as.data.frame(yoy(d, value = "n", period = "year",
-                             min_base = 0))
-  expect_equal(loose$pct_change[loose$year == 2020], 900)
-  expect_true(is.na(loose$flag[loose$year == 2020]))
+  # a minute change off a small base is reported too
+  m <- as.data.frame(yoy(data.frame(y = 1:2, n = c(15, 14)), value = "n", period = "y"))
+  expect_equal(m$pct_change[2L], -100 / 15)
+  # a note appears only when asked for, and still nothing is withheld
+  noted <- as.data.frame(yoy(d, value = "n", period = "year",
+                             min_base = 20))
+  expect_equal(noted$pct_change[noted$year == 2020], 900)
+  expect_identical(noted$flag[noted$year == 2020], "small base (below 20)")
+  expect_true(is.na(noted$flag[noted$year == 2021]))
   # a previous period of zero has no percent change to report, whatever
   # the gate
   z <- as.data.frame(yoy(data.frame(y = 1:2, n = c(0, 5)),
@@ -304,10 +308,14 @@ test_that("printing says what the percentages mean", {
   # the settings a reader needs in order to know what the column is
   expect_match(txt, "units: count")
   expect_match(txt, "exact rate-ratio interval")
-  expect_match(txt, "percent withheld below a base of 20")
+  expect_false(grepl("withheld", txt, fixed = TRUE))
   expect_match(txt, "lower is better")
+  # a small base prints its percent: 2 to 200 is +9900%
+  expect_match(txt, "9900")
   # and the reason a particular percent is absent, on its own row
-  expect_match(txt, "percent withheld: base below 20")
+  z <- utils::capture.output(print(yoy(data.frame(year = 1:2, n = c(0, 4)), value = "n", period = "year"),
+                                   color = FALSE))
+  expect_match(paste(z, collapse = "\n"), "note: previous period is zero")
   # colour is off when asked, and the table is still readable
   expect_false(grepl("\033", txt, fixed = TRUE))
   # colour is emitted when asked for

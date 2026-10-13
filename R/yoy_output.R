@@ -143,7 +143,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
     }
     cat(line, "\n", sep = "")
     if (!is.na(d$flag[r])) {
-      cat(.yg("    \u21b3 percent withheld: "), d$flag[r], "\n", sep = "")
+      cat(.yg("    \u21b3 note: "), d$flag[r], "\n", sep = "")
     }
   }
   if (nrow(as.data.frame(x)) > n) {
@@ -166,8 +166,8 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
             sprintf("units: %s", m$units))
   if (m$units == "count") {
     bits <- c(bits, sprintf("%.0f%% exact rate-ratio interval",
-                            100 * m$conf_level),
-              sprintf("percent withheld below a base of %g", m$min_base))
+                            100 * m$conf_level))
+    if (isTRUE(m$min_base > 0)) bits <- c(bits, sprintf("bases below %g noted", m$min_base))
   }
   if (m$units == "percent") {
     bits <- c(bits, "percentage-point change, not percent of a percent")
