@@ -83,6 +83,9 @@ fake_spn2 <- function(plan = list(), lookup = NULL) {
         reply(200, list(url = u, job_id = id))
       },
       poll429 = new_job(u, "poll429"),
+      poll429forever = new_job(u, "poll429forever"),
+      odd_origin = new_job(u, "odd_origin"),
+      job_throttle = new_job(u, "job_throttle"),
       html = reply(502, "<html>Bad gateway</html>"),
       refused = reply(401, list(message = "invalid key")),
       odd = reply(200, list(message = "nothing useful"))
@@ -96,6 +99,18 @@ fake_spn2 <- function(plan = list(), lookup = NULL) {
     j$polls <- j$polls + 1L
     s$jobs[[id]] <- j
     if (j$kind == "poll429" && j$polls <= 4L) return(reply(429, "<html>slow down</html>"))
+    if (j$kind == "poll429forever") return(reply(429, "<html>slow down</html>", retry_after = "30"))
+    if (j$kind == "odd_origin" && j$polls >= 2L) {
+      return(reply(200, list(status = "success", timestamp = "20261013120000", original_url = "javascript:x")))
+    }
+    if (j$kind == "job_throttle") {
+      if (is.null(s$throttled)) {
+        s$throttled <- TRUE
+        return(reply(200, list(status = "error", status_ext = "error:user-session-limit")))
+      }
+      j$kind <- "ok"
+      s$jobs[[id]] <- j
+    }
     if (j$kind == "listts" && j$polls >= 2L) {
       return(reply(200, list(status = "success", timestamp = list("x", 1), original_url = j$url)))
     }
@@ -565,4 +580,50 @@ test_that("wayback_retry(): a daily limit hit today is left for tomorrow; lookup
   expect_false(any(grepl("e.org%2Fd", s$posts)))
   # three lookups, a second apart
   expect_gte(s$clock, 2)
+})
+
+
+test_that("status checks refused past max_wait fail the capture; odd origins and job-level throttles", {
+  withr::local_envvar(keys)
+  s <- fake_spn2(list("https://e.org/a" = list(kind = "poll429forever")))
+  r <- with_fake(s, wayback_save("https://e.org/a", poll = 1, max_wait = 100, quiet = TRUE))
+  expect_identical(r$status, "failed")
+  expect_match(r$message, "no answer from archive.org in 100 seconds")
+  # the waits followed Retry-After: 30 s apart, so a handful of checks, not a hundred
+  expect_lte(s$gets, 6L)
+  s2 <- fake_spn2(list("https://e.org/b" = list(kind = "odd_origin")))
+  r2 <- with_fake(s2, wayback_save("https://e.org/b", quiet = TRUE))
+  # an original_url that is not a web address is not put in the snapshot address
+  expect_identical(r2$snapshot, "https://web.archive.org/web/20261013120000/https://e.org/b")
+  s3 <- fake_spn2(list("https://e.org/c" = list(kind = "job_throttle")))
+  r3 <- with_fake(s3, wayback_save("https://e.org/c", per_minute = 60, quiet = TRUE))
+  # a throttle reported by the job itself sends the URL again after the wait
+  expect_identical(r3$status, "saved")
+  expect_identical(s3$tries[["https://e.org/c"]], 2L)
+  expect_gte(diff(s3$post_at), 15)
+})
+
+test_that("a URL that is not UTF-8 is refused; the real sleep seam sleeps", {
+  bad <- "https://e.org/\xff"
+  Encoding(bad) <- "bytes"
+  expect_match(rmoriebricklayer:::.bl_wb_hidden_char(bad), "not UTF-8")
+  expect_identical(rmoriebricklayer:::.bl_wb_hidden_char("https://e.org/ok"), "")
+  t0 <- proc.time()[["elapsed"]]
+  rmoriebricklayer:::.bl_wb_sleep(0.05)
+  expect_gte(proc.time()[["elapsed"]] - t0, 0.04)
+})
+
+test_that("rmbl wayback --max leaves URLs for the next run and exits 1 saying so", {
+  withr::local_envvar(keys)
+  f <- withr::local_tempfile(fileext = ".txt")
+  writeLines(sprintf("https://e.org/n%d", 1:3), f)
+  outl <- character()
+  st <- with_fake(fake_spn2(), bricklayer_cli(c("wayback", f, "--max", "1"), out = function(x) outl <<- c(outl, x)))
+  expect_identical(st, 1L)
+  expect_true(any(grepl("1 saved, 0 existing, 0 failed, 2 not sent (run again to continue)", outl, fixed = TRUE)))
+  outl <- character()
+  st2 <- with_fake(fake_spn2(), bricklayer_cli(c("wayback", f), out = function(x) outl <<- c(outl, x)))
+  expect_identical(st2, 0L)
+  # the earlier capture and the two new ones
+  expect_true(any(grepl("3 saved, 0 existing, 0 failed; results", outl, fixed = TRUE)))
 })

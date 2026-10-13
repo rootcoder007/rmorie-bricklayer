@@ -52,6 +52,9 @@ r4_server <- function(env = parent.frame()) {
     "            try:",
     "                while True: self.wfile.write(b'%x\\r\\n' % len(chunk) + chunk + b'\\r\\n')",
     "            except Exception: return",
+    "        if p == '/slow':",
+    "            self.send_response(429); self.send_header('Retry-After', ' 7 ')",
+    "            self.send_header('Content-Length', '0'); self.end_headers(); return",
     "        if p == '/nowhere':",
     "            self.send_response(302); self.send_header('Content-Length', '0'); self.end_headers(); return",
     "        if p == '/missing':",
@@ -153,8 +156,12 @@ test_that("F3/F4 live: a same-origin redirect carries the headers; an API call r
                                    c("Authorization: Bearer SECRET-A", "X-Api-Key: SECRET-X"))
   expect_identical(as.integer(res$status), -1L)
   expect_match(res$error, "redirected to another host")
-  # the reply carries the server's Retry-After when it sends one (empty otherwise)
-  expect_identical(same_res <- r4(".bl_http_get_local")(paste0(srv$base, "/echo"), 10, NULL)$retry_after, "")
+  # the reply carries the server's Retry-After when it sends one, trimmed (empty otherwise)
+  expect_identical(r4(".bl_http_get_local")(paste0(srv$base, "/echo"), 10, NULL)$retry_after, "")
+  slow <- r4(".bl_http_get_local")(paste0(srv$base, "/slow"), 10, NULL)
+  expect_identical(as.integer(slow$status), 429L)
+  expect_identical(slow$retry_after, "7")
+  expect_identical(r4(".bl_wb_retry_after")(slow), 7)
 })
 
 test_that("F2/F6: bytes a server sent are parsed as text, never fetched or opened", {
