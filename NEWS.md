@@ -4,6 +4,27 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Timing tests
+
+* **dudect: both classes are written the same way.** The 150-tick ML-KEM compare-and-select was
+  flagged intermittently on GitHub's x86 runners (|t| up to 30). Its compiled code is branch-free
+  with a fixed memory access pattern; the difference came from the harness, which copied the
+  fixed class into place and generated the random class in place, leaving the slots in different
+  cache states. Random inputs now go through the same copy, and a new target,
+  `mlkem768_fo_select_validity`, compares a pool ciphertext against itself and against another,
+  both made by the same code, so only the match bit differs. Every target shows no evidence of
+  leakage locally (x86-64, max |t| 2.8) and the positive control is still flagged.
+
+## Hot spots over time, and rates over time
+
+* **New: `hotspot_persistence()`.** Incidents counted in grid cells per period: the share of
+  places holding half the incidents (the law of crime concentration), the hot cells (the busiest
+  `top` share, ties included) and their share of incidents, the Jaccard overlap of each period's
+  hot spots with the previous period's, and per cell how many periods it was hot. Plot: the
+  concentration and persistence over time and a map of the cells by how often they were hot.
+* **`plot()` of a rate takes `period =`.** A rate by group and period draws one panel per group,
+  the rate as a line over its interval band on a shared scale.
+
 ## Complex survey estimation
 
 * **New: `survey_design()`, `survey_estimate()`, `survey_compare()`.** Design-based means,

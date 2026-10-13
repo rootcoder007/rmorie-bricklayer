@@ -628,6 +628,12 @@ bricklayer_plot_options <- function(...) {
 #'     incidents as a heat map, with the highest-density regions outlined.}
 #'   \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
 #'     distance-by-time cell, coloured on a log scale around 1.}
+#'   \item{\code{rmbl_hotspot}}{(\code{\link{hotspot_persistence}}) the share of places
+#'     holding half the incidents and the overlap of hot spots with the period before, over
+#'     time, and a map of the cells coloured by how often they were hot.}
+#'   \item{\code{rmbl_svy_estimate}, \code{rmbl_svy_compare}}{(\code{\link{survey_estimate}},
+#'     \code{\link{survey_compare}}) each domain's estimate with its interval, flagged domains
+#'     marked; each difference from the reference domain with its interval.}
 #'   \item{\code{rmbl_clearance_decomposition}}{(\code{\link{clearance_decomposition}})
 #'     the parts' rates in both comparisons with the aggregate on top, where the
 #'     workload moved (coloured by whether a part clears above or below the
@@ -653,6 +659,9 @@ bricklayer_plot_options <- function(...) {
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
+#' @param period For \code{rmbl_rate}, a \code{by} column holding the period: the rate is
+#'   drawn over time with its interval band, one panel per group of the other \code{by}
+#'   columns.
 #' @param which For \code{bricklayer_analysis}, the panels: any of
 #'   \code{"change"}, \code{"rates"}, \code{"rate_change"}; \code{NULL} draws
 #'   every panel the analysis has.
@@ -694,6 +703,7 @@ bricklayer_plot_options <- function(...) {
 #' plot(knox_test(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
 #'                nsim = 99, seed = 1))
 #' }
+#' plot(hotspot_persistence(be$lon, be$lat, quarters(as.Date(be$occ_date)), cell = 0.3))
 #' # rates, shares and the change in a rate
 #' rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
 #'                  stops = c(120, 90, 60, 150, 85, 70),
@@ -703,6 +713,16 @@ bricklayer_plot_options <- function(...) {
 #' plot(share(r23, count = "stops", by = "division"))
 #' plot(rate_change(rt, count = "stops", population = "residents", period = "year",
 #'                  by = "division"))
+#' # a rate over time, one panel per group
+#' plot(rate(rt, count = "stops", population = "residents", by = c("division", "year")),
+#'      period = "year")
+#' # complex survey estimates by domain, and the differences between domains
+#' set.seed(3)
+#' sv <- data.frame(region = rep(c("north", "south", "east"), length.out = 300),
+#'                  smoker = rbinom(300, 1, 0.25), w = runif(300, 50, 150))
+#' sd <- survey_design(sv, weights = "w", strata = "region")
+#' plot(survey_estimate(sd, sv, "smoker", by = "region", stat = "proportion", levels = "1"))
+#' plot(survey_compare(sd, sv, "smoker", by = "region", stat = "proportion", levels = "1"))
 #' # a published table in one call: change, rates and rate change
 #' tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
 #'                   n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
@@ -852,15 +872,56 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
 
 #' @rdname plot-methods
 #' @export
-plot.rmbl_rate <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL) {
   d <- as.data.frame(x)
   meta <- attr(x, "rate")
+  if (!is.null(period)) return(.bl_rate_over_time(d, meta, period, main, col, palette, ...))
   label <- .bl_group_label(d, meta$by)
   cols <- .bl_cols(nrow(d), col, palette)
   .bl_dot_interval(label, d$rate, d$lower, d$upper,
                    if (is.null(main)) sprintf("Rate %s", meta$per_label %||% "") else main,
                    sprintf("Rate %s, with interval", meta$per_label %||% ""), cols, ...)
   invisible(data.frame(label = label, rate = d$rate, lower = d$lower, upper = d$upper,
+                       stringsAsFactors = FALSE))
+}
+
+# A rate over time: one panel per group (the `by` columns other than `period`), the rate as a
+# line over its interval band, every panel on the same scale so groups compare at a glance.
+.bl_rate_over_time <- function(d, meta, period, main, col, palette, ...) {
+  if (!is.character(period) || length(period) != 1L || !period %in% meta$by) {
+    stop("`period` must be one of the rate's `by` columns", call. = FALSE)
+  }
+  grp <- setdiff(meta$by, period)
+  g <- if (length(grp)) do.call(paste, c(d[grp], sep = " / ")) else rep("All", nrow(d))
+  groups <- unique(g)
+  if (length(groups) > 16L) stop("more than 16 groups to draw over time: filter or regroup first", call. = FALSE)
+  pv <- sort(unique(d[[period]]))
+  cols <- .bl_cols(length(groups), col, palette)
+  ylim <- range(c(d$lower, d$upper, d$rate), finite = TRUE)
+  ylim <- ylim + c(-0.04, 0.12) * diff(ylim)
+  op <- .bl_panels_begin(length(groups))
+  on.exit(graphics::par(op), add = TRUE)
+  on.exit(.bl_panels_abort(), add = TRUE)
+  for (k in seq_along(groups)) {
+    s <- d[g == groups[k], , drop = FALSE]
+    s <- s[order(match(s[[period]], pv)), , drop = FALSE]
+    xs <- match(s[[period]], pv)
+    graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(ylim), 3, 1)))
+    graphics::plot(range(seq_along(pv)), ylim, type = "n", xaxt = "n", xlab = "", ylab = "", main = "", ...)
+    .bl_grid(NULL)
+    ok <- is.finite(s$lower) & is.finite(s$upper)
+    if (sum(ok) > 1L) {
+      graphics::polygon(c(xs[ok], rev(xs[ok])), c(s$lower[ok], rev(s$upper[ok])),
+                        col = grDevices::adjustcolor(cols[k], 0.22), border = NA)
+    }
+    .bl_line(xs, s$rate, cols[k], fill = FALSE)
+    graphics::axis(1, at = seq_along(pv), labels = pv)
+    .bl_title(groups[k])
+    .bl_ylab(sprintf("Rate %s", meta$per_label %||% ""))
+  }
+  if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2, col = "#1F2430")
+  .bl_panels_end()
+  invisible(data.frame(group = g, period = d[[period]], rate = d$rate, lower = d$lower, upper = d$upper,
                        stringsAsFactors = FALSE))
 }
 
