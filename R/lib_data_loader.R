@@ -739,6 +739,7 @@ validate_schema <- function(df_raw, provenance) {
 #' try(apply_schema_validation(data.frame(x = 1), prov))
 #' @export
 apply_schema_validation <- function(df_raw, provenance) {
+  if (!is.data.frame(df_raw)) stop("`df_raw` must be a data frame", call. = FALSE)
   if (is.data.frame(provenance)) {
     stop("`provenance` must be a provenance list or a list of rules, not a data frame", call. = FALSE)
   }
