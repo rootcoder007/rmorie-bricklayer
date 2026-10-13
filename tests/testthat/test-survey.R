@@ -226,3 +226,26 @@ test_that("results print, plot and flag small or empty domains", {
   expect_null(cm2$level)
   expect_equal(nrow(plot(cm2, col = "black")), 2L)
 })
+
+test_that("replicate weights can be named columns, and a replicate design's df is replicates less one", {
+  d <- cbind(toy, r1 = toy$w, r2 = toy$w * 1.1, r3 = toy$w * 0.9)
+  des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1")
+  expect_length(des$reps, 3L)
+  expect_equal(des$reps[[2]], toy$w * 1.1)
+  e <- survey_estimate(des, d, "y", df = "design")
+  z <- stats::qt(0.975, 2)
+  expect_equal(c(e$lower, e$upper), e$estimate + c(-1, 1) * z * e$se)
+})
+
+test_that("a pending interrupt stops the replicate-totals kernel between replicates", {
+  skip_on_cran()
+  skip_on_os("windows")
+  skip_if(!nzchar(Sys.which("python3")) || !nzchar(Sys.which("timeout")), "no python3/timeout")
+  # 4,000 replicates over 3 million rows: seconds of work unless the poll between replicates
+  # sees the signal (the replicate list holds one vector 4,000 times, so it costs 24 MB)
+  got <- interrupt_probe(paste(
+    "w <- as.numeric(seq_len(3e6)); y <- matrix(1, 3e6, 1);",
+    ".Call(rmoriebricklayer:::C_rmbl_svy_reptotals, y, rep(list(w), 4000L))"))
+  skip_if(startsWith(got, "inconclusive"), got)
+  expect_identical(got, "interrupt")
+})
