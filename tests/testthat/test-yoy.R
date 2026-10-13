@@ -668,3 +668,13 @@ test_that("several rows of one period: counts add up, percentages are averaged",
   m <- yoy(d, value = "share", period = "year", units = "percent", fun = max)
   expect_equal(m$value[m$year == 2019], 57.9)
 })
+
+test_that("the printed footer names a min_base only when one was set", {
+  d <- data.frame(year = 2019:2021, n = c(2, 20, 25))
+  plain <- paste(utils::capture.output(print(yoy(d, value = "n", period = "year"), color = FALSE)), collapse = "\n")
+  expect_false(grepl("bases below", plain, fixed = TRUE))
+  noted <- paste(utils::capture.output(print(yoy(d, value = "n", period = "year", min_base = 20), color = FALSE)),
+                 collapse = "\n")
+  expect_match(noted, "bases below 20 noted", fixed = TRUE)
+  expect_match(noted, "note: small base (below 20)", fixed = TRUE)
+})

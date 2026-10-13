@@ -477,3 +477,15 @@ test_that("a line has its fill, halo and labelled end; a dense one drops its poi
   expect_equal(pts, 0L)
   expect_null(rmoriebricklayer:::.bl_line(NA_real_, NA_real_, "red"))
 })
+
+test_that("a drift calibration takes one colour for every row when asked", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  cal <- structure(list(columns = data.frame(column = c("a", "b"), false_alarm_rate = c(0, 1 / 3)),
+                        any_flag = 1 / 3, alpha = 0.01, n = 3L), class = "rmbl_drift_calibration")
+  bg <- NULL
+  local_mocked_bindings(points = function(x, y, pch = NULL, bg = NULL, ...) bg <<- bg, .package = "graphics")
+  d <- plot(cal, col = "purple")
+  expect_identical(bg, rep("purple", 3L))
+  expect_equal(d$lower[2], stats::binom.test(1, 3)$conf.int[1])
+})
