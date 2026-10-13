@@ -1,0 +1,27 @@
+rmoriebricklayer bundles small excerpts of published statistics in inst/extdata. They are not
+covered by the package's AGPL-3 licence; their owners' terms apply.
+
+inst/extdata/tps_break_enter_d14_2024.csv
+  Toronto Police Service, Public Safety Data Portal (https://data.tps.ca/), dataset
+  "Break and Enter Open Data", retrieved 2026-10-13; the 2024 occurrences in division D14,
+  one row per occurrence (built by data-raw/tps_break_enter_d14_2024.R in the source package).
+  Contains information licensed under the Open Government Licence - Toronto Police Service.
+
+inst/extdata/ocj_flow_ontario.csv, ocj_time_to_disposition.csv, ocj_dispositions.csv,
+inst/extdata/ocj_offence_groups.csv, ocj_courts.csv
+  Ontario Court of Justice, court statistics (https://www.ontariocourts.ca/ocj/statistics/),
+  editions 2012 to 2026, retrieved 2026-10-13. Published by the Court for public information;
+  copyright the Ontario Court of Justice / King's Printer for Ontario. Figures copied unaltered.
+
+inst/extdata/carbon_intensity.csv
+  Ember (2026), Yearly Electricity Data, via Our World in Data; lifecycle gCO2e/kWh; CC BY 4.0.
+  Every row carries its source and year (see ?carbon_intensity).
+
+inst/extdata/timezone_countries.csv
+  Built by tools/build_timezones.R from the IANA time zone database (zone.tab and backward),
+  which is in the public domain.
+
+inst/extdata/otis_a01_individuals.csv
+  Ontario Ministry of the Solicitor General, inmate data tables (Offender Tracking Information
+  System), published on the Ontario Data Catalogue (https://data.ontario.ca/) under the Open
+  Government Licence - Ontario.

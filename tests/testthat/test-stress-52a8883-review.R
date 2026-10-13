@@ -588,14 +588,19 @@ test_that("an interrupt nobody handles is an error; the shell read reports Ctrl-
   local_mocked_bindings(system2 = function(...) structure(character(), status = 130L), .package = "base")
   got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), interrupt = function(i) "interrupt")
   expect_identical(got, "interrupt")
-  local_mocked_bindings(system2 = function(...) "typed-line", .package = "base")
+  # a completed read comes back after the shell's completion mark (review of e57fed5)
+  local_mocked_bindings(system2 = function(...) "\002RMBL-LINE\002typed-line", .package = "base")
   expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), "typed-line")
+  # output without the mark is a read that never finished (a Ctrl-C before the trap was set)
+  local_mocked_bindings(system2 = function(...) character(), .package = "base")
+  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), interrupt = function(i) "interrupt")
+  expect_identical(got, "interrupt")
   # a secret is read by the shell with the echo switched off inside it (the trap restores it)
   skip_if_not(nzchar(Sys.which("stty")))
   seen <- NULL
   local_mocked_bindings(system2 = function(command, args, ...) {
     seen <<- args[[2L]]
-    "sk-typed"
+    "\002RMBL-LINE\002sk-typed"
   }, .package = "base")
   expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = TRUE), "sk-typed")
   expect_match(seen, "stty -echo", fixed = TRUE)

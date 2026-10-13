@@ -12,11 +12,13 @@ survey_design(
   fpc = NULL,
   replicates = NULL,
   id = NULL,
-  type = c("bootstrap", "mean_bootstrap", "jk1", "brr", "fay"),
+  type = c("bootstrap", "mean_bootstrap", "jk1", "jkn", "brr", "fay"),
   mean_size = 1,
   rho = NULL,
   mse = TRUE,
-  lonely_psu = c("fail", "remove", "adjust")
+  lonely_psu = c("fail", "remove", "adjust"),
+  rscales = NULL,
+  degf = NULL
 )
 }
 \arguments{
@@ -56,6 +58,14 @@ estimate (\code{TRUE}) or on the mean of the replicate estimates.}
 PSU under linearization: \code{"fail"} (an error naming it),
 \code{"remove"} (it contributes nothing) or \code{"adjust"} (its PSU is
 centred on the mean of all PSU totals).}
+
+\item{rscales}{Per-replicate factors: required for
+\code{type = "jkn"} (\eqn{(n_h - 1)/n_h} for each replicate's
+stratum), optional otherwise (multiplying the type's scale).}
+
+\item{degf}{The design's degrees of freedom, when known (a
+public-use file's documentation gives them); by default
+computed as described in Details.}
 }
 \value{
 An object of class \code{rmbl_svy_design}.
@@ -88,7 +98,25 @@ equivalently Fay's BRR with \eqn{\rho = 1 - 1/\sqrt{12}}.}
 \item{\code{"brr"}}{\eqn{1/B}, balanced repeated replication.}
 \item{\code{"fay"}}{\eqn{1/(B (1 - \rho)^2)}, Fay's BRR with
 coefficient \code{rho}.}
+\item{\code{"jkn"}}{the stratified delete-one-PSU jackknife: each
+replicate has its own factor \eqn{(n_h - 1)/n_h} for the
+\eqn{n_h} PSUs of the stratum it deletes from, given as
+\code{rscales} (passed as \code{"jk1"}, JKn weights overstated the
+standard error by 37 percent in a test design).}
 }
+
+The replicate columns are only replicates: a column holding
+the full-sample weight, the \code{id}, or any other column of
+\code{data} is refused by name, and BRR and Fay replicates must come
+in a Hadamard order (2, or a multiple of 4), so a stray column
+is caught instead of being averaged in as one more replicate.
+
+The design's degrees of freedom (\code{df = "design"} in
+\code{\link[=survey_estimate]{survey_estimate()}}) are PSUs less strata under linearization;
+for replicate weights, the rank of the replicate weight matrix
+less one, as the \code{survey} package computes them (twelve BRR
+half-samples of an eight-stratum design have 8, not 11), or
+\code{degf} when given.
 
 Without replicates, the variance is the with-replacement
 Taylor linearization: within each stratum \eqn{h} with

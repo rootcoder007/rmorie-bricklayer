@@ -132,7 +132,7 @@ test_that("F4: 'another origin' compares scheme, host and effective port", {
   expect_false(rcl("http://127.0.0.1:18081/x", "http://127.0.0.1:18081/y")$drop_auth)
 })
 
-test_that("F3/F4 live: only content-negotiation headers follow a redirect to another origin", {
+test_that("F3/F4 live: a same-origin redirect carries the headers; an API call refuses another origin", {
   srv <- r4_server()
   hdrs <- c("Authorization: Bearer SECRET-A", "X-Api-Key: SECRET-X", "Cookie: s=SECRET-C",
             "Private-Token: SECRET-P", "Accept: application/json", "Accept-Language: en")
@@ -141,22 +141,20 @@ test_that("F3/F4 live: only content-negotiation headers follow a redirect to ano
   expect_identical(same[["authorization"]], "Bearer SECRET-A")
   expect_identical(same[["x-api-key"]], "SECRET-X")
   expect_identical(same[["private-token"]], "SECRET-P")
-  # another port on the same host is another origin: nothing but negotiation travels
+  # another port on the same host is another origin. An API call (a JSON answer acted on: a model,
+  # Save Page Now, OCSP) takes its answer only from the host it asked, so the redirect is refused
+  # and the second origin is never sent anything (review of e57fed5: the other host's JSON had been
+  # recorded as archive.org's)
   srv2 <- r4_server()
-  other <- r4_json(r4(".bl_http_get_local")(sprintf("%s/go/%d", srv$base, srv2$port), 10, hdrs))
-  expect_null(other[["authorization"]])
-  expect_null(other[["x-api-key"]])
-  expect_null(other[["cookie"]])
-  expect_null(other[["private-token"]])
-  expect_identical(other[["accept"]], "application/json")
-  expect_identical(other[["accept-language"]], "en")
-  # the POST seam does the same, and the key never reaches the second origin
+  other <- r4(".bl_http_get_local")(sprintf("%s/go/%d", srv$base, srv2$port), 10, hdrs)
+  expect_identical(as.integer(other$status), -1L)
+  expect_match(other$error, "redirected to another host")
   res <- r4(".bl_http_post_local")(sprintf("%s/go/%d", srv$base, srv2$port), charToRaw("{}"), "application/json", 10,
                                    c("Authorization: Bearer SECRET-A", "X-Api-Key: SECRET-X"))
-  expect_identical(as.integer(res$status), 200L)
-  echoed <- r4_json(res)
-  expect_null(echoed[["authorization"]])
-  expect_null(echoed[["x-api-key"]])
+  expect_identical(as.integer(res$status), -1L)
+  expect_match(res$error, "redirected to another host")
+  # the reply carries the server's Retry-After when it sends one (empty otherwise)
+  expect_identical(same_res <- r4(".bl_http_get_local")(paste0(srv$base, "/echo"), 10, NULL)$retry_after, "")
 })
 
 test_that("F2/F6: bytes a server sent are parsed as text, never fetched or opened", {

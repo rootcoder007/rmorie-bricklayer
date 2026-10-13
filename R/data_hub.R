@@ -164,6 +164,16 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
       stop("the reply from data.rmorie.com is not a manifest (no list of datasets): the cached copy is kept",
            call. = FALSE)
     }
+    # an empty list does not replace a manifest that lists tables: `{"datasets": []}` took the place
+    # of the good copy and, with no digest left, a tampered cached table loaded (review of e57fed5, E10)
+    if (!length(ds) && file.exists(p)) {
+      old <- tryCatch(.rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE),
+                      error = function(e) NULL)
+      if (is.list(old) && is.list(old$datasets) && length(old$datasets)) {
+        stop("the manifest from data.rmorie.com lists no tables: the cached copy, which does, is kept",
+             call. = FALSE)
+      }
+    }
     if (!isTRUE(file.rename(tmp, p))) stop(sprintf("could not store the manifest in %s", p), call. = FALSE)
     return(m)
   }
@@ -268,7 +278,18 @@ bricklayer_data_tables <- function(refresh = FALSE) {
              delete = !cached)
     }
   }
-  if (is.null(want)) return(invisible(TRUE))
+  # no digest: loaded only when the manifest lists the table (without a digest, as some tables are);
+  # a manifest that does not list it at all says nothing about the file, which is refused
+  if (is.null(want)) {
+    listed <- tryCatch(any(vapply(bricklayer_data_manifest()$datasets,
+                                  function(d) is.list(d) && identical(d$key, key), NA)),
+                       error = function(e) !identical(.bl_data_cached_digest(key), NA))
+    if (!isTRUE(listed)) {
+      refuse(sprintf("%s is not listed in the manifest of data.rmorie.com, so the file cannot be verified", key),
+             delete = !cached)
+    }
+    return(invisible(TRUE))
+  }
   have <- tolower(core_sha256(readBin(dest, "raw", file.size(dest))))
   if (!identical(have, want)) {
     # a table rebuilt upstream has a new digest in a new manifest: fetch the manifest again
@@ -304,32 +325,8 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     if (is.na(width) || width < 40L) width <- max(80L, as.integer(getOption("width", 80L)))
   }
   rows <- ifelse(is.na(tables$rows), "-", formatC(tables$rows, format = "d", big.mark = ","))
-  # the manifest is fetched text: control characters (an ANSI escape, a carriage return)
-  # must not reach the terminal
-  printable <- function(x) {
-    # Text first marked as the UTF-8 it is (the manifest is UTF-8, but in a C locale the parser
-    # returns it unmarked) or converted, an invalid byte becoming "?": [[:cntrl:]] on unmarked
-    # text in a C locale matched the bytes 0x80-0x9F inside every multi-byte character and cut
-    # names into fragments (the C-locale CI leg, 02a38be review). Every removal below then works
-    # on whole characters.
-    x <- as.character(x)
-    u <- !is.na(x) & Encoding(x) == "unknown" & validUTF8(x)
-    v <- x[u]
-    Encoding(v) <- "UTF-8"
-    x[u] <- v
-    o <- !is.na(x) & !u & Encoding(x) != "UTF-8"
-    x[o] <- iconv(x[o], "", "UTF-8", sub = "?")
-    # ANSI escape sequences, then the C0 and C1 controls and DEL, the bidirectional and
-    # zero-width format characters (U+200B-U+200F, U+202A-U+202E, U+2066-U+2069), and the rest of
-    # Unicode's default-ignorable code points, which print as nothing and hide text in a table
-    # name (U+00AD, U+034F, U+115F, U+3164, U+180E, U+FEFF, U+FFF9-FFFB, the tag characters
-    # U+E0000-E007F; review of 02a38be)
-    x <- gsub("(*UTF)\033\\[[0-9;?]*[ -/]*[@-~]", "", x, perl = TRUE)
-    gsub(paste0("(*UTF)[\\x{00}-\\x{1f}\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
-                "\\x{17b4}\\x{17b5}\\x{180b}-\\x{180f}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}",
-                "\\x{2060}-\\x{206f}\\x{3164}\\x{fe00}-\\x{fe0f}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}",
-                "\\x{e0000}-\\x{e0fff}]"), "", x, perl = TRUE)
-  }
+  # the manifest is fetched text: what would not print as itself is removed (.rmbl_printable)
+  printable <- .rmbl_printable
   tables$key <- printable(tables$key)
   name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))
   name[!nzchar(name) | name == tables$key] <- "-"
@@ -368,7 +365,8 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
   }
   .bl_check_flag(refresh, "refresh")
   known <- tryCatch(vapply(bricklayer_data_manifest()$datasets, function(d) d$key, ""), error = function(e) NULL)
-  if (length(known) && !key %in% known) {
+  # an empty list is an answer too: no table is listed, so none is loaded
+  if (!is.null(known) && !key %in% known) {
     stop(sprintf("no table %s at data.rmorie.com (`%s data list` shows them)", key, .bl_prog()), call. = FALSE)
   }
   parts <- strsplit(key, "/", fixed = TRUE)[[1L]]

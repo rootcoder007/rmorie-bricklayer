@@ -18,7 +18,8 @@ verify_pollution(
   baseline_rate = 500,
   baseline_rate_per = 1e+05,
   population = 1e+06,
-  rare_outcome = FALSE
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 
 pollution_report_text(report)
@@ -67,6 +68,10 @@ because it is also what a rate per person-year passed as per 100,000 looks like 
 per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
 small). The check is on the converted rate, so it holds whatever
 \code{baseline_rate_per} is.}
+
+\item{high_rate}{\code{TRUE} when the outcome really is more common
+than 10,000 per 100,000 a year (no population's all-cause death
+rate is); without it such a rate is an assumption failure.}
 
 \item{report}{A result of \code{verify_pollution()}.}
 }

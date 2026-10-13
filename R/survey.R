@@ -34,7 +34,25 @@
 #'   \item{`"brr"`}{\eqn{1/B}, balanced repeated replication.}
 #'   \item{`"fay"`}{\eqn{1/(B (1 - \rho)^2)}, Fay's BRR with
 #'   coefficient `rho`.}
+#'   \item{`"jkn"`}{the stratified delete-one-PSU jackknife: each
+#'   replicate has its own factor \eqn{(n_h - 1)/n_h} for the
+#'   \eqn{n_h} PSUs of the stratum it deletes from, given as
+#'   `rscales` (passed as `"jk1"`, JKn weights overstated the
+#'   standard error by 37 percent in a test design).}
 #' }
+#'
+#' The replicate columns are only replicates: a column holding
+#' the full-sample weight, the `id`, or any other column of
+#' `data` is refused by name, and BRR and Fay replicates must come
+#' in a Hadamard order (2, or a multiple of 4), so a stray column
+#' is caught instead of being averaged in as one more replicate.
+#'
+#' The design's degrees of freedom (`df = "design"` in
+#' [survey_estimate()]) are PSUs less strata under linearization;
+#' for replicate weights, the rank of the replicate weight matrix
+#' less one, as the `survey` package computes them (twelve BRR
+#' half-samples of an eight-stratum design have 8, not 11), or
+#' `degf` when given.
 #'
 #' Without replicates, the variance is the with-replacement
 #' Taylor linearization: within each stratum \eqn{h} with
@@ -64,6 +82,12 @@
 #' @param mean_size For `type = "mean_bootstrap"`, the number of
 #'   bootstrap weights averaged into each replicate.
 #' @param rho For `type = "fay"`, Fay's coefficient.
+#' @param rscales Per-replicate factors: required for
+#'   `type = "jkn"` (\eqn{(n_h - 1)/n_h} for each replicate's
+#'   stratum), optional otherwise (multiplying the type's scale).
+#' @param degf The design's degrees of freedom, when known (a
+#'   public-use file's documentation gives them); by default
+#'   computed as described in Details.
 #' @param mse Centre replicate deviations on the full-sample
 #'   estimate (`TRUE`) or on the mean of the replicate estimates.
 #' @param lonely_psu What to do with a stratum that has a single
@@ -86,9 +110,9 @@
 #' survey_design(d, weights = "w", strata = "region")
 #' @export
 survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, replicates = NULL,
-                          id = NULL, type = c("bootstrap", "mean_bootstrap", "jk1", "brr", "fay"),
+                          id = NULL, type = c("bootstrap", "mean_bootstrap", "jk1", "jkn", "brr", "fay"),
                           mean_size = 1, rho = NULL, mse = TRUE,
-                          lonely_psu = c("fail", "remove", "adjust")) {
+                          lonely_psu = c("fail", "remove", "adjust"), rscales = NULL, degf = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   n <- nrow(data)
   if (n < 2L) stop("`data` must have at least two rows", call. = FALSE)
@@ -109,8 +133,18 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     stop("`weights` must be finite, non-negative and not missing", call. = FALSE)
   }
   w <- as.numeric(w)
+  if (!is.null(degf) && (!is.numeric(degf) || length(degf) != 1L || is.na(degf) || degf < 1)) {
+    stop("`degf` must be a number of at least 1", call. = FALSE)
+  }
+  # what survey_estimate() checks the data against: the same rows in the same order (only the row
+  # count was checked, and the same data reordered gave a wrong answer silently)
+  named <- function(x) if (is.character(x) && length(x) == 1L) x
+  check <- list(rows = attr(data, "row.names"),
+                cols = Filter(Negate(is.null),
+                              list(weights = named(weights), strata = named(strata), psu = named(psu))))
+  check$values <- lapply(check$cols, function(cn) data[[cn]])
   des <- list(n = n, weights = w, type = NULL, scale = NULL, mse = mse, reps = NULL, strata = NULL,
-              psu = NULL, fpc = NULL, lonely_psu = lonely_psu)
+              psu = NULL, fpc = NULL, lonely_psu = lonely_psu, check = check, degf = degf)
   if (!is.null(replicates)) {
     if (!is.null(strata) || !is.null(psu) || !is.null(fpc)) {
       stop("give replicate weights or strata/PSUs, not both: the replicates already carry the design",
@@ -122,9 +156,17 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         stop(sprintf("replicate columns not in `data`: %s", paste(utils::head(miss, 5), collapse = ", ")),
              call. = FALSE)
       }
+      own <- intersect(replicates, c(if (is.character(weights) && length(weights) == 1L) weights, id))
+      if (length(own)) {
+        stop(sprintf("`replicates` names %s, which is not a replicate weight (the full weight or the id)",
+                     paste(own, collapse = ", ")), call. = FALSE)
+      }
       reps <- unname(as.list(data[replicates]))
+      names(reps) <- replicates
     } else {
-      if (is.matrix(replicates)) replicates <- as.data.frame(replicates)
+      # a matrix with an extra class (a "repweights" object) was dispatched to another as.data.frame
+      # method and read wrongly
+      if (is.matrix(replicates)) replicates <- as.data.frame.matrix(unclass(replicates))
       if (!is.data.frame(replicates)) {
         stop("`replicates` must be a data frame, a matrix or column names", call. = FALSE)
       }
@@ -135,14 +177,48 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         if (anyDuplicated(replicates[[id]])) stop("`id` repeats in `replicates`", call. = FALSE)
         m <- match(data[[id]], replicates[[id]])
         if (anyNA(m)) stop(sprintf("%d row(s) of `data` have no replicate weights", sum(is.na(m))), call. = FALSE)
-        keep <- setdiff(names(replicates), c(id, if (is.character(weights)) weights))
-        replicates <- replicates[m, keep, drop = FALSE]
+        replicates <- replicates[m, setdiff(names(replicates), id), drop = FALSE]
+      }
+      # the full weight named in `weights`, shipped beside the replicates (CSUS's bootstrap file carries
+      # WGT_PUMF), is the weight and not a replicate
+      if (is.character(weights) && length(weights) == 1L) {
+        replicates <- replicates[setdiff(names(replicates), weights)]
       }
       if (nrow(replicates) != n) {
         stop(sprintf("`replicates` must have one row per row of `data` (%d)", n), call. = FALSE)
       }
-      reps <- unname(as.list(replicates))
+      reps <- as.list(replicates)
+      if (is.null(names(reps)) || any(!nzchar(names(reps)))) names(reps) <- sprintf("V%d", seq_along(reps))
     }
+    # only replicates: the full-sample weight, an id, any column of `data`, or text, is not one (the
+    # full weight and the id were averaged in as replicates and the standard error came out 0.2599
+    # or 0.2704 where it is 0.2836; review of e57fed5, E9)
+    # a cheap key first (first value, last value, sum), the full comparison only on a match: a
+    # thousand replicates against hundreds of data columns stays fast
+    key <- function(v) c(v[1L], v[n], sum(v))
+    # the replicate columns named in `data` are the replicates themselves, not columns to compare against
+    numcols <- Filter(is.numeric, as.list(data)[setdiff(names(data), if (is.character(replicates)) replicates)])
+    numcols <- lapply(numcols, as.numeric)
+    keys <- lapply(numcols, key)
+    wkey <- key(w)
+    same_as <- function(r) {
+      if (!is.numeric(r)) return("not numbers")
+      r <- as.numeric(r)
+      kr <- key(r)
+      if (identical(kr, wkey) && identical(r, w)) return("the full-sample weight")
+      for (cn in names(numcols)) {
+        if (identical(kr, keys[[cn]]) && identical(r, numcols[[cn]])) return(sprintf("column %s of `data`", cn))
+      }
+      ""
+    }
+    what <- vapply(reps, same_as, "")
+    if (any(nzchar(what))) {
+      i <- which(nzchar(what))
+      stop(sprintf("not a replicate weight: %s (%s); give only the replicate columns",
+                   paste(names(reps)[i][seq_len(min(3L, length(i)))], collapse = ", "),
+                   what[i][1L]), call. = FALSE)
+    }
+    reps <- unname(reps)
     reps <- lapply(reps, function(r) {
       if (!is.numeric(r) || anyNA(r) || any(!is.finite(r)) || any(r < 0)) {
         stop("replicate weights must be finite, non-negative and not missing", call. = FALSE)
@@ -151,6 +227,14 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     })
     B <- length(reps)
     if (B < 2L) stop("at least two replicate weights are needed", call. = FALSE)
+    if (type == "jkn" && is.null(rscales)) {
+      stop("type = \"jkn\" needs `rscales`: (n_h - 1) / n_h for the stratum each replicate deletes from",
+           call. = FALSE)
+    }
+    if (!is.null(rscales) && (!is.numeric(rscales) || length(rscales) != B || anyNA(rscales) ||
+                                any(!is.finite(rscales)) || any(rscales < 0))) {
+      stop(sprintf("`rscales` must be %d finite non-negative numbers, one per replicate", B), call. = FALSE)
+    }
     if (type == "mean_bootstrap" &&
         (!is.numeric(mean_size) || length(mean_size) != 1L || !is.finite(mean_size) || mean_size < 1)) {
       stop("`mean_size` must be a number of at least 1", call. = FALSE)
@@ -160,16 +244,31 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         stop("`rho` must be a number in [0, 1) for Fay's BRR", call. = FALSE)
       }
     }
+    if (type %in% c("brr", "fay") && B > 2L && B %% 4L != 0L) {
+      stop(sprintf(paste("%d replicates is not a Hadamard order (2, or a multiple of 4): BRR replicates",
+                         "come in those numbers, so a column that is not a replicate may be included"), B),
+           call. = FALSE)
+    }
     des$scale <- switch(type,
       bootstrap = 1 / B,
       mean_bootstrap = mean_size / B,
       jk1 = (B - 1) / B,
+      jkn = 1,
       brr = 1 / B,
       fay = 1 / (B * (1 - rho)^2))
     des$type <- type
     des$reps <- reps
     des$mean_size <- if (type == "mean_bootstrap") mean_size
     des$rho <- if (type == "fay") rho
+    des$rscales <- if (!is.null(rscales)) as.numeric(rscales)
+    # the design's degrees of freedom as the survey package computes them, the rank of the replicate
+    # weight matrix less one; the rank is read from the eigenvalues of its cross-product (singular
+    # values within 1e-5 of the largest count), which is the B x B problem: a QR of the n x B matrix
+    # took 16 s for CSUS's 36,180 x 1,000
+    if (is.null(des$degf)) {
+      ev <- eigen(crossprod(do.call(cbind, reps)), symmetric = TRUE, only.values = TRUE)$values
+      des$degf <- sum(ev > max(ev) * 1e-10) - 1L
+    }
   } else {
     s <- col(strata, "strata")
     p <- col(psu, "psu")
@@ -194,14 +293,35 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     des$strata <- s
     des$psu <- p
     des$fpc <- f
+    if (is.null(des$degf)) des$degf <- length(unique(p)) - length(unique(s))
   }
   structure(des, class = "rmbl_svy_design")
 }
 
-# the design's degrees of freedom: PSUs less strata, or replicates less one
+# the design's degrees of freedom (survey_design(): PSUs less strata, the replicate matrix's rank less
+# one, or as given)
 .svy_df <- function(des) {
+  if (!is.null(des$degf)) return(des$degf)
   if (identical(des$type, "linearization")) length(unique(des$psu)) - length(unique(des$strata)) else
     length(des$reps) - 1L
+}
+
+# The data must be the rows the design was built on, in the same order
+.svy_check_data <- function(design, data) {
+  if (!is.data.frame(data) || nrow(data) != design$n) {
+    stop("`data` must be the data frame the design was built on", call. = FALSE)
+  }
+  ck <- design$check
+  if (is.null(ck)) return(invisible())
+  same_rows <- identical(attr(data, "row.names"), ck$rows)
+  same_cols <- all(vapply(names(ck$cols), function(k) {
+    cn <- ck$cols[[k]]
+    cn %in% names(data) && identical(data[[cn]], ck$values[[k]])
+  }, logical(1)))
+  if (!same_rows || !same_cols) {
+    stop(paste("`data` is not the data frame the design was built on (its rows are in another order, or",
+               "its weight, strata or PSU columns differ): build the design on this data"), call. = FALSE)
+  }
 }
 
 #' @export
@@ -216,6 +336,7 @@ print.rmbl_svy_design <- function(x, ...) {
       bootstrap = "bootstrap",
       mean_bootstrap = sprintf("mean bootstrap (each the mean of %g)", x$mean_size),
       jk1 = "jackknife (JK1)",
+      jkn = "stratified jackknife (JKn)",
       brr = "balanced repeated replication",
       fay = sprintf("Fay's BRR (rho = %g)", x$rho))
     cat(sprintf("Variance: %d replicate weights, %s; scale %.6g, %s\n", length(x$reps), lab, x$scale,
@@ -239,7 +360,9 @@ print.rmbl_svy_design <- function(x, ...) {
     centre <- if (des$mse) est else colMeans(th)
     dev <- sweep(th, 2L, centre)
     dev[!is.finite(dev)] <- NA_real_
-    V <- des$scale * crossprod(ifelse(is.na(dev), 0, dev))
+    dz <- ifelse(is.na(dev), 0, dev)
+    if (!is.null(des$rscales)) dz <- dz * sqrt(des$rscales)
+    V <- des$scale * crossprod(dz)
     # a replicate whose domain total was zero has no estimate: its variance is not computable
     bad <- colSums(is.na(dev)) > 0
     if (any(bad)) {
@@ -253,22 +376,31 @@ print.rmbl_svy_design <- function(x, ...) {
     pt <- rowsum(z, des$psu, reorder = TRUE)
     ps <- as.integer(tapply(des$strata, des$psu, `[`, 1L))
     V <- matrix(0, k, k)
+    informative <- 0L     # strata that carry variance information
     for (h in sort(unique(ps))) {
       zh <- pt[ps == h, , drop = FALSE]
       nh <- nrow(zh)
       fh <- if (is.null(des$fpc)) 0 else des$fpc[h]
+      # a certainty stratum (every PSU sampled) adds no sampling variance, one PSU or many
+      if (fh >= 1 - 1e-12) next
       if (nh == 1L) {
         if (des$lonely_psu == "fail") {
           stop(sprintf("stratum %d has a single PSU: set lonely_psu to \"remove\" or \"adjust\"", h), call. = FALSE)
         }
-        if (des$lonely_psu == "remove") next
+        if (des$lonely_psu == "remove" || nrow(pt) < 2L) next
         dz <- sweep(zh, 2L, colSums(pt) / nrow(pt))
         V <- V + (1 - fh) * crossprod(dz)
+        informative <- informative + 1L
         next
       }
       dz <- sweep(zh, 2L, colMeans(zh))
       V <- V + (1 - fh) * nh / (nh - 1) * crossprod(dz)
+      informative <- informative + 1L
     }
+    # no stratum with two PSUs (one PSU in all, or every lonely PSU removed): a standard error of
+    # zero would read as an exact estimate, so the variance is not computable
+    census <- !is.null(des$fpc) && all(des$fpc >= 1 - 1e-12)
+    if (informative == 0L && !census) V[] <- NA_real_
   }
   list(est = unname(est), V = unname(V), A = A, D = D)
 }
@@ -349,6 +481,20 @@ print.rmbl_svy_design <- function(x, ...) {
   upper <- est + z * se
   if (stat == "proportion" && ci != "wald") {
     inside <- is.finite(se) & est > 0 & est < 1
+    # at 0 or 1 the design effect is 0/0: Wilson at the plain n (the logit interval does not exist
+    # there either, and takes the same). Wald with se = 0 had collapsed to [1, 1] for 40 of 40.
+    edge <- !is.na(est) & (est <= 0 | est >= 1) & n_used > 0
+    if (any(edge)) {
+      zz <- stats::qnorm(1 - (1 - conf_level) / 2)
+      tt <- if (is.finite(design_df)) stats::qt(1 - (1 - conf_level) / 2, design_df) else zz
+      tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n_used[edge] - 1, 1))
+      ne <- pmin(n_used[edge] * (tn / tt)^2, n_used[edge])
+      p <- pmin(pmax(est[edge], 0), 1)
+      mid <- (p + zz^2 / (2 * ne)) / (1 + zz^2 / ne)
+      half <- zz / (1 + zz^2 / ne) * sqrt(p * (1 - p) / ne + zz^2 / (4 * ne^2))
+      lower[edge] <- ifelse(p <= 0, 0, mid - half)   # the bound at the observed end is that end, exactly
+      upper[edge] <- ifelse(p >= 1, 1, mid + half)
+    }
     if (ci == "logit") {
       l <- stats::qlogis(est[inside]) - z * se[inside] / (est[inside] * (1 - est[inside]))
       u <- stats::qlogis(est[inside]) + z * se[inside] / (est[inside] * (1 - est[inside]))
@@ -357,14 +503,16 @@ print.rmbl_svy_design <- function(x, ...) {
     } else {
       # Wilson's score interval at the modified effective sample size of SAS PROC SURVEYFREQ
       # (CL(TYPE = WILSON)), which produced Health Canada's CSUS intervals: n / Deff with the SRS
-      # variance on n - 1, times (z / t_df)^2 for the design's degrees of freedom (Korn and
-      # Graubard 1998), and never more than the n respondents behind the estimate
+      # variance on n - 1, times (t_{n-1} / t_df)^2 for the design's degrees of freedom (Korn and
+      # Graubard 1998; SAS documents the n - 1 quantile, where z stood before 0.5.12), and never
+      # more than the n respondents behind the estimate
       p <- est[inside]
       n <- n_used[inside]
       zz <- stats::qnorm(1 - (1 - conf_level) / 2)
       tt <- if (is.finite(design_df)) stats::qt(1 - (1 - conf_level) / 2, design_df) else zz
+      tn <- stats::qt(1 - (1 - conf_level) / 2, pmax(n - 1, 1))
       deff <- se[inside]^2 / (p * (1 - p) / (n - 1))
-      ne <- pmin(n / deff * (zz / tt)^2, n)
+      ne <- pmin(n / deff * (tn / tt)^2, n)
       z <- zz
       mid <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
       half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
@@ -446,15 +594,23 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
   stat <- match.arg(stat)
   ci <- match.arg(ci)
   if (!inherits(design, "rmbl_svy_design")) stop("`design` must come from survey_design()", call. = FALSE)
-  if (!is.data.frame(data) || nrow(data) != design$n) {
-    stop("`data` must be the data frame the design was built on", call. = FALSE)
-  }
-  if (!is.numeric(conf_level) || length(conf_level) != 1L || !(conf_level > 0 && conf_level < 1)) {
+  .svy_check_data(design, data)
+  if (!length(by)) by <- NULL
+  if (!is.character(by) && !is.null(by)) stop("`by` must name columns of `data`", call. = FALSE)
+  if (!is.numeric(conf_level) || length(conf_level) != 1L || is.na(conf_level) ||
+        !(conf_level > 0 && conf_level < 1)) {
     stop("`conf_level` must be a number between 0 and 1", call. = FALSE)
   }
   if (stat == "ratio" && is.null(denominator)) stop("a ratio needs a `denominator` column", call. = FALSE)
   if (ci == "auto") ci <- if (stat == "proportion") "wilson" else "wald"
-  if (identical(df, "design")) df <- .svy_df(design)
+  if (identical(df, "design")) {
+    df <- .svy_df(design)
+    # replicates that are all multiples of one weight vector have rank 1: no degrees of freedom
+    if (df < 1) {
+      stop(sprintf("the design has %g degrees of freedom (its replicate weights do not vary independently)", df),
+           call. = FALSE)
+    }
+  }
   if (!is.numeric(df) || length(df) != 1L || is.na(df) || df <= 0) {
     stop("`df` must be a positive number, Inf or \"design\"", call. = FALSE)
   }
@@ -464,8 +620,11 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
   int <- .svy_ci(core$est, se, cols$n, stat, ci, conf_level, df, .svy_df(design))
   flag <- rep(NA_character_, length(se))
   flag[cols$n < min_n] <- sprintf("fewer than %g respondents", min_n)
+  # the reason a variance is missing, said as it is
+  flag[is.na(se)] <- if (is.null(design$reps)) "variance not computable (no stratum has two PSUs)" else
+    "variance not computable (a replicate left the domain empty)"
+  flag[is.na(se) & !is.null(core$D) & is.finite(core$D) & core$D == 0] <- "the domain's weights are all zero"
   flag[cols$n == 0L] <- "no respondents"
-  flag[is.na(se)] <- "variance not computable (a replicate left the domain empty)"
   out <- cbind(cols$labels, data.frame(estimate = core$est, se = se, lower = int$lower, upper = int$upper,
                                        cv = 100 * se / abs(core$est), n = cols$n, flag = flag,
                                        stringsAsFactors = FALSE))
@@ -511,6 +670,9 @@ survey_compare <- function(design, data, y, by, stat = c("mean", "total", "propo
   doms <- unique(dom)
   if (length(doms) < 2L) stop("comparisons need at least two domains", call. = FALSE)
   if (is.null(ref)) ref <- doms[1L]
+  if (!is.character(ref) || length(ref) != 1L || is.na(ref)) {
+    stop("`ref` must be one domain label", call. = FALSE)
+  }
   if (!ref %in% doms) stop(sprintf("`ref` is not one of the domains: %s", paste(doms, collapse = ", ")), call. = FALSE)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   rows <- list()

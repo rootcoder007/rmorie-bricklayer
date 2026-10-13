@@ -348,14 +348,20 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
   testthat::local_mocked_bindings(
     system2 = function(command, args = character(), ...) {
       calls <<- c(calls, command)
-      if (identical(command, "sh")) " sk-typed " else invisible(0L)
+      seen <<- c(seen, Sys.getenv("RMBL_PROMPT"))
+      if (identical(command, "sh")) "\002RMBL-LINE\002 sk-typed " else invisible(0L)
     },
     .package = "base"
   )
-  msg <- utils::capture.output(got <- .bl_readline("key> "), type = "message")
+  seen <- character()
+  withr::local_envvar(RMBL_PROMPT = "before")
+  got <- .bl_readline("key> ")
   expect_equal(got, "sk-typed")
   expect_true("sh" %in% calls)
-  expect_true(any(grepl("key>", msg, fixed = TRUE)))
+  # the shell prints the prompt once it is ready to read (review of e57fed5): it is handed over in
+  # the environment, and the variable is put back afterwards
+  expect_true("key> " %in% seen)
+  expect_identical(Sys.getenv("RMBL_PROMPT"), "before")
 })
 
 test_that("an XMSS object that still carries key_state (0.5.9 to 7703a04) is verified with a warning", {

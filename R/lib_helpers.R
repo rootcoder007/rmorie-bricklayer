@@ -384,3 +384,31 @@ write_text_fallback <- function(text, path) {
   # bad escape, 100 levels), under whatever options the caller passes
   bricklayer_json_from_json(txt, ...)
 }
+
+# Fetched or file-supplied text made safe to print: marked as the UTF-8 it is (in a C locale the
+# parser returns it unmarked, and [[:cntrl:]] on unmarked text matched the bytes 0x80-0x9F inside
+# every multi-byte character) or converted, an invalid byte becoming "?"; then ANSI escape
+# sequences, the C0 and C1 controls and DEL, the bidirectional controls (U+061C, U+200E-U+200F,
+# U+202A-U+202E, U+2066-U+2069) and the default-ignorable characters that print as nothing and hide
+# text (U+00AD, U+034F, U+115F, U+3164, U+180E, U+200B, U+2060-U+2064, U+FEFF, U+FFF9-FFFB, the
+# tag characters) are removed (review of 02a38be). Kept, because they are part of how real text is
+# written (review of e57fed5): the zero-width joiner and non-joiner (Hindi and Persian words,
+# family emoji), the variation selectors (U+FE00-U+FE0F, U+180B-U+180D: the colour form of an
+# emoji, Mongolian and CJK glyph variants) and a flag tag sequence (U+1F3F4, tag letters, U+E007F:
+# the flags of Scotland and Wales). One helper for every printer (the data tables, the Wayback
+# results).
+.rmbl_printable <- function(x) {
+  x <- as.character(x)
+  u <- !is.na(x) & Encoding(x) == "unknown" & validUTF8(x)
+  v <- x[u]
+  Encoding(v) <- "UTF-8"
+  x[u] <- v
+  o <- !is.na(x) & !u & Encoding(x) != "UTF-8"
+  x[o] <- iconv(x[o], "", "UTF-8", sub = "?")
+  x <- gsub("(*UTF)\033\\[[0-9;?]*[ -/]*[@-~]", "", x, perl = TRUE)
+  x <- gsub(paste0("(*UTF)[\\x{00}-\\x{1f}\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
+                   "\\x{17b4}\\x{17b5}\\x{180e}\\x{180f}\\x{200b}\\x{200e}\\x{200f}\\x{2028}-\\x{202e}",
+                   "\\x{2060}-\\x{206f}\\x{3164}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}]"), "", x, perl = TRUE)
+  # tag characters: kept only as a flag sequence, dropped anywhere else
+  gsub("(*UTF)(\\x{1f3f4}[\\x{e0020}-\\x{e007e}]{1,8}\\x{e007f})|[\\x{e0000}-\\x{e0fff}]", "\\1", x, perl = TRUE)
+}

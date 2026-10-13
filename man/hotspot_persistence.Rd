@@ -30,8 +30,13 @@ each period.}
 }
 \value{
 An object of class \code{rmbl_hotspot}: \code{periods} (one row
-per period), \code{cells} (one row per ever-active cell, with its
-centre in the input's units), and the settings.
+per period; \code{tied_in} counts the cells made hot only by a tie
+with the k-th busiest, and printing says when ties make most
+active cells hot), \code{cells} (one row per ever-active cell, with
+its centre in the input's units), and the settings. Points at
+(0, 0), the raw exports' "no location", are dropped, and
+longitudes across the antimeridian are taken on one side of
+it.
 }
 \description{
 Counts incidents in square cells of side \code{cell} (kilometres

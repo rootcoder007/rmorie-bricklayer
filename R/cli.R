@@ -42,22 +42,43 @@
     # over a pipe, never through a shell argument or the history. The echo is switched off and
     # back on by the shell itself, with a trap, so Ctrl-C cannot leave the terminal silent
     # (review of 52a8883, B6); an interrupted read exits 130 and is an interrupt here too
-    cat(prompt, file = stderr())
     # The trap also prints a marker: where /bin/sh is dash (Debian, Ubuntu), system2() reports no
     # exit status for the trapped `exit 130`, so Ctrl-C came back as an empty line and a usage
     # error (exit 2; review of 02a38be, C10; bash keeps the status). A typed line cannot hold the
     # marker: Ctrl-C never reaches the input.
+    # The shell prints the prompt itself, once its trap is set and the echo is off, and marks a
+    # read that completed: R printed the prompt before the child started, so a key typed at once
+    # was echoed, and a Ctrl-C in those milliseconds killed the child before its trap and came back
+    # as an empty line, exit 2 (review of e57fed5, the C10 leftovers). Output without the
+    # completion mark is a read that never finished: an interrupt. The prompt reaches the shell in
+    # the environment, never in the script.
     mark <- "\001RMBL-INTERRUPTED\001"
+    done <- "\002RMBL-LINE\002"
+    # the prompt goes straight to the terminal (this branch runs only when stdin is one): the
+    # child's stderr stays discarded, as before, which keeps R's wait on it what it was
+    ask <- "printf '%s' \"$RMBL_PROMPT\" > /dev/tty; IFS= read -r l; "
     script <- if (hide) {
       paste0("trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; ",
-             "stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\"")
+             "stty -echo; ", ask, "stty echo; printf '\\002RMBL-LINE\\002%s' \"$l\"")
     } else {
-      "trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; IFS= read -r l; printf '%s' \"$l\""
+      paste0("trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; ", ask,
+             "printf '\\002RMBL-LINE\\002%s' \"$l\"")
     }
+    # the prompt is handed over in the environment R passes on, not as a `VAR=value sh` prefix: with
+    # the prefix /bin/sh kept itself alive as the child's parent, Ctrl-C killed it, and R raised an
+    # interrupt of its own after the handled one (exit 1, not 130)
+    old_prompt <- Sys.getenv("RMBL_PROMPT", unset = NA)
+    Sys.setenv(RMBL_PROMPT = prompt)
+    on.exit(if (is.na(old_prompt)) Sys.unsetenv("RMBL_PROMPT") else Sys.setenv(RMBL_PROMPT = old_prompt), add = TRUE)
     l <- suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE))
     if (hide) cat("\n", file = stderr())
-    if (identical(as.integer(attr(l, "status")), 130L) || any(grepl(mark, l, fixed = TRUE))) .bl_signal_interrupt()
-    return(trimws(paste(as.character(l), collapse = "")))
+    st <- attr(l, "status")
+    l <- paste(as.character(l), collapse = "")
+    if (identical(as.integer(st), 130L) || grepl(mark, l, fixed = TRUE) ||
+          !grepl(done, l, fixed = TRUE)) {
+      .bl_signal_interrupt()
+    }
+    return(trimws(substring(l, regexpr(done, l, fixed = TRUE) + nchar(done))))
   }
   if (is.null(con)) {
     con <- file("stdin")
@@ -158,7 +179,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
-                data = "--out", wayback = c("--out", "--jobs", "--within", "--retry", "--include-gone"),
+                data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within"),
@@ -349,7 +370,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     describe = "describe NAME   help page of one function",
     examples = "examples NAME   the examples of one function",
     data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
-    wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]   archive every URL in FILE;",
+    wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]   archive every URL in FILE;",
                     "wayback --retry FILE.jsonl [--include-gone]   retry the failures of an earlier run;",
                     "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
     version = "version   package version"
@@ -508,6 +529,10 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 .bl_cli_models <- function(out) {
   if (is.null(.bl_hosted_base())) {
     out(sprintf("Hosted MORIE tier: disabled (%s)\n", .bl_hosted_off_reason()))
+  } else if (identical((kst <- .bl_hosted_key_state())$state, "other_address")) {
+    out(sprintf(paste("Hosted MORIE tier (%s): the stored key was issued for %s and is not sent here;",
+                      "`%s login` for this address, or unset the address that overrides it\n"),
+                kst$now, kst$saved_for, .bl_prog()))
   } else if (is.null(.bl_hosted_key())) {
     out(sprintf("Hosted MORIE tier: not logged in -- %s\n", .bl_access_hint()))
   } else {
@@ -542,10 +567,11 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
 # also lets a stopped run carry on.
 .bl_cli_wayback <- function(rest, flag, out) {
   pos <- rest
-  for (f in c("--out", "--jobs", "--within")) {
+  for (f in c("--out", "--jobs", "--within", "--max")) {
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
+  cap <- flag("--max") %||% "1000"
   # --retry FILE.jsonl: the failures of an earlier run, looked up and captured again (wayback_retry)
   retry <- "--retry" %in% pos
   gone <- "--include-gone" %in% pos
@@ -557,14 +583,14 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       return(if (length(pos) == 1L) 1L else 2L)
     }
     res <- wayback_retry(pos[[1L]], include_gone = gone, jobs = flag("--jobs") %||% "4",
-                         within = flag("--within") %||% "30d")
+                         within = flag("--within") %||% "30d", max_captures = cap)
     r <- attr(res, "retry")
-    tab <- table(factor(res$status, levels = c("saved", "existing", "failed")))
-    out(sprintf(paste("%d failures: %d found already archived, %d captured again, %d left as gone;",
-                      "now %d saved, %d existing, %d failed in %s\n"),
-                r$failed, r$found_by_lookup, r$captured_again, r$left_as_gone, tab[["saved"]], tab[["existing"]],
-                tab[["failed"]], pos[[1L]]))
-    return(if (tab[["failed"]] > 0L) 1L else 0L)
+    tab <- table(factor(res$status, levels = c("saved", "existing", "failed", "submitted")))
+    out(sprintf(paste("%d failures: %d found already archived, %d captured again, %d left as gone,",
+                      "%d left for tomorrow (a daily limit); now %d saved, %d existing, %d failed in %s\n"),
+                r$failed, r$found_by_lookup, r$captured_again, r$left_as_gone, r$left_for_tomorrow, tab[["saved"]],
+                tab[["existing"]], tab[["failed"]], pos[[1L]]))
+    return(if (tab[["failed"]] > 0L || tab[["submitted"]] > 0L) 1L else 0L)
   }
   if (length(pos) != 1L || pos[[1L]] %in% c("help", "--help", "-h")) {
     out(.bl_verb_usage("wayback", .bl_prog()))
@@ -578,11 +604,13 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   urls <- urls[nzchar(urls) & !startsWith(urls, "#")]
   jobs <- flag("--jobs") %||% "4"
   res <- wayback_save(urls, jobs = jobs, within = flag("--within") %||% "30d",
-                      output = flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl"))
-  tab <- table(factor(res$status, levels = c("saved", "existing", "failed")))
-  out(sprintf("%d saved, %d existing, %d failed; results in %s\n", tab[["saved"]], tab[["existing"]],
-              tab[["failed"]], flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl")))
-  if (tab[["failed"]] > 0L) 1L else 0L
+                      output = flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl"), max_captures = cap)
+  tab <- table(factor(res$status, levels = c("saved", "existing", "failed", "submitted")))
+  ns <- length(attr(res, "not_sent"))
+  out(sprintf("%d saved, %d existing, %d failed%s; results in %s\n", tab[["saved"]], tab[["existing"]],
+              tab[["failed"]], if (ns) sprintf(", %d not sent (run again to continue)", ns) else "",
+              flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl")))
+  if (tab[["failed"]] > 0L || ns > 0L) 1L else 0L
 }
 
 # The data verb: the curated tables at data.rmorie.com.

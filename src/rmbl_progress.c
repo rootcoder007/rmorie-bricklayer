@@ -99,8 +99,12 @@ const char *rmbl_progress_spinner(double t, int unicode) {
                                     "\xe2\xa0\x87", "\xe2\xa0\x8f"};
     static const char *ascii[] = {"|", "/", "-", "\\"};
     if (!R_FINITE(t) || t < 0) t = 0;
-    const long k = (long) (t * 10.0);
-    return unicode ? braille[k % 10] : ascii[k % 4];
+    /* the frame index in double: a cast of t * 10 to an integer overflows for t past ~9e17 (a caller
+     * passing nanoseconds) and indexed outside the table; fmod of a finite non-negative value is in [0, n) */
+    double f = floor(t * 10.0);
+    if (!R_FINITE(f)) f = 0;
+    const int k10 = (int) fmod(f, 10.0), k4 = (int) fmod(f, 4.0);
+    return unicode ? braille[k10 < 0 || k10 > 9 ? 0 : k10] : ascii[k4 < 0 || k4 > 3 ? 0 : k4];
 }
 
 static double num1(SEXP x, const char *what) {
@@ -130,8 +134,10 @@ SEXP C_rmbl_progress_frame(SEXP frac, SEXP t, SEXP width, SEXP color, SEXP unico
         c[i] = (int) v;
     }
     if (!R_FINITE(w) || w < 1) Rf_error("`width` must be at least 1");
+    /* clamped in double before the cast: (int) of a width past INT_MAX is undefined */
+    const int wi = w > RMBL_BAR_MAX_WIDTH ? RMBL_BAR_MAX_WIDTH : (int) w;
     char buf[8192];
-    rmbl_progress_bar(f, tt, (int) w, flag1(color, "color"), flag1(unicode, "unicode"),
+    rmbl_progress_bar(f, tt, wi, flag1(color, "color"), flag1(unicode, "unicode"),
                       flag1(active, "active"), c[0], c[1], c[2], buf, (int) sizeof buf);
     return Rf_ScalarString(Rf_mkCharCE(buf, CE_UTF8));
 }

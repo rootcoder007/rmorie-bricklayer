@@ -4,7 +4,14 @@
 \alias{mortality_displaced}
 \title{Deaths avoided under a counterfactual exposure reduction}
 \usage{
-mortality_displaced(exposure_delta, population, baseline_rate, beta_per_unit)
+mortality_displaced(
+  exposure_delta,
+  population,
+  baseline_rate,
+  beta_per_unit,
+  rare_outcome = FALSE,
+  high_rate = FALSE
+)
 }
 \arguments{
 \item{exposure_delta}{Counterfactual reduction in exposure (positive means
@@ -15,6 +22,11 @@ the exposure goes down).}
 \item{baseline_rate}{Baseline rate in cases per person-year.}
 
 \item{beta_per_unit}{Log-RR per unit of exposure (per unit, not per 10).}
+
+\item{rare_outcome, high_rate}{\code{TRUE} to admit a baseline rate
+below 1e-5 (one per 100,000) or above 0.1 (10,000 per 100,000)
+per person-year; without them such a rate is refused, being also
+what a rate in the wrong unit looks like.}
 }
 \value{
 Expected avoided cases.

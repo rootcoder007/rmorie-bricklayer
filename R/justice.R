@@ -94,19 +94,24 @@
 #'   throughout: from 2023 the Court publishes Toronto as one location (the
 #'   new Toronto courthouse consolidated its criminal courts that year).
 #'   Each year's courts add to the province-wide total.}
-#' \item{\code{tps_break_enter_d14_2024.csv}}{Toronto Police Service Major
-#'   Crime Indicators, every break and enter that occurred in 2024 in
-#'   division D14: \code{event_id}, occurrence date, premises type, and
-#'   the published longitude and latitude (which the Service offsets to
-#'   the nearest intersection). One occurrence has no location.}
+#' \item{\code{tps_break_enter_d14_2024.csv}}{Toronto Police Service
+#'   Break and Enter open data, every break and enter that occurred in
+#'   2024 in division D14, one row per occurrence (508): \code{event_id},
+#'   occurrence date, premises type, the published longitude and
+#'   latitude (which the Service offsets to the nearest intersection),
+#'   and \code{offence_records}, the number of offence records the
+#'   Service publishes for the occurrence (five have two). Built by
+#'   \code{data-raw/tps_break_enter_d14_2024.R} in the source package.}
 #' }
 #'
 #' @source Ontario Court of Justice, court statistics,
 #'   \url{https://www.ontariocourts.ca/ocj/statistics/} (retrieved
-#'   2026-10-13). Toronto Police Service, Public Safety Data Portal,
-#'   \url{https://data.tps.ca/} (retrieved 2026-10-13);
-#'   contains information licensed under the Open Government Licence -
-#'   Toronto Police Service.
+#'   2026-10-13), editions 2012 to 2026, published by the Court for
+#'   public use. Toronto Police Service, Public Safety Data Portal,
+#'   dataset "Break and Enter Open Data", \url{https://data.tps.ca/}
+#'   (retrieved 2026-10-13); contains information licensed under the
+#'   Open Government Licence - Toronto Police Service. See
+#'   \code{inst/COPYRIGHTS}.
 #' @name justice-data
 #' @seealso \code{\link{case_flow}}, \code{\link{life_table}},
 #'   \code{\link{disposition_mix}}, \code{\link{clearance_decomposition}},
@@ -766,6 +771,31 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
        y = .jx_earth_km * (lat - lat0) * pi / 180)
 }
 
+# The one way crime_density(), knox_test() and hotspot_persistence() put longitudes and latitudes on
+# the plane: points across the antimeridian are taken on one side of it (179 and -179 degrees were
+# 358 degrees apart, a 19,240 km bandwidth; review of e57fed5), the centre is the median, and an
+# extent past 2,000 km, where the flat approximation stops being one, is said. Returns the
+# projection (kilometres), the centre and the longitudes as used.
+.jx_lonlat_plane <- function(lon, lat, caller) {
+  if (length(lon) && diff(range(lon)) > 180) {
+    alt <- ifelse(lon < 0, lon + 360, lon)
+    if (diff(range(alt)) < diff(range(lon))) lon <- alt
+  }
+  lon0 <- stats::median(lon)
+  lat0 <- stats::median(lat)
+  p <- .jx_project(lon, lat, lon0, lat0)
+  span <- max(diff(range(p$x)), diff(range(p$y)))
+  if (span > 2000) {
+    warning(sprintf(paste("%s(): the incidents span %.0f km; distances are taken on a flat map through their",
+                          "centre, which is accurate for a city or a region, not across a continent"), caller, span),
+            call. = FALSE)
+  }
+  list(x = p$x, y = p$y, lon0 = ((lon0 + 180) %% 360) - 180, lat0 = lat0, lon = lon)
+}
+
+# (0, 0) is how raw police exports write "no location": no incident is placed in the Gulf of Guinea
+.jx_null_island <- function(lon, lat) is.finite(lon) & is.finite(lat) & lon == 0 & lat == 0
+
 # linear binning (each point shares its weight among the four nearest grid nodes)
 .jx_linbin <- function(x, y, w, gx, gy) {
   nx <- length(gx)
@@ -878,7 +908,7 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
                          "planar data take coords = \"planar\""),
                    which(bad)[1L], lon[bad][1L], lat[bad][1L]), call. = FALSE)
     }
-    keep <- keep & !(lon == 0 & lat == 0)
+    keep <- keep & !.jx_null_island(lon, lat)
   }
   dropped <- sum(!keep)
   if (dropped) message(sprintf("crime_density(): %d incident%s without a usable location dropped", dropped,
@@ -896,9 +926,9 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
     stop("`coverage` must be shares strictly between 0 and 1", call. = FALSE)
   }
   if (coords == "lonlat") {
-    lon0 <- stats::median(lon)
-    lat0 <- stats::median(lat)
-    p <- .jx_project(lon, lat, lon0, lat0)
+    p <- .jx_lonlat_plane(lon, lat, "crime_density")
+    lon0 <- p$lon0
+    lat0 <- p$lat0
   } else {
     lon0 <- lat0 <- NA_real_
     p <- list(x = (lon - stats::median(lon)) / 1000, y = (lat - stats::median(lat)) / 1000)
@@ -916,6 +946,16 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
       stop("`bandwidth` must be one or two positive numbers (kilometres)", call. = FALSE)
     }
     h <- rep_len(h, 2L)
+    # a bandwidth past half the earth's circumference is not a distance on a map; one far wider than
+    # the incidents' spread smooths them into a single blur (1e6 km was taken silently)
+    if (coords == "lonlat" && any(h > 20037.5)) {
+      stop("`bandwidth` is longer than half the earth's circumference (20,037 km)", call. = FALSE)
+    }
+    spread <- max(diff(range(p$x)), diff(range(p$y)))
+    if (spread > 0 && any(h > 10 * spread)) {
+      warning(sprintf("`bandwidth` (%.3g km) is over ten times the incidents' spread (%.3g km): the map is one blur",
+                      max(h), spread), call. = FALSE)
+    }
   }
   gx <- seq(min(p$x) - 3 * h[1L], max(p$x) + 3 * h[1L], length.out = n_grid)
   gy <- seq(min(p$y) - 3 * h[2L], max(p$y) + 3 * h[2L], length.out = n_grid)
@@ -941,7 +981,8 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
               points = data.frame(x = p$x, y = p$y), regions = regions, coords = coords,
               centre = c(lon = lon0, lat = lat0))
   if (coords == "lonlat") {
-    out$lon <- lon0 + gx / (.jx_earth_km * cos(lat0 * pi / 180)) * 180 / pi
+    out$lon <- p$lon0 + gx / (.jx_earth_km * cos(lat0 * pi / 180)) * 180 / pi
+    out$lon <- ((out$lon + 180) %% 360) - 180
     out$lat <- lat0 + gy / .jx_earth_km * 180 / pi
     out$points$lon <- lon
     out$points$lat <- lat
@@ -1122,6 +1163,10 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = NULL,
                       coords = c("lonlat", "planar"), max_pairs = 5e7) {
   coords <- match.arg(coords)
+  max_pairs <- .rmbl_num(max_pairs, "max_pairs")
+  if (length(max_pairs) != 1L || is.na(max_pairs) || max_pairs < 1) {
+    stop("`max_pairs` must be a single number of at least 1", call. = FALSE)
+  }
   x <- .rmbl_num_input(x, "x", allow_null = FALSE)
   y <- .rmbl_num_input(y, "y", allow_null = FALSE)
   tt <- if (inherits(time, "Date")) {
@@ -1150,14 +1195,26 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   if (length(nsim) != 1L || is.na(nsim) || nsim < 19L) {
     stop("`nsim` must be a whole number of at least 19", call. = FALSE)
   }
-  n <- length(x)
-  if (n < 3L) stop("need at least three incidents", call. = FALSE)
   if (coords == "lonlat") {
     if (any(abs(y) > 90 | abs(x) > 180)) {
       stop("`x` and `y` are not longitudes and latitudes in degrees; planar data take coords = \"planar\"",
            call. = FALSE)
     }
-    p <- .jx_project(x, y, stats::median(x), stats::median(y))
+    # (0, 0) is "no location", as crime_density() and hotspot_persistence() read it: twenty such rows
+    # had made the closest space-time cell 163 observed against 33 expected (review of e57fed5, E3)
+    nowhere <- .jx_null_island(x, y)
+    if (any(nowhere)) {
+      message(sprintf("knox_test(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
+                      sum(nowhere), if (sum(nowhere) == 1L) "" else "s"))
+      x <- x[!nowhere]
+      y <- y[!nowhere]
+      tt <- tt[!nowhere]
+    }
+  }
+  n <- length(x)
+  if (n < 3L) stop("need at least three incidents", call. = FALSE)
+  if (coords == "lonlat") {
+    p <- .jx_lonlat_plane(x, y, "knox_test")
     px <- p$x * 1000
     py <- p$y * 1000
   } else {

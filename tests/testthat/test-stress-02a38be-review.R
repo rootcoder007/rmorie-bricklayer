@@ -413,10 +413,14 @@ test_that("LOW: default-ignorable characters are removed from the data list", {
 test_that("B3: a temporary record file left by a writer that died is removed at the next write", {
   d <- withr::local_tempdir()
   p <- file.path(d, "rec.txt")
-  stale <- file.path(d, "xmss-dead123.tmp")
+  stale <- file.path(d, "rec.txt.xmss-dead123.tmp")
   writeLines("partial", stale)
+  # another record's temporary file in the same folder is not this writer's to remove (e57fed5, E11)
+  other <- file.path(d, "other.txt.xmss-live456.tmp")
+  writeLines("in flight", other)
   rmoriebricklayer:::.rmbl_xmss_with_lock(p, function() rmoriebricklayer:::.rmbl_xmss_record_write(p, c(`k:aa` = 3L)))
   expect_false(file.exists(stale))
+  expect_true(file.exists(other))
   expect_true(file.exists(p))
 })
 

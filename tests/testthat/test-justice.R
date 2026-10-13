@@ -292,8 +292,10 @@ test_that("crime_density(): the binned surface agrees with the direct sum (MASS:
 
 test_that("crime_density(): degrees are projected to kilometres and unlocated incidents dropped", {
   b <- ext("tps_break_enter_d14_2024.csv")
-  expect_message(kd <- crime_density(b$lon, b$lat, n_grid = 80), "1 incident without a usable location")
-  expect_identical(kd$n, 513L)
+  # every one of the 508 occurrences has a published location (the all-NA row 515 of the file before
+  # 0.5.12 was a subsetting artefact; review of e57fed5, E5); an unlocated one is dropped and said
+  expect_message(kd <- crime_density(c(b$lon, NA), c(b$lat, NA), n_grid = 80), "1 incident without a usable location")
+  expect_identical(kd$n, 508L)
   expect_identical(kd$dropped, 1L)
   expect_identical(length(kd$lon), 80L)
   # one kilometre north is 1/6371.0088 radians of latitude
@@ -301,7 +303,7 @@ test_that("crime_density(): degrees are projected to kilometres and unlocated in
   expect_equal(diff(kd$lon[1:2]) / diff(kd$x[1:2]), 180 / pi / 6371.0088 / cos(kd$centre[["lat"]] * pi / 180))
   expect_message(crime_density(c(b$lon[1:20], 0), c(b$lat[1:20], 0), n_grid = 40), "1 incident")
   out <- capture.output(print(kd))
-  expect_true(any(grepl("513 incidents (1 without a location dropped)", out, fixed = TRUE)))
+  expect_true(any(grepl("508 incidents (1 without a location dropped)", out, fixed = TRUE)))
   pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   drawn <- plot(kd)

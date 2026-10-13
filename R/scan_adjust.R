@@ -141,6 +141,8 @@ drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
          call. = FALSE)
   }
   n <- .rmbl_num(n, "n", integer = TRUE)
+  # a rate needs at least one split (n = 0 returned NaN and the plot then failed)
+  if (length(n) != 1L || is.na(n) || n < 1L) stop("`n` must be a whole number of at least 1", call. = FALSE)
   .rmbl_local_seed(seed)
   hits <- NULL
   any_flag <- logical(n)

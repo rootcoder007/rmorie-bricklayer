@@ -86,9 +86,10 @@ to the record: register it once with
 or point the record at a file that persists. Examples and vignettes point the record
 at a temporary file so that checks and builds leave the configuration directory alone.
 The record keeps one line per key for good (an exhausted key's line is what stops a
-stale copy of it), and is read and rewritten whole at every signature: about 0.7 s at a
-hundred thousand keys, longer when several processes sign at once (each waits its turn
-for the lock, up to 10 s).
+stale copy of it), and is read and rewritten whole at every signature: a whole
+signature took 0.5 s with a hundred thousand keys in the record (measured on an x86-64
+laptop; a slower machine takes longer), and longer when several processes sign at once
+(each waits its turn for the lock, up to 10 s).
 
 \code{\link[=xmss_forget_used_indices]{xmss_forget_used_indices()}}
 resets one key's entry, or removes the whole record, and with it

@@ -18,28 +18,33 @@ failure says the page is gone.}
 before capturing again.}
 
 \item{...}{Passed to \code{wayback_save()}: \code{jobs},
-\code{within}, the keys, \code{quiet}.}
+\code{within}, the keys, \code{quiet}, \code{per_minute},
+\code{max_captures}.}
 }
 \value{
 The whole run as it now stands, one row per URL (a
 data frame of class \code{rmbl_wayback_save}), with the
 attribute \code{retry}: how many failures there were, how
-many a lookup found, how many were captured again, and how
-many were left as gone.
+many a lookup found, how many were captured again, how many
+were left as gone, and how many were left for tomorrow (a
+daily limit hit today).
 }
 \description{
 Reads the results file a \code{\link{wayback_save}} run wrote
 and tries again every URL whose latest result is
-\code{"failed"}, so nobody has to dig the failures out by
-hand. Each failed URL is first looked up in the Wayback
-Machine: a capture made at any time (an earlier one of a page
-that has since gone, or one made today by another run when
-the daily limit refused this one) is recorded as
-\code{"existing"} without capturing again. What is left is
-captured again with \code{wayback_save()}, appending to the
-same file. A page its source no longer has (HTTP 404 or 410,
-"cannot find") is not sent again unless \code{include_gone =
-TRUE}: a new capture would only archive the error.
+\code{"failed"} (or \code{"submitted"}: a capture a stopped run
+had started, which is polled rather than submitted again), so
+nobody has to dig the failures out by hand. Each failed URL is
+first looked up in the Wayback Machine, one lookup a second: a
+capture made at any time (an earlier one of a page that has
+since gone, or one made today by another run when the daily
+limit refused this one) is recorded as \code{"existing"}
+without capturing again. What is left is captured again with
+\code{wayback_save()}, appending to the same file. A page its
+source no longer has (HTTP 404 or 410, "cannot find") is not
+sent again unless \code{include_gone = TRUE}: a new capture
+would only archive the error. A failure for a daily limit
+recorded today (UTC) is not sent again until tomorrow.
 }
 \examples{
 \dontrun{

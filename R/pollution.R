@@ -166,6 +166,38 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
                 "%s looks like a rate per 100,000, which only verify_pollution() takes"), format(rate))
 }
 
+# A baseline rate per person-year, checked as verify_pollution() checks its rate per 100,000 (the
+# same band, the same switches; review of e57fed5, E4: 0.5 and 8e-8 were taken as they came). The
+# band is 1 to 10,000 per 100,000 a year (1e-5 to 0.1 per person-year): below it, the number is
+# also what a rate per 100,000 passed here looks like (rare_outcome = TRUE when the outcome really
+# is that rare, never below 1e-6 per 100,000); above it, no population's all-cause mortality comes
+# close (high_rate = TRUE for an outcome that common, never above 1); zero is a measured zero.
+.pollution_rate_pp <- function(rate, rare_outcome = FALSE, high_rate = FALSE) {
+  for (a in list(list("rare_outcome", rare_outcome), list("high_rate", high_rate))) {
+    if (!is.logical(a[[2L]]) || length(a[[2L]]) != 1L || is.na(a[[2L]])) {
+      stop(sprintf("`%s` must be TRUE or FALSE", a[[1L]]), call. = FALSE)
+    }
+  }
+  if (rate > 1) stop(.pollution_rate_msg(rate), call. = FALSE)
+  if (rate == 0) return(rate)
+  if (rate < 1e-11) {
+    stop(sprintf(paste("`baseline_rate` %s per person-year is below one case per 100 billion person-years:",
+                       "not a usable rate"), format(rate)), call. = FALSE)
+  }
+  if (rate < 1e-5 && !rare_outcome) {
+    stop(sprintf(paste("`baseline_rate` %s per person-year is below one case per 100,000 a year. A rate per",
+                       "100,000 divided by 100,000 is the rate here (800 per 100,000 is 0.008); if the outcome",
+                       "really is this rare, say so with rare_outcome = TRUE"), format(rate)), call. = FALSE)
+  }
+  if (rate > 0.1 && !high_rate) {
+    stop(sprintf(paste("`baseline_rate` %s per person-year is %s per 100,000 a year, above any population's",
+                       "all-cause death rate. If it is a rate per 100,000, divide it by 100,000; if the outcome",
+                       "really is this common, say so with high_rate = TRUE"),
+                 format(rate), format(rate * 1e5, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  }
+  rate
+}
+
 .pollution_scalar <- function(x, what, nonneg = TRUE, positive = FALSE) {
   # a flag is not a number: as.numeric(TRUE) is 1, and a relative risk of TRUE is a typo
   if (is.logical(x) && !all(is.na(x))) stop(sprintf("`%s` must be numeric, not logical", what), call. = FALSE)
@@ -248,6 +280,10 @@ attributable_fraction <- function(rr, exposure_prevalence, rr_lower = NULL, rr_u
 #' @param population At-risk population.
 #' @param baseline_rate Baseline rate in cases per person-year.
 #' @param beta_per_unit Log-RR per unit of exposure (per unit, not per 10).
+#' @param rare_outcome,high_rate \code{TRUE} to admit a baseline rate
+#'   below 1e-5 (one per 100,000) or above 0.1 (10,000 per 100,000)
+#'   per person-year; without them such a rate is refused, being also
+#'   what a rate in the wrong unit looks like.
 #' @return Expected avoided cases.
 #' @references US EPA (2018). Environmental Benefits Mapping and Analysis
 #'   Program - Community Edition, user manual. Anenberg, S. C. et al. (2010).
@@ -257,11 +293,11 @@ attributable_fraction <- function(rr, exposure_prevalence, rr_lower = NULL, rr_u
 #' @examples
 #' mortality_displaced(10, 1e6, 0.008, 0.0039)
 #' @export
-mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_per_unit) {
+mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_per_unit,
+                                rare_outcome = FALSE, high_rate = FALSE) {
   exposure_delta <- .pollution_scalar(exposure_delta, "exposure_delta", nonneg = FALSE)
   population <- .pollution_scalar(population, "population")
-  baseline_rate <- .pollution_scalar(baseline_rate, "baseline_rate")
-  if (baseline_rate > 1) stop(.pollution_rate_msg(baseline_rate), call. = FALSE)
+  baseline_rate <- .pollution_rate_pp(.pollution_scalar(baseline_rate, "baseline_rate"), rare_outcome, high_rate)
   beta_per_unit <- .pollution_scalar(beta_per_unit, "beta_per_unit", nonneg = FALSE)
   baseline_rate * population * (1 - exp(-beta_per_unit * exposure_delta))
 }
@@ -286,6 +322,11 @@ mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_
 #'   incident cases.
 #' @param reference_conc Counterfactual concentration; \code{NULL} takes the
 #'   pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).
+#' @param rare_outcome,high_rate \code{TRUE} to admit a baseline rate
+#'   below 1e-5 (one per 100,000) or above 0.1 (10,000 per 100,000)
+#'   per person-year, as \code{\link{verify_pollution}} does: without
+#'   them such a rate is refused, being also what a rate in the wrong
+#'   unit looks like.
 #' @return A list of class \code{rmbl_burden} with \code{paf},
 #'   \code{attributable_cases}, \code{baseline_cases}, \code{population},
 #'   \code{baseline_rate}, \code{exposure_mean}, \code{reference_conc},
@@ -298,7 +339,7 @@ mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_
 #' @export
 pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, population,
                              pollutant = "NO2", outcome = "all_cause_mortality",
-                             reference_conc = NULL) {
+                             reference_conc = NULL, rare_outcome = FALSE, high_rate = FALSE) {
   pol <- .pollution_pollutant(pollutant)
   if (is.na(pol)) {
     stop(sprintf("Unknown pollutant '%s'. Use 'PM2.5' or 'NO2'.", paste(pollutant, collapse = ",")),
@@ -306,10 +347,9 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, 
   }
   exposure_mean <- .pollution_scalar(exposure_mean, "exposure_mean")
   exposure_prevalence <- .pollution_scalar(exposure_prevalence, "exposure_prevalence")
-  baseline_rate <- .pollution_scalar(baseline_rate, "baseline_rate")
   # the same check mortality_displaced() makes: 800 is a rate per 100,000, and taken per
   # person-year it gave 110 million attributable deaths from a million people
-  if (baseline_rate > 1) stop(.pollution_rate_msg(baseline_rate), call. = FALSE)
+  baseline_rate <- .pollution_rate_pp(.pollution_scalar(baseline_rate, "baseline_rate"), rare_outcome, high_rate)
   population <- .pollution_scalar(population, "population")
   if (!is.null(reference_conc)) {
     reference_conc <- .pollution_scalar(reference_conc, "reference_conc")
@@ -559,7 +599,8 @@ exposure_concentration_index <- function(data, exposure, income) {
 #'   micrograms per cubic metre, the population in persons and the baseline
 #'   rate per person-year.
 #' @param area_col,exposure_col,population_col,baseline_rate_col Column names.
-#' @param pollutant,outcome Passed to \code{\link{pollution_burden}}.
+#' @param pollutant,outcome,rare_outcome,high_rate Passed to
+#'   \code{\link{pollution_burden}}.
 #' @return The input columns plus \code{rr}, \code{paf},
 #'   \code{attributable_cases} and \code{baseline_cases}.
 #' @examples
@@ -570,7 +611,8 @@ exposure_concentration_index <- function(data, exposure, income) {
 pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col = "exposure",
                                      population_col = "population",
                                      baseline_rate_col = "baseline_rate",
-                                     pollutant = "NO2", outcome = "all_cause_mortality") {
+                                     pollutant = "NO2", outcome = "all_cause_mortality",
+                                     rare_outcome = FALSE, high_rate = FALSE) {
   required <- c(area_col, exposure_col, population_col, baseline_rate_col)
   missing <- setdiff(required, names(area_table))
   if (length(missing)) {
@@ -588,7 +630,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
       exposure_prevalence = 1,
       baseline_rate = as.numeric(area_table[[baseline_rate_col]][i]),
       population = as.numeric(area_table[[population_col]][i]),
-      pollutant = pollutant, outcome = outcome)
+      pollutant = pollutant, outcome = outcome, rare_outcome = rare_outcome, high_rate = high_rate)
     out <- data.frame(a = area_table[[area_col]][i], stringsAsFactors = FALSE)
     names(out) <- area_col
     out[[exposure_col]] <- as.numeric(area_table[[exposure_col]][i])
@@ -623,7 +665,9 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 }
 
 .pollution_assumptions <- function(pollutant, exposure_mean, exposure_prevalence,
-                                   baseline_rate, population, reference, rare_outcome = FALSE) {
+                                   baseline_rate, population, reference, rare_outcome = FALSE,
+                                   high_rate = FALSE) {
+  top <- if (isTRUE(high_rate)) 1e5 else 1e4
   row <- function(name, ok, note) list(assumption = name, ok = isTRUE(ok), note = note)
   fin <- function(x) length(x) == 1L && is.finite(x)
   list(
@@ -646,12 +690,12 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
     # caller says which with rare_outcome = TRUE: giving the unit is not enough, since a wrapper
     # or do.call() passes it routinely (review of 52a8883, A6; of 02a38be, C4). Below 1e-6 per
     # 100k (fewer than one case in the world's population over a lifetime) no rate is plausible.
-    row(if (isTRUE(rare_outcome)) {
-          "baseline_rate finite: zero, or between 1e-6 and 100,000 per 100k (a rare outcome)"
-        } else {
-          "baseline_rate finite: zero, or between 1 and 100,000 per 100k"
-        },
-        fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5 &&
+    # the top of the band is 10,000 per 100k (no population's all-cause death rate comes close);
+    # high_rate = TRUE admits a more common outcome, up to every person every year
+    row(sprintf("baseline_rate finite: zero, or between %s and %s per 100k%s",
+                if (isTRUE(rare_outcome)) "1e-6" else "1", format(top, big.mark = ",", scientific = FALSE),
+                if (isTRUE(rare_outcome)) " (a rare outcome)" else ""),
+        fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= top &&
           (baseline_rate == 0 || baseline_rate >= 1 || (isTRUE(rare_outcome) && baseline_rate >= 1e-6)),
         if (fin(baseline_rate) && baseline_rate < 1e-6 && baseline_rate > 0) {
           sprintf(paste("baseline_rate=%s per 100k is below one case per 100 billion person-years: not a",
@@ -661,6 +705,10 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
                         "(0.012 is 1,200 per 100k), pass baseline_rate_per = 1; if the outcome really is this",
                         "rare, say so with rare_outcome = TRUE"),
                   format(baseline_rate))
+        } else if (fin(baseline_rate) && baseline_rate > top && baseline_rate <= 1e5) {
+          sprintf(paste("baseline_rate=%s per 100k a year is above any population's all-cause death rate:",
+                        "if the outcome really is this common, say so with high_rate = TRUE"),
+                  format(baseline_rate, big.mark = ",", scientific = FALSE))
         } else if (fin(baseline_rate) && baseline_rate == 0) {
           "baseline_rate=0: a measured zero rate, so no cases"
         } else {
@@ -720,6 +768,9 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
 #'   small). The check is on the converted rate, so it holds whatever
 #'   \code{baseline_rate_per} is.
+#' @param high_rate \code{TRUE} when the outcome really is more common
+#'   than 10,000 per 100,000 a year (no population's all-cause death
+#'   rate is); without it such a rate is an assumption failure.
 #' @param baseline_rate Baseline outcome rate per 100,000 per year (unlike
 #'   \code{\link{pollution_burden}}, which takes a rate per person-year).
 #' @param population Population at risk (persons).
@@ -746,7 +797,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                              years = NULL, demo = FALSE, exposure_csv = NULL,
                              exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
                              baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6,
-                             rare_outcome = FALSE) {
+                             rare_outcome = FALSE, high_rate = FALSE) {
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
   equity_df <- NULL
@@ -787,6 +838,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   if (is.null(baseline_rate)) return(fail("baseline_rate must be a single number, not NULL"))
   if (!is.logical(rare_outcome) || length(rare_outcome) != 1L || is.na(rare_outcome)) {
     return(fail("rare_outcome must be TRUE or FALSE"))
+  }
+  if (!is.logical(high_rate) || length(high_rate) != 1L || is.na(high_rate)) {
+    return(fail("high_rate must be TRUE or FALSE"))
   }
   if (!is.numeric(baseline_rate_per) || length(baseline_rate_per) != 1L || !is.finite(baseline_rate_per) ||
         baseline_rate_per <= 0) {
@@ -923,7 +977,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   baseline_rate <- as.numeric(baseline_rate) * 1e5 / baseline_rate_per   # per 100,000 from here on
   population <- as.numeric(population)
   assumptions <- .pollution_assumptions(pollutant, exposure_mean, exposure_prevalence,
-                                        baseline_rate, population, reference, rare_outcome)
+                                        baseline_rate, population, reference, rare_outcome, high_rate)
   report <- list(
     command = "verify-pollution", pollutant = pollutant, outcome = outcome,
     region = region, years = years, data_source = data_source,
@@ -958,11 +1012,15 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # every stage runs inside the status contract: what it refuses is an "error" report, never a
   # raw condition out of verify_pollution()
   staged <- tryCatch({
+    # the rate's band was checked above, with the caller's switches: they go to the stages too, or
+    # a rate the caller vouched for (high_rate, rare_outcome) was refused again by the stage
     displaced <- mortality_displaced(exposure_delta, population * exposure_prevalence,
-                                     baseline_per_person, beta_per_unit)
+                                     baseline_per_person, beta_per_unit,
+                                     rare_outcome = rare_outcome, high_rate = high_rate)
     burden <- pollution_burden(exposure_mean, exposure_prevalence, baseline_per_person, population,
                                pollutant = if (pollutant == "pm25") "PM2.5" else "NO2",
-                               outcome = outcome, reference_conc = reference)
+                               outcome = outcome, reference_conc = reference,
+                               rare_outcome = rare_outcome, high_rate = high_rate)
     equity <- if (!is.null(equity_df) && "income" %in% names(equity_df)) {
       complete <- sum(is.finite(equity_df$exposure) & is.finite(suppressWarnings(as.numeric(equity_df$income))))
       if (complete < 2L || !any(equity_df$exposure > 0, na.rm = TRUE)) {
@@ -1000,6 +1058,15 @@ pollution_report_text <- function(report) {
   }
   bar <- strrep("=", 66)
   if (identical(report$status, "error")) return(paste0("ERROR: ", report$error, "\n"))
+  # a list that only looks like a report (status "ok" and no inputs) is refused in words, not with
+  # "$ operator is invalid for atomic vectors"
+  parts_ok <- is.list(report$inputs) && is.list(report$assumptions) &&
+    all(vapply(report$assumptions, function(a) is.list(a) && is.logical(a$ok), logical(1))) &&
+    (!identical(report$status, "ok") || is.list(report$pipeline))
+  if (!parts_ok) {
+    stop("`report` is not a complete verify_pollution() report (its inputs, assumptions or pipeline are missing)",
+         call. = FALSE)
+  }
   lines <- c(bar, sprintf("  %s -- %s -> %s", report$command, toupper(report$pollutant), report$outcome))
   if (!is.null(report$region)) lines <- c(lines, sprintf("  region: %s", report$region))
   if (!is.null(report$years)) lines <- c(lines, sprintf("  years:  %s", report$years))
@@ -1103,7 +1170,9 @@ pollution_report_text <- function(report) {
   rm(raw)
   if (!is.null(note)) message(note)
   Encoding(txt) <- "UTF-8"
-  if (!nzchar(trimws(txt))) return(data.frame())
+  # blank or not: one search that stops at the first non-blank character (trimws() ran two regular
+  # expressions over the whole text, a pass the size of the file; review of e57fed5)
+  if (!grepl("[^[:space:]]", txt, perl = TRUE)) return(data.frame())
   src <- path
   if (transformed) {
     # the decoded text goes through a file, which read.csv parses in C: text = goes through a
