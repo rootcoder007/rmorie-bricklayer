@@ -100,6 +100,7 @@ Suggests:
     sf,
     stringi,
     survival,
+    survey,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer,

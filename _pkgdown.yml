@@ -443,6 +443,16 @@ reference:
       - crime_density
       - knox_test
       - justice-data
+  - title: Complex survey estimation
+    desc: >
+      Design-based means, totals, proportions and ratios, overall and by domain,
+      with variances from replicate weights (Statistics Canada bootstrap, mean
+      bootstrap, jackknife, BRR, Fay) or Taylor linearization over strata and
+      PSUs, and design-based comparisons between domains.
+    contents:
+      - survey_design
+      - survey_estimate
+      - survey_compare
   - title: The footprint of the computation
     desc: >
       Electricity and CO2-equivalent of an expression, measured from RAPL energy

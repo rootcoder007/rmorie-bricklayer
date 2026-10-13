@@ -4,6 +4,21 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Complex survey estimation
+
+* **New: `survey_design()`, `survey_estimate()`, `survey_compare()`.** Design-based means,
+  totals, proportions and ratios, overall and by domain, with variances from replicate weights
+  (Statistics Canada's bootstrap, mean bootstrap, jackknife, BRR, Fay's BRR) or from Taylor
+  linearization over strata and PSUs with a finite population correction and a choice for
+  single-PSU strata. Domain estimates keep the whole design. Replicate totals are computed in C
+  straight from the data frame's columns (CSUS 2023: 36,180 respondents by 1,000 mean bootstrap
+  weights in about 1.6 s). Proportions default to the modified Wilson interval of SAS PROC
+  SURVEYFREQ that Health Canada's published CSUS intervals use. Estimates, standard errors and
+  intervals match the survey package to machine precision for linearized, JK1, bootstrap and Fay
+  designs, domain estimates and contrasts; CSUS 2023 lifetime cannabis use reproduces Health
+  Infobase's published percentages from the public-use file. Domains under 30 respondents are
+  flagged (Health Canada's suppression rule), not withheld. Plots for both.
+
 ## A new look for every plot
 
 * **One theme across all 33 plot methods.** The plot region is a tinted panel crossed by white
