@@ -1469,37 +1469,120 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 }
 
 #' @rdname plot-methods
+#' @param max_parts For \code{rmbl_clearance_decomposition}, the most parts drawn: past it,
+#'   the parts that moved the aggregate most, and the rest summed into one row.
 #' @usage \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
-#'   main = NULL, col = NULL, palette = NULL)
+#'   max_parts = 20L, main = NULL, col = NULL, palette = NULL)
 #' @export
-plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 20L, main = NULL, col = NULL,
+                                              palette = NULL) {
   cols <- .bl_cols(2, col, palette)
-  # both panels need about six inches across; on a smaller device the rates are drawn alone and
-  # the decomposition is written under them
+  max_parts <- .rmbl_num(max_parts, "max_parts", integer = TRUE)
+  if (length(max_parts) != 1L || is.na(max_parts) || max_parts < 2L) {
+    stop("`max_parts` must be a whole number of at least 2", call. = FALSE)
+  }
+  # no more rows than the device has room for (about 0.12 inch each): a 3-inch device shows the
+  # parts that moved the aggregate most, the rest summed, instead of 20 rows on top of each other
+  din <- tryCatch(graphics::par("din"), error = function(e) c(7, 7))
+  max_parts <- max(2L, min(max_parts, as.integer(floor((din[2L] - 2) / 0.12))))
+  v <- .jx_cd_view(x, max_parts)
+  x$groups <- v$groups
+  x$other <- v$other
+  # the paradox needs two pictures side by side: the parts' rates (most went one way) and where
+  # the work moved (toward the parts that clear less); the waterfall adds the sum. Ten inches
+  # hold all three, six hold the first two, and a smaller device the rates alone, with the
+  # decomposition written under them.
   if (is.null(what)) {
     din <- tryCatch(graphics::par("din"), error = function(e) c(7, 7))
-    what <- if (din[1L] >= 6 && din[2L] >= 3.5) c("rates", "effects") else "rates"
+    what <- if (din[1L] >= 10 && din[2L] >= 3.5) c("rates", "mix", "effects") else
+      if (din[1L] >= 6 && din[2L] >= 3.5) c("rates", "mix") else "rates"
   }
-  what <- match.arg(what, c("rates", "effects"), several.ok = TRUE)
+  what <- match.arg(what, c("rates", "mix", "effects"), several.ok = TRUE)
+  o <- x$overall
+  line <- sprintf("Change %+.4f = rates %+.4f + mix %+.4f", o$change, o$rate_effect, o$mix_effect)
   op0 <- graphics::par(no.readonly = TRUE)
   on.exit(graphics::par(op0), add = TRUE)
-  if (length(what) == 2L) {
-    .bl_panels_begin(2L)
+  draw <- list(rates = .jx_cd_rates, mix = .jx_cd_mix, effects = .jx_cd_effects)
+  if (length(what) > 1L) {
+    .bl_panels_begin(length(what))
     on.exit(.bl_panels_abort(), add = TRUE)
-    .jx_cd_rates(x, cols, NULL, ...)
-    .jx_cd_effects(x, cols, NULL, ...)
-    .bl_panels_end()
+    for (w in what) draw[[w]](x, cols, NULL, ...)
+    keys <- .bl_panels_end()
+    if (!"effects" %in% what) {
+      graphics::mtext(line, side = 1, outer = TRUE, line = if (length(keys)) 1.2 else 0.2, cex = 0.8, adj = 0)
+    }
     if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2)
-  } else if (what == "rates") {
-    o <- x$overall
-    graphics::par(oma = c(1.4, 0, 0, 0))
-    .jx_cd_rates(x, cols, main, ...)
-    graphics::mtext(sprintf("Change %+.4f = rates %+.4f + mix %+.4f", o$change, o$rate_effect, o$mix_effect),
-                    side = 1, outer = TRUE, line = 0.2, cex = 0.8, adj = 0)
   } else {
-    .jx_cd_effects(x, cols, main, ...)
+    if (what != "effects") graphics::par(oma = c(1.4, 0, 0, 0))
+    draw[[what]](x, cols, main, ...)
+    if (what != "effects") graphics::mtext(line, side = 1, outer = TRUE, line = 0.2, cex = 0.8, adj = 0)
   }
   invisible(x$groups)
+}
+
+# The parts as drawn: ordered by their average rate (lowest at the bottom), so the colours of
+# the mix panel separate; past `max_parts`, the parts that moved the aggregate most, and the rest
+# summed into one row (its rate from the summed counts, not an average of rates).
+.jx_cd_view <- function(x, max_parts) {
+  g <- x$groups
+  other <- 0L
+  if (nrow(g) > max_parts) {
+    keep <- order(-(abs(g$rate_effect) + abs(g$mix_effect)))[seq_len(max_parts - 1L)]
+    rest <- g[-keep, , drop = FALSE]
+    agg <- g[keep[1L], , drop = FALSE]
+    agg$group <- sprintf("Other parts (%d)", nrow(rest))
+    for (v in c("numerator_a", "denominator_a", "numerator_b", "denominator_b", "weight_a", "weight_b",
+                "rate_effect", "mix_effect")) agg[[v]] <- sum(rest[[v]])
+    agg$rate_a <- agg$numerator_a / agg$denominator_a
+    agg$rate_b <- agg$numerator_b / agg$denominator_b
+    agg$rate_ratio <- agg$rate_b / agg$rate_a
+    agg$lower <- NA_real_
+    agg$upper <- NA_real_
+    g <- rbind(g[keep, , drop = FALSE], agg)
+    other <- nrow(rest)
+  }
+  g <- g[order((g$rate_a + g$rate_b) / 2), , drop = FALSE]
+  rownames(g) <- NULL
+  list(groups = g, other = other)
+}
+
+# Row labels for a panel of `units` rows, chosen before the plot so the margin fits them: two
+# lines when the rows are tall enough, else one (cut with an ellipsis only past the room), and
+# a text size the row height allows.
+.jx_row_labels <- function(labs, units) {
+  fin <- tryCatch(graphics::par("fin"), error = function(e) c(7, 7))
+  csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * .bl_plot_opts()$cex
+  # the plot's height is the figure less its margins (7.2 lines) and the panel key's outer margin
+  oma <- tryCatch(sum(graphics::par("oma")[c(1L, 3L)]), error = function(e) 0)
+  rowh <- max(fin[2L] - (7.2 + oma) * csi, csi) / units
+  fit <- .bl_label_wrap(labs)
+  two <- any(grepl("\n", fit$labels, fixed = TRUE))
+  if (two && 2 * csi * 0.9 > rowh) {
+    # rows too short for two lines: the whole name a size smaller reads better than a cut one;
+    # cut (with an ellipsis) only when even 0.7 of the size does not fit the room
+    room <- 0.5 * tryCatch(graphics::par("fin")[1L], error = function(e) 7) - csi
+    w <- max(.bl_strwidth(labs, cex = 1), 0)
+    sizes <- c(0.85, 0.75, 0.65, 0.6)
+    shrink <- sizes[w * sizes <= room]
+    if (length(shrink)) {
+      fit <- list(labels = labs, mar = max(1, w * shrink[1L] / csi + 1) / shrink[1L])
+      fit$cex <- min(shrink[1L], max(0.45, rowh / (csi * 0.9)))
+      return(fit)
+    }
+    fit <- .bl_label_fit(labs)
+    two <- FALSE
+  }
+  fit$cex <- max(0.45, min(1, rowh / ((if (two) 2 else 1) * csi * 0.9)))
+  fit
+}
+
+# arrows only where they are long enough to have a direction (a part that barely moved gets its
+# two points and no arrow: R warns about a zero-length arrow and draws nothing)
+.jx_arrows <- function(x0, y, x1, col, lwd) {
+  usr <- graphics::par("usr")
+  len <- abs(x1 - x0) / diff(usr[1:2]) * graphics::par("pin")[1L]
+  ok <- is.finite(len) & len > 0.02
+  if (any(ok)) graphics::arrows(x0[ok], y[ok], x1[ok], y[ok], length = 0.06, col = col[ok], lwd = lwd[ok])
 }
 
 # each part's rate in both comparisons, the aggregate on top; an arrow per part, coloured by
@@ -1510,37 +1593,69 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, main = NULL, 
   a <- format(x$compare[1L])
   b <- format(x$compare[2L])
   labs <- c(as.character(g$group), "All parts")
-  fit <- .bl_label_wrap(labs)
   k <- nrow(g)
   y <- c(seq_len(k), k + 1.6)
   ra <- c(g$rate_a, o$rate_a)
   rb <- c(g$rate_b, o$rate_b)
+  # the panel's text size first: a panel grid lowers par("cex"), and labels measured at the
+  # lowered size and drawn at this one ran off the device
   o0 <- .bl_plot_opts()
-  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg, mar = .bl_safe_mar(c(4.2, fit$mar + 0.6, 3, 1), o0$cex))
+  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg)
+  on.exit(graphics::par(op), add = TRUE)
+  fit <- .jx_row_labels(labs, k + 2.6)
+  graphics::par(mar = .bl_safe_mar(c(4.2, fit$mar * fit$cex + 0.8, 3, 1), o0$cex))
   graphics::plot(range(c(ra, rb)), range(y) + c(-0.5, 0.5), type = "n", yaxt = "n", xlab = "", ylab = "",
                  main = "", ...)
-  # every row labelled (axis() drops labels that would touch), at a size the row height allows; a
-  # two-line label needs two lines of height, so on a short panel the labels go back to one line
   graphics::axis(2, at = y, labels = FALSE)
-  rowh <- graphics::par("pin")[2L] / diff(graphics::par("usr")[3:4])
-  lines_needed <- ifelse(grepl("\n", fit$labels, fixed = TRUE), 2, 1)
-  if (any(lines_needed * graphics::par("csi") * 0.9 > rowh)) {
-    fit <- .bl_label_fit(labs)
-    lines_needed <- 1
-  }
-  lab_cex <- min(1, rowh / (max(lines_needed) * graphics::par("csi") * 0.9))
+  # every row labelled (axis() drops labels that would touch)
   graphics::text(graphics::par("usr")[1L] - 0.03 * diff(graphics::par("usr")[1:2]), y, fit$labels, adj = 1,
-                 xpd = NA, cex = lab_cex)
+                 xpd = NA, cex = fit$cex)
   .bl_xlab("Clearance rate")
-  .bl_title(.bl_main(main, sprintf("Rates, %s to %s", a, b)))
+  title <- sprintf("Rates, %s to %s", a, b)
+  if (isTRUE(x$other > 0L)) title <- sprintf("%s, top %d", title, k - 1L)
+  .bl_title(.bl_main(main, title))
   graphics::abline(h = k + 0.8, col = "#BBBBBB")
   graphics::abline(v = 1, lty = 3, col = "#888888")
   dir <- ifelse(rb >= ra, cols[1L], cols[2L])
-  ok <- abs(rb - ra) > 0
-  graphics::arrows(ra[ok], y[ok], rb[ok], y[ok], length = 0.06, col = dir[ok], lwd = c(rep(2, k), 3.5)[ok])
+  .jx_arrows(ra, y, rb, dir, c(rep(2, k), 3.5))
   graphics::points(ra, y, pch = 21, bg = "white", col = "#555555", cex = 1.1)
   graphics::points(rb, y, pch = 19, col = dir, cex = 1.1)
-  graphics::par(op)
+  invisible(NULL)
+}
+
+# each part's share of the workload in both comparisons, coloured by whether it clears above or
+# below the average: the mix that can turn the aggregate against its parts
+.jx_cd_mix <- function(x, cols, main, ...) {
+  g <- x$groups
+  o <- x$overall
+  a <- format(x$compare[1L])
+  b <- format(x$compare[2L])
+  k <- nrow(g)
+  y <- seq_len(k)
+  wa <- g$weight_a
+  wb <- g$weight_b
+  centre <- (o$rate_a + o$rate_b) / 2
+  colr <- ifelse((g$rate_a + g$rate_b) / 2 >= centre, cols[1L], cols[2L])
+  o0 <- .bl_plot_opts()
+  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg)
+  on.exit(graphics::par(op), add = TRUE)
+  fit <- .jx_row_labels(as.character(g$group), k + 1)
+  graphics::par(mar = .bl_safe_mar(c(4.2, fit$mar * fit$cex + 0.8, 3, 1), o0$cex))
+  graphics::plot(range(c(0, wa, wb)), c(0.5, k + 0.5), type = "n", yaxt = "n", xlab = "", ylab = "", main = "",
+                 ...)
+  graphics::axis(2, at = y, labels = FALSE)
+  graphics::text(graphics::par("usr")[1L] - 0.03 * diff(graphics::par("usr")[1:2]), y, fit$labels, adj = 1,
+                 xpd = NA, cex = fit$cex)
+  .bl_xlab("Share of workload")
+  .bl_title(.bl_main(main, "Where the work moved"))
+  .bl_grid(NULL)
+  .jx_arrows(wa, y, wb, colr, rep(2, k))
+  graphics::points(wa, y, pch = 21, bg = "white", col = "#555555", cex = 1.1)
+  graphics::points(wb, y, pch = 19, col = colr, cex = 1.1)
+  # the colour key under the title, where it covers no point, sized to the panel
+  key <- "colour: blue clears above average, orange below"
+  kc <- min(0.75, 0.75 * graphics::par("pin")[1L] / max(.bl_strwidth(key, cex = 0.75), 1e-6))
+  graphics::mtext(key, side = 3, line = 0.15, cex = kc * graphics::par("cex"), col = "#555555")
   invisible(NULL)
 }
 
