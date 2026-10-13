@@ -4,6 +4,31 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Courts and police-reported crime
+
+* **New: `case_flow()`, `life_table()`, `disposition_mix()`, `clearance_decomposition()`,
+  `crime_density()` and `knox_test()`**, each with print and plot methods. The clearance rate
+  with exact intervals and months to clear the inventory; the actuarial life table for banded
+  times (equal to Kaplan-Meier at the band edges without censoring, checked against
+  `survival::survfit()`); outcome shares with Goodman's simultaneous intervals and
+  Cochran-Armitage trends; Kitagawa's decomposition of a change in a clearance rate into rate
+  and case-mix effects with a Mantel-Haenszel rate ratio and a Simpson's-paradox verdict (on the
+  Court's own figures, 2014 to 2022: the aggregate fell while the rate at a fixed mix rose);
+  binned Gaussian kernel density with highest-density regions (checked against
+  `MASS::kde2d()`); and the Knox test with exact expected counts (checked against a full
+  enumeration of permutations).
+* **Real data in `inst/extdata`** (`?justice-data`): Ontario Court of Justice monthly flow and
+  time to disposition (2024-2026), outcomes, offence groups and courts by calendar year
+  2012-2025, each reconciled to the published provincial totals; Toronto Police Service break
+  and enter occurrences in division D14, 2024. Vignette `courts-and-crime`.
+* **Plots fit the device.** Multi-panel plots choose rows and columns from the device (one row
+  squeezed four panels into a 3.5-inch device); y-axis titles sit outside the tick labels
+  actually drawn (a five-digit tick label overprinted the title at line 3) or are left off when
+  there is no room; the key under lettered panels is measured at the size it is drawn
+  (`strwidth()` scales by `par("cex")`, which a panel grid lowers, and `mtext()` does not, so
+  the key ran off the device); the plume and particle titles fit their panel.
+* `apply_schema_validation()` checks for a data frame before the schema.
+
 ## Review of 02a38be (the sixth pass)
 
 * **`hurwitz_zeta()` is accurate below s = 1.** The Euler-Maclaurin shift added in the fifth

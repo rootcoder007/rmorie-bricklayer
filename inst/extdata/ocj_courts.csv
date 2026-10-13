@@ -1,0 +1,761 @@
+"year","court","court_series","received","disposed"
+2012,"Barrie","Barrie",8611,8429
+2012,"Bracebridge","Bracebridge",1255,1331
+2012,"Cobourg","Cobourg",1346,1368
+2012,"Durham","Durham",10544,11423
+2012,"Lindsay","Lindsay",1861,1772
+2012,"Newmarket","Newmarket",12263,12240
+2012,"Orillia","Orillia",1711,1849
+2012,"Peterborough","Peterborough",3164,3191
+2012,"Brampton","Brampton",19821,18707
+2012,"Brantford","Brantford",3415,3432
+2012,"Cayuga","Cayuga",693,778
+2012,"Hamilton","Hamilton",9145,9009
+2012,"Milton","Milton",4547,4502
+2012,"Orangeville","Orangeville",1863,1891
+2012,"Simcoe","Simcoe",1180,1202
+2012,"St. Catharines","St. Catharines",5725,5569
+2012,"Welland","Welland",1017,865
+2012,"Belleville","Belleville",2416,2348
+2012,"Brockville","Brockville",2123,2251
+2012,"Cornwall","Cornwall",3908,4069
+2012,"Kingston","Kingston",3307,3413
+2012,"L'Orignal","L'Orignal",1811,1677
+2012,"Napanee","Napanee",959,972
+2012,"Ottawa","Ottawa",12390,12631
+2012,"Pembroke","Pembroke",1849,1872
+2012,"Perth","Perth",1346,1411
+2012,"Picton","Picton",292,314
+2012,"Cochrane","Cochrane",1330,1233
+2012,"Elliot Lake","Elliot Lake",403,397
+2012,"Espanola","Espanola",360,357
+2012,"Gore Bay","Gore Bay",612,673
+2012,"Haileybury","Haileybury",1146,1240
+2012,"Kirkland Lake","Kirkland Lake",150,179
+2012,"North Bay","North Bay",2756,2778
+2012,"Parry Sound","Parry Sound",987,1013
+2012,"Sault Ste. Marie","Sault Ste. Marie",2567,2440
+2012,"Sudbury","Sudbury",5206,4911
+2012,"Timmins","Timmins",2740,2678
+2012,"Dryden","Dryden",2408,2382
+2012,"Fort Frances","Fort Frances",716,685
+2012,"Kenora","Kenora",3185,3180
+2012,"Thunder Bay","Thunder Bay",5965,6338
+2012,"1000 Finch Ave.","Toronto",7978,8014
+2012,"1911 Eglinton Ave. E","Toronto",9240,8754
+2012,"2201 Finch Ave. W","Toronto",8254,8849
+2012,"311 Jarvis St.","Toronto",2033,2214
+2012,"College Park","Toronto",7881,8224
+2012,"Old City Hall","Toronto",17894,17101
+2012,"Chatham","Chatham",2434,2562
+2012,"Goderich","Goderich",1136,1115
+2012,"Guelph","Guelph",3080,3103
+2012,"Kitchener","Kitchener",9306,9145
+2012,"London","London",11710,11407
+2012,"Owen Sound","Owen Sound",1380,1335
+2012,"Sarnia","Sarnia",3141,3144
+2012,"St. Thomas","St. Thomas",1586,1489
+2012,"Stratford","Stratford",1092,1112
+2012,"Walkerton","Walkerton",1385,1364
+2012,"Windsor","Windsor",6764,7244
+2012,"Woodstock","Woodstock",1876,1871
+2013,"Barrie","Barrie",7963,8062
+2013,"Bracebridge","Bracebridge",1222,1251
+2013,"Cobourg","Cobourg",1054,1103
+2013,"Durham","Durham",9814,9445
+2013,"Lindsay","Lindsay",1817,1840
+2013,"Newmarket","Newmarket",10721,10555
+2013,"Orillia","Orillia",1766,1768
+2013,"Peterborough","Peterborough",2910,3041
+2013,"Brampton","Brampton",19947,19763
+2013,"Brantford","Brantford",3193,3446
+2013,"Cayuga","Cayuga",658,737
+2013,"Hamilton","Hamilton",8435,8507
+2013,"Milton","Milton",4546,4594
+2013,"Orangeville","Orangeville",1531,1792
+2013,"Simcoe","Simcoe",1091,1157
+2013,"St. Catharines","St. Catharines",5506,5576
+2013,"Welland","Welland",1010,1033
+2013,"Belleville","Belleville",2235,2153
+2013,"Brockville","Brockville",2109,1977
+2013,"Cornwall","Cornwall",3928,4105
+2013,"Kingston","Kingston",3003,2944
+2013,"L'Orignal","L'Orignal",1641,1528
+2013,"Napanee","Napanee",848,815
+2013,"Ottawa","Ottawa",11776,12912
+2013,"Pembroke","Pembroke",1636,1779
+2013,"Perth","Perth",1205,1279
+2013,"Picton","Picton",336,308
+2013,"Cochrane","Cochrane",1443,1368
+2013,"Elliot Lake","Elliot Lake",444,393
+2013,"Espanola","Espanola",310,317
+2013,"Gore Bay","Gore Bay",594,577
+2013,"Haileybury","Haileybury",909,1008
+2013,"Kirkland Lake","Kirkland Lake",147,141
+2013,"North Bay","North Bay",2530,2590
+2013,"Parry Sound","Parry Sound",1020,1022
+2013,"Sault Ste. Marie","Sault Ste. Marie",2570,2544
+2013,"Sudbury","Sudbury",4744,4876
+2013,"Timmins","Timmins",2602,2593
+2013,"Dryden","Dryden",2069,2162
+2013,"Fort Frances","Fort Frances",664,659
+2013,"Kenora","Kenora",2946,3020
+2013,"Thunder Bay","Thunder Bay",4971,5175
+2013,"1000 Finch Ave.","Toronto",7216,7545
+2013,"1911 Eglinton Ave. E","Toronto",7987,8330
+2013,"2201 Finch Ave. W","Toronto",7063,7393
+2013,"311 Jarvis St.","Toronto",1495,1613
+2013,"College Park","Toronto",7002,7338
+2013,"Old City Hall","Toronto",15706,14882
+2013,"Chatham","Chatham",2371,2326
+2013,"Goderich","Goderich",974,1169
+2013,"Guelph","Guelph",3097,2919
+2013,"Kitchener","Kitchener",8789,8788
+2013,"London","London",11574,11482
+2013,"Owen Sound","Owen Sound",1264,1261
+2013,"Sarnia","Sarnia",2921,2856
+2013,"St. Thomas","St. Thomas",1219,1309
+2013,"Stratford","Stratford",1240,1203
+2013,"Walkerton","Walkerton",1307,1192
+2013,"Windsor","Windsor",6369,6435
+2013,"Woodstock","Woodstock",1682,1725
+2014,"Barrie","Barrie",7737,7535
+2014,"Bracebridge","Bracebridge",1000,1035
+2014,"Cobourg","Cobourg",1061,1019
+2014,"Durham","Durham",8844,8714
+2014,"Lindsay","Lindsay",1756,1816
+2014,"Newmarket","Newmarket",10556,9934
+2014,"Orillia","Orillia",1804,1720
+2014,"Peterborough","Peterborough",2954,2725
+2014,"Brampton","Brampton",18481,18570
+2014,"Brantford","Brantford",3051,3168
+2014,"Cayuga","Cayuga",575,591
+2014,"Hamilton","Hamilton",8491,8138
+2014,"Milton","Milton",4191,4119
+2014,"Orangeville","Orangeville",1440,1280
+2014,"Simcoe","Simcoe",1091,1072
+2014,"St. Catharines","St. Catharines",5165,5156
+2014,"Welland","Welland",857,806
+2014,"Belleville","Belleville",2150,2239
+2014,"Brockville","Brockville",1784,1865
+2014,"Cornwall","Cornwall",3133,3069
+2014,"Kingston","Kingston",2788,2666
+2014,"L'Orignal","L'Orignal",1368,1392
+2014,"Napanee","Napanee",850,921
+2014,"Ottawa","Ottawa",11361,11222
+2014,"Pembroke","Pembroke",1637,1728
+2014,"Perth","Perth",1038,1012
+2014,"Picton","Picton",283,313
+2014,"Cochrane","Cochrane",1277,1259
+2014,"Elliot Lake","Elliot Lake",605,620
+2014,"Espanola","Espanola",236,260
+2014,"Gore Bay","Gore Bay",511,473
+2014,"Haileybury","Haileybury",893,785
+2014,"Kirkland Lake","Kirkland Lake",120,134
+2014,"North Bay","North Bay",2498,2349
+2014,"Parry Sound","Parry Sound",918,879
+2014,"Sault Ste. Marie","Sault Ste. Marie",2246,2211
+2014,"Sudbury","Sudbury",4089,3996
+2014,"Timmins","Timmins",2490,2277
+2014,"Dryden","Dryden",1929,1888
+2014,"Fort Frances","Fort Frances",725,665
+2014,"Kenora","Kenora",3044,2520
+2014,"Thunder Bay","Thunder Bay",4826,4589
+2014,"1000 Finch Ave.","Toronto",6186,6215
+2014,"1911 Eglinton Ave. E","Toronto",7223,7190
+2014,"2201 Finch Ave. W","Toronto",5860,5528
+2014,"311 Jarvis St.","Toronto",1312,1369
+2014,"College Park","Toronto",6332,6107
+2014,"Old City Hall","Toronto",13170,13053
+2014,"Chatham","Chatham",2366,2394
+2014,"Goderich","Goderich",1015,831
+2014,"Guelph","Guelph",3297,3085
+2014,"Kitchener","Kitchener",9308,8845
+2014,"London","London",11759,11423
+2014,"Owen Sound","Owen Sound",1133,1172
+2014,"Sarnia","Sarnia",2924,3093
+2014,"St. Thomas","St. Thomas",1220,1315
+2014,"Stratford","Stratford",1353,1279
+2014,"Walkerton","Walkerton",1272,1153
+2014,"Windsor","Windsor",6081,5861
+2014,"Woodstock","Woodstock",1604,1455
+2015,"Barrie","Barrie",7821,7573
+2015,"Bracebridge","Bracebridge",973,1008
+2015,"Cobourg","Cobourg",1079,1058
+2015,"Durham","Durham",8559,8613
+2015,"Lindsay","Lindsay",1651,1605
+2015,"Newmarket","Newmarket",11162,9992
+2015,"Orillia","Orillia",1670,1703
+2015,"Peterborough","Peterborough",2990,2813
+2015,"Brampton","Brampton",19271,17356
+2015,"Brantford","Brantford",3133,2985
+2015,"Cayuga","Cayuga",617,600
+2015,"Hamilton","Hamilton",8548,7863
+2015,"Milton","Milton",4540,4430
+2015,"Orangeville","Orangeville",1745,1528
+2015,"Simcoe","Simcoe",942,1016
+2015,"St. Catharines","St. Catharines",4765,4781
+2015,"Welland","Welland",948,841
+2015,"Belleville","Belleville",2024,1956
+2015,"Brockville","Brockville",1942,1791
+2015,"Cornwall","Cornwall",3021,3161
+2015,"Kingston","Kingston",2748,2679
+2015,"L'Orignal","L'Orignal",1383,1369
+2015,"Napanee","Napanee",846,830
+2015,"Ottawa","Ottawa",11153,10810
+2015,"Pembroke","Pembroke",1672,1603
+2015,"Perth","Perth",1091,1014
+2015,"Picton","Picton",315,278
+2015,"Cochrane","Cochrane",1383,1357
+2015,"Elliot Lake","Elliot Lake",465,446
+2015,"Espanola","Espanola",238,181
+2015,"Gore Bay","Gore Bay",608,512
+2015,"Haileybury","Haileybury",897,934
+2015,"Kirkland Lake","Kirkland Lake",108,99
+2015,"North Bay","North Bay",2335,2332
+2015,"Parry Sound","Parry Sound",928,874
+2015,"Sault Ste. Marie","Sault Ste. Marie",2231,2161
+2015,"Sudbury","Sudbury",4087,3792
+2015,"Timmins","Timmins",2618,2382
+2015,"Dryden","Dryden",1718,1753
+2015,"Fort Frances","Fort Frances",703,672
+2015,"Kenora","Kenora",3405,3113
+2015,"Thunder Bay","Thunder Bay",4427,4439
+2015,"1000 Finch Ave.","Toronto",6080,5755
+2015,"1911 Eglinton Ave. E","Toronto",7282,7202
+2015,"2201 Finch Ave. W","Toronto",6072,5369
+2015,"311 Jarvis St.","Toronto",1241,1148
+2015,"College Park","Toronto",6338,5901
+2015,"Old City Hall","Toronto",12778,11506
+2015,"Chatham","Chatham",2304,2214
+2015,"Goderich","Goderich",1084,1042
+2015,"Guelph","Guelph",3620,3319
+2015,"Kitchener","Kitchener",9540,9028
+2015,"London","London",11650,11156
+2015,"Owen Sound","Owen Sound",1290,1170
+2015,"Sarnia","Sarnia",3056,3052
+2015,"St. Thomas","St. Thomas",1083,1141
+2015,"Stratford","Stratford",1324,1268
+2015,"Walkerton","Walkerton",1399,1293
+2015,"Windsor","Windsor",6267,5889
+2015,"Woodstock","Woodstock",1492,1493
+2016,"Barrie","Barrie",7760,7666
+2016,"Bracebridge","Bracebridge",1095,1013
+2016,"Cobourg","Cobourg",967,1075
+2016,"Durham","Durham",8721,8389
+2016,"Lindsay","Lindsay",1611,1686
+2016,"Newmarket","Newmarket",10682,10447
+2016,"Orillia","Orillia",1812,1757
+2016,"Peterborough","Peterborough",3237,3050
+2016,"Brampton","Brampton",18602,17998
+2016,"Brantford","Brantford",3579,3184
+2016,"Cayuga","Cayuga",582,631
+2016,"Hamilton","Hamilton",8283,7911
+2016,"Milton","Milton",4420,4224
+2016,"Orangeville","Orangeville",1697,1742
+2016,"Simcoe","Simcoe",1027,1004
+2016,"St. Catharines","St. Catharines",4946,4715
+2016,"Welland","Welland",962,1022
+2016,"Belleville","Belleville",2155,2070
+2016,"Brockville","Brockville",1885,1811
+2016,"Cornwall","Cornwall",3068,2857
+2016,"Kingston","Kingston",2919,2679
+2016,"L'Orignal","L'Orignal",1505,1339
+2016,"Napanee","Napanee",1001,962
+2016,"Ottawa","Ottawa",11258,11128
+2016,"Pembroke","Pembroke",1860,1612
+2016,"Perth","Perth",1057,1142
+2016,"Picton","Picton",307,325
+2016,"Cochrane","Cochrane",1311,1413
+2016,"Elliot Lake","Elliot Lake",495,382
+2016,"Espanola","Espanola",310,231
+2016,"Gore Bay","Gore Bay",502,502
+2016,"Haileybury","Haileybury",807,869
+2016,"Kirkland Lake","Kirkland Lake",114,107
+2016,"North Bay","North Bay",2357,2116
+2016,"Parry Sound","Parry Sound",873,879
+2016,"Sault Ste. Marie","Sault Ste. Marie",2413,2197
+2016,"Sudbury","Sudbury",4201,4173
+2016,"Timmins","Timmins",2886,2631
+2016,"Dryden","Dryden",1844,1683
+2016,"Fort Frances","Fort Frances",786,662
+2016,"Kenora","Kenora",3054,3052
+2016,"Thunder Bay","Thunder Bay",4515,4079
+2016,"1000 Finch Ave.","Toronto",6637,6165
+2016,"1911 Eglinton Ave. E","Toronto",7819,6797
+2016,"2201 Finch Ave. W","Toronto",6186,6091
+2016,"311 Jarvis St.","Toronto",1257,1171
+2016,"College Park","Toronto",7506,6727
+2016,"Old City Hall","Toronto",11647,10803
+2016,"Chatham","Chatham",2110,1996
+2016,"Goderich","Goderich",1007,1019
+2016,"Guelph","Guelph",3398,3412
+2016,"Kitchener","Kitchener",9947,8439
+2016,"London","London",11212,10562
+2016,"Owen Sound","Owen Sound",1323,1291
+2016,"Sarnia","Sarnia",2908,2784
+2016,"St. Thomas","St. Thomas",1282,1083
+2016,"Stratford","Stratford",1603,1475
+2016,"Walkerton","Walkerton",1481,1487
+2016,"Windsor","Windsor",5988,5987
+2016,"Woodstock","Woodstock",1404,1456
+2017,"Barrie","Barrie",8465,7416
+2017,"Bracebridge","Bracebridge",1010,923
+2017,"Cobourg","Cobourg",1109,963
+2017,"Durham","Durham",9036,8361
+2017,"Lindsay","Lindsay",1808,2094
+2017,"Newmarket","Newmarket",11472,11355
+2017,"Orillia","Orillia",1401,1463
+2017,"Peterborough","Peterborough",3318,3071
+2017,"Brampton","Brampton",18123,17540
+2017,"Brantford","Brantford",3839,3463
+2017,"Cayuga","Cayuga",583,570
+2017,"Hamilton","Hamilton",9474,8721
+2017,"Milton","Milton",4577,4300
+2017,"Orangeville","Orangeville",1823,1747
+2017,"Simcoe","Simcoe",954,921
+2017,"St. Catharines","St. Catharines",5338,4939
+2017,"Welland","Welland",649,581
+2017,"Belleville","Belleville",2305,2230
+2017,"Brockville","Brockville",1972,1887
+2017,"Cornwall","Cornwall",2767,3009
+2017,"Kingston","Kingston",3139,2890
+2017,"L'Orignal","L'Orignal",1519,1391
+2017,"Napanee","Napanee",1056,1016
+2017,"Ottawa","Ottawa",11627,11221
+2017,"Pembroke","Pembroke",1853,1798
+2017,"Perth","Perth",1074,1021
+2017,"Picton","Picton",271,254
+2017,"Cochrane","Cochrane",1484,1113
+2017,"Elliot Lake","Elliot Lake",466,415
+2017,"Espanola","Espanola",343,261
+2017,"Gore Bay","Gore Bay",610,594
+2017,"Haileybury","Haileybury",925,888
+2017,"Kirkland Lake","Kirkland Lake",83,100
+2017,"North Bay","North Bay",2521,2452
+2017,"Parry Sound","Parry Sound",928,897
+2017,"Sault Ste. Marie","Sault Ste. Marie",2675,2398
+2017,"Sudbury","Sudbury",4196,3588
+2017,"Timmins","Timmins",2642,2778
+2017,"Dryden","Dryden",2033,1825
+2017,"Fort Frances","Fort Frances",1010,767
+2017,"Kenora","Kenora",3546,3416
+2017,"Thunder Bay","Thunder Bay",4767,4389
+2017,"1000 Finch Ave.","Toronto",6795,6296
+2017,"1911 Eglinton Ave. E","Toronto",7230,6942
+2017,"2201 Finch Ave. W","Toronto",6172,5942
+2017,"311 Jarvis St.","Toronto",1210,1297
+2017,"College Park","Toronto",6800,6908
+2017,"Old City Hall","Toronto",13318,11502
+2017,"Chatham","Chatham",2427,2100
+2017,"Goderich","Goderich",981,973
+2017,"Guelph","Guelph",3785,3522
+2017,"Kitchener","Kitchener",10387,10988
+2017,"London","London",11307,10622
+2017,"Owen Sound","Owen Sound",1334,1325
+2017,"Sarnia","Sarnia",2804,2657
+2017,"St. Thomas","St. Thomas",1285,1215
+2017,"Stratford","Stratford",1506,1513
+2017,"Walkerton","Walkerton",1636,1569
+2017,"Windsor","Windsor",6496,6052
+2017,"Woodstock","Woodstock",1534,1688
+2018,"Barrie","Barrie",9082,7603
+2018,"Bracebridge","Bracebridge",1124,1007
+2018,"Cobourg","Cobourg",1156,1012
+2018,"Durham","Durham",9463,8556
+2018,"Lindsay","Lindsay",1715,1459
+2018,"Newmarket","Newmarket",12011,10750
+2018,"Orillia","Orillia",1762,1429
+2018,"Peterborough","Peterborough",3541,3284
+2018,"Brampton","Brampton",17662,17174
+2018,"Brantford","Brantford",4193,3394
+2018,"Cayuga","Cayuga",510,495
+2018,"Hamilton","Hamilton",9819,8658
+2018,"Milton","Milton",5315,4447
+2018,"Orangeville","Orangeville",1714,1593
+2018,"Simcoe","Simcoe",973,906
+2018,"St. Catharines","St. Catharines",5812,5290
+2018,"Welland","Welland",599,530
+2018,"Belleville","Belleville",2432,2318
+2018,"Brockville","Brockville",2275,2165
+2018,"Cornwall","Cornwall",3126,2854
+2018,"Kingston","Kingston",3022,2799
+2018,"L'Orignal","L'Orignal",1374,1398
+2018,"Napanee","Napanee",1117,954
+2018,"Ottawa","Ottawa",12396,11556
+2018,"Pembroke","Pembroke",1849,1802
+2018,"Perth","Perth",1171,1116
+2018,"Picton","Picton",255,250
+2018,"Cochrane","Cochrane",1456,1349
+2018,"Elliot Lake","Elliot Lake",437,474
+2018,"Espanola","Espanola",311,325
+2018,"Gore Bay","Gore Bay",577,593
+2018,"Haileybury","Haileybury",1126,927
+2018,"Kirkland Lake","Kirkland Lake",69,53
+2018,"North Bay","North Bay",2845,2430
+2018,"Parry Sound","Parry Sound",1066,941
+2018,"Sault Ste. Marie","Sault Ste. Marie",3147,2651
+2018,"Sudbury","Sudbury",4725,3348
+2018,"Timmins","Timmins",3322,2511
+2018,"Dryden","Dryden",2373,1858
+2018,"Fort Frances","Fort Frances",1149,905
+2018,"Kenora","Kenora",3143,2881
+2018,"Thunder Bay","Thunder Bay",4219,3901
+2018,"1000 Finch Ave.","Toronto",6731,6229
+2018,"1911 Eglinton Ave. E","Toronto",8031,7217
+2018,"2201 Finch Ave. W","Toronto",5751,5498
+2018,"311 Jarvis St.","Toronto",987,1133
+2018,"College Park","Toronto",6771,6123
+2018,"Old City Hall","Toronto",11975,11021
+2018,"Chatham","Chatham",2798,2376
+2018,"Goderich","Goderich",1198,905
+2018,"Guelph","Guelph",4204,3720
+2018,"Kitchener","Kitchener",10793,9611
+2018,"London","London",10942,10468
+2018,"Owen Sound","Owen Sound",1500,1319
+2018,"Sarnia","Sarnia",3215,2896
+2018,"St. Thomas","St. Thomas",1750,1359
+2018,"Stratford","Stratford",1570,1520
+2018,"Walkerton","Walkerton",1754,1585
+2018,"Windsor","Windsor",7310,6987
+2018,"Woodstock","Woodstock",1888,1575
+2019,"Barrie","Barrie",10338,8630
+2019,"Bracebridge","Bracebridge",1226,1028
+2019,"Cobourg","Cobourg",1507,1251
+2019,"Durham","Durham",10143,8909
+2019,"Lindsay","Lindsay",1817,1681
+2019,"Newmarket","Newmarket",12711,11533
+2019,"Orillia","Orillia",1801,1610
+2019,"Peterborough","Peterborough",3351,3302
+2019,"Brampton","Brampton",16470,15363
+2019,"Brantford","Brantford",4253,3862
+2019,"Cayuga","Cayuga",622,526
+2019,"Hamilton","Hamilton",10501,9010
+2019,"Milton","Milton",5189,4648
+2019,"Orangeville","Orangeville",1609,1536
+2019,"Simcoe","Simcoe",1250,1264
+2019,"St. Catharines","St. Catharines",6374,6085
+2019,"Welland","Welland",606,529
+2019,"Belleville","Belleville",2771,2289
+2019,"Brockville","Brockville",2372,2113
+2019,"Cornwall","Cornwall",3053,2883
+2019,"Kingston","Kingston",3200,2826
+2019,"L'Orignal","L'Orignal",1346,1293
+2019,"Napanee","Napanee",1139,1136
+2019,"Ottawa","Ottawa",12481,12144
+2019,"Pembroke","Pembroke",1980,1860
+2019,"Perth","Perth",1026,900
+2019,"Picton","Picton",245,235
+2019,"Cochrane","Cochrane",1619,1501
+2019,"Elliot Lake","Elliot Lake",445,314
+2019,"Espanola","Espanola",355,211
+2019,"Gore Bay","Gore Bay",521,518
+2019,"Haileybury","Haileybury",1178,1118
+2019,"Kirkland Lake","Kirkland Lake",70,84
+2019,"North Bay","North Bay",3001,2604
+2019,"Parry Sound","Parry Sound",1152,1037
+2019,"Sault Ste. Marie","Sault Ste. Marie",3036,2666
+2019,"Sudbury","Sudbury",4248,3735
+2019,"Timmins","Timmins",3319,2966
+2019,"Dryden","Dryden",2318,1973
+2019,"Fort Frances","Fort Frances",1004,975
+2019,"Kenora","Kenora",3205,2954
+2019,"Thunder Bay","Thunder Bay",5020,4252
+2019,"1000 Finch Ave.","Toronto",6700,6293
+2019,"1911 Eglinton Ave. E","Toronto",8111,7546
+2019,"2201 Finch Ave. W","Toronto",6448,5580
+2019,"311 Jarvis St.","Toronto",971,880
+2019,"College Park","Toronto",6896,6208
+2019,"Old City Hall","Toronto",11619,9949
+2019,"Chatham","Chatham",2893,2853
+2019,"Goderich","Goderich",1019,1148
+2019,"Guelph","Guelph",4449,4013
+2019,"Kitchener","Kitchener",10129,10696
+2019,"London","London",11203,11420
+2019,"Owen Sound","Owen Sound",1790,1479
+2019,"Sarnia","Sarnia",3357,3019
+2019,"St. Thomas","St. Thomas",1820,1785
+2019,"Stratford","Stratford",1436,1389
+2019,"Walkerton","Walkerton",2016,1711
+2019,"Windsor","Windsor",7911,7319
+2019,"Woodstock","Woodstock",2096,1906
+2021,"Barrie","Barrie",8716,8602
+2021,"Bracebridge","Bracebridge",1376,1249
+2021,"Cobourg","Cobourg",1252,1150
+2021,"Durham","Durham",9356,8064
+2021,"Lindsay","Lindsay",1923,1708
+2021,"Newmarket","Newmarket",13108,13372
+2021,"Orillia","Orillia",1470,1477
+2021,"Peterborough","Peterborough",3348,3160
+2021,"Brampton","Brampton",13839,13824
+2021,"Brantford","Brantford",4794,4087
+2021,"Cayuga","Cayuga",685,613
+2021,"Hamilton","Hamilton",9658,8563
+2021,"Milton","Milton",4479,4696
+2021,"Orangeville","Orangeville",1645,1574
+2021,"Simcoe","Simcoe",1199,1184
+2021,"St. Catharines","St. Catharines",5538,5548
+2021,"Welland","Welland",630,604
+2021,"Belleville","Belleville",3508,3358
+2021,"Brockville","Brockville",1954,2157
+2021,"Cornwall","Cornwall",3355,3080
+2021,"Kingston","Kingston",2692,2812
+2021,"L'Orignal","L'Orignal",1501,1397
+2021,"Napanee","Napanee",1389,1296
+2021,"Ottawa","Ottawa",9580,11111
+2021,"Pembroke","Pembroke",1849,1812
+2021,"Perth","Perth",1116,1157
+2021,"Picton","Picton",261,259
+2021,"Cochrane","Cochrane",1546,1469
+2021,"Elliot Lake","Elliot Lake",569,493
+2021,"Espanola","Espanola",382,230
+2021,"Gore Bay","Gore Bay",634,649
+2021,"Haileybury","Haileybury",1336,1301
+2021,"North Bay","North Bay",3022,2887
+2021,"Parry Sound","Parry Sound",1165,1025
+2021,"Sault Ste. Marie","Sault Ste. Marie",2487,2546
+2021,"Sudbury","Sudbury",4033,3925
+2021,"Timmins","Timmins",3588,3351
+2021,"Dryden","Dryden",1676,2216
+2021,"Fort Frances","Fort Frances",886,957
+2021,"Kenora","Kenora",2706,2556
+2021,"Thunder Bay","Thunder Bay",5651,4620
+2021,"1000 Finch Ave.","Toronto",5043,4698
+2021,"1911 Eglinton Ave. E","Toronto",6052,5374
+2021,"2201 Finch Ave. W","Toronto",4997,4845
+2021,"311 Jarvis St.","Toronto",366,533
+2021,"College Park","Toronto",6199,5368
+2021,"Old City Hall","Toronto",8485,7268
+2021,"Chatham","Chatham",2832,2486
+2021,"Goderich","Goderich",1126,1200
+2021,"Guelph","Guelph",3685,3370
+2021,"Kitchener","Kitchener",8437,7647
+2021,"London","London",8522,8022
+2021,"Owen Sound","Owen Sound",1761,1822
+2021,"Sarnia","Sarnia",2662,2570
+2021,"St. Thomas","St. Thomas",1634,1768
+2021,"Stratford","Stratford",1707,1385
+2021,"Walkerton","Walkerton",1729,1944
+2021,"Windsor","Windsor",6237,5729
+2021,"Woodstock","Woodstock",2027,2140
+2022,"Barrie","Barrie",8459,8038
+2022,"Bracebridge","Bracebridge",1261,1392
+2022,"Cobourg","Cobourg",1290,1366
+2022,"Durham","Durham",9716,9009
+2022,"Lindsay","Lindsay",1690,1772
+2022,"Newmarket","Newmarket",11807,12495
+2022,"Orillia","Orillia",1557,1607
+2022,"Peterborough","Peterborough",3142,3317
+2022,"Brampton","Brampton",15038,12696
+2022,"Brantford","Brantford",4438,4130
+2022,"Cayuga","Cayuga",572,721
+2022,"Hamilton","Hamilton",8310,8806
+2022,"Milton","Milton",4787,4449
+2022,"Orangeville","Orangeville",1804,1802
+2022,"Simcoe","Simcoe",1142,1161
+2022,"St. Catharines","St. Catharines",6245,5374
+2022,"Welland","Welland",908,471
+2022,"Belleville","Belleville",3256,3708
+2022,"Brockville","Brockville",1940,2315
+2022,"Cornwall","Cornwall",3083,3306
+2022,"Kingston","Kingston",2742,2633
+2022,"L'Orignal","L'Orignal",1357,1428
+2022,"Napanee","Napanee",1054,1210
+2022,"Ottawa","Ottawa",9791,10001
+2022,"Pembroke","Pembroke",1976,2041
+2022,"Perth","Perth",1174,1210
+2022,"Picton","Picton",292,291
+2022,"Cochrane","Cochrane",1678,1910
+2022,"Elliot Lake","Elliot Lake",529,433
+2022,"Espanola","Espanola",343,365
+2022,"Gore Bay","Gore Bay",712,540
+2022,"Haileybury","Haileybury",1168,1345
+2022,"North Bay","North Bay",3033,2965
+2022,"Parry Sound","Parry Sound",982,1081
+2022,"Sault Ste. Marie","Sault Ste. Marie",2928,2747
+2022,"Sudbury","Sudbury",4302,5052
+2022,"Timmins","Timmins",3570,3477
+2022,"Dryden","Dryden",1725,1850
+2022,"Fort Frances","Fort Frances",852,734
+2022,"Kenora","Kenora",2703,3299
+2022,"Thunder Bay","Thunder Bay",4828,6509
+2022,"1000 Finch Ave.","Toronto",5462,4747
+2022,"1911 Eglinton Ave. E","Toronto",6346,5564
+2022,"2201 Finch Ave. W","Toronto",5511,4115
+2022,"311 Jarvis St.","Toronto",552,376
+2022,"College Park","Toronto",7464,5867
+2022,"Old City Hall","Toronto",8396,7737
+2022,"Chatham","Chatham",2458,2457
+2022,"Goderich","Goderich",1240,1160
+2022,"Guelph","Guelph",3830,4141
+2022,"Kitchener","Kitchener",8163,8340
+2022,"London","London",9515,7986
+2022,"Owen Sound","Owen Sound",1984,1654
+2022,"Sarnia","Sarnia",2804,2873
+2022,"St. Thomas","St. Thomas",1790,1600
+2022,"Stratford","Stratford",1814,1916
+2022,"Walkerton","Walkerton",1749,1528
+2022,"Windsor","Windsor",6061,6768
+2022,"Woodstock","Woodstock",2044,2076
+2023,"Barrie","Barrie",9243,9858
+2023,"Bracebridge","Bracebridge",1243,1207
+2023,"Cobourg","Cobourg",1423,1332
+2023,"Durham","Durham",10885,11286
+2023,"Lindsay","Lindsay",2202,2042
+2023,"Newmarket","Newmarket",13017,12863
+2023,"Orillia","Orillia",1820,1925
+2023,"Peterborough","Peterborough",2772,3302
+2023,"Brampton","Brampton",16022,16370
+2023,"Brantford","Brantford",4677,6164
+2023,"Cayuga","Cayuga",601,822
+2023,"Hamilton","Hamilton",8143,9017
+2023,"Milton","Milton",4788,4778
+2023,"Orangeville","Orangeville",2045,2280
+2023,"Simcoe","Simcoe",1253,1252
+2023,"St. Catharines","St. Catharines",7070,6562
+2023,"Welland","Welland",410,589
+2023,"Belleville","Belleville",3430,3379
+2023,"Brockville","Brockville",2157,2485
+2023,"Cornwall","Cornwall",3407,3253
+2023,"Kingston","Kingston",2883,3061
+2023,"L'Orignal","L'Orignal",1502,1517
+2023,"Napanee","Napanee",1086,1145
+2023,"Ottawa","Ottawa",10407,10149
+2023,"Pembroke","Pembroke",2166,2378
+2023,"Perth","Perth",1433,1573
+2023,"Picton","Picton",360,324
+2023,"Cochrane","Cochrane",2169,2009
+2023,"Elliot Lake","Elliot Lake",753,744
+2023,"Espanola","Espanola",437,628
+2023,"Gore Bay","Gore Bay",654,637
+2023,"Haileybury","Haileybury",1301,1488
+2023,"North Bay","North Bay",3251,3799
+2023,"Parry Sound","Parry Sound",1053,1058
+2023,"Sault Ste. Marie","Sault Ste. Marie",3086,3288
+2023,"Sudbury","Sudbury",4655,4967
+2023,"Timmins","Timmins",3765,4699
+2023,"Dryden","Dryden",2145,2350
+2023,"Fort Frances","Fort Frances",867,1071
+2023,"Kenora","Kenora",3277,3340
+2023,"Thunder Bay","Thunder Bay",4868,6420
+2023,"Chatham","Chatham",2733,2804
+2023,"Goderich","Goderich",1199,1252
+2023,"Guelph","Guelph",4074,3892
+2023,"Kitchener","Kitchener",8416,8344
+2023,"London","London",10042,9630
+2023,"Owen Sound","Owen Sound",2043,1895
+2023,"Sarnia","Sarnia",3120,3268
+2023,"St. Thomas","St. Thomas",1658,1843
+2023,"Stratford","Stratford",1743,1731
+2023,"Walkerton","Walkerton",1760,1601
+2023,"Windsor","Windsor",7006,7133
+2023,"Woodstock","Woodstock",2064,2402
+2024,"Barrie","Barrie",9702,9294
+2024,"Bracebridge","Bracebridge",1547,1459
+2024,"Cobourg","Cobourg",1670,1567
+2024,"Durham","Durham",13020,12304
+2024,"Lindsay","Lindsay",2450,2682
+2024,"Newmarket","Newmarket",13474,13191
+2024,"Orillia","Orillia",1711,1839
+2024,"Peterborough","Peterborough",3410,3633
+2024,"Brampton","Brampton",16830,16259
+2024,"Brantford","Brantford",4179,4924
+2024,"Cayuga","Cayuga",718,677
+2024,"Hamilton","Hamilton",7893,8728
+2024,"Milton","Milton",4873,4430
+2024,"Orangeville","Orangeville",2025,1772
+2024,"Simcoe","Simcoe",1237,1262
+2024,"St. Catharines","St. Catharines",7382,7427
+2024,"Welland","Welland",683,641
+2024,"Belleville","Belleville",3464,2972
+2024,"Brockville","Brockville",2297,2300
+2024,"Cornwall","Cornwall",3611,3502
+2024,"Kingston","Kingston",3142,2778
+2024,"L'Orignal","L'Orignal",1335,1467
+2024,"Napanee","Napanee",1236,1193
+2024,"Ottawa","Ottawa",10025,9772
+2024,"Pembroke","Pembroke",2571,2412
+2024,"Perth","Perth",1431,1463
+2024,"Picton","Picton",315,306
+2024,"Cochrane","Cochrane",2132,2093
+2024,"Elliot Lake","Elliot Lake",617,707
+2024,"Espanola","Espanola",537,420
+2024,"Gore Bay","Gore Bay",877,894
+2024,"Haileybury","Haileybury",1424,1468
+2024,"North Bay","North Bay",3228,3539
+2024,"Parry Sound","Parry Sound",1284,1198
+2024,"Sault Ste. Marie","Sault Ste. Marie",3333,3543
+2024,"Sudbury","Sudbury",4814,4754
+2024,"Timmins","Timmins",3813,4141
+2024,"Dryden","Dryden",2609,2082
+2024,"Fort Frances","Fort Frances",1019,1207
+2024,"Kenora","Kenora",3593,3155
+2024,"Thunder Bay","Thunder Bay",5372,5722
+2024,"Toronto Overview","Toronto",41889,39152
+2024,"Chatham","Chatham",2526,2830
+2024,"Goderich","Goderich",1603,1839
+2024,"Guelph","Guelph",3727,4453
+2024,"Kitchener","Kitchener",9063,8975
+2024,"London","London",11308,11237
+2024,"Owen Sound","Owen Sound",2436,2531
+2024,"Sarnia","Sarnia",3420,3380
+2024,"St. Thomas","St. Thomas",1709,1837
+2024,"Stratford","Stratford",1717,1949
+2024,"Walkerton","Walkerton",1744,1732
+2024,"Windsor","Windsor",7680,7916
+2024,"Woodstock","Woodstock",2147,2152
+2025,"Barrie","Barrie",10021,9459
+2025,"Bracebridge","Bracebridge",1524,1619
+2025,"Cobourg","Cobourg",2013,1758
+2025,"Durham","Durham",12163,12008
+2025,"Lindsay","Lindsay",2270,2121
+2025,"Newmarket","Newmarket",13693,13393
+2025,"Orillia","Orillia",1830,1636
+2025,"Peterborough","Peterborough",3822,3323
+2025,"Brampton","Brampton",16528,15017
+2025,"Brantford","Brantford",4028,4274
+2025,"Cayuga","Cayuga",728,706
+2025,"Hamilton","Hamilton",7453,7618
+2025,"Milton","Milton",4693,4418
+2025,"Orangeville","Orangeville",2022,1931
+2025,"Simcoe","Simcoe",1123,1171
+2025,"St. Catharines","St. Catharines",7197,7052
+2025,"Welland","Welland",382,520
+2025,"Belleville","Belleville",3605,3517
+2025,"Brockville","Brockville",2294,2189
+2025,"Cornwall","Cornwall",3881,4014
+2025,"Kingston","Kingston",2757,3068
+2025,"L'Orignal","L'Orignal",1343,1213
+2025,"Napanee","Napanee",1309,1279
+2025,"Ottawa","Ottawa",11145,11005
+2025,"Pembroke","Pembroke",2281,2547
+2025,"Perth","Perth",1643,1560
+2025,"Picton","Picton",352,385
+2025,"Cochrane","Cochrane",1995,1978
+2025,"Elliot Lake","Elliot Lake",681,681
+2025,"Espanola","Espanola",684,453
+2025,"Gore Bay","Gore Bay",1268,884
+2025,"Haileybury","Haileybury",1366,1430
+2025,"North Bay","North Bay",2840,3188
+2025,"Parry Sound","Parry Sound",1262,1285
+2025,"Sault Ste. Marie","Sault Ste. Marie",3615,3466
+2025,"Sudbury","Sudbury",5025,4599
+2025,"Timmins","Timmins",3813,3695
+2025,"Dryden","Dryden",2476,3069
+2025,"Fort Frances","Fort Frances",1087,929
+2025,"Kenora","Kenora",3773,3680
+2025,"Thunder Bay","Thunder Bay",5621,5237
+2025,"Toronto Overview","Toronto",42014,40480
+2025,"Chatham","Chatham",2810,2960
+2025,"Goderich","Goderich",1180,1168
+2025,"Guelph","Guelph",3473,3951
+2025,"Kitchener","Kitchener",9495,9404
+2025,"London","London",11863,12567
+2025,"Owen Sound","Owen Sound",2230,2368
+2025,"Sarnia","Sarnia",3391,3372
+2025,"St. Thomas","St. Thomas",2103,2039
+2025,"Stratford","Stratford",1695,1840
+2025,"Walkerton","Walkerton",1651,1713
+2025,"Windsor","Windsor",7683,7216
+2025,"Woodstock","Woodstock",2418,2559
+2026,"Toronto Overview","Toronto",42588,40826

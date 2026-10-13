@@ -108,7 +108,31 @@ bricklayer_plot_options <- function(...) {
   .bl_state$n <- n
   .bl_state$next_letter <- 1L
   .bl_state$keys <- character()
-  graphics::par(mfrow = c(1, n), oma = c(1.4, 0, 0, 0))
+  graphics::par(mfrow = .bl_panel_grid(n), oma = c(2.4, 0, 0, 0))
+}
+
+# Rows and columns for n panels on the device as it is: always one row squeezed four panels into
+# a 3.5-inch device, each too narrow for its tick labels. The grid chosen gives each panel's plot
+# region -- the cell less its margins (about 5.5 lines across, 7.2 down, and the key's 2.4) --
+# the largest 4:3 box, fewer rows on a tie: a wide device keeps one row, a tall one stacks.
+.bl_panel_grid <- function(n) {
+  din <- tryCatch(graphics::par("din"), error = function(e) c(7, 7))
+  line <- 0.2 * .bl_plot_opts()$cex
+  best <- c(1L, n)
+  size <- -Inf
+  for (r in seq_len(n)) {
+    k <- ceiling(n / r)
+    if (r > 1L && (r - 1L) * k >= n) next
+    s <- min(din[1L] / k - 5.5 * line, ((din[2L] - 2.4 * line) / r - 7.2 * line) * 4 / 3)
+    # no grid leaves room for the margins (four panels on a 3.5-inch device): the squarest
+    # cells, where R's own smaller text in a 2 x 2 grid does the rest
+    if (s <= 0) s <- -1 / min(din[1L] / k, din[2L] / r * 4 / 3)
+    if (s > size + 1e-9) {
+      size <- s
+      best <- c(r, k)
+    }
+  }
+  as.integer(best)
 }
 
 .bl_panels_end <- function() {
@@ -196,14 +220,60 @@ bricklayer_plot_options <- function(...) {
   invisible(xlab)
 }
 
+# The y-axis title, placed outside the tick labels actually drawn. plot()'s fixed line 3 sits
+# inside a five-digit tick label ("25000"), so the two overprinted; the line is now the measured
+# label width plus a gap, kept inside the margin, and the title is fitted to the plot height.
+.bl_ylab <- function(ylab) {
+  if (is.null(ylab) || !nzchar(ylab)) return(invisible(ylab))
+  op <- graphics::par(c("cex.axis", "csi", "mar", "mgp", "pin", "las"))
+  at <- graphics::axTicks(2)
+  labs <- if (isTRUE(graphics::par("ylog"))) format(at) else format(at, trim = TRUE)
+  # strwidth() scales its cex by par("cex"), as axis() and title() scale theirs, so the
+  # relative sizes are passed as they are
+  w <- if (op$las %in% c(1, 2)) max(.bl_strwidth(labs, cex = op$cex.axis), 0) else
+    graphics::strheight("0", units = "inches", cex = op$cex.axis)
+  need <- op$mgp[2L] + w / op$csi + 0.7
+  # no room outside the tick labels (a panel on a small device, where the margins were scaled
+  # down): leave the title off rather than print it over the labels; each panel's own title
+  # names what is plotted
+  if (need + 0.8 > op$mar[2L]) return(invisible(NULL))
+  line <- need
+  height <- op$pin[2L] * 0.98
+  # full size, smaller, then cut with an ellipsis: a title longer than the plot is tall ran off
+  # the panel
+  fit <- NULL
+  for (cex in c(1, 0.85, 0.7)) {
+    if (.bl_strwidth(ylab, cex = cex) <= height) {
+      fit <- cex
+      break
+    }
+  }
+  if (is.null(fit)) {
+    fit <- 0.7
+    for (k in seq(nchar(ylab) - 1L, 6L)) {
+      cut <- .bl_short_label(ylab, k)
+      if (.bl_strwidth(cut, cex = fit) <= height || k == 6L) {
+        ylab <- cut
+        break
+      }
+    }
+  }
+  graphics::title(ylab = ylab, line = max(line, 0.2), cex.lab = fit)
+  invisible(ylab)
+}
+
 # the key under lettered panels, wrapped to the device width
 .bl_panel_key <- function(keys) {
   width <- graphics::par("din")[1L] * 0.96
+  # mtext()'s cex is absolute and strwidth()'s is scaled by par("cex"), which a panel grid
+  # lowers to 0.83 or 0.66: measured at 0.8 the key was drawn wider than measured and ran off
+  # the device
+  rel <- 0.8 / graphics::par("cex")
   lines <- character()
   cur <- ""
   for (k in keys) {
     cand <- if (nzchar(cur)) paste(cur, k, sep = "    ") else k
-    if (nzchar(cur) && .bl_strwidth(cand, cex = 0.8) > width) {
+    if (nzchar(cur) && .bl_strwidth(cand, cex = rel) > width) {
       lines <- c(lines, cur)
       cur <- k
     } else {
@@ -257,6 +327,30 @@ bricklayer_plot_options <- function(...) {
     if (w <= room) break
   }
   list(labels = fit$labels, mar = max(1, fit$w / csi + 1))
+}
+
+# Row labels that do not fit are broken onto two lines at the space nearest their middle before
+# .bl_label_fit() cuts them: "Crimes Against the Person" read "Crimes Against the Pe..." on a
+# 9-inch device. Returns the labels and the margin, as .bl_label_fit() does.
+.bl_label_wrap <- function(labels, cex = .bl_plot_opts()$cex) {
+  fin <- tryCatch(graphics::par("fin")[1L], error = function(e) 7)
+  csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * cex
+  room <- 0.45 * fin - csi
+  out <- as.character(labels)
+  for (i in seq_along(out)) {
+    lab <- out[i]
+    if (is.na(lab) || .bl_strwidth(lab, cex = cex) <= room) next
+    sp <- gregexpr(" ", lab, fixed = TRUE)[[1L]]
+    if (sp[1L] < 0) next
+    cut <- sp[which.min(abs(sp - nchar(lab) / 2))]
+    two <- c(substr(lab, 1L, cut - 1L), substr(lab, cut + 1L, nchar(lab)))
+    if (max(.bl_strwidth(two, cex = cex)) <= room) out[i] <- paste(two, collapse = "\n")
+  }
+  one <- !grepl("\n", out, fixed = TRUE)
+  fit <- .bl_label_fit(out[one], cex = cex)
+  out[one] <- fit$labels
+  w <- max(vapply(strsplit(out, "\n", fixed = TRUE), function(p) max(.bl_strwidth(p, cex = cex)), 0), 0)
+  list(labels = out, mar = max(1, w / csi + 1))
 }
 
 # Margins (in lines, as par("mar")) scaled down so that the left and right together, and the top
@@ -379,6 +473,17 @@ bricklayer_plot_options <- function(...) {
 #'     with the fitted trend.}
 #'   \item{\code{bricklayer_analysis}}{(\code{\link{analyse_table}}) the
 #'     change, rates and rate change of a published table, one panel each.}
+#'   \item{\code{rmbl_case_flow}}{(\code{\link{case_flow}}) cases received
+#'     and disposed, shaded where the inventory grew or fell, and the
+#'     clearance rate with its interval and rolling value.}
+#'   \item{\code{rmbl_life_table}}{(\code{\link{life_table}}) the share of
+#'     cases still open at each band edge with its interval, and the median.}
+#'   \item{\code{rmbl_disposition_mix}}{(\code{\link{disposition_mix}}) the
+#'     shares of each outcome over the periods, stacked.}
+#'   \item{\code{rmbl_density}}{(\code{\link{crime_density}}) the density of
+#'     incidents as a heat map, with the highest-density regions outlined.}
+#'   \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
+#'     distance-by-time cell, coloured on a log scale around 1.}
 #' }
 #'
 #' @param x The result.
@@ -392,7 +497,8 @@ bricklayer_plot_options <- function(...) {
 #' @param what For \code{rmbl_stock_flow}, the measures to draw (one panel
 #'   each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
 #'   \code{"days"}, \code{"flow_rate"}, \code{"stock_rate"}. For
-#'   \code{rmbl_yoy}, \code{"pct_change"} or \code{"value"}.
+#'   \code{rmbl_yoy}, \code{"pct_change"} or \code{"value"}. For
+#'   \code{rmbl_case_flow}, \code{"flow"} and/or \code{"clearance"}.
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
@@ -435,8 +541,9 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
   for (i in seq_along(what)) {
     v <- x[[what[i]]]
     graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(v), 3, 1)))
-    graphics::plot(xs, v, type = "n", xaxt = "n", xlab = "Period", ylab = labs[[what[i]]],
+    graphics::plot(xs, v, type = "n", xaxt = "n", xlab = "Period", ylab = "",
                    main = "", ...)
+    .bl_ylab(labs[[what[i]]])
     .bl_title(.bl_main(main, labs[[what[i]]]))
     .bl_grid(NULL)
     graphics::lines(xs, v, col = cols[i], lwd = 2)
@@ -477,8 +584,9 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
     op <- .bl_par(d$value)
     on.exit(graphics::par(op), add = TRUE)
     xs <- seq_len(nrow(d))
-    graphics::plot(xs, d$value, type = "n", xaxt = "n", xlab = "", ylab = "Value",
+    graphics::plot(xs, d$value, type = "n", xaxt = "n", xlab = "", ylab = "",
                    main = if (is.null(main)) "Value by period" else main, ...)
+    .bl_ylab("Value")
     .bl_grid(NULL)
     if (length(by)) {
       g <- do.call(paste, c(d[by], sep = " / "))
@@ -560,7 +668,8 @@ plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette 
   op <- .bl_par(d$value)
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$cap, d$value, type = "n", xlab = "",
-                 ylab = "Statistic", main = if (is.null(main)) "Sensitivity to the open band's cap" else main, ...)
+                 ylab = "", main = if (is.null(main)) "Sensitivity to the open band's cap" else main, ...)
+  .bl_ylab("Statistic")
   .bl_xlab("Cap applied to the open band")
   .bl_grid(NULL)
   graphics::lines(d$cap, d$value, col = cols, lwd = 2)
@@ -576,8 +685,9 @@ plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette
   op <- .bl_par(d$false_alarm_rate)
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(d$false_alarm_rate, names.arg = d$column, col = cols, border = NA,
-                    ylab = "False-alarm rate", ylim = c(0, max(c(d$false_alarm_rate, x$alpha * 2), na.rm = TRUE)),
+                    ylab = "", ylim = c(0, max(c(d$false_alarm_rate, x$alpha * 2), na.rm = TRUE)),
                     main = if (is.null(main)) sprintf("Drift false alarms over %d random splits", x$n) else main, ...)
+  .bl_ylab("False-alarm rate")
   .bl_grid(NULL)
   graphics::abline(h = x$alpha, col = "#8C8C8C", lty = 2)
   invisible(d)
@@ -594,9 +704,10 @@ plot.bricklayer_drift <- function(x, ..., main = NULL, col = NULL, palette = NUL
   on.exit(graphics::par(op), add = TRUE)
   psi <- ifelse(is.finite(d$psi), d$psi, 0)
   graphics::barplot(psi, names.arg = d$column, col = cols, border = NA,
-                    ylab = "Population stability index",
+                    ylab = "",
                     main = "",
                     ...)
+  .bl_ylab("Population stability index")
   .bl_title(.bl_main(main, sprintf("Drift by column (%d drifted)", sum(d$drifted, na.rm = TRUE))))
   .bl_grid(NULL)
   invisible(d[c("column", "psi", "p_value", "drifted")])
@@ -612,9 +723,10 @@ plot.bricklayer_benford <- function(x, ..., main = NULL, col = NULL, palette = N
   exp_ <- as.numeric(x$expected) / x$n
   mids <- graphics::barplot(obs, names.arg = 1:9, col = cols[1L], border = NA,
                             ylim = c(0, max(c(obs, exp_), na.rm = TRUE) * 1.15),
-                            xlab = "First digit", ylab = "Proportion",
+                            xlab = "First digit", ylab = "",
                             main = "",
                             ...)
+  .bl_ylab("Proportion")
   .bl_title(.bl_main(main, sprintf("First digits against Benford (p = %.3g)", x$p_value)))
   .bl_grid(NULL)
   graphics::lines(mids, exp_, col = cols[2L], lwd = 2)
@@ -632,8 +744,9 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
   op <- .bl_par(c(0, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$size, d$rate, type = "n", ylim = c(0, 1), xlab = "",
-                 ylab = "Detection rate",
+                 ylab = "",
                  main = if (is.null(main)) sprintf("Power curve (alpha = %s)", format(x$alpha)) else main, ...)
+  .bl_ylab("Detection rate")
   .bl_xlab("Injected effect size")
   .bl_grid(NULL)
   graphics::abline(h = c(x$alpha, 0.8), col = "#8C8C8C", lty = 2)
@@ -717,9 +830,10 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   if (!is.null(col)) cols <- rep_len(col, nrow(d))
   op <- .bl_par(d$distance)
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(d$row, d$distance, type = "n", xlab = "Row", ylab = "Mahalanobis distance",
+  graphics::plot(d$row, d$distance, type = "n", xlab = "Row", ylab = "",
                  main = "",
                  ...)
+  .bl_ylab("Mahalanobis distance")
   .bl_title(.bl_main(main, sprintf("Outliers: %d of %d rows", sum(d$outlier, na.rm = TRUE), nrow(d))))
   .bl_grid(NULL)
   graphics::points(d$row, d$distance, col = cols, pch = ifelse(!is.na(d$outlier) & d$outlier, 17, 19))
@@ -829,9 +943,10 @@ plot.rmbl_crf <- function(x, ..., exposure = NULL, main = NULL, col = NULL, pale
   op <- .bl_par(d$rr)
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$exposure, d$rr, type = "n", xlab = sprintf("%s (micrograms per cubic metre)", x$pollutant),
-                 ylab = "Relative risk",
+                 ylab = "",
                  main = "",
                  ...)
+  .bl_ylab("Relative risk")
   .bl_title(.bl_main(main, sprintf("Concentration-response, %s (%s)", x$pollutant,
                                                x$extra$outcome %||% "")))
   .bl_grid(NULL)
@@ -849,9 +964,10 @@ plot.rmbl_burden <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   on.exit(graphics::par(op), add = TRUE)
   vals <- c(baseline = x$baseline_cases, attributable = x$attributable_cases)
   unit <- x$extra$unit %||% "cases"
-  graphics::barplot(vals, col = cols, border = NA, ylab = paste("Annual", unit),
+  graphics::barplot(vals, col = cols, border = NA, ylab = "",
                     main = "",
                     ...)
+  .bl_ylab(paste("Annual", unit))
   .bl_title(.bl_main(main, sprintf("%s: PAF %.1f%%, %s attributable", x$pollutant,
                                                   100 * x$paf, .bl_label(x$attributable_cases, 3))))
   .bl_grid(NULL)
@@ -867,9 +983,10 @@ plot.rmbl_equity <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   op <- .bl_par(c(0, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(c(0, cv$population), c(0, cv$exposure), type = "n", xlim = c(0, 1), ylim = c(0, 1),
-                 xlab = "", ylab = "Cumulative share of exposure",
+                 xlab = "", ylab = "",
                  main = "",
                  ...)
+  .bl_ylab("Cumulative share of exposure")
   .bl_xlab("Cumulative share of people, poorest first")
   .bl_title(.bl_main(main, sprintf("Concentration curve (index %.3f)", x$concentration_index)))
   .bl_grid(NULL)
@@ -988,8 +1105,9 @@ plot.rmbl_field <- function(x, ..., contours = 8L, main = NULL, col = NULL, pale
   on.exit(graphics::par(op), add = TRUE)
   ff <- f
   ff[!is.finite(ff)] <- NA
-  graphics::image(xs, ys, ff, col = cols, xlab = "x (m)", ylab = "y (m)",
-                  main = if (is.null(main)) x$title %||% "Concentration field" else main, ...)
+  graphics::image(xs, ys, ff, col = cols, xlab = "x (m)", ylab = "", main = "", ...)
+  .bl_title(.bl_main(main, x$title %||% "Concentration field"))
+  .bl_ylab("y (m)")
   if (contours > 0 && any(is.finite(ff)) && diff(range(ff, na.rm = TRUE)) > 0) {
     graphics::contour(xs, ys, ff, nlevels = contours, add = TRUE, col = "#333333", labcex = 0.7)
   }
@@ -1008,11 +1126,14 @@ plot.rmbl_particles <- function(x, ..., main = NULL, col = NULL, palette = NULL)
     ys <- seq(g[3L], g[4L], length.out = g[6L] + 1L)
     graphics::image(xs[-1L] - diff(xs) / 2, ys[-1L] - diff(ys) / 2, x$concentration,
                     col = bricklayer_palette(if (is.null(palette)) "sequential" else palette, 64),
-                    xlab = "x", ylab = "y", main = if (is.null(main)) "Particles over the counting grid" else main, ...)
+                    xlab = "x", ylab = "", main = "", ...)
+    .bl_title(.bl_main(main, "Particles over the counting grid"))
+    .bl_ylab("y")
     graphics::points(x$x, x$y, pch = 16, cex = 0.4, col = grDevices::adjustcolor(cols, 0.5))
   } else {
     graphics::plot(x$x, x$y, pch = 16, cex = 0.5, col = grDevices::adjustcolor(cols, 0.5),
-                   xlab = "x", ylab = "y", main = "", ...)
+                   xlab = "x", ylab = "", main = "", ...)
+    .bl_ylab("y")
     .bl_title(.bl_main(main, sprintf("%d particles", length(x$x))))
     .bl_grid(NULL)
   }
@@ -1030,10 +1151,11 @@ plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NUL
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(c(0, d$y, x$fitted))
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(d$x, d$y, type = "n", xlab = "Period", ylab = "Count",
+  graphics::plot(d$x, d$y, type = "n", xlab = "Period", ylab = "",
                  ylim = range(c(0, d$y, x$fitted), finite = TRUE),
                  main = "",
                  ...)
+  .bl_ylab("Count")
   .bl_title(.bl_main(main, sprintf("Trend: rate ratio %.3f per period (%.3f to %.3f)",
                                                x$rate_ratio, x$lower, x$upper)))
   .bl_grid(NULL)
@@ -1105,9 +1227,10 @@ plot_lorenz <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   op <- .bl_par(c(0, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(d$population, d$value, type = "n", xlim = c(0, 1), ylim = c(0, 1),
-                 xlab = "", ylab = "Cumulative share of the total",
+                 xlab = "", ylab = "",
                  main = "",
                  ...)
+  .bl_ylab("Cumulative share of the total")
   .bl_xlab("Cumulative share of units, smallest first")
   .bl_title(.bl_main(main, if (is.na(g)) "Lorenz curve" else sprintf("Lorenz curve (Gini %.3f)", g)))
   .bl_grid(NULL)
@@ -1144,9 +1267,10 @@ plot_funnel <- function(observed, expected, area = NULL, levels = c(0.95, 0.998)
   if (!is.null(col)) cols <- rep_len(col, length(ratio))
   op <- .bl_par(ratio)
   on.exit(graphics::par(op), add = TRUE)
-  graphics::plot(expected, ratio, type = "n", xlab = "Expected count", ylab = "Observed / expected",
+  graphics::plot(expected, ratio, type = "n", xlab = "Expected count", ylab = "",
                  ylim = range(c(ratio, lim$lower, lim$upper), finite = TRUE),
                  main = if (is.null(main)) "Funnel plot" else main, ...)
+  .bl_ylab("Observed / expected")
   .bl_grid(NULL)
   graphics::abline(h = target, col = "#8C8C8C")
   for (lv in unique(lim$level)) {

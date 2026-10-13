@@ -169,6 +169,20 @@ and a digest anyone can recompute says nothing about who produced the data.
   evaluates a plume on a grid for the image; `plot_lorenz()` and
   `plot_funnel()` cover the results that are plain data frames. Every
   method returns the numbers it drew. `vignette("plotting-results")`.
+- **Courts and police-reported crime** — `case_flow()` (clearance rate with
+  exact intervals, rolling clearance, net flow and months to clear the
+  pending inventory), `life_table()` (actuarial life table with Greenwood
+  intervals from banded times such as "disposed within 10 months"),
+  `disposition_mix()` (outcome shares with Goodman simultaneous intervals,
+  homogeneity and Cochran-Armitage trend tests), `clearance_decomposition()`
+  (Kitagawa's exact split of a change in a clearance rate into rate and
+  case-mix effects, a Mantel-Haenszel rate ratio within parts, and a
+  Simpson's-paradox verdict), `crime_density()` (kernel density of incident
+  locations in incidents per square kilometre, with highest-density regions)
+  and `knox_test()` (near-repeat space-time clustering, exact expectations,
+  permutation p-values). Each has a plot. Real Ontario Court of Justice and
+  Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
+  `vignette("courts-and-crime")`.
 - **Air pollution, from source to burden** — where a plume goes:
   `pg_sigmas()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
   urban), `briggs_plume_rise()` (buoyant and stable branches, transitional
