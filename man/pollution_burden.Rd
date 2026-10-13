@@ -11,7 +11,9 @@ pollution_burden(
   population,
   pollutant = "NO2",
   outcome = "all_cause_mortality",
-  reference_conc = NULL
+  reference_conc = NULL,
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 }
 \arguments{
@@ -35,6 +37,12 @@ incident cases.}
 
 \item{reference_conc}{Counterfactual concentration; \code{NULL} takes the
 pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
+
+\item{rare_outcome, high_rate}{\code{TRUE} to admit a baseline rate
+below 1e-5 (one per 100,000) or above 0.1 (10,000 per 100,000)
+per person-year, as \code{\link{verify_pollution}} does: without
+them such a rate is refused, being also what a rate in the wrong
+unit looks like.}
 }
 \value{
 A list of class \code{rmbl_burden} with \code{paf},

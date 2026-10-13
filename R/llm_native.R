@@ -1004,8 +1004,14 @@ bricklayer_llm_status <- function() {
   }
   base <- .bl_hosted_base()
   key <- .bl_hosted_key()
+  kst <- .bl_hosted_key_state()
   hosted_row <- if (is.null(base)) {
     c("hosted MORIE tier", "disabled", .bl_hosted_off_reason())
+  } else if (identical(kst$state, "other_address")) {
+    # a key is stored, for another address: "not logged in" sent people to log in again for nothing
+    # (review of e57fed5, the L3 leftover)
+    c("hosted MORIE tier", "key for another address",
+      sprintf("%s  (the stored key was issued for %s and is not sent here)", base, kst$saved_for))
   } else if (is.null(key)) {
     c("hosted MORIE tier", "not logged in", sprintf("%s  (%s)", base, .bl_access_hint()))
   } else {

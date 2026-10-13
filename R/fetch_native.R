@@ -111,7 +111,10 @@ wayback_snapshot_url_native <- function(url, timeout = 30L) {
   if (!is.character(url) || length(url) != 1L || is.na(url) || !nzchar(url)) {
     stop("`url` must be a single non-empty string", call. = FALSE)
   }
-  .rmbl_check_public_url(url, "url")
+  # the page is a query parameter of archive.org's lookup, never fetched: a plain-http page is looked
+  # up as it is (an http:// URL was refused and never found; review of e57fed5); a private address
+  # is still refused
+  .rmbl_check_public_url(url, "url", allow_http = TRUE)
   snap <- .Call(C_rmbl_wayback, url, as.integer(timeout))
   if (is.character(snap) && nzchar(snap)) snap else NULL
 }

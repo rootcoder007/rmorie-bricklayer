@@ -344,7 +344,9 @@ test_that("M3/Y3 sibling and Z6: NULL population or rate is an error report; a p
 })
 
 test_that("L12: every C1 control and bidirectional format character is stripped from the table listing", {
-  chars <- intToUtf8(c(0x80, 0x85, 0x9b, 0x9f, 0x200b, 0x200c, 0x200f, 0x202a, 0x202c, 0x202e,
+  # U+200C, the zero-width non-joiner, is part of how Persian is written and is kept (review of
+  # e57fed5); the controls and the bidirectional formatting characters are not
+  chars <- intToUtf8(c(0x80, 0x85, 0x9b, 0x9f, 0x200b, 0x200f, 0x202a, 0x202c, 0x202e,
                        0x2066, 0x2068, 0x2069, 0x1b, 0x0d, 0x09), multiple = TRUE)
   nm <- paste0("Données", paste(chars, collapse = ""), "Montréal")
   tab <- rmoriebricklayer:::.bl_data_tables_df("db/t", nm, 3L, "x")

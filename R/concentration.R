@@ -347,12 +347,26 @@ hurwitz_zeta <- function(s, q = 1) {
 }
 
 .rmbl_hurwitz_below_one <- function(si, q) {
+  if (q == 1 && si < 0) {
+    # Riemann's zeta by its functional equation, zeta(s) = 2^s pi^(s-1) sin(pi s / 2) Gamma(1-s)
+    # zeta(1-s): sinpi() is exact at the trivial zeros and accurate beside them, where the general
+    # route lost the relative digits of a value near zero (3.5e-7 at s = -2 + 1e-7; review of
+    # e57fed5). zeta(1 - s) has 1 - s > 1, the C series.
+    sp <- sinpi(si / 2)
+    if (sp == 0) return(0)
+    lmag <- si * log(2) + (si - 1) * log(pi) + lgamma(1 - si) + log(abs(.rmbl_hurwitz(1 - si, 1)))
+    return(sign(sp) * exp(lmag + log(abs(sp))))
+  }
   if (si == round(si) && si > -5) {
     # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly: a polynomial of degree at most five, with no
     # cancellation through q + 1 (zeta(-4, 1e-8) = 3.3e-10 is a small difference of O(1) values)
     m <- 1 - si
     bk <- c(1, -1 / 2, 1 / 6, 0, -1 / 30, 0)[seq_len(m + 1)]
-    return(-sum(choose(m, 0:m) * bk * q^(m - 0:m)) / m)
+    direct <- -sum(choose(m, 0:m) * bk * q^(m - 0:m)) / m
+    if (is.finite(direct)) return(direct)
+    # q^m past the double range while the value itself is not (q = 5e61, s = -4 is -6.25e307):
+    # q^m / m factored out in logarithms
+    return(-exp(m * log(q) - log(m)) * sum(choose(m, 0:m) * bk * q^(-(0:m))))
   }
   if (q >= max(40, 2 * abs(si))) return(.rmbl_hurwitz_em(si, q, 0))
   if (si <= -5) {
@@ -374,7 +388,9 @@ hurwitz_zeta <- function(s, q = 1) {
   t <- 1 - si
   K <- min(1e5, max(50, ceiling((1e-18 * (t - 1))^(1 / (1 - t)))))  # tail sum_{k > K} k^-t below 1e-18
   k <- seq_len(K)
-  series <- sum(cospi(2 * k * f - t / 2) / k^t)
+  # 2 k f reduced modulo 2 before t / 2 is taken off: cospi(2 k f - t / 2) lost the digits of a small
+  # cosine to the rounding of 2 k f - t / 2 for large k
+  series <- sum(cospi((2 * k * f) %% 2 - t / 2) / k^t)
   if (series == 0) 0 else sign(series) * 2 * exp(lgamma(t) - t * log(2 * pi) + log(abs(series)))
 }
 

@@ -956,9 +956,10 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' or point the record at a file that persists. Examples and vignettes point the record
 #' at a temporary file so that checks and builds leave the configuration directory alone.
 #' The record keeps one line per key for good (an exhausted key's line is what stops a
-#' stale copy of it), and is read and rewritten whole at every signature: about 0.7 s at a
-#' hundred thousand keys, longer when several processes sign at once (each waits its turn
-#' for the lock, up to 10 s).
+#' stale copy of it), and is read and rewritten whole at every signature: a whole
+#' signature took 0.5 s with a hundred thousand keys in the record (measured on an x86-64
+#' laptop; a slower machine takes longer), and longer when several processes sign at once
+#' (each waits its turn for the lock, up to 10 s).
 #'
 #' [xmss_forget_used_indices()]
 #' resets one key's entry, or removes the whole record, and with it
@@ -1324,7 +1325,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
   idx <- integer()
   if (file.exists(p)) {
     lines <- readLines(p, warn = FALSE, encoding = "UTF-8")
-    lines <- lines[nzchar(trimws(lines))]
+    lines <- lines[grepl("[^[:space:]]", lines, perl = TRUE)]
     ok <- grepl("^(k:[0-9a-f]{64}|[0-9a-f]{64}:[0-9a-f]{64})\t(-1|[0-9]{1,9})$", lines, perl = TRUE)
     if (!all(ok)) {
       stop(sprintf(paste("%s (the XMSS used-index record) has %d malformed line(s), the first at line %d: a record",
@@ -1332,8 +1333,11 @@ capsule_verify <- function(message, signature, key, context = NULL,
                          "repaired or removed (xmss_forget_used_indices() removes it, and with it the protection",
                          "against re-signing an index)"), p, sum(!ok), which(!ok)[[1L]]), call. = FALSE)
     }
-    ids <- sub("\t.*$", "", lines)
-    idx <- as.integer(sub("^[^\t]*\t", "", lines))
+    # split at the one tab the check above guarantees: two regular-expression passes took most of a
+    # signature's time with 100,000 keys in the record (1.4-1.8 s; review of e57fed5)
+    tab <- regexpr("\t", lines, fixed = TRUE)
+    ids <- substr(lines, 1L, tab - 1L)
+    idx <- as.integer(substring(lines, tab + 1L))
   }
   legacy <- .rmbl_xmss_legacy_json(p)
   if (length(legacy)) {
@@ -1342,7 +1346,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
   }
   if (!length(ids)) return(integer(0))
   # a key listed twice keeps its highest index
-  o <- order(ids, idx)
+  o <- order(ids, idx, method = "radix")
   ids <- ids[o]
   idx <- idx[o]
   keep <- !duplicated(ids, fromLast = TRUE)
@@ -1391,17 +1395,23 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # empty file over the record (review of 52a8883, B3).
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  # the record is written only under its lock, so a temporary file found now was left by a writer
-  # that died mid-write (SIGXFSZ, a kill): it is removed. Regular files only. (review of 02a38be, B3)
-  for (f in list.files(dirname(p), pattern = "^xmss-.*[.]tmp$", full.names = TRUE, all.files = TRUE)) {
+  # the record is written only under its lock, so a temporary file OF THIS RECORD found now was left
+  # by a writer that died mid-write (SIGXFSZ, a kill): it is removed. Regular files only (review of
+  # 02a38be, B3). Temporary names carry the record's own name: every xmss-*.tmp in the directory
+  # was removed while holding one record's lock, deleting the in-flight files of other records
+  # beside it (117 of 900 writes failed with three records in one directory; review of e57fed5, E11).
+  own <- paste0(basename(p), ".xmss-")
+  # a prefix, not a regular expression: a record name may hold any character
+  for (f in list.files(dirname(p), pattern = "[.]tmp$", full.names = TRUE, all.files = TRUE)) {
+    if (!startsWith(basename(f), own)) next
     if (identical(.Call(C_rmbl_path_kind, f), "regular")) unlink(f)
   }
-  tmp <- tempfile(pattern = "xmss-", tmpdir = dirname(p), fileext = ".tmp")
+  tmp <- tempfile(pattern = own, tmpdir = dirname(p), fileext = ".tmp")
   # the C writer removes only a temporary file it created itself
   fail <- function(why) {
     stop(sprintf("could not write the XMSS used-index record %s (%s): no signature is made", p, why), call. = FALSE)
   }
-  body <- if (length(rec)) paste0(paste(names(rec), rec, sep = "\t"), "\n", collapse = "") else ""
+  body <- if (length(rec)) paste0(names(rec), "\t", rec, "\n", collapse = "") else ""
   # written, flushed to the disk, size-checked and renamed in C (rmbl_flock.c): a short write or
   # a full disk leaves the old record in place and stops the signature
   why <- .Call(C_rmbl_write_file_checked, tmp, p, charToRaw(body))
@@ -1425,8 +1435,13 @@ capsule_verify <- function(message, signature, key, context = NULL,
   # an attempt that finds the lock busy has already closed its descriptor, so an interrupt leaves
   # nothing open (the wait used to run inside C, deaf to Ctrl-C for up to 10 s; review of 02a38be)
   start <- proc.time()[["elapsed"]]
+  # the release is registered before the lock is taken, and the descriptor is assigned with
+  # interrupts held off: a Ctrl-C landing between the C call's return and the on.exit() left a lock
+  # held for the rest of an interactive session (1 of 2,853 SIGINTs; review of e57fed5, E12)
+  fd <- -1L
+  on.exit(if (!identical(fd, -1L)) .Call(C_rmbl_flock_release, fd), add = TRUE)
   repeat {
-    fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 0L),
+    suspendInterrupts(fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 0L),
                    error = function(e) {
                      m <- conditionMessage(e)
                      hint <- if (grepl("Read-only", m)) {
@@ -1441,7 +1456,7 @@ capsule_verify <- function(message, signature, key, context = NULL,
                        ""
                      }
                      stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
-                   })
+                   }))
     if (!identical(fd, -1L)) break
     if (proc.time()[["elapsed"]] - start >= 10) {
       stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
@@ -1449,7 +1464,6 @@ capsule_verify <- function(message, signature, key, context = NULL,
     }
     Sys.sleep(0.02)
   }
-  on.exit(.Call(C_rmbl_flock_release, fd), add = TRUE)
   f()
 }
 

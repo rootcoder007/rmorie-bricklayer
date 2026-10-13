@@ -75,6 +75,8 @@ Description: Tools for building brick-proof, reproducible, self-contained data
     the operating system exposes them or modelled with the 'Green Algorithms'
     method against a sourced carbon-intensity table.
 License: AGPL-3
+Copyright: The bundled excerpts of published statistics in inst/extdata belong
+    to their publishers; see inst/COPYRIGHTS.
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)

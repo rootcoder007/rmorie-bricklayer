@@ -267,8 +267,8 @@ test_that("declared rules fire on violations and stay silent otherwise", {
   sch <- infer_schema(clean)
   expect_length(c(validate_schema(clean, list(schema = sch)),
                   validate_rules(clean, rules)), 0L)
-  expect_error(apply_schema_validation(df, list(schema = list())),
-               NA)   # no schema issues; rules are applied separately
+  # an empty schema checks nothing: asked to validate against it is refused (review of e57fed5)
+  expect_error(apply_schema_validation(df, list(schema = list())), "schema is empty")
 
   expect_output(print(rules[[1]]), "age_non_negative")
   expect_output(print(rules[[3]]), "table-level")

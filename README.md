@@ -171,8 +171,11 @@ and a digest anyone can recompute says nothing about who produced the data.
   method returns the numbers it drew. `vignette("plotting-results")`.
 - **Archiving in bulk** — `wayback_save()` (and `rmbl wayback FILE`) saves many
   URLs in the Wayback Machine with archive.org's Save Page Now 2 API and your
-  S3-like keys: captures in flight at once, recent captures kept, rate limits
-  backed off, results written as they land so a stopped run resumes, and a live
+  S3-like keys: captures in flight at once but started no faster than
+  archive.org allows an account (`per_minute`, and a cap per run), every
+  slow-down reply and `Retry-After` waited out, recent captures kept, results
+  written as they land so a stopped run resumes (captures already started are
+  polled, not sent again), `wayback_retry()` for the failures, and a live
   animated progress bar (drawn in C, shared with `bricklayer_download()`).
 - **Courts and police-reported crime** — `case_flow()` (clearance rate with
   exact intervals, rolling clearance, net flow and months to clear the
@@ -188,6 +191,18 @@ and a digest anyone can recompute says nothing about who produced the data.
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   `vignette("courts-and-crime")`.
+- **Complex surveys** — `survey_design()` (replicate weights: bootstrap,
+  mean bootstrap, JK1, JKn, BRR and Fay's BRR; or strata, PSUs and a finite
+  population correction for Taylor linearization), `survey_estimate()`
+  (means, totals, proportions and ratios by domain, with the whole design kept
+  for every subgroup, Wilson intervals at SAS's modified effective sample size,
+  and small domains flagged, not withheld) and `survey_compare()` (domain
+  differences with the design covariance). Matches the `survey` package;
+  `vignette("survey-estimation")` reproduces Health Canada's published CSUS
+  intervals.
+- **Hot spots over time** — `hotspot_persistence()`: how concentrated
+  incidents are in place, which cells are hot each period (ties counted and
+  said), and how much each period's hot spots overlap the last.
 - **Air pollution, from source to burden** — where a plume goes:
   `pg_sigmas()` (Pasquill-Gifford coefficients with Briggs's fits, rural and
   urban), `briggs_plume_rise()` (buoyant and stable branches, transitional
@@ -288,7 +303,7 @@ by a check you can run yourself; none is a claim about the design.
 | Constant time | ctgrind: every operation that touches a secret runs under valgrind memcheck with the secret marked undefined, so a branch or a memory address depending on it is an error. 22 cases -- ML-KEM 512/768/1024 (keygen, encaps, decaps and implicit rejection), ML-DSA 44/65/87 (keygen, sign), SLH-DSA (SHAKE and SHA-2 families), HQC 1/3/5 and round 4, XMSS, CTR_DRBG on the portable and the AES-NI path, HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3, digest comparison -- all clean with GCC and with Clang. The only values the schemes branch on are the ones their specifications publish (a rejected sample, the challenge, the hints, R), each declassified at one named line | `inst/ctcheck/`, workflow `constant-time` |
 | Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
 | Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
-| Survives hostile arguments | Every one of the 118 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 5 written in plain C (the file lock, the path probe, the checked writer and the checked gzip reader) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
+| Survives hostile arguments | Every one of the 118 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 8 written in plain C (the file lock and its release, the path probe, the checked writer, the checked gzip reader, the progress bar and spinner, and the survey replicate totals) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
 | Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package's PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |

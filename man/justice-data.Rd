@@ -6,10 +6,12 @@
 \source{
 Ontario Court of Justice, court statistics,
 \url{https://www.ontariocourts.ca/ocj/statistics/} (retrieved
-2026-10-13). Toronto Police Service, Public Safety Data Portal,
-\url{https://data.tps.ca/} (retrieved 2026-10-13);
-contains information licensed under the Open Government Licence -
-Toronto Police Service.
+2026-10-13), editions 2012 to 2026, published by the Court for
+public use. Toronto Police Service, Public Safety Data Portal,
+dataset "Break and Enter Open Data", \url{https://data.tps.ca/}
+(retrieved 2026-10-13); contains information licensed under the
+Open Government Licence - Toronto Police Service. See
+\code{inst/COPYRIGHTS}.
 }
 \description{
 Small excerpts of published court and police statistics, in
@@ -44,11 +46,14 @@ province-wide total.}
 throughout: from 2023 the Court publishes Toronto as one location (the
 new Toronto courthouse consolidated its criminal courts that year).
 Each year's courts add to the province-wide total.}
-\item{\code{tps_break_enter_d14_2024.csv}}{Toronto Police Service Major
-Crime Indicators, every break and enter that occurred in 2024 in
-division D14: \code{event_id}, occurrence date, premises type, and
-the published longitude and latitude (which the Service offsets to
-the nearest intersection). One occurrence has no location.}
+\item{\code{tps_break_enter_d14_2024.csv}}{Toronto Police Service
+Break and Enter open data, every break and enter that occurred in
+2024 in division D14, one row per occurrence (508): \code{event_id},
+occurrence date, premises type, the published longitude and
+latitude (which the Service offsets to the nearest intersection),
+and \code{offence_records}, the number of offence records the
+Service publishes for the occurrence (five have two). Built by
+\code{data-raw/tps_break_enter_d14_2024.R} in the source package.}
 }
 }
 \examples{

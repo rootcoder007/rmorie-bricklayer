@@ -4,6 +4,101 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Review of e57fed5 (the stress round of 2026-10-13)
+
+* **The spinner frame stays in its table (E1).** `rmbl_progress_spinner()`, a public C-callable,
+  cast `t * 10` to an integer, which overflowed past about 9e17 (nanoseconds) and read another
+  table's string; the frame is now taken in double, so every time maps to a frame. A bar wider
+  than an `int` is clamped before the cast (E13).
+* **The gzip reader's memory is bounded by its output (E8).** It inflates twice: once into a 64 kB
+  scratch buffer to check everything and count the output (a bomb is refused having held 64 kB),
+  then straight into the result, allocated once at its size; one zlib state serves every member,
+  and more than 100,000 members are refused. A million empty members (20 MB) had taken 3.56 GB, a
+  4 MB bomb 3.19 GB; both are now refused within a few megabytes. Each kind of damage is named (a
+  bad CRC, a length trailer that does not match, a damaged header, no gzip magic), not all as a
+  CRC failure. A 600 MB file under a 3.5 GB memory limit is read; under a smaller one the report
+  says the memory ran out, as an error report.
+* **Bulk archiving keeps to archive.org's limits (E7).** Captures start no faster than
+  `per_minute` (default 6; the SPN2 documentation allows an account 7). A slow-down reply, as a
+  429 or inside an HTTP 200 (`error:user-session-limit` and the other throttle codes the SPN2
+  documentation lists), holds every submission back for its `Retry-After` or 15 s doubling to
+  10 minutes, and sends the URL again; eight in a row stop the run. The account's daily cap stops
+  submitting. Status checks that fail back off the same way. `max_captures` (default 1000) caps
+  a run; the rest are left for the next. Before, 300 URLs went out in 32 s.
+* **No test captures a page on archive.org (E6).** The live test runs only with
+  `RMBL_LIVE_TESTS=1`, and never posts to `/save`.
+* **Wayback reply handling.** A job id that is not a short token (`TRUE` looped for ever, `123`
+  stopped the run) is a failure; two URLs given one id each keep their entry; a timestamp that is
+  not one is recorded as missing, and a results file holding one reads back; a reply over 64 kB is
+  not parsed. An API call takes its answer only from the host it asked: after a redirect to
+  another host, that host's JSON had been recorded as archive.org's; the transport now refuses
+  such a redirect for API calls (Save Page Now, model endpoints, OCSP), and reports `Retry-After`.
+  An http page is looked up (it is a parameter of the lookup, never fetched); a key file other
+  users can read is warned about; a URL with a control or bidirectional character is refused, and
+  printed results show only what the URLs show. A run that is stopped records the captures it had
+  started, and the next run polls them instead of sending them again; a missing folder for the
+  results file is refused before anything is sent. `wayback_retry()` looks failures up one a
+  second and leaves a daily limit hit today for tomorrow.
+* **Survey replicate columns are only replicates (E9).** A column holding the full-sample weight,
+  the id or any other column of `data` is refused by name (the full weight given as a vector and
+  the id had been averaged in: a standard error of 0.2599 or 0.2704 where it is 0.2836), BRR and
+  Fay replicates must come in a Hadamard order, and a matrix with a class of its own is read as
+  the matrix. The full weight named in `weights` and shipped beside the replicates is dropped by
+  name, as before.
+* **Wilson at 0% and 100% (E2).** The interval is Wilson's at the respondents (the design effect is
+  0/0 there): 40 of 40 gives [0.912, 1], where it collapsed to [1, 1]. The logit interval takes the
+  same at the ends. The degrees-of-freedom factor of the modified effective sample size is
+  `(t_(n-1) / t_df)^2`, as the SAS documentation gives it (it was `(z / t_df)^2`; the same for a
+  large n).
+* **Survey design.** New `type = "jkn"` with `rscales` (JKn weights passed as JK1 overstated the
+  standard error by 37%); the replicate design's degrees of freedom are the rank of the replicate
+  weight matrix less one, as the survey package computes them (twelve BRR half-samples of an
+  eight-stratum design have 8, not 11), or `degf`. `survey_estimate()` checks the data is the
+  design's rows in the design's order (reordered data gave a wrong answer silently). A design with
+  no stratum of two PSUs has no variance to report: the standard error is missing and flagged,
+  not zero; a certainty stratum is not a lonely PSU; the flag for a domain whose weights are all
+  zero says so. `by = character(0)`, `conf_level = NA` and a two-element `ref` are refused in
+  words.
+* **(0, 0) is "no location" in Knox too (E3).** `knox_test()` drops it, as `crime_density()` and
+  `hotspot_persistence()` do (twenty such rows had made the closest cell 163 observed against 33
+  expected). The three share one way onto the plane: points across the antimeridian are one place,
+  and an extent past 2,000 km is said. `crime_density()` refuses a bandwidth longer than half the
+  earth's circumference and says when one is ten times the incidents' spread; `knox_test()` checks
+  `max_pairs`; hot spots made by ties are counted (`tied_in`) and said when they are most of the
+  active cells.
+* **One rate band for every pollution entry point (E4).** `pollution_burden()`,
+  `pollution_burden_by_area()` and `mortality_displaced()` take a rate per person-year between
+  1e-5 and 0.1 (1 to 10,000 per 100,000), `rare_outcome = TRUE` below and `high_rate = TRUE` above,
+  as `verify_pollution()` now does on its rate per 100,000 (0.5 had been taken as a rate per
+  person-year: 14,634 deaths from a million people). `verify_pollution()` passes the switches on
+  to its stages. `pollution_report_text()` refuses a list that only looks like a report.
+* **The bundled TPS data, one row per occurrence (E5).** Rebuilt from the Service's Break and Enter
+  file by `data-raw/tps_break_enter_d14_2024.R`: 508 occurrences (the Service publishes one row per
+  offence record; five occurrences have two, kept as `offence_records`), every one located. The
+  old file's all-NA row was a subsetting artefact (an NA year in a logical index), and it carried
+  one 2025 occurrence and missed one of 2024. The vignette's Knox ratio is computed from the data.
+  The lone 2026 court row is gone. Sources and licences: `inst/COPYRIGHTS`, and the DESCRIPTION's
+  `Copyright` field.
+* **The manifest (E10).** An empty dataset list does not replace a cached manifest that lists
+  tables, and a table the manifest does not list is not loaded unverified.
+* **The XMSS record (E11, E12).** Temporary files carry their record's name, and a writer removes
+  only its own record's (with three records in one folder, 117 of 900 writes had failed); the lock
+  is taken with interrupts held off and released by a handler registered before it. A record of
+  100,000 keys is read without the regular-expression passes: a whole signature took 0.5 s on an
+  x86-64 laptop (the documentation said 0.7 s; the reviewer measured 1.4-1.8 s).
+* **The 02a38be leftovers.** `hurwitz_zeta()` uses the functional equation for Riemann's zeta at
+  negative s (full relative accuracy beside the trivial zeros) and no longer overflows a Bernoulli
+  polynomial whose value is finite (`hurwitz_zeta(-4, 5e61)`). The terminal prompt is printed by
+  the shell that reads it, once its trap is set and the echo is off, and a read that never
+  finished is an interrupt (a Ctrl-C in the first milliseconds had exited 2; a key typed at once
+  was echoed). `bricklayer_llm_status()` and `rmbl models` say a key is stored for another address
+  instead of "not logged in". An empty schema is said to check nothing (and refused by
+  `apply_schema_validation()`); only a one-letter slip or a swap in a structural invariant's name is
+  taken for a misspelling (`min_data_cols` is a field of its own). Printing keeps the zero-width
+  joiner and non-joiner, variation selectors and flag tag sequences. `drift_calibrate(n = 0)` is
+  refused. The README counts the 8 entry points written in plain C. The exposure CSV reader no
+  longer runs two regular expressions over the whole text to see whether it is blank.
+
 ## Retrying a bulk Wayback run
 
 * **New: `wayback_retry()` and `rmbl wayback --retry FILE.jsonl`.** Reads the results file of an

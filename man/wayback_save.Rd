@@ -14,7 +14,9 @@ wayback_save(
   poll = 10,
   max_wait = 600,
   capture_all = FALSE,
-  quiet = NULL
+  quiet = NULL,
+  per_minute = 6,
+  max_captures = 1000
 )
 }
 \arguments{
@@ -26,8 +28,9 @@ keys (\url{https://archive.org/account/s3.php}). By default
 they are read from the environment variables
 \code{IA_S3_ACCESS_KEY} and \code{IA_S3_SECRET_KEY}, or from
 the files named by \code{IA_S3_ACCESS_KEY_FILE} and
-\code{IA_S3_SECRET_KEY_FILE}. They are sent to
-web.archive.org only and never printed.}
+\code{IA_S3_SECRET_KEY_FILE} (a key file other users can
+read is warned about). They are sent to web.archive.org only
+and never printed.}
 
 \item{within}{Keep a capture made within this long instead of
 making a new one: a number followed by \code{s}, \code{m},
@@ -38,7 +41,8 @@ always captures.}
 
 \item{output}{Optional path of a JSON Lines file: one line
 per URL, written as each finishes, and read at the start so a
-run can be resumed.}
+run can be resumed. Its folder must exist; this is checked
+before anything is sent.}
 
 \item{poll}{Seconds between status checks of a capture.
 Default 10.}
@@ -51,34 +55,51 @@ default \code{FALSE}.}
 
 \item{quiet}{\code{TRUE} for no progress output; the default
 shows it while a person is watching.}
+
+\item{per_minute}{Captures started per minute, at most; default
+6 (archive.org allows an account 7).}
+
+\item{max_captures}{The most captures this run starts; default
+1000. The rest are left for the next run (with the same
+\code{output}, it carries on from them).}
 }
 \value{
 A data frame of class \code{rmbl_wayback_save}, one
-row per URL: \code{url}, \code{status} (\code{"saved"}, a new
-capture; \code{"existing"}, a capture already there; or
-\code{"failed"}), \code{timestamp} (\code{YYYYMMDDhhmmss}),
+row per URL with a result: \code{url}, \code{status}
+(\code{"saved"}, a new capture; \code{"existing"}, a capture
+already there; \code{"failed"}; or \code{"submitted"}, a
+capture started when the run was stopped, polled again by the
+next run), \code{timestamp} (\code{YYYYMMDDhhmmss}),
 \code{snapshot} (the archived copy's address) and
-\code{message} (archive.org's reason, for a failure).
+\code{message} (archive.org's reason, for a failure). The
+attribute \code{not_sent} lists the URLs this run did not
+start (\code{max_captures}, or archive.org's daily cap for the
+account).
 }
 \description{
 Saves every URL in the Internet Archive's Wayback Machine
 with Save Page Now 2, the API archive.org offers to account
-holders, keeping several captures in flight at once. A page
-archived recently is kept as it is (\code{within}); a page
-archive.org has already captured today (its daily limit) is
-recorded with that capture. Each result is written to
-\code{output} as it arrives, so an interrupted run started
-again with the same \code{output} carries on where it
-stopped. A live progress bar shows the run while a person is
-watching.
+holders, keeping several captures in flight at once while
+keeping to archive.org's rate limits. A page archived
+recently is kept as it is (\code{within}); a page archive.org
+has already captured today (its daily limit) is recorded with
+that capture. Each result is written to \code{output} as it
+arrives, so an interrupted run started again with the same
+\code{output} carries on where it stopped. A live progress
+bar shows the run while a person is watching.
 }
 \details{
-A rate limit (HTTP 429) or a server error is retried
-with exponential back-off, up to six times per URL; a refused
-key (HTTP 401 or 403) stops the run. The archive's own limits
-apply: an account may run a limited number of captures at
-once and capture a URL a limited number of times a day, so
-more \code{jobs} than the account allows only adds retries.
+Captures start no faster than \code{per_minute}. When
+archive.org asks the run to slow down (HTTP 429, or a reply
+saying the account has too many captures running, inside an
+HTTP 200 as SPN2 sends it), nothing more is submitted until
+the wait is over: as long as its \code{Retry-After} says, or
+15 seconds doubling to 10 minutes; eight such replies in a row
+stop the run. A reply saying the account's daily cap is
+reached stops submitting for the day. A server error or a lost
+connection is retried with back-off, up to six times per URL;
+status checks that fail back off the same way. A refused key
+(HTTP 401 or 403) stops the run.
 }
 \examples{
 \dontrun{
@@ -97,6 +118,6 @@ API.
 }
 \seealso{
 \code{\link{wayback_snapshot_url_native}} to look up an existing
-capture; \code{rmbl wayback FILE} runs this from the
-command line.
+capture; \code{\link{wayback_retry}}; \code{rmbl wayback FILE}
+runs this from the command line.
 }

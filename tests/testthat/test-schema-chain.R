@@ -131,7 +131,8 @@ test_that("every inferred field is a field the validator checks", {
   # keeps working
   expect_length(validate_schema(retyped, list(schema = list(
     expected_columns = names(df)))), 0L)
-  expect_length(validate_schema(df, list(schema = list())), 0L)
+  # an empty schema checks nothing, and says so (review of e57fed5)
+  expect_identical(validate_schema(df, list(schema = list()))$schema_empty$severity, "warning")
   expect_length(validate_schema(df, NULL), 0L)
   expect_length(validate_schema(df, list()), 0L)
 })

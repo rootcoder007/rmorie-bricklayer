@@ -11,7 +11,9 @@ pollution_burden_by_area(
   population_col = "population",
   baseline_rate_col = "baseline_rate",
   pollutant = "NO2",
-  outcome = "all_cause_mortality"
+  outcome = "all_cause_mortality",
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 }
 \arguments{
@@ -21,7 +23,8 @@ rate per person-year.}
 
 \item{area_col, exposure_col, population_col, baseline_rate_col}{Column names.}
 
-\item{pollutant, outcome}{Passed to \code{\link{pollution_burden}}.}
+\item{pollutant, outcome, rare_outcome, high_rate}{Passed to
+\code{\link{pollution_burden}}.}
 }
 \value{
 The input columns plus \code{rr}, \code{paf},

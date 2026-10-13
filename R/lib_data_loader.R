@@ -563,12 +563,18 @@ validate_schema <- function(df_raw, provenance) {
   if (!is.list(sch)) {
     stop(sprintf("`provenance$schema` must be a list (from infer_schema()), not %s", class(sch)[1L]), call. = FALSE)
   }
+  # a schema with no fields checks nothing: it passed as valid (review of e57fed5, the M2 leftover)
+  if (!length(sch)) {
+    issues$schema_empty <- list(severity = "warning",
+      message = "the schema is empty (list()): it lists no columns, types or invariants, so nothing would be checked")
+    return(issues)
+  }
   # a misspelt field validates nothing and says nothing: a name a few letters from a known one is
   # fatal, any other unknown name is said (review of 02a38be, M2). expected_dtypes is what the
   # provenance files call expected_types (the OTIS file's types were never checked).
   known <- c("expected_columns", "expected_types", "expected_dtypes", "structural_invariants",
              "expected_value_sets", "numeric_ranges", "max_missing_fraction", "synthetic_recipe")
-  near <- function(x, pool) pool[which(utils::adist(x, pool) <= 3 & utils::adist(x, pool) > 0)[1L]]
+  near <- function(x, pool, k = 3) pool[which(utils::adist(x, pool) <= k & utils::adist(x, pool) > 0)[1L]]
   for (nm in setdiff(names(sch), known)) {
     guess <- near(nm, known)
     if (!is.na(guess)) {
@@ -581,7 +587,19 @@ validate_schema <- function(df_raw, provenance) {
   }
   inv_known <- c("min_data_rows", "max_data_rows")
   for (nm in setdiff(names(sch$structural_invariants), inv_known)) {
-    guess <- near(nm, inv_known)   # other invariants are a dataset's own, checked by its analysis
+    # other invariants are a dataset's own, checked by its analysis: only a slip of one letter (one
+    # added, dropped or changed) or two neighbours swapped is taken for a misspelling; min_data_cols,
+    # two letters from min_data_rows, is a field of its own (review of e57fed5)
+    guess <- near(nm, inv_known, k = 1)
+    if (is.na(guess)) {
+      swapped <- vapply(inv_known, function(k) {
+        a <- strsplit(nm, "")[[1L]]
+        b <- strsplit(k, "")[[1L]]
+        i <- which(a != b)
+        length(a) == length(b) && length(i) == 2L && i[2L] == i[1L] + 1L && a[i[1L]] == b[i[2L]] && a[i[2L]] == b[i[1L]]
+      }, logical(1))
+      if (any(swapped)) guess <- inv_known[swapped][1L]
+    }
     if (!is.na(guess)) {
       issues[[paste0("schema_field_", nm)]] <- list(severity = "fatal",
         message = sprintf("unknown structural invariant '%s' (did you mean '%s'?): it would be ignored", nm, guess))
@@ -766,6 +784,11 @@ apply_schema_validation <- function(df_raw, provenance) {
   if (!is_rule_list && is.list(provenance) && is.null(provenance$schema)) {
     stop(sprintf("`provenance` has no `schema` element (it has %s): nothing would be validated",
                  paste(names(provenance), collapse = ", ")), call. = FALSE)
+  }
+  # the same for a schema with no fields: list(schema = list()) returned TRUE (review of e57fed5)
+  if (!is_rule_list && is.list(provenance$schema) && !length(provenance$schema)) {
+    stop("the schema is empty (list()): there is nothing to validate against (infer_schema() makes one)",
+         call. = FALSE)
   }
   issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
   for (nm in names(issues)) {

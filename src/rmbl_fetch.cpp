@@ -456,7 +456,8 @@ std::string redirect_policy(const std::string &from, const std::string &to,
  * request headers; the credential ones are sent to the first host only. */
 CURLcode secure_perform(CURL *h, const std::string &start_url,
                         const std::function<void()> &reset, std::string *err,
-                        const std::vector<std::string> *headers, bool allow_loopback = false) {
+                        const std::vector<std::string> *headers, bool allow_loopback = false,
+                        bool same_origin = false) {
     const bool allow_http = allow_http_option();
     std::string url = start_url;
     bool drop_auth = false;
@@ -470,6 +471,13 @@ CURLcode secure_perform(CURL *h, const std::string &start_url,
             bool drop = false;
             why = redirect_policy(start_url, url, allow_http, true, &drop, &u, &addrs, allow_loopback);
             drop_auth = drop_auth || drop;
+            /* an API call (a JSON reply the caller acts on: Save Page Now, a model, OCSP) takes its answer
+             * only from the origin it asked: after a redirect to another host that host's reply was
+             * recorded as archive.org's (review of e57fed5) */
+            if (why.empty() && same_origin && drop) {
+                why = "the reply was redirected to another host (" + origin_of(u) + "), and an API answer is taken only "
+                      "from the host that was asked";
+            }
         }
         if (!why.empty()) {
             if (err) *err = "refused: " + why;
@@ -577,6 +585,29 @@ void harden(CURL *h) {
     curl_easy_setopt(h, CURLOPT_LOW_SPEED_TIME, 30L);
 }
 
+/* The reply's Retry-After (seconds, as the text the server sent), for the API calls: a rate-limited
+ * Save Page Now or model call waits as long as it is told to (review of e57fed5, E7). Each response
+ * of a redirect chain starts over at its status line, so the value is the final reply's. */
+size_t note_retry_after(char *ptr, size_t sz, size_t nm, void *ud) {
+    const size_t n = sz * nm;
+    std::string *ra = static_cast<std::string *>(ud);
+    std::string line(ptr, n);
+    if (line.compare(0, 5, "HTTP/") == 0) { ra->clear(); return n; }
+    static const char key[] = "retry-after:";
+    if (line.size() > sizeof key - 1) {
+        bool match = true;
+        for (size_t i = 0; i + 1 < sizeof key; ++i) {
+            if (std::tolower(static_cast<unsigned char>(line[i])) != key[i]) { match = false; break; }
+        }
+        if (match) {
+            std::string v = line.substr(sizeof key - 1);
+            const size_t a = v.find_first_not_of(" \t"), b = v.find_last_not_of(" \t\r\n");
+            *ra = (a == std::string::npos) ? "" : v.substr(a, b - a + 1).substr(0, 64);
+        }
+    }
+    return n;
+}
+
 size_t write_to_string(char *ptr, size_t sz, size_t nm, void *ud) {
     std::string *s = static_cast<std::string *>(ud);
     if (s->size() + sz * nm > kMaxBody) {
@@ -635,10 +666,14 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
                      size_t bodylen, const std::string &content_type,
                      std::string &out, long timeout_s,
                      const std::vector<std::string> &extra_headers,
-                     std::string *err = NULL, bool allow_loopback = false) {
+                     std::string *err = NULL, bool allow_loopback = false,
+                     std::string *retry_after = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
+    std::string ra_sink;
+    curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
+    curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
     /* the request headers travel with secure_perform(), which drops the
      * credential ones on a cross-host redirect */
     std::vector<std::string> hdrs;
@@ -662,7 +697,7 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     char errbuf[CURL_ERROR_SIZE] = {0};   /* libcurl's own sentence ("Operation too slow ...") */
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
     std::string refused;
-    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback);
+    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
@@ -678,10 +713,14 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
  * MORIE tier). Returns HTTP status, -1 on failure. */
 long http_get_string(const std::string &url, std::string &out, long timeout_s,
                      const std::vector<std::string> &extra_headers,
-                     std::string *err = NULL, bool allow_loopback = false) {
+                     std::string *err = NULL, bool allow_loopback = false,
+                     std::string *retry_after = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
+    std::string ra_sink;
+    curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
+    curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
     curl_easy_setopt(h, CURLOPT_HTTPGET, 1L);
     harden(h);
@@ -694,7 +733,7 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     char errbuf[CURL_ERROR_SIZE] = {0};
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
     std::string refused;
-    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &extra_headers, allow_loopback);
+    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &extra_headers, allow_loopback, true);
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
@@ -933,12 +972,13 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
         Rf_error("`headers` must be a character vector or NULL");
     }
     std::string out, err;
+    std::string ra;
     const long code = http_post_bytes(
         rmbl_str0(url, "url"), RAW(body),
         static_cast<size_t>(XLENGTH(body)),
         rmbl_str0(content_type, "content_type"), out, tmo, extra, &err,
-        Rf_asLogical(allow_loopback) == TRUE);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+        Rf_asLogical(allow_loopback) == TRUE, &ra);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
@@ -947,10 +987,12 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, raw_out);
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
+    SET_STRING_ELT(nm, 3, Rf_mkChar("retry_after"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
     UNPROTECT(3);
     return res;
@@ -973,9 +1015,10 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
         Rf_error("`headers` must be a character vector or NULL");
     }
     std::string out, err;
+    std::string ra;
     const long code = http_get_string(rmbl_str0(url, "url"), out, tmo, extra, &err,
-                                      Rf_asLogical(allow_loopback) == TRUE);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+                                      Rf_asLogical(allow_loopback) == TRUE, &ra);
+    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
@@ -984,10 +1027,12 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, raw_out);
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
+    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
+    SET_STRING_ELT(nm, 3, Rf_mkChar("retry_after"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
     UNPROTECT(3);
     return res;

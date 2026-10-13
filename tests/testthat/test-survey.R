@@ -25,16 +25,20 @@ test_that("a replicate variance is the scaled sum of squared deviations", {
   R <- sapply(1:5, function(r) toy$w * c(2, 0, 1, 1, 1, 0, 1, 2, 0, 1, 1, 1)[(seq_len(12) + r) %% 12 + 1])
   th <- apply(R, 2, function(w) sum(w * toy$y) / sum(w))
   full <- sum(toy$w * toy$y) / sum(toy$w)
-  for (case in list(list("bootstrap", 1 / 5), list("jk1", 4 / 5), list("brr", 1 / 5))) {
+  for (case in list(list("bootstrap", 1 / 5), list("jk1", 4 / 5))) {
     des <- survey_design(toy, weights = "w", replicates = R, type = case[[1]])
     expect_equal(survey_estimate(des, toy, "y")$se, sqrt(case[[2]] * sum((th - full)^2)))
   }
+  # BRR half-samples come in a Hadamard order: four of them
+  des <- survey_design(toy, weights = "w", replicates = R[, 1:4], type = "brr")
+  expect_equal(survey_estimate(des, toy, "y")$se, sqrt(1 / 4 * sum((th[1:4] - full)^2)))
   des <- survey_design(toy, weights = "w", replicates = R, type = "bootstrap", mse = FALSE)
   expect_equal(survey_estimate(des, toy, "y")$se, sqrt(sum((th - mean(th))^2) / 5))
   # CSUS 2023: mean bootstrap weights of R = 12, the same as Fay's BRR with rho = 1 - 1/sqrt(12)
-  mb <- survey_design(toy, weights = "w", replicates = R, type = "mean_bootstrap", mean_size = 12)
-  fay <- survey_design(toy, weights = "w", replicates = R, type = "fay", rho = 1 - 1 / sqrt(12))
-  expect_equal(survey_estimate(mb, toy, "y")$se, sqrt(12 / 5 * sum((th - full)^2)))
+  # (four replicates: Fay's are half-samples, in a Hadamard order)
+  mb <- survey_design(toy, weights = "w", replicates = R[, 1:4], type = "mean_bootstrap", mean_size = 12)
+  fay <- survey_design(toy, weights = "w", replicates = R[, 1:4], type = "fay", rho = 1 - 1 / sqrt(12))
+  expect_equal(survey_estimate(mb, toy, "y")$se, sqrt(12 / 4 * sum((th[1:4] - full)^2)))
   expect_equal(survey_estimate(fay, toy, "y")$se, survey_estimate(mb, toy, "y")$se)
 })
 
@@ -116,7 +120,8 @@ test_that("the modified Wilson interval follows SAS SURVEYFREQ: n / Deff, df-adj
   p <- e$estimate
   n <- e$n
   dfd <- 400 - 20
-  ne <- min(n / (e$se^2 / (p * (1 - p) / (n - 1))) * (stats::qnorm(0.975) / stats::qt(0.975, dfd))^2, n)
+  # the degrees-of-freedom factor is (t_(n-1) / t_df)^2, as SAS documents it (review of e57fed5)
+  ne <- min(n / (e$se^2 / (p * (1 - p) / (n - 1))) * (stats::qt(0.975, n - 1) / stats::qt(0.975, dfd))^2, n)
   z <- stats::qnorm(0.975)
   mid <- (p + z^2 / (2 * ne)) / (1 + z^2 / ne)
   half <- z / (1 + z^2 / ne) * sqrt(p * (1 - p) / ne + z^2 / (4 * ne^2))
@@ -136,7 +141,7 @@ test_that("arguments that cannot describe a design or an estimate are refused", 
   expect_error(survey_design(toy, c(1, 2)), "one value per row")
   expect_error(survey_design(toy, -toy$w), "non-negative")
   expect_error(survey_design(toy, "w", mse = NA), "TRUE or FALSE")
-  R <- matrix(toy$w, 12, 3)
+  R <- cbind(toy$w * 1.1, toy$w * 0.9, toy$w * 1.2)   # replicates, not copies of the full weight (refused)
   expect_error(survey_design(toy, "w", replicates = R, strata = "s"), "not both")
   expect_error(survey_design(toy, "w", replicates = "zz"), "not in `data`")
   expect_error(survey_design(toy, "w", replicates = list(1)), "data frame, a matrix")
@@ -145,7 +150,7 @@ test_that("arguments that cannot describe a design or an estimate are refused", 
   expect_error(survey_design(toy, "w", replicates = -R), "non-negative")
   expect_error(survey_design(toy, "w", replicates = R, type = "mean_bootstrap", mean_size = 0), "mean_size")
   expect_error(survey_design(toy, "w", replicates = R, type = "fay"), "rho")
-  rr <- data.frame(id = 12:1, r1 = toy$w[12:1], r2 = toy$w[12:1] * 2)
+  rr <- data.frame(id = 12:1, r1 = toy$w[12:1] * 1.05, r2 = toy$w[12:1] * 2)
   t3 <- cbind(toy, id = 1:12)
   ok <- survey_design(t3, "w", replicates = rr, id = "id")
   expect_equal(ok$reps[[2]], 2 * toy$w)
@@ -228,10 +233,15 @@ test_that("results print, plot and flag small or empty domains", {
 })
 
 test_that("replicate weights can be named columns, and a replicate design's df is replicates less one", {
-  d <- cbind(toy, r1 = toy$w, r2 = toy$w * 1.1, r3 = toy$w * 0.9)
+  i <- seq_len(12)
+  d <- cbind(toy, r1 = toy$w * (1 + 0.1 * sin(i)), r2 = toy$w * (1 + 0.1 * cos(i)), r3 = toy$w * (1 + 0.1 * sin(2 * i)))
   des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1")
   expect_length(des$reps, 3L)
-  expect_equal(des$reps[[2]], toy$w * 1.1)
+  expect_equal(des$reps[[2]], toy$w * (1 + 0.1 * cos(i)))
+  # copies of one weight scaled have rank 1: no degrees of freedom, said so
+  d1 <- cbind(toy, r1 = toy$w * 1.05, r2 = toy$w * 1.1, r3 = toy$w * 0.9)
+  d1des <- survey_design(d1, "w", replicates = c("r1", "r2", "r3"), type = "jk1")
+  expect_error(survey_estimate(d1des, d1, "y", df = "design"), "0 degrees of freedom")
   e <- survey_estimate(des, d, "y", df = "design")
   z <- stats::qt(0.975, 2)
   expect_equal(c(e$lower, e$upper), e$estimate + c(-1, 1) * z * e$se)

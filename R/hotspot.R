@@ -32,8 +32,13 @@
 #'   each period.
 #' @param coords `"lonlat"` or `"planar"`.
 #' @return An object of class `rmbl_hotspot`: `periods` (one row
-#'   per period), `cells` (one row per ever-active cell, with its
-#'   centre in the input's units), and the settings.
+#'   per period; `tied_in` counts the cells made hot only by a tie
+#'   with the k-th busiest, and printing says when ties make most
+#'   active cells hot), `cells` (one row per ever-active cell, with
+#'   its centre in the input's units), and the settings. Points at
+#'   (0, 0), the raw exports' "no location", are dropped, and
+#'   longitudes across the antimeridian are taken on one side of
+#'   it.
 #' @examples
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
@@ -63,16 +68,16 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
       stop(sprintf("coordinate %d is not a longitude and latitude in degrees; planar data take coords = \"planar\"",
                    which(bad)[1L]), call. = FALSE)
     }
-    keep <- keep & !(lon == 0 & lat == 0)
+    keep <- keep & !.jx_null_island(lon, lat)
   }
   lon <- lon[keep]
   lat <- lat[keep]
   period <- period[keep]
   if (length(lon) < 2L) stop("need at least two located incidents with a period", call. = FALSE)
   if (coords == "lonlat") {
-    lon0 <- stats::median(lon)
-    lat0 <- stats::median(lat)
-    p <- .jx_project(lon, lat, lon0, lat0)
+    p <- .jx_lonlat_plane(lon, lat, "hotspot_persistence")
+    lon0 <- p$lon0
+    lat0 <- p$lat0
   } else {
     p <- list(x = lon, y = lat)
   }
@@ -108,6 +113,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     }
     rows[[j]] <- data.frame(period = levels(pf)[j], incidents = tot, active_cells = sum(cnt > 0),
                             cells_for_half = half, share_for_half = half / nc, hot_cells = sum(h),
+                            tied_in = max(0L, sum(h) - k),
                             hot_share = if (tot > 0) sum(cnt[h]) / tot else NA_real_, jaccard_previous = jac,
                             stringsAsFactors = FALSE)
   }
@@ -115,6 +121,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
   centre_y <- y0 + (as.numeric(sub(".* ", "", ukey)) + 0.5) * cell
   if (coords == "lonlat") {
     centre_lon <- lon0 + centre_x / (.jx_earth_km * pi / 180 * cos(lat0 * pi / 180))
+    centre_lon <- ((centre_lon + 180) %% 360) - 180
     centre_lat <- lat0 + centre_y / (.jx_earth_km * pi / 180)
   } else {
     centre_lon <- centre_x
@@ -137,6 +144,15 @@ print.rmbl_hotspot <- function(x, ...) {
   print(d, row.names = FALSE)
   chronic <- sum(x$cells$periods_hot >= nrow(x$periods) / 2)
   cat(sprintf("Cells hot in at least half the periods: %d\n", chronic))
+  # ties with the k-th busiest cell are hot too: when they are most of the active cells, the counts do
+  # not single out hot spots (cell = 0.1 had made 100 of 100 cells hot)
+  tied <- d$tied_in > 0 & d$hot_cells >= 0.5 * d$active_cells & d$active_cells > 1
+  if (any(tied)) {
+    cat(sprintf(paste("Note: in %s, ties with the busiest %d cells made %s of the active cells hot; the counts",
+                      "are too even (or the cells too small) to single out hot spots\n"),
+                paste(d$period[tied], collapse = ", "), x$hot_k,
+                paste(sprintf("%d of %d", d$hot_cells[tied], d$active_cells[tied]), collapse = ", ")))
+  }
   invisible(x)
 }
 
