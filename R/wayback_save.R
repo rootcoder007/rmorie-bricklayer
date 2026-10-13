@@ -313,7 +313,10 @@ print.rmbl_wayback_save <- function(x, ...) {
 
 # a failure that a new capture cannot fix: the page is gone from its source
 .bl_wb_gone <- function(msg) {
-  grepl("HTTP 404|HTTP 410|returned 404|returned 410|cannot find|not found|error:not-found", msg, ignore.case = TRUE)
+  # only what the target server said: "HTTP 404" in a failure message is the status of
+  # archive.org's own API (a capture refused or a job lost), and those pages are live
+  grepl("target server cannot find|returned 404|returned 410|error:not-found|error:gone",
+        msg, ignore.case = TRUE)
 }
 
 #' Retry the failures of a bulk Wayback run

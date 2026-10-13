@@ -274,10 +274,11 @@ test_that("wayback_retry(): failures are looked up, captured again, and gone pag
 
 test_that("wayback_retry(): what counts as gone, and bad input refused", {
   gone <- rmoriebricklayer:::.bl_wb_gone
-  expect_true(all(gone(c("HTTP 404", "HTTP 410", "Server returned 404",
+  expect_true(all(gone(c("Server returned 404", "Server returned 410",
                          "The target server cannot find https://x", "error:not-found"))))
-  expect_false(any(gone(c("HTTP 502", "could not connect", "This URL has been already captured 1 times today",
-                          "gave up after retries"))))
+  # an "HTTP 404" from archive.org's own API is not the page: StatCan tables failed that way while live
+  expect_false(any(gone(c("HTTP 404", "HTTP 410", "HTTP 502", "could not connect",
+                          "This URL has been already captured 1 times today", "gave up after retries"))))
   out <- withr::local_tempfile(fileext = ".jsonl")
   expect_error(wayback_retry(out), "no results file")
   writeLines("{\"url\": \"https://e.org/1\", \"status\": \"failed\", \"message\": \"x\"}", out)
