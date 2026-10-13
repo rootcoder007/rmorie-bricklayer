@@ -678,3 +678,11 @@ test_that("the printed footer names a min_base only when one was set", {
   expect_match(noted, "bases below 20 noted", fixed = TRUE)
   expect_match(noted, "note: small base (below 20)", fixed = TRUE)
 })
+
+test_that("a grouped table prints its group columns first", {
+  d <- data.frame(year = rep(2020:2022, 2), g = rep(c("a", "b"), each = 3), n = c(10, 12, 15, 30, 28, 33))
+  out <- utils::capture.output(print(yoy(d, value = "n", period = "year", by = "g"), color = FALSE))
+  hdr <- out[grepl("year", out)][1]
+  expect_lt(regexpr("\\bg\\b", hdr), regexpr("year", hdr))
+  expect_true(any(grepl("^\\s*b\\s", out)))
+})
