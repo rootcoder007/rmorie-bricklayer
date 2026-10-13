@@ -213,7 +213,9 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
       j <- .bl_wb_json(res)
       if (!is.null(j$job_id)) {
         inflight[[j$job_id]] <- list(url = u, start = .bl_wb_now(), due = .bl_wb_now() + poll)
-      } else if (res$status < 0 || res$status == 429L || res$status >= 500L || is.null(j)) {
+      } else if (res$status < 0 || res$status %in% c(404L, 408L, 429L) || res$status >= 500L || is.null(j)) {
+        # a 404 or 408 from the capture endpoint itself is archive.org under load, not the page: with
+        # many jobs in flight live StatCan tables were answered 404 and captured fine one at a time
         attempts[[u]] <- attempts[[u]] + 1L
         why <- if (res$status < 0) res$error else sprintf("HTTP %d", res$status)
         if (attempts[[u]] >= 6L) {

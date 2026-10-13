@@ -31,6 +31,16 @@ fake_spn2 <- function(plan = list(), lookup = NULL) {
       recent = reply(200, list(url = u, timestamp = "20261001000000", message = "The same snapshot had been made")),
       daily = reply(200, list(status = "error", status_ext = "error:too-many-daily-captures",
                               message = "This URL has been already captured 1 times today")),
+      api404 = {
+        if (k <= p$fail) {
+          reply(404, list(status = "error", message = "not found"))
+        } else {
+          s$n <- s$n + 1L
+          id <- sprintf("spn2-%d", s$n)
+          s$jobs[[id]] <- list(url = u, kind = "ok", polls = 0L)
+          reply(200, list(url = u, job_id = id))
+        }
+      },
       ratelimit = {
         if (k <= p$fail) {
           reply(429, "<html>Too Many Requests</html>")
@@ -310,4 +320,18 @@ test_that("rmbl wayback --retry: retries the failures of a results file", {
   expect_identical(with_fake(fake_spn2(), bricklayer_cli(c("wayback", "--retry", r2), out = function(x) NULL)), 1L)
   expect_identical(with_fake(fake_spn2(), bricklayer_cli(c("wayback", "--retry", r2, "--include-gone"),
                                                            out = function(x) NULL)), 0L)
+})
+
+test_that("wayback_save(): a 404 from archive.org's capture endpoint is retried, not taken as the page", {
+  withr::local_envvar(keys)
+  s <- fake_spn2(list("https://e.org/1" = list(kind = "api404", fail = 2L)))
+  r <- with_fake(s, wayback_save("https://e.org/1", quiet = TRUE))
+  expect_identical(r$status, "saved")
+  expect_equal(s$tries[["https://e.org/1"]], 3L)
+  s2 <- fake_spn2(list("https://e.org/1" = list(kind = "api404", fail = 99L)))
+  r2 <- with_fake(s2, wayback_save("https://e.org/1", quiet = TRUE))
+  expect_identical(r2$status, "failed")
+  expect_match(r2$message, "gave up after six tries: HTTP 404")
+  # and the retry does not count that failure as a gone page
+  expect_false(rmoriebricklayer:::.bl_wb_gone(r2$message))
 })
