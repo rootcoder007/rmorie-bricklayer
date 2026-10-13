@@ -8,11 +8,12 @@ bricklayer_llm_config(...)
 }
 \arguments{
 \item{...}{Settings to save, as \code{key = value}: \code{route}
-(\code{"auto"}, \code{"own"}, \code{"ollama"} or \code{"hosted"}),
-\code{own.url}, \code{own.key}, \code{own.model}, \code{ollama.url},
-\code{ollama.model}, \code{ollama.key}, \code{hosted.url},
-\code{hosted.model}, \code{hosted.key}. \code{NULL} or \code{""} removes
-a saved setting. With no arguments nothing is written.}
+(\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id),
+\code{<provider>.key} and \code{<provider>.model} (e.g.
+\code{anthropic.key}, \code{openai.model}), \code{own.url},
+\code{own.key}, \code{own.model}, \code{ollama.url},
+\code{ollama.model}, \code{ollama.key}. \code{NULL} or \code{""}
+removes a saved setting. With no arguments nothing is written.}
 }
 \value{
 A data frame with one row per setting: \code{key}, \code{value}
@@ -22,27 +23,27 @@ overrides it) and \code{help}; visibly when called with no settings.
 }
 \description{
 Every setting that decides how \code{\link{bricklayer_llm_ask}} reaches a
-model, in one place: which route to use, and the address, key and model
-of your own OpenAI-compatible server, of a local or LAN Ollama server, and
-of the hosted MORIE tier. Settings are saved in
+model, in one place: which route to use; your key and model for each
+provider (bring your own key: see \code{\link{bricklayer_llm_providers}});
+the address, key and model of your own OpenAI-compatible server; and of a
+local or LAN Ollama server. Settings are saved in
 \code{$XDG_CONFIG_HOME/morie/llm.json} (default \code{~/.config/morie/}),
-a private file this function writes only when you pass a setting; the
-hosted key goes to the shared credentials file through
-\code{\link{bricklayer_llm_login}}, which checks it with the gateway first.
-An environment variable that is set (the \code{env} column) wins over a
-saved value.
+a private file (owner-only) this function writes only when you pass a
+setting; keys are never printed. An environment variable that is set (the
+\code{env} column, e.g. \code{ANTHROPIC_API_KEY}) wins over a saved value.
 }
 \details{
 The same is available from the shell: \code{rmbl config} lists the
 settings, \code{rmbl config set KEY VALUE} and \code{rmbl config unset KEY}
-change one, and \code{rmbl config setup} walks through all of them.
+change one (a key is asked for without echo when no value is given), and
+\code{rmbl config setup} walks through them.
 }
 \examples{
 # reading the settings writes nothing
-bricklayer_llm_config()
+head(bricklayer_llm_config())
 \dontrun{
-# always use the hosted tier with one model
-bricklayer_llm_config(route = "hosted", hosted.model = "gpt-oss-120b:cf")
+# your Anthropic key and model, and always use them
+bricklayer_llm_config(anthropic.key = "sk-ant-...", route = "anthropic")
 # an Ollama server on another machine
 bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
 # your own OpenAI-compatible server

@@ -93,16 +93,17 @@
 #' Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 #' \describe{
 #'   \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-#'     [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
-#'     a local model or your own endpoint; keys are issued on request at
-#'     \url{https://www.rmorie.com/access/}): a key you paste with \code{--token}
-#'     (read from the terminal or a pipe when KEY is omitted), a code sent to
-#'     \code{--email}, or the GitHub device flow}
-#'   \item{\code{logout}}{forget the hosted key}
+#'     [--no-browser]}}{sign in for the curated tables at data.rmorie.com
+#'     (a free MORIE data key, issued at \url{https://www.rmorie.com/access/}):
+#'     a key you paste with \code{--token} (read from the terminal or a pipe
+#'     when KEY is omitted), a code sent to \code{--email}, or the GitHub
+#'     device flow}
+#'   \item{\code{logout}}{forget the data key}
 #'   \item{\code{doctor}}{report the language-model routes available here
-#'     (own endpoint, local Ollama, hosted tier), in the order \code{ask} tries them}
-#'   \item{\code{models}}{list the models the hosted tier offers your key
-#'     (default marked)}
+#'     (own endpoint, each provider with your key, local Ollama), in the
+#'     order \code{ask} tries them}
+#'   \item{\code{models [--route ROUTE]}}{list the models your provider (or
+#'     server) offers, the one in use marked}
 #'   \item{\code{data list}}{the curated tables at data.rmorie.com}
 #'   \item{\code{data pull db/table}}{download one table as CSV}
 #'   \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show
@@ -179,6 +180,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
+                models = "--route",
                 data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
@@ -230,7 +232,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                 interactive()
             )
           }
-          out(sprintf("Logged in to %s\n", .bl_hosted_base() %||% "(disabled)"))
+          out(sprintf("Logged in: the curated tables at %s are open to you\n",
+                      tryCatch(.bl_data_url(), error = function(e) "data.rmorie.com")))
         },
         logout = {
           if (length(c(rest, tail_args))) usage_error("logout takes no arguments")
@@ -242,8 +245,14 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         config = .bl_cli_config(rest, out, usage_error),
         models = {
-          if (length(c(rest, tail_args))) usage_error("models takes no arguments")
-          .bl_cli_models(out)
+          rte <- flag("--route")
+          extra <- setdiff(rest, c("--route", rte))
+          if (length(c(extra, tail_args))) usage_error(sprintf("usage: %s models [--route ROUTE]", prog))
+          if (!is.null(rte) && !rte %in% c("auto", .bl_llm_route_names())) {
+            usage_error(sprintf("--route takes auto, own, ollama or a provider (%s)",
+                                paste(.bl_llm_presets()$id, collapse = ", ")))
+          }
+          status <- .bl_cli_models(out, rte)
         },
         ask = {
           for (f in c("--model", "--route")) {
@@ -256,8 +265,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           rte <- flag("--route")
           if (!is.null(rte)) {
             rest <- rest[-(match("--route", rest) + 0:1)]
-            if (!rte %in% c("own", "ollama", "hosted", "auto")) {
-              usage_error("--route takes own, ollama, hosted or auto")
+            if (identical(rte, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+            if (!rte %in% c("auto", .bl_llm_route_names())) {
+              usage_error(sprintf("--route takes auto, own, ollama or a provider (%s)",
+                                  paste(.bl_llm_presets()$id, collapse = ", ")))
             }
             # "auto" is passed through: it means the automatic order this time, over a saved route
           }
@@ -358,11 +369,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
   u <- c(
     login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token",
-                  "  sign in to the hosted MORIE LLM tier"),
-    logout = "logout   forget the hosted key",
+                  "  sign in for the curated tables at data.rmorie.com"),
+    logout = "logout   forget the data key",
     doctor = "doctor   report the language-model routes available here",
-    models = "models   the models the hosted tier offers your key (default marked)",
-    ask = "ask [--route own|ollama|hosted|auto] [--model NAME] PROMPT...   ask the model",
+    models = "models [--route ROUTE]   the models your provider (or server) offers (the one in use marked)",
+    ask = "ask [--route auto|own|ollama|PROVIDER] [--model NAME] PROMPT...   ask the model (your own key)",
     config = paste("config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path | reset]",
                    "  show or change the language-model settings (route, addresses, keys, models)"),
     bundle = "bundle REQUEST...   agent_bundle() from the shell",
@@ -525,41 +536,26 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   invisible(targets[[1L]])  # the primary launcher's path; rmbl sits beside it
 }
 
-# The models verb: the hosted tier's list for this key, default marked.
-.bl_cli_models <- function(out) {
-  if (is.null(.bl_hosted_base())) {
-    out(sprintf("Hosted MORIE tier: disabled (%s)\n", .bl_hosted_off_reason()))
-  } else if (identical((kst <- .bl_hosted_key_state())$state, "other_address")) {
-    out(sprintf(paste("Hosted MORIE tier (%s): the stored key was issued for %s and is not sent here;",
-                      "`%s login` for this address, or unset the address that overrides it\n"),
-                kst$now, kst$saved_for, .bl_prog()))
-  } else if (is.null(.bl_hosted_key())) {
-    out(sprintf("Hosted MORIE tier: not logged in -- %s\n", .bl_access_hint()))
-  } else {
-    hm <- bricklayer_llm_models()
-    state <- .bl_key_state(hm)
-    if (identical(state, "rejected")) {
-      out(sprintf(paste0("Hosted MORIE tier (%s): the gateway rejected the stored key ",
-                         "(a newer sign-in elsewhere replaces it): run `%s login` again\n"),
-                  .bl_hosted_base(), .bl_prog()))
-    } else if (!length(hm)) {
-      out(sprintf("Hosted MORIE tier (%s): logged in, gateway not reachable (network?); try again\n",
-                  .bl_hosted_base()))
-    } else {
-      out(sprintf(
-        "Hosted MORIE tier (%s); default marked *:\n",
-        .bl_hosted_base()
-      ))
-      for (m in hm) {
-        mark <- if (identical(m, attr(hm, "default"))) "*" else " "
-        out(sprintf("  %s %s\n", mark, m))
-      }
-      out(paste0(
-        sprintf("Pick one per call with `%s ask --model NAME ...`", .bl_prog()),
-        ", or set MORIE_HOSTED_MODEL.\n"
-      ))
-    }
+# The models verb: the models the route `ask` would take offers (or the one named), default marked.
+.bl_cli_models <- function(out, route = NULL) {
+  rt <- .bl_llm_route(route)
+  if (is.null(rt)) {
+    out(paste0(.bl_no_route_message(route), "\n"))
+    return(invisible(1L))
   }
+  have <- .bl_llm_list_models(rt) %||% character()
+  if (!length(have)) {
+    out(sprintf("%s: no model list to show (the provider does not publish one, or did not answer)%s\n", rt$name,
+                if (!is.null(rt$model)) sprintf("; the model in use is %s", rt$model) else ""))
+    return(invisible(0L))
+  }
+  out(sprintf("%s; the model in use is marked *:\n", rt$name))
+  for (m in have) out(sprintf("  %s %s\n", if (identical(m, rt$model)) "*" else " ", m))
+  pick <- if (!is.null(rt$id)) sprintf("`%s config set %s.model NAME`", .bl_prog(), rt$id) else
+    if (identical(rt$name, "local Ollama")) sprintf("`%s config set ollama.model NAME`", .bl_prog()) else
+      sprintf("`%s config set own.model NAME`", .bl_prog())
+  out(sprintf("Pick one per call with `%s ask --model NAME ...`, or keep one with %s.\n", .bl_prog(), pick))
+  invisible(0L)
 }
 
 # The wayback verb: every URL in a file (one per line; blank lines and # comments skipped) saved
@@ -665,21 +661,21 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   topic <- if (length(rest) && !startsWith(rest[[1L]], "-")) rest[[1L]] else ""
   verbs <- paste0(
     sprintf("usage: %s <verb> [options]   (rmbl is the same command as rmoriebricklayer)\n\n", prog),
-    "Language models\n",
+    "Language models (your own key, or a model on your machine)\n",
     "  ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply\n",
     "  doctor                                    what is set up, and which route ask will use\n",
     "  config                                    show every language-model setting\n",
     "  config setup                              answer a few questions to set them all\n",
     "  config set KEY VALUE | unset KEY          change one (keys: config help)\n",
     "  config reset [--force]                    move an unreadable settings file aside\n",
-    "  login [--token] [--email ADDRESS]         sign in to the hosted MORIE tier\n",
-    "        [--code CODE] [--no-browser]\n",
-    "  logout                                    forget the hosted key\n",
-    "  models                                    models the hosted tier offers your key\n",
+    "  models [--route R]                        models your provider or server offers\n",
     "  bundle REQUEST...                         agent_bundle() from the shell\n",
     "\nData and functions\n",
+    "  login [--token] [--email ADDRESS]         sign in for the curated tables at data.rmorie.com\n",
+    "        [--code CODE] [--no-browser]\n",
+    "  logout                                    forget the data key\n",
     "  data list                                 curated tables at data.rmorie.com\n",
-    "  data pull db/table [--out FILE.csv]       download one of them (your MORIE key)\n",
+    "  data pull db/table [--out FILE.csv]       download one of them (your MORIE data key)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)\n",
     "  wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run\n",
     "  functions [PATTERN]                       exported functions and their titles\n",
@@ -688,7 +684,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  version                                   package version\n",
     "\nMore help\n",
     sprintf("  %s help start      getting started, step by step\n", prog),
-    sprintf("  %s help llm        every way to point ask at a model (hosted, Ollama, your own server)\n", prog),
+    sprintf("  %s help llm        every way to point ask at a model (your key, Ollama, your own server)\n", prog),
     sprintf("  %s help config     every setting, its environment variable, and examples\n", prog),
     sprintf("  %s help r          the same from R and Rscript\n", prog),
     sprintf("  %s VERB --help     one verb's usage\n", prog)
@@ -697,37 +693,39 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "Getting started\n\n",
     "1. Check what is set up:\n",
     sprintf("     %s doctor\n", prog),
-    "2. Pick a model source (any one is enough):\n",
-    sprintf("     hosted MORIE tier   %s login                  (GitHub or an emailed code)\n", prog),
-    sprintf("                         %s login --token          (paste a key from www.rmorie.com/access)\n", prog),
+    "2. Bring a model (any one is enough):\n",
+    "     your own key        export ANTHROPIC_API_KEY=...   (or OPENAI_API_KEY, GEMINI_API_KEY, GROQ_API_KEY, ...)\n",
+    sprintf("                         %s config set anthropic.key   (asks for it; saved privately)\n", prog),
     "     local Ollama        ollama pull qwen3:8b      (https://ollama.com)\n",
     sprintf("     your own server     %s config set own.url http://localhost:1234/v1\n", prog),
     sprintf("   or answer a few questions instead:  %s config setup\n", prog),
     "3. Ask:\n",
     sprintf("     %s ask \"what is a Benford screen for\"\n", prog),
-    sprintf("     %s ask --model gpt-oss-120b:cf \"...\"      (one model, this time)\n", prog),
-    sprintf("     %s ask --route hosted \"...\"               (one route, this time)\n", prog),
+    sprintf("     %s ask --model NAME \"...\"                 (one model, this time)\n", prog),
+    sprintf("     %s ask --route ollama \"...\"               (one route, this time)\n", prog),
     "4. Make a choice stick:\n",
-    sprintf("     %s config set route hosted\n", prog),
-    sprintf("     %s config set hosted.model gpt-oss-120b:cf\n", prog)
+    sprintf("     %s config set route anthropic\n", prog),
+    sprintf("     %s config set anthropic.model NAME     (`%s models` lists them)\n", prog, prog),
+    "5. The curated tables (data.rmorie.com) need a free MORIE data key:\n",
+    sprintf("     %s login                  (GitHub, or --email ADDRESS for a code)\n", prog)
   )
+  ps <- .bl_llm_presets()
   llm <- paste0(
     "Where ask sends a prompt\n\n",
-    "With route = auto (the default) ask tries, in order: your own server (if own.url is set),\n",
-    "a local Ollama server (if it has a model), then the hosted MORIE tier (if you are logged in).\n",
+    "Bring your own key, or run a model locally: nothing is sent anywhere you did not set up.\n",
+    "With route = auto (the default) ask tries, in order: your own server (if own.url is set), each\n",
+    "provider whose key is set (in the order below), then a local Ollama server (if it has a model).\n",
     sprintf("`%s doctor` shows each one and the route ask will take.\n\n", prog),
-    "Hosted MORIE tier (the :cloud and :cf models)\n",
-    sprintf("  %s login                              sign in (GitHub, or --email ADDRESS for a code)\n", prog),
-    sprintf("  %s login --token                      paste a key when asked; it is checked before it is saved\n", prog),
-    sprintf("  %s models                             the models your key can use\n", prog),
-    sprintf("  %s config set route hosted            always use it, even with Ollama running\n", prog),
-    sprintf("  %s config set hosted.model NAME       its default model\n\n", prog),
+    "Providers (your key in its variable, or `config set PROVIDER.key`; the model in PROVIDER.model)\n",
+    paste(sprintf("  %-12s %-22s %s\n", ps$id, ps$key_env, ps$base), collapse = ""),
+    sprintf("  %s models --route anthropic     the models your key can use\n", prog),
+    sprintf("  %s config set route anthropic   always use it\n\n", prog),
     "Ollama, on this machine or another\n",
     "  ollama pull qwen3:8b                      a model to use\n",
     sprintf("  %s config set ollama.url http://192.168.1.20:11434\n", prog),
     sprintf("  %s config set ollama.model qwen3:8b\n", prog),
     sprintf("  %s config set ollama.url off          never try Ollama\n\n", prog),
-    "Your own OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a provider's API)\n",
+    "Your own OpenAI-compatible server (LM Studio, vLLM, llama.cpp, Azure OpenAI's v1 endpoint, a gateway)\n",
     sprintf("  %s config set own.url http://localhost:1234/v1\n", prog),
     sprintf("  %s config set own.model NAME\n", prog),
     sprintf("  %s config set own.key                 (prompts for the key, so it stays out of history)\n\n", prog),
@@ -735,33 +733,33 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  ask talks to a server, not to files: start one on the file, then point own.url at it\n",
     "  llama-server -m /path/to/model.gguf --port 8080      (llama.cpp)\n",
     sprintf("  %s config set own.url http://localhost:8080/v1\n", prog),
-    "  OLLAMA_MODELS=/path/to/models ollama serve          (Ollama reading another folder)\n",
-    "  ollama create mymodel -f Modelfile                  (Modelfile: FROM /path/to/model.gguf)\n\n",
+    "  OLLAMA_MODELS=/path/to/models ollama serve          (Ollama reading another folder)\n\n",
     "One call only\n",
     sprintf("  %s ask --route ollama --model llama3.2 \"...\"\n", prog),
-    "  MORIE_LLM_ROUTE=hosted rmbl ask \"...\"    (environment variables win over saved settings)\n"
+    "  MORIE_LLM_ROUTE=groq rmbl ask \"...\"      (environment variables win over saved settings)\n"
   )
   r_help <- paste0(
     "From R (or Rscript -e '...': single quotes outside, double quotes inside)\n\n",
     "  library(rmoriebricklayer)\n",
     "  bricklayer_llm_status()                                   # doctor\n",
+    "  bricklayer_llm_providers()                                # every provider, its key variable\n",
     "  bricklayer_llm_config()                                   # every setting\n",
-    "  bricklayer_llm_config(route = \"hosted\", hosted.model = \"gpt-oss-120b:cf\")\n",
+    "  Sys.setenv(ANTHROPIC_API_KEY = \"...\")                     # or bricklayer_llm_config(anthropic.key = ...)\n",
+    "  bricklayer_llm_config(route = \"anthropic\", anthropic.model = \"claude-opus-5-5\")\n",
     "  bricklayer_llm_config(ollama.url = \"http://192.168.1.20:11434\", ollama.model = \"qwen3:8b\")\n",
     "  bricklayer_llm_config(own.url = \"http://localhost:1234/v1\", own.model = \"m\")\n",
     "  bricklayer_llm_config(route = NULL)                       # back to auto\n",
-    "  bricklayer_llm_login(token = \"KEY\")                       # or email = \"you@example.org\"\n",
     "  bricklayer_llm_models()\n",
-    "  bricklayer_llm_ask(\"What can a Benford screen show?\", model = \"gpt-oss-120b:cf\", route = \"hosted\")\n\n",
+    "  bricklayer_llm_ask(\"What can a Benford screen show?\")\n",
+    "  bricklayer_llm_login()                                    # the data key, for data.rmorie.com\n\n",
     "From the shell:\n",
-    "  Rscript -e 'rmoriebricklayer::bricklayer_llm_config(route = \"hosted\")'\n",
     "  Rscript -e 'cat(rmoriebricklayer::bricklayer_llm_ask(\"What can a Benford screen show?\"), \"\\n\")'\n"
   )
   if (!nzchar(topic)) {
     out(verbs)
   } else if (topic %in% c("start", "getting-started", "quickstart")) {
     out(start)
-  } else if (topic %in% c("llm", "routes", "hosted", "ollama")) {
+  } else if (topic %in% c("llm", "routes", "providers", "byok", "ollama")) {
     out(llm)
   } else if (identical(topic, "config")) {
     .bl_cli_config("help", out, function(m) stop(m, call. = FALSE))

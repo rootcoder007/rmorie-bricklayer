@@ -9,7 +9,9 @@ bricklayer_llm_ask(
   model = NULL,
   timeout = 120,
   system_prompt = NULL,
-  route = NULL
+  route = NULL,
+  docs = TRUE,
+  packages = NULL
 )
 }
 \arguments{
@@ -22,42 +24,59 @@ bricklayer_llm_ask(
 \item{system_prompt}{Optional system message.}
 
 \item{route}{\code{NULL} (the saved route, else the first that is set up),
-\code{"auto"} (the automatic order this time, ignoring a saved route) or
-one of \code{"own"}, \code{"ollama"}, \code{"hosted"} to insist on a route.}
+\code{"auto"} (the automatic order this time, ignoring a saved route),
+or \code{"own"}, \code{"ollama"} or a provider id to insist on one.}
+
+\item{docs}{Give the model the packages' help (see Details);
+\code{FALSE} sends the prompt alone.}
+
+\item{packages}{The installed packages whose help the model gets; default
+rmoriebricklayer and rmoriedata (those installed). Add \code{"rmorie"}
+to let it search that package's help too.}
 }
 \value{
 Character scalar with the reply. Errors, saying what to set up,
 when no route answers, and when the server answers with an error.
 }
 \description{
-Sends one prompt to the first language-model route that is set up on
-this machine and returns the reply. An endpoint of your own counts as set
-up when it is configured (it is not probed: a configured endpoint that is
-down is an error, not a silent hop to the hosted tier); a local Ollama
-counts when it answers; the hosted tier when a key is stored. Routes, in order:
+Sends one prompt to the first language model that is set up on this
+machine and returns the reply. Bring your own key, or run a model
+locally: nothing is sent anywhere you did not set up. In order:
 \enumerate{
-\item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL},
-with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them.
-An \code{https} address, or plain \code{http} to the loopback host or to a
+\item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL}
+(with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs
+them), e.g. LM Studio, vLLM, llama.cpp or a company gateway. An
+\code{https} address, or plain \code{http} to the loopback host or to a
 literal private LAN address (\code{10/8}, \code{172.16/12},
 \code{192.168/16}, \code{fc00::/7}: an LM Studio or vLLM box on your own
-network); a host name over plain http is refused;
-\item a local Ollama server: \code{OLLAMA_HOST} (or
-\code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
-\code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
-skips it. In the automatic order a server that answers but has no model
-pulled is skipped with a message naming the route taken instead, so a
-prompt never leaves the machine silently; \code{route = "ollama"} keeps
-it local and errors instead;
-\item the hosted MORIE tier, a last resort for people who can run neither:
-its address comes from \code{\link{bricklayer_services}} and it needs the
-key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
-Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
+network); a host name over plain http is refused. It is not probed, so a
+configured endpoint that is down is an error, not a silent hop elsewhere;
+\item a provider whose key is set (see
+\code{\link{bricklayer_llm_providers}}): OpenAI, Anthropic, Google
+Gemini, OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI,
+Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
+each through its own documented API with its own key variable
+(\code{ANTHROPIC_API_KEY}, \code{OPENAI_API_KEY}, ...);
+\item a local Ollama server: \code{OLLAMA_HOST} (default
+\code{http://localhost:11434}), model \code{OLLAMA_MODEL} or the first
+one pulled; \code{OLLAMA_HOST=off} skips it.
 }
-\code{\link{bricklayer_llm_status}} shows which route a question would take.
+\code{\link{bricklayer_llm_status}} shows what is set up and which route
+a question would take.
+}
+\details{
+With \code{docs = TRUE} (the default) the model knows the packages: its
+instructions carry an index of every exported function of
+rmoriebricklayer and rmoriedata (name, arguments, title, read from the
+help pages installed here), and it may call five read-only tools to
+search the help, read a page or its examples, list the datasets and read
+a vignette before it answers. A model that cannot call tools gets the
+help pages that best match the question (a BM25 search in R) instead.
+Nothing the model asks for is run: it answers with code for you to run.
 }
 \examples{
 \dontrun{
+Sys.setenv(ANTHROPIC_API_KEY = "...")   # your own key
 bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
 bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
 }

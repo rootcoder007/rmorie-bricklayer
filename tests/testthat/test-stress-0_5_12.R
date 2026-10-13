@@ -102,28 +102,27 @@ test_that("N6: the concentration index refuses coded incomes and negative exposu
   expect_error(pollution_burden_by_area(a), "must be numeric")
 })
 
-test_that("L1/L4: an empty local Ollama is skipped with a message in the automatic order; a bad route name errors", {
-  withr::local_envvar(MORIE_LLM_ROUTE = "", MORIE_LLM_BASE_URL = "", OLLAMA_HOST = "", OLLAMA_MODEL = "",
-                      MORIE_HOSTED_KEY = "")
+test_that("L1/L4: an empty local Ollama is no route in the automatic order; a bad route name errors", {
+  withr::local_envvar(MORIE_LLM_ROUTE = "", MORIE_LLM_BASE_URL = "", OLLAMA_HOST = "", OLLAMA_MODEL = "")
   testthat::local_mocked_bindings(
     .bl_own_base = function() NULL,
     .bl_ollama_base = function() "http://localhost:11434",
     .bl_ollama_tags = function(base, timeout = 2) character(0),
-    .bl_hosted_base = function() "https://llm.rmorie.com",
-    .bl_hosted_key = function() "k",
-    .bl_hosted_model = function() "m",
     .bl_config_value = function(env) NULL,
     .package = "rmoriebricklayer"
   )
-  expect_message(rt <- rmoriebricklayer:::.bl_llm_route(NULL), "no model pulled.*hosted MORIE tier")
-  expect_equal(rt$name, "hosted MORIE tier")
-  expect_message(rt2 <- rmoriebricklayer:::.bl_llm_route("auto"), "no model pulled")
-  expect_equal(rt2$name, "hosted MORIE tier")
+  expect_null(rmoriebricklayer:::.bl_llm_route(NULL))
+  expect_null(rmoriebricklayer:::.bl_llm_route("auto"))
   # insisting on Ollama keeps the prompt local: the empty server is taken, no message
   expect_silent(rt3 <- rmoriebricklayer:::.bl_llm_route("ollama"))
   expect_equal(rt3$name, "local Ollama")
+  # an own endpoint half set up is skipped out loud when a later route answers
+  withr::local_envvar(MORIE_LLM_MODEL = "m", MISTRAL_API_KEY = "mk")
+  expect_message(rt4 <- rmoriebricklayer:::.bl_llm_route(NULL), "no address .*; using Mistral")
+  expect_equal(rt4$name, "Mistral")
+  withr::local_envvar(MORIE_LLM_MODEL = NA, MISTRAL_API_KEY = NA)
   withr::local_envvar(MORIE_LLM_ROUTE = "ollma")
-  expect_error(rmoriebricklayer:::.bl_llm_route(NULL), "must be auto, own, ollama or hosted")
+  expect_error(rmoriebricklayer:::.bl_llm_route(NULL), "must be auto, own, ollama or a provider")
 })
 
 test_that("L2: a malformed llm.json is an error and never written over", {
@@ -134,7 +133,7 @@ test_that("L2: a malformed llm.json is an error and never written over", {
   # the review of 0.5.12: an unreadable settings file is an error every time, not a warning
   # once per change that then let the saved route be dropped
   expect_error(rmoriebricklayer:::.bl_read_config(), "not a JSON object")
-  expect_error(bricklayer_llm_config(route = "hosted"), "not a JSON object")
+  expect_error(bricklayer_llm_config(route = "ollama"), "not a JSON object")
   expect_identical(readLines(cfg), '{"route": "ollama",}')
 })
 

@@ -379,8 +379,10 @@ test_that("L3: a key saved for another hosted address is said once, and the summ
   rm(list = ls(rmoriebricklayer:::.bl_said_once), envir = rmoriebricklayer:::.bl_said_once)
   expect_message(expect_null(rmoriebricklayer:::.bl_hosted_key()), "issued for https://old.example.org/v1")
   expect_silent(expect_null(rmoriebricklayer:::.bl_hosted_key()))
-  expect_match(rmoriebricklayer:::.bl_no_route_message(), "stored key was issued for https://old.example.org/v1")
-  expect_false(grepl("no key stored", rmoriebricklayer:::.bl_no_route_message()))
+  out <- character()
+  rmoriebricklayer:::.bl_cli_doctor(function(x) out <<- c(out, x))
+  expect_true(any(grepl("data key: issued for https://old.example.org/v1, so not sent to https://llm.example.org/v1",
+                        out, fixed = TRUE)))
 })
 
 test_that("M2: validation needs a schema, a misspelt field is fatal, and expected_dtypes is checked", {

@@ -57,8 +57,11 @@ test_that("bricklayer_json_from_json fetches a URL through the same transport", 
   skip_if_not(online(), "no network")
   r <- tryCatch(bricklayer_json_from_json("https://rootcoder007.r-universe.dev/api/packages/rmoriebricklayer"),
                 error = function(e) e)
-  skip_if(inherits(r, "error") && grepl("answered HTTP 5", conditionMessage(r)), "r-universe is down")
-  expect_false(inherits(r, "error"))
+  why <- if (inherits(r, "error")) conditionMessage(r) else ""
+  # r-universe down, throttling (429), stalling or not answering in time is the third party, not the transport
+  skip_if(grepl("answered HTTP (5|429)|could not reach|timed? ?out|too slow", why),
+          paste("r-universe did not answer:", why))
+  expect_identical(why, "")
   expect_identical(r$Package, "rmoriebricklayer")
   expect_error(bricklayer_json_from_json("https://cloud.r-project.org/this-page-does-not-exist-rmbl.json"),
                "answered HTTP 404")

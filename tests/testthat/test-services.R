@@ -72,7 +72,6 @@ test_that("the bundled document verifies with the pinned key and names the hoste
   # and the hosted helpers read this document
   expect_identical(svc_ns(".bl_hosted_base")(), "https://llm.rmorie.com")
   expect_identical(svc_ns(".bl_hosted_auth")(), "https://llm.rmorie.com/auth")
-  expect_identical(svc_ns(".bl_hosted_model")(), "minimax-m3:cloud")
   expect_identical(svc_ns(".bl_data_url")(), "https://data.rmorie.com")
 })
 
@@ -98,13 +97,11 @@ test_that("a live document is verified, cached, and then served from the cache",
   # the hosted helpers follow the document, not the old constants
   expect_identical(svc_ns(".bl_hosted_base")(), "https://gw.example.org")
   expect_identical(svc_ns(".bl_hosted_auth")(), "https://gw.example.org/auth")
-  expect_identical(svc_ns(".bl_hosted_model")(), "test-model:cloud")
   expect_identical(svc_ns(".bl_data_url")(), "https://tables.example.org")
   # env overrides still win over the document
   withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "https://mine.example.org/",
                         MORIE_HOSTED_MODEL = "local:latest", MORIE_DATA_URL = "https://d.example.org"))
   expect_identical(svc_ns(".bl_hosted_base")(), "https://mine.example.org")
-  expect_identical(svc_ns(".bl_hosted_model")(), "local:latest")
   expect_identical(svc_ns(".bl_data_url")(), "https://d.example.org")
   withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "off"))
   expect_null(svc_ns(".bl_hosted_base")())
@@ -157,12 +154,9 @@ test_that("a document that does not verify is ignored at every step", {
     expect_identical(s$llm$mode, "off", info = nm)
     expect_false(file.exists(file.path(td, "morie-services.json")), info = nm)
   }
-  # with every service off the hosted helpers say so and nothing is called
+  # with every service off the data helpers say so and nothing is called
   expect_null(svc_ns(".bl_hosted_base")())
   expect_error(svc_ns(".bl_data_url")(), "not available right now.*rmorie.com/access")
-  expect_match(agent_bundle("x"), "hosted MORIE tier: disabled (switched off in the services document", fixed = TRUE)
-  expect_match(agent_bundle("x"), "rmorie.com/access")
-  expect_match(svc_ns(".bl_hosted_off_reason")(), "^switched off in the services document")
   # the fetch itself: a 404, a missing signature, an empty body
   for (pairs in list(list(), stats::setNames(list(doc), svc_url),
                      stats::setNames(list("", svc_sign(doc)), c(svc_url, svc_sig_url)))) {

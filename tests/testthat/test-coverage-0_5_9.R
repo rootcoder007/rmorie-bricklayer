@@ -180,11 +180,10 @@ test_that("sha256_file falls back to the pure-R digest when the compiled core is
   expect_equal(to_ascii("Prof. Ángela"), "Prof. Angela")
 })
 
-test_that("hosted auth and model fall back to the built-in defaults when the services document has none", {
+test_that("the sign-in address falls back to the built-in default when the services document has none", {
   withr::local_envvar(MORIE_HOSTED_AUTH_URL = "", MORIE_HOSTED_MODEL = "", MORIE_HOSTED_BASE_URL = "")
   local_mocked_bindings(.rmbl_services_llm = function() list())
   expect_match(.bl_hosted_auth(), "^https://.*/auth$")
-  expect_equal(.bl_hosted_model(), "minimax-m3:cloud")
   expect_error(.bl_login_email(""), "email address is required")
   expect_error(.bl_login_email("   "), "email address is required")
 })

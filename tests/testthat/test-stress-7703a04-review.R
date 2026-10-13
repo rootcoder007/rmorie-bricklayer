@@ -150,11 +150,13 @@ test_that("H1 and the attestation edges: edited HMAC signatures are FALSE; a mis
 
 test_that("L1, L2, L3, L5 residuals: Ollama by model is announced; wrong types are errors; keys follow addresses", {
   cf_env3()
-  withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", MORIE_HOSTED_KEY = "sk-h",
+  withr::local_envvar(c(OLLAMA_MODEL = "qwen3:8b", MORIE_LLM_MODEL = "m", OLLAMA_HOST = "http://127.0.0.1:18099",
                         MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
-  testthat::local_mocked_bindings(.bl_ollama_tags = function(base, timeout = 2) NULL, .package = "rmoriebricklayer")
-  expect_message(hit <- rmoriebricklayer:::.bl_llm_route(), "not answering")
-  expect_identical(hit$name, "hosted MORIE tier")
+  testthat::local_mocked_bindings(.bl_ollama_tags = function(base, timeout = 2) character(0),
+                                  .package = "rmoriebricklayer")
+  expect_message(hit <- rmoriebricklayer:::.bl_llm_route(), "no address .*; using the local Ollama")
+  expect_identical(hit$model, "qwen3:8b")
+  withr::local_envvar(c(MORIE_LLM_MODEL = NA))
   withr::local_envvar(c(OLLAMA_MODEL = NA))
   cfg <- rmoriebricklayer:::.bl_config_path()
   dir.create(dirname(cfg), recursive = TRUE, showWarnings = FALSE)

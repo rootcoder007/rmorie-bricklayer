@@ -19,16 +19,17 @@ The exit status, invisibly (0 on success).
 Dispatches the verbs of the \code{rmoriebricklayer} launcher:
 \describe{
 \item{\code{login [--token] [--email ADDRESS [--code CODE]]
-    [--no-browser]}}{sign in to the hosted MORIE tier (a last resort behind
-a local model or your own endpoint; keys are issued on request at
-\url{https://www.rmorie.com/access/}): a key you paste with \code{--token}
-(read from the terminal or a pipe when KEY is omitted), a code sent to
-\code{--email}, or the GitHub device flow}
-\item{\code{logout}}{forget the hosted key}
+    [--no-browser]}}{sign in for the curated tables at data.rmorie.com
+(a free MORIE data key, issued at \url{https://www.rmorie.com/access/}):
+a key you paste with \code{--token} (read from the terminal or a pipe
+when KEY is omitted), a code sent to \code{--email}, or the GitHub
+device flow}
+\item{\code{logout}}{forget the data key}
 \item{\code{doctor}}{report the language-model routes available here
-(own endpoint, local Ollama, hosted tier), in the order \code{ask} tries them}
-\item{\code{models}}{list the models the hosted tier offers your key
-(default marked)}
+(own endpoint, each provider with your key, local Ollama), in the
+order \code{ask} tries them}
+\item{\code{models [--route ROUTE]}}{list the models your provider (or
+server) offers, the one in use marked}
 \item{\code{data list}}{the curated tables at data.rmorie.com}
 \item{\code{data pull db/table}}{download one table as CSV}
 \item{\code{config [setup | set KEY VALUE | unset KEY | get KEY | help]}}{show

@@ -8,9 +8,11 @@ bricklayer_llm_status()
 }
 \value{
 A data frame with one row per route, in the order
-\code{\link{bricklayer_llm_ask}} tries them (own endpoint, local Ollama,
-hosted MORIE tier): \code{route}, \code{status} and \code{detail}.
-Printed by \code{rmoriebricklayer doctor}.
+\code{\link{bricklayer_llm_ask}} tries them (own endpoint, each provider
+whose key is set, local Ollama; the providers without a key share one
+row): \code{route}, \code{status} and \code{detail}. Nothing is sent to a
+provider; a local Ollama server is asked for its model list. Printed by
+\code{rmoriebricklayer doctor}.
 }
 \description{
 Report the language-model routes available from this machine

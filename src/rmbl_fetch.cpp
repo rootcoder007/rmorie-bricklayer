@@ -688,6 +688,10 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     curl_easy_setopt(h, CURLOPT_POSTFIELDSIZE,
                      static_cast<long>(bodylen));
     harden(h);
+    /* an API POST waits for its answer in silence (a language model thinks for minutes before the
+     * first byte of a reply that is not streamed): the stall guard for downloads would end it at
+     * 30 s, so here only the total timeout of the call bounds it */
+    curl_easy_setopt(h, CURLOPT_LOW_SPEED_TIME, 0L);
     curl_easy_setopt(h, CURLOPT_TIMEOUT, timeout_s);
     curl_easy_setopt(h, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(h, CURLOPT_NOSIGNAL, 1L);

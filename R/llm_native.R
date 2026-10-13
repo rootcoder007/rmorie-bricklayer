@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# Language-model routes, tried in this order: an OpenAI-compatible endpoint
-# of your own (MORIE_LLM_BASE_URL), a local Ollama server (OLLAMA_HOST,
-# default http://localhost:11434) and, last, the hosted MORIE tier. The
-# hosted tier's addresses come from the signed services document
-# (bricklayer_services()), never from a constant here, so they can move
-# without a package release; its key is personal, issued on request at
-# https://www.rmorie.com/access or minted by the GitHub / emailed-code sign-in,
-# and stored in a credentials file the other MORIE packages read as well.
-# Every request goes through the package's own libcurl binding.
+# Language models, bring your own key: an OpenAI-compatible endpoint of your own
+# (MORIE_LLM_BASE_URL), each provider whose key is set (R/llm_providers.R), and a
+# local Ollama server (OLLAMA_HOST, default http://localhost:11434). The hosted MORIE
+# language-model tier is retired. The MORIE key that remains is the data key for
+# data.rmorie.com: personal, issued on request at https://www.rmorie.com/access or
+# by the GitHub / emailed-code sign-in, stored in a credentials file the other MORIE
+# packages read as well; its sign-in addresses come from the signed services
+# document (bricklayer_services()). Every request goes through the package's own
+# libcurl binding.
 
 # $XDG_CONFIG_HOME/morie/credentials.json, the file the morie (Python)
 # and rmorie (R) packages read and write too, so one sign-in serves all.
@@ -247,7 +247,7 @@
     said <- paste(st$saved_for, st$now)
     if (!isTRUE(.bl_said_once[[said]])) {
       assign(said, TRUE, envir = .bl_said_once)
-      message(sprintf("the stored hosted key was issued for %s and is not sent to %s", st$saved_for, st$now))
+      message(sprintf("the stored data key was issued for %s and is not sent to %s", st$saved_for, st$now))
     }
     return(NULL)
   }
@@ -304,20 +304,7 @@
   if (nzchar(a)) a else paste0(.bl_hosted_base() %||% "https://llm.rmorie.com", "/auth")
 }
 
-.bl_hosted_model <- function() {
-  v <- .bl_env1("MORIE_HOSTED_MODEL")
-  if (!is.null(v)) return(v)
-  m <- .rmbl_services_llm()$default_model %||% ""
-  if (nzchar(m)) m else "minimax-m3:cloud"
-}
 
-# Why the hosted tier is off, for messages.
-.bl_hosted_off_reason <- function() {
-  if ("MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv())) return("MORIE_HOSTED_BASE_URL=off")
-  if (!is.null(.bl_config_value("MORIE_HOSTED_BASE_URL"))) return("hosted.url = off (rmbl config)")
-  notice <- bricklayer_services(offline = TRUE)$notice %||% ""
-  paste0("switched off in the services document", if (nzchar(notice)) paste0(": ", notice))
-}
 
 # How to get a key, in one line.
 .bl_access_hint <- function() {
@@ -326,13 +313,13 @@
           .rmbl_services_llm()$request_access %||% "https://www.rmorie.com/access", .bl_prog(), .bl_prog())
 }
 
-# The GET seam: the hosted tier's model list (a public https address, checked).
+# The GET seam for public https addresses (a provider model list, the data key check).
 .bl_http_get <- function(url, timeout, headers) {
   .rmbl_check_public_url(url, "url")
   .Call(C_rmbl_http_get, url, as.integer(timeout), headers, FALSE)
 }
 
-# ---- the routes in front of the hosted tier -----------------------------------
+# ---- your own endpoint and a local Ollama server ------------------------------
 #
 # An endpoint of your own and a local Ollama server are addresses from your own
 # environment, not from a document, so the anti-SSRF policy that guards every
@@ -405,8 +392,9 @@
   .Call(C_rmbl_http_post, url, body, content_type, as.integer(timeout), headers, .bl_loopback_url(url))
 }
 
-# The models a local Ollama server has (GET /api/tags): a character vector,
-# or NULL when nothing answers there.
+# The models a local Ollama server has (GET /api/tags): a character vector, or NULL when nothing
+# answers there. Attributes: `remote`, the models Ollama serves from its cloud (a remote_host:
+# minimax-m3:cloud, gpt-oss:120b-cloud), and `context`, the context length each one reports.
 .bl_ollama_tags <- function(base, timeout = 2) {
   key <- .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST")
   res <- tryCatch(.bl_http_get_local(paste0(base, "/api/tags"), timeout, .bl_bearer(key)),
@@ -414,73 +402,94 @@
   if (is.null(res) || !identical(as.integer(res$status), 200L)) return(NULL)
   parsed <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE),
                      error = function(e) NULL)
-  nm <- vapply(parsed$models %||% list(), function(m) as.character(m$name %||% m$model %||% "")[1L], "")
-  nm[nzchar(nm)]
+  ms <- parsed$models %||% list()
+  nm <- vapply(ms, function(m) as.character(m$name %||% m$model %||% "")[1L], "")
+  remote <- vapply(ms, function(m) nzchar(as.character(m$remote_host %||% "")[1L]), logical(1))
+  ctx <- vapply(ms, function(m) {
+    v <- suppressWarnings(as.numeric(m$details$context_length %||% m$context_length %||% NA)[1L])
+    if (is.finite(v)) v else NA_real_
+  }, 0)
+  keep <- nzchar(nm)
+  structure(nm[keep], remote = nm[keep & remote], context = stats::setNames(ctx[keep], nm[keep]))
 }
 
-# The route a question takes: list(name, base, key, model, local), or NULL
-# when nothing answers. `route` forces one of "own", "ollama", "hosted".
+# The routes a question can take, in the automatic order: an endpoint of your own when one is
+# configured, then every provider whose key is set (in the order of .bl_llm_presets()), then a
+# local Ollama server when it answers with a model. Bring your own key: the hosted MORIE tier
+# is retired, and no prompt goes anywhere you did not set up.
+.bl_llm_route_names <- function() c("own", .bl_llm_presets()$id, "ollama")
+
+.bl_hosted_retired <- function() {
+  sprintf(paste("the hosted MORIE language-model tier is retired: bring your own key (a provider's",
+                "variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `%s config set <provider>.key`)",
+                "or run a model locally (Ollama); `%s config setup` walks through it"), .bl_prog(), .bl_prog())
+}
+
+# The route a question takes: list(name, api, base, key, model, local, ...), or NULL when nothing
+# is set up. `route` forces one: "own", "ollama" or a provider id ("anthropic", "openai", ...).
 .bl_llm_route <- function(route = NULL, probe_timeout = 2) {
   if (identical(route, "auto")) {
-    # asked for the automatic order this time, whatever is saved
     route <- NULL
   } else if (is.null(route)) {
-    # a route saved with `rmbl config set route ...` (or MORIE_LLM_ROUTE)
     saved <- tolower(.bl_env1("MORIE_LLM_ROUTE") %||% "auto")
-    if (!saved %in% c("auto", "own", "ollama", "hosted")) {
-      stop(sprintf("MORIE_LLM_ROUTE (or the saved route) must be auto, own, ollama or hosted, not '%s'", saved),
+    if (identical(saved, "hosted")) {
+      # a route saved before the hosted tier was retired: said once, then the automatic order
+      if (!isTRUE(.bl_said_once[["hosted-retired"]])) {
+        assign("hosted-retired", TRUE, envir = .bl_said_once)
+        message(paste0(.bl_hosted_retired(), "; the saved route `hosted` is ignored"))
+      }
+      saved <- "auto"
+    }
+    if (!saved %in% c("auto", .bl_llm_route_names())) {
+      stop(sprintf("MORIE_LLM_ROUTE (or the saved route) must be auto, own, ollama or a provider (%s), not '%s'",
+                   paste(.bl_llm_presets()$id, collapse = ", "), saved), call. = FALSE)
+    }
+    if (!identical(saved, "auto")) route <- saved
+  }
+  if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+  presets <- .bl_llm_presets()$id
+  skipped <- character()
+  for (r in route %||% .bl_llm_route_names()) {
+    hit <- if (identical(r, "own")) {
+      base <- .bl_own_base()
+      if (!is.null(base)) {
+        list(name = "own endpoint", api = "openai", base = base,
+             key = .bl_key_for("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"),
+             model = .bl_env1("MORIE_LLM_MODEL"), local = .bl_loopback_url(base))
+      } else {
+        if (.bl_own_configured()) {
+          skipped <- c(skipped, "own endpoint: a model or key is set but no address (MORIE_LLM_BASE_URL or own.url)")
+        }
+        NULL
+      }
+    } else if (identical(r, "ollama")) {
+      base <- .bl_ollama_base()
+      tags <- if (!is.null(base)) .bl_ollama_tags(base, probe_timeout)
+      usable <- length(tags) > 0L || !is.null(.bl_env1("OLLAMA_MODEL")) || identical(route, "ollama")
+      if (!is.null(tags) && !usable) skipped <- c(skipped, sprintf("local Ollama at %s has no model pulled", base))
+      if (!is.null(base) && is.null(tags) && .bl_ollama_configured()) {
+        skipped <- c(skipped, sprintf("local Ollama at %s is not answering", base))
+      }
+      if (!is.null(tags) && usable) {
+        list(name = "local Ollama", api = "openai", base = base, key = .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST"),
+             model = .bl_env1("OLLAMA_MODEL") %||% (if (length(tags)) tags[[1L]]),
+             local = .bl_loopback_url(base), models = as.character(tags), remote = attr(tags, "remote"),
+             context = attr(tags, "context"))
+      }
+    } else if (r %in% presets) {
+      rt <- .bl_provider_route(r)
+      if (is.null(rt) && identical(route, r)) {
+        pr <- .bl_preset(r)
+        stop(sprintf("no key for %s: set %s, or `%s config set %s.key` (it asks for the key)", pr$label,
+                     pr$key_env, .bl_prog(), r), call. = FALSE)
+      }
+      rt
+    } else {
+      stop(sprintf("unknown route '%s' (own, ollama or a provider: %s)", r, paste(presets, collapse = ", ")),
            call. = FALSE)
     }
-    if (saved %in% c("own", "ollama", "hosted")) route <- saved
-  }
-  skipped <- character()
-  for (r in route %||% c("own", "ollama", "hosted")) {
-    hit <- switch(r,
-      own = {
-        base <- .bl_own_base()
-        if (!is.null(base)) {
-          list(name = "own endpoint", base = base, key = .bl_key_for("MORIE_LLM_API_KEY", "MORIE_LLM_BASE_URL"),
-               model = .bl_env1("MORIE_LLM_MODEL"), local = .bl_loopback_url(base))
-        } else {
-          if (.bl_own_configured()) {
-            skipped <- c(skipped, "own endpoint: a model or key is set but no address (MORIE_LLM_BASE_URL or own.url)")
-          }
-          NULL
-        }
-      },
-      ollama = {
-        base <- .bl_ollama_base()
-        tags <- if (!is.null(base)) .bl_ollama_tags(base, probe_timeout)
-        # a server with nothing pulled cannot answer: when picking the route
-        # (not forced), fall through to the hosted tier instead of stopping here
-        usable <- length(tags) > 0L || !is.null(.bl_env1("OLLAMA_MODEL")) || identical(route, "ollama")
-        if (!is.null(tags) && !usable) {
-          skipped <- c(skipped, sprintf("local Ollama at %s has no model pulled", base))
-        }
-        # a configured server that does not answer is skipped out loud too: the prompt is about
-        # to leave the machine, and "a prompt never leaves silently" has to hold for a dead
-        # server as much as for an empty one
-        if (!is.null(base) && is.null(tags) && .bl_ollama_configured()) {
-          skipped <- c(skipped, sprintf("local Ollama at %s is not answering", base))
-        }
-        if (!is.null(tags) && usable) {
-          list(name = "local Ollama", base = base, key = .bl_key_for("OLLAMA_API_KEY", "OLLAMA_HOST"),
-               model = .bl_env1("OLLAMA_MODEL") %||% (if (length(tags)) tags[[1L]]),
-               local = .bl_loopback_url(base), models = tags)
-        }
-      },
-      hosted = {
-        base <- .bl_hosted_base()
-        key <- .bl_hosted_key()
-        if (!is.null(base) && !is.null(key)) {
-          list(name = "hosted MORIE tier", base = base, key = key, model = .bl_hosted_model(), local = FALSE)
-        }
-      },
-      stop(sprintf("unknown route '%s' (own, ollama or hosted)", r), call. = FALSE)
-    )
     if (!is.null(hit)) {
-      # a prompt that leaves the machine because a local server was skipped is said out loud
-      if (length(skipped)) message(sprintf("%s; using the %s", paste(skipped, collapse = "; "), hit$name))
+      if (length(skipped)) message(sprintf("%s; using %s", paste(skipped, collapse = "; "), .bl_route_what(hit)))
       return(hit)
     }
   }
@@ -504,74 +513,89 @@
 
 # What to set up, when no route (or the one asked for) answers.
 .bl_no_route_message <- function(route = NULL) {
-  hosted <- .bl_hosted_base()
-  hosted_line <- if (is.null(hosted)) {
-    sprintf("hosted MORIE tier: disabled (%s); %s", .bl_hosted_off_reason(), .bl_access_hint())
-  } else {
-    st <- .bl_hosted_key_state()
-    if (identical(st$state, "other_address")) {
-      sprintf("hosted MORIE tier: the stored key was issued for %s and is not sent to %s; log in again for it",
-              st$saved_for, st$now)
-    } else {
-      sprintf("hosted MORIE tier: no key stored; %s", .bl_access_hint())
-    }
-  }
+  prog <- .bl_prog()
   ollama <- .bl_ollama_base()
   ollama_line <- if (is.null(ollama)) {
     "local Ollama: OLLAMA_HOST=off"
+  } else if (is.null(.bl_ollama_tags(ollama))) {
+    sprintf(paste("local Ollama: nothing answers at %s (install Ollama from https://ollama.com and pull a model,",
+                  "or `%s config set ollama.url ADDRESS`)"), ollama, prog)
   } else {
-    if (is.null(.bl_ollama_tags(ollama))) {
-      sprintf(paste("local Ollama: nothing answers at %s (install Ollama and pull a model,",
-                    "or `%s config set ollama.url ADDRESS`)"), ollama, .bl_prog())
-    } else {
-      sprintf("local Ollama: no model pulled at %s (`ollama pull NAME`)", ollama)
-    }
+    sprintf("local Ollama: no model pulled at %s (`ollama pull NAME`)", ollama)
   }
-  own_line <- sprintf(paste("own endpoint: `%s config set own.url URL` (and own.model, own.key)",
-                            "for any OpenAI-compatible server"), .bl_prog())
-  lines <- switch(route %||% "any",
-    own = own_line, ollama = ollama_line, hosted = hosted_line,
-    c(own_line, ollama_line, hosted_line))
-  paste(c("No language-model route is set up on this machine:", paste0("  ", lines),
-          sprintf("`%s config setup` walks through every setting.", .bl_prog())), collapse = "\n")
+  ps <- .bl_llm_presets()
+  key_line <- sprintf(paste("a provider's key: set its variable (%s, ...) or `%s config set PROVIDER.key`;",
+                            "providers: %s"), paste(utils::head(ps$key_env, 4L), collapse = ", "), prog,
+                      paste(ps$id, collapse = ", "))
+  own_line <- sprintf(paste("own endpoint: `%s config set own.url URL` (and own.model, own.key) for any",
+                            "OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a company gateway)"), prog)
+  lines <- switch(route %||% "any", own = own_line, ollama = ollama_line, c(key_line, ollama_line, own_line))
+  paste(c("No language-model route is set up on this machine: bring your own key, or run a model locally:",
+          paste0("  ", lines), sprintf("`%s config setup` walks through it.", prog)), collapse = "\n")
 }
 
-#' Models offered by the hosted MORIE LLM tier
+# What to do when a route has no model to use.
+.bl_no_model_message <- function(rt) {
+  prog <- .bl_prog()
+  have <- tryCatch(.bl_llm_list_models(rt), error = function(e) NULL)
+  shown <- if (length(have)) sprintf(" (it offers: %s%s)", paste(utils::head(have, 8L), collapse = ", "),
+                                     if (length(have) > 8L) sprintf(", ... %d in all: `%s models`", length(have), prog)
+                                     else "") else ""
+  how <- if (identical(rt$name, "own endpoint")) {
+    sprintf("`%s config set own.model NAME`", prog)
+  } else if (identical(rt$name, "local Ollama")) {
+    sprintf("pull one (`ollama pull NAME`) or `%s config set ollama.model NAME`", prog)
+  } else {
+    sprintf("`%s config set %s.model NAME`, or --model NAME for one call", prog, rt$id)
+  }
+  sprintf("%s has no model to use%s: %s", .bl_route_what(rt), shown, how)
+}
+
+#' Models a language-model route offers
 #'
-#' Asks the gateway (\code{GET /v1/models}) which models the stored key may
-#' use, through the package's own libcurl binding.
+#' Asks the provider (or your own server, or Ollama) which models your key
+#' can use, through the package's own libcurl binding.
 #'
-#' @param timeout Seconds to wait for the gateway.
-#' @return A character vector of model names, empty when the tier is disabled,
-#'   no key is stored, or the gateway does not answer, with attribute
-#'   \code{"default"}: the model \code{bricklayer_llm_ask()} uses when none
-#'   is named (the configured one when offered, else the first listed).
+#' @param route \code{NULL} (the route \code{\link{bricklayer_llm_ask}}
+#'   would take) or a route name: \code{"own"}, \code{"ollama"} or a
+#'   provider id (see \code{\link{bricklayer_llm_providers}}).
+#' @param timeout Seconds to wait for the answer.
+#' @return A character vector of model names, empty when no route is set up
+#'   or the provider does not list its models, with attributes
+#'   \code{"default"} (the model \code{bricklayer_llm_ask()} uses when none
+#'   is named) and \code{"route"}.
 #' @examples
 #' \donttest{
 #' m <- bricklayer_llm_models()
 #' attr(m, "default")
 #' }
 #' @export
-bricklayer_llm_models <- function(timeout = 10) {
+bricklayer_llm_models <- function(route = NULL, timeout = 15) {
   timeout <- .rmbl_num(timeout, "timeout")
-  base <- .bl_hosted_base()
-  key <- .bl_hosted_key()
-  if (is.null(base) || is.null(key)) {
-    return(structure(character(), default = NULL, http_status = NA_integer_))
-  }
-  res <- .bl_models_reply(base, key, timeout)
-  if (is.null(res) || !identical(as.integer(res$status), 200L)) {
-    # http_status says why the list is empty: 401/403 a rejected key, NA no answer at all
-    return(structure(character(), default = NULL,
-                     http_status = if (is.null(res)) NA_integer_ else as.integer(res$status)))
-  }
-  parsed <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE),
-    error = function(e) NULL
-  )
-  ids <- vapply(parsed$data %||% list(), function(m) as.character(m$id %||% ""), "")
-  ids <- ids[nzchar(ids)]
-  wanted <- .bl_hosted_model()
-  structure(ids, default = if (length(ids) && !wanted %in% ids) ids[[1L]] else wanted)
+  rt <- .bl_llm_route(route)
+  if (is.null(rt)) return(structure(character(), default = NULL, route = NULL))
+  ids <- .bl_llm_list_models(rt, timeout) %||% character()
+  structure(ids, default = rt$model, route = rt$name)
+}
+
+#' The language-model providers a key can be brought for
+#'
+#' Every provider \code{\link{bricklayer_llm_ask}} can reach with your own
+#' key, with the environment variable that holds it, the address it is sent
+#' to and the wire format used. Nothing is contacted.
+#'
+#' @return A data frame: \code{id} (the route name), \code{label},
+#'   \code{key_env} (and \code{alt_env}), \code{base}, \code{api}
+#'   (\code{"openai"}, \code{"anthropic"} or \code{"gemini"}),
+#'   \code{default_model} and \code{key_set} (whether a key is set here).
+#' @examples
+#' bricklayer_llm_providers()[, c("id", "key_env", "key_set")]
+#' @export
+bricklayer_llm_providers <- function() {
+  ps <- .bl_llm_presets()
+  ps$key_set <- vapply(ps$id, function(i) !is.null(.bl_preset_key(i)), logical(1), USE.NAMES = FALSE)
+  ps$models <- NULL
+  ps
 }
 
 # GET /v1/models with a key: the reply, or NULL when the gateway did not answer.
@@ -598,13 +622,6 @@ bricklayer_llm_models <- function(timeout = 10) {
   invisible(TRUE)
 }
 
-# One line for a key the gateway refused, or for a gateway that did not answer.
-.bl_key_state <- function(models) {
-  st <- attr(models, "http_status")
-  if (length(models)) return("ok")
-  if (isTRUE(st %in% c(401L, 403L))) return("rejected")
-  "unreachable"
-}
 
 # One seam for the HTTP layer so tests can stand in canned replies.
 .bl_http_post <- function(url, body, content_type, timeout, headers) {
@@ -647,10 +664,9 @@ bricklayer_llm_models <- function(timeout = 10) {
     why <- if (nzchar(res$error %||% "")) res$error else "no network, or a proxy refused the connection"
     stop(sprintf("could not reach %s (%s)", what, why), call. = FALSE)
   }
-  if (identical(what, "the hosted MORIE LLM tier") && isTRUE(res$status %in% c(401L, 403L))) {
-    stop(sprintf(paste("the hosted MORIE LLM tier rejected your key (HTTP %d):",
-                       "run `%s login` again, or `%s login --token` and paste the key"),
-                 res$status, .bl_prog(), .bl_prog()), call. = FALSE)
+  if (!is.null(secret) && isTRUE(res$status %in% c(401L, 403L))) {
+    stop(sprintf("%s rejected your key (HTTP %d): check it (`%s config` shows which key is used, never its value)",
+                 what, res$status, .bl_prog()), call. = FALSE)
   }
   msg <- res$json$error
   if (is.list(msg)) msg <- msg$message
@@ -686,120 +702,98 @@ bricklayer_llm_models <- function(timeout = 10) {
 
 #' Ask a language model
 #'
-#' Sends one prompt to the first language-model route that is set up on
-#' this machine and returns the reply. An endpoint of your own counts as set
-#' up when it is configured (it is not probed: a configured endpoint that is
-#' down is an error, not a silent hop to the hosted tier); a local Ollama
-#' counts when it answers; the hosted tier when a key is stored. Routes, in order:
+#' Sends one prompt to the first language model that is set up on this
+#' machine and returns the reply. Bring your own key, or run a model
+#' locally: nothing is sent anywhere you did not set up. In order:
 #' \enumerate{
-#'   \item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL},
-#'     with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs them.
-#'     An \code{https} address, or plain \code{http} to the loopback host or to a
+#'   \item an OpenAI-compatible endpoint of your own: \code{MORIE_LLM_BASE_URL}
+#'     (with \code{MORIE_LLM_API_KEY} and \code{MORIE_LLM_MODEL} when it needs
+#'     them), e.g. LM Studio, vLLM, llama.cpp or a company gateway. An
+#'     \code{https} address, or plain \code{http} to the loopback host or to a
 #'     literal private LAN address (\code{10/8}, \code{172.16/12},
 #'     \code{192.168/16}, \code{fc00::/7}: an LM Studio or vLLM box on your own
-#'     network); a host name over plain http is refused;
-#'   \item a local Ollama server: \code{OLLAMA_HOST} (or
-#'     \code{OLLAMA_BASE_URL}), default \code{http://localhost:11434}, model
-#'     \code{OLLAMA_MODEL} or the first one the server lists; \code{OLLAMA_HOST=off}
-#'     skips it. In the automatic order a server that answers but has no model
-#'     pulled is skipped with a message naming the route taken instead, so a
-#'     prompt never leaves the machine silently; \code{route = "ollama"} keeps
-#'     it local and errors instead;
-#'   \item the hosted MORIE tier, a last resort for people who can run neither:
-#'     its address comes from \code{\link{bricklayer_services}} and it needs the
-#'     key stored by \code{\link{bricklayer_llm_login}} (or \code{MORIE_HOSTED_KEY}).
-#'     Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
+#'     network); a host name over plain http is refused. It is not probed, so a
+#'     configured endpoint that is down is an error, not a silent hop elsewhere;
+#'   \item a provider whose key is set (see
+#'     \code{\link{bricklayer_llm_providers}}): OpenAI, Anthropic, Google
+#'     Gemini, OpenRouter, Groq, Together, Fireworks, DeepSeek, Mistral, xAI,
+#'     Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
+#'     each through its own documented API with its own key variable
+#'     (\code{ANTHROPIC_API_KEY}, \code{OPENAI_API_KEY}, ...);
+#'   \item a local Ollama server: \code{OLLAMA_HOST} (default
+#'     \code{http://localhost:11434}), model \code{OLLAMA_MODEL} or the first
+#'     one pulled; \code{OLLAMA_HOST=off} skips it.
 #' }
-#' \code{\link{bricklayer_llm_status}} shows which route a question would take.
+#' \code{\link{bricklayer_llm_status}} shows what is set up and which route
+#' a question would take.
 #'
+#' With \code{docs = TRUE} (the default) the model knows the packages: its
+#' instructions carry an index of every exported function of
+#' rmoriebricklayer and rmoriedata (name, arguments, title, read from the
+#' help pages installed here), and it may call five read-only tools to
+#' search the help, read a page or its examples, list the datasets and read
+#' a vignette before it answers. A model that cannot call tools gets the
+#' help pages that best match the question (a BM25 search in R) instead.
+#' Nothing the model asks for is run: it answers with code for you to run.
+#
 #' @param prompt Character scalar.
 #' @param model Model id; default the route's own (see above).
 #' @param timeout Seconds to wait for the reply.
 #' @param system_prompt Optional system message.
 #' @param route \code{NULL} (the saved route, else the first that is set up),
-#'   \code{"auto"} (the automatic order this time, ignoring a saved route) or
-#'   one of \code{"own"}, \code{"ollama"}, \code{"hosted"} to insist on a route.
+#'   \code{"auto"} (the automatic order this time, ignoring a saved route),
+#'   or \code{"own"}, \code{"ollama"} or a provider id to insist on one.
+#' @param docs Give the model the packages' help (see Details);
+#'   \code{FALSE} sends the prompt alone.
+#' @param packages The installed packages whose help the model gets; default
+#'   rmoriebricklayer and rmoriedata (those installed). Add \code{"rmorie"}
+#'   to let it search that package's help too.
 #' @return Character scalar with the reply. Errors, saying what to set up,
 #'   when no route answers, and when the server answers with an error.
 #' @examples
 #' \dontrun{
+#' Sys.setenv(ANTHROPIC_API_KEY = "...")   # your own key
 #' bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
 #' bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
 #' }
 #' @export
 bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
-                               system_prompt = NULL, route = NULL) {
+                               system_prompt = NULL, route = NULL, docs = TRUE, packages = NULL) {
   prompt <- .rmbl_string1(prompt, "prompt")
-  if (!is.null(route)) route <- match.arg(route, c("own", "ollama", "hosted", "auto"))
+  if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
-  what <- if (identical(rt$name, "hosted MORIE tier")) "the hosted MORIE LLM tier" else paste("the", rt$name)
-  asked_model <- model
   model <- model %||% rt$model
-  if (is.null(model) || !nzchar(model)) {
-    own <- identical(rt$name, "own endpoint")
-    stop(sprintf("%s has no model to use: %s, or `%s config set route hosted` to use the hosted tier", rt$name,
-                 if (own) sprintf("`%s config set own.model NAME`", .bl_prog())
-                 else sprintf("pull one (`ollama pull NAME`) or `%s config set ollama.model NAME`", .bl_prog()),
-                 .bl_prog()), call. = FALSE)
+  if (is.null(model) || !nzchar(model)) stop(.bl_no_model_message(rt), call. = FALSE)
+  .bl_check_flag(docs, "docs")
+  if (docs) {
+    pk <- packages %||% .bl_kn_default_packages()
+    if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`packages` must name installed packages", call. = FALSE)
+    missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
+    if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
+    return(.bl_llm_assist(rt, model, prompt, pk, system_extra = system_prompt, timeout = timeout))
   }
   msgs <- list()
-  if (!is.null(system_prompt)) {
-    msgs[[length(msgs) + 1L]] <- list(role = "system", content = system_prompt)
-  }
+  if (!is.null(system_prompt)) msgs[[1L]] <- list(role = "system", content = system_prompt)
   msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
-  ask <- function() {
-    .bl_post_json(paste0(rt$base, "/v1/chat/completions"),
-      list(
-        model = model,
-        messages = msgs,
-        # reasoning models think first: without room the answer comes back empty
-        max_tokens = 4096L
-      ),
-      timeout = timeout,
-      headers = .bl_bearer(rt$key),
-      local = isTRUE(rt$local)
-    )
-  }
-  res <- ask()
-  if (!isTRUE(res$status > 0L)) {
-    Sys.sleep(1)  # one retry: a dropped connection is often momentary
-    res <- ask()
-  }
-  if (res$status != 200L) {
-    if (identical(rt$name, "hosted MORIE tier") && !is.null(asked_model) && isTRUE(res$status %in% c(401L, 403L))) {
-      # the gateway answers 403 for a model the key does not have: say that, not "log in again"
-      have <- tryCatch(bricklayer_llm_models(), error = function(e) character())
-      if (length(have) && !asked_model %in% have) {
-        stop(sprintf("the hosted tier has no model '%s' (`%s models` lists the %d it has)",
-                     asked_model, .bl_prog(), length(have)), call. = FALSE)
-      }
-    }
-    .bl_reply_error(res, what, secret = rt$key)
-  }
-  txt <- res$json$choices[[1L]]$message$content
-  if (!is.character(txt) || !length(txt) || !any(nzchar(txt))) {
-    why <- res$json$choices[[1L]]$finish_reason %||% ""
-    stop(paste0(what, " returned no text",
-                if (nzchar(why)) sprintf(" (finish_reason: %s; try again, or another model with --model)", why)),
-         call. = FALSE)
-  }
-  paste(txt, collapse = "\n")
+  .bl_llm_chat(rt, model, msgs, timeout = timeout)$text
 }
 
-#' Sign in to the hosted MORIE language model
+#' Sign in for the curated tables at data.rmorie.com
 #'
-#' Stores a personal key for the hosted MORIE tier in
+#' Stores your personal MORIE data key in
 #' \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
 #' the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
-#' so one sign-in serves all of them). The tier is a last resort behind a
-#' local model or your own endpoint (see \code{\link{bricklayer_llm_ask}});
-#' keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
+#' so one sign-in serves all of them). The key opens the curated tables
+#' (\code{\link{bricklayer_data_load}}); it is not used for language models,
+#' which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
+#' Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
 #' The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an
-#'     email. It is checked with the gateway first and stored only when
-#'     the gateway accepts it; a refused key, or no answer, stores nothing.
+#'     email. It is checked with the service first and stored only when
+#'     it is accepted; a refused key, or no answer, stores nothing.
 #'   \item \code{email}: a 6-digit code is sent to the address (valid
 #'     ten minutes, single use); you type it, or pass \code{code}.
 #'   \item neither: the GitHub device flow; a code is shown to enter at
@@ -917,7 +911,7 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
   stop("timed out waiting for the GitHub approval", call. = FALSE)
 }
 
-#' Forget the hosted MORIE language-model key
+#' Forget the MORIE data key
 #'
 #' Removes the key from the shared credentials file (and the file itself
 #' when nothing else is stored in it).
@@ -947,9 +941,9 @@ bricklayer_llm_logout <- function() {
     if (length(left)) .bl_write_private_text(p, txt) else unlink(p)
   }
   message(if (had) {
-    "Logged out of the hosted MORIE LLM tier."
+    "Logged out: the MORIE data key was removed."
   } else {
-    "No hosted key was stored."
+    "No MORIE data key was stored."
   })
   invisible(had)
 }
@@ -957,9 +951,11 @@ bricklayer_llm_logout <- function() {
 #' Report the language-model routes available from this machine
 #'
 #' @return A data frame with one row per route, in the order
-#'   \code{\link{bricklayer_llm_ask}} tries them (own endpoint, local Ollama,
-#'   hosted MORIE tier): \code{route}, \code{status} and \code{detail}.
-#'   Printed by \code{rmoriebricklayer doctor}.
+#'   \code{\link{bricklayer_llm_ask}} tries them (own endpoint, each provider
+#'   whose key is set, local Ollama; the providers without a key share one
+#'   row): \code{route}, \code{status} and \code{detail}. Nothing is sent to a
+#'   provider; a local Ollama server is asked for its model list. Printed by
+#'   \code{rmoriebricklayer doctor}.
 #' @examples
 #' # with the local route off the call reaches no network
 #' old <- Sys.getenv("OLLAMA_HOST", unset = NA)
@@ -979,15 +975,29 @@ bricklayer_llm_status <- function() {
                       stringsAsFactors = FALSE))
   }
   own <- .bl_own_base()
-  own_row <- if (is.null(own)) {
+  rows <- list(if (is.null(own)) {
     c("own endpoint", "not set",
       "MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server")
   } else {
-    c("own endpoint", "configured",
-      sprintf("%s  model: %s", own, .bl_env1("MORIE_LLM_MODEL") %||% "(the server's first)"))
+    c("own endpoint", "configured", sprintf("%s  model: %s", own, .bl_env1("MORIE_LLM_MODEL") %||% "(not chosen)"))
+  })
+  ps <- .bl_llm_presets()
+  without <- character()
+  for (i in seq_len(nrow(ps))) {
+    rt <- .bl_provider_route(ps$id[i])
+    if (is.null(rt)) {
+      without <- c(without, sprintf("%s (%s)", ps$id[i], ps$key_env[i]))
+    } else {
+      rows[[length(rows) + 1L]] <- c(ps$label[i], "key set",
+        sprintf("%s  model: %s", ps$base[i], rt$model %||% sprintf("(not chosen: `%s models --route %s`)",
+                                                                    .bl_prog(), ps$id[i])))
+    }
+  }
+  if (length(without)) {
+    rows[[length(rows) + 1L]] <- c("other providers", "no key", paste(without, collapse = ", "))
   }
   ob <- .bl_ollama_base()
-  ollama_row <- if (is.null(ob)) {
+  rows[[length(rows) + 1L]] <- if (is.null(ob)) {
     c("local Ollama", "disabled", "OLLAMA_HOST=off")
   } else {
     tags <- .bl_ollama_tags(ob)
@@ -997,34 +1007,10 @@ bricklayer_llm_status <- function() {
     } else if (!length(tags)) {
       c("local Ollama", "no models", sprintf("%s (`ollama pull NAME`)", ob))
     } else {
-      c("local Ollama", "available",
-        sprintf("%s  models: %s (default %s)", ob, paste(tags, collapse = ", "),
-                .bl_env1("OLLAMA_MODEL") %||% tags[[1L]]))
+      c("local Ollama", "available", sprintf("%s  models: %s (default %s)", ob, paste(tags, collapse = ", "),
+                                             .bl_env1("OLLAMA_MODEL") %||% tags[[1L]]))
     }
   }
-  base <- .bl_hosted_base()
-  key <- .bl_hosted_key()
-  kst <- .bl_hosted_key_state()
-  hosted_row <- if (is.null(base)) {
-    c("hosted MORIE tier", "disabled", .bl_hosted_off_reason())
-  } else if (identical(kst$state, "other_address")) {
-    # a key is stored, for another address: "not logged in" sent people to log in again for nothing
-    # (review of e57fed5, the L3 leftover)
-    c("hosted MORIE tier", "key for another address",
-      sprintf("%s  (the stored key was issued for %s and is not sent here)", base, kst$saved_for))
-  } else if (is.null(key)) {
-    c("hosted MORIE tier", "not logged in", sprintf("%s  (%s)", base, .bl_access_hint()))
-  } else {
-    hm <- bricklayer_llm_models()
-    c("hosted MORIE tier", "key stored", switch(.bl_key_state(hm),
-      ok = sprintf("%s  models: %s (default %s)", base, paste(hm, collapse = ", "), attr(hm, "default")),
-      rejected = sprintf(paste("%s  (key rejected by the gateway -- run `%s login` again,",
-                               "or `%s login --token` and paste the key)"),
-                         base, .bl_prog(), .bl_prog()),
-      sprintf("%s  (gateway not reachable)", base)
-    ))
-  }
-  m <- rbind(own_row, ollama_row, hosted_row)
-  data.frame(route = unname(m[, 1L]), status = unname(m[, 2L]), detail = unname(m[, 3L]),
-             stringsAsFactors = FALSE)
+  m <- do.call(rbind, rows)
+  data.frame(route = unname(m[, 1L]), status = unname(m[, 2L]), detail = unname(m[, 3L]), stringsAsFactors = FALSE)
 }

@@ -458,12 +458,15 @@ test_that("section 1 leftovers: an unreadable settings file has a recovery path 
 })
 
 test_that("section 1 leftovers: verbs that take no arguments refuse extras; Ctrl-C exits 130", {
-  for (v in c("logout", "doctor", "models", "version")) {
+  for (v in c("logout", "doctor", "version")) {
     out <- character()
     s <- bricklayer_cli(c(v, "extra"), out = function(x) out <<- c(out, x))
     expect_identical(s, 2L, info = v)
     expect_true(any(grepl("takes no arguments", out)), info = v)
   }
+  out <- character()
+  expect_identical(bricklayer_cli(c("models", "extra"), out = function(x) out <<- c(out, x)), 2L)
+  expect_true(any(grepl("usage: .* models \\[--route ROUTE\\]", out)))
   testthat::local_mocked_bindings(bricklayer_llm_logout = function() {
     stop(structure(class = c("interrupt", "condition"), list(message = "", call = NULL)))
   })

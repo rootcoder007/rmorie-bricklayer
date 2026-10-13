@@ -1,6 +1,6 @@
-# The language-model routes in front of the hosted tier (an endpoint of your
-# own, a local Ollama server), the order they are tried in, and the one precise
-# relaxation of the URL policy they need: plain http on the loopback host.
+# The language-model routes (an endpoint of your own, a provider's key, a local
+# Ollama server), the order they are tried in, and the one precise relaxation of
+# the URL policy they need: plain http on the loopback host.
 
 rt_env <- function(env = parent.frame()) {
   withr::local_envvar(c(MORIE_LLM_BASE_URL = NA, MORIE_LLM_API_KEY = NA, MORIE_LLM_MODEL = NA,
@@ -60,7 +60,7 @@ test_that("an endpoint of your own is the first route, with its key and model", 
   expect_identical(seen$seam, "public")
   withr::local_envvar(c(MORIE_LLM_BASE_URL = "https://api.example.org/v1/"))
   st <- bricklayer_llm_status()
-  expect_identical(st$route, c("own endpoint", "local Ollama", "hosted MORIE tier"))
+  expect_identical(st$route, c("own endpoint", "other providers", "local Ollama"))
   expect_identical(st$status[1], "configured")
   expect_match(st$detail[1], "https://api.example.org  model: my-model", fixed = TRUE)
   # no key configured: no Authorization header at all
@@ -70,14 +70,14 @@ test_that("an endpoint of your own is the first route, with its key and model", 
   # no model: said plainly
   withr::local_envvar(c(MORIE_LLM_MODEL = NA))
   expect_error(bricklayer_llm_ask("hi"), "own endpoint has no model to use")
-  expect_match(bricklayer_llm_status()$detail[1], "(the server's first)", fixed = TRUE)
+  expect_match(bricklayer_llm_status()$detail[1], "(not chosen)", fixed = TRUE)
   withr::local_envvar(c(MORIE_LLM_BASE_URL = "ftp://x"))
   expect_error(bricklayer_llm_ask("hi"), "must be an http(s):// URL", fixed = TRUE)
   withr::local_envvar(c(MORIE_LLM_BASE_URL = "off"))
   expect_identical(bricklayer_llm_status()$status[1], "not set")
 })
 
-test_that("a local Ollama server is the second route; its first model is the default", {
+test_that("a local Ollama server is the last route; its first model is the default", {
   rt_env()
   withr::local_envvar(c(OLLAMA_HOST = "127.0.0.1:11434"))  # the form Ollama itself uses
   calls <- list()
@@ -104,8 +104,8 @@ test_that("a local Ollama server is the second route; its first model is the def
   expect_identical(calls$post$headers, "Authorization: Bearer ok-1")
   expect_identical(calls$get$headers, "Authorization: Bearer ok-1")
   st <- bricklayer_llm_status()
-  expect_identical(st$status[2], "available")
-  expect_match(st$detail[2], "llama3.2:latest, qwen3:8b (default qwen3:8b)", fixed = TRUE)
+  expect_identical(st$status[3], "available")
+  expect_match(st$detail[3], "llama3.2:latest, qwen3:8b (default qwen3:8b)", fixed = TRUE)
   # OLLAMA_BASE_URL is the other spelling, trailing slash dropped
   withr::local_envvar(c(OLLAMA_HOST = NA, OLLAMA_BASE_URL = "http://localhost:11434/"))
   bricklayer_llm_ask("hi")
@@ -116,25 +116,25 @@ test_that("a local Ollama server is the second route; its first model is the def
   expect_error(bricklayer_llm_ask("hi", route = "ollama"), "local Ollama has no model to use")
   # left to choose, an empty Ollama is passed over rather than stopping the call
   expect_error(bricklayer_llm_ask("hi"), "No language-model route")
-  expect_identical(bricklayer_llm_status()$status[2], "no models")
+  expect_identical(bricklayer_llm_status()$status[3], "no models")
   # nothing listening: the route is skipped, and status says so
   testthat::local_mocked_bindings(
     .bl_http_get_local = function(...) list(status = -1L, body = raw(), error = "refused"),
     .package = "rmoriebricklayer")
-  expect_identical(bricklayer_llm_status()$status[2], "not running")
+  expect_identical(bricklayer_llm_status()$status[3], "not running")
   expect_error(bricklayer_llm_ask("hi"), "No language-model route")
   testthat::local_mocked_bindings(.bl_http_get_local = function(...) stop("boom"), .package = "rmoriebricklayer")
   expect_null(rt_ns(".bl_ollama_tags")("http://localhost:11434"))
   # a reply that is not JSON is "no models", not an error
   testthat::local_mocked_bindings(.bl_http_get_local = function(...) list(status = 200L, body = charToRaw("<html>")),
                                   .package = "rmoriebricklayer")
-  expect_identical(rt_ns(".bl_ollama_tags")("http://localhost:11434"), character())
+  expect_identical(as.character(rt_ns(".bl_ollama_tags")("http://localhost:11434")), character())
 })
 
-test_that("the order is own endpoint, then Ollama, then hosted; `route` insists on one", {
+test_that("the order is own endpoint, then a provider's key, then Ollama; `route` insists on one", {
   rt_env()
   withr::local_envvar(c(MORIE_LLM_BASE_URL = "https://own.example.org", MORIE_LLM_MODEL = "m",
-                        OLLAMA_HOST = "localhost:11434", MORIE_HOSTED_KEY = "sk-h"))
+                        OLLAMA_HOST = "localhost:11434", OPENAI_API_KEY = "sk-o", MORIE_OPENAI_MODEL = "gpt-x"))
   testthat::local_mocked_bindings(
     .bl_http_get_local = function(...) rt_tags("l"),
     .bl_http_post = function(url, ...) rt_reply(url),
@@ -142,46 +142,44 @@ test_that("the order is own endpoint, then Ollama, then hosted; `route` insists 
     .package = "rmoriebricklayer")
   expect_match(bricklayer_llm_ask("x"), "^https://own.example.org/")
   expect_match(bricklayer_llm_ask("x", route = "ollama"), "^http://localhost:11434/")
-  expect_match(bricklayer_llm_ask("x", route = "hosted"), "^https://llm.rmorie.com/")
+  expect_match(bricklayer_llm_ask("x", route = "openai"), "^https://api.openai.com/v1/")
+  expect_error(bricklayer_llm_ask("x", route = "hosted"), "hosted MORIE language-model tier is retired")
   withr::local_envvar(c(MORIE_LLM_BASE_URL = NA))
+  expect_match(bricklayer_llm_ask("x"), "^https://api.openai.com/v1/")
+  withr::local_envvar(c(OPENAI_API_KEY = NA))
   expect_match(bricklayer_llm_ask("x"), "^http://localhost:11434/")
   withr::local_envvar(c(OLLAMA_HOST = "off"))
-  expect_match(bricklayer_llm_ask("x"), "^https://llm.rmorie.com/")
   expect_error(bricklayer_llm_ask("x", route = "own"), "own endpoint: `[a-z]+ config set own.url URL`")
   expect_error(bricklayer_llm_ask("x", route = "ollama"), "local Ollama: OLLAMA_HOST=off")
   expect_error(bricklayer_llm_ask("x", route = "nope"), "should be one of")
   expect_error(rt_ns(".bl_llm_route")("nope"), "unknown route 'nope'")
-  withr::local_envvar(c(MORIE_HOSTED_KEY = NA))
   e <- tryCatch(bricklayer_llm_ask("x"), error = function(e) conditionMessage(e))
   expect_match(e, "^No language-model route is set up on this machine:")
   expect_match(e, "own endpoint: `[a-z]+ config set own.url URL`")
   expect_match(e, "local Ollama: OLLAMA_HOST=off")
-  expect_match(e, "hosted MORIE tier: no key stored; request a key at https://rmorie.com/access")
-  expect_match(agent_bundle("x"), "rmorie.com/access")
+  expect_match(e, "a provider's key: set its variable (OPENAI_API_KEY", fixed = TRUE)
+  expect_match(agent_bundle("x"), "config setup` walks through it")
   withr::local_envvar(c(OLLAMA_HOST = "localhost:11434"))
   testthat::local_mocked_bindings(.bl_http_get_local = function(...) list(status = -1L), .package = "rmoriebricklayer")
   expect_match(tryCatch(bricklayer_llm_ask("x"), error = conditionMessage),
                "local Ollama: nothing answers at http://localhost:11434")
-  withr::local_envvar(c(MORIE_HOSTED_BASE_URL = "off"))
-  expect_match(bricklayer_llm_status()$detail[3], "MORIE_HOSTED_BASE_URL=off")
-  expect_match(agent_bundle("x", backend = "hosted"),
-               "hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)", fixed = TRUE)
+  expect_error(agent_bundle("x", route = "hosted"), "hosted MORIE language-model tier is retired")
 })
 
-test_that("the CLI doctor prints the three routes in order, and bundle fails without one", {
+test_that("the CLI doctor prints the routes in order, and bundle fails without one", {
   rt_env()
   buf <- character()
   st <- bricklayer_cli("doctor", out = function(s) buf <<- c(buf, s))
   expect_equal(st, 0L)
   expect_match(buf[1], "^  own endpoint +not set")
-  expect_match(buf[2], "^  local Ollama +disabled +OLLAMA_HOST=off")
-  expect_match(buf[3], "^  hosted MORIE tier +not logged in .*rmorie.com/access")
+  expect_match(buf[2], "^  other providers +no key +openai \\(OPENAI_API_KEY\\)")
+  expect_match(buf[3], "^  local Ollama +disabled +OLLAMA_HOST=off")
   buf <- character()
   expect_equal(bricklayer_cli(c("bundle", "x"), out = function(s) buf <<- c(buf, s)), 1L)
   expect_match(paste(buf, collapse = ""), "No language-model route")
   buf <- character()
   bricklayer_cli("models", out = function(s) buf <<- c(buf, s))
-  expect_match(buf[1], "^Hosted MORIE tier: not logged in -- request a key at https://rmorie.com/access")
+  expect_match(buf[1], "^No language-model route is set up on this machine:")
 })
 
 test_that("plain http is admitted on the loopback host only when the call asks for it", {
@@ -255,9 +253,9 @@ test_that("the transport really reaches a plain-http loopback server under the o
   expect_identical(r$status, -1L)
   expect_match(r$error, "plain http is refused")
   # the Ollama probe path admits it, and reads the model list
-  expect_identical(rt_ns(".bl_ollama_tags")(base), "probe:latest")
+  expect_identical(as.character(rt_ns(".bl_ollama_tags")(base)), "probe:latest")
   withr::local_envvar(c(OLLAMA_HOST = base, MORIE_LLM_BASE_URL = NA))
-  expect_identical(bricklayer_llm_status()$status[2], "available")
+  expect_identical(bricklayer_llm_status()$status[3], "available")
   # a POST reaches the server too (http.server answers 501 to POST: the connection was made)
   res <- rt_ns(".bl_post_json")(paste0(base, "/v1/chat/completions"), list(a = 1), timeout = 5, local = TRUE)
   expect_identical(res$status, 501L)

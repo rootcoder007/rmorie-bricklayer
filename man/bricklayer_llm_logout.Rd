@@ -2,7 +2,7 @@
 % Please edit documentation in R/llm_native.R
 \name{bricklayer_llm_logout}
 \alias{bricklayer_llm_logout}
-\title{Forget the hosted MORIE language-model key}
+\title{Forget the MORIE data key}
 \usage{
 bricklayer_llm_logout()
 }

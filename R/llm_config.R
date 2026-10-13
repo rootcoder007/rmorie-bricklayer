@@ -9,29 +9,37 @@
 # `rmbl config`, never by examples or tests.
 
 .bl_config_spec <- function() {
-  data.frame(
-    key = c("route", "own.url", "own.key", "own.model",
-            "ollama.url", "ollama.model", "ollama.key",
-            "hosted.url", "hosted.model", "hosted.key"),
+  base <- data.frame(
+    key = c("route", "own.url", "own.key", "own.model", "ollama.url", "ollama.model", "ollama.key"),
     env = c("MORIE_LLM_ROUTE", "MORIE_LLM_BASE_URL", "MORIE_LLM_API_KEY", "MORIE_LLM_MODEL",
-            "OLLAMA_HOST", "OLLAMA_MODEL", "OLLAMA_API_KEY",
-            "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL", "MORIE_HOSTED_KEY"),
-    secret = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE),
+            "OLLAMA_HOST", "OLLAMA_MODEL", "OLLAMA_API_KEY"),
+    secret = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE),
     help = c(
-      "which route `ask` uses: auto (own endpoint, then Ollama, then hosted), own, ollama or hosted",
+      paste("which route `ask` uses: auto (own endpoint, then each provider with a key, then Ollama),",
+            "own, ollama or a provider"),
       paste("your own OpenAI-compatible server, e.g. http://localhost:1234/v1 (LM Studio),",
             "http://localhost:8080/v1 (llama-server -m /path/model.gguf) or https://api.example.org/v1"),
       "API key for your own server (sent as a Bearer token)",
       "model name on your own server",
       "your Ollama server, e.g. http://localhost:11434 or 192.168.1.20:11434; off to skip Ollama",
       "Ollama model to use (default: the first one pulled)",
-      "API key for an Ollama server that wants one",
-      "hosted MORIE tier address (default: from the signed services document); off to skip it",
-      "hosted model (default: the tier's default; `rmbl models` lists them)",
-      "your MORIE key (stored by `rmbl login`; checked with the gateway before it is saved)"
+      "API key for an Ollama server that wants one"
     ),
     stringsAsFactors = FALSE
   )
+  # one key and one model per provider (bring your own key), named after the provider's own variable
+  ps <- .bl_llm_presets()
+  prov <- data.frame(
+    key = c(rbind(paste0(ps$id, ".key"), paste0(ps$id, ".model"))),
+    env = c(rbind(ps$key_env, .bl_preset_model_env(ps$id))),
+    secret = rep(c(TRUE, FALSE), nrow(ps)),
+    help = c(rbind(sprintf("your %s API key (sent only to %s)", ps$label, ps$base),
+                   ifelse(is.na(ps$default_model), sprintf("%s model to use (`rmbl models --route %s` lists them)",
+                                                           ps$label, ps$id),
+                          sprintf("%s model to use (default %s)", ps$label, ps$default_model)))),
+    stringsAsFactors = FALSE
+  )
+  rbind(base, prov)
 }
 
 .bl_config_path <- function() file.path(dirname(.bl_credentials_path()), "llm.json")
@@ -98,7 +106,7 @@
 .bl_config_value <- function(env) {
   spec <- .bl_config_spec()
   key <- spec$key[match(env, spec$env)]
-  if (is.na(key) || identical(key, "hosted.key")) return(NULL)  # the key lives in credentials.json
+  if (is.na(key)) return(NULL)
   v <- .bl_read_config()[[key]]
   if (is.character(v) && length(v) == 1L && nzchar(trimws(v))) trimws(v) else NULL
 }
@@ -106,9 +114,6 @@
 # Where a setting comes from right now: "environment", "saved", or "default".
 .bl_config_source <- function(key, env) {
   if (nzchar(trimws(Sys.getenv(env, unset = "")))) return("environment")
-  if (identical(key, "hosted.key")) {
-    return(if (is.null(.bl_read_credentials()$hosted_key)) "default" else "saved")
-  }
   if (!is.null(.bl_config_value(env))) "saved" else "default"
 }
 
@@ -119,18 +124,20 @@
 
 # The value a setting has right now (the default spelled out), for display.
 .bl_config_effective <- function(key) {
-  switch(key,
+  fixed <- switch(key,
     route = .bl_env1("MORIE_LLM_ROUTE") %||% "auto",
     own.url = .bl_env1("MORIE_LLM_BASE_URL") %||% "(not set)",
     own.key = .bl_mask(.bl_env1("MORIE_LLM_API_KEY")),
-    own.model = .bl_env1("MORIE_LLM_MODEL") %||% "(the server's first)",
+    own.model = .bl_env1("MORIE_LLM_MODEL") %||% "(not set)",
     ollama.url = .bl_env1("OLLAMA_HOST") %||% .bl_env1("OLLAMA_BASE_URL") %||% "http://localhost:11434",
     ollama.model = .bl_env1("OLLAMA_MODEL") %||% "(the first one pulled)",
     ollama.key = .bl_mask(.bl_env1("OLLAMA_API_KEY")),
-    hosted.url = tryCatch(.bl_hosted_base() %||% "off", error = function(e) conditionMessage(e)),
-    hosted.model = .bl_hosted_model(),
-    hosted.key = .bl_mask(.bl_hosted_key())
-  )
+    NULL)
+  if (!is.null(fixed)) return(fixed)
+  id <- sub("[.](key|model)$", "", key)
+  if (endsWith(key, ".key")) return(.bl_mask(.bl_preset_key(id)))
+  pr <- .bl_preset(id)
+  .bl_env1(.bl_preset_model_env(id)) %||% (if (!is.na(pr$default_model)) pr$default_model else "(not chosen)")
 }
 
 # An address that is saved must be one address: no whitespace, no `#fragment`, no `user@`.
@@ -142,12 +149,16 @@
 }
 
 .bl_config_check <- function(key, value) {
-  if (key %in% c("own.url", "ollama.url", "hosted.url") && !tolower(value) %in% c("off", "none", "disabled")) {
+  if (key %in% c("own.url", "ollama.url") && !tolower(value) %in% c("off", "none", "disabled")) {
     .bl_url_sane(value, key)
   }
   switch(key,
-    route = if (!value %in% c("auto", "own", "ollama", "hosted")) {
-      stop("route must be one of: auto, own, ollama, hosted", call. = FALSE)
+    route = {
+      if (identical(value, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+      if (!value %in% c("auto", .bl_llm_route_names())) {
+        stop(sprintf("route must be one of: auto, own, ollama, %s", paste(.bl_llm_presets()$id, collapse = ", ")),
+             call. = FALSE)
+      }
     },
     own.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
       if (!grepl("^https?://[^/[:space:]]+", value)) {
@@ -157,9 +168,6 @@
       # refused when it is saved, not only later
       v <- sub("/v1$", "", sub("/+$", "", value))
       if (!.bl_loopback_url(v)) .rmbl_check_public_url(v, "own.url")
-    },
-    hosted.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
-      .rmbl_check_public_url(sub("/+$", "", value), "hosted.url")
     },
     ollama.url = if (!tolower(value) %in% c("off", "none", "disabled")) {
       has_scheme <- grepl("^[a-z][a-z0-9+.-]*://", value, ignore.case = TRUE)
@@ -178,36 +186,37 @@
 #' Show or save the language-model settings
 #'
 #' Every setting that decides how \code{\link{bricklayer_llm_ask}} reaches a
-#' model, in one place: which route to use, and the address, key and model
-#' of your own OpenAI-compatible server, of a local or LAN Ollama server, and
-#' of the hosted MORIE tier. Settings are saved in
+#' model, in one place: which route to use; your key and model for each
+#' provider (bring your own key: see \code{\link{bricklayer_llm_providers}});
+#' the address, key and model of your own OpenAI-compatible server; and of a
+#' local or LAN Ollama server. Settings are saved in
 #' \code{$XDG_CONFIG_HOME/morie/llm.json} (default \code{~/.config/morie/}),
-#' a private file this function writes only when you pass a setting; the
-#' hosted key goes to the shared credentials file through
-#' \code{\link{bricklayer_llm_login}}, which checks it with the gateway first.
-#' An environment variable that is set (the \code{env} column) wins over a
-#' saved value.
+#' a private file (owner-only) this function writes only when you pass a
+#' setting; keys are never printed. An environment variable that is set (the
+#' \code{env} column, e.g. \code{ANTHROPIC_API_KEY}) wins over a saved value.
 #'
 #' The same is available from the shell: \code{rmbl config} lists the
 #' settings, \code{rmbl config set KEY VALUE} and \code{rmbl config unset KEY}
-#' change one, and \code{rmbl config setup} walks through all of them.
+#' change one (a key is asked for without echo when no value is given), and
+#' \code{rmbl config setup} walks through them.
 #'
 #' @param ... Settings to save, as \code{key = value}: \code{route}
-#'   (\code{"auto"}, \code{"own"}, \code{"ollama"} or \code{"hosted"}),
-#'   \code{own.url}, \code{own.key}, \code{own.model}, \code{ollama.url},
-#'   \code{ollama.model}, \code{ollama.key}, \code{hosted.url},
-#'   \code{hosted.model}, \code{hosted.key}. \code{NULL} or \code{""} removes
-#'   a saved setting. With no arguments nothing is written.
+#'   (\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id),
+#'   \code{<provider>.key} and \code{<provider>.model} (e.g.
+#'   \code{anthropic.key}, \code{openai.model}), \code{own.url},
+#'   \code{own.key}, \code{own.model}, \code{ollama.url},
+#'   \code{ollama.model}, \code{ollama.key}. \code{NULL} or \code{""}
+#'   removes a saved setting. With no arguments nothing is written.
 #' @return A data frame with one row per setting: \code{key}, \code{value}
 #'   (a key only as \code{"set"}), \code{source} (\code{"environment"},
 #'   \code{"saved"} or \code{"default"}), \code{env} (the variable that
 #'   overrides it) and \code{help}; visibly when called with no settings.
 #' @examples
 #' # reading the settings writes nothing
-#' bricklayer_llm_config()
+#' head(bricklayer_llm_config())
 #' \dontrun{
-#' # always use the hosted tier with one model
-#' bricklayer_llm_config(route = "hosted", hosted.model = "gpt-oss-120b:cf")
+#' # your Anthropic key and model, and always use them
+#' bricklayer_llm_config(anthropic.key = "sk-ant-...", route = "anthropic")
 #' # an Ollama server on another machine
 #' bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
 #' # your own OpenAI-compatible server
@@ -234,10 +243,6 @@ bricklayer_llm_config <- function(...) {
       v <- args[[k]]
       v <- if (is.null(v) || (length(v) == 1L && is.na(v))) "" else trimws(as.character(v))
       if (length(v) != 1L) stop(sprintf("%s takes one value", k), call. = FALSE)
-      if (identical(k, "hosted.key")) {
-        if (nzchar(v)) bricklayer_llm_login(token = v) else bricklayer_llm_logout()
-        next
-      }
       if (nzchar(v)) {
         if (identical(k, "route")) v <- tolower(v)
         .bl_config_check(k, v)
@@ -256,7 +261,7 @@ bricklayer_llm_config <- function(...) {
       }
     }
     .bl_write_config(data)
-    env_set <- spec$env[match(setdiff(nm, "hosted.key"), spec$key)]
+    env_set <- spec$env[match(nm, spec$key)]
     env_set <- env_set[vapply(env_set, function(e) nzchar(Sys.getenv(e, unset = "")), TRUE)]
     if (length(env_set)) {
       warning(sprintf("%s is set in the environment and still wins over the saved value",
@@ -290,7 +295,7 @@ bricklayer_llm_config <- function(...) {
   }
   show <- function(tab) {
     for (i in seq_len(nrow(tab))) {
-      out(sprintf("  %-13s %-40s %s\n", tab$key[i], tab$value[i],
+      out(sprintf("  %-18s %-40s %s\n", tab$key[i], tab$value[i],
                   if (identical(tab$source[i], "default")) "" else paste0("(", tab$source[i], ")")))
     }
   }
@@ -307,23 +312,23 @@ bricklayer_llm_config <- function(...) {
       out(paste0(
         sprintf("\nSaved in %s. ", .bl_config_path()),
         "An environment variable that is set wins over a saved value.\n",
-        sprintf("Change one:  %s config set route hosted\n", prog),
+        sprintf("Change one:  %s config set route anthropic\n", prog),
         sprintf("Walk through all of them:  %s config setup\n", prog),
         sprintf("What each one means:  %s config help\n", prog)
       ))
     },
     help = {
       for (i in seq_len(nrow(spec))) {
-        out(sprintf("  %-13s %s\n  %-13s (environment variable %s)\n", spec$key[i], spec$help[i], "", spec$env[i]))
+        out(sprintf("  %-18s %s\n  %-18s (environment variable %s)\n", spec$key[i], spec$help[i], "", spec$env[i]))
       }
       out(paste0(
         "\nExamples:\n",
-        sprintf("  %s config set route hosted                         always use the hosted tier\n", prog),
-        sprintf("  %s config set hosted.model gpt-oss-120b:cf         its model\n", prog),
+        sprintf("  %s config set anthropic.key             (asks for the key: nothing in the shell history)\n", prog),
+        sprintf("  %s config set anthropic.model claude-opus-5-5\n", prog),
+        sprintf("  %s config set route anthropic          always use that provider\n", prog),
         sprintf("  %s config set ollama.url http://192.168.1.20:11434  Ollama on another machine\n", prog),
         sprintf("  %s config set ollama.model qwen3:8b\n", prog),
         sprintf("  %s config set own.url http://localhost:1234/v1     LM Studio, vLLM, llama.cpp ...\n", prog),
-        sprintf("  %s config set own.key              (asks for the key: nothing in the shell history)\n", prog),
         sprintf("  %s config unset route                              back to the automatic order\n", prog)
       ))
     },
@@ -369,7 +374,8 @@ bricklayer_llm_config <- function(...) {
   invisible(0L)
 }
 
-# `rmbl config setup`: one question per route, Enter keeps what is there.
+# `rmbl config setup`: where `ask` should go (a provider with your key, Ollama, or your own server),
+# then that route's settings. Enter keeps what is there.
 .bl_config_setup <- function(out) {
   prog <- .bl_prog()
   ask <- function(q, current = "", secret = FALSE) {
@@ -378,23 +384,30 @@ bricklayer_llm_config <- function(...) {
     if (nzchar(a)) a else current
   }
   set <- function(...) bricklayer_llm_config(...)
-  out("Language-model setup. Press Enter to keep the value in [brackets].\n\n")
-  route <- tolower(ask("Which should `ask` use: auto, hosted, ollama or own", .bl_config_effective("route")))
-  if (!route %in% c("auto", "own", "ollama", "hosted")) route <- "auto"
+  ps <- .bl_llm_presets()
+  out("Language-model setup: bring your own key, or run a model locally. Enter keeps the value in [brackets].\n\n")
+  out(sprintf("Providers: %s\n", paste(ps$id, collapse = ", ")))
+  out("Or: ollama (a model on this or another machine), own (any OpenAI-compatible server), auto.\n")
+  route <- tolower(ask("Which should `ask` use", .bl_config_effective("route")))
+  if (!route %in% c("auto", .bl_llm_route_names())) {
+    out(sprintf("'%s' is not one of them; keeping auto\n", route))
+    route <- "auto"
+  }
   set(route = if (identical(route, "auto")) NULL else route)
-  if (route %in% c("auto", "hosted")) {
-    if (is.null(.bl_hosted_key())) {
-      out(sprintf("\nThe hosted tier needs a MORIE key: `%s login` (GitHub or an emailed code),\n", prog))
-      out("or paste one issued at https://www.rmorie.com/access here.\n")
-      k <- ask("MORIE key (Enter to skip)", secret = TRUE)
-      if (nzchar(k)) set(hosted.key = k)
+  if (route %in% ps$id) {
+    pr <- .bl_preset(route)
+    if (is.null(.bl_preset_key(route))) {
+      out(sprintf("\nYour %s key (it is saved privately and sent only to %s; %s also works):\n",
+                  pr$label, pr$base, pr$key_env))
+      k <- ask(sprintf("%s key (Enter to skip)", pr$label), secret = TRUE)
+      if (nzchar(k)) do.call(set, stats::setNames(list(k), paste0(route, ".key")))
     }
-    if (!is.null(.bl_hosted_key())) {
-      have <- tryCatch(bricklayer_llm_models(), error = function(e) character())
-      if (length(have)) out(sprintf("Models: %s\n", paste(have, collapse = ", ")))
-      m <- ask("Hosted model", .bl_config_effective("hosted.model"))
-      unchanged <- identical(m, .bl_hosted_model()) && is.null(.bl_config_value("MORIE_HOSTED_MODEL"))
-      set(hosted.model = if (unchanged) NULL else m)
+    if (!is.null(.bl_preset_key(route))) {
+      have <- tryCatch(bricklayer_llm_models(route), error = function(e) character())
+      if (length(have)) out(sprintf("Models: %s\n", paste(utils::head(have, 30L), collapse = ", ")))
+      m <- ask(sprintf("%s model", pr$label), .bl_env1(.bl_preset_model_env(route)) %||%
+                 (if (!is.na(pr$default_model)) pr$default_model else ""))
+      if (nzchar(m)) do.call(set, stats::setNames(list(m), paste0(route, ".model")))
     }
   }
   if (route %in% c("auto", "ollama")) {
@@ -428,13 +441,21 @@ bricklayer_llm_config <- function(...) {
   if (inherits(rt, "error")) {
     out(sprintf("\n  ask would fail: %s\n", conditionMessage(rt)))
   } else if (is.null(rt)) {
-    out(sprintf("\n  ask has no route yet: `%s login` for the hosted tier, or `%s config setup`\n", prog, prog))
+    out(sprintf(paste0("\n  ask has no route yet: set a provider's key (e.g. ANTHROPIC_API_KEY), pull an Ollama",
+                       " model, or `%s config setup`\n"), prog))
   } else {
     out(sprintf("\n  ask uses: %s, model %s%s\n", rt$name, rt$model %||% "(none)",
                 if (identical(.bl_config_effective("route"), "auto")) "" else
                   sprintf("  (route = %s)", .bl_config_effective("route"))))
   }
-  out(sprintf("  change it: %s config set route hosted|ollama|own|auto  (all settings: %s config)\n", prog, prog))
+  out(sprintf("  change it: %s config set route PROVIDER|ollama|own|auto  (all settings: %s config)\n", prog, prog))
+  # the sign-in key is for the curated tables only, never a language model
+  ks <- tryCatch(.bl_hosted_key_state(), error = function(e) list(state = "none"))
+  out(switch(ks$state,
+    ok = "\n  data key: stored (the curated tables at data.rmorie.com are open to you)\n",
+    other_address = sprintf("\n  data key: issued for %s, so not sent to %s (`%s login` again)\n",
+                            ks$saved_for, ks$now, prog),
+    sprintf("\n  data key: none (`%s login` opens the curated tables)\n", prog)))
 }
 
 # The recovery path for a settings file the package refuses to read: it is moved aside, never

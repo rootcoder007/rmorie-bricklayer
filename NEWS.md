@@ -4,6 +4,36 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Language models: bring your own key; the hosted tier is retired
+
+* **Any major provider, or your own model.** `bricklayer_llm_ask()` takes, in order, an endpoint
+  of your own, then the first provider whose key is set, then Ollama. Sixteen providers are
+  built in (`bricklayer_llm_providers()`): OpenAI, Anthropic, Google Gemini, OpenRouter, Groq,
+  Together AI, Fireworks AI, DeepSeek, Mistral, xAI, Cerebras, Perplexity, Hugging Face,
+  OpenCode Zen, Cohere and NVIDIA, each from its usual key variable or a key saved privately
+  with `rmbl config set <provider>.key`. Anthropic's Messages API and Gemini's
+  `generateContent` are spoken natively, tool calls included; the others are
+  OpenAI-compatible. `route = "anthropic"` (or any provider id) takes one route only;
+  `bricklayer_llm_models(route)` and `rmbl models --route` list a route's models;
+  `rmbl config setup` asks for a provider, its key and its model.
+* **The model knows the packages.** With `docs = TRUE` (the default) the model is given the
+  name, arguments and title of every function of the installed MORIE packages
+  (rmoriebricklayer, and rmoriedata and rmorie when present), read from their installed help,
+  and five read-only tools: a search over every help page, a help page, its examples, the
+  dataset list and a vignette. A model that does not take tools gets the matching pages in its
+  prompt. How much goes into the prompt follows the model's context: everything for a
+  provider's model or an Ollama cloud model, the functions nearest the question for a model
+  Ollama runs on this machine; `MORIE_LLM_CONTEXT` overrides. `agent_bundle()` asks the same
+  way (its `backend` argument is now `route`).
+* **The hosted MORIE tier is retired.** No route, setting or model list for it remains;
+  `route = "hosted"` says so, and a saved `hosted` route falls back to the automatic order
+  with a one-time message. Signing in (`rmbl login`) is for the curated tables at
+  data.rmorie.com only, and `rmbl doctor` reports the data key.
+* A model the route does not have is named as such, with the number it has; a refused key is
+  said as such, and the key never appears in an error.
+* API calls no longer end a reply that is slow to start: a model that thinks before answering
+  is not cut off by the 30-second low-speed limit.
+
 ## Review of e57fed5 (the stress round of 2026-10-13)
 
 * **The spinner frame stays in its table (E1).** `rmbl_progress_spinner()`, a public C-callable,

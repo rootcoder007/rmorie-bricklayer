@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The native hosted-LLM route and the command line. The HTTP layer is
-# replaced by canned replies; the credentials file lives in a temporary
-# XDG_CONFIG_HOME. Nothing leaves the machine and nothing touches $HOME.
+# The native language-model route (a provider's key), the data key's login and
+# the command line. The HTTP layer is replaced by canned replies; the
+# credentials file lives in a temporary XDG_CONFIG_HOME. Nothing leaves the
+# machine and nothing touches $HOME.
 
 .sandbox <- function(env = parent.frame()) {
   # storing a token asks the gateway first: offline here, the check passes
@@ -13,15 +14,15 @@
     c(
       "XDG_CONFIG_HOME", "MORIE_HOSTED_KEY",
       "MORIE_HOSTED_BASE_URL", "MORIE_HOSTED_MODEL",
-      "MORIE_LLM_BASE_URL", "OLLAMA_HOST"
+      "MORIE_LLM_BASE_URL", "OLLAMA_HOST", "OPENAI_API_KEY", "MORIE_OPENAI_MODEL"
     ),
     unset = NA
   )
-  # the hosted route alone is under test here: no endpoint of our own, no local Ollama
+  # a provider's key alone is under test here: no endpoint of our own, no local Ollama
   Sys.setenv(XDG_CONFIG_HOME = dir, OLLAMA_HOST = "off")
   Sys.unsetenv(c(
     "MORIE_HOSTED_KEY", "MORIE_HOSTED_BASE_URL",
-    "MORIE_HOSTED_MODEL", "MORIE_LLM_BASE_URL"
+    "MORIE_HOSTED_MODEL", "MORIE_LLM_BASE_URL", "OPENAI_API_KEY", "MORIE_OPENAI_MODEL"
   ))
   withr_restore <- function() {
     for (nm in names(old)) {
@@ -67,24 +68,24 @@ test_that("a token is stored owner-only in the shared credentials file", {
   expect_message(expect_true(bricklayer_llm_logout()), "Logged out")
   expect_false(file.exists(p))
   expect_null(.bl_hosted_key())
-  expect_message(expect_false(bricklayer_llm_logout()), "No hosted key")
+  expect_message(expect_false(bricklayer_llm_logout()), "No MORIE data key")
 })
 
-test_that("the environment key wins and off disables the tier", {
+test_that("the environment key wins, off disables the data address, and a data key is no model route", {
   .sandbox()
   suppressMessages(bricklayer_llm_login(token = "file-key"))
   Sys.setenv(MORIE_HOSTED_KEY = "env-key")
   expect_equal(.bl_hosted_key(), "env-key")
   Sys.setenv(MORIE_HOSTED_BASE_URL = "off")
   expect_null(.bl_hosted_base())
-  expect_error(bricklayer_llm_ask("hi"), "hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)", fixed = TRUE)
+  expect_error(bricklayer_llm_ask("hi"), "No language-model route is set up", fixed = TRUE)
   Sys.setenv(MORIE_HOSTED_BASE_URL = "https://gw.example/")
   expect_equal(.bl_hosted_base(), "https://gw.example")
 })
 
 test_that("the native route posts a bearer-authenticated chat request", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   seen <- NULL
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
@@ -95,24 +96,24 @@ test_that("the native route posts a bearer-authenticated chat request", {
       .reply("MORIE")
     }
   )
-  expect_equal(bricklayer_llm_ask("say MORIE"), "MORIE")
-  expect_equal(seen$url, "https://llm.rmorie.com/v1/chat/completions")
+  expect_equal(bricklayer_llm_ask("say MORIE", docs = FALSE), "MORIE")
+  expect_equal(seen$url, "https://api.openai.com/v1/chat/completions")
   expect_equal(seen$headers, "Authorization: Bearer sk-abc")
   expect_equal(seen$ct, "application/json")
   req <- bricklayer_json_from_json(seen$body, simplifyVector = FALSE)
-  expect_equal(req$model, "minimax-m3:cloud")
+  expect_equal(req$model, "gpt-x")
   expect_equal(req$messages[[1]]$content, "say MORIE")
-  Sys.setenv(MORIE_HOSTED_MODEL = "gemma4:31b-cloud")
-  bricklayer_llm_ask("again", system_prompt = "be brief")
+  Sys.setenv(MORIE_OPENAI_MODEL = "gpt-y")
+  bricklayer_llm_ask("again", system_prompt = "be brief", docs = FALSE)
   req <- bricklayer_json_from_json(seen$body, simplifyVector = FALSE)
-  expect_equal(req$model, "gemma4:31b-cloud")
+  expect_equal(req$model, "gpt-y")
   expect_equal(req$messages[[1]]$role, "system")
 })
 
 test_that("gateway errors are reported with their message", {
   .sandbox()
-  expect_error(bricklayer_llm_ask("hi"), "bricklayer_llm_login")
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  expect_error(bricklayer_llm_ask("hi"), "config setup` walks through it")
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   testthat::local_mocked_bindings(
     .bl_http_post = function(...) {
       list(status = 429L, body = charToRaw(
@@ -122,12 +123,12 @@ test_that("gateway errors are reported with their message", {
   )
   expect_error(bricklayer_llm_ask("hi"), "429: Rate limit exceeded")
   testthat::local_mocked_bindings(.bl_http_post = function(...) NULL)
-  expect_error(bricklayer_llm_ask("hi"), "could not reach the hosted MORIE LLM tier")
+  expect_error(bricklayer_llm_ask("hi"), "could not reach OpenAI")
 })
 
-test_that("agent_bundle() uses the hosted route when a key is stored", {
+test_that("agent_bundle() uses a provider when its key is set", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   seen <- NULL
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
@@ -137,18 +138,22 @@ test_that("agent_bundle() uses the hosted route when a key is stored", {
   )
   expect_match(agent_bundle("add provenance"), "Pin the SHA256")
   expect_match(seen, "brick-proof", fixed = TRUE)
-  suppressMessages(bricklayer_llm_logout())
-  expect_match(agent_bundle("x", backend = "hosted"), "No language-model route is set up")
+  Sys.unsetenv("OPENAI_API_KEY")
+  expect_match(agent_bundle("x"), "No language-model route is set up")
 })
 
-test_that("bricklayer_llm_status() names the hosted route", {
+test_that("bricklayer_llm_status() names the providers and which have a key", {
   .sandbox()
   st <- bricklayer_llm_status()
-  expect_equal(st$route, c("own endpoint", "local Ollama", "hosted MORIE tier"))
-  expect_equal(st$status[3], "not logged in")
-  expect_match(st$detail[3], "request a key at https://rmorie.com/access")
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
-  expect_equal(bricklayer_llm_status()$status[3], "key stored")
+  expect_equal(st$route, c("own endpoint", "other providers", "local Ollama"))
+  expect_equal(st$status[2], "no key")
+  expect_match(st$detail[2], "openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY)", fixed = TRUE)
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
+  st <- bricklayer_llm_status()
+  expect_equal(st$route, c("own endpoint", "OpenAI", "other providers", "local Ollama"))
+  expect_equal(st$status[2], "key set")
+  expect_match(st$detail[2], "https://api.openai.com/v1  model: gpt-x", fixed = TRUE)
+  expect_false(grepl("openai (OPENAI_API_KEY)", st$detail[3], fixed = TRUE))
 })
 
 test_that("the command line dispatches its verbs", {
@@ -166,10 +171,11 @@ test_that("the command line dispatches its verbs", {
   expect_match(cap("frobnicate")$text, "unknown verb")
   r <- suppressMessages(cap("login", "--token", "sk-cli"))
   expect_equal(r$status, 0L)
-  expect_match(r$text, "Logged in to https://llm.rmorie.com")
+  expect_match(r$text, "Logged in: the curated tables at https://data.rmorie.com are open to you")
   expect_equal(.bl_hosted_key(), "sk-cli")
   d <- cap("doctor")
-  expect_match(d$text, "hosted MORIE tier +key stored")
+  expect_match(d$text, "ask has no route yet")  # the data key is not a language model
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   testthat::local_mocked_bindings(.bl_http_post = function(...) .reply("echo"))
   expect_equal(cap("ask", "what", "is", "MORIE")$text, "echo\n")
   expect_match(cap("ask", "--help")$text, "usage: rmoriebricklayer ask")
@@ -179,53 +185,45 @@ test_that("the command line dispatches its verbs", {
   expect_null(.bl_hosted_key())
 })
 
-test_that("models lists the hosted tier's models and ask --model names one", {
+test_that("models lists the route's models and ask --model names one", {
   .sandbox()
   cap <- function(...) {
     buf <- character()
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  expect_match(cap("models")$text, "not logged in")
+  expect_match(cap("models")$text, "No language-model route is set up")
   expect_length(bricklayer_llm_models(), 0L)
-  suppressMessages(bricklayer_llm_login(token = "sk-models"))
+  Sys.setenv(OPENAI_API_KEY = "sk-models", MORIE_OPENAI_MODEL = "b-model")
   seen <- NULL
   testthat::local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
     seen <<- list(url = url, headers = headers)
-    list(status = 200L, body = charToRaw('{"data":[{"id":"a:cloud"},{"id":"b:cloud"}]}'))
+    list(status = 200L, body = charToRaw('{"data":[{"id":"a-model"},{"id":"b-model"}]}'))
   })
-  old_model <- Sys.getenv("MORIE_HOSTED_MODEL", unset = NA)
-  on.exit(if (is.na(old_model)) {
-    Sys.unsetenv("MORIE_HOSTED_MODEL")
-  } else {
-    Sys.setenv(MORIE_HOSTED_MODEL = old_model)
-  }, add = TRUE)
-  Sys.setenv(MORIE_HOSTED_MODEL = "b:cloud")
   hm <- bricklayer_llm_models()
-  expect_equal(as.character(hm), c("a:cloud", "b:cloud"))
-  expect_equal(attr(hm, "default"), "b:cloud")
-  expect_equal(seen$url, "https://llm.rmorie.com/v1/models")
+  expect_equal(as.character(hm), c("a-model", "b-model"))
+  expect_equal(attr(hm, "default"), "b-model")
+  expect_equal(attr(hm, "route"), "OpenAI")
+  expect_equal(seen$url, "https://api.openai.com/v1/models")
   expect_equal(seen$headers, "Authorization: Bearer sk-models")
-  Sys.setenv(MORIE_HOSTED_MODEL = "retired:cloud")
-  expect_equal(attr(bricklayer_llm_models(), "default"), "a:cloud")
   m <- cap("models")
   expect_equal(m$status, 0L)
-  expect_match(m$text, "default marked \\*:\n  \\* a:cloud\n    b:cloud\n")
-  expect_match(cap("doctor")$text, "models: a:cloud, b:cloud \\(default a:cloud\\)")
+  expect_match(m$text, "OpenAI; the model in use is marked \\*:\n    a-model\n  \\* b-model\n")
+  expect_match(m$text, "config set openai.model NAME", fixed = TRUE)
   testthat::local_mocked_bindings(.bl_http_get = function(...) list(status = 502L, body = raw()))
   expect_length(bricklayer_llm_models(), 0L)
-  expect_match(cap("models")$text, "gateway not reachable")
+  expect_match(cap("models")$text, "OpenAI: no model list to show .*the model in use is b-model")
   asked <- NULL
   testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, model = NULL, ...) {
     asked <<- model
     "echo"
   })
-  expect_equal(cap("ask", "--model", "a:cloud", "hi", "there")$text, "echo\n")
-  expect_equal(asked, "a:cloud")
+  expect_equal(cap("ask", "--model", "a-model", "hi", "there")$text, "echo\n")
+  expect_equal(asked, "a-model")
   expect_equal(cap("ask", "hi")$text, "echo\n")
   expect_null(asked)
   expect_match(cap("ask", "--help")$text,
-               "usage: rmoriebricklayer ask \\[--route own\\|ollama\\|hosted\\|auto\\] \\[--model NAME\\]")
+               "usage: rmoriebricklayer ask \\[--route auto\\|own\\|ollama\\|PROVIDER\\] \\[--model NAME\\]")
 })
 
 test_that("the email sign-in requests a code and exchanges it for a key", {
@@ -388,7 +386,7 @@ test_that("the real POST primitive reports an unreachable host as -1", {
 
 test_that("a reply without text and a reply with a plain error string are reported", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
     list(
       status = 200L, body = charToRaw("{\"choices\":[{\"message\":{\"content\":\"\"}}]}")
@@ -564,20 +562,19 @@ test_that("the Rd database falls back to the man directory and install_cli copie
   unlink(dir, recursive = TRUE)
 })
 
-test_that("the status says when the tier is off, and an explicit model reaches the gateway", {
+test_that("the status says when Ollama is off, and an explicit model reaches the provider", {
   .sandbox()
-  withr::local_envvar(MORIE_HOSTED_BASE_URL = "off")
   st <- bricklayer_llm_status()
   expect_identical(st$status[3], "disabled")
-  expect_identical(st$detail[3], "MORIE_HOSTED_BASE_URL=off")
+  expect_identical(st$detail[3], "OLLAMA_HOST=off")
 
-  withr::local_envvar(MORIE_HOSTED_BASE_URL = "https://gw.example", MORIE_HOSTED_KEY = "sk-test")
+  withr::local_envvar(OPENAI_API_KEY = "sk-test")
   seen <- NULL
   testthat::local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
     seen <<- payload
     list(status = 200L, json = list(choices = list(list(message = list(content = "pong")))))
   })
-  expect_identical(bricklayer_llm_ask("ping", model = "custom-model"), "pong")
+  expect_identical(bricklayer_llm_ask("ping", model = "custom-model", docs = FALSE), "pong")
   expect_identical(seen$model, "custom-model")
 })
 
@@ -617,7 +614,7 @@ test_that("login --help prints the usage and the usage names rmbl", {
 
 test_that("a dropped connection is retried once and then named with curl's reason", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   n <- 0L
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
@@ -634,12 +631,12 @@ test_that("a dropped connection is retried once and then named with curl's reaso
     }
   )
   expect_error(bricklayer_llm_ask("hi"),
-               "could not reach the hosted MORIE LLM tier \\(Recv failure: Connection reset by peer\\)")
+               "could not reach OpenAI .*\\(Recv failure: Connection reset by peer\\)")
 })
 
 test_that("an empty answer names why, and the request leaves room for reasoning models", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   seen <- NULL
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
@@ -649,20 +646,22 @@ test_that("an empty answer names why, and the request leaves room for reasoning 
       list(status = 200L, body = charToRaw(b))
     }
   )
-  expect_error(bricklayer_llm_ask("hi"), "returned no text \\(finish_reason: length")
+  expect_error(bricklayer_llm_ask("hi"), "OpenAI returned no text \\(finish reason: length")
   expect_equal(seen$max_tokens, 4096L)
 })
 
-test_that("agent_bundle tells the model which functions the package has", {
+test_that("agent_bundle asks with the package's help at hand, which names every function", {
   .sandbox()
-  suppressMessages(bricklayer_llm_login(token = "sk-abc"))
+  Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   sent <- NULL
-  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, ...) {
-    sent <<- prompt
+  testthat::local_mocked_bindings(bricklayer_llm_ask = function(prompt, ..., docs = TRUE) {
+    sent <<- list(prompt = prompt, docs = docs)
     "plan"
   })
   expect_equal(agent_bundle("bundle analysis.R"), "plan")
-  for (fn in c("resolve_via_ckan()", "friendly_download()", "make_manifest()", "capsule_bundle()")) {
-    expect_true(grepl(fn, sent, fixed = TRUE), info = fn)
+  expect_true(sent$docs)
+  index <- paste(.bl_kn_index_lines(.bl_kn_all_pages("rmoriebricklayer")), collapse = "\n")
+  for (fn in c("resolve_via_ckan(", "friendly_download(", "make_manifest(", "capsule_bundle(")) {
+    expect_true(grepl(fn, index, fixed = TRUE), info = fn)
   }
 })

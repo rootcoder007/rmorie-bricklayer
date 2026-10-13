@@ -526,10 +526,10 @@ test_that("CLI helpers without a terminal, a help page, or a writable destinatio
   expect_false(.bl_interactive())
   expect_identical(.bl_describe("no_such_fn"), "no help page for 'no_such_fn'\n")
   expect_identical(.bl_examples("no_such_fn"), "no help page for 'no_such_fn'\n")
-  withr::with_envvar(c(MORIE_HOSTED_BASE_URL = "off"), {
+  withr::with_envvar(c(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = NA), {
     out <- character(0)
     .bl_cli_models(function(s) out <<- c(out, s))
-    expect_identical(out, "Hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off)\n")
+    expect_match(out, "^No language-model route is set up on this machine:")
   })
   out <- character(0)
   rc <- .bl_cli_data(c("pull", "tbl"), function(f) "/nonexistent-dir-zz/out.csv",

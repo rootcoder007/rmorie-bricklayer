@@ -184,14 +184,16 @@ test_that("M8: every input the pipeline refuses is a report, not a raw error", {
   expect_true(grepl("population=1,000,000", txt, fixed = TRUE))
 })
 
-test_that("L1: a configured Ollama that does not answer is skipped out loud before the hosted tier", {
+test_that("L1: a configured Ollama that does not answer is named, and a provider's key is taken first", {
   cf_env2()
-  withr::local_envvar(c(OLLAMA_HOST = "http://127.0.0.1:18099", MORIE_HOSTED_KEY = "sk-h",
-                        MORIE_HOSTED_BASE_URL = "https://llm.example.org"))
+  withr::local_envvar(c(OLLAMA_HOST = "http://127.0.0.1:18099"))
   testthat::local_mocked_bindings(.bl_ollama_tags = function(base, timeout = 2) NULL,
                                   .package = "rmoriebricklayer")
-  expect_message(hit <- rmoriebricklayer:::.bl_llm_route(), "not answering")
-  expect_identical(hit$name, "hosted MORIE tier")
+  expect_null(rmoriebricklayer:::.bl_llm_route())
+  expect_match(rmoriebricklayer:::.bl_no_route_message(), "local Ollama: nothing answers at http://127.0.0.1:18099")
+  withr::local_envvar(c(GROQ_API_KEY = "gsk-x"))
+  expect_identical(rmoriebricklayer:::.bl_llm_route()$name, "Groq")
+  withr::local_envvar(c(GROQ_API_KEY = NA))
   # the default address, never configured, is not announced
   withr::local_envvar(c(OLLAMA_HOST = NA))
   expect_silent(rmoriebricklayer:::.bl_llm_route())
@@ -367,7 +369,7 @@ test_that("CLI: a prompt after a bare -- may start with --, and the launcher is 
   st <- bricklayer_cli(c("ask", "--", "--weird", "prompt"), out = function(s) buf <<- c(buf, s))
   expect_identical(st, 0L)
   expect_identical(seen, "--weird prompt")
-  st <- bricklayer_cli(c("ask", "--route", "hosted", "--", "--model"), out = function(s) buf <<- c(buf, s))
+  st <- bricklayer_cli(c("ask", "--route", "ollama", "--", "--model"), out = function(s) buf <<- c(buf, s))
   expect_identical(seen, "--model")
   launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")
   skip_if(!nzchar(launcher))

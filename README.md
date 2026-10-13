@@ -57,13 +57,13 @@ and a digest anyone can recompute says nothing about who produced the data.
   book and frequency table, reported odds ratios recomputed under every
   relabelling, and the mechanical step behind a permutation named, so a
   swapped label is fixed on the day, not blamed on the software.
-- **Asking a model** — `bricklayer_llm_ask()` puts a question to the first
-  language-model route that answers: an OpenAI-compatible endpoint of your
-  own, a local Ollama server, then the hosted MORIE tier as a last resort
-  (`bricklayer_llm_login()` stores its key, `bricklayer_llm_models()` lists
-  its models, `bricklayer_llm_status()` shows which route answers). The
-  hosted addresses come from a signed services document
-  (`bricklayer_services()`), so they can change without a release; the
+- **Asking a model** — `bricklayer_llm_ask()` puts a question to a language
+  model you bring: a key for any major provider (OpenAI, Anthropic, Gemini,
+  OpenRouter, Groq, Mistral, DeepSeek, xAI, Hugging Face, OpenCode and more:
+  `bricklayer_llm_providers()`), an Ollama server, or an OpenAI-compatible
+  server of your own. The model is given every function of the installed
+  MORIE packages and tools to read their help, as much as it can take in;
+  `bricklayer_llm_status()` shows which route answers, and the
   `rmoriebricklayer` launcher offers the same as shell verbs.
 - **Schema validation** — `infer_schema()` derives a pinnable schema from
   data you trust; `validate_schema()` checks names, types, ranges, value
@@ -591,43 +591,41 @@ See `vignette("drift")` for the distributional checks and
 ## Asking a model
 
 The package can put a question to a language model, from R or from the
-shell. Three routes are tried, in this order, and the first that answers
-is used:
+shell. You bring the model; the package runs no model service of its own and
+sends nothing anywhere you did not set up. The routes are tried in this
+order, and the first that is set up is used:
 
 1. **An endpoint of your own.** Set `MORIE_LLM_BASE_URL` to any
    OpenAI-compatible server (with `MORIE_LLM_API_KEY` and `MORIE_LLM_MODEL`
    when it needs them).
-2. **A local Ollama server.** Found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`),
-   default `http://localhost:11434`; the model is `OLLAMA_MODEL` or the first
-   one the server lists. `OLLAMA_HOST=off` skips it.
-3. **The hosted MORIE tier**, a last resort for people who can run neither.
-   Its address and model list come from the signed services document at
-   `https://rmorie.com/.well-known/morie-services.json` (ML-DSA-44, the
-   public key pinned in the package: `bricklayer_services()`), so the
-   endpoint can move or be paused without a package release. Keys are
-   personal, rate limited and issued on request at
-   <https://www.rmorie.com/access/>; a key is stored once, in
-   `~/.config/morie/credentials.json`, and shared with rmorie, rmoriedata and
-   the Python package morie.
+2. **A provider whose key is set**: OpenAI, Anthropic, Google Gemini,
+   OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek, Mistral, xAI,
+   Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA, each
+   from its usual variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+   `GEMINI_API_KEY`, ...) or a key saved with `rmbl config set <provider>.key`.
+   Anthropic's and Gemini's own APIs are spoken natively.
+3. **Ollama**, found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`), default
+   `http://localhost:11434`; the model is `OLLAMA_MODEL` or the first one the
+   server lists, including the cloud models Ollama serves. `OLLAMA_HOST=off`
+   skips it.
+
+The model gets the packages' help: the name, arguments and title of every
+function of rmoriebricklayer (and of rmoriedata and rmorie when installed),
+and tools to search the help, read a page, its examples, a vignette and the
+dataset list before it writes code. A large model (a provider's, or an
+Ollama cloud model) gets all of it; a small model running locally gets the
+functions nearest the question and can still look up any other.
+`MORIE_LLM_CONTEXT` sets the size by hand.
 
 ```r
 library(rmoriebricklayer)
 
+bricklayer_llm_providers()   # the providers, their addresses and key variables
 bricklayer_llm_status()      # which route would answer from this machine, and why
-bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
+Sys.setenv(ANTHROPIC_API_KEY = "...")    # or bricklayer_llm_config(anthropic.key = "...")
+bricklayer_llm_ask("How do I estimate a weighted proportion with bootstrap replicate weights?")
 bricklayer_llm_ask("The same question, on the local model.", route = "ollama")
-
-# The hosted tier: store the key you were issued, or sign in
-bricklayer_llm_login(token = "sk-...")                    # the key from rmorie.com/access
-bricklayer_llm_login(email = "you@example.org")           # or: a code is emailed, then
-bricklayer_llm_login(email = "you@example.org", code = "123456")
-bricklayer_llm_login()                                   # or: GitHub device flow
-bricklayer_llm_models()      # the hosted models your key can use; attr(, "default")
-bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.",
-                  model = "gpt-oss-120b:cf", route = "hosted")
-bricklayer_llm_logout()      # forget the key
-
-bricklayer_services()        # the signed document: endpoints, modes, models, notice
+bricklayer_llm_models(route = "anthropic")   # the models that route offers; attr(, "default")
 ```
 
 ### Choosing the route and model
@@ -639,8 +637,8 @@ set still wins for that session.
 
 ```r
 bricklayer_llm_config()                                        # every setting, its value and source
-bricklayer_llm_config(route = "hosted")                        # always the hosted tier
-bricklayer_llm_config(hosted.model = "gpt-oss-120b:cf")        # its default model
+bricklayer_llm_config(route = "anthropic")                     # always this provider
+bricklayer_llm_config(anthropic.model = "claude-opus-5-5")     # its model
 bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
 bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
 bricklayer_llm_config(route = NULL)                            # back to the automatic order
@@ -648,21 +646,16 @@ bricklayer_llm_config(route = NULL)                            # back to the aut
 
 | Setting | What it does | Environment variable |
 |---|---|---|
-| `route` | `auto` (own endpoint, Ollama, then hosted), `own`, `ollama` or `hosted` | `MORIE_LLM_ROUTE` |
-| `own.url`, `own.model`, `own.key` | your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a provider) | `MORIE_LLM_BASE_URL`, `MORIE_LLM_MODEL`, `MORIE_LLM_API_KEY` |
+| `route` | `auto` (own endpoint, a provider with a key, then Ollama), `own`, `ollama` or a provider id | `MORIE_LLM_ROUTE` |
+| `own.url`, `own.model`, `own.key` | your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a gateway) | `MORIE_LLM_BASE_URL`, `MORIE_LLM_MODEL`, `MORIE_LLM_API_KEY` |
 | `ollama.url`, `ollama.model`, `ollama.key` | an Ollama server here or on your network; `ollama.url off` skips it | `OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_API_KEY` |
-| `hosted.url`, `hosted.model`, `hosted.key` | the hosted tier; the key is checked, then stored like `login --token` | `MORIE_HOSTED_BASE_URL`, `MORIE_HOSTED_MODEL`, `MORIE_HOSTED_KEY` |
+| `<provider>.key`, `<provider>.model` | a provider's key (stored privately, shown only as "set") and model | the provider's key variable, `MORIE_<PROVIDER>_MODEL` |
 
 With `route = "auto"`, a local Ollama server that has no model pulled is
-passed over, so a stored hosted key is used rather than an empty Ollama.
+passed over.
 
-`MORIE_HOSTED_KEY` in the environment overrides the stored key, and
-`MORIE_HOSTED_BASE_URL` points the package at another gateway (set it to
-`off` to disable the hosted tier). The hosted tier serves ollama.com cloud
-models (minimax-m3:cloud, the default; minimax-m2.7:cloud, glm-5.2:cloud,
-deepseek-v4-pro:cloud, gemma4:31b-cloud, gpt-oss:20b-cloud and
-gpt-oss:120b-cloud) and additional AI models; `bricklayer_llm_models()`
-reports what your key can use now.
+Signing in (`bricklayer_llm_login()`, `rmbl login`) is for the curated tables
+at data.rmorie.com only; it is never a language model.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
@@ -671,23 +664,23 @@ The same verbs exist on the command line once the launcher is on your
 Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 rmoriebricklayer help                           # every verb; `help start`, `help llm`, `help config`, `help r`
 rmoriebricklayer doctor                         # which routes answer here, and the one ask will use
-rmoriebricklayer ask "your question"            # own endpoint, local Ollama, then the hosted tier
+rmoriebricklayer ask "your question"            # own endpoint, a provider with a key, then Ollama
 rmoriebricklayer ask --model NAME "your question"
-rmoriebricklayer ask --route hosted "your question"   # one route, this time
+rmoriebricklayer ask --route anthropic "your question"   # one route, this time
 rmoriebricklayer config                         # every language-model setting and where it comes from
-rmoriebricklayer config setup                   # a few questions that set them all
-rmoriebricklayer config set route hosted        # always the hosted tier
-rmoriebricklayer config set hosted.model gpt-oss-120b:cf
+rmoriebricklayer config setup                   # pick a provider, paste its key, pick a model
+rmoriebricklayer config set route anthropic     # always this provider
+rmoriebricklayer config set anthropic.key       # asks for the key; saved privately
 rmoriebricklayer config set ollama.url http://192.168.1.20:11434
 rmoriebricklayer config set own.url http://localhost:1234/v1
 rmoriebricklayer config unset route             # back to the automatic order
-rmoriebricklayer login --token                  # paste the key you were issued (or pipe it in)
+rmoriebricklayer models --route ollama          # the models a route offers, the one in use marked
+rmoriebricklayer login --token                  # the data key: paste the key you were issued
 rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
 rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
 rmoriebricklayer login                          # or: GitHub device flow
 rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
-rmoriebricklayer models                         # hosted models your key can use, default marked
-rmoriebricklayer logout                         # forget the key
+rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
 rmoriebricklayer bundle "your request"          # agent_bundle() from the shell

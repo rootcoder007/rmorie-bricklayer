@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 #
-# The hosted MORIE services (the language-model tier at llm.rmorie.com and
-# the curated tables at data.rmorie.com) are described by one document on
-# the project site, signed with ML-DSA-44. The packages pin the public key
+# The hosted MORIE services (the curated tables at data.rmorie.com and the
+# sign-in that issues their key) are described by one document on the
+# project site, signed with ML-DSA-44. The packages pin the public key
 # and the document's URL and nothing else: an endpoint, a model list or an
 # access mode can change on the site without a package release, and a
 # hijacked site cannot redirect anyone's key, because the signature fails
@@ -150,9 +150,9 @@
 #' The hosted MORIE services, as the project site currently describes them
 #'
 #' Reads \code{https://rmorie.com/.well-known/morie-services.json}, a signed
-#' document naming the language-model tier and the curated-data service:
-#' their endpoints, whether each is \code{"key"} (reachable with a key
-#' requested on the site) or \code{"off"}, the model list, and a notice.
+#' document naming the curated-data service and its sign-in: their
+#' endpoints, whether each is \code{"key"} (reachable with a key requested on
+#' the site) or \code{"off"}, and a notice.
 #' The signature (ML-DSA-44, public key pinned in this package) is checked
 #' before anything in it is believed, so the endpoints can move or be
 #' switched off on the site without a package release, and a document that
@@ -161,8 +161,9 @@
 #'
 #' Every other MORIE package reads the same document through this function,
 #' so one sign-in and one document serve rmorie, rmoriedata and morie alike.
-#' The hosted tier is a last resort: a local model or your own API key is
-#' always preferred where the caller offers the choice.
+#' Language models are never hosted: you bring your own key or model
+#' (\code{\link{bricklayer_llm_ask}}). The \code{llm} block of documents
+#' signed before that change carries the sign-in address only.
 #'
 #' The environment variable \code{MORIE_SERVICES_URL} points the fetch at a
 #' mirror of the document (its signature is fetched from the same place, with
@@ -177,8 +178,8 @@
 #' @param offline \code{TRUE} never fetches: the cached copy, then the
 #'   bundled one (what the examples and an offline session get).
 #' @return A list with \code{version}, \code{issued}, \code{notice},
-#'   \code{llm} (\code{mode}, \code{base_url}, \code{auth_url},
-#'   \code{default_model}, \code{models}, \code{request_access}) and
+#'   \code{llm} (\code{mode}, \code{base_url}, \code{auth_url}: where the
+#'   sign-in for the data key is reached) and
 #'   \code{data} (\code{mode}, \code{base_url}, \code{license},
 #'   \code{request_access}), with the attribute \code{"source"} set to
 #'   \code{"live"}, \code{"cache"}, \code{"bundled"} or \code{"off"}.
