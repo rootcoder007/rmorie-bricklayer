@@ -49,7 +49,8 @@
     # marker: Ctrl-C never reaches the input.
     mark <- "\001RMBL-INTERRUPTED\001"
     script <- if (hide) {
-      "trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\""
+      paste0("trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; ",
+             "stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\"")
     } else {
       "trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; IFS= read -r l; printf '%s' \"$l\""
     }

@@ -315,10 +315,13 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
       graphics::lines(px, x$disposed, col = cols[1L], lwd = 2)
       # a key over a panel smaller than about 2.6 by 1.8 inches hides the lines it explains; the
       # title says which line is which instead
-      if (all(graphics::par("pin") >= c(2.6, 1.8))) graphics::legend("bottomleft", c("received", "disposed", "inventory fell", "inventory grew"),
-                       col = c("#333333", cols[1L], NA, NA), lty = c(2, 1, NA, NA), lwd = 2,
-                       fill = c(NA, NA, grDevices::adjustcolor(cols[1L], 0.25), grDevices::adjustcolor(cols[2L], 0.25)),
-                       border = NA, bty = "n", cex = 0.75)
+      if (all(graphics::par("pin") >= c(2.6, 1.8))) {
+        graphics::legend("bottomleft", c("received", "disposed", "inventory fell", "inventory grew"),
+                         col = c("#333333", cols[1L], NA, NA), lty = c(2, 1, NA, NA), lwd = 2,
+                         fill = c(NA, NA, grDevices::adjustcolor(cols[1L], 0.25),
+                                  grDevices::adjustcolor(cols[2L], 0.25)),
+                         border = NA, bty = "n", cex = 0.75)
+      }
     } else {
       ys <- c(x$lower, x$upper, x$clearance, 1)
       op <- .bl_par(ys)
@@ -863,7 +866,8 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
   if (coords == "lonlat") {
     bad <- keep & (abs(lat) > 90 | abs(lon) > 180)
     if (any(bad)) {
-      stop(sprintf("coordinate %d is not a longitude and latitude in degrees (%g, %g); planar data take coords = \"planar\"",
+      stop(sprintf(paste("coordinate %d is not a longitude and latitude in degrees (%g, %g);",
+                         "planar data take coords = \"planar\""),
                    which(bad)[1L], lon[bad][1L], lat[bad][1L]), call. = FALSE)
     }
     keep <- keep & !(lon == 0 & lat == 0)
@@ -1110,9 +1114,13 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   coords <- match.arg(coords)
   x <- .rmbl_num_input(x, "x", allow_null = FALSE)
   y <- .rmbl_num_input(y, "y", allow_null = FALSE)
-  tt <- if (inherits(time, "Date")) as.numeric(time) else if (inherits(time, "POSIXt")) {
+  tt <- if (inherits(time, "Date")) {
+    as.numeric(time)
+  } else if (inherits(time, "POSIXt")) {
     as.numeric(time) / 86400
-  } else .rmbl_num_input(time, "time", allow_null = FALSE)
+  } else {
+    .rmbl_num_input(time, "time", allow_null = FALSE)
+  }
   if (length(y) != length(x) || length(tt) != length(x)) {
     stop("`x`, `y` and `time` must have the same length", call. = FALSE)
   }
@@ -1129,12 +1137,15 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   sb <- bands(space_bands, "space_bands")
   tb <- bands(time_bands, "time_bands")
   nsim <- .rmbl_num(nsim, "nsim", integer = TRUE)
-  if (length(nsim) != 1L || is.na(nsim) || nsim < 19L) stop("`nsim` must be a whole number of at least 19", call. = FALSE)
+  if (length(nsim) != 1L || is.na(nsim) || nsim < 19L) {
+    stop("`nsim` must be a whole number of at least 19", call. = FALSE)
+  }
   n <- length(x)
   if (n < 3L) stop("need at least three incidents", call. = FALSE)
   if (coords == "lonlat") {
     if (any(abs(y) > 90 | abs(x) > 180)) {
-      stop("`x` and `y` are not longitudes and latitudes in degrees; planar data take coords = \"planar\"", call. = FALSE)
+      stop("`x` and `y` are not longitudes and latitudes in degrees; planar data take coords = \"planar\"",
+           call. = FALSE)
     }
     p <- .jx_project(x, y, stats::median(x), stats::median(y))
     px <- p$x * 1000
@@ -1369,8 +1380,10 @@ clearance_decomposition <- function(numerator, denominator, group, compare, base
   }
   g <- sort(unique(group))
   pick <- function(v, l) v[match(paste(g, l, sep = "\r"), key)]
-  na <- pick(num, levs[1L]); da <- pick(den, levs[1L])
-  nb <- pick(num, levs[2L]); db <- pick(den, levs[2L])
+  na <- pick(num, levs[1L])
+  da <- pick(den, levs[1L])
+  nb <- pick(num, levs[2L])
+  db <- pick(den, levs[2L])
   if (any(da == 0 | db == 0)) {
     stop(sprintf("part \"%s\" has a zero denominator, so it has no rate", g[da == 0 | db == 0][1L]), call. = FALSE)
   }
@@ -1442,7 +1455,8 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
                      rate_effect = signif(g$rate_effect, 3), mix_effect = signif(g$mix_effect, 3))
   names(show)[2:5] <- c(paste("rate", a), paste("rate", b), paste("share", a), paste("share", b))
   rr <- x$rate_ratio
-  footer <- sprintf("Rate ratio %s/%s: crude %.4f (%.4f to %.4f); within parts (Mantel-Haenszel) %.4f (%.4f to %.4f), p %s",
+  footer <- sprintf(paste("Rate ratio %s/%s: crude %.4f (%.4f to %.4f);",
+                          "within parts (Mantel-Haenszel) %.4f (%.4f to %.4f), p %s"),
                     b, a, rr$ratio[1L], rr$lower[1L], rr$upper[1L], rr$ratio[2L], rr$lower[2L], rr$upper[2L],
                     .rmbl_fmt_p(rr$p_value[2L]))
   .rmbl_print_table(sprintf("Clearance rate, %s against %s: rate and case-mix effects (Kitagawa)", b, a),

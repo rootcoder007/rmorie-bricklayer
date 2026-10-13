@@ -864,7 +864,8 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
     stop("`scheme = \"xmss\"` needs a key from pqc_keygen()", call. = FALSE)
   }
   idx <- key$next_index
-  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) || idx > .Machine$integer.max) {
+  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) ||
+        idx > .Machine$integer.max) {
     stop("this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; ",
          "do not hand-edit it", call. = FALSE)
   }
@@ -1003,7 +1004,8 @@ xmss_advance <- function(key, signature, message = NULL) {
   }
   nx <- key$next_index
   if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx) || nx > .Machine$integer.max) {
-    stop("this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; do not hand-edit it",
+    stop(paste("this key's `next_index` is not a whole number >= 0 (below 2^31):",
+               "the key state is damaged; do not hand-edit it"),
          call. = FALSE)
   }
   if (!identical(tolower(as.character(signature$root)), tolower(as.character(key$root)))) {
@@ -1430,9 +1432,14 @@ capsule_verify <- function(message, signature, key, context = NULL,
                      hint <- if (grepl("Read-only", m)) {
                        " (is the directory read-only?)"
                      } else if (grepl("Permission denied", m)) {
-                       if (file.exists(lock) && file.access(lock, 2L) != 0L) " (is the lock file owned by another user?)"
-                       else " (is the directory read-only?)"
-                     } else ""
+                       if (file.exists(lock) && file.access(lock, 2L) != 0L) {
+                         " (is the lock file owned by another user?)"
+                       } else {
+                         " (is the directory read-only?)"
+                       }
+                     } else {
+                       ""
+                     }
                      stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
                    })
     if (!identical(fd, -1L)) break

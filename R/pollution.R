@@ -646,8 +646,11 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
     # caller says which with rare_outcome = TRUE: giving the unit is not enough, since a wrapper
     # or do.call() passes it routinely (review of 52a8883, A6; of 02a38be, C4). Below 1e-6 per
     # 100k (fewer than one case in the world's population over a lifetime) no rate is plausible.
-    row(if (isTRUE(rare_outcome)) "baseline_rate finite: zero, or between 1e-6 and 100,000 per 100k (a rare outcome)" else
-          "baseline_rate finite: zero, or between 1 and 100,000 per 100k",
+    row(if (isTRUE(rare_outcome)) {
+          "baseline_rate finite: zero, or between 1e-6 and 100,000 per 100k (a rare outcome)"
+        } else {
+          "baseline_rate finite: zero, or between 1 and 100,000 per 100k"
+        },
         fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5 &&
           (baseline_rate == 0 || baseline_rate >= 1 || (isTRUE(rare_outcome) && baseline_rate >= 1e-6)),
         if (fin(baseline_rate) && baseline_rate < 1e-6 && baseline_rate > 0) {
@@ -772,7 +775,8 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # the two population inputs have defaults, not an "absent" value: NULL is a wrong call
   if (is.null(population)) return(fail("population must be a single number (persons at risk), not NULL"))
   # a number is numeric: as.raw(25) was read as 25 (review of 02a38be)
-  for (nm in c("exposure_mean", "exposure_prevalence", "baseline_rate", "baseline_rate_per", "population", "reference")) {
+  scalars <- c("exposure_mean", "exposure_prevalence", "baseline_rate", "baseline_rate_per", "population", "reference")
+  for (nm in scalars) {
     v <- get(nm)
     # a missing value (NA) is not a type error: the checks below report it
     if (!is.null(v) && !is.numeric(v) && !(is.logical(v) && all(is.na(v)))) {
@@ -1033,10 +1037,11 @@ pollution_report_text <- function(report) {
 }
 
 # The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as read.csv did
-# before 0.5.12, review of 52a8883, A4) and checked to be complete (.rmbl_decompress_checked), a UTF-16 file is decoded with or without its byte-order
-# mark, a UTF-8 BOM is dropped, a file that is not UTF-8 is read as Latin-1 (and said), other NUL
-# bytes are refused. A parse that reports a problem (an unbalanced quote that swallowed the rest
-# of the file, A5) stops with the parser's own message instead of returning the rows before it.
+# before 0.5.12, review of 52a8883, A4) and checked to be complete (.rmbl_decompress_checked), a
+# UTF-16 file is decoded with or without its byte-order mark, a UTF-8 BOM is dropped, a file that
+# is not UTF-8 is read as Latin-1 (and said), other NUL bytes are refused. A parse that reports a
+# problem (an unbalanced quote that swallowed the rest of the file, A5) stops with the parser's
+# own message instead of returning the rows before it.
 .pollution_read_csv <- function(path) {
   head <- readBin(path, "raw", 6L)
   compressed <- length(head) >= 2L && (identical(head[1:2], as.raw(c(0x1f, 0x8b))) ||
@@ -1112,13 +1117,14 @@ pollution_report_text <- function(report) {
   hdr <- names(utils::read.csv(src, nrows = 1L, check.names = FALSE, encoding = "UTF-8"))
   dup <- unique(hdr[duplicated(tolower(trimws(hdr)))])
   if (length(dup)) {
-    stop(sprintf("has the column name %s more than once: say which column is meant", paste(sprintf("'%s'", dup), collapse = ", ")),
-         call. = FALSE)
+    stop(sprintf("has the column name %s more than once: say which column is meant",
+                 paste(sprintf("'%s'", dup), collapse = ", ")), call. = FALSE)
   }
   nf <- utils::count.fields(src, sep = ",", quote = "\"", blank.lines.skip = TRUE, comment.char = "")
   wrong <- which(!is.na(nf) & nf != length(hdr))
   if (length(wrong)) {
-    stop(sprintf("line %d has %d fields where the header has %d: no rows are used from a file whose rows do not line up",
+    stop(sprintf(paste("line %d has %d fields where the header has %d:",
+                       "no rows are used from a file whose rows do not line up"),
                  wrong[[1L]], nf[[wrong[[1L]]]], length(hdr)), call. = FALSE)
   }
   problems <- character()
