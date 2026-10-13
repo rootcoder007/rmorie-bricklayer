@@ -84,30 +84,25 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
         int e = errno;
         error("cannot open the lock file %s: %s", p, strerror(e));
     }
+    /* one exit for every refusal: a lock file that is not a regular file, or a lock call that fails
+     * for any reason but "held by another process" */
     struct stat st;
-    if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) {
-        RMBL_CLOSE(fd);
-        error("the lock file %s is not a regular file", p);
-    }
+    const char *why = NULL;
+    int e = 0;
+    if (fstat(fd, &st) != 0 || !S_ISREG(st.st_mode)) why = "is not a regular file";
     double start = rmbl_now_ms();
-    for (;;) {
+    while (why == NULL) {
 #ifdef _WIN32
         HANDLE h = (HANDLE) _get_osfhandle(fd);
         OVERLAPPED ov;
         memset(&ov, 0, sizeof ov);
-        if (LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ov)) break;
-        DWORD e = GetLastError();
-        if (e != ERROR_LOCK_VIOLATION && e != ERROR_IO_PENDING) {
-            RMBL_CLOSE(fd);
-            error("cannot lock %s (Windows error %lu)", p, (unsigned long) e);
-        }
+        if (LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ov)) return ScalarInteger(fd);
+        DWORD we = GetLastError();
+        if (we != ERROR_LOCK_VIOLATION && we != ERROR_IO_PENDING) { why = "cannot be locked"; e = EACCES; continue; }
 #else
-        if (flock(fd, LOCK_EX | LOCK_NB) == 0) break;
-        int e = errno;
-        if (e != EWOULDBLOCK && e != EAGAIN && e != EINTR) {
-            RMBL_CLOSE(fd);
-            error("cannot lock %s: %s", p, strerror(e));
-        }
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) return ScalarInteger(fd);
+        e = errno;
+        if (e != EWOULDBLOCK && e != EAGAIN && e != EINTR) { why = "cannot be locked"; continue; }
 #endif
         if (rmbl_now_ms() - start >= (double) tmo) {
             RMBL_CLOSE(fd);
@@ -115,7 +110,10 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
         }
         rmbl_sleep_ms(20);
     }
-    return ScalarInteger(fd);
+    RMBL_CLOSE(fd);
+    if (e != 0) error("the lock file %s %s: %s", p, why, strerror(e));
+    error("the lock file %s %s", p, why);
+    return R_NilValue; /* not reached */
 }
 
 SEXP C_rmbl_flock_release(SEXP fd_) {
