@@ -50,10 +50,10 @@
 #' its own variability. `"percent"` reports a percentage-POINT change
 #' and withholds the percent change, which for a percentage is a different
 #' quantity.
-#' @param min_base Smallest previous-period value for which
-#' a percent change is reported. Below it the percent is `NA` and the
-#' reason is recorded, rather than a large number that describes the
-#' denominator. Defaults to 20 for counts and to no gate otherwise.
+#' @param min_base Optional: previous-period values below this get a
+#' "small base" note. Nothing is withheld either way: every non-zero base gets
+#' its percent change and exact interval, which is as wide as the base is
+#' small. Defaults to 0 (no note); only a zero base has no percent change.
 #' @param conf_level Confidence level for the count
 #' interval.
 #' @param direction Which way is an improvement:
@@ -68,7 +68,7 @@
 #' (and group), and columns `period`, `value`, `previous`,
 #' `change`, `pct_change` (or `pp_change` for percentages),
 #' `pct_lower` and `pct_upper` for counts, `verdict`, and
-#' `flag` recording why a percent was withheld.
+#' `flag` noting a zero, missing or (if `min_base` is set) small base.
 #' @references
 #' The exact interval for a ratio of two counts is the conditional-binomial
 #' (Clopper-Pearson) one, which is the construction
@@ -168,7 +168,7 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
       )
     }
   }
-  if (is.null(min_base)) min_base <- if (units == "count") 20 else 0
+  if (is.null(min_base)) min_base <- 0
 
   agg <- .yoy_aggregate(x, value, period, by, fun)
   if (isTRUE(complete)) agg <- .yoy_complete(agg, period, by, lag)
@@ -372,8 +372,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
     flag[is.na(prev)] <- "no comparison period"
     small <- !is.na(prev) & prev < min_base
     if (units != "percent") {
-      flag[small] <- sprintf("base below %g", min_base)
-      out$pct_change[small] <- NA_real_
+      # a small base is computed like any other: the exact interval carries how little it supports;
+      # the note appears only when the caller set min_base
+      flag[small] <- sprintf("small base (below %g)", min_base)
       zero <- !is.na(prev) & prev == 0
       flag[zero] <- "previous period is zero"
     }
@@ -383,13 +384,9 @@ yoy.ts <- function(x, lag = NULL, ...) {
       ci <- .yoy_ratio_ci(v, prev, conf_level)
       out$pct_lower <- ci$lower
       out$pct_upper <- ci$upper
-      out$pct_lower[small] <- NA_real_
-      out$pct_upper[small] <- NA_real_
     }
-    # The verdict follows the CHANGE, not the percent. Which way a
-    # series moved is known even when the percent is withheld for a
-    # small base, and withholding the direction too would hide the one
-    # fact that is not in question.
+    # The verdict follows the CHANGE, not the percent: a rise from a zero
+    # base has no percent but is still a rise.
     out$verdict <- .yoy_verdict(out$change, direction)
     if (!is.null(by)) {
       for (b in by) out[[b]] <- g[[b]][seq_len(nrow(out))]

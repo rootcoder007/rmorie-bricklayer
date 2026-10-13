@@ -745,7 +745,8 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
     ym[length(ym)] <- 1
     for (i in rev(seq_along(ym))[-1L]) ym[i] <- min(ym[i], ym[i + 1L] - gap)
   }
-  graphics::text(max(xs), ym, fit$labels[ord], pos = 4, xpd = NA, cex = 0.75, col = cols[ord])
+  # from the frame's edge, not the last period's: drawn from inside the frame, the box ran through the first letter
+  graphics::text(graphics::par("usr")[2L], ym, fit$labels[ord], pos = 4, xpd = NA, cex = 0.75, col = cols[ord])
   invisible(s)
 }
 

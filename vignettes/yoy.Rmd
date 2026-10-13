@@ -67,20 +67,22 @@ rather than a quietly three-year one.
 
 ## The second failure: a percent off a small base
 
-Two placements becoming twenty is a 900% rise and also nothing at all.
-The number describes how small the denominator was:
+Two placements becoming twenty is a 900% rise, and the same rise off a
+base of two is far less certain than off a base of two hundred. The
+percent is still the right number; what changes is its interval:
 
 ```{r}
 tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-yoy(tiny, value = n, period = year)
+as.data.frame(yoy(tiny, value = n, period = year))[, c("year", "pct_change",
+                                                     "pct_lower", "pct_upper")]
 ```
 
-The change of `+18` is still reported, and so is the direction: those are
-facts. Only the percent is withheld, with the reason attached. Lower the
-gate if the small base is the point:
+Every non-zero base gets its percent and exact interval, however small
+the base or the change. Set `min_base` to add a note to small-base rows;
+nothing is withheld either way:
 
 ```{r}
-as.data.frame(yoy(tiny, value = n, period = year, min_base = 0))$pct_change
+as.data.frame(yoy(tiny, value = n, period = year, min_base = 20))$flag
 ```
 
 ## The third failure: a percent of a percent
@@ -182,8 +184,8 @@ for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
 ```
 
 The delimited writers lead with the settings as comments, and carry the
-`flag` column, so a withheld percentage stays marked as withheld
-wherever it lands:
+`flag` column, so a row's note (a zero base, a missing period) travels
+with it:
 
 ```{r}
 cat(yoy_csv(y, NULL, digits = 1L))

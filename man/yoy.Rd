@@ -70,10 +70,10 @@ its own variability. \code{"percent"} reports a percentage-POINT change
 and withholds the percent change, which for a percentage is a different
 quantity.}
 
-\item{min_base}{Smallest previous-period value for which
-a percent change is reported. Below it the percent is \code{NA} and the
-reason is recorded, rather than a large number that describes the
-denominator. Defaults to 20 for counts and to no gate otherwise.}
+\item{min_base}{Optional: previous-period values below this get a
+"small base" note. Nothing is withheld either way: every non-zero base gets
+its percent change and exact interval, which is as wide as the base is
+small. Defaults to 0 (no note); only a zero base has no percent change.}
 
 \item{conf_level}{Confidence level for the count
 interval.}
@@ -103,7 +103,7 @@ An \code{rmbl_yoy} object: a data frame with one row per period
 (and group), and columns \code{period}, \code{value}, \code{previous},
 \code{change}, \code{pct_change} (or \code{pp_change} for percentages),
 \code{pct_lower} and \code{pct_upper} for counts, \code{verdict}, and
-\code{flag} recording why a percent was withheld.
+\code{flag} noting a zero, missing or (if \code{min_base} is set) small base.
 }
 \description{
 Computes the change from one period to the period \code{lag} places

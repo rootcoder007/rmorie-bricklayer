@@ -226,7 +226,9 @@ the exposure marked; baseline against attributable cases; the
 concentration curve of exposure over income rank; and, for a report,
 all three on one page.}
 \item{\code{rmbl_footprint}}{(\code{\link{compute_footprint}}) the
-emission with its car-kilometre and tree-month equivalents.}
+CPU, memory and total emission in one unit chosen to fit, with the
+car-kilometre and tree-month equivalents as a caption; "Too short to
+measure" when the work took no measurable time.}
 \item{\code{rmbl_field}, \code{rmbl_particles}}{
 (\code{\link{plume_field}}, \code{\link{advection_diffusion_2d}},
 \code{\link{lagrangian_particles}}) a concentration field as an
@@ -259,12 +261,87 @@ sf <- stock_flow(days = c(13500, 14600, 15100), people = c(300, 320, 310),
                  period = 2021:2023)
 plot(sf)
 plot(sf, what = "alos", col = "firebrick", main = "Length of stay")
-y <- yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
+y <- yoy(data.frame(year = 2019:2023, n = c(400, 420, 390, 460, 450)), value = "n",
          period = "year")
 plot(y)
+# small counts: each percentage carries its exact interval
+plot(yoy(data.frame(year = 2019:2023, n = c(10, 12, 11, 15, 14)), value = "n",
+         period = "year"))
 plot(benford_test(c(1, 12, 123, 1234, 2, 23, 3, 31, 4, 45, 5, 6, 7, 8, 9)))
 plot(crf_no2(25))
-plot(compute_footprint(sum(1:10), location = "CA", cpu_power_w = 45, memory_gb = 8))
+plot(compute_footprint(for (i in 1:20) sum(sqrt(seq_len(2e5))), location = "CA",
+                       cpu_power_w = 45, memory_gb = 8))
+# the courts and crime data shipped with the package
+ext <- function(f) {
+  read.csv(system.file("extdata", f, package = "rmoriebricklayer"))
+}
+fl <- ext("ocj_flow_ontario.csv")
+plot(case_flow(fl$received, fl$disposed, pending = fl$pending, period = fl$month))
+td <- ext("ocj_time_to_disposition.csv")
+open <- unlist(td[nrow(td), 2:5]) * fl$disposed[nrow(fl)]
+plot(life_table(c(0, 10, 15, 18, Inf), open))
+dm <- ext("ocj_dispositions.csv")
+plot(disposition_mix(dm[, -(1:2)], period = dm$year))
+og <- ext("ocj_offence_groups.csv")
+og <- og[og$year \%in\% c(2014, 2022), ]
+plot(clearance_decomposition(og$disposed, og$received, og$offence_group, og$year))
+be <- ext("tps_break_enter_d14_2024.csv")
+be <- be[!is.na(be$lon), ]
+plot(crime_density(be$lon, be$lat, n_grid = 60))
+\donttest{
+plot(knox_test(be$lon, be$lat, as.Date(be$occ_date), c(100, 200, 400), c(7, 14, 28),
+               nsim = 99, seed = 1))
+}
+# rates, shares and the change in a rate
+rt <- data.frame(division = rep(c("n", "e", "w"), 2), year = rep(2022:2023, each = 3),
+                 stops = c(120, 90, 60, 150, 85, 70),
+                 residents = rep(c(1e4, 8e3, 5e3), 2))
+r23 <- rt[rt$year == 2023, ]
+plot(rate(r23, count = "stops", population = "residents", by = "division"))
+plot(share(r23, count = "stops", by = "division"))
+plot(rate_change(rt, count = "stops", population = "residents", period = "year",
+                 by = "division"))
+# a published table in one call: change, rates and rate change
+tab <- data.frame(year = rep(2020:2023, each = 2), g = rep(c("a", "b"), 4),
+                  n = c(10, 20, 12, 22, 11, 25, 15, 24), pop = rep(c(1000, 2000), 4))
+plot(analyse_table(tab, value = "n", period = "year", by = "g", population = "pop"))
+plot(count_trend(c(21000, 23000, 22000, 25000, 24000)))
+# banded tables
+plot(band_sensitivity(parse_bands(c("0-17", "18-24", "25-44", "45+")), c(10, 20, 30, 40),
+                      caps = c(60, 70, 80, 90)))
+plot(published_bounds(c(10, 20), rounding = 5))
+plot(region_coverage(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
+# drift between two extracts, and how often the test cries wolf
+set.seed(1)
+dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
+plot(capsule_drift(dd, transform(dd, a = a + 3)))
+plot(drift_calibrate(dd, n = 3L))
+# describing a table
+plot(frequency_table(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
+plot(missingness_pattern(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
+hw <- data.frame(h = rnorm(100), w = rnorm(100))
+hw$h[1] <- 15
+plot(mahalanobis_outliers(hw))
+sq <- data.frame(a = 1:20, b = (1:20)^2, c = rev(1:20))
+plot(top_correlations(sq))
+plot(correlation_table(sq))
+# power and falsification of a statistic
+xy <- data.frame(x = rnorm(60), y = rnorm(60))
+shift <- function(z, s) {
+  z$y <- z$y + s * z$x
+  z
+}
+plot(capsule_power(xy, function(z) cor(z$x, z$y), inject = shift, treatment = "x",
+                   sizes = c(0, 0.25, 0.5), n = 19, reps = 3, seed = 1))
+plot(capsule_falsify(xy, function(z) cor(z$x, z$y), treatment = "x", n = 29, seed = 1))
+# air pollution: burden, equity, and the full report
+plot(pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2"))
+plot(exposure_concentration_index(data.frame(exposure = c(4, 1, 8, 2),
+                                             income = c(2, 1, 4, 3)),
+                                  "exposure", "income"))
+plot(verify_pollution("no2", demo = TRUE))
+plot(lagrangian_particles(200, 0, 0, 1, 0.5, 1, 1, 1, 20,
+                          grid = c(-10, 40, -15, 25, 10, 8)))
 plot(plume_field(q = 100, u = 5, h = 50, x = seq(100, 2000, by = 100),
                  y = seq(-300, 300, by = 50)))
 }

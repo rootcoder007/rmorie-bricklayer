@@ -2,8 +2,8 @@
 #
 # The delimited writers exist so that the number a reader sees in the
 # HTML or the PDF is the number a pipeline downstream reads, from the
-# same object, with the withheld percentages still marked as withheld
-# and the reason still attached. A CSV that silently drops the `flag`
+# same object, with each row's note
+# still attached. A CSV that silently drops the `flag`
 # column would hand on the one figure the table declined to stand
 # behind.
 
@@ -269,8 +269,8 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   if (identical(m$units, "count")) {
     bits <- c(bits,
               sprintf("interval: %.0f%% exact rate ratio",
-                      100 * m$conf_level),
-              sprintf("percent withheld below a base of %g", m$min_base))
+                      100 * m$conf_level))
+    if (isTRUE(m$min_base > 0)) bits <- c(bits, sprintf("bases below %g noted", m$min_base))
   }
   if (identical(m$units, "percent")) {
     bits <- c(bits, "change is in percentage points")
@@ -283,8 +283,8 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
 
 # The data frame the machine-readable writers export: every column the
 # object carries, with the percent columns optionally rounded. The `flag`
-# column travels with them, so a withheld percentage stays marked as
-# withheld wherever it lands.
+# column travels with them, so a row's note (zero base, missing period)
+# stays with it wherever it lands.
 .yoy_export_frame <- function(x, digits) {
   d <- as.data.frame(x)
   if (!is.null(digits)) {

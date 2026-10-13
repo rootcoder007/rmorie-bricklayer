@@ -235,7 +235,9 @@ test_that("the settings line reports the units and the direction", {
   )
   cl <- yoy_csv(cnt, NULL)
   expect_match(cl, "exact rate ratio")
-  expect_match(cl, "percent withheld below a base of 20")
+  expect_false(grepl("bases below", cl, fixed = TRUE))
+  noted <- yoy(data.frame(p = 2019:2021, n = c(100, 120, 140)), value = "n", period = "p", min_base = 20)
+  expect_match(yoy_csv(noted, NULL), "bases below 20 noted")
   expect_false(grepl("direction:", cl, fixed = TRUE))
   # the Markdown footer carries the same line, so the caveat cannot
   # drift between formats

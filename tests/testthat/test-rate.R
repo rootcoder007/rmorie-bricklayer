@@ -147,10 +147,12 @@ test_that("min_count flags a small count without hiding the rate", {
   expect_match(east$flag, "at or below 5")
   expect_false(is.na(east$rate))
   expect_true(is.na(r$flag[r$division == "North"]))
-  # and in a change, the withheld percent is the one off the tiny base
+  # and in a change, the percent off the tiny base is still computed, only noted
   g <- data.frame(year = c(2022, 2023), n = c(2, 40), pop = c(1000, 1000))
   rc <- rate_change(g, n, pop, year, min_count = 5)
-  expect_true(is.na(rc$pct_change[2]))
+  expect_equal(rc$pct_change[2], 1900)
+  expect_lt(rc$pct_lower[2], 1900)
+  expect_gt(rc$pct_upper[2], 1900)
   expect_match(rc$flag[2], "earlier count at or below 5")
 })
 

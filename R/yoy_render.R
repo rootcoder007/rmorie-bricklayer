@@ -90,7 +90,7 @@ yoy_html <- function(x, file, title = "Year-over-year change",
       cells <- c(cells, .yoy_td(txt, "ci"))
     }
     note <- if (is.na(d$flag[r])) "" else sprintf(
-      "<tr class=\"note\"><td colspan=\"%d\">percent withheld: %s</td></tr>",
+      "<tr class=\"note\"><td colspan=\"%d\">note: %s</td></tr>",
       length(head_cells), .yoy_esc(d$flag[r]))
     paste0("<tr class=\"", cls, "\">", paste(cells, collapse = ""),
            "</tr>", note)

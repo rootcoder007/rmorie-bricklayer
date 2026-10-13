@@ -407,8 +407,8 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 #'   `"10k"`, `"100k"`, `"1m"`.
 #' @param conf_level Confidence level for the interval.
 #' @param min_count Comparisons where the earlier count is at or below
-#'   this are flagged and their percent change withheld, the way
-#'   [yoy()] withholds a percent change off a tiny base.
+#'   this are flagged as resting on a small count; the percent change and
+#'   its exact interval are still reported, as [yoy()] does.
 #'
 #' @return A data frame of class
 #'   `rmbl_rate_change` with the grouping
@@ -498,10 +498,8 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
     flag[is.na(prev_i)] <- "no comparison period"
     small <- !is.na(prev_cnt) & prev_cnt <= min_count
     if (min_count > 0) {
+      # flagged, never hidden: the percent change and its interval are still reported
       flag[small] <- sprintf("earlier count at or below %g", min_count)
-      pct[small] <- NA_real_
-      ci$lower[small] <- NA_real_
-      ci$upper[small] <- NA_real_
     }
     zero <- !is.na(prev_cnt) & prev_cnt == 0
     flag[zero] <- "earlier period is zero"
