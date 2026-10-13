@@ -228,6 +228,10 @@ extern SEXP C_rmbl_flock_release(SEXP);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);
+extern SEXP C_rmbl_progress_frame(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP C_rmbl_progress_spinner(SEXP, SEXP);
+extern int rmbl_progress_bar(double, double, int, int, int, int, int, int, int, char *, int);
+extern const char *rmbl_progress_spinner(double, int);
 
 static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_flock_acquire",  (DL_FUNC) &C_rmbl_flock_acquire,  2},
@@ -235,6 +239,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},
+    {"C_rmbl_progress_frame",     (DL_FUNC) &C_rmbl_progress_frame,     7},
+    {"C_rmbl_progress_spinner",   (DL_FUNC) &C_rmbl_progress_spinner,   2},
     {"C_rmbl_mean",           (DL_FUNC) &C_rmbl_mean,           1},
     {"C_rmbl_mean_running",   (DL_FUNC) &C_rmbl_mean_running,   1},
     {"C_rmbl_var",            (DL_FUNC) &C_rmbl_var,            1},
@@ -366,6 +372,8 @@ void R_init_rmoriebricklayer(DllInfo *dll) {
     R_RegisterCCallable("rmoriebricklayer", "rmbl_top_share",  (DL_FUNC) rmbl_top_share);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_lorenz",     (DL_FUNC) rmbl_lorenz);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_mann_kendall", (DL_FUNC) rmbl_mann_kendall);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_progress_bar", (DL_FUNC) rmbl_progress_bar);
+    R_RegisterCCallable("rmoriebricklayer", "rmbl_progress_spinner", (DL_FUNC) rmbl_progress_spinner);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_theil_sen",  (DL_FUNC) rmbl_theil_sen);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_hurwitz_zeta", (DL_FUNC) rmbl_hurwitz_zeta);
     R_RegisterCCallable("rmoriebricklayer", "rmbl_mean",        (DL_FUNC) rmbl_mean);

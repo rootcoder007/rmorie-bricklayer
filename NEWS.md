@@ -4,6 +4,24 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Archiving in bulk, and animated progress
+
+* **New: `wayback_save()` and `rmbl wayback FILE`.** Save many URLs in the Wayback Machine with
+  archive.org's Save Page Now 2 API and your account's S3-like keys (`IA_S3_ACCESS_KEY` and
+  `IA_S3_SECRET_KEY`, or `..._FILE` naming files that hold them). Several captures run in flight
+  at once through the package's own checked libcurl transport; a page captured recently is kept
+  (`within`), a page captured already today is recorded with that capture, rate limits and
+  server errors back off and retry, a refused key stops the run, and each result is written to a
+  JSON Lines file as it lands so an interrupted run carries on where it stopped. Run live with
+  real keys on the ledger's sources before release.
+* **Animated progress, drawn in C.** `src/rmbl_progress.c` renders the bar (a shimmer along the
+  filled part, a head that fills in eighths and pulses while work goes on, a spinner) in 24-bit
+  colour or plain, block characters or ASCII; the R side eases it to each new value at up to 12
+  frames a second, only on a terminal a person is watching, with milestone lines elsewhere and
+  `NO_COLOR` honoured. `bricklayer_download()` and `wayback_save()` use it, and
+  `rmbl_progress_bar()` / `rmbl_progress_spinner()` are C callables for the MORIE packages that
+  link to this one.
+
 ## Courts and police-reported crime
 
 * **New: `case_flow()`, `life_table()`, `disposition_mix()`, `clearance_decomposition()`,

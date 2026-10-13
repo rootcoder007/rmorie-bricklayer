@@ -158,9 +158,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
-                data = "--out", config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
+                data = "--out", wayback = c("--out", "--jobs", "--within"),
+                config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
-  values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out"), function(f) {
+  values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within"),
+                          function(f) {
     i <- match(f, rest)
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
   }))
@@ -300,6 +302,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
         },
         data = status <- .bl_cli_data(rest, flag, out),
+        wayback = status <- .bl_cli_wayback(rest, flag, out),
         `--version` = ,
         `-v` = ,
         version = {
@@ -346,6 +349,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     describe = "describe NAME   help page of one function",
     examples = "examples NAME   the examples of one function",
     data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
+    wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]   archive every URL in FILE",
+                    "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
     version = "version   package version"
   )
   if (!verb %in% names(u)) return(NULL)
@@ -531,6 +536,34 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   }
 }
 
+# The wayback verb: every URL in a file (one per line; blank lines and # comments skipped) saved
+# in the Wayback Machine by wayback_save(), results in --out (default FILE.wayback.jsonl), which
+# also lets a stopped run carry on.
+.bl_cli_wayback <- function(rest, flag, out) {
+  pos <- rest
+  for (f in c("--out", "--jobs", "--within")) {
+    i <- match(f, pos)
+    if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
+  }
+  if (length(pos) != 1L || pos[[1L]] %in% c("help", "--help", "-h")) {
+    out(.bl_verb_usage("wayback", .bl_prog()))
+    return(if (length(pos) == 1L) 0L else 2L)
+  }
+  if (!file.exists(pos[[1L]])) {
+    out(sprintf("no such file: %s\n", pos[[1L]]))
+    return(1L)
+  }
+  urls <- trimws(readLines(pos[[1L]], warn = FALSE))
+  urls <- urls[nzchar(urls) & !startsWith(urls, "#")]
+  jobs <- flag("--jobs") %||% "4"
+  res <- wayback_save(urls, jobs = jobs, within = flag("--within") %||% "30d",
+                      output = flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl"))
+  tab <- table(factor(res$status, levels = c("saved", "existing", "failed")))
+  out(sprintf("%d saved, %d existing, %d failed; results in %s\n", tab[["saved"]], tab[["existing"]],
+              tab[["failed"]], flag("--out") %||% paste0(pos[[1L]], ".wayback.jsonl")))
+  if (tab[["failed"]] > 0L) 1L else 0L
+}
+
 # The data verb: the curated tables at data.rmorie.com.
 .bl_cli_data <- function(rest, flag, out) {
   sub <- if (length(rest)) rest[[1L]] else "list"
@@ -598,6 +631,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "\nData and functions\n",
     "  data list                                 curated tables at data.rmorie.com\n",
     "  data pull db/table [--out FILE.csv]       download one of them (your MORIE key)\n",
+    "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)\n",
     "  functions [PATTERN]                       exported functions and their titles\n",
     "  describe NAME                             help page of one function\n",
     "  examples NAME                             its examples\n",

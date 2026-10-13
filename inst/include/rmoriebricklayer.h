@@ -505,6 +505,28 @@ static R_INLINE int rmbl_os_random(unsigned char *out, size_t n) {
     return fn(out, n);
 }
 
+/* One frame of the animated progress bar: `frac` done (0..1) at time `t`
+   seconds, `width` cells, 24-bit colour (r, g, b) when `color`, block
+   characters when `unicode` (ASCII otherwise), a pulsing head when `active`.
+   Writes a NUL-terminated string to `out` (8192 bytes holds any width up to
+   200) and returns its length. The caller owns the timing and the easing. */
+static R_INLINE int rmbl_progress_bar(double frac, double t, int width, int color, int unicode,
+                                      int active, int r, int g, int b, char *out, int cap) {
+    static int (*fn)(double, double, int, int, int, int, int, int, int, char *, int) = NULL;
+    if (fn == NULL)
+        fn = (int (*)(double, double, int, int, int, int, int, int, int, char *, int))
+             R_GetCCallable("rmoriebricklayer", "rmbl_progress_bar");
+    return fn(frac, t, width, color, unicode, active, r, g, b, out, cap);
+}
+
+/* The spinner frame for time `t` seconds (braille dots, or | / - \ in ASCII). */
+static R_INLINE const char *rmbl_progress_spinner(double t, int unicode) {
+    static const char *(*fn)(double, int) = NULL;
+    if (fn == NULL)
+        fn = (const char *(*)(double, int)) R_GetCCallable("rmoriebricklayer", "rmbl_progress_spinner");
+    return fn(t, unicode);
+}
+
 #ifdef __cplusplus
 }
 #endif

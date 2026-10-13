@@ -169,6 +169,11 @@ and a digest anyone can recompute says nothing about who produced the data.
   evaluates a plume on a grid for the image; `plot_lorenz()` and
   `plot_funnel()` cover the results that are plain data frames. Every
   method returns the numbers it drew. `vignette("plotting-results")`.
+- **Archiving in bulk** — `wayback_save()` (and `rmbl wayback FILE`) saves many
+  URLs in the Wayback Machine with archive.org's Save Page Now 2 API and your
+  S3-like keys: captures in flight at once, recent captures kept, rate limits
+  backed off, results written as they land so a stopped run resumes, and a live
+  animated progress bar (drawn in C, shared with `bricklayer_download()`).
 - **Courts and police-reported crime** — `case_flow()` (clearance rate with
   exact intervals, rolling clearance, net flow and months to clear the
   pending inventory), `life_table()` (actuarial life table with Greenwood
