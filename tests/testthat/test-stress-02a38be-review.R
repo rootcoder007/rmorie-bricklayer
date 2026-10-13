@@ -204,7 +204,9 @@ test_that("C8: parallel refreshes each use their own temporary file", {
   res <- parallel::mclapply(1:12, function(i) tryCatch({
     for (k in 1:3) bricklayer_data_manifest(refresh = TRUE)
     "ok"
-  }, error = function(e) conditionMessage(e)), mc.cores = 12)
+  }, error = function(e) conditionMessage(e)),
+  # R CMD check --as-cran caps child processes at 2 (_R_CHECK_LIMIT_CORES_)
+  mc.cores = if (nzchar(Sys.getenv("_R_CHECK_LIMIT_CORES_"))) 2L else 12L)
   expect_identical(unique(unlist(res)), "ok")
   expect_length(list.files(d, pattern = "[.]part$"), 0L)
 })
