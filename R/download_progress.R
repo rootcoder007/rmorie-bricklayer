@@ -105,8 +105,7 @@ bricklayer_download <- function(url, dest, headers = NULL,
   if (is.na(max_bytes) || max_bytes < 1) stop("`max_bytes` must be a number of bytes, at least one", call. = FALSE)
   t0 <- proc.time()[["elapsed"]]
   mile <- 0L
-  spin <- 0L
-  width <- 0L
+  anim <- NULL
   if (!quiet && !tty) {
     cat(sprintf("%s: downloading%s\n", label,
                 if (is.finite(size)) paste0(" ", .bl_fmt_bytes(size)) else ""),
@@ -118,11 +117,17 @@ bricklayer_download <- function(url, dest, headers = NULL,
     if (quiet) return(invisible(NULL))
     if (is.na(size) && is.finite(total) && total > 0) size <<- total
     if (tty) {
-      spin <<- spin + 1L
-      line <- .bl_dl_line(label, got, size, t0, spin)
-      pad <- strrep(" ", max(0L, width - nchar(line)))
-      cat("\r", line, pad, sep = "", file = stderr())
-      width <<- max(width, nchar(line))
+      # the animated bar from the native renderer once the size is known; until then a spinner
+      # with the bytes so far
+      if (is.null(anim)) anim <<- .bl_anim_new(label, if (is.finite(size)) size else 0, quiet = FALSE, tty = TRUE)
+      anim$total <- if (is.finite(size)) size else 0
+      elapsed <- max(proc.time()[["elapsed"]] - t0, 1e-6)
+      info <- if (anim$total > 0) {
+        sprintf("%s / %s  %s/s", .bl_fmt_bytes(got), .bl_fmt_bytes(size), .bl_fmt_bytes(got / elapsed))
+      } else {
+        sprintf("%s  %s/s", .bl_fmt_bytes(got), .bl_fmt_bytes(got / elapsed))
+      }
+      .bl_anim_update(anim, got, info)
     } else {
       step <- if (is.finite(size)) as.integer((10 * got) %/% size) else
         as.integer(got %/% 52428800)
@@ -162,7 +167,7 @@ bricklayer_download <- function(url, dest, headers = NULL,
     got <- res$bytes
   }
   if (!quiet) {
-    if (tty) cat("\r", strrep(" ", width), "\r", sep = "", file = stderr())
+    if (!is.null(anim)) .bl_anim_done(anim)
     cat(sprintf("%s: %s in %.0f s\n", label, .bl_fmt_bytes(got),
                 proc.time()[["elapsed"]] - t0), file = stderr())
   }

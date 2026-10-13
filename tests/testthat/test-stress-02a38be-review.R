@@ -309,14 +309,17 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   skip_if_not(nzchar(launcher))
   h <- withr::local_tempdir()
   for (args in c("login --token", "config set own.key")) {
-    cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s /dev/null > /dev/null 2>&1",
-                   shQuote(paste("sh", shQuote(launcher), args)))
+    # the terminal's transcript is kept, so a failure shows what the child printed
+    ty <- withr::local_tempfile(fileext = ".typescript")
+    cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s %s > /dev/null 2>&1",
+                   shQuote(paste("sh", shQuote(launcher), args)), shQuote(ty))
     # R CMD check sets R_TESTS=startup.Rs for the test run; the launcher's Rscript inherited it,
     # failed to source it and exited 1 before the prompt (every Linux CI leg, fc5ccfc)
     st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":"),
                                R_TESTS = NA),
                              system(cmd))
-    expect_identical(as.integer(st), 130L, info = args)
+    seen <- if (file.exists(ty)) utils::tail(gsub("\r", "", readLines(ty, warn = FALSE)), 15L) else "(no transcript)"
+    expect_identical(as.integer(st), 130L, info = paste(c(args, seen), collapse = "\n"))
   }
 })
 
