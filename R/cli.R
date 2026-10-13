@@ -43,14 +43,19 @@
     # back on by the shell itself, with a trap, so Ctrl-C cannot leave the terminal silent
     # (review of 52a8883, B6); an interrupted read exits 130 and is an interrupt here too
     cat(prompt, file = stderr())
+    # The trap also prints a marker: where /bin/sh is dash (Debian, Ubuntu), system2() reports no
+    # exit status for the trapped `exit 130`, so Ctrl-C came back as an empty line and a usage
+    # error (exit 2; review of 02a38be, C10; bash keeps the status). A typed line cannot hold the
+    # marker: Ctrl-C never reaches the input.
+    mark <- "\001RMBL-INTERRUPTED\001"
     script <- if (hide) {
-      "trap 'stty echo; exit 130' INT TERM HUP; stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\""
+      "trap 'stty echo; printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; stty -echo; IFS= read -r l; stty echo; printf '%s' \"$l\""
     } else {
-      "trap 'exit 130' INT TERM HUP; IFS= read -r l; printf '%s' \"$l\""
+      "trap 'printf \"\\001RMBL-INTERRUPTED\\001\"; exit 130' INT TERM HUP; IFS= read -r l; printf '%s' \"$l\""
     }
     l <- suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE))
     if (hide) cat("\n", file = stderr())
-    if (identical(as.integer(attr(l, "status")), 130L)) .bl_signal_interrupt()
+    if (identical(as.integer(attr(l, "status")), 130L) || any(grepl(mark, l, fixed = TRUE))) .bl_signal_interrupt()
     return(trimws(paste(as.character(l), collapse = "")))
   }
   if (is.null(con)) {

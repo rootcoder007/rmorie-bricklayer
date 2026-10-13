@@ -45,6 +45,17 @@ claims the earlier fixes overstated corrected.
   lists the table without a digest now loads it, as the live manifest does; with no manifest at
   all the cached table is refused but kept for the next run, where it is checked again before
   use (it was deleted, and had to be downloaded again).
+* **Ctrl-C at a prompt exits 130 where `/bin/sh` is dash** (Debian, Ubuntu). The shell's trap ran,
+  but `system2()` reported no exit status for it, so the interrupt came back as an empty line and
+  a usage error (exit 2, or 1 at the e-mail code prompt). The trap now also prints a marker R
+  recognises. The fifth pass's test mocked `system2()`; this one runs the launcher in a real
+  terminal (util-linux `script`), under dash and bash.
+* The CSV reader: a UTF-32 file with a byte-order mark is read (its decoding error quoted a
+  kilobyte of the file); a row with more or fewer fields than the header is refused by line number
+  (it wrapped into an extra row); a column name given twice is refused (the second column was
+  ignored); a numeric exposure column is no longer turned back into text to be searched (15 of the
+  24 s on a 102 MB file).
+* A `next_index` past 2^31 - 1 is the damaged-key error, not a raw `NA` comparison error.
 * The lock wait is interruptible (one non-blocking attempt at a time, the wait in R); releasing
   descriptor 0, 1 or 2 is refused; the record writer checks the written size and flushes the
   directory after the rename (the fifth pass's NEWS said "size-checked" before it was); a lock

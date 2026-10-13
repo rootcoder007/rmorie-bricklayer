@@ -250,3 +250,66 @@ test_that("LOW: a lock file this user cannot write is named as such, not as a re
   expect_error(rmoriebricklayer:::.rmbl_xmss_with_lock(file.path(d, "rec.txt"), function() NULL),
                "owned by another user")
 })
+
+# ---- C10: Ctrl-C at a prompt --------------------------------------------------------------
+
+test_that("C10: the trap's marker is an interrupt even when the shell's exit status is lost (dash)", {
+  skip_on_os("windows")
+  skip_if_not(nzchar(Sys.which("sh")))
+  local_mocked_bindings(.bl_interactive = function() FALSE, .bl_stdin_tty = function() TRUE)
+  # what system2(stdout = TRUE) returns from dash: the trap's output, and no status attribute
+  local_mocked_bindings(system2 = function(...) "\001RMBL-INTERRUPTED\001", .package = "base")
+  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = FALSE), interrupt = function(i) "interrupt")
+  expect_identical(got, "interrupt")
+  got <- tryCatch(rmoriebricklayer:::.bl_readline("key: ", secret = TRUE), interrupt = function(i) "interrupt")
+  expect_identical(got, "interrupt")
+})
+
+test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
+  skip_on_cran()
+  skip_on_os(c("windows", "mac"))
+  skip_if_not(nzchar(Sys.which("script")) && nzchar(Sys.which("sh")))
+  launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")
+  skip_if_not(nzchar(launcher))
+  h <- withr::local_tempdir()
+  for (args in c("login --token", "config set own.key")) {
+    cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s /dev/null > /dev/null 2>&1",
+                   shQuote(paste("sh", shQuote(launcher), args)))
+    st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":")),
+                             system(cmd))
+    expect_identical(as.integer(st), 130L, info = args)
+  }
+})
+
+test_that("LOW: UTF-32 with a mark is read, and its decoding error never quotes the file", {
+  rows <- c("exposure,income", "30,10", "40,20")
+  txt <- paste0(paste(rows, collapse = "\n"), "\n")
+  for (enc in c("UTF-32LE", "UTF-32BE")) {
+    f <- tempfile(fileext = ".csv")
+    bom <- if (enc == "UTF-32LE") as.raw(c(0xff, 0xfe, 0, 0)) else as.raw(c(0, 0, 0xfe, 0xff))
+    writeBin(c(bom, iconv(txt, "UTF-8", enc, toRaw = TRUE)[[1]]), f)
+    d <- rmoriebricklayer:::.pollution_read_csv(f)
+    expect_identical(d$exposure, c(30L, 40L), info = enc)
+  }
+  bad <- tempfile(fileext = ".csv"); writeBin(c(as.raw(c(0xff, 0xfe, 0, 0)), as.raw(c(0x41, 0, 0))), bad)
+  e <- tryCatch(rmoriebricklayer:::.pollution_read_csv(bad), error = conditionMessage)
+  expect_lt(nchar(e), 200)
+})
+
+test_that("LOW: a row with the wrong number of fields, or a column name twice, is refused", {
+  f <- tempfile(fileext = ".csv")
+  writeLines(c("exposure,income", "30,10", "40,20,99", "50,30"), f)
+  expect_error(rmoriebricklayer:::.pollution_read_csv(f), "line 3 has 3 fields where the header has 2")
+  writeLines(c("site,exposure,exposure", "a,30,99", "b,40,98"), f)
+  expect_error(rmoriebricklayer:::.pollution_read_csv(f), "'exposure' more than once")
+  writeLines(c("exposure,note", "30,\"a, quoted, note\"", "40,plain"), f)
+  expect_identical(nrow(rmoriebricklayer:::.pollution_read_csv(f)), 2L)
+})
+
+test_that("LOW: a next_index past 2^31 - 1 is the damaged-key error, not a raw NA", {
+  k <- pqc_keygen(height = 2)
+  for (bad in list(1e10, 2^31)) {
+    k2 <- k; k2$next_index <- bad
+    expect_error(capsule_sign("m", k2), "not a whole number >= 0 \\(below 2\\^31\\)")
+  }
+})

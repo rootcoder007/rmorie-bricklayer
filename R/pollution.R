@@ -824,7 +824,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (inherits(df, "error")) return(fail(sprintf("%s: %s", exposure_csv, conditionMessage(df))))
     if (!nrow(df)) return(fail(empty))
     raw_exposure <- NULL
+    naps <- FALSE
     if (!"exposure" %in% names(df) && "value" %in% names(df)) {
+      naps <- TRUE
       # a NAPS pull: hourly `value` in `unit`, converted row by row; NO2 is reported in ppb
       if (!"unit" %in% names(df)) {
         return(fail("a 'value' column needs a 'unit' column (NAPS pulls carry one; NO2 is in ppb)"))
@@ -832,7 +834,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
       # the text as read goes to the shared check below: converted first, "<2" became NA and was
       # counted as a row with no measurement (ok, prevalence 1.0 instead of 0.4; review of
       # 02a38be, C5), where the same column named exposure is refused
-      raw_exposure <- trimws(as.character(df$value))
+      if (is.character(df$value)) raw_exposure <- trimws(df$value)
       vals <- suppressWarnings(as.numeric(df$value))
       unit <- tolower(trimws(as.character(df$unit)))
       ugm3 <- c("ug/m3", "\u00b5g/m3", "\u00b5g/m\u00b3", "ug/m\u00b3")
@@ -851,15 +853,20 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (!"exposure" %in% names(df)) {
       return(fail("CSV missing 'exposure' column (ug/m3); a NAPS pull's 'value' column also works."))
     }
-    if (is.null(raw_exposure)) raw_exposure <- trimws(as.character(df$exposure))
+    # only a text column can hold text: a column read.csv parsed as numbers is not converted back
+    # to text to be searched (15 of 24 s on a 102 MB file went to that; review of 02a38be)
+    if (!naps && is.character(df$exposure)) raw_exposure <- trimws(df$exposure)
     df$exposure <- suppressWarnings(as.numeric(df$exposure))
     # an empty cell or a missing-value token is a row without a measurement: dropped, and the
     # report says how many. Text that is not a number ("<2", a detection-limit flag) is a
     # measurement the reader cannot use: dropping it biased the mean and the prevalence (60% of
     # rows dropped and status ok, review of 52a8883), so the run stops and names them
-    missing_tok <- is.na(raw_exposure) |
-      tolower(raw_exposure) %in% c("", "na", "n/a", "nan", "null", "-", ".", "missing")
-    text_rows <- is.na(df$exposure) & !missing_tok
+    text_rows <- FALSE
+    if (!is.null(raw_exposure)) {
+      missing_tok <- is.na(raw_exposure) |
+        tolower(raw_exposure) %in% c("", "na", "n/a", "nan", "null", "-", ".", "missing")
+      text_rows <- is.na(df$exposure) & !missing_tok
+    }
     if (any(text_rows)) {
       ex <- utils::head(unique(raw_exposure[text_rows]), 3L)
       return(fail(sprintf(paste("%d exposure value(s) are text, not numbers (%s): a censored value such as \"<2\"",
@@ -1035,7 +1042,15 @@ pollution_report_text <- function(report) {
   if (!length(raw)) return(data.frame())
   note <- NULL
   utf16 <- NULL
-  if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xff, 0xfe)))) {
+  # UTF-32 first: its little-endian mark starts with the UTF-16 one (FF FE 00 00), and decoded as
+  # UTF-16 it put a kilobyte of the file into the "embedded nul" message (review of 02a38be)
+  if (length(raw) >= 4L && identical(raw[1:4], as.raw(c(0xff, 0xfe, 0, 0)))) {
+    utf16 <- "UTF-32LE"
+    raw <- raw[-(1:4)]
+  } else if (length(raw) >= 4L && identical(raw[1:4], as.raw(c(0, 0, 0xfe, 0xff)))) {
+    utf16 <- "UTF-32BE"
+    raw <- raw[-(1:4)]
+  } else if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xff, 0xfe)))) {
     utf16 <- "UTF-16LE"
     raw <- raw[-(1:2)]
   } else if (length(raw) >= 2L && identical(raw[1:2], as.raw(c(0xfe, 0xff)))) {
@@ -1084,6 +1099,20 @@ pollution_report_text <- function(report) {
     writeLines(txt, src, useBytes = TRUE)
   }
   rm(txt)
+  # every row has the header's number of fields: read.csv wrapped a row with too many into an extra
+  # row, and a header with a name twice read only the first of the two columns (review of 02a38be)
+  hdr <- names(utils::read.csv(src, nrows = 1L, check.names = FALSE, encoding = "UTF-8"))
+  dup <- unique(hdr[duplicated(tolower(trimws(hdr)))])
+  if (length(dup)) {
+    stop(sprintf("has the column name %s more than once: say which column is meant", paste(sprintf("'%s'", dup), collapse = ", ")),
+         call. = FALSE)
+  }
+  nf <- utils::count.fields(src, sep = ",", quote = "\"", blank.lines.skip = TRUE, comment.char = "")
+  wrong <- which(!is.na(nf) & nf != length(hdr))
+  if (length(wrong)) {
+    stop(sprintf("line %d has %d fields where the header has %d: no rows are used from a file whose rows do not line up",
+                 wrong[[1L]], nf[[wrong[[1L]]]], length(hdr)), call. = FALSE)
+  }
   problems <- character()
   df <- withCallingHandlers(
     utils::read.csv(src, stringsAsFactors = FALSE, encoding = "UTF-8"),

@@ -864,8 +864,8 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
     stop("`scheme = \"xmss\"` needs a key from pqc_keygen()", call. = FALSE)
   }
   idx <- key$next_index
-  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx)) {
-    stop("this key's `next_index` is not a whole number >= 0: the key state is damaged; ",
+  if (!is.numeric(idx) || length(idx) != 1L || is.na(idx) || idx < 0 || idx != floor(idx) || idx > .Machine$integer.max) {
+    stop("this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; ",
          "do not hand-edit it", call. = FALSE)
   }
   idx <- as.integer(idx)
@@ -1001,8 +1001,8 @@ xmss_advance <- function(key, signature, message = NULL) {
          "recode manifest that carries it)", call. = FALSE)
   }
   nx <- key$next_index
-  if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx)) {
-    stop("this key's `next_index` is not a whole number >= 0: the key state is damaged; do not hand-edit it",
+  if (!is.numeric(nx) || length(nx) != 1L || is.na(nx) || nx < 0 || nx != floor(nx) || nx > .Machine$integer.max) {
+    stop("this key's `next_index` is not a whole number >= 0 (below 2^31): the key state is damaged; do not hand-edit it",
          call. = FALSE)
   }
   if (!identical(tolower(as.character(signature$root)), tolower(as.character(key$root)))) {
