@@ -369,6 +369,8 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
                  format(max_work, big.mark = ",", scientific = FALSE),
                  format(round(minutes, 1), big.mark = ",")), call. = FALSE)
   }
+  # a count R can loop over, whatever max_work allows: 1e300 died in seq_len() (review of 02a38be)
+  if (n_steps > .Machine$integer.max) stop("`n_steps` must be at most 2^31 - 1", call. = FALSE)
   substeps <- as.integer(substeps)
   if (stab > 1) {
     # the same physical time, taken in enough sub-steps to satisfy the bound:
@@ -446,6 +448,8 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
                  format(n_steps, big.mark = ",", scientific = FALSE),
                  format(max_work, big.mark = ",", scientific = FALSE)), call. = FALSE)
   }
+  # a count R can loop over, whatever max_work allows: 1e300 died in seq_len() (review of 02a38be)
+  if (n_steps > .Machine$integer.max) stop("`n_steps` must be at most 2^31 - 1", call. = FALSE)
   draw <- if (is.null(normals)) .rmbl_normals else match.fun(normals)
   xs <- rep(x0, n)
   ys <- rep(y0, n)
@@ -463,6 +467,12 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
     if (grid[2L] <= grid[1L] || grid[4L] <= grid[3L] || grid[5L] < 1 || grid[6L] < 1 ||
           grid[5L] != round(grid[5L]) || grid[6L] != round(grid[6L])) {
       stop("`grid` needs x_min < x_max, y_min < y_max and whole positive nx, ny", call. = FALSE)
+    }
+    if (grid[5L] * grid[6L] > max_work) {
+      stop(sprintf(paste("a %s x %s grid has %s cells, above max_work = %s; pass max_work = Inf to allocate it",
+                         "anyway"), format(grid[5L], big.mark = ","), format(grid[6L], big.mark = ","),
+                   format(grid[5L] * grid[6L], big.mark = ",", scientific = FALSE),
+                   format(max_work, big.mark = ",", scientific = FALSE)), call. = FALSE)
     }
     wx <- (grid[2L] - grid[1L]) / grid[5L]
     wy <- (grid[4L] - grid[3L]) / grid[6L]

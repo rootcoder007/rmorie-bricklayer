@@ -955,8 +955,9 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
 #' or point the record at a file that persists. Examples and vignettes point the record
 #' at a temporary file so that checks and builds leave the configuration directory alone.
 #' The record keeps one line per key for good (an exhausted key's line is what stops a
-#' stale copy of it), and is read whole at every signature: under half a second per hundred
-#' thousand keys.
+#' stale copy of it), and is read and rewritten whole at every signature: about 0.7 s at a
+#' hundred thousand keys, longer when several processes sign at once (each waits its turn
+#' for the lock, up to 10 s).
 #'
 #' [xmss_forget_used_indices()]
 #' resets one key's entry, or removes the whole record, and with it
@@ -1388,8 +1389,13 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # empty file over the record (review of 52a8883, B3).
 .rmbl_xmss_record_write <- function(p, rec) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  # the record is written only under its lock, so a temporary file found now was left by a writer
+  # that died mid-write (SIGXFSZ, a kill): it is removed. Regular files only. (review of 02a38be, B3)
+  for (f in list.files(dirname(p), pattern = "^xmss-.*[.]tmp$", full.names = TRUE, all.files = TRUE)) {
+    if (identical(.Call(C_rmbl_path_kind, f), "regular")) unlink(f)
+  }
   tmp <- tempfile(pattern = "xmss-", tmpdir = dirname(p), fileext = ".tmp")
-  # the C writer removes only a temporary file it created itself: nothing is unlinked here
+  # the C writer removes only a temporary file it created itself
   fail <- function(why) {
     stop(sprintf("could not write the XMSS used-index record %s (%s): no signature is made", p, why), call. = FALSE)
   }

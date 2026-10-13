@@ -237,7 +237,8 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   }, .package = "rmoriebricklayer")
   expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", f))
   expect_gte(calls, 2L)
-  expect_warning(apply_schema_validation(data.frame(a = 1), list(scheme = list(expected_columns = "a"))), "no `schema`")
+  # an error since the review of 02a38be (M2): a typo that validates nothing must not pass
+  expect_error(apply_schema_validation(data.frame(a = 1), list(scheme = list(expected_columns = "a"))), "no `schema`")
   expect_error(apply_schema_validation(data.frame(a = 1), new.env()), "provenance list")
   r <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 0.008)
   expect_identical(r$status, "assumption_failure")
@@ -261,7 +262,8 @@ test_that("D1 gaps and M2, M4, M6, M8 leftovers", {
   expect_true(is.na(hurwitz_zeta(2, q = -1)))
   expect_error(top_share(c(1, 2, 3), fractions = 1.5), "shares in")
   expect_identical(top_share(c(1, 2, 3), fractions = 0)$units, 0L)
-  expect_true(apply_schema_validation(data.frame(a = 1), NULL))
+  # NULL validates nothing: an error since the review of 02a38be (M2), not TRUE
+  expect_error(apply_schema_validation(data.frame(a = 1), NULL), "no schema to validate against")
   expect_error(hill_tail_index(c(1, 5, 9, 20, 50), x_min = c(1, 2)), "single threshold")
   expect_error(rapl_available(NA), "single directory")
 })

@@ -771,6 +771,14 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   }
   # the two population inputs have defaults, not an "absent" value: NULL is a wrong call
   if (is.null(population)) return(fail("population must be a single number (persons at risk), not NULL"))
+  # a number is numeric: as.raw(25) was read as 25 (review of 02a38be)
+  for (nm in c("exposure_mean", "exposure_prevalence", "baseline_rate", "baseline_rate_per", "population", "reference")) {
+    v <- get(nm)
+    # a missing value (NA) is not a type error: the checks below report it
+    if (!is.null(v) && !is.numeric(v) && !(is.logical(v) && all(is.na(v)))) {
+      return(fail(sprintf("%s must be a single number, not %s", nm, class(v)[1L])))
+    }
+  }
   if (is.null(baseline_rate)) return(fail("baseline_rate must be a single number, not NULL"))
   if (!is.logical(rare_outcome) || length(rare_outcome) != 1L || is.na(rare_outcome)) {
     return(fail("rare_outcome must be TRUE or FALSE"))

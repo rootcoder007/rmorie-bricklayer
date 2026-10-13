@@ -563,6 +563,31 @@ validate_schema <- function(df_raw, provenance) {
   if (!is.list(sch)) {
     stop(sprintf("`provenance$schema` must be a list (from infer_schema()), not %s", class(sch)[1L]), call. = FALSE)
   }
+  # a misspelt field validates nothing and says nothing: a name a few letters from a known one is
+  # fatal, any other unknown name is said (review of 02a38be, M2). expected_dtypes is what the
+  # provenance files call expected_types (the OTIS file's types were never checked).
+  known <- c("expected_columns", "expected_types", "expected_dtypes", "structural_invariants",
+             "expected_value_sets", "numeric_ranges", "max_missing_fraction", "synthetic_recipe")
+  near <- function(x, pool) pool[which(utils::adist(x, pool) <= 3 & utils::adist(x, pool) > 0)[1L]]
+  for (nm in setdiff(names(sch), known)) {
+    guess <- near(nm, known)
+    if (!is.na(guess)) {
+      issues[[paste0("schema_field_", nm)]] <- list(severity = "fatal",
+        message = sprintf("unknown schema field '%s' (did you mean '%s'?): it would be ignored", nm, guess))
+    } else {
+      issues[[paste0("schema_field_", nm)]] <- list(severity = "warning",
+        message = sprintf("schema field '%s' is not one validate_schema() uses: it was not checked", nm))
+    }
+  }
+  inv_known <- c("min_data_rows", "max_data_rows")
+  for (nm in setdiff(names(sch$structural_invariants), inv_known)) {
+    guess <- near(nm, inv_known)   # other invariants are a dataset's own, checked by its analysis
+    if (!is.na(guess)) {
+      issues[[paste0("schema_field_", nm)]] <- list(severity = "fatal",
+        message = sprintf("unknown structural invariant '%s' (did you mean '%s'?): it would be ignored", nm, guess))
+    }
+  }
+  if (is.null(sch$expected_types) && !is.null(sch$expected_dtypes)) sch$expected_types <- sch$expected_dtypes
 
   ## --- Required columns ---
   if (!is.null(sch$expected_columns)) {
@@ -611,8 +636,11 @@ validate_schema <- function(df_raw, provenance) {
       ## integer and double are both "numeric" for this purpose; a
       ## re-release legitimately widens one to the other.
       numeric_like <- c("integer", "numeric", "double")
+      ## a factor read back from a CSV is text: "factor" and "character" are one family
+      text_like <- c("character", "factor")
       same <- identical(got, want) ||
-        (got %in% numeric_like && want %in% numeric_like)
+        (got %in% numeric_like && want %in% numeric_like) ||
+        (got %in% text_like && want %in% text_like)
       if (!same) {
         issues[[paste0("type_", col)]] <- list(
           severity = "warning",
@@ -728,9 +756,15 @@ apply_schema_validation <- function(df_raw, provenance) {
   if (!is_rule_list && !is.null(provenance) && !is.list(provenance)) {
     stop("`provenance` must be a provenance list or a list of rules", call. = FALSE)
   }
-  if (!is_rule_list && is.list(provenance) && length(provenance) && is.null(provenance$schema)) {
-    warning(sprintf("`provenance` has no `schema` element (it has %s): nothing was validated",
-                    paste(names(provenance), collapse = ", ")), call. = FALSE)
+  # asked to validate, there must be something to validate against: NULL, an empty list or a
+  # provenance without `schema` (a typo such as `scheme`) returned TRUE having checked nothing
+  # (review of 02a38be, M2)
+  if (is.null(provenance) || (is.list(provenance) && !length(provenance))) {
+    stop("`provenance` is empty: there is no schema to validate against (infer_schema() makes one)", call. = FALSE)
+  }
+  if (!is_rule_list && is.list(provenance) && is.null(provenance$schema)) {
+    stop(sprintf("`provenance` has no `schema` element (it has %s): nothing would be validated",
+                 paste(names(provenance), collapse = ", ")), call. = FALSE)
   }
   issues <- if (is_rule_list) validate_rules(df_raw, provenance) else validate_schema(df_raw, provenance)
   for (nm in names(issues)) {
