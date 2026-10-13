@@ -313,3 +313,78 @@ test_that("LOW: a next_index past 2^31 - 1 is the damaged-key error, not a raw N
     expect_error(capsule_sign("m", k2), "not a whole number >= 0 \\(below 2\\^31\\)")
   }
 })
+
+test_that("L3: a key saved for another hosted address is said once, and the summary says so", {
+  d <- withr::local_tempdir()
+  withr::local_envvar(XDG_CONFIG_HOME = d, MORIE_HOSTED_KEY = "", MORIE_HOSTED_BASE_URL = "https://llm.example.org/v1")
+  dir.create(file.path(d, "morie"))
+  writeLines('{"hosted_key": "sk-test", "hosted_base_url": "https://old.example.org/v1"}', file.path(d, "morie", "credentials.json"))
+  rm(list = ls(rmoriebricklayer:::.bl_said_once), envir = rmoriebricklayer:::.bl_said_once)
+  expect_message(expect_null(rmoriebricklayer:::.bl_hosted_key()), "issued for https://old.example.org/v1")
+  expect_silent(expect_null(rmoriebricklayer:::.bl_hosted_key()))
+  expect_match(rmoriebricklayer:::.bl_no_route_message(), "stored key was issued for https://old.example.org/v1")
+  expect_false(grepl("no key stored", rmoriebricklayer:::.bl_no_route_message()))
+})
+
+test_that("M2: validation needs a schema, a misspelt field is fatal, and expected_dtypes is checked", {
+  df <- data.frame(a = 1:3, b = c("x", "y", "z"))
+  expect_error(apply_schema_validation(df, NULL), "no schema to validate against")
+  expect_error(apply_schema_validation(df, list()), "no schema to validate against")
+  expect_error(apply_schema_validation(df, list(scheme = infer_schema(df))), "no `schema` element \\(it has scheme\\)")
+  expect_error(apply_schema_validation(df, list(schema = list(expected_colums = "a"))), "did you mean 'expected_columns'")
+  expect_error(apply_schema_validation(df, list(schema = list(structural_invariants = list(min_data_row = 1)))),
+               "did you mean 'min_data_rows'")
+  expect_warning(apply_schema_validation(df, list(schema = list(notes = "about this table"))), "not one validate_schema\\(\\) uses")
+  # a dataset's own invariant (the OTIS file's) is allowed
+  expect_true(apply_schema_validation(df, list(schema = list(structural_invariants = list(total_placements_sum = 5)))))
+  # expected_dtypes is read; a factor and a character column are one family
+  expect_warning(apply_schema_validation(df, list(schema = list(expected_dtypes = list(a = "character")))), "is integer, expected character")
+  expect_true(apply_schema_validation(df, list(schema = list(expected_dtypes = list(b = "factor", a = "integer")))))
+})
+
+test_that("LOW: default-ignorable characters are removed from the data list", {
+  hidden <- "a­b͏cᅟdㅤe᠎f﻿g￹h\U000e0041i"
+  tabs <- rmoriebricklayer:::.bl_data_tables_df("db/t", hidden, 1L, "src")
+  out <- paste(rmoriebricklayer:::.bl_format_data_tables(tabs, width = 200), collapse = "\n")
+  expect_match(out, "abcdefghi", fixed = TRUE)
+})
+
+test_that("B3: a temporary record file left by a writer that died is removed at the next write", {
+  d <- withr::local_tempdir()
+  p <- file.path(d, "rec.txt")
+  stale <- file.path(d, "xmss-dead123.tmp"); writeLines("partial", stale)
+  rmoriebricklayer:::.rmbl_xmss_with_lock(p, function() rmoriebricklayer:::.rmbl_xmss_record_write(p, c(`k:aa` = 3L)))
+  expect_false(file.exists(stale))
+  expect_true(file.exists(p))
+})
+
+test_that("B5: a credentials file with a NUL, in Latin-1, or of megabytes is refused plainly", {
+  d <- withr::local_tempdir()
+  f <- file.path(d, "c.json")
+  writeBin(c(charToRaw('{"a": "b"}'), as.raw(0), charToRaw('{"c": 1}')), f)
+  expect_error(rmoriebricklayer:::.bl_read_text(f), "NUL byte")
+  writeBin(c(charToRaw('{"name": "caf'), as.raw(0xe9), charToRaw('"}')), f)
+  expect_error(rmoriebricklayer:::.bl_read_text(f), "not UTF-8 text")
+  writeBin(charToRaw(paste0('{"x": "', strrep("y", 1100000), '"}')), f)
+  expect_error(rmoriebricklayer:::.bl_read_text(f), "too large to be a credentials file")
+  writeLines('{"hosted_key": "k"}', f)
+  expect_identical(rmoriebricklayer:::.bl_read_text(f), '{"hosted_key": "k"}\n')
+})
+
+test_that("LOW: numbers must be numbers, steps and grids are capped, and plot() needs a report", {
+  expect_match(verify_pollution("pm25", exposure_mean = as.raw(25), exposure_prevalence = 1)$error, "exposure_mean must be a single number, not raw")
+  expect_match(verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, population = as.raw(9))$error, "population must be a single number")
+  expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 1e300, max_work = Inf), "at most 2\\^31 - 1")
+  expect_error(advection_diffusion_2d(matrix(0, 3, 3), 0, 0, 0.1, 0.1, 1, 1, 0.1, n_steps = 1e300, max_work = Inf), "at most 2\\^31 - 1")
+  expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 1, grid = c(0, 1, 0, 1, 1e6, 1e6)), "above max_work")
+  pdf(NULL); on.exit(grDevices::dev.off(), add = TRUE)
+  for (bad in list("x", list(), structure(list(status = "ok"), class = "rmbl_pollution_report"))) {
+    expect_error(rmoriebricklayer:::plot.rmbl_pollution_report(bad), "must be a report from verify_pollution")
+  }
+  # the NA bar's label never takes a real level's name
+  lab <- NULL
+  local_mocked_bindings(.bl_label_fit = function(labels) { lab <<- labels; list(labels = labels, mar = 4) })
+  rmoriebricklayer:::.bl_hbars(c(1, 2, 3, 4), c("(missing)", "(NA)", NA, "a"), "n", "t", rep("grey", 4))
+  expect_identical(anyDuplicated(lab), 0L)
+  expect_true("(NA 2)" %in% lab)
+})

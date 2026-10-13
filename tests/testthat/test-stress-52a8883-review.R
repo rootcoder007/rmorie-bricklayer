@@ -599,7 +599,11 @@ test_that("an interrupt nobody handles is an error; the shell read reports Ctrl-
   }, .package = "base")
   expect_identical(rmoriebricklayer:::.bl_readline("key: ", secret = TRUE), "sk-typed")
   expect_match(seen, "stty -echo", fixed = TRUE)
-  expect_match(seen, "trap 'stty echo; exit 130'", fixed = TRUE)
+  # the trap restores the echo, marks the interrupt (dash loses the status; review of 02a38be, C10)
+  # and exits 130
+  expect_match(seen, "trap 'stty echo; ", fixed = TRUE)
+  expect_match(seen, "RMBL-INTERRUPTED", fixed = TRUE)
+  expect_match(seen, "exit 130' INT TERM HUP", fixed = TRUE)
 })
 
 test_that("a manifest that cannot be stored is an error and the old copy stays", {

@@ -56,6 +56,27 @@ claims the earlier fixes overstated corrected.
   ignored); a numeric exposure column is no longer turned back into text to be searched (15 of the
   24 s on a 102 MB file).
 * A `next_index` past 2^31 - 1 is the damaged-key error, not a raw `NA` comparison error.
+* `apply_schema_validation()` needs something to validate against: `NULL`, an empty list or a
+  provenance without `schema` (a typo such as `scheme`) is an error, not `TRUE`. A schema field a
+  few letters from a known one (`expected_colums`, `min_data_row`) is fatal with a "did you mean";
+  other unknown fields are said. `expected_dtypes`, the name the provenance files use, is checked
+  as `expected_types` (the OTIS file's column types never were), and a factor matches a character
+  column.
+* A hosted key saved for another address is said once per session, and `ask` with no route says
+  the key is stored for the other address instead of "no key stored".
+* `data list` removes every default-ignorable code point (soft hyphen, U+034F, Hangul fillers,
+  U+180E, the byte-order mark, the interlinear annotation marks, tag characters), not only the
+  bidirectional and zero-width ones.
+* The credentials file is read as bytes: a NUL byte, a file that is not UTF-8 and a file over 1 MB
+  are refused with a plain reason (a NUL silently cut the file, a 10 MB file took minutes).
+* A temporary record file left by a writer that died mid-write is removed at the next write.
+* `verify_pollution()` refuses a non-numeric scalar such as `as.raw(25)`; the dispersion solvers
+  refuse `n_steps` past 2^31 - 1 even with `max_work = Inf`, and a particle grid larger than
+  `max_work` cells; `plot()` of what is not a pollution report says so.
+* Plots fit small devices: the margins are scaled to the figure at the text size in use and the
+  labels are cut by their measured width (`cex = 2` on a 2-3 inch device failed, and a 4-inch plot
+  cut labels it had room for); the bar for missing values never takes a real level's name.
+* The record documentation gives the measured cost: about 0.7 s per signature at 100,000 keys.
 * The lock wait is interruptible (one non-blocking attempt at a time, the wait in R); releasing
   descriptor 0, 1 or 2 is refused; the record writer checks the written size and flushes the
   directory after the rename (the fifth pass's NEWS said "size-checked" before it was); a lock

@@ -38,7 +38,7 @@
 
 # The credentials file as a named list, or NULL when it is not a JSON object.
 .bl_credentials_object <- function(p, simplify = TRUE) {
-  txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
+  txt <- .bl_read_text(p)
   if (!startsWith(trimws(txt), "{")) return(NULL)  # an array or a scalar is not the credentials object
   out <- tryCatch(bricklayer_json_from_json(txt, simplifyVector = simplify, bigint_as_char = TRUE),
                   error = function(e) NULL)
@@ -63,9 +63,22 @@
 
 # The file as text, bytes kept (the file is shared with morie and rmorie, whose numbers,
 # arrays and non-ASCII text must come back out exactly as they went in).
+# The credentials file as UTF-8 text, refused with a plain reason when it is not: readChar()
+# stopped at a NUL byte and dropped what followed it, a Latin-1 file failed in the JSON parser
+# with a message about bytes, and a 10 MB file took minutes in the member scanner (review of
+# 02a38be, B5). A credentials file is a few hundred bytes; past 1 MB it is not one.
 .bl_read_text <- function(p) {
-  txt <- readChar(p, file.size(p), useBytes = TRUE)
+  n <- file.size(p)
+  if (is.na(n)) stop(sprintf("cannot read %s", p), call. = FALSE)
+  if (n > 1048576) stop(sprintf("%s is %s bytes: too large to be a credentials file", p, format(n, big.mark = ",")),
+                        call. = FALSE)
+  raw <- readBin(p, "raw", n)
+  if (any(raw == as.raw(0L))) stop(sprintf("%s contains a NUL byte: it is not a JSON text file", p), call. = FALSE)
+  txt <- rawToChar(raw)
   Encoding(txt) <- "UTF-8"
+  if (!validUTF8(txt)) {
+    stop(sprintf("%s is not UTF-8 text (it may be Latin-1): save it as UTF-8", p), call. = FALSE)
+  }
   txt
 }
 
@@ -227,13 +240,31 @@
 }
 
 .bl_hosted_key <- function() {
+  st <- .bl_hosted_key_state()
+  if (identical(st$state, "other_address")) {
+    # said once per session and pair of addresses: route resolution asks more than once, and the
+    # same line came twice (review of 02a38be, L3)
+    said <- paste(st$saved_for, st$now)
+    if (!isTRUE(.bl_said_once[[said]])) {
+      assign(said, TRUE, envir = .bl_said_once)
+      message(sprintf("the stored hosted key was issued for %s and is not sent to %s", st$saved_for, st$now))
+    }
+    return(NULL)
+  }
+  st$key
+}
+.bl_said_once <- new.env(parent = emptyenv())
+
+# The stored hosted key and whether it may be sent: state "none", "ok" or "other_address" (a key
+# saved for another address than the one in use), with no message.
+.bl_hosted_key_state <- function() {
   env <- trimws(Sys.getenv("MORIE_HOSTED_KEY", unset = ""))
   if (nzchar(env)) {
-    return(env)
+    return(list(state = "ok", key = env))
   }
   cred <- .bl_read_credentials()
   key <- cred$hosted_key
-  if (!is.character(key) || length(key) != 1L || !nzchar(key)) return(NULL)
+  if (!is.character(key) || length(key) != 1L || !nzchar(key)) return(list(state = "none", key = NULL))
   # the key was issued for the address it was saved with: an address set afterwards in the
   # environment or the config gets no key, the same rule as the own and Ollama keys
   saved_for <- cred$hosted_base_url
@@ -244,10 +275,9 @@
   }
   now <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
   if (nzchar(saved_for) && !is.null(now) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
-    message(sprintf("the stored hosted key was issued for %s and is not sent to %s", saved_for, now))
-    return(NULL)
+    return(list(state = "other_address", key = NULL, saved_for = saved_for, now = now))
   }
-  key
+  list(state = "ok", key = key)
 }
 
 # The hosted endpoint, or NULL when disabled. MORIE_HOSTED_BASE_URL overrides
@@ -478,7 +508,13 @@
   hosted_line <- if (is.null(hosted)) {
     sprintf("hosted MORIE tier: disabled (%s); %s", .bl_hosted_off_reason(), .bl_access_hint())
   } else {
-    sprintf("hosted MORIE tier: no key stored; %s", .bl_access_hint())
+    st <- .bl_hosted_key_state()
+    if (identical(st$state, "other_address")) {
+      sprintf("hosted MORIE tier: the stored key was issued for %s and is not sent to %s; log in again for it",
+              st$saved_for, st$now)
+    } else {
+      sprintf("hosted MORIE tier: no key stored; %s", .bl_access_hint())
+    }
   }
   ollama <- .bl_ollama_base()
   ollama_line <- if (is.null(ollama)) {

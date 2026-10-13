@@ -89,7 +89,7 @@ bricklayer_plot_options <- function(...) {
 .bl_par <- function(y = NULL, labels = NULL) {
   o <- .bl_plot_opts()
   left <- if (is.null(y) && is.null(labels)) 4.5 else .bl_left_margin(y, labels)
-  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg, mar = c(4.2, left, 3, 1))
+  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg, mar = .bl_safe_mar(c(4.2, left, 3, 1), o$cex))
   op
 }
 
@@ -241,13 +241,35 @@ bricklayer_plot_options <- function(...) {
 
 # Labels and the left margin they need, on the device as it is: a margin wider than the device
 # failed with "figure margins too large" on a 2-3 inch plot, so long labels are cut to fit.
-.bl_label_fit <- function(labels) {
-  din <- tryCatch(graphics::par("din")[1L], error = function(e) 7)
-  csi <- tryCatch(graphics::par("csi"), error = function(e) 0.2)
-  max_lines <- max(4.5, 0.45 * din / csi)
-  chars <- max(8L, min(28L, as.integer(floor((max_lines - 1) / 0.55))))
-  labels <- .bl_short_label(labels, chars)
-  list(labels = labels, mar = min(max_lines, max(4.5, 0.55 * max(nchar(labels), 4) + 1)))
+# The longest cut (28 characters down to 8) whose measured width fits 45% of the figure at the
+# text size in use: the margin was sized at cex 1 and floored at 4.5 lines, so cex = 2 on a
+# 2-3 inch device failed and a 4-inch plot cut labels to 14 characters it had room for (review
+# of 02a38be). The margins are then fitted to the figure by .bl_safe_mar().
+.bl_label_fit <- function(labels, cex = .bl_plot_opts()$cex) {
+  fin <- tryCatch(graphics::par("fin")[1L], error = function(e) 7)
+  csi <- tryCatch(graphics::par("cin")[2L], error = function(e) 0.2) * cex
+  room <- 0.45 * fin - csi
+  fit <- NULL
+  for (k in 28:8) {
+    cand <- .bl_short_label(labels, k)
+    w <- max(.bl_strwidth(cand[!is.na(cand)], cex = cex), 0)
+    fit <- list(labels = cand, w = w)
+    if (w <= room) break
+  }
+  list(labels = fit$labels, mar = max(1, fit$w / csi + 1))
+}
+
+# Margins (in lines, as par("mar")) scaled down so that the left and right together, and the top
+# and bottom together, take at most three quarters of the figure at the text size in use:
+# "figure margins too large" on a small device or a panel otherwise.
+.bl_safe_mar <- function(mar, cex = .bl_plot_opts()$cex) {
+  fin <- tryCatch(graphics::par("fin"), error = function(e) c(7, 7))
+  csi <- tryCatch(graphics::par("cin")[2L] * graphics::par("mex"), error = function(e) 0.2) * cex
+  lim_w <- 0.75 * fin[1L] / csi
+  lim_h <- 0.75 * fin[2L] / csi
+  if (mar[2L] + mar[4L] > lim_w) mar[c(2L, 4L)] <- mar[c(2L, 4L)] * lim_w / (mar[2L] + mar[4L])
+  if (mar[1L] + mar[3L] > lim_h) mar[c(1L, 3L)] <- mar[c(1L, 3L)] * lim_h / (mar[1L] + mar[3L])
+  mar
 }
 
 .bl_left_margin <- function(y = NULL, labels = NULL) {
@@ -404,7 +426,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
             stock_rate = "Stock rate")
   cols <- .bl_cols(length(what), col, palette)
   op <- graphics::par(las = .bl_plot_opts()$las, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = c(4.2, 4.5, 3, 1))
+                      mar = .bl_safe_mar(c(4.2, 4.5, 3, 1)))
   op2 <- .bl_panels_begin(length(what))
   on.exit(graphics::par(op2), add = TRUE)
   on.exit(.bl_panels_abort(), add = TRUE)
@@ -412,7 +434,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
   xs <- seq_len(nrow(x))
   for (i in seq_along(what)) {
     v <- x[[what[i]]]
-    graphics::par(mar = c(4.2, .bl_left_margin(v), 3, 1))
+    graphics::par(mar = .bl_safe_mar(c(4.2, .bl_left_margin(v), 3, 1)))
     graphics::plot(xs, v, type = "n", xaxt = "n", xlab = "Period", ylab = labs[[what[i]]],
                    main = "", ...)
     .bl_title(.bl_main(main, labs[[what[i]]]))
@@ -626,12 +648,19 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
   labels <- as.character(labels)
   # a frequency table counts NA as a level of its own; a real level called "(missing)" keeps
   # its name and the NA level is told apart
-  na_lab <- if ("(missing)" %in% labels) "(NA)" else "(missing)"
+  # the first of "(missing)", "(NA)", "(NA 2)", ... that no real level uses: "(NA)" was taken when
+  # "(missing)" was, and a real "(NA)" level then shared its bar (review of 02a38be)
+  na_lab <- "(missing)"
+  k <- 1L
+  while (na_lab %in% labels) {
+    na_lab <- if (k == 1L) "(NA)" else sprintf("(NA %d)", k)
+    k <- k + 1L
+  }
   labels[is.na(labels)] <- na_lab
   fit <- .bl_label_fit(labels)
   labels <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = c(4.2, fit$mar, 3, 1))
+                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)))
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(rev(values), names.arg = rev(labels), horiz = TRUE, col = rev(cols),
                     border = NA, xlab = xlab, main = main, ...)
@@ -704,7 +733,7 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
   fit <- .bl_label_fit(label)
   label <- fit$labels
   op <- graphics::par(las = 1, cex = .bl_plot_opts()$cex, bg = .bl_plot_opts()$bg,
-                      mar = c(4.2, fit$mar, 3, 1))
+                      mar = .bl_safe_mar(c(4.2, fit$mar, 3, 1)))
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(rev(ifelse(is.na(r), 0, r)), names.arg = rev(label), horiz = TRUE, col = rev(cols),
                     border = NA, xlim = c(-1, 1), xlab = "Correlation", main = main, ...)
@@ -852,6 +881,12 @@ plot.rmbl_equity <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  # one clear error for what is not a report (a string, an empty list, an "ok" without its pipeline
+  # died in 15 different ways inside the drawing; review of 02a38be)
+  if (!is.list(x) || !is.character(x$status) || length(x$status) != 1L ||
+        (identical(x$status, "ok") && !is.list(x$pipeline))) {
+    stop("`x` must be a report from verify_pollution()", call. = FALSE)
+  }
   if (!identical(x$status, "ok")) {
     graphics::plot.new()
     graphics::title(main = if (is.null(main)) sprintf("verify_pollution: %s", x$status) else main)
