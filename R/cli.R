@@ -158,7 +158,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
-                data = "--out", wayback = c("--out", "--jobs", "--within"),
+                data = "--out", wayback = c("--out", "--jobs", "--within", "--retry", "--include-gone"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within"),
@@ -349,7 +349,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     describe = "describe NAME   help page of one function",
     examples = "examples NAME   the examples of one function",
     data = "data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)",
-    wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]   archive every URL in FILE",
+    wayback = paste("wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]   archive every URL in FILE;",
+                    "wayback --retry FILE.jsonl [--include-gone]   retry the failures of an earlier run;",
                     "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
     version = "version   package version"
   )
@@ -545,6 +546,26 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     i <- match(f, pos)
     if (!is.na(i)) pos <- pos[-c(i, i + 1L)]
   }
+  # --retry FILE.jsonl: the failures of an earlier run, looked up and captured again (wayback_retry)
+  retry <- "--retry" %in% pos
+  gone <- "--include-gone" %in% pos
+  pos <- setdiff(pos, c("--retry", "--include-gone"))
+  if (retry) {
+    if (length(pos) != 1L || !file.exists(pos[[1L]])) {
+      out(sprintf("--retry takes the results file of an earlier run: %s\n",
+                  if (length(pos) == 1L) paste("no such file", pos[[1L]]) else "give one FILE.jsonl"))
+      return(if (length(pos) == 1L) 1L else 2L)
+    }
+    res <- wayback_retry(pos[[1L]], include_gone = gone, jobs = flag("--jobs") %||% "4",
+                         within = flag("--within") %||% "30d")
+    r <- attr(res, "retry")
+    tab <- table(factor(res$status, levels = c("saved", "existing", "failed")))
+    out(sprintf(paste("%d failures: %d found already archived, %d captured again, %d left as gone;",
+                      "now %d saved, %d existing, %d failed in %s\n"),
+                r$failed, r$found_by_lookup, r$captured_again, r$left_as_gone, tab[["saved"]], tab[["existing"]],
+                tab[["failed"]], pos[[1L]]))
+    return(if (tab[["failed"]] > 0L) 1L else 0L)
+  }
   if (length(pos) != 1L || pos[[1L]] %in% c("help", "--help", "-h")) {
     out(.bl_verb_usage("wayback", .bl_prog()))
     return(if (length(pos) == 1L) 0L else 2L)
@@ -632,6 +653,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "  data list                                 curated tables at data.rmorie.com\n",
     "  data pull db/table [--out FILE.csv]       download one of them (your MORIE key)\n",
     "  wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)\n",
+    "  wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run\n",
     "  functions [PATTERN]                       exported functions and their titles\n",
     "  describe NAME                             help page of one function\n",
     "  examples NAME                             its examples\n",

@@ -121,6 +121,7 @@ reference:
       - wayback_snapshot_url
       - wayback_snapshot_url_native
       - wayback_save
+      - wayback_retry
   - title: Provenance & reproducibility capsules
     desc: >
       Capture the environment, record a citable data-provenance capsule, and

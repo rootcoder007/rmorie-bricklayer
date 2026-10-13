@@ -4,6 +4,16 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Retrying a bulk Wayback run
+
+* **New: `wayback_retry()` and `rmbl wayback --retry FILE.jsonl`.** Reads the results file of an
+  earlier `wayback_save()` run and retries every URL whose latest result is a failure: each is
+  first looked up in the Wayback Machine and recorded as `existing` when a capture is already
+  there (the daily limit's refusals, pages captured by another run), the rest are captured again
+  into the same file, and pages their source no longer has (HTTP 404 or 410) are left alone unless
+  `include_gone = TRUE` (`--include-gone`). Returns the whole run as it now stands, with the
+  retry's counts.
+
 ## Timing tests
 
 * **dudect: both classes are written the same way.** The 150-tick ML-KEM compare-and-select was
