@@ -4,6 +4,55 @@ The 0.5.11 stress round (commit a5a4d10) and the review of this release's own br
 6e80794, 2026-10-12): the findings of both fixed, each fix applied to its siblings, and the
 claims the earlier fixes overstated corrected.
 
+## Review of 02a38be (the sixth pass)
+
+* **`hurwitz_zeta()` is accurate below s = 1.** The Euler-Maclaurin shift added in the fifth
+  pass summed |s| + 20 terms and cancelled them against a small result: every digit was lost
+  below s = -5 (zeta(-11) came back as 5.4, zeta(-15) as -2.3e7, where 52a8883 had returned NA),
+  and near s = -5 only six digits were right. Now s <= -5 uses Hurwitz's Fourier formula on
+  (0, 1] (exact zeros at the even negative integers, zeta(-200, 2) = -1 exactly), -5 < s < 1
+  Hermite's integral on [1, 2), the integer s in (-5, 0] the Bernoulli polynomial, and any other
+  q is shifted into range by sums that do not cancel. Checked against mpmath at 40-60 digits over
+  112 points: the largest relative error is 1.9e-13. A tiny q keeps its own term
+  (`hurwitz_zeta(0.5, 1e-20)` was `Inf`). The fifth pass's test compared against a reference
+  that was wrong in the fifth digit with an absolute tolerance that accepted 0; it is relative now.
+* **A truncated or damaged compressed exposure file is refused.** R's `gzfile()` returns what a
+  cut gzip or bzip2 file decodes to, with no error and no warning, so half a file was read as a
+  whole one (status ok). gzip is now inflated in C with zlib, every member's CRC-32 and length
+  checked (several members, as `gzip -c a b` and `data.table::fwrite()` write, are read whole);
+  a bzip2 file must end with its end-of-stream marker; an xz decoder warning is an error. The
+  decompressed size is capped while it is read (`options(rmoriebricklayer.max_csv_bytes)`,
+  1 GiB): a few megabytes of gzip no longer grow to gigabytes before anything is refused. zlib is
+  now a system requirement (it ships with R's own build dependencies).
+* **A baseline rate below one per 100,000 needs `rare_outcome = TRUE`, whatever its unit.** The
+  check ran only when `baseline_rate_per` was missing, so a wrapper or `do.call()` that always
+  passes it turned 0.008 per person-year into 0.008 per 100,000 and a burden 100,000 times too
+  small, with status ok. The check is on the converted rate now, and below 1e-6 per 100,000 no
+  rate is accepted (`baseline_rate_per = 1e300` was).
+* **A NAPS `value` column with `"<2"` is refused, as an `exposure` column is.** The value was
+  converted before the text check and counted as a row with no measurement (prevalence 1.0
+  instead of 0.4).
+* **`--force` belongs to `config reset` alone.** `config set own.key --force` stored "--force" as
+  the key. `config show`, `help`, `get` and `unset` refuse extra arguments, and arguments after a
+  bare `--` are refused by every verb but `ask` and `bundle` (`functions -- a b` listed everything).
+* **A FIFO, device or directory at the legacy record path is refused at once.** The migration
+  read it with `file.exists()` only, so a FIFO blocked signing for good while the lock was held.
+* **Parallel manifest refreshes no longer collide**: each writes its own temporary file (one
+  shared name let them delete each other's, 11 of 12 workers failed). A reply that is not a
+  manifest (`{}`, an error object, a `datasets` that is not a list of tables) is refused and the
+  cached copy kept.
+* **A cached table is deleted only when it fails a known digest.** Offline, a stale manifest that
+  lists the table without a digest now loads it, as the live manifest does; with no manifest at
+  all the cached table is refused but kept for the next run, where it is checked again before
+  use (it was deleted, and had to be downloaded again).
+* The lock wait is interruptible (one non-blocking attempt at a time, the wait in R); releasing
+  descriptor 0, 1 or 2 is refused; the record writer checks the written size and flushes the
+  directory after the rename (the fifth pass's NEWS said "size-checked" before it was); a lock
+  file owned by another user is named as such, not as a read-only directory. The barrier
+  generator registers the five entry points written in plain C directly (they throw no C++
+  exception) instead of stopping, and the README counts both kinds.
+* Tests: a test compared a mean with its own formula and now checks two independent predictions.
+
 ## Review of 52a8883 (the fifth pass over the branch)
 
 * **A tampered cached table no longer loads when the manifest cannot be fetched at all.** The

@@ -1351,7 +1351,15 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # indices were used (review of 52a8883, A3). Unreadable is an error, like the new record.
 .rmbl_xmss_legacy_json <- function(p) {
   j <- file.path(dirname(p), "xmss_index.json")
-  if (!file.exists(j)) return(integer(0))
+  kind <- .Call(C_rmbl_path_kind, j)
+  if (identical(kind, "missing")) return(integer(0))
+  # the same regular-file check as the record itself: a FIFO here blocked readChar() for good
+  # while the record lock was held, so every other signer timed out (review of 02a38be, C7)
+  if (!identical(kind, "regular")) {
+    stop(sprintf(paste("%s (the XMSS index record written before 0.5.12) is a %s, not a regular file: no XMSS",
+                       "signature is made until it is removed"), j,
+                 if (identical(kind, "directory")) "directory" else "device or other special file"), call. = FALSE)
+  }
   bad <- function() {
     stop(sprintf(paste("%s (the XMSS index record written before 0.5.12) cannot be read: no XMSS signature is",
                        "made until it is repaired or removed, since it may list indices that were used"), j),
@@ -1374,7 +1382,8 @@ capsule_verify <- function(message, signature, key, context = NULL,
   out
 }
 
-# The whole record, written to a temporary file that is read back before it replaces the old
+# The whole record, written to a temporary file whose size is checked and which is flushed to the
+# disk before it replaces the old
 # one: a write that did not complete (a full disk) stops the signature instead of renaming an
 # empty file over the record (review of 52a8883, B3).
 .rmbl_xmss_record_write <- function(p, rec) {
@@ -1404,15 +1413,28 @@ capsule_verify <- function(message, signature, key, context = NULL,
 .rmbl_xmss_with_lock <- function(p, f) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   lock <- paste0(p, ".flock")
-  fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 10000L),
-                 error = function(e) {
-                   m <- conditionMessage(e)
-                   hint <- if (grepl("Permission denied|Read-only", m)) " (is the directory read-only?)" else ""
-                   stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
-                 })
-  if (identical(fd, -1L)) {
-    stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
-         call. = FALSE)
+  # one non-blocking attempt at a time, the wait between them in R: Sys.sleep() takes Ctrl-C, and
+  # an attempt that finds the lock busy has already closed its descriptor, so an interrupt leaves
+  # nothing open (the wait used to run inside C, deaf to Ctrl-C for up to 10 s; review of 02a38be)
+  start <- proc.time()[["elapsed"]]
+  repeat {
+    fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 0L),
+                   error = function(e) {
+                     m <- conditionMessage(e)
+                     hint <- if (grepl("Read-only", m)) {
+                       " (is the directory read-only?)"
+                     } else if (grepl("Permission denied", m)) {
+                       if (file.exists(lock) && file.access(lock, 2L) != 0L) " (is the lock file owned by another user?)"
+                       else " (is the directory read-only?)"
+                     } else ""
+                     stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
+                   })
+    if (!identical(fd, -1L)) break
+    if (proc.time()[["elapsed"]] - start >= 10) {
+      stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
+           call. = FALSE)
+    }
+    Sys.sleep(0.02)
   }
   on.exit(.Call(C_rmbl_flock_release, fd), add = TRUE)
   f()

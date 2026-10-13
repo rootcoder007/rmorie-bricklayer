@@ -40,11 +40,12 @@ test_that("B1: a tampered cached table is refused when the manifest is stale and
   expect_true(file.exists(file.path(d, "manifest.json")))
 })
 
-test_that("B1: with no manifest at all and the server down, the table cannot be verified and is not kept", {
+test_that("B1: with no manifest at all and the server down, the table cannot be verified and is not used", {
   d <- data_cache_with(charToRaw("666,TAMPERED\n"))
   local_mocked_bindings(.bl_data_get = function(...) stop("could not resolve host"))
   expect_error(bricklayer_data_load("db/t"), "cannot be verified")
-  expect_false(file.exists(file.path(d, "db__t.csv.gz")))
+  # a cached file is kept for the next run, where it is checked again (review of 02a38be, C9)
+  expect_true(file.exists(file.path(d, "db__t.csv.gz")))
 })
 
 test_that("B1: a genuine table loads from the stale manifest's digest while the server is down", {
@@ -54,9 +55,10 @@ test_that("B1: a genuine table loads from the stale manifest's digest while the 
   # a manifest that lists the table without a digest: the fresh manifest is authoritative
   d2 <- data_cache_with(good, '{"datasets":[{"key":"db/t"}]}', age_days = 0)
   expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", file.path(d2, "db__t.csv.gz")))
-  # the same manifest stale and unreachable: no digest to check against, so not kept
+  # the same manifest stale and unreachable: it lists the table without a digest, as the live one
+  # does, so the table loads (refusing it deleted genuine tables offline; review of 02a38be, C9)
   d3 <- data_cache_with(good, '{"datasets":[{"key":"db/t"}]}', age_days = 3)
-  expect_error(rmoriebricklayer:::.bl_data_check_sha("db/t", file.path(d3, "db__t.csv.gz")), "cannot be verified")
+  expect_true(rmoriebricklayer:::.bl_data_check_sha("db/t", file.path(d3, "db__t.csv.gz")))
   # an unparseable cached manifest is no copy at all
   d4 <- data_cache_with(good, "{not json", age_days = 3)
   expect_error(rmoriebricklayer:::.bl_data_check_sha("db/t", file.path(d4, "db__t.csv.gz")), "cannot be verified")
@@ -365,16 +367,16 @@ test_that("A5: an unbalanced quote stops the read instead of returning the rows 
   expect_identical(verify_pollution("pm25", exposure_csv = f)$status, "ok")
 })
 
-test_that("A6: a rare rate is accepted once its unit is given, and the note says how", {
+test_that("A6: a rare rate is accepted once it is declared rare, and the note says how", {
   a <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 0.5)
   expect_identical(a$status, "assumption_failure")
-  expect_match(pollution_report_text(a), "baseline_rate_per = 1e5")
+  expect_match(pollution_report_text(a), "rare_outcome = TRUE")
   b <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 5e-6,
-                        baseline_rate_per = 1)
+                        baseline_rate_per = 1, rare_outcome = TRUE)
   expect_identical(b$status, "ok")
   expect_equal(b$inputs$baseline_rate_per_100k, 0.5)
   c <- verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 0.5,
-                        baseline_rate_per = 1e5)
+                        baseline_rate_per = 1e5, rare_outcome = TRUE)
   expect_identical(c$status, "ok")
   expect_equal(c$pipeline$burden$attributable_cases, b$pipeline$burden$attributable_cases)
   expect_identical(verify_pollution("pm25", exposure_mean = 25, exposure_prevalence = 1, baseline_rate = 2e5,
@@ -487,7 +489,9 @@ test_that("CLI: extra arguments are refused; config reset asks for --force on a 
 # ---- LOW items -------------------------------------------------------------------------------
 
 test_that("A7: hurwitz_zeta() at large negative q, below s = 1, and its poles", {
-  expect_equal(hurwitz_zeta(5, -99999.5), 2.50005e-21, tolerance = 1e-5)
+  # relative, against mpmath (mp.dps = 60): at 2.5e-21 an absolute tolerance of 1e-5 accepted 0, and
+  # the value it was compared with (2.50005e-21) was itself wrong in the fifth digit (review of 02a38be)
+  expect_equal(hurwitz_zeta(5, -99999.5) / 2.499999999791666666692187e-21, 1, tolerance = 1e-10)
   expect_equal(hurwitz_zeta(3, -999999.5), rmoriebricklayer:::.rmbl_hurwitz(3, 1e6 + 0.5), tolerance = 1e-10)
   expect_equal(hurwitz_zeta(2, -2.5), sum((-2.5 + 0:2)^-2) + hurwitz_zeta(2, 0.5), tolerance = 1e-12)
   expect_equal(hurwitz_zeta(3, -1.25), sum((-1.25 + 0:1)^-3) + hurwitz_zeta(3, 0.75), tolerance = 1e-12)
@@ -516,8 +520,14 @@ test_that("type guards: x_min as a factor or text, bias_correct and min_expected
 test_that("sibling caps: particles x steps and lid images", {
   expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 1e9), "above max_work")
   expect_error(lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 2, max_work = 0), "single positive number")
-  p <- lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 3, max_work = Inf)
-  expect_equal(p$mean_x, 3 + sum(p$x - 3) / 10)
+  # independent predictions (the old line compared the mean with its own formula): no diffusion
+  # puts every particle at u dt n_steps = 3; a fixed normal draw of 1 adds sqrt(2 kx dt) per step
+  p <- lagrangian_particles(10, 0, 0, 1, 0, 0, 0, 1, n_steps = 3, max_work = Inf)
+  expect_equal(p$x, rep(3, 10))
+  expect_equal(p$mean_x, 3)
+  p <- lagrangian_particles(10, 0, 0, 1, 0, 1, 1, 1, n_steps = 3, max_work = Inf,
+                            normals = function(n, seed, stream) rep(1, n))
+  expect_equal(p$mean_x, 3 + 3 * sqrt(2))
   rec <- matrix(c(100, 0, 1), 1)
   expect_error(gaussian_plume(1, 2, 10, rec, n_images = 1e9), "at most 1,000")
   expect_error(gaussian_puff(1, 2, 10, rec, t = 10, n_images = 1001), "at most 1,000")

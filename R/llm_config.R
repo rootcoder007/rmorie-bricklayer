@@ -294,6 +294,12 @@ bricklayer_llm_config <- function(...) {
                   if (identical(tab$source[i], "default")) "" else paste0("(", tab$source[i], ")")))
     }
   }
+  if (sub_verb %in% c("show", "list", "help") && length(args)) {
+    usage_error(sprintf("usage: %s config %s", prog, sub_verb))
+  }
+  if (sub_verb %in% c("get", "unset") && length(args) > 1L) {
+    usage_error(sprintf("usage: %s config %s KEY", prog, sub_verb))
+  }
   switch(sub_verb,
     show = ,
     list = {

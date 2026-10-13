@@ -149,8 +149,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     return(invisible(0L))
   }
   # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
+  # --force belongs to `config reset` alone: offered to every config verb it became the value of
+  # `config set own.key --force` (review of 02a38be, C6)
   known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
-                data = "--out", config = "--force")
+                data = "--out", config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
   values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out"), function(f) {
     i <- match(f, rest)
@@ -165,6 +167,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   status <- 0L
   tryCatch(
     {
+      # arguments after a bare `--` are a prompt or a request: only ask and bundle take one, and
+      # every other verb ignored them (`functions -- a b` listed everything)
+      if (length(tail_args) && !verb %in% c("ask", "bundle")) {
+        usage_error(sprintf("%s takes no arguments after --", verb))
+      }
       switch(verb,
         login = {
           if (has("--token")) {
@@ -295,7 +302,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
         },
         help = ,
         `--help` = ,
-        `-h` = status <- .bl_cli_help(rest, out),
+        `-h` = {
+          if (length(rest) > 1L) usage_error(sprintf("usage: %s help [VERB]", prog))
+          status <- .bl_cli_help(rest, out)
+        },
         usage_error(sprintf("unknown verb '%s' (try: %s help)", verb, prog))
       )
     },

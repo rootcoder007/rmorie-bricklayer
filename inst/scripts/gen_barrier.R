@@ -28,8 +28,21 @@ for (f in setdiff(list.files("src", pattern = "[.]cpp$", full.names = TRUE), "sr
   d <- regmatches(s, regexpr('^(extern "C" )?SEXP C_rmbl_[A-Za-z0-9_]+_impl\\(', s, perl = TRUE))
   defined <- c(defined, sub("_impl\\($", "", sub('^(extern "C" )?SEXP ', "", d, perl = TRUE)))
 }
+# entry points written in plain C (src/*.c besides init.c: the file lock, the checked writer, the
+# checked gzip reader) throw no C++ exception and report errors through R's API themselves, so they
+# are registered directly and need no barrier; every other entry point must have its _impl
+plain_c <- character(0)
+for (f in setdiff(list.files("src", pattern = "[.]c$", full.names = TRUE), "src/init.c")) {
+  s <- readLines(f, warn = FALSE)
+  d <- regmatches(s, regexpr("^SEXP C_rmbl_[A-Za-z0-9_]+\\(", s, perl = TRUE))
+  plain_c <- c(plain_c, sub("\\($", "", sub("^SEXP ", "", d)))
+}
+arity <- arity[!names_ %in% plain_c]
+names_ <- setdiff(names_, plain_c)
 missing <- setdiff(names_, defined)
-if (length(missing)) stop("no _impl definition for: ", paste(missing, collapse = ", "))
+if (length(missing)) stop("no _impl definition and no plain C definition for: ", paste(missing, collapse = ", "))
+message(sprintf("%d entry points behind the barrier, %d in plain C (%s)", length(names_), length(plain_c),
+                paste(plain_c, collapse = ", ")))
 
 args_of <- function(a) paste(rep("SEXP", a), collapse = ", ")
 params_of <- function(a) if (a == 0) "" else paste(sprintf("SEXP a%d", seq_len(a) - 1L), collapse = ", ")

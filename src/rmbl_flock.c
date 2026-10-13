@@ -119,6 +119,8 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
 SEXP C_rmbl_flock_release(SEXP fd_) {
     int fd = asInteger(fd_);
     if (fd == NA_INTEGER || fd < 0) return R_NilValue;
+    /* stdin, stdout and stderr are never a lock: closing 1 shut R's console output */
+    if (fd <= 2) error("descriptor %d is not a lock this package holds", fd);
 #ifdef _WIN32
     HANDLE h = (HANDLE) _get_osfhandle(fd);
     OVERLAPPED ov;
@@ -142,8 +144,8 @@ SEXP C_rmbl_path_kind(SEXP path) {
     return mkString("other");
 }
 
-/* Write `bytes` to `tmp`, flush it to the disk (fsync / FlushFileBuffers) and only then rename it
- * over `path`; NULL on success, else a message. `tmp` is created here (O_EXCL), so the cleanup
+/* Write `bytes` to `tmp`, check its size, flush it to the disk (fsync / FlushFileBuffers), rename
+ * it over `path` and flush the directory entry; NULL on success, else a message. `tmp` is created here (O_EXCL), so the cleanup
  * only ever removes a file this call made. A short write, a full disk (ENOSPC, which a delayed
  * allocation may report only at fsync or close) or a failed rename takes the one exit at the end:
  * `tmp` removed, the old record untouched (review of 52a8883, B3). */
@@ -180,6 +182,9 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
         if (w > 0) off += (size_t) w;
         else if (!(w < 0 && errno == EINTR)) { why = "the write did not complete"; err = w < 0 ? errno : ENOSPC; }
     }
+    /* the file holds exactly the bytes asked for */
+    struct stat st;
+    if (why == NULL && (fstat(fd, &st) != 0 || (size_t) st.st_size != n)) { why = "the write did not complete"; err = EIO; }
 #ifdef _WIN32
     if (why == NULL && !FlushFileBuffers((HANDLE) _get_osfhandle(fd))) { why = "the write did not reach the disk"; err = EIO; }
 #else
@@ -193,6 +198,23 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
     }
 #else
     if (why == NULL && rename(tmp, path) != 0) { why = "the new record could not replace the old one"; err = errno; }
+    if (why == NULL) {
+        /* the rename is an entry in the directory: flush it too, or after a power cut the old
+         * record can come back. A file system that cannot fsync a directory (EINVAL) is let be. */
+        char dir[4096];
+        strcpy(dir, path);
+        char *slash = strrchr(dir, '/');
+        if (slash == dir) dir[1] = 0; else if (slash) *slash = 0; else strcpy(dir, ".");
+        int dfd = open(dir, O_RDONLY | O_CLOEXEC);
+        if (dfd >= 0) {
+            if (fsync(dfd) != 0 && errno != EINVAL && errno != EROFS) { why = "the new record did not reach the disk"; err = errno; }
+            close(dfd);
+        }
+        if (why != NULL) {
+            snprintf(msg, sizeof msg, "%s: %s", why, strerror(err));
+            return mkString(msg);   /* the rename is done: there is no temporary file to remove */
+        }
+    }
 #endif
     if (why != NULL) {
         snprintf(msg, sizeof msg, "%s: %s", why, strerror(err));

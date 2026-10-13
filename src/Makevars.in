@@ -2,11 +2,12 @@
 # std::optional/<regex> in the vendored SIU core need C++17.
 CXX_STD = CXX17
 # libcurl as ./configure found it (pkg-config, curl-config, or the bare
-# -lcurl). There is nothing else to link: the post-quantum schemes --
+# -lcurl), and zlib for the checked gzip reader (rmbl_gunzip.c). Nothing else
+# is linked: the post-quantum schemes --
 # XMSS, ML-KEM (FIPS 203), ML-DSA (FIPS 204), SLH-DSA (FIPS 205), HQC --
 # are all implemented in this directory.
 PKG_CPPFLAGS = @CURL_CFLAGS@
-PKG_LIBS = @CURL_LIBS@
+PKG_LIBS = @CURL_LIBS@ -lz
 
 # Header dependencies. R's default rules rebuild an object when its .cpp
 # changes but not when a header it includes changes; a warm build then
