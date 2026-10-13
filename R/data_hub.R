@@ -144,14 +144,25 @@ bricklayer_data_manifest <- function(refresh = FALSE) {
   }
   fresh <- age < 86400
   if (refresh || !fresh) {
-    # fetched beside the cached copy and moved over it only once it parses: a refresh that fails
-    # leaves the last good manifest in place, and the digest check falls back on it
-    tmp <- paste0(p, ".part")
+    # fetched beside the cached copy and moved over it only once it is a manifest: a refresh that
+    # fails leaves the last good one in place, and the digest check falls back on it. The temporary
+    # name is this process's own: one shared `manifest.json.part` let parallel refreshes delete each
+    # other's file (11 of 12 workers failed; review of 02a38be, C8).
+    dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+    tmp <- tempfile(pattern = "manifest-", tmpdir = dirname(p), fileext = ".part")
     on.exit(unlink(tmp), add = TRUE)
     .bl_data_get("/manifest.json", tmp, timeout = 60)
     m <- .rmbl_json_text(paste(readLines(tmp, warn = FALSE), collapse = "\n"), simplifyVector = FALSE)
     if (!is.list(m) || (length(m) && is.null(names(m)))) {
       stop("the manifest fetched from data.rmorie.com is not a JSON object", call. = FALSE)
+    }
+    # `{}` or `{"error": ...}` from a gateway is not a manifest: it replaced the good copy, and the
+    # digests with it (C9). A manifest is an object whose `datasets` is an array of objects with a key.
+    ds <- m$datasets
+    if (!is.list(ds) || !is.null(names(ds)) ||
+          !all(vapply(ds, function(d) is.list(d) && is.character(d$key) && length(d$key) == 1L, NA))) {
+      stop("the reply from data.rmorie.com is not a manifest (no list of datasets): the cached copy is kept",
+           call. = FALSE)
     }
     if (!isTRUE(file.rename(tmp, p))) stop(sprintf("could not store the manifest in %s", p), call. = FALSE)
     return(m)
@@ -213,15 +224,19 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   .bl_manifest_digest(bricklayer_data_manifest(refresh = refresh)$datasets, key)
 }
 
-# The digest from the manifest copy on disk, however old: NA when there is no usable copy.
+# The digest from the manifest copy on disk, however old: NA when there is no usable copy or it
+# does not list the table, NULL when it lists the table without a digest (as the live manifest
+# with no digest is: the table loads), the digest otherwise.
 .bl_data_cached_digest <- function(key) {
   p <- file.path(.bl_data_cache_dir(), "manifest.json")
   if (!file.exists(p)) return(NA)
   m <- tryCatch(.rmbl_json_text(paste(readLines(p, warn = FALSE), collapse = "\n"), simplifyVector = FALSE),
                 error = function(e) NULL)
-  if (!is.list(m)) return(NA)
-  d <- .bl_manifest_digest(m$datasets, key)
-  if (is.null(d)) NA else d
+  ds <- if (is.list(m)) m$datasets else NULL
+  if (!is.list(ds) || !is.null(names(ds))) return(NA)
+  listed <- any(vapply(ds, function(d) is.list(d) && identical(d$key, key), NA))
+  if (!listed) return(NA)
+  .bl_manifest_digest(ds, key)
 }
 
 # A cached or freshly downloaded file that does not match the manifest's SHA-256 is deleted and
@@ -230,9 +245,14 @@ bricklayer_data_tables <- function(refresh = FALSE) {
 # the table had and is used; with no copy at all the file cannot be verified and is not kept. A
 # mismatch triggers one refresh of the manifest (a table rebuilt upstream has a new digest), and
 # a refresh that fails changes nothing.
-.bl_data_check_sha <- function(key, dest) {
-  refuse <- function(msg) {
-    unlink(dest)
+# Only a file that fails a known digest is deleted. One that cannot be checked now (no manifest
+# from the service and no copy that lists the table) is refused but, when it was already in the
+# cache, kept: it is checked again before every use, and deleting it threw away a genuine table
+# whenever the service was unreachable (review of 02a38be, C9). A file just downloaded and not
+# verifiable is not kept.
+.bl_data_check_sha <- function(key, dest, cached = FALSE) {
+  refuse <- function(msg, delete = TRUE) {
+    if (delete) unlink(dest)
     stop(msg, call. = FALSE)
   }
   want <- tryCatch(.bl_data_manifest_sha(key), error = function(e) e)
@@ -241,9 +261,11 @@ bricklayer_data_tables <- function(refresh = FALSE) {
     want <- tryCatch(.bl_data_cached_digest(key), error = function(e) e)
     if (inherits(want, "error")) refuse(conditionMessage(want))
     if (identical(want, NA)) {
-      refuse(sprintf(paste("%s cannot be verified: the manifest could not be fetched from data.rmorie.com (%s)",
-                           "and no earlier copy lists its digest, so the file was not kept; run again when",
-                           "the service answers"), key, "offline or an error"))
+      refuse(sprintf(paste("%s cannot be verified: the manifest could not be fetched from data.rmorie.com",
+                           "(offline or an error) and no earlier copy lists the table; %s run again when",
+                           "the service answers"), key,
+                     if (cached) "the cached file is kept unused until then;" else "the download was not kept;"),
+             delete = !cached)
     }
   }
   if (is.null(want)) return(invisible(TRUE))
@@ -337,10 +359,11 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
   parts <- strsplit(key, "/", fixed = TRUE)[[1L]]
   dest <- file.path(.bl_data_cache_dir(),
                     paste0(gsub("/", "__", key, fixed = TRUE), ".csv.gz"))
-  if (refresh || !file.exists(dest)) {
+  cached <- !refresh && file.exists(dest)
+  if (!cached) {
     rest <- paste(parts[-1L], collapse = "/")
     .bl_data_get(sprintf("/%s/%s.csv.gz", parts[[1L]], rest), dest)
   }
-  .bl_data_check_sha(key, dest)
+  .bl_data_check_sha(key, dest, cached = cached)
   utils::read.csv(gzfile(dest), stringsAsFactors = FALSE, skipNul = TRUE)  # some sources carry NUL bytes
 }

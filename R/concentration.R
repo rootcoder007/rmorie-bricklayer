@@ -323,35 +323,78 @@ hurwitz_zeta <- function(s, q = 1) {
   }, numeric(1))
 }
 
-# zeta(s, q) for q > 0 and every s but the pole s = 1: the C series for s > 1, and below 1 the
-# analytic continuation by Euler-Maclaurin (shift M terms, then the integral, the half term and
-# twelve Bernoulli corrections; exact for a non-positive integer s once M exceeds |s|).
+# zeta(s, q) for q > 0 and every s but the pole s = 1. Three regimes:
+#  * s > 1: the C series.
+#  * s <= -5: Hurwitz's formula for 0 < f <= 1, with t = 1 - s >= 6,
+#      zeta(s, f) = 2 Gamma(t) / (2 pi)^t * sum_k cos(pi (2 k f - t / 2)) / k^t,
+#    which converges absolutely and fast; cospi() keeps the exact zeros (zeta(-2n) = 0).
+#  * -5 < s < 1: Hermite's integral at 1 <= q < 2,
+#      zeta(s, q) = q^-s / 2 + q^(1 - s) / (s - 1) + 2 int_0^Inf sin(s atan(t / q)) (q^2 + t^2)^(-s / 2) / (e^(2 pi t) - 1) dt,
+#    whose integrand is smooth and small there.
+#  Any other q is moved into range first: up by zeta(s, q) = q^-s + zeta(s, q + 1), down by
+#  zeta(s, q) = zeta(s, f) - sum_{j < N} (f + j)^-s (the sum dominates, nothing cancels), and past
+#  q = max(40, 2 |s|) the asymptotic series at q itself is used (terms fall like (|s| / (2 pi q))^2k).
+#  The Euler-Maclaurin shift used before summed M = |s| + 20 terms of size M^-s and cancelled them
+#  against a small result: 1e-6 relative error at s = -4.9 and every digit lost below s = -5
+#  (zeta(-15) came back as -2.3e7, review of 02a38be, C1).
 .rmbl_hurwitz_any <- function(s, q) {
   out <- rep(NA_real_, length(s))
   hi <- is.finite(s) & s > 1
   if (any(hi)) out[hi] <- .rmbl_hurwitz(s[hi], q)
-  lo <- which(is.finite(s) & s < 1)
-  if (length(lo)) {
-    from_c <- .rmbl_hurwitz(s[lo], q)
-    out[lo] <- from_c
-    lo <- lo[is.na(from_c)]
-  }
-  b2k <- c(1 / 6, -1 / 30, 1 / 42, -1 / 30, 5 / 66, -691 / 2730, 7 / 6, -3617 / 510, 43867 / 798,
-           -174611 / 330, 854513 / 138, -236364091 / 2730)
-  for (i in lo) {
-    si <- s[[i]]
-    M <- max(20, ceiling(abs(si)) + 20)
-    x <- q + M
-    val <- sum((q + seq_len(M) - 1)^(-si)) + x^(1 - si) / (si - 1) + x^(-si) / 2
-    poch <- si
-    for (k in seq_along(b2k)) {
-      j <- 2 * k
-      if (k > 1) poch <- poch * (si + j - 3) * (si + j - 2)
-      val <- val + b2k[[k]] / factorial(j) * poch * x^(-si - j + 1)
-    }
-    out[[i]] <- val
-  }
+  for (i in which(is.finite(s) & s < 1)) out[[i]] <- .rmbl_hurwitz_below_one(s[[i]], q)
   out
+}
+
+.rmbl_hurwitz_below_one <- function(si, q) {
+  if (si == round(si) && si > -5) {
+    # zeta(-n, q) = -B_{n+1}(q) / (n + 1) exactly: a polynomial of degree at most five, with no
+    # cancellation through q + 1 (zeta(-4, 1e-8) = 3.3e-10 is a small difference of O(1) values)
+    m <- 1 - si
+    bk <- c(1, -1 / 2, 1 / 6, 0, -1 / 30, 0)[seq_len(m + 1)]
+    return(-sum(choose(m, 0:m) * bk * q^(m - 0:m)) / m)
+  }
+  if (q >= max(40, 2 * abs(si))) return(.rmbl_hurwitz_em(si, q, 0))
+  if (si <= -5) {
+    N <- ceiling(q) - 1; f <- q - N                    # 0 < f <= 1
+    return(.rmbl_hurwitz_fourier(si, f) - if (N > 0) sum((f + (seq_len(N) - 1))^(-si)) else 0)
+  }
+  if (q < 1) {                                         # step up into [1, 2)
+    n <- ceiling(1 - q); up <- q + (seq_len(n) - 1)
+    return(sum(up^(-si)) + .rmbl_hurwitz_hermite(si, q + n))
+  }
+  N <- floor(q) - 1; f <- q - N                        # 1 <= f < 2
+  .rmbl_hurwitz_hermite(si, f) - if (N > 0) sum((f + (seq_len(N) - 1))^(-si)) else 0
+}
+
+.rmbl_hurwitz_fourier <- function(si, f) {
+  t <- 1 - si
+  K <- min(1e5, max(50, ceiling((1e-18 * (t - 1))^(1 / (1 - t)))))  # tail sum_{k > K} k^-t below 1e-18
+  k <- seq_len(K)
+  series <- sum(cospi(2 * k * f - t / 2) / k^t)
+  if (series == 0) 0 else sign(series) * 2 * exp(lgamma(t) - t * log(2 * pi) + log(abs(series)))
+}
+
+.rmbl_hurwitz_hermite <- function(si, q) {
+  g <- function(t) sin(si * atan(t / q)) * (q * q + t * t)^(-si / 2) / expm1(2 * pi * t)
+  I <- stats::integrate(g, 0, Inf, rel.tol = 2e-14, abs.tol = 0, subdivisions = 500L)$value
+  q^(-si) / 2 + q^(1 - si) / (si - 1) + 2 * I
+}
+
+.rmbl_b2k <- c(1 / 6, -1 / 30, 1 / 42, -1 / 30, 5 / 66, -691 / 2730, 7 / 6, -3617 / 510, 43867 / 798,
+               -174611 / 330, 854513 / 138, -236364091 / 2730)
+
+# Euler-Maclaurin after M direct terms (M = 0: the asymptotic series at q itself)
+.rmbl_hurwitz_em <- function(si, q, M) {
+  x <- q + M
+  val <- if (M > 0) sum((q + (seq_len(M) - 1))^(-si)) else 0  # q + (n - 1): (q + n) - 1 lost a tiny q (C2)
+  val <- val + x^(1 - si) / (si - 1) + x^(-si) / 2
+  poch <- si
+  for (k in seq_along(.rmbl_b2k)) {
+    j <- 2 * k
+    if (k > 1) poch <- poch * (si + j - 3) * (si + j - 2)
+    val <- val + .rmbl_b2k[[k]] / factorial(j) * poch * x^(-si - j + 1)
+  }
+  val
 }
 
 .rmbl_hurwitz <- function(s, q) {

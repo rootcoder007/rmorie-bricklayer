@@ -17,7 +17,8 @@ verify_pollution(
   reference = NULL,
   baseline_rate = 500,
   baseline_rate_per = 1e+05,
-  population = 1e+06
+  population = 1e+06,
+  rare_outcome = FALSE
 )
 
 pollution_report_text(report)
@@ -59,6 +60,12 @@ the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 (the default), or 1 for a rate per person-year such as a crude death rate of 0.012.}
 
 \item{population}{Population at risk (persons).}
+
+\item{rare_outcome}{\code{TRUE} when the outcome really is rarer than one case per 100,000
+per year. Without it a rate that converts to less than that is an assumption failure,
+because it is also what a rate per person-year passed as per 100,000 looks like (0.008
+per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
+small). The check is on the converted rate, so it holds whatever \code{baseline_rate_per} is.}
 
 \item{report}{A result of \code{verify_pollution()}.}
 }

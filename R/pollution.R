@@ -623,7 +623,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 }
 
 .pollution_assumptions <- function(pollutant, exposure_mean, exposure_prevalence,
-                                   baseline_rate, population, reference, rate_unit_given = FALSE) {
+                                   baseline_rate, population, reference, rare_outcome = FALSE) {
   row <- function(name, ok, note) list(assumption = name, ok = isTRUE(ok), note = note)
   fin <- function(x) length(x) == 1L && is.finite(x)
   list(
@@ -641,18 +641,23 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
         sprintf("exposure_mean=%s", format(exposure_mean))),
     row("prevalence in [0,1]", fin(exposure_prevalence) && exposure_prevalence >= 0 && exposure_prevalence <= 1,
         sprintf("exposure_prevalence=%s", format(exposure_prevalence))),
-    # a rate below one per 100,000 is real for a rare outcome, and is also what a rate per
-    # person-year passed as per 100k looks like: with the unit given it is taken as stated,
-    # without it the caller is asked which it is (review of 52a8883, A6)
-    row(if (rate_unit_given) "baseline_rate finite and between 0 and 100,000 per 100k" else
-          "baseline_rate finite: zero, or between 1 and 100,000 per 100k (below 1 when its unit is given)",
+    # a rate below one per 100,000 (the rate as converted, whatever unit it came in) is real for
+    # a rare outcome, and is also what a rate per person-year passed as per 100k looks like. The
+    # caller says which with rare_outcome = TRUE: giving the unit is not enough, since a wrapper
+    # or do.call() passes it routinely (review of 52a8883, A6; of 02a38be, C4). Below 1e-6 per
+    # 100k (fewer than one case in the world's population over a lifetime) no rate is plausible.
+    row(if (isTRUE(rare_outcome)) "baseline_rate finite: zero, or between 1e-6 and 100,000 per 100k (a rare outcome)" else
+          "baseline_rate finite: zero, or between 1 and 100,000 per 100k",
         fin(baseline_rate) && baseline_rate >= 0 && baseline_rate <= 1e5 &&
-          (rate_unit_given || baseline_rate == 0 || baseline_rate >= 1),
-        if (fin(baseline_rate) && baseline_rate < 1 && baseline_rate > 0 && !rate_unit_given) {
+          (baseline_rate == 0 || baseline_rate >= 1 || (isTRUE(rare_outcome) && baseline_rate >= 1e-6)),
+        if (fin(baseline_rate) && baseline_rate < 1e-6 && baseline_rate > 0) {
+          sprintf(paste("baseline_rate=%s per 100k is below one case per 100 billion person-years: not a",
+                        "usable rate (check baseline_rate_per)"), format(baseline_rate))
+        } else if (fin(baseline_rate) && baseline_rate < 1 && baseline_rate > 0 && !isTRUE(rare_outcome)) {
           sprintf(paste("baseline_rate=%s per 100k is below one case per 100,000. If it is a rate per person-year",
-                        "(0.012 is 1,200 per 100k), pass baseline_rate_per = 1; if it really is %s per 100,000",
-                        "(a rare outcome), say so with baseline_rate_per = 1e5"),
-                  format(baseline_rate), format(baseline_rate))
+                        "(0.012 is 1,200 per 100k), pass baseline_rate_per = 1; if the outcome really is this",
+                        "rare, say so with rare_outcome = TRUE"),
+                  format(baseline_rate))
         } else if (fin(baseline_rate) && baseline_rate == 0) {
           "baseline_rate=0: a measured zero rate, so no cases"
         } else {
@@ -706,6 +711,11 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).
 #' @param baseline_rate_per The denominator \code{baseline_rate} is quoted per: 100,000
 #'   (the default), or 1 for a rate per person-year such as a crude death rate of 0.012.
+#' @param rare_outcome \code{TRUE} when the outcome really is rarer than one case per 100,000
+#'   per year. Without it a rate that converts to less than that is an assumption failure,
+#'   because it is also what a rate per person-year passed as per 100,000 looks like (0.008
+#'   per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
+#'   small). The check is on the converted rate, so it holds whatever \code{baseline_rate_per} is.
 #' @param baseline_rate Baseline outcome rate per 100,000 per year (unlike
 #'   \code{\link{pollution_burden}}, which takes a rate per person-year).
 #' @param population Population at risk (persons).
@@ -731,8 +741,8 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region = NULL,
                              years = NULL, demo = FALSE, exposure_csv = NULL,
                              exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
-                             baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6) {
-  rate_unit_given <- !missing(baseline_rate_per)
+                             baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6,
+                             rare_outcome = FALSE) {
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
   equity_df <- NULL
@@ -762,6 +772,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   # the two population inputs have defaults, not an "absent" value: NULL is a wrong call
   if (is.null(population)) return(fail("population must be a single number (persons at risk), not NULL"))
   if (is.null(baseline_rate)) return(fail("baseline_rate must be a single number, not NULL"))
+  if (!is.logical(rare_outcome) || length(rare_outcome) != 1L || is.na(rare_outcome)) {
+    return(fail("rare_outcome must be TRUE or FALSE"))
+  }
   if (!is.numeric(baseline_rate_per) || length(baseline_rate_per) != 1L || !is.finite(baseline_rate_per) ||
         baseline_rate_per <= 0) {
     return(fail(paste("baseline_rate_per must be a single positive number",
@@ -810,11 +823,16 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     df <- tryCatch(.pollution_read_csv(exposure_csv), error = function(e) e)
     if (inherits(df, "error")) return(fail(sprintf("%s: %s", exposure_csv, conditionMessage(df))))
     if (!nrow(df)) return(fail(empty))
+    raw_exposure <- NULL
     if (!"exposure" %in% names(df) && "value" %in% names(df)) {
       # a NAPS pull: hourly `value` in `unit`, converted row by row; NO2 is reported in ppb
       if (!"unit" %in% names(df)) {
         return(fail("a 'value' column needs a 'unit' column (NAPS pulls carry one; NO2 is in ppb)"))
       }
+      # the text as read goes to the shared check below: converted first, "<2" became NA and was
+      # counted as a row with no measurement (ok, prevalence 1.0 instead of 0.4; review of
+      # 02a38be, C5), where the same column named exposure is refused
+      raw_exposure <- trimws(as.character(df$value))
       vals <- suppressWarnings(as.numeric(df$value))
       unit <- tolower(trimws(as.character(df$unit)))
       ugm3 <- c("ug/m3", "\u00b5g/m3", "\u00b5g/m\u00b3", "ug/m\u00b3")
@@ -833,7 +851,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
     if (!"exposure" %in% names(df)) {
       return(fail("CSV missing 'exposure' column (ug/m3); a NAPS pull's 'value' column also works."))
     }
-    raw_exposure <- trimws(as.character(df$exposure))
+    if (is.null(raw_exposure)) raw_exposure <- trimws(as.character(df$exposure))
     df$exposure <- suppressWarnings(as.numeric(df$exposure))
     # an empty cell or a missing-value token is a row without a measurement: dropped, and the
     # report says how many. Text that is not a number ("<2", a detection-limit flag) is a
@@ -885,7 +903,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   baseline_rate <- as.numeric(baseline_rate) * 1e5 / baseline_rate_per   # per 100,000 from here on
   population <- as.numeric(population)
   assumptions <- .pollution_assumptions(pollutant, exposure_mean, exposure_prevalence,
-                                        baseline_rate, population, reference, rate_unit_given)
+                                        baseline_rate, population, reference, rare_outcome)
   report <- list(
     command = "verify-pollution", pollutant = pollutant, outcome = outcome,
     region = region, years = years, data_source = data_source,
@@ -1000,7 +1018,7 @@ pollution_report_text <- function(report) {
 }
 
 # The exposure CSV, read whole: a gzip, bzip2 or xz file is decompressed (as read.csv did
-# before 0.5.12, review of 52a8883, A4), a UTF-16 file is decoded with or without its byte-order
+# before 0.5.12, review of 52a8883, A4) and checked to be complete (.rmbl_decompress_checked), a UTF-16 file is decoded with or without its byte-order
 # mark, a UTF-8 BOM is dropped, a file that is not UTF-8 is read as Latin-1 (and said), other NUL
 # bytes are refused. A parse that reports a problem (an unbalanced quote that swallowed the rest
 # of the file, A5) stops with the parser's own message instead of returning the rows before it.
@@ -1010,16 +1028,7 @@ pollution_report_text <- function(report) {
     (length(head) >= 3L && identical(head[1:3], charToRaw("BZh"))) ||
     (length(head) >= 6L && identical(head[1:6], as.raw(c(0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00)))))
   if (compressed) {
-    con <- gzfile(path, "rb")   # gzfile() reads gzip, bzip2 and xz alike
-    chunks <- list()
-    repeat {
-      b <- readBin(con, "raw", 4194304L)
-      if (!length(b)) break
-      chunks[[length(chunks) + 1L]] <- b
-    }
-    close(con)
-    raw <- do.call(c, chunks)
-    rm(chunks)
+    raw <- .rmbl_decompress_checked(path, head)
   } else {
     raw <- readBin(path, "raw", file.size(path))
   }
@@ -1088,4 +1097,59 @@ pollution_report_text <- function(report) {
                  problems[[1L]]), call. = FALSE)
   }
   df
+}
+
+# A compressed CSV, decompressed whole and checked to be complete. R's gzfile() returns whatever
+# a truncated gzip or bzip2 file decodes to, with no error and no warning, so half a file was read
+# as a whole one (review of 02a38be, C3). gzip goes through zlib in C (every member's CRC-32 and
+# length checked); a bzip2 file must end with its end-of-stream marker; an xz decoder warning
+# ("lzma decoding result 10" for a cut file) is an error. The output is capped while it is read
+# (option rmoriebricklayer.max_csv_bytes, 1 GiB by default): a few megabytes of gzip no longer
+# expand to gigabytes before anything is refused.
+.rmbl_decompress_checked <- function(path, head = readBin(path, "raw", 6L)) {
+  lim <- getOption("rmoriebricklayer.max_csv_bytes", 2^30)
+  if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0)
+    stop("option rmoriebricklayer.max_csv_bytes must be a single non-negative number", call. = FALSE)
+  lim <- min(lim, 2^31 - 2)   # rawToChar() takes at most 2^31 - 1 bytes
+  if (length(head) >= 2L && identical(head[1:2], as.raw(c(0x1f, 0x8b)))) {
+    return(.Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), lim))
+  }
+  bz <- length(head) >= 3L && identical(head[1:3], charToRaw("BZh"))
+  if (bz && !.rmbl_bzip2_complete(path))
+    stop("is truncated: the bzip2 stream has no end-of-stream marker", call. = FALSE)
+  con <- gzfile(path, "rb")   # bzip2 and xz
+  on.exit(close(con))
+  chunks <- list()
+  total <- 0
+  withCallingHandlers({
+    repeat {
+      b <- readBin(con, "raw", 4194304L)
+      if (!length(b)) break
+      total <- total + length(b)
+      if (total > lim) stop("decompresses to more than the size limit", call. = FALSE)
+      chunks[[length(chunks) + 1L]] <- b
+    }
+  }, warning = function(w) {
+    stop(sprintf("is truncated or damaged (the decoder said: %s)", conditionMessage(w)), call. = FALSE)
+  })
+  do.call(c, chunks)
+}
+
+# A bzip2 stream ends with the 48-bit end-of-stream magic 0x177245385090, a 32-bit CRC and zero
+# padding to the next byte; none of it is byte-aligned. A file cut anywhere before its end lacks
+# it in its last 11 bytes.
+.rmbl_bzip2_complete <- function(path) {
+  n <- file.size(path)
+  if (is.na(n) || n < 14) return(FALSE)
+  con <- file(path, "rb")
+  on.exit(close(con))
+  seek(con, n - 11)
+  tail <- readBin(con, "raw", 11L)
+  bits <- unlist(lapply(tail, function(b) rev(as.integer(rawToBits(b)))))
+
+  magic <- unlist(lapply(as.raw(c(0x17, 0x72, 0x45, 0x38, 0x50, 0x90)), function(b) rev(as.integer(rawToBits(b)))))
+  for (p in 1:8) {   # magic at bit p (0-based), then 32 CRC bits, then 0-7 zero padding bits
+    if (identical(bits[(p + 1):(p + 48)], magic) && all(bits[seq_len(88) > p + 80] == 0L)) return(TRUE)
+  }
+  FALSE
 }
