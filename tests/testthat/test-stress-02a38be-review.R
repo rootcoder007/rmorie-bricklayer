@@ -311,7 +311,10 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   for (args in c("login --token", "config set own.key")) {
     cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s /dev/null > /dev/null 2>&1",
                    shQuote(paste("sh", shQuote(launcher), args)))
-    st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":")),
+    # R CMD check sets R_TESTS=startup.Rs for the test run; the launcher's Rscript inherited it,
+    # failed to source it and exited 1 before the prompt (every Linux CI leg, fc5ccfc)
+    st <- withr::with_envvar(c(HOME = h, R_USER_CONFIG_DIR = h, R_LIBS = paste(.libPaths(), collapse = ":"),
+                               R_TESTS = NA),
                              system(cmd))
     expect_identical(as.integer(st), 130L, info = args)
   }
@@ -385,7 +388,8 @@ test_that("M2: validation needs a schema, a misspelt field is fatal, and expecte
 })
 
 test_that("LOW: default-ignorable characters are removed from the data list", {
-  hidden <- "a­b͏cᅟdㅤe᠎f﻿g￹h\U000e0041i"
+  # written with escapes: in a C locale R reads raw non-ASCII source text as "<U+00AD>"
+  hidden <- "a\u00adb\u034fc\u115fd\u3164e\u180ef\ufeffg\ufff9h\U000e0041i"
   tabs <- rmoriebricklayer:::.bl_data_tables_df("db/t", hidden, 1L, "src")
   out <- paste(rmoriebricklayer:::.bl_format_data_tables(tabs, width = 200), collapse = "\n")
   expect_match(out, "abcdefghi", fixed = TRUE)
@@ -410,7 +414,8 @@ test_that("B5: a credentials file with a NUL, in Latin-1, or of megabytes is ref
   expect_error(rmoriebricklayer:::.bl_read_text(f), "not UTF-8 text")
   writeBin(charToRaw(paste0('{"x": "', strrep("y", 1100000), '"}')), f)
   expect_error(rmoriebricklayer:::.bl_read_text(f), "too large to be a credentials file")
-  writeLines('{"hosted_key": "k"}', f)
+  # the exact bytes: writeLines() writes CRLF on Windows
+  writeBin(charToRaw('{"hosted_key": "k"}\n'), f)
   expect_identical(rmoriebricklayer:::.bl_read_text(f), '{"hosted_key": "k"}\n')
 })
 

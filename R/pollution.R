@@ -718,7 +718,8 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
 #'   per year. Without it a rate that converts to less than that is an assumption failure,
 #'   because it is also what a rate per person-year passed as per 100,000 looks like (0.008
 #'   per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
-#'   small). The check is on the converted rate, so it holds whatever \code{baseline_rate_per} is.
+#'   small). The check is on the converted rate, so it holds whatever
+#'   \code{baseline_rate_per} is.
 #' @param baseline_rate Baseline outcome rate per 100,000 per year (unlike
 #'   \code{\link{pollution_burden}}, which takes a rate per person-year).
 #' @param population Population at risk (persons).

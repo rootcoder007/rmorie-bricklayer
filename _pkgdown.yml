@@ -62,6 +62,7 @@ articles:
       - stock-and-flow
       - falsification-and-power
       - air-pollution-and-health
+      - courts-and-crime
   - title: Data handling
     contents:
       - validation-rules-and-synthetic-data
@@ -426,6 +427,21 @@ reference:
       - exposure_concentration_index
       - verify_pollution
       - plume_field
+  - title: Courts and police-reported crime
+    desc: >
+      Case flow and clearance through a court, time to disposition from banded
+      shares, the mix of outcomes, the change in a clearance rate split into rate
+      and case-mix effects (Simpson's paradox), where incidents cluster, and
+      near-repeat space-time clustering; with real Ontario Court of Justice and
+      Toronto Police Service data.
+    contents:
+      - case_flow
+      - life_table
+      - disposition_mix
+      - clearance_decomposition
+      - crime_density
+      - knox_test
+      - justice-data
   - title: The footprint of the computation
     desc: >
       Electricity and CO2-equivalent of an expression, measured from RAPL energy

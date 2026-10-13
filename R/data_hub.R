@@ -307,18 +307,28 @@ bricklayer_data_tables <- function(refresh = FALSE) {
   # the manifest is fetched text: control characters (an ANSI escape, a carriage return)
   # must not reach the terminal
   printable <- function(x) {
-    x <- gsub("[[:cntrl:]]", "", gsub("\033\\[[0-9;?]*[ -/]*[@-~]", "", x))
-    # the C1 controls (U+0080-U+009F, the 8-bit CSI among them) and the bidirectional and
-    # zero-width format characters (U+200B-U+200F, U+202A-U+202E, U+2066-U+2069), removed as
-    # UTF-8 bytes so a C locale cannot let them through
-    x <- enc2utf8(x)
-    # with the rest of Unicode's default-ignorable code points, which print as nothing and hide
-    # text in a table name (U+00AD, U+034F, U+115F, U+3164, U+180E, U+FEFF, U+FFF9-FFFB, the tag
-    # characters U+E0000-E007F; review of 02a38be)
-    gsub(paste0("(*UTF)[\\x{80}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}\\x{17b4}\\x{17b5}",
-                "\\x{180b}-\\x{180f}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}\\x{2060}-\\x{206f}\\x{3164}",
-                "\\x{fe00}-\\x{fe0f}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}\\x{e0000}-\\x{e0fff}]"), "", x,
-         perl = TRUE)
+    # Text first marked as the UTF-8 it is (the manifest is UTF-8, but in a C locale the parser
+    # returns it unmarked) or converted, an invalid byte becoming "?": [[:cntrl:]] on unmarked
+    # text in a C locale matched the bytes 0x80-0x9F inside every multi-byte character and cut
+    # names into fragments (the C-locale CI leg, 02a38be review). Every removal below then works
+    # on whole characters.
+    x <- as.character(x)
+    u <- !is.na(x) & Encoding(x) == "unknown" & validUTF8(x)
+    v <- x[u]
+    Encoding(v) <- "UTF-8"
+    x[u] <- v
+    o <- !is.na(x) & !u & Encoding(x) != "UTF-8"
+    x[o] <- iconv(x[o], "", "UTF-8", sub = "?")
+    # ANSI escape sequences, then the C0 and C1 controls and DEL, the bidirectional and
+    # zero-width format characters (U+200B-U+200F, U+202A-U+202E, U+2066-U+2069), and the rest of
+    # Unicode's default-ignorable code points, which print as nothing and hide text in a table
+    # name (U+00AD, U+034F, U+115F, U+3164, U+180E, U+FEFF, U+FFF9-FFFB, the tag characters
+    # U+E0000-E007F; review of 02a38be)
+    x <- gsub("(*UTF)\033\\[[0-9;?]*[ -/]*[@-~]", "", x, perl = TRUE)
+    gsub(paste0("(*UTF)[\\x{00}-\\x{1f}\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
+                "\\x{17b4}\\x{17b5}\\x{180b}-\\x{180f}\\x{200b}-\\x{200f}\\x{2028}-\\x{202e}",
+                "\\x{2060}-\\x{206f}\\x{3164}\\x{fe00}-\\x{fe0f}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}",
+                "\\x{e0000}-\\x{e0fff}]"), "", x, perl = TRUE)
   }
   tables$key <- printable(tables$key)
   name <- gsub("[[:space:]]+", " ", trimws(printable(tables$name)))

@@ -112,9 +112,11 @@
 #'   \code{\link{disposition_mix}}, \code{\link{clearance_decomposition}},
 #'   \code{\link{crime_density}}, \code{\link{knox_test}}.
 #' @examples
-#' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv", package = "rmoriebricklayer"))
+#' f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
+#'                           package = "rmoriebricklayer"))
 #' head(f)
-#' c <- read.csv(system.file("extdata", "ocj_courts.csv", package = "rmoriebricklayer"))
+#' c <- read.csv(system.file("extdata", "ocj_courts.csv",
+#'                           package = "rmoriebricklayer"))
 #' tapply(c$disposed, c$year, sum)
 NULL
 
@@ -960,6 +962,8 @@ print.rmbl_density <- function(x, ...) {
 #' @rdname plot-methods
 #' @param points For \code{rmbl_density}, whether to draw the incidents
 #'   over the surface.
+#' @usage \method{plot}{rmbl_density}(x, ..., points = TRUE, main = NULL,
+#'   col = NULL, palette = NULL)
 #' @export
 plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, palette = NULL) {
   ll <- x$coords == "lonlat"
@@ -1465,6 +1469,8 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 }
 
 #' @rdname plot-methods
+#' @usage \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
+#'   main = NULL, col = NULL, palette = NULL)
 #' @export
 plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, main = NULL, col = NULL, palette = NULL) {
   cols <- .bl_cols(2, col, palette)
