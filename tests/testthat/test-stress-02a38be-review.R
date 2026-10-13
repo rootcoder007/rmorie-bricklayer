@@ -315,7 +315,12 @@ test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   for (args in c("login --token", "config set own.key")) {
     # the terminal's transcript is kept, so a failure shows what the child printed
     ty <- withr::local_tempfile(fileext = ".typescript")
-    cmd <- sprintf("(sleep 5; printf '\\003') | script -qec %s %s > /dev/null 2>&1",
+    # ^C goes in once the prompt is on the terminal (both prompts end in key: ), not after a fixed
+    # sleep: on a loaded runner R was still starting at 5 s, and an interrupt during startup exits 1
+    # (C-locale leg, 01200ae and 2c1f5c1: the transcript was empty)
+    wait <- sprintf("i=0; while [ $i -lt 240 ] && ! grep -q 'key: ' %s 2>/dev/null; do sleep 0.5; i=$((i+1)); done; sleep 1",
+                    shQuote(ty))
+    cmd <- sprintf("(%s; printf '\\003') | script -qfec %s %s > /dev/null 2>&1", wait,
                    shQuote(paste("sh", shQuote(launcher), args)), shQuote(ty))
     # R CMD check sets R_TESTS=startup.Rs for the test run, which the launcher's Rscript inherited
     # and failed to source; and --as-cran puts a decoy `Rscript` first on PATH that refuses to run
