@@ -19,7 +19,9 @@ bricklayer_plot_options(...)
 sequential and diverging ones interpolate.}
 
 \item{...}{For \code{bricklayer_plot_options()}, named options to set
-(\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg});
+(\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg},
+\code{panel}: the plot region's fill behind white grid lines, \code{NA}
+for none);
 none to read the current values.}
 }
 \value{

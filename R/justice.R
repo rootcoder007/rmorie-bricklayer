@@ -314,7 +314,8 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
       .jx_fill_between(px, x$disposed, x$received, grDevices::adjustcolor(cols[1L], 0.25),
                        grDevices::adjustcolor(cols[2L], 0.25))
       graphics::lines(px, x$received, col = "#333333", lwd = 2, lty = 2)
-      graphics::lines(px, x$disposed, col = cols[1L], lwd = 2)
+      graphics::lines(px, x$disposed, col = grDevices::adjustcolor(cols[1L], 0.25), lwd = 6)
+      graphics::lines(px, x$disposed, col = cols[1L], lwd = 2.2)
       # a key over a panel smaller than about 2.6 by 1.8 inches hides the lines it explains; the
       # title says which line is which instead
       if (all(graphics::par("pin") >= c(2.6, 1.8))) {
@@ -340,14 +341,14 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
       }
       graphics::abline(h = 1, lty = 2, col = "#666666")
       graphics::lines(px, x$clearance, col = cols[1L], lwd = 1.5)
-      graphics::points(px, x$clearance, pch = 19, cex = 0.6, col = cols[1L])
+      graphics::points(px, x$clearance, pch = 21, bg = cols[1L], col = "white", lwd = 0.8, cex = 0.9)
       if (any(is.finite(x$rolling_clearance))) graphics::lines(px, x$rolling_clearance, col = cols[2L], lwd = 2.5)
     }
     graphics::par(op)
   }
   if (length(what) > 1L) {
     .bl_panels_end()
-    if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2)
+    if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2, col = "#1F2430")
   }
   invisible(as.data.frame(x))
 }
@@ -546,8 +547,11 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
   }
   kk <- length(tx)
   closed <- if (any(open)) seq_len(kk - 1L) else seq_len(kk)
+  graphics::polygon(c(tx[closed][1L], tx[closed], tx[closed][sum(closed)]), c(0, sv[closed], 0),
+                    col = grDevices::adjustcolor(cols[1L], 0.16), border = NA)
+  graphics::lines(tx[closed], sv[closed], col = grDevices::adjustcolor(cols[1L], 0.25), lwd = 7)
   graphics::lines(tx[closed], sv[closed], col = cols[1L], lwd = 2.5)
-  graphics::points(tx[closed], sv[closed], pch = 19, col = cols[1L])
+  graphics::points(tx[closed], sv[closed], pch = 21, bg = cols[1L], col = "white", lwd = 1.5, cex = 1.5)
   # an open band has no end: its fall to zero is drawn dashed, over a nominal width
   if (any(open)) graphics::lines(tx[(kk - 1L):kk], sv[(kk - 1L):kk], col = cols[1L], lwd = 2, lty = 2)
   graphics::abline(h = 0.5, lty = 3, col = "#666666")
@@ -716,7 +720,8 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
   cols <- .bl_cols(k, col, palette)
   labs <- gsub("_", " ", x$outcome)
   o <- .bl_plot_opts()
-  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg)
+  op <- graphics::par(las = o$las, cex = o$cex, bg = o$bg,
+                      bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0), col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
   # the outcome labels are drawn at 0.75 of the text size (text() scales by par("cex") as
   # strwidth() does), so the right margin is their measured width in lines plus a gap
@@ -1510,13 +1515,15 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
     for (w in what) draw[[w]](x, cols, NULL, ...)
     keys <- .bl_panels_end()
     if (!"effects" %in% what) {
-      graphics::mtext(line, side = 1, outer = TRUE, line = if (length(keys)) 1.2 else 0.2, cex = 0.8, adj = 0)
+      graphics::mtext(line, side = 1, outer = TRUE, line = if (length(keys)) 1.2 else 0.2,
+                      cex = 0.8, adj = 0, col = "#3D4350")
     }
-    if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2)
+    if (!is.null(main)) graphics::mtext(main, side = 3, outer = TRUE, line = -1.2, font = 2, col = "#1F2430")
   } else {
     if (what != "effects") graphics::par(oma = c(1.4, 0, 0, 0))
     draw[[what]](x, cols, main, ...)
-    if (what != "effects") graphics::mtext(line, side = 1, outer = TRUE, line = 0.2, cex = 0.8, adj = 0)
+    if (what != "effects") graphics::mtext(line, side = 1, outer = TRUE, line = 0.2,
+                                           cex = 0.8, adj = 0, col = "#3D4350")
   }
   invisible(x$groups)
 }
@@ -1601,7 +1608,8 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   # the panel's text size first: a panel grid lowers par("cex"), and labels measured at the
   # lowered size and drawn at this one ran off the device
   o0 <- .bl_plot_opts()
-  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg)
+  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
+                      col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
   fit <- .jx_row_labels(labs, k + 2.6)
   graphics::par(mar = .bl_safe_mar(c(4.2, fit$mar * fit$cex + 0.8, 3, 1), o0$cex))
@@ -1615,12 +1623,13 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   title <- sprintf("Rates, %s to %s", a, b)
   if (isTRUE(x$other > 0L)) title <- sprintf("%s, top %d", title, k - 1L)
   .bl_title(.bl_main(main, title))
-  graphics::abline(h = k + 0.8, col = "#BBBBBB")
+  .bl_grid(NULL, side = "x")
+  graphics::abline(h = k + 0.8, col = "#9AA0AA", lwd = 1.5)
   graphics::abline(v = 1, lty = 3, col = "#888888")
   dir <- ifelse(rb >= ra, cols[1L], cols[2L])
   .jx_arrows(ra, y, rb, dir, c(rep(2, k), 3.5))
   graphics::points(ra, y, pch = 21, bg = "white", col = "#555555", cex = 1.1)
-  graphics::points(rb, y, pch = 19, col = dir, cex = 1.1)
+  graphics::points(rb, y, pch = 21, bg = dir, col = "white", lwd = 1.2, cex = 1.5)
   invisible(NULL)
 }
 
@@ -1638,7 +1647,8 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
   centre <- (o$rate_a + o$rate_b) / 2
   colr <- ifelse((g$rate_a + g$rate_b) / 2 >= centre, cols[1L], cols[2L])
   o0 <- .bl_plot_opts()
-  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg)
+  op <- graphics::par(las = o0$las, cex = o0$cex, bg = o0$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
+                      col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430")
   on.exit(graphics::par(op), add = TRUE)
   fit <- .jx_row_labels(as.character(g$group), k + 1)
   graphics::par(mar = .bl_safe_mar(c(4.2, fit$mar * fit$cex + 0.8, 3, 1), o0$cex))
@@ -1649,10 +1659,10 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
                  xpd = NA, cex = fit$cex)
   .bl_xlab("Share of workload")
   .bl_title(.bl_main(main, "Where the work moved"))
-  .bl_grid(NULL)
+  .bl_grid(NULL, side = "x")
   .jx_arrows(wa, y, wb, colr, rep(2, k))
   graphics::points(wa, y, pch = 21, bg = "white", col = "#555555", cex = 1.1)
-  graphics::points(wb, y, pch = 19, col = colr, cex = 1.1)
+  graphics::points(wb, y, pch = 21, bg = colr, col = "white", lwd = 1.2, cex = 1.5)
   # the colour key under the title, where it covers no point, sized to the panel
   key <- "colour: blue clears above average, orange below"
   kc <- min(0.75, 0.75 * graphics::par("pin")[1L] / max(.bl_strwidth(key, cex = 0.75), 1e-6))

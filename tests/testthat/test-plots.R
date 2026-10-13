@@ -99,7 +99,13 @@ test_that("band sensitivity, drift calibration and drift", {
   set.seed(1)
   dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
   cal <- drift_calibrate(dd, n = 3L)
-  expect_equal(with_dev(plot(cal))$column, cal$columns$column)
+  pc <- with_dev(plot(cal))
+  expect_equal(pc$column, c(cal$columns$column, "any column"))
+  expect_equal(pc$false_alarm_rate, c(cal$columns$false_alarm_rate, cal$any_flag))
+  # the exact interval over the splits: 0 of 3 still allows up to 1 - 0.025^(1/3)
+  z <- which(pc$false_alarm_rate == 0)[1]
+  expect_equal(pc$upper[z], 1 - 0.025^(1 / 3))
+  expect_true(all(pc$lower <= pc$false_alarm_rate & pc$false_alarm_rate <= pc$upper))
   dr <- capsule_drift(dd, transform(dd, a = a + 3))
   pd <- with_dev(plot(dr))
   expect_equal(pd$column, dr$columns$column)
@@ -348,15 +354,17 @@ test_that("a row note fits its panel, falling back to the part before the colon"
   expect_gte(said[[2]], 0.6)
 })
 
-test_that("a drift calibration with no false alarms still draws its zeros", {
+test_that("a drift calibration with no false alarms still draws each rate and its interval", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   cal <- structure(list(columns = data.frame(column = c("a", "b"), false_alarm_rate = c(0, 0)),
-                        alpha = 0.01, n = 3L), class = "rmbl_drift_calibration")
-  said <- NULL
-  local_mocked_bindings(text = function(x, y, labels, ...) said <<- labels, .package = "graphics")
-  plot(cal)
-  expect_identical(said, c("0", "0"))
+                        any_flag = 0, alpha = 0.01, n = 3L), class = "rmbl_drift_calibration")
+  seg <- NULL
+  local_mocked_bindings(segments = function(x0, y0, x1, ...) seg <<- cbind(x0, x1), .package = "graphics")
+  d <- plot(cal)
+  expect_equal(nrow(seg), 3L)
+  expect_true(all(seg[, 2] > 0.7))
+  expect_identical(d$column, c("a", "b", "any column"))
 })
 
 test_that("a label that fits is never cut, however long", {
@@ -378,4 +386,94 @@ test_that("a panel key that wraps stays inside the outer margin", {
   rmoriebricklayer:::.bl_panel_key(c("A: Concentration-response, NO2 (all_cause_mortality)",
                                      "B: NO2: PAF 2.7%, 137 attributable", "C: Concentration curve (index -0.065)"))
   expect_true(all(at <= 2.4))
+})
+
+test_that("the panel is the plot region filled, crossed by white major and minor lines", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  graphics::plot(0:10, 0:10, type = "n")
+  r <- NULL
+  hs <- list()
+  vs <- list()
+  local_mocked_bindings(rect = function(...) r <<- list(...),
+                        abline = function(...) {
+                          a <- list(...)
+                          if (!is.null(a$h)) hs[[length(hs) + 1L]] <<- list(at = a$h, col = a$col, lwd = a$lwd)
+                          if (!is.null(a$v)) vs[[length(vs) + 1L]] <<- list(at = a$v, col = a$col, lwd = a$lwd)
+                        }, .package = "graphics")
+  rmoriebricklayer:::.bl_grid(NULL)
+  expect_identical(r$col, "#EEF1F6")
+  expect_equal(hs[[2]]$at, graphics::axTicks(2))
+  expect_equal(hs[[2]]$lwd, 1.4)
+  expect_equal(hs[[1]]$at, graphics::axTicks(2)[-1] - diff(graphics::axTicks(2)) / 2)
+  expect_identical(hs[[2]]$col, "white")
+  # across the other way for side = "x"
+  hs <- list()
+  vs <- list()
+  rmoriebricklayer:::.bl_grid(NULL, side = "x")
+  expect_equal(vs[[2]]$at, graphics::axTicks(1))
+  expect_equal(hs[[1]]$lwd, 0.6)
+  # no panel colour: grey lines on white; grid off: nothing but the fill
+  withr::local_options(rmoriebricklayer.plot = list(panel = NA))
+  r <- NULL
+  hs <- list()
+  rmoriebricklayer:::.bl_grid(NULL)
+  expect_null(r)
+  expect_identical(hs[[1]]$col, "#DDDDDD")
+  hs <- list()
+  expect_false(rmoriebricklayer:::.bl_grid(FALSE))
+  expect_length(hs, 0L)
+})
+
+test_that("bars are drawn on the panel, with room for and a label at each end", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  said <- NULL
+  local_mocked_bindings(text = function(x, y, labels, pos = NULL, ...) said <<- list(labels, pos),
+                        .package = "graphics")
+  m <- rmoriebricklayer:::.bl_barplot(c(3, -2, 5), names.arg = c("a", "b", "c"), col = "red", border = NA)
+  expect_length(m, 3L)
+  expect_identical(said[[1]], c("3", "-2", "5"))
+  expect_identical(said[[2]], c(3, 1, 3))
+  # the axis runs past the longest bar and below the most negative one
+  usr <- graphics::par("usr")
+  expect_gt(usr[4], 5.5)
+  expect_lt(usr[3], -2.5)
+  # the panel was drawn once: the method's own .bl_grid() call after the bars is skipped
+  expect_true(rmoriebricklayer:::.bl_grid(NULL))
+  expect_false(isTRUE(rmoriebricklayer:::.bl_state$panel_done))
+  # horizontal, labelled to the side; a limit the caller set is kept
+  said <- NULL
+  rmoriebricklayer:::.bl_barplot(c(1, -1), horiz = TRUE, xlim = c(-4, 4), col = "red")
+  expect_identical(said[[2]], c(4, 2))
+  expect_equal(graphics::par("usr")[1:2], c(-4, 4))
+  # too many bars to label
+  said <- NULL
+  rmoriebricklayer:::.bl_barplot(1:30, col = "red")
+  expect_null(said)
+  rmoriebricklayer:::.bl_barplot(1:3, col = "red", labels = FALSE)
+  expect_null(said)
+})
+
+test_that("a line has its fill, halo and labelled end; a dense one drops its points", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  graphics::plot(c(0, 50), c(0, 10), type = "n")
+  pts <- 0L
+  poly <- 0L
+  said <- NULL
+  local_mocked_bindings(points = function(x, ...) pts <<- pts + length(x),
+                        polygon = function(...) poly <<- poly + 1L,
+                        text = function(x, y, labels, ...) said <<- labels, .package = "graphics")
+  rmoriebricklayer:::.bl_line(1:3, c(2, 4, 6), "red")
+  expect_equal(pts, 4L)  # three points and the emphasised end
+  expect_equal(poly, 1L)
+  expect_identical(said, "6")
+  pts <- 0L
+  rmoriebricklayer:::.bl_line(1:40, seq(0, 1, length.out = 40), "red", fill = FALSE, label = FALSE)
+  expect_equal(pts, 1L)  # the end only
+  pts <- 0L
+  rmoriebricklayer:::.bl_line(1:3, c(1, 2, 3), "red", points = FALSE, label = FALSE)
+  expect_equal(pts, 0L)
+  expect_null(rmoriebricklayer:::.bl_line(NA_real_, NA_real_, "red"))
 })

@@ -315,7 +315,7 @@ plot(region_coverage(c("a", "b", "c"), c(100, 200, 300), c(1L, 0L, 2L)))
 set.seed(1)
 dd <- data.frame(a = rnorm(400), b = sample(letters[1:3], 400, TRUE))
 plot(capsule_drift(dd, transform(dd, a = a + 3)))
-plot(drift_calibrate(dd, n = 3L))
+plot(drift_calibrate(dd, n = 20L))
 # describing a table
 plot(frequency_table(data.frame(g = c("a", "b", "b", "c", "c", "c")), "g"))
 plot(missingness_pattern(data.frame(a = c(1, NA, 3, NA), b = c(NA, NA, 1, 2))))
