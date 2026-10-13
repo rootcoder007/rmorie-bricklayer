@@ -93,11 +93,13 @@ Suggests:
     digest,
     jsonlite,
     knitr,
+    MASS,
     openssl,
     pkgdown,
     rmarkdown,
     sf,
     stringi,
+    survival,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
