@@ -57,6 +57,7 @@ articles:
     contents:
       - trends-and-change
       - small-area-rates
+      - survey-estimation
       - hawkes-processes
       - banded-tables-and-concentration
       - stock-and-flow
@@ -441,6 +442,7 @@ reference:
       - disposition_mix
       - clearance_decomposition
       - crime_density
+      - hotspot_persistence
       - knox_test
       - justice-data
   - title: Complex survey estimation

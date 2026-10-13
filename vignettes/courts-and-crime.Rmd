@@ -152,6 +152,20 @@ kn
 plot(kn)
 ```
 
+## Do the hot spots last?
+
+A hot spot that stays put is a place problem; one that moves is not. `hotspot_persistence()`
+counts the incidents in grid cells each period, reports the share of places that holds half of
+them, which cells are hot (the busiest 5% of the cells with any incident), and how much each
+period's hot spots overlap the previous period's:
+
+```{r hotspots, fig.width = 9, fig.height = 4}
+h <- hotspot_persistence(b$lon, b$lat, quarters(as.Date(b$occ_date)), cell = 0.3)
+h
+plot(h)
+```
+
+
 Pairs of break-ins within 100 metres and a week of each other occur
 `r sprintf("%.2f", kn$table$ratio[1])` times as often as chance would give.
 

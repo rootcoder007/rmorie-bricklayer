@@ -1,0 +1,121 @@
+---
+title: "Complex survey estimation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Complex survey estimation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 4, dpi = 72)
+library(rmoriebricklayer)
+```
+
+A survey respondent stands for many people, and not the same number each: the final weight says
+how many. The weights fix the estimate; the design (how the sample was drawn) fixes its
+uncertainty, and ignoring it usually understates the interval. `survey_design()` records the
+design, `survey_estimate()` gives means, totals, proportions and ratios with design-based
+standard errors, and `survey_compare()` tests differences between groups.
+
+## Two ways to the variance
+
+Public-use files from Statistics Canada and Health Canada ship **replicate weights**: hundreds of
+alternative weight columns, each a resampled version of the design. The estimate is recomputed
+under each and the spread of those estimates is the variance. Other surveys ship the **strata and
+primary sampling units** (PSUs), and the variance comes from Taylor linearization.
+
+```{r design}
+set.seed(1)
+n <- 600
+d <- data.frame(region = sample(c("north", "south", "east"), n, replace = TRUE),
+                age = sample(c("15-24", "25-49", "50+"), n, replace = TRUE),
+                used = rbinom(n, 1, 0.3), drinks = rpois(n, 3), w = runif(n, 40, 160))
+# a stratified design: variance by linearization
+lin <- survey_design(d, weights = "w", strata = "region")
+lin
+# a replicate design: 200 bootstrap weights, made here by resampling within region
+reps <- sapply(1:200, function(r) {
+  m <- numeric(n)
+  for (g in unique(d$region)) {
+    i <- which(d$region == g)
+    m[i] <- tabulate(sample(length(i), replace = TRUE), length(i)) * length(i) / (length(i) - 1)
+  }
+  d$w * m
+})
+rep_des <- survey_design(d, weights = "w", replicates = reps, type = "bootstrap")
+rep_des
+```
+
+## Estimates by domain
+
+A domain (a region, an age group) is estimated inside the whole design: a respondent outside it
+counts zero, but stays in the design. That is what makes the subgroup's variance right.
+
+```{r estimate}
+e <- survey_estimate(rep_des, d, "used", by = "age", stat = "proportion", levels = "1")
+e
+plot(e)
+survey_estimate(lin, d, "drinks", by = "region")
+```
+
+Proportions get the modified Wilson interval of SAS PROC SURVEYFREQ (the effective sample size
+\(n/\mathrm{Deff}\), adjusted for the design's degrees of freedom and never above \(n\)); it
+stays inside 0 to 100% and behaves near the ends. Domains with fewer than 30 respondents are
+flagged, the rule Health Canada uses to suppress estimates in its data tool; here nothing is
+withheld, and the flag travels with the row.
+
+## Comparing groups
+
+Two overlapping intervals do not mean two groups are the same, and two separate intervals leave
+out the covariance between the estimates. `survey_compare()` takes the difference within the
+design:
+
+```{r compare}
+cmp <- survey_compare(rep_des, d, "used", by = "region", stat = "proportion", levels = "1",
+                      ref = "north")
+cmp
+plot(cmp)
+```
+
+## The Canadian Substance Use Survey, against the published figures
+
+CSUS 2023 ships 1,000 **mean bootstrap** weights, each the average of 12 bootstrap weights, so the
+bootstrap variance is multiplied by 12 (Health Canada's technical notes; the same as Fay's BRR
+with \(\rho = 1 - 1/\sqrt{12}\)). With the public-use file and its weights from data.rmorie.com
+(through rmorie), the design and the lifetime cannabis question are:
+
+```{r csus, eval = FALSE}
+a <- rmorie::morie_load_dataset("cu23mf")   # 36,180 respondents
+b <- rmorie::morie_load_dataset("cu23bt")   # PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000
+a$can <- ifelse(a$CAN_Q01 < 0, NA, a$CAN_Q01)   # -8: not stated
+des <- survey_design(a, weights = "WGT_PUMF", replicates = b, id = "PUMF_ID",
+                     type = "mean_bootstrap", mean_size = 12)
+survey_estimate(des, a, "can", stat = "proportion", levels = c("1", "2"))
+```
+
+Run on 13 October 2026 (1.6 seconds for the 1,000 replicates), against Health Infobase's
+published table:
+
+| Lifetime cannabis use | Published % | Published 95% CI | Here % | Here 95% CI |
+|---|---|---|---|---|
+| Yes, just once | 9.907782 | 9.544212 to 10.28363 | 9.907816 | 9.522047 to 10.30743 |
+| Yes, more than once | 53.192923 | 52.677340 to 53.70783 | 53.193086 | 52.677503 to 53.70799 |
+
+The percentages agree to the fourth decimal, and so does the second interval, whose design
+effect is below one so the interval is the plain Wilson one at the 36,024 respondents. The first
+interval is slightly wider here: Health Canada computed from its master file, and the public-use
+weights are not identical to it (the percentages differ in the fifth significant digit).
+
+## Linearization or replicates, the same answer
+
+On the same data the two routes agree closely when the replicates come from the same design:
+
+```{r agree}
+rbind(linearization = survey_estimate(lin, d, "drinks")[, c("estimate", "se")],
+      bootstrap = survey_estimate(rep_des, d, "drinks")[, c("estimate", "se")])
+```
+
+Every variance formula here is checked in the package tests against the survey package to machine
+precision: linearized means, totals, ratios, proportions and domains with a finite population
+correction; JK1, bootstrap and Fay replicate designs; and differences between domains.

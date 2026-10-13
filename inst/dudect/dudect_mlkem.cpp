@@ -82,3 +82,28 @@ void dd_mlkem_valid_fixed(unsigned char *in) {
     const size_t n = static_cast<size_t>(rmbl_mlkem768::kCtBytes);
     std::memcpy(in, valid_pool.data() + (valid_next++ % kValidPool) * n, n);
 }
+
+/* The compare-and-select with both classes varying: each input holds a re-encryption and a
+ * ciphertext. Class 0 is a fresh valid ciphertext against itself (a match, so g is selected),
+ * class 1 two different ones (a mismatch, so K-bar). The fixed-input target above compares
+ * the same 1,088 bytes against themselves in every class-0 measurement, and on some x86 runners
+ * that repetition alone moved the mean by about two ticks of 150; here nothing repeats and the
+ * only systematic difference is the match bit. */
+void dd_mlkem_sel2_fixed(unsigned char *in) {
+    const size_t n = static_cast<size_t>(rmbl_mlkem768::kCtBytes);
+    const unsigned char *c = valid_pool.data() + (valid_next++ % kValidPool) * n;
+    std::memcpy(in, c, n);
+    std::memcpy(in + n, c, n);
+}
+/* class 1: two different pool ciphertexts, copied the same way as class 0's, so the inputs of
+ * both classes are made by the same code from the same memory and differ only in matching */
+void dd_mlkem_sel2_other(unsigned char *in) {
+    const size_t n = static_cast<size_t>(rmbl_mlkem768::kCtBytes);
+    const size_t i = valid_next++ % kValidPool;
+    std::memcpy(in, valid_pool.data() + i * n, n);
+    std::memcpy(in + n, valid_pool.data() + ((i + 1) % kValidPool) * n, n);
+}
+void dd_mlkem_sel2_run(const unsigned char *in) {
+    const size_t n = static_cast<size_t>(rmbl_mlkem768::kCtBytes);
+    rmbl_mlkem768::fo_select(sink, g_sel, kbar_sel, in, in + n, 0);
+}

@@ -41,6 +41,9 @@ void dd_mlkem_sel_run(const unsigned char *in);
 void dd_mlkem_decm_run(const unsigned char *in);
 void dd_mlkem_validity_prep();
 void dd_mlkem_valid_fixed(unsigned char *in);
+void dd_mlkem_sel2_fixed(unsigned char *in);
+void dd_mlkem_sel2_run(const unsigned char *in);
+void dd_mlkem_sel2_other(unsigned char *in);
 size_t dd_hqc_ct_bytes();
 size_t dd_hqc_k_bytes();
 size_t dd_hqc_salt_bytes();
@@ -118,6 +121,7 @@ struct Target {
     void (*prepare)(std::mt19937_64 &);            /* fixed key material */
     void (*fixed)(unsigned char *in);              /* class 0 input */
     void (*run)(const unsigned char *in);          /* the operation timed */
+    void (*other)(unsigned char *in) = nullptr;    /* class 1 input; random bytes when unset */
 };
 
 static unsigned char g_sink[64];
@@ -194,6 +198,8 @@ static const Target kTargets[] = {
      dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_pdec_run},
     {"mlkem768_fo_select", "ML-KEM-768 decapsulation, compare and select alone: match vs mismatch",
      dd_mlkem_ct_bytes(), 1, mlkem_prep, dd_mlkem_dec_fixed, dd_mlkem_sel_run},
+    {"mlkem768_fo_select_validity", "ML-KEM-768 compare and select alone: a pool ciphertext against itself vs against another",
+     2 * dd_mlkem_ct_bytes(), 1, mlkem_validity_prep, dd_mlkem_sel2_fixed, dd_mlkem_sel2_run, dd_mlkem_sel2_other},
     {"mlkem768_encaps", "ML-KEM-768 encapsulation: fixed vs random message m",
      32, 1, mlkem_prep, mlkem_enc_fixed, dd_mlkem_enc_run},
     {"hqc1_decaps", "HQC-1 decapsulation: valid vs random ciphertext",
@@ -222,12 +228,26 @@ static double time_one(const Target &t, const unsigned char *in) {
     return static_cast<double>(z - a);
 }
 
+/* Both classes are written into their slots the same way, by memcpy(): every class-0
+ * generator copies a stored input, and a random class-1 input made in place by rnd_fill()
+ * left the slot's cache lines in a different state from a copy. On a 150-tick target (the
+ * ML-KEM compare-and-select) that alone moved the means by two to four ticks, |t| 12 to 30 on
+ * GitHub's x86 runners, with no difference in the code under test; random bytes now go
+ * through a scratch buffer and the same copy. */
 static void fill_chunk(const Target &t, std::mt19937_64 &g, std::vector<unsigned char> &buf,
                        std::vector<int> &cls, long n) {
+    std::vector<unsigned char> scratch(t.in_len);
     for (long i = 0; i < n; ++i) {
         cls[static_cast<size_t>(i)] = static_cast<int>(g() & 1u);
         unsigned char *slot = buf.data() + static_cast<size_t>(i) * t.in_len;
-        if (cls[static_cast<size_t>(i)] == 0) t.fixed(slot); else rnd_fill(g, slot, t.in_len);
+        if (cls[static_cast<size_t>(i)] == 0) {
+            t.fixed(slot);
+        } else if (t.other) {
+            t.other(slot);
+        } else {
+            rnd_fill(g, scratch.data(), t.in_len);
+            std::memcpy(slot, scratch.data(), t.in_len);
+        }
     }
 }
 

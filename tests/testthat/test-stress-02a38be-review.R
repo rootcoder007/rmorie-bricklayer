@@ -303,6 +303,10 @@ test_that("C10: the trap's marker is an interrupt even when the shell's exit sta
 
 test_that("C10: Ctrl-C at a real terminal prompt exits 130 (not mocked)", {
   skip_on_cran()
+  # under covr the child runs the instrumented package, and the interrupt lands inside covr's
+  # line counter rather than the prompt's handler (exit 1); the handler's lines are covered by
+  # the mocked tests, and this test runs unmodified in every other CI job
+  skip_on_covr()
   skip_on_os(c("windows", "mac"))
   skip_if_not(nzchar(Sys.which("script")) && nzchar(Sys.which("sh")))
   launcher <- system.file("bin", "rmbl", package = "rmoriebricklayer")

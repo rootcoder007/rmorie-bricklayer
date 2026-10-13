@@ -17,6 +17,11 @@ inst/dudect/build/dudect list
 | target | fixed class | random class |
 |---|---|---|
 | `mlkem768_decaps` | a valid ciphertext | random ciphertexts (implicit rejection) |
+| `mlkem768_decaps_validity` | fresh valid ciphertexts from a pool | random ciphertexts |
+| `mlkem768_decaps_masked`, `..._masked_validity` | as the two above, masked decapsulation | |
+| `mlkem768_pke_decrypt` | K-PKE decryption alone, a valid ciphertext | random ciphertexts |
+| `mlkem768_fo_select` | compare and select alone: the ciphertext against itself (match) | random ciphertexts (mismatch) |
+| `mlkem768_fo_select_validity` | a pool ciphertext against itself | two different pool ciphertexts |
 | `mlkem768_encaps` | a fixed message m | random messages |
 | `hqc1_decaps` | a valid ciphertext | random ciphertexts |
 | `digest_equal` | the equal 64-byte digest | random unequal digests |
@@ -26,6 +31,12 @@ inst/dudect/build/dudect list
 Inputs for each chunk of 2,048 measurements are generated before any is timed: generating a
 random input just before timing it, and copying a fixed one, leave the caches and branch
 predictors in different states and show a difference that is not the code's.
+Both classes are also written into their slots the same way, by a copy: random bytes go
+through a scratch buffer first. Made in place, they left the slot in a different cache state
+from a copied fixed input, and on GitHub's x86 runners that alone moved the 150-tick
+compare-and-select by two ticks (|t| up to 30) while the compiled code is branch-free with a
+fixed memory access pattern. `mlkem768_fo_select_validity` makes both classes from the same
+pool of real ciphertexts by the same copy, so the match bit is the only difference.
 
 Not measured here, on purpose: ML-DSA signing and the key generators. Their running time
 depends on public data by design (rejection sampling over a public matrix and a published
