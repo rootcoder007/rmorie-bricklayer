@@ -1,8 +1,8 @@
 ---
-title: "Language-model routes and the signed services document"
+title: "Language models (your own key) and the signed services document"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Language-model routes and the signed services document}
+  %\VignetteIndexEntry{Language models (your own key) and the signed services document}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,20 +14,32 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(rmoriebricklayer)
 ```
 
-`bricklayer_llm_ask()` sends a question to a language model and returns the answer. Which
-model answers is decided by a fixed order of routes, and every address the package would
-connect to is either yours or comes from a signed document. This vignette explains the
-order, the document, and what the package will and will not do on the network.
+`bricklayer_llm_ask()` sends a question to a language model and returns the answer. You bring
+the model: a key for a provider you already use, a model on your own machine, or a server of
+your own. Nothing is sent anywhere you did not set up, and the package runs no model service of
+its own. This vignette explains the routes, how the model is given the packages' help, and what
+the package will and will not do on the network.
 
 ## The route order
 
 1. **An endpoint of your own**: `MORIE_LLM_BASE_URL` (with `MORIE_LLM_API_KEY` and
-   `MORIE_LLM_MODEL`), any OpenAI-compatible server. Taken when configured, not probed.
-2. **A local Ollama** at `OLLAMA_HOST` (default `localhost:11434`); `OLLAMA_HOST=off`
-   disables the probe.
-3. **The hosted MORIE tier**, last, and only with a personal key issued on request at
-   <https://www.rmorie.com/access/>. A cloud provider's own API (Gemini, OpenAI) is reached
-   through route 1 when its endpoint speaks the OpenAI protocol; there is no separate route.
+   `MORIE_LLM_MODEL`), any OpenAI-compatible server (LM Studio, vLLM, llama.cpp's
+   `llama-server`, a company gateway). Taken when configured, not probed.
+2. **A provider whose key is set**, in the order `bricklayer_llm_providers()` lists them:
+   OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek,
+   Mistral, xAI, Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA. Each reads
+   its usual variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, ...) or a key
+   saved with `bricklayer_llm_config(anthropic.key = ...)`; the model is
+   `MORIE_<PROVIDER>_MODEL` or `<provider>.model`. Anthropic's Messages API and Gemini's
+   `generateContent` are spoken natively; the others are OpenAI-compatible.
+3. **Ollama** at `OLLAMA_HOST` (default `localhost:11434`), on this machine or another;
+   `OLLAMA_HOST=off` disables the probe. Its first pulled model is the default.
+
+`route = "anthropic"` (or `rmbl config set route anthropic`) takes one route only.
+
+```{r providers}
+bricklayer_llm_providers()[, c("id", "label", "key_env")]
+```
 
 `bricklayer_llm_status()` reports what is available from this machine. With the local route
 off the call reaches no network:
@@ -39,31 +51,48 @@ bricklayer_llm_status()
 if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
 ```
 
-## Asking
+## Asking, with the packages' help at hand
 
 ```{r ask, eval = FALSE}
-bricklayer_llm_ask("In one sentence, what does a Merkle root pin?")
+bricklayer_llm_ask("How do I estimate a weighted proportion with bootstrap replicate weights?")
 bricklayer_llm_ask(paste(c("Summarise this table:", capture.output(print(head(mtcars)))),
                          collapse = "\n"),
-                   system_prompt = "Answer in two sentences.")
+                   system_prompt = "Answer in two sentences.", docs = FALSE)
 ```
 
-`agent_bundle()` sends its request over the same route (`backend = "auto"` takes the saved
-route or the first that answers; `backend = "hosted"` goes straight to the hosted tier) and
-explains a reproducibility bundle's verification output in plain language; with no route it
-returns the setup hint and `rmbl bundle` exits 1.
+With `docs = TRUE` (the default) the model is told every function of the MORIE packages
+installed here (rmoriebricklayer, and rmoriedata and rmorie when present), read from their
+installed help, and gets five tools it can call: `search_docs` (a search over every help page),
+`get_help`, `get_examples`, `list_datasets` and `get_vignette`. It reads the pages it needs
+before it writes code. A model that does not take tools gets the pages nearest the question in
+its prompt instead. The tools only read help; nothing the model says is run.
+
+How much of the help goes into the prompt follows what the model can take in:
+
+* a provider's model, a model Ollama serves from its cloud (`minimax-m3:cloud` reports a
+  512,000-token context) and a remote server of your own get the whole index of functions, full
+  help pages and up to six rounds of lookups;
+* a model Ollama runs on this machine works in Ollama's context window (4,096 tokens unless the
+  server was started with `OLLAMA_CONTEXT_LENGTH`), so it gets the functions nearest the
+  question, shorter pages and fewer rounds; a server of your own on this machine gets a middle
+  size;
+* `MORIE_LLM_CONTEXT` (tokens) says what your model takes, whatever the route.
+
+Every size can still reach every function: `search_docs` and `get_help` look up any page.
+
+`agent_bundle()` asks over the same routes, with the bundle task added, and with no route it
+returns the setup hint (`rmbl bundle` exits 1).
 
 ## The signed services document
 
-The hosted tier's addresses, its model list and its sign-in service are **not** hard-coded
-in the package. They come from a document at
+The data service's addresses and its sign-in service are **not** hard-coded in the package. They come from a document at
 `https://rmorie.com/.well-known/morie-services.json`, signed with ML-DSA-44 under a key
 pinned in the package, so the endpoints can change without a release while no one but the
 project can change them. A copy ships with the package as the fallback and the floor:
 
 ```{r services}
 s <- bricklayer_services(offline = TRUE)
-s$llm$mode
+s$data$mode
 attr(s, "source")
 ```
 
@@ -97,25 +126,28 @@ for every byte the package sends or receives:
 * The sign-in service's `verification_uri` is opened in a browser only when it is a public
   https address.
 
-## Signing in to the hosted tier
+## The data key
+
+Signing in is for the curated tables at `data.rmorie.com` only; it is never a language model.
 
 ```{r login, eval = FALSE}
 bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 bricklayer_llm_login()          # or: GitHub device flow / emailed code
-bricklayer_llm_models()         # what the tier offers
 bricklayer_llm_logout()         # forget the key
 ```
 
 The key is stored with mode 0600 in the user's configuration directory and never written
-anywhere else. Prompts and responses are not stored by the tier; the published terms are at
-`https://llm.rmorie.com/`.
+anywhere else. `rmbl doctor` says whether one is stored.
 
 ## From the command line
 
 The same routes serve the CLI installed by `install_cli()`:
 
 ```sh
-rmoriebricklayer status
+rmoriebricklayer config setup       # pick a provider, paste its key (saved privately), pick a model
+rmoriebricklayer doctor             # the routes, and the one ask takes
+rmoriebricklayer models --route anthropic
 rmoriebricklayer ask "what does capsule_bundle() cover?"
-rmoriebricklayer login --token      # paste the key when asked; it never sits in the shell history
+rmoriebricklayer ask --route ollama --model gemma3:4b "how do I verify a capsule?"
+rmoriebricklayer login --token      # the data key: paste it when asked; it never sits in the shell history
 ```

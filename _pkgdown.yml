@@ -153,6 +153,7 @@ reference:
       - bricklayer_llm_status
       - bricklayer_services
       - bricklayer_llm_models
+      - bricklayer_llm_providers
       - bricklayer_data_manifest
       - bricklayer_download
       - bricklayer_cli

@@ -2,22 +2,26 @@
 % Please edit documentation in R/llm_native.R
 \name{bricklayer_llm_models}
 \alias{bricklayer_llm_models}
-\title{Models offered by the hosted MORIE LLM tier}
+\title{Models a language-model route offers}
 \usage{
-bricklayer_llm_models(timeout = 10)
+bricklayer_llm_models(route = NULL, timeout = 15)
 }
 \arguments{
-\item{timeout}{Seconds to wait for the gateway.}
+\item{route}{\code{NULL} (the route \code{\link{bricklayer_llm_ask}}
+would take) or a route name: \code{"own"}, \code{"ollama"} or a
+provider id (see \code{\link{bricklayer_llm_providers}}).}
+
+\item{timeout}{Seconds to wait for the answer.}
 }
 \value{
-A character vector of model names, empty when the tier is disabled,
-no key is stored, or the gateway does not answer, with attribute
-\code{"default"}: the model \code{bricklayer_llm_ask()} uses when none
-is named (the configured one when offered, else the first listed).
+A character vector of model names, empty when no route is set up
+or the provider does not list its models, with attributes
+\code{"default"} (the model \code{bricklayer_llm_ask()} uses when none
+is named) and \code{"route"}.
 }
 \description{
-Asks the gateway (\code{GET /v1/models}) which models the stored key may
-use, through the package's own libcurl binding.
+Asks the provider (or your own server, or Ollama) which models your key
+can use, through the package's own libcurl binding.
 }
 \examples{
 \donttest{

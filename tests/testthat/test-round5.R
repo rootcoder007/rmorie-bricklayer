@@ -47,28 +47,26 @@ test_that("a pasted key the gateway refuses is not stored; an address is checked
 })
 
 test_that("a refused key is said as such, and the gateway's key fragment is never printed", {
-  withr::local_envvar(MORIE_HOSTED_KEY = "sk-x", MORIE_HOSTED_BASE_URL = NA)
-  local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) list(status = 401L, body = raw(0)))
-  expect_match(.cap("models")$text, "rejected the stored key")
-  st <- bricklayer_llm_status()
-  expect_match(st$detail[3], "key rejected by the gateway")
   res <- list(status = 401L, json = list(error = list(
     message = "Authentication Error, Received API Key = sk-...abcd, Key Hash (Token) =1234"
   )))
-  expect_error(.bl_reply_error(res, "the hosted MORIE LLM tier"), "rejected your key")
+  expect_error(.bl_reply_error(res, "OpenAI", secret = "sk-x"), "OpenAI rejected your key \\(HTTP 401\\)")
   res$status <- 400L
-  e <- tryCatch(.bl_reply_error(res, "the hosted MORIE LLM tier"), error = conditionMessage)
+  e <- tryCatch(.bl_reply_error(res, "OpenAI", secret = "sk-x"), error = conditionMessage)
   expect_false(grepl("sk-|Key Hash|abcd", e))
+  # with no key sent (the sign-in service), a 403 is the service's own message
+  res$status <- 403L
+  expect_error(.bl_reply_error(res, "the sign-in service"), "the sign-in service answered 403: Authentication Error")
 })
 
 test_that("models without jsonlite: the native JSON parser reads the list", {
-  withr::local_envvar(MORIE_HOSTED_KEY = "sk-x", MORIE_HOSTED_BASE_URL = NA, MORIE_HOSTED_MODEL = NA)
-  local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) {
-    list(status = 200L, body = charToRaw('{"data":[{"id":"a"},{"id":"minimax-m3:cloud"}]}'))
+  withr::local_envvar(OPENAI_API_KEY = "sk-x", MORIE_OPENAI_MODEL = "b", MORIE_LLM_BASE_URL = NA, OLLAMA_HOST = "off")
+  local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {
+    list(status = 200L, body = charToRaw('{"data":[{"id":"a"},{"id":"b"}]}'))
   })
   m <- bricklayer_llm_models()
-  expect_equal(as.character(m), c("a", "minimax-m3:cloud"))
-  expect_equal(attr(m, "default"), "minimax-m3:cloud")
+  expect_equal(as.character(m), c("a", "b"))
+  expect_equal(attr(m, "default"), "b")
 })
 
 test_that("SIU dates must exist; day-first ordinals and abbreviations read; NA is NA", {
@@ -230,14 +228,17 @@ test_that("the key hints name the command the user typed", {
 })
 
 test_that("a model the key does not have is named, not blamed on the key", {
-  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = "sk-ok", MORIE_HOSTED_BASE_URL = NA)
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), OPENAI_API_KEY = "sk-ok", MORIE_LLM_BASE_URL = NA,
+                      OLLAMA_HOST = "off")
   testthat::local_mocked_bindings(
     .bl_post_json = function(...) list(status = 403L, json = list(), body = raw(0)),
-    bricklayer_llm_models = function(...) c("a", "b")
+    .bl_llm_list_models = function(...) c("a", "b")
   )
-  expect_error(bricklayer_llm_ask("hi", model = "nosuchmodel"),
-               "the hosted tier has no model 'nosuchmodel' (`rmoriebricklayer models` lists the 2 it has)",
+  expect_error(bricklayer_llm_ask("hi", model = "nosuchmodel", docs = FALSE),
+               "OpenAI has no model 'nosuchmodel' (`rmoriebricklayer models --route openai` lists the 2 it has)",
                fixed = TRUE)
+  # a model it does have: the key is what was refused
+  expect_error(bricklayer_llm_ask("hi", model = "a", docs = FALSE), "OpenAI rejected your key (HTTP 403)", fixed = TRUE)
 })
 
 test_that("no answer at all is reported as unreachable, not as HTTP -1", {

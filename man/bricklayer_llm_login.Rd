@@ -2,7 +2,7 @@
 % Please edit documentation in R/llm_native.R
 \name{bricklayer_llm_login}
 \alias{bricklayer_llm_login}
-\title{Sign in to the hosted MORIE language model}
+\title{Sign in for the curated tables at data.rmorie.com}
 \usage{
 bricklayer_llm_login(
   token = NULL,
@@ -27,17 +27,18 @@ bricklayer_llm_login(
 The key, invisibly.
 }
 \description{
-Stores a personal key for the hosted MORIE tier in
+Stores your personal MORIE data key in
 \code{$XDG_CONFIG_HOME/morie/credentials.json} (owner-only; the file
 the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
-so one sign-in serves all of them). The tier is a last resort behind a
-local model or your own endpoint (see \code{\link{bricklayer_llm_ask}});
-keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
+so one sign-in serves all of them). The key opens the curated tables
+(\code{\link{bricklayer_data_load}}); it is not used for language models,
+which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
+Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
 The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 \itemize{
 \item \code{token}: a key you already have, from the website or an
-email. It is checked with the gateway first and stored only when
-the gateway accepts it; a refused key, or no answer, stores nothing.
+email. It is checked with the service first and stored only when
+it is accepted; a refused key, or no answer, stores nothing.
 \item \code{email}: a 6-digit code is sent to the address (valid
 ten minutes, single use); you type it, or pass \code{code}.
 \item neither: the GitHub device flow; a code is shown to enter at

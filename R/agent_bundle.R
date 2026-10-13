@@ -2,52 +2,45 @@
 
 #' Agent-assisted reproducibility-bundle help
 #'
-#' Sends a bundle-building request, with a rmoriebricklayer-focused
-#' preamble, to the language-model route \code{\link{bricklayer_llm_ask}}
-#' takes: the route saved with \code{rmbl config set route}, else the first
-#' that is set up in the automatic order (your own endpoint, a local Ollama
-#' server with a model pulled, then the hosted MORIE tier).
+#' Asks a language model to plan a brick-proof, reproducible data bundle,
+#' through \code{\link{bricklayer_llm_ask}}: your own key, your own
+#' endpoint or a local Ollama server, with the packages' help at hand (the
+#' model reads the help pages of the functions it proposes before it
+#' answers).
 #'
 #' @param request Character scalar describing the bundle task.
-#' @param model Optional model id, e.g. \code{"minimax-m3:cloud"};
-#'   \code{NULL} uses the default (\code{rmbl models} lists them).
-#' @param backend \code{"auto"} (default): the saved route, else the first
-#'   that is set up; \code{"hosted"}: the hosted MORIE tier only.
+#' @param model Optional model id; \code{NULL} uses the route's model
+#'   (\code{rmbl models} lists them).
+#' @param route \code{NULL} (the saved route, else the first that is set
+#'   up), \code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id.
 #' @return Character scalar: the answer, or a message saying what to set
 #'   up when no route answers.
 #' @examples
 #' \donttest{
-#' # Needs a language-model route: a stored key (bricklayer_llm_login()), your
-#' # own endpoint or a local Ollama. try() keeps the example graceful when no
-#' # route answers or the hosted tier is slow.
+#' # Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
+#' # endpoint or a local Ollama. try() keeps the example graceful when none answers.
 #' try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
-#' try(agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud"))
 #' }
 #'
 #' # With every route switched off the call returns a setup hint, not an
 #' # error, and reaches no network -- safe to run anywhere:
-#' routes <- c("MORIE_HOSTED_BASE_URL", "OLLAMA_HOST", "MORIE_LLM_BASE_URL")
-#' old <- Sys.getenv(routes, unset = NA)
-#' Sys.setenv(MORIE_HOSTED_BASE_URL = "off", OLLAMA_HOST = "off",
-#'            MORIE_LLM_BASE_URL = "off")
+#' keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", bricklayer_llm_providers()$key_env,
+#'           bricklayer_llm_providers()$alt_env[nzchar(bricklayer_llm_providers()$alt_env)])
+#' old <- Sys.getenv(keys, unset = NA)
+#' Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off")
+#' Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL")))
 #' agent_bundle("hello")
-#' for (v in routes) {
+#' for (v in keys) {
 #'   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 #' }
 #' @export
-agent_bundle <- function(request, model = NULL, backend = "auto") {
+agent_bundle <- function(request, model = NULL, route = NULL) {
   request <- .rmbl_string1(request, "request")
-  backend <- match.arg(backend, c("auto", "hosted"))
-  preamble <- paste0(
-    "You are helping build a brick-proof, reproducible data bundle with the R package ",
-    "rmoriebricklayer. Use only its functions: resolve_via_ckan(), resolve_via_ckan_search(), ",
-    "resolve_via_arcgis() and resolve_via_socrata() find a portal's download URL; ",
-    "bricklayer_fetch() and friendly_download() download with a Wayback Machine fallback ",
-    "(wayback_snapshot_url()); sha256_file() and make_manifest() / write_manifest_json() record ",
-    "provenance; make_synthetic_csv() writes a synthetic stand-in with the same columns; ",
-    "capsule_bundle(), capsule_sign() and capsule_verify() package and check the bundle; ",
-    "use_capsule_template() scaffolds one. Answer with a short plan and R code. Request: ", request)
-  route <- if (identical(backend, "hosted")) "hosted" else NULL
+  if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
   if (is.null(.bl_llm_route(route))) return(.bl_no_route_message(route))
-  bricklayer_llm_ask(preamble, model = model, route = route)
+  extra <- paste("The task is a brick-proof, reproducible data bundle: find a portal's download URL, fetch",
+                 "with a Wayback fallback, record provenance (hashes, a manifest), write a synthetic stand-in,",
+                 "then package, sign and verify the bundle. Answer with a short plan and R code.")
+  bricklayer_llm_ask(request, model = model, route = route, system_prompt = extra)
 }
