@@ -136,11 +136,12 @@
     ollama.model = .bl_env1("OLLAMA_MODEL") %||% "(the first one pulled)",
     ollama.key = .bl_mask(.bl_env1("OLLAMA_API_KEY")),
     NULL)
-  if (!is.null(fixed)) return(fixed)
+  if (!is.null(fixed)) return(.rmbl_printable(fixed))
   id <- sub("[.](key|model)$", "", key)
   if (endsWith(key, ".key")) return(.bl_mask(.bl_preset_key(id)))
   pr <- .bl_preset(id)
-  .bl_env1(.bl_preset_model_env(id)) %||% (if (!is.na(pr$default_model)) pr$default_model else "(not chosen)")
+  .rmbl_printable(.bl_env1(.bl_preset_model_env(id)) %||%
+                    (if (!is.na(pr$default_model)) pr$default_model else "(not chosen)"))
 }
 
 # An address that is saved must be one address: no whitespace, no `#fragment`, no `user@`.

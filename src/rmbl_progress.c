@@ -33,7 +33,7 @@ static void put(rmbl_buf *o, const char *s) {
 }
 
 static void put_rgb(rmbl_buf *o, int r, int g, int b) {
-    char t[32];
+    char t[64];   /* three clamped ints: 43 bytes at most; gcc's bound is the int's (-Wformat-truncation) */
     snprintf(t, sizeof t, "\033[38;2;%d;%d;%dm", r, g, b);
     put(o, t);
 }

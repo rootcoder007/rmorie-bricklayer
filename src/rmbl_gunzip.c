@@ -23,6 +23,8 @@
 #include <string.h>
 #include <zlib.h>
 
+int rmbl_interrupt_pending(void);   /* rmbl_barrier.cpp: a Ctrl-C is pending */
+
 #define RMBL_GUNZIP_MAX_MEMBERS 100000
 #define RMBL_GUNZIP_SCRATCH 65536
 
@@ -74,6 +76,9 @@ static const char *rmbl_gunzip_pass(z_stream *zs, const unsigned char *src, size
                 zs->next_out = dst + len;
             }
             zs->avail_out = room;
+            /* a Ctrl-C is honoured between calls (a gigabyte ignored it for seconds; review of
+             * 46de6a9): the state is freed by the caller, the interrupt is raised by R afterwards */
+            if (rmbl_interrupt_pending()) return "was interrupted (Ctrl-C)";
             rc = inflate(zs, Z_NO_FLUSH);
             len += (size_t) (room - zs->avail_out);
             if (dst != NULL && spill && room != zs->avail_out) return "decompressed differently on the second pass";

@@ -23,6 +23,7 @@ test_that("bricklayer_fetch validates inputs before any network access", {
 })
 
 test_that("bricklayer_fetch errors when live and fallback both fail", {
+  skip_if_not(identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"), "the fallback looks archive.org up: RMBL_LIVE_TESTS=1")
   expect_error(
     bricklayer_fetch("https://invalid.invalid/a", tempfile(),
                      wayback = "https://invalid.invalid/b", timeout = 3),
@@ -38,6 +39,8 @@ test_that("bricklayer_fetch errors when live and fallback both fail", {
 test_that("wayback_snapshot_url_native validates input and degrades to NULL", {
   expect_error(wayback_snapshot_url_native(""))
   expect_error(wayback_snapshot_url_native(1))
+  # the transport does not honour a proxy, so this reaches archive.org: live runs only (H8)
+  skip_if_not(identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"), "set RMBL_LIVE_TESTS=1 for the live lookup")
   old <- c(http_proxy = Sys.getenv("http_proxy"),
            https_proxy = Sys.getenv("https_proxy"))
   Sys.setenv(http_proxy = "http://127.0.0.1:9",

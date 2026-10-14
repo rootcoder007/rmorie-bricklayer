@@ -5,7 +5,10 @@
 # developer's endpoint with their real key; review of 29a55d8, L4): RMBL_LIVE_LLM=1 keeps them for
 # the live checks.
 if (!identical(Sys.getenv("RMBL_LIVE_LLM"), "1")) {
-  Sys.setenv(OLLAMA_HOST = "off")
+  # nor the developer's saved keys: a fresh, empty config directory for the whole run (a test
+  # POSTed a prompt to api.anthropic.com with a saved key; review of 46de6a9, H8)
+  Sys.setenv(OLLAMA_HOST = "off", XDG_CONFIG_HOME = tempfile("rmbl-test-xdg-"))
+  Sys.unsetenv(c("MORIE_HOSTED_KEY", "MORIE_HOSTED_BASE_URL", "MORIE_DATA_URL"))
   local({
     ps <- get(".bl_llm_presets", envir = asNamespace("rmoriebricklayer"))()
     Sys.unsetenv(c(ps$key_env, ps$alt_env[nzchar(ps$alt_env)], get(".bl_preset_model_env",

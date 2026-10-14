@@ -7,6 +7,8 @@
 C <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))
 
 online <- function() {
+  # live traffic only when asked for (review of 46de6a9, H8)
+  if (!identical(Sys.getenv("RMBL_LIVE_TESTS"), "1")) return(FALSE)
   r <- tryCatch(.Call(C("C_rmbl_http_download"), "https://cloud.r-project.org/", tempfile(), 20L,
                       NULL, NULL, NULL, FALSE),
                 error = function(e) NULL)

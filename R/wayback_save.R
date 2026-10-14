@@ -363,11 +363,13 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
   hold_until <- -Inf      # nothing is submitted before this (archive.org asked to slow down)
   throttles <- 0L         # slow-down replies since the last capture that got through
   stopped <- NULL         # why submitting stopped for the rest of the run
-  # every resubmission counts for the run, and an error for the URL: a throttle in the status reply
-  # used to requeue the URL and the job id it got next reset the strikes, so one URL made 174
-  # POSTs and never stopped (review of 29a55d8, G5). A URL that errs is sent at most six times
-  # (a throttle is the account's state, not the URL's: it counts toward the eight strikes); a run
-  # resubmits at most as many times as it has URLs (and 20), then stops
+  # every resubmission since the last capture that got through counts for the run, and an error
+  # for the URL: a throttle in the status reply used to requeue the URL and the job id it got next
+  # reset the strikes, so one URL made 174 POSTs and never stopped (review of 29a55d8, G5). A URL
+  # that errs is sent at most six times (a throttle is the account's state, not the URL's: it
+  # counts toward the eight strikes); a run resubmits at most as many times as it has URLs (and
+  # 20) between two captures that get through, then stops (a cap over the whole run stopped a
+  # slow archive at 27 of 40; review of 46de6a9, H7)
   requeues <- 0L
   requeue_cap <- max(20L, length(queue))
   requeue <- function(u, why, err = TRUE) {
@@ -433,6 +435,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
         existing_or_failed(u, said(.bl_wb_str(j$message), "captured already today"))
       } else if (!is.na(.bl_wb_ts(j$timestamp))) {
         throttles <- 0L
+        requeues <- 0L
         finish(u, "existing", .bl_wb_ts(j$timestamp), .bl_wb_snapshot(.bl_wb_ts(j$timestamp), u))
       } else {
         finish(u, "failed", msg = .bl_wb_str(j$message) %|NA|% if (!is.null(j$job_id))
@@ -463,6 +466,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
         }
       } else if (identical(st, "success")) {
         throttles <- 0L
+        requeues <- 0L
         ts <- .bl_wb_ts(j$timestamp)
         orig <- .bl_wb_str(j$original_url)
         if (is.na(orig) || !grepl("^https?://[^[:space:]]+$", orig, ignore.case = TRUE)) orig <- u
@@ -542,8 +546,8 @@ print.rmbl_wayback_save <- function(x, ...) {
 
 # a failure that a capture today cannot fix: the URL's or the account's daily limit
 .bl_wb_daily_failure <- function(msg) {
-  grepl("already captured|captured [0-9]+ times today|too-many-daily-captures|daily capture limit|captures per day",
-        msg, ignore.case = TRUE)
+  grepl(paste0("already captured|captured already today|captured [0-9]+ times today|too-many-daily-captures|",
+               "daily capture limit|captures per day"), msg, ignore.case = TRUE)
 }
 
 #' Retry the failures of a bulk Wayback run
