@@ -109,7 +109,7 @@ jobs:
       # then stops on "non-numeric argument to binary operator" before it
       # reports anything. Remove this once that data file is numeric again.
       - continue-on-error: true
-        uses: ropensci-review-tools/pkgcheck-action@fa6dc3e9dec0580397ae44ec6fb9e7953947758c # main
+        uses: ropensci-review-tools/pkgcheck-action@562177730fb5e50099fcaccc19425457894c250a # main
         with:
           ref: ${{ github.sha }}
           post-to-issue: false
