@@ -216,7 +216,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   # under it with an older issue date, with the pinned key re-bound to that test key
   key <- fips_keygen("ML-DSA-44")
   old_doc <- sub(b$issued, "2020-01-01T00:00:00Z", rawToChar(readBin(bundled, "raw", file.size(bundled))), fixed = TRUE)
-  old_doc <- sub("https://llm.rmorie.com", "https://retired-gw.example.net", old_doc, fixed = TRUE)
+  old_doc <- gsub("https://data.rmorie.com/auth", "https://retired-gw.example.net/auth", old_doc, fixed = TRUE)
   sig <- function(doc, k = key) {
     s <- capsule_sign(charToRaw(doc), k, context = "morie-services", deterministic = TRUE)
     sprintf('{"scheme":"ML-DSA-44","context":"morie-services","signature":"%s"}', s$signature)
@@ -235,7 +235,7 @@ test_that("F5: a signed document older than the bundled one is refused, cached o
   Sys.setFileTime(file.path(td, "morie-services.json"), Sys.time() - 1e7)
   s <- bricklayer_services(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
-  expect_identical(s$llm$base_url, "https://llm.rmorie.com")
+  expect_identical(s$data$auth_url, "https://data.rmorie.com/auth")  # the bundled copy
   expect_false(file.exists(file.path(td, "morie-services.json")))  # the stale cache is gone
   expect_false(file.exists(file.path(td, "morie-services.sig")))
   # the same date as the bundled copy: the bundled copy serves and the cache stays (a

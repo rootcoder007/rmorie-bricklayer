@@ -31,6 +31,11 @@ claims the earlier fixes overstated corrected.
   data.rmorie.com only, and `rmbl doctor` reports the data key.
 * A model the route does not have is named as such, with the number it has; a refused key is
   said as such, and the key never appears in an error.
+* **The data key is checked and issued by the data service.** `login --token` asks
+  data.rmorie.com (`/v1/whoami`) whether it knows the key before storing it; the sign-in address
+  is the services document's `data.auth_url`, then its `llm.auth_url` for documents signed earlier.
+  A document may now leave out the `llm` block. A restricted table (the ICPSR studies, NCVS 38604,
+  the a2aj case law) refused with 403 says to accept the terms at https://data.rmorie.com/terms.
 * API calls no longer end a reply that is slow to start: a model that thinks before answering
   is not cut off by the 30-second low-speed limit.
 

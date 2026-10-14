@@ -269,9 +269,10 @@
   # environment or the config gets no key, the same rule as the own and Ollama keys
   saved_for <- cred$hosted_base_url
   if (!is.character(saved_for) || length(saved_for) != 1L || !nzchar(saved_for)) {
-    # a file without the address (morie writes one): the key was issued by the hosted tier, so
-    # it goes to the signed services document's address and nowhere else
+    # a file without the address (morie writes one): the key goes to the signed services
+    # document's address and nowhere else (the data service, now that no model is hosted)
     saved_for <- .rmbl_services_llm()$base_url %||% ""
+    if (!nzchar(saved_for)) saved_for <- .rmbl_services_data()$base_url %||% ""
   }
   now <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
   if (nzchar(saved_for) && !is.null(now) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
@@ -297,11 +298,13 @@
   .rmbl_check_public_url(v, "MORIE_HOSTED_BASE_URL")
 }
 
+# The sign-in service that issues the data key: the services document's data.auth_url, else the
+# auth_url of its llm block (documents signed before the data service issued its own keys).
 .bl_hosted_auth <- function() {
   v <- sub("/+$", "", trimws(Sys.getenv("MORIE_HOSTED_AUTH_URL", unset = "")))
   if (nzchar(v)) return(.rmbl_check_public_url(v, "MORIE_HOSTED_AUTH_URL"))  # a code and a key go there
-  a <- .rmbl_services_llm()$auth_url %||% ""
-  if (nzchar(a)) a else paste0(.bl_hosted_base() %||% "https://llm.rmorie.com", "/auth")
+  for (a in c(.rmbl_services_data()$auth_url, .rmbl_services_llm()$auth_url)) if (nzchar(a %||% "")) return(a)
+  paste0(.rmbl_services_data()$base_url %||% "https://data.rmorie.com", "/auth")
 }
 
 
@@ -598,25 +601,28 @@ bricklayer_llm_providers <- function() {
   ps
 }
 
-# GET /v1/models with a key: the reply, or NULL when the gateway did not answer.
-.bl_models_reply <- function(base, key, timeout = 10) {
-  tryCatch(
-    .bl_http_get(paste0(base, "/v1/models"), timeout, paste("Authorization: Bearer", key)),
-    error = function(e) NULL
-  )
+# Ask the data service whether it knows a key: GET /v1/whoami, or /manifest.json from a service
+# that predates /v1/whoami (it answers 404 there). The reply, or NULL when nothing answered.
+.bl_key_reply <- function(base, key, timeout = 10) {
+  get <- function(p) {
+    tryCatch(.bl_http_get(paste0(base, p), timeout, paste("Authorization: Bearer", key)), error = function(e) NULL)
+  }
+  res <- get("/v1/whoami")
+  if (identical(as.integer(res$status), 404L)) res <- get("/manifest.json")
+  res
 }
 
-# `login --token KEY`: ask the gateway before the key replaces a working one in the shared file
-# (stored as is, a mistyped key left all three packages reporting "key rejected").
+# `login --token KEY`: ask the data service before the key replaces a working one in the shared
+# file (stored as is, a mistyped key left all three packages reporting "key rejected").
 .bl_check_token <- function(token) {
-  base <- .bl_hosted_base()
+  base <- tryCatch(.bl_data_url(), error = function(e) NULL)
   if (is.null(base)) return(invisible(TRUE))
-  res <- .bl_models_reply(base, token)
+  res <- .bl_key_reply(base, token)
   if (is.null(res)) {
     stop(sprintf("could not reach %s to check the key; nothing stored (try again)", base), call. = FALSE)
   }
   if (!identical(as.integer(res$status), 200L)) {
-    stop(sprintf("the gateway did not accept that key (HTTP %d); nothing stored (%s)",
+    stop(sprintf("the data service did not accept that key (HTTP %d); nothing stored (%s)",
                  as.integer(res$status), .bl_access_hint()), call. = FALSE)
   }
   invisible(TRUE)

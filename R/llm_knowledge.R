@@ -266,7 +266,9 @@
   if (is.finite(set) && set > 0) return(set)
   if (!is.null(rt$id)) return(128000)
   if (identical(rt$name, "local Ollama")) {
-    if (model %in% (rt$remote %||% character())) {
+    # ollama.com itself (OLLAMA_HOST=https://ollama.com with OLLAMA_API_KEY), or any Ollama not on
+    # this machine or the LAN, is the server's business: its models run in their own context
+    if (model %in% (rt$remote %||% character()) || !isTRUE(rt$local)) {
       v <- unname((rt$context %||% c())[model])
       return(if (length(v) && is.finite(v)) v else 128000)
     }
