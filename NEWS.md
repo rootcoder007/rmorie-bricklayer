@@ -100,12 +100,6 @@ claims the earlier fixes overstated corrected.
 * **Schema check warning.** The misspelling check on structural invariants compared names of two
   lengths and warned "longer object length is not a multiple of shorter object length".
 * **Coverage.** The coverage job runs the live transport checks, as the check job does.
-* **C is compiled as C23 (`SystemRequirements: USE_C23`).** CRAN's R 4.6.1 for arm64 macOS
-  (the Sonoma build) sets `CC = clang -arch arm64` with no standard, so Apple clang 21
-  compiled C as gnu17. That R was built with `HAVE_ENUM_BASE_TYPE`, so its `Boolean.h`
-  declares `enum :int`, which is C23. The header silences that only for clang before 21,
-  so every C file warned under `-pedantic`. R now uses its `CC23` (`-std=gnu23` there),
-  and `configure` probes with the same compiler, falling back to `CC` on R before 4.3.
 * **No warnings in the build or the tests.** The checked writer's message buffer holds a whole
   path (gcc `-Wformat-truncation`); two unused Keccak helpers and an unused constant are gone
   (clang `-Wunused`). The tests expect the warnings they provoke: the stability bound, the
