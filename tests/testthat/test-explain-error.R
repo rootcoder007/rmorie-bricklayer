@@ -52,7 +52,7 @@ test_that("the messages table is kept between sessions for a person watching, on
   d <- withr::local_tempdir()
   withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
                        morie.quiet = NULL)
-  withr::local_envvar(MORIE_LLM_CACHE = NA)
+  withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
   writeLines("x", file.path(d, "messages-0000000000000000.rds"))  # an older version's
   memo <- ns(".bl_ee_memo")
   rm(list = ls(memo, all.names = TRUE), envir = memo)
