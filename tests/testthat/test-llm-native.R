@@ -167,7 +167,7 @@ test_that("the command line dispatches its verbs", {
   expect_match(cap()$text, "usage: rmoriebricklayer")
   expect_equal(cap("frobnicate")$status, 2L)  # an unknown verb is a usage error
   # `login --token` asks the gateway first: here it accepts the key
-  testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
+  testthat::local_mocked_bindings(.bl_key_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   expect_match(cap("frobnicate")$text, "unknown verb")
   r <- suppressMessages(cap("login", "--token", "sk-cli"))
   expect_equal(r$status, 0L)
@@ -250,7 +250,7 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
   ))
   expect_equal(key, "sk-mail")
   expect_length(seen, 1L) # a supplied code skips the request step
-  expect_equal(seen[[1]]$url, "https://llm.rmorie.com/auth/email/verify")
+  expect_equal(seen[[1]]$url, "https://data.rmorie.com/auth/email/verify")
   req <- bricklayer_json_from_json(seen[[1]]$body)
   expect_equal(req$email, "vee@example.com")
   expect_equal(req$code, "123456")
@@ -364,7 +364,7 @@ test_that("the credentials path and reader cope with no XDG dir and bad JSON", {
   Sys.setenv(MORIE_HOSTED_AUTH_URL = "https://auth.example/x/")
   expect_equal(.bl_hosted_auth(), "https://auth.example/x")
   Sys.unsetenv("MORIE_HOSTED_AUTH_URL")
-  expect_equal(.bl_hosted_auth(), "https://llm.rmorie.com/auth")
+  expect_equal(.bl_hosted_auth(), "https://data.rmorie.com/auth")
 })
 
 test_that("the real POST primitive reports an unreachable host as -1", {
@@ -511,7 +511,7 @@ test_that("the command line prompts for a token, runs the device flow and checks
     list(text = paste(buf, collapse = ""), status = st)
   }
   testthat::local_mocked_bindings(.bl_readline = function(prompt, ...) "sk-prompted")
-  testthat::local_mocked_bindings(.bl_models_reply = function(...) list(status = 200L, body = charToRaw("{}")))
+  testthat::local_mocked_bindings(.bl_key_reply = function(...) list(status = 200L, body = charToRaw("{}")))
   r <- suppressMessages(cap("login", "--token"))
   expect_equal(r$status, 0L)
   expect_equal(.bl_hosted_key(), "sk-prompted")

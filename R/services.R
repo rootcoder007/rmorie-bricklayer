@@ -114,11 +114,14 @@
     is.character(u) && length(u) == 1L && (identical(u, "") ||
       !inherits(tryCatch(.rmbl_check_public_url(u, "a service URL"), error = function(e) e), "error"))
   }
+  # the llm block is optional: language models are never hosted now (a document may keep one,
+  # mode off, for older installs that read their sign-in address from it)
+  if (is.null(d$llm)) d$llm <- .rmbl_services_off()$llm
   if (!is.list(d$llm) || !is.list(d$data) || !mode_ok(d$llm$mode) || !mode_ok(d$data$mode)) return(NULL)
   if (!is.character(d$issued) || length(d$issued) != 1L ||
       is.na(.rmbl_services_time(d$issued))) return(NULL)
   for (f in c("base_url", "auth_url")) if (!url_ok(d$llm[[f]] %||% "")) return(NULL)
-  if (!url_ok(d$data$base_url %||% "")) return(NULL)
+  for (f in c("base_url", "auth_url")) if (!url_ok(d$data[[f]] %||% "")) return(NULL)
   d$llm$models <- as.character(unlist(d$llm$models %||% character(0)))
   d$llm$default_model <- as.character(d$llm$default_model %||% "")[1L]
   d$notice <- as.character(d$notice %||% "")[1L]

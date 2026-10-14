@@ -606,8 +606,9 @@ order, and the first that is set up is used:
    Anthropic's and Gemini's own APIs are spoken natively.
 3. **Ollama**, found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`), default
    `http://localhost:11434`; the model is `OLLAMA_MODEL` or the first one the
-   server lists, including the cloud models Ollama serves. `OLLAMA_HOST=off`
-   skips it.
+   server lists, including the cloud models Ollama serves. Ollama's own cloud
+   API works the same way: `rmbl config set ollama.url https://ollama.com` and
+   `rmbl config set ollama.key` (your Ollama API key). `OLLAMA_HOST=off` skips it.
 
 The model gets the packages' help: the name, arguments and title of every
 function of rmoriebricklayer (and of rmoriedata and rmorie when installed),

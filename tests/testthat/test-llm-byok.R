@@ -372,6 +372,9 @@ test_that("the help in the prompt follows the model's capacity: all of it for a 
   expect_identical(cap(ollama, "gemma3:4b"), 4096)
   expect_identical(tier(ollama, "minimax-m3:cloud"), "full")
   expect_identical(tier(ollama, "gemma3:4b"), "small")
+  # Ollama's own cloud API (ollama.url https://ollama.com, with ollama.key) is not this machine
+  cloud_api <- utils::modifyList(ollama, list(base = "https://ollama.com", local = FALSE, remote = character()))
+  expect_identical(tier(cloud_api, "gpt-oss:120b"), "full")
   withr::local_envvar(OLLAMA_CONTEXT_LENGTH = "16384")
   expect_identical(tier(ollama, "gemma3:4b"), "compact")
   withr::local_envvar(OLLAMA_CONTEXT_LENGTH = NA)

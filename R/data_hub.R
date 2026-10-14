@@ -29,6 +29,10 @@
   svc$base_url
 }
 
+# The tables whose source licence asks more than attribution (ICPSR studies, the NCVS 38604
+# extract, the a2aj case law): data.rmorie.com opens them once the terms at /terms are accepted.
+.bl_data_restricted <- function(key) grepl("^(icpsr_|ncvs_38604|a2aj_)", sub("^(db|files)/", "", key))
+
 # The hosted key for the data service: to the address the signed services document names, never
 # to an address set in MORIE_DATA_URL (a key that belongs to one service does not follow a URL).
 .bl_data_key <- function() {
@@ -88,6 +92,11 @@
   )
   if (inherits(rc, "condition")) {
     msg <- conditionMessage(rc)
+    if (grepl("403|Forbidden", msg) && .bl_data_restricted(label)) {
+      stop(sprintf(paste("%s is a restricted table (its source asks more than a citation): read and accept",
+                         "the terms at https://data.rmorie.com/terms, signed in with your key, then ask again"),
+                   label), call. = FALSE)
+    }
     if (grepl("401|403|Unauthorized|Forbidden", msg)) {
       stop("the curated-data service rejected the stored key; ",
            sprintf("run bricklayer_llm_login() again (or `%s login --token` and paste the key).", .bl_prog()),

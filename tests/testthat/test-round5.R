@@ -38,7 +38,7 @@ test_that("usage errors exit 2, an unknown function 1", {
 
 test_that("a pasted key the gateway refuses is not stored; an address is checked first", {
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, MORIE_HOSTED_BASE_URL = NA)
-  local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) list(status = 401L, body = raw(0)))
+  local_mocked_bindings(.bl_key_reply = function(base, key, timeout = 10) list(status = 401L, body = raw(0)))
   r <- .cap("login", "--token", "sk-bad")
   expect_equal(r$status, 1L)
   expect_match(r$text, "did not accept that key")
@@ -140,13 +140,14 @@ test_that("login --token asks the gateway first and stores nothing it refuses", 
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA,
                       MORIE_HOSTED_BASE_URL = NA)
   reply <- NULL
-  testthat::local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) reply)
+  testthat::local_mocked_bindings(.bl_key_reply = function(base, key, timeout = 10) reply)
   expect_error(.bl_check_token("sk-x"), "could not reach .* nothing stored")
   reply <- list(status = 401L)
   expect_error(.bl_check_token("sk-x"), "did not accept that key (HTTP 401)", fixed = TRUE)
   reply <- list(status = 200L)
   expect_true(.bl_check_token("sk-x"))
-  withr::local_envvar(MORIE_HOSTED_BASE_URL = "off")
+  # with the data service switched off there is nothing to ask
+  testthat::local_mocked_bindings(.bl_data_url = function() stop("off"))
   reply <- NULL
   expect_true(.bl_check_token("sk-x"))
 })
@@ -249,7 +250,7 @@ test_that("no answer at all is reported as unreachable, not as HTTP -1", {
 
 test_that("bricklayer_llm_login(token =) refuses a key the gateway rejects", {
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA, MORIE_HOSTED_BASE_URL = NA)
-  testthat::local_mocked_bindings(.bl_models_reply = function(base, key, timeout = 10) list(status = 401L))
+  testthat::local_mocked_bindings(.bl_key_reply = function(base, key, timeout = 10) list(status = 401L))
   expect_error(bricklayer_llm_login(token = "sk-bad"), "did not accept that key")
   expect_null(.bl_hosted_key())
 })

@@ -48,19 +48,19 @@ svc_setup <- function(env = parent.frame(), key = svc_key$public) {
   td
 }
 
-test_that("the bundled document verifies with the pinned key and names the hosted services", {
+test_that("the bundled document verifies with the pinned key and names the data service", {
   td <- svc_setup(key = svc_ns(".rmbl_services_pubkey")())
   s <- bricklayer_services(offline = TRUE)
   expect_identical(attr(s, "source"), "bundled")
   expect_identical(s$version, 1L)
-  expect_identical(s$llm$mode, "key")
-  expect_identical(s$llm$base_url, "https://llm.rmorie.com")
-  expect_identical(s$llm$auth_url, "https://llm.rmorie.com/auth")
-  expect_identical(s$llm$default_model, "minimax-m3:cloud")
-  expect_true(s$llm$default_model %in% s$llm$models)
+  # no language model is hosted; the llm block only tells older installs where to sign in
+  expect_identical(s$llm$mode, "off")
+  expect_identical(s$llm$base_url, "")
+  expect_identical(s$llm$auth_url, "https://data.rmorie.com/auth")
   expect_identical(s$data$mode, "key")
   expect_identical(s$data$base_url, "https://data.rmorie.com")
-  expect_match(s$notice, "last resort")
+  expect_identical(s$data$auth_url, "https://data.rmorie.com/auth")
+  expect_match(s$notice, "Language models are not hosted")
   expect_match(s$llm$request_access, "^https://rmorie.com/")
   # the bundled signature is over exactly these bytes: one changed byte fails
   p <- system.file("services", "morie-services.json", package = "rmoriebricklayer")
@@ -70,8 +70,8 @@ test_that("the bundled document verifies with the pinned key and names the hoste
   bytes[length(bytes) - 1L] <- as.raw(0x20)
   expect_false(svc_ns(".rmbl_services_verify")(bytes, sig))
   # and the hosted helpers read this document
-  expect_identical(svc_ns(".bl_hosted_base")(), "https://llm.rmorie.com")
-  expect_identical(svc_ns(".bl_hosted_auth")(), "https://llm.rmorie.com/auth")
+  expect_null(svc_ns(".bl_hosted_base")())
+  expect_identical(svc_ns(".bl_hosted_auth")(), "https://data.rmorie.com/auth")
   expect_identical(svc_ns(".bl_data_url")(), "https://data.rmorie.com")
 })
 
