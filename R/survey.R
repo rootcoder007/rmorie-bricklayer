@@ -146,7 +146,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   # every column, in order and sorted: a reordered tibble (row names always 1..n) with a vector
   # weight gave SE 13.8 for 20.2 silently (review of 46de6a9); a column changed afterwards is not
   # a reorder and passes
-  check$digests <- .svy_column_digests(data)
+  # only when nothing is named: a named weight, strata or PSU column is compared by value already,
+  # and hashing every column of a million-row frame on each estimate is a cost to pay only when
+  # there is no other way to notice a reorder
+  if (!length(check$cols)) check$digests <- .svy_column_digests(data)
   des <- list(n = n, weights = w, type = NULL, scale = NULL, mse = mse, reps = NULL, strata = NULL,
               psu = NULL, fpc = NULL, lonely_psu = lonely_psu, check = check, degf = degf)
   if (!is.null(replicates)) {
