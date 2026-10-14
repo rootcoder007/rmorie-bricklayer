@@ -62,6 +62,10 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     stop("`top` must be a share in (0, 1]", call. = FALSE)
   }
   keep <- is.finite(lon) & is.finite(lat) & !is.na(period)
+  if (!all(keep)) {
+    message(sprintf("hotspot_persistence(): %d incident%s without a usable location or period dropped", sum(!keep),
+                    if (sum(!keep) == 1L) "" else "s"))
+  }
   if (coords == "lonlat") {
     bad <- keep & (abs(lat) > 90 | abs(lon) > 180)
     if (any(bad)) {

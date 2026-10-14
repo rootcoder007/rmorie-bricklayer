@@ -72,6 +72,33 @@ claims the earlier fixes overstated corrected.
   beside the saved answers.
 * **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
   the Ollama app, or its system service) when nothing answers at its address.
+## Re-test of 46de6a9 (2026-10-14, statistics)
+
+* **Survey replicates, once more.** The totals and constancy checks added in 46de6a9 refused 13.5%
+  of 1,320 genuine sets (a dominant PSU; a jackknife replicate constant on a subset) and still let
+  a data column ride along with replicates taken from the analysis file. Both checks are gone.
+  What a replicate weight is decides now: the full weight times a multiplier shared by whole PSUs,
+  so divided by the full weight it takes at most about one value per PSU (compared at four
+  significant digits, so weights rounded in a file stay one value), and it changes some rows
+  outright. A column that takes about one value per row (a data column, a second weight, survey's
+  multiplier matrix) or that is within a percent of the weight in every row (a rounded, jittered
+  or single-precision copy) is refused; the row numbers and the id are refused exactly; a
+  bootstrap replicate that draws every PSU once is the full weight, legitimately, and is kept.
+  A genuine replicate that shares the id's name is kept (it went with the id). A reordered tibble
+  with a vector weight is caught: the design keeps a digest of every column as given and sorted,
+  and the same values in another order are a reorder whatever the row names say; a column changed
+  afterwards is not. In a design whose weights take only a few values (three PSUs), a stray column
+  that is a function of the weight cannot be told from a replicate: give only the replicate
+  columns.
+* **`hurwitz_zeta()` beside the trivial zeros** takes the distance to the nearest integer exactly
+  before `sinpi()` (R's `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which on some libms loses
+  the digits of a value of order that distance); the test compares against mpmath at the exact
+  doubles. **`crime_density()`** keeps every incident on a map that runs past 180 degrees (the
+  points are in the grid's frame). `hotspot_persistence()` says when it drops an incident without
+  a location or period. A planar cell index past 2^53 is refused rather than merged with its
+  neighbours. A burden at rate 0 or population 0 draws. The age-specific rate message in
+  `pollution_burden()` and its siblings no longer says such a rate cannot exist.
+
 ## Review of 29a55d8 (the stress round of 2026-10-14)
 
 * **Ctrl-C while a model thinks is a Ctrl-C (G1).** The wait consumed the interrupt and the

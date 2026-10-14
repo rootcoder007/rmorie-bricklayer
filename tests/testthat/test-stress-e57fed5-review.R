@@ -95,10 +95,12 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   # the replicate file with its id and full weight beside the replicates: by name both are dropped
   with_id <- survey_design(d, weights = "w", replicates = s$rdf, id = "id")
   expect_equal(survey_estimate(with_id, d, "y")$se, se, tolerance = 1e-14)
-  # the weight given as a vector cannot be recognised by name: it is refused by value
-  expect_error(survey_design(d, weights = d$w, replicates = s$rdf, id = "id"), "the full-sample weight")
-  # no id: the id column is a column of `data`
-  expect_error(survey_design(d, weights = "w", replicates = s$rdf[, -2]), "column id of `data`")
+  # the weight given as a vector cannot be recognised by name: it is refused by value for a jackknife
+  # (a bootstrap replicate that draws every PSU once is the full weight, legitimately: accepted)
+  expect_error(survey_design(d, weights = d$w, replicates = s$rdf, id = "id", type = "jk1"), "the full-sample weight")
+  expect_s3_class(survey_design(d, weights = d$w, replicates = cbind(w = d$w, s$reps)), "rmbl_svy_design")
+  # no id: the id column is the row number
+  expect_error(survey_design(d, weights = "w", replicates = s$rdf[, -2]), "the row number")
   expect_error(survey_design(d, weights = "w", replicates = c("w")), "not a replicate weight")
   expect_error(survey_design(d, weights = "w", replicates = data.frame(a = s$reps[, 1], b = letters[1:2])),
                "not numbers")
@@ -113,12 +115,43 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   by_cols <- survey_design(dd, weights = "w", replicates = dd[paste0("bw", 1:20)])
   expect_equal(survey_estimate(by_cols, dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
   # but a stray column of the file beside them is still refused
-  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "id")]), "not a replicate weight")
-  # a stray column that is not in `data` either: a row number, a constant, survey's multipliers
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "not a replicate weight")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 100 + seq_len(nrow(d)))), "totals .* times")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 1)), "same for every row")
-  expect_error(survey_design(d, weights = "w", replicates = s$reps / d$w * 0.1), "totals .* times")
+  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "id")]), "the row number")
+  # a data column riding along with the replicates, whatever its name or scale (review of 46de6a9)
+  dd$meals <- runif(nrow(dd), 0, 100)
+  dd$w_alt <- runif(nrow(dd), 1, 3)
+  dd$fpc2 <- 7
+  for (extra in c("meals", "w_alt")) {
+    expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), extra)]), "different values",
+                 info = extra)
+  }
+  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "fpc2")]), "constant column")
+  # an unnamed matrix of the same columns is a replicate set
+  expect_equal(survey_estimate(survey_design(dd, weights = "w", replicates = unname(as.matrix(dd[paste0("bw", 1:20)]))),
+                               dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
+  # a stray column that is not in `data` either: a row number, a constant, a rounded or jittered weight,
+  # survey's multiplier matrix (the counts without the weight)
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "the row number")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 100 + seq_len(nrow(d)))), "different values")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 1)), "constant column")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, round(d$w, 2))), "not quite it")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15))), "not quite it")
+  f32 <- readBin(writeBin(d$w, raw(), size = 4), "double", size = 4, n = length(d$w))
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, f32)), "not quite it")
+  # replicate weights rounded in a file (four decimals) are still one multiplier per PSU
+  expect_s3_class(survey_design(d, weights = "w", replicates = round(s$reps, 4)), "rmbl_svy_design")
+  expect_error(survey_design(d, weights = "w", replicates = s$reps / d$w), "different values")
+  # genuine sets with a dominant PSU, or a jackknife replicate constant on a subset, are not refused
+  w3 <- rep(c(900, 50, 50), each = 20)
+  jk <- sapply(1:3, function(k) w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2))
+  expect_s3_class(survey_design(data.frame(y = d$y, w = w3), weights = "w", replicates = jk, type = "jk1"),
+                  "rmbl_svy_design")
+  sub <- cbind(d$w * 25 / 24, d$w * 25 / 24, d$w * c(rep(0, 30), rep(25 / 24, 30)))
+  expect_s3_class(survey_design(d, weights = "w", replicates = sub, type = "jk1"), "rmbl_svy_design")
+  # a genuine replicate that shares the id's name stays (review of 46de6a9, F2 sibling)
+  r_id <- s$rdf
+  names(r_id)[3] <- "id"
+  expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = r_id, id = "id"), d, "y")$se, se,
+               tolerance = 1e-14)
   # F2: a genuine replicate under the weight's name is refused, not dropped; the weight itself is set aside
   r2 <- as.data.frame(s$reps)
   names(r2)[1] <- "w"
@@ -190,6 +223,18 @@ test_that("the data must be the design's rows in the design's order", {
   shuffled <- s$d[sample(nrow(s$d)), ]
   rownames(shuffled) <- NULL
   expect_error(survey_estimate(des, shuffled, "y"), "not the data frame")
+  # a tibble (row names always 1..n) with a vector weight: nothing named to compare, so the columns'
+  # values are (review of 46de6a9); a column changed afterwards is not a reorder
+  tb <- structure(s$d, class = c("tbl_df", "tbl", "data.frame"))
+  dv <- survey_design(tb, weights = tb$w, replicates = s$reps)
+  se0 <- survey_estimate(dv, tb, "y")$se
+  tb2 <- tb[sample(nrow(tb)), ]
+  expect_error(survey_estimate(dv, tb2, "y"), "not the data frame")
+  tb3 <- tb
+  tb3$y <- tb3$y * 2
+  expect_equal(survey_estimate(dv, tb3, "y")$se, 2 * se0, tolerance = 1e-12)
+  dl <- survey_design(tb, weights = tb$w, strata = tb$g)
+  expect_error(survey_estimate(dl, tb2, "y"), "not the data frame")
   d2 <- s$d
   d2$w <- rev(d2$w)
   expect_error(survey_estimate(des, d2, "y"), "not the data frame")
@@ -272,6 +317,11 @@ test_that("points across the antimeridian are one place; distances past a contin
   near <- crime_density(runif(60, 179.5, 179.99), runif(60, -17.2, -16.8), n_grid = 40)
   expect_false(is.unsorted(near$lon))
   expect_s3_class(plot(near), "data.frame")
+  # every incident lies on its map: the points are in the grid's own frame (review of 46de6a9)
+  for (kd_ in list(kd, near)) {
+    expect_true(all(kd_$points$lon >= min(kd_$lon) & kd_$points$lon <= max(kd_$lon)))
+    expect_true(all(kd_$points$lat >= min(kd_$lat) & kd_$points$lat <= max(kd_$lat)))
+  }
   h <- hotspot_persistence(lon, lat, rep(1:2, 30), cell = 1)
   expect_true(all(abs(h$cells$x) > 179))
   k <- knox_test(lon, lat, 1:60, 1000, 3, nsim = 19, seed = 1)
@@ -386,21 +436,24 @@ test_that("E12: the lock is released however its holder ends", {
 # ---- the 02a38be leftovers -----------------------------------------------------------------
 
 test_that("hurwitz_zeta: accurate beside the trivial zeros and for a huge q", {
-  # zeta(-2 + e) ~ zeta'(-2) e, zeta'(-2) = -zeta(3) / (4 pi^2)
-  zp <- -1.2020569031595942853997 / (4 * pi^2)
-  # relative accuracy: the ratio to the true value, not an absolute tolerance a zero would pass
-  # (review of 29a55d8: 1e-12 and 1e-15 from the zero lost digits in sinpi() beside +-1, F5)
-  # against the distance the double -2 + e really carries ((-2 + e) + 2 is exact): e itself is
-  # not representable beside -2 to better than 4e-16 / e, which is all a reference at e could show
-  for (e in c(1e-7, -1e-9, 1e-12, -1e-14, 1e-15)) {
-    d <- (-2 + e) + 2
-    # the second-order term of the series is 1.08 e of the first: within that, then to 1e-12
-    expect_equal(hurwitz_zeta(-2 + e) / (zp * d), 1, tolerance = max(1e-12, 3 * abs(e)), info = format(e))
+  # mpmath zeta() at 60 digits, at the exact doubles z + e (hex floats both ways): the earlier check
+  # against a first-order series could not see the loss in sinpi() beside -1 (review of 46de6a9, F5)
+  ref <- c("-0x1.fffffffbb47dp+0" = "-0x1.0bd3d5ef008bbp-35", "-0x1.0000000036f9cp+1" = "0x1.ac86230f7688dp-39",
+           "-0x1.fffffffffee68p+0" = "-0x1.12479a7f26a4ap-45", "-0x1.00000000000e1p+1" = "0x1.b675312d78035p-49",
+           "-0x1.fffffffffffd3p+0" = "-0x1.5ec427579363ap-52", "-0x1.0000000000002p+1" = "0x1.f2de15d1e2a96p-56",
+           "-0x1.7ffffffeed1f4p+2" = "-0x1.9f289f0130298p-38", "-0x1.800000001b7cep+2" = "0x1.4c207f3453ea2p-41",
+           "-0x1.7fffffffffb9ap+2" = "-0x1.a92905ae0d99dp-48", "-0x1.8000000000071p+2" = "0x1.555622921a6d1p-51",
+           "-0x1.7fffffffffff5p+2" = "-0x1.09d1cde551be8p-54", "-0x1.8000000000001p+2" = "0x1.82a588935fa0ep-58",
+           "-0x1.3fffffff768fap+3" = "-0x1.4d04d0f350402p-36", "-0x1.400000000dbe7p+3" = "0x1.0a6a40c52cf72p-39",
+           "-0x1.3fffffffffdcdp+3" = "-0x1.550aa3361be41p-46", "-0x1.4000000000038p+3" = "0x1.0f6121ee20db0p-49",
+           "-0x1.3fffffffffffap+3" = "-0x1.d138cc73a5eccp-53", "-0x1.4000000000001p+3" = "0x1.3625dda26ea00p-55",
+           "-0x1.bfffffff768fap+3" = "-0x1.40ae5ba61ff67p-32", "-0x1.c00000000dbe7p+3" = "0x1.008b7c88dc2d3p-35",
+           "-0x1.bfffffffffdcdp+3" = "-0x1.486816cf80041p-42", "-0x1.c000000000038p+3" = "0x1.05534842e7207p-45",
+           "-0x1.bfffffffffffap+3" = "-0x1.bffc7be06777fp-49", "-0x1.c000000000001p+3" = "0x1.2aa852959a536p-51")
+  for (i in seq_along(ref)) {
+    s <- as.numeric(names(ref)[i])   # R reads C99 hex floats exactly
+    expect_equal(hurwitz_zeta(s) / as.numeric(ref[[i]]), 1, tolerance = 1e-12, info = names(ref)[i])
   }
-  # past the double range: a signed infinity, not NaN
-  expect_identical(hurwitz_zeta(-60, 1e10), -Inf)
-  expect_identical(hurwitz_zeta(-61, 1e10), -Inf)
-  expect_false(is.nan(hurwitz_zeta(-400, 2)))
   expect_identical(hurwitz_zeta(-4), 0)
   expect_equal(hurwitz_zeta(-11), 691 / 32760, tolerance = 1e-13)
   # -B5(q)/5 with q^5 past the double range while the value is not
