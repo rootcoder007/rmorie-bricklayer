@@ -36,9 +36,11 @@ server) offers, the one in use marked}
 or change the language-model settings (\code{\link{bricklayer_llm_config}}):
 the route \code{ask} uses and the address, key and model of each route;
 \code{setup} walks through them}
-\item{\code{ask [--route ROUTE] [--model NAME] PROMPT...}}{send a prompt to the model
-(or the named one, on the named route) and print the
-reply}
+\item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a prompt to the
+model (or the named one, on the named route) and print the reply; the
+same question again is answered from this machine (\code{--fresh} asks anew)}
+\item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
+(\code{\link{bricklayer_explain_error}}), without a model or the network}
 \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 shell}
 \item{\code{functions [PATTERN]}}{list the exported functions with

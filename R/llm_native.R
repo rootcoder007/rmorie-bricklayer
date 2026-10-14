@@ -521,8 +521,9 @@
   ollama_line <- if (is.null(ollama)) {
     "local Ollama: OLLAMA_HOST=off"
   } else if (is.null(.bl_ollama_tags(ollama))) {
-    sprintf(paste("local Ollama: nothing answers at %s (install Ollama from https://ollama.com and pull a model,",
-                  "or `%s config set ollama.url ADDRESS`)"), ollama, prog)
+    sprintf(paste("local Ollama: nothing answers at %s (installed? start its server with `ollama serve`,",
+                  "or open the Ollama app; not installed: https://ollama.com, then `ollama pull NAME`;",
+                  "on another machine: `%s config set ollama.url ADDRESS`)"), ollama, prog)
   } else {
     sprintf("local Ollama: no model pulled at %s (`ollama pull NAME`)", ollama)
   }
@@ -812,9 +813,17 @@ bricklayer_llm_providers <- function() {
 #' @param docs Give the model the packages' help (see Details);
 #'   \code{FALSE} sends the prompt alone.
 #' @param packages The installed packages whose help the model gets; default
-#'   rmoriebricklayer and rmoriedata (those installed). Add \code{"rmorie"}
-#'   to let it search that package's help too.
-#' @return Character scalar with the reply. Errors, saying what to set up,
+#'   rmoriebricklayer, rmoriedata and rmorie (those installed).
+#' @param fresh \code{TRUE} asks the model even when an answer to the same
+#'   question is saved on this machine, and keeps the new one. A person at a
+#'   terminal or in an interactive session gets a saved answer back at once
+#'   when the question (case and spacing aside), route, model, packages and
+#'   their versions all match, for 30 days; the answers are owner-only files
+#'   under \code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is
+#'   kept elsewhere, and \code{MORIE_LLM_CACHE=off} (or
+#'   \code{options(rmoriebricklayer.llm_cache = FALSE)}) turns it off.
+#' @return Character scalar with the reply; a saved answer carries the time it
+#'   was saved as attribute \code{cached}. Errors, saying what to set up,
 #'   when no route answers, and when the server answers with an error.
 #' @examples
 #' \dontrun{
@@ -824,8 +833,10 @@ bricklayer_llm_providers <- function() {
 #' }
 #' @export
 bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
-                               system_prompt = NULL, route = NULL, docs = TRUE, packages = NULL) {
+                               system_prompt = NULL, route = NULL, docs = TRUE, packages = NULL,
+                               fresh = FALSE) {
   prompt <- .rmbl_string1(prompt, "prompt")
+  .bl_check_flag(fresh, "fresh")
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
   if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
@@ -838,12 +849,19 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
     if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`packages` must name installed packages", call. = FALSE)
     missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
     if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
-    return(.bl_llm_assist(rt, model, prompt, pk, system_extra = system_prompt, timeout = timeout))
   }
-  msgs <- list()
-  if (!is.null(system_prompt)) msgs[[1L]] <- list(role = "system", content = system_prompt)
-  msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
-  .bl_llm_chat(rt, model, msgs, timeout = timeout)$text
+  key <- .bl_answer_key(rt, model, prompt, if (docs) pk, system_prompt)
+  if (!fresh && !is.null(hit <- .bl_answer_get(key))) return(hit)
+  ans <- if (docs) {
+    .bl_llm_assist(rt, model, prompt, pk, system_extra = system_prompt, timeout = timeout)
+  } else {
+    msgs <- list()
+    if (!is.null(system_prompt)) msgs[[1L]] <- list(role = "system", content = system_prompt)
+    msgs[[length(msgs) + 1L]] <- list(role = "user", content = prompt)
+    .bl_llm_chat(rt, model, msgs, timeout = timeout)$text
+  }
+  .bl_answer_put(key, prompt, model, ans)
+  ans
 }
 
 #' Sign in for the curated tables at data.rmorie.com
@@ -854,7 +872,8 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' so one sign-in serves all of them). The key opens the curated tables
 #' (\code{\link{bricklayer_data_load}}); it is not used for language models,
 #' which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
-#' Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at \url{https://www.rmorie.com/access/}.
+#' Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
+#' \url{https://www.rmorie.com/access/}.
 #' The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an
@@ -1069,7 +1088,8 @@ bricklayer_llm_status <- function() {
     tags <- .bl_ollama_tags(ob)
     if (is.null(tags)) {
       c("local Ollama", "not running",
-        sprintf("%s (install Ollama and pull a model, or point OLLAMA_HOST at a server)", ob))
+        sprintf(paste("%s (start it with `ollama serve`; or install Ollama, pull a model,",
+                      "or point OLLAMA_HOST at a server)"), ob))
     } else if (!length(tags)) {
       c("local Ollama", "no models", sprintf("%s (`ollama pull NAME`)", ob))
     } else {

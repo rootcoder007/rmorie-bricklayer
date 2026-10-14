@@ -41,6 +41,11 @@ cases <- list(
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
     df <- bricklayer_data_load("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "bricklayer_data_load")
   },
+  `explain-error` = function() {
+    r <- run("explain-error", "`prompt` must be a single non-empty string")
+    check(r$status == 0L && grepl("raised in rmoriebricklayer::", r$text, fixed = TRUE), r$text)
+    r <- run("explain-error", "object 'zz' not found"); check(r$status == 1L && grepl("Not a message", r$text), r$text)
+  },
   wayback = function() {
     # no archive.org keys on a runner: usage, a missing file and a missing results file, nothing sent
     r <- run("wayback"); check(r$status == 2L && grepl("wayback FILE", r$text, fixed = TRUE), r$text)

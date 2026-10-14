@@ -114,9 +114,11 @@
 #'     or change the language-model settings (\code{\link{bricklayer_llm_config}}):
 #'     the route \code{ask} uses and the address, key and model of each route;
 #'     \code{setup} walks through them}
-#'   \item{\code{ask [--route ROUTE] [--model NAME] PROMPT...}}{send a prompt to the model
-#'     (or the named one, on the named route) and print the
-#'     reply}
+#'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a prompt to the
+#'     model (or the named one, on the named route) and print the reply; the
+#'     same question again is answered from this machine (\code{--fresh} asks anew)}
+#'   \item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
+#'     (\code{\link{bricklayer_explain_error}}), without a model or the network}
 #'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 #'     shell}
 #'   \item{\code{functions [PATTERN]}}{list the exported functions with
@@ -183,7 +185,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
-  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route"),
+  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route", "--fresh"),
                 models = "--route",
                 data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
@@ -204,7 +206,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     {
       # arguments after a bare `--` are a prompt or a request: only ask and bundle take one, and
       # every other verb ignored them (`functions -- a b` listed everything)
-      if (length(tail_args) && !verb %in% c("ask", "bundle")) {
+      if (length(tail_args) && !verb %in% c("ask", "bundle", "explain-error")) {
         usage_error(sprintf("%s takes no arguments after --", verb))
       }
       switch(verb,
@@ -266,6 +268,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
           mdl <- flag("--model")
           if (!is.null(mdl)) rest <- rest[-(match("--model", rest) + 0:1)]
+          fresh <- "--fresh" %in% rest
+          rest <- rest[rest != "--fresh"]
           rte <- flag("--route")
           if (!is.null(rte)) {
             rest <- rest[-(match("--route", rest) + 0:1)]
@@ -277,13 +281,19 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             # "auto" is passed through: it means the automatic order this time, over a saved route
           }
           if (!length(rest) && !length(tail_args)) {
-            usage_error(sprintf("usage: %s ask [--route ROUTE] [--model NAME] [--] PROMPT...", prog))
+            usage_error(sprintf("usage: %s ask [--route ROUTE] [--model NAME] [--fresh] [--] PROMPT...", prog))
           } else {
             prompt <- paste(c(rest, tail_args), collapse = " ")
             if (!nzchar(trimws(prompt))) {
-              usage_error(sprintf("the prompt is empty (usage: %s ask [--route ROUTE] [--model NAME] PROMPT...)", prog))
+              usage_error(sprintf(paste("the prompt is empty (usage: %s ask [--route ROUTE] [--model NAME]",
+                                        "[--fresh] PROMPT...)"), prog))
             }
-            out(paste0(bricklayer_llm_ask(prompt, model = mdl, route = rte), "\n"))
+            ans <- bricklayer_llm_ask(prompt, model = mdl, route = rte, fresh = fresh)
+            out(paste0(ans, "\n"))
+            if (!is.null(attr(ans, "cached"))) {
+              out(sprintf("(the answer saved on %s for this question; `%s ask --fresh ...` asks the model again)\n",
+                          attr(ans, "cached"), prog))
+            }
           }
         },
         bundle = {
@@ -338,6 +348,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           }
         },
         data = status <- .bl_cli_data(rest, flag, out),
+        `explain-error` = status <- .bl_cli_explain(c(rest, tail_args), out, prog),
         wayback = status <- .bl_cli_wayback(rest, flag, out),
         `--version` = ,
         `-v` = ,
@@ -377,7 +388,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     logout = "logout   forget the data key",
     doctor = "doctor   report the language-model routes available here",
     models = "models [--route ROUTE]   the models your provider (or server) offers (the one in use marked)",
-    ask = "ask [--route auto|own|ollama|PROVIDER] [--model NAME] PROMPT...   ask the model (your own key)",
+    ask = paste("ask [--route auto|own|ollama|PROVIDER] [--model NAME] [--fresh] PROMPT...",
+                "  ask the model (your own key; --fresh: not the answer saved for the same question)"),
+    `explain-error` = "explain-error MESSAGE...   where an error of these packages comes from, without a model",
     config = paste("config [show | help | get KEY | set KEY VALUE | unset KEY | setup | path | reset]",
                    "  show or change the language-model settings (route, addresses, keys, models)"),
     bundle = "bundle REQUEST...   agent_bundle() from the shell",
@@ -666,7 +679,8 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
   verbs <- paste0(
     sprintf("usage: %s <verb> [options]   (rmbl is the same command as rmoriebricklayer)\n\n", prog),
     "Language models (your own key, or a model on your machine)\n",
-    "  ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply\n",
+    "  ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply (--fresh: ask anew)\n",
+    "  explain-error \"MESSAGE\"                   where an error comes from and what to do, no model needed\n",
     "  doctor                                    what is set up, and which route ask will use\n",
     "  config                                    show every language-model setting\n",
     "  config setup                              answer a few questions to set them all\n",
@@ -700,7 +714,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     "2. Bring a model (any one is enough):\n",
     "     your own key        export ANTHROPIC_API_KEY=...   (or OPENAI_API_KEY, GEMINI_API_KEY, GROQ_API_KEY, ...)\n",
     sprintf("                         %s config set anthropic.key   (asks for it; saved privately)\n", prog),
-    "     local Ollama        ollama pull qwen3:8b      (https://ollama.com)\n",
+    "     local Ollama        ollama serve, then ollama pull qwen3:8b   (https://ollama.com)\n",
     sprintf("     your own server     %s config set own.url http://localhost:1234/v1\n", prog),
     sprintf("   or answer a few questions instead:  %s config setup\n", prog),
     "3. Ask:\n",
@@ -725,6 +739,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     sprintf("  %s models --route anthropic     the models your key can use\n", prog),
     sprintf("  %s config set route anthropic   always use it\n\n", prog),
     "Ollama, on this machine or another\n",
+    "  ollama serve                              start the server (or open the Ollama app)\n",
     "  ollama pull qwen3:8b                      a model to use\n",
     sprintf("  %s config set ollama.url http://192.168.1.20:11434\n", prog),
     sprintf("  %s config set ollama.model qwen3:8b\n", prog),

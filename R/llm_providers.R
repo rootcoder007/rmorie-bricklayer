@@ -184,7 +184,14 @@
     }
   }
   body <- list(model = model, max_tokens = as.integer(max_tokens), messages = out)
-  if (length(sys)) body$system <- paste(sys, collapse = "\n\n")
+  if (length(sys)) {
+    body$system <- paste(sys, collapse = "\n\n")
+    # instructions this long are the same every question: Anthropic keeps them for the next one when
+    # asked (a prompt under 1,024 tokens is not cached, so a short one goes as it is)
+    if (nchar(body$system) >= 4000L) {
+      body$system <- list(list(type = "text", text = body$system, cache_control = list(type = "ephemeral")))
+    }
+  }
   if (length(tools)) {
     body$tools <- lapply(tools, function(t) {
       list(name = t$name, description = t$description, input_schema = t$parameters)
@@ -284,9 +291,24 @@
     .bl_openai_parse(json))
 }
 
+# What a person watching a terminal sees while the model works: "<model> is thinking", with a
+# turning spinner and the seconds so far (drawn by the POST in src/rmbl_fetch.cpp, wiped when the
+# reply comes). Nothing when nobody is watching or the session is quiet (the download bar's rule).
+.bl_wait <- new.env(parent = emptyenv())
+
+.bl_llm_wait_label <- function(model) {
+  if (.bl_dl_quiet() || !.bl_stderr_tty()) return("")
+  paste(model %||% "the model", "is", .bl_wait$what %||% "thinking")
+}
+
 # One chat turn on a route: list(text, tool_calls, finish). One retry when no HTTP answer came.
 .bl_llm_chat <- function(rt, model, messages, tools = NULL, timeout = 120, max_tokens = 4096L, allow_empty = FALSE) {
   req <- .bl_llm_request(rt, model, messages, tools, max_tokens)
+  lbl <- .bl_llm_wait_label(model %||% rt$model)
+  if (nzchar(lbl)) {
+    .Call(C_rmbl_wait_label, lbl, isTRUE(l10n_info()[["UTF-8"]]), !nzchar(Sys.getenv("NO_COLOR")))
+    on.exit(.Call(C_rmbl_wait_label, "", FALSE, FALSE), add = TRUE)
+  }
   send <- function() {
     .bl_post_json(req$url, req$body, timeout = timeout, headers = .bl_llm_headers(rt), local = isTRUE(rt$local))
   }

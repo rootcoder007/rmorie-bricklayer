@@ -43,6 +43,33 @@ claims the earlier fixes overstated corrected.
 * API calls no longer end a reply that is slow to start: a model that thinks before answering
   is not cut off by the 30-second low-speed limit.
 
+* **It shows that it is working.** While a model thinks, the terminal shows a turning spinner,
+  "<model> is thinking" and the seconds so far, then how many help pages it has read; the line
+  is wiped when the answer comes. Only for a person at a terminal (never in a script, a log or
+  `options(morie.quiet = TRUE)`); Ctrl-C now ends a long wait for a model.
+* **A repeated question is answered at once.** The answer to the same question (case and
+  spacing aside), on the same route, model, packages and versions, is kept on this machine
+  for 30 days and comes back without asking the model: `rmbl ask` says so, `--fresh` (R:
+  `fresh = TRUE`) asks again. Owner-only files under `tools::R_user_dir()`, at most 200,
+  outdated ones removed on each save; only for a person at a terminal or an interactive
+  session, never in scripts or checks; `MORIE_LLM_CACHE=off` turns it off. Nothing is hosted.
+* **Servers can reuse the instructions.** The instructions a model gets are the same for every
+  question (the functions picked for a question travel with the question), so the prompt
+  caches of Ollama, OpenAI, DeepSeek and Gemini apply, and long instructions are marked for
+  Anthropic's cache: a faster, cheaper first answer on every route.
+* **Better retrieval.** The help search matches inflected words ("emissions" finds
+  "emission", "testing" finds "test") and leaves out question words; the closest help pages go
+  with every question, to large models too; and the model is told never to say the packages
+  lack something before it has searched under other words.
+* **`bricklayer_explain_error()` and `rmbl explain-error "MESSAGE"`**: where an error or warning
+  of rmoriebricklayer, rmoriedata or rmorie comes from, without a model or the network. Every
+  message is read from the packages' own code (stop(), warning(), usage errors; sprintf() and
+  paste() parts as wildcards), matched exactly or by its words, and traced to the exported
+  functions that reach it, whose help pages say what they expect. With no argument, the last
+  error of the session. rmorie's 18,000 messages are read once per installed version and kept
+  beside the saved answers.
+* **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
+  the Ollama app, or its system service) when nothing answers at its address.
 ## Review of e57fed5 (the stress round of 2026-10-13)
 
 * **The spinner frame stays in its table (E1).** `rmbl_progress_spinner()`, a public C-callable,

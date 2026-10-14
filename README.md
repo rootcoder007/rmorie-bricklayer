@@ -608,10 +608,19 @@ order, and the first that is set up is used:
    `GEMINI_API_KEY`, ...) or a key saved with `rmbl config set <provider>.key`.
    Anthropic's and Gemini's own APIs are spoken natively.
 3. **Ollama**, found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`), default
-   `http://localhost:11434`; the model is `OLLAMA_MODEL` or the first one the
+   `http://localhost:11434`. Its server has to be running: `ollama serve` in a
+   terminal (or the Ollama desktop app, or the `ollama` system service the
+   Linux installer sets up), then `ollama pull NAME` for a model. `rmbl doctor`
+   says "not running" until it answers; the model is `OLLAMA_MODEL` or the first one the
    server lists, including the cloud models Ollama serves. Ollama's own cloud
    API works the same way: `rmbl config set ollama.url https://ollama.com` and
    `rmbl config set ollama.key` (your Ollama API key). `OLLAMA_HOST=off` skips it.
+
+While it works, `rmbl ask` shows a spinner with the seconds so far. The same question again
+is answered from this machine at once (`--fresh` asks the model again; `MORIE_LLM_CACHE=off`
+turns that off), and an error of these packages can be explained without any model:
+`rmbl explain-error "the error text"` (R: `bricklayer_explain_error()`) names the function that
+raised it, the exported functions it comes from and what the message asks for.
 
 The model gets the packages' help: the name, arguments and title of every
 function of rmoriebricklayer (and of rmoriedata and rmorie when installed),
