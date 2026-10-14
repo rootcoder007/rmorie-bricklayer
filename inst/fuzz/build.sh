@@ -15,8 +15,13 @@ mkdir -p "$OUT"
 $CXX $FLAGS fuzz_der.cpp -o "$OUT/fuzz_der" $RLD
 $CXX $FLAGS fuzz_strtod.cpp -o "$OUT/fuzz_strtod" $RLD
 $CXX $FLAGS fuzz_siu.cpp ../../src/siu_parse.cpp ../../src/siu_resolve.cpp -o "$OUT/fuzz_siu"
-# the URL policy needs libR only for Rf_GetOption1 (the allow_http option)
-$CXX $FLAGS -DRMBL_FUZZ_EXPORTS fuzz_url.cpp ../../src/rmbl_fetch.cpp -o "$OUT/fuzz_url" $RLD $(curl-config --libs 2>/dev/null || echo -lcurl)
+# the URL policy needs libR only for Rf_GetOption1 (the allow_http option); rmbl_fetch.cpp draws a
+# model's wait with the spinner frames of rmbl_progress.c, compiled here as C
+CC=${CC:-clang}
+$CC -g -O1 -fno-omit-frame-pointer -fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=undefined \
+  -I../../src $RCPP -c ../../src/rmbl_progress.c -o "$OUT/rmbl_progress.o"
+$CXX $FLAGS -DRMBL_FUZZ_EXPORTS fuzz_url.cpp ../../src/rmbl_fetch.cpp "$OUT/rmbl_progress.o" -o "$OUT/fuzz_url" $RLD \
+  $(curl-config --libs 2>/dev/null || echo -lcurl)
 # differential target against OpenSSL: needs libcrypto >= 3.5 (ML-KEM, ML-DSA, SLH-DSA);
 # REQUIRE_OSSL35=1 (CI) makes its absence an error rather than a skip
 if pkg-config --atleast-version=3.5 openssl 2>/dev/null || pkg-config --atleast-version=3.5 libcrypto 2>/dev/null; then
