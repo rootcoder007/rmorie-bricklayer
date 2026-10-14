@@ -20,7 +20,16 @@
 # SIGINT while a child runs (as system() does), so a Ctrl-C landing there killed only the child.
 # Sys.which("sh") came back "", the prompt fell back to a blocking read of stdin that ignores
 # Ctrl-C, and the command waited at the prompt (a Ctrl-C 0.18 s after start, 2026-10-14).
-.bl_have_program <- function(name) any(file.exists(file.path(c("/bin", "/usr/bin"), name)))
+# The search runs over PATH, as the shell does, then /bin and /usr/bin: /bin and /usr/bin alone missed
+# stty on a NixOS-style layout, so the key was echoed as it was typed (network stress test of 5e1dce5).
+.bl_find_program <- function(name) {
+  dirs <- c(strsplit(Sys.getenv("PATH"), .Platform$path.sep, fixed = TRUE)[[1L]], "/bin", "/usr/bin")
+  p <- file.path(unique(dirs[nzchar(dirs)]), name)
+  p <- p[file.exists(p) & !dir.exists(p)]
+  p <- p[file.access(p, 1L) == 0L]
+  if (length(p)) p[[1L]] else ""
+}
+.bl_have_program <- function(name) nzchar(.bl_find_program(name))
 .bl_stdout_tty <- function() isatty(stdout())
 
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
@@ -80,7 +89,12 @@
     # until the read is over, so it arrives once, here, inside the caller's handler, rather than a
     # moment later on top of the interrupt the child reported (exit 1, "Execution halted"; R-devel
     # CI on 487b956 and a704645)
-    l <- suspendInterrupts(suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE)))
+    # a Ctrl-C already pending (one that landed while R or the package was starting) is taken now:
+    # left pending, it was lost once the read began, and the command waited at the prompt
+    .Call(C_rmbl_check_interrupt)
+    # the sh found above, not whichever `sh` comes first on PATH
+    l <- suspendInterrupts(suppressWarnings(system2(.bl_find_program("sh"), c("-c", shQuote(script)),
+                                                    stdout = TRUE, stderr = FALSE)))
     if (hide) cat("\n", file = stderr())
     st <- attr(l, "status")
     l <- paste(as.character(l), collapse = "")
@@ -161,14 +175,12 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
   rest <- args[-1L]
-  # `aye` and `tellme` are other names for ask, and a question with no verb is asked:
-  # `rmbl "how do I weight a survey?"` (a word that holds a space, or a last word ending in ?).
-  # A lone unknown word stays an unknown verb, so a typo is never sent to a model.
+  # `aye` and `tellme` are other names for ask, and a question with no verb is asked when it plainly
+  # is one (.bl_bare_question): `rmbl "how do I weight a survey?"`, `rmbl "how?" --fresh`. A typo with
+  # a quoted argument, a file name or a pasted key stays an unknown verb and never reaches a model.
   if (verb %in% c("aye", "tellme")) {
     verb <- "ask"
-  } else if (is.null(.bl_verb_usage(verb)) && !verb %in% c("help", "--help", "-h", "version", "--version", "-v") &&
-               !startsWith(verb, "-") &&
-               (any(grepl("[[:space:]]", args)) || endsWith(args[[length(args)]], "?"))) {
+  } else if (is.null(.bl_verb_usage(verb)) && .bl_bare_question(args)) {
     rest <- args
     verb <- "ask"
   }
@@ -195,7 +207,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (!verb %in% c("help", "--help", "-h") && any(rest %in% c("--help", "-h"))) {
     u <- .bl_verb_usage(verb, prog)
     if (is.null(u)) {
-      out(sprintf("%s: unknown verb '%s' (try: %s help)\n", prog, verb, prog))
+      out(sprintf("%s: %s\n", prog, .bl_unknown_verb(verb, prog)))
       return(invisible(2L))
     }
     out(u)
@@ -381,7 +393,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
           if (length(rest) > 1L) usage_error(sprintf("usage: %s help [VERB]", prog))
           status <- .bl_cli_help(rest, out)
         },
-        usage_error(sprintf("unknown verb '%s' (try: %s help)", verb, prog))
+        usage_error(.bl_unknown_verb(verb, prog))
       )
     },
     error = function(e) {
@@ -400,6 +412,52 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
 # One usage line per verb, for `VERB --help`; NULL for a verb that does not exist.
+# A question typed with no verb, asked as `ask` would be: the first argument is the question itself
+# (two words or more, or ending in ?), it is not a verb or a near miss of one, it holds no path, line
+# break or key-shaped word, and what follows is only options ask takes. Before, any argument with a
+# space or a last one ending in ? made the whole line a question: `explain-eror "object 'x' not
+# found"`, `"My Documents/urls.txt"` and `conifg set anthropic.key "<key>\r"` (a CRLF key file) went to
+# the model, the key with them (network stress test of 5e1dce5).
+.bl_bare_question <- function(args) {
+  if (!length(args)) return(FALSE)
+  q <- args[[1L]]
+  if (!nzchar(q) || startsWith(q, "-") || grepl("[\r\n\v\f]", q) || grepl("[/\\]", q)) return(FALSE)
+  words <- strsplit(trimws(q), "[[:space:]]+")[[1L]]
+  if (!any(grepl("[[:alpha:]]{2,}", words))) return(FALSE)
+  if (length(words) < 2L && !endsWith(q, "?")) return(FALSE)
+  if (any(grepl("^[A-Za-z0-9_+=.:-]{24,}$", words))) return(FALSE)
+  if (length(words) == 1L) {
+    w <- tolower(sub("[?!.]+$", "", words[[1L]]))
+    if (min(utils::adist(w, .bl_verb_names())) <= 2L) return(FALSE)
+  }
+  rest <- args[-1L]
+  i <- 1L
+  while (i <= length(rest)) {
+    if (rest[[i]] %in% c("--route", "--model")) {
+      i <- i + 2L
+    } else if (identical(rest[[i]], "--fresh")) {
+      i <- i + 1L
+    } else {
+      return(FALSE)
+    }
+  }
+  TRUE
+}
+
+# Every verb and spelling the command takes, for the bare-question rule and "did you mean".
+.bl_verb_names <- function() {
+  c(.bl_verb_usage(NULL), "help", "version", "aye", "tellme")
+}
+
+# The line for an unknown verb: the nearest verb when one is close, and how to ask a model.
+.bl_unknown_verb <- function(verb, prog) {
+  v <- .bl_verb_names()
+  d <- utils::adist(tolower(verb), v)
+  near <- if (min(d) <= 2L) sprintf(" (did you mean `%s %s`?)", prog, v[which.min(d)]) else ""
+  sprintf("unknown verb '%s'%s; try `%s help`, or `%s ask \"QUESTION\"` for a model",
+          .rmbl_printable(verb), near, prog, prog)
+}
+
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
   u <- c(
     login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token",
@@ -422,6 +480,7 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                     "(keys: IA_S3_ACCESS_KEY and IA_S3_SECRET_KEY, or their _FILE twins)"),
     version = "version   package version"
   )
+  if (is.null(verb)) return(names(u))
   if (!verb %in% names(u)) return(NULL)
   sprintf("usage: %s %s\n", prog, u[[verb]])
 }

@@ -49,6 +49,18 @@
   x
 }
 
+# A column-name argument: text naming one column (or, with `several`, one or more), none missing or
+# empty. NULL or character(0) went on to data[, cols] and failed there as "get1index" (statistics
+# stress test of 5e1dce5).
+.rmbl_colnames <- function(x, what, several = FALSE) {
+  ok <- is.character(x) && length(x) >= 1L && !anyNA(x) && all(nzchar(x)) && (several || length(x) == 1L)
+  if (!ok) {
+    stop(sprintf("`%s` must name %s of `data`", what, if (several) "one or more columns" else "one column"),
+         call. = FALSE)
+  }
+  x
+}
+
 .rmbl_string1 <- function(x, what) {
   if (!is.character(x) || length(x) != 1L || is.na(x) || !nzchar(trimws(x))) {
     stop(sprintf("`%s` must be a single non-empty string", what),

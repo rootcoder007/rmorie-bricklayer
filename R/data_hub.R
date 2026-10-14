@@ -395,9 +395,30 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
 # decompressed by the checked reader, split into columns in C (rmbl_csv.c) and typed by
 # type.convert(), which is what read.csv() does after scan(). read.csv() took 20 to 28 s on a 75 MB
 # table (review of 29a55d8 and after, CSV speed).
-.bl_read_csv_gz <- function(path, max_bytes = 8 * 2^30) {
-  bytes <- .Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), max_bytes)
+# The fast way holds the whole decompressed table in memory, so it is taken up to `in_memory` bytes
+# (the gzip reader measures the output before it allocates any of it). Past that the table is read
+# as read.csv(gzfile()) reads it, a piece at a time: a 2.6 MB file that inflated to 2.5 GiB of blank
+# lines got the process killed for memory (network stress test of 5e1dce5). A file that is not gzip
+# data at all, though its name ends in .gz, is read as the plain CSV it is, as gzfile() did.
+.bl_read_csv_gz <- function(path, in_memory = 512 * 2^20) {
+  head <- readBin(path, "raw", 2L)
+  if (length(head) < 2L || head[[1L]] != as.raw(0x1f) || head[[2L]] != as.raw(0x8b)) {
+    if (file.size(path) > in_memory) return(.bl_read_csv_streamed(path))
+    return(.bl_csv_from_bytes(readBin(path, "raw", file.size(path))))
+  }
+  bytes <- tryCatch(.Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), in_memory),
+                    error = function(e) {
+                      if (grepl("more than the size limit", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
+                    })
+  if (is.null(bytes)) return(.bl_read_csv_streamed(path))
   .bl_csv_from_bytes(bytes)
+}
+
+# The large-table path: read.csv() itself, on a gzfile() connection (it reads plain files too).
+.bl_read_csv_streamed <- function(path) {
+  con <- gzfile(path, "rt")
+  on.exit(close(con), add = TRUE)
+  utils::read.csv(con, stringsAsFactors = FALSE, skipNul = TRUE)
 }
 
 .bl_csv_from_bytes <- function(bytes, skip_nul = TRUE) {

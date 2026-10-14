@@ -165,6 +165,12 @@ h
 plot(h)
 ```
 
+The hot set is the busiest `r h$hot_k` cells and every cell tied with the last of them. When a
+tie would make more than twice that many cells hot, the counts do not single those cells out, so
+the tied group is left out and counted under `tied_out`: a quarter can then show fewer hot cells
+than `r h$hot_k`, a smaller hot share, and an overlap with its neighbours that cannot be computed
+(left blank)`r if (any(h$periods$tied_out > 0)) sprintf(", as in %s here", paste(h$periods$period[h$periods$tied_out > 0], collapse = " and ")) else ""`.
+
 
 Pairs of break-ins within 100 metres and a week of each other occur
 `r sprintf("%.2f", kn$table$ratio[1])` times as often as chance would give.

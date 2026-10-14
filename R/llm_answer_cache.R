@@ -21,7 +21,14 @@
   !tolower(trimws(Sys.getenv("MORIE_LLM_CACHE", ""))) %in% off &&
     !isFALSE(opt) && !(is.character(opt) && tolower(trimws(opt[[1L]])) %in% off) &&
     !isTRUE(getOption("morie.quiet")) &&
-    (interactive() || (.bl_stdin_tty() && .bl_stdout_tty()))
+    .bl_person_watching()
+}
+
+# Someone is there to see the answer: a terminal at both ends, or an interactive session in a GUI
+# (RStudio, R.app, Rgui). `R --interactive < file` is interactive() with neither, and saved answers
+# from a script (network stress test of 5e1dce5).
+.bl_person_watching <- function() {
+  (.bl_stdin_tty() && .bl_stdout_tty()) || (interactive() && !.Platform$GUI %in% c("X11", "unknown", "Tk"))
 }
 
 .bl_answer_dir <- function() {
@@ -74,7 +81,7 @@
                           "question is answered at once; MORIE_LLM_CACHE=off turns that off)"), d))
   }
   ok <- tryCatch({
-    if (!dir.exists(d)) dir.create(d, recursive = TRUE, mode = "0700")
+    .bl_private_dir(d)
     f <- file.path(d, paste0(key, ".json"))
     tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = d, fileext = ".tmp")   # never a fixed name
     writeLines(enc2utf8(bricklayer_json_to_json(list(question = prompt, model = model %||% "", answer = answer,

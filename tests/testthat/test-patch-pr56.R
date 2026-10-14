@@ -20,7 +20,8 @@ test_that("the native CSV reader: no header, a header past 64 columns, text afte
   expect_identical(w$columns[[150]], 150L)
   # a blank line before a wide header
   expect_identical(split(paste0("\n", wide))$names, sprintf("c%d", 1:150))
-  expect_error(split("a,b\n\"x\"y,2\n"), "a quoted field is followed by text before the next comma")
+  # text after a closing quote is part of the field, as read.csv() appends it
+  expect_identical(split("a,b\n\"x\"y,2\n")$columns[[1L]], "xy")
 })
 
 test_that("hurwitz_zeta past the double range is the leading term's infinity, not NaN", {
@@ -66,8 +67,8 @@ test_that("survey: a reordered frame is caught by its digests; an empty frame ha
   d2 <- d[c(2:n, 1L), ]
   rownames(d2) <- NULL
   expect_error(survey_estimate(des, d2, "y"), "not the data frame the design was built on")
-  dg <- ns(".svy_column_digests")(d[0])
-  expect_identical(dim(dg), c(0L, 2L))
+  rk <- ns(".svy_rowkey_digests")(d[0])
+  expect_identical(rk$cols, character())
   d$id <- as.numeric(seq_len(n)) * 1.5
   r2 <- data.frame(id = d$id, reps, stray = d$id)
   expect_error(survey_design(d, weights = "w", id = "id", replicates = r2, type = "bootstrap"), "the id")
@@ -101,4 +102,263 @@ test_that("ask and explain-error read this package unless told otherwise; no oth
     if (is.function(f)) deparse(f) else character()
   }))
   expect_false(any(grepl("\"rmorie\"|\"rmoriedata\"", src)))
+})
+
+test_that("a settings folder an earlier version left open is made owner-only", {
+  skip_on_os("windows")
+  d <- file.path(withr::local_tempdir(), "morie")
+  dir.create(d)
+  Sys.chmod(d, "0777", use_umask = FALSE)
+  ns(".bl_private_dir")(d)
+  expect_identical(as.character(file.info(d)$mode), "700")
+  # through the settings writer
+  withr::local_envvar(XDG_CONFIG_HOME = dirname(d))
+  Sys.chmod(d, "0777", use_umask = FALSE)
+  bricklayer_llm_config(ollama.model = "m1")
+  expect_identical(as.character(file.info(d)$mode), "700")
+})
+
+test_that("config set changes only the setting it sets; the rest of llm.json is kept as written", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  p <- ns(".bl_config_path")()
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  raw <- paste0('{"note": 0.13436424411240122, "list": ["x"], "": "empty", "big": 9007199254740993,',
+                ' "ollama.model": "old"}')
+  writeLines(raw, p, sep = "")
+  bricklayer_llm_config(ollama.model = "qwen3:8b")
+  txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
+  for (keep in c("0.13436424411240122", '["x"]', '"": "empty"', "9007199254740993")) {
+    expect_true(grepl(keep, txt, fixed = TRUE), info = keep)
+  }
+  expect_identical(ns(".bl_read_config")()[["ollama.model"]], "qwen3:8b")
+  expect_false(grepl('"old"', txt, fixed = TRUE))
+  # removing a setting leaves the others too
+  bricklayer_llm_config(ollama.model = NA)
+  txt <- paste(readLines(p, warn = FALSE), collapse = "\n")
+  expect_true(grepl("0.13436424411240122", txt, fixed = TRUE))
+  expect_null(ns(".bl_read_config")()[["ollama.model"]])
+  # a new file starts empty and gets the one setting
+  unlink(p)
+  bricklayer_llm_config(ollama.model = "m2")
+  expect_identical(ns(".bl_read_config")()[["ollama.model"]], "m2")
+})
+
+test_that("the native CSV reader reads as read.csv() does at the edges the stress tests found", {
+  rc <- function(txt) {
+    f <- tempfile(fileext = ".csv")
+    writeBin(charToRaw(txt), f)
+    utils::read.csv(f, stringsAsFactors = FALSE, skipNul = TRUE)
+  }
+  ours <- function(txt) ns(".bl_csv_from_bytes")(charToRaw(txt))
+  same <- c(padded_header = "a , b ,c\n1,2,3\n",
+            Operational_Capacity = " Operational_Capacity ,x\n10,1\n",
+            quoted_padded_header = "\" a \",b\n1,2\n",
+            crlf_in_quotes = "a,b\n\"x\r\ny\",2\n",
+            cr_in_quotes = "a,b\n\"x\ry\",2\n",
+            empty_quote_line_2col = "a,b\n1,2\n\"\"\n3,4\n",
+            empty_quote_line_1col = "a\n1\n\"\"\n3\n",
+            space_then_quoted = "a,b\n \"x\",2\n",
+            quoted_then_space = "a,b\n\"x\" ,2\n",
+            padded_data = "a,b\n x ,2\n")
+  for (k in names(same)) expect_identical(ours(same[[k]]), rc(same[[k]]), label = k)
+  # a quote inside an unquoted field: read.csv() swallows the rest of the file; refused in words
+  expect_error(ours("a,b\nab\"c,2\n3,4\n"), "a quote inside an unquoted field")
+})
+
+test_that("a .csv.gz that is plain text, or that inflates past the in-memory size, reads as read.csv() reads it", {
+  txt <- "a,b\n1,x\n2,y\n"
+  plain <- tempfile(fileext = ".csv.gz")
+  writeBin(charToRaw(txt), plain)
+  ref <- utils::read.csv(gzfile(plain), stringsAsFactors = FALSE, skipNul = TRUE)
+  expect_identical(ns(".bl_read_csv_gz")(plain), ref)
+  gz <- tempfile(fileext = ".csv.gz")
+  con <- gzfile(gz, "wb")
+  writeLines(c("a,b", sprintf("%d,%s", 1:2000, "v")), con)
+  close(con)
+  ref <- utils::read.csv(gzfile(gz), stringsAsFactors = FALSE, skipNul = TRUE)
+  expect_identical(ns(".bl_read_csv_gz")(gz), ref)
+  # under a tiny in-memory size the same table goes the streamed way, with the same result
+  expect_identical(ns(".bl_read_csv_gz")(gz, in_memory = 100), ref)
+  expect_identical(ns(".bl_read_csv_gz")(plain, in_memory = 5),
+                   utils::read.csv(gzfile(plain), stringsAsFactors = FALSE))
+})
+
+test_that("survey: rows reordered within strata are refused; a permuted outcome is not a reorder", {
+  set.seed(9)
+  n <- 60
+  d <- data.frame(y = rnorm(n), w = runif(n, 1, 3), st = rep(1:3, each = 20), psu = rep(1:12, each = 5))
+  des <- survey_design(d, weights = d$w, strata = "st", psu = "psu")
+  # the rows of each PSU reversed: strata and PSU columns exactly as they were, y and w moved
+  o <- unlist(lapply(split(seq_len(n), d$psu), rev), use.names = FALSE)
+  d2 <- d[o, ]
+  attr(d2, "row.names") <- seq_len(n)
+  expect_identical(d2$st, d$st)
+  expect_identical(d2$psu, d$psu)
+  expect_error(survey_estimate(des, d2, "y"), "not the data frame")
+  # a permutation test: y permuted, everything else in place
+  d3 <- d
+  d3$y <- sample(d3$y)
+  expect_s3_class(survey_estimate(des, d3, "y"), "data.frame")
+  # y reversed and a column added
+  d4 <- d
+  d4$y <- rev(d4$y)
+  d4$extra <- 1
+  expect_s3_class(survey_estimate(des, d4, "y"), "data.frame")
+})
+
+test_that("survey: stray replicate columns are refused or said, genuine ones pass in silence", {
+  set.seed(11)
+  m <- 30
+  n <- m * 4
+  psu <- rep(seq_len(m), each = 4)
+  w <- rep(exp(rnorm(m)), each = 4) * 25
+  d <- data.frame(y = rnorm(n), w = w, pid = seq_len(n))
+  boot <- sapply(1:40, function(b) {
+    k <- stats::rmultinom(1, m, rep(1, m))[, 1]
+    w * k[psu]
+  })
+  jk <- sapply(seq_len(m), function(j) {
+    f <- rep(m / (m - 1), m)
+    f[j] <- 0
+    w * f[psu]
+  })
+  expect_silent(survey_design(d, weights = "w", replicates = boot, type = "bootstrap"))
+  expect_silent(survey_design(d, weights = "w", replicates = jk, type = "jk1"))
+  # the weight itself beside bootstrap replicates of 30 PSUs: more equal replicates than chance draws
+  expect_warning(survey_design(d, weights = "w", replicates = cbind(boot, as.numeric(w)), type = "bootstrap"),
+                 "equal the full-sample weight")
+  # a copy of the weight a rounding error off, under a jackknife: refused; under the bootstrap: said
+  expect_error(survey_design(d, weights = "w", replicates = cbind(jk, w * (1 + 1e-11)), type = "jk1"),
+               "a copy of the full-sample weight")
+  expect_warning(survey_design(d, weights = "w", replicates = cbind(boot, round(w, 2) + 0.001), type = "bootstrap"),
+                 "within 1% of the full-sample weight")
+  # a jackknife replicate that leaves nothing out and is no rescaled weight
+  expect_warning(survey_design(d, weights = "w", replicates = cbind(jk, rep(7, n)), type = "jk1"),
+                 "leaves no row out")
+  # a jackknife on a subset whose left-out PSU is elsewhere: the weight times one factor, in silence
+  expect_silent(survey_design(d, weights = "w", replicates = cbind(jk, w * m / (m - 1)), type = "jk1"))
+  # multipliers in place of the weights (the weights here average about 40)
+  mult <- boot / w
+  expect_warning(survey_design(d, weights = "w", replicates = mult, type = "bootstrap"), "multipliers")
+  # a second column named like the id, holding other values: refused
+  r2 <- data.frame(pid = d$pid, boot, pid = rev(d$pid), check.names = FALSE)
+  expect_error(survey_design(d, weights = "w", id = "pid", replicates = r2, type = "bootstrap"),
+               "has the id's name but not its values")
+  # the weight beside the replicates under its own name, 1e-13 off: the weight, set aside
+  r3 <- data.frame(w = w * (1 + 1e-13), jk)
+  expect_silent(des <- survey_design(d, weights = "w", replicates = r3, type = "jk1"))
+  expect_equal(length(des$reps), m)
+})
+
+test_that("hurwitz_zeta with a whole q beside the trivial zeros matches mpmath at the exact doubles", {
+  # mpmath zeta(s, q) at 60 digits; s and the references are C99 hex floats (statistics stress test
+  # of 5e1dce5: 5.4e-8 relative at q = 2 near s = -30)
+  ref <- data.frame(
+    s = c("-0x1.e000010c6f7a1p+4", "-0x1.e000000044b83p+4", "-0x1.e000000000119p+4", "-0x1.ep+4",
+          "-0x1.e000010c6f7a1p+4", "-0x1.e000000044b83p+4"),
+    q = c(2, 2, 2, 2, 7, 7),
+    v = c("0x1.2aca793b1cb81p+7", "-0x1.b2ff657204b01p-1", "-0x1.ffec5216e9183p-1", "-0x1.0000000000000p+0",
+          "-0x1.7818195336b14p+77", "-0x1.7817ed39b28cbp+77"),
+    stringsAsFactors = FALSE)
+  for (i in seq_len(nrow(ref))) {
+    s <- as.numeric(ref$s[[i]])
+    want <- as.numeric(ref$v[[i]])
+    got <- hurwitz_zeta(s, ref$q[[i]])
+    expect_lt(abs(got - want) / abs(want), 1e-13, label = sprintf("zeta(%s, %g)", ref$s[[i]], ref$q[[i]]))
+  }
+})
+
+test_that("knox close pairs match brute force with a far outlier and with a tiny band", {
+  brute <- function(x, y, r) {
+    n <- length(x)
+    p <- utils::combn(n, 2)
+    d <- sqrt(((x[p[1, ]] - x[p[2, ]]) / r)^2 + ((y[p[1, ]] - y[p[2, ]]) / r)^2)
+    k <- d <= 1
+    paste(p[1, k], p[2, k])
+  }
+  ours <- function(x, y, r) {
+    cp <- ns(".jx_close_pairs")(x, y, r, 1e7)
+    sort(paste(pmin(cp$i, cp$j), pmax(cp$i, cp$j)))
+  }
+  set.seed(3)
+  x <- runif(200, 0, 10)
+  y <- runif(200, 0, 10)
+  expect_identical(ours(x, y, 0.7), sort(brute(x, y, 0.7)))
+  # one far outlier, and one beside it
+  x2 <- c(x, 1e300, 1e300)
+  y2 <- c(y, 0, 0.1)
+  expect_identical(ours(x2, y2, 0.7), sort(brute(x2, y2, 0.7)))
+  # a band of 1e-300 on points spread over 1e-299: every index overflows, every pair compared
+  x3 <- runif(60, 0, 1e-299)
+  y3 <- runif(60, 0, 1e-299)
+  expect_identical(ours(x3, y3, 2e-300), sort(brute(x3, y3, 2e-300)))
+  # knox_test itself runs with the outlier
+  t2 <- c(runif(200, 0, 100), 1, 2)
+  expect_s3_class(suppressMessages(knox_test(x2, y2, t2, space_bands = c(0.3, 0.7), time_bands = c(5, 10), nsim = 19L,
+                                             coords = "planar")),
+                  "rmbl_knox")
+})
+
+test_that("a period whose hot set a tie empties has no overlap to report, before or after", {
+  # 10 cells; period A: cell 1 busiest (k = 1); period B: three cells tied at the top (left out);
+  # period C: cell 1 busiest again
+  x <- c(rep(0.5, 5), 1.5, 2.5,  0.5, 1.5, 2.5,  rep(0.5, 4), 1.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5)
+  y <- rep(0.5, length(x))
+  p <- c(rep("A", 7), rep("B", 3), rep("C", length(x) - 10))
+  h <- hotspot_persistence(x, y, p, cell = 1, top = 0.1, coords = "planar")
+  d <- h$periods
+  expect_identical(d$tied_out[d$period == "B"], 3L)
+  expect_identical(d$hot_cells[d$period == "B"], 0L)
+  expect_true(is.na(d$jaccard_previous[d$period == "B"]))
+  expect_true(is.na(d$jaccard_previous[d$period == "C"]))
+  expect_output(print(h), "left out of the hot set")
+})
+
+test_that("column-name arguments that are NULL, empty or missing are refused in words", {
+  d <- data.frame(y = rnorm(30), d = rnorm(30), x = rnorm(30), inc = runif(30), e = runif(30))
+  for (bad in list(NULL, character(), NA_character_, "")) {
+    expect_error(plr_crossfit(d, bad, "d", "x"), "`outcome` must name one column")
+    expect_error(plr_crossfit(d, "y", "d", bad), "`covariates` must name one or more columns")
+    expect_error(exposure_response_plr(d, "y", bad, "x"), "`exposure` must name one column")
+    expect_error(exposure_concentration_index(d, "e", bad), "`income` must name one column")
+    expect_error(pollution_burden_by_area(d, area_col = bad), "`area_col` must name one column")
+  }
+  expect_error(plr_crossfit(d, c("y", "x"), "d", "x"), "`outcome` must name one column")
+})
+
+test_that("messy data with duplicate column names is inspected, not refused; survey_design minds only its columns", {
+  d <- data.frame(a = c(1, NA, 1), a = c(2, 2, 2), b = c(1, 2, 1), check.names = FALSE)
+  ms <- missingness_summary(d)
+  expect_identical(unname(ms[["n_missing"]]), 1)
+  expect_identical(unname(ms[["n_cols"]]), 3)
+  dr <- duplicate_rows(rbind(d, d[1, ]))
+  expect_true(nrow(dr) >= 2L)
+  expect_error(duplicate_rows(d, "a"), "two columns named a")
+  expect_identical(nrow(duplicate_rows(d, "b")), 2L)
+  sd <- data.frame(y = rnorm(6), w = 1:6, junk = 1, junk = 2, check.names = FALSE)
+  expect_s3_class(survey_design(sd, weights = "w"), "rmbl_svy_design")
+  sd2 <- data.frame(y = rnorm(6), w = 1:6, w = 6:1, check.names = FALSE)
+  expect_error(survey_design(sd2, weights = "w"), "two columns named w")
+})
+
+test_that("a Ctrl-C (or a time limit) during a GET is raised at once, not lost (network stress test of 5e1dce5)", {
+  skip_on_os("windows")
+  skip_on_cran()
+  port <- 20000L + sample.int(20000L, 1L)
+  srv <- tryCatch(serverSocket(port), error = function(e) NULL)   # listens, never answers
+  skip_if(is.null(srv), "no local port")
+  on.exit(close(srv), add = TRUE)
+  # R checks a setTimeLimit() limit where it checks for Ctrl-C, and the GET's callback takes both the
+  # same way: an elapsed limit is the Ctrl-C without a signal (a signal sent to a child depends on
+  # what the test run has done to SIGINT). The old callback took it and the GET came back as a plain
+  # failure (status -1), and a Wayback run polled on past its limit
+  t0 <- Sys.time()
+  setTimeLimit(elapsed = 1.5, transient = TRUE)
+  r <- tryCatch(.Call(asNamespace("rmoriebricklayer")$C_rmbl_http_get, sprintf("http://127.0.0.1:%d/x", port),
+                      30L, character(), TRUE),
+                interrupt = function(e) "INTERRUPTED", error = function(e) "STOPPED")
+  setTimeLimit(elapsed = Inf)
+  expect_true(identical(r, "INTERRUPTED") || identical(r, "STOPPED"),
+              info = paste(utils::capture.output(str(r)), collapse = " "))
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 10)
 })

@@ -31,12 +31,13 @@ test_that("a quoted question with no verb is asked", {
   r <- ask_via_cli("how do I weight a survey?")
   expect_identical(r$status, 0L)
   expect_identical(r$seen$prompt, "how do I weight a survey?")
-  # unquoted words, the last ending in ?
-  r <- ask_via_cli(c("what", "is", "PSI?"))
-  expect_identical(r$seen$prompt, "what is PSI?")
-  # one word with a question mark
+  # one word with a question mark, and the options ask takes after the question
   r <- ask_via_cli("why?")
   expect_identical(r$seen$prompt, "why?")
+  r <- ask_via_cli(c("how?", "--fresh", "--route", "own"))
+  expect_identical(r$seen$prompt, "how?")
+  expect_true(r$seen$fresh)
+  expect_identical(r$seen$route, "own")
   # R >= 4.6 keeps the --args separator
   r <- ask_via_cli(c("--args", "how do I weight a survey?"))
   expect_identical(r$seen$prompt, "how do I weight a survey?")
@@ -101,4 +102,31 @@ test_that("the prompt finds sh and stty without a child process (a Ctrl-C there 
   # .bl_readline asks it, never Sys.which(), which runs a child that a Ctrl-C kills alone
   body_txt <- paste(deparse(rmoriebricklayer:::.bl_readline), collapse = "\n")
   expect_false(grepl("Sys.which", body_txt, fixed = TRUE))
+})
+
+test_that("typos, file names and keys are never taken for a question (network stress test of 5e1dce5)", {
+  crlf_key <- paste0("sk-ant-", strrep("a", 40), "\r")
+  cases <- list(
+    c("explain-eror", "object 'x' not found"),
+    c("wayabck", "my urls.txt"),
+    "My Documents/urls.txt",
+    "C:\\Users\\me\\My Documents\\notes.txt",
+    "models?", "version?", "doctor?", "logout?", "?",
+    c("conifg", "set", "anthropic.key", crlf_key),
+    paste("please use", strrep("k", 40)),
+    c("what", "is", "PSI?"),
+    c("how do I weight a survey?", "extra"),
+    c("line one\nline two")
+  )
+  for (a in cases) {
+    r <- ask_via_cli(a)
+    expect_null(r$seen, label = paste(a, collapse = " | "))
+    expect_identical(r$status, 2L, label = paste(a, collapse = " | "))
+  }
+  # a near miss names the verb it is close to, and nothing echoes the key
+  r <- ask_via_cli(c("explain-eror", "object 'x' not found"))
+  expect_match(r$out, "did you mean `rmoriebricklayer explain-error`", fixed = TRUE)
+  r <- ask_via_cli(c("conifg", "set", "anthropic.key", crlf_key))
+  expect_false(grepl(strrep("a", 40), r$out, fixed = TRUE))
+  expect_match(r$out, "did you mean `rmoriebricklayer config`", fixed = TRUE)
 })

@@ -327,21 +327,32 @@ rule_col_count <- function(n, severity = c("warning", "fatal")) {
 #' @export
 duplicate_rows <- function(data, columns = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
-  .rmbl_df_names(data)
+  # duplicate column names are messy data, which this exists to inspect: every column by position,
+  # a column given by name only when the name is one column's (statistics stress test of 5e1dce5)
   if (nrow(data) == 0L) {
     out <- cbind(data, dupe_count = integer(0))
     return(out)
   }
-  cols <- if (is.null(columns)) names(data) else as.character(columns)
-  missing_cols <- setdiff(cols, names(data))
-  if (length(missing_cols) > 0L) {
-    stop(sprintf(
-      "no such column(s): %s",
-      paste(missing_cols, collapse = ", ")
-    ), call. = FALSE)
+  if (is.null(columns)) {
+    pos <- seq_along(data)
+  } else {
+    cols <- as.character(columns)
+    missing_cols <- setdiff(cols, names(data))
+    if (length(missing_cols) > 0L) {
+      stop(sprintf(
+        "no such column(s): %s",
+        paste(missing_cols, collapse = ", ")
+      ), call. = FALSE)
+    }
+    twice <- cols[cols %in% names(data)[duplicated(names(data))]]
+    if (length(twice)) {
+      stop(sprintf("`data` has two columns named %s: give the columns by position, or rename one", twice[[1L]]),
+           call. = FALSE)
+    }
+    pos <- match(cols, names(data))
   }
-  key <- do.call(paste, c(lapply(cols, function(cn) {
-    as.character(data[[cn]])
+  key <- do.call(paste, c(lapply(pos, function(i) {
+    as.character(data[[i]])
   }), sep = "\r"))
   counts <- table(key)
   dupe_keys <- names(counts)[counts > 1L]
@@ -379,7 +390,7 @@ duplicate_rows <- function(data, columns = NULL) {
 #' @export
 missingness_summary <- function(data) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
-  .rmbl_df_names(data)
+  # every column by position: duplicate or empty names are the messy data this summarises
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
   n <- nrow(data)
   per_col <- vapply(data, function(v) sum(is.na(v)), numeric(1))

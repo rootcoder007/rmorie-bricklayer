@@ -354,7 +354,8 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
     system2 = function(command, args = character(), ...) {
       calls <<- c(calls, command)
       seen <<- c(seen, Sys.getenv("RMBL_PROMPT"))
-      if (identical(command, "sh")) "\002RMBL-LINE\002 sk-typed " else invisible(0L)
+      # the sh found on PATH, by its full path (network stress test of 5e1dce5)
+      if (identical(basename(command), "sh")) "\002RMBL-LINE\002 sk-typed " else invisible(0L)
     },
     .package = "base"
   )
@@ -362,7 +363,7 @@ test_that("a line typed at a terminal in a non-interactive session is read by a 
   withr::local_envvar(RMBL_PROMPT = "before")
   got <- .bl_readline("key> ")
   expect_equal(got, "sk-typed")
-  expect_true("sh" %in% calls)
+  expect_true("sh" %in% basename(calls))
   # the shell prints the prompt once it is ready to read (review of e57fed5): it is handed over in
   # the environment, and the variable is put back afterwards
   expect_true("key> " %in% seen)

@@ -52,6 +52,8 @@ test_that("an endpoint of your own is the first route, with its key and model", 
       rt_reply("own says hi")
     },
     .bl_http_post_local = function(...) stop("a remote endpoint must not take the loopback seam"),
+    # the status below would look the server up: nothing leaves a test (network stress test of 5e1dce5)
+    .bl_http_get = function(url, timeout, headers) list(status = -1L, body = raw(0), error = "offline in tests"),
     .package = "rmoriebricklayer")
   expect_identical(bricklayer_llm_ask("hi"), "own says hi")
   expect_identical(seen$url, "https://api.example.org/v1/chat/completions")

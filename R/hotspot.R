@@ -107,6 +107,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
   counts[as.integer(rownames(tab)), as.integer(colnames(tab))] <- unclass(tab)
   k <- max(1L, ceiling(top * nc))
   hot <- matrix(FALSE, nc, np)
+  emptied <- logical(np)
   rows <- vector("list", np)
   for (j in seq_len(np)) {
     cnt <- counts[, j]
@@ -126,9 +127,12 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     }
     h <- above | tied
     hot[, j] <- h
+    # a period whose hot set the tie emptied has no hot set to compare: its overlap with the period
+    # before and after is unknown, not 0 (statistics stress test of 5e1dce5)
+    emptied[j] <- tied_out > 0L && !any(h)
     half <- if (tot > 0) which(cumsum(srt) >= tot / 2)[1L] else NA_integer_
     jac <- NA_real_
-    if (j > 1L) {
+    if (j > 1L && !emptied[j] && !emptied[j - 1L]) {
       u <- sum(h | hot[, j - 1L])
       if (u > 0) jac <- sum(h & hot[, j - 1L]) / u
     }

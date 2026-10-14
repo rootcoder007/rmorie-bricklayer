@@ -100,6 +100,8 @@ test_that("SIU reports: a team size given as digits, and the French resolver wit
 })
 
 online_now <- function() {
+  # the probe is itself a network request: only in a run that opts in (network stress test of 5e1dce5)
+  if (!identical(Sys.getenv("RMBL_LIVE_TESTS"), "1")) return(FALSE)
   r <- tryCatch(.Call(C_rmbl_http_download, "https://cloud.r-project.org/", tempfile(), 20L, NULL, NULL, NULL, FALSE),
                 error = function(e) NULL)
   !is.null(r) && identical(r$status, 200L)

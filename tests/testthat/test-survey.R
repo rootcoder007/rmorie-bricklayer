@@ -201,7 +201,8 @@ test_that("a stratum with one PSU fails, is removed, or is centred on the overal
 test_that("results print, plot and flag small or empty domains", {
   R <- matrix(toy$w, 12, 4) * c(1, 1.2, 0.8, 1.1)
   R[toy$g == "z", 2] <- 0
-  des <- survey_design(toy, "w", replicates = R, type = "jk1")
+  # synthetic replicates that leave no row out and vary row by row: said for a jackknife
+  expect_warning(des <- survey_design(toy, "w", replicates = R, type = "jk1"), "leaves no row out")
   e <- survey_estimate(des, toy, "y", by = "g", min_n = 5)
   expect_identical(e$flag[e$g != "z"], rep("fewer than 5 respondents", 2))
   e2 <- survey_estimate(des, toy, "y", by = "g", min_n = 1)
@@ -210,7 +211,8 @@ test_that("results print, plot and flag small or empty domains", {
   out <- utils::capture.output(print(des))
   expect_match(out[2], "4 replicate weights, jackknife")
   for (ty in list(list("bootstrap", NULL), list("mean_bootstrap", NULL), list("brr", NULL), list("fay", 0.5))) {
-    d2 <- survey_design(toy, "w", replicates = R, type = ty[[1]], rho = ty[[2]], mean_size = 4)
+    mk <- function() survey_design(toy, "w", replicates = R, type = ty[[1]], rho = ty[[2]], mean_size = 4)
+    if (identical(ty[[1]], "brr")) expect_warning(d2 <- mk(), "leaves no row out") else d2 <- mk()
     expect_length(utils::capture.output(print(d2)), 2L)
   }
   expect_match(utils::capture.output(print(survey_design(toy, "w", strata = "s", fpc = rep(0.5, 12))))[2],
@@ -236,7 +238,8 @@ test_that("replicate weights can be named columns, and a replicate design's df i
   # multipliers per PSU, as replicate weights are (one per row is not a replicate; review of 46de6a9)
   i <- toy$p
   d <- cbind(toy, r1 = toy$w * (1 + 0.1 * sin(i)), r2 = toy$w * (1 + 0.1 * cos(i)), r3 = toy$w * (1 + 0.1 * sin(2 * i)))
-  des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1")
+  # multipliers that vary row by row and leave no row out: said for a jackknife
+  expect_warning(des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1"), "leaves no row out")
   expect_length(des$reps, 3L)
   expect_equal(des$reps[[2]], toy$w * (1 + 0.1 * cos(i)))
   # copies of one weight scaled have rank 1: no degrees of freedom, said so

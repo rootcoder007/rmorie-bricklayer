@@ -98,7 +98,11 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   # the weight given as a vector cannot be recognised by name: it is refused by value for a jackknife
   # (a bootstrap replicate that draws every PSU once is the full weight, legitimately: accepted)
   expect_error(survey_design(d, weights = d$w, replicates = s$rdf, id = "id", type = "jk1"), "the full-sample weight")
-  expect_s3_class(survey_design(d, weights = d$w, replicates = cbind(w = d$w, s$reps)), "rmbl_svy_design")
+  # for a bootstrap it is kept, and said when more replicates equal the weight than chance draws
+  # (statistics stress test of 5e1dce5)
+  expect_warning(des_w <- survey_design(d, weights = d$w, replicates = cbind(w = d$w, s$reps)),
+                 "equal the full-sample weight")
+  expect_s3_class(des_w, "rmbl_svy_design")
   # no id: the id column is the row number
   expect_error(survey_design(d, weights = "w", replicates = s$rdf[, -2]), "the row number")
   expect_error(survey_design(d, weights = "w", replicates = c("w")), "not a replicate weight")
@@ -130,9 +134,9 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   # that draws every PSU once is the weight, legitimately); nothing else is guessed
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "the row number")
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w), type = "jk1"), "the full-sample weight")
-  expect_s3_class(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w)), "rmbl_svy_design")
-  expect_s3_class(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "bootstrap"),
-                  "rmbl_svy_design")
+  expect_warning(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w)), "equal the full-sample weight")
+  expect_warning(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "bootstrap"),
+                 "equal the full-sample weight")
   # genuine sets with a dominant PSU, a jackknife replicate constant on a subset, rounded in a file
   w3 <- rep(c(900, 50, 50), each = 20)
   jk <- sapply(1:3, function(k) w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2))
@@ -141,11 +145,11 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   sub <- cbind(d$w * 25 / 24, d$w * 25 / 24, d$w * c(rep(0, 30), rep(25 / 24, 30)))
   expect_s3_class(survey_design(d, weights = "w", replicates = sub, type = "jk1"), "rmbl_svy_design")
   expect_s3_class(survey_design(d, weights = "w", replicates = round(s$reps, 4)), "rmbl_svy_design")
-  # a genuine replicate that shares the id's name stays (review of 46de6a9, F2 sibling)
+  # a second column with the id's name and other values is refused, as one with the weight's name is
+  # (it was kept as a replicate; NEWS said refused; statistics stress test of 5e1dce5)
   r_id <- s$rdf
   names(r_id)[3] <- "id"
-  expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = r_id, id = "id"), d, "y")$se, se,
-               tolerance = 1e-14)
+  expect_error(survey_design(d, weights = "w", replicates = r_id, id = "id"), "has the id's name but not its values")
   # F2: a genuine replicate under the weight's name is refused, not dropped; the weight itself is set aside
   r2 <- as.data.frame(s$reps)
   names(r2)[1] <- "w"
@@ -223,6 +227,10 @@ test_that("the data must be the design's rows in the design's order", {
   dv <- survey_design(tb, weights = tb$w, replicates = s$reps)
   se0 <- survey_estimate(dv, tb, "y")$se
   tb2 <- tb[sample(nrow(tb)), ]
+  # a real tibble's row names are 1..n after any reorder: without this the shuffled names caught it
+  # and the test passed on builds that never compared the values (statistics stress test of 5e1dce5)
+  attr(tb2, "row.names") <- seq_len(nrow(tb2))
+  expect_identical(attr(tb2, "row.names"), attr(tb, "row.names"))
   expect_error(survey_estimate(dv, tb2, "y"), "not the data frame")
   tb3 <- tb
   tb3$y <- tb3$y * 2

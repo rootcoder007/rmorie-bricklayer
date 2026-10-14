@@ -84,7 +84,7 @@
 
 .bl_write_private_text <- function(p, txt) {
   # the directory as private as its files: under umask 000 it came out 0777 (review of 46de6a9)
-  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE, mode = "0700")
+  .bl_private_dir(dirname(p))
   tmp <- tempfile(pattern = ".cred-", tmpdir = dirname(p), fileext = ".tmp")
   file.create(tmp)
   Sys.chmod(tmp, mode = "0600")
@@ -200,6 +200,16 @@
   if (is.null(value)) return(txt)
   open <- regexpr("{", txt, fixed = TRUE)
   paste0(substr(txt, 1L, open), "\n  \"", key, "\": ", lit, if (length(mem)) "," else "", substr(txt, open + 1L, nch))
+}
+
+
+# A folder for keys, settings or saved answers: created owner-only, and made owner-only when it is
+# already there (mode = "0700" applies only to a folder dir.create() makes, so one an earlier version
+# left at 0777 under umask 000 stayed open; network stress test of 5e1dce5). Windows has no modes.
+.bl_private_dir <- function(d) {
+  if (!dir.exists(d)) dir.create(d, recursive = TRUE, showWarnings = FALSE, mode = "0700")
+  if (.Platform$OS.type == "unix" && dir.exists(d)) Sys.chmod(d, "0700", use_umask = FALSE)
+  invisible(d)
 }
 
 .bl_write_private_json <- function(p, data) {

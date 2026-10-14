@@ -49,6 +49,13 @@ extern "C" int rmbl_interrupt_pending(void) {
  * raised from inside rmbl_interrupt_pending(), over live std::vectors
  * (the 0.5.8 diff review). With a barrier active it does nothing: the
  * barrier raises after the entry point returned. */
+/* A Ctrl-C already pending is raised now, as R raises it (.bl_readline, before the terminal read: left
+ * pending it was lost once the read began; network stress test of 5e1dce5). No C++ object is alive. */
+extern "C" SEXP C_rmbl_check_interrupt(void) {
+    R_CheckUserInterrupt();
+    return R_NilValue;
+}
+
 extern "C" void rmbl_interrupt_raise_unbarriered(void) {
     if (rmbl_barrier_depth == 0) rmbl_raise_interrupt();
 }

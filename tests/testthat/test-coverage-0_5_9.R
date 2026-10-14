@@ -260,7 +260,8 @@ test_that("revocation: extension scans, DER OIDs with zero and multi-byte arcs, 
   expect_identical(der_oid("1.2.840.113549"), as.raw(c(0x06, 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d)))
   # the network seam refuses a loopback address and answers NULL instead of erroring
   # an unresolvable fallback: no Wayback lookup from a test (L4, H8)
-  got <- .rmbl_net_get_file("http://127.0.0.1:1/x", "https://invalid.invalid/x", tempfile(), 1)
+  # both addresses are loopback: refused by the seam before any name is looked up
+  got <- .rmbl_net_get_file("http://127.0.0.1:1/x", "http://127.0.0.1:2/x", tempfile(), 1)
   expect_true(is.null(got) || (is.numeric(got) && got != 200))
   f <- x509_fx()
   leaf <- cert_parse(f$ocsp_good)

@@ -1059,22 +1059,44 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 # pairs closer than `r`: points hashed to cells of side r, each cell compared with itself and
 # four of its neighbours, so every close pair is found once
 .jx_close_pairs <- function(x, y, r, max_pairs) {
+  # distances do not move when the coordinates are shifted, and the cell indices shrink
+  x <- x - min(x)
+  y <- y - min(y)
   cx <- floor(x / r)
   cy <- floor(y / r)
-  # past 2^53 a cell index is not a whole number a double can hold, so neighbouring cells merge
-  # and a pair is counted up to nine times (x = 1e12 with a band of 1e-6; review of 46de6a9)
-  if (any(abs(c(cx, cy)) >= 2^53)) {
-    stop("the coordinates divided by the band exceed 2^53: no cell index can be held; use a wider band or",
-         " rescale the coordinates", call. = FALSE)
-  }
-  # whole numbers written out in full: paste() writes 1e15 and 1e15 + 1 both as "1e+15", one cell
-  key <- function(a, b) sprintf("%.0f %.0f", a, b)
-  pts <- data.frame(i = seq_along(x), k = key(cx, cy))
+  # past 2^52 a cell index is not a whole number with room beside it, so neighbouring cells merge or
+  # skip (x = 1e12 with a band of 1e-6 overcounted; review of 46de6a9). Those points are compared
+  # with every other one directly; one far outlier, or a band so small that every index overflows,
+  # refused the whole test before (statistics stress test of 5e1dce5)
+  far <- !is.finite(cx) | !is.finite(cy) | abs(cx) >= 2^52 | abs(cy) >= 2^52
+  near <- which(!far)
+  # within the band, in units of the band: r * r underflows for a band of 1e-300
+  within <- function(i, j) ((x[i] - x[j]) / r)^2 + ((y[i] - y[j]) / r)^2 <= 1
   out_i <- list()
   out_j <- list()
   total <- 0
+  if (any(far)) {
+    fi <- which(far)
+    total <- length(fi) * length(x)
+    if (total > max_pairs) {
+      stop(sprintf(paste("%d incidents lie too far out for the largest distance band to index (past 2^52",
+                         "bands); comparing them with every other one is more than %s pairs: use a wider",
+                         "band, rescale, or raise `max_pairs`"), length(fi), format(max_pairs, big.mark = ",")),
+           call. = FALSE)
+    }
+    for (i in fi) {
+      j <- setdiff(seq_along(x), i)
+      j <- j[!(far[j] & j < i)]   # each pair of two far points once
+      sel <- within(rep(i, length(j)), j)
+      out_i[[length(out_i) + 1L]] <- pmin(i, j[sel])
+      out_j[[length(out_j) + 1L]] <- pmax(i, j[sel])
+    }
+  }
+  # whole numbers written out in full: paste() writes 1e15 and 1e15 + 1 both as "1e+15", one cell
+  key <- function(a, b) sprintf("%.0f %.0f", a, b)
+  pts <- data.frame(i = near, k = key(cx[near], cy[near]))
   for (off in list(c(0, 0), c(1, -1), c(1, 0), c(1, 1), c(0, 1))) {
-    nb <- data.frame(j = seq_along(x), k = key(cx - off[1L], cy - off[2L]))
+    nb <- data.frame(j = near, k = key(cx[near] - off[1L], cy[near] - off[2L]))
     # sizes first, so a dense cell is refused before memory is spent on it
     a <- table(pts$k)
     b <- table(nb$k)
@@ -1087,8 +1109,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
     }
     m <- merge(pts, nb, by = "k")
     if (all(off == 0)) m <- m[m$i < m$j, ]
-    d2 <- (x[m$i] - x[m$j])^2 + (y[m$i] - y[m$j])^2
-    sel <- d2 <= r * r
+    sel <- within(m$i, m$j)
     out_i[[length(out_i) + 1L]] <- m$i[sel]
     out_j[[length(out_j) + 1L]] <- m$j[sel]
   }

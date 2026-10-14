@@ -41,11 +41,35 @@
 #'   standard error by 37 percent in a test design).}
 #' }
 #'
-#' The replicate columns are only replicates: a column holding
-#' the full-sample weight, the `id`, or any other column of
-#' `data` is refused by name, and BRR and Fay replicates must come
-#' in a Hadamard order (2, or a multiple of 4), so a stray column
-#' is caught instead of being averaged in as one more replicate.
+#' The replicate columns are taken as given: which columns are
+#' replicates is not guessed from their values (rules that tried
+#' refused genuine designs, a dominant PSU or a jackknife on a
+#' subset). Refused, because no genuine replicate can be it: the
+#' `id`'s values, the row numbers, a column of `data` passed under
+#' another name, a second column named like the weight or the `id`
+#' that holds other values, and under JK1, JKn and BRR a copy of the
+#' full-sample weight (equal to it, or within 1 percent of it on every
+#' row). Warned about, because a genuine set can produce it but
+#' rarely does: under the bootstrap, more replicates equal to the
+#' full-sample weight than chance draws; under the bootstrap or
+#' Fay's method, a replicate within 1 percent of the weight on
+#' every row;
+#' under JK1, JKn and BRR, a replicate that leaves no row out; and a
+#' set whose replicates total, on average, under a tenth or over ten
+#' times the weight (multipliers such as \pkg{survey}'s
+#' `$repweights` passed in place of replicate weights). A column of
+#' `data` named in `replicates`, and every column of an unnamed
+#' matrix, is a replicate because it was given as one; a stray that
+#' is itself shaped like a replicate (another design's multipliers, a
+#' constant under the bootstrap) cannot be told from one. BRR and
+#' Fay replicates must come in a Hadamard order (2, or a multiple of
+#' 4).
+#'
+#' The data passed to [survey_estimate()] must be the rows
+#' the design was built on, in the same order: rows in another order
+#' are refused
+#' (within strata or PSUs too), and a column changed since (a
+#' permuted outcome for a permutation test) is not a reorder.
 #'
 #' The design's degrees of freedom (`df = "design"` in
 #' [survey_estimate()]) are PSUs less strata under
@@ -114,7 +138,11 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
                           mean_size = 1, rho = NULL, mse = TRUE,
                           lonely_psu = c("fail", "remove", "adjust"), rscales = NULL, degf = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
-  .rmbl_df_names(data)
+  # only the columns the design names must be unique: a duplicated column it does not use is no
+  # reason to refuse the data (statistics stress test of 5e1dce5)
+  used <- unlist(Filter(function(v) is.character(v), list(weights, strata, psu, fpc, id, replicates)))
+  twice <- used[used %in% names(data)[duplicated(names(data))]]
+  if (length(twice)) stop(sprintf("`data` has two columns named %s: rename one", twice[[1L]]), call. = FALSE)
   n <- nrow(data)
   if (n < 2L) stop("`data` must have at least two rows", call. = FALSE)
   type <- .rmbl_arg(type)
@@ -144,13 +172,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
                 cols = Filter(Negate(is.null),
                               list(weights = named(weights), strata = named(strata), psu = named(psu))))
   check$values <- lapply(check$cols, function(cn) data[[cn]])
-  # every column, in order and sorted: a reordered tibble (row names always 1..n) with a vector
-  # weight gave SE 13.8 for 20.2 silently (review of 46de6a9); a column changed afterwards is not
-  # a reorder and passes
-  # only when nothing is named: a named weight, strata or PSU column is compared by value already,
-  # and hashing every column of a million-row frame on each estimate is a cost to pay only when
-  # there is no other way to notice a reorder
-  if (!length(check$cols)) check$digests <- .svy_column_digests(data)
+  # the rows as a set and in order: a reordered tibble (row names always 1..n) with a vector weight
+  # gave SE 13.8 for 20.2 silently (review of 46de6a9), and rows reordered within their strata or
+  # PSUs passed the named columns' check too (statistics stress test of 5e1dce5)
+  check$rowkeys <- .svy_rowkey_digests(data)
   des <- list(n = n, weights = w, type = NULL, scale = NULL, mse = mse, reps = NULL, strata = NULL,
               psu = NULL, fpc = NULL, lonely_psu = lonely_psu, check = check, degf = degf)
   if (!is.null(replicates)) {
@@ -189,10 +214,17 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         if (anyDuplicated(replicates[[id]])) stop("`id` repeats in `replicates`", call. = FALSE)
         m <- match(data[[id]], replicates[[id]])
         if (anyNA(m)) stop(sprintf("%d row(s) of `data` have no replicate weights", sum(is.na(m))), call. = FALSE)
-        # the one id column, by position: a replicate that happens to share the id's name stays
-        # (it was dropped with it, B 24 -> 23; review of 46de6a9)
+        # a second column with the id's name: the id itself is set aside, and one that holds other
+        # values is refused, as a column with the weight's name is (dropped with the id it was B 24 ->
+        # 23, kept it was a replicate nobody named; reviews of 46de6a9 and 5e1dce5)
+        for (i in which(names(replicates) == id)[-1L]) {
+          if (!identical(replicates[[i]], replicates[[id]])) {
+            stop(sprintf(paste("column %s of `replicates` has the id's name but not its values: rename it,",
+                               "or give only the replicate columns"), id), call. = FALSE)
+          }
+        }
         id_values <- replicates[[id]][m]
-        replicates <- replicates[m, -match(id, names(replicates)), drop = FALSE]
+        replicates <- replicates[m, names(replicates) != id, drop = FALSE]
       }
       if (nrow(replicates) != n) {
         stop(sprintf("`replicates` must have one row per row of `data` (%d)", n), call. = FALSE)
@@ -204,7 +236,9 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       if (is.character(weights) && length(weights) == 1L && weights %in% names(replicates)) {
         for (i in which(names(replicates) == weights)) {
           v <- replicates[[i]]
-          if (!is.numeric(v) || !identical(as.numeric(v), as.numeric(w))) {
+          # the weight within a rounding error (1e-12 of it, the replicate check's own tolerance):
+          # identical() refused a copy 1e-13 off (statistics stress test of 5e1dce5)
+          if (!is.numeric(v) || any(abs(as.numeric(v) - w) > 1e-12 * pmax(abs(w), .Machine$double.xmin))) {
             stop(sprintf(paste("column %s of `replicates` has the full weight's name but not its values: rename",
                                "it, or give only the replicate columns"), weights), call. = FALSE)
           }
@@ -320,11 +354,12 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     cn <- ck$cols[[k]]
     cn %in% names(data) && identical(data[[cn]], ck$values[[k]])
   }, logical(1)))
-  if (same_rows && same_cols && !is.null(ck$digests)) {
-    now <- .svy_column_digests(data[intersect(names(data), rownames(ck$digests))])
-    was <- ck$digests[rownames(now), , drop = FALSE]
-    # the same values in another order: a reorder, whatever the row names say
-    if (any(now[, "ordered"] != was[, "ordered"] & now[, "sorted"] == was[, "sorted"])) same_rows <- FALSE
+  if (same_rows && same_cols && !is.null(ck$rowkeys) && all(ck$rowkeys$cols %in% names(data))) {
+    now <- .svy_rowkey_digests(data[ck$rowkeys$cols])
+    # the same rows in another order: a reorder, whatever the row names say. A column changed since
+    # (a permuted y for a permutation test, a recode) changes the rows themselves and passes; it was
+    # refused as a reorder when each column was compared on its own (statistics stress test of 5e1dce5)
+    if (identical(now$sorted, ck$rowkeys$sorted) && !identical(now$ordered, ck$rowkeys$ordered)) same_rows <- FALSE
   }
   if (!same_rows || !same_cols) {
     stop(paste("`data` is not the data frame the design was built on (its rows are in another order, or",
@@ -332,17 +367,42 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   }
 }
 
-# A digest of each column as given and sorted (rows: columns; "ordered", "sorted").
-.svy_column_digests <- function(data) {
-  if (!length(data)) return(matrix(character(), 0L, 2L, dimnames = list(NULL, c("ordered", "sorted"))))
-  one <- function(v) {
-    v <- as.character(v)
-    v[is.na(v)] <- "\x1fNA"
-    c(core_sha256(paste(v, collapse = "\x1f")), core_sha256(paste(sort(v), collapse = "\x1f")))
+# One number per row that does not depend on the row order: each column's values coded by their
+# rank among its distinct values (a radix sort, so no locale), folded into the row's key modulo
+# 2^31 - 1 (exact in a double). Digested in row order and sorted: the same rows in another order
+# have the same sorted digest and a different ordered one. A million rows of ten columns take about
+# a second; the per-column text digests this replaces took 88 s per estimate (statistics stress test
+# of 5e1dce5).
+.svy_rowkey_digests <- function(data) {
+  nm <- names(data) %||% character(length(data))
+  # the columns that can be found again by name: atomic, named, the name used once
+  keep <- vapply(data, function(v) is.atomic(v) && !is.null(v), NA) & !is.na(nm) & nzchar(nm) &
+    !(nm %in% nm[duplicated(nm)])
+  cols <- nm[keep]
+  n <- nrow(data)
+  k <- numeric(n)
+  # x mod 2^31 - 1 by floor(): R's %% on doubles took most of the time. Deterministic, which is all a
+  # key needs, and under 2^53 after the next multiply
+  fold <- function(x) x - 2147483647 * floor(x / 2147483647)
+  for (i in which(keep)) {
+    v <- as.vector(data[[i]])   # a one-dimensional array (apiclus2 has one) is its values
+    code <- if (is.double(v)) {
+      # the bits of the number: the same value gives the same code wherever its row is, with no
+      # sort or match
+      b <- readBin(writeBin(v, raw()), "integer", n = 2L * n)
+      fold(fold(b[c(TRUE, FALSE)]) * 65599 + b[c(FALSE, TRUE)])
+    } else if (is.integer(v) || is.logical(v)) {
+      x <- as.numeric(v)
+      x[is.na(x)] <- -1
+      x
+    } else {
+      if (is.complex(v)) v <- paste(Re(v), Im(v))
+      match(v, sort(unique(v), method = "radix", na.last = TRUE))
+    }
+    k <- fold(k * 1000003 + code)
   }
-  d <- t(vapply(data, one, character(2), USE.NAMES = TRUE))
-  colnames(d) <- c("ordered", "sorted")
-  d
+  list(cols = cols, ordered = core_sha256(writeBin(k, raw())),
+       sorted = core_sha256(writeBin(sort(k, method = "radix"), raw())))
 }
 
 # The replicates are exactly the columns given, by name or as the object passed: nothing is
@@ -366,12 +426,31 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   numcols <- Filter(is.numeric, as.list(data))
   key <- function(v) c(v[1L], v[n], sum(v))
   keys <- lapply(numcols, function(v) key(as.numeric(v)))
+  warned <- character()
+  equal <- integer()
   for (b in seq_along(reps)) {
     r <- reps[[b]]
     rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
+    nm <- names(reps)[[b]] %||% as.character(b)
     if (identical(r, w) || all(rel < 1e-12)) {
       if (!type %in% c("bootstrap", "mean_bootstrap")) refuse(b, "the full-sample weight")
+      equal <- c(equal, b)
       next
+    }
+    # every row within 1% of the weight, not equal to it: a rounded, jittered or single-precision
+    # copy. A jackknife or BRR replicate zeroes the PSUs it leaves out, so there it cannot be one;
+    # under a bootstrap or Fay's method it is said
+    if (all(rel < 0.01)) {
+      if (type %in% c("jk1", "jkn", "brr")) refuse(b, "a copy of the full-sample weight (within 1% on every row)")
+      warned <- c(warned, sprintf("replicate %s is within 1%% of the full-sample weight on every row", nm))
+    } else if (type %in% c("jk1", "jkn", "brr") && !any(r == 0 & w > 0) &&
+                 length(unique(signif(r / pmax(w, .Machine$double.xmin), 9))) > 2L) {
+      # a jackknife or BRR replicate leaves PSUs out (their rows are 0) and scales the rest by one
+      # factor (two for JKn: its stratum's and 1 elsewhere). On a subset the PSU it leaves out may
+      # be outside it, so a genuine one can leave no row out, but its rows still share one or two
+      # factors; a rounded weight or a constant does not (rounded weights were kept silently)
+      warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
+                                  nm, toupper(type)))
     }
     if (!is.null(idv) && identical(r, idv)) refuse(b, "the id")
     if (identical(r, rown) || (!is.null(rn) && identical(r, rn))) refuse(b, "the row number")
@@ -382,6 +461,38 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         refuse(b, sprintf("column %s of `data`", cn))
       }
     }
+  }
+  # a bootstrap draw of every PSU once is the full weight, legitimately: with m PSUs it happens with
+  # chance m!/m^m per replicate (22% at three). More such replicates than chance makes (a Poisson
+  # tail under 1e-4) means the weight itself was passed beside them: said, not refused (kept
+  # silently, SE 0.270 for 0.284; statistics stress test of 5e1dce5). m is read from the replicates:
+  # the rows of one PSU share their multiplier in every replicate
+  if (length(equal) && identical(type, "bootstrap")) {
+    z <- cos(seq_along(reps))
+    sig <- numeric(n)
+    for (b in seq_along(reps)) sig <- sig + z[[b]] * reps[[b]] / pmax(w, .Machine$double.xmin)
+    m <- length(unique(signif(sig, 10)))
+    expect <- length(reps) * exp(lfactorial(m) - m * log(m))
+    if (stats::ppois(length(equal) - 1L, expect, lower.tail = FALSE) < 1e-4) {
+      warned <- c(warned, sprintf(paste("%d replicate(s) equal the full-sample weight (%s), more than a",
+                                        "bootstrap of %d PSUs draws"),
+                                  length(equal), paste(utils::head(names(reps)[equal], 3L), collapse = ", "), m))
+    }
+  }
+  # the set as a whole: replicate weights total, on average, what the weight totals (jackknife and
+  # bootstrap replicate totals average to the full total, whatever one dominant PSU does to a single
+  # replicate). An average a tenth of that or ten times it is survey's multipliers ($repweights) or
+  # another scale passed in place of the weights (accepted silently: SE 20.16 for 28.28 on apiclus2;
+  # statistics stress test of 5e1dce5)
+  ratio <- mean(vapply(reps, sum, 0)) / sum(w)
+  if (is.finite(ratio) && (ratio < 0.1 || ratio > 10)) {
+    warned <- c(warned, sprintf(paste("the replicates total %.3g times the full-sample weight: multipliers",
+                                      "(as survey's $repweights) rather than replicate weights?"), ratio))
+  }
+  if (length(warned)) {
+    warning(paste0(paste(utils::head(warned, 5L), collapse = "; "),
+                   if (length(warned) > 5L) sprintf("; and %d more", length(warned) - 5L) else "",
+                   ". Kept as given: give only the replicate weights if these are not"), call. = FALSE)
   }
   invisible(TRUE)
 }

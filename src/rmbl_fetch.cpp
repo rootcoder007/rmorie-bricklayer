@@ -631,8 +631,19 @@ size_t write_to_file(char *ptr, size_t sz, size_t nm, void *ud) {
     return std::fwrite(ptr, 1, n, fs->fp);
 }
 
+/* A pending Ctrl-C (or a setTimeLimit() limit, which R checks in the same place) ends a GET as it
+ * ends a POST. rmbl_interrupt_pending() takes the pending interrupt, so the callback records it: asked
+ * again after the transfer it is gone, and the GET came back as a plain failure (exit 0, a Wayback
+ * run polled on past its time limit; network stress test of 5e1dce5). */
+static int get_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
+    if (!rmbl_interrupt_pending()) return 0;
+    *static_cast<bool *>(ud) = true;
+    return 1;
+}
+
 /* GET a URL into a std::string. Returns HTTP status, or -1 on transport
- * failure. Follows redirects; hard total-timeout so nothing can hang. */
+ * failure. Follows redirects; hard total-timeout so nothing can hang. A Ctrl-C ends it and is
+ * raised by the entry point's barrier. */
 long http_get_string(const std::string &url, std::string &out, long timeout_s) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
@@ -646,7 +657,12 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
     curl_easy_setopt(h, CURLOPT_ACCEPT_ENCODING, "");
     curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_to_string);
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
+    bool stopped = false;
+    curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, get_xferinfo);
+    curl_easy_setopt(h, CURLOPT_XFERINFODATA, &stopped);
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, NULL, nullptr);
+    if (rc == CURLE_ABORTED_BY_CALLBACK && stopped) rmbl_kernel_interrupted = 1;
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(h);
@@ -759,11 +775,6 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
 
 /* GET a URL into a string with extra headers (the bearer key of the hosted
  * MORIE tier). Returns HTTP status, -1 on failure. */
-/* a pending Ctrl-C ends a GET as it ends a POST (`rmbl models` ran to its timeout; review of 46de6a9) */
-static int get_xferinfo(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
-    return rmbl_interrupt_pending() ? 1 : 0;
-}
-
 long http_get_string(const std::string &url, std::string &out, long timeout_s,
                      const std::vector<std::string> &extra_headers,
                      std::string *err = NULL, bool allow_loopback = false,
@@ -772,8 +783,10 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     if (!h) return -1;
     out.clear();
     std::string ra_sink;
+    bool got_interrupt = false;
     curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, get_xferinfo);
+    curl_easy_setopt(h, CURLOPT_XFERINFODATA, &got_interrupt);
     curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
     curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
@@ -789,7 +802,7 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &extra_headers, allow_loopback, true);
-    const bool stopped = rc == CURLE_ABORTED_BY_CALLBACK && rmbl_interrupt_pending();
+    const bool stopped = rc == CURLE_ABORTED_BY_CALLBACK && got_interrupt;
     if (interrupted) *interrupted = stopped;
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
