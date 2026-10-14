@@ -19,9 +19,10 @@ test_that("a key is checked at the data service: /v1/whoami, or the manifest on 
   expect_length(seen, 1L)
   local_mocked_bindings(.bl_http_get = function(...) stop("no network"))
   expect_null(dk_ns(".bl_key_reply")("https://data.example.org", "sk-x"))
-  # login --token asks the data service named by the document
+  # login --token asks the data service named by the signed document, never MORIE_DATA_URL (G3)
   asked <- NULL
-  local_mocked_bindings(.bl_data_url = function() "https://data.example.org",
+  withr::local_envvar(MORIE_DATA_URL = "https://data2.example.org")
+  local_mocked_bindings(.rmbl_services_data = function() list(mode = "key", base_url = "https://data.example.org"),
                         .bl_key_reply = function(base, key, timeout = 10) {
                           asked <<- base
                           list(status = 403L)
