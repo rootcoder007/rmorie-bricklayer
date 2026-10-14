@@ -415,7 +415,8 @@ test_that("knox_test(): seeds, dates, degrees and the near-repeat signal in the 
 
 test_that("knox_test(): bad input is refused in words", {
   expect_error(knox_test(1:3, 1:2, 1:3, 1, 1), "same length")
-  expect_error(knox_test(c(1, NA, 3), 1:3, 1:3, 1, 1, coords = "planar"), "finite")
+  # an incident without a location is dropped and said; two are not enough
+  expect_error(suppressMessages(knox_test(c(1, NA, 3), 1:3, 1:3, 1, 1, coords = "planar")), "at least three")
   expect_error(knox_test(1:3, 1:3, 1:3, c(2, 1), 1, coords = "planar"), "increasing")
   expect_error(knox_test(1:3, 1:3, 1:3, 1, 0, coords = "planar"), "positive")
   expect_error(knox_test(1:3, 1:3, 1:3, 1, 1, nsim = 5, coords = "planar"), "at least 19")

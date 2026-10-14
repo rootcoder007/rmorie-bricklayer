@@ -397,7 +397,10 @@ write_text_fallback <- function(text, path) {
 # emoji, Mongolian and CJK glyph variants) and a flag tag sequence (U+1F3F4, tag letters, U+E007F:
 # the flags of Scotland and Wales). One helper for every printer (the data tables, the Wayback
 # results).
-.rmbl_printable <- function(x) {
+# `lines = TRUE` keeps newlines and tabs (a model's answer, which is text to read, not a cell of a
+# table): the screen-clearing, title-setting and clipboard-writing escapes still go, with every
+# other control character (review of 29a55d8, L1).
+.rmbl_printable <- function(x, lines = FALSE) {
   x <- as.character(x)
   u <- !is.na(x) & Encoding(x) == "unknown" & validUTF8(x)
   v <- x[u]
@@ -406,7 +409,10 @@ write_text_fallback <- function(text, path) {
   o <- !is.na(x) & !u & Encoding(x) != "UTF-8"
   x[o] <- iconv(x[o], "", "UTF-8", sub = "?")
   x <- gsub("(*UTF)\033\\[[0-9;?]*[ -/]*[@-~]", "", x, perl = TRUE)
-  x <- gsub(paste0("(*UTF)[\\x{00}-\\x{1f}\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
+  # an operating-system command (a title, a clipboard write) ends in BEL or ESC \
+  x <- gsub("(*UTF)\033\\][^\a\033]*(\a|\033\\\\)?", "", x, perl = TRUE)
+  x <- gsub(paste0("(*UTF)[", if (lines) "\\x{00}-\\x{08}\\x{0b}-\\x{1f}" else "\\x{00}-\\x{1f}",
+                   "\\x{7f}-\\x{9f}\\x{00ad}\\x{034f}\\x{061c}\\x{115f}\\x{1160}",
                    "\\x{17b4}\\x{17b5}\\x{180e}\\x{180f}\\x{200b}\\x{200e}\\x{200f}\\x{2028}-\\x{202e}",
                    "\\x{2060}-\\x{206f}\\x{3164}\\x{feff}\\x{ffa0}\\x{fff0}-\\x{fffb}]"), "", x, perl = TRUE)
   # tag characters: kept only as a flag sequence, dropped anywhere else

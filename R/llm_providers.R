@@ -71,9 +71,18 @@
   pr <- .bl_preset(id)
   for (e in c(pr$key_env, if (nzchar(pr$alt_env)) pr$alt_env)) {
     v <- trimws(Sys.getenv(e, unset = ""))
-    if (nzchar(v)) return(v)
+    if (nzchar(v)) return(.bl_key_text(v, e))
   }
-  .bl_config_value(pr$key_env)
+  .bl_key_text(.bl_config_value(pr$key_env), paste0(id, ".key"))
+}
+
+# A key is one line of printable text: a line break or control character inside one would go to
+# the wire as a second request header (review of 29a55d8, L3). NULL passes through.
+.bl_key_text <- function(key, what) {
+  if (!is.null(key) && grepl("[[:cntrl:]]", key)) {
+    stop(sprintf("%s has a line break or control character in it: set it to the key alone", what), call. = FALSE)
+  }
+  key
 }
 
 # The route for a provider: list(name, id, api, base, key, model, local = FALSE), or NULL when no key.
@@ -138,6 +147,7 @@
 }
 
 .bl_openai_parse <- function(json) {
+  if (!length(json$choices)) return(list(text = "", tool_calls = list(), finish = ""))
   ch <- json$choices[[1L]]
   msg <- ch$message
   calls <- lapply(msg$tool_calls %||% list(), function(tc) {
@@ -256,6 +266,7 @@
 }
 
 .bl_gemini_parse <- function(json) {
+  if (!length(json$candidates)) return(list(text = "", tool_calls = list(), finish = ""))
   cand <- json$candidates[[1L]]
   txt <- character()
   calls <- list()
@@ -298,7 +309,8 @@
 
 .bl_llm_wait_label <- function(model) {
   if (.bl_dl_quiet() || !.bl_stderr_tty()) return("")
-  paste(model %||% "the model", "is", .bl_wait$what %||% "thinking")
+  # the model's name can come from a server's own list (Ollama's /api/tags): printable or nothing
+  paste(.rmbl_printable(model %||% "the model"), "is", .bl_wait$what %||% "thinking")
 }
 
 # One chat turn on a route: list(text, tool_calls, finish). One retry when no HTTP answer came.
@@ -313,8 +325,10 @@
     .bl_post_json(req$url, req$body, timeout = timeout, headers = .bl_llm_headers(rt), local = isTRUE(rt$local))
   }
   res <- send()
-  if (!isTRUE(res$status > 0L)) {
-    Sys.sleep(1)  # a dropped connection is often momentary
+  # a dropped connection is often momentary: one more try. Never after Ctrl-C (the barrier raises
+  # it before this line; a stub that returns the status instead is not sent the prompt twice either)
+  if (!isTRUE(res$status > 0L) && !grepl("interrupted", res$error %||% "", fixed = TRUE)) {
+    Sys.sleep(1)
     res <- send()
   }
   if (!identical(res$status, 200L)) {
@@ -329,7 +343,7 @@
     .bl_reply_error(res, .bl_route_what(rt), secret = rt$key %||% "")
   }
   out <- .bl_llm_parse(rt, res$json)
-  out$text <- trimws(out$text)
+  out$text <- .rmbl_printable(trimws(out$text), lines = TRUE)
   if (!allow_empty && !nzchar(out$text) && !length(out$tool_calls)) {
     stop(paste0(.bl_route_what(rt), " returned no text",
                 if (nzchar(out$finish)) sprintf(" (finish reason: %s; try again, or another model)", out$finish)),
@@ -352,10 +366,10 @@
   j <- tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE), error = function(e) NULL)
   if (identical(rt$api, "gemini")) {
     ok <- Filter(function(m) "generateContent" %in% unlist(m$supportedGenerationMethods), j$models %||% list())
-    return(sub("^models/", "", vapply(ok, function(m) as.character(m$name %||% ""), "")))
+    return(.rmbl_printable(sub("^models/", "", vapply(ok, function(m) as.character(m$name %||% ""), ""))))
   }
   ids <- vapply(j$data %||% list(), function(m) as.character(m$id %||% "")[1L], "")
-  ids[nzchar(ids)]
+  .rmbl_printable(ids[nzchar(ids)])
 }
 
 # A route in a sentence: "the own endpoint", "the local Ollama", but "OpenAI".

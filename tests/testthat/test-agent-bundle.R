@@ -3,7 +3,8 @@
 test_that("agent_bundle() returns a setup hint when no key is stored", {
   Sys.setenv(XDG_CONFIG_HOME = tempfile("xdg-"))
   on.exit(Sys.unsetenv("XDG_CONFIG_HOME"), add = TRUE)
-  withr::local_envvar(OPENAI_API_KEY = NA, OLLAMA_HOST = "off")
+  withr::local_envvar(OPENAI_API_KEY = NA, OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = NA, MORIE_LLM_API_KEY = NA,
+                      MORIE_LLM_ROUTE = NA)
   expect_match(agent_bundle("hello"), "No language-model route")
   expect_match(agent_bundle("hello"), "config setup` walks through it", fixed = TRUE)
   expect_match(agent_bundle("hello", route = "ollama"), "local Ollama: OLLAMA_HOST=off")

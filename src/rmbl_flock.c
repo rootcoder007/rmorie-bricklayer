@@ -71,10 +71,7 @@ static const char *rmbl_path_arg(SEXP path) {
 }
 
 /* The descriptor of the held lock, or -1 when another process holds it past the timeout. */
-SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
-    const char *p = rmbl_path_arg(path);
-    int tmo = asInteger(timeout_ms);
-    if (tmo == NA_INTEGER || tmo < 0) tmo = 0;
+static int rmbl_flock_try(const char *p, int tmo) {
 #ifdef _WIN32
     int fd = _open(p, _O_RDWR | _O_CREAT | _O_BINARY | _O_NOINHERIT, _S_IREAD | _S_IWRITE);
 #else
@@ -96,31 +93,33 @@ SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
         HANDLE h = (HANDLE) _get_osfhandle(fd);
         OVERLAPPED ov;
         memset(&ov, 0, sizeof ov);
-        if (LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ov)) return ScalarInteger(fd);
+        if (LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ov)) return fd;
         DWORD we = GetLastError();
         if (we != ERROR_LOCK_VIOLATION && we != ERROR_IO_PENDING) { why = "cannot be locked"; e = EACCES; continue; }
 #else
-        if (flock(fd, LOCK_EX | LOCK_NB) == 0) return ScalarInteger(fd);
+        if (flock(fd, LOCK_EX | LOCK_NB) == 0) return fd;
         e = errno;
         if (e != EWOULDBLOCK && e != EAGAIN && e != EINTR) { why = "cannot be locked"; continue; }
 #endif
         if (rmbl_now_ms() - start >= (double) tmo) {
             RMBL_CLOSE(fd);
-            return ScalarInteger(-1);
+            return -1;
         }
         rmbl_sleep_ms(20);
     }
     RMBL_CLOSE(fd);
     if (e != 0) error("the lock file %s %s: %s", p, why, strerror(e));
     error("the lock file %s %s", p, why);
-    return R_NilValue; /* not reached */
+    return -1; /* not reached */
 }
 
-SEXP C_rmbl_flock_release(SEXP fd_) {
-    int fd = asInteger(fd_);
-    if (fd == NA_INTEGER || fd < 0) return R_NilValue;
-    /* stdin, stdout and stderr are never a lock: closing 1 shut R's console output */
-    if (fd <= 2) error("descriptor %d is not a lock this package holds", fd);
+SEXP C_rmbl_flock_acquire(SEXP path, SEXP timeout_ms) {
+    int tmo = asInteger(timeout_ms);
+    if (tmo == NA_INTEGER || tmo < 0) tmo = 0;
+    return ScalarInteger(rmbl_flock_try(rmbl_path_arg(path), tmo));
+}
+
+static void rmbl_flock_close(int fd) {
 #ifdef _WIN32
     HANDLE h = (HANDLE) _get_osfhandle(fd);
     OVERLAPPED ov;
@@ -130,7 +129,39 @@ SEXP C_rmbl_flock_release(SEXP fd_) {
     flock(fd, LOCK_UN);
 #endif
     RMBL_CLOSE(fd);
+}
+
+SEXP C_rmbl_flock_release(SEXP fd_) {
+    int fd = asInteger(fd_);
+    if (fd == NA_INTEGER || fd < 0) return R_NilValue;
+    /* stdin, stdout and stderr are never a lock: closing 1 shut R's console output */
+    if (fd <= 2) error("descriptor %d is not a lock this package holds", fd);
+    rmbl_flock_close(fd);
     return R_NilValue;
+}
+
+/* Take the lock and run `fn()` under it in one C frame, the release registered with R as the
+ * cleanup of that frame (R_ExecWithCleanup): an error or a Ctrl-C anywhere inside fn() unwinds
+ * through the cleanup and the descriptor is closed. Nothing R-level runs between the lock being
+ * taken and the release being registered, so no interrupt can land in the gap (an on.exit()
+ * handler is itself R code that an interrupt can cut short before its .Call: 73 to 95 locks per
+ * 5,000 interrupts stayed held for the rest of the session; review of 29a55d8, G6). `busy` is
+ * returned as is when another process holds the lock: the caller waits in R, where Ctrl-C works,
+ * and asks again. */
+static SEXP rmbl_flock_call_fn(void *d) {
+    SEXP call = PROTECT(lang1((SEXP) d));
+    SEXP r = eval(call, R_GlobalEnv);
+    UNPROTECT(1);
+    return r;
+}
+static void rmbl_flock_cleanup(void *d) {
+    rmbl_flock_close(*(int *) d);
+}
+SEXP C_rmbl_flock_with(SEXP path, SEXP fn, SEXP busy) {
+    if (!isFunction(fn)) error("`fn` must be a function");
+    int fd = rmbl_flock_try(rmbl_path_arg(path), 0);
+    if (fd < 0) return busy;
+    return R_ExecWithCleanup(rmbl_flock_call_fn, (void *) fn, rmbl_flock_cleanup, &fd);
 }
 
 /* "missing", "regular", "directory" or "other" (a device, a FIFO, a socket): the used-index

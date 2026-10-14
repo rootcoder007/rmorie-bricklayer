@@ -317,7 +317,8 @@ test_that("a model without tools gets the matching help pages instead; spent rou
   }
   ok <- list(choices = list(list(finish_reason = "stop", message = list(content = "Use knox_test()."))))
   s <- fake_post(list(refuse, ok))
-  local_mocked_bindings(.bl_post_json = s$post)
+  # the 400 asks the provider for its model list: never the real api.openai.com from a test (L4)
+  local_mocked_bindings(.bl_post_json = s$post, .bl_http_get = function(...) stop("no network in tests"))
   expect_match(bricklayer_llm_ask("near repeat burglary in space and time"), "knox_test")
   second <- s$calls[[2L]]$payload
   expect_null(second$tools)
@@ -547,6 +548,7 @@ test_that("route_info says which route would answer; chat sends a whole conversa
   withr::local_envvar(GROQ_API_KEY = NA)
   expect_error(bricklayer_llm_chat(convo), "No language-model route")
   withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = NA)
+  local_mocked_bindings(.bl_http_get = function(...) stop("no network in tests"))  # no api.groq.com (L4)
   expect_error(bricklayer_llm_chat(convo, route = "groq"), "Groq has no model to use")
 })
 
@@ -650,9 +652,9 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   local_mocked_bindings(.bl_llm_chat = function(...) {
     n <<- n + 1L
     list(text = sprintf("answer %d", n), tool_calls = list())
-  }, .package = "rmoriebricklayer")
-  a1 <- bricklayer_llm_ask("How do I sign?", docs = FALSE)
-  a2 <- bricklayer_llm_ask("  how do i   SIGN? ", docs = FALSE)   # case and spacing aside, the same question
+  }, .bl_stdin_tty = function() TRUE, .bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
+  expect_message(a1 <- bricklayer_llm_ask("How do I sign?", docs = FALSE), "answers are kept on this machine")
+  a2 <- bricklayer_llm_ask("  How do I   sign? ", docs = FALSE)   # spacing aside, the same question
   expect_identical(as.character(a1), "answer 1")
   expect_identical(as.character(a2), "answer 1")
   expect_null(attr(a1, "cached"))
@@ -679,10 +681,12 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   bricklayer_llm_ask("How do I sign?", docs = FALSE)
   expect_identical(n, before + 1L)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
-  withr::local_options(morie.progress = FALSE)   # nobody watching (a script, a check): nothing read or kept
+  # nobody watching (a script, a pipeline `> file`, a check): nothing read or kept
+  local_mocked_bindings(.bl_stdout_tty = function() FALSE, .package = "rmoriebricklayer")
   unlink(list.files(d, full.names = TRUE))
   bricklayer_llm_ask("a script's question", docs = FALSE)
   expect_length(list.files(d), 0L)
+  local_mocked_bindings(.bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
   expect_error(bricklayer_llm_ask("q", fresh = NA), "fresh")
   # the CLI says when an answer was saved, and --fresh asks anew
   withr::local_options(morie.progress = TRUE)
@@ -716,12 +720,34 @@ test_that("the answer folder stays small: expired answers and the oldest past th
   expect_identical(ns(".bl_answer_prune")(withr::local_tempdir()), 0L)
 })
 
-test_that("no answer is kept during a test run or a package check", {
+test_that("no answer is kept during a test run, a package check, or from a script", {
   withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
   withr::local_envvar(MORIE_LLM_CACHE = NA, TESTTHAT = "true", `_R_CHECK_PACKAGE_NAME_` = NA)
   expect_false(ns(".bl_answer_cache_on")())
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = "rmorie")
   expect_false(ns(".bl_answer_cache_on")())
   withr::local_envvar(`_R_CHECK_PACKAGE_NAME_` = NA)
-  expect_true(ns(".bl_answer_cache_on")())
+  # the command line's progress option is not a terminal (`rmbl ask ... </dev/null >file` wrote the
+  # question and answer to the cache; review of 29a55d8, G4): both stdin and stdout must be one
+  local_mocked_bindings(.bl_stdin_tty = function() FALSE, .package = "rmoriebricklayer")
+  expect_false(ns(".bl_answer_cache_on")())
+  local_mocked_bindings(.bl_stdin_tty = function() TRUE, .package = "rmoriebricklayer")
+  expect_identical(ns(".bl_answer_cache_on")(), isatty(stdout()))
+  withr::local_options(morie.quiet = TRUE)
+  expect_false(ns(".bl_answer_cache_on")())
+})
+
+test_that("the answer key keeps the question's case and the stored question is checked on a hit", {
+  rt <- list(name = "openai", base = "https://api.openai.com/v1")
+  k <- ns(".bl_answer_key")
+  expect_false(identical(k(rt, "m", "what is df$X?"), k(rt, "m", "what is df$x?")))
+  expect_identical(ns(".bl_answer_key")(rt, "m", "what  is\tdf$X? "), ns(".bl_answer_key")(rt, "m", "what is df$X?"))
+  d <- withr::local_tempdir()
+  withr::local_options(rmoriebricklayer.llm_cache_dir = d)
+  key <- k(rt, "m", "q one")
+  rec <- list(question = "q one", model = "m", answer = "A", time = "t")
+  writeLines(bricklayer_json_to_json(rec, auto_unbox = TRUE), file.path(d, paste0(key, ".json")))
+  local_mocked_bindings(.bl_answer_cache_on = function() TRUE, .package = "rmoriebricklayer")
+  expect_identical(as.character(ns(".bl_answer_get")(key, "q one")), "A")
+  expect_null(ns(".bl_answer_get")(key, "q two"))
 })

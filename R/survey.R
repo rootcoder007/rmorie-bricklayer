@@ -180,13 +180,22 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
         # by position, not by name: replicate columns may be unnamed or share a name
         replicates <- replicates[m, names(replicates) != id, drop = FALSE]
       }
-      # the full weight named in `weights`, shipped beside the replicates (CSUS's bootstrap file carries
-      # WGT_PUMF), is the weight and not a replicate
-      if (is.character(weights) && length(weights) == 1L) {
-        replicates <- replicates[, names(replicates) != weights, drop = FALSE]
-      }
       if (nrow(replicates) != n) {
         stop(sprintf("`replicates` must have one row per row of `data` (%d)", n), call. = FALSE)
+      }
+      # the full weight named in `weights`, shipped beside the replicates (CSUS's bootstrap file carries
+      # WGT_PUMF), is the weight and not a replicate: set aside when it is the weight. A column that
+      # only carries the weight's name is refused, not dropped (a genuine replicate called "pw" went
+      # silently, B 24 -> 23; review of 29a55d8, F2)
+      if (is.character(weights) && length(weights) == 1L && weights %in% names(replicates)) {
+        for (i in which(names(replicates) == weights)) {
+          v <- replicates[[i]]
+          if (!is.numeric(v) || !identical(as.numeric(v), as.numeric(w))) {
+            stop(sprintf(paste("column %s of `replicates` has the full weight's name but not its values: rename",
+                               "it, or give only the replicate columns"), weights), call. = FALSE)
+          }
+        }
+        replicates <- replicates[, names(replicates) != weights, drop = FALSE]
       }
       reps <- as.list(replicates)
       if (is.null(names(reps)) || any(!nzchar(names(reps)))) names(reps) <- sprintf("V%d", seq_along(reps))
@@ -197,8 +206,22 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     # a cheap key first (first value, last value, sum), the full comparison only on a match: a
     # thousand replicates against hundreds of data columns stays fast
     key <- function(v) c(v[1L], v[n], sum(v))
-    # the replicate columns named in `data` are the replicates themselves, not columns to compare against
-    numcols <- Filter(is.numeric, as.list(data)[setdiff(names(data), if (is.character(replicates)) replicates)])
+    # the replicate columns named in `data` are the replicates themselves, not columns to compare
+    # against; so are the replicates when every one of them is a column of `data` taken out under
+    # its own name (`replicates = d[paste0("bw", 1:24)]`, the layout where the replicate weights
+    # ship in the analysis file: refused as "column bw1 of `data`"; review of 29a55d8, F1). When
+    # only some match, those are stray columns and are refused below
+    from_data <- character()
+    if (is.character(replicates)) {
+      from_data <- replicates
+    } else {
+      same <- vapply(names(reps), function(nm) {
+        nm %in% names(data) && is.numeric(reps[[nm]]) && is.numeric(data[[nm]]) &&
+          identical(as.numeric(reps[[nm]]), as.numeric(data[[nm]]))
+      }, NA)
+      if (length(same) && all(same)) from_data <- names(reps)
+    }
+    numcols <- Filter(is.numeric, as.list(data)[setdiff(names(data), from_data)])
     numcols <- lapply(numcols, as.numeric)
     keys <- lapply(numcols, key)
     wkey <- key(w)
@@ -226,6 +249,22 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       }
       as.numeric(r)
     })
+    # a replicate weight sums to about the full weights' total (JK, BRR, Fay, bootstrap and SDR all
+    # keep it; a 5 to 1 margin covers any of them): a row number, an id, a constant column or
+    # survey's multiplier matrix (as.svrepdesign()$repweights, which needs weights(d, "analysis"))
+    # does not, and was averaged in silently (review of 29a55d8, E9 residual)
+    ratio <- vapply(reps, sum, 0) / sum(w)
+    flat <- vapply(reps, function(r) length(r) > 2L && all(r == r[[1L]]), NA)
+    if (any(flat)) {
+      stop(sprintf("replicate %d is the same for every row: not a replicate weight (a constant column, or a flag)",
+                   which(flat)[[1L]]), call. = FALSE)
+    }
+    off <- which(!is.finite(ratio) | ratio < 0.2 | ratio > 5)
+    if (length(off)) {
+      stop(sprintf(paste("replicate %d totals %.3g times the full weights: not a replicate weight (a row number,",
+                         "an id or a constant column is not one, and survey's multiplier matrix needs",
+                         "weights(design, \"analysis\"))"), off[[1L]], ratio[[off[[1L]]]]), call. = FALSE)
+    }
     B <- length(reps)
     if (B < 2L) stop("at least two replicate weights are needed", call. = FALSE)
     if (type == "jkn" && is.null(rscales)) {
@@ -671,6 +710,8 @@ survey_compare <- function(design, data, y, by, stat = c("mean", "total", "propo
   doms <- unique(dom)
   if (length(doms) < 2L) stop("comparisons need at least two domains", call. = FALSE)
   if (is.null(ref)) ref <- doms[1L]
+  # a domain label may be a number (ref = 2023 for a year): matched as the label it prints as
+  if (is.numeric(ref) && length(ref) == 1L && !is.na(ref)) ref <- as.character(ref)
   if (!is.character(ref) || length(ref) != 1L || is.na(ref)) {
     stop("`ref` must be one domain label", call. = FALSE)
   }

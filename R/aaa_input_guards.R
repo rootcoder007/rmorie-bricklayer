@@ -70,11 +70,12 @@
     }
     x <- v
   }
-  if (!integer) return(as.numeric(x))
-  # a count, not a flag: as.numeric(TRUE) is 1
+  # a number, not a flag: as.numeric(TRUE) is 1 (max_pairs = TRUE was read as one pair)
   if (is.logical(x) && any(!is.na(x))) {
-    stop(sprintf("`%s` must be a whole number, not %s", what, format(x[!is.na(x)][1L])), call. = FALSE)
+    stop(sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "", format(x[!is.na(x)][1L])),
+         call. = FALSE)
   }
+  if (!integer) return(as.numeric(x))
   # a whole number: as.integer() would read 2.5 as 2 and pick another setting silently, and
   # turn Inf or 1e10 into NA with a coercion warning
   x <- as.numeric(x)

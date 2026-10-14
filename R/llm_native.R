@@ -202,17 +202,11 @@
 }
 
 .bl_write_private_json <- function(p, data) {
-  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
-  tmp <- paste0(p, ".tmp")
-  # created empty and made private BEFORE the key is written, so no umask
-  # ever leaves it world-readable, even briefly
-  file.create(tmp)
-  Sys.chmod(tmp, mode = "0600")
-  writeLines(
-    bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
-    tmp
-  )
-  file.rename(tmp, p)
+  # through the one private writer: a fresh temporary name each time (a planted llm.json.tmp
+  # symlink had its target overwritten with the keys; review of 29a55d8, L5), created empty and
+  # made 0600 before a byte is written
+  .bl_write_private_text(p, paste0(bricklayer_json_to_json(data, auto_unbox = TRUE, pretty = TRUE, null = "null"),
+                                   "\n"))
   invisible(p)
 }
 
@@ -227,7 +221,7 @@
   # the file is edited as text: this package's three members are set, every other byte stays
   new <- .bl_credentials_text_set(txt, "hosted_key", key)
   if (!is.null(user)) new <- .bl_credentials_text_set(new, "hosted_user", user)
-  new <- .bl_credentials_text_set(new, "hosted_base_url", .bl_hosted_base())
+  new <- .bl_credentials_text_set(new, "hosted_base_url", .bl_key_address())
   back <- if (.bl_credentials_text_ok(new)) {
     bricklayer_json_from_json(new, simplifyVector = FALSE, bigint_as_char = TRUE)
   } else {
@@ -274,11 +268,22 @@
     saved_for <- .rmbl_services_llm()$base_url %||% ""
     if (!nzchar(saved_for)) saved_for <- .rmbl_services_data()$base_url %||% ""
   }
-  now <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
-  if (nzchar(saved_for) && !is.null(now) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now))) {
-    return(list(state = "other_address", key = NULL, saved_for = saved_for, now = now))
+  # the comparison runs whatever the services document says: with the model tier off it is the
+  # data address (a key saved for another server went to data.rmorie.com when `now` was NULL;
+  # review of 29a55d8, G2)
+  now <- tryCatch(.bl_key_address(), error = function(e) NULL)
+  if (nzchar(saved_for) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now %||% ""))) {
+    return(list(state = "other_address", key = NULL, saved_for = saved_for, now = now %||% ""))
   }
   list(state = "ok", key = key)
+}
+
+# The address a stored key belongs to: the model tier's while the services document has one, else
+# the data service's (the signed document's, never MORIE_DATA_URL). "" when neither is known.
+.bl_key_address <- function() {
+  a <- tryCatch(.bl_hosted_base(), error = function(e) NULL)
+  if (is.null(a)) a <- .rmbl_services_data()$base_url %||% ""
+  sub("/+$", "", a)
 }
 
 # The address a stored key was issued for under the retired language-model tier, or NULL (the
@@ -504,14 +509,14 @@
 # saved for another server.
 .bl_key_for <- function(key_env, url_env) {
   env_key <- trimws(Sys.getenv(key_env, unset = ""))
-  if (nzchar(env_key)) return(env_key)
+  if (nzchar(env_key)) return(.bl_key_text(env_key, key_env))
   env_url <- trimws(Sys.getenv(url_env, unset = ""))
   if (identical(url_env, "OLLAMA_HOST") && !nzchar(env_url)) {
     env_url <- trimws(Sys.getenv("OLLAMA_BASE_URL", unset = ""))
   }
   saved_url <- .bl_config_value(url_env)
   if (nzchar(env_url) && !identical(sub("/+$", "", env_url), sub("/+$", "", saved_url %||% ""))) return(NULL)
-  .bl_config_value(key_env)
+  .bl_key_text(.bl_config_value(key_env), key_env)
 }
 
 # What to set up, when no route (or the one asked for) answers.
@@ -676,8 +681,9 @@ bricklayer_llm_providers <- function() {
 # `login --token KEY`: ask the data service before the key replaces a working one in the shared
 # file (stored as is, a mistyped key left all three packages reporting "key rejected").
 .bl_check_token <- function(token) {
-  base <- tryCatch(.bl_data_url(), error = function(e) NULL)
-  if (is.null(base)) return(invisible(TRUE))
+  # the signed document's address only: MORIE_DATA_URL is never sent a key under test (G3)
+  base <- sub("/+$", "", .rmbl_services_data()$base_url %||% "")
+  if (!nzchar(base) || !identical(.rmbl_services_data()$mode, "key")) return(invisible(TRUE))
   res <- .bl_key_reply(base, token)
   if (is.null(res)) {
     stop(sprintf("could not reach %s to check the key; nothing stored (try again)", base), call. = FALSE)
@@ -739,7 +745,7 @@ bricklayer_llm_providers <- function() {
   if (is.list(msg)) msg <- msg$message
   detail <- ""
   if (is.character(msg) && length(msg) == 1L) {
-    detail <- paste0(": ", .bl_redact(msg, secret))
+    detail <- paste0(": ", .rmbl_printable(.bl_redact(msg, secret)))
   }
   stop(sprintf("%s answered %d%s", what, res$status, detail), call. = FALSE)
 }
@@ -816,11 +822,14 @@ bricklayer_llm_providers <- function() {
 #'   rmoriebricklayer, rmoriedata and rmorie (those installed).
 #' @param fresh \code{TRUE} asks the model even when an answer to the same
 #'   question is saved on this machine, and keeps the new one. A person at a
-#'   terminal or in an interactive session gets a saved answer back at once
-#'   when the question (case and spacing aside), route, model, packages and
-#'   their versions all match, for 30 days; the answers are owner-only files
-#'   under \code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is
-#'   kept elsewhere, and \code{MORIE_LLM_CACHE=off} (or
+#'   terminal (the command line with the terminal on stdin and stdout) or in
+#'   an interactive session gets a saved answer back at once when the
+#'   question (spacing aside; case counts), route, model, packages and their
+#'   versions all match, for 30 days; the first save in a session says so.
+#'   The answers are owner-only files under
+#'   \code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is kept
+#'   elsewhere, nothing is kept from a script or a pipeline, and
+#'   \code{MORIE_LLM_CACHE=off} (or
 #'   \code{options(rmoriebricklayer.llm_cache = FALSE)}) turns it off.
 #' @return Character scalar with the reply; a saved answer carries the time it
 #'   was saved as attribute \code{cached}. Errors, saying what to set up,
@@ -851,7 +860,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
     if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
   }
   key <- .bl_answer_key(rt, model, prompt, if (docs) pk, system_prompt)
-  if (!fresh && !is.null(hit <- .bl_answer_get(key))) return(hit)
+  if (!fresh && !is.null(hit <- .bl_answer_get(key, prompt))) return(hit)
   ans <- if (docs) {
     .bl_llm_assist(rt, model, prompt, pk, system_extra = system_prompt, timeout = timeout)
   } else {

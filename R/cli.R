@@ -16,6 +16,7 @@
   stop("interrupted", call. = FALSE)
 }
 .bl_stdin_tty <- function() isatty(stdin())
+.bl_stdout_tty <- function() isatty(stdout())
 
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
 # Rscript, where readline() returns "" at once, so outside an interactive session read one line of

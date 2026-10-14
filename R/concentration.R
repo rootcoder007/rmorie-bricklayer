@@ -352,6 +352,9 @@ hurwitz_zeta <- function(s, q = 1) {
     # zeta(1-s): sinpi() is exact at the trivial zeros and accurate beside them, where the general
     # route lost the relative digits of a value near zero (3.5e-7 at s = -2 + 1e-7; review of
     # e57fed5). zeta(1 - s) has 1 - s > 1, the C series.
+    # (beside the zero, s = -2 + 1e-12 itself carries 1e-12 only to 4e-4: the double nearest -2 + e
+    # is what is evaluated, to full accuracy; a reference at e is off by that much. Review of
+    # 29a55d8, F5)
     sp <- sinpi(si / 2)
     if (sp == 0) return(0)
     lmag <- si * log(2) + (si - 1) * log(pi) + lgamma(1 - si) + log(abs(.rmbl_hurwitz(1 - si, 1)))
@@ -407,7 +410,10 @@ hurwitz_zeta <- function(s, q = 1) {
 .rmbl_hurwitz_em <- function(si, q, M) {
   x <- q + M
   val <- if (M > 0) sum((q + (seq_len(M) - 1))^(-si)) else 0  # q + (n - 1): (q + n) - 1 lost a tiny q (C2)
-  val <- val + x^(1 - si) / (si - 1) + x^(-si) / 2
+  lead <- x^(1 - si) / (si - 1)
+  # past the double range the value is the leading term's sign at infinity, not NaN from Inf - Inf
+  if (is.infinite(lead)) return(lead)
+  val <- val + lead + x^(-si) / 2
   poch <- si
   for (k in seq_along(.rmbl_b2k)) {
     j <- 2 * k

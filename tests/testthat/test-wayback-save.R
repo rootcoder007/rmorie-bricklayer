@@ -294,7 +294,7 @@ test_that("the transport seams reach archive.org (live, opt-in, never a capture)
   # real traffic only when asked for (RMBL_LIVE_TESTS=1), and never a POST to /save: a test run with
   # network used to start a real capture of example.org (review of e57fed5, E6)
   skip_on_cran()
-  skip_if_not(nzchar(Sys.getenv("RMBL_LIVE_TESTS")), "set RMBL_LIVE_TESTS=1 for the live archive.org checks")
+  skip_if_not(identical(Sys.getenv("RMBL_LIVE_TESTS"), "1"), "set RMBL_LIVE_TESTS=1 for the live archive.org checks")
   expect_true(is.numeric(rmoriebricklayer:::.bl_wb_now()))
   # no key: archive.org answers with a refusal, through the package's own transport
   r <- rmoriebricklayer:::.bl_wb_get("/save/status/user", "Accept: application/json")
@@ -451,7 +451,7 @@ test_that("E7: eight slow-downs in a row stop the run; the account's daily cap s
   expect_identical(nrow(res), 0L)
   expect_setequal(attr(res, "not_sent"), c("https://e.org/a", "https://e.org/b"))
   expect_match(attr(res, "stopped"), "eight times in a row")
-  expect_length(s$posts, 9L)
+  expect_length(s$posts, 8L)
   expect_output(print(res), "not sent this run")
   s2 <- fake_spn2(list("https://e.org/a" = list(kind = "acct")))
   res2 <- with_fake(s2, wayback_save(c("https://e.org/a", "https://e.org/b", "https://e.org/c"), quiet = TRUE))

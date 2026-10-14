@@ -49,7 +49,9 @@
 # looped forever, 123 stopped the run)
 .bl_wb_job_id <- function(x) {
   x <- .bl_wb_str(x)
-  if (!is.na(x) && grepl("^[A-Za-z0-9._:-]{1,200}$", x)) x else NA_character_
+  # a job id that reads like a status code ("error:not-found") is not one: polling it would turn
+  # archive.org's 404 into "gone" for a live page
+  if (!is.na(x) && grepl("^[A-Za-z0-9._:-]{1,200}$", x) && !grepl("^error", x, ignore.case = TRUE)) x else NA_character_
 }
 
 # Retry-After in seconds (a number, or an HTTP date), capped at an hour; NA when not sent
@@ -91,8 +93,11 @@
 
 # "slow down": the account has too many captures running, or archive.org is overloaded. SPN2 says
 # so inside an HTTP 200 (status_ext; the API docs list these codes) as well as with a 429.
-.bl_wb_throttle_codes <- c("error:user-session-limit", "error:too-many-requests", "error:bandwidth-limit-exceeded",
-                           "error:no-browsers-available", "error:service-unavailable", "error:celery")
+# archive.org's own account and capacity throttles. error:service-unavailable (the live page's 503)
+# and error:bandwidth-limit-exceeded (the target server's) are the page's, not the account's: they
+# fail that URL (review of 29a55d8, G5)
+.bl_wb_throttle_codes <- c("error:user-session-limit", "error:too-many-requests",
+                           "error:no-browsers-available", "error:celery")
 .bl_wb_throttled <- function(j) {
   isTRUE(.bl_wb_str(j$status_ext) %in% .bl_wb_throttle_codes) ||
     grepl("already reached the limit of active sessions|cannot start capture|too many requests|try again later",
@@ -136,7 +141,9 @@
 # a URL that cannot be sent as it is: a control or invisible formatting character (U+202E printed
 # the rest of a line reversed)
 .bl_wb_hidden_char <- function(u) {
-  cp <- if (validUTF8(u)) utf8ToInt(enc2utf8(u)) else NA_integer_
+  # the bytes as given: under the C locale enc2utf8() rewrote U+202E to "<U+202E>", which passed
+  u <- iconv(u, "UTF-8", "UTF-8", sub = NA)
+  cp <- if (!is.na(u) && validUTF8(u)) utf8ToInt(u) else NA_integer_
   if (anyNA(cp)) return("a byte that is not UTF-8")
   bad <- cp[cp < 32L | (cp >= 127L & cp < 160L) | cp %in% c(0x061CL, 0x200BL:0x200FL, 0x2028L:0x202EL,
                                                            0x2060L:0x206FL, 0xFEFFL)]
@@ -354,18 +361,46 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
   spacing <- 60 / per_minute
   next_post <- -Inf
   hold_until <- -Inf      # nothing is submitted before this (archive.org asked to slow down)
-  throttles <- 0L         # slow-down replies in a row
+  throttles <- 0L         # slow-down replies since the last capture that got through
   stopped <- NULL         # why submitting stopped for the rest of the run
+  # every resubmission counts for the run, and an error for the URL: a throttle in the status reply
+  # used to requeue the URL and the job id it got next reset the strikes, so one URL made 174
+  # POSTs and never stopped (review of 29a55d8, G5). A URL that errs is sent at most six times
+  # (a throttle is the account's state, not the URL's: it counts toward the eight strikes); a run
+  # resubmits at most as many times as it has URLs (and 20), then stops
+  requeues <- 0L
+  requeue_cap <- max(20L, length(queue))
+  requeue <- function(u, why, err = TRUE) {
+    requeues <<- requeues + 1L
+    if (err) {
+      a <- attempts[u]
+      attempts[[u]] <<- (if (is.na(a)) 0L else a) + 1L
+      if (attempts[[u]] >= 6L) {
+        finish(u, "failed", msg = paste("gave up after six tries:", why))
+        return(FALSE)
+      }
+    }
+    if (requeues > requeue_cap) {
+      queue <<- c(u, queue)
+      stopped <<- sprintf("archive.org answered %d resubmissions with errors or slow-downs (%s)", requeues, why)
+      return(FALSE)
+    }
+    queue <<- c(u, queue)
+    TRUE
+  }
   slow_down <- function(u, res, now, why) {
     throttles <<- throttles + 1L
-    queue <<- c(u, queue)
-    if (throttles > 8L) {
+    if (throttles >= 8L) {
+      queue <<- c(u, queue)
       stopped <<- sprintf("archive.org asked to slow down eight times in a row (%s)", why)
       return(invisible())
     }
+    if (!requeue(u, why, err = FALSE)) return(invisible())
     ra <- .bl_wb_retry_after(res)
     hold_until <<- now + if (!is.na(ra)) max(ra, spacing) else min(600, 15 * 2^(throttles - 1L))
   }
+  # a message that archive.org left empty is written out, so wayback_retry() knows what happened
+  said <- function(m, default) if (is.na(m) || !nzchar(m)) default else m
   while ((length(queue) && is.null(stopped)) || length(inflight)) {
     now <- .bl_wb_now()
     # start captures while there is room, no faster than per_minute and not while held
@@ -378,7 +413,6 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
       j <- .bl_wb_json(res)
       id <- .bl_wb_job_id(j$job_id)
       if (!is.na(id)) {
-        throttles <- 0L
         inflight[[u]] <- list(id = id, start = now, due = now + poll, fails = 0L)
       } else if (!is.null(j) && .bl_wb_account_cap(j)) {
         queue <- c(u, queue)
@@ -389,18 +423,14 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
       } else if (res$status < 0 || res$status %in% c(404L, 408L) || res$status >= 500L || is.null(j)) {
         # a 404 or 408 from the capture endpoint itself is archive.org under load, not the page: with
         # many jobs in flight live StatCan tables were answered 404 and captured fine one at a time
-        attempts[[u]] <- attempts[[u]] + 1L
         why <- if (res$status < 0) res$error else sprintf("HTTP %d", res$status)
-        if (attempts[[u]] >= 6L) {
-          finish(u, "failed", msg = paste("gave up after six tries:", why))
-        } else {
-          queue <- c(u, queue)
+        if (requeue(u, why)) {
           ra <- .bl_wb_retry_after(res)
           hold_until <- now + if (!is.na(ra)) ra else min(300, 15 * 2^(attempts[[u]] - 1L))
         }
       } else if (.bl_wb_daily_limit(j)) {
         throttles <- 0L
-        existing_or_failed(u, .bl_wb_str(j$message) %|NA|% "captured already today")
+        existing_or_failed(u, said(.bl_wb_str(j$message), "captured already today"))
       } else if (!is.na(.bl_wb_ts(j$timestamp))) {
         throttles <- 0L
         finish(u, "existing", .bl_wb_ts(j$timestamp), .bl_wb_snapshot(.bl_wb_ts(j$timestamp), u))
@@ -432,6 +462,7 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
           inflight[[u]]$due <- now + if (!is.na(ra)) ra else min(300, poll * 2^job$fails)
         }
       } else if (identical(st, "success")) {
+        throttles <- 0L
         ts <- .bl_wb_ts(j$timestamp)
         orig <- .bl_wb_str(j$original_url)
         if (is.na(orig) || !grepl("^https?://[^[:space:]]+$", orig, ignore.case = TRUE)) orig <- u
@@ -442,7 +473,8 @@ wayback_save <- function(urls, access_key = NULL, secret_key = NULL, within = "3
         if (.bl_wb_throttled(j)) {
           slow_down(u, res, now, .bl_wb_str(j$status_ext) %|NA|% "slow down")
         } else if (.bl_wb_daily_limit(j)) {
-          existing_or_failed(u, .bl_wb_str(j$message) %|NA|% "")
+          throttles <- 0L
+          existing_or_failed(u, said(.bl_wb_str(j$message), "captured already today"))
         } else {
           finish(u, "failed", msg = .bl_wb_str(j$message) %|NA|% (.bl_wb_str(j$status_ext) %|NA|% "error"))
         }

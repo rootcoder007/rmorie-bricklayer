@@ -68,7 +68,12 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
       stop(sprintf("coordinate %d is not a longitude and latitude in degrees; planar data take coords = \"planar\"",
                    which(bad)[1L]), call. = FALSE)
     }
-    keep <- keep & !.jx_null_island(lon, lat)
+    nowhere <- keep & .jx_null_island(lon, lat)
+    if (any(nowhere)) {
+      message(sprintf("hotspot_persistence(): %d incident%s at (0, 0), the raw exports' \"no location\", dropped",
+                      sum(nowhere), if (sum(nowhere) == 1L) "" else "s"))
+    }
+    keep <- keep & !nowhere
   }
   lon <- lon[keep]
   lat <- lat[keep]
