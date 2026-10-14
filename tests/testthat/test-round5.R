@@ -147,7 +147,7 @@ test_that("login --token asks the gateway first and stores nothing it refuses", 
   reply <- list(status = 200L)
   expect_true(.bl_check_token("sk-x"))
   # with the data service switched off there is nothing to ask
-  testthat::local_mocked_bindings(.bl_data_url = function() stop("off"))
+  testthat::local_mocked_bindings(.rmbl_services_data = function() list(mode = "off"))
   reply <- NULL
   expect_true(.bl_check_token("sk-x"))
 })

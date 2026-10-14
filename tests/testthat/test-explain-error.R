@@ -53,6 +53,9 @@ test_that("the messages table is kept between sessions for a person watching, on
   withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
                        morie.quiet = NULL)
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
+  # a person watching: the terminal on stdin and stdout (the progress option alone is a script; G4)
+  local_mocked_bindings(.bl_stdin_tty = function() TRUE, .bl_stdout_tty = function() TRUE,
+                        .package = "rmoriebricklayer")
   writeLines("x", file.path(d, "messages-0000000000000000.rds"))  # an older version's
   memo <- ns(".bl_ee_memo")
   rm(list = ls(memo, all.names = TRUE), envir = memo)
