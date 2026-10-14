@@ -154,6 +154,8 @@ reference:
       - bricklayer_services
       - bricklayer_llm_models
       - bricklayer_llm_providers
+      - bricklayer_llm_route_info
+      - bricklayer_llm_chat
       - bricklayer_data_manifest
       - bricklayer_download
       - bricklayer_cli

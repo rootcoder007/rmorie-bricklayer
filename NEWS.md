@@ -25,6 +25,10 @@ claims the earlier fixes overstated corrected.
   provider's model or an Ollama cloud model, the functions nearest the question for a model
   Ollama runs on this machine; `MORIE_LLM_CONTEXT` overrides. `agent_bundle()` asks the same
   way (its `backend` argument is now `route`).
+* `bricklayer_llm_route_info()` says which route would answer, without sending anything;
+  `bricklayer_llm_chat()` sends a whole conversation as it is (no help, no tools), for chat
+  loops in the other MORIE packages. rmorie's help, thousands of pages, is searched by the
+  tools, and only its functions nearest the question are listed for the model.
 * **The hosted MORIE tier is retired.** No route, setting or model list for it remains;
   `route = "hosted"` says so, and a saved `hosted` route falls back to the automatic order
   with a one-time message. Signing in (`rmbl login`) is for the curated tables at

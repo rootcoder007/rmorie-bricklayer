@@ -11,10 +11,13 @@
 
 .bl_kn_cache <- new.env(parent = emptyenv())
 
+# A package with more help pages than this is searched, not listed in full.
+.bl_kn_list_max <- 800L
+
 # The MORIE packages installed here whose help the model gets (rmorie, with its thousands of
-# pages, is searched by the tools but not put in the index).
+# pages, is searched by the tools; only its functions nearest the question are listed).
 .bl_kn_default_packages <- function() {
-  pk <- c("rmoriebricklayer", "rmoriedata")
+  pk <- c("rmoriebricklayer", "rmoriedata", "rmorie")
   pk[vapply(pk, function(p) nzchar(system.file(package = p)), logical(1))]
 }
 
@@ -293,10 +296,21 @@
 .bl_llm_assist <- function(rt, model, prompt, pkgs, system_extra = NULL, timeout = 120, max_rounds = NULL) {
   pages <- .bl_kn_all_pages(pkgs)
   tier <- .bl_llm_tier(.bl_llm_capacity(rt, model))
-  index <- .bl_kn_index_lines(Filter(function(p) p$pkg %in% pkgs, pages))
+  # a package with thousands of pages (rmorie) is not listed whole: its functions nearest the
+  # question are, and the tools reach the rest
+  big <- names(which(table(vapply(pages, function(p) p$pkg, "")) > .bl_kn_list_max))
+  listed <- Filter(function(p) p$pkg %in% pkgs && !p$pkg %in% big, pages)
+  near_big <- if (length(big)) .bl_kn_search(prompt, Filter(function(p) p$pkg %in% big, pages), 40L) else list()
+  index <- .bl_kn_index_lines(c(listed, near_big))
   if (length(index) > tier$index) index <- .bl_kn_index_lines(.bl_kn_search(prompt, pages, tier$index))
   clip <- tier$clip
   max_rounds <- max_rounds %||% tier$rounds
+  if (length(big)) {
+    system_extra <- c(system_extra, sprintf(paste("%s has %d more functions than are listed below: search_docs finds",
+                                                  "the right one by what it does, and get_help reads it."),
+                                            paste(big, collapse = " and "),
+                                            sum(vapply(pages, function(p) p$pkg %in% big, NA)) - length(near_big)))
+  }
   sys <- .bl_kn_system(pkgs, index, system_extra)
   msgs <- list(list(role = "system", content = sys), list(role = "user", content = prompt))
   tools <- .bl_kn_tools()
