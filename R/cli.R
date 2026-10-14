@@ -16,6 +16,11 @@
   stop("interrupted", call. = FALSE)
 }
 .bl_stdin_tty <- function() isatty(stdin())
+# A program in the usual places, found without a child process: Sys.which() runs one, and R ignores
+# SIGINT while a child runs (as system() does), so a Ctrl-C landing there killed only the child.
+# Sys.which("sh") came back "", the prompt fell back to a blocking read of stdin that ignores
+# Ctrl-C, and the command waited at the prompt (a Ctrl-C 0.18 s after start, 2026-10-14).
+.bl_have_program <- function(name) any(file.exists(file.path(c("/bin", "/usr/bin"), name)))
 .bl_stdout_tty <- function() isatty(stdout())
 
 # One typed line for a prompt (the key of `login --token`, the emailed code). The launchers run
@@ -26,7 +31,7 @@
   # a key typed at a terminal is not echoed (stty, where there is one); elsewhere it is
   # read as any other line, which is what piping `echo KEY |` relies on
   hide <- isTRUE(secret) && is.null(con) && .Platform$OS.type == "unix" && .bl_stdin_tty() &&
-    nzchar(Sys.which("stty"))
+    .bl_have_program("stty")
   if (.bl_interactive()) {
     if (hide) {
       system2("stty", "-echo", stdout = FALSE, stderr = FALSE)
@@ -37,7 +42,7 @@
     }
     return(trimws(readline(prompt)))
   }
-  if (is.null(con) && .bl_stdin_tty() && .Platform$OS.type == "unix" && nzchar(Sys.which("sh"))) {
+  if (is.null(con) && .bl_stdin_tty() && .Platform$OS.type == "unix" && .bl_have_program("sh")) {
     # R's blocking read of a terminal ignores Ctrl-C until Enter: a shell `read` child sees the
     # terminal's interrupt at once, and Ctrl-D ends it with an empty line. the line comes back
     # over a pipe, never through a shell argument or the history. The echo is switched off and
@@ -117,7 +122,9 @@
 #'     \code{setup} walks through them}
 #'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a prompt to the
 #'     model (or the named one, on the named route) and print the reply; the
-#'     same question again is answered from this machine (\code{--fresh} asks anew)}
+#'     same question again is answered from this machine (\code{--fresh} asks anew).
+#'     \code{aye} and \code{tellme} are the same verb, and a quoted question with no
+#'     verb (\code{rmbl "how do I weight a survey?"}) is asked too}
 #'   \item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
 #'     (\code{\link{bricklayer_explain_error}}), without a model or the network}
 #'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
@@ -154,6 +161,17 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (length(args) && identical(args[[1L]], "--args")) args <- args[-1L]  # R >= 4.6 keeps the separator
   verb <- if (length(args)) args[[1L]] else "help"
   rest <- args[-1L]
+  # `aye` and `tellme` are other names for ask, and a question with no verb is asked:
+  # `rmbl "how do I weight a survey?"` (a word that holds a space, or a last word ending in ?).
+  # A lone unknown word stays an unknown verb, so a typo is never sent to a model.
+  if (verb %in% c("aye", "tellme")) {
+    verb <- "ask"
+  } else if (is.null(.bl_verb_usage(verb)) && !verb %in% c("help", "--help", "-h", "version", "--version", "-v") &&
+               !startsWith(verb, "-") &&
+               (any(grepl("[[:space:]]", args)) || endsWith(args[[length(args)]], "?"))) {
+    rest <- args
+    verb <- "ask"
+  }
   # everything after a bare `--` is positional: a prompt or request that itself starts with --
   dd <- match("--", rest)
   tail_args <- if (is.na(dd)) character() else rest[-seq_len(dd)]
@@ -525,7 +543,8 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       target <- file.path(dir, paste0(nm, ".cmd"))
       writeLines(sprintf(paste0("@echo off\r\nset RMBL_PROG=", nm, "\r\nRscript --no-save --no-restore -e ",
                                 "\".libPaths(c('%s', .libPaths())); ",
-                                "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q))\" %%*"),
+                                "q <- tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L); ",
+                                "quit(status = as.integer(q))\" %%*"),
                          lib), target)
       # nocov end
     } else {
@@ -533,8 +552,10 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
       if (file.exists(target) || !is.na(Sys.readlink(target))) unlink(target)
       # the library path is an R string literal (deparse() escapes it) inside
       # a single-quoted shell argument (a quote in the path becomes '\'')
+      # a Ctrl-C that reaches the top level exits 130, not 1 (as inst/bin/rmbl)
       body <- paste0("suppressPackageStartupMessages({ .libPaths(c(", deparse(lib), ", .libPaths())); ",
-                     "q <- rmoriebricklayer::bricklayer_cli(); quit(status = as.integer(q)) })")
+                     "q <- tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L); ",
+                     "quit(status = as.integer(q)) })")
       body <- gsub("'", "'\\\\''", body)
       writeLines(c("#!/bin/sh",
                    sprintf("# %s: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())", nm),
@@ -681,6 +702,7 @@ install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
     sprintf("usage: %s <verb> [options]   (rmbl is the same command as rmoriebricklayer)\n\n", prog),
     "Language models (your own key, or a model on your machine)\n",
     "  ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply (--fresh: ask anew)\n",
+    "  aye, tellme, or just \"QUESTION?\"          the same as ask\n",
     "  explain-error \"MESSAGE\"                   where an error comes from and what to do, no model needed\n",
     "  doctor                                    what is set up, and which route ask will use\n",
     "  config                                    show every language-model setting\n",

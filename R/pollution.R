@@ -852,14 +852,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
   for (nm in c("reference", "exposure_mean", "exposure_prevalence", "baseline_rate", "population")) {
     v <- get(nm, inherits = FALSE)
     if (is.null(v)) next
+    # a flag, text, a date, a factor, a list or a complex was refused by type above; a missing
+    # value (NA) is logged as a failed assumption below
     if (length(v) != 1L) return(fail(sprintf("%s must be a single number, not %d values", nm, length(v))))
-    # a flag, text, a date or a factor is not a number; a missing value (NA) is logged as a
-    # failed assumption below
-    if (is.list(v) || is.complex(v)) return(fail(sprintf("%s must be a single number, not a %s", nm, class(v)[1L])))
-    if ((is.logical(v) && !is.na(v)) || is.factor(v) || inherits(v, c("Date", "POSIXt", "difftime")) ||
-          (!is.numeric(v) && !is.na(v) && is.na(suppressWarnings(as.numeric(v))))) {
-      return(fail(sprintf("%s must be a single number", nm)))
-    }
   }
   reference <- suppressWarnings(as.numeric(reference))
   if (!is.character(outcome) || length(outcome) != 1L || is.na(outcome)) {

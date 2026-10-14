@@ -1,0 +1,103 @@
+# `aye`, `tellme` and a bare question are the ask verb (Vee, 2026-10-14); a lone unknown word is
+# still an unknown verb, so a typo never reaches a model.
+
+ask_via_cli <- function(args) {
+  seen <- NULL
+  testthat::local_mocked_bindings(
+    bricklayer_llm_ask = function(prompt, model = NULL, route = NULL, fresh = FALSE) {
+      seen <<- list(prompt = prompt, model = model, route = route, fresh = fresh)
+      "the answer"
+    },
+    .package = "rmoriebricklayer"
+  )
+  txt <- character()
+  st <- bricklayer_cli(args, out = function(s) txt <<- c(txt, s))
+  list(status = st, out = paste(txt, collapse = ""), seen = seen)
+}
+
+test_that("aye and tellme ask, with every option ask takes", {
+  for (v in c("ask", "aye", "tellme")) {
+    r <- ask_via_cli(c(v, "--route", "own", "--model", "m1", "--fresh", "how", "are", "you"))
+    expect_identical(r$status, 0L, info = v)
+    expect_identical(r$seen$prompt, "how are you", info = v)
+    expect_identical(r$seen$route, "own", info = v)
+    expect_identical(r$seen$model, "m1", info = v)
+    expect_true(r$seen$fresh, info = v)
+    expect_match(r$out, "the answer", fixed = TRUE, info = v)
+  }
+})
+
+test_that("a quoted question with no verb is asked", {
+  r <- ask_via_cli("how do I weight a survey?")
+  expect_identical(r$status, 0L)
+  expect_identical(r$seen$prompt, "how do I weight a survey?")
+  # unquoted words, the last ending in ?
+  r <- ask_via_cli(c("what", "is", "PSI?"))
+  expect_identical(r$seen$prompt, "what is PSI?")
+  # one word with a question mark
+  r <- ask_via_cli("why?")
+  expect_identical(r$seen$prompt, "why?")
+  # R >= 4.6 keeps the --args separator
+  r <- ask_via_cli(c("--args", "how do I weight a survey?"))
+  expect_identical(r$seen$prompt, "how do I weight a survey?")
+})
+
+test_that("a lone unknown word, a verb, or an option is not sent to a model", {
+  r <- ask_via_cli("hepl")
+  expect_identical(r$status, 2L)
+  expect_null(r$seen)
+  expect_match(r$out, "unknown verb 'hepl'", fixed = TRUE)
+  r <- ask_via_cli(c("logn", "now"))
+  expect_identical(r$status, 2L)
+  expect_null(r$seen)
+  # a real verb with a spaced argument stays that verb
+  r <- ask_via_cli(c("explain-error", "could not find function x?"))
+  expect_null(r$seen)
+  r <- ask_via_cli(c("--weird", "flag?"))
+  expect_null(r$seen)
+})
+
+test_that("aye and tellme with no prompt say how to ask", {
+  for (v in c("aye", "tellme")) {
+    r <- ask_via_cli(v)
+    expect_identical(r$status, 2L, info = v)
+    expect_match(r$out, "ask [--route ROUTE]", fixed = TRUE, info = v)
+    expect_null(r$seen)
+  }
+  # `aye --help` describes ask
+  txt <- character()
+  expect_identical(bricklayer_cli(c("aye", "--help"), out = function(s) txt <<- c(txt, s)), 0L)
+  expect_match(paste(txt, collapse = ""), "ask the model", fixed = TRUE)
+})
+
+test_that("help lists the other names of ask", {
+  txt <- character()
+  bricklayer_cli("help", out = function(s) txt <<- c(txt, s))
+  expect_match(paste(txt, collapse = ""), "aye, tellme", fixed = TRUE)
+})
+
+test_that("every launcher turns a top-level Ctrl-C into exit 130", {
+  for (nm in c("rmbl", "rmoriebricklayer")) {
+    f <- system.file("bin", nm, package = "rmoriebricklayer")
+    skip_if_not(nzchar(f))
+    expect_match(paste(readLines(f), collapse = "\n"),
+                 "tryCatch(rmoriebricklayer::bricklayer_cli(), interrupt = function(e) 130L)", fixed = TRUE)
+  }
+  skip_on_os("windows")
+  d <- withr::local_tempdir()
+  invisible(utils::capture.output(suppressMessages(install_cli(dir = d))))
+  for (nm in list.files(d)) {
+    expect_match(paste(readLines(file.path(d, nm)), collapse = "\n"),
+                 "interrupt = function(e) 130L", fixed = TRUE, info = nm)
+  }
+})
+
+test_that("the prompt finds sh and stty without a child process (a Ctrl-C there was lost)", {
+  skip_on_os("windows")
+  have <- rmoriebricklayer:::.bl_have_program
+  expect_true(have("sh"))
+  expect_false(have("no-such-program-rmbl"))
+  # .bl_readline asks it, never Sys.which(), which runs a child that a Ctrl-C kills alone
+  body_txt <- paste(deparse(rmoriebricklayer:::.bl_readline), collapse = "\n")
+  expect_false(grepl("Sys.which", body_txt, fixed = TRUE))
+})

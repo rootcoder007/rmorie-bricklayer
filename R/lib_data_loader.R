@@ -595,8 +595,10 @@ validate_schema <- function(df_raw, provenance) {
       swapped <- vapply(inv_known, function(k) {
         a <- strsplit(nm, "")[[1L]]
         b <- strsplit(k, "")[[1L]]
+        # lengths first: a != b on two lengths warned "longer object length is not a multiple"
+        if (length(a) != length(b)) return(FALSE)
         i <- which(a != b)
-        length(a) == length(b) && length(i) == 2L && i[2L] == i[1L] + 1L && a[i[1L]] == b[i[2L]] && a[i[2L]] == b[i[1L]]
+        length(i) == 2L && i[2L] == i[1L] + 1L && a[i[1L]] == b[i[2L]] && a[i[2L]] == b[i[1L]]
       }, logical(1))
       if (any(swapped)) guess <- inv_known[swapped][1L]
     }

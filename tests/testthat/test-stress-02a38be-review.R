@@ -397,7 +397,8 @@ test_that("M2: validation needs a schema, a misspelt field is fatal, and expecte
   expect_warning(apply_schema_validation(df, list(schema = list(notes = "about this table"))),
                  "not one validate_schema\\(\\) uses")
   # a dataset's own invariant (the OTIS file's) is allowed
-  expect_true(apply_schema_validation(df, list(schema = list(structural_invariants = list(total_placements_sum = 5)))))
+  # ...with no warning (the misspelling check compared names of two lengths)
+  expect_true(expect_no_warning(apply_schema_validation(df, list(schema = list(structural_invariants = list(total_placements_sum = 5))))))
   # expected_dtypes is read; a factor and a character column are one family
   expect_warning(apply_schema_validation(df, list(schema = list(expected_dtypes = list(a = "character")))),
                  "is integer, expected character")

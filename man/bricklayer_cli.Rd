@@ -38,7 +38,9 @@ the route \code{ask} uses and the address, key and model of each route;
 \code{setup} walks through them}
 \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a prompt to the
 model (or the named one, on the named route) and print the reply; the
-same question again is answered from this machine (\code{--fresh} asks anew)}
+same question again is answered from this machine (\code{--fresh} asks anew).
+\code{aye} and \code{tellme} are the same verb, and a quoted question with no
+verb (\code{rmbl "how do I weight a survey?"}) is asked too}
 \item{\code{explain-error MESSAGE...}}{where an error of these packages comes from
 (\code{\link{bricklayer_explain_error}}), without a model or the network}
 \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the

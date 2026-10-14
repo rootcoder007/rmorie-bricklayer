@@ -54,6 +54,28 @@ test_that("G2: with the model tier off, a key saved for another address is not s
   expect_match(cred$hosted_base_url, "^https://")
 })
 
+test_that("G2 note: a key a pre-0.5.12 login saved for llm.rmorie.com goes to the data address, nowhere else", {
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_BASE_URL = NA, MORIE_DATA_URL = NA,
+                      MORIE_HOSTED_KEY = NA)
+  p <- ns(".bl_credentials_path")()
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  for (u in c("https://llm.rmorie.com", "https://llm.rmorie.com/")) {
+    writeLines(sprintf('{"hosted_key": "sk-old", "hosted_base_url": "%s"}', u), p)
+    st <- ns(".bl_hosted_key_state")()
+    expect_identical(st$state, "ok", info = u)
+    expect_identical(st$key, "sk-old", info = u)
+  }
+  # only that exact address: a look-alike stays bound to itself
+  for (u in c("https://llm.rmorie.com.evil.example", "http://llm.rmorie.com", "https://llm2.rmorie.com")) {
+    writeLines(sprintf('{"hosted_key": "sk-old", "hosted_base_url": "%s"}', u), p)
+    expect_identical(ns(".bl_hosted_key_state")()$state, "other_address", info = u)
+  }
+  # and only toward the signed document's data address: with the key address moved elsewhere it is held back
+  writeLines('{"hosted_key": "sk-old", "hosted_base_url": "https://llm.rmorie.com"}', p)
+  local_mocked_bindings(.bl_key_address = function() "https://gw.company.example", .package = "rmoriebricklayer")
+  expect_identical(ns(".bl_hosted_key_state")()$state, "other_address")
+})
+
 test_that("G3: `login --token` checks the key at the signed document's data address, never MORIE_DATA_URL", {
   seen <- character()
   local_mocked_bindings(.bl_http_get = function(url, timeout, headers) {

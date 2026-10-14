@@ -368,7 +368,10 @@
   }
   for (round in seq_len(max_rounds)) {
     if (proc.time()[["elapsed"]] >= deadline) break
-    res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = left(), allow_empty = TRUE),
+    # the budget is taken outside the handler: a spent budget raised inside it read as a model
+    # that takes no tools, and the plain fallback then sent the question with a full timeout
+    tmo <- left()
+    res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = tmo, allow_empty = TRUE),
                     error = function(e) e)
     if (inherits(res, "error")) {
       if (round == 1L && .bl_kn_no_tools(res)) {

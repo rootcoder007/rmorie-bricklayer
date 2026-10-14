@@ -273,11 +273,22 @@
   # data address (a key saved for another server went to data.rmorie.com when `now` was NULL;
   # review of 29a55d8, G2)
   now <- tryCatch(.bl_key_address(), error = function(e) NULL)
+  # credentials written before 0.5.12 name the retired model tier's address: the same issuer and
+  # key store as the data service, so such a key still goes to the signed document's data address,
+  # and to no other (those users signed in again otherwise; review of 46de6a9, G2 note)
+  data_base <- sub("/+$", "", .rmbl_services_data()$base_url %||% "")
+  if (sub("/+$", "", saved_for) %in% .bl_legacy_key_addresses && nzchar(data_base) &&
+        identical(sub("/+$", "", now %||% ""), data_base)) {
+    saved_for <- data_base
+  }
   if (nzchar(saved_for) && !identical(sub("/+$", "", saved_for), sub("/+$", "", now %||% ""))) {
     return(list(state = "other_address", key = NULL, saved_for = saved_for, now = now %||% ""))
   }
   list(state = "ok", key = key)
 }
+
+# Where pre-0.5.12 logins recorded the key: the retired language-model tier's gateway.
+.bl_legacy_key_addresses <- "https://llm.rmorie.com"
 
 # The address a stored key belongs to: the model tier's while the services document has one, else
 # the data service's (the signed document's, never MORIE_DATA_URL). "" when neither is known.

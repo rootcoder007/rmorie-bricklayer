@@ -627,3 +627,20 @@ test_that("rmbl wayback --max leaves URLs for the next run and exits 1 saying so
   # the earlier capture and the two new ones
   expect_true(any(grepl("3 saved, 0 existing, 0 failed; results", outl, fixed = TRUE)))
 })
+
+test_that("H7: resubmissions past the run's cap between two captures stop the run, from an error or a slow-down", {
+  withr::local_envvar(keys)
+  # four URLs the server never takes: six tries each would be 24 resubmissions; the cap is 20
+  u4 <- sprintf("https://e.org/d%d", 1:4)
+  s <- fake_spn2(stats::setNames(rep(list(list(kind = "down")), 4L), u4))
+  res <- with_fake(s, wayback_save(u4, jobs = 1L, quiet = TRUE))
+  expect_match(attr(res, "stopped"), "answered 21 resubmissions with errors or slow-downs")
+  # the cap reached by a slow-down: three URLs use 18, the throttled one takes it past 20
+  u3 <- sprintf("https://e.org/d%d", 1:3)
+  plan <- c(stats::setNames(rep(list(list(kind = "down")), 3L), u3),
+            list("https://e.org/s" = list(kind = "session", fail = 99)))
+  s2 <- fake_spn2(plan)
+  res2 <- with_fake(s2, wayback_save(c(u3, "https://e.org/s"), jobs = 1L, quiet = TRUE))
+  expect_match(attr(res2, "stopped"), "resubmissions with errors or slow-downs")
+  expect_true("https://e.org/s" %in% attr(res2, "not_sent"))
+})

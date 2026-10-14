@@ -72,6 +72,35 @@ claims the earlier fixes overstated corrected.
   beside the saved answers.
 * **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
   the Ollama app, or its system service) when nothing answers at its address.
+## CI on 84840ac, and asking in other words (2026-10-14)
+
+* **`aye`, `tellme`, or just the question.** `rmbl aye "..."`, `rmbl tellme "..."` and
+  `rmbl "how do I weight a survey?"` all ask, with every option `ask` takes. A first word that is
+  no verb is asked when a word holds a space or the last word ends in `?`. A lone unknown word is
+  still an unknown verb, so a typo is never sent to a model.
+* **Ctrl-C reaching the top level exits 130.** The launchers (`inst/bin/rmbl`,
+  `inst/bin/rmoriebricklayer`, and what `install_cli()` writes) catch an interrupt that gets past
+  the command's own handler, which exited 1 with "Execution halted" on the release legs of
+  84840ac. A Ctrl-C in the first tenth of a second, while R itself starts and before the package
+  loads, is R's own and still exits 1.
+* **A Ctrl-C just before a key prompt is no longer lost.** The prompt looked for `sh` and `stty`
+  with `Sys.which()`, which runs a child process. R ignores Ctrl-C while a child runs, so the
+  interrupt killed only the child. The prompt then fell back to a read that ignores Ctrl-C, and
+  the command waited. They are now found on disk, with no child process.
+* **The otis-mrp bundle runs again.** `analysis.R` sources the package's argument checks
+  (`aaa_input_guards.R`, `lib_helpers.R`) before the package files it loads on its own. Those
+  files call `.rmbl_arg()` since the `match.arg` sweep, and the bundle check failed with "could
+  not find function".
+* **Keys from earlier logins.** A key a pre-0.5.12 login saved for `https://llm.rmorie.com` (the
+  retired gateway, the same issuer and key store) goes to the signed document's data address
+  again, instead of asking to sign in anew. Any other address stays bound to itself.
+* **A spent time budget stops the help lookups.** When no time was left for another turn, the
+  error was taken for a model that cannot use tools, and the question went out again without
+  them, with a full timeout. It now stops with the time-budget message.
+* **Schema check warning.** The misspelling check on structural invariants compared names of two
+  lengths and warned "longer object length is not a multiple of shorter object length".
+* **Coverage.** The coverage job runs the live transport checks, as the check job does.
+
 ## Re-test of 46de6a9 (2026-10-14)
 
 * **Survey replicates: an explicit contract, nothing guessed.** The totals and constancy checks
