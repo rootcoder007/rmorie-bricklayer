@@ -106,6 +106,22 @@ args <- commandArgs(trailingOnly = TRUE)
 }
 SCRIPT_DIR <- tryCatch(.otis_script_dir(), error = function(e) getwd())
 
+## The package files this script sources on their own when the package is not installed
+## (json_native.R, yoy.R, custody.R, region_map.R, ...) call the shared argument checks
+## (aaa_input_guards.R) and their message helper (lib_helpers.R): those come first, from beside
+## the script (a bundle) or from ../../R (a checkout).
+if (!exists(".rmbl_arg", mode = "function")) {
+  for (.f in c("aaa_input_guards.R", "lib_helpers.R")) {
+    for (.dir in c(SCRIPT_DIR, file.path(SCRIPT_DIR, "..", "..", "R"))) {
+      .fp <- file.path(.dir, .f)
+      if (file.exists(.fp)) {
+        source(.fp)
+        break
+      }
+    }
+  }
+}
+
 ## The input is searched for, never assumed. An absolute default is
 ## wrong twice over: it cannot exist on anyone else's machine, and it
 ## states the author's directory layout in a public repository.

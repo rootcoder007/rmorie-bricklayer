@@ -24,6 +24,9 @@ jobs:
     timeout-minutes: 45
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # the live transport checks run here as in r-pkg-check.yml: without them the lines only they
+      # reach read as uncovered (fetch_native.R fell 38 points on PR #56)
+      RMBL_LIVE_TESTS: "1"
       # pak queries 5 Bioconductor repos by default; this package needs
       # none of them, and when bioconductor.org is slow the resolver logs
       # "unable to access index for repository .../bioc" on every leg.

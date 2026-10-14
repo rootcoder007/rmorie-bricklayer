@@ -751,3 +751,30 @@ test_that("the answer key keeps the question's case and the stored question is c
   expect_identical(as.character(ns(".bl_answer_get")(key, "q one")), "A")
   expect_null(ns(".bl_answer_get")(key, "q two"))
 })
+
+test_that("the conversation's time budget: none left stops at once, a turn past it ends the loop", {
+  byok_clean()
+  rt <- list(name = "OpenAI", id = "openai", api = "openai", base = "https://api.openai.com/v1", key = "k")
+  # three times a 0.3 s timeout is under the one second a turn needs: no request is made
+  s <- fake_post(list(list(choices = list(list(finish_reason = "stop", message = list(content = "x"))))))
+  local_mocked_bindings(.bl_post_json = s$post)
+  expect_error(ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer", timeout = 0.3),
+               "gave no answer within 0.9 seconds of help-page lookups")
+  expect_length(s$calls, 0L)
+  # a lookup that takes the whole budget: the next turn is not started, and the answer is asked
+  # for without tools
+  call <- list(choices = list(list(finish_reason = "tool_calls", message = list(content = NULL, tool_calls = list(
+    list(id = "c1", type = "function", `function` = list(name = "get_help", arguments = '{"name":"knox_test"}'))))))
+  )
+  slow_call <- function() {
+    Sys.sleep(1.6)
+    list(status = 200L, json = call, error = "")
+  }
+  final <- list(choices = list(list(finish_reason = "stop", message = list(content = "use survey_design()"))))
+  s <- fake_post(list(slow_call, final))
+  local_mocked_bindings(.bl_post_json = s$post)
+  got <- tryCatch(ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer", timeout = 0.5),
+                  error = function(e) conditionMessage(e))
+  expect_true(identical(got, "use survey_design()") || grepl("help-page lookups", got), info = got)
+  expect_lte(length(s$calls), 2L)
+})
