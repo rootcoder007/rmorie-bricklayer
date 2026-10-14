@@ -31,8 +31,9 @@ each period.}
 \value{
 An object of class \code{rmbl_hotspot}: \code{periods} (one row
 per period; \code{tied_in} counts the cells made hot only by a tie
-with the k-th busiest, and printing says when ties make most
-active cells hot), \code{cells} (one row per ever-active cell, with
+with the k-th busiest, \code{tied_out} the tied cells left out when
+the tie would have made more than twice \code{k} cells hot, which
+printing says), \code{cells} (one row per ever-active cell, with
 its centre in the input's units), and the settings. Points at
 (0, 0), the raw exports' "no location", are dropped, and
 longitudes across the antimeridian are taken on one side of
@@ -44,8 +45,9 @@ for longitude and latitude, map units otherwise) for each
 period and reports, per period: the incidents, the cells with
 any, the share of the ever-active cells that holds half the
 incidents, the hot cells (the \code{top} share of the ever-active
-cells with the most incidents, all cells tied at the cut
-included) and their share of the incidents, and the Jaccard
+cells with the most incidents, with the cells tied at the cut
+included unless the tie would more than double the hot set) and
+their share of the incidents, and the Jaccard
 overlap of the hot set with the previous period's (shared hot
 cells over cells hot in either). Per cell: the incidents in
 all, and in how many periods it was hot.

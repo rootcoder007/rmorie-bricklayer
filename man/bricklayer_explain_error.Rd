@@ -2,7 +2,7 @@
 % Please edit documentation in R/explain_error.R
 \name{bricklayer_explain_error}
 \alias{bricklayer_explain_error}
-\title{Explain an error from rmoriebricklayer (or rmoriedata, or rmorie)}
+\title{Explain an error from rmoriebricklayer (or a package built on it)}
 \usage{
 bricklayer_explain_error(message = geterrmessage(), packages = NULL, n = 3L)
 }
@@ -12,7 +12,8 @@ in f(x) : ..." is fine), or a condition. Default: the last error of this
 session (\code{geterrmessage()}).}
 
 \item{packages}{The installed packages to search; default
-rmoriebricklayer, rmoriedata and rmorie (those installed).}
+rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
+package built on this one sets for its own command line).}
 
 \item{n}{How many matches to return, best first.}
 }

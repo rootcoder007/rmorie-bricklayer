@@ -62,12 +62,18 @@
   invisible(out)
 }
 
+# Whether reading the messages takes long enough to say so first: by the size of the namespaces
+# (a package of some 18,000 objects takes a while; this one, about 1,200, takes a second).
+.bl_ee_big <- function(pkgs, limit = 5000L) {
+  sum(vapply(pkgs, function(p) length(ls(asNamespace(p), all.names = TRUE)), 0L)) > limit
+}
+
 # The table for the packages: one row per message, with the function raising it and the exported
 # functions it is reached from.
 .bl_ee_table <- function(pkgs) {
   key <- paste(pkgs, vapply(pkgs, function(p) as.character(utils::packageVersion(p)), ""), collapse = " ")
   if (!is.null(.bl_ee_memo[[key]])) return(.bl_ee_memo[[key]])
-  # rmorie has some 18,000 messages: the table is kept between sessions beside the saved answers
+  # a large package has thousands of messages: the table is kept between sessions beside the saved answers
   # (same rules: a person watching, removed when the versions change), built once per version
   f <- if (.bl_answer_cache_on()) {
     file.path(.bl_answer_dir(), paste0("messages-", substr(core_sha256(key), 1L, 16L), ".rds"))
@@ -79,8 +85,8 @@
       return(tab)
     }
   }
-  if (!is.null(f) && "rmorie" %in% pkgs) message("Reading the messages of ", paste(pkgs, collapse = ", "),
-                                               " (once for these versions; it takes a little while)")
+  if (!is.null(f) && .bl_ee_big(pkgs)) message("Reading the messages of ", paste(pkgs, collapse = ", "),
+                                             " (once for these versions; it takes a little while)")
   cols <- list(package = character(), raised_by = character(), kind = character(), template = character(),
                exported = character())
   for (p in pkgs) {
@@ -155,7 +161,7 @@
   unique(w[nchar(w) >= 3L & !w %in% .bl_ee_stop & !grepl("^[0-9]+$", w)])
 }
 
-#' Explain an error from rmoriebricklayer (or rmoriedata, or rmorie)
+#' Explain an error from rmoriebricklayer (or a package built on it)
 #'
 #' Finds where an error or warning message comes from, without a language
 #' model and without the network: every message the packages raise is written
@@ -170,7 +176,8 @@
 #'   in f(x) : ..." is fine), or a condition. Default: the last error of this
 #'   session (\code{geterrmessage()}).
 #' @param packages The installed packages to search; default
-#'   rmoriebricklayer, rmoriedata and rmorie (those installed).
+#'   rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
+#'   package built on this one sets for its own command line).
 #' @param n How many matches to return, best first.
 #' @return A data frame, best match first: \code{package}, \code{raised_by}
 #'   (the function whose code raises it), \code{exported} (the exported

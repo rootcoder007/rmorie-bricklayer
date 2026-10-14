@@ -100,6 +100,14 @@ claims the earlier fixes overstated corrected.
 * **Schema check warning.** The misspelling check on structural invariants compared names of two
   lengths and warned "longer object length is not a multiple of shorter object length".
 * **Coverage.** The coverage job runs the live transport checks, as the check job does.
+* **This package names no package built on it.** `bricklayer_llm_ask()` and
+  `bricklayer_explain_error()` read this package's help and messages by default; before, they
+  also loaded rmoriedata and rmorie when those were installed. A package built on this one passes
+  its own (`packages =`), and its command line sets `RMBL_PACKAGES` (comma-separated) for the
+  verbs it hands over, as `RMBL_PROG` names the command.
+* **explain-error announces a long read by its size.** The "Reading the messages ..." note
+  came only when rmorie was among the packages; it now comes for any set of namespaces over
+  5,000 objects (rmorie has 18,709, this package about 1,200).
 * **No warnings in the build or the tests.** The checked writer's message buffer holds a whole
   path (gcc `-Wformat-truncation`); two unused Keccak helpers and an unused constant are gone
   (clang `-Wunused`). The tests expect the warnings they provoke: the stability bound, the

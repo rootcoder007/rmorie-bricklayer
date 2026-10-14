@@ -815,7 +815,7 @@ bricklayer_llm_providers <- function() {
 #'
 #' With \code{docs = TRUE} (the default) the model knows the packages: its
 #' instructions carry an index of every exported function of
-#' rmoriebricklayer and rmoriedata (name, arguments, title, read from the
+#' the packages (\code{packages}; name, arguments, title, read from the
 #' help pages installed here), and it may call five read-only tools to
 #' search the help, read a page or its examples, list the datasets and read
 #' a vignette before it answers. A model that cannot call tools gets the
@@ -832,7 +832,8 @@ bricklayer_llm_providers <- function() {
 #' @param docs Give the model the packages' help (see Details);
 #'   \code{FALSE} sends the prompt alone.
 #' @param packages The installed packages whose help the model gets; default
-#'   rmoriebricklayer, rmoriedata and rmorie (those installed).
+#'   rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
+#'   package built on this one sets for its own command line).
 #' @param fresh \code{TRUE} asks the model even when an answer to the same
 #'   question is saved on this machine, and keeps the new one. A person at a
 #'   terminal (the command line with the terminal on stdin and stdout) or in

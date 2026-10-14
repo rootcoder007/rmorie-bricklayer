@@ -32,15 +32,19 @@ or \code{"own"}, \code{"ollama"} or a provider id to insist on one.}
 \code{FALSE} sends the prompt alone.}
 
 \item{packages}{The installed packages whose help the model gets; default
-rmoriebricklayer, rmoriedata and rmorie (those installed).}
+rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
+package built on this one sets for its own command line).}
 
 \item{fresh}{\code{TRUE} asks the model even when an answer to the same
 question is saved on this machine, and keeps the new one. A person at a
-terminal or in an interactive session gets a saved answer back at once
-when the question (case and spacing aside), route, model, packages and
-their versions all match, for 30 days; the answers are owner-only files
-under \code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is
-kept elsewhere, and \code{MORIE_LLM_CACHE=off} (or
+terminal (the command line with the terminal on stdin and stdout) or in
+an interactive session gets a saved answer back at once when the
+question (spacing aside; case counts), route, model, packages and their
+versions all match, for 30 days; the first save in a session says so.
+The answers are owner-only files under
+\code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is kept
+elsewhere, nothing is kept from a script or a pipeline, and
+\code{MORIE_LLM_CACHE=off} (or
 \code{options(rmoriebricklayer.llm_cache = FALSE)}) turns it off.}
 }
 \value{
@@ -77,7 +81,7 @@ a question would take.
 \details{
 With \code{docs = TRUE} (the default) the model knows the packages: its
 instructions carry an index of every exported function of
-rmoriebricklayer and rmoriedata (name, arguments, title, read from the
+the packages (\code{packages}; name, arguments, title, read from the
 help pages installed here), and it may call five read-only tools to
 search the help, read a page or its examples, list the datasets and read
 a vignette before it answers. A model that cannot call tools gets the
