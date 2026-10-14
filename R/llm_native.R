@@ -554,6 +554,66 @@
   sprintf("%s has no model to use%s: %s", .bl_route_what(rt), shown, how)
 }
 
+#' The language-model route that would answer
+#'
+#' Which route \code{\link{bricklayer_llm_ask}} would take now, without sending
+#' anything: your own endpoint, a provider whose key is set, or Ollama, in that
+#' order (or the one \code{route} names).
+#'
+#' @param route \code{NULL} (the saved setting, else the automatic order),
+#'   \code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id from
+#'   \code{\link{bricklayer_llm_providers}}.
+#' @return \code{NULL} when no route is set up, else a list with \code{route}
+#'   (the id \code{route =} takes), \code{name}, \code{model} (\code{NULL} when
+#'   none is chosen) and \code{base} (the address requests go to).
+#' @examples
+#' old <- Sys.getenv("OLLAMA_HOST", unset = NA)
+#' Sys.setenv(OLLAMA_HOST = "off")
+#' str(bricklayer_llm_route_info("ollama"))
+#' if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
+#' @export
+bricklayer_llm_route_info <- function(route = NULL) {
+  if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  rt <- .bl_llm_route(route)
+  if (is.null(rt)) return(NULL)
+  list(route = .bl_route_id(rt), name = rt$name, model = rt$model, base = rt$base)
+}
+
+#' A conversation with a language model
+#'
+#' Sends a whole conversation (system, user and assistant turns) to the route
+#' \code{\link{bricklayer_llm_ask}} would take, and returns the reply. Unlike
+#' \code{bricklayer_llm_ask()} it adds nothing to the conversation: no help
+#' pages, no tools.
+#'
+#' @param messages A list of turns, each \code{list(role = , content = )} with
+#'   role \code{"system"}, \code{"user"} or \code{"assistant"}.
+#' @inheritParams bricklayer_llm_ask
+#' @return The reply text.
+#' @examples
+#' \dontrun{
+#' bricklayer_llm_chat(list(list(role = "user", content = "Name one survey weight type.")))
+#' }
+#' @export
+bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 120) {
+  ok <- is.list(messages) && length(messages) && all(vapply(messages, function(m) {
+    is.list(m) && is.character(m$role) && length(m$role) == 1L && m$role %in% c("system", "user", "assistant") &&
+      is.character(m$content) && length(m$content) == 1L && !is.na(m$content)
+  }, logical(1)))
+  if (!ok) stop("`messages` must be a list of list(role = \"system\"|\"user\"|\"assistant\", content = text)",
+                call. = FALSE)
+  if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
+  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  timeout <- .rmbl_num(timeout, "timeout")
+  rt <- .bl_llm_route(route)
+  if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
+  model <- model %||% rt$model
+  if (is.null(model) || !nzchar(model)) stop(.bl_no_model_message(rt), call. = FALSE)
+  .bl_llm_chat(rt, model, lapply(messages, function(m) list(role = m$role, content = m$content)),
+               timeout = timeout)$text
+}
+
 #' Models a language-model route offers
 #'
 #' Asks the provider (or your own server, or Ollama) which models your key

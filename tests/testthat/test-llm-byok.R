@@ -508,3 +508,42 @@ test_that("the three wire formats: arguments as an object or nothing, text besid
     content = list(parts = list(list(text = "first"), list(text = "second")))))))
   expect_identical(out$text, "first\nsecond")
 })
+
+test_that("a package with thousands of help pages is searched, not listed whole", {
+  byok_clean()
+  rt <- list(name = "OpenAI", id = "openai", api = "openai", base = "https://api.openai.com/v1", key = "k")
+  ok <- list(choices = list(list(finish_reason = "stop", message = list(content = "ok"))))
+  s <- fake_post(list(ok))
+  local_mocked_bindings(.bl_post_json = s$post, .bl_kn_list_max = 50L)
+  ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer")
+  sys <- s$calls[[1L]]$payload$messages[[1L]]$content
+  # rmoriebricklayer stands in for the big package here: 40 of its pages listed, the rest searched
+  expect_match(sys, "rmoriebricklayer has [0-9]+ more functions than are listed below: search_docs")
+  expect_lte(length(grep("  -- ", strsplit(sys, "\n")[[1L]])), 41L)
+  expect_match(sys, "survey_design")
+})
+
+test_that("route_info says which route would answer; chat sends a whole conversation as it is", {
+  byok_clean()
+  expect_null(bricklayer_llm_route_info())
+  expect_error(bricklayer_llm_route_info("hosted"), "retired")
+  withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = "llama-x")
+  info <- bricklayer_llm_route_info()
+  expect_identical(info[c("route", "name", "model")], list(route = "groq", name = "Groq", model = "llama-x"))
+  expect_match(info$base, "^https://api.groq.com")
+  s <- fake_post(list(list(choices = list(list(finish_reason = "stop", message = list(content = "pong"))))))
+  local_mocked_bindings(.bl_post_json = s$post)
+  convo <- list(list(role = "system", content = "be brief"), list(role = "user", content = "ping"),
+                list(role = "assistant", content = "?"), list(role = "user", content = "ping again"))
+  expect_identical(bricklayer_llm_chat(convo), "pong")
+  sent <- s$calls[[1L]]$payload$messages
+  expect_identical(vapply(sent, function(m) m$role, ""), c("system", "user", "assistant", "user"))
+  expect_null(s$calls[[1L]]$payload$tools)  # nothing added
+  expect_error(bricklayer_llm_chat(list(list(role = "tool", content = "x"))), "must be a list of")
+  expect_error(bricklayer_llm_chat("ping"), "must be a list of")
+  expect_error(bricklayer_llm_chat(convo, route = "hosted"), "retired")
+  withr::local_envvar(GROQ_API_KEY = NA)
+  expect_error(bricklayer_llm_chat(convo), "No language-model route")
+  withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = NA)
+  expect_error(bricklayer_llm_chat(convo, route = "groq"), "Groq has no model to use")
+})
