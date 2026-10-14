@@ -395,8 +395,12 @@
                                         content = .bl_kn_run_tool(tc, pkgs, clip))
     }
     if (length(res$tool_calls) > length(calls)) {
-      msgs[[length(msgs) + 1L]] <- list(role = "user", content = sprintf(
-        "Only the first %d of your %d tool calls were run; ask for the rest in later turns, a few at a time.",
+      # the note goes with the last tool result: as a turn of its own it followed the tool results,
+      # which Anthropic and Gemini carry in a user turn, so they got two user turns in a row
+      # (network stress test of 5e1dce5)
+      last <- length(msgs)
+      msgs[[last]]$content <- paste0(msgs[[last]]$content, "\n\n", sprintf(
+        "(Only the first %d of your %d tool calls were run; ask for the rest in later turns, a few at a time.)",
         length(calls), length(res$tool_calls)))
     }
     looked <- looked + length(res$tool_calls)

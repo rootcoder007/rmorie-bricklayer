@@ -17,8 +17,13 @@
 
 int rmbl_interrupt_pending(void);   /* rmbl_barrier.cpp: a Ctrl-C is pending */
 
-/* the fields of one record, as (start, length, quoted) spans into the buffer */
-typedef struct { size_t start, len; int quoted; } rmbl_span;
+/* the fields of one record, as spans into the buffer: the field (inside its quotes when quoted),
+ * and for a quoted field the blanks before its opening quote and the text after its closing one,
+ * which read.csv() keeps around the unquoted text (" "x"" reads as " x", ""x" " as "x ") */
+typedef struct { size_t start, len; int quoted; size_t pre_start, pre_len, post_start, post_len; } rmbl_span;
+
+/* the bytes a field's text can take */
+static size_t rmbl_span_len(const rmbl_span *sp) { return sp->pre_len + sp->len + sp->post_len; }
 
 /* Scan one record from `pos`: fills `spans` (at most `cap`), returns the field count (which may
  * exceed `cap`: the caller sizes), advances `*pos` past the record's line ending, sets `*empty`
@@ -37,6 +42,12 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
         rmbl_span sp;
         sp.start = p;
         sp.quoted = 0;
+        sp.pre_start = sp.post_start = p;
+        sp.pre_len = sp.post_len = 0;
+        /* blanks before an opening quote: the field is quoted, the blanks are kept */
+        size_t q = p;
+        while (q < n && (s[q] == ' ' || s[q] == '\t')) q++;
+        if (q < n && q > p && s[q] == '"') { sp.pre_len = q - p; p = q; }
         if (p < n && s[p] == '"') {
             /* a quoted field: runs to the closing quote; a doubled quote is one quote (unescaped
              * by the caller), so the span keeps the inner bytes as they are */
@@ -52,14 +63,18 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
             }
             sp.len = p - sp.start;
             p++;   /* the closing quote */
-            /* whatever follows up to the separator is taken as part of the field by read.csv()
-             * too (it appends it); the curated tables never do this, so it is refused in words */
-            if (p < n && s[p] != ',' && s[p] != '\n' && s[p] != '\r') {
-                *err = "a quoted field is followed by text before the next comma";
-                return 0;
-            }
-        } else {
+            /* whatever follows up to the separator is part of the field, as read.csv() appends it
+             * (it was refused here; network stress test of 5e1dce5) */
+            sp.post_start = p;
             while (p < n && s[p] != ',' && s[p] != '\n' && s[p] != '\r') p++;
+            sp.post_len = p - sp.post_start;
+        } else {
+            while (p < n && s[p] != ',' && s[p] != '\n' && s[p] != '\r') {
+                /* read.csv() takes a quote inside an unquoted field as the start of a quoted run and
+                 * swallows the rest of the file into it (0 rows and a warning): refused in words */
+                if (s[p] == '"') { *err = "a quote inside an unquoted field (ab\"c)"; return 0; }
+                p++;
+            }
             sp.len = p - sp.start;
         }
         if (nf < cap) spans[nf] = sp;
@@ -72,16 +87,33 @@ static size_t rmbl_csv_record(const unsigned char *s, size_t n, size_t *pos, rmb
         p++;
     }
     *pos = p;
+    /* a line holding only "" is a blank line to read.csv(): skipped, not a row of NA */
+    if (nf == 1 && cap >= 1 && spans[0].quoted && rmbl_span_len(&spans[0]) == 0) {
+        *empty = 1;
+        return 0;
+    }
     return nf;
 }
 
-/* The field's text with doubled quotes undone and NUL bytes dropped, into `buf` (sized to len). */
+/* The field's text with doubled quotes undone, a CR or CRLF inside quotes made a newline (as
+ * read.csv() reads the file in text mode) and NUL bytes dropped, into `buf` (sized to
+ * rmbl_span_len). */
 static size_t rmbl_csv_field(const unsigned char *s, const rmbl_span *sp, char *buf, int skip_nul) {
     size_t o = 0;
+    for (size_t i = 0; i < sp->pre_len; i++) buf[o++] = (char) s[sp->pre_start + i];
     for (size_t i = 0; i < sp->len; i++) {
         unsigned char c = s[sp->start + i];
         if (c == 0 && skip_nul) continue;
         if (sp->quoted && c == '"' && i + 1 < sp->len && s[sp->start + i + 1] == '"') i++;
+        if (sp->quoted && c == '\r') {
+            if (i + 1 < sp->len && s[sp->start + i + 1] == '\n') continue;
+            c = '\n';
+        }
+        buf[o++] = (char) c;
+    }
+    for (size_t i = 0; i < sp->post_len; i++) {
+        unsigned char c = s[sp->post_start + i];
+        if (c == 0 && skip_nul) continue;
         buf[o++] = (char) c;
     }
     return o;
@@ -186,7 +218,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     }
     const size_t ncol = nh;
     size_t maxlen = 0;
-    for (size_t j = 0; j < ncol; j++) if (spans[j].len > maxlen) maxlen = spans[j].len;
+    for (size_t j = 0; j < ncol; j++) if (rmbl_span_len(&spans[j]) > maxlen) maxlen = rmbl_span_len(&spans[j]);
     const size_t body = pos;
     /* first pass: the rows are counted and each column's type decided, with no allocation */
     int *type = (int *) R_alloc(ncol, sizeof(int));
@@ -204,9 +236,10 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
                   (unsigned long) (nrow + 2), (unsigned long) nf, (unsigned long) ncol);
         }
         for (size_t j = 0; j < nf; j++) {
-            if (spans[j].len > maxlen) maxlen = spans[j].len;
+            const size_t fl = rmbl_span_len(&spans[j]);
+            if (fl > maxlen) maxlen = fl;
             if (type[j] == RMBL_T_STR) continue;
-            if (spans[j].len + 1 > bufcap) { bufcap = spans[j].len * 2 + 16; buf = (char *) R_alloc(bufcap, 1); }
+            if (fl + 1 > bufcap) { bufcap = fl * 2 + 16; buf = (char *) R_alloc(bufcap, 1); }
             size_t len = rmbl_csv_field(s, &spans[j], buf, skip_nul);
             if (rmbl_csv_is_na(buf, len)) continue;
             int iv; double dv;
@@ -230,7 +263,15 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     do { rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err); } while (empty && pos < n);
     for (size_t j = 0; j < ncol; j++) {
         size_t len = rmbl_csv_field(s, &spans[j], buf, skip_nul);
-        SET_STRING_ELT(names, (R_xlen_t) j, mkCharLenCE(buf, (int) len, CE_NATIVE));
+        size_t b = 0;
+        /* an unquoted name is trimmed, as read.csv() reads the header with strip.white = TRUE
+         * (" Operational_Capacity " came out X.Operational_Capacity.; statistics stress test of
+         * 5e1dce5); a quoted one keeps its blanks, as there */
+        if (!spans[j].quoted) {
+            while (b < len && (buf[b] == ' ' || buf[b] == '\t')) b++;
+            while (len > b && (buf[len - 1] == ' ' || buf[len - 1] == '\t')) len--;
+        }
+        SET_STRING_ELT(names, (R_xlen_t) j, mkCharLenCE(buf + b, (int) (len - b), CE_NATIVE));
     }
     SEXP columns = PROTECT(allocVector(VECSXP, (R_xlen_t) ncol));
     for (size_t j = 0; j < ncol; j++) {

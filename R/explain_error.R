@@ -133,7 +133,7 @@
   assign(key, tab, envir = .bl_ee_memo)
   if (!is.null(f)) {
     tryCatch({
-      if (!dir.exists(dirname(f))) dir.create(dirname(f), recursive = TRUE, mode = "0700")
+      .bl_private_dir(dirname(f))
       old <- setdiff(list.files(dirname(f), pattern = "^messages-.*[.]rds$", full.names = TRUE), f)
       unlink(old)  # one table kept: the versions installed now
       saveRDS(tab, f)

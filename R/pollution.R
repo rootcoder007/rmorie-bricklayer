@@ -416,6 +416,9 @@ pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, 
 #' plr_crossfit(d, "asthma", "exposure", c("x1", "x2"))$ate
 #' @export
 plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, seed = 1L) {
+  .rmbl_colnames(outcome, "outcome")
+  .rmbl_colnames(treatment, "treatment")
+  .rmbl_colnames(covariates, "covariates", several = TRUE)
   cols <- c(outcome, treatment, covariates)
   missing <- setdiff(cols, names(data))
   if (length(missing)) stop(sprintf("data is missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
@@ -490,6 +493,9 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
 #' @export
 exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootstrap = 100L,
                                   random_state = 42L, estimator = plr_crossfit) {
+  .rmbl_colnames(outcome, "outcome")
+  .rmbl_colnames(exposure, "exposure")
+  .rmbl_colnames(confounders, "confounders", several = TRUE)
   estimator <- match.fun(estimator)
   n_bootstrap <- .pollution_scalar(n_bootstrap, "n_bootstrap")
   if (n_bootstrap != round(n_bootstrap)) stop("`n_bootstrap` must be a whole number of resamples", call. = FALSE)
@@ -547,6 +553,8 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
 #' exposure_concentration_index(d, "exposure", "income")$concentration_index
 #' @export
 exposure_concentration_index <- function(data, exposure, income) {
+  .rmbl_colnames(exposure, "exposure")
+  .rmbl_colnames(income, "income")
   missing <- setdiff(c(exposure, income), names(data))
   if (length(missing)) stop(sprintf("data is missing columns: %s", paste(missing, collapse = ", ")), call. = FALSE)
   df <- data[, c(exposure, income), drop = FALSE]
@@ -614,6 +622,7 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
                                      baseline_rate_col = "baseline_rate",
                                      pollutant = "NO2", outcome = "all_cause_mortality",
                                      rare_outcome = FALSE, high_rate = FALSE) {
+  for (a in c("area_col", "exposure_col", "population_col", "baseline_rate_col")) .rmbl_colnames(get(a), a)
   required <- c(area_col, exposure_col, population_col, baseline_rate_col)
   missing <- setdiff(required, names(area_table))
   if (length(missing)) {

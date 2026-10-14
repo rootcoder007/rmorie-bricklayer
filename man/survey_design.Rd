@@ -105,11 +105,35 @@ replicate has its own factor \eqn{(n_h - 1)/n_h} for the
 standard error by 37 percent in a test design).}
 }
 
-The replicate columns are only replicates: a column holding
-the full-sample weight, the \code{id}, or any other column of
-\code{data} is refused by name, and BRR and Fay replicates must come
-in a Hadamard order (2, or a multiple of 4), so a stray column
-is caught instead of being averaged in as one more replicate.
+The replicate columns are taken as given: which columns are
+replicates is not guessed from their values (rules that tried
+refused genuine designs, a dominant PSU or a jackknife on a
+subset). Refused, because no genuine replicate can be it: the
+\code{id}'s values, the row numbers, a column of \code{data} passed under
+another name, a second column named like the weight or the \code{id}
+that holds other values, and under JK1, JKn and BRR a copy of the
+full-sample weight (equal to it, or within 1 percent of it on every
+row). Warned about, because a genuine set can produce it but
+rarely does: under the bootstrap, more replicates equal to the
+full-sample weight than chance draws; under the bootstrap or
+Fay's method, a replicate within 1 percent of the weight on
+every row;
+under JK1, JKn and BRR, a replicate that leaves no row out; and a
+set whose replicates total, on average, under a tenth or over ten
+times the weight (multipliers such as \pkg{survey}'s
+\verb{$repweights} passed in place of replicate weights). A column of
+\code{data} named in \code{replicates}, and every column of an unnamed
+matrix, is a replicate because it was given as one; a stray that
+is itself shaped like a replicate (another design's multipliers, a
+constant under the bootstrap) cannot be told from one. BRR and
+Fay replicates must come in a Hadamard order (2, or a multiple of
+4).
+
+The data passed to \code{\link[=survey_estimate]{survey_estimate()}} must be the rows
+the design was built on, in the same order: rows in another order
+are refused
+(within strata or PSUs too), and a column changed since (a
+permuted outcome for a permutation test) is not a reorder.
 
 The design's degrees of freedom (\code{df = "design"} in
 \code{\link[=survey_estimate]{survey_estimate()}}) are PSUs less strata under

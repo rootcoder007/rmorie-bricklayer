@@ -58,7 +58,7 @@
   lines <- readLines(p, warn = FALSE)
   # `[]`, `"x"` and `5` parse, and an empty array reads as an empty list: only an object will do
   if (!startsWith(trimws(paste(lines, collapse = "")), "{")) return(NULL)
-  out <- tryCatch(.rmbl_json_text(lines, simplifyVector = TRUE), error = function(e) NULL)
+  out <- tryCatch(.rmbl_json_text(lines, simplifyVector = TRUE, bigint_as_char = TRUE), error = function(e) NULL)
   if (!is.list(out)) return(NULL)
   out
 }
@@ -99,7 +99,17 @@
     if (file.exists(p)) unlink(p)
     return(invisible(p))
   }
-  .bl_write_private_json(p, data)
+  # only the settings that changed are written, in place: the rest of the file stays as it was
+  # written (a full rewrite cut floats to 4 digits, unboxed one-element arrays, turned a "" key into
+  # "1" and rounded integers past 2^53; network stress test of 5e1dce5). credentials.json is
+  # written the same way.
+  old <- if (file.exists(p)) .bl_read_config() else list()
+  txt <- if (file.exists(p)) .bl_read_text(p) else "{}"
+  for (k in union(names(old), names(data))) {
+    if (nzchar(k) && !identical(old[[k]], data[[k]])) txt <- .bl_credentials_text_set(txt, k, data[[k]])
+  }
+  if (!endsWith(txt, "\n")) txt <- paste0(txt, "\n")   # a text file ends its last line
+  .bl_write_private_text(p, txt)
 }
 
 # The saved value behind an environment variable's name, or NULL.
@@ -404,9 +414,10 @@ bricklayer_llm_config <- function(...) {
   if (route %in% ps$id) {
     pr <- .bl_preset(route)
     if (is.null(.bl_preset_key(route))) {
-      out(sprintf("\nYour %s key (it is saved privately and sent only to %s; %s also works):\n",
-                  pr$label, pr$base, pr$key_env))
-      k <- ask(sprintf("%s key (Enter to skip)", pr$label), secret = TRUE)
+      # the explanation is part of the prompt the shell prints once echo is off: printed by R first,
+      # a key pasted straight away was echoed (network stress test of 5e1dce5)
+      k <- ask(sprintf(paste0("\nYour %s key (it is saved privately and sent only to %s; %s also works)\n",
+                              "%s key (Enter to skip)"), pr$label, pr$base, pr$key_env, pr$label), secret = TRUE)
       if (nzchar(k)) do.call(set, stats::setNames(list(k), paste0(route, ".key")))
     }
     if (!is.null(.bl_preset_key(route))) {

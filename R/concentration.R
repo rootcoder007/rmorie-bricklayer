@@ -354,8 +354,8 @@ hurwitz_zeta <- function(s, q = 1) {
     # e57fed5). zeta(1 - s) has 1 - s > 1, the C series.
     # sinpi(x) beside x = -1 is sin(pi * x) in R, which carries the absolute error of pi * x (about
     # 2e-16) into a value of order the distance from -1: the distance is taken first, exactly
-    # (si / 2 + 1 is exact there, Sterbenz), and sinpi of that is accurate (review of 46de6a9, F5;
-    # on glibc the two agree to 1e-15, on other libms not)
+    # (si / 2 + 1 is exact there, Sterbenz), and sinpi of that is accurate (review of 46de6a9, F5:
+    # sin(pi * x) was off by up to 8.9% at -2 +/- 1e-15, on glibc as on other libms)
     sp <- .rmbl_sinpi(si / 2)
     if (sp == 0) return(0)
     lmag <- si * log(2) + (si - 1) * log(pi) + lgamma(1 - si) + log(abs(.rmbl_hurwitz(1 - si, 1)))
@@ -373,6 +373,12 @@ hurwitz_zeta <- function(s, q = 1) {
     return(-exp(m * log(q) - log(m)) * sum(choose(m, 0:m) * bk * q^(-(0:m))))
   }
   if (q >= max(40, 2 * abs(si))) return(.rmbl_hurwitz_em(si, q, 0))
+  if (si <= -5 && q == round(q) && q >= 2) {
+    # a whole q: zeta(s, q) = zeta(s) - sum_{k < q} k^-s, exactly, with zeta(s) by the functional
+    # equation, which is accurate beside the trivial zeros. The Fourier route lost 5.4e-8 relative
+    # at q = 2 near s = -30 (statistics stress test of 5e1dce5)
+    return(.rmbl_hurwitz_below_one(si, 1) - sum((seq_len(q - 1))^(-si)))
+  }
   if (si <= -5) {
     N <- ceiling(q) - 1
     f <- q - N                    # 0 < f <= 1

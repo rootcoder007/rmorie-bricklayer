@@ -184,6 +184,9 @@ test_that("L2: a nameless tool call, a regex filter, an empty reply and a flood 
   expect_length(asst[[1L]]$tool_calls, 12L)
   told <- vapply(sent[[2L]]$messages, function(m) m$content %||% "", "")
   expect_true(any(grepl("Only the first 12 of your 40", told)))
+  # with the last tool result, not a user turn after the tool results
+  roles <- vapply(sent[[2L]]$messages, function(m) m$role %||% "", "")
+  expect_false(any(roles[-1L] == "user" & roles[-length(roles)] == "tool"))
   # an endless tool loop ends in an error, never an empty answer with exit 0
   n <- 0L
   local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
@@ -242,14 +245,16 @@ test_that("hotspot_persistence says when it drops (0, 0)", {
   expect_message(hotspot_persistence(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident at \\(0, 0\\)")
 })
 
-test_that("the planar cell key tells 1e15 from 1e15 + 1, and refuses indices past 2^53", {
+test_that("the planar cell key tells 1e15 from 1e15 + 1, and indices past 2^52 are compared directly", {
   x <- c(1e15, 1e15 + 1, 1e15 + 2) * 3
   cp <- ns(".jx_close_pairs")(x, c(0, 0, 0), 1, 1e6)
   # the three points are three apart: no pair is within 1
   expect_identical(length(cp$i), 0L)
   # at 8e15 / 1 the index is still a whole number; at 1e12 / 1e-6 it is not (review of 46de6a9)
   expect_identical(length(ns(".jx_close_pairs")(c(8e15, 8e15 + 0.5, 8e15 + 3), c(0, 0, 0), 1, 1e6)$i), 1L)
-  expect_error(ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6), "exceed 2\\^53")
+  # 1e12 + 1e-7 is the double 1e12: one pair at distance 0, found directly (it was refused; the
+  # statistics stress test of 5e1dce5 asked for the test to run rather than refuse)
+  expect_identical(length(ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6)$i), 1L)
 })
 
 test_that("hotspot_persistence says when it drops an incident without a location or period", {
@@ -391,7 +396,9 @@ test_that("a choice argument is refused in the package's words, naming what was 
 test_that("a data frame with empty or repeated column names is refused in words", {
   d <- data.frame(y = 1:6, w = 1)
   names(d)[2] <- ""
-  expect_error(survey_design(d, weights = "y"), "every column of `data` must have a name")
+  # survey_design() minds only the columns it uses: an unnamed column it does not use is no reason to
+  # refuse the data (statistics stress test of 5e1dce5)
+  expect_s3_class(survey_design(d, weights = "y"), "rmbl_svy_design")
   d2 <- data.frame(a = 1:6, b = 1:6)
   names(d2) <- c("a", "a")
   expect_error(survey_design(d2, weights = "a"), "two columns named a")

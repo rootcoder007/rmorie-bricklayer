@@ -72,6 +72,64 @@ claims the earlier fixes overstated corrected.
   beside the saved answers.
 * **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
   the Ollama app, or its system service) when nothing answers at its address.
+## Network and statistics stress tests of 5e1dce5 (2026-10-14)
+
+* **A typo, a file name or a key is never sent to a model.** A line with no verb is asked only when
+  it plainly is a question: the first argument is the question itself (two words or more, or
+  ending in `?`), it is not a verb or one or two letters from one, it holds no path, line break or
+  key-shaped word, and anything after it is an option `ask` takes (`rmbl "how?" --fresh` works).
+  `rmbl explain-eror "object 'x' not found"`, `rmbl "My Documents/urls.txt"` and `rmbl conifg set
+  anthropic.key "$(cat key.txt)"` with a CRLF key file went to the model before, the key with
+  them. An unknown verb now names the nearest one (`did you mean ...`).
+* **A Ctrl-C during a GET is raised** (`rmbl models` exited 0 with "did not answer", a Wayback run
+  polled on past its time limit): the transfer's callback records the interrupt it takes. The
+  plain GET behind the Wayback lookups takes Ctrl-C too.
+* **The key prompt finds `stty` and `sh` on PATH** without a child process (only `/bin` and
+  `/usr/bin` were looked in, so on a NixOS-style layout the key was echoed), runs the `sh` it
+  found, and takes a Ctrl-C already pending before the read starts. `config setup` prints its
+  key explanation as part of the prompt the shell shows once echo is off.
+* **A settings or cache folder left open by an earlier version is made owner-only**, not only a
+  new one. `config set` writes only the settings it changes into `llm.json` (a full rewrite cut
+  floats to 4 digits, unboxed arrays, renamed a `""` key and rounded integers past 2^53).
+  Answers are kept only with a person at a terminal or in a GUI session (`R --interactive < file`
+  kept them). The note after the tool-call cap goes with the last tool result (Anthropic and
+  Gemini got two user turns in a row).
+* **The native CSV reader**: a table that would decompress past 512 MiB is read the streamed way
+  (`read.csv(gzfile())`; a 2.6 MB file of blank lines got the process killed for memory), and a
+  `.csv.gz` that is plain text is read as such. As `read.csv()` reads them: unquoted header names
+  are trimmed (`" Operational_Capacity "` came out `X.Operational_Capacity.`), CR and CRLF inside
+  quotes are newlines, a line holding only `""` is blank, blanks before a quote and text after
+  one are kept. A quote inside an unquoted field (`ab"c`, where `read.csv()` swallows the rest of
+  the file) is refused in words. Deliberate differences from `read.csv()`: a UTF-8 byte-order mark
+  is not part of the first name, and ragged rows, extra fields and an unclosed quote are refused.
+* **Survey replicates**: what is refused, what is said and what cannot be told apart is in
+  `?survey_design`. New: a copy of the weight within 1 percent on every row is refused under JK1,
+  JKn and BRR; warnings for more replicates equal to the weight than a bootstrap draws (judged
+  against the m!/m^m chance for the PSUs read from the replicates), a near copy under the
+  bootstrap or Fay, a JK or BRR replicate that leaves no row out and is no rescaled weight, and
+  replicates totalling on average under a tenth or over ten times the weight (`$repweights`
+  multipliers). 360 generated genuine sets: 0 refused, 0 warned; survey's JK1 and bootstrap
+  subsets of apiclus1: no warning. A second column with the id's name and other values is refused
+  (it was kept); the weight beside the replicates under its own name is recognised within 1e-12.
+* **Reordered survey data is caught by a key per row**, computed every time: rows reordered within
+  strata or PSUs are refused now, a permuted outcome (a permutation test) is not a reorder, and a
+  million rows of ten columns take 0.6 s per estimate (the per-column digests took 88 s). Only the
+  columns the design uses must have unique names.
+* **`hurwitz_zeta()` with a whole `q`** beside the trivial zeros goes through Riemann's zeta and the
+  finite sum (5.4e-8 relative at q = 2 near s = -30); 144 points against mpmath at the exact
+  doubles agree to 3e-15.
+* **`knox_test()`** compares incidents too far out for the distance band to index with every
+  other one directly (one outlier at 1e300, or a band of 1e-300, refused the whole test), and
+  measures distances in band units. **`hotspot_persistence()`**: a period whose hot set a tie
+  emptied has no overlap to report (it showed 0); the courts vignette says how ties work.
+* **Refusals in words**: a `NULL`, empty or missing column name in `plr_crossfit()`,
+  `exposure_response_plr()`, `exposure_concentration_index()` and `pollution_burden_by_area()`.
+  `missingness_summary()` and `duplicate_rows()` take data with duplicate column names, which is
+  the messy data they exist to inspect.
+* **Tests**: none reaches a real host without `RMBL_LIVE_TESTS=1` (`online_now()`, the LinkingTo
+  fallback, an `invalid.invalid` lookup, a route test's status lookup); the tibble reorder test
+  resets row names as a tibble does (it passed on builds that never compared values).
+
 ## CI on 84840ac, and asking in other words (2026-10-14)
 
 * **`aye`, `tellme`, or just the question.** `rmbl aye "..."`, `rmbl tellme "..."` and
@@ -163,9 +221,10 @@ claims the earlier fixes overstated corrected.
   values of `compare` and keeps its type; an estimate without a standard error plots without a
   warning.
 * **`hurwitz_zeta()` beside the trivial zeros** takes the distance to the nearest integer exactly
-  before `sinpi()` (R's `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which on some libms loses
-  the digits of a value of order that distance); the test compares against mpmath at the exact
-  doubles. **`crime_density()`** keeps every incident on a map that runs past 180 degrees (the
+  before `sinpi()` (R's `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which loses the digits of a
+  value of order that distance: up to 8.9% at -2 +/- 1e-15, on glibc as on other libms); the test
+  compares against mpmath at the exact doubles. A whole `q` of 2 or more beside the trivial zeros
+  goes through Riemann's zeta and the finite sum (5.4e-8 relative at q = 2 near s = -30 before). **`crime_density()`** keeps every incident on a map that runs past 180 degrees (the
   points are in the grid's frame). `hotspot_persistence()` says when it drops an incident without
   a location or period. A planar cell index past 2^53 is refused rather than merged with its
   neighbours. A burden at rate 0 or population 0 draws. The age-specific rate message in
@@ -205,9 +264,8 @@ claims the earlier fixes overstated corrected.
   label.
 * **`crime_density()` near the antimeridian (F4)** draws: grid nodes past 180 degrees keep their
   continued values when wrapping would put them out of order. `hurwitz_zeta()` past the double
-  range is a signed infinity, not NaN; beside the trivial zeros it is accurate for the double it
-  is given (`-2 + 1e-12` carries `1e-12` to 4e-4, which is where a reference at `1e-12` differs;
-  F5 as reported). `knox_test()` drops an incident without a location or time and says so, as its
+  range is a signed infinity, not NaN. (This entry first called F5 a reference artefact; it was a
+  real loss of digits, fixed in the re-test above.) `knox_test()` drops an incident without a location or time and says so, as its
   siblings do; `hotspot_persistence()` says when it drops (0, 0); `max_pairs = TRUE` is refused;
   the planar cell key writes whole numbers in full.
 * **Model and provider text is made printable (L1)**: answers, model lists, the spinner's model

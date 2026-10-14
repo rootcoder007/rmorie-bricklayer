@@ -21,7 +21,7 @@ test_that("messages name the command the user typed", {
   withr::local_envvar(RMBL_PROG = "rmbl")
   r <- .cap("nosuch")
   expect_equal(r$status, 2L)
-  expect_match(r$text, "^rmbl: unknown verb 'nosuch' \\(try: rmbl help\\)")
+  expect_match(r$text, "^rmbl: unknown verb 'nosuch'; try `rmbl help`")
 })
 
 test_that("usage errors exit 2, an unknown function 1", {
