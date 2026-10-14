@@ -2,7 +2,7 @@
 ## table from the source datasets, and compare.
 ##
 ## The dashboard at
-##   https://zeus.tail6f5dd7.ts.net/dashboard/otis-yoy.html
+##   https://<your-dashboard-host>/dashboard/otis-yoy.html
 ## publishes 147 tables across 29 OTIS datasets. This file recomputes
 ## all of them from the CSVs the province publishes and compares every
 ## cell against otis_yoy_published.csv.gz, so a reviewer can confirm the
@@ -343,7 +343,7 @@ otis_yoy_download <- function(destdir, signatures,
 ## ---------------------------------------------------------------------
 ## The published RATE tables
 ##
-## https://zeus.tail6f5dd7.ts.net/dashboard/otis-rates.html publishes 108
+## https://<your-dashboard-host>/dashboard/otis-rates.html publishes 108
 ## rate tables across 24 datasets, each count expressed against two
 ## exposures:
 ##

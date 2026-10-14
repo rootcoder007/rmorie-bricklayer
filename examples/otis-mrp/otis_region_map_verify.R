@@ -3,13 +3,13 @@
 ## and compare both against the published files.
 ##
 ## The page at
-##   https://zeus.tail6f5dd7.ts.net/dashboard/otis-crosswalk.html
+##   https://<your-dashboard-host>/dashboard/otis-crosswalk.html
 ## states where every open institution sits, by census division, and the
 ## population of the divisions that hold one. Those two published files
 ## travel with this example:
 ##
 ##   institution_cd_region_map.csv   35 institutions, assigned by point in
-##                                  polygon (published on zeus as
+##                                  polygon (published on the dashboard host as
 ##                                  institution_cd_crosswalk.csv)
 ##                                  against the 2021 cartographic
 ##                                  boundary file lcd_000b21a_e.shp
