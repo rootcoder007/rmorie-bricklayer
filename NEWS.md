@@ -100,6 +100,10 @@ claims the earlier fixes overstated corrected.
 * **Schema check warning.** The misspelling check on structural invariants compared names of two
   lengths and warned "longer object length is not a multiple of shorter object length".
 * **Coverage.** The coverage job runs the live transport checks, as the check job does.
+* **No warnings in the build or the tests.** The checked writer's message buffer holds a whole
+  path (gcc `-Wformat-truncation`); two unused Keccak helpers and an unused constant are gone
+  (clang `-Wunused`). The tests expect the warnings they provoke: the stability bound, the
+  exhausted XMSS key and the record switched off.
 
 ## Re-test of 46de6a9 (2026-10-14)
 

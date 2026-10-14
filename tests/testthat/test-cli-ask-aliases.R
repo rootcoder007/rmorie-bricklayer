@@ -50,8 +50,9 @@ test_that("a lone unknown word, a verb, or an option is not sent to a model", {
   r <- ask_via_cli(c("logn", "now"))
   expect_identical(r$status, 2L)
   expect_null(r$seen)
-  # a real verb with a spaced argument stays that verb
-  r <- ask_via_cli(c("explain-error", "could not find function x?"))
+  # a real verb with a spaced argument stays that verb (functions, not explain-error: that builds the
+  # session's message table, and under this mock it would be built from the mock)
+  r <- ask_via_cli(c("functions", "survey design?"))
   expect_null(r$seen)
   r <- ask_via_cli(c("--weird", "flag?"))
   expect_null(r$seen)
