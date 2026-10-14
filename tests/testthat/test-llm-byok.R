@@ -643,7 +643,8 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   d <- withr::local_tempdir()
   withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
                        morie.quiet = NULL)
-  withr::local_envvar(MORIE_LLM_CACHE = NA, GROQ_API_KEY = "gsk", MORIE_GROQ_MODEL = "llama-x")
+  withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA,
+                      GROQ_API_KEY = "gsk", MORIE_GROQ_MODEL = "llama-x")
   n <- 0L
   local_mocked_bindings(.bl_llm_chat = function(...) {
     n <<- n + 1L
@@ -676,7 +677,7 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   before <- n
   bricklayer_llm_ask("How do I sign?", docs = FALSE)
   expect_identical(n, before + 1L)
-  withr::local_envvar(MORIE_LLM_CACHE = NA)
+  withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA)
   withr::local_options(morie.progress = FALSE)   # nobody watching (a script, a check): nothing read or kept
   unlink(list.files(d, full.names = TRUE))
   bricklayer_llm_ask("a script's question", docs = FALSE)
@@ -712,4 +713,14 @@ test_that("the answer folder stays small: expired answers and the oldest past th
   expect_identical(ns(".bl_answer_prune")(d), 4L)
   expect_setequal(list.files(d), c(nm(1), nm(2), nm(3), "notes.json"))
   expect_identical(ns(".bl_answer_prune")(withr::local_tempdir()), 0L)
+})
+
+test_that("no answer is kept during a test run or a package check", {
+  withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
+  withr::local_envvar(MORIE_LLM_CACHE = NA, TESTTHAT = "true", `_R_CHECK_PACKAGE_NAME_` = NA)
+  expect_false(ns(".bl_answer_cache_on")())
+  withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = "rmorie")
+  expect_false(ns(".bl_answer_cache_on")())
+  withr::local_envvar(`_R_CHECK_PACKAGE_NAME_` = NA)
+  expect_true(ns(".bl_answer_cache_on")())
 })

@@ -11,6 +11,8 @@
 # fresh = TRUE (`ask --fresh`) asks again and keeps the new answer.
 
 .bl_answer_cache_on <- function() {
+  # never under a test run or R CMD check, of this package or of one that drives its command line
+  if (identical(Sys.getenv("TESTTHAT"), "true") || nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(FALSE)
   !tolower(Sys.getenv("MORIE_LLM_CACHE", "")) %in% c("off", "0", "false", "no") &&
     !isFALSE(getOption("rmoriebricklayer.llm_cache")) && !.bl_dl_quiet()
 }
