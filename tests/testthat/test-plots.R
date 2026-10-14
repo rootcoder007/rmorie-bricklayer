@@ -47,7 +47,7 @@ test_that("stock and flow", {
   expect_equal(d$alos, sf$alos)
   d2 <- with_dev(plot(sf, what = c("flow_rate", "stock_rate"), col = "red", main = "x"))
   expect_equal(names(d2), c("period", "flow_rate", "stock_rate"))
-  expect_error(with_dev(plot(sf, what = "nothing")), "arg")
+  expect_error(with_dev(plot(sf, what = "nothing")), "must be one or more of")
 })
 
 test_that("period-over-period change", {
