@@ -281,11 +281,14 @@ and a digest anyone can recompute says nothing about who produced the data.
   and attributes (exactly, doubles included, with `digits = I(17)`), with
   base64 and base64url codecs beside it.
 - **Curated tables** — `bricklayer_data_tables()` lists the tables served
-  at data.rmorie.com (161 databases and 203 tables on 2026-10-05,
-  materialised from Google BigQuery public datasets), and
-  `bricklayer_data_load("db/table")` opens one with your MORIE key (issued
-  on request at <https://www.rmorie.com/access/>, under the terms at
-  <https://www.rmorie.com/data-license/>), cached locally. `bricklayer_fetch()` downloads any URL with an Internet Archive
+  at data.rmorie.com (175 databases and 716 tables on 2026-10-13: Google
+  BigQuery public datasets and the survey, court and justice data the MORIE
+  ledger uses), and `bricklayer_data_load("db/table")` opens one with your
+  MORIE key (`rmoriebricklayer login` signs in with GitHub or an emailed
+  code; or ask at <https://www.rmorie.com/access/>), under the terms at
+  <https://www.rmorie.com/data-license/>, cached locally. The ICPSR, NCVS
+  38604 and a2aj tables open once you accept their terms at
+  <https://data.rmorie.com/terms>. `bricklayer_fetch()` downloads any URL with an Internet Archive
   fallback (libcurl).
 
 ## Security posture

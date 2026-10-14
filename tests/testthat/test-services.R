@@ -1,4 +1,4 @@
-# The signed service document: what the packages trust about the hosted tier
+# The signed service document: what the packages trust about the hosted data service
 # and how they fall back when the site cannot be reached or does not verify.
 
 svc_ns <- function(nm) get(nm, envir = asNamespace("rmoriebricklayer"))

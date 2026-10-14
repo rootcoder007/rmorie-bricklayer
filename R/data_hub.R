@@ -1,6 +1,6 @@
 # Curated datasets at data.rmorie.com (the address comes from the signed
 # services document), opened by the MORIE key this package stores with
-# bricklayer_llm_login(); keys are issued on request at www.rmorie.com/access/.
+# bricklayer_llm_login() (GitHub or an emailed code), or one asked for at www.rmorie.com/access/.
 # The same tables rmorie and morie pull;
 # a manifest lists every table with its rows, columns, SHA-256 and the
 # BigQuery public dataset it was built from.
@@ -115,7 +115,7 @@
 #' tables from the edge, under the data access terms at
 #' \url{https://www.rmorie.com/data-license/}. They open with the key
 #' \code{\link{bricklayer_llm_login}} stores, the same key rmorie and morie
-#' use; keys are personal and issued on request at
+#' use; keys are personal: sign in with GitHub or an emailed code, or ask at
 #' \url{https://www.rmorie.com/access/}. The service address comes from
 #' \code{\link{bricklayer_services}}.
 #' \code{bricklayer_data_manifest()} returns the gateway's manifest

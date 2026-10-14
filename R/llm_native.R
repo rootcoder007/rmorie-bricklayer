@@ -4,9 +4,9 @@
 # (MORIE_LLM_BASE_URL), each provider whose key is set (R/llm_providers.R), and a
 # local Ollama server (OLLAMA_HOST, default http://localhost:11434). The hosted MORIE
 # language-model tier is retired. The MORIE key that remains is the data key for
-# data.rmorie.com: personal, issued on request at https://www.rmorie.com/access or
-# by the GitHub / emailed-code sign-in, stored in a credentials file the other MORIE
-# packages read as well; its sign-in addresses come from the signed services
+# data.rmorie.com: personal, issued by the GitHub / emailed-code sign-in at
+# data.rmorie.com/auth or on request at https://www.rmorie.com/access, stored
+# in a credentials file the other MORIE packages read as well; its sign-in addresses come from the signed services
 # document (bricklayer_services()). Every request goes through the package's own
 # libcurl binding.
 
@@ -281,10 +281,10 @@
   list(state = "ok", key = key)
 }
 
-# The hosted endpoint, or NULL when disabled. MORIE_HOSTED_BASE_URL overrides
-# ("" on POSIX or "off" on any platform disables; Windows drops a variable set
-# to ""); otherwise the signed services document decides, and a document
-# with the tier switched off disables it here too.
+# The address a stored key was issued for under the retired language-model tier, or NULL (the
+# signed services document now switches that tier off, and a key is bound to the data address).
+# MORIE_HOSTED_BASE_URL overrides ("" on POSIX or "off" on any platform disables; Windows drops a
+# variable set to "").
 .bl_hosted_base <- function() {
   saved <- .bl_config_value("MORIE_HOSTED_BASE_URL")
   if (!"MORIE_HOSTED_BASE_URL" %in% names(Sys.getenv()) && is.null(saved)) {
@@ -311,9 +311,9 @@
 
 # How to get a key, in one line.
 .bl_access_hint <- function() {
-  sprintf(paste("request a key at %s, then `%s login --token` and paste it when asked",
-                "(R: bricklayer_llm_login(token = )); `%s login` signs in with GitHub or an emailed code"),
-          .rmbl_services_llm()$request_access %||% "https://www.rmorie.com/access", .bl_prog(), .bl_prog())
+  sprintf(paste("`%s login` signs in with GitHub or an emailed code; a key you were given:",
+                "`%s login --token` and paste it when asked (R: bricklayer_llm_login(token = )); or ask at %s"),
+          .bl_prog(), .bl_prog(), .rmbl_services_data()$request_access %||% "https://www.rmorie.com/access")
 }
 
 # The GET seam for public https addresses (a provider model list, the data key check).
@@ -854,7 +854,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' so one sign-in serves all of them). The key opens the curated tables
 #' (\code{\link{bricklayer_data_load}}); it is not used for language models,
 #' which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
-#' Keys are personal and issued on request at \url{https://www.rmorie.com/access/}.
+#' Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at \url{https://www.rmorie.com/access/}.
 #' The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 #' \itemize{
 #'   \item \code{token}: a key you already have, from the website or an

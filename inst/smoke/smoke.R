@@ -9,25 +9,16 @@ if (nzchar(key)) Sys.setenv(MORIE_HOSTED_KEY = key) else Sys.unsetenv("MORIE_HOS
 options(timeout = 600)
 run <- function(...) { buf <- character(); st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s)); list(status = st, text = paste(buf, collapse = "")) }
 check <- function(cond, what) if (!isTRUE(cond)) stop(what, call. = FALSE)
-# the hosted tier answers 429 when every runner of every package asks at once on the shared key: wait and ask once more
-run_llm <- function(...) {
-  r <- run(...)
-  if (r$status != 0 && grepl("429", r$text, fixed = TRUE)) { Sys.sleep(45); r <- run(...) }
-  r
-}
+# a runner has no language model of its own: with none set up, models and ask must say how to bring one
+no_route <- function(r) r$status == 1L && grepl("bring your own key", r$text, fixed = TRUE)
 cases <- list(
   version = function() { r <- run("version"); check(r$status == 0 && grepl("rmoriebricklayer", r$text), r$text) },
   doctor = function() { r <- run("doctor"); check(r$status == 0 && nzchar(r$text), r$text) },
   models = function() {
-    r <- run("models"); check(r$status == 0, r$text)
-    # the gateway serves additional AI models (suffix :cf) beside the ollama.com ones
-    if (nzchar(Sys.getenv("MORIE_SMOKE_KEY"))) check(grepl(":cf", r$text, fixed = TRUE), paste("no additional AI model (:cf) listed:", r$text))
+    r <- run("models"); check(r$status == 0 || no_route(r), r$text)
   },
   ask = function() {
-    r <- run_llm("ask", "hello"); check(r$status == 0, r$text)
-    # one of the additional models, named per call
-    r <- run_llm("ask", "--model", "gpt-oss-120b:cf", "Reply with the single word pong.")
-    check(r$status == 0 && nzchar(trimws(r$text)), r$text)
+    r <- run("ask", "Reply with the single word pong."); check((r$status == 0 && nzchar(trimws(r$text))) || no_route(r), r$text)
   },
   launcher = function() {
     # what inst/bin/rmoriebricklayer does under R 4.6 (which keeps "--args" in commandArgs)
@@ -49,6 +40,13 @@ cases <- list(
     r <- run("data", "list"); check(r$status == 0 && grepl("chicago_crime", r$text), substr(r$text, 1, 300))
     r <- run("data", "pull", "fec_cm_2020/fec_cm_2020", "--out", "fec.csv"); check(r$status == 0 && nrow(utils::read.csv("fec.csv")) > 1000, r$text)
     df <- bricklayer_data_load("fec_cm_2020/fec_cm_2020"); check(nrow(df) > 1000, "bricklayer_data_load")
+  },
+  wayback = function() {
+    # no archive.org keys on a runner: usage, a missing file and a missing results file, nothing sent
+    r <- run("wayback"); check(r$status == 2L && grepl("wayback FILE", r$text, fixed = TRUE), r$text)
+    r <- run("wayback", "help"); check(r$status == 0L && grepl("--retry", r$text, fixed = TRUE), r$text)
+    r <- run("wayback", "no-such-urls.txt"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
+    r <- run("wayback", "--retry", "no-such.jsonl"); check(r$status == 1L && grepl("no such file", r$text, fixed = TRUE), r$text)
   },
   config = function() {
     r <- run("config"); check(r$status == 0 && grepl("route", r$text, fixed = TRUE), r$text)
