@@ -497,7 +497,7 @@ bricklayer_json_base64url_dec <- function(input) {
     o$always_decimal <- FALSE
     return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
-  na <- if (is.null(na)) "string" else match.arg(na, c("string", "null", "NA"))
+  na <- if (is.null(na)) "string" else .rmbl_arg(na, c("string", "null", "NA"))
   nas <- switch(na, string = TRUE, null = FALSE, "NA" = NA)
   if (!is.null(attr(x, "dim")) && length(dim(x)) < 2L) x <- c(x)
   tmp <- .rmbl_json_num_to_char(x, o$digits, nas, o$use_signif, o$always_decimal)
@@ -513,7 +513,7 @@ bricklayer_json_base64url_dec <- function(input) {
   tmp <- .rmbl_json_esc(as.character(x))
   miss <- which(is.na(x))
   if (length(miss)) {
-    na <- if (is.null(na)) "null" else match.arg(na, c("null", "string", "NA"))
+    na <- if (is.null(na)) "null" else .rmbl_arg(na, c("null", "string", "NA"))
     tmp[miss] <- if (na == "null") "null" else if (na == "string") "\"NA\"" else NA_character_
   }
   if (isTRUE(auto_unbox) && length(tmp) == 1L) return(tmp)
@@ -525,7 +525,7 @@ bricklayer_json_base64url_dec <- function(input) {
     if (!isTRUE(o$quiet_vec_names)) message("Input to asJSON(keep_vec_names=TRUE) is a named vector. In a future version of jsonlite, this option will not be supported, and named vectors will be translated into arrays instead of objects. If you want JSON object output, please use a named list instead. See ?toJSON.")
     return(.rmbl_json_as(as.list(x), o, collapse, na = na, auto_unbox = TRUE, indent = NA_integer_))
   }
-  na <- if (is.null(na)) "null" else match.arg(na, c("null", "string", "NA"))
+  na <- if (is.null(na)) "null" else .rmbl_arg(na, c("null", "string", "NA"))
   tmp <- ifelse(x, "true", "false")
   if (!identical(na, "NA")) {
     miss <- which(is.na(x))
@@ -537,7 +537,7 @@ bricklayer_json_base64url_dec <- function(input) {
 }
 #' @noRd
 .rmbl_json_as_cplx <- function(x, o, collapse, na, oldna, auto_unbox, indent) {
-  na <- if (is.null(na)) "string" else match.arg(na, c("string", "null", "NA"))
+  na <- if (is.null(na)) "string" else .rmbl_arg(na, c("string", "null", "NA"))
   if (identical(o$complex, "string")) {
     mystring <- prettyNum(x = x, digits = if (is.null(o$digits)) 5 else o$digits)
     miss <- which(!is.finite(x))
@@ -632,7 +632,7 @@ bricklayer_json_base64url_dec <- function(input) {
     return(.rmbl_json_as_list(as.list(x), o, collapse = TRUE, na = na, oldna = oldna,
                            auto_unbox = o$auto_unbox, indent = indent, is_df = TRUE))
   if (is.null(na) || !length(na) || identical(na, "NA")) oldna <- NULL else oldna <- na
-  if (dataframe == "rows" && has_names) na <- if (is.null(na)) "NA" else match.arg(na, c("NA", "null", "string"))
+  if (dataframe == "rows" && has_names) na <- if (is.null(na)) "NA" else .rmbl_arg(na, c("NA", "null", "string"))
   if (!nrow(x)) return(.rmbl_json_as(list(), o, collapse = collapse, indent = indent))
   for (i in which(vapply(x, is.raw, logical(1)))) x[[i]] <- as.character.hexmode(x[[i]])
   if (identical(o$complex, "list"))
@@ -699,19 +699,19 @@ bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"
                                  auto_unbox = FALSE, digits = 4, pretty = FALSE,
                                  force = FALSE, ...) {
   dots <- list(...)
-  o <- list(dataframe = match.arg(dataframe), matrix = match.arg(matrix),
-            Date = match.arg(Date), POSIXt = match.arg(POSIXt), factor = match.arg(factor),
-            complex = match.arg(complex), raw = match.arg(raw), null = match.arg(null),
+  o <- list(dataframe = .rmbl_arg(dataframe), matrix = .rmbl_arg(matrix),
+            Date = .rmbl_arg(Date), POSIXt = .rmbl_arg(POSIXt), factor = .rmbl_arg(factor),
+            complex = .rmbl_arg(complex), raw = .rmbl_arg(raw), null = .rmbl_arg(null),
             auto_unbox = isTRUE(auto_unbox), digits = digits,
             use_signif = if (!is.null(dots$use_signif)) isTRUE(dots$use_signif) else inherits(digits, "AsIs"),
             force = isTRUE(force), indent = .rmbl_json_indent_init(pretty),
             rownames = dots$rownames, keep_vec_names = isTRUE(dots$keep_vec_names),
             json_verbatim = isTRUE(dots$json_verbatim), always_decimal = isTRUE(dots$always_decimal),
             time_format = dots$time_format, UTC = isTRUE(dots$UTC), no_dots = isTRUE(dots$no_dots),
-            hms = if (is.null(dots$hms)) "string" else match.arg(dots$hms, c("string", "secs")),
+            hms = if (is.null(dots$hms)) "string" else .rmbl_arg(dots$hms, c("string", "secs")),
             keep_empty_names = isTRUE(dots$keep_empty_names),
             quiet_vec_names = isTRUE(dots$quiet_vec_names), depth = 0L)
-  na <- if (!missing(na)) match.arg(na) else NULL
+  na <- if (!missing(na)) .rmbl_arg(na) else NULL
   ans <- .rmbl_json_as(x, o, na = na, oldna = NULL, auto_unbox = o$auto_unbox, indent = o$indent)
   class(ans) <- "json"
   ans
@@ -804,7 +804,7 @@ bricklayer_json_unbox <- function(x) {
 #' @noRd
 .rmbl_json_parse <- function(txt, bigint_as_char = FALSE, bigint_warn = TRUE,
                              duplicate_keys = c("error", "keep")) {
-  duplicate_keys <- match.arg(duplicate_keys)
+  duplicate_keys <- .rmbl_arg(duplicate_keys)
   s <- paste(txt, collapse = "\n")
   # the byte-order mark is tested and removed on the BYTES, before any
   # encoding conversion: substring(s, 2L) on a string a C locale has not
@@ -1255,7 +1255,7 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
     txt <- readLines(con, warn = FALSE, encoding = "UTF-8")
   }
   obj <- .rmbl_json_parse(txt, bigint_as_char, bigint_warn,
-                          duplicate_keys = match.arg(duplicate_keys))
+                          duplicate_keys = .rmbl_arg(duplicate_keys))
   if (any(isTRUE(simplifyVector), isTRUE(simplifyDataFrame), isTRUE(simplifyMatrix)))
     return(.rmbl_json_simplify(obj, simplifyVector = simplifyVector, simplifyDataFrame = simplifyDataFrame,
                             simplifyMatrix = simplifyMatrix, flatten = flatten))

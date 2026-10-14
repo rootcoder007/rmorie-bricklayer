@@ -602,7 +602,7 @@ core_hawkes_nll <- function(times, horizon,
                             kernel = c("exponential", "weibull", "lomax",
                                        "gamma"),
                             par) {
-  kernel <- match.arg(kernel)
+  kernel <- .rmbl_arg(kernel)
   code <- switch(kernel, exponential = 0L, weibull = 1L, lomax = 2L,
                  gamma = 3L)
   times <- .rmbl_num(times, "times")

@@ -180,7 +180,7 @@ test_that("life_table(): bad input is refused in words", {
   expect_error(life_table(c(0, 1, 2), c(0, 0)), "no cases")
   expect_error(life_table(c(0, 1, 2), 1:2, censored = 1:3), "must have 2")
   expect_error(life_table(c(0, 1, 2), 1:2, conf_level = 2), "between 0 and 1")
-  expect_error(life_table(c(0, 1, 2), 1:2, conf_type = "logit"), "should be one of")
+  expect_error(life_table(c(0, 1, 2), 1:2, conf_type = "logit"), "must be one of")
 })
 
 # ---- disposition_mix --------------------------------------------------------------------------

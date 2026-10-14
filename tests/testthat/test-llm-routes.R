@@ -151,7 +151,7 @@ test_that("the order is own endpoint, then a provider's key, then Ollama; `route
   withr::local_envvar(c(OLLAMA_HOST = "off"))
   expect_error(bricklayer_llm_ask("x", route = "own"), "own endpoint: `[a-z]+ config set own.url URL`")
   expect_error(bricklayer_llm_ask("x", route = "ollama"), "local Ollama: OLLAMA_HOST=off")
-  expect_error(bricklayer_llm_ask("x", route = "nope"), "should be one of")
+  expect_error(bricklayer_llm_ask("x", route = "nope"), "must be one of")
   expect_error(rt_ns(".bl_llm_route")("nope"), "unknown route 'nope'")
   e <- tryCatch(bricklayer_llm_ask("x"), error = function(e) conditionMessage(e))
   expect_match(e, "^No language-model route is set up on this machine:")

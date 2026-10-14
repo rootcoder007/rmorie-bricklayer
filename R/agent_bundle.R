@@ -37,7 +37,7 @@
 agent_bundle <- function(request, model = NULL, route = NULL) {
   request <- .rmbl_string1(request, "request")
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
-  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   if (is.null(.bl_llm_route(route))) return(.bl_no_route_message(route))
   extra <- paste("The task is a brick-proof, reproducible data bundle: find a portal's download URL, fetch",
                  "with a Wayback fallback, record provenance (hashes, a manifest), write a synthetic stand-in,",

@@ -339,7 +339,11 @@ test_that("hot spots made by ties are counted and said", {
   x <- runif(200, 0, 10)
   y <- runif(200, 0, 10)
   h <- hotspot_persistence(x, y, rep(1:2, 100), cell = 0.1, coords = "planar")
-  expect_true(all(h$periods$tied_in > 0))
+  # every cell holds one incident: a tie that would make all of them hot is left out, and the
+  # counts say so (100 of 100 were "hot"; reviews of e57fed5 and 46de6a9)
+  expect_true(all(h$periods$tied_out > 0))
+  expect_true(all(h$periods$hot_cells <= 2 * h$hot_k))   # only cells that stand out above the tie
+  expect_true(all(h$periods$tied_in == 0L))
   out <- capture.output(print(h))
   expect_true(any(grepl("too even", out, fixed = TRUE)))
   h2 <- hotspot_persistence(c(rep(1, 50), x[1:10]), c(rep(1, 50), y[1:10]), rep(1:2, 30), cell = 1, coords = "planar")

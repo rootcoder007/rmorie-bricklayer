@@ -327,7 +327,7 @@ test_that("printing says what the percentages mean", {
                                       color = TRUE, palette = "mono"))
   expect_false(any(grepl("\033", mono, fixed = TRUE)))
   expect_error(print(yoy(d, value = "n", period = "year"),
-                     palette = "neon"), "'arg' should be one of")
+                     palette = "neon"), "must be one of")
   # row capping
   big <- data.frame(year = 2000:2050, n = seq(100, 600, by = 10))
   capped <- utils::capture.output(print(yoy(big, value = "n",

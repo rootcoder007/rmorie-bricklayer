@@ -378,7 +378,7 @@ funnel_limits <- function(expected, target = 1,
 #' @export
 morans_i <- function(x, neighbours, style = c("W", "B"),
                      n_perm = 9999L) {
-  style <- match.arg(style)
+  style <- .rmbl_arg(style)
   x <- .rmbl_num(x, "x")
   n <- length(x)
   if (n < 3L) stop("Moran's I needs at least three areas", call. = FALSE)

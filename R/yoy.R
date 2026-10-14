@@ -121,8 +121,8 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
                              "lower_is_better"
                            ),
                            complete = TRUE, ...) {
-  units <- match.arg(units)
-  direction <- match.arg(direction)
+  units <- .rmbl_arg(units)
+  direction <- .rmbl_arg(direction)
   # several rows for one period: counts add up, a rate or a share is averaged
   # (two shares of 53% and 57.9% are not 110.9%)
   if (is.null(fun)) fun <- if (units == "count") sum else mean

@@ -31,7 +31,7 @@
 yoy_palettes <- function() names(.YOY_PALETTES)
 
 .yoy_pal <- function(palette) {
-  palette <- match.arg(palette, names(.YOY_PALETTES))
+  palette <- .rmbl_arg(palette, names(.YOY_PALETTES))
   .YOY_PALETTES[[palette]]
 }
 

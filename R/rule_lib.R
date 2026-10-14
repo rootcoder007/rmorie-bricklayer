@@ -90,7 +90,7 @@
 rule_in_set <- function(column, set, na_pass = TRUE,
                         severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   set <- as.character(set)
   rule(paste0(column, "_in_set"),
     function(v) {
@@ -110,7 +110,7 @@ rule_in_set <- function(column, set, na_pass = TRUE,
 rule_between <- function(column, lo, hi, na_pass = TRUE,
                          severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   lo <- .rmbl_num(lo, "lo")[1L]
   hi <- .rmbl_num(hi, "hi")[1L]
   if (is.na(lo) || is.na(hi) || lo > hi) {
@@ -133,7 +133,7 @@ rule_between <- function(column, lo, hi, na_pass = TRUE,
 #' @export
 rule_not_null <- function(column, severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   rule(paste0(column, "_not_null"), function(v) !is.na(v),
     column = column, severity = severity,
     message = sprintf("Column '%s' has missing values", column)
@@ -144,7 +144,7 @@ rule_not_null <- function(column, severity = c("warning", "fatal")) {
 #' @export
 rule_unique <- function(column, severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   rule(paste0(column, "_unique"),
     # duplicated() marks every occurrence after the first, so the
     # reported rows are the repeats rather than all of them
@@ -159,7 +159,7 @@ rule_unique <- function(column, severity = c("warning", "fatal")) {
 rule_regex <- function(column, pattern, na_pass = TRUE,
                        severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   pattern <- as.character(pattern)[1L]
   rule(paste0(column, "_regex"),
     function(v) {
@@ -179,7 +179,7 @@ rule_regex <- function(column, pattern, na_pass = TRUE,
 rule_increasing <- function(column, strictly = FALSE,
                             severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   rule(paste0(column, "_increasing"),
     function(v) {
       d <- diff(as.numeric(v))
@@ -207,7 +207,7 @@ rule_increasing <- function(column, strictly = FALSE,
 rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
                                severity = c("warning", "fatal")) {
   column <- .rmbl_string1(column, "column")
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   n <- .rmbl_num(n, "n")[1L]
   if (is.na(n) || n <= 0) stop("`n` must be positive", call. = FALSE)
   rule(paste0(column, "_within_mads"),
@@ -236,7 +236,7 @@ rule_within_n_mads <- function(column, n = 3, na_pass = TRUE,
 #' @rdname rmbl_rule_library
 #' @export
 rule_complete_rows <- function(severity = c("warning", "fatal")) {
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   rule("complete_rows",
     function(d) stats::complete.cases(d),
     severity = severity,
@@ -248,7 +248,7 @@ rule_complete_rows <- function(severity = c("warning", "fatal")) {
 #' @export
 rule_distinct_rows <- function(columns = NULL,
                                severity = c("warning", "fatal")) {
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   rule("distinct_rows",
     function(d) {
       sub <- if (is.null(columns)) {
@@ -277,7 +277,7 @@ rule_distinct_rows <- function(columns = NULL,
 #' @rdname rmbl_rule_library
 #' @export
 rule_col_count <- function(n, severity = c("warning", "fatal")) {
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   if (is.na(n) || n < 0L) {
     stop("`n` must be a non-negative integer", call. = FALSE)
@@ -327,6 +327,7 @@ rule_col_count <- function(n, severity = c("warning", "fatal")) {
 #' @export
 duplicate_rows <- function(data, columns = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (nrow(data) == 0L) {
     out <- cbind(data, dupe_count = integer(0))
     return(out)
@@ -378,6 +379,7 @@ duplicate_rows <- function(data, columns = NULL) {
 #' @export
 missingness_summary <- function(data) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
   n <- nrow(data)
   per_col <- vapply(data, function(v) sum(is.na(v)), numeric(1))

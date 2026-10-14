@@ -231,7 +231,7 @@ adp_from_counts <- function(counts, t = 365) {
 stock_flow <- function(days, people, period = NULL, t = 365,
                        exposure = NULL, per = 100000,
                        baseline = c("first", "previous")) {
-  baseline <- match.arg(baseline)
+  baseline <- .rmbl_arg(baseline)
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
   people <- .rmbl_pos_num(people, "people")
   if (length(days) != length(people)) {

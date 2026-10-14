@@ -157,7 +157,7 @@ test_that("utilisation: measured per process or per machine, fixed by number, an
   expect_error(compute_footprint(1, usage = "sometimes", location = 100), "process")
   expect_error(compute_footprint(1, usage = c(0.1, 0.2), location = 100), "single number")
   expect_error(compute_footprint(1, usage = NA_real_, location = 100), "single number")
-  expect_error(compute_footprint(1, load_curve = "cubic", location = 100), "arg")
+  expect_error(compute_footprint(1, load_curve = "cubic", location = 100), "must be one of")
   unlink(stat)
 })
 

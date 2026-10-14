@@ -45,7 +45,7 @@
 #' @export
 rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
                  message = NULL) {
-  severity <- match.arg(severity)
+  severity <- .rmbl_arg(severity)
   name <- as.character(name)[1L]
   if (is.na(name) || !nzchar(name)) {
     stop("`name` must be a non-empty string", call. = FALSE)
@@ -127,6 +127,7 @@ rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
 #' @export
 validate_rules <- function(data, rules) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (inherits(rules, "bricklayer_rule")) rules <- list(rules)
   if (!is.list(rules)) {
     stop("`rules` must be a rule() or a list of them", call. = FALSE)

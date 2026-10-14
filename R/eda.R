@@ -232,8 +232,9 @@ print.bricklayer_freq <- function(x, ...) {
 #' @export
 correlation_table <- function(data, method = c("spearman", "pearson"),
                               min_pairs = 3L) {
-  method <- match.arg(method)
+  method <- .rmbl_arg(method)
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
     stop("need at least two numeric columns to correlate", call. = FALSE)
@@ -329,7 +330,8 @@ print.bricklayer_cortable <- function(x, ...) {
 #' @export
 drop_empty <- function(data, which = c("rows", "cols")) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
-  which <- match.arg(which, c("rows", "cols"), several.ok = TRUE)
+  .rmbl_df_names(data)
+  which <- .rmbl_arg(which, c("rows", "cols"), several = TRUE)
   dropped <- character(0)
   if ("cols" %in% which && ncol(data) > 0L) {
     empty <- vapply(data, function(v) all(is.na(v)), logical(1))
@@ -349,6 +351,7 @@ drop_empty <- function(data, which = c("rows", "cols")) {
 #' @export
 drop_constant <- function(data, na_as_value = FALSE) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     attr(data, "dropped") <- character(0)
     return(data)
@@ -409,7 +412,7 @@ clean_column_names <- function(data, case = c("snake", "lower_camel",
                                               "upper_camel",
                                               "screaming_snake", "none"),
                                sep = "_") {
-  case <- match.arg(case)
+  case <- .rmbl_arg(case)
   nms <- if (is.data.frame(data)) names(data) else as.character(data)
   if (length(nms) == 0L) {
     if (is.data.frame(data)) return(data)

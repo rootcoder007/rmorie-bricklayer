@@ -208,7 +208,7 @@ test_that("stock_flow measures against the previous period when asked", {
   expect_identical(attr(sf2, "stock_flow")$baseline, "previous")
   expect_error(
     stock_flow(days = 1:2, people = c(1, 1), baseline = "middle"),
-    "should be one of"
+    "must be one of"
   )
 })
 

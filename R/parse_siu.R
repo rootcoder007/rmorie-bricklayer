@@ -104,7 +104,7 @@ bricklayer_parse_siu <- function(html) {
 #' }
 #' @export
 bricklayer_fetch_parse_siu <- function(drid, lang = c("en", "fr")) {
-  lang <- match.arg(lang)  # argument errors, before any network
+  lang <- .rmbl_arg(lang)  # argument errors, before any network
   drid <- .rmbl_drid(drid)
   dest <- tempfile(fileext = ".html")
   on.exit(unlink(dest), add = TRUE)

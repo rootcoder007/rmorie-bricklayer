@@ -387,5 +387,26 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
     .bl_data_get(sprintf("/%s/%s.csv.gz", parts[[1L]], rest), dest)
   }
   .bl_data_check_sha(key, dest, cached = cached)
-  utils::read.csv(gzfile(dest), stringsAsFactors = FALSE, skipNul = TRUE)  # some sources carry NUL bytes
+  .bl_read_csv_gz(dest)
+}
+
+# A gzip-compressed CSV as utils::read.csv(gzfile(f), stringsAsFactors = FALSE, skipNul = TRUE)
+# reads it (the same columns, types, names and row names), in a fraction of the time: the file is
+# decompressed by the checked reader, split into columns in C (rmbl_csv.c) and typed by
+# type.convert(), which is what read.csv() does after scan(). read.csv() took 20 to 28 s on a 75 MB
+# table (review of 29a55d8 and after, CSV speed).
+.bl_read_csv_gz <- function(path, max_bytes = 8 * 2^30) {
+  bytes <- .Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), max_bytes)
+  .bl_csv_from_bytes(bytes)
+}
+
+.bl_csv_from_bytes <- function(bytes, skip_nul = TRUE) {
+  parts <- .Call(C_rmbl_csv_split, bytes, skip_nul)
+  # the bytes decided the plain integer, decimal and logical columns; the rest is text for R to judge
+  cols <- lapply(parts$columns, function(v) {
+    if (is.character(v)) utils::type.convert(v, as.is = TRUE, na.strings = character()) else v
+  })
+  n <- if (length(cols)) length(cols[[1L]]) else 0L
+  names(cols) <- make.names(parts$names, unique = TRUE)
+  structure(cols, class = "data.frame", row.names = c(NA_integer_, -n))
 }

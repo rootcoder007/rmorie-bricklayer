@@ -61,6 +61,45 @@
 # A numeric argument: text that is not a number is refused in words (as.numeric() turned it into NA
 # with "NAs introduced by coercion" and the function failed further on); every other type converts
 # exactly as as.numeric() / as.integer() always did.
+# .rmbl_arg() in the package's words: `what` must be one of the choices, and what was given is named
+# (match.arg's "'arg' should be one of" names neither; review of 29a55d8, hostile battery). Without
+# `choices` they are the argument's default in the calling function, as .rmbl_arg() finds them.
+.rmbl_arg <- function(arg, choices, several = FALSE) {
+  what <- paste(deparse(substitute(arg)), collapse = "")
+  if (missing(choices)) {
+    fn <- sys.function(sysp <- sys.parent())
+    choices <- eval(formals(fn)[[what]], envir = sys.frame(sysp))
+  }
+  if (is.null(arg)) return(choices[[1L]])
+  if (!several && identical(arg, choices)) return(choices[[1L]])
+  shown <- paste(dQuote(choices, FALSE), collapse = ", ")
+  given <- .rmbl_printable(paste(utils::head(deparse(arg), 1L), collapse = ""))
+  if (!is.character(arg) || !length(arg) || anyNA(arg) || (!several && length(arg) != 1L)) {
+    stop(sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
+         call. = FALSE)
+  }
+  i <- pmatch(arg, choices, nomatch = 0L, duplicates.ok = several)
+  if (any(i == 0L)) {
+    stop(sprintf("`%s` must be %s %s, not %s", what, if (several) "one or more of" else "one of", shown, given),
+         call. = FALSE)
+  }
+  unique(choices[i])
+}
+
+# A data frame's columns must be named, every name non-empty and no name twice: a frame built by
+# hand with NULL or "" names is refused in words, not with a subscript error later (review of
+# 29a55d8, hostile battery).
+.rmbl_df_names <- function(data, what = "data") {
+  nm <- names(data)
+  if (length(data) && (is.null(nm) || anyNA(nm) || any(!nzchar(nm)))) {
+    stop(sprintf("every column of `%s` must have a name (names(%s) has an empty one)", what, what), call. = FALSE)
+  }
+  if (anyDuplicated(nm)) {
+    stop(sprintf("`%s` has two columns named %s: rename one", what, nm[duplicated(nm)][[1L]]), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 .rmbl_num <- function(x, what, integer = FALSE) {
   if (is.character(x)) {
     v <- suppressWarnings(as.numeric(x))

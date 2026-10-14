@@ -452,7 +452,7 @@ fips_sizes <- function(scheme) {
   if (is.null(prehash)) return("none")
   prehash <- as.character(prehash)[1L]
   if (is.na(prehash)) prehash <- "none"
-  match.arg(prehash, c("none", "sha224", "sha256", "sha384", "sha512", "sha512_224",
+  .rmbl_arg(prehash, c("none", "sha224", "sha256", "sha384", "sha512", "sha512_224",
                      "sha512_256", "sha3_224", "sha3_256", "sha3_384", "sha3_512",
                      "shake128", "shake256"))
 }
@@ -851,7 +851,7 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   if (is.null(scheme)) {
     scheme <- if (inherits(key, "bricklayer_signing_key")) "xmss" else "hmac"
   }
-  scheme <- match.arg(scheme, c("xmss", "hmac"))
+  scheme <- .rmbl_arg(scheme, c("xmss", "hmac"))
 
   if (identical(scheme, "hmac")) {
     tag <- core_hmac_sha256(key, message)

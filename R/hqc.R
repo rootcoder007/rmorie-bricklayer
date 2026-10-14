@@ -121,7 +121,7 @@
 #' @export
 hqc_keygen <- function(level = 3L, seed = NULL, version = c("v5", "round4")) {
   level <- .rmbl_hqc_level(level)
-  version <- match.arg(version)
+  version <- .rmbl_arg(version)
   n <- hqc_sizes(level, version)[["seed"]]
   if (is.null(seed)) {
     seed <- random_bytes(n)
@@ -170,7 +170,7 @@ hqc_public_key <- function(key) {
 #' rbind(v5 = hqc_sizes(1), round4 = hqc_sizes(1, "round4"))
 #' @export
 hqc_sizes <- function(level, version = c("v5", "round4")) {
-  version <- match.arg(version)
+  version <- .rmbl_arg(version)
   lv <- .rmbl_hqc_level(level)
   if (version == "v5") .Call(C_rmbl_hqc_sizes, lv) else .Call(C_rmbl_hqc4_sizes, lv)
 }

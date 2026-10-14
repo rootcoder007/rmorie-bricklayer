@@ -114,10 +114,11 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
                           mean_size = 1, rho = NULL, mse = TRUE,
                           lonely_psu = c("fail", "remove", "adjust"), rscales = NULL, degf = NULL) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   n <- nrow(data)
   if (n < 2L) stop("`data` must have at least two rows", call. = FALSE)
-  type <- match.arg(type)
-  lonely_psu <- match.arg(lonely_psu)
+  type <- .rmbl_arg(type)
+  lonely_psu <- .rmbl_arg(lonely_psu)
   if (!is.logical(mse) || length(mse) != 1L || is.na(mse)) stop("`mse` must be TRUE or FALSE", call. = FALSE)
   col <- function(x, what) {
     if (is.null(x)) return(NULL)
@@ -652,8 +653,8 @@ print.rmbl_svy_design <- function(x, ...) {
 survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total", "proportion", "ratio"),
                             denominator = NULL, levels = NULL, conf_level = 0.95,
                             ci = c("auto", "wilson", "logit", "wald"), min_n = 30, df = Inf) {
-  stat <- match.arg(stat)
-  ci <- match.arg(ci)
+  stat <- .rmbl_arg(stat)
+  ci <- .rmbl_arg(ci)
   if (!inherits(design, "rmbl_svy_design")) stop("`design` must come from survey_design()", call. = FALSE)
   .svy_check_data(design, data)
   if (!length(by)) by <- NULL
@@ -721,7 +722,7 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
 #' @export
 survey_compare <- function(design, data, y, by, stat = c("mean", "total", "proportion", "ratio"),
                            denominator = NULL, levels = NULL, ref = NULL, conf_level = 0.95) {
-  stat <- match.arg(stat)
+  stat <- .rmbl_arg(stat)
   if (missing(by) || !length(by)) stop("`by` must name the domains to compare", call. = FALSE)
   e <- survey_estimate(design, data, y, by = by, stat = stat, denominator = denominator, levels = levels,
                        conf_level = conf_level, ci = "wald")

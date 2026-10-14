@@ -250,7 +250,7 @@ cert_chain_verify <- function(leaf, trust, intermediates = list(),
     )
   }
   at_time <- as.POSIXct(at_time, tz = "UTC")
-  revocation <- match.arg(revocation)
+  revocation <- .rmbl_arg(revocation)
 
   checks <- list()
   note_row <- function(check, ok, detail = "") {

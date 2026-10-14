@@ -322,9 +322,98 @@ test_that("the saved config directory is private; model names from a server prin
 })
 
 test_that("gunzip and a GET take Ctrl-C (the C side reports, the barrier raises)", {
-  src <- readLines(testthat::test_path("..", "..", "src", "rmbl_gunzip.c"))
-  skip_if(!length(src), "sources not beside the tests")
+  g <- testthat::test_path("..", "..", "src", "rmbl_gunzip.c")
+  skip_if(!file.exists(g), "the sources are not beside the tests (an installed package)")
+  src <- readLines(g)
   expect_true(any(grepl("rmbl_interrupt_pending()", src, fixed = TRUE)))
   f <- readLines(testthat::test_path("..", "..", "src", "rmbl_fetch.cpp"))
   expect_true(any(grepl("CURLOPT_XFERINFOFUNCTION, get_xferinfo", f, fixed = TRUE)))
+})
+
+test_that("an estimate without a standard error plots without a warning", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  d <- data.frame(y = rnorm(20), g = rep(c("a", "b"), 10), w = 1, s = 1:20, p = 1:20)
+  des <- survey_design(d, weights = "w", strata = "s", psu = "p", lonely_psu = "remove")
+  e <- survey_estimate(des, d, "y", by = "g")
+  expect_true(all(is.na(e$se)))
+  expect_no_warning(plot(e))
+  expect_no_warning(plot(survey_compare(des, d, "y", by = "g")))
+})
+
+test_that("drift_psi bins and clearance_decomposition base are refused in words", {
+  x <- rnorm(200)
+  expect_error(drift_psi(x, x, bins = c(2, 3)), "one whole number")
+  expect_error(drift_psi(x, x, bins = 1e9), "at most 1,000,000")
+  expect_error(drift_psi(x, x, bins = 1), "at least 2")
+  expect_error(clearance_decomposition(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
+                                       base = 1i), "one of the two values")
+  expect_error(clearance_decomposition(c(5, 6, 7, 8), c(10, 10, 10, 10), c("a", "b", "a", "b"), c("x", "x", "y", "y"),
+                                       base = NA), "one of the two values")
+})
+
+test_that("a choice argument is refused in the package's words, naming what was given", {
+  d4 <- data.frame(y = 1:4, w = 1)
+  expect_error(survey_design(d4, weights = "w", replicates = cbind(1:4, 4:1), type = "jackknife"),
+               "`type` must be one of \"bootstrap\".*not \"jackknife\"")
+  expect_error(life_table(c(0, 1, 2), 1:2, conf_type = 3), "`conf_type` must be one of")
+  f <- function(what = c("mean", "total")) ns(".rmbl_arg")(what)
+  expect_identical(f(), "mean")
+  expect_identical(f("tot"), "total")
+  expect_error(f("sum"), "`what` must be one of \"mean\", \"total\", not \"sum\"")
+  g <- function(what = c("a", "b", "c")) ns(".rmbl_arg")(what, several = TRUE)
+  expect_identical(g(c("c", "a")), c("c", "a"))
+  expect_error(g(c("a", "z")), "one or more of")
+})
+
+test_that("a data frame with empty or repeated column names is refused in words", {
+  d <- data.frame(y = 1:6, w = 1)
+  names(d)[2] <- ""
+  expect_error(survey_design(d, weights = "y"), "every column of `data` must have a name")
+  d2 <- data.frame(a = 1:6, b = 1:6)
+  names(d2) <- c("a", "a")
+  expect_error(survey_design(d2, weights = "a"), "two columns named a")
+  expect_error(analyse_table(d2, value = "a", period = "a"), "two columns named a")
+})
+
+test_that("the CSV reader gives read.csv's table, byte for byte of meaning", {
+  same <- function(txt) {
+    ref <- utils::read.csv(text = txt, stringsAsFactors = FALSE, skipNul = TRUE)
+    got <- ns(".bl_csv_from_bytes")(charToRaw(txt))
+    expect_identical(got, ref, info = substr(txt, 1, 40))
+  }
+  same("a,b,c\n1,x,TRUE\n2,y,FALSE\n")
+  same("a,b\n1,\"he said \"\"hi\"\"\"\n2,\"two\nlines\"\n")
+  same("a,b\r\n1,2\r\n\r\n3,4\r\n")
+  same("a,b\n1,NA\n\"NA\",2\nNA,\n")
+  same("a b,c-d,1x\n1,2,3\n")
+  same("a,a,b\n1,2,3\n")
+  same("id,text\n07035394,\"0001\"\n2,x\n")
+  same("a,b\n1.5,1e3\n2,1e400\n")
+  same("a,b\n1,2\n3\n")
+  same("a,b\n")
+  same("x\n1\n2")
+  same("a,b\n\"\",\"\"\n")
+  same("a,b,c\nTRUE,1,T\n1,TRUE,F\n")
+  same("a,b,c,d\n2147483647,2147483648,-2147483648,+5\n1,2,3,05\n")
+  same("a,b,c\n1e3,0x10,Inf\n2.,.5,-inf\n")
+  same("a,b\n 1,1 \n2,2\n")
+  same("a,b\n,\n,\n")
+  same("a,b\n1,\n2,\n")
+  same("a\n1d5\n2\n")
+  same("a,b\n1,2\n3,4.5\n")
+  same("a\n12345678901234567890\n1\n")
+  same("a,b\nT,F\ntrue,False\n")
+  same("a,b\n1,2\nNA,NA\n")
+  # a NUL byte is dropped, as skipNul = TRUE drops it; a byte-order mark is not part of a name
+  expect_identical(ns(".bl_csv_from_bytes")(as.raw(c(charToRaw("a,b\n1,x"), 0, charToRaw("y\n"))))$b, "xy")
+  expect_identical(names(ns(".bl_csv_from_bytes")(as.raw(c(0xEF, 0xBB, 0xBF, charToRaw("a,b\n1,2\n"))))), c("a", "b"))
+  expect_error(ns(".bl_csv_from_bytes")(charToRaw("a,b\n1,2,3\n")), "3 fields where the header has 2")
+  expect_error(ns(".bl_csv_from_bytes")(charToRaw("a,b\n1,\"open\n")), "never closes")
+  # through gzip, as the curated tables arrive
+  f <- withr::local_tempfile(fileext = ".csv.gz")
+  con <- gzfile(f, "w")
+  writeLines(c("k,v,flag", "1,alpha,TRUE", "2,\"b,eta\",FALSE", "3,NA,NA"), con)
+  close(con)
+  expect_identical(ns(".bl_read_csv_gz")(f), utils::read.csv(gzfile(f), stringsAsFactors = FALSE, skipNul = TRUE))
 })

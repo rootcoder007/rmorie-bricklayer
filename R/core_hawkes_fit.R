@@ -10,7 +10,7 @@
 .rmbl_hk_methods <- c("auto", "exact", "soe", "truncate", "em", "inar")
 
 .rmbl_hk_method <- function(method, kernel) {
-  method <- match.arg(method, .rmbl_hk_methods)
+  method <- .rmbl_arg(method, .rmbl_hk_methods)
   # Weibull's exact window is where the kernel underflows: for shape < 1 the whole record, so
   # "auto" truncates. Lomax and gamma use the sum of exponentials ("soe"; a gamma kernel with
   # shape >= 1 is truncated at eps). The gamma stall on that route (2,000 iterations to a worse
@@ -172,8 +172,8 @@
 core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"),
                             baseline = c("constant", "sinusoidal"), method = "auto", eps = 1e-9,
                             start = NULL) {
-  kernel <- match.arg(kernel)
-  baseline <- match.arg(baseline)
+  kernel <- .rmbl_arg(kernel)
+  baseline <- .rmbl_arg(baseline)
   method <- .rmbl_hk_method(method, kernel)
   chk <- .rmbl_hk_check_times(times, horizon)
   horizon <- chk$horizon
@@ -297,8 +297,8 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 #' @export
 core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"), par,
                                   baseline = c("constant", "sinusoidal")) {
-  kernel <- match.arg(kernel)
-  baseline <- match.arg(baseline)
+  kernel <- .rmbl_arg(kernel)
+  baseline <- .rmbl_arg(baseline)
   chk <- .rmbl_hk_check_times(times, horizon)
   nb <- if (baseline == "constant") 1L else 4L
   np <- if (kernel == "exponential") 1L else 2L
