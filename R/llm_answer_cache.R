@@ -36,8 +36,9 @@
     unlink(f)
     return(NULL)
   }
-  rec <- tryCatch(bricklayer_json_from_json(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n"),
-                                            simplifyVector = FALSE), error = function(e) NULL)
+  # the text parser: a file's contents are data, never a URL or a path to follow
+  rec <- tryCatch(.rmbl_json_text(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n"),
+                                  simplifyVector = FALSE), error = function(e) NULL)
   ans <- rec$answer
   if (!is.character(ans) || length(ans) != 1L || !nzchar(ans)) return(NULL)
   structure(ans, cached = rec$time %||% "")

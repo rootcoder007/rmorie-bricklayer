@@ -56,13 +56,13 @@ test_that("the messages table is kept between sessions for a person watching, on
   writeLines("x", file.path(d, "messages-0000000000000000.rds"))  # an older version's
   memo <- ns(".bl_ee_memo")
   rm(list = ls(memo, all.names = TRUE), envir = memo)
-  t1 <- ns(".bl_ee_table")("rmoriedata")
+  t1 <- ns(".bl_ee_table")("rmoriebricklayer")
   f <- list.files(d, pattern = "^messages-")
   expect_length(f, 1L)
   expect_false(identical(f, "messages-0000000000000000.rds"))
   memo <- ns(".bl_ee_memo")
   rm(list = ls(memo, all.names = TRUE), envir = memo)
-  expect_identical(ns(".bl_ee_table")("rmoriedata"), t1)  # read back
+  expect_identical(ns(".bl_ee_table")("rmoriebricklayer"), t1)  # read back
   # the answers' pruning leaves it alone
   ns(".bl_answer_prune")(d)
   expect_length(list.files(d, pattern = "^messages-"), 1L)
