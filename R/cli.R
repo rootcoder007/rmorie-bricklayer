@@ -70,7 +70,11 @@
     old_prompt <- Sys.getenv("RMBL_PROMPT", unset = NA)
     Sys.setenv(RMBL_PROMPT = prompt)
     on.exit(if (is.na(old_prompt)) Sys.unsetenv("RMBL_PROMPT") else Sys.setenv(RMBL_PROMPT = old_prompt), add = TRUE)
-    l <- suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE))
+    # Ctrl-C reaches R as well as the child (one foreground process group): R's own interrupt is held
+    # until the read is over, so it arrives once, here, inside the caller's handler, rather than a
+    # moment later on top of the interrupt the child reported (exit 1, "Execution halted"; R-devel
+    # CI on 487b956 and a704645)
+    l <- suspendInterrupts(suppressWarnings(system2("sh", c("-c", shQuote(script)), stdout = TRUE, stderr = FALSE)))
     if (hide) cat("\n", file = stderr())
     st <- attr(l, "status")
     l <- paste(as.character(l), collapse = "")
