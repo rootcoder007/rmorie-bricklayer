@@ -14,11 +14,14 @@
 # A package with more help pages than this is searched, not listed in full.
 .bl_kn_list_max <- 800L
 
-# The MORIE packages installed here whose help the model gets (rmorie, with its thousands of
-# pages, is searched by the tools; only its functions nearest the question are listed).
+# The packages whose help and messages ask and explain-error read when none are named: this one.
+# This package names no package built on it. Such a package passes its own (`packages =`), and its
+# command line sets RMBL_PACKAGES (comma-separated) for the verbs it hands over, the way RMBL_PROG
+# names the command. A package with thousands of pages is searched by the tools, not listed.
 .bl_kn_default_packages <- function() {
-  pk <- c("rmoriebricklayer", "rmoriedata", "rmorie")
-  pk[vapply(pk, function(p) nzchar(system.file(package = p)), logical(1))]
+  v <- trimws(strsplit(Sys.getenv("RMBL_PACKAGES", unset = ""), ",", fixed = TRUE)[[1L]])
+  v <- v[nzchar(v)]
+  if (length(v)) unique(v) else "rmoriebricklayer"
 }
 
 .bl_rd_plain <- function(x) {

@@ -72,3 +72,33 @@ test_that("survey: a reordered frame is caught by its digests; an empty frame ha
   r2 <- data.frame(id = d$id, reps, stray = d$id)
   expect_error(survey_design(d, weights = "w", id = "id", replicates = r2, type = "bootstrap"), "the id")
 })
+
+test_that("reading a large set of messages is announced first, by size and not by name", {
+  big <- ns(".bl_ee_big")
+  expect_false(big("rmoriebricklayer"))
+  expect_true(big("rmoriebricklayer", limit = 10L))
+  d <- withr::local_tempdir()
+  withr::local_options(rmoriebricklayer.llm_cache_dir = d)
+  local_mocked_bindings(.bl_answer_cache_on = function() TRUE, .bl_ee_big = function(pkgs, limit = 5000L) TRUE,
+                        .package = "rmoriebricklayer")
+  rm(list = ls(ns(".bl_ee_memo")), envir = ns(".bl_ee_memo"))
+  expect_message(ns(".bl_ee_table")("rmoriebricklayer"), "Reading the messages of rmoriebricklayer")
+  # the table built under the mock is not left for the tests after this one
+  rm(list = ls(ns(".bl_ee_memo")), envir = ns(".bl_ee_memo"))
+})
+
+test_that("ask and explain-error read this package unless told otherwise; no other package is named", {
+  withr::local_envvar(RMBL_PACKAGES = NA)
+  expect_identical(ns(".bl_kn_default_packages")(), "rmoriebricklayer")
+  withr::local_envvar(RMBL_PACKAGES = " rmoriebricklayer , stats,,stats ")
+  expect_identical(ns(".bl_kn_default_packages")(), c("rmoriebricklayer", "stats"))
+  withr::local_envvar(RMBL_PACKAGES = "rmoriebricklayer,no.such.pkg")
+  expect_error(bricklayer_explain_error("x"), "not installed: no.such.pkg")
+  withr::local_envvar(RMBL_PACKAGES = NA)
+  # the code names no package built on this one
+  src <- unlist(lapply(ls(asNamespace("rmoriebricklayer"), all.names = TRUE), function(n) {
+    f <- get(n, envir = asNamespace("rmoriebricklayer"))
+    if (is.function(f)) deparse(f) else character()
+  }))
+  expect_false(any(grepl("\"rmorie\"|\"rmoriedata\"", src)))
+})
