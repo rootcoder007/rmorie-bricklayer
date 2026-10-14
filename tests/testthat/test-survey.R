@@ -233,7 +233,8 @@ test_that("results print, plot and flag small or empty domains", {
 })
 
 test_that("replicate weights can be named columns, and a replicate design's df is replicates less one", {
-  i <- seq_len(12)
+  # multipliers per PSU, as replicate weights are (one per row is not a replicate; review of 46de6a9)
+  i <- toy$p
   d <- cbind(toy, r1 = toy$w * (1 + 0.1 * sin(i)), r2 = toy$w * (1 + 0.1 * cos(i)), r3 = toy$w * (1 + 0.1 * sin(2 * i)))
   des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1")
   expect_length(des$reps, 3L)

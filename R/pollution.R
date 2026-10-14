@@ -190,9 +190,10 @@ crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 
                        "really is this rare, say so with rare_outcome = TRUE"), format(rate)), call. = FALSE)
   }
   if (rate > 0.1 && !high_rate) {
-    stop(sprintf(paste("`baseline_rate` %s per person-year is %s per 100,000 a year, above any population's",
-                       "all-cause death rate. If it is a rate per 100,000, divide it by 100,000; if the outcome",
-                       "really is this common, say so with high_rate = TRUE"),
+    stop(sprintf(paste("`baseline_rate` %s per person-year is %s per 100,000 a year, above a whole population's",
+                       "all-cause death rate (an age-specific rate for the oldest ages can be this high). If it",
+                       "is a rate per 100,000, divide it by 100,000; if the outcome really is this common, say",
+                       "so with high_rate = TRUE"),
                  format(rate), format(rate * 1e5, big.mark = ",", scientific = FALSE)), call. = FALSE)
   }
   rate

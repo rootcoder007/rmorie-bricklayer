@@ -216,11 +216,34 @@ test_that("hotspot_persistence says when it drops (0, 0)", {
   expect_message(hotspot_persistence(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident at \\(0, 0\\)")
 })
 
-test_that("the planar cell key tells 1e15 from 1e15 + 1", {
+test_that("the planar cell key tells 1e15 from 1e15 + 1, and refuses indices past 2^53", {
   x <- c(1e15, 1e15 + 1, 1e15 + 2) * 3
   cp <- ns(".jx_close_pairs")(x, c(0, 0, 0), 1, 1e6)
   # the three points are three apart: no pair is within 1
   expect_identical(length(cp$i), 0L)
+  # at 8e15 / 1 the index is still a whole number; at 1e12 / 1e-6 it is not (review of 46de6a9)
+  expect_identical(length(ns(".jx_close_pairs")(c(8e15, 8e15 + 0.5, 8e15 + 3), c(0, 0, 0), 1, 1e6)$i), 1L)
+  expect_error(ns(".jx_close_pairs")(c(1e12, 1e12 + 1e-7), c(0, 0), 1e-6, 1e6), "exceed 2\\^53")
+})
+
+test_that("hotspot_persistence says when it drops an incident without a location or period", {
+  set.seed(7)
+  lon <- c(runif(50, -79.5, -79.3), NA)
+  lat <- c(runif(50, 43.6, 43.8), 43.7)
+  expect_message(hotspot_persistence(lon, lat, rep(1:2, length.out = 51), cell = 1), "1 incident without a usable")
+})
+
+test_that("a burden at rate 0 or population 0 draws; the rate message allows an age-specific rate", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  b0 <- pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0, population = 1000,
+                         pollutant = "pm25")
+  expect_s3_class(plot(b0), "data.frame")
+  p0 <- pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0.01, population = 0,
+                         pollutant = "pm25")
+  expect_s3_class(plot(p0), "data.frame")
+  expect_error(pollution_burden(exposure_mean = 10, exposure_prevalence = 1, baseline_rate = 0.15, population = 1000,
+                                pollutant = "pm25"), "age-specific rate")
 })
 
 test_that("survey_compare takes a numeric domain label", {

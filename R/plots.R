@@ -133,8 +133,9 @@ bricklayer_plot_options <- function(...) {
                                                                                    horiz = horiz, add = TRUE))))
   w <- 0.5 * (args$width %||% 1)
   ok <- is.finite(h) & h != 0
-  # the sheen: a white band fading out across the first third of each bar
-  for (k in 1:16) {
+  # the sheen: a white band fading out across the first third of each bar (none when every bar is
+  # zero: rect() refuses empty coordinates beside a scalar; a burden at rate 0 did not draw)
+  for (k in if (any(ok)) 1:16 else integer()) {
     a <- 0.022 * (17 - k) / 4
     f0 <- (k - 1) / 40
     f1 <- k / 40

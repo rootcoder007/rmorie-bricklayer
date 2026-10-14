@@ -987,9 +987,13 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
     # node ends up on one side; otherwise the nodes past 180 keep their continued values
     # (180.3 is -179.7) and the map stays one piece (review of 29a55d8, F4)
     wrapped <- ((out$lon + 180) %% 360) - 180
-    if (!is.unsorted(wrapped, strictly = TRUE)) out$lon <- wrapped
+    wrap <- !is.unsorted(wrapped, strictly = TRUE)
+    if (wrap) out$lon <- wrapped
     out$lat <- lat0 + gy / .jx_earth_km * 180 / pi
-    out$points$lon <- lon
+    # the incidents in the grid's own frame (the same transform as the grid's nodes), so a map that
+    # runs past 180 degrees keeps its points on it (30 of 60 fell off; review of 46de6a9, F4)
+    plon <- p$lon0 + p$x / (.jx_earth_km * cos(lat0 * pi / 180)) * 180 / pi
+    out$points$lon <- if (wrap) ((plon + 180) %% 360) - 180 else plon
     out$points$lat <- lat
   }
   class(out) <- "rmbl_density"
@@ -1057,6 +1061,12 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 .jx_close_pairs <- function(x, y, r, max_pairs) {
   cx <- floor(x / r)
   cy <- floor(y / r)
+  # past 2^53 a cell index is not a whole number a double can hold, so neighbouring cells merge
+  # and a pair is counted up to nine times (x = 1e12 with a band of 1e-6; review of 46de6a9)
+  if (any(abs(c(cx, cy)) >= 2^53)) {
+    stop("the coordinates divided by the band exceed 2^53: no cell index can be held; use a wider band or",
+         " rescale the coordinates", call. = FALSE)
+  }
   # whole numbers written out in full: paste() writes 1e15 and 1e15 + 1 both as "1e+15", one cell
   key <- function(a, b) sprintf("%.0f %.0f", a, b)
   pts <- data.frame(i = seq_along(x), k = key(cx, cy))

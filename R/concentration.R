@@ -352,10 +352,11 @@ hurwitz_zeta <- function(s, q = 1) {
     # zeta(1-s): sinpi() is exact at the trivial zeros and accurate beside them, where the general
     # route lost the relative digits of a value near zero (3.5e-7 at s = -2 + 1e-7; review of
     # e57fed5). zeta(1 - s) has 1 - s > 1, the C series.
-    # (beside the zero, s = -2 + 1e-12 itself carries 1e-12 only to 4e-4: the double nearest -2 + e
-    # is what is evaluated, to full accuracy; a reference at e is off by that much. Review of
-    # 29a55d8, F5)
-    sp <- sinpi(si / 2)
+    # sinpi(x) beside x = -1 is sin(pi * x) in R, which carries the absolute error of pi * x (about
+    # 2e-16) into a value of order the distance from -1: the distance is taken first, exactly
+    # (si / 2 + 1 is exact there, Sterbenz), and sinpi of that is accurate (review of 46de6a9, F5;
+    # on glibc the two agree to 1e-15, on other libms not)
+    sp <- .rmbl_sinpi(si / 2)
     if (sp == 0) return(0)
     lmag <- si * log(2) + (si - 1) * log(pi) + lgamma(1 - si) + log(abs(.rmbl_hurwitz(1 - si, 1)))
     return(sign(sp) * exp(lmag + log(abs(sp))))
@@ -407,6 +408,14 @@ hurwitz_zeta <- function(s, q = 1) {
                -174611 / 330, 854513 / 138, -236364091 / 2730)
 
 # Euler-Maclaurin after M direct terms (M = 0: the asymptotic series at q itself)
+# sin(pi x) with the reduction done exactly: x - round(x) is exact (Sterbenz) and the sign
+# alternates with the integer.
+.rmbl_sinpi <- function(x) {
+  k <- round(x)
+  s <- sinpi(x - k)
+  if (k %% 2 == 0) s else -s
+}
+
 .rmbl_hurwitz_em <- function(si, q, M) {
   x <- q + M
   val <- if (M > 0) sum((q + (seq_len(M) - 1))^(-si)) else 0  # q + (n - 1): (q + n) - 1 lost a tiny q (C2)
