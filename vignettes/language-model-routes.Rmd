@@ -32,7 +32,9 @@ the package will and will not do on the network.
    saved with `bricklayer_llm_config(anthropic.key = ...)`; the model is
    `MORIE_<PROVIDER>_MODEL` or `<provider>.model`. Anthropic's Messages API and Gemini's
    `generateContent` are spoken natively; the others are OpenAI-compatible.
-3. **Ollama** at `OLLAMA_HOST` (default `localhost:11434`), on this machine or another, or
+3. **Ollama** at `OLLAMA_HOST` (default `localhost:11434`), on this machine or another, once its
+   server is running (`ollama serve`, the Ollama app, or the system service its Linux installer
+   sets up) and has a model (`ollama pull NAME`), or
    Ollama's own cloud API (`ollama.url = https://ollama.com` with your `ollama.key`);
    `OLLAMA_HOST=off` disables the probe. Its first listed model is the default.
 

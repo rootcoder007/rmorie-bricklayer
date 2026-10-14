@@ -163,6 +163,7 @@ SEXP C_rmbl_ec_mul_impl(SEXP, SEXP);
 SEXP C_rmbl_ec_order_impl(SEXP);
 SEXP C_rmbl_http_post_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_http_get_impl(SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_wait_label_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_der_parse_impl(SEXP);
 SEXP C_rmbl_rsa_recover_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_mlkem_sizes_impl(SEXP);
@@ -431,6 +432,9 @@ SEXP C_rmbl_http_post(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5) {
 }
 SEXP C_rmbl_http_get(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_http_get", [&] { return C_rmbl_http_get_impl(a0, a1, a2, a3); });
+}
+SEXP C_rmbl_wait_label(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_wait_label", [&] { return C_rmbl_wait_label_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_der_parse(SEXP a0) {
     return rmbl_guard("C_rmbl_der_parse", [&] { return C_rmbl_der_parse_impl(a0); });

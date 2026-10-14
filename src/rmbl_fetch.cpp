@@ -662,6 +662,39 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
  * refuse it, so a verifier limited to GET is a verifier that usually
  * cannot check revocation at all.
  */
+/* While a language model thinks, the reply's first byte can be a minute away: with a label set
+ * (C_rmbl_wait_label, from R when a person is watching a terminal) the wait draws one line on
+ * stderr -- a turning bar, the label and the seconds so far -- and wipes it when the reply comes.
+ * libcurl calls this several times a second while it waits; a pending Ctrl-C ends the request. */
+static std::string g_wait_label;
+static bool g_wait_unicode = false, g_wait_color = false;
+extern "C" const char *rmbl_progress_spinner(double t, int unicode);  /* rmbl_progress.c */
+
+struct Wait {
+    std::chrono::steady_clock::time_point t0, last;
+    size_t width;
+    bool interrupted;
+};
+
+int wait_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
+    Wait *w = static_cast<Wait *>(ud);
+    if (rmbl_interrupt_pending()) {
+        w->interrupted = true;
+        return 1;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (w->width && std::chrono::duration<double>(now - w->last).count() < 0.125) return 0;
+    w->last = now;
+    const double secs = std::chrono::duration<double>(now - w->t0).count();
+    const char *spin = rmbl_progress_spinner(secs, g_wait_unicode);
+    /* the visible width: one cell for the spinner, whatever its bytes */
+    const int n = std::snprintf(NULL, 0, "x %s  %ds ", g_wait_label.c_str(), static_cast<int>(secs));
+    if (g_wait_color) REprintf("\r\033[38;2;130;160;255m%s\033[0m %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
+    else REprintf("\r%s %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
+    if (n > 0 && static_cast<size_t>(n) > w->width) w->width = static_cast<size_t>(n);
+    return 0;
+}
+
 long http_post_bytes(const std::string &url, const unsigned char *body,
                      size_t bodylen, const std::string &content_type,
                      std::string &out, long timeout_s,
@@ -700,13 +733,21 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
     char errbuf[CURL_ERROR_SIZE] = {0};   /* libcurl's own sentence ("Operation too slow ...") */
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
+    Wait wait = {std::chrono::steady_clock::now(), std::chrono::steady_clock::now(), 0u, false};
+    if (!g_wait_label.empty()) {
+        curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
+        curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
+        curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
+    }
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
+    if (wait.width) REprintf("\r%s\r", std::string(wait.width, ' ').c_str());
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
         out.clear();
-        if (err) *err = rc == CURLE_WRITE_ERROR ? "the reply is larger than the 16 MiB in-memory limit"
+        if (err) *err = wait.interrupted ? "interrupted (Ctrl-C)"
+                      : rc == CURLE_WRITE_ERROR ? "the reply is larger than the 16 MiB in-memory limit"
                       : !refused.empty() ? refused : errbuf[0] ? std::string(errbuf) : curl_easy_strerror(rc);
     }
     curl_easy_cleanup(h);
@@ -953,6 +994,18 @@ int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
 }
 
 /* ---- .Call wrappers for bricklayer's own R side ------------------------ */
+
+/* The label the next POSTs draw while they wait ("" for none), with braille or ASCII frames and
+ * with or without colour; see wait_xferinfo. */
+SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
+    if (TYPEOF(label) != STRSXP || XLENGTH(label) != 1 || STRING_ELT(label, 0) == NA_STRING) {
+        Rf_error("`label` must be a single string");
+    }
+    g_wait_label = std::string(Rf_translateCharUTF8(STRING_ELT(label, 0))).substr(0, 200);
+    g_wait_unicode = Rf_asLogical(unicode) == TRUE;
+    g_wait_color = Rf_asLogical(color) == TRUE;
+    return R_NilValue;
+}
 
 /* POST raw bytes, return the reply as raw bytes and the HTTP status.
  * Used only by the OCSP path, which is opt-in. */

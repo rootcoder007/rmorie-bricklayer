@@ -394,7 +394,8 @@ test_that("the help in the prompt follows the model's capacity: all of it for a 
     s <- fake_post(list(ok))
     local_mocked_bindings(.bl_post_json = s$post)
     ns(".bl_llm_assist")(ollama, model, "survey replicate weights", "rmoriebricklayer")
-    sys <- s$calls[[1L]]$payload$messages[[1L]]$content
+    m <- s$calls[[1L]]$payload$messages
+    sys <- paste(m[[1L]]$content, m[[2L]]$content, sep = "\n")  # the instructions and the question
     list(n = length(grep("  -- ", strsplit(sys, "\n")[[1L]])), sys = sys)
   }
   small <- index_size("gemma3:4b")
@@ -516,7 +517,8 @@ test_that("a package with thousands of help pages is searched, not listed whole"
   s <- fake_post(list(ok))
   local_mocked_bindings(.bl_post_json = s$post, .bl_kn_list_max = 50L)
   ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer")
-  sys <- s$calls[[1L]]$payload$messages[[1L]]$content
+  m <- s$calls[[1L]]$payload$messages
+  sys <- paste(m[[1L]]$content, m[[2L]]$content, sep = "\n")
   # rmoriebricklayer stands in for the big package here: 40 of its pages listed, the rest searched
   expect_match(sys, "rmoriebricklayer has [0-9]+ more functions than are listed below: search_docs")
   expect_lte(length(grep("  -- ", strsplit(sys, "\n")[[1L]])), 41L)
@@ -546,4 +548,168 @@ test_that("route_info says which route would answer; chat sends a whole conversa
   expect_error(bricklayer_llm_chat(convo), "No language-model route")
   withr::local_envvar(GROQ_API_KEY = "gsk-x", MORIE_GROQ_MODEL = NA)
   expect_error(bricklayer_llm_chat(convo, route = "groq"), "Groq has no model to use")
+})
+
+test_that("a model's wait draws a spinner with its label and seconds on stderr, and wipes it", {
+  skip_on_cran()
+  # a server that takes 1.5 s to answer, in a child R (R_TESTS unset, this R's own Rscript)
+  port <- 18000L + sample.int(900L, 1L)
+  srv <- tempfile(fileext = ".R")
+  writeLines(c(sprintf("s <- serverSocket(%dL)", port), "con <- socketAccept(s, blocking = TRUE, open = 'r+b')",
+               "invisible(readLines(con, n = 1L))", "Sys.sleep(1.5)",
+               "reply <- c('HTTP/1.1 200 OK', 'Content-Length: 2', 'Connection: close', '', 'ok')",
+               "writeLines(reply, con, sep = '\\r\\n')",
+               "close(con); close(s)"), srv)
+  withr::local_envvar(R_TESTS = NA)
+  p <- system2(file.path(R.home("bin"), "Rscript"), c("--vanilla", srv), wait = FALSE, stdout = FALSE, stderr = FALSE)
+  Sys.sleep(1)
+  on.exit(.Call(C_rmbl_wait_label, "", FALSE, FALSE), add = TRUE)
+  .Call(C_rmbl_wait_label, "test-model is thinking", FALSE, FALSE)
+  err <- capture.output(res <- .Call(C_rmbl_http_post, sprintf("http://127.0.0.1:%d/", port), charToRaw("{}"),
+                                     "application/json", 10L, NULL, TRUE), type = "message")
+  .Call(C_rmbl_wait_label, "", FALSE, FALSE)
+  txt <- paste(err, collapse = "")
+  expect_identical(res$status, 200L)
+  expect_identical(rawToChar(res$body), "ok")
+  expect_match(txt, "test-model is thinking  1s", fixed = TRUE)
+  expect_match(txt, "[|/\\-] test-model is thinking  0s")
+  expect_match(txt, "\r *\r$")  # wiped: the reply starts on a clean line
+  expect_error(.Call(C_rmbl_wait_label, NA_character_, FALSE, FALSE), "single string")
+})
+
+test_that("the wait label shows only to a person at a terminal, and names the lookups", {
+  withr::local_options(morie.quiet = NULL, morie.progress = TRUE)
+  local_mocked_bindings(.bl_stderr_tty = function() TRUE)
+  expect_identical(.bl_llm_wait_label("gemma3:4b"), "gemma3:4b is thinking")
+  .bl_wait$what <- "thinking (2 help pages read so far)"
+  on.exit(.bl_wait$what <- NULL, add = TRUE)
+  expect_identical(.bl_llm_wait_label(NULL), "the model is thinking (2 help pages read so far)")
+  .bl_wait$what <- NULL
+  local_mocked_bindings(.bl_stderr_tty = function() FALSE)
+  expect_identical(.bl_llm_wait_label("m"), "")
+  local_mocked_bindings(.bl_stderr_tty = function() TRUE)
+  withr::local_options(morie.quiet = TRUE)
+  expect_identical(.bl_llm_wait_label("m"), "")
+  # a chat turn sets the label for its POST and clears it after, and the tool loop counts lookups
+  withr::local_options(morie.quiet = NULL)
+  seen <- character()
+  local_mocked_bindings(.bl_post_json = function(...) {
+    seen <<- c(seen, .bl_llm_wait_label("m"))
+    list(status = 200L, json = list(choices = list(list(message = list(content = "fine"), finish_reason = "stop"))))
+  })
+  rt <- list(name = "own endpoint", api = "openai", base = "http://localhost:1/v1", model = "m", local = TRUE)
+  expect_identical(.bl_llm_chat(rt, "m", list(list(role = "user", content = "hi")))$text, "fine")
+  expect_identical(seen, "m is thinking")
+})
+
+test_that("the instructions are the same for every question; the question carries its own nearest functions", {
+  byok_clean()
+  ok <- list(choices = list(list(finish_reason = "stop", message = list(content = "ok"))))
+  s <- fake_post(list(ok, ok, ok, ok))
+  local_mocked_bindings(.bl_post_json = s$post)
+  small <- list(name = "local Ollama", api = "openai", base = "http://localhost:11434", local = TRUE,
+                model = "gemma3:4b",
+                context = c("gemma3:4b" = 4096))
+  big <- list(name = "OpenAI", id = "openai", api = "openai", base = "https://api.openai.com/v1", key = "k")
+  for (rt in list(small, big)) {
+    ns(".bl_llm_assist")(rt, "m", "survey replicate weights", "rmoriebricklayer")
+    ns(".bl_llm_assist")(rt, "m", "sign a capsule bundle", "rmoriebricklayer")
+  }
+  sys <- vapply(s$calls, function(cl) cl$payload$messages[[1L]]$content, "")
+  q <- vapply(s$calls, function(cl) cl$payload$messages[[2L]]$content, "")
+  expect_identical(sys[[1L]], sys[[2L]])   # a small model: no index in the instructions, the same text
+  expect_identical(sys[[3L]], sys[[4L]])   # a large model: the whole index, the same text
+  expect_false(grepl("Exported functions", sys[[1L]], fixed = TRUE))
+  expect_match(sys[[1L]], "the ones nearest the question are listed with it")
+  expect_match(q[[1L]], "Functions nearest this question.*survey_design")
+  expect_match(sys[[3L]], "Exported functions (name(arguments)  -- title):", fixed = TRUE)
+  # a large model gets the closest pages with the question as well, so it starts from them
+  expect_match(q[[3L]], "^survey replicate weights\n\nFunctions nearest this question")
+})
+
+test_that("Anthropic is asked to keep long instructions; short ones go as they are", {
+  long <- strrep("x", 5000L)
+  convo <- list(list(role = "system", content = long), list(role = "user", content = "q"))
+  b <- ns(".bl_anthropic_body")("claude-x", convo, NULL, 100L)
+  expect_identical(b$system[[1L]]$cache_control$type, "ephemeral")
+  expect_identical(b$system[[1L]]$text, long)
+  convo[[1L]]$content <- "be brief"
+  b <- ns(".bl_anthropic_body")("claude-x", convo, NULL, 100L)
+  expect_identical(b$system, "be brief")
+})
+
+test_that("a repeated question is answered from this machine; --fresh asks again; off and quiet keep nothing", {
+  byok_clean()
+  d <- withr::local_tempdir()
+  withr::local_options(rmoriebricklayer.llm_cache = NULL, rmoriebricklayer.llm_cache_dir = d, morie.progress = TRUE,
+                       morie.quiet = NULL)
+  withr::local_envvar(MORIE_LLM_CACHE = NA, GROQ_API_KEY = "gsk", MORIE_GROQ_MODEL = "llama-x")
+  n <- 0L
+  local_mocked_bindings(.bl_llm_chat = function(...) {
+    n <<- n + 1L
+    list(text = sprintf("answer %d", n), tool_calls = list())
+  })
+  a1 <- bricklayer_llm_ask("How do I sign?", docs = FALSE)
+  a2 <- bricklayer_llm_ask("  how do i   SIGN? ", docs = FALSE)   # case and spacing aside, the same question
+  expect_identical(as.character(a1), "answer 1")
+  expect_identical(as.character(a2), "answer 1")
+  expect_null(attr(a1, "cached"))
+  expect_match(attr(a2, "cached"), "^[0-9]{4}-[0-9]{2}-[0-9]{2} ")
+  expect_identical(n, 1L)
+  f <- list.files(d, full.names = TRUE)
+  expect_length(f, 1L)
+  if (.Platform$OS.type != "windows") expect_identical(as.character(file.info(f)$mode), "600")
+  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE, fresh = TRUE)), "answer 2")
+  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 2")  # the new one kept
+  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", model = "other", docs = FALSE)), "answer 3")
+  # an answer past its days is asked again
+  withr::local_options(rmoriebricklayer.llm_cache_days = -1)
+  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 4")
+  withr::local_options(rmoriebricklayer.llm_cache_days = 30)
+  expect_length(list.files(d), 0L)  # past its days, even the answer just saved is removed
+  expect_identical(as.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)), "answer 5")
+  expect_length(list.files(d), 1L)
+  # a damaged file is a miss, not an error
+  writeLines("{not json", list.files(d, full.names = TRUE)[1L])
+  expect_true(is.character(bricklayer_llm_ask("How do I sign?", docs = FALSE)))
+  withr::local_envvar(MORIE_LLM_CACHE = "off")
+  before <- n
+  bricklayer_llm_ask("How do I sign?", docs = FALSE)
+  expect_identical(n, before + 1L)
+  withr::local_envvar(MORIE_LLM_CACHE = NA)
+  withr::local_options(morie.progress = FALSE)   # nobody watching (a script, a check): nothing read or kept
+  unlink(list.files(d, full.names = TRUE))
+  bricklayer_llm_ask("a script's question", docs = FALSE)
+  expect_length(list.files(d), 0L)
+  expect_error(bricklayer_llm_ask("q", fresh = NA), "fresh")
+  # the CLI says when an answer was saved, and --fresh asks anew
+  withr::local_options(morie.progress = TRUE)
+  out <- function(...) {
+    b <- character()
+    bricklayer_cli(c(...), out = function(x) b <<- c(b, x))
+    paste(b, collapse = "")
+  }
+  first <- out("ask", "what", "is", "a", "capsule")
+  expect_false(grepl("saved on", first, fixed = TRUE))
+  expect_match(out("ask", "what", "is", "a", "capsule"), "the answer saved on .* --fresh")
+  expect_false(grepl("saved on", out("ask", "--fresh", "what", "is", "a", "capsule"), fixed = TRUE))
+})
+
+test_that("the answer folder stays small: expired answers and the oldest past the cap are removed on save", {
+  d <- withr::local_tempdir()
+  nm <- function(i) paste0(strrep(as.character(i), 64L), ".json")  # named as saved answers are
+  for (i in 1:5) {
+    f <- file.path(d, nm(i))
+    writeLines("{}", f)
+    Sys.setFileTime(f, Sys.time() - i * 3600)
+  }
+  writeLines("{}", old <- file.path(d, nm(9)))
+  writeLines("{}", file.path(d, "notes.json"))  # not an answer: left alone
+  Sys.setFileTime(old, Sys.time() - 40 * 86400)
+  writeLines("x", tmp <- file.path(d, "half.json.tmp"))
+  Sys.setFileTime(tmp, Sys.time() - 7200)
+  withr::local_options(rmoriebricklayer.llm_cache_max = 3L, rmoriebricklayer.llm_cache_days = 30)
+  expect_identical(ns(".bl_answer_prune")(d), 4L)
+  expect_setequal(list.files(d), c(nm(1), nm(2), nm(3), "notes.json"))
+  expect_identical(ns(".bl_answer_prune")(withr::local_tempdir()), 0L)
 })

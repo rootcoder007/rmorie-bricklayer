@@ -609,8 +609,8 @@ test_that("a URL that is not UTF-8 is refused; the real sleep seam sleeps", {
   expect_match(rmoriebricklayer:::.bl_wb_hidden_char(bad), "not UTF-8")
   expect_identical(rmoriebricklayer:::.bl_wb_hidden_char("https://e.org/ok"), "")
   t0 <- proc.time()[["elapsed"]]
-  rmoriebricklayer:::.bl_wb_sleep(0.05)
-  expect_gte(proc.time()[["elapsed"]] - t0, 0.04)
+  rmoriebricklayer:::.bl_wb_sleep(0.2)
+  expect_gte(proc.time()[["elapsed"]] - t0, 0.1)  # Windows clocks tick coarsely: a wide margin
 })
 
 test_that("rmbl wayback --max leaves URLs for the next run and exits 1 saying so", {

@@ -39,8 +39,17 @@
   w <- w[nchar(w) >= 2L]
   stop_words <- c("the", "of", "and", "to", "in", "is", "for", "an", "or", "by", "on", "be", "as", "it", "at",
                   "with", "from", "that", "this", "are", "its", "when", "which", "not", "one", "each", "if",
-                  "can", "do", "does", "how", "what", "use", "using", "my", "me", "into", "per")
-  w[!w %in% stop_words]
+                  "can", "do", "does", "how", "what", "use", "using", "my", "me", "into", "per",
+                  "function", "functions", "package", "packages", "want", "need", "way", "there", "any", "some")
+  w <- w[!w %in% stop_words]
+  # a light stem, so "emissions" finds "emission" and "testing" finds "test": the same word in
+  # the question and on the page, however each is inflected
+  long <- nchar(w) > 4L
+  w[long] <- sub("ies$", "y", w[long])
+  w[long] <- sub("([^su])s$", "\\1", w[long])
+  long <- nchar(w) > 5L
+  w[long] <- sub("(ing|ed)$", "", w[long])
+  w
 }
 
 # The help pages of one installed package: one record per page (name, aliases, title,
@@ -237,18 +246,25 @@
 
 # ---- the conversation ------------------------------------------------------------------------
 
+# The instructions stay the same from one question to the next (the functions picked for a question
+# travel with the question), so a server's prompt cache can reuse them: Ollama, OpenAI, DeepSeek and
+# Gemini do it on their own for an unchanged start, Anthropic when asked (.bl_anthropic_body).
 .bl_kn_system <- function(pkgs, index_lines, extra = NULL) {
+  where <- if (length(index_lines)) "the index below lists every one" else
+    "the ones nearest the question are listed with it, and search_docs finds the rest"
   paste(c(
     sprintf(paste("You help people use the R packages %s. Answer with short explanations and R code they can run.",
-                  "When these packages have a function for the task (the index below lists every one), use it rather",
+                  "When these packages have a function for the task (%s), use it rather",
                   "than another package's; load them with library(%s). Otherwise use base R. Never invent a function,",
                   "an argument, a package or a dataset. Before you give code that calls a package function, read its",
                   "help page (get_help); search_docs finds the right page when you are unsure of the name. Say plainly",
                   "when the packages cannot do something. Only these packages are installed: load no other MORIE",
-                  "package. For example data, simulate it, or use a dataset that list_datasets names."),
-            paste(pkgs, collapse = " and "), pkgs[[1L]]),
+                  "package. For example data, simulate it, or use a dataset that list_datasets names. Never say the",
+                  "packages lack something before search_docs has looked for it under other words (a synonym, the",
+                  "thing measured, the field it belongs to); the pages listed with the question are where to start."),
+            paste(pkgs, collapse = " and "), where, pkgs[[1L]]),
     extra,
-    "", "Exported functions (name(arguments)  -- title):", index_lines), collapse = "\n")
+    if (length(index_lines)) c("", "Exported functions (name(arguments)  -- title):", index_lines)), collapse = "\n")
 }
 
 # A model that says it cannot take tools (HTTP 400 naming them, as Ollama and many servers answer)
@@ -301,8 +317,14 @@
   big <- names(which(table(vapply(pages, function(p) p$pkg, "")) > .bl_kn_list_max))
   listed <- Filter(function(p) p$pkg %in% pkgs && !p$pkg %in% big, pages)
   near_big <- if (length(big)) .bl_kn_search(prompt, Filter(function(p) p$pkg %in% big, pages), 40L) else list()
-  index <- .bl_kn_index_lines(c(listed, near_big))
-  if (length(index) > tier$index) index <- .bl_kn_index_lines(.bl_kn_search(prompt, pages, tier$index))
+  # the index that does not depend on the question goes into the instructions; the functions
+  # picked for this question (all of them for a small model) go with the question
+  index <- .bl_kn_index_lines(listed)
+  near <- near_big
+  if (length(index) + length(near) > tier$index) {
+    index <- character()
+    near <- .bl_kn_search(prompt, pages, tier$index)
+  }
   clip <- tier$clip
   max_rounds <- max_rounds %||% tier$rounds
   if (length(big)) {
@@ -312,8 +334,18 @@
                                             sum(vapply(pages, function(p) p$pkg %in% big, NA)) - length(near_big)))
   }
   sys <- .bl_kn_system(pkgs, index, system_extra)
-  msgs <- list(list(role = "system", content = sys), list(role = "user", content = prompt))
+  # the help pages closest to the question go with it for every model, so a large one starts from
+  # them too instead of from memory
+  if (!length(near)) near <- .bl_kn_search(prompt, pages, 6L)
+  ask <- prompt
+  if (length(near)) {
+    ask <- paste(c(prompt, "", "Functions nearest this question (name(arguments)  -- title):",
+                   .bl_kn_index_lines(near)), collapse = "\n")
+  }
+  msgs <- list(list(role = "system", content = sys), list(role = "user", content = ask))
   tools <- .bl_kn_tools()
+  looked <- 0L
+  on.exit(.bl_wait$what <- NULL, add = TRUE)
   for (round in seq_len(max_rounds)) {
     res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = timeout, allow_empty = TRUE),
                     error = function(e) e)
@@ -332,6 +364,8 @@
       msgs[[length(msgs) + 1L]] <- list(role = "tool", tool_call_id = tc$id, name = tc$name,
                                         content = .bl_kn_run_tool(tc, pkgs, clip))
     }
+    looked <- looked + length(res$tool_calls)
+    .bl_wait$what <- sprintf("thinking (%d help %s read so far)", looked, if (looked == 1L) "page" else "pages")
   }
   # the rounds are spent, or a turn came back empty: one last turn without tools, so an answer comes back
   msgs[[length(msgs) + 1L]] <- list(role = "user", content = "Answer now with what you have found.")

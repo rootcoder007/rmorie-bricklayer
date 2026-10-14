@@ -11,7 +11,8 @@ bricklayer_llm_ask(
   system_prompt = NULL,
   route = NULL,
   docs = TRUE,
-  packages = NULL
+  packages = NULL,
+  fresh = FALSE
 )
 }
 \arguments{
@@ -31,11 +32,20 @@ or \code{"own"}, \code{"ollama"} or a provider id to insist on one.}
 \code{FALSE} sends the prompt alone.}
 
 \item{packages}{The installed packages whose help the model gets; default
-rmoriebricklayer and rmoriedata (those installed). Add \code{"rmorie"}
-to let it search that package's help too.}
+rmoriebricklayer, rmoriedata and rmorie (those installed).}
+
+\item{fresh}{\code{TRUE} asks the model even when an answer to the same
+question is saved on this machine, and keeps the new one. A person at a
+terminal or in an interactive session gets a saved answer back at once
+when the question (case and spacing aside), route, model, packages and
+their versions all match, for 30 days; the answers are owner-only files
+under \code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is
+kept elsewhere, and \code{MORIE_LLM_CACHE=off} (or
+\code{options(rmoriebricklayer.llm_cache = FALSE)}) turns it off.}
 }
 \value{
-Character scalar with the reply. Errors, saying what to set up,
+Character scalar with the reply; a saved answer carries the time it
+was saved as attribute \code{cached}. Errors, saying what to set up,
 when no route answers, and when the server answers with an error.
 }
 \description{

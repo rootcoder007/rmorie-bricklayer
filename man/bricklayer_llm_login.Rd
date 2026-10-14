@@ -33,7 +33,8 @@ the \code{morie}, \code{rmorie} and \code{rmoriedata} packages read too,
 so one sign-in serves all of them). The key opens the curated tables
 (\code{\link{bricklayer_data_load}}); it is not used for language models,
 which run on your own key or a local model (\code{\link{bricklayer_llm_ask}}).
-Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at \url{https://www.rmorie.com/access/}.
+Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
+\url{https://www.rmorie.com/access/}.
 The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in:
 \itemize{
 \item \code{token}: a key you already have, from the website or an
