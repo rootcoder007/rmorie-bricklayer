@@ -191,7 +191,8 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
     strcpy(path, q);
     const unsigned char *b = RAW(bytes);
     size_t n = (size_t) XLENGTH(bytes);
-    char msg[512];
+    /* room for a whole path and its error (gcc -Wformat-truncation: 512 cut a long path short) */
+    char msg[sizeof tmp + 256];
 #ifdef _WIN32
     int fd = _open(tmp, _O_WRONLY | _O_CREAT | _O_EXCL | _O_BINARY | _O_NOINHERIT, _S_IREAD | _S_IWRITE);
 #else

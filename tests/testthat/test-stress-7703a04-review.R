@@ -102,7 +102,8 @@ test_that("Y5 and Z5: one work cap for every run, the same for both spellings of
   # the hourly run written two ways: sub-stepped by the scheme, or stepped by the caller
   c1 <- matrix(0, 5, 5)
   c1[3, 3] <- 1
-  a <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1)
+  expect_warning(a <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 3600, 1),
+                 "outside its stability bound")
   b <- advection_diffusion_2d(c1, u = 0, v = 0, kx = 50, ky = 50, 10, 10, 0.5, 7200)
   expect_equal(a$field, b$field, tolerance = 1e-12)
   msg <- function(e) conditionMessage(e)
@@ -110,7 +111,9 @@ test_that("Y5 and Z5: one work cap for every run, the same for both spellings of
   eb <- tryCatch(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 0.5, 7200, max_work = 1e5), error = msg)
   expect_match(ea, "above max_work")
   expect_match(eb, "above max_work")
-  expect_s3_class(advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = Inf), "rmbl_field")
+  expect_warning(f <- advection_diffusion_2d(c1, 0, 0, 50, 50, 10, 10, 3600, 1, max_work = Inf),
+                 "outside its stability bound")
+  expect_s3_class(f, "rmbl_field")
   # a stable run is capped too: no run is unbounded
   expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e9), "above max_work")
   expect_error(advection_diffusion_2d(matrix(1, 3, 3), 0, 0, 0, 0, 1, 1, 0.1, 1e300), "max_work|not finite")
@@ -393,7 +396,7 @@ test_that("the refusals of the third pass are exercised: work, keys, credentials
   expect_warning(s2 <- capsule_sign("m2", xmss_advance(k, s)), "record is off")
   expect_s3_class(s2, "bricklayer_signature")
   # a FIPS public-key object is compared by its `public` field
-  a <- capsule_attest(list(n = 1), pqc_keygen(height = 2))
+  expect_warning(a <- capsule_attest(list(n = 1), pqc_keygen(height = 2)), "record is off")
   fk <- structure(list(public = "abcd"), class = "bricklayer_oqs_public_key")
   chk <- capsule_check_attestation(a, list(n = 1), key_expected = fk)
   expect_false(chk$checks$ok[chk$checks$check == "key_as_expected"])

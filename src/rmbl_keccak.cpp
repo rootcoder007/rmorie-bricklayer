@@ -155,16 +155,6 @@ void keccak_f1600(uint64_t a[25]) {
     }
 }
 
-inline uint64_t load64(const unsigned char *p) {
-    uint64_t v = 0;
-    for (int i = 0; i < 8; ++i) v |= static_cast<uint64_t>(p[i]) << (8 * i);
-    return v;
-}
-
-inline void store64(unsigned char *p, uint64_t v) {
-    for (int i = 0; i < 8; ++i) p[i] = static_cast<unsigned char>(v >> (8 * i));
-}
-
 }  // namespace
 
 /* The sponge state, exposed so ML-DSA can squeeze incrementally rather

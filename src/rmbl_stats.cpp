@@ -36,8 +36,6 @@
 
 namespace {
 
-const double kMadConstant = 1.4826022185056018;  /* 1 / qnorm(3/4) */
-
 inline bool has_nan(const double *a, R_xlen_t n) {
     for (R_xlen_t i = 0; i < n; ++i) {
         if (std::isnan(a[i])) return true;

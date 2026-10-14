@@ -196,7 +196,7 @@ test_that("every leaf of the tree signs under one public root", {
     expect_true(capsule_verify(paste0("manifest-", i), s, pub))
     sigs[[i]] <- s
     # the returned state is what advances the index
-    key <- xmss_advance(key, s)
+    if (i < 8L) key <- xmss_advance(key, s) else expect_warning(key <- xmss_advance(key, s), "used all 8")
     expect_equal(key$next_index, i)
   }
   # the key is now exhausted, and says so rather than wrapping around and
