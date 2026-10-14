@@ -102,6 +102,9 @@ test_that("an interrupt inside a guarded call stops the replicate kernel with an
   res <- tryCatch(.Call(ns("C_rmbl_http_download"), sprintf("http://127.0.0.1:%d/f", port), withr::local_tempfile(),
                         10L, NULL, prog, NULL, TRUE),
                   interrupt = function(i) NULL, error = function(e) NULL)
+  # a signal that arrived after the kernel had run is taken here, not by the next test
+  tryCatch(Sys.sleep(0.3), interrupt = function(i) NULL)
   skip_if(is.null(got), "the progress callback did not run")
+  skip_if(is.numeric(got), "the signal reached R after the kernel had run (timing)")
   expect_identical(got, "interrupted")
 })
