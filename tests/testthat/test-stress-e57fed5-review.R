@@ -116,40 +116,31 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   expect_equal(survey_estimate(by_cols, dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
   # but a stray column of the file beside them is still refused
   expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "id")]), "the row number")
-  # a data column riding along with the replicates, whatever its name or scale (review of 46de6a9)
+  # the replicates are exactly the columns given: a column of `data` passed under its own name is a
+  # replicate because it was asked for (the explicit contract; review of 46de6a9, H1/H5), one passed
+  # under another name is refused, and nothing is guessed from values
   dd$meals <- runif(nrow(dd), 0, 100)
-  dd$w_alt <- runif(nrow(dd), 1, 3)
-  dd$fpc2 <- 7
-  for (extra in c("meals", "w_alt")) {
-    expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), extra)]), "different values",
-                 info = extra)
-  }
-  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "fpc2")]), "constant column")
+  expect_s3_class(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "meals")]), "rmbl_svy_design")
+  expect_error(survey_design(dd, weights = "w", replicates = cbind(dd[paste0("bw", 1:20)], zz = dd$meals)),
+               "column meals of `data`")
   # an unnamed matrix of the same columns is a replicate set
   expect_equal(survey_estimate(survey_design(dd, weights = "w", replicates = unname(as.matrix(dd[paste0("bw", 1:20)]))),
                                dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
-  # a stray column that is not in `data` either: a row number, a constant, a rounded or jittered weight,
-  # survey's multiplier matrix (the counts without the weight)
+  # the exact refusals: the row number, the id, the full weight for a jackknife (a bootstrap replicate
+  # that draws every PSU once is the weight, legitimately); nothing else is guessed
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "the row number")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 100 + seq_len(nrow(d)))), "different values")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 1)), "constant column")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, round(d$w, 2))), "not quite it")
-  # a copy of the weight a rounding error off is the full weight to any numerical test: kept for a
-  # bootstrap (a draw of every PSU once), refused for a jackknife
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "jk1"),
-               "the full-sample weight")
-  f32 <- readBin(writeBin(d$w, raw(), size = 4), "double", size = 4, n = length(d$w))
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, f32)), "not quite it")
-  # replicate weights rounded in a file (four decimals) are still one multiplier per PSU
-  expect_s3_class(survey_design(d, weights = "w", replicates = round(s$reps, 4)), "rmbl_svy_design")
-  expect_error(survey_design(d, weights = "w", replicates = s$reps / d$w), "different values")
-  # genuine sets with a dominant PSU, or a jackknife replicate constant on a subset, are not refused
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w), type = "jk1"), "the full-sample weight")
+  expect_s3_class(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w)), "rmbl_svy_design")
+  expect_s3_class(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "bootstrap"),
+                  "rmbl_svy_design")
+  # genuine sets with a dominant PSU, a jackknife replicate constant on a subset, rounded in a file
   w3 <- rep(c(900, 50, 50), each = 20)
   jk <- sapply(1:3, function(k) w3 * ifelse(rep(1:3, each = 20) == k, 0, 3 / 2))
   expect_s3_class(survey_design(data.frame(y = d$y, w = w3), weights = "w", replicates = jk, type = "jk1"),
                   "rmbl_svy_design")
   sub <- cbind(d$w * 25 / 24, d$w * 25 / 24, d$w * c(rep(0, 30), rep(25 / 24, 30)))
   expect_s3_class(survey_design(d, weights = "w", replicates = sub, type = "jk1"), "rmbl_svy_design")
+  expect_s3_class(survey_design(d, weights = "w", replicates = round(s$reps, 4)), "rmbl_svy_design")
   # a genuine replicate that shares the id's name stays (review of 46de6a9, F2 sibling)
   r_id <- s$rdf
   names(r_id)[3] <- "id"

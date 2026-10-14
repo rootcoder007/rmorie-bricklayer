@@ -313,7 +313,7 @@
   paste(.rmbl_printable(model %||% "the model"), "is", .bl_wait$what %||% "thinking")
 }
 
-# One chat turn on a route: list(text, tool_calls, finish). One retry when no HTTP answer came.
+# One chat turn on a route: list(text, tool_calls, finish). No retry: the prompt goes once.
 .bl_llm_chat <- function(rt, model, messages, tools = NULL, timeout = 120, max_tokens = 4096L, allow_empty = FALSE) {
   req <- .bl_llm_request(rt, model, messages, tools, max_tokens)
   lbl <- .bl_llm_wait_label(model %||% rt$model)
@@ -324,13 +324,9 @@
   send <- function() {
     .bl_post_json(req$url, req$body, timeout = timeout, headers = .bl_llm_headers(rt), local = isTRUE(rt$local))
   }
+  # one send, never two: a POST that timed out may have been read by the provider, and a retry
+  # would send the prompt (and its cost) again (review of 46de6a9); the person asks again
   res <- send()
-  # a dropped connection is often momentary: one more try. Never after Ctrl-C (the barrier raises
-  # it before this line; a stub that returns the status instead is not sent the prompt twice either)
-  if (!isTRUE(res$status > 0L) && !grepl("interrupted", res$error %||% "", fixed = TRUE)) {
-    Sys.sleep(1)
-    res <- send()
-  }
   if (!identical(res$status, 200L)) {
     if (isTRUE(res$status %in% c(400L, 403L, 404L))) {
       # a model the route does not have is often answered 400/403/404: name it, not the key

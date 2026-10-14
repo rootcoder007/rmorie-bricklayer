@@ -759,14 +759,21 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
 
 /* GET a URL into a string with extra headers (the bearer key of the hosted
  * MORIE tier). Returns HTTP status, -1 on failure. */
+/* a pending Ctrl-C ends a GET as it ends a POST (`rmbl models` ran to its timeout; review of 46de6a9) */
+static int get_xferinfo(void *, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
+    return rmbl_interrupt_pending() ? 1 : 0;
+}
+
 long http_get_string(const std::string &url, std::string &out, long timeout_s,
                      const std::vector<std::string> &extra_headers,
                      std::string *err = NULL, bool allow_loopback = false,
-                     std::string *retry_after = NULL) {
+                     std::string *retry_after = NULL, bool *interrupted = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
     std::string ra_sink;
+    curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, get_xferinfo);
     curl_easy_setopt(h, CURLOPT_HEADERFUNCTION, note_retry_after);
     curl_easy_setopt(h, CURLOPT_HEADERDATA, retry_after ? retry_after : &ra_sink);
     curl_easy_setopt(h, CURLOPT_URL, url.c_str());
@@ -782,11 +789,14 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s,
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &extra_headers, allow_loopback, true);
+    const bool stopped = rc == CURLE_ABORTED_BY_CALLBACK && rmbl_interrupt_pending();
+    if (interrupted) *interrupted = stopped;
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
         out.clear();
-        if (err) *err = rc == CURLE_WRITE_ERROR ? "the reply is larger than the 16 MiB in-memory limit"
+        if (err) *err = stopped ? "interrupted (Ctrl-C)"
+                      : rc == CURLE_WRITE_ERROR ? "the reply is larger than the 16 MiB in-memory limit"
                       : !refused.empty() ? refused : errbuf[0] ? std::string(errbuf) : curl_easy_strerror(rc);
     }
     curl_easy_cleanup(h);
@@ -1066,8 +1076,10 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     const std::vector<std::string> extra = header_lines(headers);
     std::string out, err;
     std::string ra;
+    bool interrupted = false;
     const long code = http_get_string(rmbl_str0(url, "url"), out, tmo, extra, &err,
-                                      Rf_asLogical(allow_loopback) == TRUE, &ra);
+                                      Rf_asLogical(allow_loopback) == TRUE, &ra, &interrupted);
+    if (interrupted) rmbl_kernel_interrupted = 1;
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));

@@ -83,7 +83,8 @@
 }
 
 .bl_write_private_text <- function(p, txt) {
-  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
+  # the directory as private as its files: under umask 000 it came out 0777 (review of 46de6a9)
+  dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE, mode = "0700")
   tmp <- tempfile(pattern = ".cred-", tmpdir = dirname(p), fileext = ".tmp")
   file.create(tmp)
   Sys.chmod(tmp, mode = "0600")
@@ -417,6 +418,7 @@
     v <- suppressWarnings(as.numeric(m$details$context_length %||% m$context_length %||% NA)[1L])
     if (is.finite(v)) v else NA_real_
   }, 0)
+  nm <- .rmbl_printable(nm)   # a server's names reach the terminal (`models --route ollama`)
   keep <- nzchar(nm)
   structure(nm[keep], remote = nm[keep & remote], context = stats::setNames(ctx[keep], nm[keep]))
 }

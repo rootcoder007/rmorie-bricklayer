@@ -248,9 +248,8 @@
     sprintf("there is no tool '%s'", .rmbl_printable(nm)))
 }
 
-# The most tool calls one turn is answered: past it the rest are told to ask again (3,000 calls in
-# one turn ran 36 s of CPU; review of 29a55d8, L2). Every call still gets a result, which the
-# providers require.
+# The most tool calls one turn is answered: the rest are dropped from the turn and the model told
+# (3,000 calls in one turn ran 36 s of CPU; review of 29a55d8, L2).
 .bl_kn_calls_per_turn <- 12L
 
 # ---- the conversation ------------------------------------------------------------------------
@@ -359,7 +358,14 @@
   # is not started, and each turn gets what is left (seven rounds of two minutes each were
   # possible; review of 29a55d8, L6)
   deadline <- proc.time()[["elapsed"]] + 3 * timeout
-  left <- function() max(5, min(timeout, deadline - proc.time()[["elapsed"]]))
+  left <- function() {
+    rem <- deadline - proc.time()[["elapsed"]]
+    if (rem < 1) {
+      stop(sprintf("%s gave no answer within %g seconds of help-page lookups (try again, or a smaller question)",
+                   .bl_route_what(rt), 3 * timeout), call. = FALSE)
+    }
+    min(timeout, rem)
+  }
   for (round in seq_len(max_rounds)) {
     if (proc.time()[["elapsed"]] >= deadline) break
     res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = left(), allow_empty = TRUE),
@@ -374,13 +380,18 @@
       if (nzchar(res$text)) return(res$text)
       break  # an empty turn after its lookups: asked once more below, for the answer itself
     }
-    msgs[[length(msgs) + 1L]] <- list(role = "assistant", content = res$text, tool_calls = res$tool_calls)
-    for (k in seq_along(res$tool_calls)) {
-      tc <- res$tool_calls[[k]]
+    # the assistant turn is ours to write: past the cap the calls are not kept, so neither their
+    # results nor 3,000 "not run" rows are built or sent (review of 46de6a9)
+    calls <- utils::head(res$tool_calls, .bl_kn_calls_per_turn)
+    msgs[[length(msgs) + 1L]] <- list(role = "assistant", content = res$text, tool_calls = calls)
+    for (tc in calls) {
       msgs[[length(msgs) + 1L]] <- list(role = "tool", tool_call_id = tc$id, name = tc$name,
-                                        content = if (k <= .bl_kn_calls_per_turn) .bl_kn_run_tool(tc, pkgs, clip) else
-                                          sprintf("not run: at most %d tool calls are answered in one turn; ask again",
-                                                  .bl_kn_calls_per_turn))
+                                        content = .bl_kn_run_tool(tc, pkgs, clip))
+    }
+    if (length(res$tool_calls) > length(calls)) {
+      msgs[[length(msgs) + 1L]] <- list(role = "user", content = sprintf(
+        "Only the first %d of your %d tool calls were run; ask for the rest in later turns, a few at a time.",
+        length(calls), length(res$tool_calls)))
     }
     looked <- looked + length(res$tool_calls)
     .bl_wait$what <- sprintf("thinking (%d help %s read so far)", looked, if (looked == 1L) "page" else "pages")

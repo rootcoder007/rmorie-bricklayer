@@ -14,14 +14,14 @@ test_that("G1: an interrupted POST is not retried", {
   rt <- list(name = "OpenAI", id = "openai", api = "openai", base = "https://api.openai.com/v1", key = "sk-x")
   expect_error(ns(".bl_llm_chat")(rt, "m", list(list(role = "user", content = "q"))), "interrupted")
   expect_identical(calls, 1L)
-  # a dropped connection, by contrast, still gets its one more try
+  # nor is a timed-out or dropped POST: the prompt goes once (review of 46de6a9)
   calls <- 0L
   local_mocked_bindings(.bl_post_json = function(...) {
     calls <<- calls + 1L
-    list(status = -1L, json = NULL, error = "could not connect")
+    list(status = -1L, json = NULL, error = "Operation timed out after 120000 milliseconds")
   })
   expect_error(ns(".bl_llm_chat")(rt, "m", list(list(role = "user", content = "q"))), "could not reach")
-  expect_identical(calls, 2L)
+  expect_identical(calls, 1L)
 })
 
 test_that("G1: the C side flags the interrupt the wait consumed (the barrier raises it)", {
@@ -35,7 +35,8 @@ test_that("G1: the C side flags the interrupt the wait consumed (the barrier rai
 # ---- G2, G3: a stored key is bound to an address; a new token is checked at the document's ----
 
 test_that("G2: with the model tier off, a key saved for another address is not sent to the data service", {
-  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_BASE_URL = NA, MORIE_DATA_URL = NA)
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_BASE_URL = NA, MORIE_DATA_URL = NA,
+                      MORIE_HOSTED_KEY = NA)
   p <- ns(".bl_credentials_path")()
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   writeLines('{"hosted_key": "sk-other", "hosted_base_url": "https://gw.company.example"}', p)
@@ -156,8 +157,11 @@ test_that("L2: a nameless tool call, a regex filter, an empty reply and a flood 
   withr::local_envvar(MORIE_LLM_CONTEXT = "200000")
   expect_match(ns(".bl_llm_assist")(rt, "m", "near repeats", "rmoriebricklayer", max_rounds = 2L), "knox_test")
   tool_msgs <- Filter(function(m) identical(m$role, "tool"), sent[[2L]]$messages)
-  expect_length(tool_msgs, 40L)
-  expect_identical(sum(grepl("^not run: at most", vapply(tool_msgs, function(m) m$content, ""))), 40L - 12L)
+  expect_length(tool_msgs, 12L)   # the rest are dropped from the turn, and the model told
+  asst <- Filter(function(m) identical(m$role, "assistant"), sent[[2L]]$messages)
+  expect_length(asst[[1L]]$tool_calls, 12L)
+  told <- vapply(sent[[2L]]$messages, function(m) m$content %||% "", "")
+  expect_true(any(grepl("Only the first 12 of your 40", told)))
   # an endless tool loop ends in an error, never an empty answer with exit 0
   n <- 0L
   local_mocked_bindings(.bl_post_json = function(url, payload, ...) {
@@ -264,4 +268,63 @@ test_that("an assumption with ok = NA is reported as NA, not a raw error", {
 test_that("the progress frame takes a NaN time", {
   fr <- .Call(ns("C_rmbl_progress_frame"), 0.5, NaN, 40L, TRUE, FALSE, TRUE, c(10, 20, 30))
   expect_false(grepl("-2147483648", fr, fixed = TRUE))
+})
+
+# ---- review of 46de6a9 ----------------------------------------------------------------------
+
+test_that("H4/H7: the daily-limit default is retried tomorrow; the run cap counts between captures", {
+  expect_true(ns(".bl_wb_daily_failure")("captured already today"))
+  expect_true(ns(".bl_wb_daily_failure")("You have already captured this URL today"))
+  expect_false(ns(".bl_wb_daily_failure")("Server returned 404"))
+})
+
+test_that("H6: a cached answer is made printable on the way out; odd files are a miss", {
+  real_on <- ns(".bl_answer_cache_on")
+  d <- withr::local_tempdir()
+  withr::local_options(rmoriebricklayer.llm_cache_dir = d)
+  local_mocked_bindings(.bl_answer_cache_on = function() TRUE, .package = "rmoriebricklayer")
+  k <- strrep("a", 64)
+  writeLines(bricklayer_json_to_json(list(question = "q", model = "m", answer = "x\u001b[2Jy\u001b]52;c;Zm9v\u0007z",
+                                          time = "t\u001b[2J"), auto_unbox = TRUE), file.path(d, paste0(k, ".json")))
+  got <- ns(".bl_answer_get")(k, "q")
+  expect_identical(as.character(got), "xyz")
+  expect_identical(attr(got, "cached"), "t")
+  writeLines("\"just a string\"", file.path(d, paste0(k, ".json")))
+  expect_null(ns(".bl_answer_get")(k, "q"))
+  writeLines("[1, 2]", file.path(d, paste0(k, ".json")))
+  expect_null(ns(".bl_answer_get")(k, "q"))
+  # every spelling of off, and the option as text
+  withr::local_options(rmoriebricklayer.llm_cache = NULL, morie.progress = TRUE, morie.quiet = NULL)
+  withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA)
+  local_mocked_bindings(.bl_answer_cache_on = real_on, .bl_stdin_tty = function() TRUE,
+                        .bl_stdout_tty = function() TRUE, .package = "rmoriebricklayer")
+  for (v in c(" off", "disabled", "none", "No", "0")) {
+    withr::with_envvar(c(MORIE_LLM_CACHE = v), expect_false(ns(".bl_answer_cache_on")(), label = v))
+  }
+  withr::local_envvar(MORIE_LLM_CACHE = NA)
+  withr::with_options(list(rmoriebricklayer.llm_cache = "no"), expect_false(ns(".bl_answer_cache_on")()))
+  withr::with_options(list(rmoriebricklayer.llm_cache = TRUE), expect_true(ns(".bl_answer_cache_on")()))
+})
+
+test_that("the saved config directory is private; model names from a server print clean", {
+  skip_on_os("windows")
+  withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir())
+  old <- Sys.umask("000")
+  on.exit(Sys.umask(old), add = TRUE)
+  bricklayer_llm_config(openai.model = "gpt\u001b[2J-x")
+  p <- ns(".bl_config_path")()
+  expect_identical(as.character(file.info(dirname(p))$mode), "700")
+  expect_identical(ns(".bl_config_effective")("openai.model"), "gpt-x")
+  local_mocked_bindings(.bl_http_get_local = function(...) {
+    list(status = 200L, body = charToRaw('{"models":[{"name":"m\\u001b[2J1"},{"name":"ok"}]}'), error = "")
+  }, .package = "rmoriebricklayer")
+  expect_identical(as.character(ns(".bl_ollama_tags")("http://localhost:11434")), c("m1", "ok"))
+})
+
+test_that("gunzip and a GET take Ctrl-C (the C side reports, the barrier raises)", {
+  src <- readLines(testthat::test_path("..", "..", "src", "rmbl_gunzip.c"))
+  skip_if(!length(src), "sources not beside the tests")
+  expect_true(any(grepl("rmbl_interrupt_pending()", src, fixed = TRUE)))
+  f <- readLines(testthat::test_path("..", "..", "src", "rmbl_fetch.cpp"))
+  expect_true(any(grepl("CURLOPT_XFERINFOFUNCTION, get_xferinfo", f, fixed = TRUE)))
 })

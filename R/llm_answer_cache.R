@@ -16,8 +16,11 @@
 .bl_answer_cache_on <- function() {
   # never under a test run or R CMD check, of this package or of one that drives its command line
   if (identical(Sys.getenv("TESTTHAT"), "true") || nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(FALSE)
-  !tolower(Sys.getenv("MORIE_LLM_CACHE", "")) %in% c("off", "0", "false", "no") &&
-    !isFALSE(getOption("rmoriebricklayer.llm_cache")) && !isTRUE(getOption("morie.quiet")) &&
+  off <- c("off", "0", "false", "no", "none", "disabled")
+  opt <- getOption("rmoriebricklayer.llm_cache")
+  !tolower(trimws(Sys.getenv("MORIE_LLM_CACHE", ""))) %in% off &&
+    !isFALSE(opt) && !(is.character(opt) && tolower(trimws(opt[[1L]])) %in% off) &&
+    !isTRUE(getOption("morie.quiet")) &&
     (interactive() || (.bl_stdin_tty() && .bl_stdout_tty()))
 }
 
@@ -48,13 +51,16 @@
   # the text parser: a file's contents are data, never a URL or a path to follow
   rec <- tryCatch(.rmbl_json_text(paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n"),
                                   simplifyVector = FALSE), error = function(e) NULL)
+  if (!is.list(rec)) return(NULL)   # a scalar or an array is not an answer record
   ans <- rec$answer
   if (!is.character(ans) || length(ans) != 1L || !nzchar(ans)) return(NULL)
   # the stored question must be this one: a file is never trusted on its name alone
   if (!is.null(prompt) && !identical(.bl_answer_question(rec$question %||% ""), .bl_answer_question(prompt))) {
     return(NULL)
   }
-  structure(ans, cached = rec$time %||% "")
+  # a file is text from the disk: what the terminal must not see goes, whoever wrote it (an answer
+  # cached by an earlier build carried a clipboard write; review of 46de6a9, H6)
+  structure(.rmbl_printable(ans, lines = TRUE), cached = .rmbl_printable(rec$time %||% ""))
 }
 
 .bl_answer_put <- function(key, prompt, model, answer) {
@@ -70,7 +76,7 @@
   ok <- tryCatch({
     if (!dir.exists(d)) dir.create(d, recursive = TRUE, mode = "0700")
     f <- file.path(d, paste0(key, ".json"))
-    tmp <- paste0(f, ".tmp")
+    tmp <- tempfile(pattern = paste0(key, "-"), tmpdir = d, fileext = ".tmp")   # never a fixed name
     writeLines(enc2utf8(bricklayer_json_to_json(list(question = prompt, model = model %||% "", answer = answer,
                                                     time = format(Sys.time(), "%Y-%m-%d %H:%M")),
                                                auto_unbox = TRUE)), tmp, useBytes = TRUE)

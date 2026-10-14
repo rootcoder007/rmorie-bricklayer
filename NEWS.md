@@ -72,24 +72,40 @@ claims the earlier fixes overstated corrected.
   beside the saved answers.
 * **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
   the Ollama app, or its system service) when nothing answers at its address.
-## Re-test of 46de6a9 (2026-10-14, statistics)
+## Re-test of 46de6a9 (2026-10-14)
 
-* **Survey replicates, once more.** The totals and constancy checks added in 46de6a9 refused 13.5%
-  of 1,320 genuine sets (a dominant PSU; a jackknife replicate constant on a subset) and still let
-  a data column ride along with replicates taken from the analysis file. Both checks are gone.
-  What a replicate weight is decides now: the full weight times a multiplier shared by whole PSUs,
-  so divided by the full weight it takes at most about one value per PSU (compared at four
-  significant digits, so weights rounded in a file stay one value), and it changes some rows
-  outright. A column that takes about one value per row (a data column, a second weight, survey's
-  multiplier matrix) or that is within a percent of the weight in every row (a rounded, jittered
-  or single-precision copy) is refused; the row numbers and the id are refused exactly; a
-  bootstrap replicate that draws every PSU once is the full weight, legitimately, and is kept.
-  A genuine replicate that shares the id's name is kept (it went with the id). A reordered tibble
-  with a vector weight is caught: the design keeps a digest of every column as given and sorted,
-  and the same values in another order are a reorder whatever the row names say; a column changed
-  afterwards is not. In a design whose weights take only a few values (three PSUs), a stray column
-  that is a function of the weight cannot be told from a replicate: give only the replicate
-  columns.
+* **Survey replicates: an explicit contract, nothing guessed.** The totals and constancy checks
+  added in 46de6a9 refused 13.5% of 1,320 genuine sets (a dominant PSU; a jackknife replicate
+  constant on a subset) while a data column still rode along with replicates taken from the
+  analysis file. Every value heuristic is gone. The replicates are exactly the columns you give,
+  by name or as the object passed: a column of `data` passed under its own name is a replicate
+  because it was asked for. What is refused is exact: the full-sample weight itself (for a
+  jackknife, BRR or Fay design; a bootstrap replicate that draws every PSU once is the weight,
+  legitimately), the id's values, the row numbers, a column of `data` passed under another name,
+  and a name collision with the weight or the id whose values differ. A genuine replicate that
+  shares the id's name is kept. A reordered tibble with a vector weight is caught: the design
+  keeps a digest of every column as given and sorted, and the same values in another order are a
+  reorder whatever the row names say; a column changed afterwards is not.
+* **The prompt goes once.** A model call is never retried: a POST that timed out may have been
+  read by the provider. A conversation with help-page lookups that runs out of its time budget
+  says so instead of shrinking the last call to five seconds; past the cap of 12 tool calls in a
+  turn the rest are dropped from the turn and the model told, rather than 3,000 "not run" rows
+  being sent back. `rmbl models` and any GET take Ctrl-C; so does a gzip decompression.
+* **The answer cache** makes a stored answer printable on the way out (an answer cached by an
+  earlier build carried a clipboard write), writes through a fresh temporary name, treats a file
+  that is not a record as a miss, and takes `MORIE_LLM_CACHE` as `off`, `0`, `false`, `no`,
+  `none` or `disabled` (spaces aside), and the option as those words too. A script run at a
+  terminal with stdin and stdout on it is a person watching; `</dev/null`, a pipe or a redirect
+  is not. Model names from a server and `config` values print clean. The saved settings
+  directory is created 0700 whatever the umask.
+* **Wayback.** The daily-limit default message is what `wayback_retry()` looks for, so a URL
+  captured already today is left for tomorrow; the per-run resubmission cap counts only
+  resubmissions since the last capture that got through, so a slow archive finishes.
+* **Tests** run in a fresh, empty config directory with the developer's saved keys, hosted key
+  and `MORIE_DATA_URL` unset; every test that reaches the live internet needs
+  `RMBL_LIVE_TESTS=1`.
+* Pre-0.5.12 logins stored the address of the retired model tier; such a key is withheld with a
+  message, so those users log in once more.
 * **`hurwitz_zeta()` beside the trivial zeros** takes the distance to the nearest integer exactly
   before `sinpi()` (R's `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which on some libms loses
   the digits of a value of order that distance); the test compares against mpmath at the exact

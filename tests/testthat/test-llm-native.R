@@ -612,7 +612,7 @@ test_that("login --help prints the usage and the usage names rmbl", {
 })
 
 
-test_that("a dropped connection is retried once and then named with curl's reason", {
+test_that("a dropped connection is not retried (the prompt goes once) and is named with curl's reason", {
   .sandbox()
   Sys.setenv(OPENAI_API_KEY = "sk-abc", MORIE_OPENAI_MODEL = "gpt-x")
   n <- 0L
@@ -623,8 +623,9 @@ test_that("a dropped connection is retried once and then named with curl's reaso
       list(status = -1L, body = raw(), error = "Recv failure: Connection reset by peer")
     }
   )
-  expect_equal(bricklayer_llm_ask("hi"), "back")  # the second try answered
-  expect_equal(n, 2L)
+  # one send: a POST that timed out may have been read by the provider (review of 46de6a9)
+  expect_error(bricklayer_llm_ask("hi"), "could not reach OpenAI")
+  expect_equal(n, 1L)
   testthat::local_mocked_bindings(
     .bl_http_post = function(url, body, content_type, timeout, headers) {
       list(status = -1L, body = raw(), error = "Recv failure: Connection reset by peer")
