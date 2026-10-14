@@ -53,6 +53,9 @@ jobs:
       # Documented pak knob (pak NEWS: use_bioconductor / PKG_USE_BIOCONDUCTOR).
       PKG_USE_BIOCONDUCTOR: "false"
       R_KEEP_PKG_SOURCE: yes
+      # the live transport checks (archive.org lookups, never a capture; cloud.r-project.org) run
+      # here and nowhere a test run did not ask for them
+      RMBL_LIVE_TESTS: "1"
     steps:
       - uses: actions/checkout@v7
       - name: Force a C locale for this cell

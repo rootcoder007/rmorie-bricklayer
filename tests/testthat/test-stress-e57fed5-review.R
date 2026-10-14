@@ -107,6 +107,24 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   # a matrix with a class of its own is read as the matrix it is
   m <- structure(s$reps, class = c("repweights", "matrix"))
   expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = m), d, "y")$se, se, tolerance = 1e-14)
+  # F1: the replicates taken out of the analysis file itself, by name or as its columns
+  dd <- cbind(d, stats::setNames(as.data.frame(s$reps), paste0("bw", 1:20)))
+  by_name <- survey_design(dd, weights = "w", replicates = paste0("bw", 1:20))
+  by_cols <- survey_design(dd, weights = "w", replicates = dd[paste0("bw", 1:20)])
+  expect_equal(survey_estimate(by_cols, dd, "y")$se, survey_estimate(by_name, dd, "y")$se, tolerance = 1e-14)
+  # but a stray column of the file beside them is still refused
+  expect_error(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "id")]), "not a replicate weight")
+  # a stray column that is not in `data` either: a row number, a constant, survey's multipliers
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, seq_len(nrow(d)))), "not a replicate weight")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 100 + seq_len(nrow(d)))), "totals .* times")
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 1)), "same for every row")
+  expect_error(survey_design(d, weights = "w", replicates = s$reps / d$w * 0.1), "totals .* times")
+  # F2: a genuine replicate under the weight's name is refused, not dropped; the weight itself is set aside
+  r2 <- as.data.frame(s$reps)
+  names(r2)[1] <- "w"
+  expect_error(survey_design(d, weights = "w", replicates = r2), "has the full weight's name but not its values")
+  r3 <- cbind(w = d$w, as.data.frame(s$reps))
+  expect_equal(survey_estimate(survey_design(d, weights = "w", replicates = r3), d, "y")$se, se, tolerance = 1e-14)
 })
 
 test_that("E2: Wilson at 0% and 100% is SRS Wilson at the respondents, not a point", {
@@ -168,6 +186,10 @@ test_that("the data must be the design's rows in the design's order", {
   s <- svy_data()
   des <- survey_design(s$d, weights = "w", replicates = s$reps)
   expect_error(survey_estimate(des, s$d[sample(nrow(s$d)), ], "y"), "not the data frame the design was built on")
+  # the same rows reordered with their row names reset: caught by the values, not the names
+  shuffled <- s$d[sample(nrow(s$d)), ]
+  rownames(shuffled) <- NULL
+  expect_error(survey_estimate(des, shuffled, "y"), "not the data frame")
   d2 <- s$d
   d2$w <- rev(d2$w)
   expect_error(survey_estimate(des, d2, "y"), "not the data frame")
@@ -238,7 +260,18 @@ test_that("points across the antimeridian are one place; distances past a contin
   lat <- runif(60, -17.1, -17)
   kd <- crime_density(lon, lat, n_grid = 40)
   expect_lt(max(kd$bandwidth), 5)
-  expect_true(all(kd$lon >= -180 & kd$lon <= 180))
+  # one piece, in order, a degree either side of the antimeridian (nodes past 180 keep their
+  # continued values so image() can draw them; review of 29a55d8, F4)
+  expect_false(is.unsorted(kd$lon))
+  expect_true(all(abs(abs(kd$lon) - 180) < 1))
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_s3_class(plot(kd), "data.frame")
+  # F4: incidents near the antimeridian without crossing it, whose grid runs past 180
+  set.seed(3)
+  near <- crime_density(runif(60, 179.5, 179.99), runif(60, -17.2, -16.8), n_grid = 40)
+  expect_false(is.unsorted(near$lon))
+  expect_s3_class(plot(near), "data.frame")
   h <- hotspot_persistence(lon, lat, rep(1:2, 30), cell = 1)
   expect_true(all(abs(h$cells$x) > 179))
   k <- knox_test(lon, lat, 1:60, 1000, 3, nsim = 19, seed = 1)
@@ -343,10 +376,11 @@ test_that("E12: the lock is released however its holder ends", {
   t0 <- proc.time()[["elapsed"]]
   expect_identical(with_lock(p, function() "again"), "again")
   expect_lt(proc.time()[["elapsed"]] - t0, 2)
-  # the descriptor is taken with interrupts held off and released by the handler registered first
+  # the lock is taken and f() run in one C frame whose cleanup is the release: no R-level handler
+  # for an interrupt to cut short (review of 29a55d8, G6)
   src <- paste(deparse(with_lock), collapse = "\n")
-  expect_match(src, "suspendInterrupts", fixed = TRUE)
-  expect_lt(regexpr("on.exit", src, fixed = TRUE), regexpr("suspendInterrupts", src, fixed = TRUE))
+  expect_match(src, "C_rmbl_flock_with", fixed = TRUE)
+  expect_false(grepl("on.exit", src, fixed = TRUE))
 })
 
 # ---- the 02a38be leftovers -----------------------------------------------------------------
@@ -354,9 +388,19 @@ test_that("E12: the lock is released however its holder ends", {
 test_that("hurwitz_zeta: accurate beside the trivial zeros and for a huge q", {
   # zeta(-2 + e) ~ zeta'(-2) e, zeta'(-2) = -zeta(3) / (4 pi^2)
   zp <- -1.2020569031595942853997 / (4 * pi^2)
-  for (e in c(1e-7, -1e-9, 1e-12)) {
-    expect_equal(hurwitz_zeta(-2 + e), zp * e, tolerance = 1e-5, info = format(e))
+  # relative accuracy: the ratio to the true value, not an absolute tolerance a zero would pass
+  # (review of 29a55d8: 1e-12 and 1e-15 from the zero lost digits in sinpi() beside +-1, F5)
+  # against the distance the double -2 + e really carries ((-2 + e) + 2 is exact): e itself is
+  # not representable beside -2 to better than 4e-16 / e, which is all a reference at e could show
+  for (e in c(1e-7, -1e-9, 1e-12, -1e-14, 1e-15)) {
+    d <- (-2 + e) + 2
+    # the second-order term of the series is 1.08 e of the first: within that, then to 1e-12
+    expect_equal(hurwitz_zeta(-2 + e) / (zp * d), 1, tolerance = max(1e-12, 3 * abs(e)), info = format(e))
   }
+  # past the double range: a signed infinity, not NaN
+  expect_identical(hurwitz_zeta(-60, 1e10), -Inf)
+  expect_identical(hurwitz_zeta(-61, 1e10), -Inf)
+  expect_false(is.nan(hurwitz_zeta(-400, 2)))
   expect_identical(hurwitz_zeta(-4), 0)
   expect_equal(hurwitz_zeta(-11), 691 / 32760, tolerance = 1e-13)
   # -B5(q)/5 with q^5 past the double range while the value is not

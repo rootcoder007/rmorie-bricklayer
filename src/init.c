@@ -226,6 +226,7 @@ extern int  rmbl_wayback_snapshot(const char *, char *, int, int);
 /* the used-index record's file lock (rmbl_flock.c) */
 extern SEXP C_rmbl_flock_acquire(SEXP, SEXP);
 extern SEXP C_rmbl_flock_release(SEXP);
+extern SEXP C_rmbl_flock_with(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);
@@ -239,6 +240,7 @@ extern const char *rmbl_progress_spinner(double, int);
 static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_flock_acquire",  (DL_FUNC) &C_rmbl_flock_acquire,  2},
     {"C_rmbl_flock_release",  (DL_FUNC) &C_rmbl_flock_release,  1},
+    {"C_rmbl_flock_with",     (DL_FUNC) &C_rmbl_flock_with,     3},
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},

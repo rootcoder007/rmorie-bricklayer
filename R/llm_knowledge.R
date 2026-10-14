@@ -182,7 +182,8 @@
                             substr(.bl_data_name(d), 1L, 90L)))
     }
   }
-  if (nzchar(filter %||% "")) out <- out[grepl(filter, out, ignore.case = TRUE)]
+  # plain text, not a pattern: a model's "([" is not an error (review of 29a55d8, L2)
+  if (nzchar(filter %||% "")) out <- out[grepl(tolower(filter), tolower(out), fixed = TRUE)]
   if (!length(out)) return("no dataset matches: simulate example data instead, and invent no dataset name")
   .bl_kn_clip(paste(utils::head(out, 200L), collapse = "\n"))
 }
@@ -219,7 +220,10 @@
     if (!nzchar(nm)) return("give the function's name as a string (search_docs finds it)")
     sprintf("'%s' does not exist in these packages: do not use it (search_docs finds what does)", nm)
   }
-  switch(call$name,
+  # a call without a usable name (none, a list, several) is answered in words, never an error
+  nm <- call$name
+  if (!is.character(nm) || length(nm) != 1L || is.na(nm)) nm <- ""
+  switch(nm,
     search_docs = {
       hit <- .bl_kn_search(arg("query"), pages, 10L)
       if (!length(hit)) "nothing matches; try other words" else
@@ -241,8 +245,13 @@
     },
     list_datasets = .bl_kn_datasets(arg("filter"), pkgs),
     get_vignette = .bl_kn_vignette(arg("name"), pkgs),
-    sprintf("there is no tool '%s'", call$name))
+    sprintf("there is no tool '%s'", .rmbl_printable(nm)))
 }
+
+# The most tool calls one turn is answered: past it the rest are told to ask again (3,000 calls in
+# one turn ran 36 s of CPU; review of 29a55d8, L2). Every call still gets a result, which the
+# providers require.
+.bl_kn_calls_per_turn <- 12L
 
 # ---- the conversation ------------------------------------------------------------------------
 
@@ -346,8 +355,14 @@
   tools <- .bl_kn_tools()
   looked <- 0L
   on.exit(.bl_wait$what <- NULL, add = TRUE)
+  # the whole conversation gets three times one call's timeout: a turn that would start past that
+  # is not started, and each turn gets what is left (seven rounds of two minutes each were
+  # possible; review of 29a55d8, L6)
+  deadline <- proc.time()[["elapsed"]] + 3 * timeout
+  left <- function() max(5, min(timeout, deadline - proc.time()[["elapsed"]]))
   for (round in seq_len(max_rounds)) {
-    res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = timeout, allow_empty = TRUE),
+    if (proc.time()[["elapsed"]] >= deadline) break
+    res <- tryCatch(.bl_llm_chat(rt, model, msgs, tools = tools, timeout = left(), allow_empty = TRUE),
                     error = function(e) e)
     if (inherits(res, "error")) {
       if (round == 1L && .bl_kn_no_tools(res)) {
@@ -360,16 +375,24 @@
       break  # an empty turn after its lookups: asked once more below, for the answer itself
     }
     msgs[[length(msgs) + 1L]] <- list(role = "assistant", content = res$text, tool_calls = res$tool_calls)
-    for (tc in res$tool_calls) {
+    for (k in seq_along(res$tool_calls)) {
+      tc <- res$tool_calls[[k]]
       msgs[[length(msgs) + 1L]] <- list(role = "tool", tool_call_id = tc$id, name = tc$name,
-                                        content = .bl_kn_run_tool(tc, pkgs, clip))
+                                        content = if (k <= .bl_kn_calls_per_turn) .bl_kn_run_tool(tc, pkgs, clip) else
+                                          sprintf("not run: at most %d tool calls are answered in one turn; ask again",
+                                                  .bl_kn_calls_per_turn))
     }
     looked <- looked + length(res$tool_calls)
     .bl_wait$what <- sprintf("thinking (%d help %s read so far)", looked, if (looked == 1L) "page" else "pages")
   }
   # the rounds are spent, or a turn came back empty: one last turn without tools, so an answer comes back
   msgs[[length(msgs) + 1L]] <- list(role = "user", content = "Answer now with what you have found.")
-  .bl_llm_chat(rt, model, msgs, timeout = timeout)$text
+  ans <- .bl_llm_chat(rt, model, msgs, timeout = left())$text
+  if (!nzchar(ans)) {
+    stop(sprintf("%s returned no text after %d rounds of help-page lookups (try again, or another model)",
+                 .bl_route_what(rt), max_rounds), call. = FALSE)
+  }
+  ans
 }
 
 # No tools: the pages that match the question go into the prompt.

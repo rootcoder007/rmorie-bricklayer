@@ -38,7 +38,8 @@ static void put_rgb(rmbl_buf *o, int r, int g, int b) {
     put(o, t);
 }
 
-static int clamp255(double v) { return v < 0 ? 0 : v > 255 ? 255 : (int) (v + 0.5); }
+/* NaN is not below, above or between: it would be cast to INT_MIN (a sibling of E13) */
+static int clamp255(double v) { return !(v == v) ? 0 : v < 0 ? 0 : v > 255 ? 255 : (int) (v + 0.5); }
 
 /* The bar for a fraction `frac` (0..1) at time `t` seconds, `width` cells.
  * Writes a NUL-terminated string to `out` (`cap` bytes; 8192 holds any

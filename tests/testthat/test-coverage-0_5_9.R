@@ -259,7 +259,7 @@ test_that("revocation: extension scans, DER OIDs with zero and multi-byte arcs, 
   expect_identical(der_oid("2.5.0.1"), as.raw(c(0x06, 0x03, 0x55, 0x00, 0x01)))
   expect_identical(der_oid("1.2.840.113549"), as.raw(c(0x06, 0x06, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d)))
   # the network seam refuses a loopback address and answers NULL instead of erroring
-  got <- .rmbl_net_get_file("http://127.0.0.1:1/x", NULL, tempfile(), 1)
+  got <- .rmbl_net_get_file("http://127.0.0.1:1/x", "", tempfile(), 1)  # no Wayback lookup from a test (L4)
   expect_true(is.null(got) || (is.numeric(got) && got != 200))
   f <- x509_fx()
   leaf <- cert_parse(f$ocsp_good)

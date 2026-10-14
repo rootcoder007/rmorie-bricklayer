@@ -125,7 +125,10 @@
 # The value a setting has right now (the default spelled out), for display.
 .bl_config_effective <- function(key) {
   fixed <- switch(key,
-    route = .bl_env1("MORIE_LLM_ROUTE") %||% "auto",
+    route = {
+      r <- .bl_env1("MORIE_LLM_ROUTE") %||% "auto"
+      if (identical(tolower(r), "hosted")) "auto (the saved route `hosted` is retired and ignored)" else r
+    },
     own.url = .bl_env1("MORIE_LLM_BASE_URL") %||% "(not set)",
     own.key = .bl_mask(.bl_env1("MORIE_LLM_API_KEY")),
     own.model = .bl_env1("MORIE_LLM_MODEL") %||% "(not set)",
@@ -151,6 +154,9 @@
 .bl_config_check <- function(key, value) {
   if (key %in% c("own.url", "ollama.url") && !tolower(value) %in% c("off", "none", "disabled")) {
     .bl_url_sane(value, key)
+  }
+  if (endsWith(key, ".key") && grepl("[[:cntrl:]]", value)) {
+    stop(sprintf("%s has a line break or control character in it: give the key alone", key), call. = FALSE)
   }
   switch(key,
     route = {

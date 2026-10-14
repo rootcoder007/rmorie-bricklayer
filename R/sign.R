@@ -1401,9 +1401,13 @@ capsule_verify <- function(message, signature, key, context = NULL,
   # was removed while holding one record's lock, deleting the in-flight files of other records
   # beside it (117 of 900 writes failed with three records in one directory; review of e57fed5, E11).
   own <- paste0(basename(p), ".xmss-")
-  # a prefix, not a regular expression: a record name may hold any character
+  # this record's own temporaries only: the prefix, then tempfile()'s letters and digits, then
+  # .tmp. A prefix alone also matched the files of a record whose name starts with this one
+  # ("pre.txt" removed "pre.txt.xmss-b.xmss-1a2b.tmp" from under "pre.txt.xmss-b"; review of
+  # 29a55d8, E11 residual). A record name may hold any character: it is escaped, not interpreted
+  own_re <- paste0("^", gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", own), "[A-Za-z0-9]+[.]tmp$")
   for (f in list.files(dirname(p), pattern = "[.]tmp$", full.names = TRUE, all.files = TRUE)) {
-    if (!startsWith(basename(f), own)) next
+    if (!grepl(own_re, basename(f))) next
     if (identical(.Call(C_rmbl_path_kind, f), "regular")) unlink(f)
   }
   tmp <- tempfile(pattern = own, tmpdir = dirname(p), fileext = ".tmp")
@@ -1444,26 +1448,25 @@ capsule_verify <- function(message, signature, key, context = NULL,
   # an attempt that finds the lock busy has already closed its descriptor, so an interrupt leaves
   # nothing open (the wait used to run inside C, deaf to Ctrl-C for up to 10 s; review of 02a38be)
   start <- proc.time()[["elapsed"]]
-  # the release is registered before the lock is taken, and the descriptor is assigned with
-  # interrupts held off: a Ctrl-C landing between the C call's return and the on.exit() left a lock
-  # held for the rest of an interactive session (1 of 2,853 SIGINTs; review of e57fed5, E12)
-  fd <- -1L
-  on.exit(if (!identical(fd, -1L)) .Call(C_rmbl_flock_release, fd), add = TRUE)
+  # the lock is taken and f() run in one C frame, the release being that frame's cleanup
+  # (R_ExecWithCleanup): an error or a Ctrl-C inside f() closes the descriptor on the way out, and
+  # no R code runs between taking the lock and registering the release. The on.exit() of before was
+  # R code too, which an interrupt could cut short ahead of its .Call: a lock stayed held for the
+  # rest of the session 73 to 95 times per 5,000 interrupts (review of 29a55d8, G6; e57fed5, E12)
+  busy <- new.env(parent = emptyenv())
   repeat {
-    suspendInterrupts(fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 0L),
-                   error = function(e) {
-                     m <- conditionMessage(e)
-                     stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, .rmbl_lock_hint(m, lock)),
-                          call. = FALSE)
-                   }))
-    if (!identical(fd, -1L)) break
+    r <- tryCatch(.Call(C_rmbl_flock_with, lock, f, busy), error = function(e) {
+      m <- conditionMessage(e)
+      if (!grepl("lock file", m, fixed = TRUE)) stop(e)
+      stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, .rmbl_lock_hint(m, lock)), call. = FALSE)
+    })
+    if (!identical(r, busy)) return(r)
     if (proc.time()[["elapsed"]] - start >= 10) {
       stop(sprintf("could not lock the XMSS used-index record %s within 10 s: another process holds %s", p, lock),
            call. = FALSE)
     }
     Sys.sleep(0.02)
   }
-  f()
 }
 
 # The highest index this key is known to have used: the record on disk (its id, and the legacy

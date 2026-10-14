@@ -47,12 +47,14 @@ claims the earlier fixes overstated corrected.
   "<model> is thinking" and the seconds so far, then how many help pages it has read; the line
   is wiped when the answer comes. Only for a person at a terminal (never in a script, a log or
   `options(morie.quiet = TRUE)`); Ctrl-C now ends a long wait for a model.
-* **A repeated question is answered at once.** The answer to the same question (case and
-  spacing aside), on the same route, model, packages and versions, is kept on this machine
-  for 30 days and comes back without asking the model: `rmbl ask` says so, `--fresh` (R:
-  `fresh = TRUE`) asks again. Owner-only files under `tools::R_user_dir()`, at most 200,
-  outdated ones removed on each save; only for a person at a terminal or an interactive
-  session, never in scripts or checks; `MORIE_LLM_CACHE=off` turns it off. Nothing is hosted.
+* **A repeated question is answered at once.** The answer to the same question (spacing
+  aside; case counts), on the same route, model, packages and versions, is kept on this
+  machine for 30 days and comes back without asking the model: `rmbl ask` says so, `--fresh`
+  (R: `fresh = TRUE`) asks again. Owner-only files under `tools::R_user_dir()`, at most 200,
+  outdated ones removed on each save, the first save in a session says where; only for a
+  person at a terminal (the command line with the terminal on stdin and stdout) or an
+  interactive session, never from a script, a pipeline or a check; `MORIE_LLM_CACHE=off`
+  turns it off. Nothing is hosted.
 * **Servers can reuse the instructions.** The instructions a model gets are the same for every
   question (the functions picked for a question travel with the question), so the prompt
   caches of Ollama, OpenAI, DeepSeek and Gemini apply, and long instructions are marked for
@@ -70,6 +72,56 @@ claims the earlier fixes overstated corrected.
   beside the saved answers.
 * **Ollama has to be running.** `rmbl doctor` and the help now say to start it (`ollama serve`,
   the Ollama app, or its system service) when nothing answers at its address.
+## Review of 29a55d8 (the stress round of 2026-10-14)
+
+* **Ctrl-C while a model thinks is a Ctrl-C (G1).** The wait consumed the interrupt and the
+  POST came back as a dropped connection, which was retried: the prompt went to the provider
+  twice and the answer printed. The interrupted POST now raises the interrupt (exit 130 from
+  `rmbl ask`, one request at the provider), and nothing is retried after one.
+* **A stored key stays bound to its address (G2, G3).** With the model tier off the comparison
+  had no address to compare against, so a key saved for another server went to the data
+  service, and a new login recorded no address. The address is now the data service's when the
+  document names no model tier; `login --token` checks the key at the signed document's address
+  only, never at `MORIE_DATA_URL`.
+* **The answer cache is for a person at a terminal (G4).** It wrote from `rmbl ask` in a script
+  or a pipeline (the command line always turns the progress option on); now it needs the
+  terminal on stdin and stdout, or an interactive session. The question keeps its case (`df$X`
+  is not `df$x`), the stored question is checked on a hit, and the first save in a session says
+  where the answers go.
+* **Wayback status-reply throttles stop (G5).** A throttle in the status reply requeued the URL
+  and the next job id reset the strike count: one URL made 174 POSTs. Strikes now reset only
+  when a capture gets through, the eighth stops the run, a run resubmits at most as many times
+  as it has URLs, the target page's own 503 and bandwidth errors fail that URL rather than count
+  as account throttles, and a job id that reads like an error code is refused.
+* **The XMSS lock is released whatever happens (G6).** The lock is taken and the locked call run
+  in one C frame whose cleanup is the release (`R_ExecWithCleanup`): an `on.exit()` handler is
+  R code an interrupt can cut short before its `.Call`, and 73 to 95 locks per 5,000 interrupts
+  stayed held; 5,000 interrupts now leave none. A record whose name starts with another's keeps
+  its temporary files.
+* **Survey replicates (F1, F2, E9 residual).** Replicate columns taken out of the analysis file
+  itself (`replicates = d[paste0("bw", 1:24)]`) are accepted again; a genuine replicate under the
+  weight's name is refused, not dropped; a replicate that sums to less than a fifth or more than
+  five times the full weights (a row number, an id, survey's multiplier matrix) or is the same
+  for every row (a constant) is refused. `survey_compare(ref = 2023)` takes the number as the
+  label.
+* **`crime_density()` near the antimeridian (F4)** draws: grid nodes past 180 degrees keep their
+  continued values when wrapping would put them out of order. `hurwitz_zeta()` past the double
+  range is a signed infinity, not NaN; beside the trivial zeros it is accurate for the double it
+  is given (`-2 + 1e-12` carries `1e-12` to 4e-4, which is where a reference at `1e-12` differs;
+  F5 as reported). `knox_test()` drops an incident without a location or time and says so, as its
+  siblings do; `hotspot_persistence()` says when it drops (0, 0); `max_pairs = TRUE` is refused;
+  the planar cell key writes whole numbers in full.
+* **Model and provider text is made printable (L1)**: answers, model lists, the spinner's model
+  name and error bodies lose screen-clearing, title and clipboard escapes. **Tool calls keep the
+  text-only contract (L2)**: a nameless call is answered in words, the dataset filter is plain
+  text, at most 12 calls are run per turn, an empty reply is "returned no text", never `""`.
+  **A key with a line break is refused (L3)** in R and in C, so it never becomes a second request
+  header. **The settings file is written through a fresh temporary name (L5)**. A conversation
+  with help-page lookups gets three times one call's timeout (L6). The progress frame takes a
+  NaN time. An assumption with `ok = NA` prints as NA. The age-specific rate message no longer
+  says such a rate cannot exist. The live transport tests need `RMBL_LIVE_TESTS=1` exactly, and
+  the model tests clear a developer's own endpoint and keys (L4).
+
 ## Review of e57fed5 (the stress round of 2026-10-13)
 
 * **The spinner frame stays in its table (E1).** `rmbl_progress_spinner()`, a public C-callable,

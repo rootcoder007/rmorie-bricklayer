@@ -982,7 +982,12 @@ crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 2
               centre = c(lon = lon0, lat = lat0))
   if (coords == "lonlat") {
     out$lon <- p$lon0 + gx / (.jx_earth_km * cos(lat0 * pi / 180)) * 180 / pi
-    out$lon <- ((out$lon + 180) %% 360) - 180
+    # the grid is drawn with image(), which needs increasing longitudes: a grid that runs past
+    # 180 degrees (incidents near the antimeridian, 179.5 to 179.99) is wrapped only when every
+    # node ends up on one side; otherwise the nodes past 180 keep their continued values
+    # (180.3 is -179.7) and the map stays one piece (review of 29a55d8, F4)
+    wrapped <- ((out$lon + 180) %% 360) - 180
+    if (!is.unsorted(wrapped, strictly = TRUE)) out$lon <- wrapped
     out$lat <- lat0 + gy / .jx_earth_km * 180 / pi
     out$points$lon <- lon
     out$points$lat <- lat
@@ -1052,7 +1057,8 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 .jx_close_pairs <- function(x, y, r, max_pairs) {
   cx <- floor(x / r)
   cy <- floor(y / r)
-  key <- function(a, b) paste(a, b)
+  # whole numbers written out in full: paste() writes 1e15 and 1e15 + 1 both as "1e+15", one cell
+  key <- function(a, b) sprintf("%.0f %.0f", a, b)
   pts <- data.frame(i = seq_along(x), k = key(cx, cy))
   out_i <- list()
   out_j <- list()
@@ -1179,8 +1185,15 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
   if (length(y) != length(x) || length(tt) != length(x)) {
     stop("`x`, `y` and `time` must have the same length", call. = FALSE)
   }
-  if (any(!is.finite(x) | !is.finite(y) | !is.finite(tt))) {
-    stop("`x`, `y` and `time` must be finite (drop incidents with no location or time first)", call. = FALSE)
+  # an incident without a location or a time is dropped and said, as crime_density() and
+  # hotspot_persistence() do (knox_test() alone refused the whole call; review of 29a55d8)
+  keep <- is.finite(x) & is.finite(y) & is.finite(tt)
+  if (!all(keep)) {
+    message(sprintf("knox_test(): %d incident%s without a usable location or time dropped", sum(!keep),
+                    if (sum(!keep) == 1L) "" else "s"))
+    x <- x[keep]
+    y <- y[keep]
+    tt <- tt[keep]
   }
   bands <- function(b, what) {
     b <- .rmbl_num_input(b, what, allow_null = FALSE)

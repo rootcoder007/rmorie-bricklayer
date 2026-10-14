@@ -124,8 +124,11 @@ for every byte the package sends or receives:
 * **Keys are redacted by value**: a gateway's error text has the key that was sent, any
   `Bearer` token and any `sk-` key removed before it becomes an R condition.
 * Bytes a server sent are parsed as text, never as a second address.
-* A transfer under 64 bytes/s for 30 s is ended; an in-memory reply past 16 MiB is dropped;
-  the services document and JSON fetches cap at 1 MiB and 16 MiB.
+* A download under 64 bytes/s for 30 s is ended. A model call is not: a model may think for
+  a minute before its first byte, so a call has one deadline, the `timeout` (120 s), a
+  conversation with help-page lookups three times that, and Ctrl-C ends the wait at once
+  without sending the prompt again. An in-memory reply past 16 MiB is dropped; the services
+  document and JSON fetches cap at 1 MiB and 16 MiB.
 * The sign-in service's `verification_uri` is opened in a browser only when it is a public
   https address.
 

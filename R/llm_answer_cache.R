@@ -6,30 +6,37 @@
 # "cache"), kept 30 days (options(rmoriebricklayer.llm_cache_days)), at most the 200 newest
 # (rmoriebricklayer.llm_cache_max): each save removes the rest, so the folder stays a few hundred
 # KB, as CRAN asks of a package's cache (small, and outdated material removed). Only for a person at a
-# terminal or an interactive session (the download bar's rule), so scripts, tests and checks never
-# write there; MORIE_LLM_CACHE=off or options(rmoriebricklayer.llm_cache = FALSE) turns it off,
-# fresh = TRUE (`ask --fresh`) asks again and keeps the new answer.
+# terminal (`rmbl ask` with the terminal on both stdin and stdout) or an interactive R session, so
+# scripts, pipelines, tests and checks never write there (`rmbl ask ... </dev/null >file` did, under
+# the download bar's rule, which the command line always turns on; review of 29a55d8, G4). The
+# first save in a session says where the answers go. MORIE_LLM_CACHE=off or
+# options(rmoriebricklayer.llm_cache = FALSE) turns it off, fresh = TRUE (`ask --fresh`) asks again
+# and keeps the new answer.
 
 .bl_answer_cache_on <- function() {
   # never under a test run or R CMD check, of this package or of one that drives its command line
   if (identical(Sys.getenv("TESTTHAT"), "true") || nzchar(Sys.getenv("_R_CHECK_PACKAGE_NAME_"))) return(FALSE)
   !tolower(Sys.getenv("MORIE_LLM_CACHE", "")) %in% c("off", "0", "false", "no") &&
-    !isFALSE(getOption("rmoriebricklayer.llm_cache")) && !.bl_dl_quiet()
+    !isFALSE(getOption("rmoriebricklayer.llm_cache")) && !isTRUE(getOption("morie.quiet")) &&
+    (interactive() || (.bl_stdin_tty() && .bl_stdout_tty()))
 }
 
 .bl_answer_dir <- function() {
   getOption("rmoriebricklayer.llm_cache_dir") %||% file.path(tools::R_user_dir("rmoriebricklayer", "cache"), "answers")
 }
 
-# The question is matched without regard to case or spacing; everything else exactly.
+# The question is matched spacing aside, and in its own case (R is case-sensitive: df$X is not
+# df$x; F3); everything else exactly.
+.bl_answer_question <- function(prompt) gsub("[[:space:]]+", " ", trimws(prompt))
+
 .bl_answer_key <- function(rt, model, prompt, pkgs = NULL, system_prompt = NULL) {
   vers <- vapply(pkgs, function(p) as.character(utils::packageVersion(p)), "")
-  q <- tolower(gsub("[[:space:]]+", " ", trimws(prompt)))
+  q <- .bl_answer_question(prompt)
   core_sha256(paste(c("v1", rt$name %||% "", rt$base %||% "", model %||% "", paste(pkgs, vers),
                       system_prompt %||% "", q), collapse = "\x1f"))
 }
 
-.bl_answer_get <- function(key) {
+.bl_answer_get <- function(key, prompt = NULL) {
   if (!.bl_answer_cache_on()) return(NULL)
   f <- file.path(.bl_answer_dir(), paste0(key, ".json"))
   if (!file.exists(f)) return(NULL)
@@ -43,6 +50,10 @@
                                   simplifyVector = FALSE), error = function(e) NULL)
   ans <- rec$answer
   if (!is.character(ans) || length(ans) != 1L || !nzchar(ans)) return(NULL)
+  # the stored question must be this one: a file is never trusted on its name alone
+  if (!is.null(prompt) && !identical(.bl_answer_question(rec$question %||% ""), .bl_answer_question(prompt))) {
+    return(NULL)
+  }
   structure(ans, cached = rec$time %||% "")
 }
 
@@ -51,6 +62,11 @@
     return(invisible(FALSE))
   }
   d <- .bl_answer_dir()
+  if (!isTRUE(.bl_said_once[["answer-cache"]])) {
+    assign("answer-cache", TRUE, envir = .bl_said_once)
+    message(sprintf(paste("(answers are kept on this machine for 30 days under %s, owner-only, so the same",
+                          "question is answered at once; MORIE_LLM_CACHE=off turns that off)"), d))
+  }
   ok <- tryCatch({
     if (!dir.exists(d)) dir.create(d, recursive = TRUE, mode = "0700")
     f <- file.path(d, paste0(key, ".json"))

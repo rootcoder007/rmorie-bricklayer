@@ -6,6 +6,9 @@
 # the coverage workflow has it; CRAN-style offline checks skip them.
 
 skip_if_no_internet <- function() {
+  # live traffic only when asked for: a test run is not a reason to reach cloud.r-project.org or
+  # archive.org (review of 29a55d8, L4); the CI check job sets it
+  if (!identical(Sys.getenv("RMBL_LIVE_TESTS"), "1")) testthat::skip("set RMBL_LIVE_TESTS=1 for the live fetch checks")
   ok <- !inherits(try(suppressWarnings(
     readLines("https://cloud.r-project.org/", n = 1L, warn = FALSE)),
     silent = TRUE), "try-error")

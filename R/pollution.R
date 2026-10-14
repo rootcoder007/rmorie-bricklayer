@@ -706,8 +706,9 @@ pollution_burden_by_area <- function(area_table, area_col = "fsa", exposure_col 
                         "rare, say so with rare_outcome = TRUE"),
                   format(baseline_rate))
         } else if (fin(baseline_rate) && baseline_rate > top && baseline_rate <= 1e5) {
-          sprintf(paste("baseline_rate=%s per 100k a year is above any population's all-cause death rate:",
-                        "if the outcome really is this common, say so with high_rate = TRUE"),
+          sprintf(paste("baseline_rate=%s per 100k a year is above a whole population's all-cause death rate",
+                        "(an age-specific rate for the oldest ages can be this high): if the outcome really is",
+                        "this common, say so with high_rate = TRUE"),
                   format(baseline_rate, big.mark = ",", scientific = FALSE))
         } else if (fin(baseline_rate) && baseline_rate == 0) {
           "baseline_rate=0: a measured zero rate, so no cases"
@@ -985,7 +986,7 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                   baseline_rate_per_100k = baseline_rate, population = population,
                   reference_conc = reference, dropped_rows = dropped_rows),
     assumptions = assumptions)
-  if (!all(vapply(assumptions, function(a) a$ok, logical(1)))) {
+  if (!all(vapply(assumptions, function(a) isTRUE(a$ok), logical(1)))) {
     report$status <- "assumption_failure"
     report$pipeline <- list(skipped = TRUE, reason = "assumptions")
     return(structure(report, exit_status = 1L, class = c("rmbl_pollution_report", "list")))
@@ -1082,7 +1083,8 @@ pollution_report_text <- function(report) {
              },
              "", "Assumption log")
   for (a in report$assumptions) {
-    lines <- c(lines, sprintf("  [%s] %s -- %s", if (a$ok) "PASS" else "FAIL", a$assumption, a$note))
+    lines <- c(lines, sprintf("  [%s] %s -- %s", if (isTRUE(a$ok)) "PASS" else if (isFALSE(a$ok)) "FAIL" else "NA",
+                              a$assumption, a$note))
   }
   if (identical(report$status, "assumption_failure")) {
     return(paste0(paste(lines, collapse = "\n"), "\n\nSTATUS: assumption_failure (pipeline skipped)\n"))

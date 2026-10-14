@@ -700,7 +700,7 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
                      std::string &out, long timeout_s,
                      const std::vector<std::string> &extra_headers,
                      std::string *err = NULL, bool allow_loopback = false,
-                     std::string *retry_after = NULL) {
+                     std::string *retry_after = NULL, bool *interrupted = NULL) {
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
@@ -742,6 +742,9 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
     if (wait.width) REprintf("\r%s\r", std::string(wait.width, ' ').c_str());
+    /* a Ctrl-C that ended the wait is raised by the barrier once this returns: the caller never
+     * sees a status to retry on, so the prompt is not sent again (review of 29a55d8, G1) */
+    if (interrupted) *interrupted = wait.interrupted;
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
@@ -1009,6 +1012,8 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
 
 /* POST raw bytes, return the reply as raw bytes and the HTTP status.
  * Used only by the OCSP path, which is opt-in. */
+static std::vector<std::string> header_lines(SEXP headers);
+
 SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
                       SEXP timeout, SEXP headers, SEXP allow_loopback) {
     if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
@@ -1020,21 +1025,16 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
     }
     const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
         ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
-    std::vector<std::string> extra;
-    if (TYPEOF(headers) == STRSXP) {
-        for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
-            extra.push_back(rmbl_str_at(headers, i, "headers"));
-        }
-    } else if (headers != R_NilValue) {
-        Rf_error("`headers` must be a character vector or NULL");
-    }
+    const std::vector<std::string> extra = header_lines(headers);
     std::string out, err;
     std::string ra;
+    bool interrupted = false;
     const long code = http_post_bytes(
         rmbl_str0(url, "url"), RAW(body),
         static_cast<size_t>(XLENGTH(body)),
         rmbl_str0(content_type, "content_type"), out, tmo, extra, &err,
-        Rf_asLogical(allow_loopback) == TRUE, &ra);
+        Rf_asLogical(allow_loopback) == TRUE, &ra, &interrupted);
+    if (interrupted) rmbl_kernel_interrupted = 1;
     SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
     SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
@@ -1063,14 +1063,7 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     }
     const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
         ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
-    std::vector<std::string> extra;
-    if (TYPEOF(headers) == STRSXP) {
-        for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
-            extra.push_back(rmbl_str_at(headers, i, "headers"));
-        }
-    } else if (headers != R_NilValue) {
-        Rf_error("`headers` must be a character vector or NULL");
-    }
+    const std::vector<std::string> extra = header_lines(headers);
     std::string out, err;
     std::string ra;
     const long code = http_get_string(rmbl_str0(url, "url"), out, tmo, extra, &err,
@@ -1106,11 +1099,18 @@ SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout)
     return Rf_ScalarInteger(rmbl_fetch_with_fallback(u, w, p, t));
 }
 
+/* The request headers, one "Name: value" each. A line break inside one (a key pasted with a
+ * trailing newline, or one carrying "\r\nX-Injected: ...") would reach the wire as a second
+ * header: refused here, for every caller (review of 29a55d8, L3). */
 static std::vector<std::string> header_lines(SEXP headers) {
     std::vector<std::string> extra;
     if (TYPEOF(headers) == STRSXP) {
         for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
-            extra.push_back(rmbl_str_at(headers, i, "headers"));
+            const std::string h = rmbl_str_at(headers, i, "headers");
+            if (h.find('\r') != std::string::npos || h.find('\n') != std::string::npos) {
+                Rf_error("a request header has a line break in it (check the key or the value it was set from)");
+            }
+            extra.push_back(h);
         }
     } else if (headers != R_NilValue) {
         Rf_error("`headers` must be a character vector or NULL");
