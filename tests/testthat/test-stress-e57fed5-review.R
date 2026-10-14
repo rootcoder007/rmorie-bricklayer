@@ -134,7 +134,10 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 100 + seq_len(nrow(d)))), "different values")
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, 1)), "constant column")
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, round(d$w, 2))), "not quite it")
-  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15))), "not quite it")
+  # a copy of the weight a rounding error off is the full weight to any numerical test: kept for a
+  # bootstrap (a draw of every PSU once), refused for a jackknife
+  expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, d$w * (1 + 1e-15)), type = "jk1"),
+               "the full-sample weight")
   f32 <- readBin(writeBin(d$w, raw(), size = 4), "double", size = 4, n = length(d$w))
   expect_error(survey_design(d, weights = "w", replicates = cbind(s$reps, f32)), "not quite it")
   # replicate weights rounded in a file (four decimals) are still one multiplier per PSU
