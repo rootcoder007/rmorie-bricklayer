@@ -140,7 +140,7 @@
 # "Error in f(x) : msg" / "Error: msg" / "Warning message:" as R prints them, fancy quotes made plain
 .bl_ee_clean <- function(msg) {
   m <- paste(msg, collapse = " ")
-  m <- gsub("[‘’]", "'", gsub("[“”]", "\"", m))
+  m <- gsub("[\u2018\u2019]", "'", gsub("[\u201c\u201d]", "\"", m))
   m <- sub("^\\s*(Error|Warning)( message)?( in [^:]*)?\\s*:\\s*", "", m)
   m <- sub("^\\s*(Error|Warning)( message)?s?:?\\s*$", "", m)
   trimws(gsub("[[:space:]]+", " ", m))
