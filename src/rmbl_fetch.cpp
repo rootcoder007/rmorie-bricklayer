@@ -678,7 +678,7 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
      * credential ones on a cross-host redirect */
     std::vector<std::string> hdrs;
     hdrs.push_back("Content-Type: " + content_type);
-    /* e.g. "Authorization: Bearer ..." for the hosted MORIE LLM tier */
+    /* e.g. "Authorization: Bearer ..." for the data key at data.rmorie.com, or a provider key */
     for (size_t i = 0; i < extra_headers.size(); ++i) hdrs.push_back(extra_headers[i]);
     /* libcurl would otherwise announce Expect: 100-continue and wait */
     hdrs.push_back("Expect:");

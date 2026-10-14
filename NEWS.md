@@ -1847,7 +1847,7 @@ was fixed, and each has a test that fails on 0.5.5).
 
 * `bricklayer_llm_ask()`, `bricklayer_llm_login()`, `bricklayer_llm_logout()`
   and `bricklayer_llm_status()` talk to the hosted MORIE LLM tier at
-  <https://llm.rmorie.com> through the package's own libcurl POST. Sign in
+  llm.rmorie.com (retired in 0.5.12) through the package's own libcurl POST. Sign in
   with the GitHub device flow, a code sent to your email, or a key you
   already have; the key is kept in `$XDG_CONFIG_HOME/morie/credentials.json`
   (owner-only, written only by an explicit `login`), the file `morie` and
