@@ -1428,6 +1428,15 @@ capsule_verify <- function(message, signature, key, context = NULL,
 # taken over: the lock directory of 0.5.12-pre was, by check-then-delete, which let two signers
 # hold it at once and sign one index (review of 52a8883, B2), and spun for ever on a lock it
 # could not delete (B4). The wait is bounded at 10 s and draws no random numbers.
+# What to check when the lock file cannot be opened: a read-only directory, or a lock file another
+# user owns. "" when the system's reason says neither.
+.rmbl_lock_hint <- function(m, lock) {
+  if (grepl("Read-only", m)) return(" (is the directory read-only?)")
+  if (!grepl("Permission denied", m)) return("")
+  if (file.exists(lock) && file.access(lock, 2L) != 0L) " (is the lock file owned by another user?)" else
+    " (is the directory read-only?)"
+}
+
 .rmbl_xmss_with_lock <- function(p, f) {
   dir.create(dirname(p), recursive = TRUE, showWarnings = FALSE)
   lock <- paste0(p, ".flock")
@@ -1444,18 +1453,8 @@ capsule_verify <- function(message, signature, key, context = NULL,
     suspendInterrupts(fd <- tryCatch(.Call(C_rmbl_flock_acquire, lock, 0L),
                    error = function(e) {
                      m <- conditionMessage(e)
-                     hint <- if (grepl("Read-only", m)) {
-                       " (is the directory read-only?)"
-                     } else if (grepl("Permission denied", m)) {
-                       if (file.exists(lock) && file.access(lock, 2L) != 0L) {
-                         " (is the lock file owned by another user?)"
-                       } else {
-                         " (is the directory read-only?)"
-                       }
-                     } else {
-                       ""
-                     }
-                     stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, hint), call. = FALSE)
+                     stop(sprintf("cannot use the XMSS used-index record %s: %s%s", p, m, .rmbl_lock_hint(m, lock)),
+                          call. = FALSE)
                    }))
     if (!identical(fd, -1L)) break
     if (proc.time()[["elapsed"]] - start >= 10) {

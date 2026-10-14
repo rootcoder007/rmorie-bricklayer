@@ -210,10 +210,8 @@ SEXP C_rmbl_write_file_checked(SEXP tmp_, SEXP path_, SEXP bytes) {
             if (fsync(dfd) != 0 && errno != EINVAL && errno != EROFS) { why = "the new record did not reach the disk"; err = errno; }
             close(dfd);
         }
-        if (why != NULL) {
-            snprintf(msg, sizeof msg, "%s: %s", why, strerror(err));
-            return mkString(msg);   /* the rename is done: there is no temporary file to remove */
-        }
+        /* a failure here takes the one exit below: the rename is done, so its remove(tmp) finds
+         * nothing and the message is all that is left to give */
     }
 #endif
     if (why != NULL) {
