@@ -646,10 +646,11 @@ test_that("a repeated question is answered from this machine; --fresh asks again
   withr::local_envvar(TESTTHAT = NA, `_R_CHECK_PACKAGE_NAME_` = NA, MORIE_LLM_CACHE = NA,
                       GROQ_API_KEY = "gsk", MORIE_GROQ_MODEL = "llama-x")
   n <- 0L
+  # TESTTHAT is unset above (the cache stays off under a test run), so the package is named here
   local_mocked_bindings(.bl_llm_chat = function(...) {
     n <<- n + 1L
     list(text = sprintf("answer %d", n), tool_calls = list())
-  })
+  }, .package = "rmoriebricklayer")
   a1 <- bricklayer_llm_ask("How do I sign?", docs = FALSE)
   a2 <- bricklayer_llm_ask("  how do i   SIGN? ", docs = FALSE)   # case and spacing aside, the same question
   expect_identical(as.character(a1), "answer 1")
