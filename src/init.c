@@ -230,6 +230,7 @@ extern SEXP C_rmbl_flock_with(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_path_kind(SEXP);
 extern SEXP C_rmbl_write_file_checked(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_gunzip_checked(SEXP, SEXP);
+extern SEXP C_rmbl_csv_split(SEXP, SEXP);   /* rmbl_csv.c */
 extern SEXP C_rmbl_progress_frame(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_progress_spinner(SEXP, SEXP);
 /* replicate totals for survey estimation (rmbl_survey.c) */
@@ -244,6 +245,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_path_kind",      (DL_FUNC) &C_rmbl_path_kind,      1},
     {"C_rmbl_write_file_checked", (DL_FUNC) &C_rmbl_write_file_checked, 3},
     {"C_rmbl_gunzip_checked",     (DL_FUNC) &C_rmbl_gunzip_checked,     2},
+    {"C_rmbl_csv_split",          (DL_FUNC) &C_rmbl_csv_split,          2},
     {"C_rmbl_progress_frame",     (DL_FUNC) &C_rmbl_progress_frame,     7},
     {"C_rmbl_progress_spinner",   (DL_FUNC) &C_rmbl_progress_spinner,   2},
     {"C_rmbl_svy_reptotals",      (DL_FUNC) &C_rmbl_svy_reptotals,      2},

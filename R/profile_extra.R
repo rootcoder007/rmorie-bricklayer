@@ -49,6 +49,7 @@
 #' @export
 missingness_pattern <- function(data, max_patterns = 20L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     stop("`data` has no columns", call. = FALSE)
   }
@@ -175,8 +176,9 @@ top_correlations <- function(data, n = 10L, method = c(
                                "pearson"
                              ),
                              min_abs = 0) {
-  method <- match.arg(method)
+  method <- .rmbl_arg(method)
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   num <- names(data)[vapply(data, is.numeric, logical(1))]
   if (length(num) < 2L) {
     stop("need at least two numeric columns to correlate", call. = FALSE)

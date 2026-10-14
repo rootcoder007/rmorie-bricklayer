@@ -26,7 +26,7 @@ test_that("route_info takes a named route", {
   ri <- bricklayer_llm_route_info("groq")
   expect_identical(ri$route, "groq")
   expect_identical(ri$model, "llama-x")
-  expect_error(bricklayer_llm_route_info("nowhere"), "should be one of")
+  expect_error(bricklayer_llm_route_info("nowhere"), "must be one of")
 })
 
 test_that("verify_pollution reports a scalar that is not a number", {
@@ -106,5 +106,8 @@ test_that("an interrupt inside a guarded call stops the replicate kernel with an
   tryCatch(Sys.sleep(0.3), interrupt = function(i) NULL)
   skip_if(is.null(got), "the progress callback did not run")
   skip_if(is.numeric(got), "the signal reached R after the kernel had run (timing)")
-  expect_identical(got, "interrupted")
+  # the kernel stopped: either with its own "interrupted" error, or R delivered the pending interrupt
+  # as a condition to the handler around the call before the kernel's check (what R 4.5+ does when a
+  # tryCatch(interrupt = ) is on the stack); what matters is that no result came back
+  expect_true(got %in% c("interrupted", "interrupt"))
 })

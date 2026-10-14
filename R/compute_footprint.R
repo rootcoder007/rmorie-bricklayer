@@ -465,8 +465,8 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
                               load_curve = c("linear", "codecarbon"), cores = NULL,
                               memory_gb = NULL, memory_power_w_per_gb = 0.3725, pue = 1,
                               rapl_dir = "/sys/class/powercap", proc_stat = "/proc/stat") {
-  method <- match.arg(method)
-  load_curve <- match.arg(load_curve)
+  method <- .rmbl_arg(method)
+  load_curve <- .rmbl_arg(load_curve)
   ci <- carbon_intensity(location)
   # every argument is checked before `expr` runs, so a bad argument never costs the computation
   if (!is.numeric(pue) || length(pue) != 1L || !is.finite(pue) || pue < 1) {
@@ -496,7 +496,7 @@ compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", 
     stop("`usage` takes one value: \"process\", \"machine\" or a single number in [0, 1]", call. = FALSE)
   }
   if (is.character(usage)) {
-    usage_mode <- match.arg(usage, c("process", "machine"))
+    usage_mode <- .rmbl_arg(usage, c("process", "machine"))
   } else if (is.numeric(usage) && length(usage) == 1L && is.finite(usage) && usage >= 0 && usage <= 1) {
     usage_mode <- "fixed"
   } else {

@@ -206,7 +206,7 @@ print.bricklayer_prereg_check <- function(x, ...) {
 falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
                                          "none"),
                            alpha = 0.05) {
-  method <- match.arg(method)
+  method <- .rmbl_arg(method)
   at_floor <- character(0)
   if (is.list(x) && length(x) &&
       all(vapply(x, inherits, logical(1), "bricklayer_falsification"))) {

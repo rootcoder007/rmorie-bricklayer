@@ -64,9 +64,10 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
                           per = 1000, conf_level = 0.95, alpha = 0.05,
                           adjust = "BH") {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
-  units <- match.arg(units)
-  direction <- match.arg(direction)
-  rounding_kind <- match.arg(rounding_kind)
+  .rmbl_df_names(data)
+  units <- .rmbl_arg(units)
+  direction <- .rmbl_arg(direction)
+  rounding_kind <- .rmbl_arg(rounding_kind)
   for (col in c(value, period, by, population)) {
     if (!col %in% names(data)) {
       stop(sprintf("column `%s` not found in `data`", col), call. = FALSE)
@@ -265,7 +266,7 @@ report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
     format <- if (grepl("\\.html?$", path, ignore.case = TRUE)) "html" else
       "markdown"
   }
-  format <- match.arg(format)
+  format <- .rmbl_arg(format)
   m <- x$meta
   lines <- character()
   add <- function(...) lines <<- c(lines, ...)

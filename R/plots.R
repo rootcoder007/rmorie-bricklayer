@@ -37,7 +37,7 @@
 #' bricklayer_plot_options(palette = old$palette, grid = old$grid)
 #' @export
 bricklayer_palette <- function(name = c("okabe", "diverging", "sequential", "grey"), n = NULL) {
-  name <- match.arg(name)
+  name <- .rmbl_arg(name)
   base <- switch(name,
     okabe = c("#0072B2", "#D55E00", "#009E73", "#E69F00", "#CC79A7", "#56B4E9", "#F0E442", "#000000"),
     diverging = c("#2166AC", "#8C8C8C", "#D6604D"),
@@ -61,7 +61,7 @@ bricklayer_plot_options <- function(...) {
   if (is.null(names(new)) || any(!nzchar(names(new))) || length(bad)) {
     stop(sprintf("plot options are %s", paste(names(current), collapse = ", ")), call. = FALSE)
   }
-  if (!is.null(new$palette)) new$palette <- match.arg(new$palette, c("okabe", "diverging", "sequential", "grey"))
+  if (!is.null(new$palette)) new$palette <- .rmbl_arg(new$palette, c("okabe", "diverging", "sequential", "grey"))
   current[names(new)] <- new
   options(rmoriebricklayer.plot = current)
   invisible(current)
@@ -517,9 +517,13 @@ bricklayer_plot_options <- function(...) {
   if (!is.null(ref)) graphics::abline(v = ref, col = "#8C8C8C", lty = 2)
   ok <- is.finite(lower) & is.finite(upper)
   cols <- rep_len(cols, n)
-  graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok],
-                     col = grDevices::adjustcolor(cols[ok], 0.28), lwd = 9, lend = 1)
-  graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 1.6, lend = 1)
+  # no interval anywhere (every standard error NA): nothing to draw, and adjustcolor() on an empty
+  # vector warned "non-empty data for zero-extent matrix" (review of 29a55d8)
+  if (any(ok)) {
+    graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok],
+                       col = grDevices::adjustcolor(cols[ok], 0.28), lwd = 9, lend = 1)
+    graphics::segments(lower[ok], seq_len(n)[ok], upper[ok], seq_len(n)[ok], col = cols[ok], lwd = 1.6, lend = 1)
+  }
   graphics::points(est, seq_len(n), pch = 21, bg = cols, col = "white", lwd = 1.6, cex = 1.7)
   graphics::axis(2, at = seq_len(n), labels = label, tick = FALSE, cex.axis = 0.85)
   # a row with no estimate says why (a suppressed percentage, the first period), so an empty
@@ -773,7 +777,7 @@ bricklayer_plot_options <- function(...) {
 plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days"),
                                  main = NULL, col = NULL, palette = NULL) {
   avail <- intersect(c("adp", "alos", "people", "days", "flow_rate", "stock_rate"), names(x))
-  what <- match.arg(what, avail, several.ok = TRUE)
+  what <- .rmbl_arg(what, avail, several = TRUE)
   labs <- c(adp = "Average daily population", alos = "Average length of stay (days)",
             people = "People", days = "Person-days", flow_rate = "Flow rate",
             stock_rate = "Stock rate")
@@ -808,7 +812,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
 #' @export
 plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, col = NULL,
                           palette = NULL) {
-  what <- match.arg(what)
+  what <- .rmbl_arg(what)
   d <- as.data.frame(x)
   meta <- attr(x, "yoy")
   period <- if (!is.null(meta$period)) meta$period else names(d)[1L]
@@ -1509,7 +1513,7 @@ plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @export
 plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
   panels <- c("change", "rates", "rate_change")
-  which <- if (is.null(which)) panels else match.arg(which, panels, several.ok = TRUE)
+  which <- if (is.null(which)) panels else .rmbl_arg(which, panels, several = TRUE)
   parts <- Filter(Negate(is.null), list(change = x$change, rates = x$rates, rate_change = x$rate_change)[which])
   if (!length(parts)) {
     graphics::plot.new()

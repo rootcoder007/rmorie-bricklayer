@@ -269,7 +269,7 @@ test_that("a revoked certificate is caught, and fetching is opt-in", {
   expect_error(cert_chain_verify(f$nc_leaf_good,
     trust = ca,
     revocation = "sometimes"
-  ), "arg")
+  ), "must be one of")
 })
 
 test_that("SHA-1 matches its FIPS vectors", {

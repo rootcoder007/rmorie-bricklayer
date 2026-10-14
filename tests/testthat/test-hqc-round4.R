@@ -40,7 +40,7 @@ test_that("round 4 has its own sizes: 40-byte seeds, a 64-byte secret", {
     expect_identical(unname(hqc_sizes(as.integer(lv), "round4")), want[[lv]])
   }
   expect_named(hqc_sizes(1, "round4"), names(hqc_sizes(1)))
-  expect_error(hqc_sizes(1, "round3"), "should be one of")
+  expect_error(hqc_sizes(1, "round3"), "must be one of")
 })
 
 test_that("the official round-4 known-answer vectors are reproduced (both multipliers)", {

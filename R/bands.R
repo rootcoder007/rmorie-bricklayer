@@ -207,7 +207,7 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
                                         "geometric"),
                         open_upper_cap = NULL, open_upper_factor = 2,
                         open_lower_floor = NULL) {
-  rule <- match.arg(rule)
+  rule <- .rmbl_arg(rule)
   if (!is.data.frame(bands)) bands <- parse_bands(bands)
   need <- c("lower", "upper", "open_lower", "open_upper")
   if (!all(need %in% names(bands))) {

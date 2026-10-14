@@ -11,7 +11,7 @@ test_that("agent_bundle() returns a setup hint when no key is stored", {
   expect_false(grepl("own endpoint", agent_bundle("hello", route = "ollama")))
   expect_error(agent_bundle("hello", route = "gemini"), "no key for Google Gemini: set GEMINI_API_KEY")
   expect_error(agent_bundle("hello", route = "hosted"), "retired")
-  expect_error(agent_bundle("hello", route = "cloud"), "should be one of")
+  expect_error(agent_bundle("hello", route = "cloud"), "must be one of")
 })
 
 test_that("agent_bundle() sends the request with the bundle task to the route", {

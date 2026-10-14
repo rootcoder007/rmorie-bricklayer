@@ -101,7 +101,7 @@ test_that("EM reaches the direct maximum; INAR is close; truncation is close; ba
   expect_lt(abs(tr$nll - core_hawkes_fit(e$t, e$T, "gamma", method = "exact")$nll), 1e-3)
   expect_error(core_hawkes_fit(e$t, e$T, "exponential", "sinusoidal", method = "inar"), "stationary")
   expect_error(core_hawkes_fit(e$t, e$T, "weibull", method = "soe"), "completely monotone")
-  expect_error(core_hawkes_fit(e$t, e$T, "exponential", method = "newton"), "should be one of")
+  expect_error(core_hawkes_fit(e$t, e$T, "exponential", method = "newton"), "must be one of")
   expect_error(core_hawkes_fit(e$t[1:10], e$T, "exponential"), "too few events")
   expect_error(core_hawkes_fit(rev(e$t), e$T, "exponential"), "sorted")
   expect_error(core_hawkes_fit(e$t, e$T, "exponential", eps = 2), "eps")

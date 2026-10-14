@@ -226,6 +226,7 @@ print.bricklayer_outliers <- function(x, ...) {
 #' @export
 missing_runs <- function(data, min_run = 2L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
   min_run <- .rmbl_num(min_run, "min_run", integer = TRUE)
   if (length(min_run) != 1L || is.na(min_run) || min_run < 1L) {
@@ -304,6 +305,7 @@ print.bricklayer_runs <- function(x, ...) {
 #' @export
 missingness_map <- function(data, height = 20L, width = 12L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) stop("`data` has no columns", call. = FALSE)
   height <- .rmbl_num(height, "height", integer = TRUE)
   if (length(height) != 1L || is.na(height) || height < 1L) {

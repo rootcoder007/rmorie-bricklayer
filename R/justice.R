@@ -294,7 +294,7 @@ print.rmbl_case_flow <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NULL, col = NULL, palette = NULL) {
-  what <- match.arg(what, c("flow", "clearance"), several.ok = TRUE)
+  what <- .rmbl_arg(what, c("flow", "clearance"), several = TRUE)
   px <- .jx_period_x(x$period)
   cols <- .bl_cols(2, col, palette)
   if (length(what) > 1L) {
@@ -438,7 +438,7 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' @export
 life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
                        conf_type = c("log-log", "log", "plain")) {
-  conf_type <- match.arg(conf_type)
+  conf_type <- .rmbl_arg(conf_type)
   conf_level <- .jx_conf(conf_level)
   if (is.character(breaks) || is.factor(breaks)) {
     # times, not head counts: "Under 10" ends at 10, and "Over 18" starts there
@@ -895,7 +895,7 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #' @export
 crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 200L,
                           coverage = c(0.5, 0.9), coords = c("lonlat", "planar")) {
-  coords <- match.arg(coords)
+  coords <- .rmbl_arg(coords)
   lon <- .rmbl_num_input(lon, "lon", allow_null = FALSE)
   lat <- .rmbl_num_input(lat, "lat", allow_null = FALSE)
   if (length(lon) != length(lat)) stop("`lon` and `lat` must have the same length", call. = FALSE)
@@ -1178,7 +1178,7 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #' @export
 knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = NULL,
                       coords = c("lonlat", "planar"), max_pairs = 5e7) {
-  coords <- match.arg(coords)
+  coords <- .rmbl_arg(coords)
   max_pairs <- .rmbl_num(max_pairs, "max_pairs")
   if (length(max_pairs) != 1L || is.na(max_pairs) || max_pairs < 1) {
     stop("`max_pairs` must be a single number of at least 1", call. = FALSE)
@@ -1453,7 +1453,11 @@ clearance_decomposition <- function(numerator, denominator, group, compare, base
          call. = FALSE)
   }
   if (!is.null(base)) {
-    if (length(base) != 1L || !base %in% levs) stop("`base` must be one of the two values of `compare`", call. = FALSE)
+    if (!is.atomic(base) || is.complex(base) || length(base) != 1L || is.na(base) ||
+          !as.character(base) %in% as.character(levs)) {
+      stop("`base` must be one of the two values of `compare`", call. = FALSE)
+    }
+    base <- levs[match(as.character(base), as.character(levs))]   # the level itself, in its own type
     levs <- c(base, setdiff(levs, base))
   }
   key <- paste(group, compare, sep = "\r")
@@ -1583,7 +1587,7 @@ plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 2
     what <- if (din[1L] >= 10 && din[2L] >= 3.5) c("rates", "mix", "effects") else
       if (din[1L] >= 6 && din[2L] >= 3.5) c("rates", "mix") else "rates"
   }
-  what <- match.arg(what, c("rates", "mix", "effects"), several.ok = TRUE)
+  what <- .rmbl_arg(what, c("rates", "mix", "effects"), several = TRUE)
   o <- x$overall
   line <- sprintf("Change %+.4f = rates %+.4f + mix %+.4f", o$change, o$rate_effect, o$mix_effect)
   op0 <- graphics::par(no.readonly = TRUE)

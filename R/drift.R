@@ -125,8 +125,11 @@ drift_psi <- function(x, y, bins = 10L, eps = 1e-6) {
   x <- x[!is.na(x)]   # min_n = 1L above: at least one value remains in each
   y <- y[!is.na(y)]
   bins <- .rmbl_num(bins, "bins", integer = TRUE)
-  if (is.na(bins) || bins < 2L) {
-    stop("`bins` must be at least 2", call. = FALSE)
+  if (length(bins) != 1L || is.na(bins) || bins < 2L) {
+    stop("`bins` must be one whole number of at least 2", call. = FALSE)
+  }
+  if (bins > 1e6) {
+    stop("`bins` must be at most 1,000,000 (a bin per value is already the finest it gets)", call. = FALSE)
   }
   eps <- .rmbl_num(eps, "eps")
   if (length(eps) != 1L || is.na(eps) || eps <= 0 || eps >= 1) {

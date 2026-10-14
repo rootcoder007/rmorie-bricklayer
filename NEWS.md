@@ -106,6 +106,21 @@ claims the earlier fixes overstated corrected.
   `RMBL_LIVE_TESTS=1`.
 * Pre-0.5.12 logins stored the address of the retired model tier; such a key is withheld with a
   message, so those users log in once more.
+* **The curated tables load in a fraction of the time.** A gzip-compressed CSV is decompressed by
+  the checked reader, split into columns in C and typed as `read.csv()` types it (plain integers,
+  decimals and `TRUE`/`FALSE`/`T`/`F` decided from the bytes, everything else by
+  `type.convert()`): the same table, byte for byte of meaning, in a fifth of the time (a
+  million-row table: 1.3 s where `read.csv()` took 6.6 s). A record with more fields than the
+  header and a quote that never closes are refused in words.
+* **Hot spots made by a tie are not hot spots.** When the cells tied with the k-th busiest would
+  make more than twice k cells hot, the tied group is left out (`tied_out` says how many, and
+  printing says so); `cell = 0.1` on even counts no longer calls 100 of 100 cells hot.
+* **Refusals in words, every time.** A choice argument given a wrong value says what it must be
+  and what it got (`match.arg()`'s "'arg' should be one of" named neither); a data frame with an
+  empty or repeated column name is refused before anything is looked up; `drift_psi(bins = )`
+  takes one whole number up to a million; `clearance_decomposition(base = )` takes one of the two
+  values of `compare` and keeps its type; an estimate without a standard error plots without a
+  warning.
 * **`hurwitz_zeta()` beside the trivial zeros** takes the distance to the nearest integer exactly
   before `sinpi()` (R's `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which on some libms loses
   the digits of a value of order that distance); the test compares against mpmath at the exact

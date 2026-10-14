@@ -45,7 +45,7 @@ published_bounds <- function(x, rounding = NULL,
                              suppressed_marks = c("x", "X", "s", "..",
                                                   "F", "suppressed",
                                                   "n/a")) {
-  rounding_kind <- match.arg(rounding_kind)
+  rounding_kind <- .rmbl_arg(rounding_kind)
   if (!is.null(rounding)) {
     rounding <- .rmbl_num(rounding, "rounding")[1L]
     if (is.na(rounding) || rounding <= 0) {
@@ -178,7 +178,7 @@ yoy_bounds <- function(y, rounding = NULL,
   if (!inherits(y, "rmbl_yoy")) {
     stop("`y` must come from yoy()", call. = FALSE)
   }
-  rounding_kind <- match.arg(rounding_kind)
+  rounding_kind <- .rmbl_arg(rounding_kind)
   m <- attr(y, "yoy")
   now <- published_bounds(y$value, rounding, rounding_kind,
                           suppression_limit)

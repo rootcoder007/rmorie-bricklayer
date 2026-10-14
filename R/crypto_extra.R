@@ -271,7 +271,7 @@ digest_object <- function(x, algo = c(
                             "sha256", "sha512", "blake2b",
                             "crc32"
                           ), key = NULL) {
-  algo <- match.arg(algo)
+  algo <- .rmbl_arg(algo)
   bytes <- serialize(x, NULL, version = 2L, xdr = TRUE)
   if (!is.null(key)) {
     # A keyed digest authenticates; an unkeyed one only detects

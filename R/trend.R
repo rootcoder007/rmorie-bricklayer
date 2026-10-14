@@ -82,7 +82,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
                          "decreasing"
                        ),
                        conf_level = 0.95) {
-  alternative <- match.arg(alternative)
+  alternative <- .rmbl_arg(alternative)
   if (is.data.frame(y)) {
     if (is.null(value)) {
       stop("`value` is required for a data frame",

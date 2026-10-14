@@ -582,7 +582,7 @@
 #' @export
 bricklayer_llm_route_info <- function(route = NULL) {
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
-  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
   if (is.null(rt)) return(NULL)
   list(route = .bl_route_id(rt), name = rt$name, model = rt$model, base = rt$base)
@@ -612,7 +612,7 @@ bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 
   if (!ok) stop("`messages` must be a list of list(role = \"system\"|\"user\"|\"assistant\", content = text)",
                 call. = FALSE)
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
-  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   timeout <- .rmbl_num(timeout, "timeout")
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
@@ -849,7 +849,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
   prompt <- .rmbl_string1(prompt, "prompt")
   .bl_check_flag(fresh, "fresh")
   if (identical(route, "hosted")) stop(.bl_hosted_retired(), call. = FALSE)
-  if (!is.null(route)) route <- match.arg(route, c("auto", .bl_llm_route_names()))
+  if (!is.null(route)) route <- .rmbl_arg(route, c("auto", .bl_llm_route_names()))
   rt <- .bl_llm_route(route)
   if (is.null(rt)) stop(.bl_no_route_message(route), call. = FALSE)
   model <- model %||% rt$model

@@ -86,8 +86,8 @@ test_that("a pre-hashed signature still respects the context", {
 
 test_that("an unknown pre-hash is refused", {
   key <- fips_keygen("ML-DSA-44")
-  expect_error(capsule_sign("m", key, prehash = "md5"), "arg")
-  expect_error(capsule_sign("m", key, prehash = "sha1"), "arg")
+  expect_error(capsule_sign("m", key, prehash = "md5"), "must be one of")
+  expect_error(capsule_sign("m", key, prehash = "sha1"), "must be one of")
   # partial matching is match.arg's, so an unambiguous prefix is fine
   expect_true(capsule_verify(
     "m", capsule_sign("m", key, prehash = "shake2"),

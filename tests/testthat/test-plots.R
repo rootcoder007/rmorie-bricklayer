@@ -15,7 +15,7 @@ test_that("palettes and plot options", {
   expect_length(bricklayer_palette("sequential", 7), 7L)
   expect_equal(bricklayer_palette("diverging", 1), "#2166AC")
   expect_error(bricklayer_palette("okabe", 0), "positive")
-  expect_error(bricklayer_palette("neon"), "arg")
+  expect_error(bricklayer_palette("neon"), "must be one of")
   old <- bricklayer_plot_options()
   expect_equal(old$palette, "okabe")
   on.exit(options(rmoriebricklayer.plot = NULL), add = TRUE)
@@ -24,7 +24,7 @@ test_that("palettes and plot options", {
   expect_false(bricklayer_plot_options()$grid)
   expect_error(bricklayer_plot_options(size = 3), "plot options are")
   expect_error(bricklayer_plot_options(3), "plot options are")
-  expect_error(bricklayer_plot_options(palette = "neon"), "arg")
+  expect_error(bricklayer_plot_options(palette = "neon"), "must be one of")
   with_dev({
     graphics::plot.new()
     expect_false(rmoriebricklayer:::.bl_grid(NULL))

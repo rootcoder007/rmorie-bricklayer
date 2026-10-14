@@ -34,7 +34,7 @@
 #' @export
 bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"),
                                  wayback = "", timeout = 120L) {
-  lang <- match.arg(lang)
+  lang <- .rmbl_arg(lang)
   did <- .rmbl_drid(drid)
   dest <- .rmbl_string1(dest, "dest")
   url <- sprintf(

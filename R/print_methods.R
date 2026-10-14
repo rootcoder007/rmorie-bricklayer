@@ -389,6 +389,7 @@ summary.bricklayer_benford <- function(object, ...) {
 #' @export
 profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
+  .rmbl_df_names(data)
   if (ncol(data) == 0L) {
     stop("`data` has no columns to profile", call. = FALSE)
   }

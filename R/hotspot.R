@@ -11,8 +11,9 @@
 #' period and reports, per period: the incidents, the cells with
 #' any, the share of the ever-active cells that holds half the
 #' incidents, the hot cells (the `top` share of the ever-active
-#' cells with the most incidents, all cells tied at the cut
-#' included) and their share of the incidents, and the Jaccard
+#' cells with the most incidents, with the cells tied at the cut
+#' included unless the tie would more than double the hot set) and
+#' their share of the incidents, and the Jaccard
 #' overlap of the hot set with the previous period's (shared hot
 #' cells over cells hot in either). Per cell: the incidents in
 #' all, and in how many periods it was hot.
@@ -33,8 +34,9 @@
 #' @param coords `"lonlat"` or `"planar"`.
 #' @return An object of class `rmbl_hotspot`: `periods` (one row
 #'   per period; `tied_in` counts the cells made hot only by a tie
-#'   with the k-th busiest, and printing says when ties make most
-#'   active cells hot), `cells` (one row per ever-active cell, with
+#'   with the k-th busiest, `tied_out` the tied cells left out when
+#'   the tie would have made more than twice `k` cells hot, which
+#'   printing says), `cells` (one row per ever-active cell, with
 #'   its centre in the input's units), and the settings. Points at
 #'   (0, 0), the raw exports' "no location", are dropped, and
 #'   longitudes across the antimeridian are taken on one side of
@@ -49,7 +51,7 @@
 #' plot(h)
 #' @export
 hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coords = c("lonlat", "planar")) {
-  coords <- match.arg(coords)
+  coords <- .rmbl_arg(coords)
   lon <- .rmbl_num_input(lon, "lon", allow_null = FALSE)
   lat <- .rmbl_num_input(lat, "lat", allow_null = FALSE)
   if (length(lon) != length(lat) || length(period) != length(lon)) {
@@ -111,8 +113,18 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     tot <- sum(cnt)
     srt <- sort(cnt, decreasing = TRUE)
     cut <- srt[k]
-    # the busiest k cells and every cell tied with the k-th, never a cell with no incident
-    h <- cnt >= cut & cnt > 0
+    # the busiest k cells and every cell tied with the k-th, never a cell with no incident. When the
+    # tie would make more than twice k cells hot, the counts do not single those cells out: the
+    # tied group is left out (cell = 0.1 had made 100 of 100 cells "hot"; review of e57fed5 and
+    # 46de6a9), and tied_out says how many
+    above <- cnt > cut
+    tied <- cnt == cut & cnt > 0
+    tied_out <- 0L
+    if (sum(above) + sum(tied) > 2L * k) {
+      tied_out <- sum(tied)
+      tied <- rep(FALSE, nc)
+    }
+    h <- above | tied
     hot[, j] <- h
     half <- if (tot > 0) which(cumsum(srt) >= tot / 2)[1L] else NA_integer_
     jac <- NA_real_
@@ -122,7 +134,7 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
     }
     rows[[j]] <- data.frame(period = levels(pf)[j], incidents = tot, active_cells = sum(cnt > 0),
                             cells_for_half = half, share_for_half = half / nc, hot_cells = sum(h),
-                            tied_in = max(0L, sum(h) - k),
+                            tied_in = max(0L, sum(h) - k), tied_out = tied_out,
                             hot_share = if (tot > 0) sum(cnt[h]) / tot else NA_real_, jaccard_previous = jac,
                             stringsAsFactors = FALSE)
   }
@@ -153,14 +165,13 @@ print.rmbl_hotspot <- function(x, ...) {
   print(d, row.names = FALSE)
   chronic <- sum(x$cells$periods_hot >= nrow(x$periods) / 2)
   cat(sprintf("Cells hot in at least half the periods: %d\n", chronic))
-  # ties with the k-th busiest cell are hot too: when they are most of the active cells, the counts do
-  # not single out hot spots (cell = 0.1 had made 100 of 100 cells hot)
-  tied <- d$tied_in > 0 & d$hot_cells >= 0.5 * d$active_cells & d$active_cells > 1
+  # a tie with the k-th busiest cell that would have made more than twice k cells hot is left out:
+  # the counts are too even (or the cells too small) to single out hot spots
+  tied <- !is.na(d$tied_out) & d$tied_out > 0
   if (any(tied)) {
-    cat(sprintf(paste("Note: in %s, ties with the busiest %d cells made %s of the active cells hot; the counts",
+    cat(sprintf(paste("Note: in %s, %s cells tied with the busiest %d were left out of the hot set; the counts",
                       "are too even (or the cells too small) to single out hot spots\n"),
-                paste(d$period[tied], collapse = ", "), x$hot_k,
-                paste(sprintf("%d of %d", d$hot_cells[tied], d$active_cells[tied]), collapse = ", ")))
+                paste(d$period[tied], collapse = ", "), paste(d$tied_out[tied], collapse = ", "), x$hot_k))
   }
   invisible(x)
 }
