@@ -136,7 +136,10 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
 .analysis_trends <- function(data, value, period, by, units, conf_level) {
   groups <- if (is.null(by)) list(data) else
     split(data, data[by], drop = TRUE)
+  pg <- bricklayer_progress("trends", length(groups))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(groups, function(g) {
+    pg$tick(info = "groups")
     g <- g[order(g[[period]]), , drop = FALSE]
     agg <- stats::aggregate(g[[value]], by = list(p = g[[period]]),
                             FUN = sum, na.rm = TRUE)

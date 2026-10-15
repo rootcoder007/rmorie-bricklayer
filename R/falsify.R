@@ -97,6 +97,9 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
   }
   if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
 
+  pg <- bricklayer_progress("falsification", 2 * n + 1L)
+  on.exit(pg$done(), add = TRUE)
+  pg$update(0, "the data as given")
   observed <- .rmbl_falsify_eval(statistic, data, "the data as given")
   rows <- list()
   add <- function(control, passed, value, detail) {
@@ -113,6 +116,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
         "skipped: no `treatment` column was named")
   } else {
     perm <- vapply(seq_len(n), function(i) {
+      pg$update(i, sprintf("permutation %d/%d", i, n))
       d <- data
       d[[treatment]] <- sample(d[[treatment]])
       tryCatch(as.numeric(statistic(d))[1L], error = function(e) NA_real_)
@@ -153,6 +157,7 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
 
   k <- max(2L, as.integer(round(subset_frac * nrow(data))))
   subs <- vapply(seq_len(n), function(i) {
+    pg$update(n + i, sprintf("subset %d/%d", i, n))
     idx <- sample.int(nrow(data), k)
     tryCatch(as.numeric(statistic(data[idx, , drop = FALSE]))[1L],
              error = function(e) NA_real_)

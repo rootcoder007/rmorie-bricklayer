@@ -33,7 +33,11 @@ static void rmbl_raise_interrupt(void) {
 static int rmbl_barrier_depth = 0;
 
 static void rmbl_chk_(void *) { R_CheckUserInterrupt(); }
+/* rmbl_fetch.cpp: turns the busy spinner when R has set a label (a no-op otherwise); every kernel's
+ * poll for a Ctrl-C comes through here, so every polling kernel animates it */
+extern "C" void rmbl_wait_tick(void);
 extern "C" int rmbl_interrupt_pending(void) {
+    rmbl_wait_tick();
     /* R_CheckUserInterrupt() longjmps when one is pending; run it under
      * R_ToplevelExec so the jump is caught here. With a barrier active the
      * kernel stops, sets the flag and the barrier raises after its

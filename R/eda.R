@@ -244,7 +244,10 @@ correlation_table <- function(data, method = c("spearman", "pearson"),
     stop("`min_pairs` must be a single integer of at least 2", call. = FALSE)
   }
   pairs <- utils::combn(num, 2L)
+  pg <- bricklayer_progress("correlations", ncol(pairs))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(seq_len(ncol(pairs)), function(j) {
+    pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
     a <- data[[pairs[1L, j]]]
     b <- data[[pairs[2L, j]]]
     ok <- !is.na(a) & !is.na(b)

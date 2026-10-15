@@ -444,7 +444,17 @@ benford_test <- function(x) {
     stop("`x` has no finite non-zero values to take a leading digit from",
          call. = FALSE)
   }
-  counts <- .Call(C_rmbl_first_digit_counts, x)
+  # in blocks of a million, so a long vector shows its progress (the counts add up exactly)
+  starts <- seq.int(1, length(x), by = 1e6)
+  pg <- bricklayer_progress("Benford digits", length(x))
+  on.exit(pg$done(), add = TRUE)
+  counts <- NULL
+  for (s in starts) {
+    e <- min(length(x), s + 1e6 - 1)
+    k <- .Call(C_rmbl_first_digit_counts, x[s:e])
+    counts <- if (is.null(counts)) k else counts + k
+    pg$update(e, sprintf("%s of %s values", .bl_n(e), .bl_n(length(x))))
+  }
   names(counts) <- as.character(1:9)
   n <- sum(counts)
   p <- log10(1 + 1 / (1:9))
@@ -580,7 +590,10 @@ capsule_drift <- function(reference, current, alpha = 0.01,
                unseen_share = unseen, drifted = drifted, note = note,
                stringsAsFactors = FALSE)
   }
+  pg <- bricklayer_progress("drift screen", length(shared))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(shared, function(nm) {
+    pg$tick(info = nm)
     a <- reference[[nm]]
     b <- current[[nm]]
     numeric_col <- is.numeric(a) && is.numeric(b)

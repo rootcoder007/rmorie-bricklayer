@@ -1286,8 +1286,12 @@ knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = N
     tabulate(s_idx[ok] + (t_idx[ok] - 1L) * ks, ks * kt)
   }
   obs <- cell_of(tt)
-  sims <- .rmbl_with_seed_maybe(seed, vapply(seq_len(nsim), function(k) cell_of(tt[sample.int(n)]),
-                                             numeric(ks * kt)))
+  pg <- bricklayer_progress("Knox test", nsim)
+  on.exit(pg$done(), add = TRUE)
+  sims <- .rmbl_with_seed_maybe(seed, vapply(seq_len(nsim), function(k) {
+    pg$update(k - 1L, sprintf("permutation %d/%d", k, nsim))
+    cell_of(tt[sample.int(n)])
+  }, numeric(ks * kt)))
   sims <- matrix(sims, nrow = ks * kt)
   pv <- (1 + rowSums(sims >= obs)) / (nsim + 1)
   tab <- data.frame(space_lower = rep(c(0, utils::head(sb, -1L)), times = kt), space_upper = rep(sb, times = kt),

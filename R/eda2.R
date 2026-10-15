@@ -98,6 +98,9 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
          call. = FALSE)
   }
   Xc <- X[ok, , drop = FALSE]
+  pg <- bricklayer_progress("Mahalanobis distances", 0)
+  on.exit(pg$done(), add = TRUE)
+  pg$update(info = sprintf("centring %s rows", format(nrow(Xc), big.mark = ",")))
 
   if (isTRUE(robust)) {
     centre <- apply(Xc, 2L, core_median)
@@ -126,6 +129,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   # and hand back distances that are an artifact of the floor rather
   # than a property of the data. Collinear columns have no Mahalanobis
   # distance, and saying so beats inventing one.
+  pg$update(info = "covariance")
   ev <- tryCatch(eigen(S, symmetric = TRUE, only.values = TRUE)$values,
                  error = function(e) NULL)
   if (is.null(ev) ||
@@ -136,6 +140,7 @@ mahalanobis_outliers <- function(data, alpha = 0.001, robust = TRUE) {
   }
   S <- .rmbl_make_pd(S, 1e-8)   # positive definite by construction, so invertible
   S_inv <- solve(S)
+  pg$update(info = "distances")
   d2 <- rowSums((Z %*% S_inv) * Z)
 
   out <- data.frame(row = which(ok), distance = sqrt(d2),

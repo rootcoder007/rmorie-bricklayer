@@ -106,10 +106,14 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
   }
   if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
 
-  rows <- lapply(sizes, function(sz) {
+  pg <- bricklayer_progress("power curve", length(sizes) * reps)
+  on.exit(pg$done(), add = TRUE)
+  rows <- lapply(seq_along(sizes), function(si) {
+    sz <- sizes[[si]]
     hits <- 0L
     usable <- 0L
     for (r in seq_len(reps)) {
+      pg$update((si - 1L) * reps + r - 1L, sprintf("size %s, rep %d/%d", format(sz), r, reps))
       d <- tryCatch(inject(data, sz), error = function(e) NULL)
       if (!is.data.frame(d)) next
       obs <- tryCatch(as.numeric(statistic(d))[1L],

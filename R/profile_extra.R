@@ -194,7 +194,10 @@ top_correlations <- function(data, n = 10L, method = c(
   }
 
   pairs <- utils::combn(num, 2L)
+  pg <- bricklayer_progress("correlations", ncol(pairs))
+  on.exit(pg$done(), add = TRUE)
   vals <- vapply(seq_len(ncol(pairs)), function(j) {
+    pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
     a <- data[[pairs[1L, j]]]
     b <- data[[pairs[2L, j]]]
     ok <- !is.na(a) & !is.na(b)

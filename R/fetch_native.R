@@ -66,9 +66,9 @@ bricklayer_fetch <- function(url, dest, wayback = "", timeout = 120L) {
   if (length(timeout) != 1L || is.na(timeout) || timeout < 1L) {
     stop("`timeout` must be a positive number of seconds", call. = FALSE)
   }
-  code <- .Call(C_rmbl_fetch_fallback, url,
-                if (is.null(wayback)) "" else as.character(wayback),
-                dest, as.integer(timeout))
+  code <- .bl_net(url, .Call(C_rmbl_fetch_fallback, url,
+                            if (is.null(wayback)) "" else as.character(wayback),
+                            dest, as.integer(timeout)))
   if (code == 0L) return(invisible("live"))
   if (code == 1L) return(invisible("wayback"))
   v <- -code
@@ -115,6 +115,6 @@ wayback_snapshot_url_native <- function(url, timeout = 30L) {
   # up as it is (an http:// URL was refused and never found; review of e57fed5); a private address
   # is still refused
   .rmbl_check_public_url(url, "url", allow_http = TRUE)
-  snap <- .Call(C_rmbl_wayback, url, as.integer(timeout))
+  snap <- .bl_net("https://archive.org/", .Call(C_rmbl_wayback, url, as.integer(timeout)))
   if (is.character(snap) && nzchar(snap)) snap else NULL
 }

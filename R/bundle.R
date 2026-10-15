@@ -100,10 +100,15 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
     stop("these files are not in `dir`: ",
          paste(utils::head(missing, 5L), collapse = ", "), call. = FALSE)
   }
-  entries <- lapply(files, function(f) {
+  pg <- bricklayer_progress("bundling", length(files))
+  on.exit(pg$done(), add = TRUE)
+  entries <- lapply(seq_along(files), function(i) {
+    f <- files[[i]]
+    pg$update(i - 1L, sprintf("hashing %s", basename(f)))
     p <- file.path(dir, f)
     list(path = f, sha256 = sha256_file(p), size_bytes = file.size(p))
   })
+  pg$update(length(files), "signing")
   payload <- list(
     files = entries,
     manifest_digest = manifest_digest(manifest),
@@ -157,8 +162,11 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE)
   }
+  pg <- bricklayer_progress("verifying bundle", length(bundle$files))
+  on.exit(pg$done(), add = TRUE)
   for (e in bundle$files) {
     f <- as.character(e$path)[1L]
+    pg$tick(1, sprintf("hashing %s", basename(f)))
     p <- .rmbl_safe_rel(f, dir)
     if (is.null(p)) {
       note_row(paste0("file:", f), FALSE,

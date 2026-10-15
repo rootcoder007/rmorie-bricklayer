@@ -346,7 +346,7 @@
 # The GET seam for public https addresses (a provider model list, the data key check).
 .bl_http_get <- function(url, timeout, headers) {
   .rmbl_check_public_url(url, "url")
-  .Call(C_rmbl_http_get, url, as.integer(timeout), headers, FALSE)
+  .bl_net(url, .Call(C_rmbl_http_get, url, as.integer(timeout), headers, FALSE))
 }
 
 # ---- your own endpoint and a local Ollama server ------------------------------
@@ -415,7 +415,7 @@
 # address, the usual checks for anything else. One seam, so tests can stand
 # in a server.
 .bl_http_get_local <- function(url, timeout, headers) {
-  .Call(C_rmbl_http_get, url, as.integer(timeout), headers, .bl_loopback_url(url))
+  .bl_net(url, .Call(C_rmbl_http_get, url, as.integer(timeout), headers, .bl_loopback_url(url)))
 }
 # POST for the local routes, the same way.
 .bl_http_post_local <- function(url, body, content_type, timeout, headers) {

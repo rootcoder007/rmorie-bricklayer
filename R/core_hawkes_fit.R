@@ -205,19 +205,28 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
   x0 <- pmin(pmax(x0, b$lower), b$upper)
   exact_nll <- function(th) .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[1]]
   converged <- TRUE
+  # EM is an R loop: a bar with its iterations; the other routes are long native calls: a spinner
+  # with the stage
+  stage <- function(what, expr) {
+    .bl_busy(sprintf("Hawkes fit (%s, %s events): %s", kernel, format(n, big.mark = ","), what), expr)
+  }
   if (method == "em") {
-    em <- .rmbl_hk_em(times, horizon, kernel, baseline, x0, b)
+    pg <- bricklayer_progress(sprintf("Hawkes fit (%s)", kernel), 0)
+    on.exit(pg$done(), add = TRUE)
+    pg$update(info = sprintf("fitting %s events", format(n, big.mark = ",")))
+    em <- .rmbl_hk_em(times, horizon, kernel, baseline, x0, b, pg = pg)
     # EM converges linearly: its steps shrink long before it reaches the maximum, so a small step
     # is not a stop (it ended 1.4e-5 short on macOS x86_64). Finish with the projected BFGS on the
     # exact likelihood from EM's point; it only moves uphill.
+    pg$update(info = "polishing the EM point")
     pol <- .rmbl_hk_pbfgs(times, horizon, kernel, baseline, "exact", 1e-12, b, em$theta)
     theta <- if (pol$value <= exact_nll(em$theta)) pol$par else em$theta
     converged <- pol$iterations < 2000
   } else if (method == "inar") {
-    theta <- .rmbl_hk_inar(times, horizon, kernel, baseline, b)
+    theta <- stage("INAR approximation", .rmbl_hk_inar(times, horizon, kernel, baseline, b))
   } else {
     run <- function(st) .rmbl_hk_pbfgs(times, horizon, kernel, baseline, method, eps, b, st)
-    fit <- run(x0)
+    fit <- stage("first start", run(x0))
     if (!is.null(start) && fit$value >= 1e11) {
       # the optimizer cannot move from a point where the likelihood is not finite (it returned
       # the start itself, reported as converged)
@@ -227,7 +236,8 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
     if (kernel != "exponential" && is.null(start)) {
       # a second, deterministic start at the exponential fit (the shape-1 member of Weibull and
       # gamma), as morie's Python fit: the likelihood is multimodal
-      fit2 <- run(.rmbl_hk_warm(times, horizon, kernel, baseline, b))
+      fit2 <- stage("second start, from the exponential fit",
+                    run(.rmbl_hk_warm(times, horizon, kernel, baseline, b)))
       if (fit2$value < fit$value) fit <- fit2
     }
     theta <- fit$par
@@ -314,7 +324,7 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 }
 
 # EM (Veen & Schoenberg 2008), as morie's Python hawkes_em
-.rmbl_hk_em <- function(times, horizon, kernel, baseline, x0, b, max_iter = 500L, tol = 1e-9) {
+.rmbl_hk_em <- function(times, horizon, kernel, baseline, x0, b, max_iter = 500L, tol = 1e-9, pg = NULL) {
   kind <- .rmbl_hk_kind[[kernel]]
   bk <- .rmbl_hk_bkind[[baseline]]
   nb <- if (baseline == "constant") 1L else 4L
@@ -327,6 +337,7 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
   nll_of <- function(th) .rmbl_hk_call(times, horizon, kernel, baseline, th, "exact", 1e-12, FALSE)[[1]]
   cur <- nll_of(theta)
   for (it in seq_len(max_iter)) {
+    if (!is.null(pg)) pg$update(info = sprintf("EM iteration %d", it))
     a <- theta[seq_len(nb)]
     eta <- theta[[nb + 1L]]
     psi <- theta[-seq_len(nb + 1L)]

@@ -40,7 +40,10 @@ yoy_pvalues <- function(y) {
   w1 <- rep_len(w1, n)
   w2 <- rep_len(w2, n)
   p <- rep(NA_real_, n)
+  pg <- bricklayer_progress("exact p-values", n)
+  on.exit(pg$done(), add = TRUE)
   for (i in seq_len(n)) {
+    pg$update(i - 1L, sprintf("comparison %d/%d", i, n))
     if (is.na(v1[i]) || is.na(v2[i]) || is.na(w1[i]) || is.na(w2[i])) next
     tot <- v1[i] + v2[i]
     if (tot <= 0 || w1[i] <= 0 || w2[i] <= 0) next
@@ -146,7 +149,10 @@ drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
   .rmbl_local_seed(seed)
   hits <- NULL
   any_flag <- logical(n)
+  pg <- bricklayer_progress("drift calibration", n)
+  on.exit(pg$done(), add = TRUE)
   for (i in seq_len(n)) {
+    pg$update(i - 1L, sprintf("split %d/%d", i, n))
     idx <- sample.int(nrow(data), nrow(data) %/% 2L)
     res <- capsule_drift(data[idx, , drop = FALSE],
                          data[-idx, , drop = FALSE], alpha = alpha, ...)

@@ -692,6 +692,29 @@ struct Wait {
     bool interrupted;
 };
 
+/* Any long native call, not only a POST: R sets a label (.bl_busy(), .bl_net()) and every poll for
+ * a Ctrl-C (rmbl_interrupt_pending(), which the kernels call every few hundred milliseconds of work,
+ * and libcurl's progress callbacks several times a second) turns the spinner: one clock from when the
+ * label was set and one line, wiped when R clears the label. Nothing for the first 0.75 s, so a quick
+ * call never flashes a line; nothing while a POST draws its own wait line. */
+static std::chrono::steady_clock::time_point g_busy_t0, g_busy_last;
+static size_t g_busy_width = 0;
+static bool g_post_waiting = false;
+
+extern "C" void rmbl_wait_tick(void) {
+    if (g_wait_label.empty() || g_post_waiting) return;
+    const auto now = std::chrono::steady_clock::now();
+    const double secs = std::chrono::duration<double>(now - g_busy_t0).count();
+    if (secs < 0.75) return;
+    if (g_busy_width && std::chrono::duration<double>(now - g_busy_last).count() < 0.125) return;
+    g_busy_last = now;
+    const char *spin = rmbl_progress_spinner(secs, g_wait_unicode);
+    const int n = std::snprintf(NULL, 0, "x %s  %ds ", g_wait_label.c_str(), static_cast<int>(secs));
+    if (g_wait_color) REprintf("\r\033[38;2;130;160;255m%s\033[0m %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
+    else REprintf("\r%s %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
+    if (n > 0 && static_cast<size_t>(n) > g_busy_width) g_busy_width = static_cast<size_t>(n);
+}
+
 int wait_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
     Wait *w = static_cast<Wait *>(ud);
     if (rmbl_interrupt_pending()) {
@@ -754,9 +777,11 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
         curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
         curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
         curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
+        g_post_waiting = true;
     }
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
+    g_post_waiting = false;
     if (wait.width) REprintf("\r%s\r", std::string(wait.width, ' ').c_str());
     /* a Ctrl-C that ended the wait is raised by the barrier once this returns: the caller never
      * sees a status to retry on, so the prompt is not sent again (review of 29a55d8, G1) */
@@ -1027,6 +1052,11 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
     if (TYPEOF(label) != STRSXP || XLENGTH(label) != 1 || STRING_ELT(label, 0) == NA_STRING) {
         Rf_error("`label` must be a single string");
     }
+    /* the busy spinner's line ends with the label that drew it */
+    if (g_busy_width) REprintf("\r%s\r", std::string(g_busy_width, ' ').c_str());
+    g_busy_width = 0;
+    g_busy_t0 = g_busy_last = std::chrono::steady_clock::now();
+    g_post_waiting = false;
     g_wait_label = std::string(Rf_translateCharUTF8(STRING_ELT(label, 0))).substr(0, 200);
     g_wait_unicode = Rf_asLogical(unicode) == TRUE;
     g_wait_color = Rf_asLogical(color) == TRUE;

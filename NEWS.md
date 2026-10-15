@@ -1,3 +1,39 @@
+# rmoriebricklayer 0.5.13
+
+## Live progress for long work
+
+* **`bricklayer_progress(label, total)`**, exported: the animated bar of `bricklayer_download()`
+  for any loop, as an object with `$update(done, info)`, `$tick(by, info)`, `$wait(seconds)` and
+  `$done(summary)`. It follows the download bar's rule (drawn while a person watches a terminal:
+  an interactive session, or a command line that sets `options(morie.progress = TRUE)`; a line at
+  each tenth when stderr is not a terminal; nothing with `options(morie.quiet = TRUE)` or
+  `quiet = TRUE`). Nothing is drawn for the first 0.75 s, so a fast call never flashes a bar; a
+  bar inside another function's running bar stays silent, so nested work shows the outer loop; an
+  update is a stored value when quiet and a throttled frame when drawing. With `total = 0` it is a
+  spinner with the time so far and the current stage. `on.exit(p$done(), add = TRUE)` clears the
+  line when the work fails or is interrupted.
+* **Wired into the long-running functions**: the bootstrap of `exposure_response_plr()`, the folds
+  of `plr_crossfit()`, the permutations of `knox_test()` and `step_change()`, the controls of
+  `capsule_falsify()`, the repetitions of `capsule_power()`, the splits of `drift_calibrate()`,
+  the columns of `capsule_drift()`, `profile_columns()`, `correlation_table()` and
+  `top_correlations()`, the stages of `mahalanobis_outliers()`, the EM iterations of
+  `mcar_test()` and of `core_hawkes_fit(method = "em")`, the replicate checks of
+  `survey_design()`, the steps of `lagrangian_particles()` and `advection_diffusion_2d()`, the
+  receptors of `gaussian_plume()`, `gaussian_puff()` and `plume_field()`, the files of
+  `capsule_bundle()` and `capsule_bundle_verify()`, the columns and the writing of
+  `make_synthetic_csv()`, the packages of `capture_dependencies()`, the groups and exact p-values
+  of `analyse_table()` and `yoy_pvalues()`, and long vectors in `benford_test()` and
+  `distinct_sketch()` (read in blocks of a million; the counts and registers are those of one
+  pass).
+* **A spinner for long native calls**: XMSS key generation and signing (`pqc_keygen()`, a few
+  seconds at the default height, about a minute at 14), `derive_key()`, the native routes of
+  `core_hawkes_fit()` (with the stage: first start, second start) and every network request
+  (`bricklayer_fetch()`, the portal resolvers, `wayback_snapshot_url_native()`, revocation and
+  service lookups, model lists) show a turning spinner with the label and the seconds so far,
+  drawn by the compiled layer each time the call polls for a Ctrl-C, from 0.75 s on, on a
+  terminal only. The XMSS tree now polls every 32 leaves (it was every 1,024, once in a whole
+  default key).
+
 # rmoriebricklayer 0.5.12
 
 The 0.5.11 stress round (commit a5a4d10) and the review of this release's own branch (head

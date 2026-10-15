@@ -256,7 +256,18 @@ distinct_sketch <- function(x, p = 14L, registers = NULL) {
            "same `p`", call. = FALSE)
     }
   }
-  .Call(C_rmbl_hll_add, as.character(x), p, registers)
+  # in blocks of a million, so a long vector shows its progress (a register keeps its maximum,
+  # so the blocks give exactly the registers of one pass)
+  n <- length(x)
+  if (n <= 1e6) return(.Call(C_rmbl_hll_add, as.character(x), p, registers))
+  pg <- bricklayer_progress("distinct sketch", n)
+  on.exit(pg$done(), add = TRUE)
+  for (s in seq.int(1, n, by = 1e6)) {
+    e <- min(n, s + 1e6 - 1)
+    registers <- .Call(C_rmbl_hll_add, as.character(x[s:e]), p, registers)
+    pg$update(e, sprintf("%s of %s values", .bl_n(e), .bl_n(n)))
+  }
+  registers
 }
 
 #' @rdname rmbl_distinct

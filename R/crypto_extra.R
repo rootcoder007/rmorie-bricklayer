@@ -148,7 +148,8 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
       call. = FALSE
     )
   }
-  .Call(C_rmbl_pbkdf2, passphrase, salt, iterations, length)
+  .bl_busy(sprintf("deriving a key (%s PBKDF2 iterations)", format(iterations, big.mark = ",")),
+           .Call(C_rmbl_pbkdf2, passphrase, salt, iterations, length))
 }
 
 #' BLAKE2b digest, optionally keyed

@@ -442,7 +442,10 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
   storage.mode(X) <- "double"
   U <- numeric(n)
   V <- numeric(n)
+  pg <- bricklayer_progress("cross-fitting", k_folds)
+  on.exit(pg$done(), add = TRUE)
   for (k in seq_len(k_folds)) {
+    pg$update(k - 1L, sprintf("fold %d/%d", k, k_folds))
     test <- folds == k
     Xt <- X[!test, , drop = FALSE]
     gy <- stats::lm.fit(Xt, y[!test])$coefficients
@@ -452,6 +455,7 @@ plr_crossfit <- function(data, outcome, treatment, covariates, k_folds = 5L, see
     U[test] <- y[test] - drop(X[test, , drop = FALSE] %*% gy)
     V[test] <- d[test] - drop(X[test, , drop = FALSE] %*% gd)
   }
+  pg$update(k_folds, sprintf("fold %d/%d", k_folds, k_folds))
   denom <- sum(V * V)
   scale <- max(1, sum((d - mean(d))^2))
   if (!is.finite(denom) || denom <= 1e-10 * scale) {
@@ -500,6 +504,9 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
   n_bootstrap <- .pollution_scalar(n_bootstrap, "n_bootstrap")
   if (n_bootstrap != round(n_bootstrap)) stop("`n_bootstrap` must be a whole number of resamples", call. = FALSE)
   n_bootstrap <- as.integer(n_bootstrap)
+  pg <- bricklayer_progress("exposure-response bootstrap", n_bootstrap + 1L)
+  on.exit(pg$done(), add = TRUE)
+  pg$update(0, "fitting the full sample")
   base <- estimator(data, outcome, exposure, confounders)
   ate <- as.numeric(base$ate)
   se_analytic <- as.numeric(base$se)
@@ -507,6 +514,7 @@ exposure_response_plr <- function(data, outcome, exposure, confounders, n_bootst
   boot <- .rmbl_with_seed(random_state, {
     out <- numeric(0)
     for (b in seq_len(n_bootstrap)) {
+      pg$update(b, sprintf("bootstrap %d/%d", b, n_bootstrap))
       idx <- sample.int(n, n, replace = TRUE)
       r <- tryCatch(estimator(data[idx, , drop = FALSE], outcome, exposure, confounders),
                     error = function(e) NULL)

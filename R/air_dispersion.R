@@ -272,7 +272,12 @@ gaussian_plume <- function(q, u, h, receptors, stability = "D", setting = "rural
   mixing_height <- .ad_lid(mixing_height, h)
   R <- .ad_rec(receptors)
   .ad_receptor_heights(R, mixing_height)
-  vapply(seq_len(nrow(R)), function(i) {
+  nr <- nrow(R)
+  pg <- bricklayer_progress("Gaussian plume", nr)
+  on.exit(pg$done(), add = TRUE)
+  every <- max(1L, nr %/% 500L)
+  vapply(seq_len(nr), function(i) {
+    if (i %% every == 0L) pg$update(i, sprintf("receptor %d/%d", i, nr))
     x <- R[i, 1L]
     if (x <= 0) return(0)
     s <- pg_sigmas(x, stability, setting)
@@ -299,7 +304,12 @@ gaussian_puff <- function(mass, u, h, receptors, t, stability = "D", setting = "
   sy <- s$sigma_y
   sz <- s$sigma_z
   k <- mass / ((2 * pi)^1.5 * sy * sy * sz)
-  vapply(seq_len(nrow(R)), function(i) {
+  nr <- nrow(R)
+  pg <- bricklayer_progress("Gaussian puff", nr)
+  on.exit(pg$done(), add = TRUE)
+  every <- max(1L, nr %/% 500L)
+  vapply(seq_len(nr), function(i) {
+    if (i %% every == 0L) pg$update(i, sprintf("receptor %d/%d", i, nr))
     k * exp(-(R[i, 1L] - u * t)^2 / (2 * sy * sy)) * exp(-(R[i, 2L]^2) / (2 * sy * sy)) *
       .ad_vertical(R[i, 3L], h, sz, mixing_height, n_images)
   }, 0)
@@ -387,7 +397,10 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
     stab <- abs(ax) + abs(ay) + 2 * (dxn + dyn)
     n_steps <- n_steps * substeps
   }
+  pg <- bricklayer_progress("advection-diffusion", n_steps)
+  on.exit(pg$done(), add = TRUE)
   for (step in seq_len(n_steps)) {
+    pg$update(step - 1L, sprintf("step %d/%s", step, format(n_steps, big.mark = ",", scientific = FALSE)))
     nw <- matrix(0, nx, ny)
     for (i in seq_len(max(nx - 2, 0)) + 1) {
       for (j in seq_len(max(ny - 2, 0)) + 1) {
@@ -455,7 +468,15 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
   ys <- rep(y0, n)
   fx <- sqrt(2 * kx * dt)
   fy <- sqrt(2 * ky * dt)
+  pg <- bricklayer_progress("particles", n_steps)
+  on.exit(pg$done(), add = TRUE)
+  # a step can be a few microseconds (one particle): the bar hears of every thousandth
+  every <- max(1, n_steps %/% 1000)
   for (step in seq_len(n_steps)) {
+    if (step %% every == 0) {
+      pg$update(step - 1L, sprintf("step %s/%s", format(step, big.mark = ",", scientific = FALSE),
+                                   format(n_steps, big.mark = ",", scientific = FALSE)))
+    }
     k <- step - 1
     xs <- xs + u * dt + fx * draw(n, seed, 2 * k)
     ys <- ys + v * dt + fy * draw(n, seed, 2 * k + 1)

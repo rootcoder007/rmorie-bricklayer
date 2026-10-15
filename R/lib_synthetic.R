@@ -250,7 +250,13 @@ make_synthetic_csv <- function(schema, out_path,
   out <- list()
   ctx <- list() # one entry per row
   ctx_person <- list() # one entry per person, before replication
+  # base R only when sourced standalone in a bundle: the bar only when the package is there
+  pg <- if (exists("bricklayer_progress", mode = "function")) {
+    bricklayer_progress("synthetic data", length(schema$columns) + 1L)
+  }
+  if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
   for (col_name in names(schema$columns)) {
+    if (!is.null(pg)) pg$tick(0, sprintf("column %s", col_name))
     spec <- schema$columns[[col_name]]
     type <- spec$type %||% "sample"
     if (identical(type, "bernoulli")) {
@@ -265,7 +271,9 @@ make_synthetic_csv <- function(schema, out_path,
     }
     ctx[[col_name]] <- vals
     out[[col_name]] <- vals
+    if (!is.null(pg)) pg$tick()
   }
+  if (!is.null(pg)) pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
   out_df <- as.data.frame(out, stringsAsFactors = FALSE)
   utils::write.csv(out_df, out_path, row.names = FALSE)
   # The CSV stays a plain CSV so every reader opens it; the sidecar beside

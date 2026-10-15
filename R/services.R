@@ -277,7 +277,7 @@ bricklayer_services <- function(refresh = FALSE, max_age = 86400, timeout = 20,
 # The download seam (one line, so the tests can serve a document of their own).
 .rmbl_net_download <- function(url, tmp, timeout) {
   # 1 MiB is a large document
-  res <- .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL, 1048576, FALSE)
+  res <- .bl_net(url, .Call(C_rmbl_http_download, url, tmp, as.integer(timeout), NULL, NULL, 1048576, FALSE))
   res$status
 }
 

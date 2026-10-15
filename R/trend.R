@@ -364,9 +364,15 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # same MAXIMUM over splits. Comparing the best split against its own
   # null would find a break in any series.
   nfact <- if (n <= 8L) factorial(n) else Inf
+  pg <- bricklayer_progress("step change", .bl_count(min(nfact, n_perm)))
+  on.exit(pg$done(), add = TRUE)
   if (nfact <= n_perm) {
     perms <- .rmbl_permutations(n)
-    null <- apply(perms, 1L, function(p) max(stat(y[p])$vals))
+    np <- nrow(perms)
+    null <- vapply(seq_len(np), function(i) {
+      pg$update(i - 1L, sprintf("ordering %d/%d", i, np))
+      max(stat(y[perms[i, ]])$vals)
+    }, 0)
     method <- sprintf("exact over all %d orderings", nrow(perms))
     np <- nrow(perms)
   } else {
@@ -378,7 +384,10 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     .rmbl_local_seed(seed)
     null <- vapply(
       seq_len(n_perm),
-      function(i) max(stat(sample(y))$vals), 0
+      function(i) {
+        pg$update(i - 1L, sprintf("permutation %d/%d", i, n_perm))
+        max(stat(sample(y))$vals)
+      }, 0
     )
     if (is.null(old)) {
       suppressWarnings(rm(".Random.seed", envir = globalenv()))

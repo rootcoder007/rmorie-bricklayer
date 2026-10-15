@@ -273,7 +273,10 @@ capture_dependencies <- function(packages = loadedNamespaces()) {
     if (is.null(v) || !nzchar(as.character(v)[1L])) return(NA_character_)
     as.character(v)[1L]
   }
+  pg <- bricklayer_progress("reading package descriptions", length(packages))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(packages, function(p) {
+    pg$tick(info = p)
     d <- suppressWarnings(tryCatch(utils::packageDescription(p), error = function(e) NULL))  # absent: an NA row
     if (inherits(d, "try-error") || !is.list(d)) d <- NULL
     data.frame(

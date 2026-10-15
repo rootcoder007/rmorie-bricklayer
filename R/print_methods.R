@@ -393,7 +393,10 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (ncol(data) == 0L) {
     stop("`data` has no columns to profile", call. = FALSE)
   }
+  pg <- bricklayer_progress("profiling columns", ncol(data))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(names(data), function(nm) {
+    pg$tick(info = nm)
     v <- data[[nm]]
     n_missing <- sum(is.na(v))
     base <- data.frame(column = nm, type = class(v)[1L], n = length(v),

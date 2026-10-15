@@ -654,7 +654,8 @@ pqc_keygen <- function(height = 10L, sk_seed = NULL, pub_seed = NULL,
   # cannot be the one the RFC specifies.
   sk_prf <- if (is.null(sk_prf)) .rmbl_random_seed_hex() else
     .rmbl_check_seed(sk_prf, "sk_prf")
-  root <- .Call(C_rmbl_xmss_keygen, sk_seed, pub_seed, height)
+  root <- .bl_busy(sprintf("XMSS key: building the tree of %s one-time keys", format(2^height, big.mark = ",")),
+                   .Call(C_rmbl_xmss_keygen, sk_seed, pub_seed, height))
   out <- list(root = root, pub_seed = pub_seed, sk_seed = sk_seed,
               sk_prf = sk_prf,
               height = height, next_index = 0L,
@@ -896,8 +897,9 @@ capsule_sign <- function(message, key, scheme = NULL, context = NULL,
   ids <- .rmbl_xmss_ids(key)
   # retire the index before the signature exists (RFC 8391's order), under the record's lock
   .rmbl_xmss_reserve(ids, idx)
-  res <- .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
-               as.integer(key$height), idx, message)
+  res <- .bl_busy(sprintf("XMSS signature %d: rebuilding the tree", idx),
+                  .Call(C_rmbl_xmss_sign, key$sk_seed, key[["sk_prf"]], key$pub_seed,
+                        as.integer(key$height), idx, message))
   if (!identical(tolower(as.character(res$root)), ids$root)) {
     stop(sprintf(paste("this key's `root` does not match its seeds: the key object was edited. No signature",
                        "is returned, and index %d stays retired"), idx), call. = FALSE)

@@ -198,14 +198,14 @@ revocation_fetch <- function(path, timeout = 10) {
 # The two network calls, each one line, so the protocol logic above and
 # below can be exercised against recorded answers.
 .rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
-  tryCatch(.Call(C_rmbl_fetch_fallback, url, fallback, tmp,
-                 as.integer(timeout)),
+  tryCatch(.bl_net(url, .Call(C_rmbl_fetch_fallback, url, fallback, tmp,
+                              as.integer(timeout))),
            error = function(e) NULL)
 }
 
 .rmbl_net_post <- function(url, body, content_type, timeout) {
-  tryCatch(.Call(C_rmbl_http_post, url, body, content_type,
-                 as.integer(timeout), NULL, FALSE),
+  tryCatch(.bl_net(url, .Call(C_rmbl_http_post, url, body, content_type,
+                              as.integer(timeout), NULL, FALSE)),
            error = function(e) NULL)
 }
 

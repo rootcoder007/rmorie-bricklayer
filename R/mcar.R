@@ -45,8 +45,11 @@
   }
 
   iter <- 0L
+  pg <- bricklayer_progress("EM (normal, missing data)", 0)
+  on.exit(pg$done(), add = TRUE)
   for (it in seq_len(max_iter)) {
     iter <- it
+    pg$update(info = sprintf("iteration %d", it))
     T1 <- numeric(p)              # accumulated first moments
     T2 <- matrix(0, p, p)         # accumulated second moments
     for (i in seq_len(n)) {

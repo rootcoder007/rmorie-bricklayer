@@ -1237,8 +1237,8 @@ bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
       txt <- .rmbl_check_public_url(txt, "txt")
       tmp <- tempfile(fileext = ".json")
       on.exit(unlink(tmp), add = TRUE)
-      res <- .Call(C_rmbl_http_download, txt, tmp, 60L,
-                   "Accept: application/json, text/*, */*", NULL, 16777216, FALSE)  # 16 MiB is a large JSON
+      res <- .bl_net(txt, .Call(C_rmbl_http_download, txt, tmp, 60L,
+                                "Accept: application/json, text/*, */*", NULL, 16777216, FALSE))  # 16 MiB is a large JSON
       if (res$status < 0) stop(sprintf("%s: %s", txt, res$error), call. = FALSE)
       if (res$status >= 400) stop(sprintf("%s answered HTTP %d", txt, res$status), call. = FALSE)
       txt <- file(tmp)

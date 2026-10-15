@@ -430,7 +430,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   keys <- lapply(numcols, function(v) key(as.numeric(v)))
   warned <- character()
   equal <- integer()
+  pg <- bricklayer_progress("checking replicate weights", length(reps))
+  on.exit(pg$done(), add = TRUE)
   for (b in seq_along(reps)) {
+    pg$update(b - 1L, sprintf("replicate %d/%d", b, length(reps)))
     r <- reps[[b]]
     rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     nm <- names(reps)[[b]] %||% as.character(b)
