@@ -24,14 +24,24 @@ system's CSPRNG.}
 \item{key}{A key from \code{fips_keygen()}.}
 }
 \value{
-A list of class \code{bricklayer_fips_key}: \code{public},
-\code{secret} (both hex), and \code{scheme}.
+\code{fips_keygen()}: a list of class \code{bricklayer_fips_key} (also
+\code{bricklayer_oqs_key}) with \code{public} and \code{secret} (the encoded keys as
+lowercase hex strings, in the standards' byte layouts) and \code{scheme}.
+Printing it never shows the secret. \code{fips_public_key()}: a list of
+class \code{bricklayer_fips_public_key} (also \code{bricklayer_oqs_public_key})
+with \code{public} and \code{scheme}.
 }
 \description{
 Generates a key for one of the NIST-standardised signature schemes:
 ML-DSA (FIPS 204) or SLH-DSA (FIPS 205). Both are implemented in this
 package, natively, with no system dependency;
-\code{\link[=pqc_backends]{pqc_backends()}} lists the parameter sets.
+\code{\link[=pqc_backends]{pqc_backends()}} lists the parameter sets. The key signs
+capsule
+manifests, attestations and bundles with \code{\link[=capsule_sign]{capsule_sign()}},
+and its
+public half, from \code{fips_public_key()}, is what you give to anyone who
+should be able to check those signatures with
+\code{\link[=capsule_verify]{capsule_verify()}}.
 }
 \details{
 Unlike \code{\link[=pqc_keygen]{pqc_keygen()}} 's hash-based key, these
@@ -45,6 +55,26 @@ parameter sets have small signatures and slow signing, its \code{f} sets
 the reverse, and its SHAKE and SHA-2 families are equally strong: pick
 SHA-2 where a validated SHA-2 implementation is what an auditor will ask
 about. \code{"ML-DSA-65"} is the sensible default.
+
+Key generation expands a random seed (the length
+\code{\link[=fips_sizes]{fips_sizes()}} reports
+as \code{seed}: 32 bytes for ML-DSA, three times the security level in bytes
+for SLH-DSA) into the key pair exactly as FIPS 204 \code{ML-DSA.KeyGen} and
+FIPS 205 \code{slh_keygen} do, so the same seed gives the same key as any
+other conforming implementation. ML-DSA keys take milliseconds; SLH-DSA
+keys take from milliseconds (the \code{f} sets) to about a second (the \code{s}
+sets, which build a larger top tree), with a spinner on stderr after
+0.75 s when a person is watching (see
+\code{\link[=bricklayer_progress]{bricklayer_progress()}}) and
+Ctrl-C honoured. Nothing is written to disk: saving the key, and keeping
+its \code{secret} private, is up to you. \code{fips_public_key()} drops the secret
+half, leaving what a verifier needs.
+
+Refusals: an unknown scheme (the message lists the known ones, and
+points to \code{\link[=pqc_keygen]{pqc_keygen()}} for XMSS), a \code{seed} that is not
+a raw vector of
+the right length, and for \code{fips_public_key()} a key that did not come
+from \code{fips_keygen()} or \code{\link[=fips_key]{fips_key()}}.
 }
 \section{Security}{
 
@@ -76,6 +106,17 @@ capsule_verify("a manifest digest", sig, fips_public_key(key))
 sig2 <- capsule_sign("a manifest digest", key, context = "release")
 capsule_verify("a manifest digest", sig2, key, context = "release")
 capsule_verify("a manifest digest", sig2, key, context = "staging")
+
+# A fixed seed reproduces the key (for test vectors only: a guessable
+# seed is a guessable key).
+seed <- as.raw(1:32)
+identical(fips_keygen("ML-DSA-44", seed)$public, fips_keygen("ML-DSA-44", seed)$public)
+
+# The public half carries no secret.
+names(fips_public_key(key))
+
+# An unknown parameter set is refused.
+try(fips_keygen("ML-DSA-99"))
 }
 \references{
 National Institute of Standards and Technology (2024).

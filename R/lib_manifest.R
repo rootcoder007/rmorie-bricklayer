@@ -30,18 +30,54 @@
 
 #' Construct a Reproducibility Manifest
 #'
-#' Creates an empty manifest object that accumulates cross-check entries
-#' via [record()] and is later serialized with
-#' [write_manifest_json()].
+#' Creates an empty manifest: the record of one analysis run that collects
+#' the run's metadata, the cross-checks of its results against expected
+#' values (added with [record()]), and optionally a snapshot of the
+#' R
+#' environment it ran in. Write it out with
+#' [write_manifest_json()] and
+#' [write_summary_txt()], or hash and sign it with
+#' [manifest_digest()] and
+#' [capsule_attest()], so a reader can later see what was
+#' run, where, and
+#' whether the numbers matched.
 #'
-#' @param meta A named list of run metadata (e.g.
-#' `project`, `author`, `run_at`, `synthetic`) .
-#' @param environment Logical; when `TRUE` (the
-#' default) the manifest also records the analysis environment via
-#' [capture_environment()] (R version,
-#' platform, OS, UTC timestamp, loaded package versions).
-#' @return A manifest list with elements `meta`, an empty
-#' `results` list, and (when requested) `environment`.
+#' @details
+#' The manifest is a plain list, so you can add your own elements to
+#' \code{meta} before writing it. The package owns the synthetic-data flag:
+#' \code{meta$synthetic} is set to \code{TRUE} when you pass it, when the
+#' environment variable \code{BRICKLAYER_SYNTHETIC} is set to a value other
+#' than \code{0}, \code{false}, \code{no} or \code{off}, or when the package
+#' generated synthetic data earlier in the session. It is written only when
+#' \code{TRUE}, so a manifest of real data keeps the digest it had before the
+#' flag existed. On a synthetic manifest every [record()] entry is
+#' \code{INFO}.
+#'
+#' Fields of \code{meta} that [write_summary_txt()]
+#' reads: \code{project},
+#' \code{author}, \code{run_at}, \code{os}, \code{r_version} and
+#' \code{r_package_versions} (a named list or vector of versions).
+#'
+#' Errors when \code{meta} is not a list. Nothing is written.
+#'
+#' @param meta A list of run metadata, normally named (for example
+#'   \code{project}, \code{author}, \code{run_at}, \code{synthetic}). May be
+#'   \code{list()}.
+#' @param environment Logical scalar; when \code{TRUE} (the default) the
+#'   manifest also records the analysis environment via
+#'   [capture_environment()]: R version, platform, OS,
+#'   UTC timestamp, random
+#'   number generator kind and whether it was seeded, and the version of
+#'   every loaded package. Any other value leaves it out.
+#' @return A list with elements \code{meta} (the list given, plus
+#'   \code{synthetic = TRUE} when flagged), \code{results} (an empty list,
+#'   filled by [record()]) and, when \code{environment = TRUE},
+#'   \code{environment} (the list from
+#'   [capture_environment()]).
+#' @seealso [record()],
+#'   [write_manifest_json()],
+#'   [write_summary_txt()],
+#'   [manifest_digest()].
 #' @examples
 #' # Minimal manifest, no environment capture.
 #' man <- make_manifest(list(project = "demo-study", author = "A. Author"),
@@ -54,6 +90,13 @@
 #' full <- make_manifest(list(project = "demo"), environment = TRUE)
 #' names(full) # adds "environment"
 #' full$environment$r_version
+#'
+#' # a run on generated data is flagged, and its checks become INFO
+#' syn <- make_manifest(list(project = "demo", synthetic = TRUE), environment = FALSE)
+#' syn$meta$synthetic
+#'
+#' # meta must be a list
+#' try(make_manifest("demo"))
 #' @export
 make_manifest <- function(meta, environment = TRUE) {
   if (!is.list(meta)) stop("`meta` must be a list", call. = FALSE)
@@ -70,25 +113,53 @@ make_manifest <- function(meta, environment = TRUE) {
 
 #' Record a Cross-Check Result in a Manifest
 #'
-#' Appends one named cross-check entry to a manifest, classifying it as
-#' `PASS`, `DIFFER`, or `INFO`, printing a formatted line to
-#' the console, and returning the updated manifest.
+#' Appends one named cross-check to a manifest: a number your analysis
+#' produced (\code{observed}) next to the number it should reproduce
+#' (\code{expected}, for example a published table value). Each entry is
+#' classified \code{PASS}, \code{DIFFER} or \code{INFO}, a one-line report
+#' is shown as a message, and the updated manifest is returned so calls can
+#' be chained. The tallies appear in
+#' [write_summary_txt()] and the entries in
+#' [write_manifest_json()].
+#'
+#' @details
+#' The status is decided in this order: \code{INFO} when \code{synthetic =
+#' TRUE} or the manifest's \code{meta$synthetic} is \code{TRUE} (a comparison
+#' on generated data is not meaningful); \code{PASS} when both values are
+#' numeric and \eqn{|observed - expected| \le tol}; \code{DIFFER} when both are
+#' numeric and further apart; \code{INFO} otherwise (for example a text or
+#' logical value, or an \code{NA}). The tolerance is absolute, not relative:
+#' scale it to the size of the quantity.
+#'
+#' \code{observed} and \code{expected} must be single values: a vector of
+#' another length (including an empty one) is an error naming the argument;
+#' record a vector's elements under separate names, or a summary of it.
+#' Recording under an existing \code{name} replaces that
+#' entry. The message line is a side effect; wrap the call in
+#' \code{suppressMessages()} to silence it.
 #'
 #' @param manifest A manifest as returned by
-#' [make_manifest()].
-#' @param name Unique name for this cross-check; used as the
-#' result key.
-#' @param observed The observed value (numeric or
-#' otherwise).
-#' @param expected The expected value to compare against.
-#' @param tol Numeric tolerance; a numeric pair within
-#' `tol` is `PASS`. Defaults to `0.0001`.
-#' @param group Optional grouping label for the entry.
-#' Defaults to `"general"`.
-#' @param synthetic Logical; if `TRUE` the entry is
-#' marked `INFO` because comparison against synthetic data is not
-#' meaningful.
-#' @return The updated manifest, returned so calls can be chained.
+#'   [make_manifest()].
+#' @param name Character scalar, the name of this cross-check; used as the
+#'   key in \code{manifest$results}, so it should be unique.
+#' @param observed The value the analysis produced: a numeric scalar for a
+#'   tolerance check, or any single value to be stored as information.
+#' @param expected The value to compare against, of the same kind.
+#' @param tol Numeric scalar, the absolute tolerance: a numeric pair at most
+#'   \code{tol} apart is \code{PASS}. Default \code{0.0001}.
+#' @param group Character scalar, a grouping label stored with the entry (for
+#'   example the table the number comes from). Default \code{"general"}.
+#' @param synthetic Logical scalar; \code{TRUE} marks this entry \code{INFO}
+#'   because a comparison on synthetic data is not meaningful. Default
+#'   \code{FALSE}.
+#' @return The manifest with \code{results[[name]]} set to a list with
+#'   \code{group}, \code{observed}, \code{expected}, \code{diff} (the
+#'   absolute difference, \code{NA} when the pair is not numeric),
+#'   \code{status} (\code{"PASS"}, \code{"DIFFER"} or \code{"INFO"}),
+#'   \code{tol} and \code{note} (a sentence for synthetic entries, else
+#'   \code{NULL}).
+#' @seealso [make_manifest()],
+#'   [write_summary_txt()].
 #' @examples
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
 #'
@@ -110,12 +181,24 @@ make_manifest <- function(meta, environment = TRUE) {
 #' )
 #' man$results$synthetic_row$status # "INFO"
 #'
+#' # a non-numeric value is stored as information, silently
+#' man <- suppressMessages(record(man, "country", observed = "CA", expected = "CA",
+#'                                group = "metadata"))
+#' man$results$country$status # "INFO"
+#'
 #' # Calls chain: record() returns the mutated manifest.
-#' length(man$results) # 3
+#' length(man$results) # 4
 #' @export
 record <- function(manifest, name, observed, expected,
                    tol = 0.0001, group = "general",
                    synthetic = FALSE) {
+  # one value each: a vector made the PASS test `diff <= tol` a vector and
+  # failed in R's own words ('length = 2' in coercion to 'logical(1)')
+  lens <- c(observed = length(observed), expected = length(expected))
+  if (any(lens != 1L)) {
+    bad <- which(lens != 1L)[1L]
+    stop(sprintf("`%s` must be a single value, got %d", names(lens)[bad], lens[[bad]]), call. = FALSE)
+  }
   diff <- if (is.numeric(observed) && is.numeric(expected)) {
     abs(observed - expected)
   } else {
@@ -157,20 +240,39 @@ record <- function(manifest, name, observed, expected,
 
 #' Write a Manifest to JSON
 #'
-#' Serializes a manifest to a pretty-printed JSON file with the native JSON
-#' codec (
-#' [bricklayer_json_to_json()]) ; no
-#' jsonlite needed.
+#' Writes a manifest to a JSON file, so the record of a run (its metadata,
+#' cross-checks and environment) can be kept next to the outputs, shared,
+#' and read back by any JSON reader. By default the file is pretty-printed
+#' for people; \code{canonical = TRUE} writes the byte-stable form that
+#' [manifest_digest()] hashes. The package's own JSON codec
+#' ([bricklayer_json_to_json()]) is used; jsonlite
+#' is not needed.
+#'
+#' @details
+#' Numbers are written with 17 significant digits, so every double reads
+#' back exactly; \code{NA} and \code{NULL} are written as \code{null}, and
+#' length-one vectors as scalars. When the manifest's \code{meta$synthetic}
+#' is \code{TRUE}, or the session is flagged synthetic (see
+#' [make_manifest()]), \code{meta$synthetic = true} is
+#' written whatever the
+#' list says, so a file written from generated data always says so. An
+#' existing file at \code{path} is overwritten; the folder must exist.
+#'
+#' Errors when \code{path} is not a single non-empty string, and (from base
+#' R) when the file cannot be opened for writing.
 #'
 #' @param manifest A manifest as returned by
-#' [make_manifest()] / built up with
-#' [record()].
-#' @param path Destination path for the JSON file.
-#' @param canonical Write the canonical form rather than
-#' the pretty-printed one: one line, keys sorted, which is what
-#' [manifest_digest()] hashes. Use it when
-#' the file itself has to be byte-stable rather than read by a person.
-#' @return The `path`, returned invisibly.
+#'   [make_manifest()] and built up
+#'   with [record()].
+#' @param path Character scalar, the destination file path.
+#' @param canonical Logical scalar, default \code{FALSE}. \code{TRUE} writes
+#'   the canonical form instead of the pretty-printed one: one line, keys
+#'   sorted, which is what [manifest_digest()] hashes. Use
+#'   it when the file
+#'   itself has to be byte-stable rather than read by a person.
+#' @return \code{path} (character scalar), invisibly.
+#' @seealso [manifest_canonical()],
+#'   [write_summary_txt()].
 #' @examples
 #' man <- make_manifest(list(project = "demo"), environment = FALSE)
 #' man <- record(man, "row_count", observed = 20, expected = 20)
@@ -180,6 +282,13 @@ record <- function(manifest, name, observed, expected,
 #' # Round-trips back through the package's own codec.
 #' back <- bricklayer_json_from_json(path, simplifyVector = FALSE)
 #' back$results$row_count$status # "PASS"
+#'
+#' # the canonical form: one line whose SHA-256 is the manifest digest
+#' cpath <- write_manifest_json(man, tempfile(fileext = ".json"), canonical = TRUE)
+#' identical(readLines(cpath), manifest_canonical(man))
+#'
+#' # the path must be one string
+#' try(write_manifest_json(man, c("a.json", "b.json")))
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
   path <- .rmbl_string1(path, "path")
@@ -234,10 +343,14 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' manifest written on one machine reads back bit-identically on another,
 #' and a caller does nothing to get that.
 #'
-#' @param manifest A manifest, as from
-#' [make_manifest()].
-#' @return `manifest_canonical()` a length-1 character vector;
-#' `manifest_digest()` 64 hex characters.
+#' Errors when \code{manifest} is not a list.
+#'
+#' @param manifest A manifest (a list), as from
+#'   [make_manifest()]; any list
+#'   is accepted.
+#' @return \code{manifest_canonical()}: a character scalar, the one-line
+#'   JSON. \code{manifest_digest()}: a character scalar of 64 lower-case
+#'   hexadecimal characters, the SHA-256 of the canonical bytes.
 #' @seealso
 #' [make_manifest()],
 #' [write_manifest_json()],
@@ -251,6 +364,13 @@ write_manifest_json <- function(manifest, path, canonical = FALSE) {
 #' # full precision, so a recorded number can be checked later
 #' m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 #' grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
+#'
+#' # any change to a recorded value changes the digest
+#' m2 <- record(m, "check", observed = 1, expected = 1)
+#' manifest_digest(m) == manifest_digest(m2)
+#'
+#' # only lists can be serialised this way
+#' try(manifest_digest("not a manifest"))
 #' @export
 manifest_canonical <- function(manifest) {
   if (!is.list(manifest)) stop("`manifest` must be a list", call. = FALSE)
@@ -335,25 +455,50 @@ summarise_counts <- function(manifest) {
 
 #' Write a Plain-Language Run Summary
 #'
-#' Writes a human-readable `SUMMARY.txt` into the output directory,
-#' covering run metadata, the exact absolute paths used, result counts, the
-#' files produced, and optional notes, contact, and licence lines.
+#' Writes \code{SUMMARY.txt} into an output folder: a plain-text page a
+#' person can read without any software, giving the project, author, time,
+#' operating system and R version of the run, whether it ran on real or
+#' synthetic data, the paths it used, the tally of cross-check results, the
+#' files in the folder, and optional notes, contact and licence lines. It is
+#' the human-readable companion of
+#' [write_manifest_json()].
+#'
+#' @details
+#' Header fields come from \code{manifest$meta}: \code{project} (default
+#' \code{"(unnamed)"}), \code{author} (\code{"(unknown)"}), \code{run_at}
+#' (default the current time), \code{os} (default \code{Sys.info()}),
+#' \code{r_version} (default \code{R.version.string}) and \code{synthetic}.
+#' When \code{meta$r_package_versions} is present a section lists those
+#' versions. Result counts are tallied from the \code{status} of each entry
+#' of \code{manifest$results} (PASS, DIFFER, WARN, INFO).
+#'
+#' The file list is \code{list.files(output_dir)} at the time of the call,
+#' sorted, so write the summary last. The paths are printed as given (they
+#' are not made absolute). An existing \code{SUMMARY.txt} is overwritten.
+#'
+#' Errors when \code{manifest} is not a list, and (from base R) when
+#' \code{output_dir} does not exist or cannot be written.
 #'
 #' @param manifest A manifest as returned by
-#' [make_manifest()]; its `meta` supplies
-#' project/author/run details.
-#' @param output_dir Directory to write
-#' `SUMMARY.txt` into and to list produced files from.
-#' @param paths A named list of absolute paths to report (e.g.
-#' `capsule`, `input`, `results`, `analysis_script`,
-#' `provenance`) .
-#' @param what_was_done Optional character vector of
-#' bullet points describing what the run did.
-#' @param contact Optional contact string appended to the
-#' summary.
-#' @param licence Optional licence string appended to the
-#' summary.
-#' @return The path to the written `SUMMARY.txt`, returned invisibly.
+#'   [make_manifest()]; its
+#'   \code{meta} supplies the header and its \code{results} the counts.
+#' @param output_dir Character scalar, an existing folder to write
+#'   \code{SUMMARY.txt} into and to list the files of.
+#' @param paths A named list (or named character vector) of paths to report,
+#'   one line each, labelled by the capitalised name (for example
+#'   \code{capsule}, \code{input}, \code{results}, \code{analysis_script},
+#'   \code{provenance}). \code{list()} reports none.
+#' @param what_was_done Optional character vector, one line each, describing
+#'   what the run did. Default \code{NULL} (no section).
+#' @param contact Optional character scalar appended as a \code{Contact:}
+#'   line. Default \code{NULL}.
+#' @param licence Optional character scalar appended as a \code{Licence:}
+#'   line. Default \code{NULL}.
+#' @return The path to the written \code{SUMMARY.txt} (character scalar),
+#'   invisibly.
+#' @seealso [make_manifest()],
+#'   [record()],
+#'   [write_manifest_json()].
 #' @examples
 #' man <- make_manifest(list(project = "demo", author = "A. Author"),
 #'   environment = FALSE
@@ -363,6 +508,15 @@ summarise_counts <- function(manifest) {
 #' dir.create(out, showWarnings = FALSE)
 #' s <- write_summary_txt(man, out, paths = list(results = out))
 #' readLines(s)[7:8]
+#'
+#' # with notes, contact and licence lines
+#' s <- write_summary_txt(man, out, paths = list(results = out),
+#'   what_was_done = c("- read the extract", "- recomputed table 2"),
+#'   contact = "analyst at example.org", licence = "CC BY 4.0")
+#' tail(readLines(s), 6)
+#'
+#' # the manifest has to be a list
+#' try(write_summary_txt("demo", out, paths = list()))
 #' @export
 write_summary_txt <- function(manifest, output_dir, paths,
                               what_was_done = NULL,

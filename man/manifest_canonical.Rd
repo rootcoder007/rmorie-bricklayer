@@ -10,12 +10,14 @@ manifest_canonical(manifest)
 manifest_digest(manifest)
 }
 \arguments{
-\item{manifest}{A manifest, as from
-\code{\link[=make_manifest]{make_manifest()}}.}
+\item{manifest}{A manifest (a list), as from
+\code{\link[=make_manifest]{make_manifest()}}; any list
+is accepted.}
 }
 \value{
-\code{manifest_canonical()} a length-1 character vector;
-\code{manifest_digest()} 64 hex characters.
+\code{manifest_canonical()}: a character scalar, the one-line
+JSON. \code{manifest_digest()}: a character scalar of 64 lower-case
+hexadecimal characters, the SHA-256 of the canonical bytes.
 }
 \description{
 \code{manifest_canonical()} renders a manifest as one line of JSON with
@@ -46,6 +48,8 @@ this package converts decimals itself rather than asking the platform,
 in integer arithmetic with a remainder that decides the rounding. A
 manifest written on one machine reads back bit-identically on another,
 and a caller does nothing to get that.
+
+Errors when \code{manifest} is not a list.
 }
 \examples{
 a <- make_manifest(list(b = 2, a = 1), environment = FALSE)
@@ -56,6 +60,13 @@ identical(manifest_digest(a), manifest_digest(b))
 # full precision, so a recorded number can be checked later
 m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
+
+# any change to a recorded value changes the digest
+m2 <- record(m, "check", observed = 1, expected = 1)
+manifest_digest(m) == manifest_digest(m2)
+
+# only lists can be serialised this way
+try(manifest_digest("not a manifest"))
 }
 \seealso{
 \code{\link[=make_manifest]{make_manifest()}},

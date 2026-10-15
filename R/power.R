@@ -20,8 +20,11 @@
 #' Adds an effect of each given size to the data, reruns the whole
 #' detection procedure, and reports how often it was found. The result is a
 #' power curve, and the smallest size detected reliably is the smallest
-#' effect the analysis could have seen.
+#' effect the analysis could have seen. Use it before reporting a null
+#' result, to show whether the analysis could have found an effect of the
+#' size that matters.
 #'
+#' @details
 #' This is the positive control that
 #' [capsule_falsify()] lacks: its four are
 #' all negative. Those establish that the finding is not an artefact; this
@@ -31,28 +34,66 @@
 #' found nothing either way, and the two are routinely reported as the same
 #' thing.
 #'
+#' For each size (0 is always added) and each of \code{reps} repetitions:
+#' the data are passed through \code{inject(data, size)}, the statistic is
+#' computed, and a permutation null is built by shuffling the
+#' \code{treatment} column \code{n} times and recomputing the statistic. The
+#' two-sided permutation p-value is
+#' \deqn{p = \frac{1 + \#\{|T^*| \ge |T|\}}{1 + n_{ok}}}
+#' over the \eqn{n_{ok}} permutations with a finite statistic (Phipson and
+#' Smyth's correction, so \eqn{p} is never 0), and the effect counts as
+#' detected when \eqn{p \le \alpha}. A repetition whose injection or
+#' observed statistic fails (error or non-finite value) is skipped and not
+#' counted in \code{reps}. Since the data are the same in every repetition,
+#' \code{inject} should add randomness of its own (new noise, a resampled
+#' effect) when repetitions are meant to differ; otherwise only the
+#' permutations vary.
+#'
+#' The cost is \eqn{|sizes| \times reps \times (n + 1)} evaluations of
+#' \code{statistic}. A progress bar is drawn on stderr unless
+#' \code{options(morie.quiet = TRUE)}. With \code{seed}, R's random number
+#' state is set for the run and restored afterwards; without it, the run
+#' uses and advances the session's generator.
+#'
+#' Errors: \code{data} not a data frame of at least 4 rows;
+#' \code{statistic} or \code{inject} not a function; \code{treatment}
+#' missing or not a column; \code{n} below 9; \code{reps} below 1; \code{n}
+#' so small that \eqn{1/(n+1) > \alpha}, so that nothing could ever be
+#' detected.
+#'
 #' @param data A data frame.
 #' @param statistic A function of one data frame returning
-#' a single finite number.
-#' @param inject A function of `(data, size)` returning
-#' the data with an effect of that size added. It is the caller's, because
-#' what counts as an effect of size 0.2 is a modelling decision and not
-#' something this function can guess.
-#' @param sizes Effect sizes to try. `0` is added if
-#' absent, since the detection rate there is the false-positive rate and
-#' belongs on the same curve.
-#' @param treatment Column permuted to build the null, as
-#' in [capsule_falsify()].
-#' @param n Permutations per test.
-#' @param reps Repetitions per size. The detection rate at each
-#' size is out of this many, so its resolution is `1 / reps`.
+#'   a single finite number (for example a correlation or a difference in
+#'   means).
+#' @param inject A function of \code{(data, size)} returning
+#'   the data with an effect of that size added. It is the caller's, because
+#'   what counts as an effect of size 0.2 is a modelling decision and not
+#'   something this function can guess.
+#' @param sizes Numeric vector of effect sizes to try (default
+#'   \code{c(0, 0.2, 0.5)}). \code{0} is added if absent, since the detection
+#'   rate there is the false-positive rate and belongs on the same curve.
+#'   Duplicates are removed and the sizes sorted.
+#' @param treatment Name of the column permuted to build the null, as
+#'   in [capsule_falsify()]. Required.
+#' @param n Permutations per test, a whole number of at least 9 (default
+#'   99).
+#' @param reps Repetitions per size, a whole number of at least 1 (default
+#'   10). The detection rate at each size is out of this many, so its
+#'   resolution is \code{1 / reps}.
 #' @param alpha Significance threshold for counting a
-#' detection.
-#' @param seed Optional integer seed.
-#' @return A list of class `bricklayer_power`: a `curve` data
-#' frame ( `size`, `detected`, `reps`, `rate`) , the
-#' `alpha` used, and `smallest_detected`, the smallest size found
-#' at a rate of at least 0.8 -- `NA` when no size reached it.
+#'   detection (default 0.05).
+#' @param seed Optional integer seed; \code{NULL} (the default) uses the
+#'   session's random number state.
+#' @return A list of class \code{c("bricklayer_power", "list")}:
+#'   \describe{
+#'     \item{\code{curve}}{data frame with one row per size: \code{size},
+#'       \code{detected} (integer), \code{reps} (integer, the usable repetitions)
+#'       and \code{rate} (\code{detected / reps}, \code{NA} when none was usable).}
+#'     \item{\code{alpha}, \code{n}, \code{reps}, \code{treatment}}{the settings used.}
+#'     \item{\code{smallest_detected}}{the smallest positive size found at a rate of
+#'       at least 0.8, or \code{NA} when no size reached it.}
+#'     \item{\code{false_positive_rate}}{the rate at size 0.}
+#'   }
 #' @seealso [capsule_falsify()] for the
 #' negative controls.
 #' @examples
@@ -67,12 +108,24 @@
 #'                     sizes = c(0, 0.3, 0.6), treatment = "x",
 #'                     n = 99, reps = 5, seed = 42)
 #' pw$curve
+#' pw
 #'
 #' # The rate at size 0 estimates the false-positive rate. With few
 #' # repetitions it is usually 0, because alpha is small -- five draws
 #' # at 0.05 come up empty about three times in four -- so read it as a
 #' # sanity check that it is not LARGE, not as an estimate of alpha.
 #' pw$curve[pw$curve$size == 0, "rate"]
+#'
+#' # an injection with fresh noise each time, and smaller effects
+#' inj2 <- function(z, size) {
+#'   z$y <- z$y + size * z$x + stats::rnorm(nrow(z), sd = 0.5)
+#'   z
+#' }
+#' capsule_power(d, function(z) cor(z$x, z$y), inj2, sizes = c(0.1, 0.2),
+#'               treatment = "x", n = 49, reps = 4, seed = 7)$smallest_detected
+#'
+#' # too few permutations to ever reach alpha = 0.05
+#' try(capsule_power(d, function(z) cor(z$x, z$y), inj, treatment = "x", n = 9))
 #' @export
 capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
                           treatment = NULL, n = 99L, reps = 10L,

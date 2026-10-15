@@ -7,24 +7,48 @@
 core_uniforms(n, seed)
 }
 \arguments{
-\item{n}{Number of uniforms.}
+\item{n}{Number of uniforms, one non-negative whole number (0 gives
+\code{numeric(0)}).}
 
-\item{seed}{A non-negative whole number below 2^53.}
+\item{seed}{The seed, one whole number in \eqn{[0, 2^{53})} (so that it is
+exact as an R double).}
 }
 \value{
-A numeric vector of length \code{n}.
+A numeric vector of length \code{n}, values in [0, 1).
 }
 \description{
-The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on
-[0, 1) from a 64-bit \code{seed}, the same numbers morie's Python computes,
-so the R and Python arms can draw identical "random" values where their
-results must agree (the within-day jitter of tied event dates in the TPS
-Hawkes fits, a subsample). Not a statistical replacement for R's own
-generators.
+Returns \code{n} pseudo-random numbers on [0, 1) from a 64-bit seed with
+the splitmix64 generator, the same numbers morie's Python computes for
+the same seed. Use it where the R and Python arms must draw identical
+"random" values so that their results agree: the within-day jitter of
+tied event dates in the TPS Hawkes fits, or a subsample.
+}
+\details{
+splitmix64 (Steele, Lea & Flood 2014) advances a 64-bit state by the
+constant \code{0x9E3779B97F4A7C15} and mixes it with two
+multiply-xorshift rounds; the top 53 bits of each output divided by
+\eqn{2^{53}} give a double in [0, 1). The stream depends only on
+\code{seed}: R's own generator and \code{set.seed()} are neither used nor
+changed. It is not a statistical replacement for R's generators.
+
+Errors: \code{n} not one non-negative whole number; \code{seed} not one
+whole number in \eqn{[0, 2^{53})}.
 }
 \examples{
 core_uniforms(3, 42)
 identical(core_uniforms(5, 1), core_uniforms(5, 1))
+
+# a stream is a prefix of a longer one with the same seed
+all.equal(core_uniforms(3, 7), core_uniforms(10, 7)[1:3])
+
+# R's own generator is left alone
+set.seed(1); a <- runif(1)
+set.seed(1); invisible(core_uniforms(100, 9)); b <- runif(1)
+identical(a, b)
+
+# negative counts and seeds past 2^53 are refused
+try(core_uniforms(-1, 1))
+try(core_uniforms(2, 2^53))
 }
 \references{
 Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number

@@ -10,7 +10,8 @@ drift_homogeneity(x, y, seed = 1L)
 \item{x, y}{Factor or character vectors (or named count
 vectors) -- the reference and the new sample.}
 
-\item{seed}{Seed for the Monte Carlo branch (small expected counts). The
+\item{seed}{Integer, default 1: seed for the Monte Carlo branch (small expected
+counts). The
 draw is made under this seed and the caller's RNG stream is restored,
 so the same inputs give the same p-value and nothing downstream moves.}
 }
@@ -24,9 +25,35 @@ attribute \code{method} names the branch, or says why the test was
 inapplicable (one category, no counts).
 }
 \description{
-Tests whether two SAMPLES were drawn from the same categorical
-distribution, by Pearson's chi-square on the 2-by-k contingency table of
-their counts.
+Tests whether two samples of a categorical variable (for example race,
+offence type or region in an old and a new data extract) were drawn from
+the same distribution, by Pearson's chi-square on the 2-by-k contingency
+table of their counts. Use it to ask whether the mix of categories has
+changed between two samples; it is the categorical test that
+\code{\link[=capsule_drift]{capsule_drift()}} runs.
+}
+\details{
+With pooled shares \eqn{\hat\pi_j = (x_j + y_j)/(n_x + n_y)} and
+expected counts \eqn{n_x \hat\pi_j} and \eqn{n_y \hat\pi_j},
+\deqn{X^2 = \sum_j \frac{(x_j - n_x\hat\pi_j)^2}{n_x\hat\pi_j} +
+  \frac{(y_j - n_y\hat\pi_j)^2}{n_y\hat\pi_j}}
+on \eqn{k - 1} degrees of freedom. Three branches, named in the \code{method}
+attribute:
+\itemize{
+\item \code{"chi-square approximation"}: every expected count is at least
+5; the p-value is the chi-square upper tail.
+\item \code{"Monte Carlo permutation (small expected counts)"}: some
+expected count is below 5; the p-value comes from
+\code{\link[stats:chisq.test]{stats::chisq.test()}} with \code{simulate.p.value = TRUE}
+and
+\code{B = 10000} tables with the same margins, drawn under \code{seed}.
+\item \code{"inapplicable: ..."}: a single category, or fewer than two
+observations per category (for example two disjoint sets of dates);
+no test has power there, so \code{p_value} is \code{NA} rather than 1.
+}
+
+Errors: a numeric vector without names; negative, infinite or missing
+counts; an empty sample.
 }
 \section{Why this and not \code{\link[=drift_chisq]{drift_chisq()}}}{
 \code{\link[=drift_chisq]{drift_chisq()}} compares observed counts
@@ -63,6 +90,12 @@ all.equal(drift_homogeneity(a, b)[["statistic"]],
 # It is more conservative than treating the reference as known, which
 # is exactly the point.
 drift_homogeneity(a, b)[["p_value"]] >= drift_chisq(b, a)[["p_value"]]
+
+# named count vectors, and a small table that takes the Monte Carlo branch
+drift_homogeneity(c(a = 30, b = 20), c(a = 25, b = 25))
+attr(drift_homogeneity(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
+
+try(drift_homogeneity(c(1, 2), c(a = 3)))
 }
 \seealso{
 \code{\link[=drift_chisq]{drift_chisq()}} for a known reference

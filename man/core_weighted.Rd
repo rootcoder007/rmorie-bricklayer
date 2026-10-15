@@ -9,18 +9,39 @@ core_weighted(x, w)
 \arguments{
 \item{x}{Numeric vector of observations.}
 
-\item{w}{Numeric vector of non-negative weights, the same
-length as \code{x}.}
+\item{w}{Numeric vector of non-negative weights, the same length as
+\code{x}. Only their relative sizes matter for the mean; the variance's
+correction uses them as given.}
 }
 \value{
-A named length-2 numeric: \code{mean} and \code{variance}.
+A named length-2 numeric vector: \code{mean} (units of \code{x}) and
+\code{variance} (squared units of \code{x}).
 }
 \description{
-The weights are treated as RELIABILITY weights (how precisely each
-observation is known), so the variance carries the bias correction
-\eqn{\sum w - \sum w^2 / \sum w} in the denominator rather than
-\code{n - 1}. With every weight equal to 1 it reduces exactly to
-\code{\link[stats:var]{stats::var()}}.
+The weighted mean and weighted variance of a numeric vector, for data
+where some observations count for more than others: an average over
+areas weighted by population, or measurements weighted by how precise
+each one is. Both come from the compiled core in one pass.
+}
+\details{
+The mean is \eqn{\bar x_w = \sum_i w_i x_i / \sum_i w_i}. The weights
+are treated as RELIABILITY weights (how precisely each observation is
+known), so the variance is
+\deqn{s_w^2 = \frac{\sum_i w_i (x_i - \bar x_w)^2}
+  {\sum_i w_i - \sum_i w_i^2 / \sum_i w_i},}
+the unbiased estimator under that reading. With every weight equal to 1
+it reduces exactly to \code{\link[stats:var]{stats::var()}}. Frequency weights
+(a weight of
+3
+meaning three identical rows) call for the denominator
+\eqn{\sum w - 1} instead, and survey design weights call for a
+design-based variance, so do not use this variance for those.
+
+Refusals: \code{x} and \code{w} of different lengths
+(\code{"must have the same length"}), any negative weight
+(\code{"must be non-negative"}), and a character, factor or list argument
+(\code{"must be numeric"}). All-zero weights, or an \code{NA} in either vector,
+give \code{NaN} for both entries.
 }
 \examples{
 x <- c(10, 20, 30, 40)
@@ -35,4 +56,12 @@ all.equal(core_weighted(x, rep(1, 4))[["variance"]], stats::var(x))
 
 # A single dominant weight pulls the mean onto that observation.
 core_weighted(x, c(1, 1, 1, 1000))[["mean"]]
+
+# A negative weight is refused.
+try(core_weighted(x, c(1, -1, 1, 1)))
+}
+\seealso{
+\code{\link[=core_moments]{core_moments()}} for the unweighted moments,
+\code{\link[=core_ipw_weights]{core_ipw_weights()}} for inverse-probability weights
+to feed in here.
 }

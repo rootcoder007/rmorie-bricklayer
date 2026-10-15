@@ -10,10 +10,19 @@ hqc_compress_key(key)
 \item{key}{A key from \code{\link[=hqc_keygen]{hqc_keygen()}}.}
 }
 \value{
-The key with \code{secret} replaced by the hex of its seed: 32 bytes
-for v5, 96, 104 or 112 for round 4.
+The key (class \code{bricklayer_hqc_key}) with \code{secret} replaced by
+the hex of its seed: 32 bytes for v5, 96, 104 or 112 for round 4. The
+other elements are unchanged.
 }
 \description{
+Shrinks an HQC key pair for storage by replacing its secret half with the
+seed it was generated from (32 bytes for v5, instead of several
+kilobytes). The full key is derived again from the seed whenever
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}} needs it, so a compressed key works
+everywhere a full
+one does in this package.
+}
+\details{
 The HQC specification of 2025-08-22 allows the decapsulation key to be
 stored as its 32-byte \code{seed_KEM} alone (the compressed format
 \code{dk_KEM = (seed_KEM)}), from which the whole key pair is derived again.
@@ -21,8 +30,7 @@ stored as its 32-byte \code{seed_KEM} alone (the compressed format
 \code{\link[=hqc_decapsulate]{hqc_decapsulate()}} takes such a
 key and expands it, and refuses one whose seed does not derive the key's
 public half.
-}
-\details{
+
 The round-4 revision (64-byte shared secret) defines no compressed format,
 but its key pair is derived from the randomness its key generation draws,
 \code{sk_seed || sigma || pk_seed} (96, 104 or 112 bytes: the \code{seed} of
@@ -32,6 +40,13 @@ but its key pair is derived from the randomness its key generation draws,
 form is that seed: this package's convention, not a format of the
 submission, so software built on round 4 (liboqs, PQClean) expects the
 full secret key.
+
+A key that is already compressed is returned unchanged. Errors: \code{key} not
+from \code{\link[=hqc_keygen]{hqc_keygen()}}; a secret of neither the full nor the
+seed length.
+The public half is kept, and anyone with the seed can rebuild the whole
+secret key, so the compressed key must be protected exactly like the full
+one.
 }
 \examples{
 key <- hqc_keygen(1)
@@ -39,6 +54,14 @@ small <- hqc_compress_key(key)
 nchar(small$secret) / 2
 sent <- hqc_encapsulate(hqc_public_key(key))
 identical(hqc_decapsulate(small, sent$ciphertext), sent$shared)
+
+# compressing twice changes nothing
+identical(hqc_compress_key(small), small)
+
+# a seed paired with someone else's public key is refused on use
+spliced <- small
+spliced$public <- hqc_keygen(1)$public
+try(hqc_decapsulate(spliced, sent$ciphertext))
 }
 \references{
 Gaborit, P. et al. (2025). Hamming Quasi-Cyclic (HQC),
@@ -46,5 +69,6 @@ specification of 2025-08-22, section 3 (HQC-KEM key pair formats).
 \url{https://pqc-hqc.org/}
 }
 \seealso{
-\code{\link[=hqc_keygen]{hqc_keygen()}}, \code{\link[=hqc_decapsulate]{hqc_decapsulate()}}
+\code{\link[=hqc_keygen]{hqc_keygen()}},
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}}
 }

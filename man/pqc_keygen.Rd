@@ -22,15 +22,46 @@ key you can forge.}
 }
 \value{
 A list of class \code{bricklayer_signing_key}: \code{root} (the
-public verification value), \code{pub_seed}, \code{sk_seed} (SECRET),
-\code{sk_prf} (SECRET), \code{height}, \code{next_index},
-\code{capacity}, and \code{scheme}.
+public verification value, 64 hex characters), \code{pub_seed}, \code{sk_seed}
+(SECRET) and \code{sk_prf} (SECRET), each 64 hex characters, \code{height} (an
+integer), \code{next_index} (the next unused leaf, 0 for a new key),
+\code{capacity} (\code{2^height}, the number of signatures), and \code{scheme}
+(\code{"xmss-sha256"}).
 }
 \description{
 Builds an XMSS key pair: a Merkle tree over \code{2^height} Winternitz
 one-time keys, all derived from two 32-byte seeds. Security rests on
 SHA-256 alone -- no lattice assumption, no elliptic curve, nothing
-Shor's algorithm breaks.
+Shor's algorithm breaks. The key signs a fixed number of messages,
+\code{2^height}, and must be carried forward after each signature (see
+\code{\link[=xmss_advance]{xmss_advance()}}); for a key with no such state use
+\code{\link[=fips_keygen]{fips_keygen()}}.
+}
+\details{
+Key generation walks all \code{2^height} leaves, so cost doubles with
+each unit of height. The default 10 gives 1024 signatures and takes a
+few seconds; heights above about 14 are slow enough to be worth avoiding
+unless the key really must last that long. A spinner on stderr shows the
+work after 0.75 s when a person is watching (see
+\code{\link[=bricklayer_progress]{bricklayer_progress()}}), and Ctrl-C stops it.
+
+The construction is single-tree XMSS with SHA-256, n = 32 and
+Winternitz parameter 16 (RFC 8391; at heights 10 and 16 these are its
+\code{XMSS-SHA2_10_256} and \code{XMSS-SHA2_16_256} parameter sets, and the other
+heights use the same construction with a smaller or larger tree). Its
+signatures are byte-identical to the XMSS reference implementation's
+for the same key material.
+
+Side effect: a key generated from fresh randomness is entered in the
+package's used-index record (the file described under
+\code{\link[=xmss_advance]{xmss_advance()}}), so that a stale copy of it can never
+sign an index
+twice on this machine. A key built from given seeds is NOT entered, and
+signs only after \code{\link[=xmss_register_key]{xmss_register_key()}} vouches that it
+never has.
+
+Refusals: a \code{height} that is not a whole number from 1 to 16, and a
+seed that is not 64 hex characters.
 }
 \section{A height-\code{h} key signs exactly \code{2^h} messages}{
 Each signature consumes one leaf, and \strong{signing two different messages
@@ -39,11 +70,6 @@ signatures at one index an adversary can forge a third message.
 \code{\link[=capsule_sign]{capsule_sign()}} therefore tracks
 \code{next_index} and refuses to reuse one. Do not hand-edit that field,
 and do not copy a key to two machines that sign independently.
-
-Key generation walks all \code{2^height} leaves, so cost doubles with
-each unit of height. The default 10 gives 1024 signatures and takes a
-moment; heights above about 14 are slow enough to be worth avoiding
-unless the key really must last that long.
 }
 
 \section{Key format}{
@@ -89,6 +115,9 @@ names(pub)
 s1 <- paste(rep("11", 32), collapse = "")
 s2 <- paste(rep("22", 32), collapse = "")
 identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
+
+# The height is limited to 16 (65,536 signatures).
+try(pqc_keygen(height = 20))
 options(op)
 }
 \seealso{

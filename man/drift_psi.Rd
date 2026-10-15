@@ -10,7 +10,8 @@ drift_psi(x, y, bins = 10L, eps = 1e-06)
 \item{x, y}{Numeric vectors, the reference and the new sample.
 Binned on the quantiles of \code{x}, so the reference defines the bins.}
 
-\item{bins}{Number of bins (default 10).}
+\item{bins}{Whole number, default 10: the number of quantile bins of the
+reference. Fewer bins are used when the reference has tied quantiles.}
 
 \item{eps}{Floor applied to empty bins in the PSI (default
 1e-6), any value in (0, 1). An empty bin contributes
@@ -20,13 +21,28 @@ statistic: the default reports the raw index, and a larger floor (0.01,
 Compare runs only at one \code{eps}.}
 }
 \value{
-A named length-2 numeric: \code{psi} and \code{js_divergence}.
+A named length-2 numeric: \code{psi} (non-negative, unbounded) and
+\code{js_divergence} (in nats, between 0 and \eqn{\log 2 \approx 0.693}).
 }
 \description{
-Two summaries of how far a new binned distribution has moved from a
-reference one.
+Two effect-size summaries of how far the distribution of a numeric
+column has moved from a reference sample. Both samples are binned on the
+reference's quantiles and the two sets of bin shares are compared. Unlike
+a p-value they do not grow with the sample size, so they say how large a
+shift is rather than whether it is detectable.
+\code{\link[=capsule_drift]{capsule_drift()}} reports
+both for every numeric column.
 }
 \details{
+Binning: values are rounded to 12 significant digits (so a formatting
+difference between two releases does not move tied values across an
+edge), the \code{bins + 1} quantiles of \code{x} are computed, duplicates are
+removed, and the interior quantiles become right-closed cut points with
+open ends at \eqn{\pm\infty}. When the reference has fewer than three
+distinct quantiles (a constant or nearly constant column), every distinct
+quantile is a cut point instead. The bin shares \eqn{p_i} (reference) and
+\eqn{q_i} (new) are the proportions of each sample in each bin.
+
 The population stability index is
 \eqn{\sum_i (p_i - q_i)\log(p_i/q_i)} -- the symmetrised
 Kullback-Leibler divergence of the two discrete distributions. The
@@ -43,6 +59,13 @@ it is finite even when a category is absent from one side.
 Empty bins are floored at \code{eps} for the PSI only, since
 \eqn{\log(0)} would otherwise send it to infinity on a single missing
 category.
+
+Missing values are dropped. Errors: non-numeric or infinite input, an
+empty sample, \code{bins} not a whole number from 2 to 1,000,000, \code{eps} not
+strictly between 0 and 1. The PSI bands quoted above are heuristics with
+no calibrated null distribution; on a few hundred rows binning noise alone
+can exceed 0.25 (see \code{psi_min_n} in
+\code{\link[=capsule_drift]{capsule_drift()}}).
 }
 \examples{
 set.seed(2)
@@ -60,6 +83,12 @@ drift_psi(ref, ref)
 # The Jensen-Shannon divergence is bounded by log(2), whatever the
 # shift, which is what makes it comparable across columns.
 drift_psi(c(1, 1, 1), c(9, 9, 9))[["js_divergence"]] <= log(2)
+
+# a coarser binning, and a larger floor that damps an empty bin
+drift_psi(ref, stats::rnorm(500, mean = 1), bins = 4)
+drift_psi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
+
+try(drift_psi(ref, ref, bins = 1))
 }
 \references{
 Wu D, Olson DL (2010). Enterprise risk management: coping
@@ -69,4 +98,8 @@ Society} 61(2), 179--190. \doi{10.1057/jors.2008.144}
 Lin J (1991). Divergence measures based on the Shannon entropy.
 \emph{IEEE Transactions on Information Theory} 37(1), 145--151.
 \doi{10.1109/18.61115}
+}
+\seealso{
+\code{\link[=drift_ks]{drift_ks()}},
+\code{\link[=capsule_drift]{capsule_drift()}}.
 }

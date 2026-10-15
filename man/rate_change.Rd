@@ -28,38 +28,48 @@ rate_change(x, ...)
 
 \item{...}{Passed to methods.}
 
-\item{count}{Column of counts: non-negative whole numbers.}
+\item{count}{Column of counts (unquoted or a string): non-negative whole
+numbers.}
 
-\item{population}{Column of exposure: positive.}
+\item{population}{Column of exposure (unquoted or a string): positive.}
 
-\item{period}{Column of periods. Sorted, and compared on the period
-value rather than on row position, so a missing year gives no
-comparison instead of a silent comparison against the wrong year.}
+\item{period}{Column of periods (unquoted or a string). Sorted within
+each group; see Details for how the earlier period is found.}
 
-\item{by}{Character vector of grouping columns.}
+\item{by}{Character vector of grouping columns, default \code{NULL}.}
 
-\item{lag}{How many periods back to compare against. Default 1.}
+\item{lag}{Whole number, default 1: how many periods back to compare
+against.}
 
 \item{per}{The rate denominator: a positive number, or \code{"1k"},
-\code{"10k"}, \code{"100k"}, \code{"1m"}.}
+\code{"10k"}, \code{"100k"}, \code{"1m"}. Default 1000.}
 
-\item{conf_level}{Confidence level for the interval.}
+\item{conf_level}{Number in (0, 1), default 0.95: the confidence level of
+the interval.}
 
-\item{min_count}{Comparisons where the earlier count is at or below
-this are flagged as resting on a small count; the percent change and
-its exact interval are still reported, as \code{\link[=yoy]{yoy()}} does.}
+\item{min_count}{Number, default 0. Comparisons where the earlier count
+is at or below this are flagged as resting on a small count; the percent
+change and its exact interval are still reported, as \code{\link{yoy}}
+does.}
 }
 \value{
-A data frame of class
-\code{rmbl_rate_change} with the grouping
-columns, \code{period}, \code{count}, \code{population},
-\code{rate}, \code{previous_rate}, \code{rate_ratio},
-\code{pct_change}, \code{pct_lower}, \code{pct_upper} and
-\code{flag}.
+A data frame of class \code{c("rmbl_rate_change", "data.frame")}
+with one row per group and period: the grouping columns, the period
+column, \code{count}, \code{population}, \code{rate},
+\code{previous_rate}, \code{previous_count},
+\code{previous_population}, \code{rate_ratio}, \code{pct_change},
+\code{pct_lower}, \code{pct_upper} (numeric) and \code{flag} (character:
+\code{"no comparison period"}, \code{"earlier period is zero"}, a
+small-count note, or \code{NA}). The \code{rate_change} attribute records
+the settings.
 }
 \description{
-The change in a rate from one period to the period \code{lag} places
-earlier, with the exact conditional interval for the rate ratio.
+Compares each period's rate with the rate \code{lag} periods earlier (for
+example this year's stops per 100,000 residents with last year's), and
+gives the rate ratio, the percent change and an exact confidence interval
+for the change. Use it instead of the percent change of two published
+rates: both the counts and the populations move between periods, and the
+interval here accounts for the randomness in the counts.
 }
 \details{
 This is not the percent change of two rates treated as measured
@@ -67,9 +77,32 @@ numbers. Both the counts and the denominators move between periods,
 and an interval that ignores the denominators understates the
 uncertainty of the change. The construction here conditions on the
 total of the two counts and corrects for the ratio of the two
-exposures, which is \code{\link[=yoy]{yoy()}}'s exact conditional-binomial interval
-generalised to unequal denominators: with equal populations it
+exposures, which is \code{\link{yoy}}'s exact conditional-binomial
+interval generalised to unequal denominators: with equal populations it
 reduces to exactly that.
+
+With counts \eqn{a} (now) and \eqn{b} (earlier) and exposures
+\eqn{t_a}, \eqn{t_b}, conditional on \eqn{a + b} the count \eqn{a} is
+binomial with success probability \eqn{p = RR\,t_a / (RR\,t_a + t_b)}.
+The Clopper-Pearson limits for \eqn{p}, \eqn{p_L =
+B^{-1}(\alpha/2;\, a, b + 1)} and \eqn{p_U = B^{-1}(1 - \alpha/2;\, a + 1,
+b)} (0 when \eqn{a = 0}, 1 when \eqn{b = 0}), give
+\eqn{RR = (t_b / t_a)\, p / (1 - p)} and the percent change
+\eqn{100 (RR - 1)}. When \eqn{b = 0} the upper limit is \code{Inf} and the
+percent change itself is \code{NA}; when both counts are 0 there is no
+interval.
+
+Counts and populations are summed within each period (and \code{by}
+group). Matching to the earlier period: for a numeric period column the
+comparison is the period whose value is exactly \code{lag} less, so a
+missing year gives no comparison instead of a silent comparison against
+the wrong year. For any other period type (character, factor, Date) the
+earlier period is \code{lag} steps back along the periods observed in the
+group, so a gap in such a column is not detected.
+
+Errors: \code{x} not a data frame; columns not found; \code{lag} not a
+positive whole number; \code{conf_level} outside (0, 1); a population of
+zero or below.
 }
 \examples{
 d <- data.frame(
@@ -81,8 +114,19 @@ d <- data.frame(
 # North's count rose while its population rose too: the rate change
 # is smaller than the count change, which is the reason to use it
 rate_change(d, stops, residents, year, by = "division", per = "100k")
+
+# a missing year gives no comparison rather than a wrong one
+gap <- data.frame(year = c(2019, 2020, 2022), n = c(10, 14, 12),
+                  pop = c(1000, 1000, 1100))
+rate_change(gap, n, pop, year)$flag
+
+# two-year change, flagging small earlier counts
+rate_change(d, stops, residents, year, by = "division", lag = 2,
+            min_count = 65)
+
+try(rate_change(1:3))
 }
 \seealso{
-\code{\link[=rate]{rate()}}, \code{\link[=yoy]{yoy()}} for change in a count or a measured
-quantity.
+\code{\link{rate}}, \code{\link{yoy}} for change in a count or a
+measured quantity.
 }

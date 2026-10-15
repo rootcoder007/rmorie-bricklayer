@@ -76,9 +76,35 @@ to another implementation as bytes.
 \description{
 Authenticates \code{message} -- normally a manifest digest, or the whole
 manifest text -- so a verifier can tell that it came from the holder of
-the key and has not been altered since.
+the key and has not been altered since. A digest alone shows that data
+were not corrupted; a signature also shows who vouched for them, because
+only the key holder can make it. Verify with
+\code{\link[=capsule_verify]{capsule_verify()}}.
 }
 \details{
+Three kinds of key are accepted: a shared secret (HMAC), an XMSS key from
+\code{\link[=pqc_keygen]{pqc_keygen()}}, or a standardised ML-DSA or SLH-DSA key from
+\code{\link[=fips_keygen]{fips_keygen()}}. For new work the standardised keys are the
+simplest:
+they sign any number of messages with no state to keep.
+
+With a standardised key the signature is FIPS 204 \code{ML-DSA.Sign} or
+FIPS 205 \code{slh_sign} over the message with its context (hedged by
+default, deterministic on request). ML-DSA signs in milliseconds;
+SLH-DSA from a few hundred milliseconds (the \code{f} sets) to several
+seconds (the \code{s} sets at 192 and 256 bits); an XMSS signature rebuilds
+the key's tree, about 3 s at the default height 10. Slow signatures show
+a spinner on stderr after 0.75 s when a person is watching (an
+interactive session or \code{options(morie.progress = TRUE)};
+\code{options(morie.quiet = TRUE)} silences it), and Ctrl-C stops them.
+
+Refusals: a message that is not one string or a raw vector; a key of the
+wrong kind for the scheme; a context over 255 bytes; an unknown pre-hash;
+an exhausted XMSS key, an index the used-index record shows as used, a
+key whose record cannot be read or written, or an XMSS key the record
+does not know (see \code{\link[=xmss_advance]{xmss_advance()}} and
+\code{\link[=xmss_register_key]{xmss_register_key()}}).
+
 With \code{scheme = "hmac"} the \code{key} is a shared secret string and
 the result is an HMAC-SHA-256 tag. Symmetric, so anyone who can verify
 can also sign.
@@ -141,6 +167,14 @@ capsule_verify("manifest-2", s2, signing_public_key(key))
 
 # A signature does not transfer to another message.
 capsule_verify("manifest-1", s2, signing_public_key(key))
+
+# A standardised key: no state, any number of signatures.
+fk <- fips_keygen("ML-DSA-44")
+s3 <- capsule_sign("manifest-3", fk, context = "release", deterministic = TRUE)
+capsule_verify("manifest-3", s3, fips_public_key(fk), context = "release")
+
+# An XMSS signature needs an XMSS key.
+try(capsule_sign("manifest-4", "shared-secret", scheme = "xmss"))
 options(op)
 }
 \seealso{

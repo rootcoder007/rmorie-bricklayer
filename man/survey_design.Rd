@@ -25,7 +25,7 @@ survey_design(
 \item{data}{A data frame, one row per respondent.}
 
 \item{weights}{The final (full-sample) weight: a column name
-or a numeric vector.}
+or a numeric vector with one non-negative value per row.}
 
 \item{strata, psu}{Optional stratum and primary sampling unit:
 column names or vectors. A PSU label need only be unique
@@ -44,18 +44,23 @@ replicate weight columns in \code{data}.}
 in both) that matches its rows to \code{data}'s; without it the
 rows must already be in the same order.}
 
-\item{type}{How the replicates were made; see Details.}
+\item{type}{How the replicates were made: \code{"bootstrap"} (the
+default), \code{"mean_bootstrap"}, \code{"jk1"}, \code{"jkn"},
+\code{"brr"} or \code{"fay"}; see Details. Ignored without
+\code{replicates}.}
 
 \item{mean_size}{For \code{type = "mean_bootstrap"}, the number of
-bootstrap weights averaged into each replicate.}
+bootstrap weights averaged into each replicate; default \code{1}.}
 
-\item{rho}{For \code{type = "fay"}, Fay's coefficient.}
+\item{rho}{For \code{type = "fay"}, Fay's coefficient, between 0 and 1;
+default \code{NULL}.}
 
-\item{mse}{Centre replicate deviations on the full-sample
-estimate (\code{TRUE}) or on the mean of the replicate estimates.}
+\item{mse}{Logical scalar, default \code{TRUE}: centre replicate deviations
+on the full-sample estimate (\code{TRUE}) or on the mean of the replicate
+estimates (\code{FALSE}).}
 
 \item{lonely_psu}{What to do with a stratum that has a single
-PSU under linearization: \code{"fail"} (an error naming it),
+PSU under linearization: \code{"fail"} (the default; an error naming it),
 \code{"remove"} (it contributes nothing) or \code{"adjust"} (its PSU is
 centred on the mean of all PSU totals).}
 
@@ -68,14 +73,27 @@ public-use file's documentation gives them); by default
 computed as described in Details.}
 }
 \value{
-An object of class \code{rmbl_svy_design}.
+An object of class \code{rmbl_svy_design}: a list with \code{n}
+(respondents), \code{weights}, \code{type} (the replicate type, or
+\code{"linearization"}), \code{scale} and \code{reps} (the replicate
+scale and weights, \code{NULL} under linearization), \code{mse},
+\code{strata} and \code{psu} (integer codes), \code{lonely_psu},
+\code{check} (the row names and digests used to recognise the data
+later) and \code{degf} (the design degrees of freedom). The print method
+summarises it.
 }
 \description{
 Collects what design-based estimation needs: the final
 weight, and either a set of replicate weights or the strata
 and primary sampling units (PSUs) for Taylor linearization.
 \code{\link[=survey_estimate]{survey_estimate()}} and
-\code{\link[=survey_compare]{survey_compare()}} take the result.
+\code{\link[=survey_compare]{survey_compare()}} take the result. Use it once per
+survey file: a
+public-use file from Statistics Canada or Health Canada ships its final
+weight and a set of bootstrap replicate weights, and estimates computed
+without them understate the standard errors. The design checks the
+replicate columns it is given and remembers the rows it was built on, so a
+later estimate cannot silently be run on a reordered or different table.
 }
 \details{
 Replicate variances are \eqn{v = s \sum_r (\hat\theta_r -
@@ -151,6 +169,20 @@ of squared deviations of the PSU totals of the weighted
 linearized values from their stratum mean, summed over strata
 (\eqn{f_h} from \code{fpc}, zero without one). No strata means one
 stratum; no PSUs means every respondent is its own PSU.
+
+Errors: \code{data} not a data frame or with fewer than two rows; a named
+column that \code{data} does not have, or a vector of the wrong length;
+weights or replicate weights that are negative, missing or not finite;
+both replicates and strata or PSUs; fewer than two replicates, or
+replicate columns refused for the reasons above; BRR or Fay replicates not
+in a Hadamard order; \code{type = "jkn"} without \code{rscales}, or
+\code{rscales} not one non-negative number per replicate; \code{rho} not
+in [0, 1) for Fay; \code{mean_size} or \code{degf} below 1; missing
+strata or PSU labels; an \code{fpc} that is not positive, varies within a
+stratum, or is smaller than the PSUs sampled.
+Nothing is computed until \code{\link[=survey_estimate]{survey_estimate()}} is called,
+so a single-PSU
+stratum under \code{lonely_psu = "fail"} is reported then.
 }
 \examples{
 set.seed(1)
@@ -163,6 +195,14 @@ des <- survey_design(d, weights = "w", replicates = reps, type = "bootstrap")
 des
 # the same data as a stratified design, variance by linearization
 survey_design(d, weights = "w", strata = "region")
+
+# delete-one jackknife replicates over ten groups of respondents
+grp <- rep(1:10, length.out = 100)
+jk <- sapply(1:10, function(g) ifelse(grp == g, 0, d$w * 10 / 9))
+survey_design(d, weights = "w", replicates = jk, type = "jk1")
+
+# a weight column that does not exist
+try(survey_design(d, weights = "wt"))
 }
 \seealso{
 \code{\link[=survey_estimate]{survey_estimate()}},

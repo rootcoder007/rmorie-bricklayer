@@ -5,17 +5,33 @@
 
 #' Multivariate outliers by Mahalanobis distance
 #'
+#' @description
+#' Finds the rows of a numeric table that are unusual as a combination of
+#' values, not just on one variable at a time, and gives each row a
+#' distance, a p-value and an outlier flag. Use it before modelling to find
+#' records that are probably data-entry or linkage errors.
+#'
+#' @details
 #' Ranks rows by how far they sit from the centre of the data ONCE THE
 #' CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
 #' do: a row can be unremarkable on every variable separately and still be
 #' impossible jointly -- a person 1.5 m tall weighing 140 kg is inside both
 #' marginal ranges and outside the cloud.
 #'
+#' With centre \eqn{c} and scatter matrix \eqn{S}, the squared distance of
+#' row \eqn{x} is \deqn{d^2 = (x - c)^\top S^{-1} (x - c).}
 #' Under multivariate normality the squared distance is chi-square on
-#' `p` degrees of freedom, which gives the p-value and the cut-off.
+#' `p` degrees of freedom (the number of numeric columns), which gives the
+#' p-value and the cut-off.
 #'
-#' `robust = TRUE` centres on the coordinate-wise median and scales by
-#' a MAD-based covariance instead of the mean and sample covariance. This
+#' `robust = TRUE` centres each column on its median and scales it by its
+#' MAD (\code{core_mad()}, the 1.4826-scaled median absolute deviation;
+#' a column whose MAD is zero falls back to its standard deviation), then
+#' takes \eqn{S} as the sample covariance of the standardised data.
+#' `robust = FALSE` uses the column means and the sample covariance. The
+#' robust centre and scales resist outliers; the correlation shape in
+#' \eqn{S} is still a classical estimate, so this is not a high-breakdown
+#' estimator such as the minimum covariance determinant. The choice
 #' matters more than it sounds: outliers inflate the very covariance used
 #' to judge them, so with several of them the classical distance hides
 #' exactly the rows it is meant to find (the masking effect).
@@ -25,6 +41,11 @@
 #' invertible would return numbers governed by the floor rather than by the
 #' data. Drop the redundant column first --
 #' [top_correlations()] will identify it.
+#'
+#' Errors: `data` neither a data frame nor a matrix; no numeric columns;
+#' no more complete rows than columns; collinear columns (smallest
+#' eigenvalue of \eqn{S} at most \eqn{10^{-8}} times the largest); `alpha`
+#' outside (0, 1). A progress indicator is shown in an interactive session.
 #'
 #' @param data A data frame or numeric matrix; non-numeric
 #' columns are dropped. Rows with any missing value are skipped, and
@@ -38,7 +59,10 @@
 #' `row`, `distance` (the square root of the squared Mahalanobis
 #' distance), `p_value`, `log_p_value` (the log of the chi-square upper
 #' tail, which keeps its information where `p_value` underflows to 0) and
-#' `outlier`, ordered by descending distance.
+#' `outlier` (logical), ordered by descending distance, with skipped rows
+#' (`NA` distance) last. `row` is the row number in `data`. The attributes
+#' `robust` and `alpha` record the settings. The print method shows the
+#' number of flagged rows and the ten most distant.
 #' @references Mahalanobis PC (1936). On the generalised distance in
 #' statistics. *Proceedings of the National Institute of Sciences of
 #' India* 2(1), 49--55.
@@ -193,6 +217,7 @@ print.bricklayer_outliers <- function(x, ...) {
 
 #' Runs of consecutive missing values
 #'
+#' @description
 #' Finds the maximal stretches of consecutive `NA` in each column,
 #' with where each begins and how long it is.
 #'
@@ -203,11 +228,21 @@ print.bricklayer_outliers <- function(x, ...) {
 #' to fetch, or a period was never collected; scattered gaps say individual
 #' records failed. The rate cannot distinguish them.
 #'
-#' @param data A data frame.
-#' @param min_run Report only runs at least this long
-#' (default 2, since a run of 1 is an isolated gap).
-#' @return A data frame of class `bricklayer_runs` with `column`,
-#' `start`, `end` and `length`, longest first. Zero rows
+#' @details
+#' Each column's missingness indicator \code{is.na(x)} is run-length
+#' encoded with \code{rle()}; every run of `TRUE` with length at least
+#' `min_run` is reported. Rows are taken in their current order, so sort
+#' the data by time (or by download order) first. A list column counts an
+#' element as missing only when \code{is.na()} says so. Errors: `data` not a
+#' data frame or without columns, or with duplicated or empty names;
+#' `min_run` not a positive whole number.
+#'
+#' @param data A data frame, in the row order that carries meaning.
+#' @param min_run Whole number, default 2: report only runs at least this
+#' long (a run of 1 is an isolated gap).
+#' @return A data frame of class `bricklayer_runs` with `column`
+#' (character), `start` and `end` (integer row numbers, inclusive) and
+#' `length` (integer), longest first and then by column name. Zero rows
 #' when there are no qualifying runs.
 #' @seealso
 #' [missingness_pattern()] for which
@@ -228,6 +263,8 @@ print.bricklayer_outliers <- function(x, ...) {
 #'
 #' # A complete column has no runs.
 #' missing_runs(data.frame(x = 1:5))
+#'
+#' try(missing_runs(df, min_run = 0))
 #' @export
 missing_runs <- function(data, min_run = 2L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
@@ -278,6 +315,7 @@ print.bricklayer_runs <- function(x, ...) {
 
 #' Text map of where the missing values are
 #'
+#' @description
 #' Draws the missingness of a whole table as a grid, one character per cell
 #' block -- a console counterpart of `visdat::vis_miss()` that needs
 #' no graphics device, so it works over SSH, in a log, and inside a
@@ -289,12 +327,24 @@ print.bricklayer_runs <- function(x, ...) {
 #' are all instantly recognisable shapes that a column of percentages is
 #' not.
 #'
+#' @details
+#' The rows are split into at most `height` consecutive blocks of nearly
+#' equal size; each map line is one block, labelled with its first row
+#' number, and each map column is one column of `data`. A cell's shade is
+#' its block's proportion missing rounded to the nearest quarter: blank (0),
+#' light, medium, dark, full (1). Where the console cannot show Unicode the
+#' shades are \code{" .-+#"}. Column names are written vertically above the
+#' map, cut to `width` characters. A table with no rows prints
+#' \code{"(no rows)"}. Errors: `data` not a data frame or without columns;
+#' `height` not a positive whole number.
+#'
 #' @param data A data frame.
-#' @param height Maximum rows in the map (default 20).
-#' @param width Maximum characters per column label (default
-#' 12).
-#' @return A character vector of the map's lines, invisibly; printed as a
-#' side effect.
+#' @param height Whole number, default 20: the maximum number of lines
+#' (row blocks) in the map.
+#' @param width Whole number, default 12: column names are cut to this many
+#' characters in the vertical legend.
+#' @return A character vector of the map's lines, invisibly; the map is
+#' printed with \code{cat()} as a side effect.
 #' @seealso
 #' [missingness_pattern()],
 #' [missing_runs()]
@@ -307,6 +357,11 @@ print.bricklayer_runs <- function(x, ...) {
 #'   mostly_gone = c(1:10, rep(NA, 90))
 #' )
 #' missingness_map(df)
+#'
+#' # a coarser map with short labels
+#' missingness_map(df, height = 5, width = 4)
+#'
+#' try(missingness_map(df, height = 0))
 #' @export
 missingness_map <- function(data, height = 20L, width = 12L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)

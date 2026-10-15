@@ -9,23 +9,27 @@ top_correlations(data, n = 10L, method = c("spearman", "pearson"), min_abs = 0)
 \arguments{
 \item{data}{A data frame; non-numeric columns are ignored.}
 
-\item{n}{Number of pairs to return (default 10).}
+\item{n}{Number of pairs to return, one positive whole number (default
+10).}
 
-\item{method}{\code{"spearman"} (default) or
-\code{"pearson"}.}
+\item{method}{\code{"spearman"} (default) or \code{"pearson"}.}
 
-\item{min_abs}{Report only pairs whose absolute
-correlation reaches this (default 0).}
+\item{min_abs}{Report only pairs whose absolute correlation reaches this,
+a number in \eqn{[0, 1]} (default 0).}
 }
 \value{
-A data frame of class \code{bricklayer_correlations} with
-\code{x}, \code{y}, \code{correlation} and \code{abs_correlation},
-strongest first.
+A data frame of class \code{c("bricklayer_correlations",
+  "data.frame")} with \code{x} and \code{y} (character, column names),
+\code{correlation} (numeric) and \code{abs_correlation} (numeric),
+strongest first, at most \code{n} rows; the method is in
+\code{attr(, "method")}. The print method draws a signed bar per pair.
 }
 \description{
-Ranks the numeric column pairs by the strength of their association, so
-a wide table's structure can be read without squinting at a correlation
-matrix.
+Ranks the numeric column pairs by the strength of their association and
+returns the strongest, so a wide table's structure can be read without
+squinting at a correlation matrix. Use it on a new data set to find
+near-duplicate columns, derived columns and the relationships worth a
+closer look.
 }
 \details{
 Spearman is the default deliberately. Pearson measures LINEAR
@@ -33,6 +37,19 @@ association only, so it understates a relationship that is perfectly
 monotone but curved, and a single outlier can manufacture or destroy it.
 On data you have not yet inspected -- which is the situation this
 function is for -- the rank correlation is the safer question to ask.
+
+Non-numeric columns are ignored. Each pair uses the rows where both
+values are present; a pair with fewer than three such rows, or with a
+constant column, has no correlation and is left out. Pairs are ranked by
+absolute correlation, those below \code{min_abs} dropped, and the first
+\code{n} returned. \code{\link[=correlation_table]{correlation_table()}} gives every
+pair, with the
+number of rows behind each. A progress bar is drawn on stderr for many
+pairs unless \code{options(morie.quiet = TRUE)}.
+
+Errors: \code{data} not a data frame; fewer than two numeric columns;
+\code{n} not one positive whole number; \code{min_abs} not one number in
+\eqn{[0, 1]}; an invalid \code{method}.
 }
 \examples{
 set.seed(1)
@@ -54,10 +71,14 @@ tc[tc$x == "a" & tc$y == "d", "correlation"]
 tp <- top_correlations(df, method = "pearson")
 tp[tp$x == "a" & tp$y == "d", "correlation"]
 
-# Filter to the pairs worth looking at.
-top_correlations(df, min_abs = 0.5)
+# Filter to the pairs worth looking at, and keep the top two.
+top_correlations(df, n = 2, min_abs = 0.5)
+
+# a threshold above 1 is an error
+try(top_correlations(df, min_abs = 2))
 }
 \seealso{
 \code{\link[=core_cor_spearman]{core_cor_spearman()}},
-\code{\link[=core_cov]{core_cov()}}
+\code{\link[=core_cov]{core_cov()}},
+\code{\link[=correlation_table]{correlation_table()}}
 }

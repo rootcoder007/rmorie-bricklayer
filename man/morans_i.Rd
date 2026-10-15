@@ -7,36 +7,59 @@
 morans_i(x, neighbours, style = c("W", "B"), n_perm = 9999L)
 }
 \arguments{
-\item{x}{The variable, one value per area.}
+\item{x}{Numeric vector, one value per area, no missing values.}
 
-\item{neighbours}{Either a list with one integer
-vector of neighbour indices per area, or a square weight matrix.}
+\item{neighbours}{Either a list with one integer vector of neighbour
+indices per area (in the order of \code{x}), or a square \eqn{n \times
+n} weight matrix.}
 
-\item{style}{\code{"W"} row-standardises the weights, so
+\item{style}{\code{"W"} (the default) row-standardises the weights, so
 each area's neighbours carry a total weight of one; \code{"B"} leaves
-them binary. Row standardisation is the usual choice, and stops an area
-with many neighbours from dominating.}
+them as given (binary for a list). Row standardisation is the usual
+choice, and stops an area with many neighbours from dominating.}
 
-\item{n_perm}{Permutations for the null distribution.}
+\item{n_perm}{Integer, default \code{9999}: the number of random
+permutations for the null distribution.}
 }
 \value{
-A list with \code{I}, its expectation under the null (
-\code{-1/(n-1)}, which is not zero), the permutation mean and standard
-deviation, a \code{z} score, \code{p_value}, and \code{W}, the total
-weight.
+A list with \code{I} (the statistic), \code{expectation}
+(\eqn{-1/(n-1)}), \code{null_mean} and \code{null_sd} (mean and standard
+deviation of the permuted values), \code{z} (\code{(I - null_mean) /
+null_sd}), \code{p_value}, \code{W} (the total weight), \code{n} (number
+of areas), \code{n_perm} (permutations used) and \code{style}.
 }
 \description{
-Spatial autocorrelation for an areal variable, with a permutation
-p-value. A neighbour list is required and is not invented: an
+Measures spatial autocorrelation in a variable measured on areas: whether
+neighbouring areas tend to have similar values (positive I), dissimilar
+values (negative I), or neither. The p-value comes from randomly
+permuting the values over the areas. You must supply the neighbour
+structure (a list or a weight matrix); none is invented, because an
 administrative extract keyed on a region ships no geometry, and guessing
 adjacency would make the answer a property of the guess.
 }
 \details{
-The expectation of I under the null is \code{-1/(n - 1)}, not zero, so a
+With weights \eqn{w_{ij}}, total \eqn{W = \sum_{ij} w_{ij}} and
+\eqn{z_i = x_i - \bar x},
+\deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j} w_{ij} z_i z_j}{\sum_i z_i^2}.}
+The expectation of I under the null is \eqn{-1/(n - 1)}, not zero, so a
 small negative I is what independence looks like in a small set of
 areas. The p-value comes from permuting the values over the areas, which
 needs no distributional assumption -- and with a handful of regions no
-distributional assumption is safe.
+distributional assumption is safe. It is two-sided around
+\eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1 + B)} over the
+\eqn{B} finite permuted values, so it is never exactly zero.
+
+A neighbour list is binary; a weight matrix keeps its magnitudes (for
+example inverse distances). Self-neighbours and the diagonal are dropped.
+\code{style = "W"} divides each area's weights by their total. The
+permutations use R's random number generator, so call
+\code{set.seed()} first for a reproducible p-value. The work is done in
+compiled code.
+
+Errors: fewer than three areas; missing values in \code{x}; a constant
+\code{x}; a neighbour index outside \code{1..n}; a list of the wrong
+length; a weight matrix that is not \eqn{n \times n}, not finite, or has
+negative weights; no area with any neighbour.
 }
 \examples{
 # Six areas in a line, each adjacent to the next.
@@ -52,12 +75,19 @@ morans_i(c(1, 6, 1, 6, 1, 6), nb, n_perm = 999L)[c("I", "p_value")]
 
 # And the null expectation is not zero.
 -1 / (6 - 1)
+
+# the same line as a binary weight matrix, unstandardised
+w <- matrix(0, 6, 6)
+for (i in 1:5) w[i, i + 1] <- w[i + 1, i] <- 1
+set.seed(1)
+morans_i(c(1, 2, 3, 4, 5, 6), w, style = "B", n_perm = 999L)$I
+
+# a constant variable has no autocorrelation to measure
+try(morans_i(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
 }
 \references{
 Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.
-\emph{Biometrika} 37(1/2), 17-23. (Not in the local corpus; cited from the
-published paper. The corpus does carry applied uses of the statistic,
-including Laniyonu (2017) on policing practices in gentrifying
-neighbourhoods, where it is used exactly as here -- to establish that
-areal residuals are spatially dependent.)
+\emph{Biometrika} 37(1/2), 17-23. Laniyonu (2017), on policing practices
+in gentrifying neighbourhoods, uses the statistic as here, to establish
+that areal residuals are spatially dependent.
 }

@@ -163,11 +163,12 @@ test_that("Merkle helpers reject malformed input rather than guessing", {
   bad <- list(sibling = c("aa", "bb"), side = "left")
   expect_error(merkle_verify("x", bad, "root"), "differ in length")
   # an empty proof verifies only the single-leaf tree
+  # (a hand-built proof names its scheme; one without it is checked under 0.5.12's scheme 1)
   expect_true(merkle_verify("solo", list(sibling = character(0),
-                                         side = character(0)),
+                                         side = character(0), scheme = 2L),
                             merkle_root("solo")))
   expect_false(merkle_verify("other", list(sibling = character(0),
-                                           side = character(0)),
+                                           side = character(0), scheme = 2L),
                              merkle_root("solo")))
 })
 

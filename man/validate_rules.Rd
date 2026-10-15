@@ -9,28 +9,44 @@ validate_rules(data, rules)
 \arguments{
 \item{data}{A data frame.}
 
-\item{rules}{A list of \code{\link[=rule]{rule()}} objects,
-or a single rule.}
+\item{rules}{A list of \code{\link[=rule]{rule()}} objects, or a single rule.}
 }
 \value{
-A named list of issues, each with \code{severity},
-\code{message}, and for a row-wise rule \code{n_failed} and \code{rows}
-(the first failing row indices). Empty when everything passes.
+A named list of issues, one per failed rule, each a list with
+\code{severity} (character) and \code{message} (character; for a row-wise
+rule it ends with "(k of n rows)"), and for a row-wise rule
+\code{n_failed} (integer) and \code{rows} (integer, the first ten failing
+row indices). Empty when everything passes.
 }
 \description{
-Evaluates each rule from \code{\link[=rule]{rule()}} and returns the
-failures in the same shape
-\code{\link[=validate_schema]{validate_schema()}} uses, so the two can
-be combined and handed to
-\code{\link[=apply_schema_validation]{apply_schema_validation()}}
-together.
+Evaluates each rule from \code{\link[=rule]{rule()}} on a data frame and returns the
+failures in the same shape \code{\link[=validate_schema]{validate_schema()}} uses, so
+the two can be
+combined and handed to
+\code{\link[=apply_schema_validation]{apply_schema_validation()}} together. Use it
+each
+time a data set is refreshed, to see which of its own invariants still
+hold.
 }
 \details{
 A rule whose column is absent is SKIPPED rather than failed -- a missing
-column is \code{\link[=validate_schema]{validate_schema()}} 's business,
-and reporting it twice buries the real finding. A rule that ERRORS is
-reported as a failure naming the error, never swallowed: a rule that
-cannot run has not passed.
+column is \code{\link[=validate_schema]{validate_schema()}}'s business, and reporting
+it twice buries
+the real finding. A rule that ERRORS is reported as a failure naming the
+error, never swallowed: a rule that cannot run has not passed.
+
+How a rule's result is read: a result that is not logical, or has length
+0, is a failure (\code{"rule returned <class>, not a logical"}); a single value
+fails unless it is \code{TRUE} (so \code{NA} fails); a longer vector is
+read row by row, and rows that are \code{FALSE} or \code{NA} fail (a rule
+that cannot decide has not been satisfied). The length of a row-wise
+result is not checked against the number of rows. The issue is named by
+the rule's \code{name}; two rules with the same name keep only the later
+failure. Rules run in the order given and only read the data.
+
+Errors: \code{data} not a data frame (or with missing or duplicated
+column names); \code{rules} not a rule or a list; an element that is not
+a rule.
 }
 \examples{
 df <- data.frame(id = c(1, 2, 2), age = c(30, -5, 40),
@@ -61,6 +77,12 @@ length(validate_rules(data.frame(id = 1:3), rules[1:2]))
 # A rule that errors is a failure, not a silent pass.
 broken <- list(rule("bad", function(v) stop("boom"), column = "age"))
 validate_rules(clean, broken)$bad$message
+
+# NA counts as a failure
+validate_rules(data.frame(age = c(30, NA)), rules[1])$age_non_negative$message
+
+# only rule() objects are accepted
+try(validate_rules(df, list(function(v) v >= 0)))
 }
 \seealso{
 \code{\link[=rule]{rule()}},

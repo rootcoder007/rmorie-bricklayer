@@ -30,13 +30,18 @@ bar was shown, writes \code{summary} on its own line. Each returns the
 object invisibly.
 }
 \description{
-Makes a progress bar on stderr for a loop or a long computation: the
-animated bar of \code{\link{bricklayer_download}()} (drawn in place at no
-more than 12 frames a second) while a person is watching a terminal, a line
-at each tenth when stderr is not a terminal, and nothing when quiet. With
-\code{total = 0} the work has no count, and the bar is a spinner with the
-time so far and the current stage (the \code{info} text), with a line at
-each new stage when stderr is not a terminal.
+Makes a progress bar for a loop or a long computation: the animated bar of
+\code{\link{bricklayer_download}()}, redrawn in place at no more than 12
+frames a second, when the console can redraw a line -- a terminal, or the
+RStudio, Positron, R.app or RKWard console (never a knitr or Jupyter
+notebook; the options \code{rmoriebricklayer.dynamic} or
+\code{cli.dynamic}, or the environment variable \code{R_CLI_DYNAMIC},
+override the choice). In the RStudio or Positron console the bar is drawn
+on stdout, elsewhere on stderr. Otherwise a milestone line goes to stderr
+at each tenth, and nothing is shown when quiet. With \code{total = 0} the
+work has no count, and the bar is a spinner with the time so far and the
+current stage (the \code{info} text), with a line at each new stage when
+the console cannot redraw.
 }
 \details{
 Progress is shown when a person is watching: an interactive session, or a

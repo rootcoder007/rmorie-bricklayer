@@ -28,7 +28,7 @@ test_that("the percent change is the arithmetic, not the row order", {
   expect_error(yoy(d, value = "n", period = "nope"), "not found")
   expect_error(yoy(d, value = "n", period = "year", lag = 0), "positive")
   expect_error(yoy(d, value = "n", period = "year", conf_level = 1),
-               "strictly inside")
+               "strictly between 0 and 1")  # the shared message since 0.5.13
 })
 
 test_that("a missing period is a gap, not a shifted comparison", {

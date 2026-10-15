@@ -9,27 +9,63 @@
 
 #' Render a change table to HTML or PDF
 #'
-#' @param x An `rmbl_yoy` object from
-#' [yoy()].
-#' @param file Output path. `yoy_html()` writes a single
-#' self-contained HTML file with no external requests; `yoy_pdf()`
-#' writes a PDF using R's own device, so neither needs a package beyond
-#' base R.
-#' @param title Heading for the page.
+#' Writes a change table from [yoy()] to a file for people who will not
+#' run
+#' R: \code{yoy_html()} to a single self-contained web page, \code{yoy_pdf()}
+#' to a PDF. Each row shows the period, the value, the previous value, the
+#' change and the percent change, coloured by whether it is better or worse,
+#' with the exact interval and any flags; the HTML page also has summary
+#' cards from [yoy_summary()]. Use them to hand a reviewed set
+#' of
+#' period-over-period changes to a manager, a journalist or a court.
+#'
+#' @details
+#' Neither backend needs a package beyond base R. The HTML page inlines its
+#' stylesheet, makes no external requests (no fonts, scripts or images from
+#' the network) and escapes every value, so the file stays the artefact and
+#' renders the same later. Rows are coloured by the table's \code{verdict}:
+#' \code{"worse"} in the palette's bad colour, \code{"better"} in its good
+#' colour, everything else (including the \code{"up"} and \code{"down"} of
+#' \code{direction = "neutral"}) in its neutral grey. Labels set
+#' with [yoy_label()] replace the period. For percentage units
+#' the change is
+#' shown in points. The page ends with the package version that wrote it.
+#'
+#' The PDF is drawn on R's own \code{pdf()} device with its standard fonts,
+#' which cannot draw arrows or dashes, so those are written in ASCII
+#' (\code{+}, \code{-}). Long tables are split over pages at 0.22 inch per row,
+#' with "page i of n" labels; notes go under the last page's rows when they
+#' fit and on pages of their own otherwise. The interval column appears only
+#' when the table has \code{pct_lower} and \code{pct_upper} (counts).
+#'
+#' Both overwrite \code{file}. Errors: \code{x} not from [yoy()]; a
+#' \code{palette} not in [yoy_palettes()]; a file that cannot
+#' be written.
+#'
+#' @param x An \code{rmbl_yoy} object from [yoy()].
+#' @param file Output path (a string). \code{yoy_html()} writes a single
+#'   self-contained HTML file with no external requests; \code{yoy_pdf()}
+#'   writes a PDF using R's own device, so neither needs a package beyond
+#'   base R.
+#' @param title Heading for the page (and the HTML page title or PDF title),
+#'   a string; default \code{"Year-over-year change"}.
 #' @param subtitle Optional line under the heading.
-#' Defaults to the table's own settings -- lag, units, interval and base
-#' gate -- so the reader can see what the percentages mean.
-#' @param palette One of
-#' [yoy_palettes()].
-#' @param digits Digits for the percent column.
-#' @param bars Whether to draw an in-cell bar proportional to
-#' the change, scaled to the largest absolute change in the table.
-#' @param interval Whether to show the exact interval
-#' column for counts.
+#'   Defaults to the table's own settings -- lag, units, interval and base
+#'   gate -- so the reader can see what the percentages mean.
+#' @param palette One of [yoy_palettes()]:
+#'   \code{"diverging"} (the default),
+#'   \code{"safe"} or \code{"mono"}.
+#' @param digits Digits for the percent column, default 1.
+#' @param bars Logical (HTML only): draw an in-cell bar proportional to
+#'   the change, scaled to the largest absolute change in the table
+#'   (default \code{TRUE}).
+#' @param interval Logical: show the exact interval column for counts
+#'   (default \code{TRUE}).
 #' @param notes Optional character vector of footnotes.
-#' @param width,height PDF page size in inches.
+#' @param width,height PDF page size in inches (default 11 by 8.5,
+#'   landscape US letter).
 #' @param ... Ignored.
-#' @return The path, invisibly.
+#' @return The path \code{file}, invisibly.
 #' @examples
 #' d <- data.frame(year = rep(2019:2023, each = 2),
 #'                 region = rep(c("North", "South"), 5),
@@ -45,6 +81,16 @@
 #' yoy_pdf(y, p, title = "Placements by region")
 #' file.exists(p)
 #'
+#' # a colour-blind-safe palette, no bars or intervals, and a footnote
+#' yoy_html(y, h, palette = "safe", bars = FALSE, interval = FALSE,
+#'          notes = "Counts below 10 are suppressed at source.")
+#' any(grepl("suppressed", readLines(h)))
+#'
+#' # portrait letter pages, with fiscal-year labels
+#' yoy_pdf(yoy_label(y, fiscal_year_label), p, width = 8.5, height = 11)
+#'
+#' # only yoy() tables can be rendered
+#' try(yoy_html(d, h))
 #' unlink(c(h, p))
 #' @name yoy_render
 #' @export
@@ -70,9 +116,7 @@ yoy_html <- function(x, file, title = "Year-over-year change",
                   if (pp) "points" else "change %")
   if (show_ci) head_cells <- c(head_cells, "interval")
   rows <- vapply(seq_len(nrow(d)), function(r) {
-    v <- d$verdict[r]
-    cls <- if (is.na(v)) "flat" else if (v %in% c("worse", "up")) "bad"
-    else if (v %in% c("better", "down")) "good" else "flat"
+    cls <- .yoy_verdict_class(d$verdict[r])
     cells <- c(
       if (!is.null(m$by)) vapply(m$by, function(b) {
         .yoy_td(.yoy_esc(as.character(d[[b]][r])), "grp")
@@ -275,13 +319,7 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
       sprintf("[%s, %s]", .yoy_fmt_pct(d$pct_lower, 0L),
               .yoy_fmt_pct(d$pct_upper, 0L))))
   }
-  cols <- vapply(seq_len(nrow(d)), function(r) {
-    v <- d$verdict[r]
-    if (is.na(v)) return(pal$flat)
-    if (v %in% c("worse", "up")) return(pal$bad)
-    if (v %in% c("better", "down")) return(pal$good)
-    pal$flat
-  }, "")
+  cols <- vapply(.yoy_verdict_class(d$verdict), function(k) pal[[k]], "", USE.NAMES = FALSE)
 
   # Paginate on the rows that fit, so a long table becomes several pages
   # rather than one page with the tail cut off.

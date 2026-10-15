@@ -21,9 +21,9 @@ means 15 significant digits, as in jsonlite, and is not exact.
 A complex value with only one \code{NA} part comes back as \code{NA}, as it
 does in jsonlite.}
 
-\item{pretty}{Indent the output.}
+\item{pretty}{Logical scalar, default \code{FALSE}: indent the output.}
 
-\item{txt}{JSON produced by
+\item{txt}{Character scalar: JSON produced by
 \code{bricklayer_json_serialize()}.}
 
 \item{trusted}{\code{FALSE} (default) rebuilds data types only (vectors,
@@ -78,6 +78,9 @@ identical(bricklayer_json_unserialize(exact), 1/3)
 
 # The serialised form is JSON, so it can be pinned like any other text.
 nchar(core_sha256(bricklayer_json_serialize(m)))
+
+# A function is refused unless the JSON is trusted.
+try(bricklayer_json_unserialize(bricklayer_json_serialize(function(x) x + 1)))
 }
 \seealso{
 \code{\link[=bricklayer_json_to_json]{bricklayer_json_to_json()}} for

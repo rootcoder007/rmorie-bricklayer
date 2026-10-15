@@ -7,32 +7,55 @@
 count_trend(y, x = NULL, offset = NULL, conf_level = 0.95)
 }
 \arguments{
-\item{y}{Counts, in period order.}
+\item{y}{Numeric vector of counts (non-negative whole numbers), in period
+order.}
 
-\item{x}{Periods. Defaults to the position.}
+\item{x}{Numeric vector of periods, default \code{NULL} (the position).
+The rate ratio is per unit of \code{x}.}
 
-\item{offset}{Exposure for each period -- a population, a
-number of admissions, a number of days. The trend is then in the rate
-rather than in the count.}
+\item{offset}{Optional numeric vector of exposures, one per period -- a
+population, a number of admissions, a number of days. Positive. The
+trend is then in the rate rather than in the count.}
 
-\item{conf_level}{Confidence level for the rate ratio.}
+\item{conf_level}{Number in (0, 1), default 0.95: the confidence level of
+the rate-ratio interval.}
 }
 \value{
-A list with \code{rate_ratio} (per period), its interval,
-\code{p_value}, the fitted values, the dispersion, and
-\code{overdispersed}.
+A list of class \code{c("rmbl_count_trend", "list")} with
+\code{rate_ratio} (per period), \code{lower}, \code{upper},
+\code{p_value} (test of no trend), \code{log_slope} (\eqn{\beta_1}),
+\code{se} (its standard error, scaled when overdispersed),
+\code{fitted} (fitted counts), \code{dispersion}, \code{overdispersed}
+(logical), \code{n}, \code{data} (list of the \code{x} and \code{y}
+used) and \code{method}.
 }
 \description{
-Fits a Poisson log-linear trend by iteratively reweighted least squares
-and reports the multiplicative change per period, which is what a count
-series' trend actually is. An offset carries the denominator when the
-exposure varies.
+Estimates the trend in a series of counts (arrests, admissions,
+incidents per year) as a rate ratio per period: 0.85 means the count
+falls by 15\% a year. It fits a Poisson log-linear model and, when the
+counts vary more than a Poisson model allows, widens the interval. An
+offset carries the denominator when the exposure varies, so the trend is
+then in the rate rather than in the count.
 }
 \details{
-The dispersion is reported because a Poisson fit assumes it is one. When
-it is well above one the interval is too narrow, and the quasi-Poisson
-interval -- which scales the standard error by the square root of the
-dispersion -- is returned instead, with \code{overdispersed} set.
+The model is \eqn{\log \mu_t = \beta_0 + \beta_1 (x_t - \bar x) +
+\log o_t}, with \eqn{o_t} the offset (1 when none), fitted by iteratively
+reweighted least squares (at most 50 iterations). The rate ratio is
+\eqn{e^{\beta_1}}, with a Wald interval \eqn{e^{\beta_1 \pm z\,
+\mathrm{se}}}.
+
+The dispersion is reported because a Poisson fit assumes it is one. It
+is the Pearson statistic \eqn{\sum (y - \mu)^2/\mu} divided by
+\eqn{n - 2}. When it exceeds 1.5 the quasi-Poisson interval is returned
+instead: the standard error is multiplied by the square root of the
+dispersion and the \eqn{t} distribution on \eqn{n - 2} degrees of freedom
+replaces the normal, and \code{overdispersed} is set.
+
+Missing values are dropped. Errors: negative or fractional counts;
+\code{x} and \code{y} of different lengths; infinite \code{x}; every count
+zero; an offset of the wrong length or not positive; fewer than three
+periods; a \code{conf_level} outside (0, 1). There is a \code{plot()} method for the
+result.
 }
 \examples{
 # A count falling by about 15\% a year.
@@ -40,9 +63,17 @@ set.seed(3)
 y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))
 fit <- count_trend(y)
 round(fit$rate_ratio, 3)
+c(fit$lower, fit$upper)
 
 # With a varying denominator the trend is in the rate.
 count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
+
+# Counts that swing far more than Poisson noise get the wider interval.
+wild <- count_trend(c(10, 50, 5, 60, 8, 70))
+wild$dispersion
+wild$method
+
+try(count_trend(c(1.5, 2, 3)))
 }
 \references{
 Bilder, C. R. and Loughin, T. M. \emph{Analysis of Categorical Data with
@@ -51,4 +82,7 @@ an overdispersed Poisson fit: the variance is scaled by an estimated
 dispersion, which widens the interval while leaving the point estimate
 alone. That is the behaviour reported here through \code{dispersion} and
 \code{overdispersed}.
+}
+\seealso{
+\code{\link{trend_test}}, \code{\link{rate_change}}.
 }

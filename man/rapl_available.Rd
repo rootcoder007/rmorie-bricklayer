@@ -7,10 +7,14 @@
 rapl_available(rapl_dir = "/sys/class/powercap")
 }
 \arguments{
-\item{rapl_dir}{The powercap directory; the default is the Linux location.}
+\item{rapl_dir}{Character scalar, the powercap directory; default
+\code{"/sys/class/powercap"}, the Linux location. Another path is useful
+for testing against a copy of the directory tree.}
 }
 \value{
-A single logical.
+A logical scalar: \code{TRUE} when every CPU-package energy counter
+under \code{rapl_dir} is readable, \code{FALSE} otherwise (including
+when the directory does not exist).
 }
 \description{
 \code{TRUE} when the operating system exposes readable RAPL (Running
@@ -21,6 +25,30 @@ Linux 5.10 that file is readable by root only, so \code{FALSE} is the
 common answer for an ordinary user, and \code{\link{compute_footprint}}
 then falls back to its model.
 }
+\details{
+A domain counts when it is a directory named \code{intel-rapl:N} (the
+\code{intel-rapl:N:M} subdomains are parts of a package and would count
+the same energy twice) whose \code{name} file starts with
+\code{"package"} and whose \code{energy_uj} file holds a number. Every
+such domain must be readable: if any is not, the answer is \code{FALSE}.
+Only files under \code{rapl_dir} are read; nothing is written. On macOS
+and Windows there is no such directory and the answer is \code{FALSE}.
+Errors when \code{rapl_dir} is not a single non-missing string.
+}
 \examples{
 rapl_available()
+
+# a fake powercap tree with one readable package domain
+d <- file.path(tempfile(), "intel-rapl:0")
+dir.create(d, recursive = TRUE)
+writeLines("package-0", file.path(d, "name"))
+writeLines("123456789", file.path(d, "energy_uj"))
+rapl_available(dirname(d))
+
+# a folder that does not exist is simply FALSE; a non-path is an error
+rapl_available(file.path(tempdir(), "no-such-dir"))
+try(rapl_available(NA_character_))
+}
+\seealso{
+\code{\link{compute_footprint}}
 }

@@ -53,14 +53,17 @@ ML-DSA-65), depending on the CPU.}
 or \code{\link[=capsule_sign]{capsule_sign()}}.}
 }
 \value{
-\code{fips_mu()} returns 64 raw bytes; \code{fips_sign_mu()} a
-\code{bricklayer_signature}; \code{fips_verify_mu()} a length-1 logical.
+\code{fips_mu()}: a raw vector of 64 bytes. \code{fips_sign_mu()}: a
+list of class \code{bricklayer_signature} with \code{scheme} and \code{signature}
+(hex). \code{fips_verify_mu()}: \code{TRUE} or \code{FALSE}.
 }
 \description{
 The external-mu interface. \code{fips_mu()} reduces a message to the
 64-byte value mu that is the only thing ML-DSA signing actually
 consumes; \code{fips_sign_mu()} signs that value and
-\code{fips_verify_mu()} checks it.
+\code{fips_verify_mu()} checks it. Use it when the message and the signing
+key are in different places: the machine with the data computes mu from
+the public key, and only those 64 bytes travel to the signer.
 }
 \details{
 The point is that the message need never reach the key. A large file can
@@ -73,6 +76,24 @@ key cannot be signed under another to any useful effect.
 The resulting signature is an ordinary ML-DSA signature.
 \code{\link[=capsule_verify]{capsule_verify()}} accepts it, given the
 same message and context.
+
+mu is FIPS 204's
+\eqn{\mu = \mathrm{SHAKE256}(tr \| M', 64)} with
+\eqn{tr = \mathrm{SHAKE256}(pk, 64)} and \eqn{M'} the message prefixed by
+the domain byte, the context length and the context (or, with a
+\code{prehash}, the pre-hash's identifier and digest), as in FIPS 204
+Algorithm 7. Signing from mu is Algorithm 7 from that point on, and
+\code{fips_verify_mu()} is Algorithm 8 from mu.
+
+Refusals: a key that is not an ML-DSA key from
+\code{\link[=fips_keygen]{fips_keygen()}} or
+\code{\link[=fips_key]{fips_key()}} (SLH-DSA keys are refused with
+\code{"external mu is an ML-DSA interface"}), \code{fips_sign_mu()} with a public
+key only (\code{"signing needs a key with its secret half"}) or a \code{mu} that
+is not 64 raw bytes. \code{fips_verify_mu()} returns \code{FALSE}, not an error,
+for a mismatched scheme, a wrong-length mu or a malformed signature; it
+errors only when \code{signature} is not a \code{bricklayer_signature} or \code{key}
+is not a list.
 }
 \examples{
 key <- fips_keygen("ML-DSA-65")
@@ -89,6 +110,12 @@ capsule_verify("a manifest digest", sig, key, context = "release")
 # message stay on the machine that has it
 identical(fips_mu(fips_public_key(key), "a manifest digest",
                   context = "release"), mu)
+
+# A different context gives a different mu.
+identical(fips_mu(key, "a manifest digest", context = "staging"), mu)
+
+# SLH-DSA has no external-mu interface.
+try(fips_mu(fips_keygen("SLH-DSA-SHA2-128f"), "m"))
 }
 \references{
 National Institute of Standards and Technology (2024).

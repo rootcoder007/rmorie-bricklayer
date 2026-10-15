@@ -188,7 +188,7 @@ test_that("stay_summary copes with a single person and refuses nonsense", {
   expect_true(is.na(one$upper))
   expect_error(stay_summary(c(1, -1)), "non-negative")
   expect_error(stay_summary(numeric(0)), "must not be empty")
-  expect_error(stay_summary(c(1, 2), conf_level = 1), "strictly inside")
+  expect_error(stay_summary(c(1, 2), conf_level = 1), "strictly between 0 and 1")  # the shared message since 0.5.13
 })
 
 test_that("stock_flow measures against the previous period when asked", {

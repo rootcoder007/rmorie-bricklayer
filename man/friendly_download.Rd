@@ -7,37 +7,78 @@
 friendly_download(url, target_path, attempt_wayback = NULL, allow_file = FALSE)
 }
 \arguments{
-\item{url}{URL to download.}
+\item{url}{URL to download, a single string.}
 
-\item{target_path}{Destination path on disk.}
+\item{target_path}{Destination path on disk, a single string.}
 
-\item{attempt_wayback}{Wayback Machine snapshot
-URL tried as a fallback if the primary download fails. When \code{NULL}
-(the default) a snapshot is resolved automatically via
-\code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}}; pass an
-explicit URL to override the lookup, or \code{""} (or \code{FALSE}) to disable
-the fallback entirely.}
+\item{attempt_wayback}{The Wayback Machine snapshot URL tried as a
+fallback if the primary download fails. \code{NULL} (the default)
+resolves a snapshot automatically via
+\code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}} (one more
+request); a URL string overrides the lookup; \code{""} or \code{FALSE}
+disables the fallback entirely.}
 
-\item{allow_file}{Accept a \verb{file://} URL for \code{url} and
-\code{attempt_wayback} (default \code{FALSE}; an offline test passes \code{TRUE}).}
+\item{allow_file}{Logical. Accept a \code{file://} URL for \code{url}
+(default \code{FALSE}; offline tests pass \code{TRUE}). It does not
+apply to \code{attempt_wayback}.}
 }
 \value{
 \code{TRUE} if either the primary download or the Wayback
-fallback succeeds, otherwise \code{FALSE}.
+fallback succeeded (the file is at \code{target_path}), otherwise
+\code{FALSE}.
 }
 \description{
-Wraps \code{\link[=bricklayer_download]{bricklayer_download()}} and, on
-failure, prints plain-language guidance for the most common academic and
-corporate network problems (rate limiting, TLS-inspection VPNs, DNS
-failures, timeouts, HTTP 403). Optionally retries from a Wayback Machine
-snapshot URL.
+Downloads one file like \code{\link[=download_data]{download_data()}}, but never stops
+on a network
+failure: it returns \code{TRUE} or \code{FALSE}, prints plain-language
+advice for the usual academic and corporate network problems, and then
+tries a Wayback Machine copy of the same address. Use it in scripts that
+other people run on networks you do not control (university VPNs,
+corporate proxies), where a bare "cannot open the connection" is not
+enough to act on.
+}
+\details{
+The URL is checked first, as in \code{\link[=download_data]{download_data()}}; a
+refused URL is an
+error, not \code{FALSE}. The download is then attempted. On failure the
+messages name the URL and the error, then the likely causes picked out
+from the error text: rate limiting (HTTP 429, common behind shared VPN
+addresses), a TLS handshake failure (VPNs that inspect TLS, such as Cisco
+AnyConnect, GlobalProtect, Zscaler or Netskope), a DNS failure, a refused
+or reset connection, a timeout, an HTTP 403, or otherwise a moved file or
+a portal that is down. When base R reports the HTTP status only in a
+warning, that warning's text is used as the cause.
+
+The fallback: with \code{attempt_wayback = NULL} a snapshot is looked up
+with \code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}}; with a URL that URL
+is used; with
+\code{""} or \code{FALSE} the fallback is off. The fallback is fetched
+without \code{allow_file}, so it must be a public \code{https} URL even
+when \code{allow_file = TRUE}; a refused fallback URL counts as a failed
+fallback (\code{FALSE}), with a message.
+
+All output goes to the message stream. The transport always draws its
+progress (it is called with \code{quiet = FALSE}). \code{target_path} is
+overwritten on success.
 }
 \examples{
-\donttest{
+src <- tempfile(fileext = ".csv")
+writeLines(c("id,value", "1,10"), src)
+
+# a successful download returns TRUE
+friendly_download(paste0("file://", src), tempfile(fileext = ".csv"),
+  attempt_wayback = "", allow_file = TRUE)
+
+# a failed one returns FALSE with advice, here with the fallback off
+friendly_download(paste0("file://", src, "-missing"), tempfile(),
+  attempt_wayback = "", allow_file = TRUE)
+
+# a refused URL is an error, not FALSE
+try(friendly_download("http://example.org/data.csv", tempfile()))
+\dontrun{
+# needs the network; the Wayback fallback is looked up on failure
 ok <- friendly_download("https://cloud.r-project.org/",
-  tempfile(fileext = ".html"),
-  attempt_wayback = ""
-) # disable the fallback
+  tempfile(fileext = ".html"))
 ok
 }
 }

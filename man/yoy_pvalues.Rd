@@ -7,20 +7,37 @@
 yoy_pvalues(y)
 }
 \arguments{
-\item{y}{An \code{rmbl_yoy} object with count units.}
+\item{y}{An \code{rmbl_yoy} object from \code{\link{yoy}} with
+\code{units = "count"}.}
 }
 \value{
-\code{y} with a \code{p_value} column; \code{NA} where there is no
-comparison period or both counts are zero.
+\code{y}, with its class and attributes, and an added numeric
+\code{p_value} column; \code{NA} where there is no comparison period or
+both counts are zero.
 }
 \description{
+Adds a two-sided exact p-value to each row of a period-over-period change
+table of counts from \code{\link{yoy}}, testing whether the count changed
+by more than chance between the two periods. Use it when you want a test
+to go with each change, and then pass the table to
+\code{\link{scan_adjust}} to correct for the number of rows tested.
+}
+\details{
 For count units the interval in \code{\link[=yoy]{yoy()}} is the exact conditional
 binomial interval for the ratio of two Poisson means; this is the
-matching two-sided test, so a scan over many groups can be corrected
-for multiple comparisons with
-\code{\link[=scan_adjust]{scan_adjust()}}. The test conditions on
+matching two-sided test. The test conditions on
 the total of the two periods and asks whether the split is
-compatible with equal means.
+compatible with equal means: with current count \eqn{a} and previous
+count \eqn{b}, \eqn{a \sim \mathrm{Binomial}(a + b, 1/2)} under the null,
+and the p-value is that of \code{stats::binom.test(a, a + b, p = 0.5)}.
+The two periods are treated as having equal exposure; for changing
+populations use \code{\link{rate_change}} and \code{\link{scan_adjust}},
+which weight by the exposures. Counts are rounded to whole numbers.
+
+Errors: \code{y} not a \code{yoy()} result; a \code{yoy()} result whose
+units are not counts (percentages and measured values have no Poisson
+test). A progress indicator is shown for long tables in an interactive
+session.
 }
 \examples{
 seg <- data.frame(year = rep(2022:2023, each = 3),
@@ -28,4 +45,13 @@ seg <- data.frame(year = rep(2022:2023, each = 3),
                   n = c(30, 50, 80, 45, 52, 79))
 y <- yoy(seg, value = "n", period = "year", by = "site")
 yoy_pvalues(y)$p_value
+
+# the same test by hand for site A: 45 against 30
+stats::binom.test(45, 75)$p.value
+
+# anything that is not a yoy() table is refused
+try(yoy_pvalues(seg))
+}
+\seealso{
+\code{\link{scan_adjust}}, \code{\link{yoy}}.
 }

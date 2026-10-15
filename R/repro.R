@@ -10,31 +10,59 @@
 
 #' Recompute a manifest's recorded statistics against the data
 #'
-#' Re-evaluates named statistics against `data` and compares each to
+#' Re-evaluates named statistics against \code{data} and compares each to
 #' what the manifest recorded. This is the check
-#' [verify_capsule()] cannot make: that one
-#' confirms the record is internally consistent, which an
-#' edited-at-the-time manifest also is.
+#' [verify_capsule()] cannot
+#' make: that one confirms the record is internally consistent, which an
+#' edited-at-the-time manifest also is. Use it when receiving a capsule, or
+#' after a data refresh, to confirm that the numbers in the record still
+#' come out of the data.
 #'
+#' @details
 #' Every recorded result that was NOT recomputed is reported too, as
-#' `unchecked`. An analysis that recorded twenty statistics and
+#' \code{unchecked}. An analysis that recorded twenty statistics and
 #' re-derives three has seventeen it has not re-derived, and a report that
 #' quietly omitted them would read as a clean bill of health.
 #'
-#' @param manifest A manifest, as from
-#' [make_manifest()] and
-#' [record()].
-#' @param data The data the statistics are computed from.
-#' @param statistics Named list of functions of
-#' `data`. Names must match the recorded result names.
-#' @param tol Optional numeric tolerance overriding each
-#' result's own recorded `tol`. Supply it to check more strictly than
-#' the original run did.
-#' @return A list of class `bricklayer_recompute`: `ok`, a
-#' `results` data frame with one row per recomputed statistic (
-#' `name`, `recorded`, `recomputed`, `delta`,
-#' `tol`, `status`) , and `unchecked`, the names recorded
-#' but not recomputed.
+#' For each function in \code{statistics}, its value on \code{data} is
+#' compared with the \code{observed} value recorded under the same name.
+#' Numeric results match when they are identical (so the same \code{NA},
+#' \code{NaN} or infinite value on both sides matches) or when
+#' \eqn{|recorded - recomputed| \le tol}, with
+#' \code{tol} the argument if given, else the result's recorded \code{tol},
+#' else 0 (exact); any other pair with a missing or non-finite value is
+#' \code{"DIFFER"}. A non-numeric result (a label, a verdict) is compared as
+#' text and must be identical. A function that errors gives the status
+#' \code{"ERROR"} with the message; a name the manifest does not have gives
+#' \code{"NOT_RECORDED"}. \code{ok} is \code{TRUE} only when every row is
+#' \code{"MATCH"} and nothing recorded was left unchecked. The functions are
+#' run as given, so they can read files or draw random numbers; nothing else
+#' is changed.
+#'
+#' Errors: \code{manifest} not a list with \code{results}; \code{statistics}
+#' not a non-empty fully named list, or with an element that is not a
+#' function.
+#'
+#' @param manifest A manifest, as from [make_manifest()]
+#'   and [record()].
+#' @param data The data the statistics are computed from (usually a data
+#'   frame); passed unchanged to each function.
+#' @param statistics Named list of functions of \code{data}, each returning
+#'   one value. Names must match the recorded result names.
+#' @param tol Optional numeric tolerance (absolute) overriding each
+#'   result's own recorded \code{tol}. Supply it to check more strictly than
+#'   the original run did. \code{NULL} (the default) uses the recorded one.
+#' @return A list of class \code{c("bricklayer_recompute", "list")}:
+#'   \describe{
+#'     \item{\code{ok}}{logical, every statistic matched and none was left unchecked.}
+#'     \item{\code{results}}{data frame, one row per recomputed statistic, with
+#'       \code{name} (character), \code{recorded} and \code{recomputed} (numeric,
+#'       \code{NA} for non-numeric values), \code{delta} (numeric absolute
+#'       difference), \code{tol} (numeric), \code{status} (\code{"MATCH"},
+#'       \code{"DIFFER"}, \code{"NOT_RECORDED"} or \code{"ERROR"}) and \code{detail}
+#'       (character explanation).}
+#'     \item{\code{unchecked}}{character, the names recorded but not recomputed.}
+#'   }
 #' @seealso
 #' [verify_capsule()],
 #' [capsule_falsify()],
@@ -57,6 +85,17 @@
 #' # and data that no longer matches the record is caught
 #' manifest_recompute(m, data.frame(x = 1:11),
 #'                    list(n = function(z) nrow(z)))$ok
+#'
+#' # a stricter tolerance than the recorded one
+#' manifest_recompute(m, d, list(mean_x = function(z) mean(z$x) + 1e-9,
+#'                               n = nrow), tol = 0)$results$status
+#'
+#' # a function that fails is reported, not thrown
+#' manifest_recompute(m, d, list(mean_x = function(z) stop("column y is gone"),
+#'                               n = nrow))$results[, c("name", "status")]
+#'
+#' # statistics must be named
+#' try(manifest_recompute(m, d, list(function(z) nrow(z))))
 #' @export
 manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
   if (!is.list(manifest) || is.null(manifest$results)) {
@@ -106,12 +145,19 @@ manifest_recompute <- function(manifest, data, statistics, tol = NULL) {
                                          as.character(got)[1L]),
                         stringsAsFactors = FALSE))
     }
-    d <- abs(as.numeric(rec$observed)[1L] - as.numeric(got)[1L])
-    data.frame(name = nm, recorded = as.numeric(rec$observed)[1L],
-               recomputed = as.numeric(got)[1L], delta = d,
+    r <- as.numeric(rec$observed)[1L]
+    g <- as.numeric(got)[1L]
+    d <- abs(r - g)
+    # identical() first: NA, NaN and Inf recorded and recomputed alike are a
+    # match, and a delta of NA (one side missing) is a difference, not a
+    # crash of `d <= use_tol`
+    same <- identical(r, g) || (!is.na(d) && d <= use_tol)
+    data.frame(name = nm, recorded = r,
+               recomputed = g, delta = d,
                tol = use_tol,
-               status = if (d <= use_tol) "MATCH" else "DIFFER",
-               detail = sprintf("|recorded - recomputed| = %.17g", d),
+               status = if (same) "MATCH" else "DIFFER",
+               detail = if (is.finite(d)) sprintf("|recorded - recomputed| = %.17g", d) else
+                 sprintf("recorded %s, recomputed %s", format(r), format(g)),
                stringsAsFactors = FALSE)
   })
   df <- do.call(rbind, rows)
@@ -152,26 +198,44 @@ print.bricklayer_recompute <- function(x, ...) {
 
 #' Record and restore the random number generator state
 #'
-#' `manifest_record_seed()` stores the generator's kind and its full
-#' state in the manifest; `manifest_restore_seed()` puts both back.
-#' Together they let a run that used randomness be repeated exactly.
+#' \code{manifest_record_seed()} stores the generator's kind and its full
+#' state in the manifest; \code{manifest_restore_seed()} puts both back.
+#' Together they let a run that used randomness (a bootstrap, a permutation
+#' test, a simulation, a random split) be repeated exactly, even without
+#' knowing what seed was set or how many draws came before.
 #'
-#' Why the state and not just a seed. `set.seed(1)` is reproducible
+#' @details
+#' Why the state and not just a seed. \code{set.seed(1)} is reproducible
 #' only if everything before it is too: a single extra draw anywhere
-#' upstream shifts every subsequent value. Recording `.Random.seed` as
+#' upstream shifts every subsequent value. Recording \code{.Random.seed} as
 #' it stood pins the actual position in the stream, and recording
-#' `RNGkind()` alongside it pins what that position means -- R has
-#' changed its default `sample()` algorithm before, and a seed
+#' \code{RNGkind()} alongside it pins what that position means -- R has
+#' changed its default \code{sample()} algorithm before, and a seed
 #' replayed under a different kind gives different numbers with no warning.
 #'
-#' This is opt-in because the state is 626 integers, which is a lot of
-#' manifest for an analysis with no randomness in it.
+#' This is opt-in because the state is 626 integers for R's default
+#' Mersenne-Twister generator, which is a lot of manifest for an analysis
+#' with no randomness in it.
 #'
-#' @param manifest A manifest, as from
-#' [make_manifest()].
-#' @return `manifest_record_seed()` the manifest with an `rng`
-#' element; `manifest_restore_seed()` the manifest, invisibly, having
-#' set the generator.
+#' Side effects: if no generator state exists yet (\code{.Random.seed} is
+#' absent from the global environment), \code{manifest_record_seed()} draws
+#' one uniform number to create it, and records \code{was_initialised =
+#' FALSE}. \code{manifest_restore_seed()} calls \code{RNGkind()} with the
+#' recorded kinds and assigns \code{.Random.seed} in the global environment,
+#' replacing the current state.
+#'
+#' Errors: \code{manifest} that is not a list (or is a data frame); for
+#' \code{manifest_restore_seed()}, a manifest without a recorded state or with
+#' an empty kind.
+#'
+#' @param manifest A manifest, as from [make_manifest()] (a
+#'   list).
+#' @return \code{manifest_record_seed()}: the manifest with an \code{rng}
+#'   element, a list of \code{kind} (character, the three \code{RNGkind()}
+#'   values), \code{state} (integer, the \code{.Random.seed} vector) and
+#'   \code{was_initialised} (logical, whether a state existed before the
+#'   call). \code{manifest_restore_seed()}: the manifest, invisibly, having
+#'   set the generator.
 #' @seealso
 #' [capture_environment()],
 #' [capsule_falsify()].
@@ -186,6 +250,13 @@ print.bricklayer_recompute <- function(x, ...) {
 #'
 #' manifest_restore_seed(m)
 #' identical(runif(3), first)
+#'
+#' # what is stored
+#' m$rng$kind
+#' length(m$rng$state)
+#'
+#' # a manifest without a recorded state cannot restore one
+#' try(manifest_restore_seed(make_manifest(list(a = 1), environment = FALSE)))
 #' @export
 manifest_record_seed <- function(manifest) {
   if (!is.list(manifest) || is.data.frame(manifest)) {
@@ -236,21 +307,38 @@ manifest_restore_seed <- function(manifest) {
 #' Records, for every package named, its version and enough about its
 #' provenance to find the same one again: the library it was loaded from,
 #' the repository it was installed from, and -- for a package installed
-#' from a remote -- the remote's URL and commit.
+#' from a remote -- the remote's URL and commit. Store it in a manifest next
+#' to [capture_environment()] when an analysis depends
+#' on packages installed
+#' from GitHub or a local build.
 #'
+#' @details
 #' Why versions alone are not enough. Two installations can report the same
 #' version and differ: one built from CRAN, one from a fork, one from a
-#' local `R CMD INSTALL` of a working tree with uncommitted changes. A
+#' local \code{R CMD INSTALL} of a working tree with uncommitted changes. A
 #' version number identifies an intention; the repository and commit
 #' identify what was actually loaded.
 #'
+#' The fields are read from each package's installed DESCRIPTION
+#' (\code{utils::packageDescription()}): \code{Repository} (for example
+#' \code{"CRAN"}), \code{RemoteUrl} and \code{RemoteSha} (written by
+#' remotes, pak and devtools for packages installed from a Git host) and
+#' \code{Built}. Packages are sorted and de-duplicated. A progress bar is
+#' drawn on stderr for many packages unless \code{options(morie.quiet =
+#' TRUE)}. Nothing is written. Error: \code{packages} that is not a character
+#' vector.
+#'
 #' @param packages Character vector of package names.
-#' Defaults to the namespaces currently loaded.
-#' @return A data frame with one row per package: `package`,
-#' `version`, `library`, `repository`, `remote_url`,
-#' `remote_sha`, `built`. Unavailable fields are `NA` rather
-#' than omitted, so a reader can see that the information was absent rather
-#' than forgotten.
+#'   Defaults to the namespaces currently loaded.
+#' @return A data frame with one row per package and character columns
+#'   \code{package}, \code{version}, \code{library} (the library directory),
+#'   \code{repository}, \code{remote_url}, \code{remote_sha} and \code{built}
+#'   (R version, platform and time of the build). Unavailable fields are
+#'   \code{NA} rather than omitted, so a reader can see that the information
+#'   was absent rather than forgotten; for a package that is not installed,
+#'   every field except \code{package} is \code{NA}. An empty \code{packages} gives a
+#'   data frame with no
+#'   rows and the same columns.
 #' @seealso
 #' [capture_environment()],
 #' [environment_diff()].
@@ -260,6 +348,12 @@ manifest_restore_seed <- function(manifest) {
 #'
 #' # a package with no repository field records that fact
 #' is.na(capture_dependencies("stats")$repository)
+#'
+#' # a package that is not installed is a row of NAs, not an error
+#' capture_dependencies("notapackage123")[, c("package", "version")]
+#'
+#' # names must be character
+#' try(capture_dependencies(1))
 #' @export
 capture_dependencies <- function(packages = loadedNamespaces()) {
   if (!is.null(packages) && !is.character(packages)) {
@@ -283,8 +377,11 @@ capture_dependencies <- function(packages = loadedNamespaces()) {
       package    = p,
       version    = tryCatch(as.character(utils::packageVersion(p)),
                             error = function(e) NA_character_),
-      library    = tryCatch(dirname(dirname(system.file(package = p))),
-                            error = function(e) NA_character_),
+      # system.file() is "" for a package that is not installed, and dirname(dirname("")) is ""
+      library    = tryCatch({
+        sf <- system.file(package = p)
+        if (nzchar(sf)) dirname(sf) else NA_character_
+      }, error = function(e) NA_character_),
       repository = field(d, "Repository"),
       remote_url = field(d, "RemoteUrl"),
       remote_sha = field(d, "RemoteSha"),

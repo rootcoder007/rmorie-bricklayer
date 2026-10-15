@@ -342,12 +342,23 @@ void wots_pk_from_sig(unsigned char *pk, const unsigned char *sig,
 typedef void (*LeafGen)(unsigned char *leaf, const Ctx &ctx,
                         uint32_t idx, void *info);
 
+/* How often treehash() polls for a Ctrl-C: a WOTS+ leaf is a whole one-time public key
+ * (kWotsLen chains of up to 15 hashes), a FORS leaf two hashes, so a poll every 16 WOTS+
+ * leaves and every 256 FORS leaves is a poll every few milliseconds at every parameter set,
+ * and its cost (one clock read and one R_ToplevelExec) is lost in the hashing. */
+const uint32_t kPollWotsLeaves = 15u;
+const uint32_t kPollForsLeaves = 255u;
+
+/* `poll_mask`: a pending Ctrl-C is taken (and the busy spinner turned) after every
+ * poll_mask + 1 leaves. The test is on the loop counter alone, which runs over every leaf of
+ * the tree whatever the key or message, so it adds no branch on secret data. */
 void treehash(unsigned char *root, unsigned char *auth_path, const Ctx &ctx,
               uint32_t leaf_idx, uint32_t idx_offset, uint32_t tree_height,
-              LeafGen gen_leaf, Adrs tree_adrs, void *info) {
+              LeafGen gen_leaf, Adrs tree_adrs, void *info, uint32_t poll_mask) {
     std::vector<unsigned char> stack(
         static_cast<size_t>(tree_height) * kN);
     for (uint32_t idx = 0;; ++idx) {
+        if ((idx & poll_mask) == poll_mask) ::rmbl::check_interrupt();
         unsigned char current[2 * kN];
         gen_leaf(current + kN, ctx, idx + idx_offset, info);
         uint32_t internal_idx_offset = idx_offset;
@@ -432,7 +443,7 @@ void merkle_sign(unsigned char *sig, unsigned char *root, const Ctx &ctx,
     info.wots_sign_leaf = idx_leaf;
     treehash(root, idx_leaf == ~0u ? nullptr : auth_path, ctx, idx_leaf, 0,
              static_cast<uint32_t>(kTreeHeight), wots_gen_leaf, tree_adrs,
-             &info);
+             &info, kPollWotsLeaves);
 }
 
 void merkle_gen_root(unsigned char *root, const Ctx &ctx) {
@@ -525,7 +536,7 @@ void fors_sign(unsigned char *sig, unsigned char *pk, const unsigned char *m,
         sig += kN;
         treehash(roots + i * kN, sig, ctx, indices[i], idx_offset,
                  static_cast<uint32_t>(kForsHeight), fors_gen_leaf,
-                 tree_adrs, &info);
+                 tree_adrs, &info, kPollForsLeaves);
         sig += static_cast<size_t>(kN) * kForsHeight;
     }
     thash(pk, roots, kForsTrees, ctx, pk_adrs);
@@ -769,6 +780,9 @@ void sign(unsigned char *sig, const unsigned char *m, size_t mlen,
         merkle_sign(sig, root, ctx, wots_adrs, tree_adrs, idx_leaf);
         RMBL_SLHDSA_DECLASSIFY(root, kN);
         sig += kWotsBytes + kTreeHeight * kN;
+        /* once per hypertree layer, a fixed count: the "f" sets' subtrees (8 leaves) are too
+         * small for treehash()'s own poll */
+        ::rmbl::check_interrupt();
         /* climb one layer: this subtree's index becomes the leaf index
          * of the layer above */
         idx_leaf = static_cast<uint32_t>(tree & ((1u << kTreeHeight) - 1));

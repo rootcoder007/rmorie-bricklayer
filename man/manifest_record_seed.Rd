@@ -10,18 +10,23 @@ manifest_record_seed(manifest)
 manifest_restore_seed(manifest)
 }
 \arguments{
-\item{manifest}{A manifest, as from
-\code{\link[=make_manifest]{make_manifest()}}.}
+\item{manifest}{A manifest, as from \code{\link[=make_manifest]{make_manifest()}} (a
+list).}
 }
 \value{
-\code{manifest_record_seed()} the manifest with an \code{rng}
-element; \code{manifest_restore_seed()} the manifest, invisibly, having
+\code{manifest_record_seed()}: the manifest with an \code{rng}
+element, a list of \code{kind} (character, the three \code{RNGkind()}
+values), \code{state} (integer, the \code{.Random.seed} vector) and
+\code{was_initialised} (logical, whether a state existed before the
+call). \code{manifest_restore_seed()}: the manifest, invisibly, having
 set the generator.
 }
 \description{
 \code{manifest_record_seed()} stores the generator's kind and its full
 state in the manifest; \code{manifest_restore_seed()} puts both back.
-Together they let a run that used randomness be repeated exactly.
+Together they let a run that used randomness (a bootstrap, a permutation
+test, a simulation, a random split) be repeated exactly, even without
+knowing what seed was set or how many draws came before.
 }
 \details{
 Why the state and not just a seed. \code{set.seed(1)} is reproducible
@@ -32,8 +37,20 @@ it stood pins the actual position in the stream, and recording
 changed its default \code{sample()} algorithm before, and a seed
 replayed under a different kind gives different numbers with no warning.
 
-This is opt-in because the state is 626 integers, which is a lot of
-manifest for an analysis with no randomness in it.
+This is opt-in because the state is 626 integers for R's default
+Mersenne-Twister generator, which is a lot of manifest for an analysis
+with no randomness in it.
+
+Side effects: if no generator state exists yet (\code{.Random.seed} is
+absent from the global environment), \code{manifest_record_seed()} draws
+one uniform number to create it, and records \code{was_initialised =
+FALSE}. \code{manifest_restore_seed()} calls \code{RNGkind()} with the
+recorded kinds and assigns \code{.Random.seed} in the global environment,
+replacing the current state.
+
+Errors: \code{manifest} that is not a list (or is a data frame); for
+\code{manifest_restore_seed()}, a manifest without a recorded state or with
+an empty kind.
 }
 \examples{
 set.seed(42)
@@ -46,6 +63,13 @@ invisible(runif(1000))
 
 manifest_restore_seed(m)
 identical(runif(3), first)
+
+# what is stored
+m$rng$kind
+length(m$rng$state)
+
+# a manifest without a recorded state cannot restore one
+try(manifest_restore_seed(make_manifest(list(a = 1), environment = FALSE)))
 }
 \seealso{
 \code{\link[=capture_environment]{capture_environment()}},

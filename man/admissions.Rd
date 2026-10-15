@@ -7,22 +7,36 @@
 admissions(adp, alos, t = 365)
 }
 \arguments{
-\item{adp}{Average daily population.}
+\item{adp}{Numeric scalar, the average daily population (people held on
+an average day); must be positive.}
 
-\item{alos}{Average length of stay in days.}
+\item{alos}{Numeric scalar, the average length of stay in days; must be
+positive.}
 
-\item{t}{Length of the period in days. Default 365.}
+\item{t}{Numeric scalar, the length of the period in days; must be
+positive. Default \code{365}.}
 }
 \value{
-The implied number of admissions.
+A numeric scalar: the implied number of admissions over the
+period, \eqn{\mathrm{adp} \times t / \mathrm{alos}}. It is not rounded.
 }
 \description{
-Admissions implied by a population and a length of stay
+Works out how many admissions a given average daily population and
+average length of stay imply over a period. Published statistics often
+give the population held and the average stay but not the number
+admitted (or the other way round); this recovers the missing quantity
+from the identity that links all three.
 }
 \details{
 Rearranging the identity \eqn{\bar{X}_{hc} = N_a \bar{X}_t / t}
 (Lakner 1976, p.18-20) for \eqn{N_a}. Useful when two of the three
-quantities are published and the third is not.
+quantities are published and the third is not. The identity holds
+exactly only in a steady state (admissions and stays roughly constant
+across the period); with a population that is growing or shrinking
+quickly the result is an approximation.
+
+Errors when any argument is not numeric, is \code{NA} or \code{Inf}, is
+not positive, or has more than one value.
 }
 \examples{
 # Lakner (p.20) runs this the other way: t = 365, an average daily
@@ -32,6 +46,12 @@ round(alos_implied, 1)
 
 # and back again
 admissions(25, alos_implied)
+
+# a 90-day quarter with 40 held on average and a 12-day average stay
+admissions(40, 12, t = 90)
+
+# an average stay of zero is refused
+try(admissions(25, 0))
 }
 \seealso{
 \code{\link[=adp]{adp()}},

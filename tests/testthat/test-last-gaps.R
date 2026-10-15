@@ -82,7 +82,7 @@ test_that("the C-level guards reject malformed arguments", {
                "must be a matrix")
   # the bootstrap needs at least one replicate
   expect_error(.Call(rmoriebricklayer:::C_rmbl_bootstrap_mean,
-                     c(1, 2, 3), 0, 1), "at least 1")
+                     c(1, 2, 3), 0, 1), "whole number >= 1")  # wording since 0.5.13
   # BLAKE2b's length and key bounds
   expect_error(.Call(rmoriebricklayer:::C_rmbl_blake2b, "x", NULL, 0L),
                "between 1 and 64")
@@ -101,18 +101,18 @@ test_that("the C-level guards reject malformed arguments", {
                "non-negative")
   # the Merkle proof index
   expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_proof,
-                     list(charToRaw("a"), charToRaw("b")), 5L),
+                     list(charToRaw("a"), charToRaw("b")), 5L, 2L),
                "between 1 and")
   # the C layer takes bytes, so it refuses anything that is not a list
   # of raw vectors rather than coercing it to text and hashing that
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, c("a", "b")),
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, c("a", "b"), 2L),
                "list of raw vectors")
-  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list("a")),
+  expect_error(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list("a"), 2L),
                "must be a raw vector")
 })
 
 test_that("an empty Merkle tree and sketch degrade rather than error", {
-  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list())))
+  expect_true(is.na(.Call(rmoriebricklayer:::C_rmbl_merkle_root, list(), 2L)))  # scheme argument since 0.5.13
   expect_true(is.na(merkle_root(character(0))))
   expect_equal(distinct_count(integer(0)), 0)
   expect_length(reservoir_indices(0, 0), 0L)

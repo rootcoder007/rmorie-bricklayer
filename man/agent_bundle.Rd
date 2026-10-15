@@ -9,11 +9,12 @@ agent_bundle(request, model = NULL, route = NULL)
 \arguments{
 \item{request}{Character scalar describing the bundle task.}
 
-\item{model}{Optional model id; \code{NULL} uses the route's model
+\item{model}{Optional model id, a string; \code{NULL} uses the route's model
 (\code{rmbl models} lists them).}
 
 \item{route}{\code{NULL} (the saved route, else the first that is set
-up), \code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id.}
+up), \code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id such as
+\code{"anthropic"} or \code{"openai"}.}
 }
 \value{
 Character scalar: the answer, or a message saying what to set
@@ -24,13 +25,32 @@ Asks a language model to plan a brick-proof, reproducible data bundle,
 through \code{\link{bricklayer_llm_ask}}: your own key, your own
 endpoint or a local Ollama server, with the packages' help at hand (the
 model reads the help pages of the functions it proposes before it
-answers).
+answers). Use it to get a first draft of the steps and R code for
+packaging an analysis: finding the portal's download URL, fetching with a
+Wayback fallback, recording hashes and a manifest, writing a synthetic
+stand-in, then packaging, signing and verifying the bundle.
+}
+\details{
+The request is sent with a fixed system prompt that describes that task
+and asks for a short plan and R code. The route is chosen as in
+\code{\link[=bricklayer_llm_ask]{bricklayer_llm_ask()}}; when no route is set up, the
+function returns a
+message saying what to set up (a provider key, a local Ollama or your own
+endpoint) instead of an error, and makes no network request. When a
+route is set up, the request and the prompt are sent to that provider or
+server. The answer is model output: check the code it proposes against
+the help pages before running it.
+
+Errors: \code{request} not a single non-empty string; \code{route} not one
+of the names listed; \code{route = "hosted"} (the hosted tier is retired);
+and errors raised by \code{\link[=bricklayer_llm_ask]{bricklayer_llm_ask()}}.
 }
 \examples{
-\donttest{
+\dontrun{
 # Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
-# endpoint or a local Ollama. try() keeps the example graceful when none answers.
-try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
+# endpoint or a local Ollama.
+agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data")
+agent_bundle("sign and verify my capsule", route = "ollama")
 }
 
 # With every route switched off the call returns a setup hint, not an
@@ -40,8 +60,12 @@ keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", bricklayer_llm_providers()$key_en
 old <- Sys.getenv(keys, unset = NA)
 Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off")
 Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL")))
-agent_bundle("hello")
+cat(agent_bundle("hello"))
 for (v in keys) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
+
+# argument errors come first
+try(agent_bundle(""))
+try(agent_bundle("plan a bundle", route = "hosted"))
 }

@@ -7,15 +7,38 @@
 bricklayer_siu_iso_date(x)
 }
 \arguments{
-\item{x}{A character vector of human-readable dates.}
+\item{x}{A character vector of human-readable dates. A vector that is
+all \code{NA} (of any type) is accepted.}
 }
 \value{
-A character vector of \code{YYYY-MM-DD} strings (or \code{""}) .
+A character vector the same length as \code{x}: \code{YYYY-MM-DD}
+strings, \code{""} for unparseable input and \code{NA} for \code{NA}.
+Unnamed.
 }
 \description{
-\code{"January 5, 2023"} (or \code{"January 5 2023"}) becomes
-\code{"2023-01-05"}; unparseable input becomes \code{""}.
+Turns the written-out dates found in SIU reports, in English or French,
+into ISO \code{YYYY-MM-DD} strings that sort and convert with
+\code{as.Date()}. \code{"January 5, 2023"}, \code{"January 5 2023"},
+\code{"5 January 2023"} and \code{"5 janvier 2023"} all become
+\code{"2023-01-05"}.
+}
+\details{
+Each element is parsed by the native core. Month names may be English or
+French (accents optional), full or abbreviated, before or after the day;
+ordinals such as \code{"1er"} are accepted, and an ISO date is passed
+through. A date that does not exist (\code{"February 30, 2023"}) or text
+that is not a date gives \code{""}. \code{NA} stays \code{NA}.
+
+Error: \code{x} that is neither character nor all \code{NA} ("x must be
+a character vector of dates").
 }
 \examples{
 bricklayer_siu_iso_date(c("January 5, 2023", "not a date"))
+
+# French, day-first and impossible dates
+bricklayer_siu_iso_date(c("5 janvier 2023", "5 January 2023", "February 30, 2023", NA))
+as.Date(bricklayer_siu_iso_date("April 28, 2023"))
+
+# numbers are refused
+try(bricklayer_siu_iso_date(20230105))
 }

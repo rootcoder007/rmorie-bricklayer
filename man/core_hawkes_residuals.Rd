@@ -13,33 +13,74 @@ core_hawkes_residuals(
 )
 }
 \arguments{
-\item{times}{Sorted event times in \code{[0, horizon]}.}
+\item{times}{Numeric vector of event times, sorted increasingly, all in
+\code{[0, horizon]}, in any time unit (days are the natural unit for the
+sinusoidal baseline's yearly cycle). At least 50 events.}
 
-\item{horizon}{End of the observation window.}
+\item{horizon}{End of the observation window, one positive number in the
+same unit as \code{times}; the window is \code{[0, horizon]}.}
 
-\item{kernel}{One of \code{"exponential"}, \code{"weibull"},
-\code{"gamma"}, \code{"lomax"}.}
+\item{kernel}{The triggering kernel: \code{"exponential"} (the default),
+\code{"weibull"}, \code{"gamma"} or \code{"lomax"}.}
 
-\item{par}{Parameters (baseline, eta, kernel), as \code{core_hawkes_fit()} returns them in
-\code{theta}.}
+\item{par}{Numeric vector of parameters (baseline terms, \code{eta},
+kernel parameters), as \code{core_hawkes_fit()} returns them in
+\code{theta}: length 3 for the exponential kernel with a constant
+baseline, one more for a two-parameter kernel, three more for the
+sinusoidal baseline.}
 
-\item{baseline}{\code{"constant"} or \code{"sinusoidal"}.}
+\item{baseline}{\code{"constant"} (the default) or \code{"sinusoidal"}
+(trend plus a 365.25-unit cycle).}
 }
 \value{
-A numeric vector of length \code{length(times)}.
+A numeric vector of length \code{length(times)}, values in
+(0, 1).
 }
 \description{
-\eqn{U_i = 1 - \exp(-(\Lambda(t_i) - \Lambda(t_{i-1})))}, uniform on (0, 1) when the model
-is right (Brown et al. 2002); computed in O(n) or O(n w) by the shared C++ core.
+Transforms the event times into residuals that are independent and
+uniform on (0, 1) when the fitted Hawkes model is right, by the
+time-rescaling theorem. Plot them, or test them against the uniform with
+\code{stats::ks.test()}, to check the fit of
+\code{\link[=core_hawkes_fit]{core_hawkes_fit()}};
+departures show where the model misses clustering or a trend.
+}
+\details{
+With the compensator \eqn{\Lambda(t) = \int_0^t \lambda(s)\,ds}, the
+residual of event \eqn{i} is
+\deqn{U_i = 1 - \exp(-(\Lambda(t_i) - \Lambda(t_{i-1})))}
+with \eqn{t_0 = 0} (Brown et al. 2002). The rescaled gaps
+\eqn{\Lambda(t_i) - \Lambda(t_{i-1})} are unit-rate exponential under the
+model, so the \eqn{U_i} are uniform. The model and kernels are those of
+\code{\link[=core_hawkes_fit]{core_hawkes_fit()}}; the shared C++ core computes the
+residuals in O(n)
+for the exponential kernel and O(n w) for the others. Tied times give
+tied residuals.
+
+Errors: \code{times} with \code{NA}, unsorted or outside
+\code{[0, horizon]}; \code{par} of the wrong length (2 + kernel
+parameters for the constant baseline, 5 + kernel parameters for the
+sinusoidal one).
 }
 \examples{
 set.seed(2)
 times <- sort(stats::runif(200, 0, 50))
 U <- core_hawkes_residuals(times, 50, "exponential", c(log(3), 0.2, 2))
 stats::ks.test(U, "punif")$p.value
+
+# residuals of a fitted model, and a quick uniform Q-Q check
+fit <- core_hawkes_fit(times, 50, "weibull")
+U2 <- core_hawkes_residuals(times, 50, "weibull", fit$theta)
+summary(U2)
+plot(stats::ppoints(length(U2)), sort(U2), xlab = "uniform quantile", ylab = "residual")
+abline(0, 1)
+
+# par must match the kernel and baseline
+try(core_hawkes_residuals(times, 50, "weibull", c(log(3), 0.2, 2)))
 }
 \references{
-Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The time-rescaling
-theorem and its application to neural spike train data analysis. \emph{Neural Comput.}
+Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The
+time-rescaling
+theorem and its application to neural spike train data analysis.
+\emph{Neural Comput.}
 14, 325--346. \doi{10.1162/08997660252741149}
 }

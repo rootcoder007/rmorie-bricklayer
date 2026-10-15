@@ -85,13 +85,15 @@ inline void midranks(const double *a, R_xlen_t n, double *out) {
 extern "C" {
 
 /* ---------------------------------------------------------------- */
-/* One-pass central moments (Welford / Terriberry).                  */
+/* Central moments in three passes: the mean, the largest deviation, */
+/* then the scaled powers (not a one-pass Welford update).           */
 /* out[0..3] = mean, variance (n-1), skewness, excess kurtosis.      */
 /* The higher moments use the sample-moment definitions m3 / m2^1.5  */
 /* and m4 / m2^2 - 3, with m_k the k-th central moment divided by n. */
 /* ---------------------------------------------------------------- */
-/* Mean, variance, skewness and excess kurtosis in two passes on scaled
- * deviations. The single-pass update this replaces squared a[0] on its
+/* Mean, variance, skewness and excess kurtosis: after the mean, one pass
+ * finds the largest deviation and one sums the powers of the deviations
+ * scaled by it. The single-pass update this replaces squared a[0] on its
  * first step (NaN for |x| above the square root of DBL_MAX) and raised
  * raw deviations to the fourth power (overflow beyond |d| ~ 1e77). Here
  * the mean is base R's (extended-precision sum plus a corrective pass),

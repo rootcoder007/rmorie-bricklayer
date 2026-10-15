@@ -7,9 +7,12 @@
  * spinner. One frame per call: the caller owns the timing and the easing,
  * so the renderer has no state and is safe to call from anywhere.
  *
- * Colour is 24-bit ANSI and only when asked for (the R side turns it off for
- * NO_COLOR and for a stderr that is not a terminal); `unicode = 0` draws the
- * same bar in ASCII for a terminal that cannot show block characters.
+ * Colour only when asked for, at the console's depth (the R side decides it,
+ * .bl_console() in R/progress_anim.R): `color` is 0 for none, 1 for 24-bit
+ * (what TRUE has always meant), or the number of colours the console shows --
+ * 16777216 for 24-bit, 256 for the 6x6x6 cube (the RStudio console), 8 or 16
+ * for the basic colours, without the shimmer. `unicode = 0` draws the same
+ * bar in ASCII for a console that cannot show block characters.
  */
 #include <R.h>
 #include <Rinternals.h>
@@ -32,14 +35,39 @@ static void put(rmbl_buf *o, const char *s) {
     o->b[o->n] = '\0';
 }
 
-static void put_rgb(rmbl_buf *o, int r, int g, int b) {
-    char t[64];   /* three clamped ints: 43 bytes at most; gcc's bound is the int's (-Wformat-truncation) */
-    snprintf(t, sizeof t, "\033[38;2;%d;%d;%dm", r, g, b);
-    put(o, t);
-}
-
 /* NaN is not below, above or between: it would be cast to INT_MIN (a sibling of E13) */
 static int clamp255(double v) { return !(v == v) ? 0 : v < 0 ? 0 : v > 255 ? 255 : (int) (v + 0.5); }
+
+/* The escape for a foreground colour at `ncolors` colours into `out` (`cap` bytes; 32 is enough),
+ * "" below 8: 24-bit, the nearest of the 6x6x6 cube of 256, or the basic colour made of the
+ * channels within a quarter of the brightest (blue gives cyan, amber yellow, violet blue). The R
+ * side's .bl_sgr() is the same mapping; rmbl_fetch.cpp colours the native spinner with it. */
+int rmbl_progress_fg(char *out, int cap, int r, int g, int b, int ncolors) {
+    if (cap <= 0) return 0;
+    out[0] = '\0';
+    r = clamp255(r);
+    g = clamp255(g);
+    b = clamp255(b);
+    int n = 0;
+    if (ncolors == 1 || ncolors >= 16777216) {
+        n = snprintf(out, (size_t) cap, "\033[38;2;%d;%d;%dm", r, g, b);
+    } else if (ncolors >= 256) {
+        const int q = 16 + 36 * ((r * 5 + 127) / 255) + 6 * ((g * 5 + 127) / 255) + (b * 5 + 127) / 255;
+        n = snprintf(out, (size_t) cap, "\033[38;5;%dm", q);
+    } else if (ncolors >= 8) {
+        const int m = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        const int c = (4 * r >= 3 * m) + 2 * (4 * g >= 3 * m) + 4 * (4 * b >= 3 * m);
+        n = snprintf(out, (size_t) cap, "\033[%dm", 30 + c);
+    }
+    if (n < 0 || n >= cap) out[0] = '\0';
+    return out[0] ? n : 0;
+}
+
+static void put_rgb(rmbl_buf *o, int r, int g, int b, int ncolors) {
+    char t[64];   /* three clamped ints: 43 bytes at most; gcc's bound is the int's (-Wformat-truncation) */
+    rmbl_progress_fg(t, (int) sizeof t, r, g, b, ncolors);
+    put(o, t);
+}
 
 /* The bar for a fraction `frac` (0..1) at time `t` seconds, `width` cells.
  * Writes a NUL-terminated string to `out` (`cap` bytes; 8192 holds any
@@ -54,6 +82,9 @@ int rmbl_progress_bar(double frac, double t, int width, int color, int unicode, 
     if (!R_FINITE(t)) t = 0;
     if (width < 1) width = 1;
     if (width > RMBL_BAR_MAX_WIDTH) width = RMBL_BAR_MAX_WIDTH;
+    /* 8 or 16 colours: one accent and a dim track, no shimmer or pulse (a basic colour has no shades) */
+    const int basic = color > 1 && color < 256;
+    if (color > 1 && color < 8) color = 0;
     const double full = frac * width;
     const int n = (int) floor(full);
     /* the shimmer: a soft highlight four cells wide sweeping left to right */
@@ -65,15 +96,20 @@ int rmbl_progress_bar(double frac, double t, int width, int color, int unicode, 
             if (color) {
                 double glow = 1.0 - fabs(i - pos) / 4.0;
                 if (glow < 0) glow = 0;
-                put_rgb(&o, clamp255(r + (255 - r) * 0.6 * glow), clamp255(g + (255 - g) * 0.6 * glow),
-                        clamp255(b + (255 - b) * 0.6 * glow));
+                if (!basic) {
+                    put_rgb(&o, clamp255(r + (255 - r) * 0.6 * glow), clamp255(g + (255 - g) * 0.6 * glow),
+                            clamp255(b + (255 - b) * 0.6 * glow), color);
+                } else if (i == 0) {
+                    put_rgb(&o, r, g, b, color);
+                }
             }
             put(&o, unicode ? "\xe2\x96\x88" : "#");      /* full block */
         } else if (i == n && frac < 1) {
             const double part = full - n;
             if (color) {
                 const double pulse = active ? 0.55 + 0.45 * sin(t * 6.0) : 0.6;
-                put_rgb(&o, clamp255(r * pulse), clamp255(g * pulse), clamp255(b * pulse));
+                if (basic) put_rgb(&o, r, g, b, color);
+                else put_rgb(&o, clamp255(r * pulse), clamp255(g * pulse), clamp255(b * pulse), color);
             }
             if (unicode) {
                 int k = (int) (part * 8.0);
@@ -85,7 +121,10 @@ int rmbl_progress_bar(double frac, double t, int width, int color, int unicode, 
                 put(&o, part >= 0.5 ? ">" : (active && fmod(t * 2.0, 1.0) < 0.5 ? ">" : "."));
             }
         } else {
-            if (color) put_rgb(&o, 70, 70, 80);
+            if (color && i == (frac < 1 ? n + 1 : n)) {
+                if (basic) put(&o, "\033[0m\033[2m");
+                else put_rgb(&o, 70, 70, 80, color);
+            }
             put(&o, unicode ? "\xe2\x94\x80" : ".");      /* the track */
         }
     }
@@ -122,6 +161,17 @@ static int flag1(SEXP x, const char *what) {
     return LOGICAL(x)[0];
 }
 
+/* `color`: TRUE or FALSE, or the number of colours the console shows (see the top of the file) */
+static int colors1(SEXP x) {
+    if (TYPEOF(x) == LGLSXP && XLENGTH(x) == 1 && LOGICAL(x)[0] != NA_LOGICAL) return LOGICAL(x)[0];
+    if ((TYPEOF(x) == INTSXP || TYPEOF(x) == REALSXP) && XLENGTH(x) == 1) {
+        const double v = Rf_asReal(x);
+        if (R_FINITE(v) && v >= 0) return v >= 16777216 ? 16777216 : (int) v;
+    }
+    Rf_error("`color` must be TRUE or FALSE, or a number of colours");
+    return 0;
+}
+
 SEXP C_rmbl_progress_frame(SEXP frac, SEXP t, SEXP width, SEXP color, SEXP unicode, SEXP active, SEXP rgb) {
     const double f = num1(frac, "frac"), tt = num1(t, "t"), w = num1(width, "width");
     if ((TYPEOF(rgb) != REALSXP && TYPEOF(rgb) != INTSXP) || XLENGTH(rgb) != 3) {
@@ -138,7 +188,7 @@ SEXP C_rmbl_progress_frame(SEXP frac, SEXP t, SEXP width, SEXP color, SEXP unico
     /* clamped in double before the cast: (int) of a width past INT_MAX is undefined */
     const int wi = w > RMBL_BAR_MAX_WIDTH ? RMBL_BAR_MAX_WIDTH : (int) w;
     char buf[8192];
-    rmbl_progress_bar(f, tt, wi, flag1(color, "color"), flag1(unicode, "unicode"),
+    rmbl_progress_bar(f, tt, wi, colors1(color), flag1(unicode, "unicode"),
                       flag1(active, "active"), c[0], c[1], c[2], buf, (int) sizeof buf);
     return Rf_ScalarString(Rf_mkCharCE(buf, CE_UTF8));
 }

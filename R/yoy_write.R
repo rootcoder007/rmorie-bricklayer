@@ -9,17 +9,37 @@
 
 #' Write a change table to a file, in whatever format the name implies
 #'
-#' @param x An `rmbl_yoy` object from
+#' Writes a period-over-period table from [yoy()] in the format the
+#' file
+#' name implies, so one call serves a web page, a PDF for a report, a CSV for
+#' a spreadsheet, JSON for a program or Markdown for a README. Every format is
+#' written from the same object, with each row's note attached, so the number
+#' a reader sees and the number a pipeline reads are the same.
+#'
+#' @details
+#' The extension is matched case-insensitively: \code{.html} and \code{.htm}
+#' go to [yoy_html()], \code{.pdf} to
+#' [yoy_pdf()], \code{.csv} to
+#' [yoy_csv()], \code{.tsv} and \code{.tab} to
+#' [yoy_tsv()], \code{.json} to
+#' [yoy_json()], \code{.md} and \code{.markdown} to
+#' [yoy_markdown()]. An
+#' existing file is overwritten. Errors when \code{x} does not come from
+#' [yoy()], when the format cannot be read from the extension (pass
+#' \code{format}), or when \code{format} is not one of the names below; and
+#' whatever error the chosen writer raises.
+#'
+#' @param x An \code{rmbl_yoy} object from
 #' [yoy()].
-#' @param file Output path.
-#' @param format Output format. `"auto"` reads it from
-#' the file extension: `.html` / `.htm`, `.pdf`,
-#' `.csv`, `.tsv` / `.tab`, `.json`, `.md` /
-#' `.markdown`.
+#' @param file Character scalar, the output path.
+#' @param format Character scalar, the output format: \code{"auto"} (the
+#' default) reads it from the file extension; otherwise one of
+#' \code{"html"}, \code{"pdf"}, \code{"csv"}, \code{"tsv"}, \code{"json"}
+#' or \code{"markdown"} (case-insensitive).
 #' @param ... Passed to the format's own writer, so the colour,
 #' digit and layout options of [yoy_html()] and
 #' [yoy_pdf()] are available here too.
-#' @return The path, invisibly.
+#' @return \code{file}, invisibly (as returned by the chosen writer).
 #' @seealso
 #' [yoy_html()], [yoy_pdf()],
 #' [yoy_csv()]
@@ -33,6 +53,13 @@
 #'   cat(ext, file.size(f), "bytes\n")
 #'   unlink(f)
 #' }
+#'
+#' # an extension that names no format: say which one
+#' f <- file.path(tempdir(), "change.txt")
+#' yoy_write(y, f, format = "csv", digits = 1)
+#' readLines(f, n = 3)
+#' unlink(f)
+#' try(yoy_write(y, file.path(tempdir(), "change.xlsx")))
 #' @export
 yoy_write <- function(x, file, format = "auto", ...) {
   if (!inherits(x, "rmbl_yoy")) {
@@ -69,28 +96,52 @@ yoy_write <- function(x, file, format = "auto", ...) {
 #' contains one; `yoy_tsv()` separates with a tab and replaces any tab
 #' inside a field, since a tab-separated field cannot contain one and
 #' writing it would shift every column after it.
+#' `yoy_json()` writes an object with `settings` (value, period, grouping,
+#' lag, units, minimum base, confidence level, direction), `summary` (from
+#' [yoy_summary()]) and `rows`, using the package's own
+#' JSON codec.
+#' `yoy_markdown()` writes a pipe table meant for reading: values formatted
+#' (every numeric column right-aligned),
+#' percentages signed and rounded, the interval as `[lower, upper]`, notes in
+#' the last column, and the settings in an italic line under the table.
+#'
+#' @details
+#' The CSV and TSV writers export every column of the object (the period and
+#' grouping columns, `value`, `previous`, `change`, the percent or
+#' percentage-point change, `flag`, the interval and `verdict`), so the note
+#' explaining a missing or flagged figure stays with its row. Quoting in the
+#' CSV follows RFC 4180 (a field with a comma, a quote or a line break is
+#' quoted, quotes doubled). The metadata line names the value and period
+#' columns, the grouping, the lag, the units, and for counts the interval's
+#' confidence level and the base below which changes are noted. A pipe inside
+#' a Markdown cell is escaped. An existing file is overwritten. Errors when
+#' `x` does not come from [yoy()], or `digits` is not a whole
+#' number.
 #'
 #' @param x An `rmbl_yoy` object from
 #' [yoy()].
-#' @param file Output path, or `NULL` to return the text
-#' instead of writing it.
-#' @param digits Digits for the percent columns. `NULL`,
-#' the default, writes them unrounded, which is what a downstream
-#' calculation wants; give a number for a figure meant to be read.
-#' @param na How to write a missing value. The default empty
-#' string is what most readers expect; `"NA"` keeps R's own spelling.
+#' @param file Character scalar, the output path, or `NULL` to return the
+#' text instead of writing it.
+#' @param digits Integer scalar or `NULL`: decimal places for the percent
+#' columns. For the CSV, TSV and JSON writers `NULL`, the default, writes them
+#' unrounded, which is what a downstream calculation wants; give a number for
+#' a figure meant to be read. For `yoy_markdown()` the default is `1`.
+#' @param na Character scalar, how to write a missing value (CSV and TSV). The
+#' default empty string is what most readers expect; `"NA"` keeps R's own
+#' spelling.
 #' @param metadata Whether to lead with comment lines
 #' recording the lag, units, confidence level, base gate and direction. On
 #' by default, because a percent column means different things under
 #' different settings and the file is the only place a later reader can
 #' look. Markdown and JSON carry the same information structurally.
-#' @param comment Comment prefix for the metadata lines.
-#' @param align Whether to pad the Markdown columns so the
-#' source table is readable unrendered.
-#' @param pretty Whether to indent the JSON.
+#' @param comment Character scalar, the comment prefix for the metadata
+#' lines; default `"#"`.
+#' @param align Logical scalar, default `TRUE`: pad the Markdown columns so
+#' the source table is readable unrendered.
+#' @param pretty Logical scalar, default `TRUE`: indent the JSON.
 #' @param ... Ignored.
-#' @return The path, invisibly; or the text, when `file` is
-#' `NULL`.
+#' @return `file`, invisibly; or, when `file` is `NULL`, the text as a
+#' character scalar.
 #' @examples
 #' d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
 #' y <- yoy(d, value = "n", period = "year")
@@ -103,6 +154,17 @@ yoy_write <- function(x, file, format = "auto", ...) {
 #'
 #' # JSON keeps the settings as fields rather than as comments.
 #' substr(yoy_json(y, NULL), 1, 80)
+#'
+#' # rounded percentages, no metadata line, and R's own NA
+#' cat(yoy_tsv(y, NULL, digits = 1, metadata = FALSE, na = "NA"))
+#'
+#' # written to a file
+#' f <- tempfile(fileext = ".csv")
+#' yoy_csv(y, f)
+#' read.csv(f, comment.char = "#")[, c("year", "pct_change", "flag")]
+#'
+#' # only yoy() results are accepted
+#' try(yoy_csv(d, NULL))
 #' @name yoy_delim
 #' @export
 yoy_csv <- function(x, file, digits = NULL, na = "", metadata = TRUE,
@@ -215,8 +277,6 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
   # a pipe inside a cell would end the cell
   cols <- lapply(cols, function(v) gsub("|", "\\|", v, fixed = TRUE))
   nms <- names(cols)
-  numeric_from <- length(nms) -
-    (if ("interval" %in% nms) 3L else 2L)
   # Display WIDTH, not character count: the em dash standing in for a
   # missing value is one character and one column, but a byte count
   # would misjudge it and the rule under the header would not line up
@@ -232,7 +292,9 @@ yoy_markdown <- function(x, file, digits = 1L, align = TRUE, ...) {
     gap <- max(0L, w[k] - nchar(s, type = "width"))
     if (right) paste0(strrep(" ", gap), s) else paste0(s, strrep(" ", gap))
   }
-  right <- seq_along(cols) >= numeric_from & nms != "note"
+  # every numeric column right-aligned: counting back from the end had left the value and the
+  # previous value aligned left while the change beside them was aligned right
+  right <- seq_along(cols) > length(m$by) + 1L & nms != "note"
   row <- function(vals) {
     paste0("| ", paste(vapply(seq_along(vals), function(k) {
       padr(vals[k], k, right[k])

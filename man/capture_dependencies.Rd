@@ -11,24 +11,40 @@ capture_dependencies(packages = loadedNamespaces())
 Defaults to the namespaces currently loaded.}
 }
 \value{
-A data frame with one row per package: \code{package},
-\code{version}, \code{library}, \code{repository}, \code{remote_url},
-\code{remote_sha}, \code{built}. Unavailable fields are \code{NA} rather
-than omitted, so a reader can see that the information was absent rather
-than forgotten.
+A data frame with one row per package and character columns
+\code{package}, \code{version}, \code{library} (the library directory),
+\code{repository}, \code{remote_url}, \code{remote_sha} and \code{built}
+(R version, platform and time of the build). Unavailable fields are
+\code{NA} rather than omitted, so a reader can see that the information
+was absent rather than forgotten; for a package that is not installed,
+every field except \code{package} is \code{NA}. An empty \code{packages} gives a
+data frame with no
+rows and the same columns.
 }
 \description{
 Records, for every package named, its version and enough about its
 provenance to find the same one again: the library it was loaded from,
 the repository it was installed from, and -- for a package installed
-from a remote -- the remote's URL and commit.
+from a remote -- the remote's URL and commit. Store it in a manifest next
+to \code{\link[=capture_environment]{capture_environment()}} when an analysis depends
+on packages installed
+from GitHub or a local build.
 }
 \details{
 Why versions alone are not enough. Two installations can report the same
 version and differ: one built from CRAN, one from a fork, one from a
-local \verb{R CMD INSTALL} of a working tree with uncommitted changes. A
+local \code{R CMD INSTALL} of a working tree with uncommitted changes. A
 version number identifies an intention; the repository and commit
 identify what was actually loaded.
+
+The fields are read from each package's installed DESCRIPTION
+(\code{utils::packageDescription()}): \code{Repository} (for example
+\code{"CRAN"}), \code{RemoteUrl} and \code{RemoteSha} (written by
+remotes, pak and devtools for packages installed from a Git host) and
+\code{Built}. Packages are sorted and de-duplicated. A progress bar is
+drawn on stderr for many packages unless \code{options(morie.quiet =
+TRUE)}. Nothing is written. Error: \code{packages} that is not a character
+vector.
 }
 \examples{
 deps <- capture_dependencies(c("stats", "utils"))
@@ -36,6 +52,12 @@ deps[, c("package", "version")]
 
 # a package with no repository field records that fact
 is.na(capture_dependencies("stats")$repository)
+
+# a package that is not installed is a row of NAs, not an error
+capture_dependencies("notapackage123")[, c("package", "version")]
+
+# names must be character
+try(capture_dependencies(1))
 }
 \seealso{
 \code{\link[=capture_environment]{capture_environment()}},

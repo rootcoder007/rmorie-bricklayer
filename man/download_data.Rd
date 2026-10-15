@@ -7,38 +7,73 @@
 download_data(url, target_path, mode = "wb", quiet = FALSE, allow_file = FALSE)
 }
 \arguments{
-\item{url}{URL to download.}
+\item{url}{The URL to download, a single string.}
 
-\item{target_path}{Destination path on disk.}
+\item{target_path}{Destination path on disk, a single string. Its
+directory must exist.}
 
 \item{mode}{Kept for the signature of \code{utils::download.file()}; only
-\code{"wb"} (or \code{"w"}) is accepted. Every transfer is binary and written
-fresh through the package's own transport, so an append mode cannot be
-honoured and is an error rather than a silent \code{"wb"}.}
+\code{"wb"} (the default) or \code{"w"} is accepted. Every transfer is
+binary and written fresh through the package's own transport, so an
+append mode cannot be honoured and is an error rather than a silent
+\code{"wb"}.}
 
-\item{quiet}{Logical; suppress progress output. Defaults to
-\code{FALSE}.}
+\item{quiet}{Logical. \code{TRUE} suppresses the progress output;
+\code{FALSE} (the default) shows it.}
 
-\item{allow_file}{Accept a \verb{file://} URL (default \code{FALSE}; an offline
-test passes \code{TRUE}). Every URL must otherwise be \code{https} and public.}
+\item{allow_file}{Logical. Accept a \code{file://} URL (default
+\code{FALSE}; offline tests and examples pass \code{TRUE}). Every URL
+must otherwise be \code{https} and public.}
 }
 \value{
 The \code{target_path}, returned invisibly.
 }
 \description{
-Downloads through the package's own transport,
-\code{\link[=bricklayer_download]{bricklayer_download()}}: the URL checked and pinned,
-every redirect hop re-checked, the body capped, a live
-progress bar. Returns the target path invisibly so it
-composes in pipelines.
+Downloads one file to a path on disk through the package's own transport,
+\code{\link[=bricklayer_download]{bricklayer_download()}}, and returns the path. It is
+the plain download
+step of a data pipeline: resolve a URL (for example with
+\code{\link[=resolve_via_ckan]{resolve_via_ckan()}}), download it with this function,
+then check it with
+\code{\link[=verify_sha256]{verify_sha256()}}. Use
+\code{\link[=friendly_download]{friendly_download()}} instead when a person should
+see advice about the failure and a Wayback Machine fallback.
+}
+\details{
+Before anything is fetched the URL must be one public \code{https} URL:
+plain \code{http} needs \code{options(rmoriebricklayer.allow_http =
+TRUE)}, \code{file://} needs \code{allow_file = TRUE}, and loopback,
+private, link-local and cloud-metadata addresses are refused. The
+transport then resolves the host, pins the connection to the checked
+addresses, re-checks every redirect hop, caps the body at 2 GiB and allows
+3600 seconds for the transfer. The file at \code{target_path} is
+overwritten. Errors from the transfer (network, HTTP status, size cap)
+propagate as R errors; nothing partial is left behind.
+
+Progress is drawn on stderr while \code{quiet = FALSE}, whatever the
+\code{morie.quiet} option says, because the value is passed to the
+transport explicitly.
+
+Errors: \code{url} or \code{target_path} not a single non-empty string;
+a refused URL; \code{mode} other than \code{"wb"} or \code{"w"}.
 }
 \examples{
-\donttest{
-# try(): a live download must fail gracefully on an offline check machine.
-dest <- try(download_data("https://cloud.r-project.org/",
+# offline: a local file through a file:// URL
+src <- tempfile(fileext = ".csv")
+writeLines(c("id,value", "1,10", "2,20"), src)
+dest <- download_data(paste0("file://", src), tempfile(fileext = ".csv"),
+  quiet = TRUE, allow_file = TRUE)
+read.csv(dest)
+
+# file:// is refused unless asked for, and so is an append mode
+try(download_data(paste0("file://", src), tempfile()))
+try(download_data("https://example.org/x.csv", tempfile(), mode = "a"))
+\dontrun{
+# needs the network
+dest <- download_data("https://cloud.r-project.org/",
   tempfile(fileext = ".html"),
   quiet = TRUE
-))
-if (!inherits(dest, "try-error")) file.exists(dest)
+)
+file.exists(dest)
 }
 }

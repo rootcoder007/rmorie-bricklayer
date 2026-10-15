@@ -16,41 +16,45 @@ bricklayer_llm_ask(
 )
 }
 \arguments{
-\item{prompt}{Character scalar.}
+\item{prompt}{Character scalar: the question, in plain text.}
 
-\item{model}{Model id; default the route's own (see above).}
+\item{model}{Character scalar or \code{NULL} (the default): the model id
+to use. \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
+for your own endpoint, \code{OLLAMA_MODEL} or the first pulled model
+for Ollama, the saved \code{PROVIDER.model} or the provider's default
+model (see \code{\link{bricklayer_llm_providers}}).}
 
-\item{timeout}{Seconds to wait for the reply.}
+\item{timeout}{Numeric scalar, seconds to wait for each reply; default
+\code{120}. With \code{docs = TRUE} the whole exchange gets at most
+three times this.}
 
-\item{system_prompt}{Optional system message.}
+\item{system_prompt}{Character scalar or \code{NULL} (the default): extra
+instructions sent as the system message (added to the package's own
+instructions when \code{docs = TRUE}).}
 
-\item{route}{\code{NULL} (the saved route, else the first that is set up),
-\code{"auto"} (the automatic order this time, ignoring a saved route),
-or \code{"own"}, \code{"ollama"} or a provider id to insist on one.}
+\item{route}{Character scalar or \code{NULL} (the default: the saved
+route, else the first that is set up). \code{"auto"} uses the
+automatic order and ignores a saved route; \code{"own"},
+\code{"ollama"} or a provider id insists on that one.}
 
-\item{docs}{Give the model the packages' help (see Details);
-\code{FALSE} sends the prompt alone.}
+\item{docs}{Logical scalar, default \code{TRUE}: give the model the
+packages' help and the lookup tools (see Details). \code{FALSE} sends
+the prompt alone.}
 
-\item{packages}{The installed packages whose help the model gets; default
-rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
-package built on this one sets for its own command line).}
+\item{packages}{Character vector or \code{NULL} (the default): the
+installed packages whose help the model gets. \code{NULL} means
+\code{"rmoriebricklayer"}, or the comma-separated list in the
+environment variable \code{RMBL_PACKAGES} (which a package built on
+this one sets for its own command line). Ignored when
+\code{docs = FALSE}.}
 
-\item{fresh}{\code{TRUE} asks the model even when an answer to the same
-question is saved on this machine, and keeps the new one. A person at a
-terminal (the command line with the terminal on stdin and stdout) or in
-an interactive session gets a saved answer back at once when the
-question (spacing aside; case counts), route, model, packages and their
-versions all match, for 30 days; the first save in a session says so.
-The answers are owner-only files under
-\code{tools::R_user_dir("rmoriebricklayer", "cache")}, nothing is kept
-elsewhere, nothing is kept from a script or a pipeline, and
-\code{MORIE_LLM_CACHE=off} (or
-\code{options(rmoriebricklayer.llm_cache = FALSE)}) turns it off.}
+\item{fresh}{Logical scalar, default \code{FALSE}. \code{TRUE} asks the
+model even when a saved answer matches (see Details), and saves the
+new answer in its place.}
 }
 \value{
-Character scalar with the reply; a saved answer carries the time it
-was saved as attribute \code{cached}. Errors, saying what to set up,
-when no route answers, and when the server answers with an error.
+A character scalar with the reply. A saved answer carries the
+time it was saved as attribute \code{cached}.
 }
 \description{
 Sends one prompt to the first language model that is set up on this
@@ -79,19 +83,75 @@ one pulled; \code{OLLAMA_HOST=off} skips it.
 a question would take.
 }
 \details{
-With \code{docs = TRUE} (the default) the model knows the packages: its
-instructions carry an index of every exported function of
-the packages (\code{packages}; name, arguments, title, read from the
-help pages installed here), and it may call five read-only tools to
-search the help, read a page or its examples, list the datasets and read
-a vignette before it answers. A model that cannot call tools gets the
-help pages that best match the question (a BM25 search in R) instead.
-Nothing the model asks for is run: it answers with code for you to run.
+With \code{docs = TRUE} (the default) the model is given the help of the
+packages named in \code{packages} (read from the help pages installed
+here) and may call five read-only tools before it answers:
+\code{search_docs}, \code{get_help}, \code{get_examples},
+\code{list_datasets} and \code{get_vignette}. How much help goes into the
+instructions depends on the model's context size: a model with at least
+32,000 tokens gets an index of every exported function (name, arguments,
+title) and up to six rounds of lookups; 8,000 to 32,000 tokens, the 120
+functions nearest the question and four rounds; smaller, the 40 nearest
+and three rounds. A package with very many pages is never listed whole:
+its functions nearest the question are listed and the tools reach the
+rest. "Nearest" is a BM25 search over the help text in R (\eqn{k_1 =
+1.2}, \eqn{b = 0.75}). A model that cannot call tools gets the best
+matching pages in the prompt instead. Nothing the model asks for is run:
+it answers with code for you to run.
+
+With \code{docs = TRUE} the whole exchange is given at most three times
+\code{timeout}; a lookup round that would start after that is not
+started and the call errors. With \code{docs = FALSE} one request is made
+with \code{system_prompt} (when given) and \code{prompt}.
+
+Saved answers: a person at a terminal (the command line with a terminal
+on both stdin and stdout) or in an interactive GUI session gets a saved
+answer back at once when the question (spacing aside; case counts),
+route, address, model, packages and their versions, and
+\code{system_prompt} all match. Answers are kept 30 days
+(\code{options(rmoriebricklayer.llm_cache_days)}), at most the 200
+newest (\code{options(rmoriebricklayer.llm_cache_max)}), as owner-only
+files under \code{tools::R_user_dir("rmoriebricklayer", "cache")}. The
+first save in a session says where answers go. Nothing is saved from a
+script, a pipeline, a test run, \code{R CMD check}, or with
+\code{options(morie.quiet = TRUE)}; \code{MORIE_LLM_CACHE=off} or
+\code{options(rmoriebricklayer.llm_cache = FALSE)} turns saving off.
+
+Errors: \code{prompt} is not a single non-empty string; \code{fresh} or
+\code{docs} is not \code{TRUE} or \code{FALSE}; \code{route = "hosted"}
+or an unknown route; no route is set up (the message lists what to set);
+no model is chosen for the route; \code{packages} names a package that is
+not installed; and, after sending, an unreachable server, a rejected key
+(HTTP 401 or 403) or an error reply. The key is redacted from any error
+text a server echoes back.
 }
 \examples{
+old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
+
+# arguments are checked before any route is resolved
+try(bricklayer_llm_ask(c("two", "questions")))
+
+# a provider named explicitly without its key
+try(bricklayer_llm_ask("What is a capsule?", route = "anthropic"))
+
+# no route set up: the error lists what to set up
+try(bricklayer_llm_ask("What is a capsule?", route = "ollama", docs = FALSE))
+
+for (v in names(old)) {
+  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+}
 \dontrun{
-Sys.setenv(ANTHROPIC_API_KEY = "...")   # your own key
+# needs your own key or a local model, and the network
+Sys.setenv(ANTHROPIC_API_KEY = "...")
 bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
 bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
+bricklayer_llm_ask("Summarise Benford's law in two lines", docs = FALSE,
+                   system_prompt = "You are terse.")
 }
+}
+\seealso{
+\code{\link{bricklayer_llm_chat}} for a conversation without the
+help; \code{\link{bricklayer_llm_status}} and
+\code{\link{bricklayer_llm_route_info}} to see where a question would go.
 }

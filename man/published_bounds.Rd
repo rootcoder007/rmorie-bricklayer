@@ -13,12 +13,13 @@ published_bounds(
 )
 }
 \arguments{
-\item{x}{Published values: a numeric vector, or a character vector in
-which suppressed cells appear as one of \code{suppressed_marks} or as
-\code{"<k"} for a limit \code{k}.}
+\item{x}{Published values: a numeric vector, or a character vector (or
+factor) in which suppressed cells appear as one of
+\code{suppressed_marks} or as \code{"<k"} for a limit \code{k}.}
 
-\item{rounding}{The base the release rounds to (\code{5}, \code{10}, ...), or
-\code{NULL} when the counts are exact.}
+\item{rounding}{Numeric scalar, the base the release rounds to
+(\code{5}, \code{10}, ...), or \code{NULL} (the default) when the
+counts are exact.}
 
 \item{rounding_kind}{\code{"nearest"} (the printed value is the observed
 value rounded to the nearest multiple of \code{rounding}, so the
@@ -26,17 +27,25 @@ observed value lies within half a base) or \code{"random"} (Statistics
 Canada's random rounding, where the observed value lies within
 \code{rounding - 1}).}
 
-\item{suppression_limit}{For a cell printed as suppressed with no
-explicit limit, the smallest count that would have been published:
-the cell then lies in \verb{[0, suppression_limit - 1]}.}
+\item{suppression_limit}{Numeric scalar or \code{NULL} (the default). For
+a cell printed as suppressed with no explicit limit, the smallest count
+that would have been published: the cell then lies in
+\code{[0, suppression_limit - 1]}.}
 
-\item{suppressed_marks}{Strings that mark a suppressed cell.}
+\item{suppressed_marks}{Character vector of the strings that mark a
+suppressed cell, matched exactly after trimming. Default
+\code{c("x", "X", "s", "..", "F", "suppressed", "n/a")}.}
 }
 \value{
-A data frame of class \code{rmbl_bounds} with \code{value} (the
-published number, \code{NA} for a suppressed cell), \code{lower}, \code{upper}
-and \code{status}: \code{"exact"}, \code{"rounded"}, \code{"suppressed"}, or
-\code{"missing"} for an \code{NA} that carried no suppression mark.
+A data frame of class \code{c("rmbl_bounds", "data.frame")}, one
+row per cell, with \code{value} (numeric, the published number,
+\code{NA} for a suppressed cell), \code{lower} and \code{upper}
+(numeric, the interval of observed counts) and \code{status}
+(character: \code{"exact"}, \code{"rounded"}, \code{"suppressed"}, or
+\code{"missing"} for an \code{NA} that carried no suppression mark).
+Attribute \code{"bounds"} records \code{rounding},
+\code{rounding_kind} and \code{suppression_limit}. \code{plot()} draws
+each value inside its interval.
 }
 \description{
 Administrative releases rarely publish the count that was observed.
@@ -50,13 +59,41 @@ could have produced it, so \code{\link[=change_envelope]{change_envelope()}}
 and \code{\link[=yoy_bounds]{yoy_bounds()}} can
 carry the interval through a difference, a percent change or a rate.
 }
+\details{
+For a published value \eqn{v} rounded to base \eqn{b}: with
+\code{rounding_kind = "nearest"} the observed count lies in
+\eqn{[\max(0, v - b/2), v + b/2]}; with \code{"random"} (unbiased random
+rounding, where a count is moved to one of the two neighbouring multiples)
+it lies in \eqn{[\max(0, v - (b - 1)), v + (b - 1)]}. The bounds are not
+rounded to whole numbers. A suppressed cell lies in \eqn{[0, k - 1]}, with
+\eqn{k} from \code{"<k"} or from \code{suppression_limit}; rounding is
+not applied to it. Without \code{rounding}, a published number is taken as
+exact (lower = upper = value).
+
+Text cells are trimmed, and thousands separators (commas) are removed
+before they are read as numbers. A missing value (\code{NA}) that is not a
+suppression mark gets status \code{"missing"} and \code{NA} bounds.
+
+Errors: \code{rounding} not a positive number; an unknown
+\code{rounding_kind}; a text cell that is neither a number nor a
+suppression mark (the message lists the cells); a suppressed cell with no
+limit (neither \code{"<k"} nor \code{suppression_limit}).
+}
 \examples{
 published_bounds(c(120, 35, 0), rounding = 5)
 published_bounds(c("120", "x", "<5"), rounding = 5,
                  suppression_limit = 5)
 # random rounding to base 5 is wider than rounding to the nearest 5
 published_bounds(15, rounding = 5, rounding_kind = "random")
+
+# thousands separators and a custom suppression mark
+published_bounds(c("1,200", "--", "<10"), suppression_limit = 10,
+                 suppressed_marks = "--")
+
+# a suppressed cell needs a limit
+try(published_bounds(c("120", "x")))
 }
 \seealso{
-\code{\link[=change_envelope]{change_envelope()}}, \code{\link[=yoy_bounds]{yoy_bounds()}}
+\code{\link[=change_envelope]{change_envelope()}},
+\code{\link[=yoy_bounds]{yoy_bounds()}}
 }

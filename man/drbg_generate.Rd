@@ -9,17 +9,38 @@ drbg_generate(drbg, n, additional = NULL)
 \arguments{
 \item{drbg}{A generator from \code{\link[=drbg_new]{drbg_new()}}.}
 
-\item{n}{Number of bytes, 1 to 65536 (the standard's limit per request for
-AES: 2^19 bits).}
+\item{n}{Integer scalar, the number of bytes, 1 to 65536 (the standard's
+limit per request for AES: 2^19 bits).}
 
-\item{additional}{Optional additional input of up to 48 bytes, raw or hex, mixed into the
-state before and after the output.}
+\item{additional}{Optional additional input of up to 48 bytes, raw or hex,
+mixed into the state before and after the output. Default \code{NULL}
+(none).}
 }
 \value{
 A raw vector of \code{n} bytes.
 }
 \description{
-Generates \code{n} bytes (SP 800-90A's Generate function) and advances the generator.
+Generates \code{n} bytes (SP 800-90A's Generate function) and advances the
+generator. Use it to draw reproducible random bytes from a generator made
+by \code{\link[=drbg_new]{drbg_new()}}: the same seed and the same sequence of calls
+give the same
+bytes on every platform, which is what known-answer tests and reproducible
+key generation need.
+}
+\details{
+Each call encrypts the counter V under Key with AES-256 to produce the
+output, then updates (Key, V) with the additional input, so the next call
+gives different bytes and earlier outputs cannot be recovered from the new
+state. The generator is changed in place. When the generator was created or
+last reseeded in another process (a fork, or a copy restored from a file),
+it first reseeds itself from the operating system. After \eqn{2^{48}}
+requests since seeding the standard requires a reseed, and the call errors
+until \code{\link[=drbg_reseed]{drbg_reseed()}} is called.
+
+Errors: \code{drbg} not made by \code{\link[=drbg_new]{drbg_new()}}; \code{n} not a
+single whole
+number from 1 to 65536; \code{additional} longer than 48 bytes or neither raw
+nor hex.
 }
 \examples{
 d <- drbg_new(as.raw(0:47))
@@ -30,7 +51,15 @@ identical(x, y)  # the state moved on
 # additional input changes the output and the state
 e <- drbg_new(as.raw(0:47))
 identical(drbg_generate(e, 16, additional = "00ff"), x)
+
+# random integers in 1..6 from the bytes (rejection keeps them uniform)
+r <- as.integer(drbg_generate(drbg_new(as.raw(0:47)), 64))
+head(r[r < 252] \%\% 6 + 1, 10)
+
+# one request is at most 65536 bytes
+try(drbg_generate(d, 70000))
 }
 \seealso{
-\code{\link[=drbg_new]{drbg_new()}}, \code{\link[=drbg_reseed]{drbg_reseed()}}.
+\code{\link[=drbg_new]{drbg_new()}},
+\code{\link[=drbg_reseed]{drbg_reseed()}}.
 }

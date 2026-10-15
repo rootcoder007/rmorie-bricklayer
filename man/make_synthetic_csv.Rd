@@ -7,32 +7,59 @@
 make_synthetic_csv(schema, out_path, n_rows = NULL, seed = NULL)
 }
 \arguments{
-\item{schema}{The synthetic recipe (a list with
-\code{columns}, and optional \code{n_rows}, \code{seed}, and
-\code{row_replication}) .}
+\item{schema}{The synthetic recipe: a list with \code{columns} (a named
+list of column specs), and optional \code{n_rows}, \code{seed} and
+\code{row_replication}.}
 
-\item{out_path}{Path where the CSV is written.}
+\item{out_path}{Character string: the path of the CSV to write.}
 
-\item{n_rows}{Number of rows (persons, if replicating) to
-generate. Defaults to \code{schema$n_rows}, then 50000.}
+\item{n_rows}{Whole number: the number of rows (persons, if replicating)
+to generate. Defaults to \code{schema$n_rows}, then 50000.}
 
 \item{seed}{Random seed for reproducibility. Defaults to
 \code{schema$seed}, then 91735246.}
 }
 \value{
 Invisibly, an object of class \code{bricklayer_synthetic}: a list
-with \code{path}, \code{sidecar} (the \verb{<path>.synthetic} marker file;
-\code{\link[=verify_capsule]{verify_capsule()}} treats its presence as a failed check),
-\code{recipe_sha256}, \code{rows} (rows written),
-and \code{seed} used.
+with \code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
+\code{\link{verify_capsule}} treats its presence as a failed check),
+\code{rows} (rows written), \code{seed} (the seed used) and
+\code{recipe_sha256} (the recipe's digest, \code{NA} when it could not
+be computed). Its print method labels the file as synthetic.
 }
 \description{
-Generates a reproducible synthetic data set from the
-\code{schema$synthetic_recipe} block of a provenance object and writes
-it to a CSV. Columns are produced in declaration order so later columns
-can reference earlier ones, a shared per-row latent propensity drives
-any Bernoulli columns, and an optional row-replication block expands
-per-person rows.
+Generates a reproducible synthetic data set from a recipe (the
+\code{schema$synthetic_recipe} block of a provenance object, or a list
+written by hand) and writes it to a CSV file. Each column is described as
+in \code{\link{make_synthetic_column}}. Next to the CSV it writes a
+\code{.synthetic} marker file, so the generated rows can never be
+mistaken for real data later. Use it to share a runnable version of an
+analysis without sharing restricted records.
+}
+\details{
+Columns are produced in declaration order so later columns can reference
+earlier ones. A shared per-person latent propensity, uniform on
+\eqn{[0, 1]}, drives every \code{"bernoulli"} column through its
+\code{p_with_baserate} field, so those columns are correlated with each
+other. An optional \code{row_replication} block (\code{values} and
+\code{weights}) draws how many rows each person gets: person-level
+columns are drawn once per person and repeated, while \code{"bernoulli"}
+columns are drawn once per row. With replication the file therefore has
+more than \code{n_rows} rows.
+
+The data are drawn under \code{seed} and the caller's random number
+stream is restored afterwards, so the same recipe and seed give the same
+file and the surrounding analysis is not disturbed.
+
+Side effects: writes \code{out_path} (overwriting it) and
+\code{paste0(out_path, ".synthetic")}, a small JSON file with
+\code{synthetic: true}, the row count, the seed, the recipe's SHA-256 and
+the time; and marks the R session as having made synthetic data, so a
+manifest built later in the same session is labelled synthetic. A
+progress bar is shown in an interactive session.
+
+Errors: \code{schema} not a list; any error from
+\code{\link{make_synthetic_column}}; an unwritable \code{out_path}.
 }
 \examples{
 recipe <- list(
@@ -54,6 +81,18 @@ df <- utils::read.csv(out)
 dim(df)
 names(df)
 
-# `n_rows` overrides the recipe's own row count.
+# and the marker file says it is synthetic
+file.exists(res$sidecar)
+
+# n_rows overrides the recipe's own row count.
 make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+
+# one to three rows per person
+recipe$row_replication <- list(values = list(1, 2, 3))
+make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+
+try(make_synthetic_csv("not a recipe", tempfile()))
+}
+\seealso{
+\code{\link{make_synthetic_column}}, \code{\link{verify_capsule}}.
 }

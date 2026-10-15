@@ -13,53 +13,118 @@ verify_capsule(
 )
 }
 \arguments{
-\item{capsule_dir}{Directory containing the capsule.}
+\item{capsule_dir}{Directory containing the capsule, a single string.}
 
-\item{provenance_file}{Provenance JSON filename
-inside \code{capsule_dir} (default \code{"data_provenance.json"}) .}
+\item{provenance_file}{Provenance JSON filename, relative to
+\code{capsule_dir} (default \code{"data_provenance.json"}).}
 
-\item{data_file}{Data filename inside
-\code{capsule_dir}. Defaults to the provenance's
-\code{resource$filename}.}
+\item{data_file}{Data filename relative to \code{capsule_dir}. \code{NULL}
+(the default) uses the provenance's \code{resource$filename}.}
 
-\item{manifest_file}{Optional results-manifest JSON
-(as written by
-\code{\link[=write_manifest_json]{write_manifest_json()}}) inside
-\code{capsule_dir}; checked when present.}
+\item{manifest_file}{Optional results-manifest JSON (as written by
+\code{\link[=write_manifest_json]{write_manifest_json()}}), relative to
+\code{capsule_dir}. \code{NULL}
+(the default) uses \code{manifest.json} when the capsule has one.}
 
-\item{script_file}{Optional analysis-script filename
-inside \code{capsule_dir}; compared against the manifest's recorded
-\code{meta$script_sha256} when both are present.}
+\item{script_file}{Optional analysis-script filename relative to
+\code{capsule_dir}; compared against the pinned script digest.
+\code{NULL} (the default) uses the script named in the provenance or
+the manifest, if any.}
 }
 \value{
-An object of class \code{bricklayer_capsule_check} (a list with a
-print method): \code{ok} (logical scalar: every check passed AND the three
-required checks -- \code{provenance_readable}, \code{data_present},
-\code{data_sha256} -- were all made), \code{checks} (data.frame with columns
-\code{check}, \code{ok}, \code{detail}), \code{required} and \code{missing}. A check that
-cannot be made because the provenance lacks the field is recorded as
-a FAILED row, never skipped: a provenance of \code{{}} verifies nothing.
+An object of class \code{c("bricklayer_capsule_check", "list")},
+printed as one line per check:
+\describe{
+\item{\code{ok}}{logical scalar, the overall verdict described in Details.}
+\item{\code{checks}}{data.frame with columns \code{check} (character, the check
+name), \code{ok} (logical) and \code{detail} (character: the path checked, the
+digest found, or why it failed).}
+\item{\code{required}}{character, the checks that had to be made.}
+\item{\code{missing}}{character, required checks that were never made
+(\code{character(0)} when none).}
+}
 }
 \description{
-Runs the full custody chain over a capsule directory in one call: the
-provenance manifest is readable, the pinned data file exists and matches
-its recorded \code{sha256} (and \code{size_bytes} / row count where
-recorded), the schema still validates, a recorded analysis script still
-matches its pinned hash, and every numeric cross-check stored in a
-results manifest still reproduces its recorded \code{PASS} /
-\code{DIFFER} status from its own \code{observed} / \code{expected} /
-\code{tol} fields.
+Runs the full custody chain over a capsule directory in one call and
+reports, check by check, whether the capsule is still the one the
+analysis was run on: the provenance record is readable, the pinned data
+file is present and has its recorded SHA-256, the schema still validates,
+a recorded analysis script still has its pinned hash, every numeric
+cross-check in a results manifest still reproduces its recorded verdict,
+and the data are real rather than synthetic. Use it before re-running or
+publishing an analysis, or when receiving a capsule from someone else.
 }
 \details{
-Entirely offline: nothing is downloaded and nothing is written.
+The checks, in the order they appear in \code{checks}:
+\describe{
+\item{\code{provenance_readable}}{\code{provenance_file} is a plain relative path
+inside
+the capsule (no \code{..}, no absolute path, no symlink out) and parses as JSON.}
+\item{\code{data_present}}{the data file (\code{data_file}, else the provenance's
+\code{resource$filename}) is inside the capsule and is a file.}
+\item{\code{data_sha256}}{its SHA-256 equals \code{resource$sha256} (64 hex
+characters), compared by \code{\link[=verify_sha256]{verify_sha256()}}.}
+\item{\code{data_size_bytes}}{when \code{resource$size_bytes} is recorded: the size
+on disk matches.}
+\item{\code{data_readable}}{a \code{.csv} file is read with
+\code{utils::read.csv()};
+a non-CSV file fails this row when a row count or schema is recorded (they
+cannot be checked).}
+\item{\code{data_row_count}}{when \code{resource$row_count_data_rows} is recorded:
+the
+CSV has that many rows.}
+\item{\code{schema_valid}}{when a \code{schema} is recorded:
+\code{\link[=validate_schema]{validate_schema()}}
+finds no fatal issue (warnings are listed in \code{detail} but pass).}
+\item{\code{manifest_consistent}}{when \code{manifest_file} is given, or the capsule
+holds \code{manifest.json}: every result with numeric \code{observed} and
+\code{expected}, a \code{tol} and a status of \code{PASS} or \code{DIFFER} still
+gets that status from \eqn{|observed - expected| \le tol}.}
+\item{\code{script_sha256}}{when a script is named (\code{script_file},
+\code{script$filename} in the provenance or \code{meta$script_file} in the
+manifest)
+or a script digest is pinned (\code{meta$script_sha256} or \code{script$sha256}):
+the script's SHA-256 matches the pin.}
+\item{\code{data_not_synthetic}}{no \code{<data>.synthetic} sidecar (written by
+\code{\link[=make_synthetic_csv]{make_synthetic_csv()}}), and neither the manifest
+nor the provenance records
+\code{synthetic = true}.}
+}
+A check that cannot be made because the provenance lacks a field is a
+FAILED row, never skipped: a provenance of \code{{}} verifies nothing.
+\code{ok} is \code{TRUE} only when every row passed and every required
+check (\code{provenance_readable}, \code{data_present},
+\code{data_sha256}, \code{data_not_synthetic}, plus
+\code{manifest_consistent} and \code{script_sha256} when a manifest or a
+script is in play) was made.
+
+Entirely offline: nothing is downloaded and nothing is written. Error:
+\code{capsule_dir} that is not one existing directory. Every other problem
+is a failed row, not an error.
 }
 \examples{
 dir <- file.path(tempdir(), "capsule-example")
 dir.create(dir, showWarnings = FALSE)
 write.csv(data.frame(id = 1:3), file.path(dir, "d.csv"), row.names = FALSE)
 prov <- list(resource = list(filename = "d.csv",
-                             sha256 = sha256_file(file.path(dir, "d.csv"))))
+                             sha256 = sha256_file(file.path(dir, "d.csv")),
+                             row_count_data_rows = 3),
+             schema = list(expected_columns = "id"))
 writeLines(bricklayer_json_to_json(prov, auto_unbox = TRUE),
            file.path(dir, "data_provenance.json"))
 verify_capsule(dir)$ok
+verify_capsule(dir)
+
+# an edited data file fails its digest and its row count
+write.csv(data.frame(id = 1:4), file.path(dir, "d.csv"), row.names = FALSE)
+chk <- verify_capsule(dir)
+chk$ok
+chk$checks[!chk$checks$ok, c("check", "detail")]
+
+# a path out of the capsule is a failed check, not a read
+verify_capsule(dir, provenance_file = "../elsewhere.json")$ok
+
+# a missing directory is an error
+try(verify_capsule(file.path(tempdir(), "no-such-capsule")))
+unlink(dir, recursive = TRUE)
 }

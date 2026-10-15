@@ -22,18 +22,11 @@
   x
 }
 
-.jx_conf <- function(conf_level) {
-  conf_level <- .rmbl_num(conf_level, "conf_level")
-  if (length(conf_level) != 1L || is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
-    stop("`conf_level` must be a single number between 0 and 1", call. = FALSE)
-  }
-  conf_level
-}
-
 # The exact conditional interval for the ratio a / b of two Poisson counts over the same
 # exposure: given a + b, a is binomial with p = r / (1 + r), and the Clopper-Pearson limits
 # for p map to r = p / (1 - p).
 .jx_ratio_ci <- function(a, b, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
   alpha <- 1 - conf_level
   lo <- ifelse(a == 0, 0, stats::qbeta(alpha / 2, a, b + 1))
   hi <- ifelse(b == 0, 1, stats::qbeta(1 - alpha / 2, a + 1, b))
@@ -177,6 +170,14 @@ NULL
 #' transfer them -- so \code{pending_change} is reported next to
 #' \code{net} rather than derived from it.
 #'
+#' The result carries attribute \code{"case_flow"}: \code{window},
+#' \code{conf_level} and the totals received and disposed. Errors:
+#' \code{received} empty; a count vector that is not numeric, has a missing,
+#' negative or infinite value, or a length other than \code{received}'s;
+#' \code{period} of another length, with missing or repeated values;
+#' \code{window} not a whole number of at least 1; \code{conf_level}
+#' outside (0, 1).
+#'
 #' @references
 #' Ostrom, B. J. and Hanson, R. A. (1999). \emph{Efficiency, Timeliness,
 #' and Quality: A New Perspective from Nine State Criminal Trial Courts}.
@@ -196,6 +197,13 @@ NULL
 #' cf <- case_flow(f$received, f$disposed, pending = f$pending, period = f$month)
 #' cf
 #' plot(cf)
+#'
+#' # without the pending count, a quarterly rolling window and 90% intervals
+#' cq <- case_flow(f$received, f$disposed, period = f$month, window = 3, conf_level = 0.90)
+#' head(as.data.frame(cq)[, c("period", "clearance", "rolling_clearance", "cumulative_net")])
+#'
+#' # one value per period in every count
+#' try(case_flow(c(100, 120, 90), c(95, 130)))
 #' @export
 case_flow <- function(received, disposed, pending = NULL, period = NULL, window = 12L,
                       conf_level = 0.95) {
@@ -209,7 +217,7 @@ case_flow <- function(received, disposed, pending = NULL, period = NULL, window 
   if (length(window) != 1L || is.na(window) || window < 1L) {
     stop("`window` must be a single whole number of at least 1", call. = FALSE)
   }
-  conf_level <- .jx_conf(conf_level)
+  conf_level <- .rmbl_conf_level(conf_level)
   ci <- .jx_ratio_ci(disposed, received, conf_level)
   clearance <- ifelse(received > 0, disposed / received, NA_real_)
   roll <- function(v) {
@@ -416,6 +424,16 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' still pending are not in them, so the survival function describes the
 #' disposed cohort, not every case received.
 #'
+#' The median is attribute \code{"median"} (\code{Inf}, with a \code{note},
+#' when survival never falls to one half or crosses it in the open band), and
+#' attribute \code{"life_table"} records \code{conf_level} and
+#' \code{conf_type}. Errors: band labels that cannot be read, or that are
+#' not contiguous, or with an open band other than the last; fewer than two
+#' increasing edges, or an infinite edge other than the last; \code{events}
+#' or \code{censored} that are not non-negative counts, one per band; no
+#' cases at all; \code{conf_level} outside (0, 1); an unknown
+#' \code{conf_type}.
+#'
 #' @references
 #' Cutler, S. J. and Ederer, F. (1958). Maximum utilization of the life
 #' table method in analyzing survival. \emph{Journal of Chronic
@@ -438,11 +456,22 @@ plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NU
 #' lt <- life_table(c(0, 10, 15, 18, Inf), events = shares * f$disposed[last])
 #' lt
 #' plot(lt)
+#'
+#' # bands given by their labels, with some cases still open, on the log scale
+#' lt2 <- life_table(c("Under 10", "10-15", "15-18", "Over 18"),
+#'                   events = c(600, 150, 60, 90), censored = c(40, 20, 10, 0),
+#'                   conf_type = "log")
+#' as.data.frame(lt2)[, c("lower", "upper", "at_risk", "survival",
+#'                        "conf_lower", "conf_upper")]
+#' attr(lt2, "median")
+#'
+#' # an open band can only come last
+#' try(life_table(c(0, Inf, 20), events = c(5, 5)))
 #' @export
 life_table <- function(breaks, events, censored = 0, conf_level = 0.95,
                        conf_type = c("log-log", "log", "plain")) {
   conf_type <- .rmbl_arg(conf_type)
-  conf_level <- .jx_conf(conf_level)
+  conf_level <- .rmbl_conf_level(conf_level)
   if (is.character(breaks) || is.factor(breaks)) {
     # times, not head counts: "Under 10" ends at 10, and "Over 18" starts there
     b <- parse_bands(as.character(breaks), integer_scale = FALSE)
@@ -608,6 +637,12 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' large, so these tests detect small changes; the shares and their
 #' intervals show whether a change is large enough to matter.
 #'
+#' Errors: \code{counts} not a numeric matrix or data frame, with a
+#' non-numeric column, fewer than one period or two outcomes, or a negative,
+#' missing or infinite count; a period with no cases; \code{scores} not one
+#' finite number per period, or all equal; \code{period} of the wrong length
+#' or with repeats; \code{conf_level} outside (0, 1).
+#'
 #' @references
 #' Goodman, L. A. (1965). On simultaneous confidence intervals for
 #' multinomial proportions. \emph{Technometrics}, 7(2), 247-254.
@@ -626,6 +661,16 @@ plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' mix <- disposition_mix(d[, -(1:2)], period = d$year)
 #' mix
 #' plot(mix)
+#'
+#' # the parts of the result
+#' head(mix$shares)
+#' mix$trend
+#'
+#' # years as trend scores, so the gap where no row exists is respected
+#' disposition_mix(d[, -(1:2)], period = d$year, scores = d$year)$trend[, 1:3]
+#'
+#' # outcome columns only: a text column is refused
+#' try(disposition_mix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
 #' @export
 disposition_mix <- function(counts, period = NULL, scores = NULL, conf_level = 0.95) {
   if (is.data.frame(counts)) {
@@ -641,7 +686,7 @@ disposition_mix <- function(counts, period = NULL, scores = NULL, conf_level = 0
     stop("`counts` needs at least one period and two outcomes", call. = FALSE)
   }
   .jx_counts(as.vector(counts), "counts")
-  conf_level <- .jx_conf(conf_level)
+  conf_level <- .rmbl_conf_level(conf_level)
   nt <- nrow(counts)
   k <- ncol(counts)
   outcome <- colnames(counts) %||% paste0("outcome_", seq_len(k))
@@ -872,6 +917,15 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #' surface is, so it should be reported with any map; the default suits a
 #' first look, not a definitive one.
 #'
+#' Errors: \code{lon} and \code{lat} of different lengths, or (with
+#' \code{coords = "lonlat"}) a coordinate that is not a longitude and
+#' latitude in degrees; fewer than two located incidents with positive weight;
+#' \code{n_grid} not a whole number from 10 to 2000; \code{coverage} not
+#' shares strictly between 0 and 1; incidents all on one line with no
+#' \code{bandwidth} given; a \code{bandwidth} that is not one or two positive
+#' numbers, or longer than half the earth's circumference. Incidents with a
+#' missing coordinate are dropped.
+#'
 #' @references
 #' Scott, D. W. (2015). \emph{Multivariate Density Estimation: Theory,
 #' Practice, and Visualization}, 2nd ed. Wiley, Hoboken, NJ.
@@ -895,6 +949,18 @@ plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette =
 #' kd <- crime_density(b$lon, b$lat, n_grid = 120)
 #' kd
 #' plot(kd)
+#'
+#' # a fixed 300 m bandwidth on a coarser grid: a sharper surface
+#' kd3 <- crime_density(b$lon, b$lat, bandwidth = 0.3, n_grid = 60)
+#' kd3$regions
+#'
+#' # planar coordinates in metres
+#' set.seed(2)
+#' xy <- cbind(rnorm(200, sd = 500), rnorm(200, sd = 500))
+#' crime_density(xy[, 1], xy[, 2], coords = "planar", n_grid = 40)$bandwidth
+#'
+#' # longitudes and latitudes are checked
+#' try(crime_density(c(-79.4, 200), c(43.7, 43.8)))
 #' @export
 crime_density <- function(lon, lat, weights = NULL, bandwidth = NULL, n_grid = 200L,
                           coverage = c(0.5, 0.9), coords = c("lonlat", "planar")) {
@@ -1176,6 +1242,13 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #' incidents relative to each other, not to what caused them; near-repeat
 #' patterns also arise when one offender commits a series.
 #'
+#' Errors: \code{x}, \code{y} and \code{time} of different lengths;
+#' \code{space_bands} or \code{time_bands} not positive, finite and
+#' increasing; \code{nsim} below 19; \code{max_pairs} below 1; longitude and
+#' latitude out of range under \code{coords = "lonlat"}; fewer than three
+#' incidents. With \code{seed} the random number stream is set for the call
+#' and restored afterwards.
+#'
 #' @references
 #' Knox, E. G. (1964). The detection of space-time interactions.
 #' \emph{Journal of the Royal Statistical Society, Series C (Applied
@@ -1199,6 +1272,17 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 #'                 time_bands = c(7, 14, 28), nsim = 199, seed = 1)
 #' kn
 #' plot(kn)
+#'
+#' # planar coordinates in metres and times in days, on simulated points
+#' set.seed(5)
+#' n <- 150
+#' kp <- knox_test(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
+#'                 space_bands = c(200, 400), time_bands = c(14, 28),
+#'                 nsim = 99, seed = 2, coords = "planar")
+#' kp
+#'
+#' # bands must increase
+#' try(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
 #' @export
 knox_test <- function(x, y, time, space_bands, time_bands, nsim = 999L, seed = NULL,
                       coords = c("lonlat", "planar"), max_pairs = 5e7) {
@@ -1464,6 +1548,17 @@ plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
 #' cd
 #' plot(cd)
+#'
+#' # Simpson's paradox in four numbers: each part clears better in B, yet the
+#' # aggregate falls, because B's workload moved to the part that clears less
+#' toy <- clearance_decomposition(numerator = c(90, 20, 19, 60),
+#'                                denominator = c(100, 50, 20, 140),
+#'                                group = c("minor", "serious", "minor", "serious"),
+#'                                compare = c("A", "A", "B", "B"))
+#' toy
+#'
+#' # every part must appear in both comparisons
+#' try(clearance_decomposition(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
 #' @export
 clearance_decomposition <- function(numerator, denominator, group, compare, base = NULL, conf_level = 0.95) {
   num <- .jx_counts(numerator, "numerator")
@@ -1474,7 +1569,7 @@ clearance_decomposition <- function(numerator, denominator, group, compare, base
     stop("`numerator`, `denominator`, `group` and `compare` must have the same length", call. = FALSE)
   }
   if (anyNA(group) || anyNA(compare)) stop("`group` and `compare` must not have missing values", call. = FALSE)
-  conf_level <- .jx_conf(conf_level)
+  conf_level <- .rmbl_conf_level(conf_level)
   levs <- sort(unique(compare))
   if (length(levs) != 2L) {
     stop(sprintf("`compare` must have exactly two values (two periods or two jurisdictions), got %d", length(levs)),
@@ -1587,7 +1682,8 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 }
 
 #' @rdname plot-methods
-#' @param max_parts For \code{rmbl_clearance_decomposition}, the most parts drawn: past it,
+#' @param max_parts For \code{rmbl_clearance_decomposition}, the most parts drawn: past
+#'   it,
 #'   the parts that moved the aggregate most, and the rest summed into one row.
 #' @usage \method{plot}{rmbl_clearance_decomposition}(x, ..., what = NULL,
 #'   max_parts = 20L, main = NULL, col = NULL, palette = NULL)

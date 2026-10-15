@@ -7,18 +7,24 @@
 alos(days, n)
 }
 \arguments{
-\item{days}{Person-days served during the period, summed.}
+\item{days}{Numeric vector of person-days served during the period,
+non-negative, no \code{NA} or \code{Inf}; the vector is summed.}
 
-\item{n}{Number of people. For an unbiased average this should be the
+\item{n}{Numeric scalar, the number of people; must be positive. A
+vector of several values is refused. For an unbiased average this should be the
 people both admitted AND released within the period, because anyone
 still held has an unfinished stay.}
 }
 \value{
-A single number: days per person.
+A numeric scalar: days per person, \eqn{\sum X_i / n}.
 }
 \description{
 The mean number of person-days served per person: the FLOW side of
-the same person-days.
+the same person-days. Use it to say how long a typical admission lasts,
+and together with \code{\link[=adp]{adp()}} to tell whether a change in the population
+held
+came from more people or from longer stays. For the full distribution of
+stays (median, spread, interval) use \code{\link[=stay_summary]{stay_summary()}}.
 }
 \details{
 Lakner's \eqn{\bar{X}_t = \sum X_i / N'} (1976, p.16), with a caveat
@@ -27,11 +33,22 @@ stay people actually serve, or the average is biased DOWNWARD, since
 the longest stays are the ones that fail to finish inside the window.
 For short-stay facilities a year is comfortable; for long sentences it
 is not, and the period has to be set from the records.
+
+Errors when \code{days} is not numeric, is empty, or has \code{NA},
+\code{Inf} or negative values, and when \code{n} is not a single positive
+number.
 }
 \examples{
 # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 # detention days between them.
 alos(12150, 2700)
+
+# from one value per released person
+stays <- c(2, 5, 1, 30, 4, 7)
+alos(stays, length(stays))
+
+# zero people cannot have an average stay
+try(alos(12150, 0))
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

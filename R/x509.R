@@ -31,23 +31,97 @@
 #' Parse an X.509 certificate
 #'
 #' Reads the fields a verifier needs: who issued it, who it is for, when it
-#' is valid, what key it carries, and what that key is allowed to do.
+#' is valid, what key it carries, and what that key is allowed to do. Use it
+#' to inspect the certificate of a timestamping authority or a signer before
+#' you decide to trust it, or as the first step of
+#' [cert_chain_verify()]. The
+#' DER decoder is the package's own; no system library or network is used.
 #'
-#' @param certificate DER or PEM, as a raw vector or a
-#' path.
-#' @return A list of class `bricklayer_certificate`.
+#' @details
+#' The certificate is decoded as DER (RFC 5280 section 4.1); a file whose
+#' text contains a \code{-----BEGIN} line is read as PEM and its base64 body
+#' decoded first (only the first certificate in the file is used). Version
+#' 1 certificates, without the explicit version field, are accepted.
+#' Extensions read: basic constraints, key usage, extended key usage, subject
+#' alternative name, name constraints, certificate policies, policy mappings
+#' and policy constraints, and inhibit any-policy. The signature is not
+#' checked here: that needs the issuer's key, which
+#' [cert_chain_verify()]
+#' supplies.
+#'
+#' Errors: \code{certificate} neither a raw vector nor the path of an
+#' existing file (a directory is refused); bytes that are not well-formed DER
+#' or carry trailing bytes; a DER structure that is not a certificate or has
+#' no signature.
+#'
+#' @param certificate The certificate, DER or PEM: a raw vector of DER bytes,
+#'   or the path of a \code{.der}, \code{.crt}, \code{.cer} or \code{.pem}
+#'   file.
+#' @return A list of class \code{c("bricklayer_certificate", "list")} with
+#'   \code{version} (integer), \code{serial} (hex), \code{issuer} and
+#'   \code{subject} (distinguished names as text), \code{not_before} and
+#'   \code{not_after} (\code{POSIXct}, UTC), \code{signature_algorithm} (a
+#'   name such as \code{"ECDSA-SHA256"}) and \code{signature_oid},
+#'   \code{signature} and \code{tbs} (raw; the signed part), \code{key} (a list:
+#'   \code{type} \code{"RSA"} or \code{"EC"}, \code{bits}, and the key
+#'   values, with \code{curve} for EC), \code{is_ca} and \code{path_len},
+#'   \code{key_usage} and \code{extended_key_usage} (character; EKU as OIDs),
+#'   \code{subject_rdns}, \code{issuer_rdns}, \code{san},
+#'   \code{name_constraints}, the policy fields (\code{policies},
+#'   \code{policy_mappings}, \code{require_explicit_policy},
+#'   \code{inhibit_policy_mapping}, \code{inhibit_any_policy}),
+#'   \code{self_signed} (logical: issuer equals subject) and \code{der} (the
+#'   bytes). \code{print()} shows a summary.
 #' @seealso
 #' [cert_chain_verify()],
 #' [timestamp_verify()].
 #' @examples
-#' # Certificates come from outside the package, so there is nothing to
-#' # parse offline; this is the shape of the call.
-#' \dontrun{
-#' cert <- cert_parse("tsa.crt")
-#' cert$subject
-#' cert$not_after
-#' cert$extended_key_usage
+#' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
+#' # and a leaf it issued (a throwaway test authority; trust it for nothing).
+#' root_hex <- paste0(
+#'   "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
+#'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
+#'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
+#'   "393038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
+#'   "030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0301070342",
+#'   "0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb59280e958aa6c",
+#'   "e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300f0603551d",
+#'   "130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0e04160414",
+#'   "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
+#'   "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
+#'   "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
+#' leaf_hex <- paste0(
+#'   "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
+#'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
+#'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
+#'   "313038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
+#'   "030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0301070342",
+#'   "00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a859ebb7681a",
+#'   "e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a305830090603551d",
+#'   "1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd5987f0dfa",
+#'   "0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65d3252cf12",
+#'   "7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554adb8f33e4ac",
+#'   "53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7fb4af3724",
+#'   "78d684f648e6ef23c68a3d764894c8fc")
+#' hex2raw <- function(h) {
+#'   as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
 #' }
+#' root <- cert_parse(hex2raw(root_hex))
+#' root
+#' leaf <- cert_parse(hex2raw(leaf_hex))
+#' leaf$subject
+#' leaf$key$curve
+#' c(leaf$not_before, leaf$not_after)
+#'
+#' # the same certificate from a PEM file
+#' pem <- tempfile(fileext = ".pem")
+#' writeLines(c("-----BEGIN CERTIFICATE-----",
+#'              strsplit(bricklayer_json_base64_enc(hex2raw(root_hex)), "\n")[[1]],
+#'              "-----END CERTIFICATE-----"), pem)
+#' cert_parse(pem)$self_signed
+#'
+#' # bytes that are not a certificate
+#' try(cert_parse(charToRaw("not a certificate")))
 #' @export
 cert_parse <- function(certificate) {
   der <- .rmbl_as_bytes(certificate, "certificate")
@@ -184,14 +258,15 @@ print.bricklayer_certificate <- function(x, ...) {
 #' @param intermediates Optional further certificates
 #' to build the path through. They are not trusted by being supplied; they
 #' still have to verify.
-#' @param at_time The time to check validity windows at.
-#' Defaults to now.
+#' @param at_time The time to check validity windows at: a \code{POSIXct} or
+#' anything \code{as.POSIXct()} reads, taken as UTC. Defaults to now.
 #' @param purpose Optional extended key usage the leaf must
-#' carry, as a name ( `"timeStamping"`, `"codeSigning"`, ...) or
-#' an OID.
-#' @param crls Optional list of CRLs, as raw or paths, to check
-#' the chain against.
-#' @param policies Acceptable certificate policy OIDs.
+#' carry, as a name (\code{"timeStamping"}, \code{"codeSigning"}, ...) or
+#' an OID. Default \code{NULL}: no purpose is required.
+#' @param crls Optional list of CRLs, as raw DER or paths, to check
+#' the chain against. Default \code{list()}.
+#' @param policies Optional character vector of acceptable certificate
+#' policy OIDs; default \code{NULL}.
 #' Supplied, the path must yield at least one of them after policy mapping
 #' and the constraints in RFC 5280 section 6.1; omitted, policies are
 #' processed but only reported as a failure when a certificate in the path
@@ -203,19 +278,88 @@ print.bricklayer_certificate <- function(x, ...) {
 #' -- which makes verification depend on the network and discloses to
 #' the responder which certificates are being checked, so it is never the
 #' default. `"none"` skips revocation entirely.
-#' @return A list of class `bricklayer_certpath_check`: `ok`, the
-#' `path` that was built, and a `checks` data frame.
+#' @details
+#' The path is built by following issuer names from the leaf through the
+#' intermediates until a certificate in \code{trust} is reached, at most ten
+#' steps (a cycle among supplied certificates cannot loop). Then every link is
+#' checked: the validity window at \code{at_time}, the signature under the
+#' issuer's key (RSA PKCS#1 v1.5 with SHA-1, SHA-256, SHA-384 or SHA-512;
+#' ECDSA with SHA-256, SHA-384 or SHA-512 on P-256, P-384 and P-521), that
+#' every issuer is a CA with a path length that allows the chain, name
+#' constraints, the policy rules of RFC 5280 section 6.1, the requested
+#' \code{purpose} (extended key usage of the leaf), that the anchor is
+#' self-signed, and revocation as \code{revocation} says. Each
+#' check is one row of \code{checks}; \code{ok} is \code{TRUE} only when every
+#' row passed. A failed check is a row, not an error.
+#'
+#' Errors: \code{trust} empty; a certificate that [cert_parse()]
+#' cannot read;
+#' an unknown \code{revocation}. With \code{revocation = "fetch"} the network
+#' is used (distribution points and OCSP responders named in the
+#' certificates); otherwise nothing is fetched.
+#'
+#' @return A list of class \code{bricklayer_certpath_check}: \code{ok}
+#' (logical, the verdict), \code{path} (the list of certificates from the
+#' leaf to the anchor, as built), \code{checks} (a data frame with
+#' \code{check}, logical \code{ok} and \code{detail}, one row per check),
+#' \code{at_time} (the time used) and \code{policies} (the outcome of policy
+#' processing). \code{print()} shows the verdict and the checks.
 #' @seealso
 #' [cert_parse()],
 #' [timestamp_verify()].
 #' @examples
-#' \dontrun{
-#' res <- cert_chain_verify("tsa.crt",
-#'   trust = "ca.crt",
-#'   purpose = "timeStamping"
-#' )
+#' # A small test chain shipped as hexadecimal DER: a self-signed P-256 root
+#' # and a leaf it issued (a throwaway test authority; trust it for nothing).
+#' root_hex <- paste0(
+#'   "308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06",
+#'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
+#'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932",
+#'   "393038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
+#'   "030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0301070342",
+#'   "0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb59280e958aa6c",
+#'   "e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300f0603551d",
+#'   "130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0e04160414",
+#'   "2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602",
+#'   "21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3",
+#'   "c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0")
+#' leaf_hex <- paste0(
+#'   "308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06",
+#'   "082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355",
+#'   "04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030",
+#'   "313038343334315a302931123010060355040a0c09726d626c20746573743113301106035504",
+#'   "030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0301070342",
+#'   "00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a859ebb7681a",
+#'   "e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a305830090603551d",
+#'   "1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd5987f0dfa",
+#'   "0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65d3252cf12",
+#'   "7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554adb8f33e4ac",
+#'   "53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7fb4af3724",
+#'   "78d684f648e6ef23c68a3d764894c8fc")
+#' hex2raw <- function(h) {
+#'   as.raw(strtoi(substring(h, seq(1, nchar(h), 2), seq(2, nchar(h), 2)), 16L))
+#' }
+#' root <- cert_parse(hex2raw(root_hex))
+#' leaf <- cert_parse(hex2raw(leaf_hex))
+#'
+#' # the leaf chains to the root, checked a day after it was issued
+#' res <- cert_chain_verify(leaf, trust = root, at_time = leaf$not_before + 86400)
 #' res$ok
-#' res$checks
+#' res$checks[, c("check", "ok")]
+#'
+#' # after the leaf expired, the same chain fails on validity
+#' cert_chain_verify(leaf, trust = root, at_time = leaf$not_after + 86400)$ok
+#'
+#' # a purpose the leaf was not issued for
+#' r <- cert_chain_verify(leaf, trust = root, at_time = leaf$not_before + 86400,
+#'                        purpose = "timeStamping")
+#' r$checks[!r$checks$ok, ]
+#'
+#' # a chain must end at something you trust
+#' try(cert_chain_verify(leaf, trust = list()))
+#' \dontrun{
+#' # with revocation looked up on the network
+#' cert_chain_verify("tsa.crt", trust = "ca.crt", purpose = "timeStamping",
+#'                   revocation = "fetch")
 #' }
 #' @export
 cert_chain_verify <- function(leaf, trust, intermediates = list(),

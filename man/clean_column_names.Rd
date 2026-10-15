@@ -13,29 +13,45 @@ clean_column_names(
 \arguments{
 \item{data}{A data frame, or a character vector of names.}
 
-\item{case}{\code{"snake"} (default), \code{"lower_camel"},
-\code{"upper_camel"}, \code{"screaming_snake"}, or \code{"none"} to
-normalise separators only.}
+\item{case}{\code{"snake"} (default, \code{total_pop}), \code{"lower_camel"}
+(\code{totalPop}), \code{"upper_camel"} (\code{TotalPop}),
+\code{"screaming_snake"} (\code{TOTAL_POP}), or \code{"none"} to normalise
+separators only and keep the letters' case.}
 
-\item{sep}{Separator for \code{"snake"} and
-\code{"screaming_snake"} (default \code{"_"}) .}
+\item{sep}{Separator, a string, used between words for \code{"snake"},
+\code{"screaming_snake"} and \code{"none"}, and before the number that
+disambiguates a duplicate in every case (default \code{"_"}).}
 }
 \value{
-The data frame with new names (and an \code{"original_names"}
-attribute), or the cleaned character vector.
+For a data frame, the data frame with new names and an
+\code{"original_names"} attribute (character, the names before cleaning);
+for a character vector, the cleaned character vector.
 }
 \description{
-Converts names to a consistent, syntactically valid form: transliterated
-to ASCII, non-alphanumerics collapsed to a single separator, and
-duplicates disambiguated with a numeric suffix. The counterpart of
-\code{janitor::clean_names()}.
+Converts column names to a consistent, syntactically valid form:
+transliterated to ASCII, non-alphanumerics collapsed to a single
+separator, and duplicates disambiguated with a numeric suffix. The
+counterpart of \code{janitor::clean_names()}. Use it right after reading
+an open-data file, so the rest of the script can refer to columns without
+backticks.
 }
 \details{
 Open-data extracts arrive with names like
 \code{"Total Population (2021)"} and \code{"\% change"}, which need
 backticks everywhere and break silently when a re-release renames
-\code{"\% change"} to \code{"\% change"}. Normalising once at ingestion
-makes the schema stable against that.
+\code{"\% change"} to \code{"\% Change"} or adds a trailing space.
+Normalising once at ingestion makes the schema stable against that.
+
+The steps, in order: transliterate to ASCII (\code{iconv(...,
+"ASCII//TRANSLIT")}, keeping the original where that fails); replace
+\code{\%} by \code{pct}, \code{&} by \code{and} and \code{#} by \code{n}
+as words; split camelCase at a lower-to-upper boundary; turn every run of
+other characters into one word break; an empty name becomes \code{x};
+join the words in the chosen case; prefix \code{x} to a name starting
+with a digit; and give repeated names the suffixes \code{<sep>2},
+\code{<sep>3}, ... in order of appearance (the first keeps its name).
+The transliteration depends on the platform's iconv, so an accented
+letter may come out slightly differently on different systems.
 
 Record the mapping in the capsule manifest. Cleaning names changes what
 a downstream script must refer to, so an unrecorded cleaning is itself a
@@ -57,4 +73,10 @@ attr(cleaned, "original_names")
 clean_column_names(c("Total Pop"), case = "lower_camel")
 clean_column_names(c("Total Pop"), case = "upper_camel")
 clean_column_names(c("Total Pop"), case = "screaming_snake")
+
+# a different separator, and a name that starts with a digit
+clean_column_names(c("2021 count", "Rate per 1000"), sep = ".")
+
+# an unknown case is an error
+try(clean_column_names("a b", case = "kebab"))
 }

@@ -7,22 +7,34 @@
 core_gamma_cdf(shape, x)
 }
 \arguments{
-\item{shape}{Shape parameter \eqn{a} (length-1, > 0).}
+\item{shape}{Shape parameter \eqn{a}, a single positive number.}
 
-\item{x}{Numeric vector of quantiles (>= 0).}
+\item{x}{Numeric vector of quantiles.}
 }
 \value{
-A numeric vector the length of \code{x}, each entry in \
-[0, 1].
-
-[0, 1]: R:0,\%201\%5C
+A numeric vector the length of \code{x}, each entry a probability in
+\eqn{[0, 1]}.
 }
 \description{
 The lower regularized incomplete gamma function \eqn{P(a, x)}, which is
 the CDF of a Gamma distribution with shape \code{a} and unit rate.
 Exposed because it is the building block of the chi-square tail used by
 \code{\link[=drift_chisq]{drift_chisq()}} and
-\code{\link[=benford_test]{benford_test()}}.
+\code{\link[=benford_test]{benford_test()}}: the p-value of a chi-square statistic
+\eqn{q} on
+\eqn{k} degrees of freedom is \eqn{1 - P(k/2, q/2)}.
+}
+\details{
+\deqn{P(a, x) = \frac{1}{\Gamma(a)} \int_0^x t^{a-1} e^{-t} \, dt,}
+evaluated by the shared core (a series for small \eqn{x}, a continued
+fraction otherwise, the standard pairing), and agreeing with
+\code{stats::pgamma(x, shape)} to rounding. For a gamma distribution with
+rate \eqn{r}, pass \code{x * r}.
+
+\code{shape} must be a single positive number
+(\code{"shape must be a single positive number"}). A negative \code{x} gives 0,
+a missing \code{x} gives \code{NA}, and \code{Inf} gives 1, as in
+\code{\link[stats:pgamma]{stats::pgamma()}}.
 }
 \examples{
 core_gamma_cdf(3.5, c(0.5, 1, 4, 12))
@@ -36,4 +48,10 @@ all.equal(core_gamma_cdf(1, c(0.5, 2)), stats::pexp(c(0.5, 2)))
 
 # A chi-square tail on k degrees of freedom is 1 - P(k/2, q/2).
 1 - core_gamma_cdf(2 / 2, 5.99 / 2)      # about 0.05 on 2 df
+
+# The shape must be positive.
+try(core_gamma_cdf(0, 1))
+}
+\seealso{
+\code{\link[stats:pgamma]{stats::pgamma()}}, the base R equivalent.
 }

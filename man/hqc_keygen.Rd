@@ -26,11 +26,18 @@ tests need; the default draws from the operating system's CSPRNG.}
 64-byte shared secret). Keys remember it; encapsulation and decapsulation
 follow the key.}
 
-\item{key}{A key from \code{hqc_keygen()}.}
+\item{key}{A key from \code{hqc_keygen()} (\code{hqc_public_key()} only).}
 }
 \value{
-A list of class \code{bricklayer_hqc_key}: \code{public}, \code{secret} (both
-hex), \code{level} and \code{version}. The v5 secret key is the specification's
+\code{hqc_keygen()} returns a list of class \code{bricklayer_hqc_key} with
+\code{public} and \code{secret} (character, lowercase hex of the encapsulation and
+decapsulation keys; see \code{\link[=hqc_sizes]{hqc_sizes()}} for their byte lengths),
+\code{level}
+(integer 1, 3 or 5) and \code{version} (\code{"v5"} or \code{"round4"}). Its print
+method shows the level and the start of the public key and withholds the
+secret. \code{hqc_public_key()} returns a list of class
+\code{bricklayer_hqc_public_key} with \code{public}, \code{level} and \code{version}
+only. The v5 secret key is the specification's
 \code{ek || seed_dk || sigma || seed_KEM}; the round-4 one is
 \code{sk_seed || sigma || ek}.
 }
@@ -39,6 +46,15 @@ Generates a key for HQC (Hamming Quasi-Cyclic), the code-based key
 encapsulation mechanism NIST selected for standardisation in March 2025
 (NIST IR 8545) as a second KEM next to ML-KEM. It is implemented in this
 package, with no system dependency.
+A key encapsulation mechanism (KEM) lets two parties agree on a secret
+key: the recipient publishes the public half of this key pair, a sender
+uses it with \code{\link[=hqc_encapsulate]{hqc_encapsulate()}} to make a ciphertext
+and a shared
+secret, and only the holder of the secret half can recover that secret
+from the ciphertext with \code{\link[=hqc_decapsulate]{hqc_decapsulate()}}. The shared
+secret is then
+used as the key of a symmetric cipher. \code{hqc_public_key()} strips the
+secret half so the public key can be handed out.
 }
 \details{
 The implementation follows the HQC specification of 2025-08-22 and is byte
@@ -46,7 +62,8 @@ for byte the scheme of the authors' reference implementation v5.0.0: all
 300 official known-answer vectors are reproduced (the package's tests check
 them). It runs in constant time with respect to secrets -- no secret
 reaches a branch, a memory index or a variable shift, checked under
-valgrind memcheck in CI (\code{inst/ctcheck}: the \code{hqc1}, \code{hqc3}, \code{hqc5}
+valgrind memcheck in CI (\code{inst/ctcheck}: the \code{hqc1}, \code{hqc3},
+\code{hqc5}
 and \code{hqc1-round4} cases) -- wipes its secret intermediates (the same
 harness scans the dead stack for them), and gives the same bytes on
 little- and big-endian machines. On x86-64 processors with PCLMULQDQ and on
@@ -58,7 +75,8 @@ draft of it (checked 2026-10-05). The specification of 2025-08-22 followed
 here already makes the changes NIST listed for FIPS 207 (the salted FO
 transform, SHA3-512 seed expansion, the 32-byte shared secret, the new
 sampler, the seed in the decapsulation key, the seed-only compressed key
-that \code{\link[=hqc_compress_key]{hqc_compress_key()}} writes); the published standard
+that \code{\link[=hqc_compress_key]{hqc_compress_key()}} writes); the published
+standard
 may still differ
 in detail. Keep keys and ciphertexts tagged with the scheme, version and
 level they belong to.
@@ -71,6 +89,15 @@ with domain bytes in place of SHA3, another sampler), so its keys and
 ciphertexts are not interchangeable with v5's. It reproduces that
 revision's 300 official known-answer vectors (the package's tests check
 them); use it to exchange keys with software built on it, and v5 otherwise.
+
+Errors: a \code{level} other than 1, 3, 5, 128, 192 or 256 (a typo is never
+mapped to a default, because the level is not recorded in the
+ciphertext); a \code{seed} that is not a raw vector of exactly
+\code{hqc_sizes(level, version)[["seed"]]} bytes; a \code{version} other than
+\code{"v5"} or \code{"round4"}. \code{hqc_public_key()} errors on anything that is not
+a
+\code{bricklayer_hqc_key}. Key generation takes a few tens of milliseconds even
+at level 5.
 }
 \section{Security}{
 

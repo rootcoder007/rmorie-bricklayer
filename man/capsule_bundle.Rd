@@ -22,23 +22,28 @@ capsule_bundle_read(path)
 capsule_bundle_verify(bundle, dir, manifest = NULL, key_expected = NULL)
 }
 \arguments{
-\item{dir}{Directory the capsule lives in.}
+\item{dir}{Character scalar, the directory the capsule lives in. For
+\code{capsule_bundle_verify()}, the directory to check the files in.}
 
-\item{manifest}{A manifest, as from
-\code{\link[=make_manifest]{make_manifest()}}.}
+\item{manifest}{A manifest, as from \code{\link[=make_manifest]{make_manifest()}}.
+Required by
+\code{capsule_bundle()}; optional for \code{capsule_bundle_verify()}, where it adds
+a check that the manifest still has the bundled digest.}
 
 \item{key}{A signing key from
 \code{\link[=fips_keygen]{fips_keygen()}} or
 \code{\link[=pqc_keygen]{pqc_keygen()}}.}
 
-\item{files}{Paths relative to \code{dir}. Defaults to
-every regular file in \code{dir}, excluding the bundle itself.}
+\item{files}{Character vector of paths relative to \code{dir}. Defaults to
+every regular file in \code{dir} (recursively, dot-files included), excluding
+the bundle itself.}
 
 \item{context, prehash, note}{As in
 \code{\link[=capsule_attest]{capsule_attest()}}.}
 
-\item{path}{Where to write the bundle. Defaults to
-\code{capsule_bundle.json} inside \code{dir}.}
+\item{path}{Character scalar. For \code{capsule_bundle()}, where to write the
+bundle; defaults to \code{capsule_bundle.json} inside \code{dir} (an existing file
+is overwritten). For \code{capsule_bundle_read()}, the bundle file to read.}
 
 \item{bundle}{A bundle read back with
 \code{capsule_bundle_read()}, or the path to one.}
@@ -49,10 +54,18 @@ should have signed: without it the check confirms the bundle is
 internally consistent, which any key's holder could arrange.}
 }
 \value{
-\code{capsule_bundle()} the bundle, invisibly, with the path it
-was written to as an attribute; \code{capsule_bundle_read()} the bundle;
-\code{capsule_bundle_verify()} a list with \code{ok} and a \code{checks}
-data frame.
+\code{capsule_bundle()}: the bundle, invisibly, a list of class
+\code{bricklayer_bundle} with \code{files} (a list of \code{path}, \code{sha256},
+\code{size_bytes}), \code{manifest_digest}, \code{bundled_utc} and \code{attestation}
+(from
+\code{\link[=capsule_attest]{capsule_attest()}}), and the path it was written to as
+attribute
+\code{"path"}. \code{capsule_bundle_read()}: the same structure read from the file.
+\code{capsule_bundle_verify()}: a list of class \code{bricklayer_bundle_check} with
+\code{ok} (logical) and \code{checks} (a data frame of \code{check}, logical \code{ok}
+and
+\code{detail}: one \code{file:PATH} row per listed file, \code{no_unlisted_files}, the
+\verb{attestation:} rows and, with a manifest, \code{manifest_digest}).
 }
 \description{
 Records a digest of every file named, the manifest's canonical digest,
@@ -71,6 +84,37 @@ What it establishes: the named files have not changed since signing, the
 manifest has not changed, and both were signed together by the holder of
 that key. What it does not: that the key belongs to anyone in
 particular, or that the manifest's claims are true.
+
+How it is built. Each file is hashed with SHA-256
+(\code{\link[=sha256_file]{sha256_file()}}); the
+payload is the list of \code{path}, \code{sha256} and \code{size_bytes}, the
+manifest's
+\code{\link[=manifest_digest]{manifest_digest()}} and the UTC time;
+\code{\link[=capsule_attest]{capsule_attest()}} signs a manifest
+whose \code{meta} is that payload, and the bundle (payload plus attestation) is
+written as pretty JSON with doubles at 17 digits. With \code{files = NULL} every
+regular file under \code{dir} is hashed, recursively and including dot-files
+(a \code{.Rprofile} dropped into a capsule runs code), except the bundle file
+itself. A progress bar is shown when \code{options(morie.progress)} allows it.
+
+How it is checked. \code{capsule_bundle_verify()} re-hashes every listed file
+(a path that is absolute or climbs out of \code{dir} fails its row), reports
+every file on disk the bundle does not list (the bundle's own file
+excepted), checks the attestation with
+\code{\link[=capsule_check_attestation]{capsule_check_attestation()}}
+(signature, digest, and \code{key_expected} when given), and, when \code{manifest}
+is given, compares its digest with the bundled one. Every check is a row of
+\code{checks}; \code{ok} is \code{TRUE} only when all pass. A failed check is a row,
+not
+an error.
+
+Errors: \code{dir} missing or not a directory; no files to bundle, or a named
+file not in \code{dir}; a key \code{\link[=capsule_attest]{capsule_attest()}} cannot
+sign with;
+\code{capsule_bundle_read()} given a file that is not a bundle;
+\code{capsule_bundle_verify()} given something other than a bundle or a path.
+Reading a bundle whose signature records a stateful key's state warns (see
+\code{\link[=capsule_attest]{capsule_attest()}}).
 }
 \examples{
 dir <- tempfile()
@@ -86,7 +130,21 @@ capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok
 # touch a byte of the data and the bundle no longer holds
 write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"),
           row.names = FALSE)
-capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok
+res <- capsule_bundle_verify(attr(b, "path"), dir, manifest = m)
+res$ok
+res$checks[!res$checks$ok, c("check", "detail")]
+
+# read back, and checked against the key you expected to have signed
+b2 <- capsule_bundle_read(attr(b, "path"))
+b2
+capsule_bundle_verify(b2, dir, key_expected = "00ff")$ok
+
+# a file added beside the bundle is reported too
+writeLines("x", file.path(dir, "extra.txt"))
+capsule_bundle_verify(b2, dir)$checks[, c("check", "ok")]
+
+# a directory that does not exist
+try(capsule_bundle(file.path(tempdir(), "no-such-capsule"), m, key))
 unlink(dir, recursive = TRUE)
 }
 \seealso{

@@ -7,18 +7,24 @@
 hqc_decapsulate(key, ciphertext)
 }
 \arguments{
-\item{key}{A key from \code{\link[=hqc_keygen]{hqc_keygen()}}, with its secret half.}
+\item{key}{A key from \code{\link[=hqc_keygen]{hqc_keygen()}}, with its secret half
+(full or
+compressed).}
 
 \item{ciphertext}{Ciphertext from
-\code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, hex or raw.}
+\code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, as a hex string or a raw vector.}
 }
 \value{
-The shared secret as hex: 64 characters (32 bytes), or 128 for a
-round-4 key.
+The shared secret as a lowercase hex string: 64 characters (32
+bytes), or 128 for a round-4 key.
 }
 \description{
-Returns the shared secret the ciphertext carries, as hex (32 bytes; 64 for
-a round-4 key).
+The recipient's half of an HQC key exchange. Given the key pair from
+\code{\link[=hqc_keygen]{hqc_keygen()}} (with its secret half) and a ciphertext from
+\code{\link[=hqc_encapsulate]{hqc_encapsulate()}}, it returns the shared secret the
+ciphertext carries,
+as hex (32 bytes; 64 for a round-4 key). The sender and recipient then
+hold the same secret without it ever having been sent.
 }
 \details{
 A ciphertext that was not produced by a correct encapsulation under this
@@ -30,6 +36,15 @@ learns nothing from the outcome. A mismatch between the two sides' secrets
 is the signal that something was wrong. A decapsulation key whose stored
 seeds no longer derive from each other (corrupted or spliced; for round 4,
 whose public half is not the one its secret seed makes) IS refused.
+
+A compressed key from \code{\link[=hqc_compress_key]{hqc_compress_key()}} is accepted:
+the full key pair
+is derived again from the seed, and the call errors if that does not give
+the key's own public half. The level and version are taken from the key,
+so the ciphertext must come from a key of the same level and version.
+
+Errors: \code{key} not an HQC key; a public key (no secret half); a secret of
+the wrong length; a ciphertext of the wrong length or not valid hex.
 }
 \examples{
 key <- hqc_keygen(1)
@@ -42,7 +57,13 @@ substring(bad, 3L, 4L) <- if (substring(bad, 3L, 4L) == "ff") "fe" else "ff"
 other <- hqc_decapsulate(key, bad)
 nchar(other) == 64L
 identical(other, sent$shared)
+
+# the public key alone cannot decapsulate, and a truncated ciphertext
+# is refused
+try(hqc_decapsulate(hqc_public_key(key), sent$ciphertext))
+try(hqc_decapsulate(key, substring(sent$ciphertext, 1L, 100L)))
 }
 \seealso{
-\code{\link[=hqc_encapsulate]{hqc_encapsulate()}}.
+\code{\link[=hqc_encapsulate]{hqc_encapsulate()}},
+\code{\link[=hqc_compress_key]{hqc_compress_key()}}.
 }

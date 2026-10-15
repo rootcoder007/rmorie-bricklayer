@@ -7,21 +7,47 @@
 footprint_equivalents(co2e_g)
 }
 \arguments{
-\item{co2e_g}{Grams of CO2-equivalent.}
+\item{co2e_g}{Numeric scalar, grams of CO2-equivalent; finite and
+non-negative (for example the \code{co2e_g} element of a
+\code{\link{compute_footprint}} result).}
 }
 \value{
-A list with \code{car_km}, \code{tree_months} and \code{sources}.
+A list with \code{car_km} (numeric, kilometres),
+\code{tree_months} (numeric) and \code{sources} (named character vector,
+\code{car} and \code{tree}, naming each factor's source).
 }
 \description{
-Kilometres driven in an average European passenger car (175 gCO2/km) and
+Converts grams of CO2-equivalent into two everyday comparisons:
+kilometres driven in an average European passenger car (175 gCO2/km) and
 tree-months of carbon sequestration (917 gCO2 per tree per month), the two
 comparisons the Green Algorithms calculator prints, with their sources.
+Use it to make the \code{co2e_g} of \code{\link{compute_footprint}}
+easier to read in a report.
+}
+\details{
+The conversions are plain divisions: \eqn{\mathrm{km} = g / 175} and
+\eqn{\mathrm{tree\ months} = g / 917}. Both factors are averages and the
+comparisons are illustrations, not offsets: a tree-month is the carbon one
+mature tree takes up in a month, not a promise that planting one cancels
+the emission. Errors when \code{co2e_g} is not a single finite,
+non-negative number.
 }
 \examples{
 footprint_equivalents(1200)
+
+# the footprint of a small computation, in everyday terms
+fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON",
+                        cpu_power_w = 45, memory_gb = 8)
+unlist(footprint_equivalents(fp$co2e_g)[c("car_km", "tree_months")])
+
+# a vector is refused: convert one total at a time
+try(footprint_equivalents(c(10, 20)))
 }
 \references{
 Green Algorithms data v3.1, context.csv: car factor from
 Helmers et al. (2019) Atmospheric Environment and UK BEIS 2019 conversion
 factors; tree sequestration from Bernal et al. (2018) via the same file.
+}
+\seealso{
+\code{\link{compute_footprint}}
 }

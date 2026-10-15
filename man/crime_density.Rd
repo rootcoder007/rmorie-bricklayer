@@ -67,6 +67,15 @@ index: when half the incidents fall in a few per cent of the mapped
 area, they are concentrated. The bandwidth decides how sharp the
 surface is, so it should be reported with any map; the default suits a
 first look, not a definitive one.
+
+Errors: \code{lon} and \code{lat} of different lengths, or (with
+\code{coords = "lonlat"}) a coordinate that is not a longitude and
+latitude in degrees; fewer than two located incidents with positive weight;
+\code{n_grid} not a whole number from 10 to 2000; \code{coverage} not
+shares strictly between 0 and 1; incidents all on one line with no
+\code{bandwidth} given; a \code{bandwidth} that is not one or two positive
+numbers, or longer than half the earth's circumference. Incidents with a
+missing coordinate are dropped.
 }
 \examples{
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
@@ -74,6 +83,18 @@ b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 kd <- crime_density(b$lon, b$lat, n_grid = 120)
 kd
 plot(kd)
+
+# a fixed 300 m bandwidth on a coarser grid: a sharper surface
+kd3 <- crime_density(b$lon, b$lat, bandwidth = 0.3, n_grid = 60)
+kd3$regions
+
+# planar coordinates in metres
+set.seed(2)
+xy <- cbind(rnorm(200, sd = 500), rnorm(200, sd = 500))
+crime_density(xy[, 1], xy[, 2], coords = "planar", n_grid = 40)$bandwidth
+
+# longitudes and latitudes are checked
+try(crime_density(c(-79.4, 200), c(43.7, 43.8)))
 }
 \references{
 Scott, D. W. (2015). \emph{Multivariate Density Estimation: Theory,

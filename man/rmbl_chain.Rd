@@ -20,37 +20,76 @@ chain_seal(chain)
 chain_verify(chain)
 }
 \arguments{
-\item{chain}{A chain from \code{chain_new()} or
-\code{chain_append()}.}
+\item{chain}{A chain from \code{chain_new()} or \code{chain_append()}.}
 
 \item{entry}{Any object to record. It is digested through
 its own deterministic serialization, so lists and data frames are
 accepted as readily as strings.}
 
-\item{label}{Optional short character label for the entry.}
+\item{label}{Optional short label for the entry (the first element of
+\code{as.character(label)} is kept); \code{NA} by default. Covered by
+the entry's digest.}
 }
 \value{
 \code{chain_new()} and \code{chain_append()} return an object of
-class \code{bricklayer_chain}. \code{chain_verify()} returns a list with
-\code{valid}, \code{n}, \code{broken_at} ( \code{NA} when intact) and
-\code{head}. \code{chain_head()} returns the head digest.
-\code{chain_seal()} returns a single digest over the verified chain's
-length and links, or \code{NA} if the chain does not verify.
+class \code{c("bricklayer_chain", "list")} with \code{entries} (a list of
+entries, each with \code{label}, \code{payload}, \code{prev},
+\code{scheme} and \code{digest}) and \code{genesis} (64 zeros).
+\code{chain_verify()} returns a
+list of class \code{bricklayer_chain_check} with \code{valid} (logical),
+\code{n} (integer, entries), \code{broken_at} (integer index of the first
+bad entry, \code{NA} when intact) and \code{head}. \code{chain_head()}
+returns the head digest (64 hex characters; the genesis value for an
+empty chain). \code{chain_seal()} returns a single digest over the verified
+chain's length and links, or \code{NA} if the chain does not verify.
 }
 \description{
-Each entry records the digest of the entry before it, so the chain's
+Keeps a history of runs (one manifest per run) as a hash chain: each
+entry records the digest of the entry before it, so the chain's
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-\code{\link[=chain_verify]{chain_verify()}} reports the first index
-where the break occurs.
+\code{\link[=chain_verify]{chain_verify()}} reports the first index where the break
+occurs. Use it
+when the record of which analyses were run, and in what order, has to be
+auditable.
 }
 \details{
+\code{chain_new()} starts an empty chain, \code{chain_append()} adds an
+entry, \code{chain_head()} returns the last link, \code{chain_verify()}
+checks every link and \code{chain_seal()} returns one digest to sign.
+
 This is the structure behind an append-only audit log, and it is what a
 per-manifest digest alone cannot give you: individually valid manifests
 say nothing about whether any were removed.
-}
-\section{What the head covers, and what it does not}{
+
+Each entry stores \code{payload}, the SHA-256 of the entry (of its UTF-8
+bytes for a single string, otherwise of \code{serialize(entry, version =
+2, xdr = TRUE)} with the four bytes that name the writer's R version set
+to zero), \code{prev}, the previous link (64 zeros for the first),
+\code{scheme} (2) and \code{digest} = SHA-256 of
+\code{"v2|<prev>|<payload>|<label>"}, where \code{<label>} is \code{"0"}
+for a missing label and \code{"1"} followed by the label otherwise. The
+entry itself is not kept, only its digest; the label is covered, so
+editing it breaks the link. Zeroing the writer-version bytes makes the
+payload the same on every R version, for any R object (a canonical JSON
+encoding would cover only the objects JSON can hold); the rest of a
+version-2 stream depends only on the object.
+
+Entries written by 0.5.12 and earlier carry no \code{scheme}. Their
+digest is SHA-256 of \code{"<prev>:<payload>"} (the label not covered,
+and the payload of a non-string entry taken over serialized bytes that
+include the writer's R version). \code{chain_verify()} and
+\code{chain_seal()} still accept them under those rules, with a warning
+that they were sealed with the weaker scheme. Appending to such a chain
+adds scheme-2 entries.
+
+\code{chain_verify()} walks the chain from the start: an entry fails when
+its \code{prev} is not the previous link, its \code{scheme} is neither 2
+nor absent, or its \code{digest} does not recompute (compared in constant
+time with \code{\link[=core_digest_equal]{core_digest_equal()}}).
+\subsection{What the head covers, and what it does not}{
+
 \code{chain_head()} is the STORED digest of the last entry. Deleting an
 entry from the MIDDLE leaves that value untouched -- the stored digests
 do not change, only the links between them stop agreeing -- so the head
@@ -63,15 +102,19 @@ changes.
 
 The two failures are complementary, which is why \code{chain_seal()}
 exists: it verifies the links AND folds the entry count and every link
-digest into one value, so a single signature over the seal detects an
-edit, a deletion, a reordering, an insertion and a truncation alike.
-Sign the seal, not the head.
+digest into one value (SHA-256 of the count and the links joined by
+\code{"|"}), so a single signature over the seal detects an edit, a
+deletion, a reordering, an insertion and a truncation alike. Sign the
+seal, not the head.
 
 Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
 signature an attacker who rewrites the whole chain leaves it internally
 consistent, because recomputing every link is cheap.
-}
 
+Error: a \code{chain} that does not come from \code{chain_new()} (for
+\code{chain_append()}, \code{chain_head()} and \code{chain_verify()}).
+}
+}
 \examples{
 op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
 # one-time index record out of your configuration directory; leave the default in use
@@ -108,10 +151,17 @@ capsule_verify(chain_seal(truncated), sig, signing_public_key(key))
 
 # A chain whose links disagree has no seal to present at all.
 chain_seal(dropped)
+
+# any object can be an entry, such as a whole manifest list
+ch2 <- chain_append(chain_new(), list(run = 1, mean = 2.5), label = "list entry")
+chain_head(ch2)
+
+# only chains are accepted
+try(chain_verify(list(entries = list())))
 options(op)
 }
 \seealso{
-\code{\link[=capsule_sign]{capsule_sign()}} to sign the head,
+\code{\link[=capsule_sign]{capsule_sign()}} to sign the seal,
 \code{\link[=merkle_root]{merkle_root()}} for pinning the contents of
 one capsule rather than a history.
 }

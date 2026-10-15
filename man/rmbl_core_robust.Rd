@@ -20,12 +20,11 @@ core_iqr(x)
 core_tukey_fences(x, k = 1.5)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with
-\code{\link[=as.numeric]{as.numeric()}}) .}
+\item{x}{Numeric (or logical) vector; coerced with
+\code{\link[=as.numeric]{as.numeric()}}.}
 
-\item{probs}{Numeric vector of probabilities in \ [0, 1].
-
-[0, 1]: R:0,\%201\%5C}
+\item{probs}{Numeric vector of probabilities, each in \eqn{[0, 1]}
+(default the minimum, quartiles and maximum).}
 
 \item{constant}{Scale factor for \code{core_mad()}. The
 default \code{1.4826} makes the MAD consistent for the standard
@@ -35,14 +34,16 @@ The unrounded consistency constant is \code{1 / qnorm(3/4)} =
 1.4826022185...; pass it explicitly if you want the extra digits, or
 \code{1} for the unscaled median deviation.}
 
-\item{k}{Fence width in IQRs (default 1.5, Tukey's convention;
-3 is the usual "far out" cutoff).}
+\item{k}{Fence width in IQRs, a single non-negative number (default
+1.5, Tukey's convention; 3 is the usual "far out" cutoff).}
 }
 \value{
-\code{core_quantile()} returns a numeric vector the length of
-\code{probs}; \code{core_median()}, \code{core_mad()} and
-\code{core_iqr()} a length-1 numeric; \code{core_tukey_fences()} a named
-length-2 numeric ( \code{lower}, \code{upper}) .
+\code{core_quantile()}: a numeric vector the length of \code{probs}, in
+the units of \code{x}, named by percentage (\code{"25\%"}, ...) as
+\code{\link[stats:quantile]{stats::quantile()}} names them. \code{core_median()},
+\code{core_mad()} and
+\code{core_iqr()}: a length-1 numeric in the units of \code{x}.
+\code{core_tukey_fences()}: a named length-2 numeric, \code{lower} and \code{upper}.
 }
 \description{
 \code{core_quantile()} is the type-7 quantile, which is R's default, so
@@ -58,7 +59,27 @@ These are the robust counterparts of
 \code{\link[=core_moments]{core_moments()}}: a single corrupted row can
 move a mean or a variance arbitrarily far, but moves a median or a MAD
 hardly at all -- which is what you want when deciding whether a freshly
-fetched column is still the column a capsule was pinned against.
+fetched column is still the column a capsule was pinned against, or
+when screening a column for values to inspect by hand.
+
+The type-7 quantile at probability \eqn{p} interpolates linearly between
+the order statistics \eqn{x_{(j)}} and \eqn{x_{(j+1)}} with
+\eqn{h = (n - 1)p + 1}, \eqn{j = \lfloor h \rfloor}:
+\eqn{Q(p) = x_{(j)} + (h - j)(x_{(j+1)} - x_{(j)})} (Hyndman and Fan,
+1996). The MAD is \eqn{c \cdot \mathrm{median}_i |x_i - \mathrm{median}(x)|}
+with \eqn{c} = \code{constant}; the IQR is \eqn{Q(0.75) - Q(0.25)}; and the
+fences are \eqn{Q(0.25) - k \cdot \mathrm{IQR}} and
+\eqn{Q(0.75) + k \cdot \mathrm{IQR}} (Tukey, 1977).
+
+Missing values are not removed: an \code{NA} or \code{NaN} anywhere in \code{x} makes
+every result \code{NaN} (unlike \code{\link[stats:quantile]{stats::quantile()}}, which
+stops). An empty
+\code{x} gives \code{NaN}. \code{core_quantile()} refuses an empty \code{probs}
+(\code{"probs is empty"}) and any probability outside \eqn{[0, 1]} or missing
+(\code{"must lie in [0, 1]"}); every function refuses a character, factor or
+list \code{x} (\code{"must be numeric"}). The quantiles sort a copy of \code{x}, so
+the
+cost is \eqn{O(n \log n)}.
 }
 \examples{
 x <- c(2, 4, 4, 4, 5, 5, 7, 9)
@@ -83,4 +104,22 @@ c(mean = mean(wild), median = core_median(wild))
 # Values outside the fences are the candidates to inspect.
 f <- core_tukey_fences(wild)
 wild[wild < f[["lower"]] | wild > f[["upper"]]]
+
+# A missing value is not dropped: the answer is NaN.
+core_median(c(1, NA, 3))
+
+# A probability outside [0, 1] is refused.
+try(core_quantile(x, 1.5))
+}
+\references{
+Hyndman RJ, Fan Y (1996). Sample quantiles in statistical
+packages. \emph{The American Statistician} 50(4), 361--365.
+\doi{10.1080/00031305.1996.10473566}
+
+Tukey JW (1977). \emph{Exploratory Data Analysis}. Addison-Wesley.
+}
+\seealso{
+\code{\link[=core_moments]{core_moments()}} for the non-robust moments,
+\code{\link[=core_trimmed_mean]{core_trimmed_mean()}} for a robust centre that still
+averages.
 }

@@ -2,33 +2,52 @@
 % Please edit documentation in R/core_stats.R
 \name{core_moments}
 \alias{core_moments}
-\title{Mean, variance, skewness and kurtosis in one pass (C backend)}
+\title{Mean, variance, skewness and kurtosis (C backend)}
 \usage{
 core_moments(x)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with
-\code{\link[=as.numeric]{as.numeric()}}) .}
+\item{x}{Numeric (or logical) vector; coerced with
+\code{\link[=as.numeric]{as.numeric()}}.}
 }
 \value{
-A named length-4 numeric: \code{mean}, \code{variance},
-\code{skewness}, \code{kurtosis}. \code{skewness} needs at least 3
-observations and \code{kurtosis} at least 4; both are \code{NaN} below
-that, as is everything if \code{x} contains NA/NaN.
+A named length-4 numeric vector: \code{mean} (units of \code{x}),
+\code{variance} (squared units of \code{x}, \code{n - 1} denominator),
+\code{skewness} and
+\code{kurtosis} (both unitless; kurtosis as excess over the normal's 3).
 }
 \description{
-A single streaming pass (Welford's recurrence, extended to the third and
-fourth central moments) over \code{x}. One pass matters for capsule
-members large enough that reading the column twice is the expensive
-part.
+The four standard descriptive moments of a numeric vector -- where it is
+centred, how spread out it is, whether it leans to one side and how
+heavy its tails are -- in one call to the compiled core. These are the
+four numbers a data description or a drift check usually reports
+together.
 }
 \details{
-The variance uses the \code{n - 1} denominator, matching
-\code{\link[stats:var]{stats::var()}}. The shape statistics use the
-\emph{sample moment} definitions
-\eqn{m_3 / m_2^{3/2}} and \eqn{m_4 / m_2^2 - 3}, with \eqn{m_k} the
-k-th central moment divided by \code{n} -- so kurtosis is reported as
-EXCESS kurtosis and a normal sample sits near zero, not near three.
+The mean is base R's (an extended-precision sum followed by a
+corrective pass); the deviations from it are then divided by their
+largest magnitude before any power is taken, and the scale is restored
+at the end. That avoids both the cancellation of the textbook "sum of
+squares minus square of sum" formula and overflow of fourth powers for
+values beyond about \eqn{10^{77}}. It reads the data three times
+(mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
+the \code{n - 1} denominator, matching \code{\link[stats:var]{stats::var()}}. The shape
+statistics
+use the \emph{sample moment} definitions
+\deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 / m_2^2 - 3,}
+with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is reported
+as EXCESS kurtosis: a normal sample sits near zero, not near three.
+These are the uncorrected moment ratios (type 1 in the classification
+of Joanes and Gill, 1998), not the bias-adjusted versions some software
+reports.
+
+Edge cases are \code{NaN}, never an error: an empty vector gives four \code{NaN};
+one value gives its mean and \code{NaN} for the rest; \code{skewness} needs at
+least 3 values and \code{kurtosis} at least 4; any \code{NA} or \code{NaN} in \code{x}
+makes
+every entry \code{NaN}. A constant vector has variance 0 and \code{NaN} shape
+statistics. A character, factor or list \code{x} is refused
+(\code{"must be numeric"}).
 }
 \examples{
 core_moments(c(2, 4, 4, 4, 5, 5, 7, 9))
@@ -47,7 +66,13 @@ core_moments(c(rep(0, 20), -8, 8))[["kurtosis"]] > 0
 core_moments(c(1, 2))
 }
 \references{
-Welford BP (1962). Note on a method for calculating
-corrected sums of squares and products. \emph{Technometrics} 4(3),
-419--420. \doi{10.1080/00401706.1962.10490022}
+Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
+kurtosis. \emph{Journal of the Royal Statistical Society: Series D (The
+Statistician)} 47(1), 183--189. \doi{10.1111/1467-9884.00122}
+}
+\seealso{
+\code{\link[=core_sd]{core_sd()}},
+\code{\link[=core_quantile]{core_quantile()}} and
+\code{\link[=core_mad]{core_mad()}} for robust
+alternatives that one extreme value cannot move.
 }

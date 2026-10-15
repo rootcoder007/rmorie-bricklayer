@@ -22,8 +22,13 @@
 # relationship governs hospital beds, shelter occupancy and open
 # caseloads. It is Little's law with the names corrections planning uses.
 
-.rmbl_pos_num <- function(x, arg, allow_zero = FALSE) {
+.rmbl_pos_num <- function(x, arg, allow_zero = FALSE, scalar = FALSE) {
   x <- .rmbl_num_input(x, arg)
+  # a scalar argument with several values was read by its first one and the
+  # rest dropped in silence
+  if (scalar && length(x) > 1L) {
+    stop(sprintf("`%s` must be a single number, got %d values", arg, length(x)), call. = FALSE)
+  }
   if (any(!is.finite(x[!is.na(x)]))) {
     stop(sprintf("`%s` must be finite (no Inf)", arg), call. = FALSE)
   }
@@ -46,18 +51,37 @@
 #' Average daily population
 #'
 #' The mean number of person-days served per day over a period: a
-#' STOCK, answering how many people are held at one time.
+#' STOCK, answering how many people are held at one time. Use it to report
+#' how much confinement (or bed occupancy, shelter use, open caseload) a
+#' system used over a year or any other window, from the days each person
+#' spent in it. It is the measure capacity planning needs, because it counts
+#' beds in use rather than people who passed through.
 #'
-#' @param days Person-days served during the period. A vector is summed,
-#'   so one element per person is the usual input.
-#' @param t Length of the period in days. Default 365.
+#' @param days Numeric vector of person-days served during the period,
+#'   non-negative, no \code{NA} or \code{Inf}. The vector is summed, so one
+#'   element per person and a single pre-computed total give the same result.
+#' @param t Numeric scalar, the length of the period in days; must be
+#'   positive. Default \code{365}. A vector of several values is refused.
+#'   \code{\link{period_days}} turns two dates into this.
 #'
-#' @return A single number: person-days per day.
+#' @return A numeric scalar: person-days per day, that is the average number
+#'   of people held on any one day of the period.
 #'
 #' @details
-#' This is Lakner's \eqn{\bar{X}_{hc} = \sum X_i / t} (1976, p.15). The
+#' This is Lakner's \eqn{\bar{X}_{hc} = \sum X_i / t} (1976, p.15), where
+#' \eqn{X_i} is the days served by person \eqn{i} inside the period. The
 #' denominator is TIME, which is what makes it a stock. Compare
-#' [alos()], whose denominator is people.
+#' [alos()], whose denominator is people: the two are linked by
+#' \eqn{\mathrm{ADP} = N \times \mathrm{ALOS} / t} (Little's law), so
+#' [admissions()] and [stock_flow()]
+#' can move between them.
+#'
+#' Only days served inside the period should be counted: a stay that began
+#' before the period or ends after it contributes its days within the window.
+#'
+#' Errors when \code{days} is not numeric (text and factors are refused),
+#' is empty, has \code{NA}, \code{Inf} or a negative value, or when
+#' \code{t} is not a single positive number.
 #'
 #' @references
 #' Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for
@@ -74,24 +98,36 @@
 #'
 #' # per-person days give the same total
 #' adp(c(10, 20, 30), t = 30)
+#'
+#' # a leap year, with the period length taken from the dates
+#' adp(13500, t = period_days("2024-01-01", "2024-12-31"))
+#'
+#' # negative days are refused
+#' try(adp(c(10, -2)))
 #' @export
 adp <- function(days, t = 365) {
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
-  t <- .rmbl_pos_num(t, "t")[1L]
+  t <- .rmbl_pos_num(t, "t", scalar = TRUE)
   sum(days) / t
 }
 
 #' Average length of stay
 #'
 #' The mean number of person-days served per person: the FLOW side of
-#' the same person-days.
+#' the same person-days. Use it to say how long a typical admission lasts,
+#' and together with [adp()] to tell whether a change in the population
+#' held
+#' came from more people or from longer stays. For the full distribution of
+#' stays (median, spread, interval) use [stay_summary()].
 #'
-#' @param days Person-days served during the period, summed.
-#' @param n Number of people. For an unbiased average this should be the
+#' @param days Numeric vector of person-days served during the period,
+#'   non-negative, no \code{NA} or \code{Inf}; the vector is summed.
+#' @param n Numeric scalar, the number of people; must be positive. A
+#'   vector of several values is refused. For an unbiased average this should be the
 #'   people both admitted AND released within the period, because anyone
 #'   still held has an unfinished stay.
 #'
-#' @return A single number: days per person.
+#' @return A numeric scalar: days per person, \eqn{\sum X_i / n}.
 #'
 #' @details
 #' Lakner's \eqn{\bar{X}_t = \sum X_i / N'} (1976, p.16), with a caveat
@@ -100,6 +136,10 @@ adp <- function(days, t = 365) {
 #' the longest stays are the ones that fail to finish inside the window.
 #' For short-stay facilities a year is comfortable; for long sentences it
 #' is not, and the period has to be set from the records.
+#'
+#' Errors when \code{days} is not numeric, is empty, or has \code{NA},
+#' \code{Inf} or negative values, and when \code{n} is not a single positive
+#' number.
 #'
 #' @references
 #' Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for
@@ -111,25 +151,48 @@ adp <- function(days, t = 365) {
 #' # Lakner (p.17): 2,700 inmates admitted and released served 12,150
 #' # detention days between them.
 #' alos(12150, 2700)
+#'
+#' # from one value per released person
+#' stays <- c(2, 5, 1, 30, 4, 7)
+#' alos(stays, length(stays))
+#'
+#' # zero people cannot have an average stay
+#' try(alos(12150, 0))
 #' @export
 alos <- function(days, n) {
   days <- .rmbl_pos_num(days, "days", allow_zero = TRUE)
-  n <- .rmbl_pos_num(n, "n")[1L]
+  n <- .rmbl_pos_num(n, "n", scalar = TRUE)
   sum(days) / n
 }
 
 #' Admissions implied by a population and a length of stay
 #'
-#' @param adp Average daily population.
-#' @param alos Average length of stay in days.
-#' @param t Length of the period in days. Default 365.
+#' Works out how many admissions a given average daily population and
+#' average length of stay imply over a period. Published statistics often
+#' give the population held and the average stay but not the number
+#' admitted (or the other way round); this recovers the missing quantity
+#' from the identity that links all three.
 #'
-#' @return The implied number of admissions.
+#' @param adp Numeric scalar, the average daily population (people held on
+#'   an average day); must be positive.
+#' @param alos Numeric scalar, the average length of stay in days; must be
+#'   positive.
+#' @param t Numeric scalar, the length of the period in days; must be
+#'   positive. Default \code{365}.
+#'
+#' @return A numeric scalar: the implied number of admissions over the
+#'   period, \eqn{\mathrm{adp} \times t / \mathrm{alos}}. It is not rounded.
 #'
 #' @details
 #' Rearranging the identity \eqn{\bar{X}_{hc} = N_a \bar{X}_t / t}
 #' (Lakner 1976, p.18-20) for \eqn{N_a}. Useful when two of the three
-#' quantities are published and the third is not.
+#' quantities are published and the third is not. The identity holds
+#' exactly only in a steady state (admissions and stays roughly constant
+#' across the period); with a population that is growing or shrinking
+#' quickly the result is an approximation.
+#'
+#' Errors when any argument is not numeric, is \code{NA} or \code{Inf}, is
+#' not positive, or has more than one value.
 #'
 #' @seealso [adp()],
 #'   [alos()],
@@ -143,11 +206,17 @@ alos <- function(days, n) {
 #'
 #' # and back again
 #' admissions(25, alos_implied)
+#'
+#' # a 90-day quarter with 40 held on average and a 12-day average stay
+#' admissions(40, 12, t = 90)
+#'
+#' # an average stay of zero is refused
+#' try(admissions(25, 0))
 #' @export
 admissions <- function(adp, alos, t = 365) {
-  adp <- .rmbl_pos_num(adp, "adp")[1L]
-  alos <- .rmbl_pos_num(alos, "alos")[1L]
-  t <- .rmbl_pos_num(t, "t")[1L]
+  adp <- .rmbl_pos_num(adp, "adp", scalar = TRUE)
+  alos <- .rmbl_pos_num(alos, "alos", scalar = TRUE)
+  t <- .rmbl_pos_num(t, "t", scalar = TRUE)
   adp * t / alos
 }
 
@@ -156,11 +225,20 @@ admissions <- function(adp, alos, t = 365) {
 #' When only a count of people present on certain days is available --
 #' not a record per person -- the person-days over the period are the
 #' mean of those counts scaled to the period's length.
+#' Use it with [adp()] or [alos()] when the source
+#' is a daily or weekly
+#' count sheet rather than admission and release dates.
 #'
-#' @param counts Headcounts, one per day on which a count was taken.
-#' @param t Length of the period in days. Default 365.
+#' @param counts Numeric vector of headcounts, one per day on which a count
+#'   was taken; non-negative, no \code{NA} or \code{Inf}. The days need not
+#'   be consecutive.
+#' @param t Numeric scalar, the length of the period in days; must be
+#'   positive. Default \code{365}.
 #'
-#' @return Estimated person-days over the period.
+#' @return A numeric scalar: the estimated person-days over the period,
+#'   \code{mean(counts) * t}. Despite the function's name this is a total of
+#'   person-days, not an average daily population; divide by \code{t} (or
+#'   pass it to [adp()]) for the population held on an average day.
 #'
 #' @details
 #' Lakner's \eqn{X_t = (\frac{1}{C}\sum N_i) t} (1976, p.21). The counts
@@ -176,10 +254,18 @@ admissions <- function(adp, alos, t = 365) {
 #' # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 #' # fifty thousand detention days across the year.
 #' adp_from_counts(rep(34935 / 255, 255))
+#'
+#' # weekly counts over a 31-day month, then the average daily population
+#' pd <- adp_from_counts(c(120, 130, 125, 128), t = 31)
+#' pd
+#' adp(pd, t = 31)
+#'
+#' # a missing count must be dropped or filled first
+#' try(adp_from_counts(c(120, NA, 125)))
 #' @export
 adp_from_counts <- function(counts, t = 365) {
   counts <- .rmbl_pos_num(counts, "counts", allow_zero = TRUE)
-  t <- .rmbl_pos_num(t, "t")[1L]
+  t <- .rmbl_pos_num(t, "t", scalar = TRUE)
   mean(counts) * t
 }
 
@@ -188,24 +274,48 @@ adp_from_counts <- function(counts, t = 365) {
 #' Reports the same person-days as a stock and as a flow, and says how
 #' much of any change in the stock came from the number of people and
 #' how much from how long they stayed.
+#' Use it whenever a report compares periods: the count of people (a flow)
+#' and the population held (a stock) can move in opposite directions when the
+#' length of stay changes, and a table with only one of them implies the wrong
+#' direction for the other.
 #'
-#' @param days Person-days, one element per period.
-#' @param people Number of people, one element per period.
-#' @param period Optional labels for the periods.
-#' @param t Length of each period in days, one value or one per period.
-#'   Default 365. [period_days()] turns dates into this.
-#' @param exposure Optional population to express rates against, one per
-#'   period; for example provincial residents.
-#' @param per Rate denominator when `exposure` is given. Default 100000.
-#' @param baseline What the change columns compare against: `"first"`
-#'   (the default) measures every period against the first, which is
-#'   what a report on a whole window wants; `"previous"` measures each
-#'   period against the one before it, which is what a series wants.
+#' @param days Numeric vector of person-days, one element per period;
+#'   non-negative, no \code{NA} or \code{Inf}.
+#' @param people Numeric vector of the number of people (admissions or
+#'   persons served), one element per period, the same length as
+#'   \code{days}; positive.
+#' @param period Optional labels for the periods (any vector, converted to
+#'   character), one per period. Default \code{NULL} labels them
+#'   \code{1, 2, ...}.
+#' @param t Numeric, the length of each period in days: one value for all
+#'   periods, or one per period; positive. Default \code{365}.
+#'   [period_days()] turns dates into this.
+#' @param exposure Optional numeric population to express rates against,
+#'   one value or one per period, positive; for example provincial
+#'   residents. Default \code{NULL} (no rate columns).
+#' @param per Numeric scalar, the rate base when \code{exposure} is given:
+#'   rates are per \code{per} residents. Default \code{100000}.
+#' @param baseline Character scalar, what the change columns compare
+#'   against: \code{"first"} (the default) measures every period against the
+#'   first, which is what a report on a whole window wants;
+#'   \code{"previous"} measures each period against the one before it,
+#'   which is what a series wants (the first row's changes are then
+#'   \code{NA}).
 #'
-#' @return A data frame of class `rmbl_stock_flow`, one row per period:
-#'   `people`, `days`, `alos`, `adp`, and when `exposure` is supplied
-#'   `flow_rate` and `stock_rate`. Change columns compare each period
-#'   with the first.
+#' @return A data frame of class \code{c("rmbl_stock_flow", "data.frame")},
+#'   one row per period, with columns \code{period} (character),
+#'   \code{people}, \code{days}, \code{alos} (days per person),
+#'   \code{adp} (days divided by \code{t}); when \code{exposure} is given
+#'   also \code{exposure}, \code{flow_rate} (people per \code{per}
+#'   residents) and \code{stock_rate} (\code{adp} per \code{per}
+#'   residents). Then the percentage changes against the baseline:
+#'   \code{people_change}, \code{alos_change}, \code{days_change},
+#'   \code{adp_change}, and with \code{exposure} also
+#'   \code{flow_rate_change} and \code{stock_rate_change}. Attribute
+#'   \code{"stock_flow"} is a list with \code{t} (the period lengths),
+#'   \code{baseline} and \code{per} (\code{NA} without \code{exposure}).
+#'   The print method shows the levels and a footer with the change from the
+#'   baseline to the last period, flagging rates with opposite signs.
 #'
 #' @details
 #' The decomposition is exact, because days are people times length of
@@ -213,6 +323,16 @@ adp_from_counts <- function(counts, t = 365) {
 #' changes \eqn{p} in people and \eqn{l} in stay. The two rates can
 #' therefore carry OPPOSITE signs, and the point of putting them in one
 #' table is that neither can then be quoted alone.
+#'
+#' Changes are percentages: \eqn{100 (v_i / v_b - 1)} with \eqn{b} the
+#' baseline row. Errors when \code{days} and \code{people} differ in length,
+#' when \code{exposure} has a length other than 1 or the number of periods,
+#' when \code{t} has a length other than 1 or the number of periods, when
+#' \code{period} has a length other than the number of periods, when
+#' \code{per} has more than one value, when any input has \code{NA},
+#' \code{Inf}, text, or a value that is negative (\code{days}) or not
+#' positive (the others), and when \code{baseline} is not one of the two
+#' choices.
 #'
 #' @references
 #' Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for
@@ -227,6 +347,16 @@ adp_from_counts <- function(counts, t = 365) {
 #'   period = c("2023", "2025"),
 #'   exposure = c(15495050, 16256538)
 #' )
+#'
+#' # a series of three years against the previous year, with leap-year lengths
+#' sf <- stock_flow(
+#'   days = c(100200, 104000, 99000), people = c(9800, 9500, 9900),
+#'   period = 2023:2025, t = c(365, 366, 365), baseline = "previous"
+#' )
+#' as.data.frame(sf)[, c("period", "alos", "adp", "people_change", "adp_change")]
+#'
+#' # days and people must line up period by period
+#' try(stock_flow(days = c(100, 120), people = c(10, 12, 14)))
 #' @export
 stock_flow <- function(days, people, period = NULL, t = 365,
                        exposure = NULL, per = 100000,
@@ -239,7 +369,13 @@ stock_flow <- function(days, people, period = NULL, t = 365,
   }
   t <- .rmbl_pos_num(t, "t")
   if (length(t) == 1L) t <- rep(t, length(days))
+  if (length(t) != length(days)) {
+    stop("`t` must be length 1 or the same length as `days`", call. = FALSE)
+  }
   if (is.null(period)) period <- seq_along(days)
+  if (length(period) != length(days)) {
+    stop("`period` must have one label per period (the length of `days`)", call. = FALSE)
+  }
   out <- data.frame(
     period = as.character(period), people = people,
     days = days, stringsAsFactors = FALSE
@@ -254,7 +390,7 @@ stock_flow <- function(days, people, period = NULL, t = 365,
         call. = FALSE
       )
     }
-    per <- .rmbl_pos_num(per, "per")[1L]
+    per <- .rmbl_pos_num(per, "per", scalar = TRUE)
     out$exposure <- exposure
     out$flow_rate <- per * people / exposure
     out$stock_rate <- per * out$adp / exposure
@@ -318,11 +454,21 @@ print.rmbl_stock_flow <- function(x, ...) {
 
 #' Period length in days, from dates
 #'
-#' @param from Start of the period: a `Date`, or anything `as.Date()`
-#'   accepts.
-#' @param to End of the period, inclusive.
+#' Counts the days from one date to another, both ends included, so the
+#' result can be passed as the period length \code{t} to [adp()],
+#' [admissions()],
+#' [adp_from_counts()] and
+#' [stock_flow()]. It saves getting
+#' a fiscal year, a quarter or a leap year wrong by a day.
 #'
-#' @return The number of days in the period, for use as `t`.
+#' @param from Start of the period: a single \code{Date}, or a single value
+#'   \code{as.Date()} accepts (such as \code{"2024-01-01"}). Numbers are
+#'   refused.
+#' @param to End of the period, inclusive, in the same forms; must not be
+#'   before \code{from}.
+#'
+#' @return A numeric scalar: the number of days in the period,
+#'   \code{to - from + 1}, for use as \code{t}.
 #'
 #' @details
 #' Inclusive of both ends, because a period running from the 1st to the
@@ -330,12 +476,23 @@ print.rmbl_stock_flow <- function(x, ...) {
 #' special handling: the arithmetic is on dates, so 2024 comes out at
 #' 366 and 2023 at 365 without anyone choosing.
 #'
+#' Errors when either argument is numeric, has a length other than one, is
+#' \code{NA}, or when \code{to} precedes \code{from}. Text that is not a
+#' date fails inside \code{as.Date()} with base R's own message.
+#'
 #' @seealso [adp()]
 #'
 #' @examples
 #' period_days("2024-01-01", "2024-12-31") # a leap year
 #' period_days("2023-01-01", "2023-12-31")
 #' period_days("2025-04-01", "2026-03-31") # a fiscal year
+#'
+#' # a quarter as the period of an average daily population
+#' adp(4200, t = period_days(as.Date("2025-01-01"), as.Date("2025-03-31")))
+#'
+#' # numbers are not dates, and the end cannot come first
+#' try(period_days(1, 31))
+#' try(period_days("2024-12-31", "2024-01-01"))
 #' @export
 period_days <- function(from, to) {
   if (is.numeric(from) || is.numeric(to)) {
@@ -359,14 +516,22 @@ period_days <- function(from, to) {
 #' one value per person and reports the spread as well, because a mean
 #' stay is a poor summary of a distribution that is usually skewed.
 #'
-#' @param days_per_person Days served, one element per person.
-#' @param conf_level Confidence level for the interval on the mean.
+#' @param days_per_person Numeric vector of days served, one element per
+#'   person; non-negative, no \code{NA} or \code{Inf}, at least one value.
+#' @param conf_level Numeric scalar strictly between 0 and 1, the
+#'   confidence level for the interval on the mean. Default \code{0.95}.
 #'
-#' @return A one-row data frame: `n`, `total_days`, `mean`, `sd`,
-#'   `median`, `iqr`, `max`, `se`, `lower`, `upper`.
+#' @return A one-row data frame with numeric columns \code{n} (people),
+#'   \code{total_days}, \code{mean}, \code{sd} (sample standard
+#'   deviation), \code{median}, \code{iqr} (interquartile range, quantile
+#'   type 7), \code{max}, \code{se} (standard error of the mean),
+#'   \code{lower} and \code{upper} (the t interval on the mean). With a
+#'   single person \code{sd}, \code{se}, \code{lower} and \code{upper}
+#'   are \code{NA}.
 #'
 #' @details
-#' The interval is the ordinary t interval on a mean. It describes
+#' The interval is the ordinary t interval on a mean,
+#' \eqn{\bar{x} \pm t_{n-1, 1-\alpha/2}\, s / \sqrt{n}}. It describes
 #' uncertainty about the AVERAGE stay, not the spread of stays, and on a
 #' skewed distribution the median and the interquartile range say more
 #' about a typical stay than the mean does -- which is why they are
@@ -375,6 +540,10 @@ period_days <- function(from, to) {
 #' Lakner's caveat on [alos()] applies here too (1976, p.16-17): a
 #' person still held has an unfinished stay, so a window shorter than
 #' the longest stay biases the mean DOWNWARD.
+#'
+#' Errors when \code{days_per_person} is not numeric, is empty, or has
+#' \code{NA}, \code{Inf} or negative values, and when \code{conf_level}
+#' is not strictly inside (0, 1).
 #'
 #' @seealso [alos()],
 #'   [adp()],
@@ -387,12 +556,16 @@ period_days <- function(from, to) {
 #'
 #' # the mean is pulled well above the median by the long tail
 #' stay_summary(stays)[, c("mean", "median", "max")]
+#'
+#' # a 90% interval instead of 95%
+#' stay_summary(stays, conf_level = 0.90)[, c("mean", "lower", "upper")]
+#'
+#' # a confidence level of 1 is refused
+#' try(stay_summary(stays, conf_level = 1))
 #' @export
 stay_summary <- function(days_per_person, conf_level = 0.95) {
   x <- .rmbl_pos_num(days_per_person, "days_per_person", allow_zero = TRUE)
-  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
-  if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1)
-    stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
+  conf_level <- .rmbl_conf_level(conf_level)
   n <- length(x)
   m <- mean(x)
   s <- if (n > 1L) stats::sd(x) else NA_real_

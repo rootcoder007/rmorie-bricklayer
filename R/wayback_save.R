@@ -152,6 +152,13 @@
 
 #' Archive many pages in the Wayback Machine
 #'
+#' @description
+#' Asks the Internet Archive to take a dated copy of each web page or file
+#' in a list, so that the exact source an analysis used (a statistics page,
+#' a data download, a policy document) can be cited and checked later even
+#' if the original changes or disappears. It needs a free archive.org
+#' account and its API keys.
+#'
 #' Saves every URL in the Internet Archive's Wayback Machine
 #' with Save Page Now 2, the API archive.org offers to account
 #' holders, keeping several captures in flight at once while
@@ -220,6 +227,24 @@
 #'   status checks that fail back off the same way. A refused key
 #'   (HTTP 401 or 403) stops the run.
 #'
+#'   A run of many URLs is slow by design: at the default 6 captures a
+#'   minute, 1,000 URLs take close to three hours. URLs already finished in
+#'   \code{output} are skipped, so a run can be stopped and restarted.
+#'
+#'   Network: every request goes to \url{https://web.archive.org}; the
+#'   keys travel in the \code{Authorization} header and are never written
+#'   to \code{output} or printed.
+#'
+#'   Errors, all raised before anything is sent: no usable URL; a URL with
+#'   an invisible or control character, or not starting with
+#'   \code{http://} or \code{https://}; missing keys, or keys that are not
+#'   letters and digits; \code{within} not of the form \code{"30d"};
+#'   \code{jobs} outside 1 to 12; \code{poll} below 1; \code{max_wait}
+#'   below \code{poll}; \code{per_minute} outside (0, 60];
+#'   \code{max_captures} below 1; \code{capture_all} not \code{TRUE} or
+#'   \code{FALSE}; an \code{output} whose folder does not exist or that
+#'   cannot be written.
+#'
 #' @references Internet Archive. Save Page Now 2 (SPN2) public
 #'   API.
 #'   \url{https://archive.org/details/spn-2-public-api-page-docs}.
@@ -227,6 +252,14 @@
 #'   capture; \code{\link{wayback_retry}}; \code{rmbl wayback FILE}
 #'   runs this from the command line.
 #' @examples
+#' # The checks run before any request, so these need no network or keys:
+#' try(wayback_save("ftp://example.org/report.pdf"))
+#' try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+#'                  jobs = 20))
+#' try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+#'                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
+#'
+#' # A real run needs archive.org keys and the network.
 #' \dontrun{
 #' Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
 #'            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")
@@ -552,6 +585,13 @@ print.rmbl_wayback_save <- function(x, ...) {
 
 #' Retry the failures of a bulk Wayback run
 #'
+#' @description
+#' Picks up where a \code{\link{wayback_save}} run left off: it re-tries
+#' only the URLs whose captures failed or were still running, after first
+#' checking whether the Wayback Machine already holds a copy of each. Use it
+#' after a run that hit archive.org's limits, typically the next day.
+#'
+#' @details
 #' Reads the results file a \code{\link{wayback_save}} run wrote
 #' and tries again every URL whose latest result is
 #' \code{"failed"} (or \code{"submitted"}: a capture a stopped run
@@ -563,18 +603,31 @@ print.rmbl_wayback_save <- function(x, ...) {
 #' limit refused this one) is recorded as \code{"existing"}
 #' without capturing again. What is left is captured again with
 #' \code{wayback_save()}, appending to the same file. A page its
-#' source no longer has (HTTP 404 or 410, "cannot find") is not
-#' sent again unless \code{include_gone = TRUE}: a new capture
-#' would only archive the error. A failure for a daily limit
+#' source no longer has is not sent again unless
+#' \code{include_gone = TRUE}: a new capture would only archive the error.
+#' "Gone" means the recorded message contains archive.org's report of the
+#' target server's reply ("target server cannot find", "returned 404",
+#' "returned 410", "error:not-found" or "error:gone"); an HTTP 404 from
+#' archive.org's own API does not count. A failure for a daily limit
 #' recorded today (UTC) is not sent again until tomorrow.
+#'
+#' Network: the lookups use the Wayback availability API and the new
+#' captures use \code{wayback_save()}, which needs the archive.org keys.
+#' When there is nothing left to send, no keys and no network are needed.
+#' Each lookup that finds a capture is appended to \code{output} as an
+#' \code{"existing"} line.
+#'
+#' Errors: \code{output} not a single path to an existing file;
+#' \code{include_gone} or \code{lookup} not \code{TRUE} or \code{FALSE};
+#' any error from \code{wayback_save()}.
 #'
 #' @param output The JSON Lines results file of an earlier
 #'   \code{wayback_save()} run (or of \code{rmbl wayback});
 #'   results of the retry are appended to it.
-#' @param include_gone Also capture again the pages whose
-#'   failure says the page is gone.
-#' @param lookup Look each failure up in the Wayback Machine
-#'   before capturing again.
+#' @param include_gone Logical, default \code{FALSE}. Also capture again
+#'   the pages whose failure says the page is gone.
+#' @param lookup Logical, default \code{TRUE}. Look each failure up in the
+#'   Wayback Machine (one lookup a second) before capturing again.
 #' @param ... Passed to \code{wayback_save()}: \code{jobs},
 #'   \code{within}, the keys, \code{quiet}, \code{per_minute},
 #'   \code{max_captures}.
@@ -583,10 +636,30 @@ print.rmbl_wayback_save <- function(x, ...) {
 #'   attribute \code{retry}: how many failures there were, how
 #'   many a lookup found, how many were captured again, how many
 #'   were left as gone, and how many were left for tomorrow (a
-#'   daily limit hit today).
+#'   daily limit hit today), as a one-row data frame with integer columns
+#'   \code{failed}, \code{found_by_lookup}, \code{captured_again},
+#'   \code{left_as_gone} and \code{left_for_tomorrow}.
 #' @seealso \code{\link{wayback_save}}; \code{rmbl wayback
 #'   --retry FILE.jsonl} from the command line.
 #' @examples
+#' # Offline: a results file whose only failure is a page that is gone
+#' # has nothing to send again, so no keys or network are used.
+#' f <- tempfile(fileext = ".jsonl")
+#' writeLines(c(
+#'   paste0('{"url":"https://example.org/","status":"saved",',
+#'          '"timestamp":"20260101120000",',
+#'          '"snapshot":"https://web.archive.org/web/20260101120000/https://example.org/",',
+#'          '"message":"","at":"2026-01-01T12:00:00Z"}'),
+#'   paste0('{"url":"https://example.org/old","status":"failed",',
+#'          '"message":"target server cannot find the page","at":"2026-01-01T12:00:00Z"}')
+#' ), f)
+#' res <- wayback_retry(f, lookup = FALSE)
+#' res
+#' attr(res, "retry")
+#'
+#' try(wayback_retry(tempfile(fileext = ".jsonl")))
+#'
+#' # With failures to resend, keys and the network are needed.
 #' \dontrun{
 #' res <- wayback_save(urls, output = "snapshots.jsonl")
 #' # later, or the next day once the daily capture limits have reset:

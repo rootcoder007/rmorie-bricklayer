@@ -8,32 +8,62 @@ relabel_forensics(value_labels, observed, counts = NULL)
 }
 \arguments{
 \item{value_labels}{Named character vector, code = true label, in code
-order.}
+order (the source program's code book).}
 
 \item{observed}{Named character vector, true label = label it was seen
-under.}
+under, covering every label once.}
 
-\item{counts}{Optional named numeric vector of frequencies per true
-label, enabling the frequency-order mechanism.}
+\item{counts}{Optional named numeric vector of frequencies per true label,
+default \code{NULL}. Enables the two frequency-order mechanisms.}
 }
 \value{
-A data frame with one row per mechanism (\code{mechanism},
-\code{permutation}, \code{matches}) and a \code{verdict} attribute.
+A data frame of class \code{c("bricklayer_relabel_forensics",
+  "data.frame")} with one row per mechanism tried and columns
+\code{mechanism} (character), \code{permutation} (character,
+\code{"A -> B, ..."}) and \code{matches} (logical). The \code{verdict}
+attribute is a character summary. The print method shows only the
+matching mechanisms and the verdict.
 }
 \description{
-When categories came out permuted and the transfer between two programs
-is being blamed, the question is which deterministic step, applied to
-the code book, yields exactly the observed permutation. This function
-tries the known ones: labels sorted alphabetically (or reversed, or
-case-insensitively) and assigned by code position, labels reversed,
-every rotation, codes sorted as strings, and labels ordered by frequency
-when counts are supplied. A match is a reconstruction, not a proof of
-intent; but a transfer fault has no reason to select the sort order of
-the labels, so a match on a sort-based mechanism exonerates the software.
+When categories come out permuted (each true group reported under another
+group's label), this function asks which deterministic step, applied to
+the code book, produces exactly that permutation. It tries the known
+mechanisms: labels sorted alphabetically (also reversed or
+case-insensitive) and assigned by code position, labels reversed, every
+rotation, codes sorted as strings, and, when counts are given, labels
+ordered by frequency. A match is a reconstruction, not proof of intent;
+but a file transfer has no reason to pick the sort order of the labels, so
+a match on a sort-based mechanism points to a positional relabel in the
+analysis rather than to the software.
+}
+\details{
+With labels \eqn{L_1, \dots, L_k} in code order, each mechanism produces
+a sequence \eqn{M_1, \dots, M_k} meaning "true group \eqn{L_i} was seen as
+\eqn{M_i}". It matches when \eqn{M_i =} \code{observed[L_i]} for all
+\eqn{i}. There are five fixed mechanisms, \eqn{k - 1} rotations, and two
+frequency orders with \code{counts}. When \code{observed} is the identity
+no mechanism is reported as matching.
+
+Errors: either argument unnamed; \code{observed} not a permutation of the
+labels in \code{value_labels}.
 }
 \examples{
+# the OHRC 2023 case: alphabetical labels assigned to codes 1-4
 vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
 obs <- c(White = "Black", Black = "Other", Other = "Unknown",
          Unknown = "White")
-attr(relabel_forensics(vl, obs), "verdict")
+relabel_forensics(vl, obs)
+
+# a frequency-ordered relabel needs the counts
+obs2 <- c(White = "White", Black = "Other", Other = "Black",
+          Unknown = "Unknown")
+rf <- relabel_forensics(vl, obs2, counts = c(White = 50, Black = 10,
+                                             Other = 30, Unknown = 5))
+rf$mechanism[rf$matches]
+
+# observed must be a permutation of the labels
+try(relabel_forensics(vl, c(White = "Black")))
+}
+\seealso{
+\code{\link{verify_marginals}}, \code{\link{relabel}}.
 }

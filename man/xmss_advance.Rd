@@ -21,12 +21,15 @@ or the attestation, bundle or recode manifest that carries it.}
 
 \item{message}{The message the signature was made over; when given, the signature is
 verified against the key first, so an edited or foreign signature cannot advance it.
-Without it, the signature's index is accepted only up to the highest index the record
-shows this key has used here, so an edited index cannot burn the key's remaining leaves;
+Without it, the signature's index is accepted only up to the highest index the
+record
+shows this key has used here, so an edited index cannot burn the key's remaining
+leaves;
 a signature made on another machine needs \code{message}.}
 
 \item{key_to_register}{For
-\code{\link[=xmss_register_key]{xmss_register_key()}}: a signing key generated on another
+\code{\link[=xmss_register_key]{xmss_register_key()}}: a signing key generated on
+another
 machine, regenerated from given seeds, or whose record was deleted, that has never
 signed; it is added to the record so that it may sign from \code{next_index}. A key
 the record shows has signed is refused.}
@@ -44,43 +47,58 @@ The key with \code{next_index} advanced past the signature's index and past
 every index the record knows this key has used.
 }
 \description{
-An XMSS signature consumes one leaf, so the key that made it must not sign at that index
-again. This returns the key with \code{next_index} set to one past the signature's index
-(refusing a signature that was not made by this key), which is the key to save and to use
+An XMSS signature consumes one leaf, so the key that made it must not sign at that
+index
+again. This returns the key with \code{next_index} set to one past the signature's
+index
+(refusing a signature that was not made by this key), which is the key to save and to
+use
 for the next signature. The signature object itself carries no key material.
 }
 \details{
 The package records the highest index each key has signed with and refuses that index
 again, within the session and across sessions on this machine. The record is the file
-\code{xmss_used_indices.txt} under \code{tools::R_user_dir("rmoriebricklayer", "config")},
+\code{xmss_used_indices.txt} under
+\code{tools::R_user_dir("rmoriebricklayer", "config")},
 which is where CRAN policy lets a package keep its own configuration. A key is entered
 under a fingerprint of its secret seed (\code{sk_seed}), not under the \code{root} it
-carries, so editing a stale copy's \code{root} does not make it a new key, and a signature
+carries, so editing a stale copy's \code{root} does not make it a new key, and a
+signature
 whose \code{root} does not match the seeds is withheld.
 \code{\link[=pqc_keygen]{pqc_keygen()}}
 registers a key it generates from fresh randomness. A key built from given
-seeds is not registered, because it may be one that has signed elsewhere: it signs from
+seeds is not registered, because it may be one that has signed elsewhere: it signs
+from
 index 0 only after
 \code{\link[=xmss_register_key]{xmss_register_key()}}
 vouches for it, and the same holds for any key
 the record does not know (from another machine, or whose record was deleted).
 Every reservation runs under an operating-system file lock (\code{flock} on Unix,
 \code{LockFileEx} on Windows) on \code{xmss_used_indices.txt.flock}, which the system
-releases when the process ends, so a crashed session leaves no lock for another process to
-take over. A record that cannot be read, or that cannot be written in full (a full disk),
-stops the signature. The record of the releases before 0.5.12 (\code{xmss_index.json} in
-the same directory) is read and merged, and kept as \code{xmss_index.json.migrated} once
+releases when the process ends, so a crashed session leaves no lock for another
+process to
+take over. A record that cannot be read, or that cannot be written in full (a full
+disk),
+stops the signature. The record of the releases before 0.5.12 (\code{xmss_index.json}
+in
+the same directory) is read and merged, and kept as \code{xmss_index.json.migrated}
+once
 the new record has been written.
 Another path can be set with the option \code{rmoriebricklayer.xmss_index_file} or the
-environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file, or
+environment variable \code{RMBL_XMSS_INDEX_FILE}: an absolute path to a regular file,
+or
 to one that does not exist yet (a device such as \code{/dev/null}, a directory or a
-relative path is refused). The option \code{FALSE} (or, except on Windows, where an empty
-environment variable is an unset one, the value \code{""}) turns the file off: then only
+relative path is refused). The option \code{FALSE} (or, except on Windows, where an
+empty
+environment variable is an unset one, the value \code{""}) turns the file off: then
+only
 the session remembers, every signature warns, and a stale copy of the key reloaded
-elsewhere signs a used index again. The record does not travel with the key and is lost if
+elsewhere signs a used index again. The record does not travel with the key and is
+lost if
 the file is deleted, so a key copied to another machine is protected only by the
 \code{next_index} you saved: save the advanced key after every signature. In CI or a
-container with a fresh home directory, a key that was not generated in that run is unknown
+container with a fresh home directory, a key that was not generated in that run is
+unknown
 to the record: register it once with
 \code{\link[=xmss_register_key]{xmss_register_key()}},
 or point the record at a file that persists. Examples and vignettes point the record
@@ -104,6 +122,23 @@ key <- xmss_advance(key, s1)
 key$next_index
 s2 <- capsule_sign("manifest-2", key)
 capsule_verify("manifest-2", s2, signing_public_key(key))
+
+# With the message, the signature is verified before the key advances.
+key <- xmss_advance(key, s2, message = "manifest-2")
+key$next_index
+
+# A key regenerated from seeds is unknown to the record until registered.
+s <- paste(rep("ab", 32), collapse = "")
+k2 <- pqc_keygen(height = 1, sk_seed = s, pub_seed = s, sk_prf = s)
+try(capsule_sign("m", k2))
+invisible(xmss_register_key(k2))
+capsule_verify("m", capsule_sign("m", k2), signing_public_key(k2))
+
+# Reset a test key's entry so it may sign from index 0 again.
+xmss_forget_used_indices(k2)
+
+# A signature that is not an XMSS signature cannot advance a key.
+try(xmss_advance(key, list()))
 options(op)
 }
 \seealso{

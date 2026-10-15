@@ -7,7 +7,9 @@
 pqc_backends()
 }
 \value{
-A character vector of scheme names, \code{"xmss-sha256"} first.
+A character vector of 16 scheme names: \code{"xmss-sha256"} first,
+then the three ML-DSA sets, the six SLH-DSA SHA-2 sets and the six
+SLH-DSA SHAKE sets.
 }
 \description{
 Reports the signature schemes this package implements. The list is
@@ -21,7 +23,19 @@ machine is available on every machine.
 standards, taken with \code{\link[=fips_keygen]{fips_keygen()}}: ML-DSA
 (FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at all
 twelve -- six over SHAKE and six over SHA-2, which are different schemes
-and not merely different code paths.
+and not merely different code paths. Use it to see which names
+\code{\link[=fips_keygen]{fips_keygen()}}, \code{\link[=fips_sizes]{fips_sizes()}} and
+\code{\link[=fips_key]{fips_key()}} accept, or to choose a
+parameter set.
+
+The names follow the standards: \code{"ML-DSA-44"}, \code{"ML-DSA-65"} and
+\code{"ML-DSA-87"} (NIST security categories 2, 3 and 5), then
+\code{"SLH-DSA-SHA2-"} and \code{"SLH-DSA-SHAKE-"} followed by \code{128}, \code{192}
+or
+\code{256} (the security level in bits) and \code{s} (small signatures, slow
+signing) or \code{f} (fast signing, larger signatures). The function takes
+no arguments, has no side effects and returns the same 16 names in the
+same order on every platform.
 }
 \examples{
 pqc_backends()
@@ -29,6 +43,10 @@ pqc_backends()
 # Every scheme is present in every build.
 all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") \%in\%
     pqc_backends())
+
+# The SLH-DSA sets with fast signing, and their signature sizes in bytes.
+fast <- grep("^SLH-DSA-.*f$", pqc_backends(), value = TRUE)
+vapply(fast, function(s) fips_sizes(s)[["signature"]], integer(1))
 }
 \seealso{
 \code{\link[=fips_keygen]{fips_keygen()}} for the standardised schemes,

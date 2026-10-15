@@ -6,6 +6,13 @@
 
 #' Cryptographically strong random bytes
 #'
+#' @description
+#' Returns \code{n} random bytes that are suitable for keys, salts and
+#' nonces. Use it whenever a value must be unguessable; use
+#' \code{set.seed()} and \code{runif()} for simulations, where
+#' reproducibility is the point.
+#'
+#' @details
 #' Reads the operating system's own random source -- `/dev/urandom` on
 #' Unix and macOS, `RtlGenRandom` on Windows -- rather than R's
 #' Mersenne Twister.
@@ -20,8 +27,12 @@
 #' to a weaker generator, because a silent downgrade in a key is worse than
 #' an error.
 #'
-#' @param n Number of bytes (1 to 1048576).
-#' @return A raw vector of length `n`.
+#' Errors: \code{n} not a single whole number from 1 to 1,048,576 (1 MiB);
+#' no readable operating-system source.
+#'
+#' @param n Whole number from 1 to 1048576: the number of bytes.
+#' @return A raw vector of length `n`. Print it as hex with
+#' \code{paste(format(x), collapse = "")}.
 #' @seealso
 #' [derive_key()] to stretch a passphrase instead,
 #' [pqc_keygen()] which uses this for its seeds.
@@ -40,6 +51,8 @@
 #'
 #' # As hex, for a seed argument.
 #' paste(format(random_bytes(4)), collapse = "")
+#'
+#' try(random_bytes(0))
 #' @export
 random_bytes <- function(n) {
   n <- .rmbl_num(n, "n", integer = TRUE)
@@ -59,6 +72,14 @@ random_bytes <- function(n) {
 
 #' Derive a key from a passphrase
 #'
+#' @description
+#' Turns a passphrase that a person can remember into a fixed-length key
+#' (32 bytes by default) for signing or encryption, in a way that makes
+#' guessing the passphrase slow. The same passphrase, salt and iteration
+#' count always give the same key, so the key need not be stored: it can be
+#' derived again when needed.
+#'
+#' @details
 #' PBKDF2-HMAC-SHA256 (RFC 8018): stretches a passphrase into a key of full
 #' width by iterating a keyed hash, so guessing the passphrase costs
 #' `iterations` times more than a single hash would.
@@ -77,15 +98,23 @@ random_bytes <- function(n) {
 #' chose. PBKDF2 is here because it needs nothing beyond the bundled
 #' SHA-256, so it works wherever this package works.
 #'
+#' The derivation runs in compiled code; at the default 100,000 iterations
+#' it takes a fraction of a second, and a busy indicator is shown in an
+#' interactive session. Errors: a passphrase or salt that is not a single
+#' non-missing string or a raw vector; `iterations` below 1; `length`
+#' outside 1 to 1024.
+#'
 #' @param passphrase Passphrase, as a length-1 character
 #' or raw vector.
 #' @param salt Unique, non-secret salt (length-1 character or
 #' raw). Use [random_bytes()] to make one, and
 #' store it beside the key.
-#' @param iterations Iteration count (default 100000,
-#' minimum 1).
-#' @param length Derived key length in bytes (default 32).
-#' @return A length-1 character vector: the key as lowercase hex.
+#' @param iterations Whole number, default 100000 (minimum 1): the PBKDF2
+#' iteration count. Verification must use the same value.
+#' @param length Whole number from 1 to 1024, default 32: the derived key
+#' length in bytes.
+#' @return A length-1 character vector: the key as lowercase hex
+#' (\code{2 * length} characters).
 #' @references Moriarty K, Kaliski B, Rusch A (2017). PKCS #5:
 #' Password-Based Cryptography Specification Version 2.1. RFC 8018.
 #'   \doi{10.17487/RFC8018}
@@ -106,7 +135,7 @@ random_bytes <- function(n) {
 #'
 #' # Use it to sign a manifest from a passphrase rather than raw bytes.
 #' salt <- paste(format(random_bytes(16)), collapse = "")
-#' key <- derive_key("correct horse battery staple", salt)
+#' key <- derive_key("purple otter lantern", salt)
 #' sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
 #' capsule_verify("manifest-digest", sig, key)
 #'
@@ -115,6 +144,9 @@ random_bytes <- function(n) {
 #'   substring(derive_key("pw", "s", 10, length = 64), 1, 64),
 #'   derive_key("pw", "s", 10, length = 32)
 #' )
+#'
+#' # a vector of passphrases is refused
+#' try(derive_key(c("a", "b"), "salt"))
 #' @export
 derive_key <- function(passphrase, salt, iterations = 100000L,
                        length = 32L) {
@@ -154,6 +186,16 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
 
 #' BLAKE2b digest, optionally keyed
 #'
+#' @description
+#' Computes the BLAKE2b hash of text or bytes as lowercase hex, with any
+#' digest length from 1 to 64 bytes. With a key it becomes a message
+#' authentication code: only someone holding the key can produce or check
+#' the digest. Use it for fingerprints and keyed checks inside your own
+#' workflow; use [core_sha256()] or
+#' [core_hmac_sha256()] where other tools
+#' must reproduce the value.
+#'
+#' @details
 #' BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256 in
 #' software, that takes a key natively and produces any digest length from
 #' 1 to 64 bytes.
@@ -165,9 +207,16 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
 #' SHA-256 or HMAC where interoperability with other tools matters; use
 #' this where it does not and speed does.
 #'
+#' Character input is hashed element by element, as the bytes of each
+#' string; \code{NA} elements give \code{NA}. A raw vector is one message.
+#' The digest length is a parameter of BLAKE2b, so a 32-byte digest is not
+#' the first half of the 64-byte digest of the same input. Errors: `length`
+#' outside 1 to 64; a key that is not a single string or raw vector, or is
+#' longer than 64 bytes.
+#'
 #' @param x A character vector or a raw vector.
-#' @param key Optional key, at most 64 bytes. `NULL`
-#' (default) gives the plain digest.
+#' @param key Optional key: a single string or a raw vector of at most 64
+#' bytes. `NULL` (default) gives the plain digest.
 #' @param length Digest length in bytes, 1 to 64 (default 32,
 #' matching SHA-256's width).
 #' @return A character vector of lowercase hex digests -- one per element
@@ -198,6 +247,8 @@ derive_key <- function(passphrase, salt, iterations = 100000L,
 #' # Vectorised, and raw input hashes the same bytes.
 #' core_blake2b(c("a", "b"))
 #' identical(core_blake2b("abc"), core_blake2b(charToRaw("abc")))
+#'
+#' try(core_blake2b("abc", length = 65))
 #' @export
 core_blake2b <- function(x, key = NULL, length = 32L) {
   if (!is.raw(x) && !is.null(x) && any(is.na(x))) {
@@ -228,6 +279,7 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
 
 #' Digest an arbitrary R object
 #'
+#' @description
 #' Fingerprints any R object by hashing its serialization, so a list, a
 #' data frame, a function or a fitted model all get a stable digest. The
 #' counterpart of `digest::digest()`, computed with this package's own
@@ -239,12 +291,28 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
 #' merely print the same need not, because attributes are part of the
 #' serialization.
 #'
+#' @details
+#' The object is serialized with \code{serialize(x, NULL, version = 2,
+#' xdr = TRUE)} and the bytes are hashed with [core_sha256()],
+#' [core_sha512()], [core_blake2b()]
+#' (32 bytes) or [core_crc32()]. CRC-32 is
+#' a checksum for accidental corruption, not a cryptographic hash. With a
+#' `key` the digest is HMAC-SHA-256 for `"sha256"` and keyed BLAKE2b for
+#' `"blake2b"`; a key with `"sha512"` or `"crc32"` is an error rather than
+#' a
+#' silently unkeyed digest. Objects that contain environments (functions,
+#' many fitted models) serialize their enclosing environments too, so
+#' their digest can change between sessions even when the code does not.
+#'
 #' @param x Any R object.
 #' @param algo `"sha256"` (default), `"sha512"`,
 #' `"blake2b"` or `"crc32"`.
-#' @param key Optional key, for `"blake2b"` only: gives a
-#' keyed fingerprint that only a key holder can reproduce.
-#' @return A length-1 character vector (or numeric for `"crc32"`) .
+#' @param key Optional key (a single string or raw vector), default `NULL`.
+#' Only for `"sha256"` (HMAC-SHA-256) and `"blake2b"` (keyed BLAKE2b): gives
+#' a keyed fingerprint that only a key holder can reproduce.
+#' @return A length-1 character vector of lowercase hex (64 characters for
+#' `"sha256"` and `"blake2b"`, 128 for `"sha512"`), or a length-1 numeric
+#' for `"crc32"`.
 #' @seealso
 #' [core_sha256()] for hashing text or bytes
 #' directly,
@@ -267,6 +335,9 @@ core_blake2b <- function(x, key = NULL, length = 32L) {
 #'
 #' # A data frame's digest pins the data, so it can go in a manifest.
 #' digest_object(data.frame(x = 1:3))
+#'
+#' # a key with an algorithm that has no keyed form is refused
+#' try(digest_object(1:3, algo = "crc32", key = "secret"))
 #' @export
 digest_object <- function(x, algo = c(
                             "sha256", "sha512", "blake2b",

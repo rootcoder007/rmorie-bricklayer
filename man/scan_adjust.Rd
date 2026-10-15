@@ -7,18 +7,23 @@
 scan_adjust(x, method = "BH", alpha = 0.05)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} or \code{rmbl_rate_change} object, or any data frame
-with a \code{p_value} column.}
+\item{x}{An \code{rmbl_yoy} or \code{rmbl_rate_change} object, or any
+data frame with a \code{p_value} column.}
 
-\item{method}{Adjustment passed to \code{\link[stats:p.adjust]{stats::p.adjust()}};
-\code{"BH"}
-(false discovery rate) by default, \code{"holm"} for family-wise control.}
+\item{method}{Character, default \code{"BH"}: any method of
+\code{\link[stats]{p.adjust}} (\code{"BH"}, \code{"holm"},
+\code{"bonferroni"}, \code{"BY"}, \code{"hochberg"}, \code{"hommel"},
+\code{"fdr"}, \code{"none"}).}
 
-\item{alpha}{Level at which \code{significant} is decided.}
+\item{alpha}{Number, default 0.05: the level at which \code{significant}
+is decided, applied to the adjusted p-values.}
 }
 \value{
-\code{x} with \code{p_value} (if it was missing), \code{p_adjusted} and
-\code{significant}; the class and attributes of \code{x} are kept.
+\code{x} with \code{p_value} (if it was missing),
+\code{p_adjusted} (numeric, \code{NA} where \code{p_value} is) and
+\code{significant} (logical) columns; the class and attributes of
+\code{x} are kept, and a \code{scan_adjust} attribute lists
+\code{method}, \code{alpha} and \code{tests}.
 }
 \description{
 A change table over fifty institutions is fifty tests. Reporting the
@@ -31,10 +36,43 @@ the object does not carry them: the conditional binomial test for
 (with the exposures as the
 binomial weights).
 }
+\details{
+For a \code{rate_change()} table, conditional on the two counts' total
+the current count is binomial with success probability
+\eqn{t_a / (t_a + t_b)}, the share of the combined exposure in the
+current period, and the p-value is the two-sided exact binomial test of
+that. Rows without a p-value (no comparison period, both counts zero)
+are left out of the adjustment, so the number of tests is the number of
+rows with a p-value; it is recorded in the \code{scan_adjust} attribute.
+
+The adjustment is \code{stats::p.adjust(p, method)}: \code{"BH"} controls
+the expected proportion of false discoveries among the rows declared
+significant, which suits a screen; \code{"holm"} and \code{"bonferroni"}
+control the chance of any false discovery, which a claim about one
+specific row needs. A row is \code{significant} when its adjusted p-value
+is strictly below \code{alpha}.
+
+Errors: \code{x} not a data frame; no \code{p_value} column and not a
+\code{yoy()} or \code{rate_change()} result; a \code{yoy()} result
+without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
+\code{p.adjust()}.
+}
 \examples{
 seg <- data.frame(year = rep(2022:2023, each = 3),
                   site = rep(c("A", "B", "C"), 2),
                   n = c(30, 50, 80, 45, 52, 79))
 y <- yoy(seg, value = "n", period = "year", by = "site")
 scan_adjust(y)[, c("site", "pct_change", "p_value", "p_adjusted")]
+
+# family-wise control instead of the false discovery rate
+scan_adjust(y, method = "holm")$p_adjusted
+
+# any table with a p_value column
+scan_adjust(data.frame(test = c("a", "b", "c"), p_value = c(0.001, 0.02, 0.4)))
+
+try(scan_adjust(data.frame(p_value = 1.5)))
+}
+\seealso{
+\code{\link{yoy_pvalues}}, \code{\link{falsify_family}} for a
+family of falsification results, \code{\link{drift_calibrate}}.
 }

@@ -183,8 +183,12 @@
 #' embed binary content in a text manifest wherever this package runs.
 #'
 #' `bricklayer_json_base64_enc()` breaks its output into 72-character
-#' lines, matching jsonlite's encoder; the decoder ignores line breaks and
-#' any other character outside the alphabet, so either form round trips.
+#' lines (a newline after each complete block of 54 input bytes), matching
+#' jsonlite's encoder byte for byte; the decoder ignores line breaks, other
+#' white space and \code{=} padding, so either form round trips. Any other
+#' character outside the alphabet is an error rather than being skipped,
+#' because skipping it would decode a corrupted body into a shorter
+#' valid-looking one.
 #'
 #' The URL-safe variant substitutes `-` and `_` for `+` and
 #' `/` and drops the `=` padding, which is what makes it safe in
@@ -195,12 +199,22 @@
 #' pin content and [core_hmac_sha256()] to
 #' authenticate it.
 #'
-#' @param input For the encoders, a raw vector or a character
-#' vector (joined with newlines first). For the decoders, base64 text or
-#' its raw bytes.
-#' @return The encoders return a length-1 character vector (
-#' `NA_character_` for `NULL` input); the decoders return a raw
-#' vector.
+#' Errors: an encoder given anything but a raw vector, a character vector or
+#' \code{NULL}; \code{bricklayer_json_base64_dec()} given anything but text or
+#' raw bytes, or text with a character outside the standard alphabet;
+#' \code{bricklayer_json_base64url_dec()} given anything but character text
+#' (raw bytes are refused), \code{NA}, or a character outside the URL-safe
+#' alphabet.
+#'
+#' @param input For the encoders, a raw vector, or a character vector
+#' (its elements are joined with newlines and encoded as UTF-8 bytes), or
+#' \code{NULL}. For \code{bricklayer_json_base64_dec()}, base64 text (a
+#' character vector, joined with newlines) or its raw bytes. For
+#' \code{bricklayer_json_base64url_dec()}, URL-safe base64 text, with or
+#' without \code{=} padding.
+#' @return The encoders return a character scalar (\code{""} for empty input,
+#' \code{NA_character_} for \code{NULL}); the decoders return a raw vector
+#' (use \code{rawToChar()} for text).
 #' @seealso
 #' [json_gzip_encode()], which composes this
 #' with gzip.
@@ -230,6 +244,9 @@
 #' long <- bricklayer_json_base64_enc(strrep("x", 200))
 #' grepl("\n", long)
 #' rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
+#'
+#' # A character outside the alphabet is refused, not skipped.
+#' try(bricklayer_json_base64_dec("ab$c"))
 #' @name rmbl_base64
 #' @export
 bricklayer_json_base64_enc <- function(input) {
@@ -655,38 +672,95 @@ bricklayer_json_base64url_dec <- function(input) {
 
 #' Encode an R object as JSON (jsonlite's toJSON, natively)
 #'
-#' Every option of jsonlite's `toJSON()` with the same default and the
-#' same bytes out: `dataframe`, `matrix`, `Date`,
-#' `POSIXt`, `factor`, `complex`, `raw`, `null`,
-#' `na`, `auto_unbox`, `digits` ( `I(n)` for
-#' significant digits, `NA` for 15), `pretty` (TRUE = 2 spaces,
-#' or a width), `force`, plus `rownames`, `keep_vec_names`,
-#' `json_verbatim`, `always_decimal`, `time_format`,
-#' `UTC`, `no_dots`, `hms`.
+#' Converts R data (vectors, lists, data frames, matrices, dates, factors)
+#' to JSON text, with the same options, the same defaults and the same bytes
+#' out as jsonlite's \code{toJSON()}, but computed by this package's own
+#' code, so manifests, provenance records and capsules can be written where
+#' jsonlite is not installed and their digests stay the same either way. Use
+#' it to write data for an API or a person; use
+#' [bricklayer_json_serialize()]
+#' when the JSON must rebuild the exact R object (classes, factor levels,
+#' attributes).
 #'
-#' @param x the object to encode.
-#' @param dataframe As in jsonlite.
-#' @param matrix As in jsonlite.
-#' @param Date As in jsonlite.
-#' @param POSIXt As in jsonlite.
-#' @param factor As in jsonlite.
-#' @param complex As in jsonlite.
-#' @param raw As in jsonlite.
-#' @param null As in jsonlite: `NULL` is written as `{}` by default
-#'   (a round trip gives an empty list). Pass `null = "null"` for a
-#'   JSON null; [bricklayer_json_serialize] round-trips `NULL` exactly.
-#' @param na As in jsonlite.
-#' @param auto_unbox As in jsonlite.
-#' @param digits As in jsonlite.
-#' @param pretty As in jsonlite.
-#' @param force As in jsonlite.
-#' @param ... As in jsonlite, plus `keep_vec_names` (a named atomic
-#'   vector is written as an object, as `manifest_canonical()` requires)
-#'   and `quiet_vec_names` (no message when names cannot be kept).
-#' @return a length-one character vector of class `json`.
+#' @details
+#' Atomic vectors become arrays, so a single value is \code{[1]} unless
+#' \code{auto_unbox = TRUE}. Named lists become objects and unnamed lists
+#' arrays. Missing values follow jsonlite: with \code{na} not given, a
+#' missing number is written as the string \code{"NA"} and a missing string
+#' or logical as \code{null}; in a data frame by rows a missing value is
+#' left out of its record.
+#'
+#' Further options of \code{toJSON()} are taken through \code{...}:
+#' \code{rownames}, \code{keep_vec_names}, \code{json_verbatim},
+#' \code{always_decimal}, \code{time_format}, \code{UTC}, \code{no_dots},
+#' \code{hms} (\code{"string"} or \code{"secs"}), and two of this package's
+#' own: \code{keep_empty_names} (an empty-string key is written as
+#' \code{""} rather than replaced by its position) and
+#' \code{quiet_vec_names} (no message when \code{keep_vec_names} is used).
+#' [manifest_canonical()] uses both.
+#'
+#' Errors: an option value not among its choices (the message lists them);
+#' an object with no JSON form (a function, a symbol) unless
+#' \code{force = TRUE}.
+#'
+#' @param x The object to encode.
+#' @param dataframe How a data frame is written: \code{"rows"} (the default,
+#'   an array of records), \code{"columns"} (an object of column arrays) or
+#'   \code{"values"} (an array of row arrays, without names).
+#' @param matrix How a matrix is written: \code{"rowmajor"} (the default, an
+#'   array of rows) or \code{"columnmajor"} (an array of columns).
+#' @param Date How a \code{Date} is written: \code{"ISO8601"} (the default,
+#'   \code{"2024-01-02"}) or \code{"epoch"} (days since 1970-01-01).
+#' @param POSIXt How a date-time is written: \code{"string"} (the default,
+#'   \code{"2024-01-02 03:04:05"}), \code{"ISO8601"}
+#'   (\code{"2024-01-02T03:04:05"}), \code{"epoch"} (milliseconds since
+#'   1970) or \code{"mongo"} (\code{{"$date": ms}}).
+#' @param factor How a factor is written: \code{"string"} (the default, its
+#'   labels) or \code{"integer"} (its codes).
+#' @param complex How a complex number is written: \code{"string"} (the
+#'   default, \code{"1+2i"}) or \code{"list"} (an object of \code{real} and
+#'   \code{imaginary} arrays).
+#' @param raw How a raw vector is written: \code{"base64"} (the default, one
+#'   string), \code{"hex"}, \code{"mongo"}, \code{"int"} or \code{"js"}.
+#' @param null How \code{NULL} inside a list is written: \code{"list"} (the
+#'   default, \code{{}}; a round trip gives an empty list) or \code{"null"}
+#'   (a JSON \code{null}).
+#'   [bricklayer_json_serialize()] round-trips
+#'   \code{NULL} exactly.
+#' @param na How missing values are written: \code{"null"} or
+#'   \code{"string"} (\code{"NA"}). When not given, the per-type default of
+#'   jsonlite applies (see Details).
+#' @param auto_unbox Logical scalar, default \code{FALSE}: write length-one
+#'   vectors as scalars (\code{1}) rather than arrays (\code{[1]}).
+#' @param digits Numeric scalar, default \code{4}: decimal places kept for
+#'   doubles. \code{I(n)} means \code{n} significant digits (\code{I(17)}
+#'   writes every double exactly) and \code{NA} means 15 significant digits.
+#' @param pretty \code{FALSE} (the default) for compact output, \code{TRUE}
+#'   to indent by two spaces, or a number of spaces.
+#' @param force Logical scalar, default \code{FALSE}: write objects that have
+#'   no JSON form (as \code{{}}) instead of failing.
+#' @param ... Further options of jsonlite's \code{toJSON()} and of this
+#'   package (see Details).
+#' @return A character scalar of class \code{json}, the JSON text.
+#' @seealso [bricklayer_json_from_json()] for the
+#'   reverse,
+#'   [bricklayer_json_serialize()] for an exact
+#'   round trip.
 #' @examples
 #' bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 #' bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
+#'
+#' # a data frame by columns, and a date-time in ISO 8601
+#' df <- data.frame(id = 1:2, v = c(1.5, NA))
+#' bricklayer_json_to_json(df, dataframe = "columns", na = "null")
+#' bricklayer_json_to_json(as.POSIXct("2024-01-02 03:04:05", tz = "UTC"), POSIXt = "ISO8601")
+#'
+#' # digits: decimal places by default, significant digits with I()
+#' bricklayer_json_to_json(pi)
+#' bricklayer_json_to_json(pi, digits = I(17))
+#'
+#' # a choice that does not exist is refused
+#' try(bricklayer_json_to_json(df, dataframe = "table"))
 #' @export
 bricklayer_json_to_json <- function(x, dataframe = c("rows", "columns", "values"),
                                  matrix = c("rowmajor", "columnmajor"),
@@ -1199,25 +1273,80 @@ bricklayer_json_unbox <- function(x) {
 
 #' Parse JSON into R objects (jsonlite's fromJSON, natively)
 #'
-#' @param txt JSON text, a file path, or an http(s) URL. A URL goes through
+#' Reads JSON text, a JSON file or a JSON address on the web into R objects,
+#' with the same simplification rules as jsonlite's \code{fromJSON()}: an
+#' array of numbers becomes a numeric vector, an array of records a data
+#' frame, an array of equal-length arrays a matrix. The parser is this
+#' package's own, so it works without jsonlite, and it is stricter in two
+#' places that matter for provenance records: a repeated key is an error by
+#' default, and a whole number too large for a double is flagged.
+#'
+#' @details
+#' A single string shorter than 2,084 bytes that is not valid JSON is taken
+#' as a location: an \code{http(s)} address is fetched (a public \code{https}
+#' host only, redirects re-checked, 60 second timeout, body capped at 16
+#' MiB), otherwise an existing file is read. Anything else is parsed as JSON
+#' text; a character vector is joined with newlines. A connection is read to
+#' its end (and closed when this call opened it).
+#'
+#' Without simplification (\code{simplifyVector = FALSE}) objects become named
+#' lists, arrays unnamed lists, \code{null} \code{NULL}, and numbers integer
+#' or double. Whole numbers beyond \eqn{2^{53}} cannot be held exactly in a
+#' double: they are read as doubles with a warning, or kept as text with
+#' \code{bigint_as_char = TRUE}.
+#'
+#' Errors: \code{txt} not character or a connection; invalid JSON (the message
+#' gives the character offset); a repeated key under
+#' \code{duplicate_keys = "error"}; an address that is not a public
+#' \code{https} host, that cannot be reached or that answers with an HTTP
+#' error.
+#'
+#' @param txt JSON text (a character vector, joined with newlines), a file
+#' path, an \code{http(s)} URL, or a connection. A URL goes through
 #' the same check and the same transport as every other fetch in the
 #' package (public https host, redirects re-checked, body capped).
-#' @param simplifyVector,simplifyDataFrame,simplifyMatrix,flatten as in jsonlite.
+#' @param simplifyVector Logical scalar, default \code{TRUE}: turn arrays of
+#' scalars into atomic vectors.
+#' @param simplifyDataFrame Logical scalar, default \code{simplifyVector}: turn
+#' arrays of records into data frames.
+#' @param simplifyMatrix Logical scalar, default \code{simplifyVector}: turn
+#' arrays of equal-length arrays into matrices.
+#' @param flatten Logical scalar, default \code{FALSE}: expand nested data
+#' frame columns into \code{outer.inner} columns.
 #' @param duplicate_keys What to do with an object that repeats a key:
-#' `"error"` (default) refuses the document, `"keep"` returns both
+#' \code{"error"} (default) refuses the document, \code{"keep"} returns both
 #' values under the repeated name, as jsonlite does.
-#' @param bigint_warn warn (once per document) when a whole number beyond
-#'   2^53 is read into a double; the package's own readers of API payloads
-#'   turn this off, since long numeric identifiers are routine there.
-#' @param bigint_as_char integers beyond 2^53 come
-#' back as strings.
-#' @param simplify legacy: `FALSE` turns every
+#' @param bigint_warn Logical scalar, default \code{TRUE}: warn (once per
+#'   document) when a whole number beyond 2^53 is read into a double; the
+#'   package's own readers of API payloads turn this off, since long numeric
+#'   identifiers are routine there.
+#' @param bigint_as_char Logical scalar, default \code{FALSE}: integers beyond
+#' 2^53 come back as strings.
+#' @param simplify Legacy, default \code{NULL}: \code{FALSE} turns every
 #' simplification off.
-#' @param ... ignored, for call compatibility.
-#' @return an R object.
+#' @param ... Ignored, for call compatibility with jsonlite.
+#' @return An R object: a list, an atomic vector, a data frame, a matrix or
+#' \code{NULL}, depending on the JSON and the simplification options.
+#' @seealso [bricklayer_json_to_json()] for the
+#'   reverse.
 #' @examples
 #' bricklayer_json_from_json('[{"a":1,"b":"x"},{"a":2,"b":"y"}]')
 #' bricklayer_json_from_json('[[1,2],[3,4]]')
+#'
+#' # no simplification: nested lists exactly as in the document
+#' str(bricklayer_json_from_json('{"a": [1, 2], "b": {"c": null}}', simplifyVector = FALSE))
+#'
+#' # from a file
+#' f <- tempfile(fileext = ".json")
+#' writeLines('[{"a":1},{"a":2,"b":"x"}]', f)
+#' bricklayer_json_from_json(f)
+#'
+#' # a large identifier kept exactly, as text
+#' bricklayer_json_from_json('[12345678901234567890]', bigint_as_char = TRUE)
+#'
+#' # a repeated key is refused unless asked for
+#' try(bricklayer_json_from_json('{"a": 1, "a": 2}'))
+#' bricklayer_json_from_json('{"a": 1, "a": 2}', duplicate_keys = "keep")
 #' @export
 bricklayer_json_from_json <- function(txt, simplifyVector = TRUE,
                                    simplifyDataFrame = simplifyVector,
@@ -1805,8 +1934,8 @@ bricklayer_json_rbind_pages <- function(pages) {
 #' means 15 significant digits, as in jsonlite, and is not exact.
 #' A complex value with only one `NA` part comes back as `NA`, as it
 #' does in jsonlite.
-#' @param pretty Indent the output.
-#' @param txt JSON produced by
+#' @param pretty Logical scalar, default \code{FALSE}: indent the output.
+#' @param txt Character scalar: JSON produced by
 #' `bricklayer_json_serialize()`.
 #' @param trusted `FALSE` (default) rebuilds data types only (vectors,
 #' lists, factors, matrices, data frames, environments, symbols) and
@@ -1845,6 +1974,9 @@ bricklayer_json_rbind_pages <- function(pages) {
 #'
 #' # The serialised form is JSON, so it can be pinned like any other text.
 #' nchar(core_sha256(bricklayer_json_serialize(m)))
+#'
+#' # A function is refused unless the JSON is trusted.
+#' try(bricklayer_json_unserialize(bricklayer_json_serialize(function(x) x + 1)))
 #' @name rmbl_json_serialize
 #' @export
 bricklayer_json_serialize <- function(x, digits = 8, pretty = FALSE) {

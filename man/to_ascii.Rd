@@ -7,10 +7,12 @@
 to_ascii(x)
 }
 \arguments{
-\item{x}{A character vector.}
+\item{x}{A character vector (other types are converted with
+\code{\link[=as.character]{as.character()}}).}
 }
 \value{
-A character vector containing only ASCII characters.
+A character vector the length of \code{x}, containing only printable
+ASCII characters (bytes 32 to 126); \code{NA} elements become \code{""}.
 }
 \description{
 Converts a character vector to plain 7-bit ASCII, transliterating
@@ -18,7 +20,28 @@ accented or non-Latin characters to their nearest ASCII equivalent (for
 example, an accented capital A becomes a plain "A"). Falls back to
 dropping any character that has no transliteration. This is the
 deterministic "fallback" used by
-\code{\link[=ascii_fallback]{ascii_fallback()}}.
+\code{\link[=ascii_fallback]{ascii_fallback()}}. Use it for destinations that accept
+only ASCII --
+a package \code{DESCRIPTION}, a file name, a legacy system -- so a name
+written with an accented letter arrives with the plain letter rather
+than as an encoding error or a question mark.
+}
+\details{
+Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
+first. Then, when the \pkg{stringi} package is installed, the ICU
+transform \code{"Any-Latin; Latin-ASCII"} romanises any script and folds
+accents (Cyrillic, Greek and Chinese become Latin letters). Without
+\pkg{stringi}, a fixed table folds the common Latin accents and
+ligatures (sharp s to "ss", the ae ligature to "ae", thorn to "th" and so on) and
+every other non-ASCII character is dropped, so non-Latin scripts
+disappear rather than being romanised. Either way the result is then
+stripped of anything outside the printable ASCII range (space to
+tilde), so control characters such as newlines and tabs are removed
+too. The result never depends on the session's locale.
+
+A missing value becomes \code{""}; non-character input is converted with
+\code{\link[=as.character]{as.character()}} first (so numbers pass through as their
+digits).
 }
 \examples{
 # Latin accents fold to their nearest ASCII letter.
@@ -33,4 +56,13 @@ if (requireNamespace("stringi", quietly = TRUE))
 
 # Either way the result is guaranteed pure 7-bit ASCII (never "?").
 all(charToRaw(to_ascii("caf\u00e9")) < 128)
+
+# Missing values become empty strings; line breaks are removed.
+to_ascii(c(NA, "two\nlines"))
+}
+\seealso{
+\code{\link[=ascii_fallback]{ascii_fallback()}} to transliterate only when
+needed,
+\code{\link[=write_text_fallback]{write_text_fallback()}} to write text with an
+ASCII retry.
 }

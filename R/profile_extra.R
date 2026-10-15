@@ -5,10 +5,14 @@
 
 #' Which columns are missing together
 #'
-#' Counts the distinct PATTERNS of missingness across rows, rather than the
-#' per-column rates [profile_columns()]
-#' reports.
+#' Counts the distinct PATTERNS of missingness across rows -- which
+#' combination of columns is missing in each row -- rather than the
+#' per-column rates [profile_columns()] reports. Use it
+#' before deciding how
+#' to handle gaps (drop rows, impute, model separately), because the right
+#' choice depends on whether columns are missing together.
 #'
+#' @details
 #' The distinction decides what to do about the gaps. Two columns each 30%
 #' missing at random need different handling from two columns 30% missing
 #' in THE SAME rows -- the second is one structural gap (a join that
@@ -16,15 +20,27 @@
 #' should be dropped or modelled separately, while the first does not. A
 #' per-column rate cannot tell the two apart; this can.
 #'
+#' Each row is coded as a string with one character per column, \code{X}
+#' where \code{is.na()} is true and \code{.} otherwise, and the codes are
+#' tabulated. Patterns are sorted by descending frequency and the first
+#' \code{max_patterns} kept, so \code{pct_rows} may not sum to 100 when
+#' patterns are cut. A frame with no rows gives an empty table. The work is
+#' one pass over the rows; very wide frames give long codes.
+#'
+#' Errors: \code{data} not a data frame, without columns, or with missing or
+#' duplicated names; \code{max_patterns} not one positive whole number.
+#'
 #' @param data A data frame.
 #' @param max_patterns Maximum patterns to return, most
-#' frequent first (default 20).
-#' @return A data frame of class `bricklayer_missingness`, one row per
-#' pattern: `pattern` (a string of `.` for present and `X`
-#' for missing, in column order), `n_rows`, `pct_rows`,
-#' `n_missing` (columns missing in that pattern), and `columns`
-#' (their names). Carries the column order as the `"columns"`
-#' attribute.
+#'   frequent first, one positive whole number (default 20).
+#' @return A data frame of class \code{c("bricklayer_missingness",
+#'   "data.frame")}, one row per pattern: \code{pattern} (character, \code{.}
+#'   for present and \code{X} for missing, in column order), \code{n_rows}
+#'   (integer), \code{pct_rows} (numeric, percent of all rows),
+#'   \code{n_missing} (integer, columns missing in that pattern) and
+#'   \code{columns} (character, their names comma-separated, \code{""} for the
+#'   complete pattern). Carries the column order as the \code{"columns"}
+#'   attribute.
 #' @seealso [profile_columns()] for
 #' per-column rates.
 #' @examples
@@ -46,6 +62,12 @@
 #'
 #' # A complete frame has exactly one pattern.
 #' missingness_pattern(data.frame(x = 1:3, y = 4:6))
+#'
+#' # keep only the most common pattern
+#' missingness_pattern(scattered, max_patterns = 1)
+#'
+#' # a frame without columns has no patterns
+#' try(missingness_pattern(data.frame()))
 #' @export
 missingness_pattern <- function(data, max_patterns = 20L) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
@@ -126,28 +148,47 @@ print.bricklayer_missingness <- function(x, ...) {
 
 #' Strongest pairwise correlations in a data frame
 #'
-#' Ranks the numeric column pairs by the strength of their association, so
-#' a wide table's structure can be read without squinting at a correlation
-#' matrix.
+#' Ranks the numeric column pairs by the strength of their association and
+#' returns the strongest, so a wide table's structure can be read without
+#' squinting at a correlation matrix. Use it on a new data set to find
+#' near-duplicate columns, derived columns and the relationships worth a
+#' closer look.
 #'
+#' @details
 #' Spearman is the default deliberately. Pearson measures LINEAR
 #' association only, so it understates a relationship that is perfectly
 #' monotone but curved, and a single outlier can manufacture or destroy it.
 #' On data you have not yet inspected -- which is the situation this
 #' function is for -- the rank correlation is the safer question to ask.
 #'
+#' Non-numeric columns are ignored. Each pair uses the rows where both
+#' values are present; a pair with fewer than three such rows, or with a
+#' constant column, has no correlation and is left out. Pairs are ranked by
+#' absolute correlation, those below \code{min_abs} dropped, and the first
+#' \code{n} returned. [correlation_table()] gives every
+#' pair, with the
+#' number of rows behind each. A progress bar is drawn on stderr for many
+#' pairs unless \code{options(morie.quiet = TRUE)}.
+#'
+#' Errors: \code{data} not a data frame; fewer than two numeric columns;
+#' \code{n} not one positive whole number; \code{min_abs} not one number in
+#' \eqn{[0, 1]}; an invalid \code{method}.
+#'
 #' @param data A data frame; non-numeric columns are ignored.
-#' @param n Number of pairs to return (default 10).
-#' @param method `"spearman"` (default) or
-#' `"pearson"`.
-#' @param min_abs Report only pairs whose absolute
-#' correlation reaches this (default 0).
-#' @return A data frame of class `bricklayer_correlations` with
-#' `x`, `y`, `correlation` and `abs_correlation`,
-#' strongest first.
+#' @param n Number of pairs to return, one positive whole number (default
+#'   10).
+#' @param method \code{"spearman"} (default) or \code{"pearson"}.
+#' @param min_abs Report only pairs whose absolute correlation reaches this,
+#'   a number in \eqn{[0, 1]} (default 0).
+#' @return A data frame of class \code{c("bricklayer_correlations",
+#'   "data.frame")} with \code{x} and \code{y} (character, column names),
+#'   \code{correlation} (numeric) and \code{abs_correlation} (numeric),
+#'   strongest first, at most \code{n} rows; the method is in
+#'   \code{attr(, "method")}. The print method draws a signed bar per pair.
 #' @seealso
 #' [core_cor_spearman()],
-#' [core_cov()]
+#' [core_cov()],
+#' [correlation_table()]
 #' @examples
 #' set.seed(1)
 #' n <- 200
@@ -168,8 +209,11 @@ print.bricklayer_missingness <- function(x, ...) {
 #' tp <- top_correlations(df, method = "pearson")
 #' tp[tp$x == "a" & tp$y == "d", "correlation"]
 #'
-#' # Filter to the pairs worth looking at.
-#' top_correlations(df, min_abs = 0.5)
+#' # Filter to the pairs worth looking at, and keep the top two.
+#' top_correlations(df, n = 2, min_abs = 0.5)
+#'
+#' # a threshold above 1 is an error
+#' try(top_correlations(df, min_abs = 2))
 #' @export
 top_correlations <- function(data, n = 10L, method = c(
                                "spearman",
@@ -260,42 +304,61 @@ print.bricklayer_correlations <- function(x, ...) {
 #'
 #' Reports what changed between the environment captured by one run and
 #' another: the R version, the platform, and every package whose version
-#' differs, was added, or disappeared.
+#' differs, was added, or disappeared. Use it when a result does not
+#' reproduce, to see first whether the software around it changed.
 #'
+#' @details
 #' This is the question a failed reproduction actually raises. A manifest
 #' records the environment; comparing two manifests by eye across a few
 #' hundred packages does not scale, and the one line that matters -- a
 #' dependency that moved a minor version -- is exactly what gets missed.
 #'
+#' Versions are compared as strings. A package recorded in \code{b} but not
+#' in \code{a} (or recorded with an \code{NA} version in \code{a}) is
+#' \code{"added"}; the reverse is \code{"removed"}. The operating-system
+#' string, the capture time and the random number generator settings are
+#' not compared. Rows follow the order of \code{a}'s packages, then
+#' \code{b}'s new ones.
+#'
+#' Error: \code{a} or \code{b} that is not a list.
+#'
 #' @param a,b Environment records from
-#' [capture_environment()], or whole
-#' manifests containing an `environment` element.
-#' @return A list of class `bricklayer_env_diff`: `identical`
-#' (logical), `r_version` (a length-2 character vector when they
-#' differ, else `NULL`) , `platform` (likewise), and
-#' `packages` (a data frame of `package`, `a`, `b`,
-#' `change`, where `change` is `"added"`, `"removed"`
-#' or `"changed"`) .
+#'   [capture_environment()], or whole
+#'   manifests containing an \code{environment} element (such as
+#'   [make_manifest()] returns).
+#' @return A list of class \code{c("bricklayer_env_diff", "list")}:
+#'   \code{identical} (logical, \code{TRUE} when R version, platform and all
+#'   package versions agree), \code{r_version} (a named length-2 character
+#'   vector \code{c(a = , b = )} when they differ, else \code{NULL}),
+#'   \code{platform} (likewise), and \code{packages} (a data frame with
+#'   character columns \code{package}, \code{a}, \code{b} and \code{change},
+#'   where \code{change} is \code{"added"}, \code{"removed"} or
+#'   \code{"changed"}; no rows when nothing differs).
 #' @seealso
 #' [capture_environment()],
 #' [make_manifest()]
 #' @examples
-#' a <- capture_environment()
+#' a <- capture_environment(c("stats", "utils"))
 #' b <- a
 #'
 #' # An environment matches itself.
 #' environment_diff(a, b)$identical
 #'
-#' # Stage a moved dependency and a removed one.
-#' if (length(b$packages)) {
-#'   nm <- names(b$packages)[1]
-#'   b$packages[[nm]] <- "0.0.0"
-#'   environment_diff(a, b)$packages
-#' }
+#' # Stage a moved dependency, an added one and a newer R.
+#' b$packages[["stats"]] <- "0.0.0"
+#' b$packages[["tools"]] <- "4.9.0"
+#' b$r_version <- "9.9.9"
+#' d <- environment_diff(a, b)
+#' d$packages
+#' d$r_version
+#' d
 #'
 #' # Whole manifests are accepted, not just the environment block.
 #' m <- make_manifest(list(run = "demo"))
 #' environment_diff(m, m)$identical
+#'
+#' # anything other than a record is refused
+#' try(environment_diff("4.5.1", a))
 #' @export
 environment_diff <- function(a, b) {
   pull <- function(x, what) {

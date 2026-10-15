@@ -7,28 +7,38 @@
 region_coverage(region, population, units)
 }
 \arguments{
-\item{region}{Region identifiers, one per region, not repeated.}
+\item{region}{Region identifiers, one per region, not repeated
+(character, or anything that converts to it; surrounding spaces are
+trimmed).}
 
-\item{population}{Population of each region, same length and order.}
+\item{population}{Population of each region, same length and order,
+non-negative numbers.}
 
-\item{units}{Number of units located in each region. Zero is the
-expected value for most regions in most geographies.}
+\item{units}{Number of units located in each region, same length and
+order, non-negative whole numbers. Zero is the expected value for most
+regions in most geographies.}
 }
 \value{
-A data frame of class \code{rmbl_region_coverage}, one row per
-region, with the columns
-\code{region},
-\code{population},
-\code{units},
-\code{has_unit}
-and \code{pop_share},
-ordered by units then population. The totals are carried on the
-\code{coverage} attribute and printed by the print method.
+A data frame of class \code{c("rmbl_region_coverage",
+  "data.frame")}, one row per region, with the columns
+\code{region} (character),
+\code{population} (numeric),
+\code{units} (numeric),
+\code{has_unit} (logical)
+and \code{pop_share} (numeric, percent of the total population),
+ordered by units then population, both descending. The totals are
+carried on the \code{coverage} attribute, a list of \code{regions},
+\code{with_unit}, \code{without_unit}, \code{units},
+\code{total_population}, \code{covered_population},
+\code{uncovered_population} and \code{covered_share} (percent), and
+printed by the print method (which shows the first \code{n = 10} regions).
 }
 \description{
-Summarises where a set of point-located units sits relative to the
-regions of a statistical geography: how many regions hold at least one
-unit, and what share of the population lives in them.
+Summarises where a set of point-located units (jails, courthouses,
+hospitals, police stations) sits relative to the regions of a statistical
+geography: how many regions hold at least one unit, and what share of the
+population lives in them. Use it to describe the footprint of a set of
+facilities, not to build a per-capita rate (see Details).
 }
 \details{
 The share this returns is CONTEXT, not a denominator, and the
@@ -49,7 +59,12 @@ denominator must cover the same population, the defensible figure is
 the whole-territory one.
 
 The print method says this each time, because the covered share is
-precisely the number a reader is tempted to divide by.
+precisely the number a reader is tempted to divide by. With a total
+population of zero the shares are \code{NA}.
+
+Errors: empty, missing or repeated \code{region} values; arguments of
+different lengths; missing or negative \code{population}; missing,
+negative or fractional \code{units}.
 }
 \examples{
 # Four regions, two of which hold a facility.
@@ -62,6 +77,16 @@ cov
 
 # The covered share is reported, and is not a rate denominator.
 attr(cov, "coverage")$covered_share
+attr(cov, "coverage")[c("with_unit", "uncovered_population")]
+
+# counting units per region from a facility list first
+fac <- c("C", "A", "A", "A")
+regions <- c("A", "B", "C", "D")
+units <- as.vector(table(factor(fac, levels = regions)))
+region_coverage(regions, c(1200000, 800000, 450000, 90000), units)$has_unit
+
+# a region listed twice is refused
+try(region_coverage(c("A", "A"), c(10, 20), c(1, 0)))
 }
 \seealso{
 \code{\link[=region_map_integrity]{region_map_integrity()}},

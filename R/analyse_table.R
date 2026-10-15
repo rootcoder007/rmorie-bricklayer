@@ -12,36 +12,104 @@
 #' groups scanned, the envelope that rounding and suppression in the
 #' release imply, and a drift screen against the prior capsule.
 #'
+#' @details
+#' The steps, in order:
+#' \enumerate{
+#'   \item profile: [profile_columns()] and
+#'     [missingness_summary()] on \code{data};
+#'   \item change: [yoy()] between consecutive periods within each
+#'     \code{by} group.
+#'     For \code{units = "count"} the exact p-values are then adjusted across all
+#'     comparisons with [scan_adjust()], and, when
+#'     \code{rounding} or
+#'     \code{suppression_limit} is given, [yoy_bounds()] adds
+#'     the publication
+#'     envelope (see [published_bounds()]). For
+#'     \code{"continuous"} and
+#'     \code{"percent"} units neither step runs: \code{rounding} and
+#'     \code{suppression_limit} are then ignored, with a warning;
+#'   \item rates (only with \code{population}): [rate()] per group and
+#'     period, and
+#'     [rate_change()] between periods, adjusted with
+#'     [scan_adjust()];
+#'   \item trend: per group, the values summed within each period, then
+#'     [trend_test()] (Mann-Kendall tau, p-value and Theil-Sen
+#'     slope) and, for
+#'     counts, [count_trend()] (Poisson rate ratio per period).
+#'     A group with fewer
+#'     than three periods gets \code{NA}; a test that fails gets \code{NA} rather
+#'     than an error;
+#'   \item drift (only with \code{prior}): [capsule_drift()]
+#'     of \code{data} against
+#'     \code{prior}.
+#' }
+#' Nothing is written and nothing is fetched; a progress bar for the trend
+#' step is drawn on stderr unless \code{options(morie.quiet = TRUE)}.
+#' Errors: \code{data} or \code{prior} not a data frame; a named column not
+#' in \code{data}; an invalid \code{units}, \code{direction} or
+#' \code{rounding_kind}; a \code{conf_level} outside (0, 1); and any error of the
+#' functions called (for example
+#' negative counts in [yoy()]).
+#'
 #' @param data A data frame in long form: one row per period and group.
-#' @param value Column with the published count (or measure).
-#' @param period Column with the period (fiscal year, quarter, ...).
-#' @param by Optional grouping columns (institution, region, ...).
-#' @param population Optional exposure column for rates.
+#' @param value Name of the column (a string) with the published count (or
+#'   measure).
+#' @param period Name of the column with the period (fiscal year, quarter,
+#'   ...); numeric periods are used as the time axis of the trend tests.
+#' @param by Optional character vector of grouping column names
+#'   (institution, region, ...). \code{NULL} (the default) treats the table as
+#'   one series.
+#' @param population Optional name of an exposure column for rates
+#'   (\code{NULL}, the default, skips the rate step).
 #' @param prior Optional data frame: the previous capsule of the same
-#'   table, for the drift screen.
-#' @param units `"count"`, `"continuous"` or `"percent"`, as in
-#'   [yoy()].
+#'   table, for the drift screen. \code{NULL} (the default) skips it.
+#' @param units \code{"count"} (the default), \code{"continuous"} or
+#'   \code{"percent"}, as in [yoy()].
 #' @param rounding,rounding_kind,suppression_limit How the release rounds
-#'   or suppresses cells; see
-#'   [published_bounds()]. `NULL` when the
-#'   counts are exact.
-#' @param direction Which way is an improvement, as in [yoy()].
-#' @param per Rate denominator, as in [rate()].
-#' @param conf_level Confidence level for every interval.
+#'   or suppresses cells; see [published_bounds()].
+#'   \code{rounding} is the
+#'   rounding base (for example 5), \code{rounding_kind} \code{"nearest"} (the
+#'   default) or \code{"random"}, \code{suppression_limit} the threshold below
+#'   which cells are suppressed. \code{NULL} when the counts are exact. Used
+#'   only for counts: with other \code{units} they are ignored, with a
+#'   warning.
+#' @param direction Which way is an improvement, as in [yoy()]:
+#'   \code{"neutral"} (the default), \code{"higher_is_better"} or
+#'   \code{"lower_is_better"}.
+#' @param per Rate denominator, as in [rate()]; default 1000 (rates
+#'   per
+#'   1,000 of \code{population}).
+#' @param conf_level Confidence level for every interval, default 0.95.
 #' @param alpha Level for the multiple-comparison decision and the drift
-#'   screens.
-#' @param adjust Multiple-comparison method for [scan_adjust()].
-#' @return A list of class `bricklayer_analysis` with `profile`
-#'   ([profile_columns()]), `missingness`
-#'   ([missingness_summary()]),
-#'   `change` ([yoy()] with p-values, adjustment and,
-#'   if `rounding` or
-#'   `suppression_limit` was given, publication bounds), `rates` and
-#'   `rate_change` (when `population` is given), `trend` (one row per
-#'   group with [trend_test()] and, for counts,
-#'   [count_trend()]),
-#'   `drift` ([capsule_drift()] against `prior`),
-#'   and `meta`.
+#'   screens, default 0.05.
+#' @param adjust Multiple-comparison method for
+#'   [scan_adjust()], default
+#'   \code{"BH"} (Benjamini-Hochberg).
+#' @return A list of class \code{bricklayer_analysis} (with a print method that
+#'   summarises it in a few lines):
+#'   \describe{
+#'     \item{\code{profile}}{[profile_columns()] of
+#'       \code{data}.}
+#'     \item{\code{missingness}}{named numeric from
+#'       [missingness_summary()].}
+#'     \item{\code{change}}{the [yoy()] table; for counts with the
+#'       added columns
+#'       \code{p_value}, \code{p_adjusted} and \code{significant}, and with
+#'       \code{env_*} and \code{combined_pct_lower}/\code{combined_pct_upper} when
+#'       publication bounds were requested.}
+#'     \item{\code{rates}, \code{rate_change}}{the [rate()] and
+#'       [rate_change()]
+#'       tables when \code{population} is given, otherwise \code{NULL}.}
+#'     \item{\code{trend}}{data frame with one row per group: the \code{by} columns,
+#'       \code{periods}, \code{first}, \code{last}, \code{tau}, \code{trend_p},
+#'       \code{slope}, \code{rate_ratio}, \code{rate_ratio_lower},
+#'       \code{rate_ratio_upper}.}
+#'     \item{\code{drift}}{[capsule_drift()] result against
+#'       \code{prior}, or
+#'       \code{NULL}.}
+#'     \item{\code{meta}}{list of the arguments used, \code{n_rows}, the sorted
+#'       \code{periods}, \code{prior} (logical) and \code{when} (a time stamp).}
+#'   }
 #' @examples
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
@@ -50,7 +118,24 @@
 #'                    by = c("table", "group"))
 #' a
 #' a$change[, c("table", "group", "year", "pct_change", "p_adjusted")]
-#' @seealso [report_analysis()] writes the result as a Markdown or HTML
+#' a$trend[, c("group", "tau", "trend_p", "rate_ratio")]
+#'
+#' # counts published rounded to base 5: the intervals widen
+#' b <- analyse_table(otis, value = "individuals", period = "year",
+#'                    by = c("table", "group"), rounding = 5)
+#' b$change[1:3, c("group", "year", "pct_lower", "combined_pct_lower")]
+#'
+#' # rates with an exposure column
+#' d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),
+#'                 n = c(10, 12, 15, 9, 30, 28, 35, 40),
+#'                 pop = rep(c(1000, 2000), each = 4))
+#' r <- analyse_table(d, "n", "year", by = "site", population = "pop", per = 1000)
+#' r$rate_change[, c("site", "year", "rate", "rate_ratio", "p_adjusted")]
+#'
+#' # a column that is not in the data is an error
+#' try(analyse_table(otis, value = "count", period = "year"))
+#' @seealso [report_analysis()] writes the result as a
+#'   Markdown or HTML
 #'   report.
 #' @export
 analyse_table <- function(data, value, period, by = NULL, population = NULL,
@@ -65,6 +150,7 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
                           adjust = "BH") {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
+  conf_level <- .rmbl_conf_level(conf_level)
   units <- .rmbl_arg(units)
   direction <- .rmbl_arg(direction)
   rounding_kind <- .rmbl_arg(rounding_kind)
@@ -74,6 +160,10 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
     }
   }
   bounded <- !is.null(rounding) || !is.null(suppression_limit)
+  if (bounded && units != "count") {
+    warning(sprintf(paste0("`rounding` and `suppression_limit` apply only to counts: they are ignored ",
+                           "with units = \"%s\""), units), call. = FALSE)
+  }
 
   ## ---- what is in it ----
   profile <- profile_columns(data)
@@ -134,6 +224,7 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
 }
 
 .analysis_trends <- function(data, value, period, by, units, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
   groups <- if (is.null(by)) list(data) else
     split(data, data[by], drop = TRUE)
   pg <- bricklayer_progress("trends", length(groups))
@@ -236,21 +327,43 @@ print.bricklayer_analysis <- function(x, ...) {
 
 #' Write an analysis as a Markdown or HTML report
 #'
-#' Renders a [analyse_table()] result: the profile,
-#' the change table
-#' with its intervals and adjusted p-values, the rates, the trends and
-#' the drift screen, each with one sentence saying how to read it. The
-#' Markdown is plain enough to paste into a notebook; the HTML is a
-#' single self-contained file.
+#' Renders an [analyse_table()] result as a report: the
+#' change table with
+#' its intervals and adjusted p-values, the rates, the trends, the drift
+#' screen and the column profile, each with one sentence saying how to read
+#' it. The Markdown is plain enough to paste into a notebook or a pull
+#' request; the HTML is a single self-contained file with no external
+#' resources, suitable for e-mailing to a reviewer.
 #'
-#' @param x A `bricklayer_analysis`.
-#' @param path Where to write. With `NULL` the text is returned invisibly
-#'   and nothing is written.
-#' @param format `"markdown"` or `"html"`; guessed from `path` when it
-#'   ends in `.html` or `.md`.
-#' @param title Report title.
-#' @param digits Digits for percentages and rates.
-#' @return The report text, invisibly.
+#' @details
+#' Sections appear in this order: a header line (value, period, groups,
+#' rows, period range and the time of the analysis), "Change between
+#' periods", "Rates per ..." (when there were rates), "Trend over the
+#' series", "Drift against the prior capsule" (when a prior was given) and
+#' "What is in the table" (with "Missing values" when any are missing).
+#' Tables use pipe syntax; numbers are rounded to \code{digits} decimals,
+#' whole numbers of 10,000 and above get thousands separators, logicals are
+#' written yes/no and \code{NA} is blank. When the values are percentages
+#' the change is reported in percentage points. The HTML is produced by a
+#' small built-in converter (headings, paragraphs, tables and inline code,
+#' with the text escaped). The file is written as UTF-8 and overwritten if
+#' it exists.
+#'
+#' Errors: \code{x} not from [analyse_table()]; an invalid
+#' \code{format}.
+#'
+#' @param x A \code{bricklayer_analysis} from
+#'   [analyse_table()].
+#' @param path Where to write, a file path. With \code{NULL} (the default)
+#'   the text is returned invisibly and nothing is written.
+#' @param format \code{"markdown"} (the default) or \code{"html"}. When
+#'   \code{format} is not given and \code{path} ends in \code{.html} or
+#'   \code{.htm}, HTML is written; any other path gives Markdown.
+#' @param title Report title, a string; the top heading and, for HTML, the
+#'   page title.
+#' @param digits Number of decimals for percentages and rates, default 1.
+#' @return The report text (a length-1 character string, Markdown or a full
+#'   HTML document), invisibly.
 #' @examples
 #' path <- system.file("extdata", "otis_a01_individuals.csv",
 #'                     package = "rmoriebricklayer")
@@ -258,6 +371,15 @@ print.bricklayer_analysis <- function(x, ...) {
 #'                    period = "year", by = c("table", "group"))
 #' md <- report_analysis(a)
 #' cat(substr(md, 1, 400))
+#'
+#' # HTML, chosen from the file extension
+#' out <- tempfile(fileext = ".html")
+#' report_analysis(a, out, title = "OTIS A01: individuals in custody", digits = 2)
+#' readLines(out, n = 3)
+#'
+#' # only an analyse_table() result can be reported
+#' try(report_analysis(read.csv(path)))
+#' unlink(out)
 #' @export
 report_analysis <- function(x, path = NULL, format = c("markdown", "html"),
                             title = "Analysis of a published table",

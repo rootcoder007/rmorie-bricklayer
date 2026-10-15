@@ -7,43 +7,63 @@
 eb_rates(observed, expected, area = NULL)
 }
 \arguments{
-\item{observed}{Observed counts.}
+\item{observed}{Numeric vector of observed counts (non-negative, no
+\code{NA}).}
 
-\item{expected}{Expected counts.}
+\item{expected}{Numeric vector of expected counts (positive), the same
+length, for example from \code{\link{expected_counts}}.}
 
-\item{area}{Optional labels.}
+\item{area}{Optional vector of area labels, added as the first column.
+Default \code{NULL}.}
 }
 \value{
-A data frame with the raw \code{sir}, the shrunk \code{eb}, the
-\code{shrinkage} applied (zero means untouched, one means replaced by
-the overall rate), and the fitted prior's \code{nu} and \code{alpha}.
+A data frame with one row per area: \code{area} (when given),
+\code{observed}, \code{expected}, the raw ratio \code{sir}, the shrunk
+estimate \code{eb}, the \code{shrinkage} applied (zero means untouched,
+one means replaced by the overall rate), and the fitted prior's \code{nu}
+(shape) and \code{alpha} (rate), the same on every row.
 }
 \description{
-A small area's rate is mostly noise, so ranking areas by their raw rates
+A small area's rate is mostly noise, so ranking areas by their raw ratios
 puts the smallest areas at both ends of the table by construction. This
-borrows strength across areas: each rate is pulled toward the overall
-one by an amount that depends on how little information the area
-carries.
+function borrows strength across areas: each area's ratio of observed to
+expected is pulled toward the overall ratio by an amount that depends on
+how little information the area carries. Use the shrunk estimates for
+maps and rankings; use \code{\link{sir}} for each area's own evidence.
 }
 \details{
-The Clayton-Kaldor construction: the area-specific relative risks are
-taken to come from a gamma prior, whose two parameters are estimated
-from the observed and expected counts by the method of moments, and the
-posterior mean \code{(O + nu) / (E + alpha)} is reported. Where the
-expected count is large the data dominate and the estimate barely moves;
-where it is small the prior does, which is the intended behaviour and
-not a defect.
+The area relative risks \eqn{\theta_a} are taken to come from a gamma
+prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the overall
+ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by the
+method of moments,
+\deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a E_a} - \frac{m}{\bar E},}
+with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E} the mean expected count;
+the subtracted term is the spread that Poisson sampling alone would
+produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 / s^2}, and the
+posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported, with
+shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is large
+the data dominate and the estimate barely moves; where it is small the
+prior does, which is the intended behaviour and not a defect.
 
 When the between-area variance estimate comes out at or below zero there
 is no evidence of any real variation between areas, and every estimate
 collapses to the overall rate. That is reported through \code{shrinkage}
-rather than hidden.
+(all ones) and \code{NA} prior parameters rather than hidden.
+
+Errors: lengths that differ; missing, negative or infinite counts;
+missing, infinite or non-positive expected counts; fewer than two areas.
 }
 \examples{
 # Three areas, one of them tiny. The tiny area's raw ratio is
 # extreme; its shrunk one is not.
 eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
          area = c("North", "South", "Tiny"))
+
+# no variation beyond chance: every estimate is the overall ratio
+eb_rates(c(10, 11, 9), c(10, 10, 10))
+
+# one area has nothing to borrow from
+try(eb_rates(5, 4))
 }
 \references{
 Clayton, D. and Kaldor, J. (1987). Empirical Bayes estimates of
@@ -56,5 +76,5 @@ empirical-Bayes approximation in the development of Bayesian disease
 mapping.
 }
 \seealso{
-\code{\link[=sir]{sir()}}, \code{\link[=funnel_limits]{funnel_limits()}}
+\code{\link{sir}}, \code{\link{funnel_limits}}
 }

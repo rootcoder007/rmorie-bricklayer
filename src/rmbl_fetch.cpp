@@ -25,6 +25,10 @@
 #include <cstdlib>
 #include <functional>
 #include <chrono>
+#include <atomic>
+#include <cmath>
+#include <cstdarg>
+#include <thread>
 #include <R.h>
 #include <Rinternals.h>
 #include <curl/curl.h>
@@ -678,41 +682,125 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
  * refuse it, so a verifier limited to GET is a verifier that usually
  * cannot check revocation at all.
  */
-/* While a language model thinks, the reply's first byte can be a minute away: with a label set
- * (C_rmbl_wait_label, from R when a person is watching a terminal) the wait draws one line on
- * stderr -- a turning bar, the label and the seconds so far -- and wipes it when the reply comes.
- * libcurl calls this several times a second while it waits; a pending Ctrl-C ends the request. */
+/* The native spinner. R sets a label for a long native call (.bl_busy(), .bl_net(), and a model's
+ * wait in .bl_llm_chat()) and every poll for a Ctrl-C turns it: rmbl_interrupt_pending(), which the
+ * kernels call every few hundred milliseconds of work, and libcurl's progress callback, several
+ * times a second while a request waits (a language model can think for a minute before the first
+ * byte). One clock from when the label was set, nothing for the first 0.75 s (a quick call never
+ * flashes a line), at most 12 frames a second, and one look with the R side's spinner: the accent
+ * spinner, the label, the time so far dimmed. When R clears the label the line is wiped, or replaced
+ * by a check (a cross after an error) and the time taken when R says how the call ended.
+ *
+ * Where the console cannot redraw a line (a log, a pipe, knitr, a notebook) a line when the call
+ * has run 0.75 s, one every ten seconds after it, and one at the end: the R side's rule for work
+ * with no count, a line at a stage and never one per poll.
+ *
+ * The frames go through REprintf, or Rprintf where R draws on stdout (the RStudio and Positron
+ * consoles, which print stderr in their error colour), then R_FlushConsole() so a GUI shows them
+ * while the call is still running (RcppProgress draws the same way, REprintf + R_FlushConsole()).
+ * R's console functions belong to R's main thread, so the spinner turns only there: a poll from a
+ * worker thread returns at once. */
 static std::string g_wait_label;
-static bool g_wait_unicode = false, g_wait_color = false;
-extern "C" const char *rmbl_progress_spinner(double t, int unicode);  /* rmbl_progress.c */
+static bool g_wait_unicode = false, g_wait_dynamic = true, g_wait_stdout = false;
+static int g_wait_colors = 1;   /* 1: none; else the console's colours, as in rmbl_progress_fg() */
+static std::atomic<bool> g_wait_on(false);
+static std::thread::id g_wait_thread;   /* R's main thread: written once, before g_wait_on is first set */
+extern "C" const char *rmbl_progress_spinner(double t, int unicode);                /* rmbl_progress.c */
+extern "C" int rmbl_progress_fg(char *out, int cap, int r, int g, int b, int ncolors);  /* rmbl_progress.c */
 
 struct Wait {
-    std::chrono::steady_clock::time_point t0, last;
-    size_t width;
     bool interrupted;
 };
 
-/* Any long native call, not only a POST: R sets a label (.bl_busy(), .bl_net()) and every poll for
- * a Ctrl-C (rmbl_interrupt_pending(), which the kernels call every few hundred milliseconds of work,
- * and libcurl's progress callbacks several times a second) turns the spinner: one clock from when the
- * label was set and one line, wiped when R clears the label. Nothing for the first 0.75 s, so a quick
- * call never flashes a line; nothing while a POST draws its own wait line. */
 static std::chrono::steady_clock::time_point g_busy_t0, g_busy_last;
-static size_t g_busy_width = 0;
-static bool g_post_waiting = false;
+static size_t g_busy_width = 0;   /* cells of the line on screen, 0 when none */
+static double g_busy_said = -1;   /* no redraw: when the last line was written, -1 before the first */
 
-extern "C" void rmbl_wait_tick(void) {
-    if (g_wait_label.empty() || g_post_waiting) return;
+static void wait_put(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    if (g_wait_stdout) Rvprintf(fmt, ap);
+    else REvprintf(fmt, ap);
+    va_end(ap);
+    R_FlushConsole();
+}
+
+static std::string wait_secs(double s) {
+    char b[48];
+    if (s < 60) std::snprintf(b, sizeof b, "%.1fs", s);
+    else std::snprintf(b, sizeof b, "%dm%02ds", static_cast<int>(s / 60), static_cast<int>(std::fmod(s, 60.0)));
+    return b;
+}
+
+/* the cells a UTF-8 string takes: one per code point (the label is printable text from R) */
+static size_t wait_cells(const std::string &s) {
+    size_t n = 0;
+    for (unsigned char c : s) n += (c & 0xC0) != 0x80;
+    return n;
+}
+
+static std::string wait_paint(const std::string &x, int r, int g, int b) {
+    char fg[64];
+    if (g_wait_colors < 8 || !rmbl_progress_fg(fg, (int) sizeof fg, r, g, b, g_wait_colors)) return x;
+    return std::string(fg) + x + "\033[0m";
+}
+
+static std::string wait_dim(const std::string &x) {
+    if (g_wait_colors < 8) return x;
+    if (g_wait_colors < 256) return "\033[2m" + x + "\033[0m";
+    return wait_paint(x, 135, 135, 145);
+}
+
+/* one frame, on a line whose old content is padded over (no erase-line escape: the RStudio console
+ * redraws on \r but has no cursor control); `end` "\n" makes it the last line */
+static void wait_line(const std::string &line, size_t cells, const char *end) {
+    const size_t pad = g_busy_width > cells ? g_busy_width - cells : 0;
+    wait_put("\r%s%s%s", line.c_str(), std::string(pad, ' ').c_str(), end);
+    g_busy_width = *end ? 0 : (cells > g_busy_width ? cells : g_busy_width);
+}
+
+static void wait_draw(void) {
     const auto now = std::chrono::steady_clock::now();
     const double secs = std::chrono::duration<double>(now - g_busy_t0).count();
     if (secs < 0.75) return;
-    if (g_busy_width && std::chrono::duration<double>(now - g_busy_last).count() < 0.125) return;
+    if (!g_wait_dynamic) {
+        if (g_busy_said < 0) wait_put("  %s (%s)\n", g_wait_label.c_str(), wait_secs(secs).c_str());
+        else if (secs - g_busy_said >= 10) wait_put("  %s: still working (%s)\n", g_wait_label.c_str(), wait_secs(secs).c_str());
+        else return;
+        g_busy_said = secs;
+        return;
+    }
+    if (g_busy_width && std::chrono::duration<double>(now - g_busy_last).count() < 1.0 / 12) return;
     g_busy_last = now;
-    const char *spin = rmbl_progress_spinner(secs, g_wait_unicode);
-    const int n = std::snprintf(NULL, 0, "x %s  %ds ", g_wait_label.c_str(), static_cast<int>(secs));
-    if (g_wait_color) REprintf("\r\033[38;2;130;160;255m%s\033[0m %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
-    else REprintf("\r%s %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
-    if (n > 0 && static_cast<size_t>(n) > g_busy_width) g_busy_width = static_cast<size_t>(n);
+    const std::string el = wait_secs(secs);
+    wait_line(wait_paint(rmbl_progress_spinner(secs, g_wait_unicode), 80, 200, 255) + " " + g_wait_label + " " +
+                  wait_dim(el),
+              3 + wait_cells(g_wait_label) + el.size(), "");
+}
+
+/* the end of a label: the line wiped (`status` < 0), or a check (1) or a cross (0) and the time */
+static void wait_end(int status) {
+    if (g_wait_label.empty()) return;
+    const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - g_busy_t0).count();
+    if (g_wait_dynamic && g_busy_width) {
+        if (status < 0) {
+            wait_put("\r%s\r", std::string(g_busy_width, ' ').c_str());
+        } else {
+            const std::string mark = status ? wait_paint(g_wait_unicode ? "\xe2\x9c\x94" : "v", 120, 220, 140)
+                                            : wait_paint(g_wait_unicode ? "\xe2\x9c\x96" : "x", 255, 120, 120);
+            const std::string tail = g_wait_unicode ? "\xc2\xb7 " + wait_secs(secs) : "(" + wait_secs(secs) + ")";
+            const std::string text = status ? g_wait_label : g_wait_label + "  stopped";
+            wait_line(mark + " " + text + " " + wait_dim(tail), 3 + wait_cells(text) + wait_cells(tail), "\n");
+        }
+    } else if (!g_wait_dynamic && g_busy_said >= 0 && status >= 0) {
+        wait_put("  %s: %s (%s)\n", g_wait_label.c_str(), status ? "done" : "stopped", wait_secs(secs).c_str());
+    }
+    g_busy_width = 0;
+}
+
+extern "C" void rmbl_wait_tick(void) {
+    if (!g_wait_on.load(std::memory_order_acquire) || std::this_thread::get_id() != g_wait_thread) return;
+    wait_draw();
 }
 
 int wait_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
@@ -721,16 +809,7 @@ int wait_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
         w->interrupted = true;
         return 1;
     }
-    const auto now = std::chrono::steady_clock::now();
-    if (w->width && std::chrono::duration<double>(now - w->last).count() < 0.125) return 0;
-    w->last = now;
-    const double secs = std::chrono::duration<double>(now - w->t0).count();
-    const char *spin = rmbl_progress_spinner(secs, g_wait_unicode);
-    /* the visible width: one cell for the spinner, whatever its bytes */
-    const int n = std::snprintf(NULL, 0, "x %s  %ds ", g_wait_label.c_str(), static_cast<int>(secs));
-    if (g_wait_color) REprintf("\r\033[38;2;130;160;255m%s\033[0m %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
-    else REprintf("\r%s %s  %ds ", spin, g_wait_label.c_str(), static_cast<int>(secs));
-    if (n > 0 && static_cast<size_t>(n) > w->width) w->width = static_cast<size_t>(n);
+    rmbl_wait_tick();
     return 0;
 }
 
@@ -772,17 +851,15 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
     char errbuf[CURL_ERROR_SIZE] = {0};   /* libcurl's own sentence ("Operation too slow ...") */
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
-    Wait wait = {std::chrono::steady_clock::now(), std::chrono::steady_clock::now(), 0u, false};
+    /* the spinner of the label R set, turned while the POST waits; wiped or ended when R clears it */
+    Wait wait = {false};
     if (!g_wait_label.empty()) {
         curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
         curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
         curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
-        g_post_waiting = true;
     }
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
-    g_post_waiting = false;
-    if (wait.width) REprintf("\r%s\r", std::string(wait.width, ' ').c_str());
     /* a Ctrl-C that ended the wait is raised by the barrier once this returns: the caller never
      * sees a status to retry on, so the prompt is not sent again (review of 29a55d8, G1) */
     if (interrupted) *interrupted = wait.interrupted;
@@ -1046,20 +1123,43 @@ int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
 
 /* ---- .Call wrappers for bricklayer's own R side ------------------------ */
 
-/* The label the next POSTs draw while they wait ("" for none), with braille or ASCII frames and
- * with or without colour; see wait_xferinfo. */
+/* The label of the native spinner ("" to end it), with braille or ASCII frames, and the mode: TRUE
+ * or FALSE for colour (the older form: a redrawn line on stderr, 256 colours or none), or
+ * c(colours, redraws, to stdout) from .bl_busy(), with a fourth element when ending a label: 1 when
+ * the call ended well (a check), 0 after an error or an interrupt (a cross); see wait_draw(). */
 SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
     if (TYPEOF(label) != STRSXP || XLENGTH(label) != 1 || STRING_ELT(label, 0) == NA_STRING) {
         Rf_error("`label` must be a single string");
     }
-    /* the busy spinner's line ends with the label that drew it */
-    if (g_busy_width) REprintf("\r%s\r", std::string(g_busy_width, ' ').c_str());
+    int colors = 1, status = -1;
+    bool dynamic = true, to_stdout = false;
+    if (TYPEOF(color) == LGLSXP) {
+        colors = Rf_asLogical(color) == TRUE ? 256 : 1;
+    } else if (TYPEOF(color) == REALSXP && (XLENGTH(color) == 3 || XLENGTH(color) == 4)) {
+        const double *m = REAL(color);
+        for (R_xlen_t i = 0; i < XLENGTH(color); ++i) {
+            if (!R_FINITE(m[i]) || m[i] < 0) Rf_error("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
+        }
+        colors = m[0] >= 16777216 ? 16777216 : static_cast<int>(m[0]);
+        dynamic = m[1] != 0;
+        to_stdout = m[2] != 0;
+        if (XLENGTH(color) == 4) status = m[3] != 0;
+    } else {
+        Rf_error("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
+    }
+    /* the line of the label before ends on the stream and in the mode it was drawn with */
+    g_wait_on.store(false, std::memory_order_release);
+    wait_end(status);
+    if (g_wait_thread == std::thread::id()) g_wait_thread = std::this_thread::get_id();
     g_busy_width = 0;
+    g_busy_said = -1;
     g_busy_t0 = g_busy_last = std::chrono::steady_clock::now();
-    g_post_waiting = false;
     g_wait_label = std::string(Rf_translateCharUTF8(STRING_ELT(label, 0))).substr(0, 200);
     g_wait_unicode = Rf_asLogical(unicode) == TRUE;
-    g_wait_color = Rf_asLogical(color) == TRUE;
+    g_wait_colors = colors;
+    g_wait_dynamic = dynamic;
+    g_wait_stdout = to_stdout;
+    g_wait_on.store(!g_wait_label.empty(), std::memory_order_release);
     return R_NilValue;
 }
 

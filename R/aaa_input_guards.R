@@ -112,6 +112,25 @@
   invisible(TRUE)
 }
 
+# a seed for a native generator: one whole number in [0, 2^53). The core casts it to an unsigned
+# 64-bit integer, and a NA, negative or fractional double cast that way is undefined behaviour.
+.rmbl_seed <- function(seed, what = "seed") {
+  seed <- .rmbl_num(seed, what)
+  if (length(seed) != 1L || is.na(seed) || seed < 0 || seed != floor(seed) || seed >= 2^53) {
+    stop(sprintf("`%s` must be a whole number in [0, 2^53)", what), call. = FALSE)
+  }
+  seed
+}
+
+# a confidence level: one number strictly inside (0, 1); outside it the interval quantiles are NaN
+.rmbl_conf_level <- function(x, what = "conf_level") {
+  x <- .rmbl_num(x, what)
+  if (length(x) != 1L || is.na(x) || x <= 0 || x >= 1) {
+    stop(sprintf("`%s` must be a single number strictly between 0 and 1", what), call. = FALSE)
+  }
+  x
+}
+
 .rmbl_num <- function(x, what, integer = FALSE) {
   if (is.character(x)) {
     v <- suppressWarnings(as.numeric(x))

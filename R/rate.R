@@ -55,46 +55,76 @@
 
 #' Event rates per unit of population
 #'
-#' Counts divided by exposure and scaled to a denominator, with the
-#' exact Poisson interval that says how much of the result is signal.
+#' @description
+#' Turns counts of events (arrests, stops, admissions, deaths) into rates
+#' per unit of exposure, such as per 1,000 or per 100,000 residents, with an
+#' exact Poisson confidence interval for each rate. A count is not
+#' comparable across areas of different size or years of different
+#' population; a rate is. The interval says how much of a rate is signal:
+#' three events in a small area give a rate whose interval is several times
+#' its own width.
 #'
-#' A count is not comparable across areas of different size or years of
-#' different population; a rate is. What a rate does not do is become
-#' reliable just because it is a rate: three events in a small area
-#' gives a rate with an interval several times its own width, and the
-#' interval here is the one that says so. It is the exact Poisson
-#' interval, computed through the gamma relation, so a count of zero has
-#' a lower limit of exactly zero rather than a negative number.
+#' @details
+#' For count \eqn{y} and exposure \eqn{t}, the rate is
+#' \eqn{\mathrm{per} \times y / t}. The interval is the exact Poisson
+#' interval for \eqn{y}, computed through the gamma relation,
+#' \deqn{\left[G^{-1}(\alpha/2;\, y),\ G^{-1}(1 - \alpha/2;\, y + 1)\right]
+#'   \times \mathrm{per} / t,}
+#' with \eqn{G^{-1}(p; k)} the gamma quantile with shape \eqn{k}; a count of
+#' zero has a lower limit of exactly zero. This is the interval of
+#' \code{stats::poisson.test()}. It treats the exposure as known without
+#' error.
 #'
-#' `per` takes a number, or one of `"1k"`,
-#' `"10k"`, `"100k"`, `"1m"`, because a
-#' denominator mistyped by a factor of ten is
-#' invisible once it reaches a table.
+#' With a data frame, counts and exposures are summed within each
+#' combination of the \code{by} columns (missing values are ignored in the
+#' sums), and the groups come out in sorted order. Groups with no rows are
+#' not created. Without \code{by} the whole table is one group. With a
+#' vector, each element is its own row.
+#'
+#' \code{per} takes a number, or one of \code{"1k"}, \code{"10k"},
+#' \code{"100k"}, \code{"1m"} (case, spaces, commas and a leading "per" are
+#' ignored), because a denominator mistyped by a factor of ten is invisible
+#' once it reaches a table.
+#'
+#' A rate and a share are different quantities: use \code{\link{share}} when
+#' the denominator is the total of the same events, not a population.
+#'
+#' Errors: count or population columns that are not numeric or not found;
+#' negative or fractional counts; a population of zero or below;
+#' \code{conf_level} outside (0, 1); an unknown \code{per} shorthand or a
+#' non-positive \code{per}.
 #'
 #' @param x A data frame, or a numeric vector of counts.
 #' @param ... Passed to methods.
-#' @param count Column of counts: non-negative whole numbers.
-#' @param population Column of exposure: positive. Person-years, stops,
-#'   residents -- whatever the events were at risk of happening to.
-#' @param by Character vector of grouping columns. The rate is computed
-#'   within each group.
-#' @param per The rate denominator: a positive number, or `"1k"`,
-#'   `"10k"`, `"100k"`, `"1m"`. Default 1000.
-#' @param conf_level Confidence level for the interval.
-#' @param min_count Counts at or below this are flagged as too small to
-#'   report, with the rate still computed. Default 0, which flags
+#' @param count Column of counts, given unquoted or as a string:
+#'   non-negative whole numbers.
+#' @param population For the data-frame method, the column of exposure,
+#'   unquoted or as a string; for the default method, a numeric vector the
+#'   length of \code{x} (or one number, recycled). Positive. Person-years,
+#'   stops, residents -- whatever the events were at risk of happening to.
+#' @param by Character vector of grouping columns, default \code{NULL}. The
+#'   rate is computed within each group.
+#' @param per The rate denominator: a positive number, or \code{"1k"},
+#'   \code{"10k"}, \code{"100k"}, \code{"1m"}. Default 1000.
+#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#'   the interval.
+#' @param min_count Number, default 0. Counts at or below this are flagged
+#'   as too small to report, with the rate still computed. The default flags
 #'   nothing; published guidance often uses 5 or 10.
 #'
-#' @return A data frame of class `rmbl_rate` with the
-#'   grouping columns, `count`, `population`,
-#'   `rate`, `lower`, `upper` and `flag`, plus a
-#'   `rate` attribute recording the denominator and
-#'   the confidence level.
+#' @return A data frame of class \code{c("rmbl_rate", "data.frame")} with
+#'   the grouping columns (or \code{label}, for a named vector), \code{count},
+#'   \code{population}, \code{rate},
+#'   \code{lower}, \code{upper} (numeric, rates per \code{per}) and
+#'   \code{flag} (character, \code{NA} when not flagged), plus a \code{rate}
+#'   attribute: a list of \code{count}, \code{population}, \code{by},
+#'   \code{per}, \code{per_label} (for example \code{"per 100,000"}),
+#'   \code{conf_level} and \code{min_count}. The print method titles the
+#'   table with the denominator and the interval.
 #'
-#' @seealso [share()] for a percentage of a
-#'   total, [rate_change()] for the change in a
-#'   rate between periods, [sir()] for a rate
-#'   compared against an expected count rather
+#' @seealso \code{\link{share}} for a percentage of a total,
+#'   \code{\link{rate_change}} for the change in a rate between periods,
+#'   \code{\link{sir}} for a rate compared against an expected count rather
 #'   than a population.
 #'
 #' @examples
@@ -114,8 +144,11 @@
 #' rate(stops, stops, residents, by = "division", per = "100k",
 #'      min_count = 5)
 #'
-#' # vectors work too, for a single figure
-#' rate(3, 9500, per = "100k")
+#' # vectors work too, for a single figure; a zero count has a lower limit of 0
+#' rate(c(3, 0), 9500, per = "100k")
+#'
+#' # a fractional count has no Poisson interval
+#' try(rate(2.5, 1000))
 #' @export
 rate <- function(x, ...) UseMethod("rate")
 
@@ -169,6 +202,7 @@ rate.data.frame <- function(x, count, population, by = NULL, per = 1000,
 #' @export
 rate.default <- function(x, population, per = 1000, conf_level = 0.95,
                          min_count = 0, ...) {
+  lab <- names(x)
   x <- .rmbl_num(x, "x")
   population <- .rmbl_num(population, "population")
   if (length(population) == 1L) population <- rep(population, length(x))
@@ -178,6 +212,8 @@ rate.default <- function(x, population, per = 1000, conf_level = 0.95,
   per <- .rate_per(per)
   agg <- data.frame(count = x, population = population,
                     stringsAsFactors = FALSE)
+  # a named vector keeps its names as the first column (.rmbl_num drops them)
+  if (!is.null(lab)) agg <- cbind(data.frame(label = lab, stringsAsFactors = FALSE), agg)
   structure(.rate_compute(agg, per, conf_level, min_count),
             class = c("rmbl_rate", "data.frame"),
             rate = list(count = "count", population = "population",
@@ -187,10 +223,7 @@ rate.default <- function(x, population, per = 1000, conf_level = 0.95,
 }
 
 .rate_compute <- function(agg, per, conf_level, min_count) {
-  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
-  if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
-    stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
-  }
+  conf_level <- .rmbl_conf_level(conf_level)
   cnt <- as.numeric(agg$count)
   pop <- as.numeric(agg$population)
   if (any(cnt < 0, na.rm = TRUE)) {
@@ -238,36 +271,60 @@ print.rmbl_rate <- function(x, ...) {
 
 #' Share of a total, in percent
 #'
-#' What fraction of a total each count is, with the Wilson interval.
+#' @description
+#' Expresses each count as a percentage of a total (for example each
+#' division's share of all stops), with a Wilson confidence interval. A
+#' share's denominator is the total of the same events, so shares over a
+#' complete grouping sum to 100. Use \code{\link{rate}} instead when the
+#' denominator is a population; "40% of stops" and "40 stops per 1,000
+#' residents" are different claims.
 #'
-#' A share and a rate are different quantities: a share's denominator is
-#' the total of the same events, so shares over a complete grouping sum
-#' to 100. Use [rate()] when the denominator is a population.
+#' @details
+#' For count \eqn{y} out of total \eqn{n}, the share is \eqn{100\,y/n} and
+#' the interval is Wilson's score interval for \eqn{\hat p = y/n},
+#' \deqn{\frac{\hat p + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat p(1-\hat p)}{n}
+#'   + \frac{z^2}{4n^2}}}{1 + z^2/n},}
+#' with \eqn{z} the standard normal quantile for \code{conf_level}, reported
+#' in percent and clipped to \eqn{[0, 100]}.
 #'
 #' The interval is Wilson's, not the textbook normal approximation.
 #' The normal interval on a proportion is wrong in exactly the cases
 #' people reach for it -- small counts and shares near 0 or 100, where
 #' it runs past the ends of the scale and reports a negative percentage.
-#' Wilson's stays inside the scale and is accurate at those counts.
+#' Wilson's stays inside the scale and is accurate at those counts. It
+#' treats each count as a binomial draw from the total, which is an
+#' approximation when the total is itself the sum of the counts.
+#'
+#' With a data frame, counts are summed within each combination of the
+#' \code{by} columns (missing values ignored), groups sorted. The default
+#' method treats each element of \code{x} as a row; when \code{x} is named,
+#' its names become a leading \code{label} column.
+#'
+#' Errors: a count column that is not numeric or not found; negative counts;
+#' a total of zero or below; a count larger than the total;
+#' \code{conf_level} outside (0, 1).
 #'
 #' @param x A data frame, or a numeric vector of counts.
 #' @param ... Passed to methods.
-#' @param count Column of counts: non-negative whole numbers.
+#' @param count Column of counts, unquoted or as a string: non-negative
+#'   whole numbers.
 #' @param by Character vector of grouping columns. Shares are computed
-#'   over the groups, so they sum to 100 unless `total` says otherwise.
-#' @param total The denominator. `NULL` (default) sums `count`, which
-#'   makes the shares sum to 100. A number, or a column name, uses that
-#'   instead -- for the case where some of the total is not in the table.
-#' @param conf_level Confidence level for the interval.
+#'   over the groups, so they sum to 100 unless \code{total} says otherwise.
+#' @param total The denominator. \code{NULL} (default) sums \code{count},
+#'   which makes the shares sum to 100. A number uses that number; a column
+#'   name (data-frame method) uses the sum of that column -- for the case
+#'   where some of the total is not in the table.
+#' @param conf_level Number in (0, 1), default 0.95: the confidence level
+#'   of the interval.
 #'
-#' @return A data frame of class `rmbl_share`
-#'   with the grouping columns, `count`, `total`,
-#'   `share`, `lower` and `upper`, plus a `share`
-#'   attribute recording the denominator and the
-#'   confidence level.
+#' @return A data frame of class \code{c("rmbl_share", "data.frame")} with
+#'   the grouping columns (or \code{label}, for a named vector), \code{count},
+#'   \code{total}, \code{share},
+#'   \code{lower} and \code{upper} (percent), plus a \code{share} attribute:
+#'   a list of \code{count}, \code{by}, \code{total} and \code{conf_level}.
 #'
-#' @seealso [rate()] for events per population,
-#'   [yoy()] for change between periods.
+#' @seealso \code{\link{rate}} for events per population,
+#'   \code{\link{yoy}} for change between periods.
 #'
 #' @examples
 #' stops <- data.frame(
@@ -283,6 +340,12 @@ print.rmbl_rate <- function(x, ...) {
 #'
 #' # a denominator from outside the table
 #' share(stops, stops, by = "division", total = 10000)
+#'
+#' # a plain vector
+#' share(c(3, 7))
+#'
+#' # a count larger than its total is not a share
+#' try(share(c(5, 2), total = 4))
 #' @export
 share <- function(x, ...) UseMethod("share")
 
@@ -330,9 +393,12 @@ share.data.frame <- function(x, count, by = NULL, total = NULL,
 #' @rdname share
 #' @export
 share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
+  lab <- names(x)
   x <- .rmbl_num(x, "x")
   denom <- if (is.null(total)) sum(x, na.rm = TRUE) else as.numeric(total)[1L]
   agg <- data.frame(count = x, stringsAsFactors = FALSE)
+  # a named vector keeps its names as the first column (.rmbl_num drops them)
+  if (!is.null(lab)) agg <- cbind(data.frame(label = lab, stringsAsFactors = FALSE), agg)
   structure(.share_compute(agg, denom, conf_level),
             class = c("rmbl_share", "data.frame"),
             share = list(count = "count", by = NULL, total = denom,
@@ -340,10 +406,7 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 }
 
 .share_compute <- function(agg, denom, conf_level) {
-  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
-  if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
-    stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
-  }
+  conf_level <- .rmbl_conf_level(conf_level)
   cnt <- as.numeric(agg$count)
   if (any(cnt < 0, na.rm = TRUE)) {
     stop("`count` must be non-negative", call. = FALSE)
@@ -371,6 +434,7 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 # small counts and extreme shares where the normal approximation
 # reports impossible values.
 .share_wilson <- function(cnt, n, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
   z <- stats::qnorm(1 - (1 - conf_level) / 2)
   p <- cnt / n
   denom <- 1 + z^2 / n
@@ -382,43 +446,78 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 
 #' Change in a rate between periods
 #'
-#' The change in a rate from one period to the period `lag` places
-#' earlier, with the exact conditional interval for the rate ratio.
+#' @description
+#' Compares each period's rate with the rate \code{lag} periods earlier (for
+#' example this year's stops per 100,000 residents with last year's), and
+#' gives the rate ratio, the percent change and an exact confidence interval
+#' for the change. Use it instead of the percent change of two published
+#' rates: both the counts and the populations move between periods, and the
+#' interval here accounts for the randomness in the counts.
 #'
+#' @details
 #' This is not the percent change of two rates treated as measured
 #' numbers. Both the counts and the denominators move between periods,
 #' and an interval that ignores the denominators understates the
 #' uncertainty of the change. The construction here conditions on the
 #' total of the two counts and corrects for the ratio of the two
-#' exposures, which is [yoy()]'s exact conditional-binomial interval
-#' generalised to unequal denominators: with equal populations it
+#' exposures, which is \code{\link{yoy}}'s exact conditional-binomial
+#' interval generalised to unequal denominators: with equal populations it
 #' reduces to exactly that.
+#'
+#' With counts \eqn{a} (now) and \eqn{b} (earlier) and exposures
+#' \eqn{t_a}, \eqn{t_b}, conditional on \eqn{a + b} the count \eqn{a} is
+#' binomial with success probability \eqn{p = RR\,t_a / (RR\,t_a + t_b)}.
+#' The Clopper-Pearson limits for \eqn{p}, \eqn{p_L =
+#' B^{-1}(\alpha/2;\, a, b + 1)} and \eqn{p_U = B^{-1}(1 - \alpha/2;\, a + 1,
+#' b)} (0 when \eqn{a = 0}, 1 when \eqn{b = 0}), give
+#' \eqn{RR = (t_b / t_a)\, p / (1 - p)} and the percent change
+#' \eqn{100 (RR - 1)}. When \eqn{b = 0} the upper limit is \code{Inf} and the
+#' percent change itself is \code{NA}; when both counts are 0 there is no
+#' interval.
+#'
+#' Counts and populations are summed within each period (and \code{by}
+#' group). Matching to the earlier period: for a numeric period column the
+#' comparison is the period whose value is exactly \code{lag} less, so a
+#' missing year gives no comparison instead of a silent comparison against
+#' the wrong year. For any other period type (character, factor, Date) the
+#' earlier period is \code{lag} steps back along the periods observed in the
+#' group, so a gap in such a column is not detected.
+#'
+#' Errors: \code{x} not a data frame; columns not found; \code{lag} not a
+#' positive whole number; \code{conf_level} outside (0, 1); a population of
+#' zero or below.
 #'
 #' @param x A data frame.
 #' @param ... Passed to methods.
-#' @param count Column of counts: non-negative whole numbers.
-#' @param population Column of exposure: positive.
-#' @param period Column of periods. Sorted, and compared on the period
-#'   value rather than on row position, so a missing year gives no
-#'   comparison instead of a silent comparison against the wrong year.
-#' @param by Character vector of grouping columns.
-#' @param lag How many periods back to compare against. Default 1.
-#' @param per The rate denominator: a positive number, or `"1k"`,
-#'   `"10k"`, `"100k"`, `"1m"`.
-#' @param conf_level Confidence level for the interval.
-#' @param min_count Comparisons where the earlier count is at or below
-#'   this are flagged as resting on a small count; the percent change and
-#'   its exact interval are still reported, as [yoy()] does.
+#' @param count Column of counts (unquoted or a string): non-negative whole
+#'   numbers.
+#' @param population Column of exposure (unquoted or a string): positive.
+#' @param period Column of periods (unquoted or a string). Sorted within
+#'   each group; see Details for how the earlier period is found.
+#' @param by Character vector of grouping columns, default \code{NULL}.
+#' @param lag Whole number, default 1: how many periods back to compare
+#'   against.
+#' @param per The rate denominator: a positive number, or \code{"1k"},
+#'   \code{"10k"}, \code{"100k"}, \code{"1m"}. Default 1000.
+#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#'   the interval.
+#' @param min_count Number, default 0. Comparisons where the earlier count
+#'   is at or below this are flagged as resting on a small count; the percent
+#'   change and its exact interval are still reported, as \code{\link{yoy}}
+#'   does.
 #'
-#' @return A data frame of class
-#'   `rmbl_rate_change` with the grouping
-#'   columns, `period`, `count`, `population`,
-#'   `rate`, `previous_rate`, `rate_ratio`,
-#'   `pct_change`, `pct_lower`, `pct_upper` and
-#'   `flag`.
+#' @return A data frame of class \code{c("rmbl_rate_change", "data.frame")}
+#'   with one row per group and period: the grouping columns, the period
+#'   column, \code{count}, \code{population}, \code{rate},
+#'   \code{previous_rate}, \code{previous_count},
+#'   \code{previous_population}, \code{rate_ratio}, \code{pct_change},
+#'   \code{pct_lower}, \code{pct_upper} (numeric) and \code{flag} (character:
+#'   \code{"no comparison period"}, \code{"earlier period is zero"}, a
+#'   small-count note, or \code{NA}). The \code{rate_change} attribute records
+#'   the settings.
 #'
-#' @seealso [rate()], [yoy()] for change in a count or a measured
-#'   quantity.
+#' @seealso \code{\link{rate}}, \code{\link{yoy}} for change in a count or a
+#'   measured quantity.
 #'
 #' @examples
 #' d <- data.frame(
@@ -430,6 +529,17 @@ share.default <- function(x, total = NULL, conf_level = 0.95, ...) {
 #' # North's count rose while its population rose too: the rate change
 #' # is smaller than the count change, which is the reason to use it
 #' rate_change(d, stops, residents, year, by = "division", per = "100k")
+#'
+#' # a missing year gives no comparison rather than a wrong one
+#' gap <- data.frame(year = c(2019, 2020, 2022), n = c(10, 14, 12),
+#'                   pop = c(1000, 1000, 1100))
+#' rate_change(gap, n, pop, year)$flag
+#'
+#' # two-year change, flagging small earlier counts
+#' rate_change(d, stops, residents, year, by = "division", lag = 2,
+#'             min_count = 65)
+#'
+#' try(rate_change(1:3))
 #' @export
 rate_change <- function(x, ...) UseMethod("rate_change")
 
@@ -461,10 +571,7 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
   if (length(lag) != 1L || is.na(lag) || lag < 1L) {
     stop("`lag` must be a positive integer", call. = FALSE)
   }
-  conf_level <- .rmbl_num(conf_level, "conf_level")[1L]
-  if (is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
-    stop("`conf_level` must lie strictly inside (0, 1)", call. = FALSE)
-  }
+  conf_level <- .rmbl_conf_level(conf_level)
   keys <- c(by, period)
   agg <- stats::aggregate(x[c(count, population)], by = x[keys], FUN = sum,
                           na.rm = TRUE)
@@ -558,6 +665,7 @@ rate_change.data.frame <- function(x, count, population, period, by = NULL,
 # the interval for RR. With ta == tb this is the same construction
 # yoy() uses for counts.
 .rate_ratio_ci <- function(a, b, ta, tb, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
   n <- length(a)
   lower <- rep(NA_real_, n)
   upper <- rep(NA_real_, n)

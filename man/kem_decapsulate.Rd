@@ -14,21 +14,31 @@ kem_decapsulate(
 \item{key}{A key from
 \code{\link[=kem_keygen]{kem_keygen()}}, with its secret half.}
 
-\item{ciphertext}{Ciphertext from
-\code{\link[=kem_encapsulate]{kem_encapsulate()}}, hex or raw.}
+\item{ciphertext}{The \code{ciphertext} element from
+\code{\link[=kem_encapsulate]{kem_encapsulate()}},
+as a hex string or a raw vector, of the length for the key's level.}
 
-\item{masked}{\code{TRUE} (the default, or the option \code{rmoriebricklayer.masked})
-for the first-order masked decapsulation, \code{FALSE} for the plain one. Both
-return the same secret.}
+\item{masked}{Logical, \code{TRUE} or \code{FALSE}. \code{TRUE} (the
+default, taken from the option \code{rmoriebricklayer.masked} when set)
+runs the first-order masked decapsulation, \code{FALSE} the plain one.
+Both return the same secret.}
 }
 \value{
-64 hex characters: the 32-byte shared secret.
+A length-1 character vector of 64 lower-case hex characters: the
+32-byte shared secret.
 }
 \description{
-Returns the 32-byte shared secret the ciphertext carries, as hex.
+Returns the 32-byte shared secret that a ciphertext from
+\code{\link[=kem_encapsulate]{kem_encapsulate()}} carries, as hex. This is the
+recipient's side of the
+exchange: with the secret half of the key pair, the recipient recovers
+the same secret the sender kept, and the two can then use it as a common
+key.
 }
 \details{
-There is no failure path, and that is deliberate. A ciphertext that was
+This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
+the right length there is no failure path, and that is deliberate. A ciphertext that
+was
 not produced by a correct encapsulation under this key yields a shared
 secret derived from a value held only inside the decapsulation key -- so
 it is a real secret, just not the sender's. Whoever sent it learns
@@ -50,6 +60,14 @@ the plain time depending on the CPU (4 ms for ML-KEM-768 on this
 package's test machine against 1.2 ms plain). \code{masked = FALSE} runs the
 plain constant-time decapsulation, and the option
 \code{rmoriebricklayer.masked} sets the default for a session.
+
+Errors (checked before any decapsulation): \code{key} not from
+\code{\link[=kem_keygen]{kem_keygen()}}, or a public key only ("decapsulation needs a
+key with its
+secret half"); a ciphertext that is not hex or raw of exactly
+\code{\link[=kem_sizes]{kem_sizes()}}\code{[["ciphertext"]]} bytes for the key's
+level (768,
+1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
 }
 \examples{
 key <- kem_keygen(512)
@@ -65,6 +83,10 @@ identical(other, sent$shared)
 
 # the masked and the plain decapsulation agree
 identical(kem_decapsulate(key, bad, masked = FALSE), other)
+
+# a public key alone cannot decapsulate, and a short ciphertext is refused
+try(kem_decapsulate(kem_public_key(key), sent$ciphertext))
+try(kem_decapsulate(key, "abcd"))
 }
 \seealso{
 \code{\link[=kem_encapsulate]{kem_encapsulate()}}.

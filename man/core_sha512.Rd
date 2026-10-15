@@ -7,26 +7,39 @@
 core_sha512(x)
 }
 \arguments{
-\item{x}{A character vector or a raw vector.}
+\item{x}{A character vector (one digest per element) or a raw vector
+(one digest of all its bytes).}
 }
 \value{
-A character vector of 128-character lowercase hex digests (one
-per element for character input; length-1 for raw input).
+A character vector of 128-character lowercase hex digests: one
+per element for character input (\code{NA} for \code{NA}), length 1 for
+raw input.
 }
 \description{
 Hashes character or raw input with the self-contained SHA-512 (FIPS
-180-4) in the compiled core. Use it over
-\code{\link[=core_sha256]{core_sha256()}} when a pin has to outlive the
-capsule by decades: the wider digest leaves more margin, including
-against a quantum adversary, for whom Grover's algorithm halves the
-effective preimage exponent.
+180-4) in the compiled core and returns the digest as hex. A digest is a
+fingerprint: any change to the input gives a different value, so it pins
+a data file, a code string or a manifest. Use it over
+\code{\link[=core_sha256]{core_sha256()}}
+when a pin has to outlive the capsule by decades: the wider digest leaves
+more margin, including against a quantum adversary, for whom Grover's
+algorithm halves the effective preimage exponent.
+}
+\details{
+Character input is hashed element by element, each string as its bytes
+(UTF-8 text gives the UTF-8 bytes; no newline is added). \code{NA}
+elements give \code{NA}. Other atomic input (numbers, logicals) is first
+converted with \code{as.character()}, so \code{core_sha512(1)} is the
+digest of the text \code{"1"}. A raw vector is hashed as one byte string.
+For files use \code{\link[=sha512_file]{sha512_file()}}. Pure computation; no side
+effects.
 }
 \examples{
 # FIPS 180-4 test vector for "abc".
 core_sha512("abc")
 
-# Vectorised over character input.
-core_sha512(c("abc", "def"))
+# Vectorised over character input; NA stays NA.
+core_sha512(c("abc", "def", NA))
 
 # Raw input hashes the bytes directly, and agrees with the character
 # form for the same bytes.
@@ -34,6 +47,9 @@ identical(core_sha512("abc"), core_sha512(charToRaw("abc")))
 
 # Twice the digest width of SHA-256.
 c(sha256 = nchar(core_sha256("abc")), sha512 = nchar(core_sha512("abc")))
+
+# numbers are hashed as their text
+identical(core_sha512(1), core_sha512("1"))
 }
 \seealso{
 \code{\link[=core_sha256]{core_sha256()}},

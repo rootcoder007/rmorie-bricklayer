@@ -7,13 +7,30 @@
 bricklayer_siu_text(html)
 }
 \arguments{
-\item{html}{A length-1 character vector of raw report HTML.}
+\item{html}{A length-1 character vector holding the raw HTML of one
+report page. A file path is not read here (use
+\code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}}, which accepts a path).}
 }
 \value{
 A length-1 character vector of plain text.
 }
 \description{
-Convert SIU report HTML to plain text
+Strips the markup from one SIU director's report page and returns the
+readable text, keeping line breaks so section headings ("Subject
+Officials", "Witness Officials") stay on lines of their own. Use it
+before \code{\link[=bricklayer_siu_resolve_so]{bricklayer_siu_resolve_so()}}, or to
+read or search a saved report
+without a browser.
+}
+\details{
+The conversion runs in the native core: tags are removed, block-level
+tags become line breaks, HTML entities are decoded and runs of spaces are
+collapsed while newlines are kept. Nothing is fetched and nothing is
+written.
+
+Errors: \code{html} must be a single non-NA character string ("html must
+be a single non-NA character string"), and input over 2 MiB is refused
+("html is larger than 2 MiB: not a report page").
 }
 \section{Limits}{
 
@@ -25,4 +42,12 @@ many lines were split: a field that spans a split may be incomplete.
 
 \examples{
 bricklayer_siu_text("<p>Number of SIU Investigators assigned: 3</p>")
+
+# the bundled synthetic report, as text
+f <- system.file("extdata", "siu_synthetic_report.html", package = "rmoriebricklayer")
+txt <- bricklayer_siu_text(paste(readLines(f), collapse = "\n"))
+cat(substr(txt, 1, 200))
+
+# more than one string is refused
+try(bricklayer_siu_text(c("<p>a</p>", "<p>b</p>")))
 }

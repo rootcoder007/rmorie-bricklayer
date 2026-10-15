@@ -11,36 +11,41 @@ validate_schema(df_raw, provenance)
 
 \item{provenance}{A provenance list as returned by
 \code{\link[=load_provenance]{load_provenance()}}, or
-\code{list(schema = infer_schema(df))}. The \code{schema} block may
-contain:
+\code{list(schema = infer_schema(df))}. The
+\code{schema} block may contain:
 \itemize{
-\item \code{expected_columns} -- required column names. A missing one is
-\code{"fatal"}; everything else below is a \code{"warning"}.
-\item \code{structural_invariants} -- \code{min_data_rows} and \code{max_data_rows}.
-\item \code{expected_value_sets} -- a named list of allowed values per column.
+\item \code{expected_columns} -- required column names (character). A missing
+one is \code{"fatal"}; everything else below is a \code{"warning"}.
+\item \code{structural_invariants} -- a list with \code{min_data_rows} and
+\code{max_data_rows} (numbers of rows).
+\item \code{expected_value_sets} -- a named list of allowed values per
+column.
 \item \code{expected_types} -- a named character vector of expected classes.
 \code{integer}, \code{numeric} and \code{double} are treated as
 interchangeable, since a re-release legitimately widens one to another.
 \item \code{numeric_ranges} -- a named list of \code{c(min =, max =)} bounds.
-\item \code{max_missing_fraction} -- a named numeric of per-column ceilings on
-the share of \code{NA}.
+\item \code{max_missing_fraction} -- a named numeric of per-column ceilings
+on the share of \code{NA}, between 0 and 1.
 }
 
-\code{\link[=infer_schema]{infer_schema()}} produces all six from data
-you already trust.}
+\code{\link[=infer_schema]{infer_schema()}} produces all six from data you already
+trust.}
 }
 \value{
 A named list of issues; each issue is a list with
-\code{severity} ( \code{"fatal"} or \code{"warning"}) and a
-human-readable \code{message}. A zero-length list means the data frame
-is clean.
+\code{severity} (\code{"fatal"} or \code{"warning"}) and a
+human-readable \code{message}. The names are those listed in Details. A
+zero-length list means the data frame is clean.
 }
 \description{
-Checks a raw data frame against the \code{schema} block of a provenance
-object and returns the issues found rather than raising, so the caller
-decides how to react.
-\code{\link[=apply_schema_validation]{apply_schema_validation()}} is the
-wrapper that turns them into errors and warnings.
+Checks a data frame against the \code{schema} block of a provenance
+record: required columns, row-count bounds, column types, numeric ranges,
+missingness and allowed category values. It returns the problems it
+finds instead of stopping, so the caller can log them, show them, or pass
+the same schema to \code{\link[=apply_schema_validation]{apply_schema_validation()}},
+the wrapper that turns
+them into errors and warnings. Use it each time a file is re-downloaded,
+to catch a re-release that renamed, retyped or recoded a column.
 }
 \details{
 Every schema field is optional and is checked only when present, so a
@@ -48,8 +53,46 @@ schema written for an earlier version keeps working unchanged.
 
 This is the STRUCTURAL check -- names, types, bounds, value sets. It
 cannot tell you that a column kept its name, type and range while its
-distribution moved; \code{\link[=capsule_drift]{capsule_drift()}}
-answers that.
+distribution moved; \code{\link[=capsule_drift]{capsule_drift()}} answers that. Rules
+that are
+particular to a data set (an age must be non-negative, two dates must be
+ordered) belong in \code{\link[=rule]{rule()}} and
+\code{\link[=validate_rules]{validate_rules()}}.
+
+The checks, and the name of the issue each one adds:
+\itemize{
+\item a missing \code{expected_columns} entry: \code{missing_columns},
+\code{"fatal"};
+\item fewer than \code{min_data_rows} or more than \code{max_data_rows}
+rows: \code{row_count_low} / \code{row_count_high};
+\item a column whose class differs from \code{expected_types}:
+\code{type_<col>}. \code{integer}, \code{numeric} and \code{double} are
+one family, and so are \code{character} and \code{factor};
+\item non-missing values outside \code{numeric_ranges} (inclusive bounds;
+non-numeric columns are skipped): \code{range_<col>};
+\item a share of \code{NA} above \code{max_missing_fraction}:
+\code{missing_<col>};
+\item values not in \code{expected_value_sets}: \code{unexpected_<col>}.
+}
+A column named in a check but absent from the data is skipped by that
+check (only \code{expected_columns} reports it). All of these are
+\code{"warning"} except \code{missing_columns}.
+
+The schema itself is checked too. An empty schema (\code{list()}) gives
+one \code{schema_empty} warning. An unknown field name within three edits
+of a known one (\code{expected_colums}) is \code{"fatal"}, because it
+would otherwise be ignored silently; any other unknown name is a warning.
+An unknown structural invariant one edit, or one swap of neighbouring
+letters, away from \code{min_data_rows} or \code{max_data_rows} is fatal;
+other invariant names are left alone. \code{expected_dtypes} is accepted
+as another name for \code{expected_types}, and \code{synthetic_recipe} is
+a known field that is not checked here.
+
+Errors: \code{df_raw} that is not a data frame; a \code{schema} that is
+not a list. A \code{provenance} that is \code{NULL} or has no
+\code{schema} returns an empty list (use
+\code{\link[=apply_schema_validation]{apply_schema_validation()}} to
+make that an error).
 }
 \examples{
 prov <- list(schema = list(
@@ -74,6 +117,16 @@ validate_schema(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
 
 # A clean frame produces nothing.
 length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
+
+# a misspelt schema field is fatal rather than silently ignored
+validate_schema(df, list(schema = list(expected_colums = "id")))[[1]]
+
+# a schema inferred from trusted data, checked against a new release
+sch <- infer_schema(data.frame(id = 1:3, year = 2020:2022))
+names(validate_schema(data.frame(id = 1:2), list(schema = sch)))
+
+# the data must be a data frame
+try(validate_schema(list(id = 1), prov))
 }
 \seealso{
 \code{\link[=infer_schema]{infer_schema()}} to derive a schema,

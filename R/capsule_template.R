@@ -2,31 +2,80 @@
 
 #' Start a capsule from a template
 #'
-#' Writes the skeleton of a reproducible capsule: a `data_provenance.json`
-#' with the fields [load_provenance()] and
-#' [verify_capsule()] expect, an
-#' `analysis.R` that fetches the source, verifies it, runs
-#' [analyse_table()] and writes the manifest and report,
-#' and a README
-#' that says how to run it. Every field that must be filled in is marked
-#' `TODO`. The script runs as written against the shipped OTIS example
-#' when `example = TRUE`.
+#' @description
+#' Creates a new folder with the three files a reproducible analysis
+#' "capsule" needs, ready to be filled in: a \code{data_provenance.json}
+#' that says where the data come from, an \code{analysis.R} script that
+#' fetches, checks, analyses and records, and a \code{README.md} that says
+#' how to run it. Use it to start a new project in the package's
+#' fetch-verify-analyse-record pattern instead of writing that scaffolding
+#' by hand.
 #'
-#' @param path Directory to create.
-#' @param name Capsule name.
-#' @param example Use the shipped OTIS table as the source so the
-#'   skeleton runs immediately.
+#' @details
+#' The files:
+#' \describe{
+#'   \item{\code{data_provenance.json}}{the fields
+#'     \code{\link{load_provenance}} and \code{\link{verify_capsule}} expect:
+#'     \code{name}, \code{source} (\code{url}, \code{publisher},
+#'     \code{licence}, \code{retrieved}, \code{sha256}) and \code{table}
+#'     (\code{value}, \code{period}, \code{by}, \code{rounding},
+#'     \code{suppression_limit}). Every field that must be filled in is
+#'     marked \code{TODO}.}
+#'   \item{\code{analysis.R}}{reads the provenance, downloads the source
+#'     with \code{\link{friendly_download}} (a local path is read directly),
+#'     computes its SHA-256 with \code{\link{sha256_file}} and stops if it no
+#'     longer matches the pinned value, runs \code{\link{analyse_table}},
+#'     and writes \code{results/manifest.json}, \code{results/report.html}
+#'     and \code{results/report.md}.}
+#'   \item{\code{README.md}}{the three steps to fill in and run the capsule.}
+#' }
+#' With \code{example = TRUE} the source is the OTIS table shipped with the
+#' package (\code{extdata/otis_a01_individuals.csv}), so
+#' \code{Rscript analysis.R} runs as written. The table settings in the
+#' template (\code{value = "individuals"}, \code{period = "year"},
+#' \code{by = c("table", "group")}) fit that example and must be edited for
+#' other data.
+#'
+#' Side effects: creates \code{path} (and its parents) and writes the three
+#' files. Errors: \code{path} exists and is not empty; \code{name} is not a
+#' single non-empty string. The \code{name} and source are written as escaped
+#' JSON strings, so quotes and backslashes are safe.
+#'
+#' @param path Character string: the directory to create. It may exist only
+#'   if it is empty.
+#' @param name Character string: the capsule name written into the
+#'   provenance and README. Defaults to the last part of \code{path}.
+#' @param example Logical, default \code{FALSE}. \code{TRUE} uses the
+#'   shipped OTIS table as the source so the skeleton runs immediately;
+#'   \code{FALSE} leaves a \code{TODO} URL.
 #' @return The directory path, invisibly.
+#' @seealso \code{\link{load_provenance}}, \code{\link{verify_capsule}},
+#'   \code{\link{analyse_table}}.
 #' @examples
 #' d <- use_capsule_template(tempfile("capsule-"), example = TRUE)
 #' list.files(d)
+#'
+#' # the provenance file to fill in
+#' cat(readLines(file.path(d, "data_provenance.json")), sep = "\n")
+#'
+#' # a blank template with a chosen name
+#' d2 <- use_capsule_template(tempfile("capsule-"), name = "segregation-2024")
+#' grep("TODO", readLines(file.path(d2, "data_provenance.json")), value = TRUE)
+#'
+#' # an existing, non-empty folder is never overwritten
+#' try(use_capsule_template(d))
 #' @export
 use_capsule_template <- function(path, name = basename(path),
                                  example = FALSE) {
   if (dir.exists(path) && length(list.files(path))) {
     stop("`path` exists and is not empty", call. = FALSE)
   }
+  if (!is.character(name) || length(name) != 1L || is.na(name) || !nzchar(name)) {
+    stop("`name` must be a single non-empty string", call. = FALSE)
+  }
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  # a JSON string literal for x: quotes, backslashes (Windows paths) and control characters escaped
+  jstr <- function(x) sub("^\\[(.*)\\]$", "\\1", bricklayer_json_to_json(as.character(x)))
   src <- if (example) {
     system.file("extdata", "otis_a01_individuals.csv",
                 package = "rmoriebricklayer")
@@ -36,9 +85,9 @@ use_capsule_template <- function(path, name = basename(path),
   # nolint start: indentation_linter, line_length_linter.
   prov <- c(
     "{",
-    sprintf("  \"name\": \"%s\",", name),
+    sprintf("  \"name\": %s,", jstr(name)),
     "  \"source\": {",
-    sprintf("    \"url\": \"%s\",", src),
+    sprintf("    \"url\": %s,", jstr(src)),
     "    \"publisher\": \"TODO: who publishes the table\",",
     "    \"licence\": \"TODO: e.g. Open Government Licence - Ontario\",",
     "    \"retrieved\": \"TODO: YYYY-MM-DD\",",

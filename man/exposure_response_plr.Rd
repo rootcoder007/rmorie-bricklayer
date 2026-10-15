@@ -15,13 +15,15 @@ exposure_response_plr(
 )
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame with one row per unit.}
 
-\item{outcome, exposure, confounders}{Column names.}
+\item{outcome, exposure, confounders}{Column names: the outcome and the
+exposure (single strings) and the confounders (one or more strings).}
 
-\item{n_bootstrap}{Number of resamples (default 100).}
+\item{n_bootstrap}{Number of resamples, a non-negative whole number
+(default 100); at least 10 must succeed.}
 
-\item{random_state}{Seed for the resampling.}
+\item{random_state}{Seed for the resampling (default 42).}
 
 \item{estimator}{A function \code{(data, outcome, treatment, covariates)}
 returning a list with \code{ate} and \code{se}. The default is
@@ -29,25 +31,66 @@ returning a list with \code{ate} and \code{se}. The default is
 has the same interface.}
 }
 \value{
-A list with \code{ate}, \code{se_analytic}, \code{se_bootstrap},
-\code{ci_lower_bs}, \code{ci_upper_bs}, \code{n_bootstrap} and
-\code{method}.
+A list with \code{ate} (the full-sample estimate),
+\code{se_analytic} (the estimator's standard error),
+\code{se_bootstrap} (the standard deviation of the replicates),
+\code{ci_lower_bs} and \code{ci_upper_bs} (the 95\% percentile
+interval), \code{n_bootstrap} (the number of successful resamples) and
+\code{method} (the estimator's method with
+\code{" + percentile bootstrap"}).
 }
 \description{
 Fits the partially linear exposure-response model with
 \code{\link{plr_crossfit}} (or any estimator with the same interface),
 then re-fits it on \code{n_bootstrap} non-parametric resamples of the rows
-for a percentile interval (Efron and Tibshirani 1993, chapter 13).
+for a percentile interval (Efron and Tibshirani 1993, chapter 13). The
+bootstrap interval does not lean on the estimator's own standard error,
+so it is a check on it: when the two disagree, the analytic one should
+not be trusted alone.
+}
+\details{
+Each resample draws \code{nrow(data)} rows with replacement and calls
+\code{estimator(resample, outcome, exposure, confounders)}; a resample on
+which the estimator fails is skipped, and the run stops if fewer than 10
+succeed. The interval is the 2.5\% and 97.5\% type-7 quantiles of the
+replicate estimates, and \code{se_bootstrap} their standard deviation.
+Resampling uses \code{random_state} and restores R's own random stream
+afterwards. The cost is \code{n_bootstrap + 1} estimator calls; with
+\code{\link{plr_crossfit}} at n = 20000 and 100 resamples that is a
+few seconds. A progress bar on stderr follows the resamples when a person
+is watching (\code{options(morie.progress = TRUE)} outside an
+interactive session; \code{options(morie.quiet = TRUE)} silences it).
+
+Refusals: column names that are not strings, an \code{n_bootstrap} that
+is not a single non-negative whole number, an estimator that is not a
+function, and the estimator's own errors on the full sample.
 }
 \examples{
 set.seed(1)
 d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 d$exposure <- 20 + 2 * d$x1 + rnorm(200)
 d$asthma <- 5 + 0.3 * d$exposure + d$x2 + rnorm(200)
-exposure_response_plr(d, outcome = "asthma", exposure = "exposure",
-                      confounders = c("x1", "x2"), n_bootstrap = 20)$ate
+r <- exposure_response_plr(d, outcome = "asthma", exposure = "exposure",
+                           confounders = c("x1", "x2"), n_bootstrap = 20)
+r$ate
+c(r$ci_lower_bs, r$ci_upper_bs)
+
+# Any estimator with the same interface: here an ordinary regression.
+ols <- function(data, outcome, treatment, covariates) {
+  f <- stats::reformulate(c(treatment, covariates), outcome)
+  cf <- summary(stats::lm(f, data = data))$coefficients
+  list(ate = cf[treatment, 1], se = cf[treatment, 2], method = "OLS")
+}
+exposure_response_plr(d, "asthma", "exposure", c("x1", "x2"),
+                      n_bootstrap = 20, estimator = ols)$method
+
+# Fewer than 10 resamples cannot give an interval.
+try(exposure_response_plr(d, "asthma", "exposure", c("x1", "x2"), n_bootstrap = 5))
 }
 \references{
 Efron, B. and Tibshirani, R. J. (1993). An Introduction to the
 Bootstrap. Chapman and Hall.
+}
+\seealso{
+\code{\link{core_bootstrap_mean}} for a bootstrap of a mean.
 }

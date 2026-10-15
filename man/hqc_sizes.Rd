@@ -7,7 +7,8 @@
 hqc_sizes(level, version = c("v5", "round4"))
 }
 \arguments{
-\item{level}{Security level: 1, 3 or 5 (or 128, 192, 256).}
+\item{level}{Security level: 1, 3 or 5 (or 128, 192, 256 for the same
+three). There is no default.}
 
 \item{version}{\code{"v5"} (the default) or \code{"round4"}, as in
 \code{\link[=hqc_keygen]{hqc_keygen()}}.}
@@ -18,8 +19,29 @@ A named integer vector: \code{encapsulation_key}, \code{decapsulation_key},
 (encapsulation randomness) and \code{shared_secret}, all in bytes.
 }
 \description{
-Reports the sizes the HQC specification fixes, so a caller never has to
-hard-code them.
+Reports the byte lengths that the HQC specification fixes for a security
+level: the encapsulation (public) key, the decapsulation (secret) key, the
+ciphertext, the key-generation seed, the encapsulation randomness and the
+shared secret. Use it to validate stored keys and ciphertexts, or to size
+storage, without hard-coding numbers.
+}
+\details{
+The values come from the compiled implementation, so they are the sizes
+it actually uses. For \code{version = "v5"} (specification of 2025-08-22):
+
+\tabular{lrrr}{
+\tab HQC-1 \tab HQC-3 \tab HQC-5 \cr
+encapsulation key \tab 2241 \tab 4514 \tab 7237 \cr
+decapsulation key \tab 2321 \tab 4602 \tab 7333 \cr
+ciphertext \tab 4433 \tab 8978 \tab 14421 \cr
+seed \tab 32 \tab 32 \tab 32 \cr
+message \tab 16 \tab 24 \tab 32 \cr
+salt \tab 16 \tab 16 \tab 16 \cr
+shared secret \tab 32 \tab 32 \tab 32
+}
+For \code{version = "round4"} the codes are the same but the key encoding
+differs: the seed is 96, 104 or 112 bytes and the shared secret 64 bytes.
+A level other than 1, 3, 5 (or 128, 192, 256) is an error.
 }
 \examples{
 hqc_sizes(1)
@@ -29,7 +51,15 @@ hqc_sizes(1)
 rbind(HQC = hqc_sizes(3)[c("encapsulation_key", "ciphertext")],
       ML_KEM = kem_sizes(768)[c("encapsulation_key", "ciphertext")])
 rbind(v5 = hqc_sizes(1), round4 = hqc_sizes(1, "round4"))
+
+# check a stored public key's length
+key <- hqc_keygen(1)
+nchar(key$public) / 2 == hqc_sizes(1)[["encapsulation_key"]]
+
+# an unknown level is refused rather than mapped to a default
+try(hqc_sizes(2))
 }
 \seealso{
-\code{\link[=hqc_keygen]{hqc_keygen()}}, \code{\link[=kem_sizes]{kem_sizes()}} for ML-KEM.
+\code{\link[=hqc_keygen]{hqc_keygen()}},
+\code{\link[=kem_sizes]{kem_sizes()}} for ML-KEM.
 }

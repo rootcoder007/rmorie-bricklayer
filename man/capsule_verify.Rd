@@ -29,7 +29,7 @@ Taken from the signature when not given, since
 check a signature that arrived without that field.}
 }
 \value{
-A length-1 logical.
+\code{TRUE} or \code{FALSE} (a length-1 logical, never \code{NA}).
 }
 \description{
 Checks \code{signature} against \code{message}. For \code{"hmac"} the
@@ -44,6 +44,20 @@ cannot be replayed at another index or under another key.
 Returns \code{FALSE} rather than erroring on a malformed or truncated
 signature: a verifier must treat unparseable input as "not verified",
 never as an exception to be caught and ignored.
+
+\code{TRUE} means the signature is valid for \code{message} under \code{key} (and, for
+the standardised schemes, \code{context} and the pre-hash). Verification
+needs only public material, except for HMAC, where the verifier holds
+the same secret as the signer and could therefore also sign. HMAC tags
+are compared in constant time.
+
+Only two inputs are errors rather than \code{FALSE}: a \code{signature} that is not
+a \code{bricklayer_signature} at all, and, for an XMSS signature, a key that
+is not a key object (a string, say) or a \code{message} that is not one
+string or a raw vector. A key or signature whose class, scheme or fields were edited
+returns \code{FALSE}. An XMSS signature object written by 0.5.9 to 0.5.12
+(one that carries a \code{key_state} field) still verifies, with a warning
+that it exposed the signer's private key.
 }
 \examples{
 op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
@@ -64,5 +78,17 @@ capsule_verify("pinned-manifest", sig,
 # A truncated signature is not verified, and does not error.
 trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 capsule_verify("pinned-manifest", trunc, pub)
+
+# HMAC: the verifier holds the same secret.
+tag <- capsule_sign("pinned-manifest", "shared-secret", scheme = "hmac")
+capsule_verify("pinned-manifest", tag, "shared-secret")
+
+# Something that is not a signature at all is an error, not FALSE.
+try(capsule_verify("pinned-manifest", list(signature = "00"), pub))
 options(op)
+}
+\seealso{
+\code{\link[=capsule_sign]{capsule_sign()}},
+\code{\link[=signing_public_key]{signing_public_key()}},
+\code{\link[=fips_public_key]{fips_public_key()}}.
 }

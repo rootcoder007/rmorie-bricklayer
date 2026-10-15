@@ -46,6 +46,12 @@ count against the period totals (\code{stats::prop.trend.test()}); the
 Holm adjustment covers the \eqn{k} tests. Counts of court cases are
 large, so these tests detect small changes; the shares and their
 intervals show whether a change is large enough to matter.
+
+Errors: \code{counts} not a numeric matrix or data frame, with a
+non-numeric column, fewer than one period or two outcomes, or a negative,
+missing or infinite count; a period with no cases; \code{scores} not one
+finite number per period, or all equal; \code{period} of the wrong length
+or with repeats; \code{conf_level} outside (0, 1).
 }
 \examples{
 d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
@@ -53,6 +59,16 @@ d <- read.csv(system.file("extdata", "ocj_dispositions.csv",
 mix <- disposition_mix(d[, -(1:2)], period = d$year)
 mix
 plot(mix)
+
+# the parts of the result
+head(mix$shares)
+mix$trend
+
+# years as trend scores, so the gap where no row exists is respected
+disposition_mix(d[, -(1:2)], period = d$year, scores = d$year)$trend[, 1:3]
+
+# outcome columns only: a text column is refused
+try(disposition_mix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
 }
 \references{
 Goodman, L. A. (1965). On simultaneous confidence intervals for

@@ -7,19 +7,38 @@
 verify_sha256(path, expected_sha)
 }
 \arguments{
-\item{path}{Path to the file to hash.}
+\item{path}{Path to the file to hash, a single string.}
 
-\item{expected_sha}{The expected SHA256 digest, as a
-lowercase hex string.}
+\item{expected_sha}{The expected SHA-256 digest: a hex string (64
+characters, any case), or a length-1 list holding one, as read from
+provenance JSON.}
 }
 \value{
-A list with \code{actual} (computed digest), \code{expected}
-(the value passed in), and \code{match} (logical; \code{TRUE} if they
-are identical).
+A list of three elements: \code{actual} (character, the computed
+digest, 64 lower-case hex characters), \code{expected} (character, the
+normalised expected value) and \code{match} (logical, \code{TRUE} when
+they are identical).
 }
 \description{
-Computes the SHA256 digest of a file with the package's own compiled
-SHA-256 core and compares it to the expected value pinned in provenance.
+Computes the SHA-256 digest of a file and compares it with the digest
+pinned in a provenance record, so a pipeline can tell whether the file it
+downloaded is byte for byte the one the analysis was run on. A changed
+file (a silent re-release, a truncated download, an edited copy) gives a
+different digest.
+}
+\details{
+The digest is computed by \code{\link[=sha256_file]{sha256_file()}}, the package's own
+compiled
+SHA-256 core (FIPS 180-4), reading the file in chunks. The expected
+value is normalised before the comparison: a length-1 list (as
+\code{\link[=load_provenance]{load_provenance()}} returns a pinned digest) is
+unlisted, surrounding
+spaces are trimmed and letters are lower-cased, so an upper-case digest
+copied from a web page still matches. The function reports and does not
+stop on a mismatch; the caller decides.
+
+Errors: \code{path} that does not name a readable file;
+\code{expected_sha} that is not exactly one non-NA value.
 }
 \examples{
 f <- tempfile()
@@ -33,4 +52,11 @@ chk$match # TRUE
 bad <- verify_sha256(f, strrep("0", 64L))
 bad$match # FALSE
 bad$actual # the real digest
+
+# case and a list wrapper (as from provenance JSON) do not matter
+verify_sha256(f, list(toupper(sha256_file(f))))$match
+
+# a missing file, or more than one expected digest, is an error
+try(verify_sha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
+try(verify_sha256(f, c("a", "b")))
 }

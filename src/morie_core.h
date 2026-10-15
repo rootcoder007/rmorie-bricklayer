@@ -214,12 +214,20 @@ inline void bootstrap_mean(const double *a, std::size_t n, std::size_t B,
     }
     std::mt19937_64 rng(seed);
     std::uniform_int_distribution<std::size_t> idx(0, n - 1);
+    // the interrupt hook (when the host installed one) after about every 2^20 draws: a poll
+    // every few milliseconds of work at any n; it touches neither the generator nor the sums,
+    // so the replicates are the same with and without it
+    const std::size_t poll_every = n >= (std::size_t(1) << 20) ? 1 : (std::size_t(1) << 20) / n;
     for (std::size_t b = 0; b < B; ++b) {
         long double s = 0.0L;
         for (std::size_t i = 0; i < n; ++i) {
             s += a[idx(rng)];
         }
         out[b] = static_cast<double>(s / static_cast<long double>(n));
+        if ((b + 1) % poll_every == 0) {
+            void (*h)() = interrupt_hook();
+            if (h) h();
+        }
     }
 }
 

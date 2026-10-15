@@ -84,66 +84,152 @@
 
 #' Fit a Hawkes process by maximum likelihood (analytic gradient, fast routes)
 #'
-#' Maximum-likelihood fit of a univariate Hawkes process
-#' \eqn{\lambda(t) = \nu(t) + \eta \sum_{t_j < t} g(t - t_j)} with a
-#' constant baseline (\eqn{\nu = e^{a_0}}) or a sinusoidal one
+#' Fits a self-exciting (Hawkes) point process to a series of event times,
+#' such as the times of shootings, break-ins or calls for service, and
+#' returns the estimated background rate, the branching ratio (the share of
+#' events triggered by earlier events) and the shape of the triggering
+#' kernel, with AIC, BIC and a goodness-of-fit test. Use it to ask whether
+#' events cluster in time beyond what a steady or seasonal rate explains.
+#'
+#' @details
+#' The model is the univariate Hawkes process
+#' \deqn{\lambda(t) = \nu(t) + \eta \sum_{t_j < t} g(t - t_j)}
+#' with a constant baseline (\eqn{\nu = e^{a_0}}) or a sinusoidal one
 #' (\eqn{\nu(t) = \exp(a_0 + a_1 t/T + a_2 \sin(2\pi t/365.25) + a_3 \cos(2\pi t/365.25))},
-#' its integral by the trapezoid rule on \code{max(64, floor(T) + 1)} points) and one of four
-#' normalised kernels: exponential (decay \code{beta}), Weibull (\code{alpha, lambda}),
-#' gamma (\code{alpha, beta}) or Lomax (\code{alpha, c}). Every route uses the analytic
-#' gradient, so one likelihood evaluation per point instead of one per parameter.
+#' a trend plus a yearly cycle when times are in days, its integral by the
+#' trapezoid rule on \code{max(64, floor(T) + 1)} points), branching ratio
+#' \eqn{\eta \in [0.001, 0.99]} and one of four normalised kernels \eqn{g}:
+#' exponential (decay \code{beta}), Weibull (shape \code{alpha}, scale
+#' \code{lambda}), gamma (shape \code{alpha}, rate \code{beta}) or Lomax
+#' (shape \code{alpha}, scale \code{c}). The log-likelihood is
+#' \eqn{\sum_i \log \lambda(t_i) - \int_0^T \lambda(t)\,dt}. Every route uses
+#' the analytic gradient of the shared C++ core (the code morie's Python arm
+#' calls), so one likelihood evaluation per point instead of one per
+#' parameter. The optimiser is a projected BFGS inside a fixed parameter box
+#' (\eqn{a_0 \in [-15, 15]}, the other baseline terms in \eqn{[-5, 5]},
+#' kernel parameters bounded as listed in the source), at most 2000
+#' iterations.
 #'
 #' \describe{
-#'   \item{\code{"exact"}}{Ozaki's O(n) recursion for the exponential kernel; for Weibull and
-#'     gamma the double sum stops where the kernel underflows to exactly 0 (the same value as
+#'   \item{\code{"exact"}}{Ozaki's O(n) recursion for the exponential kernel; for Weibull
+#'     and
+#'     gamma the double sum stops where the kernel underflows to exactly 0 (the same
+#'     value as
 #'     the full sum); Lomax the full O(n^2) sum.}
-#'   \item{\code{"soe"}}{the completely monotone kernels (Lomax; gamma with shape < 1) as a
+#'   \item{\code{"soe"}}{the completely monotone kernels (Lomax; gamma with shape < 1) as
+#'     a
 #'     sum of exponentials (Beylkin & Monzon 2010): relative error \code{eps} on every
 #'     intensity, O(n K); a gamma kernel with shape >= 1 is truncated at \code{eps}.}
 #'   \item{\code{"truncate"}}{each event excites only lags with kernel tail mass above
 #'     \code{eps}: an approximation for light-tailed kernels, O(n w).}
 #'   \item{\code{"em"}}{the EM algorithm (Veen & Schoenberg 2008), finished by the
-#'     projected BFGS on the exact likelihood from EM's point (EM's steps shrink before it
-#'     reaches the maximum): the same maximum, a different route.}
-#'   \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned counts
+#'     projected BFGS on the exact likelihood from EM's point (EM's steps shrink before
+#'     it
+#'     reaches the maximum). It is an R loop of up to 500 iterations and much slower than
+#'     the
+#'     other routes (tens of seconds for a few hundred events); because it starts from
+#'     the
+#'     same point but moves differently, it can end at a different local maximum.}
+#'   \item{\code{"inar"}}{Kirchner's (2017) INAR(p) least-squares estimator on binned
+#'     counts
 #'     (constant baseline only): a different, fast, approximate estimator.}
-#'   \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"} for
+#'   \item{\code{"auto"}}{\code{"exact"} for the exponential kernel, \code{"truncate"}
+#'     for
 #'     Weibull, \code{"soe"} for gamma and Lomax.}
 #' }
-#' The reported \code{nll} is the exact likelihood at the estimate whatever the route, so AIC
-#' is comparable across routes. An event exactly at \code{horizon} is part of the record and
-#' counted, as in morie's Python fit.
+#' For the Weibull, gamma and Lomax kernels without \code{start}, a second
+#' deterministic start at the exponential fit (the shape-1 member) is also
+#' run and the better optimum kept, because the likelihood is multimodal.
+#' The exponential kernel without \code{start} is also run from a second
+#' start (branching ratio 0.1 and a decay a quarter of the reciprocal mean
+#' gap), and the better optimum kept: on data with little clustering its
+#' likelihood can have more than one maximum, one of them with the decay on
+#' its bound. A parameter on its bound (see \code{at_bound}) is still a
+#' reason to refit from another \code{start} and compare \code{nll}.
 #'
-#' @param times Sorted event times in \code{[0, horizon]}.
-#' @param horizon End of the observation window.
-#' @param kernel One of \code{"exponential"}, \code{"weibull"},
-#'   \code{"gamma"}, \code{"lomax"}.
-#' @param baseline \code{"constant"} or \code{"sinusoidal"}.
-#' @param method One of \code{"auto"}, \code{"exact"}, \code{"soe"}, \code{"truncate"},
-#'   \code{"em"}, \code{"inar"}. \code{"auto"} is \code{"exact"} for the exponential kernel,
-#'   \code{"truncate"} for Weibull and \code{"soe"} for Lomax and gamma.
-#' @param eps Error level of \code{"soe"} (relative, per intensity) and \code{"truncate"}
-#'   (kernel tail mass).
-#' @param start Optional starting values (baseline, eta, kernel).
-#' @return A list: \code{theta}, \code{baseline_params}, \code{branching_ratio},
-#'   \code{kernel_params}, \code{nll}, \code{aic}, \code{bic}, \code{n}, \code{horizon},
-#'   \code{k_params}, \code{ks_stat}, \code{ks_pvalue} (time-rescaling residuals against the
-#'   uniform), \code{method}, \code{eps}, \code{converged} (the optimiser stopped at a
-#'   maximum within the parameter box) and \code{at_bound} (the parameters that lie on the
-#'   box, \code{character(0)} for an interior maximum). An estimate on the box is not
-#'   an interior maximum of the likelihood: day-dated (tied) times drive a shape or
-#'   decay to its wall, and a Lomax fitted to exponential data runs to its
-#'   exponential limit.
-#' Events at the same instant do not excite each other: the intensity is
-#' \eqn{\lambda(t) = \nu(t) + \eta \sum_{t_j < t} g(t - t_j)}, over strictly earlier
-#' events, as the definition of a Hawkes process (a simple point process, with no two
-#' events at one time) has it. Tied times are fitted that way, with a warning: data
-#' recorded to a resolution, such as daily dates, carry ties the process itself never
-#' makes, and treating them as exact biases the fit (Filimonov & Sornette 2015), so spread
-#' them uniformly across their interval first with
+#' The reported \code{nll} is the exact likelihood at the estimate whatever
+#' the route, so AIC is comparable across routes. An event exactly at
+#' \code{horizon} is part of the record and counted, as in morie's Python
+#' fit. The Kolmogorov-Smirnov test compares the time-rescaling residuals of
+#' [core_hawkes_residuals()] with the uniform
+#' distribution (exact p-value up
+#' to 10,000 events without ties, asymptotic otherwise).
+#'
+#' Events at the same instant do not excite each other: the intensity sums
+#' over strictly earlier events, as the definition of a Hawkes process (a
+#' simple point process, with no two events at one time) has it. Tied times
+#' are fitted that way, with a warning: data recorded to a resolution, such
+#' as daily dates, carry ties the process itself never makes, and treating
+#' them as exact biases the fit (Filimonov & Sornette 2015), so spread them
+#' uniformly across their interval first with
 #' [core_hawkes_jitter()].
 #'
-#' @references Ozaki T (1979). Maximum likelihood estimation of Hawkes' self-exciting point
+#' Errors: \code{times} with \code{NA}, unsorted, or outside
+#' \code{[0, horizon]}; \code{horizon} not one positive finite number; fewer
+#' than 50 events; an event rate \code{n / horizon} outside
+#' \eqn{[e^{-15}, 100 e^{15}]} per unit time (rescale the times);
+#' \code{eps} not in (0, 1); \code{start} of the wrong length or with a
+#' non-finite likelihood; \code{method = "soe"} with a kernel other than
+#' Lomax or gamma; \code{method = "inar"} with the sinusoidal baseline.
+#' Long fits show a progress spinner (EM a bar) on stderr unless
+#' \code{options(morie.quiet = TRUE)}.
+#'
+#' @param times Numeric vector of event times, sorted increasingly, all in
+#'   \code{[0, horizon]}, in any time unit (days are the natural unit for the
+#'   sinusoidal baseline's yearly cycle). At least 50 events.
+#' @param horizon End of the observation window, one positive number in the
+#'   same unit as \code{times}; the window is \code{[0, horizon]}.
+#' @param kernel The triggering kernel: \code{"exponential"} (the default),
+#'   \code{"weibull"}, \code{"gamma"} or \code{"lomax"}.
+#' @param baseline \code{"constant"} (the default) or \code{"sinusoidal"}
+#'   (trend plus a 365.25-unit cycle).
+#' @param method One of \code{"auto"} (the default), \code{"exact"}, \code{"soe"},
+#'   \code{"truncate"}, \code{"em"}, \code{"inar"}. \code{"auto"} is
+#'   \code{"exact"} for the exponential kernel, \code{"truncate"} for Weibull
+#'   and \code{"soe"} for Lomax and gamma.
+#' @param eps Error level, one number in (0, 1), default \code{1e-9}: the
+#'   relative error per intensity of \code{"soe"} and the kernel tail mass
+#'   dropped by \code{"truncate"}. Ignored by the other routes.
+#' @param start Optional numeric vector of starting values in the order of
+#'   \code{theta}: the baseline terms (\code{a0}, or \code{a0..a3}), then
+#'   \code{eta}, then the kernel parameters. Values outside the parameter box
+#'   are moved onto it. \code{NULL} (the default) uses a start from the data.
+#' @return A list:
+#'   \describe{
+#'     \item{\code{theta}}{numeric, all estimates in the order baseline, \code{eta},
+#'       kernel.}
+#'     \item{\code{baseline_params}}{numeric, \code{a0} (constant) or \code{a0..a3}
+#'       (sinusoidal), on the log scale.}
+#'     \item{\code{branching_ratio}}{numeric, \eqn{\eta}, the expected number of events
+#'       each
+#'       event triggers.}
+#'     \item{\code{kernel_params}}{numeric, the kernel parameters (\code{beta};
+#'       \code{alpha, lambda}; \code{alpha, beta}; or \code{alpha, c}).}
+#'     \item{\code{nll}, \code{aic}, \code{bic}}{numeric: the exact negative
+#'       log-likelihood,
+#'       \eqn{2k + 2\,nll} and \eqn{k \log n + 2\,nll}.}
+#'     \item{\code{n}, \code{horizon}, \code{k_params}}{the number of events (integer),
+#'       the
+#'       window end and the number of parameters (integer).}
+#'     \item{\code{ks_stat}, \code{ks_pvalue}}{numeric, the Kolmogorov-Smirnov test of
+#'       the
+#'       time-rescaling residuals against the uniform.}
+#'     \item{\code{kernel}, \code{baseline}, \code{method}}{character, the choices used
+#'       (\code{method} after \code{"auto"} is resolved).}
+#'     \item{\code{eps}}{numeric, \code{eps} for \code{"soe"} and \code{"truncate"},
+#'       \code{NA} otherwise.}
+#'     \item{\code{converged}}{logical, the optimiser stopped at a maximum within the
+#'       parameter box (before its iteration limit, at a finite likelihood). A maximum
+#'       on the box counts: \code{at_bound} names the parameters that lie on it.}
+#'     \item{\code{at_bound}}{character, the names of parameters that lie on the box
+#'       (\code{character(0)} for an interior maximum).}
+#'   }
+#'   An estimate on the box is not an interior maximum of the likelihood:
+#'   day-dated (tied) times drive a shape or decay to its wall, and a Lomax
+#'   fitted to exponential data runs to its exponential limit.
+#'
+#' @references Ozaki T (1979). Maximum likelihood estimation of Hawkes' self-exciting
+#'   point
 #'   processes. \emph{Ann. Inst. Statist. Math.} 31, 145--155. \doi{10.1007/BF02480272}
 #'
 #'   Beylkin G, Monzon L (2010). Approximation by exponential sums revisited.
@@ -157,17 +243,36 @@
 #'   \emph{Quant. Finance} 17, 571--595. \doi{10.1080/14697688.2016.1211312}
 #'
 #'   Filimonov V, Sornette D (2015). Apparent criticality and calibration issues in the
-#'   Hawkes self-excited point process model: application to high-frequency financial data.
+#'   Hawkes self-excited point process model: application to high-frequency financial
+#'   data.
 #'   \emph{Quant. Finance} 15(8), 1293--1314. \doi{10.1080/14697688.2015.1032544}
-#' @seealso [core_hawkes_jitter()], for times recorded to a
-#'   resolution.
+#' @seealso [core_hawkes_jitter()], for times recorded
+#'   to a
+#'   resolution; [core_hawkes_residuals()] for the
+#'   residuals.
 #' @examples
 #' set.seed(1)
 #' times <- sort(stats::runif(400, 0, 100))
 #' fit <- core_hawkes_fit(times, 100, "exponential")
 #' fit$branching_ratio
+#' fit$at_bound # an interior maximum: the better of two starts
+#' # one start alone can stop with the decay on its bound, at a worse nll
+#' core_hawkes_fit(times, 100, "exponential", start = c(log(2.4), 0.4, 4))$at_bound
+#' fit$nll
 #' core_hawkes_fit(times, 100, "lomax", method = "soe", eps = 1e-8)$nll
 #' core_hawkes_fit(times, 100, "exponential", baseline = "sinusoidal")$aic
+#'
+#' # the fast approximate INAR estimator
+#' core_hawkes_fit(times, 100, method = "inar")$branching_ratio
+#'
+#' # daily dates: spread the ties across each day first
+#' days <- floor(times)
+#' jit <- core_hawkes_jitter(days, horizon = 100)
+#' core_hawkes_fit(jit, 100)$converged
+#'
+#' # too few events, or times past the horizon, are refused
+#' try(core_hawkes_fit(times[1:20], 100))
+#' try(core_hawkes_fit(times, 50))
 #' @export
 core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"),
                             baseline = c("constant", "sinusoidal"), method = "auto", eps = 1e-9,
@@ -233,6 +338,17 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
       stop("the likelihood is not finite at `start` (no intensity, or an overflowing baseline): ",
            "give a start inside the model", call. = FALSE)
     }
+    if (kernel == "exponential" && is.null(start)) {
+      # a second start with little excitation and a slow decay: on weakly clustered data the
+      # likelihood has a second maximum with the decay on its bound, and the data-driven start
+      # can stop there (nll -155.02 against -156.46 for runif(400) with seed 1)
+      x1 <- .rmbl_hk_x0(kernel, baseline, n, horizon, mean(diff(times)))
+      x1[[1L]] <- log(max(n / horizon, 1e-3) * 0.9)
+      x1[[nb + 1L]] <- 0.1
+      x1[[length(x1)]] <- x1[[length(x1)]] / 4
+      fit2 <- stage("second start", run(pmin(pmax(x1, b$lower), b$upper)))
+      if (fit2$value < fit$value) fit <- fit2
+    }
     if (kernel != "exponential" && is.null(start)) {
       # a second, deterministic start at the exponential fit (the shape-1 member of Weibull and
       # gamma), as morie's Python fit: the likelihood is multimodal
@@ -289,21 +405,58 @@ core_hawkes_fit <- function(times, horizon, kernel = c("exponential", "weibull",
 
 #' Time-rescaling residuals of a Hawkes process
 #'
-#' \eqn{U_i = 1 - \exp(-(\Lambda(t_i) - \Lambda(t_{i-1})))}, uniform on (0, 1) when the model
-#' is right (Brown et al. 2002); computed in O(n) or O(n w) by the shared C++ core.
+#' Transforms the event times into residuals that are independent and
+#' uniform on (0, 1) when the fitted Hawkes model is right, by the
+#' time-rescaling theorem. Plot them, or test them against the uniform with
+#' \code{stats::ks.test()}, to check the fit of
+#' [core_hawkes_fit()];
+#' departures show where the model misses clustering or a trend.
+#'
+#' @details
+#' With the compensator \eqn{\Lambda(t) = \int_0^t \lambda(s)\,ds}, the
+#' residual of event \eqn{i} is
+#' \deqn{U_i = 1 - \exp(-(\Lambda(t_i) - \Lambda(t_{i-1})))}
+#' with \eqn{t_0 = 0} (Brown et al. 2002). The rescaled gaps
+#' \eqn{\Lambda(t_i) - \Lambda(t_{i-1})} are unit-rate exponential under the
+#' model, so the \eqn{U_i} are uniform. The model and kernels are those of
+#' [core_hawkes_fit()]; the shared C++ core computes the
+#' residuals in O(n)
+#' for the exponential kernel and O(n w) for the others. Tied times give
+#' tied residuals.
+#'
+#' Errors: \code{times} with \code{NA}, unsorted or outside
+#' \code{[0, horizon]}; \code{par} of the wrong length (2 + kernel
+#' parameters for the constant baseline, 5 + kernel parameters for the
+#' sinusoidal one).
 #'
 #' @inheritParams core_hawkes_fit
-#' @param par Parameters (baseline, eta, kernel), as \code{core_hawkes_fit()} returns them in
-#'   \code{theta}.
-#' @return A numeric vector of length \code{length(times)}.
-#' @references Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The time-rescaling
-#'   theorem and its application to neural spike train data analysis. \emph{Neural Comput.}
+#' @param par Numeric vector of parameters (baseline terms, \code{eta},
+#'   kernel parameters), as \code{core_hawkes_fit()} returns them in
+#'   \code{theta}: length 3 for the exponential kernel with a constant
+#'   baseline, one more for a two-parameter kernel, three more for the
+#'   sinusoidal baseline.
+#' @return A numeric vector of length \code{length(times)}, values in
+#'   (0, 1).
+#' @references Brown EN, Barbieri R, Ventura V, Kass RE, Frank LM (2002). The
+#'   time-rescaling
+#'   theorem and its application to neural spike train data analysis.
+#'   \emph{Neural Comput.}
 #'   14, 325--346. \doi{10.1162/08997660252741149}
 #' @examples
 #' set.seed(2)
 #' times <- sort(stats::runif(200, 0, 50))
 #' U <- core_hawkes_residuals(times, 50, "exponential", c(log(3), 0.2, 2))
 #' stats::ks.test(U, "punif")$p.value
+#'
+#' # residuals of a fitted model, and a quick uniform Q-Q check
+#' fit <- core_hawkes_fit(times, 50, "weibull")
+#' U2 <- core_hawkes_residuals(times, 50, "weibull", fit$theta)
+#' summary(U2)
+#' plot(stats::ppoints(length(U2)), sort(U2), xlab = "uniform quantile", ylab = "residual")
+#' abline(0, 1)
+#'
+#' # par must match the kernel and baseline
+#' try(core_hawkes_residuals(times, 50, "weibull", c(log(3), 0.2, 2)))
 #' @export
 core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "weibull", "gamma", "lomax"), par,
                                   baseline = c("constant", "sinusoidal")) {
@@ -443,31 +596,52 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 
 #' Reproducible uniforms shared with morie's Python arm (splitmix64)
 #'
-#' The splitmix64 generator (Steele, Lea & Flood 2014): \code{n} uniforms on
-#' [0, 1) from a 64-bit \code{seed}, the same numbers morie's Python computes,
-#' so the R and Python arms can draw identical "random" values where their
-#' results must agree (the within-day jitter of tied event dates in the TPS
-#' Hawkes fits, a subsample). Not a statistical replacement for R's own
-#' generators.
+#' Returns \code{n} pseudo-random numbers on [0, 1) from a 64-bit seed with
+#' the splitmix64 generator, the same numbers morie's Python computes for
+#' the same seed. Use it where the R and Python arms must draw identical
+#' "random" values so that their results agree: the within-day jitter of
+#' tied event dates in the TPS Hawkes fits, or a subsample.
 #'
-#' @param n Number of uniforms.
-#' @param seed A non-negative whole number below 2^53.
-#' @return A numeric vector of length \code{n}.
+#' @details
+#' splitmix64 (Steele, Lea & Flood 2014) advances a 64-bit state by the
+#' constant \code{0x9E3779B97F4A7C15} and mixes it with two
+#' multiply-xorshift rounds; the top 53 bits of each output divided by
+#' \eqn{2^{53}} give a double in [0, 1). The stream depends only on
+#' \code{seed}: R's own generator and \code{set.seed()} are neither used nor
+#' changed. It is not a statistical replacement for R's generators.
+#'
+#' Errors: \code{n} not one non-negative whole number; \code{seed} not one
+#' whole number in \eqn{[0, 2^{53})}.
+#'
+#' @param n Number of uniforms, one non-negative whole number (0 gives
+#'   \code{numeric(0)}).
+#' @param seed The seed, one whole number in \eqn{[0, 2^{53})} (so that it is
+#'   exact as an R double).
+#' @return A numeric vector of length \code{n}, values in [0, 1).
 #' @references Steele GL, Lea D, Flood CH (2014). Fast splittable pseudorandom number
 #'   generators. \emph{OOPSLA 2014}, 453--472. \doi{10.1145/2660193.2660195}
 #' @examples
 #' core_uniforms(3, 42)
 #' identical(core_uniforms(5, 1), core_uniforms(5, 1))
+#'
+#' # a stream is a prefix of a longer one with the same seed
+#' all.equal(core_uniforms(3, 7), core_uniforms(10, 7)[1:3])
+#'
+#' # R's own generator is left alone
+#' set.seed(1); a <- runif(1)
+#' set.seed(1); invisible(core_uniforms(100, 9)); b <- runif(1)
+#' identical(a, b)
+#'
+#' # negative counts and seeds past 2^53 are refused
+#' try(core_uniforms(-1, 1))
+#' try(core_uniforms(2, 2^53))
 #' @export
 core_uniforms <- function(n, seed) {
   n <- .rmbl_num(n, "n")
-  seed <- .rmbl_num(seed, "seed")
   if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) {
     stop("`n` must be a non-negative whole number", call. = FALSE)
   }
-  if (length(seed) != 1L || is.na(seed) || seed < 0 || seed != floor(seed) || seed >= 2^53) {
-    stop("`seed` must be a whole number in [0, 2^53)", call. = FALSE)
-  }
+  seed <- .rmbl_seed(seed)
   .Call(C_rmbl_uniforms, n, seed)
 }
 
@@ -476,23 +650,40 @@ core_uniforms <- function(n, seed) {
 #' Daily (or hourly, or second) timestamps put every event of an interval at
 #' one time, but a Hawkes process never has two events at one instant, and
 #' fitting the rounded times as exact biases the estimates (Filimonov &
-#' Sornette 2015). The remedy they use is to redistribute each timestamp
-#' uniformly within its interval of uncertainty: `times + resolution * U`,
-#' with `U` uniform on [0, 1), then sorted. The uniforms are the splitmix64
-#' stream of [core_uniforms()], so the result is reproducible
-#' and, on daily
-#' dates with `seed = 42`, the same as the jitter rmorie and morie (Python)
-#' apply before their TPS Hawkes fits.
+#' Sornette 2015). This function spreads each recorded time uniformly over
+#' the interval it stands for, so the times can be passed to
+#' [core_hawkes_fit()].
+#'
+#' @details
+#' Each time becomes \code{t + w * U}, with
+#' \code{w = min(resolution, horizon - t)} and \code{U} uniform on [0, 1),
+#' and the result is sorted; this is the remedy Filimonov and Sornette use.
+#' The times are sorted (radix order) before the uniforms are assigned, so
+#' the result does not depend on the input order. The uniforms are the
+#' splitmix64 stream of [core_uniforms()], so the result is
+#' reproducible
+#' and, on daily dates with \code{seed = 42}, the same as the jitter rmorie
+#' and morie (Python) apply before their TPS Hawkes fits. R's random number
+#' generator is not used.
+#'
+#' Errors: \code{times} with \code{NA} or non-finite values; \code{resolution}
+#' not one positive finite number; \code{horizon} not one number; a time
+#' past \code{horizon}.
 #'
 #' @param times Numeric event times, each the start of its resolution
 #'   interval (for example whole days since an origin).
-#' @param resolution The width of the interval a recorded time stands for
-#'   (positive; 1 for daily dates in days).
-#' @param seed Seed of the uniforms, as in [core_uniforms()].
-#' @param horizon End of the observation window, when it cuts an interval short: an event
-#'   recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]}, so a
-#'   time dated on the horizon itself stays there (\code{Inf}: no window).
-#' @return The jittered times, sorted.
+#' @param resolution The width of the interval a recorded time stands for,
+#'   one positive number in the unit of \code{times}: 1 (the default) for
+#'   daily dates in days, \code{1/24} for hourly times in days.
+#' @param seed Seed of the uniforms, as in
+#'   [core_uniforms()]; default 42.
+#' @param horizon End of the observation window, when it cuts an interval short: an
+#'   event
+#'   recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]},
+#'   so a
+#'   time dated on the horizon itself stays there (\code{Inf}, the default: no window).
+#' @return A numeric vector of the jittered times, the same length as
+#'   \code{times}, sorted increasingly.
 #' @references Filimonov V, Sornette D (2015). Apparent criticality and
 #'   calibration issues in the Hawkes self-excited point process model:
 #'   application to high-frequency financial data. \emph{Quant. Finance}
@@ -503,6 +694,15 @@ core_uniforms <- function(n, seed) {
 #' days <- c(0, 0, 0, 1, 3, 3)
 #' core_hawkes_jitter(days)
 #' anyDuplicated(core_hawkes_jitter(days))
+#'
+#' # a horizon keeps the last day inside the window
+#' core_hawkes_jitter(c(0, 1, 2), horizon = 2)
+#'
+#' # hourly resolution, in days, and another seed
+#' core_hawkes_jitter(c(0, 0, 0), resolution = 1 / 24, seed = 7)
+#'
+#' # times past the horizon are refused
+#' try(core_hawkes_jitter(c(0, 5), horizon = 3))
 #' @export
 core_hawkes_jitter <- function(times, resolution = 1, seed = 42, horizon = Inf) {
   times <- .rmbl_num(times, "times")

@@ -13,19 +13,61 @@ yoy_summary(object, ...)
 \method{yoy_summary}{rmbl_yoy}(object, ...)
 }
 \arguments{
-\item{object}{An \code{rmbl_yoy} object.}
+\item{object}{An \code{rmbl_yoy} object returned by \code{\link{yoy}}.}
 
 \item{...}{Ignored.}
 }
 \value{
-A data frame with one row per group giving the first and last
-period, the total change across the span, the compound annual growth
-rate, and how many periods moved each way.
+A data frame with one row per series or group and columns: the
+\code{by} columns (character), when \code{yoy()} had \code{by};
+\code{from}, \code{to} (the first and last observed period, same type as
+the period column); \code{first}, \code{last} (numeric values at those
+periods); \code{total_pct}, \code{cagr_pct} (numeric, percent);
+\code{periods} (integer, observed periods); \code{up}, \code{down},
+\code{flat} (integer counts of period-to-period changes).
 }
 \description{
-Summarise a change table
+Collapses a period-over-period change table from \code{\link{yoy}} into
+one row per series (or one row per group when \code{yoy()} was called with
+\code{by}). Each row gives the first and last observed periods, the total
+change between them, the compound annual growth rate, and how many
+period-to-period changes went up, went down or stayed flat. Use it to
+report the whole span of a series in one line next to the detailed table.
+}
+\details{
+Rows whose \code{value} is missing are dropped before the summary, and
+the remaining rows are sorted by period. With \eqn{v_1} the first and
+\eqn{v_T} the last observed value, the total change is
+\deqn{100 (v_T / v_1 - 1)}
+and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+\deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
+Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
+does not exist; \code{cagr_pct} is also \code{NA} for a single period.
+"Annual" in CAGR assumes one period is a year; for monthly or quarterly
+data read it as the compound rate per \code{lag} periods.
+
+The \code{up}, \code{down} and \code{flat} counts are taken from the
+percent-change column (\code{pct_change}, or \code{pp_change} for
+\code{units = "percent"}). A change out of a zero base has no percent
+change and is not counted in any of the three. A group with no non-missing
+value gives a row of \code{NA} with \code{periods = 0}.
+
+Anything other than a \code{yoy()} result is refused with the error
+"\code{object} must be a yoy() result".
 }
 \examples{
+# one series
 d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 yoy_summary(yoy(d, value = "n", period = "year"))
+
+# one row per group; a zero base gives no percent change
+g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
+                n = c(10, 12, 0, 15, 5, 7, 6, 9))
+yoy_summary(yoy(g, value = "n", period = "year", by = "unit"))
+
+# anything that is not a yoy() result is refused
+try(yoy_summary(d))
+}
+\seealso{
+\code{\link{yoy}}, \code{\link{yoy_palettes}}.
 }

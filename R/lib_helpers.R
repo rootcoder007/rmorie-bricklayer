@@ -5,13 +5,44 @@
 
 #' Compute a File's SHA256 Digest
 #'
-#' Returns the SHA256 digest of a file as a lowercase hex string, computed
-#' by the package's own compiled SHA-256 core (or, when the file is sourced
-#' standalone inside a capsule bundle, by the pure-R FIPS 180-4
-#' implementation it ships). Used to record and verify data provenance.
+#' Returns the SHA-256 digest of a file as a lowercase hex string. A
+#' digest is a 64-character fingerprint of the file's exact bytes: any
+#' change to the file, even one byte, gives a different digest, so
+#' recording it when data are downloaded and checking it later shows
+#' whether the file used in an analysis is the one that was recorded. The
+#' package uses it to record and verify data provenance in capsules and
+#' manifests.
 #'
-#' @param path Path to the file to hash.
-#' @return The SHA256 digest as a character string.
+#' @details
+#' The digest is SHA-256 as specified in FIPS 180-4 (National Institute of
+#' Standards and Technology, 2015), computed by the package's own compiled
+#' core; it is identical to `digest::digest(file = path, algo = "sha256")`
+#' and to the `sha256sum` command-line tool. The file is read in binary
+#' mode, 8 MB at a time, so memory use stays at one chunk whatever the
+#' file's size, and line endings or encodings are never altered. A file
+#' larger than one chunk shows a byte-progress bar on stderr after 0.75 s
+#' when a person is watching (an interactive session, or
+#' `options(morie.progress = TRUE)`); `options(morie.quiet = TRUE)` silences
+#' it. Hashing runs at roughly 100 MB a second or faster.
+#'
+#' When this file is sourced on its own inside a capsule bundle (outside
+#' the package), the same digest comes from the bundle's pure-R SHA-256
+#' implementation, which reads the whole file at once.
+#'
+#' Refusals: anything other than a single string naming an existing
+#' regular file -- a missing path, a directory, `NA`, a number or a vector
+#' of several paths -- stops with `"sha256_file: <path> is not a file"`.
+#'
+#' @param path A single string: the path of the file to hash (`~` is
+#'   expanded as usual by R's file functions).
+#' @return A single string of 64 lowercase hexadecimal characters, the
+#'   SHA-256 digest of the file's bytes.
+#' @references National Institute of Standards and Technology (2015).
+#'   Secure Hash Standard (SHS). FIPS PUB 180-4.
+#'   \doi{10.6028/NIST.FIPS.180-4}
+#' @seealso [core_sha256()] for the digest of a string or raw
+#'   vector held
+#'   in memory.
 #' @examples
 #' f <- tempfile()
 #' writeLines("hello capsule", f)
@@ -29,18 +60,51 @@
 #' # Provenance pin: record a digest, verify it later.
 #' pinned <- sha256_file(f)
 #' stopifnot(sha256_file(f) == pinned)
+#'
+#' # An empty file has the well-known empty-input digest.
+#' e <- tempfile()
+#' file.create(e)
+#' sha256_file(e)
+#'
+#' # The file's bytes and the same bytes in memory hash alike.
+#' identical(sha256_file(f), core_sha256(readBin(f, "raw", file.size(f))))
+#'
+#' # A directory or a missing file is refused.
+#' try(sha256_file(tempdir()))
 #' @export
 sha256_file <- function(path) {
   if (!is.character(path) || length(path) != 1L || is.na(path) || !file.exists(path) || dir.exists(path)) {
     stop(sprintf("sha256_file: %s is not a file", if (is.character(path) && length(path) == 1L) path else "`path`"),
          call. = FALSE)
   }
-  bytes <- readBin(path, "raw", n = file.info(path)$size)
-  # inside the package: the compiled SHA-256 core (identical output to
-  # digest::digest(file = path, algo = "sha256")); sourced standalone in a
-  # capsule bundle: the pure-R FIPS 180-4 implementation from sha256_native.R
-  if (exists("core_sha256", mode = "function")) return(core_sha256(bytes))
-  .rmbl_sha256_hex(bytes)
+  # inside the package: the compiled SHA-256 core over the file read in chunks (identical output
+  # to digest::digest(file = path, algo = "sha256")); sourced standalone in a capsule bundle: the
+  # pure-R FIPS 180-4 implementation from sha256_native.R, over the whole file at once
+  if (exists("core_sha256", mode = "function")) return(.rmbl_sha256_stream(path))
+  .rmbl_sha256_hex(readBin(path, "raw", n = file.info(path)$size))
+}
+
+# The digest of a file read `chunk` bytes at a time (8 MB), so memory stays at one chunk whatever
+# the file's size; a file larger than one chunk gets a byte-progress bar (drawn only after the
+# usual lazy start, so a quick hash shows nothing).
+.rmbl_sha256_stream <- function(path, chunk = 8388608L) {
+  size <- file.info(path)$size
+  con <- file(path, open = "rb")
+  on.exit(close(con), add = TRUE)
+  pg <- if (is.finite(size) && size > chunk) {
+    bricklayer_progress(sprintf("sha256 %s", .rmbl_printable(basename(path))), size)
+  }
+  if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
+  state <- NULL
+  done <- 0
+  repeat {
+    b <- readBin(con, "raw", n = chunk)
+    if (!length(b)) break
+    state <- .Call(C_rmbl_sha256_chunk, state, b, FALSE)
+    done <- done + length(b)
+    if (!is.null(pg)) pg$update(done, info = sprintf("%s of %s", .bl_fmt_bytes(done), .bl_fmt_bytes(size)))
+  }
+  .Call(C_rmbl_sha256_chunk, state, NULL, TRUE)
 }
 
 ## ----------------- Unicode-safe text with ASCII fallback -----------------
@@ -54,10 +118,37 @@ sha256_file <- function(path) {
 #' example, an accented capital A becomes a plain "A"). Falls back to
 #' dropping any character that has no transliteration. This is the
 #' deterministic "fallback" used by
-#' [ascii_fallback()].
+#' [ascii_fallback()]. Use it for destinations that accept
+#' only ASCII --
+#' a package `DESCRIPTION`, a file name, a legacy system -- so a name
+#' written with an accented letter arrives with the plain letter rather
+#' than as an encoding error or a question mark.
 #'
-#' @param x A character vector.
-#' @return A character vector containing only ASCII characters.
+#' @details
+#' Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
+#' first. Then, when the \pkg{stringi} package is installed, the ICU
+#' transform `"Any-Latin; Latin-ASCII"` romanises any script and folds
+#' accents (Cyrillic, Greek and Chinese become Latin letters). Without
+#' \pkg{stringi}, a fixed table folds the common Latin accents and
+#' ligatures (sharp s to "ss", the ae ligature to "ae", thorn to "th" and so on) and
+#' every other non-ASCII character is dropped, so non-Latin scripts
+#' disappear rather than being romanised. Either way the result is then
+#' stripped of anything outside the printable ASCII range (space to
+#' tilde), so control characters such as newlines and tabs are removed
+#' too. The result never depends on the session's locale.
+#'
+#' A missing value becomes `""`; non-character input is converted with
+#' [as.character()] first (so numbers pass through as their
+#' digits).
+#'
+#' @param x A character vector (other types are converted with
+#'   [as.character()]).
+#' @return A character vector the length of `x`, containing only printable
+#'   ASCII characters (bytes 32 to 126); `NA` elements become `""`.
+#' @seealso [ascii_fallback()] to transliterate only when
+#'   needed,
+#'   [write_text_fallback()] to write text with an
+#'   ASCII retry.
 #' @export
 #' @examples
 #' # Latin accents fold to their nearest ASCII letter.
@@ -72,6 +163,9 @@ sha256_file <- function(path) {
 #'
 #' # Either way the result is guaranteed pure 7-bit ASCII (never "?").
 #' all(charToRaw(to_ascii("caf\u00e9")) < 128)
+#'
+#' # Missing values become empty strings; line breaks are removed.
+#' to_ascii(c(NA, "two\nlines"))
 to_ascii <- function(x) {
   x <- as.character(x)
   # Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
@@ -160,11 +254,27 @@ to_ascii <- function(x) {
 #' accents wherever UTF-8 is supported while degrading gracefully instead
 #' of erroring where it is not.
 #'
-#' @param x A character vector.
-#' @param force Logical; always transliterate to ASCII
-#' (default `FALSE`) .
-#' @return A character vector: `x` where it can be represented, ASCII
-#' otherwise.
+#' @details
+#' Each element is tested on its bytes with [validUTF8()], so the
+#' outcome
+#' does not depend on the session locale. Valid elements (including plain
+#' ASCII and properly encoded accented text) are returned unchanged;
+#' invalid ones go through [to_ascii()], which drops the bytes
+#' that are
+#' not UTF-8 and transliterates the rest. With `force = TRUE` every
+#' element goes through [to_ascii()]. A missing value is kept as
+#' `NA`
+#' unless `force = TRUE`, when it becomes `""`.
+#'
+#' @param x A character vector (other types are converted with
+#'   [as.character()]).
+#' @param force A single logical: `TRUE` always transliterates every
+#'   element to ASCII; `FALSE` (the default) only the elements that are not
+#'   valid UTF-8. Anything other than `TRUE` counts as `FALSE`.
+#' @return A character vector the length of `x`: each element unchanged
+#'   when it is valid UTF-8 (and `force` is not `TRUE`), otherwise its
+#'   ASCII transliteration.
+#' @seealso [to_ascii()], which does the transliteration.
 #' @export
 #' @examples
 #' # By default valid UTF-8 is preserved (accents kept where supported).
@@ -179,6 +289,11 @@ to_ascii <- function(x) {
 #'
 #' # Vectorised; each element handled independently.
 #' ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
+#'
+#' # Bytes that are not UTF-8 (a Latin-1 file read as UTF-8) are repaired.
+#' bad <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
+#' validUTF8(bad)
+#' ascii_fallback(bad)
 ascii_fallback <- function(x, force = FALSE) {
   x <- as.character(x)
   if (isTRUE(force)) return(to_ascii(x))
@@ -191,19 +306,47 @@ ascii_fallback <- function(x, force = FALSE) {
 
 #' Write Text as UTF-8, Falling Back to ASCII on an Encoding Error
 #'
-#' Writes `text` to `path` as UTF-8. If the write raises an
-#' encoding error (for example a destination or locale that cannot
-#' represent the characters), it retries with an ASCII transliteration
-#' produced by [to_ascii()] so capsule generation
-#' never fails on a non-ASCII name.
+#' Writes `text` to `path` as UTF-8, one element per line. If the write
+#' fails (for example a destination or locale that cannot represent the
+#' characters), it retries with an ASCII transliteration produced by
+#' [to_ascii()], so capsule generation never fails on a non-ASCII
+#' name.
+#' Use it to write generated text files (README, citation, script) whose
+#' content may include names with accents.
 #'
-#' @param text A character vector of lines to write.
-#' @param path Destination file path.
+#' @details
+#' The lines are joined with `"\n"`, a final newline is added, and the
+#' UTF-8 bytes are written through a binary connection, so the bytes on
+#' disk are UTF-8 whatever the session locale (a text connection would
+#' re-encode from the native locale) and line endings are `"\n"` on every
+#' platform. An existing file is overwritten. A missing element is written
+#' as the two letters `NA`, and an empty `text` writes a file holding a
+#' single newline.
+#'
+#' The ASCII retry is taken on any error from the first write, not only on
+#' an encoding error; if the retry also fails (a directory that does not
+#' exist, a read-only location), that error reaches the caller. A `path`
+#' that is not a single non-empty string is refused before anything is
+#' written (`"path must be a single non-empty string"`).
+#'
+#' @param text A character vector of lines to write (other types are
+#'   converted with [as.character()]).
+#' @param path The destination file, a single non-empty string. Its
+#'   directory must exist.
 #' @return Invisibly, `path`.
+#' @seealso [to_ascii()] for the retry's transliteration.
 #' @examples
 #' p <- write_text_fallback(c("line one", "line two"),
 #'                          tempfile(fileext = ".txt"))
 #' readLines(p)
+#'
+#' # Accented names are written as UTF-8 bytes, whatever the locale.
+#' q <- write_text_fallback("Author: \u00c1ngela Zorro Medina", tempfile())
+#' readLines(q, encoding = "UTF-8")
+#' readBin(q, "raw", 20)
+#'
+#' # The path must be one string.
+#' try(write_text_fallback("x", c("a.txt", "b.txt")))
 #' @export
 write_text_fallback <- function(text, path) {
   path <- .rmbl_string1(path, "path")

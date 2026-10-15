@@ -14,28 +14,68 @@
 
 #' Parse banded category labels into numeric bounds
 #'
-#' Recognises the forms that open-data publishers actually use: a bare
-#' number ( `"3"`) , a closed range ( `"18 to 24"`,
-#' `"18-24"`, `"18 - 24"`) , an open upper band ( `"50+"`,
-#' `"Greater than 15"`, `"over 15"`, `"more than 15"`,
-#' `"65 and over"`) , and an open lower band ( `"<18"`,
-#' `"under 18"`, `"less than 18"`) .
+#' @description
+#' Published administrative tables often report intervals instead of
+#' values: "18 to 24", "2 to 5", "50+", "Greater than 15 days". This function
+#' reads such labels into a lower and an upper bound per band, and flags the
+#' bands that are open at the top or the bottom. It recognises the wordings
+#' open-data publishers actually use, and leaves a label it cannot read as
+#' \code{NA} rather than guessing. Use it as the first step before
+#' \code{\link{band_values}}, \code{\link{expand_bands}} or
+#' \code{\link{band_sensitivity}}.
 #'
-#' @param x Character labels.
-#' @param closed_upper For an open upper band, whether
-#' the stated number is included. `"50+"` includes 50;
-#' `"Greater than 15"` does not, so its lower bound is 16 for integer
-#' data. Controlled per-label by the wording, and this argument only
-#' settles the ambiguous `"+"` form.
-#' @param integer_scale Whether the quantity is
-#' integer-valued, which decides whether `"greater than 15"` starts at
-#' 16 or just above 15.
-#' @return A data frame with `label`, `lower`, `upper`,
-#' `open_lower` and `open_upper`. An unparseable label gives
-#' `NA` bounds rather than a guess.
+#' @details
+#' Labels are lower-cased and trimmed; the Unicode dash family (U+2010 to
+#' U+2015 and the minus sign U+2212) is read as a hyphen, and correctly
+#' grouped thousands separators are removed (\code{"1,000 to 2,499"}). Then,
+#' in order:
+#' \itemize{
+#'   \item \strong{Closed range}: two numbers joined by \code{to}, \code{-} or
+#'     \code{through}, optionally preceded by one word and followed by a unit
+#'     (\code{"ages 18-24"}, \code{"0 to 5 overnight stays"}). The two
+#'     numbers must be the only numbers in the label, the lower must not
+#'     exceed the upper, and no open-band cue word (over, under, more, less,
+#'     plus, ...) or \code{+} may appear; otherwise the label is \code{NA}.
+#'   \item \strong{Open upper band, inclusive}: \code{"50+"},
+#'     \code{"65 and over"}, \code{"and above"}, \code{"or more"},
+#'     \code{"or over"}, \code{"plus"}. The lower bound is the number when
+#'     \code{closed_upper = TRUE}, and the number plus one step otherwise.
+#'   \item \strong{Open upper band, exclusive}: \code{"greater than"},
+#'     \code{"more than"}, \code{"over"}, \code{"above"}, \code{"gt"}. The
+#'     lower bound is the number plus one step.
+#'   \item \strong{Open lower band, inclusive}: \code{"17 and under"},
+#'     \code{"or less"}, \code{"or fewer"}, \code{"and below"},
+#'     \code{"or under"}. The upper bound is the number.
+#'   \item \strong{Open lower band, exclusive}: \code{"less than"},
+#'     \code{"fewer than"}, \code{"under"}, \code{"below"}, \code{"<"},
+#'     \code{"lt"}. The upper bound is the number minus one step.
+#'   \item \strong{Bare number}: a band of width zero. A bare negative
+#'     number (\code{"-5"}) is read as a suppressed cell and stays \code{NA}.
+#' }
+#' The step is 1 when \code{integer_scale = TRUE} and the label has no
+#' decimal point, and 0 otherwise. A label with more than one number that is
+#' not a range, an empty label and \code{NA} all give \code{NA} bounds.
+#' Anything other than a character or factor vector is an error.
+#'
+#' @param x Character vector (or factor) of band labels.
+#' @param closed_upper Logical, default \code{TRUE}. For the inclusive
+#'   open-upper wordings (\code{"+"}, \code{"and over"}, \code{"or more"} and
+#'   the like), whether the stated number belongs to the band:
+#'   \code{TRUE} reads \code{"50+"} as 50 and above, \code{FALSE} as above 50
+#'   (lower bound 51 on an integer scale). The exclusive wordings
+#'   (\code{"greater than 15"}) always exclude the number.
+#' @param integer_scale Logical, default \code{TRUE}. Whether the quantity is
+#'   integer-valued (counts, days, whole years). It decides whether
+#'   \code{"greater than 15"} starts at 16 (\code{TRUE}) or at 15 as an
+#'   infimum (\code{FALSE}). A label written with decimals is always treated
+#'   as continuous.
+#' @return A data frame with one row per label and columns \code{label}
+#'   (character, as given), \code{lower} and \code{upper} (numeric bounds,
+#'   \code{NA} for the open side of an open band or for an unparsed label),
+#'   and \code{open_lower}, \code{open_upper} (logical).
 #' @seealso
-#' [band_values()],
-#' [band_sensitivity()]
+#' \code{\link{band_values}}, \code{\link{band_sensitivity}},
+#' \code{\link{expand_bands}}
 #' @references
 #' The forms recognised here are taken from the categories the Ontario
 #' Ministry of the Solicitor General publishes in its inmate datasets (the
@@ -44,10 +84,16 @@
 #' @examples
 #' parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #'
-#' parse_bands(c("18 to 24", "25 to 49", "50+"))
+#' parse_bands(c("18 to 24", "25 to 49", "50+", "under 18"))
 #'
-#' # An unrecognised label is reported as unparsed, not guessed at.
-#' parse_bands(c("3", "unknown", "not stated"))
+#' # "50+" excluding 50, and a continuous scale
+#' parse_bands(c("50+", "over 15"), closed_upper = FALSE)
+#' parse_bands(c("over 15", "under 0.5"), integer_scale = FALSE)
+#'
+#' # An unrecognised or self-contradictory label is NA, not guessed at.
+#' parse_bands(c("3", "unknown", "24 to 18", "15 to 19 and over"))
+#'
+#' try(parse_bands(1:3))
 #' @export
 parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
   if (!is.null(x) && !is.character(x) && !is.factor(x)) {
@@ -168,40 +214,68 @@ parse_bands <- function(x, closed_upper = TRUE, integer_scale = TRUE) {
 
 #' Representative values for banded categories
 #'
-#' Turns bounds into the single number per band that a calculation needs,
-#' under a stated rule. The open band is the whole difficulty: it has no
-#' midpoint, so a cap has to be supplied or assumed, and the assumption is
-#' recorded in the result rather than absorbed into it.
+#' @description
+#' Gives each band a single number that a calculation can use (a mean, a
+#' concentration index, a regression), under a rule you choose. For closed
+#' bands the rule places the value at the midpoint, the lower or upper
+#' bound, or the geometric mean of the bounds. An open band ("50+",
+#' "under 18") has no midpoint, so its missing bound is filled from an
+#' explicit assumption, and the rows that rest on that assumption are
+#' flagged in the result instead of being absorbed into it.
 #'
-#' @param bands A data frame from
-#' [parse_bands()], or labels to parse.
-#' @param rule How to place a value inside a closed band.
-#' `"midpoint"` is the arithmetic mean of the bounds. `"lower"`
-#' and `"upper"` give the conservative and generous readings, which
-#' together bracket whatever the truth is. `"geometric"` suits a
-#' quantity whose distribution inside the band is closer to log-uniform
-#' than uniform, which is usual for counts and durations.
-#' @param open_upper_cap Upper bound to assume for an
-#' open top band. The default multiplies the band's lower bound by
-#' `open_upper_factor`, which is an assumption and is flagged as one.
-#' @param open_upper_factor Multiplier used when no
-#' cap is given.
-#' @param open_lower_floor Lower bound assumed for an open lower band
-#'   ("under 18"). `NULL`, the default, uses 0, or the band's own upper
-#'   bound when that is below 0; an explicit floor above a band's upper
+#' @details
+#' For a band with bounds \eqn{[l, u]} the value is \eqn{(l + u)/2}
+#' (\code{"midpoint"}), \eqn{l} (\code{"lower"}), \eqn{u} (\code{"upper"}) or
+#' \eqn{\sqrt{l u}} (\code{"geometric"}; when \eqn{l \le 0} the arithmetic
+#' midpoint is used instead, because the geometric mean is undefined there).
+#' The \code{"lower"} and \code{"upper"} rules bracket any value that could
+#' come from the bands.
+#'
+#' An open upper band gets \eqn{u =} \code{open_upper_cap} if given, else
+#' \eqn{u = l \times} \code{open_upper_factor}. An open lower band gets
+#' \eqn{l =} \code{open_lower_floor} if given, else \eqn{\min(0, u)}. A cap
+#' below the band's lower bound, or a floor above its upper bound, is an
+#' error, because the value would lie outside the band. Unparsed bands give
+#' \code{NA}.
+#'
+#' Use \code{\link{band_sensitivity}} to see how much a result moves with the
+#' cap, and \code{\link{expand_bands}} to turn the values into one value per
+#' unit.
+#'
+#' @param bands A data frame from \code{\link{parse_bands}}, or a character
+#'   vector of labels to parse with its defaults.
+#' @param rule Character, one of \code{"midpoint"} (the default),
+#'   \code{"lower"}, \code{"upper"} or \code{"geometric"}. The geometric
+#'   mean suits quantities whose distribution inside a band is closer to
+#'   log-uniform than uniform, which is usual for counts and durations.
+#' @param open_upper_cap Number or \code{NULL} (the default). The upper bound
+#'   assumed for every open top band, in the units of the labels.
+#' @param open_upper_factor Number, default \code{2}. When no cap is given,
+#'   the open top band's upper bound is its lower bound times this factor
+#'   (so "Greater than 10" becomes 11 to 22).
+#' @param open_lower_floor Number or \code{NULL} (the default). The lower bound
+#'   assumed for an open bottom band ("under 18"). \code{NULL} uses 0, or the
+#'   band's own upper bound when that is below 0. A floor above a band's upper
 #'   bound is refused.
-#' for an open bottom band. Defaults to zero.
-#' @return The band table with a `value` column and an `assumed`
-#' column marking the rows whose value rests on the open-band assumption.
-#' @seealso [band_sensitivity()]
+#' @return The band table with two added columns: \code{value} (numeric, the
+#'   representative value) and \code{assumed} (logical, \code{TRUE} for the
+#'   open bands whose value rests on the cap or floor).
+#' @seealso \code{\link{parse_bands}}, \code{\link{band_sensitivity}},
+#'   \code{\link{expand_bands}}
 #' @examples
 #' b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-#'
 #' band_values(b)
 #'
 #' # The lower and upper rules bracket the truth.
 #' band_values(b, rule = "lower")$value
 #' band_values(b, rule = "upper", open_upper_cap = 40)$value
+#'
+#' # geometric placement, and an explicit floor for an open bottom band
+#' band_values(b, rule = "geometric", open_upper_cap = 40)$value
+#' band_values(c("under 5", "5 to 9", "10+"), open_lower_floor = 1)
+#'
+#' # a cap inside the open band is refused
+#' try(band_values(b, open_upper_cap = 5))
 #' @export
 band_values <- function(bands, rule = c("midpoint", "lower", "upper",
                                         "geometric"),
@@ -274,32 +348,60 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
 
 #' How much a result depends on the open band's assumed cap
 #'
-#' Recomputes a statistic across a range of assumed caps for the open top
-#' band and reports how far the answer moves. Everything derived from
-#' banded data carries this dependence; the only question is whether it was
-#' measured.
+#' @description
+#' Recomputes a statistic of banded data (by default the Gini coefficient)
+#' for a range of assumed caps on the open top band, and reports how far the
+#' answer moves. Every statistic computed from banded data depends on where
+#' the open band is assumed to end; this function measures that dependence,
+#' so you can report a range instead of a single figure when the dependence
+#' is large.
 #'
-#' @param bands A data frame from
-#' [parse_bands()], or labels to parse.
-#' @param counts How many units fall in each band.
-#' @param statistic A function of a numeric vector of
-#' per-unit values. Defaults to [gini()].
-#' @param caps Caps to try for the open top band. Defaults to a
-#' geometric sweep from the band's lower bound to twenty times it.
-#' @param rule Passed to
-#' [band_values()].
-#' @return A data frame of `cap` and `value`, with the span and
-#' the relative span attached as attributes and printed by `print()`.
+#' @details
+#' Let \eqn{b} be the smallest lower bound among the open top bands. The
+#' default caps are 12 points spaced evenly on the log scale from
+#' \eqn{1.05 b} to \eqn{20 b}. For each cap \eqn{c},
+#' \code{\link{band_values}(bands, rule, open_upper_cap = c)} gives one value
+#' per band, each value is repeated \code{counts} times, and
+#' \code{statistic} is applied to the result. A statistic that errors or
+#' does not return a single number gives \code{NA}; warnings are suppressed.
+#'
+#' The span is \eqn{\max - \min} over the finite values and the relative span
+#' is the span divided by the median absolute value (\code{NA} when any value
+#' is zero). The print method adds a note when the relative span exceeds
+#' 0.1.
+#'
+#' Errors: \code{counts} not numeric or of a different length from the
+#' bands; no open top band.
+#'
+#' @param bands A data frame from \code{\link{parse_bands}}, or labels to
+#'   parse.
+#' @param counts Numeric vector, one per band: how many units fall in each
+#'   band. Non-integer counts are truncated by \code{rep()}.
+#' @param statistic A function that takes a numeric vector of per-unit
+#'   values and returns one number. Default \code{\link{gini}}.
+#' @param caps Numeric vector of caps to try, in the units of the labels.
+#'   Default \code{NULL}: the geometric sweep described in Details. Values are
+#'   sorted and de-duplicated.
+#' @param rule Character, default \code{"midpoint"}: the placement rule passed
+#'   to \code{\link{band_values}}.
+#' @return A data frame of class \code{c("rmbl_band_sensitivity",
+#'   "data.frame")} with numeric columns \code{cap} and \code{value}, and
+#'   attributes \code{span}, \code{relative_span} and \code{base} (the lower
+#'   bound \eqn{b} of the open band).
 #' @examples
 #' b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
 #' counts <- c(1200, 430, 110, 38)
 #'
 #' s <- band_sensitivity(b, counts)
 #' s
+#' attr(s, "relative_span")
 #'
 #' # A statistic that barely moves has been measured; one that swings
 #' # has not.
-#' band_sensitivity(b, counts, statistic = mean)
+#' band_sensitivity(b, counts, statistic = mean, caps = c(12, 20, 50))
+#'
+#' # nothing to vary without an open band
+#' try(band_sensitivity(c("1", "2 to 5"), c(10, 4)))
 #' @export
 band_sensitivity <- function(bands, counts, statistic = gini, caps = NULL,
                              rule = "midpoint") {
@@ -360,22 +462,50 @@ print.rmbl_band_sensitivity <- function(x, ...) {
 
 #' Expand a banded frequency table into per-unit values
 #'
-#' @param bands A data frame from
-#' [parse_bands()], or labels to parse.
-#' @param counts How many units fall in each band.
-#' @param ... Passed to
-#' [band_values()].
-#' @param drop_unparsed A band whose label could not be parsed, yet which
-#' has a count, is an error by default: every statistic computed from the
-#' result would otherwise describe a fraction of the data in silence.
-#' `TRUE` leaves those units out with a warning instead.
-#' @return A numeric vector with one entry per unit.
+#' @description
+#' Turns a banded frequency table (labels and a count per band) into a
+#' numeric vector with one value per unit, using the representative value of
+#' each band from \code{\link{band_values}}. The result can be passed to any
+#' function that expects individual values, such as \code{\link{gini}},
+#' \code{mean()} or \code{quantile()}. Bands that cannot be parsed but have
+#' units in them are an error by default, so a statistic never describes
+#' only part of the data without saying so.
+#'
+#' @details
+#' Each band's value is repeated \code{round(counts)} times, in band order.
+#' Bands with an \code{NA} count are skipped. A band with an \code{NA} value
+#' (unparsed label) and a positive count is an error unless
+#' \code{drop_unparsed = TRUE}, in which case its units are left out with a
+#' warning that gives their number and labels.
+#'
+#' Errors: \code{counts} of the wrong length, non-numeric or negative; an
+#' unplaceable band with units (by default); any error from
+#' \code{\link{band_values}}.
+#'
+#' @param bands A data frame from \code{\link{parse_bands}}, or labels to
+#'   parse.
+#' @param counts Numeric vector, one non-negative count per band.
+#' @param ... Further arguments to \code{\link{band_values}}: \code{rule},
+#'   \code{open_upper_cap}, \code{open_upper_factor} and
+#'   \code{open_lower_floor}.
+#' @param drop_unparsed Logical, default \code{FALSE}. \code{FALSE} makes a
+#'   band whose label could not be parsed, yet which has a count, an error;
+#'   \code{TRUE} leaves those units out with a warning instead.
+#' @return A numeric vector with one entry per unit (length
+#'   \code{sum(round(counts))} over the placed bands).
+#' @seealso \code{\link{band_values}}, \code{\link{band_sensitivity}}
 #' @examples
 #' x <- expand_bands(c("1", "2 to 5", "Greater than 5"),
 #'                   counts = c(10, 4, 2), open_upper_cap = 12)
 #' table(x)
-#'
 #' gini(x)
+#'
+#' # the lower-bound reading of the same table
+#' expand_bands(c("1", "2 to 5", "Greater than 5"), counts = c(10, 4, 2),
+#'              rule = "lower")
+#'
+#' # an unparseable band with units in it stops the call
+#' try(expand_bands(c("1", "not stated"), counts = c(3, 2)))
 #' @export
 expand_bands <- function(bands, counts, ..., drop_unparsed = FALSE) {
   if (!is.data.frame(bands)) bands <- parse_bands(bands)

@@ -7,14 +7,50 @@
 bricklayer_llm_logout()
 }
 \value{
-\code{TRUE} when a key was removed, invisibly.
+Logical scalar, invisibly: \code{TRUE} when a key was removed,
+\code{FALSE} when none was stored.
 }
 \description{
-Removes the key from the shared credentials file (and the file itself
-when nothing else is stored in it).
+Removes the MORIE data key that \code{\link{bricklayer_llm_login}}
+stored, so this machine can no longer load the curated tables at
+data.rmorie.com until you sign in again. Use it on a shared machine, or
+to switch to another key. Nothing is contacted.
+}
+\details{
+The shared credentials file
+(\code{$XDG_CONFIG_HOME/morie/credentials.json}, else
+\code{~/.config/morie/credentials.json}) is edited as text: the members
+\code{hosted_key}, \code{hosted_user} and \code{hosted_base_url} are
+removed and every other entry (written by \code{morie}, \code{rmorie} or
+\code{rmoriedata}) is kept byte for byte. When nothing else is left the
+file is deleted. A key set in the environment variable
+\code{MORIE_HOSTED_KEY} is not touched. A message says whether a key was
+removed.
+
+Errors when the file is not a JSON object (or not valid JSON, or names a
+member twice), and when the key cannot be removed without damaging the
+file; in both cases the file is left as it was.
 }
 \examples{
-\dontrun{
+old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile())   # a scratch credentials folder
+
+# nothing stored yet
 bricklayer_llm_logout()
+
+# a file holding a key and another tool's entry: only the key goes
+d <- file.path(Sys.getenv("XDG_CONFIG_HOME"), "morie")
+dir.create(d, recursive = TRUE)
+writeLines('{"hosted_key": "k-123", "other_tool": 1}', file.path(d, "credentials.json"))
+bricklayer_llm_logout()
+readLines(file.path(d, "credentials.json"))
+
+# a damaged file is refused, not overwritten
+writeLines("not json", file.path(d, "credentials.json"))
+try(bricklayer_llm_logout())
+
+if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 }
+\seealso{
+\code{\link{bricklayer_llm_login}}.
 }
