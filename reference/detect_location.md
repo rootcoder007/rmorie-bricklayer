@@ -81,4 +81,20 @@ detect_location(env_location = "", codecarbon_location = "", tz = "",
 #> $method
 #> [1] "locale en_IN.UTF-8"
 #> 
+# an explicit setting wins over everything else
+detect_location(env_location = "CA-QC", tz = "Europe/Paris")
+#> $location
+#> [1] "CA-QC"
+#> 
+#> $method
+#> [1] "RMBL_LOCATION environment variable"
+#> 
+# nothing usable: the world average, and the method says so
+detect_location(env_location = "", codecarbon_location = "", tz = "UTC", locale = "C")
+#> $location
+#> [1] "WORLD"
+#> 
+#> $method
+#> [1] "fallback, no location found in environment, time zone or locale"
+#> 
 ```

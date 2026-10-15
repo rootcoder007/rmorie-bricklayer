@@ -4,7 +4,9 @@ Fits the partially linear exposure-response model with
 [`plr_crossfit`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
 (or any estimator with the same interface), then re-fits it on
 `n_bootstrap` non-parametric resamples of the rows for a percentile
-interval (Efron and Tibshirani 1993, chapter 13).
+interval (Efron and Tibshirani 1993, chapter 13). The bootstrap interval
+does not lean on the estimator's own standard error, so it is a check on
+it: when the two disagree, the analytic one should not be trusted alone.
 
 ## Usage
 
@@ -24,19 +26,21 @@ exposure_response_plr(
 
 - data:
 
-  A data frame.
+  A data frame with one row per unit.
 
 - outcome, exposure, confounders:
 
-  Column names.
+  Column names: the outcome and the exposure (single strings) and the
+  confounders (one or more strings).
 
 - n_bootstrap:
 
-  Number of resamples (default 100).
+  Number of resamples, a non-negative whole number (default 100); at
+  least 10 must succeed.
 
 - random_state:
 
-  Seed for the resampling.
+  Seed for the resampling (default 42).
 
 - estimator:
 
@@ -47,13 +51,40 @@ exposure_response_plr(
 
 ## Value
 
-A list with `ate`, `se_analytic`, `se_bootstrap`, `ci_lower_bs`,
-`ci_upper_bs`, `n_bootstrap` and `method`.
+A list with `ate` (the full-sample estimate), `se_analytic` (the
+estimator's standard error), `se_bootstrap` (the standard deviation of
+the replicates), `ci_lower_bs` and `ci_upper_bs` (the 95% percentile
+interval), `n_bootstrap` (the number of successful resamples) and
+`method` (the estimator's method with `" + percentile bootstrap"`).
+
+## Details
+
+Each resample draws `nrow(data)` rows with replacement and calls
+`estimator(resample, outcome, exposure, confounders)`; a resample on
+which the estimator fails is skipped, and the run stops if fewer than 10
+succeed. The interval is the 2.5% and 97.5% type-7 quantiles of the
+replicate estimates, and `se_bootstrap` their standard deviation.
+Resampling uses `random_state` and restores R's own random stream
+afterwards. The cost is `n_bootstrap + 1` estimator calls; with
+[`plr_crossfit`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
+at n = 20000 and 100 resamples that is a few seconds. A progress bar on
+stderr follows the resamples when a person is watching
+(`options(morie.progress = TRUE)` outside an interactive session;
+`options(morie.quiet = TRUE)` silences it).
+
+Refusals: column names that are not strings, an `n_bootstrap` that is
+not a single non-negative whole number, an estimator that is not a
+function, and the estimator's own errors on the full sample.
 
 ## References
 
 Efron, B. and Tibshirani, R. J. (1993). An Introduction to the
 Bootstrap. Chapman and Hall.
+
+## See also
+
+[`core_bootstrap_mean`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_bootstrap_mean.md)
+for a bootstrap of a mean.
 
 ## Examples
 
@@ -62,7 +93,24 @@ set.seed(1)
 d <- data.frame(x1 = rnorm(200), x2 = rnorm(200))
 d$exposure <- 20 + 2 * d$x1 + rnorm(200)
 d$asthma <- 5 + 0.3 * d$exposure + d$x2 + rnorm(200)
-exposure_response_plr(d, outcome = "asthma", exposure = "exposure",
-                      confounders = c("x1", "x2"), n_bootstrap = 20)$ate
+r <- exposure_response_plr(d, outcome = "asthma", exposure = "exposure",
+                           confounders = c("x1", "x2"), n_bootstrap = 20)
+r$ate
 #> [1] 0.2536464
+c(r$ci_lower_bs, r$ci_upper_bs)
+#> [1] 0.1365177 0.3476568
+
+# Any estimator with the same interface: here an ordinary regression.
+ols <- function(data, outcome, treatment, covariates) {
+  f <- stats::reformulate(c(treatment, covariates), outcome)
+  cf <- summary(stats::lm(f, data = data))$coefficients
+  list(ate = cf[treatment, 1], se = cf[treatment, 2], method = "OLS")
+}
+exposure_response_plr(d, "asthma", "exposure", c("x1", "x2"),
+                      n_bootstrap = 20, estimator = ols)$method
+#> [1] "OLS + percentile bootstrap"
+
+# Fewer than 10 resamples cannot give an interval.
+try(exposure_response_plr(d, "asthma", "exposure", c("x1", "x2"), n_bootstrap = 5))
+#> Error : Only 5 successful bootstrap fits; need >=10. Inspect the model's convergence on your resamples.
 ```

@@ -1,7 +1,11 @@
 # Byte lengths of a standardised signature scheme
 
 Reports the sizes fixed by a FIPS 204 or FIPS 205 parameter set, so a
-caller never has to hard-code them.
+caller never has to hard-code them. Use it to check key material before
+[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md),
+to size storage for signatures, or to compare parameter sets: an SLH-DSA
+signature is 7,856 to 49,856 bytes where an ML-DSA one is 2,420 to
+4,627.
 
 ## Usage
 
@@ -18,9 +22,21 @@ fips_sizes(scheme)
 
 ## Value
 
-A named integer vector: `public_key`, `secret_key`, `signature`, `seed`
-and `opt_rand`, all in bytes. `opt_rand` is the per-signature randomness
-the scheme consumes.
+A named integer vector of five byte counts: `public_key`, `secret_key`,
+`signature`, `seed` and `opt_rand` (the per-signature randomness the
+scheme consumes).
+
+## Details
+
+The sizes are the standards' tables (FIPS 204 Table 2, FIPS 205 Table 2)
+as the compiled code uses them. `seed` is the key-generation input of
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md);
+`opt_rand` is the per-signature randomness (32 bytes for ML-DSA's `rnd`,
+\\n\\ bytes for SLH-DSA's `opt_rand`), which the deterministic variants
+replace with a fixed value. XMSS is not covered: its sizes follow from
+the tree height of
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md).
+An unknown scheme, or anything but one string, is refused.
 
 ## See also
 
@@ -43,4 +59,19 @@ fips_sizes("SLH-DSA-SHAKE-128s")
 fips_sizes("SLH-DSA-SHAKE-128s")[["signature"]] >
   fips_sizes("ML-DSA-44")[["signature"]]
 #> [1] TRUE
+
+# Every standardised set at once.
+sapply(setdiff(pqc_backends(), "xmss-sha256"), fips_sizes)["signature", ]
+#>          ML-DSA-44          ML-DSA-65          ML-DSA-87  SLH-DSA-SHA2-128s 
+#>               2420               3309               4627               7856 
+#>  SLH-DSA-SHA2-128f  SLH-DSA-SHA2-192s  SLH-DSA-SHA2-192f  SLH-DSA-SHA2-256s 
+#>              17088              16224              35664              29792 
+#>  SLH-DSA-SHA2-256f SLH-DSA-SHAKE-128s SLH-DSA-SHAKE-128f SLH-DSA-SHAKE-192s 
+#>              49856               7856              17088              16224 
+#> SLH-DSA-SHAKE-192f SLH-DSA-SHAKE-256s SLH-DSA-SHAKE-256f 
+#>              35664              29792              49856 
+
+# XMSS has no fixed sizes here.
+try(fips_sizes("xmss-sha256"))
+#> Error : unknown scheme 'xmss-sha256'. The standardised schemes are: ML-DSA-44, ML-DSA-65, ML-DSA-87, SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f, SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f, SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f, SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f. For the stateful hash-based scheme use pqc_keygen().
 ```

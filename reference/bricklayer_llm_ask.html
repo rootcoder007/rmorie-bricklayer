@@ -49,7 +49,7 @@ a question would take."><meta property="og:image" content="https://rootcoder007.
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,76 +132,139 @@ a question would take.</p>
 
 
 <dl><dt id="arg-prompt">prompt<a class="anchor" aria-label="anchor" href="#arg-prompt"></a></dt>
-<dd><p>Character scalar.</p></dd>
+<dd><p>Character scalar: the question, in plain text.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
-<dd><p>Model id; default the route's own (see above).</p></dd>
+<dd><p>Character scalar or <code>NULL</code> (the default): the model id
+to use. <code>NULL</code> uses the route's own choice: <code>MORIE_LLM_MODEL</code>
+for your own endpoint, <code>OLLAMA_MODEL</code> or the first pulled model
+for Ollama, the saved <code>PROVIDER.model</code> or the provider's default
+model (see <code><a href="bricklayer_llm_providers.html">bricklayer_llm_providers</a></code>).</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Seconds to wait for the reply.</p></dd>
+<dd><p>Numeric scalar, seconds to wait for each reply; default
+<code>120</code>. With <code>docs = TRUE</code> the whole exchange gets at most
+three times this.</p></dd>
 
 
 <dt id="arg-system-prompt">system_prompt<a class="anchor" aria-label="anchor" href="#arg-system-prompt"></a></dt>
-<dd><p>Optional system message.</p></dd>
+<dd><p>Character scalar or <code>NULL</code> (the default): extra
+instructions sent as the system message (added to the package's own
+instructions when <code>docs = TRUE</code>).</p></dd>
 
 
 <dt id="arg-route">route<a class="anchor" aria-label="anchor" href="#arg-route"></a></dt>
-<dd><p><code>NULL</code> (the saved route, else the first that is set up),
-<code>"auto"</code> (the automatic order this time, ignoring a saved route),
-or <code>"own"</code>, <code>"ollama"</code> or a provider id to insist on one.</p></dd>
+<dd><p>Character scalar or <code>NULL</code> (the default: the saved
+route, else the first that is set up). <code>"auto"</code> uses the
+automatic order and ignores a saved route; <code>"own"</code>,
+<code>"ollama"</code> or a provider id insists on that one.</p></dd>
 
 
 <dt id="arg-docs">docs<a class="anchor" aria-label="anchor" href="#arg-docs"></a></dt>
-<dd><p>Give the model the packages' help (see Details);
-<code>FALSE</code> sends the prompt alone.</p></dd>
+<dd><p>Logical scalar, default <code>TRUE</code>: give the model the
+packages' help and the lookup tools (see Details). <code>FALSE</code> sends
+the prompt alone.</p></dd>
 
 
 <dt id="arg-packages">packages<a class="anchor" aria-label="anchor" href="#arg-packages"></a></dt>
-<dd><p>The installed packages whose help the model gets; default
-rmoriebricklayer (or the comma-separated list in <code>RMBL_PACKAGES</code>, which a
-package built on this one sets for its own command line).</p></dd>
+<dd><p>Character vector or <code>NULL</code> (the default): the
+installed packages whose help the model gets. <code>NULL</code> means
+<code>"rmoriebricklayer"</code>, or the comma-separated list in the
+environment variable <code>RMBL_PACKAGES</code> (which a package built on
+this one sets for its own command line). Ignored when
+<code>docs = FALSE</code>.</p></dd>
 
 
 <dt id="arg-fresh">fresh<a class="anchor" aria-label="anchor" href="#arg-fresh"></a></dt>
-<dd><p><code>TRUE</code> asks the model even when an answer to the same
-question is saved on this machine, and keeps the new one. A person at a
-terminal (the command line with the terminal on stdin and stdout) or in
-an interactive session gets a saved answer back at once when the
-question (spacing aside; case counts), route, model, packages and their
-versions all match, for 30 days; the first save in a session says so.
-The answers are owner-only files under
-<code>tools::R_user_dir("rmoriebricklayer", "cache")</code>, nothing is kept
-elsewhere, nothing is kept from a script or a pipeline, and
-<code>MORIE_LLM_CACHE=off</code> (or
-<code>options(rmoriebricklayer.llm_cache = FALSE)</code>) turns it off.</p></dd>
+<dd><p>Logical scalar, default <code>FALSE</code>. <code>TRUE</code> asks the
+model even when a saved answer matches (see Details), and saves the
+new answer in its place.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Character scalar with the reply; a saved answer carries the time it
-was saved as attribute <code>cached</code>. Errors, saying what to set up,
-when no route answers, and when the server answers with an error.</p>
+    <p>A character scalar with the reply. A saved answer carries the
+time it was saved as attribute <code>cached</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>With <code>docs = TRUE</code> (the default) the model knows the packages: its
-instructions carry an index of every exported function of
-the packages (<code>packages</code>; name, arguments, title, read from the
-help pages installed here), and it may call five read-only tools to
-search the help, read a page or its examples, list the datasets and read
-a vignette before it answers. A model that cannot call tools gets the
-help pages that best match the question (a BM25 search in R) instead.
-Nothing the model asks for is run: it answers with code for you to run.</p>
+    <p>With <code>docs = TRUE</code> (the default) the model is given the help of the
+packages named in <code>packages</code> (read from the help pages installed
+here) and may call five read-only tools before it answers:
+<code>search_docs</code>, <code>get_help</code>, <code>get_examples</code>,
+<code>list_datasets</code> and <code>get_vignette</code>. How much help goes into the
+instructions depends on the model's context size: a model with at least
+32,000 tokens gets an index of every exported function (name, arguments,
+title) and up to six rounds of lookups; 8,000 to 32,000 tokens, the 120
+functions nearest the question and four rounds; smaller, the 40 nearest
+and three rounds. A package with very many pages is never listed whole:
+its functions nearest the question are listed and the tools reach the
+rest. "Nearest" is a BM25 search over the help text in R (\(k_1 =
+1.2\), \(b = 0.75\)). A model that cannot call tools gets the best
+matching pages in the prompt instead. Nothing the model asks for is run:
+it answers with code for you to run.</p>
+<p>With <code>docs = TRUE</code> the whole exchange is given at most three times
+<code>timeout</code>; a lookup round that would start after that is not
+started and the call errors. With <code>docs = FALSE</code> one request is made
+with <code>system_prompt</code> (when given) and <code>prompt</code>.</p>
+<p>Saved answers: a person at a terminal (the command line with a terminal
+on both stdin and stdout) or in an interactive GUI session gets a saved
+answer back at once when the question (spacing aside; case counts),
+route, address, model, packages and their versions, and
+<code>system_prompt</code> all match. Answers are kept 30 days
+(<code>options(rmoriebricklayer.llm_cache_days)</code>), at most the 200
+newest (<code>options(rmoriebricklayer.llm_cache_max)</code>), as owner-only
+files under <code>tools::R_user_dir("rmoriebricklayer", "cache")</code>. The
+first save in a session says where answers go. Nothing is saved from a
+script, a pipeline, a test run, <code>R CMD check</code>, or with
+<code>options(morie.quiet = TRUE)</code>; <code>MORIE_LLM_CACHE=off</code> or
+<code>options(rmoriebricklayer.llm_cache = FALSE)</code> turns saving off.</p>
+<p>Errors: <code>prompt</code> is not a single non-empty string; <code>fresh</code> or
+<code>docs</code> is not <code>TRUE</code> or <code>FALSE</code>; <code>route = "hosted"</code>
+or an unknown route; no route is set up (the message lists what to set);
+no model is chosen for the route; <code>packages</code> names a package that is
+not installed; and, after sending, an unreachable server, a rejected key
+(HTTP 401 or 403) or an error reply. The key is redacted from any error
+text a server echoes back.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="bricklayer_llm_chat.html">bricklayer_llm_chat</a></code> for a conversation without the
+help; <code><a href="bricklayer_llm_status.html">bricklayer_llm_status</a></code> and
+<code><a href="bricklayer_llm_route_info.html">bricklayer_llm_route_info</a></code> to see where a question would go.</p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>ANTHROPIC_API_KEY <span class="op">=</span> <span class="st">"..."</span><span class="op">)</span>   <span class="co"># your own key</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span>, <span class="st">"OLLAMA_HOST"</span><span class="op">)</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span>, OLLAMA_HOST <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># arguments are checked before any route is resolved</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two"</span>, <span class="st">"questions"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `prompt` must be a single non-empty string</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a provider named explicitly without its key</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="st">"What is a capsule?"</span>, route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no key for Anthropic: set ANTHROPIC_API_KEY, or `rmoriebricklayer config set anthropic.key` (it asks for the key)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># no route set up: the error lists what to set up</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="st">"What is a capsule?"</span>, route <span class="op">=</span> <span class="st">"ollama"</span>, docs <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : No language-model route is set up on this machine: bring your own key, or run a model locally:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   local Ollama: OLLAMA_HOST=off</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> `rmoriebricklayer config setup` walks through it.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">Sys.setenv</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="va">old</span><span class="op">[</span><span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># needs your own key or a local model, and the network</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>ANTHROPIC_API_KEY <span class="op">=</span> <span class="st">"..."</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="st">"What does a SHA-256 provenance record protect against?"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="st">"Explain an E-value of 2.1"</span>, route <span class="op">=</span> <span class="st">"ollama"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_ask</span><span class="op">(</span><span class="st">"Summarise Benford's law in two lines"</span>, docs <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>                   system_prompt <span class="op">=</span> <span class="st">"You are terse."</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

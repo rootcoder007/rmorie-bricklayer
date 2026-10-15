@@ -29,14 +29,14 @@ published_bounds(
 
 - x:
 
-  Published values: a numeric vector, or a character vector in which
-  suppressed cells appear as one of `suppressed_marks` or as `"<k"` for
-  a limit `k`.
+  Published values: a numeric vector, or a character vector (or factor)
+  in which suppressed cells appear as one of `suppressed_marks` or as
+  `"<k"` for a limit `k`.
 
 - rounding:
 
-  The base the release rounds to (`5`, `10`, ...), or `NULL` when the
-  counts are exact.
+  Numeric scalar, the base the release rounds to (`5`, `10`, ...), or
+  `NULL` (the default) when the counts are exact.
 
 - rounding_kind:
 
@@ -47,20 +47,47 @@ published_bounds(
 
 - suppression_limit:
 
-  For a cell printed as suppressed with no explicit limit, the smallest
-  count that would have been published: the cell then lies in
-  `[0, suppression_limit - 1]`.
+  Numeric scalar or `NULL` (the default). For a cell printed as
+  suppressed with no explicit limit, the smallest count that would have
+  been published: the cell then lies in `[0, suppression_limit - 1]`.
 
 - suppressed_marks:
 
-  Strings that mark a suppressed cell.
+  Character vector of the strings that mark a suppressed cell, matched
+  exactly after trimming. Default
+  `c("x", "X", "s", "..", "F", "suppressed", "n/a")`.
 
 ## Value
 
-A data frame of class `rmbl_bounds` with `value` (the published number,
-`NA` for a suppressed cell), `lower`, `upper` and `status`: `"exact"`,
-`"rounded"`, `"suppressed"`, or `"missing"` for an `NA` that carried no
-suppression mark.
+A data frame of class `c("rmbl_bounds", "data.frame")`, one row per
+cell, with `value` (numeric, the published number, `NA` for a suppressed
+cell), `lower` and `upper` (numeric, the interval of observed counts)
+and `status` (character: `"exact"`, `"rounded"`, `"suppressed"`, or
+`"missing"` for an `NA` that carried no suppression mark). Attribute
+`"bounds"` records `rounding`, `rounding_kind` and `suppression_limit`.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws each
+value inside its interval.
+
+## Details
+
+For a published value \\v\\ rounded to base \\b\\: with
+`rounding_kind = "nearest"` the observed count lies in \\\[\max(0, v -
+b/2), v + b/2\]\\; with `"random"` (unbiased random rounding, where a
+count is moved to one of the two neighbouring multiples) it lies in
+\\\[\max(0, v - (b - 1)), v + (b - 1)\]\\. The bounds are not rounded to
+whole numbers. A suppressed cell lies in \\\[0, k - 1\]\\, with \\k\\
+from `"<k"` or from `suppression_limit`; rounding is not applied to it.
+Without `rounding`, a published number is taken as exact (lower = upper
+= value).
+
+Text cells are trimmed, and thousands separators (commas) are removed
+before they are read as numbers. A missing value (`NA`) that is not a
+suppression mark gets status `"missing"` and `NA` bounds.
+
+Errors: `rounding` not a positive number; an unknown `rounding_kind`; a
+text cell that is neither a number nor a suppression mark (the message
+lists the cells); a suppressed cell with no limit (neither `"<k"` nor
+`suppression_limit`).
 
 ## See also
 
@@ -85,4 +112,16 @@ published_bounds(c("120", "x", "<5"), rounding = 5,
 published_bounds(15, rounding = 5, rounding_kind = "random")
 #>   value lower upper  status
 #> 1    15    11    19 rounded
+
+# thousands separators and a custom suppression mark
+published_bounds(c("1,200", "--", "<10"), suppression_limit = 10,
+                 suppressed_marks = "--")
+#>   value lower upper     status
+#> 1  1200  1200  1200      exact
+#> 2    NA     0     9 suppressed
+#> 3    NA     0     9 suppressed
+
+# a suppressed cell needs a limit
+try(published_bounds(c("120", "x")))
+#> Error : a suppressed cell has no limit: give `suppression_limit` or write the cell as "<k"
 ```

@@ -80,6 +80,15 @@ are concentrated. The bandwidth decides how sharp the surface is, so it
 should be reported with any map; the default suits a first look, not a
 definitive one.
 
+Errors: `lon` and `lat` of different lengths, or (with
+`coords = "lonlat"`) a coordinate that is not a longitude and latitude
+in degrees; fewer than two located incidents with positive weight;
+`n_grid` not a whole number from 10 to 2000; `coverage` not shares
+strictly between 0 and 1; incidents all on one line with no `bandwidth`
+given; a `bandwidth` that is not one or two positive numbers, or longer
+than half the earth's circumference. Incidents with a missing coordinate
+are dropped.
+
 ## References
 
 Scott, D. W. (2015). *Multivariate Density Estimation: Theory, Practice,
@@ -117,4 +126,22 @@ kd
 #>        90%   14.840                32.0%           11.26
 #> ────────────────────────────────────────────────────────────────── 
 plot(kd)
+
+
+# a fixed 300 m bandwidth on a coarser grid: a sharper surface
+kd3 <- crime_density(b$lon, b$lat, bandwidth = 0.3, n_grid = 60)
+kd3$regions
+#>   coverage    level  area_km2 area_share
+#> 1      0.5 33.66915  5.149953  0.1247222
+#> 2      0.9 13.09560 13.763795  0.3333333
+
+# planar coordinates in metres
+set.seed(2)
+xy <- cbind(rnorm(200, sd = 500), rnorm(200, sd = 500))
+crime_density(xy[, 1], xy[, 2], coords = "planar", n_grid = 40)$bandwidth
+#> [1] 0.2220670 0.2038706
+
+# longitudes and latitudes are checked
+try(crime_density(c(-79.4, 200), c(43.7, 43.8)))
+#> Error : coordinate 2 is not a longitude and latitude in degrees (200, 43.8); planar data take coords = "planar"
 ```

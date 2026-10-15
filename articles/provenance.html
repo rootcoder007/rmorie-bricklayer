@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,7 +149,7 @@ system dependency.</p>
 <span><span class="va">signing_key</span></span>
 <span><span class="co">#&gt; ── Signing key (post-quantum) ────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme     xmss-sha256</span></span>
-<span><span class="co">#&gt;   root       6b7cc80696f68347e41642aab027d9d566dfe760d2c432fe5e7b3542318a3e95</span></span>
+<span><span class="co">#&gt;   root       37d581becf53d40afaf1be2f3df6f6f139d68d8b06fcafb110ffa1f7e6bd1778</span></span>
 <span><span class="co">#&gt;   height     3</span></span>
 <span><span class="co">#&gt;   used       0 of 8 signatures</span></span>
 <span><span class="co">#&gt;   remaining  8</span></span>
@@ -162,7 +162,7 @@ system dependency.</p>
 <span><span class="va">pub</span></span>
 <span><span class="co">#&gt; ── Public verification key ───────────────────────────────────────</span></span>
 <span><span class="co">#&gt;   scheme  xmss-sha256</span></span>
-<span><span class="co">#&gt;   root    6b7cc80696f68347e41642aab027d9d566dfe760d2c432fe5e7b3542318a3e95</span></span>
+<span><span class="co">#&gt;   root    37d581becf53d40afaf1be2f3df6f6f139d68d8b06fcafb110ffa1f7e6bd1778</span></span>
 <span><span class="co">#&gt;   height  3</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -381,13 +381,13 @@ failures:</p>
 <span></span>
 <span><span class="co"># a declared outcome that was not reported</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="st">"n_rows"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-15T06:29:09Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-15T16:14:35Z: departures below </span></span>
 <span><span class="co">#&gt;   declared but not reported (outcome switching): ate</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span>
 <span></span>
 <span><span class="co"># statistics reported that were never declared</span></span>
 <span><span class="fu"><a href="../reference/prereg_declare.html">prereg_check</a></span><span class="op">(</span><span class="va">plan</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ate"</span>, <span class="st">"n_rows"</span>, <span class="st">"by_year"</span>, <span class="st">"by_precinct"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ── Against the declaration of 2026-10-15T06:29:09Z: departures below </span></span>
+<span><span class="co">#&gt; ── Against the declaration of 2026-10-15T16:14:35Z: departures below </span></span>
 <span><span class="co">#&gt;   reported but not declared (2 addition(s)): by_year, by_precinct</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <p>That second case is why a nominal p-value needs correcting. Run the
@@ -429,7 +429,7 @@ rewritten to match whatever the files now say.</p>
 <span><span class="co">#&gt;   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606</span></span>
 <span><span class="co">#&gt;   no_unlisted_files              ok    </span></span>
 <span><span class="co">#&gt;   attestation:attestation_comple ok    </span></span>
-<span><span class="co">#&gt;   attestation:manifest_digest    ok    4121a94d3d9fc6f98274b8182d2e84465f2f</span></span>
+<span><span class="co">#&gt;   attestation:manifest_digest    ok    090a9cb3648da40370f2789879eb9bfdfe90</span></span>
 <span><span class="co">#&gt;   attestation:signature          ok    </span></span>
 <span><span class="co">#&gt;   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
@@ -470,7 +470,7 @@ one chunk belongs without re-reading the rest.</p>
 <code class="sourceCode R"><span><span class="va">chunks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id,value"</span>, <span class="st">"1,2"</span>, <span class="st">"3,4"</span>, <span class="st">"5,6"</span><span class="op">)</span></span>
 <span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
 <span><span class="va">root</span></span>
-<span><span class="co">#&gt; [1] "43bb94e5930a98ec80fc2e06d6a9227fde4174f74e7dd15e710c97f4de80e0ab"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "80332968a476e13898f2d88c2632603b3fa6bcc746bf05be7ed178aced51ab16"</span></span></code></pre></div>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Editing one chunk moves exactly one leaf.</span></span>
 <span><span class="va">edited_chunks</span> <span class="op">&lt;-</span> <span class="va">chunks</span></span>
@@ -482,11 +482,14 @@ one chunk belongs without re-reading the rest.</p>
 <span><span class="va">proof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_proof</a></span><span class="op">(</span><span class="va">chunks</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">proof</span></span>
 <span><span class="co">#&gt; $sibling</span></span>
-<span><span class="co">#&gt; [1] "e96f71a6079688ae6f7063cb93d59d5d80d15287032b2b777d77c0f6e15452e2"</span></span>
-<span><span class="co">#&gt; [2] "a5996cc23ea660aef0bc1260431c976e7d451cceb94cab2bafa8ff2ff09ddc4c"</span></span>
+<span><span class="co">#&gt; [1] "2191ddd39af84a2334704f1bc99d7c53fc4735a5f1f44cdebdf0c3c52f5d5681"</span></span>
+<span><span class="co">#&gt; [2] "8f71896ada80f49aab101ab39dff71d81b3470c5abc14cb58f1806b16c8fe6af"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $side</span></span>
-<span><span class="co">#&gt; [1] "right" "left"</span></span>
+<span><span class="co">#&gt; [1] "right" "left" </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $scheme</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_verify</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>, <span class="va">proof</span>, <span class="va">root</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_verify</a></span><span class="op">(</span><span class="st">"3,5"</span>, <span class="va">proof</span>, <span class="va">root</span><span class="op">)</span></span>
@@ -518,12 +521,12 @@ before:</p>
 <span><span class="co">#&gt;   ✓ chain intact</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   entries  3</span></span>
-<span><span class="co">#&gt;   head     2afe0e270d2b1fbbc080dd4624540c181e5b8458aaecf247ccb8c38dc4c387da</span></span>
-<span><span class="co">#&gt;   seal     de28f9277b3f9f4cb3b1a7dd80e556d0c6e1568723f1395732f9d087ee7f7353</span></span>
+<span><span class="co">#&gt;   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49</span></span>
+<span><span class="co">#&gt;   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     1  run-1            7947c9201969a6793f9daf05</span></span>
-<span><span class="co">#&gt;     2  run-2            9dbaa6d33259f974f30ff33e</span></span>
-<span><span class="co">#&gt;     3  run-3            2afe0e270d2b1fbbc080dd46</span></span>
+<span><span class="co">#&gt;     1  run-1            cb25fa776c693a106b2d08a1</span></span>
+<span><span class="co">#&gt;     2  run-2            03a645a531c93fbb12bb2c07</span></span>
+<span><span class="co">#&gt;     3  run-3            b9ccb96106a68f3d4d2a0cfb</span></span>
 <span><span class="co">#&gt; ──────────────────────────────────────────────────────────────────</span></span></code></pre></div>
 <div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Deleting an entry from the middle breaks the links, and names where.</span></span>

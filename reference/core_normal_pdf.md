@@ -1,6 +1,10 @@
 # Normal density (C backend)
 
-Vectorised over `x`; `mean` and `sd` are length-1.
+Evaluates the density of the normal distribution with a given mean and
+standard deviation at each value of `x`, in compiled code. It is the
+same kernel that other packages reach through
+`LinkingTo: rmoriebricklayer`, and for a positive standard deviation it
+agrees with [`dnorm`](https://rdrr.io/r/stats/Normal.html).
 
 ## Usage
 
@@ -16,16 +20,31 @@ core_normal_pdf(x, mean = 0, sd = 1)
 
 - mean:
 
-  Distribution mean (length-1, default 0).
+  Number, default `0`: the mean \\\mu\\.
 
 - sd:
 
-  Distribution standard deviation (length-1, default 1, \> 0).
+  Number, default `1`: the standard deviation \\\sigma\\; must be
+  positive for a finite result.
 
 ## Value
 
-A numeric vector the length of `x`. Equivalent to
-`stats::dnorm(x, mean, sd)`.
+A numeric vector the length of `x`.
+
+## Details
+
+\$\$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x -
+\mu)^2}{2\sigma^2}\right).\$\$ The function is vectorised over `x` only;
+`mean` must be a single finite number and `sd` a single positive number,
+and anything else is an error
+([`dnorm()`](https://rdrr.io/r/stats/Normal.html) recycles them, and
+gives `Inf` or `NaN` for `sd = 0` or below). `NA` in `x` gives `NA`;
+`x = Inf` gives 0. Character, factor or list input for `x` is an error.
+
+## See also
+
+[`rmbl_core_stats`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_stats.md),
+[`dnorm`](https://rdrr.io/r/stats/Normal.html).
 
 ## Examples
 
@@ -38,13 +57,17 @@ core_normal_pdf(c(-1, 0, 1))
 core_normal_pdf(0)
 #> [1] 0.3989423
 
-# Shift and scale via `mean` and `sd`.
-core_normal_pdf(5, mean = 5, sd = 2)       # peak of N(5, 2)
-#> [1] 0.1994711
+# Shift and scale via mean and sd.
 core_normal_pdf(c(0, 5, 10), mean = 5, sd = 2)
 #> [1] 0.00876415 0.19947114 0.00876415
 
 # Identical to stats::dnorm().
 all.equal(core_normal_pdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
 #> [1] TRUE
+
+# a non-positive sd and text are refused
+try(core_normal_pdf(0, sd = 0))
+#> Error : `sd` must be a single positive number
+try(core_normal_pdf("0"))
+#> Error : `x` must be numeric, got character
 ```

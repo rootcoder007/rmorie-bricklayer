@@ -173,7 +173,7 @@ diff of the leaves names exactly which chunk changed.
 chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 root <- merkle_root(chunks)
 root
-#> [1] "d2197affda886ecc49807b28c90a8c4ff7a07f122225ecc64788d08df5a312f3"
+#> [1] "3b1537c90e21c2e66f341b946388abbb78bf249fb433f961fba223b67141be31"
 
 before <- merkle_leaves(chunks)
 after <- merkle_leaves(c(chunks[1:2], "row5,row6-EDITED", chunks[4]))
@@ -199,7 +199,7 @@ ch <- chunk_file(p, chunk_bytes = 128)
 length(ch)
 #> [1] 9
 merkle_root(ch)
-#> [1] "c4cb691d88a0dbf1dad9767c19095d54ac6958e6411e06d81dced0dba895c382"
+#> [1] "3f565b39becbebbc336618294525d7a1ff45394d68ecaec899d292bb0fd357c1"
 identical(unlist(ch), readBin(p, "raw", file.size(p)))
 #> [1] TRUE
 ```

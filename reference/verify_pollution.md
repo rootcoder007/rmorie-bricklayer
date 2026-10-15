@@ -5,7 +5,10 @@ column and an optional `income` column, a NAPS-style pull with a `value`
 column and a `unit`, or scalar arguments), logs the assumptions, and
 when they all hold runs the concentration-response,
 attributable-fraction, displaced-mortality, burden and equity stages.
-`pollution_report_text()` renders the result as plain text.
+`pollution_report_text()` renders the result as plain text. It is the
+one-call version of the pollution functions, made for scripts and the
+command line: it never stops with an R error for bad input, but returns
+a report whose status says what went wrong.
 
 ## Usage
 
@@ -107,7 +110,8 @@ pollution_report_text(report)
 
 - report:
 
-  A result of `verify_pollution()`.
+  A result of `verify_pollution()` (or a list with the same parts);
+  anything else is refused with an R error.
 
 ## Value
 
@@ -122,8 +126,54 @@ reference, a directory as `exposure_csv`) is an `"error"` report with
 exit status 2, never a raw R error; an exposure at or below the
 reference is a valid run with zero attributable cases, and the scalar
 inputs `exposure_mean` and `exposure_prevalence` go together (one
-without the other is an error report). `pollution_report_text()`: a
-character string.
+without the other is an error report). On `"ok"` the report also holds
+`inputs` (the resolved exposure mean and prevalence, the rate per
+100,000, the population, the reference and the rows dropped),
+`assumptions` (a list of `assumption`, `ok`, `note`) and `pipeline`
+(`crf`, `paf`, `paf_ci`, `displaced`, `burden` and `equity`, which is
+`NULL` without income data). `pollution_report_text()`: a single
+character string with embedded newlines, ending in a `STATUS:` line (or
+`"ERROR:"` and the message for an error report).
+
+## Details
+
+The assumption log checks that the exposure mean is finite and
+non-negative and at most 10,000 micrograms per cubic metre, the
+prevalence is in \\\[0, 1\]\\, the baseline rate (converted to per
+100,000) is zero or between 1 and 10,000 per 100,000 a year (from 1e-6
+with `rare_outcome`, up to 100,000 with `high_rate`), the population is
+positive and at most 10 billion, the reference is finite and
+non-negative, and the pollutant has a CRF. Any failure gives status
+`"assumption_failure"` and skips the stages.
+
+With data (a CSV or the demo), the "exposed" are the rows above the
+reference: their mean is `exposure_mean` and their share
+`exposure_prevalence`. Empty cells and missing-value tokens (`NA`,
+`n/a`, `null`, `-` ...) are dropped with a message; text that is not a
+number (a detection-limit flag such as `"<2"`) and negative values stop
+the run with an error report. A gzip, bzip2 or xz file is decompressed;
+UTF-16 and Latin-1 files are decoded. An `income` column, when present
+and numeric, gives the equity stage
+([`exposure_concentration_index`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)).
+
+The stages:
+[`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+or
+[`crf_no2`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md);
+[`attributable_fraction`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+with the CRF's interval;
+[`mortality_displaced`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+for removing the excess exposure over the exposed population, with
+\\\beta = \log(RR) / (\bar x - x\_{ref})\\; and
+[`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md).
+The demo data are 1,000 synthetic units with lognormal exposures at the
+scale of Toronto NO2 or PM2.5 levels and five income groups, drawn with
+a fixed seed (R's own random stream is restored).
+
+## See also
+
+[`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+and the other stage functions to run one step on its own.
 
 ## Examples
 
@@ -171,4 +221,28 @@ cat(pollution_report_text(r))
 #>   concentration index: -0.0647
 #> 
 #> STATUS: ok
+
+# Scalar inputs: a city of 2.8 million at a PM2.5 mean of 9.
+s <- verify_pollution("pm25", exposure_mean = 9, exposure_prevalence = 1,
+                      baseline_rate = 750, population = 2.8e6, region = "Toronto")
+s$pipeline$burden$attributable_cases
+#> [1] 510.8617
+attr(s, "exit_status")
+#> [1] 0
+
+# A CSV of measurements with an income column.
+f <- tempfile(fileext = ".csv")
+utils::write.csv(data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5), f,
+                 row.names = FALSE)
+verify_pollution("no2", exposure_csv = f)$pipeline$equity$concentration_index
+#> [1] 0.02947368
+
+# A rate per person-year passed as per 100,000 fails an assumption ...
+bad <- verify_pollution("no2", exposure_mean = 20, exposure_prevalence = 1,
+                        baseline_rate = 0.008)
+bad$status
+#> [1] "assumption_failure"
+# ... and an argument it cannot use is an error report, not an R error.
+verify_pollution("no2")$error
+#> [1] "no exposure data: pass exposure_csv, or exposure_mean and exposure_prevalence, or demo = TRUE"
 ```

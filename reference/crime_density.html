@@ -15,7 +15,7 @@ plot draws the surface as a heat map with those regions outlined."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,6 +138,14 @@ index: when half the incidents fall in a few per cent of the mapped
 area, they are concentrated. The bandwidth decides how sharp the
 surface is, so it should be reported with any map; the default suits a
 first look, not a definitive one.</p>
+<p>Errors: <code>lon</code> and <code>lat</code> of different lengths, or (with
+<code>coords = "lonlat"</code>) a coordinate that is not a longitude and
+latitude in degrees; fewer than two located incidents with positive weight;
+<code>n_grid</code> not a whole number from 10 to 2000; <code>coverage</code> not
+shares strictly between 0 and 1; incidents all on one line with no
+<code>bandwidth</code> given; a <code>bandwidth</code> that is not one or two positive
+numbers, or longer than half the earth's circumference. Incidents with a
+missing coordinate are dropped.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -174,6 +182,23 @@ kind of surface, for an air pollutant).</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kd</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="crime_density-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a fixed 300 m bandwidth on a coarser grid: a sharper surface</span></span></span>
+<span class="r-in"><span><span class="va">kd3</span> <span class="op">&lt;-</span> <span class="fu">crime_density</span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, bandwidth <span class="op">=</span> <span class="fl">0.3</span>, n_grid <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">kd3</span><span class="op">$</span><span class="va">regions</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   coverage    level  area_km2 area_share</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      0.5 33.66915  5.149953  0.1247222</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      0.9 13.09560 13.763795  0.3333333</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># planar coordinates in metres</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, sd <span class="op">=</span> <span class="fl">500</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, sd <span class="op">=</span> <span class="fl">500</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">crime_density</span><span class="op">(</span><span class="va">xy</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span>, <span class="va">xy</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span>, coords <span class="op">=</span> <span class="st">"planar"</span>, n_grid <span class="op">=</span> <span class="fl">40</span><span class="op">)</span><span class="op">$</span><span class="va">bandwidth</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2220670 0.2038706</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># longitudes and latitudes are checked</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">crime_density</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">79.4</span>, <span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">43.7</span>, <span class="fl">43.8</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : coordinate 2 is not a longitude and latitude in degrees (200, 43.8); planar data take coords = "planar"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

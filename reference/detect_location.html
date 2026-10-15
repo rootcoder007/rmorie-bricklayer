@@ -25,7 +25,7 @@ never silently applies one country's grid to another's computation."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -147,6 +147,22 @@ to the locale.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "locale en_IN.UTF-8"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="co"># an explicit setting wins over everything else</span></span></span>
+<span class="r-in"><span><span class="fu">detect_location</span><span class="op">(</span>env_location <span class="op">=</span> <span class="st">"CA-QC"</span>, tz <span class="op">=</span> <span class="st">"Europe/Paris"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $location</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "CA-QC"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "RMBL_LOCATION environment variable"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="co"># nothing usable: the world average, and the method says so</span></span></span>
+<span class="r-in"><span><span class="fu">detect_location</span><span class="op">(</span>env_location <span class="op">=</span> <span class="st">""</span>, codecarbon_location <span class="op">=</span> <span class="st">""</span>, tz <span class="op">=</span> <span class="st">"UTC"</span>, locale <span class="op">=</span> <span class="st">"C"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $location</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "WORLD"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $method</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "fallback, no location found in environment, time zone or locale"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

@@ -1,10 +1,14 @@
 # Validate a Data Frame Against a Provenance Schema
 
-Checks a raw data frame against the `schema` block of a provenance
-object and returns the issues found rather than raising, so the caller
-decides how to react.
-[`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
-is the wrapper that turns them into errors and warnings.
+Checks a data frame against the `schema` block of a provenance record:
+required columns, row-count bounds, column types, numeric ranges,
+missingness and allowed category values. It returns the problems it
+finds instead of stopping, so the caller can log them, show them, or
+pass the same schema to
+[`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md),
+the wrapper that turns them into errors and warnings. Use it each time a
+file is re-downloaded, to catch a re-release that renamed, retyped or
+recoded a column.
 
 ## Usage
 
@@ -24,10 +28,11 @@ validate_schema(df_raw, provenance)
   [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md),
   or `list(schema = infer_schema(df))`. The `schema` block may contain:
 
-  - `expected_columns` – required column names. A missing one is
-    `"fatal"`; everything else below is a `"warning"`.
+  - `expected_columns` – required column names (character). A missing
+    one is `"fatal"`; everything else below is a `"warning"`.
 
-  - `structural_invariants` – `min_data_rows` and `max_data_rows`.
+  - `structural_invariants` – a list with `min_data_rows` and
+    `max_data_rows` (numbers of rows).
 
   - `expected_value_sets` – a named list of allowed values per column.
 
@@ -38,16 +43,16 @@ validate_schema(df_raw, provenance)
   - `numeric_ranges` – a named list of `c(min =, max =)` bounds.
 
   - `max_missing_fraction` – a named numeric of per-column ceilings on
-    the share of `NA`.
+    the share of `NA`, between 0 and 1.
 
   [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
   produces all six from data you already trust.
 
 ## Value
 
-A named list of issues; each issue is a list with `severity` ( `"fatal"`
-or `"warning"`) and a human-readable `message`. A zero-length list means
-the data frame is clean.
+A named list of issues; each issue is a list with `severity` (`"fatal"`
+or `"warning"`) and a human-readable `message`. The names are those
+listed in Details. A zero-length list means the data frame is clean.
 
 ## Details
 
@@ -58,7 +63,50 @@ This is the STRUCTURAL check – names, types, bounds, value sets. It
 cannot tell you that a column kept its name, type and range while its
 distribution moved;
 [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
-answers that.
+answers that. Rules that are particular to a data set (an age must be
+non-negative, two dates must be ordered) belong in
+[`rule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.md)
+and
+[`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md).
+
+The checks, and the name of the issue each one adds:
+
+- a missing `expected_columns` entry: `missing_columns`, `"fatal"`;
+
+- fewer than `min_data_rows` or more than `max_data_rows` rows:
+  `row_count_low` / `row_count_high`;
+
+- a column whose class differs from `expected_types`: `type_<col>`.
+  `integer`, `numeric` and `double` are one family, and so are
+  `character` and `factor`;
+
+- non-missing values outside `numeric_ranges` (inclusive bounds;
+  non-numeric columns are skipped): `range_<col>`;
+
+- a share of `NA` above `max_missing_fraction`: `missing_<col>`;
+
+- values not in `expected_value_sets`: `unexpected_<col>`.
+
+A column named in a check but absent from the data is skipped by that
+check (only `expected_columns` reports it). All of these are `"warning"`
+except `missing_columns`.
+
+The schema itself is checked too. An empty schema
+([`list()`](https://rdrr.io/r/base/list.html)) gives one `schema_empty`
+warning. An unknown field name within three edits of a known one
+(`expected_colums`) is `"fatal"`, because it would otherwise be ignored
+silently; any other unknown name is a warning. An unknown structural
+invariant one edit, or one swap of neighbouring letters, away from
+`min_data_rows` or `max_data_rows` is fatal; other invariant names are
+left alone. `expected_dtypes` is accepted as another name for
+`expected_types`, and `synthetic_recipe` is a known field that is not
+checked here.
+
+Errors: `df_raw` that is not a data frame; a `schema` that is not a
+list. A `provenance` that is `NULL` or has no `schema` returns an empty
+list (use
+[`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+to make that an error).
 
 ## See also
 
@@ -99,4 +147,22 @@ validate_schema(data.frame(v = c(1, NA, NA, 4)), gappy)[[1]]$message
 # A clean frame produces nothing.
 length(validate_schema(data.frame(id = 1:3, year = 2021), prov))
 #> [1] 0
+
+# a misspelt schema field is fatal rather than silently ignored
+validate_schema(df, list(schema = list(expected_colums = "id")))[[1]]
+#> $severity
+#> [1] "fatal"
+#> 
+#> $message
+#> [1] "unknown schema field 'expected_colums' (did you mean 'expected_columns'?): it would be ignored"
+#> 
+
+# a schema inferred from trusted data, checked against a new release
+sch <- infer_schema(data.frame(id = 1:3, year = 2020:2022))
+names(validate_schema(data.frame(id = 1:2), list(schema = sch)))
+#> [1] "missing_columns"
+
+# the data must be a data frame
+try(validate_schema(list(id = 1), prov))
+#> Error : `df_raw` must be a data frame
 ```

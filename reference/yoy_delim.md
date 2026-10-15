@@ -3,7 +3,15 @@
 `yoy_csv()` separates fields with a comma and quotes any field that
 contains one; `yoy_tsv()` separates with a tab and replaces any tab
 inside a field, since a tab-separated field cannot contain one and
-writing it would shift every column after it.
+writing it would shift every column after it. `yoy_json()` writes an
+object with `settings` (value, period, grouping, lag, units, minimum
+base, confidence level, direction), `summary` (from
+[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md))
+and `rows`, using the package's own JSON codec. `yoy_markdown()` writes
+a pipe table meant for reading: values formatted (every numeric column
+right-aligned), percentages signed and rounded, the interval as
+`[lower, upper]`, notes in the last column, and the settings in an
+italic line under the table.
 
 ## Usage
 
@@ -26,18 +34,22 @@ yoy_markdown(x, file, digits = 1L, align = TRUE, ...)
 
 - file:
 
-  Output path, or `NULL` to return the text instead of writing it.
+  Character scalar, the output path, or `NULL` to return the text
+  instead of writing it.
 
 - digits:
 
-  Digits for the percent columns. `NULL`, the default, writes them
+  Integer scalar or `NULL`: decimal places for the percent columns. For
+  the CSV, TSV and JSON writers `NULL`, the default, writes them
   unrounded, which is what a downstream calculation wants; give a number
-  for a figure meant to be read.
+  for a figure meant to be read. For `yoy_markdown()` the default is
+  `1`.
 
 - na:
 
-  How to write a missing value. The default empty string is what most
-  readers expect; `"NA"` keeps R's own spelling.
+  Character scalar, how to write a missing value (CSV and TSV). The
+  default empty string is what most readers expect; `"NA"` keeps R's own
+  spelling.
 
 - metadata:
 
@@ -49,7 +61,8 @@ yoy_markdown(x, file, digits = 1L, align = TRUE, ...)
 
 - comment:
 
-  Comment prefix for the metadata lines.
+  Character scalar, the comment prefix for the metadata lines; default
+  `"#"`.
 
 - ...:
 
@@ -57,16 +70,32 @@ yoy_markdown(x, file, digits = 1L, align = TRUE, ...)
 
 - pretty:
 
-  Whether to indent the JSON.
+  Logical scalar, default `TRUE`: indent the JSON.
 
 - align:
 
-  Whether to pad the Markdown columns so the source table is readable
-  unrendered.
+  Logical scalar, default `TRUE`: pad the Markdown columns so the source
+  table is readable unrendered.
 
 ## Value
 
-The path, invisibly; or the text, when `file` is `NULL`.
+`file`, invisibly; or, when `file` is `NULL`, the text as a character
+scalar.
+
+## Details
+
+The CSV and TSV writers export every column of the object (the period
+and grouping columns, `value`, `previous`, `change`, the percent or
+percentage-point change, `flag`, the interval and `verdict`), so the
+note explaining a missing or flagged figure stays with its row. Quoting
+in the CSV follows RFC 4180 (a field with a comma, a quote or a line
+break is quoted, quotes doubled). The metadata line names the value and
+period columns, the grouping, the lag, the units, and for counts the
+interval's confidence level and the base below which changes are noted.
+A pipe inside a Markdown cell is escaped. An existing file is
+overwritten. Errors when `x` does not come from
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+or `digits` is not a whole number.
 
 ## Examples
 
@@ -86,17 +115,41 @@ cat(yoy_csv(y, NULL))
 
 # Markdown, for a report.
 cat(yoy_markdown(y, NULL))
-#> | year | n   | previous | change | change % |     interval | note                 |
-#> | ---- | --- | -------- | -----: | -------: | -----------: | -------------------- |
-#> | 2019 | 402 | —        |      — |        — |              | no comparison period |
-#> | 2020 | 377 | 402      |    -25 |    -6.2% |  [-19%, +8%] |                      |
-#> | 2021 | 190 | 377      |   -187 |   -49.6% | [-58%, -40%] |                      |
-#> | 2022 | 268 | 190      |     78 |   +41.1% | [+17%, +71%] |                      |
-#> | 2023 | 331 | 268      |     63 |   +23.5% |  [+5%, +46%] |                      |
+#> | year |   n | previous | change | change % |     interval | note                 |
+#> | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |
+#> | 2019 | 402 |        — |      — |        — |              | no comparison period |
+#> | 2020 | 377 |      402 |    -25 |    -6.2% |  [-19%, +8%] |                      |
+#> | 2021 | 190 |      377 |   -187 |   -49.6% | [-58%, -40%] |                      |
+#> | 2022 | 268 |      190 |     78 |   +41.1% | [+17%, +71%] |                      |
+#> | 2023 | 331 |      268 |     63 |   +23.5% |  [+5%, +46%] |                      |
 #> 
 #> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio_
 
 # JSON keeps the settings as fields rather than as comments.
 substr(yoy_json(y, NULL), 1, 80)
 #> [1] "{\n  \"settings\": {\n    \"value\": \"n\",\n    \"period\": \"year\",\n    \"lag\": 1,\n    \"uni"
+
+# rounded percentages, no metadata line, and R's own NA
+cat(yoy_tsv(y, NULL, digits = 1, metadata = FALSE, na = "NA"))
+#> year value   previous    change  pct_change  flag    pct_lower   pct_upper   verdict
+#> 2019 402 NA  NA  NA  no comparison period    NA  NA  NA
+#> 2020 377 402 -25 -6.2    NA  -18.7   8.2 down
+#> 2021 190 377 -187    -49.6   NA  -57.9   -39.8   down
+#> 2022 268 190 78  41.1    NA  16.7    70.8    up
+#> 2023 331 268 63  23.5    NA  4.8 45.6    up
+
+# written to a file
+f <- tempfile(fileext = ".csv")
+yoy_csv(y, f)
+read.csv(f, comment.char = "#")[, c("year", "pct_change", "flag")]
+#>   year pct_change                 flag
+#> 1 2019         NA no comparison period
+#> 2 2020  -6.218905                     
+#> 3 2021 -49.602122                     
+#> 4 2022  41.052632                     
+#> 5 2023  23.507463                     
+
+# only yoy() results are accepted
+try(yoy_csv(d, NULL))
+#> Error : `x` must be an rmbl_yoy object from yoy()
 ```

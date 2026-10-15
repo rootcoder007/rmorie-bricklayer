@@ -89,6 +89,12 @@ first time band (0 to its edge). The test speaks to the timing of
 incidents relative to each other, not to what caused them; near-repeat
 patterns also arise when one offender commits a series.
 
+Errors: `x`, `y` and `time` of different lengths; `space_bands` or
+`time_bands` not positive, finite and increasing; `nsim` below 19;
+`max_pairs` below 1; longitude and latitude out of range under
+`coords = "lonlat"`; fewer than three incidents. With `seed` the random
+number stream is set for the call and restored afterwards.
+
 ## References
 
 Knox, E. G. (1964). The detection of space-time interactions. *Journal
@@ -125,4 +131,24 @@ kn
 #>   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)
 #> ────────────────────────────────────────────────────────────────── 
 plot(kn)
+
+
+# planar coordinates in metres and times in days, on simulated points
+set.seed(5)
+n <- 150
+kp <- knox_test(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
+                space_bands = c(200, 400), time_bands = c(14, 28),
+                nsim = 99, seed = 2, coords = "planar")
+kp
+#> ── Knox ratios, observed / expected pairs (150 incidents, 99 permutations)  
+#>   distance 0-14 d 14-28 d
+#>    0-200 m   0.77    0.73
+#>  200-400 m   1.06    0.85
+#> 
+#>   * p < 0.05, ** p < 0.01, one-sided per cell (not adjusted for the number of cells)
+#> ────────────────────────────────────────────────────────────────── 
+
+# bands must increase
+try(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
+#> Error : `space_bands` must be positive, finite and increasing
 ```

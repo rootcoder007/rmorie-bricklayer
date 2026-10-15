@@ -50,13 +50,33 @@ capsule_verify(message, signature, key, context = NULL, prehash = NULL)
 
 ## Value
 
-A length-1 logical.
+`TRUE` or `FALSE` (a length-1 logical, never `NA`).
 
 ## Details
 
 Returns `FALSE` rather than erroring on a malformed or truncated
 signature: a verifier must treat unparseable input as "not verified",
 never as an exception to be caught and ignored.
+
+`TRUE` means the signature is valid for `message` under `key` (and, for
+the standardised schemes, `context` and the pre-hash). Verification
+needs only public material, except for HMAC, where the verifier holds
+the same secret as the signer and could therefore also sign. HMAC tags
+are compared in constant time.
+
+Only two inputs are errors rather than `FALSE`: a `signature` that is
+not a `bricklayer_signature` at all, and, for an XMSS signature, a key
+that is not a key object (a string, say) or a `message` that is not one
+string or a raw vector. A key or signature whose class, scheme or fields
+were edited returns `FALSE`. An XMSS signature object written by 0.5.9
+to 0.5.12 (one that carries a `key_state` field) still verifies, with a
+warning that it exposed the signer's private key.
+
+## See also
+
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md),
+[`signing_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/signing_public_key.md),
+[`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md).
 
 ## Examples
 
@@ -84,5 +104,14 @@ capsule_verify("pinned-manifest", sig,
 trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 capsule_verify("pinned-manifest", trunc, pub)
 #> [1] FALSE
+
+# HMAC: the verifier holds the same secret.
+tag <- capsule_sign("pinned-manifest", "shared-secret", scheme = "hmac")
+capsule_verify("pinned-manifest", tag, "shared-secret")
+#> [1] TRUE
+
+# Something that is not a signature at all is an error, not FALSE.
+try(capsule_verify("pinned-manifest", list(signature = "00"), pub))
+#> Error : `signature` must come from capsule_sign()
 options(op)
 ```

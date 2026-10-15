@@ -19,7 +19,7 @@ than errors."><meta property="og:image" content="https://rootcoder007.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,19 +81,40 @@ than errors.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric vector (coerced with
-<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>) .</p></dd>
+<dd><p>Numeric (or logical) vector; coerced with
+<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>.</p></dd>
 
 
 <dt id="arg-trim">trim<a class="anchor" aria-label="anchor" href="#arg-trim"></a></dt>
-<dd><p>Proportion trimmed from <em>each</em> end, in \
-[0, 0.5]. At <code>0.5</code> both reduce to the median.</p>
-<p>[0, 0.5]: R:0,%200.5%5C</p></dd>
+<dd><p>Proportion trimmed (or winsorized) at <em>each</em> end, a single
+number in \([0, 0.5]\) (default 0.1, i.e. 10% at each end). At
+<code>0.5</code> both reduce to the median.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A length-1 numeric.</p>
+    <p>A length-1 numeric in the units of <code>x</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>With \(g = \lfloor n \cdot \mathrm{trim} \rfloor\) and the sorted values
+\(x_{(1)} \le \dots \le x_{(n)}\), the trimmed mean is
+\(\frac{1}{n - 2g} \sum_{i=g+1}^{n-g} x_{(i)}\) and the winsorized mean
+replaces \(x_{(1)}, \dots, x_{(g)}\) by \(x_{(g+1)}\) and
+\(x_{(n-g+1)}, \dots, x_{(n)}\) by \(x_{(n-g)}\) before averaging all
+\(n\) values. At <code>trim = 0.5</code> both return the median, as <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code> does.</p>
+<p>A <code>trim</code> that is not a single number in \([0, 0.5]\) is an error. An
+empty <code>x</code>, or any <code>NA</code>/<code>NaN</code> in <code>x</code>, gives <code>NaN</code> (missing
+values are not
+removed). A character, factor or list <code>x</code> is refused
+(<code>"must be numeric"</code>). Both sort a copy of <code>x</code>, so the cost is
+\(O(n \log n)\).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="rmbl_core_robust.html">core_median()</a></code> and
+<code><a href="rmbl_core_robust.html">core_mad()</a></code> for the other robust
+summaries; <code><a href="core_moments.html">core_moments()</a></code> for the ordinary mean.</p></div>
     </div>
 
     <div class="section level2">
@@ -116,6 +137,12 @@ than errors.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu">core_trimmed_mean</span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.5</span><span class="op">)</span>, <span class="fu"><a href="rmbl_core_robust.html">core_median</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A trim past one half is not a trim.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">core_winsorized_mean</span><span class="op">(</span><span class="va">x</span>, <span class="fl">0.7</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `trim` must be a single number in [0, 0.5]</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">core_trimmed_mean</span><span class="op">(</span><span class="va">letters</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` must be numeric, got character</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

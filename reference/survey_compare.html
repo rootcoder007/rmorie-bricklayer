@@ -4,12 +4,18 @@ difference, its standard error from the design (the
 covariance between the two estimates included, which is what
 a pair of separate intervals leaves out), a confidence
 interval and a two-sided p-value from the normal
-approximation."><meta property="og:description" content="Each domain's estimate against a reference domain: the
+approximation. Use it to test whether two regions or groups differ, rather
+than checking whether their separate intervals overlap: overlapping
+intervals do not mean no difference, and domains of one survey are not
+independent."><meta property="og:description" content="Each domain's estimate against a reference domain: the
 difference, its standard error from the design (the
 covariance between the two estimates included, which is what
 a pair of separate intervals leaves out), a confidence
 interval and a two-sided p-value from the normal
-approximation."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+approximation. Use it to test whether two regions or groups differ, rather
+than checking whether their separate intervals overlap: overlapping
+intervals do not mean no difference, and domains of one survey are not
+independent."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +23,7 @@ approximation."><meta property="og:image" content="https://rootcoder007.github.i
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +69,10 @@ difference, its standard error from the design (the
 covariance between the two estimates included, which is what
 a pair of separate intervals leaves out), a confidence
 interval and a two-sided p-value from the normal
-approximation.</p>
+approximation. Use it to test whether two regions or groups differ, rather
+than checking whether their separate intervals overlap: overlapping
+intervals do not mean no difference, and domains of one survey are not
+independent.</p>
     </div>
 
     <div class="section level2">
@@ -94,7 +103,8 @@ approximation.</p>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>The analysis column.</p></dd>
+<dd><p>Character scalar, the analysis column: numeric for a mean, total
+or ratio; any type for a proportion (each distinct value is a category).</p></dd>
 
 
 <dt id="arg-by">by<a class="anchor" aria-label="anchor" href="#arg-by"></a></dt>
@@ -117,19 +127,37 @@ approximation.</p>
 
 <dt id="arg-ref">ref<a class="anchor" aria-label="anchor" href="#arg-ref"></a></dt>
 <dd><p>The reference domain, as its label (for several
-<code>by</code> columns, the labels joined with <code>" / "</code>); default the
-first.</p></dd>
+<code>by</code> columns, the labels joined with <code>" / "</code>); a number is
+matched as the label it prints as. Default <code>NULL</code>: the first domain.</p></dd>
 
 
 <dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
-<dd><p>Confidence level.</p></dd>
+<dd><p>Numeric scalar in (0, 1), the confidence level; default
+<code>0.95</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame of class <code>rmbl_svy_compare</code>: <code>domain</code>,
-<code>level</code> (for a proportion), <code>estimate</code>, <code>reference</code>,
-<code>difference</code>, <code>se</code>, <code>lower</code>, <code>upper</code>, <code>p_value</code>.</p>
+    <p>A data frame of class <code>c("rmbl_svy_compare", "data.frame")</code>,
+one row per non-reference domain (and category): <code>domain</code>,
+<code>level</code> (for a proportion only), numeric <code>estimate</code> (the
+domain's), <code>reference</code> (the reference domain's), <code>difference</code>,
+<code>se</code>, <code>lower</code>, <code>upper</code> and <code>p_value</code>. Attributes
+<code>ref</code>, <code>stat</code>, <code>y</code> and <code>conf_level</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The estimates come from <code><a href="survey_estimate.html">survey_estimate()</a></code> with Wald
+intervals. For domain
+\(i\) and reference \(0\) the difference is \(d = \hat\theta_i -
+\hat\theta_0\) with \(SE(d) = \sqrt{V_{ii} + V_{00} - 2V_{i0}}\) from the
+design covariance; the interval is \(d \pm z\,SE(d)\) and the p-value
+\(2\Phi(-|d|/SE(d))\), both on the normal distribution (there is no
+<code>df</code> argument). For a proportion every category is compared
+separately. No adjustment for multiple comparisons is made.</p>
+<p>Errors: <code>by</code> missing or empty; fewer than two domains; a <code>ref</code>
+that is not a single domain label present in the data; and every error of
+<code><a href="survey_estimate.html">survey_estimate()</a></code>.</p>
     </div>
 
     <div class="section level2">
@@ -144,6 +172,18 @@ first.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  domain level estimate reference difference      se   lower   upper p_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    east     1   0.2538    0.3701    -0.1164 0.09485 -0.3023 0.06954  0.2199</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   south     1   0.2352    0.3701    -0.1350 0.09464 -0.3205 0.05052  0.1538</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># means, against the default (first) domain, at 90 percent</span></span></span>
+<span class="r-in"><span><span class="va">d</span><span class="op">$</span><span class="va">drinks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">survey_compare</span><span class="op">(</span><span class="va">des</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span>, conf_level <span class="op">=</span> <span class="fl">0.90</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Survey mean of drinks against east (90% interval)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  domain estimate reference difference     se   lower  upper p_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   north    3.066     3.361    -0.2952 0.3947 -0.9444 0.3539  0.4544</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   south    3.083     3.361    -0.2779 0.3811 -0.9048 0.3490  0.4659</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the reference must be one of the domains</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">survey_compare</span><span class="op">(</span><span class="va">des</span>, <span class="va">d</span>, <span class="st">"drinks"</span>, by <span class="op">=</span> <span class="st">"region"</span>, ref <span class="op">=</span> <span class="st">"west"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `ref` is not one of the domains: east, north, south</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

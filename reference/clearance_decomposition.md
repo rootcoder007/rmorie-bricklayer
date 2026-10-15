@@ -171,4 +171,31 @@ cd
 #>   Rate ratio 2022/2014: crude 0.9989 (0.9929 to 1.0050); within parts (Mantel-Haenszel) 1.0085 (1.0024 to 1.0146), p 0.00644
 #> ────────────────────────────────────────────────────────────────── 
 plot(cd)
+
+
+# Simpson's paradox in four numbers: each part clears better in B, yet the
+# aggregate falls, because B's workload moved to the part that clears less
+toy <- clearance_decomposition(numerator = c(90, 20, 19, 60),
+                               denominator = c(100, 50, 20, 140),
+                               group = c("minor", "serious", "minor", "serious"),
+                               compare = c("A", "A", "B", "B"))
+toy
+#> ── Clearance rate, B against A: rate and case-mix effects (Kitagawa)  
+#>   A: 0.7333   B: 0.4938   change -0.2396 = rate effect +0.0371 + mix effect -0.2766
+#>   B standardised to the A mix: 0.7762; to the average mix: 0.6350
+#>   2 of 2 parts rose, 0 fell. Simpson's paradox: every part moved the other way to the aggregate (2 of 2)
+#> 
+#>     part rate A rate B share A share B  ratio  lower  upper rate_effect
+#>    minor    0.9 0.9500  0.6667   0.125 1.0556 0.6075 1.7454      0.0198
+#>  serious    0.4 0.4286  0.3333   0.875 1.0714 0.6367 1.8767      0.0173
+#>  mix_effect
+#>      -0.169
+#>      -0.108
+#> 
+#>   Rate ratio B/A: crude 0.6733 (0.4978 to 0.9072); within parts (Mantel-Haenszel) 1.0634 (0.7465 to 1.5149), p 0.733
+#> ────────────────────────────────────────────────────────────────── 
+
+# every part must appear in both comparisons
+try(clearance_decomposition(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
+#> Error : part "y" is in only one comparison; a rate change needs it in both (merge or drop it first)
 ```

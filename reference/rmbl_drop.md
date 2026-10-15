@@ -3,7 +3,9 @@
 `drop_empty()` removes rows or columns that are entirely missing.
 `drop_constant()` removes columns that hold a single distinct value. The
 counterparts of `janitor::remove_empty()` and
-`janitor::remove_constant()`.
+`janitor::remove_constant()`. Use them after reading a spreadsheet
+export, which often carries blank padding rows, empty columns and
+columns that repeat one value (a year, a jurisdiction) on every row.
 
 ## Usage
 
@@ -21,17 +23,18 @@ drop_constant(data, na_as_value = FALSE)
 
 - which:
 
-  `"rows"`, `"cols"`, or both (the default).
+  `"rows"`, `"cols"`, or both (the default, `c("rows", "cols")`).
 
 - na_as_value:
 
-  Treat `NA` as a distinct value, so a column of `NA` s plus one real
-  value counts as two (default `FALSE`) .
+  Logical: treat `NA` as a distinct value, so a column of `NA`s plus one
+  real value counts as two (default `FALSE`).
 
 ## Value
 
 The data frame, with the offending rows or columns removed. The names of
-what was dropped are attached as the `"dropped"` attribute.
+the columns that were dropped are attached as the `"dropped"` attribute
+(a character vector, empty when none); dropped rows are not listed.
 
 ## Details
 
@@ -41,6 +44,16 @@ column that was informative in the pinned capsule and is constant in a
 fresh fetch means the source changed, so check
 [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
 before deleting it and moving on.
+
+`drop_empty()` removes all-`NA` columns first, then all-`NA` rows among
+the remaining columns, and resets the row names. An empty string is a
+value, not missing. `drop_constant()` counts the distinct non-missing
+values of each column (with `na_as_value = TRUE`, `NA` counts as a
+value), so an all-`NA` column is also dropped by default. Neither
+function modifies anything in place.
+
+Errors: `data` not a data frame (or with missing or duplicated names);
+`which` other than `"rows"` and/or `"cols"`.
 
 ## See also
 
@@ -70,6 +83,8 @@ drop_constant(df)
 #> 1    1
 #> 2    2
 #> 3   NA
+attr(drop_constant(df), "dropped")
+#> [1] "all_na"   "constant"
 
 # Rows only.
 drop_empty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
@@ -83,4 +98,8 @@ ncol(drop_constant(x))
 #> [1] 0
 ncol(drop_constant(x, na_as_value = TRUE))
 #> [1] 1
+
+# only data frames
+try(drop_empty(c(1, NA)))
+#> Error : `data` must be a data frame
 ```

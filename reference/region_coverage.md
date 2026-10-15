@@ -1,8 +1,10 @@
 # Population of the regions that contain a unit, and of those that do not
 
-Summarises where a set of point-located units sits relative to the
-regions of a statistical geography: how many regions hold at least one
-unit, and what share of the population lives in them.
+Summarises where a set of point-located units (jails, courthouses,
+hospitals, police stations) sits relative to the regions of a
+statistical geography: how many regions hold at least one unit, and what
+share of the population lives in them. Use it to describe the footprint
+of a set of facilities, not to build a per-capita rate (see Details).
 
 ## Usage
 
@@ -14,23 +16,31 @@ region_coverage(region, population, units)
 
 - region:
 
-  Region identifiers, one per region, not repeated.
+  Region identifiers, one per region, not repeated (character, or
+  anything that converts to it; surrounding spaces are trimmed).
 
 - population:
 
-  Population of each region, same length and order.
+  Population of each region, same length and order, non-negative
+  numbers.
 
 - units:
 
-  Number of units located in each region. Zero is the expected value for
-  most regions in most geographies.
+  Number of units located in each region, same length and order,
+  non-negative whole numbers. Zero is the expected value for most
+  regions in most geographies.
 
 ## Value
 
-A data frame of class `rmbl_region_coverage`, one row per region, with
-the columns `region`, `population`, `units`, `has_unit` and `pop_share`,
-ordered by units then population. The totals are carried on the
-`coverage` attribute and printed by the print method.
+A data frame of class `c("rmbl_region_coverage", "data.frame")`, one row
+per region, with the columns `region` (character), `population`
+(numeric), `units` (numeric), `has_unit` (logical) and `pop_share`
+(numeric, percent of the total population), ordered by units then
+population, both descending. The totals are carried on the `coverage`
+attribute, a list of `regions`, `with_unit`, `without_unit`, `units`,
+`total_population`, `covered_population`, `uncovered_population` and
+`covered_share` (percent), and printed by the print method (which shows
+the first `n = 10` regions).
 
 ## Details
 
@@ -51,7 +61,12 @@ opposite directions. Where numerator and denominator must cover the same
 population, the defensible figure is the whole-territory one.
 
 The print method says this each time, because the covered share is
-precisely the number a reader is tempted to divide by.
+precisely the number a reader is tempted to divide by. With a total
+population of zero the shares are `NA`.
+
+Errors: empty, missing or repeated `region` values; arguments of
+different lengths; missing or negative `population`; missing, negative
+or fractional `units`.
 
 ## See also
 
@@ -87,4 +102,22 @@ cov
 # The covered share is reported, and is not a rate denominator.
 attr(cov, "coverage")$covered_share
 #> [1] 64.96063
+attr(cov, "coverage")[c("with_unit", "uncovered_population")]
+#> $with_unit
+#> [1] 2
+#> 
+#> $uncovered_population
+#> [1] 890000
+#> 
+
+# counting units per region from a facility list first
+fac <- c("C", "A", "A", "A")
+regions <- c("A", "B", "C", "D")
+units <- as.vector(table(factor(fac, levels = regions)))
+region_coverage(regions, c(1200000, 800000, 450000, 90000), units)$has_unit
+#> [1]  TRUE  TRUE FALSE FALSE
+
+# a region listed twice is refused
+try(region_coverage(c("A", "A"), c(10, 20), c(1, 0)))
+#> Error : `region` must not repeat: one row per region
 ```

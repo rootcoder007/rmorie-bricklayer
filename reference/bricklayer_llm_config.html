@@ -3,19 +3,17 @@
 model, in one place: which route to use; your key and model for each
 provider (bring your own key: see bricklayer_llm_providers);
 the address, key and model of your own OpenAI-compatible server; and of a
-local or LAN Ollama server. Settings are saved in
-$XDG_CONFIG_HOME/morie/llm.json (default ~/.config/morie/),
-a private file (owner-only) this function writes only when you pass a
-setting; keys are never printed. An environment variable that is set (the
-env column, e.g. ANTHROPIC_API_KEY) wins over a saved value."><meta property="og:description" content="Every setting that decides how bricklayer_llm_ask reaches a
+local or LAN Ollama server. Called with no arguments it only reads: it
+returns a table of every setting, its current value, and where that value
+comes from. Called with key = value pairs it saves those settings
+first. Keys are never printed, only whether one is set."><meta property="og:description" content="Every setting that decides how bricklayer_llm_ask reaches a
 model, in one place: which route to use; your key and model for each
 provider (bring your own key: see bricklayer_llm_providers);
 the address, key and model of your own OpenAI-compatible server; and of a
-local or LAN Ollama server. Settings are saved in
-$XDG_CONFIG_HOME/morie/llm.json (default ~/.config/morie/),
-a private file (owner-only) this function writes only when you pass a
-setting; keys are never printed. An environment variable that is set (the
-env column, e.g. ANTHROPIC_API_KEY) wins over a saved value."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+local or LAN Ollama server. Called with no arguments it only reads: it
+returns a table of every setting, its current value, and where that value
+comes from. Called with key = value pairs it saves those settings
+first. Keys are never printed, only whether one is set."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -23,7 +21,7 @@ env column, e.g. ANTHROPIC_API_KEY) wins over a saved value."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,11 +66,10 @@ env column, e.g. ANTHROPIC_API_KEY) wins over a saved value."><meta property="og
 model, in one place: which route to use; your key and model for each
 provider (bring your own key: see <code><a href="bricklayer_llm_providers.html">bricklayer_llm_providers</a></code>);
 the address, key and model of your own OpenAI-compatible server; and of a
-local or LAN Ollama server. Settings are saved in
-<code>$XDG_CONFIG_HOME/morie/llm.json</code> (default <code>~/.config/morie/</code>),
-a private file (owner-only) this function writes only when you pass a
-setting; keys are never printed. An environment variable that is set (the
-<code>env</code> column, e.g. <code>ANTHROPIC_API_KEY</code>) wins over a saved value.</p>
+local or LAN Ollama server. Called with no arguments it only reads: it
+returns a table of every setting, its current value, and where that value
+comes from. Called with <code>key = value</code> pairs it saves those settings
+first. Keys are never printed, only whether one is set.</p>
     </div>
 
     <div class="section level2">
@@ -86,56 +83,126 @@ setting; keys are never printed. An environment variable that is set (the
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Settings to save, as <code>key = value</code>: <code>route</code>
-(<code>"auto"</code>, <code>"own"</code>, <code>"ollama"</code> or a provider id),
-<code>&lt;provider&gt;.key</code> and <code>&lt;provider&gt;.model</code> (e.g.
-<code>anthropic.key</code>, <code>openai.model</code>), <code>own.url</code>,
-<code>own.key</code>, <code>own.model</code>, <code>ollama.url</code>,
-<code>ollama.model</code>, <code>ollama.key</code>. <code>NULL</code> or <code>""</code>
-removes a saved setting. With no arguments nothing is written.</p></dd>
+(<code>"auto"</code>, <code>"own"</code>, <code>"ollama"</code> or a provider id such as
+<code>"anthropic"</code>; case is ignored), <code>&lt;provider&gt;.key</code> and
+<code>&lt;provider&gt;.model</code> (e.g. <code>anthropic.key</code>,
+<code>openai.model</code>), <code>own.url</code>, <code>own.key</code>,
+<code>own.model</code>, <code>ollama.url</code>, <code>ollama.model</code>,
+<code>ollama.key</code>. Each value is a single string (leading and trailing
+spaces are removed). <code>NULL</code>, <code>NA</code> or <code>""</code> removes a
+saved setting. With no arguments nothing is written.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with one row per setting: <code>key</code>, <code>value</code>
-(a key only as <code>"set"</code>), <code>source</code> (<code>"environment"</code>,
-<code>"saved"</code> or <code>"default"</code>), <code>env</code> (the variable that
-overrides it) and <code>help</code>; visibly when called with no settings.</p>
+    <p>A data frame with one row per setting (seven general settings
+followed by a key and a model row for each provider) and five character
+columns: <code>key</code> (the setting's name), <code>value</code> (its current
+value, the default spelled out; a key only as <code>"set"</code> or
+<code>"(not set)"</code>), <code>source</code> (<code>"environment"</code>,
+<code>"saved"</code> or <code>"default"</code>), <code>env</code> (the environment
+variable that overrides it) and <code>help</code> (what it is for). Returned
+visibly when called with no settings, invisibly after saving.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The same is available from the shell: <code>rmbl config</code> lists the
+    <p><strong>Where settings live.</strong> Saved settings are kept in
+<code>$XDG_CONFIG_HOME/morie/llm.json</code> (<code>~/.config/morie/llm.json</code>
+when <code>XDG_CONFIG_HOME</code> is unset), a private file (mode 0600, in a
+private directory) next to the shared <code>credentials.json</code>. The file is
+written only when you pass a setting; only the settings that change are
+rewritten in place, so the rest of the file stays exactly as it was. An
+empty set of settings removes the file.</p>
+<p><strong>Precedence.</strong> An environment variable that is set (the <code>env</code>
+column, for example <code>ANTHROPIC_API_KEY</code> or <code>OLLAMA_HOST</code>) wins
+over a saved value, which wins over the built-in default. Saving a
+setting whose variable is set warns that the variable still wins. A
+provider key is also read from the provider's alternative variable where
+it has one (<code>GOOGLE_API_KEY</code> for Gemini, <code>HUGGINGFACE_HUB_TOKEN</code>
+for Hugging Face, <code>CO_API_KEY</code> for Cohere).</p>
+<p><strong>Checks when saving.</strong> Names must be among the settings listed in
+the <code>key</code> column (<code>"unknown setting"</code> otherwise) and every value
+passed as <code>key = value</code> with one value each. <code>route</code> must be
+<code>"auto"</code>, <code>"own"</code>, <code>"ollama"</code> or a provider id; the
+retired <code>"hosted"</code> route is refused. <code>own.url</code> must be an
+<code>http(s)://</code> address and <code>ollama.url</code> an address or
+<code>host:port</code>; both are refused if they contain spaces, a fragment or
+user information, and, unless they point at this machine or a private LAN
+address, they get the package's public-address check (a metadata or
+link-local address is refused). <code>"off"</code>, <code>"none"</code> or
+<code>"disabled"</code> turns a server off. A key with a line break or control
+character in it is refused. A new <code>own.url</code> or <code>ollama.url</code>
+drops the key saved for the old server (with a message), so a key is
+never sent to a server it was not saved for. A settings file that is not
+a JSON object, or holds a setting that is not a non-empty string, stops
+every call until it is fixed or moved aside with <code>rmbl config reset</code>.</p>
+<p>Reading the settings takes a few milliseconds: the table of settings is
+built once per session and the file is read once per call. Nothing is
+sent over the network by this function.</p>
+<p>The same is available from the shell: <code>rmbl config</code> lists the
 settings, <code>rmbl config set KEY VALUE</code> and <code>rmbl config unset KEY</code>
 change one (a key is asked for without echo when no value is given), and
 <code>rmbl config setup</code> walks through them.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="bricklayer_llm_providers.html">bricklayer_llm_providers</a></code> for the providers and
+their variables, <code><a href="bricklayer_llm_status.html">bricklayer_llm_status</a></code> for which routes
+are reachable, <code><a href="bricklayer_llm_ask.html">bricklayer_llm_ask</a></code> which uses these
+settings.</p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># reading the settings writes nothing</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">bricklayer_llm_config</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            key                  value  source                env</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        route                   auto default    MORIE_LLM_ROUTE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      own.url              (not set) default MORIE_LLM_BASE_URL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3      own.key              (not set) default  MORIE_LLM_API_KEY</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    own.model              (not set) default    MORIE_LLM_MODEL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   ollama.url http://localhost:11434 default        OLLAMA_HOST</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 ollama.model (the first one pulled) default       OLLAMA_MODEL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                      help</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                      which route `ask` uses: auto (own endpoint, then each provider with a key, then Ollama), own, ollama or a provider</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 your own OpenAI-compatible server, e.g. http://localhost:1234/v1 (LM Studio), http://localhost:8080/v1 (llama-server -m /path/model.gguf) or https://api.example.org/v1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3                                                                                                                    API key for your own server (sent as a Bearer token)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4                                                                                                                                           model name on your own server</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5                                                                               your Ollama server, e.g. http://localhost:11434 or 192.168.1.20:11434; off to skip Ollama</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6                                                                                                                     Ollama model to use (default: the first one pulled)</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Work in a temporary settings directory so your own settings are</span></span></span>
+<span class="r-in"><span><span class="co"># untouched.</span></span></span>
+<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"cfg"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Reading the settings writes nothing.</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">bricklayer_llm_config</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">cfg</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"key"</span>, <span class="st">"value"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            key                  value  source</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        route                   auto default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      own.url              (not set) default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3      own.key              (not set) default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    own.model              (not set) default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   ollama.url http://localhost:11434 default</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 ollama.model (the first one pulled) default</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">cfg</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 39</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Save a local Ollama model and use it for every request; the key column</span></span></span>
+<span class="r-in"><span><span class="co"># shows where each value now comes from.</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>ollama.model <span class="op">=</span> <span class="st">"qwen3:8b"</span>, route <span class="op">=</span> <span class="st">"ollama"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">bricklayer_llm_config</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span><span class="op">[</span><span class="va">cfg</span><span class="op">$</span><span class="va">key</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"route"</span>, <span class="st">"ollama.model"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"key"</span>, <span class="st">"value"</span>, <span class="st">"source"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            key    value source</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        route   ollama  saved</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 ollama.model qwen3:8b  saved</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A key is shown only as set or not set.</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>own.url <span class="op">=</span> <span class="st">"http://localhost:1234/v1"</span>, own.key <span class="op">=</span> <span class="st">"k-123"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span> <span class="op">&lt;-</span> <span class="fu">bricklayer_llm_config</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cfg</span><span class="op">$</span><span class="va">value</span><span class="op">[</span><span class="va">cfg</span><span class="op">$</span><span class="va">key</span> <span class="op">==</span> <span class="st">"own.key"</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "set"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Back to the defaults: NULL removes a saved setting.</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>route <span class="op">=</span> <span class="cn">NULL</span>, ollama.model <span class="op">=</span> <span class="cn">NULL</span>, own.url <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
+<span class="r-in"><span>                      own.key <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Unknown settings and retired routes are refused.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : unknown setting 'colour' (one of: route, own.url, own.key, own.model, ollama.url, ollama.model, ollama.key, openai.key, openai.model, anthropic.key, anthropic.model, gemini.key, gemini.model, openrouter.key, openrouter.model, groq.key, groq.model, together.key, together.model, fireworks.key, fireworks.model, deepseek.key, deepseek.model, mistral.key, mistral.model, xai.key, xai.model, cerebras.key, cerebras.model, perplexity.key, perplexity.model, huggingface.key, huggingface.model, opencode.key, opencode.model, cohere.key, cohere.model, nvidia.key, nvidia.model)</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>route <span class="op">=</span> <span class="st">"hosted"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : the hosted MORIE language-model tier is retired: bring your own key (a provider's variable such as ANTHROPIC_API_KEY or OPENAI_API_KEY, or `rmoriebricklayer config set &lt;provider&gt;.key`) or run a model locally (Ollama); `rmoriebricklayer config setup` walks through it</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="co"># your Anthropic key and model, and always use them</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>anthropic.key <span class="op">=</span> <span class="st">"sk-ant-..."</span>, route <span class="op">=</span> <span class="st">"anthropic"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># an Ollama server on another machine</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>ollama.url <span class="op">=</span> <span class="st">"http://192.168.1.20:11434"</span>, ollama.model <span class="op">=</span> <span class="st">"qwen3:8b"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># your own OpenAI-compatible server</span></span></span>
-<span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>own.url <span class="op">=</span> <span class="st">"http://localhost:1234/v1"</span>, own.model <span class="op">=</span> <span class="st">"my-model"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># back to the automatic order</span></span></span>
-<span class="r-in"><span><span class="fu">bricklayer_llm_config</span><span class="op">(</span>route <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

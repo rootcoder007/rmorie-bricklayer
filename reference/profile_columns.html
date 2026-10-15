@@ -13,7 +13,7 @@ distinct levels plus the most common one for a categorical column."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,8 +74,9 @@ distinct levels plus the most common one for a categorical column.</p>
 
 
 <dt id="arg-quantiles">quantiles<a class="anchor" aria-label="anchor" href="#arg-quantiles"></a></dt>
-<dd><p>Quantile probabilities to include for
-numeric columns (default the quartiles).</p></dd>
+<dd><p>Numeric vector of quantile probabilities to include for
+numeric columns, one column each named <code>q</code> and the percentage (<code>q25</code>,
+<code>q50</code>, ...); default the quartiles. <code>NULL</code> or an empty vector adds none.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -86,7 +87,16 @@ values, and for a numeric column the counts of zero, negative and
 infinite values, the classical and robust centre and spread, the range,
 the skewness, the count outside the Tukey fences, and an
 <code><a href="inline_hist.html">inline_hist()</a></code> sketch of its distribution. A
-categorical column reports its most common value in <code>top</code> instead.</p>
+categorical column reports its most common value in <code>top</code> instead.
+The columns are <code>column</code>, <code>type</code> (the first class), <code>n</code>,
+<code>n_missing</code>,
+<code>pct_missing</code>, <code>n_distinct</code>, <code>n_zero</code>, <code>n_negative</code>,
+<code>n_infinite</code>,
+<code>mean</code>, <code>sd</code>, <code>median</code>, <code>mad</code>, <code>min</code>, <code>max</code>,
+<code>skewness</code>, <code>n_outliers</code>,
+<code>hist</code>, <code>top</code> and one per quantile; a statistic that does not apply to the
+column's type is <code>NA</code>. The print method formats the numbers to four
+significant digits and shows the histogram last.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -94,6 +104,23 @@ categorical column reports its most common value in <code>top</code> instead.</p
 where they disagree, the column has outliers or a heavy tail, and the
 mean is not describing it. That is visible in one glance here and in no
 single number.</p>
+<p>How the numbers are computed. A column is numeric when <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">is.numeric()</a></code> is
+<code>TRUE</code>; every other column (character, factor, logical, <code>Date</code>, ...) is
+treated as categorical, and <code>top</code> is its most frequent non-missing value as
+text (ties broken by the order of <code>sort(table())</code>). For a numeric column,
+over its non-missing values: <code>sd</code> is the sample standard deviation
+(\(n - 1\)), <code>mad</code> the median absolute deviation scaled by 1.4826,
+<code>skewness</code> the population moment ratio \(m_3 / m_2^{3/2}\),
+<code>n_outliers</code> the count outside the Tukey fences (1.5 interquartile ranges
+beyond the quartiles), and the quantiles are type 7. Infinite values are
+counted in <code>n_infinite</code> (and in <code>n_negative</code>, <code>n_distinct</code>) and left
+out
+of every other numeric statistic, which are taken over the finite values
+only: a column with an infinite value keeps a finite mean and range, and
+a column with no finite value has <code>NA</code> statistics. A progress bar is shown for
+wide tables when
+<code>options(morie.progress)</code> allows it. Errors when <code>data</code> is not a data
+frame, has no columns, or has duplicate or empty column names.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -155,6 +182,18 @@ single number.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 skewed      0         48          0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  grade     NA         NA         NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4  gappy      0          0          0</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># deciles instead of quartiles</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu">profile_columns</span><span class="op">(</span><span class="va">df</span>, quantiles <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "column"      "type"        "n"           "n_missing"   "pct_missing"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "n_distinct"  "n_zero"      "n_negative"  "n_infinite"  "mean"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "sd"          "median"      "mad"         "min"         "max"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "skewness"    "n_outliers"  "hist"        "top"         "q10"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21] "q90"        </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a table with no columns has nothing to profile</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">profile_columns</span><span class="op">(</span><span class="va">df</span><span class="op">[</span>, <span class="fl">0</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `data` has no columns to profile</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

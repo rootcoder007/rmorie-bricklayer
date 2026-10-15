@@ -1,7 +1,11 @@
 # Standardised incidence ratio, with an exact interval
 
-The ratio of observed to expected, with the exact Poisson interval for
-it. A ratio of one is the overall experience; above one is an excess.
+Divides each area's observed count by its expected count to give the
+standardised incidence ratio (SIR), and adds an exact Poisson confidence
+interval. A ratio of one is the overall experience; above one is an
+excess and below one a deficit. Use it after
+[`expected_counts`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md)
+to say which areas differ from the overall rate by more than chance.
 
 ## Usage
 
@@ -13,35 +17,53 @@ sir(observed, expected, area = NULL, conf_level = 0.95)
 
 - observed:
 
-  Observed counts.
+  Numeric vector of observed counts (non-negative).
 
 - expected:
 
-  Expected counts, from
-  [`expected_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md).
+  Numeric vector of expected counts (positive), for example from
+  [`expected_counts`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md);
+  the same length as `observed`, or length one.
 
 - area:
 
-  Optional labels.
+  Optional vector of area labels, added as the first column. Default
+  `NULL`.
 
 - conf_level:
 
-  Confidence level.
+  Number in (0, 1), default `0.95`: the two-sided confidence level of
+  the interval.
 
 ## Value
 
-A data frame with `observed`, `expected`, `sir`, `lower`, `upper`,
-`excess` (the interval lies above one), `deficit` (the interval lies
-below one) and `significant` – whether the interval excludes one.
+A data frame with one row per area: `area` (when given), `observed`,
+`expected`, `sir`, `lower`, `upper` (numeric), and logical `excess` (the
+interval lies above one), `deficit` (the interval lies below one) and
+`significant` (either).
 
 ## Details
 
-The interval is the exact Poisson one, from the relation between the
-Poisson and gamma distributions, and so is identical to
-[`stats::poisson.test`](https://rdrr.io/r/stats/poisson.test.html) 's.
+With observed count \\O\\ and expected \\E\\, \\SIR = O / E\\. The
+interval for \\1 - \alpha\\ coverage is
+\$\$\left\[\frac{G^{-1}(\alpha/2;\\ O)}{E},\\ \frac{G^{-1}(1-\alpha/2;\\
+O+1)}{E}\right\]\$\$ where \\G^{-1}(p; k)\\ is the gamma quantile with
+shape \\k\\; the lower limit is 0 when \\O = 0\\. This is the exact
+Poisson interval, from the relation between the Poisson and gamma
+distributions, and so is identical to
+[`stats::poisson.test()`](https://rdrr.io/r/stats/poisson.test.html)'s.
 It is the interval to use here because the counts that matter are small:
 a normal approximation on an observed count of three is not an interval,
 it is a decoration.
+
+Each area's interval is a separate test; with many areas some will
+exclude one by chance (see
+[`scan_adjust`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)).
+Missing values are dropped before the lengths are compared.
+
+Errors: negative, infinite or non-numeric counts; an expected count of
+zero or below; lengths that differ (a single `expected` is recycled). A
+`conf_level` outside (0, 1) is an error.
 
 ## References
 
@@ -50,8 +72,9 @@ Modeling*. Chapman and Hall/CRC, Chapter 1.
 
 ## See also
 
-[`eb_rates()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md),
-[`funnel_limits()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
+[`expected_counts`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expected_counts.md),
+[`eb_rates`](https://rootcoder007.github.io/rmorie-bricklayer/reference/eb_rates.md),
+[`funnel_limits`](https://rootcoder007.github.io/rmorie-bricklayer/reference/funnel_limits.md)
 
 ## Examples
 
@@ -72,4 +95,13 @@ sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
 sir(3, 5)
 #>   observed expected sir     lower    upper excess deficit significant
 #> 1        3        5 0.6 0.1237344 1.753455  FALSE   FALSE       FALSE
+
+# a 90 percent interval, and a zero count (lower limit exactly 0)
+sir(c(0, 40), c(2, 25), conf_level = 0.90)
+#>   observed expected sir   lower    upper excess deficit significant
+#> 1        0        2 0.0 0.00000 1.497866  FALSE   FALSE       FALSE
+#> 2       40       25 1.6 1.20783 2.082775   TRUE   FALSE        TRUE
+
+try(sir(c(3, 4), c(5, 0)))
+#> Error : `expected` must be positive
 ```

@@ -57,6 +57,16 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   [`agent_bundle`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   from the shell
 
+- `wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d] [--max N]`:
+
+  save every URL listed in FILE (one per line; blank lines and `#`
+  comments skipped) in the Internet Archive's Wayback Machine with
+  [`wayback_save`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md),
+  results in `--out` (default `FILE.wayback.jsonl`), so a stopped run
+  carries on; `wayback --retry FILE.jsonl [--include-gone]` retries the
+  failures of an earlier run
+  ([`wayback_retry`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md))
+
 - `functions [PATTERN]`:
 
   list the exported functions with their one-line titles, optionally
@@ -73,11 +83,18 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
 
 - `version`:
 
-  print the package version
+  print the package version (also `--version`, `-v`)
 
-- `help`:
+- `help [VERB]`:
 
-  this list
+  this list, or one verb's usage (also `--help`, `-h`; `VERB --help`
+  shows a verb's usage without running it)
+
+The launcher installed by
+[`install_cli`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+calls this function with the shell's arguments and exits with its
+status. Calling it from R is the same as typing the command, which is
+how the examples below work.
 
 ## Usage
 
@@ -89,21 +106,57 @@ bricklayer_cli(args = commandArgs(trailingOnly = TRUE), out = cat)
 
 - args:
 
-  Character vector of arguments; defaults to the command line.
+  Character vector of arguments, verb first; defaults to the command
+  line (`commandArgs(trailingOnly = TRUE)`). An empty vector prints the
+  help.
 
 - out:
 
-  Function that receives the output text (default: the console).
+  Function that receives the output text, one string at a time (default
+  `cat`, the console). Pass a function that collects the strings to
+  capture the output.
 
 ## Value
 
-The exit status, invisibly (0 on success).
+The exit status (integer scalar), invisibly: 0 on success, 1 on failure,
+2 for a usage error, 130 when interrupted.
+
+## Details
+
+An option a verb does not take is refused with exit status 2 rather than
+ignored or sent as part of a prompt; everything after a bare `--` is
+positional (for a prompt that itself starts with `--`) and only `ask`,
+`bundle` and `explain-error` accept it. A first argument that is plainly
+a question (two or more words, or ending in `?`, with no path, line
+break or key-shaped word) and no verb is asked as `ask` would ask it.
+
+Errors are not raised: every error is written to `out` as
+`"PROG: message"` and turned into the exit status. The status is 0 on
+success, 1 when the verb failed (an error, nothing found, no route), 2
+for a usage error (an unknown verb or option, a missing value) and 130
+when interrupted (Ctrl-C). The command name in messages is the
+environment variable `RMBL_PROG`, else `rmoriebricklayer`.
+
+Side effects: during the call `options(morie.progress = TRUE)` is set,
+so downloads draw a progress bar; when `RMBL_PROG` is set (the launcher
+sets it) and `options(rmoriebricklayer.data_cache)` is not, the
+data.rmorie.com manifest and tables are kept in
+`tools::R_user_dir("rmoriebricklayer", "cache")` rather than a fresh
+temporary folder. The verbs `login`, `logout` and `config` write the
+shared credentials and settings files; `ask`, `models`, `data`, `bundle`
+and `wayback` use the network; `functions`, `describe`, `examples`,
+`explain-error`, `version` and `help` only read the installed help.
+
+## See also
+
+[`install_cli`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+to put the command on your PATH.
 
 ## Examples
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.12
+#> rmoriebricklayer 0.5.13
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
@@ -191,47 +244,154 @@ bricklayer_cli(c("describe", "analyse_table"))
 #> 
 #>     data: A data frame in long form: one row per period and group.
 #> 
-#>    value: Column with the published count (or measure).
+#>    value: Name of the column (a string) with the published count (or
+#>           measure).
 #> 
-#>   period: Column with the period (fiscal year, quarter, ...).
+#>   period: Name of the column with the period (fiscal year, quarter,
+#>           ...); numeric periods are used as the time axis of the
+#>           trend tests.
 #> 
-#>       by: Optional grouping columns (institution, region, ...).
+#>       by: Optional character vector of grouping column names
+#>           (institution, region, ...). ‘NULL’ (the default) treats the
+#>           table as one series.
 #> 
-#> population: Optional exposure column for rates.
+#> population: Optional name of an exposure column for rates (‘NULL’,
+#>           the default, skips the rate step).
 #> 
 #>    prior: Optional data frame: the previous capsule of the same
-#>           table, for the drift screen.
+#>           table, for the drift screen. ‘NULL’ (the default) skips it.
 #> 
-#>    units: ‘"count"’, ‘"continuous"’ or ‘"percent"’, as in ‘yoy()’.
+#>    units: ‘"count"’ (the default), ‘"continuous"’ or ‘"percent"’, as
+#>           in ‘yoy()’.
 #> 
 #> rounding, rounding_kind, suppression_limit: How the release rounds or
-#>           suppresses cells; see ‘published_bounds()’. ‘NULL’ when the
-#>           counts are exact.
+#>           suppresses cells; see ‘published_bounds()’. ‘rounding’ is
+#>           the rounding base (for example 5), ‘rounding_kind’
+#>           ‘"nearest"’ (the default) or ‘"random"’,
+#>           ‘suppression_limit’ the threshold below which cells are
+#>           suppressed. ‘NULL’ when the counts are exact. Used only for
+#>           counts: with other ‘units’ they are ignored, with a
+#>           warning.
 #> 
-#> direction: Which way is an improvement, as in ‘yoy()’.
+#> direction: Which way is an improvement, as in ‘yoy()’: ‘"neutral"’
+#>           (the default), ‘"higher_is_better"’ or ‘"lower_is_better"’.
 #> 
-#>      per: Rate denominator, as in ‘rate()’.
+#>      per: Rate denominator, as in ‘rate()’; default 1000 (rates per
+#>           1,000 of ‘population’).
 #> 
-#> conf_level: Confidence level for every interval.
+#> conf_level: Confidence level for every interval, default 0.95.
 #> 
 #>    alpha: Level for the multiple-comparison decision and the drift
-#>           screens.
+#>           screens, default 0.05.
 #> 
-#>   adjust: Multiple-comparison method for ‘scan_adjust()’.
+#>   adjust: Multiple-comparison method for ‘scan_adjust()’, default
+#>           ‘"BH"’ (Benjamini-Hochberg).
+#> 
+#> Details:
+#> 
+#>      The steps, in order:
+#> 
+#>        1. profile: ‘profile_columns()’ and ‘missingness_summary()’ on
+#>           ‘data’;
+#> 
+#>        2. change: ‘yoy()’ between consecutive periods within each
+#>           ‘by’ group. For ‘units = "count"’ the exact p-values are
+#>           then adjusted across all comparisons with ‘scan_adjust()’,
+#>           and, when ‘rounding’ or ‘suppression_limit’ is given,
+#>           ‘yoy_bounds()’ adds the publication envelope (see
+#>           ‘published_bounds()’). For ‘"continuous"’ and ‘"percent"’
+#>           units neither step runs: ‘rounding’ and ‘suppression_limit’
+#>           are then ignored, with a warning;
+#> 
+#>        3. rates (only with ‘population’): ‘rate()’ per group and
+#>           period, and ‘rate_change()’ between periods, adjusted with
+#>           ‘scan_adjust()’;
+#> 
+#>        4. trend: per group, the values summed within each period,
+#>           then ‘trend_test()’ (Mann-Kendall tau, p-value and
+#>           Theil-Sen slope) and, for counts, ‘count_trend()’ (Poisson
+#>           rate ratio per period). A group with fewer than three
+#>           periods gets ‘NA’; a test that fails gets ‘NA’ rather than
+#>           an error;
+#> 
+#>        5. drift (only with ‘prior’): ‘capsule_drift()’ of ‘data’
+#>           against ‘prior’.
+#> 
+#>      Nothing is written and nothing is fetched; a progress bar for
+#>      the trend step is drawn on stderr unless ‘options(morie.quiet =
+#>      TRUE)’. Errors: ‘data’ or ‘prior’ not a data frame; a named
+#>      column not in ‘data’; an invalid ‘units’, ‘direction’ or
+#>      ‘rounding_kind’; a ‘conf_level’ outside (0, 1); and any error of
+#>      the functions called (for example negative counts in ‘yoy()’).
 #> 
 #> Value:
 #> 
-#>      A list of class ‘bricklayer_analysis’ with ‘profile’
-#>      (‘profile_columns()’), ‘missingness’ (‘missingness_summary()’),
-#>      ‘change’ (‘yoy()’ with p-values, adjustment and, if ‘rounding’
-#>      or ‘suppression_limit’ was given, publication bounds), ‘rates’
-#>      and ‘rate_change’ (when ‘population’ is given), ‘trend’ (one row
-#>      per group with ‘trend_test()’ and, for counts, ‘count_trend()’),
-#>      ‘drift’ (‘capsule_drift()’ against ‘prior’), and ‘meta’.
+#>      A list of class ‘bricklayer_analysis’ (with a print method that
+#>      summarises it in a few lines):
+#> 
+#>      ‘profile’
+#>           ‘profile_columns()’ of ‘data’.
+#> 
+#>      ‘missingness’
+#>           named numeric from ‘missingness_summary()’.
+#> 
+#>      ‘change’
+#>           the ‘yoy()’ table; for counts with the added columns
+#>           ‘p_value’, ‘p_adjusted’ and ‘significant’, and with ‘env_*’
+#>           and ‘combined_pct_lower’/‘combined_pct_upper’ when
+#>           publication bounds were requested.
+#> 
+#>      ‘rates’, ‘rate_change’
+#>           the ‘rate()’ and ‘rate_change()’ tables when ‘population’
+#>           is given, otherwise ‘NULL’.
+#> 
+#>      ‘trend’
+#>           data frame with one row per group: the ‘by’ columns,
+#>           ‘periods’, ‘first’, ‘last’, ‘tau’, ‘trend_p’, ‘slope’,
+#>           ‘rate_ratio’, ‘rate_ratio_lower’, ‘rate_ratio_upper’.
+#> 
+#>      ‘drift’
+#>           ‘capsule_drift()’ result against ‘prior’, or ‘NULL’.
+#> 
+#>      ‘meta’
+#>           list of the arguments used, ‘n_rows’, the sorted ‘periods’,
+#>           ‘prior’ (logical) and ‘when’ (a time stamp).
 #> 
 #> See Also:
 #> 
 #>      ‘report_analysis()’ writes the result as a Markdown or HTML
 #>      report.
 #> 
+
+# one verb's usage, and the examples of a help page
+bricklayer_cli(c("help", "data"))
+#> usage: rmoriebricklayer data list | data pull db/table [--out FILE.csv]   curated tables at data.rmorie.com (your MORIE key)
+bricklayer_cli(c("examples", "period_days"))
+#> 
+#>      period_days("2024-01-01", "2024-12-31") # a leap year
+#>      period_days("2023-01-01", "2023-12-31")
+#>      period_days("2025-04-01", "2026-03-31") # a fiscal year
+#>      
+#>      # a quarter as the period of an average daily population
+#>      adp(4200, t = period_days(as.Date("2025-01-01"), as.Date("2025-03-31")))
+#>      
+#>      # numbers are not dates, and the end cannot come first
+#>      try(period_days(1, 31))
+#>      try(period_days("2024-12-31", "2024-01-01"))
+#>      
+
+# capture the output instead of printing it
+lines <- character()
+status <- bricklayer_cli(c("functions", "^drbg_"),
+                         out = function(x) lines <<- c(lines, x))
+status
+#> [1] 0
+lines
+#> [1] "  drbg_generate  Draw bytes from a DRBG\n"                                                  
+#> [2] "  drbg_new       A deterministic random bit generator: AES-256 CTR_DRBG (NIST SP 800-90A)\n"
+#> [3] "  drbg_reseed    Reseed a DRBG\n"                                                           
+
+# an unknown verb is a usage error: status 2, nothing run
+bricklayer_cli("nonsense")
+#> rmoriebricklayer: unknown verb 'nonsense'; try `rmoriebricklayer help`, or `rmoriebricklayer ask "QUESTION"` for a model
 ```

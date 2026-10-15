@@ -32,11 +32,11 @@ bricklayer_json_unserialize(txt, trusted = FALSE)
 
 - pretty:
 
-  Indent the output.
+  Logical scalar, default `FALSE`: indent the output.
 
 - txt:
 
-  JSON produced by `bricklayer_json_serialize()`.
+  Character scalar: JSON produced by `bricklayer_json_serialize()`.
 
 - trusted:
 
@@ -106,4 +106,8 @@ identical(bricklayer_json_unserialize(exact), 1/3)
 # The serialised form is JSON, so it can be pinned like any other text.
 nchar(core_sha256(bricklayer_json_serialize(m)))
 #> [1] 64
+
+# A function is refused unless the JSON is trusted.
+try(bricklayer_json_unserialize(bricklayer_json_serialize(function(x) x + 1)))
+#> Error : bricklayer_json_unserialize() refuses to rebuild a 'closure' from JSON it did not write: that would run code chosen by the file's author. Pass trusted = TRUE only for JSON produced by bricklayer_json_serialize() in your own session.
 ```

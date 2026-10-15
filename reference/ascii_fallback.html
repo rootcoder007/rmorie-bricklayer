@@ -21,7 +21,7 @@ of erroring where it is not."><meta property="og:image" content="https://rootcod
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -82,18 +82,38 @@ of erroring where it is not.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A character vector.</p></dd>
+<dd><p>A character vector (other types are converted with
+<code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>).</p></dd>
 
 
 <dt id="arg-force">force<a class="anchor" aria-label="anchor" href="#arg-force"></a></dt>
-<dd><p>Logical; always transliterate to ASCII
-(default <code>FALSE</code>) .</p></dd>
+<dd><p>A single logical: <code>TRUE</code> always transliterates every
+element to ASCII; <code>FALSE</code> (the default) only the elements that are not
+valid UTF-8. Anything other than <code>TRUE</code> counts as <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector: <code>x</code> where it can be represented, ASCII
-otherwise.</p>
+    <p>A character vector the length of <code>x</code>: each element unchanged
+when it is valid UTF-8 (and <code>force</code> is not <code>TRUE</code>), otherwise its
+ASCII transliteration.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Each element is tested on its bytes with <code><a href="https://rdrr.io/r/base/validUTF8.html" class="external-link">validUTF8()</a></code>, so the
+outcome
+does not depend on the session locale. Valid elements (including plain
+ASCII and properly encoded accented text) are returned unchanged;
+invalid ones go through <code><a href="to_ascii.html">to_ascii()</a></code>, which drops the bytes
+that are
+not UTF-8 and transliterates the rest. With <code>force = TRUE</code> every
+element goes through <code><a href="to_ascii.html">to_ascii()</a></code>. A missing value is kept as
+<code>NA</code>
+unless <code>force = TRUE</code>, when it becomes <code>""</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="to_ascii.html">to_ascii()</a></code>, which does the transliteration.</p></div>
     </div>
 
     <div class="section level2">
@@ -114,6 +134,13 @@ otherwise.</p>
 <span class="r-in"><span><span class="co"># Vectorised; each element handled independently.</span></span></span>
 <span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"caf\u00e9"</span>, <span class="st">"resume"</span><span class="op">)</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "cafe"   "resume"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Bytes that are not UTF-8 (a Latin-1 file read as UTF-8) are repaired.</span></span></span>
+<span class="r-in"><span><span class="va">bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0x63</span>, <span class="fl">0x61</span>, <span class="fl">0x66</span>, <span class="fl">0xe9</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/validUTF8.html" class="external-link">validUTF8</a></span><span class="op">(</span><span class="va">bad</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span><span class="fu">ascii_fallback</span><span class="op">(</span><span class="va">bad</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "caf"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

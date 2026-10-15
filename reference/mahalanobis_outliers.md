@@ -1,10 +1,9 @@
 # Multivariate outliers by Mahalanobis distance
 
-Ranks rows by how far they sit from the centre of the data ONCE THE
-CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
-do: a row can be unremarkable on every variable separately and still be
-impossible jointly – a person 1.5 m tall weighing 140 kg is inside both
-marginal ranges and outside the cloud.
+Finds the rows of a numeric table that are unusual as a combination of
+values, not just on one variable at a time, and gives each row a
+distance, a p-value and an outlier flag. Use it before modelling to find
+records that are probably data-entry or linkage errors.
 
 ## Usage
 
@@ -33,19 +32,39 @@ mahalanobis_outliers(data, alpha = 0.001, robust = TRUE)
 A data frame of class `bricklayer_outliers` with `row`, `distance` (the
 square root of the squared Mahalanobis distance), `p_value`,
 `log_p_value` (the log of the chi-square upper tail, which keeps its
-information where `p_value` underflows to 0) and `outlier`, ordered by
-descending distance.
+information where `p_value` underflows to 0) and `outlier` (logical),
+ordered by descending distance, with skipped rows (`NA` distance) last.
+`row` is the row number in `data`. The attributes `robust` and `alpha`
+record the settings. The print method shows the number of flagged rows
+and the ten most distant.
 
 ## Details
 
-Under multivariate normality the squared distance is chi-square on `p`
-degrees of freedom, which gives the p-value and the cut-off.
+Ranks rows by how far they sit from the centre of the data ONCE THE
+CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
+do: a row can be unremarkable on every variable separately and still be
+impossible jointly – a person 1.5 m tall weighing 140 kg is inside both
+marginal ranges and outside the cloud.
 
-`robust = TRUE` centres on the coordinate-wise median and scales by a
-MAD-based covariance instead of the mean and sample covariance. This
-matters more than it sounds: outliers inflate the very covariance used
-to judge them, so with several of them the classical distance hides
-exactly the rows it is meant to find (the masking effect).
+With centre \\c\\ and scatter matrix \\S\\, the squared distance of row
+\\x\\ is \$\$d^2 = (x - c)^\top S^{-1} (x - c).\$\$ Under multivariate
+normality the squared distance is chi-square on `p` degrees of freedom
+(the number of numeric columns), which gives the p-value and the
+cut-off.
+
+`robust = TRUE` centres each column on its median and scales it by its
+MAD
+([`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md),
+the 1.4826-scaled median absolute deviation; a column whose MAD is zero
+falls back to its standard deviation), then takes \\S\\ as the sample
+covariance of the standardised data. `robust = FALSE` uses the column
+means and the sample covariance. The robust centre and scales resist
+outliers; the correlation shape in \\S\\ is still a classical estimate,
+so this is not a high-breakdown estimator such as the minimum covariance
+determinant. The choice matters more than it sounds: outliers inflate
+the very covariance used to judge them, so with several of them the
+classical distance hides exactly the rows it is meant to find (the
+masking effect).
 
 Exactly collinear columns are refused rather than repaired: the distance
 is undefined there, and flooring the covariance's eigenvalues to make it
@@ -53,6 +72,11 @@ invertible would return numbers governed by the floor rather than by the
 data. Drop the redundant column first –
 [`top_correlations()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.md)
 will identify it.
+
+Errors: `data` neither a data frame nor a matrix; no numeric columns; no
+more complete rows than columns; collinear columns (smallest eigenvalue
+of \\S\\ at most \\10^{-8}\\ times the largest); `alpha` outside (0, 1).
+A progress indicator is shown in an interactive session.
 
 ## References
 

@@ -16,30 +16,40 @@ stay_summary(days_per_person, conf_level = 0.95)
 
 - days_per_person:
 
-  Days served, one element per person.
+  Numeric vector of days served, one element per person; non-negative,
+  no `NA` or `Inf`, at least one value.
 
 - conf_level:
 
-  Confidence level for the interval on the mean.
+  Numeric scalar strictly between 0 and 1, the confidence level for the
+  interval on the mean. Default `0.95`.
 
 ## Value
 
-A one-row data frame: `n`, `total_days`, `mean`, `sd`, `median`, `iqr`,
-`max`, `se`, `lower`, `upper`.
+A one-row data frame with numeric columns `n` (people), `total_days`,
+`mean`, `sd` (sample standard deviation), `median`, `iqr` (interquartile
+range, quantile type 7), `max`, `se` (standard error of the mean),
+`lower` and `upper` (the t interval on the mean). With a single person
+`sd`, `se`, `lower` and `upper` are `NA`.
 
 ## Details
 
-The interval is the ordinary t interval on a mean. It describes
-uncertainty about the AVERAGE stay, not the spread of stays, and on a
-skewed distribution the median and the interquartile range say more
-about a typical stay than the mean does – which is why they are returned
-beside it rather than left to be asked for.
+The interval is the ordinary t interval on a mean, \\\bar{x} \pm
+t\_{n-1, 1-\alpha/2}\\ s / \sqrt{n}\\. It describes uncertainty about
+the AVERAGE stay, not the spread of stays, and on a skewed distribution
+the median and the interquartile range say more about a typical stay
+than the mean does – which is why they are returned beside it rather
+than left to be asked for.
 
 Lakner's caveat on
 [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md)
 applies here too (1976, p.16-17): a person still held has an unfinished
 stay, so a window shorter than the longest stay biases the mean
 DOWNWARD.
+
+Errors when `days_per_person` is not numeric, is empty, or has `NA`,
+`Inf` or negative values, and when `conf_level` is not strictly inside
+(0, 1).
 
 ## See also
 
@@ -60,4 +70,13 @@ stay_summary(stays)
 stay_summary(stays)[, c("mean", "median", "max")]
 #>       mean median max
 #> 1 6.451613      3 120
+
+# a 90% interval instead of 95%
+stay_summary(stays, conf_level = 0.90)[, c("mean", "lower", "upper")]
+#>       mean    lower   upper
+#> 1 6.451613 3.637665 9.26556
+
+# a confidence level of 1 is refused
+try(stay_summary(stays, conf_level = 1))
+#> Error : `conf_level` must be a single number strictly between 0 and 1
 ```

@@ -2,7 +2,11 @@
 
 Computes the change from one period to the period `lag` places before
 it, matched on the period's own value rather than on row order, and
-carries an exact interval for count data.
+carries an exact interval for count data. Use it for the "up 12% on last
+year" figures of an annual report or an open-data release: a missing
+year shows as a gap instead of shifting every comparison, a percentage
+is compared in percentage points, and a change off a small count comes
+with an interval as wide as the count is small.
 
 ## Usage
 
@@ -45,7 +49,7 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - x:
 
-  An `rmbl_yoy` object.
+  An `rmbl_yoy` object returned by `yoy()`.
 
 - ...:
 
@@ -75,11 +79,11 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - fun:
 
-  How several rows of one period are combined: `NULL` (the default) sums
-  counts and averages continuous values and percentages; pass a function
-  to choose. period and group, when there is more than one row. Default
-  [`sum()`](https://rdrr.io/r/base/sum.html), which is what a count
-  needs.
+  How several rows of one period (and group) are combined into one
+  value: `NULL` (the default) sums counts
+  ([`sum()`](https://rdrr.io/r/base/sum.html)) and averages continuous
+  values and percentages ([`mean()`](https://rdrr.io/r/base/mean.html));
+  pass a function of a numeric vector returning one number to choose.
 
 - units:
 
@@ -98,7 +102,8 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - conf_level:
 
-  Confidence level for the count interval.
+  Numeric scalar in (0, 1), the confidence level for the count interval;
+  default 0.95.
 
 - direction:
 
@@ -108,35 +113,82 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - complete:
 
-  Whether to insert the missing periods in the observed range so that a
-  gap is visible as a gap instead of closing up.
+  Logical scalar, default `TRUE`: insert the missing periods in the
+  observed range so that a gap is visible as a gap instead of closing
+  up.
 
 - digits:
 
-  Digits for the percent column.
+  Integer, default `1`. Decimal places shown in the percent (or
+  percentage-point) change column. The interval column is always shown
+  to whole percent.
 
 - palette:
 
-  One of
-  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md).
+  Character, default `"diverging"`. One of
+  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md);
+  chooses the colours used when `color = TRUE`. An unknown name is an
+  error.
 
 - color:
 
-  Whether to emit ANSI colour. Defaults to colour only when writing to a
-  terminal that has it, so a redirected or captured output stays plain
-  text.
+  Logical or `NULL` (the default). `TRUE` wraps each row in 24-bit ANSI
+  colour codes chosen from its verdict; `FALSE` prints plain text.
+  `NULL` means colour only in an interactive session with the `NO_COLOR`
+  environment variable unset, so output that is redirected or captured
+  stays plain text.
 
 - n:
 
-  Maximum rows to print.
+  Integer, default `30`. Maximum number of rows printed; the number of
+  rows left out is reported on a final line.
 
 ## Value
 
-An `rmbl_yoy` object: a data frame with one row per period (and group),
-and columns `period`, `value`, `previous`, `change`, `pct_change` (or
-`pp_change` for percentages), `pct_lower` and `pct_upper` for counts,
-`verdict`, and `flag` noting a zero, missing or (if `min_base` is set)
-small base.
+An `rmbl_yoy` object (a data frame of class
+`c("rmbl_yoy", "data.frame")`) with one row per period (and group): the
+period column under its own name (`period` for a vector or a `ts`), the
+grouping columns, then `value`, `previous`, `change`, `pct_change` (or
+`pp_change` for percentages), `flag` (character: "no comparison period",
+"no data", "previous period is zero", or a small-base note when
+`min_base` is set; `NA` otherwise), `pct_lower` and `pct_upper` for
+counts, and `verdict`. Attribute `"yoy"` records `value`, `period`,
+`by`, `lag`, `units`, `min_base`, `conf_level`, `direction` and the
+display digits; the writers
+([`yoy_write()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_write.md))
+and
+[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md)
+read it.
+
+## Details
+
+Rows are first combined to one per period (and group) with `fun`. With
+`complete = TRUE` the periods missing from a regular grid (numbers,
+`Date` or `POSIXct` with a common step) are inserted with `NA` values
+and flagged "no data". Each period is then compared with the period
+`lag` steps earlier in that grid: `change` is the difference,
+`pct_change` \\100 (v_t / v\_{t-lag} - 1)\\ (`NA` off a zero base), and
+for percentages `pp_change` is the difference in percentage points.
+
+For counts, conditional on their sum \\n = a + b\\ the current count
+\\a\\ is binomial with probability \\\rho / (1 + \rho)\\, \\\rho\\ the
+rate ratio; the Clopper-Pearson interval for that probability,
+transformed back, is an exact interval for the ratio, reported as
+`pct_lower` and `pct_upper` (percent change). It is the interval
+[`stats::poisson.test()`](https://rdrr.io/r/stats/poisson.test.html)
+gives for two counts with equal exposure. A zero base has no percent
+change but still an interval (with an infinite upper end).
+
+`verdict` is `"up"`, `"down"` or `"unchanged"` for
+`direction = "neutral"`, and `"better"`, `"worse"` or `"unchanged"`
+otherwise; it reads the sign of the change only and makes no claim of
+significance.
+
+Errors: `x` neither a data frame, a numeric vector nor a `ts`; `value`,
+`period` or `by` naming a column that does not exist; a non-numeric or
+infinite `value`; for `units = "count"`, negative or fractional values;
+`lag` not a positive whole number; `conf_level` outside (0, 1); an
+unknown `units` or `direction`.
 
 ## References
 
@@ -216,4 +268,31 @@ yoy(rate, value = "share", period = "year", units = "percent")
 #> 2023  5.4    5.0       0.4     ▲ +0.4pp
 #> 
 #> lag 1 period · units: percent · percentage-point change, not percent of a percent
+
+# a missing year stays a gap; a bare column name works too
+yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, period = year)
+#> year  n   previous  change  change %  interval     
+#> ────  ──  ────────  ──────  ────────  ─────────────
+#> 2019  10  —         —         —       —            
+#>     ↳ note: no comparison period
+#> 2020  —   10        —         —       —            
+#>     ↳ note: no data
+#> 2021  12  —         —         —       —            
+#>     ↳ note: no comparison period
+#> 2022  15  12        3       ▲ +25.0%  [-45%, +192%]
+#> 
+#> lag 1 period · units: count · 95% exact rate-ratio interval
+
+# a quarterly series compares each quarter with the same quarter a year earlier
+q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
+as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pct_change")]
+#>    period value previous pct_change
+#> 5 2021.00     6        5   20.00000
+#> 6 2021.25     7        6   16.66667
+#> 7 2021.50     9        7   28.57143
+#> 8 2021.75     9        8   12.50000
+
+# counts must be whole numbers
+try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
+#> Error : `units = "count"` needs non-negative whole numbers; use units = "continuous" for a measured quantity
 ```

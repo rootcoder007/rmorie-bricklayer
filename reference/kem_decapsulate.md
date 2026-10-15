@@ -1,6 +1,10 @@
 # Recover a shared secret from an ML-KEM ciphertext
 
-Returns the 32-byte shared secret the ciphertext carries, as hex.
+Returns the 32-byte shared secret that a ciphertext from
+[`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md)
+carries, as hex. This is the recipient's side of the exchange: with the
+secret half of the key pair, the recipient recovers the same secret the
+sender kept, and the two can then use it as a common key.
 
 ## Usage
 
@@ -22,30 +26,32 @@ kem_decapsulate(
 
 - ciphertext:
 
-  Ciphertext from
+  The `ciphertext` element from
   [`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md),
-  hex or raw.
+  as a hex string or a raw vector, of the length for the key's level.
 
 - masked:
 
-  `TRUE` (the default, or the option `rmoriebricklayer.masked`) for the
-  first-order masked decapsulation, `FALSE` for the plain one. Both
-  return the same secret.
+  Logical, `TRUE` or `FALSE`. `TRUE` (the default, taken from the option
+  `rmoriebricklayer.masked` when set) runs the first-order masked
+  decapsulation, `FALSE` the plain one. Both return the same secret.
 
 ## Value
 
-64 hex characters: the 32-byte shared secret.
+A length-1 character vector of 64 lower-case hex characters: the 32-byte
+shared secret.
 
 ## Details
 
-There is no failure path, and that is deliberate. A ciphertext that was
-not produced by a correct encapsulation under this key yields a shared
-secret derived from a value held only inside the decapsulation key – so
-it is a real secret, just not the sender's. Whoever sent it learns
-nothing about whether it was accepted, which is what closes off a
-chosen-ciphertext attack. The consequence for a caller: a mismatch
-between the two sides' secrets is the signal that something was wrong,
-not an error from this function.
+This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
+the right length there is no failure path, and that is deliberate. A
+ciphertext that was not produced by a correct encapsulation under this
+key yields a shared secret derived from a value held only inside the
+decapsulation key – so it is a real secret, just not the sender's.
+Whoever sent it learns nothing about whether it was accepted, which is
+what closes off a chosen-ciphertext attack. The consequence for a
+caller: a mismatch between the two sides' secrets is the signal that
+something was wrong, not an error from this function.
 
 Masked by default. With `masked = TRUE` every value that depends on the
 secret key is held as two random shares from the moment the key is read
@@ -60,6 +66,14 @@ about 2.3 to 3.4 times the plain time depending on the CPU (4 ms for
 ML-KEM-768 on this package's test machine against 1.2 ms plain).
 `masked = FALSE` runs the plain constant-time decapsulation, and the
 option `rmoriebricklayer.masked` sets the default for a session.
+
+Errors (checked before any decapsulation): `key` not from
+[`kem_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_keygen.md),
+or a public key only ("decapsulation needs a key with its secret half");
+a ciphertext that is not hex or raw of exactly
+[`kem_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_sizes.md)`[["ciphertext"]]`
+bytes for the key's level (768, 1088 or 1568); `masked` not `TRUE` or
+`FALSE`.
 
 ## See also
 
@@ -85,4 +99,10 @@ identical(other, sent$shared)
 # the masked and the plain decapsulation agree
 identical(kem_decapsulate(key, bad, masked = FALSE), other)
 #> [1] TRUE
+
+# a public key alone cannot decapsulate, and a short ciphertext is refused
+try(kem_decapsulate(kem_public_key(key), sent$ciphertext))
+#> Error : decapsulation needs a key with its secret half
+try(kem_decapsulate(key, "abcd"))
+#> Error : `ciphertext` must be 768 bytes for ML-KEM-512
 ```

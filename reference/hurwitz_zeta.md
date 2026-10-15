@@ -1,8 +1,11 @@
 # Hurwitz zeta function
 
-`zeta(s, q) = sum over k >= 0 of (q + k)^-s`, by Euler-Maclaurin. It is
+Computes the Hurwitz zeta function \\\zeta(s, q) = \sum\_{k \ge 0} (q +
+k)^{-s}\\ for a vector of exponents `s` and one lower limit `q`. It is
 the normalising constant of the discrete power law truncated below at
-`q`, which is why it is here; `zeta(s, 1)` is the Riemann zeta.
+`q`, which is why it is here (see
+[`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md));
+`zeta(s, 1)` is the Riemann zeta.
 
 ## Usage
 
@@ -14,19 +17,39 @@ hurwitz_zeta(s, q = 1)
 
 - s:
 
-  Exponent. The series converges for `s > 1`; below 1 the value is the
-  analytic continuation (so `hurwitz_zeta(0.5, 0.5)` is \\-0.6049\\),
-  and `s = 1` is a pole (`NA`).
+  Numeric vector of exponents. The series converges for `s > 1`; below 1
+  the value is the analytic continuation (so `hurwitz_zeta(0.5, 0.5)` is
+  \\-0.6049\\), and `s = 1` is a pole (`NA`).
 
 - q:
 
-  Lower limit: any real number but zero or a negative integer (poles,
-  `NA`). For a negative non-integer `q` the value is real only for a
-  whole `s`; a fractional `s` gives `NA`.
+  Numeric scalar, the lower limit; default `1` (the Riemann zeta). Any
+  real number but zero or a negative integer (poles, `NA`). For a
+  negative non-integer `q` the value is real only for a whole `s`; a
+  fractional `s` gives `NA`.
 
 ## Value
 
 A numeric vector the length of `s`.
+
+## Details
+
+For \\s \> 1\\ and \\q \> 0\\ the series is evaluated in compiled code
+by Euler-Maclaurin summation: direct terms, the integral of the tail,
+and Bernoulli-number corrections. For \\s \< 1\\ the value is the
+analytic continuation: exact Bernoulli polynomials for whole \\s \> -5\\
+(\\\zeta(-n, q) = -B\_{n+1}(q)/(n+1)\\), Riemann's functional equation
+at \\q = 1\\, Hurwitz's Fourier series for \\s \le -5\\, Hermite's
+integral (by
+[`stats::integrate()`](https://rdrr.io/r/stats/integrate.html)) for \\-5
+\< s \< 1\\, and the asymptotic series for large \\q\\, with the shift
+\\\zeta(s, q) = q^{-s} + \zeta(s, q + 1)\\ to move \\q\\ into range. A
+negative non-integer `q` uses the reflection of its negative terms.
+
+Values that do not exist are `NA`, not errors: `s = 1` (a pole), `q`
+zero or a negative integer (poles), a fractional `s` with a negative `q`
+(a complex value), and a non-finite `s`. Errors when `s` or `q` is
+logical or not numeric, and when `q` is not a single finite number.
 
 ## References
 
@@ -60,4 +83,12 @@ hurwitz_zeta(2.5, 3) - hurwitz_zeta(2.5, 4)
 # Outside the domain of convergence there is no value to return.
 hurwitz_zeta(1)
 #> [1] NA
+
+# several exponents at once, including the analytic continuation
+hurwitz_zeta(c(2, 0.5, -1))  # -1/12 at s = -1
+#> [1]  1.64493407 -1.46035451 -0.08333333
+
+# one lower limit per call
+try(hurwitz_zeta(2, q = c(1, 2)))
+#> Error : `q` must be a single finite number
 ```

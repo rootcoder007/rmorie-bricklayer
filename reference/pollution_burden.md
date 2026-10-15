@@ -2,7 +2,10 @@
 
 Chains the concentration-response function, the attributable fraction
 and the baseline case count into annual attributable cases, as the GBD
-risk factor estimates do (GBD 2019 Risk Factors Collaborators 2020).
+risk factor estimates do (GBD 2019 Risk Factors Collaborators 2020). Use
+it for a single population (a city, a region) when you know its mean
+exposure, its baseline rate and its size; for many areas at once see
+[`pollution_burden_by_area`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md).
 
 ## Usage
 
@@ -67,10 +70,33 @@ pollution_burden(
 
 ## Value
 
-A list of class `rmbl_burden` with `paf`, `attributable_cases`,
-`baseline_cases`, `population`, `baseline_rate`, `exposure_mean`,
-`reference_conc`, `pollutant`, `citation` and `extra` (the RR and
-log-RR).
+A list of class `rmbl_burden`
+([`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws it)
+with: `paf` (the attributable fraction), `attributable_cases` and
+`baseline_cases` (per year), `population`, `baseline_rate` (per
+person-year), `exposure_mean`, `reference_conc` (the one used),
+`pollutant` (`"PM2.5"` or `"NO2"`), `citation` (a string), and `extra`,
+a list with `rr`, `log_rr`, `outcome` and `unit` (`"deaths"` or
+`"incident cases"`).
+
+## Details
+
+The steps are: the relative risk at `exposure_mean` from
+[`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+or
+[`crf_no2`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+(with the reference concentration given or the pollutant's default); the
+attributable fraction from
+[`attributable_fraction`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+with `exposure_prevalence`; the baseline cases \\y_0 N\\; and the
+attributable cases, their product. The result is a yearly count of
+deaths (or incident cases for `"childhood_asthma"`).
+
+Refusals: an unknown pollutant, an outcome the pollutant's CRF does not
+have, any input that is not a single finite non-negative number, and a
+baseline rate outside the band described in
+[`mortality_displaced`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+unless `rare_outcome` or `high_rate` admits it.
 
 ## References
 
@@ -81,6 +107,24 @@ factors in 204 countries and territories, 1990-2019. The Lancet
 ## Examples
 
 ``` r
-pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2")$attributable_cases
+# Ambient NO2 of 25 micrograms per cubic metre over a million people.
+b <- pollution_burden(25, 1, 0.008, 1e6, pollutant = "NO2")
+b$attributable_cases
 #> [1] 234.1369
+b$paf
+#> [1] 0.02926711
+
+# PM2.5 and ischaemic heart disease deaths, against the WHO guideline
+# of 5 as the counterfactual.
+pollution_burden(12, 1, 0.0012, 2.8e6, pollutant = "PM2.5", outcome = "ihd",
+                 reference_conc = 5)$attributable_cases
+#> [1] 1235.817
+
+# Childhood asthma counts incident cases, not deaths.
+pollution_burden(30, 1, 0.012, 5e5, outcome = "childhood_asthma")$extra$unit
+#> [1] "incident cases"
+
+# Only PM2.5 and NO2 have concentration-response functions here.
+try(pollution_burden(40, 1, 0.008, 1e6, pollutant = "O3"))
+#> Error : Unknown pollutant 'O3'. Use 'PM2.5' or 'NO2'.
 ```

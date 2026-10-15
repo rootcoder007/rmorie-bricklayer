@@ -1,8 +1,14 @@
 # BLAKE2b digest, optionally keyed
 
-BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256 in
-software, that takes a key natively and produces any digest length from
-1 to 64 bytes.
+Computes the BLAKE2b hash of text or bytes as lowercase hex, with any
+digest length from 1 to 64 bytes. With a key it becomes a message
+authentication code: only someone holding the key can produce or check
+the digest. Use it for fingerprints and keyed checks inside your own
+workflow; use
+[`core_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_sha256.md)
+or
+[`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
+where other tools must reproduce the value.
 
 ## Usage
 
@@ -18,8 +24,8 @@ core_blake2b(x, key = NULL, length = 32L)
 
 - key:
 
-  Optional key, at most 64 bytes. `NULL` (default) gives the plain
-  digest.
+  Optional key: a single string or a raw vector of at most 64 bytes.
+  `NULL` (default) gives the plain digest.
 
 - length:
 
@@ -33,12 +39,23 @@ character input, length-1 for raw input.
 
 ## Details
 
+BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256 in
+software, that takes a key natively and produces any digest length from
+1 to 64 bytes.
+
 The native key is the interesting part. A keyed BLAKE2b IS a message
 authentication code, with no HMAC wrapper and so no doubled hashing –
 `core_blake2b(msg, key = k)` does the job of
 [`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
 at lower cost. Use SHA-256 or HMAC where interoperability with other
 tools matters; use this where it does not and speed does.
+
+Character input is hashed element by element, as the bytes of each
+string; `NA` elements give `NA`. A raw vector is one message. The digest
+length is a parameter of BLAKE2b, so a 32-byte digest is not the first
+half of the 64-byte digest of the same input. Errors: `length` outside 1
+to 64; a key that is not a single string or raw vector, or is longer
+than 64 bytes.
 
 ## References
 
@@ -82,4 +99,7 @@ core_blake2b(c("a", "b"))
 #> [2] "6e5c1f45cbaf19f94230ba3501c378a5335af71a331b5b5aed62792332288dc3"
 identical(core_blake2b("abc"), core_blake2b(charToRaw("abc")))
 #> [1] TRUE
+
+try(core_blake2b("abc", length = 65))
+#> Error : `length` must be a single integer between 1 and 64
 ```

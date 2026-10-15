@@ -13,7 +13,9 @@ pqc_backends()
 
 ## Value
 
-A character vector of scheme names, `"xmss-sha256"` first.
+A character vector of 16 scheme names: `"xmss-sha256"` first, then the
+three ML-DSA sets, the six SLH-DSA SHA-2 sets and the six SLH-DSA SHAKE
+sets.
 
 ## Details
 
@@ -23,7 +25,20 @@ The rest are the NIST standards, taken with
 [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md):
 ML-DSA (FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at
 all twelve – six over SHAKE and six over SHA-2, which are different
-schemes and not merely different code paths.
+schemes and not merely different code paths. Use it to see which names
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md),
+[`fips_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_sizes.md)
+and
+[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+accept, or to choose a parameter set.
+
+The names follow the standards: `"ML-DSA-44"`, `"ML-DSA-65"` and
+`"ML-DSA-87"` (NIST security categories 2, 3 and 5), then
+`"SLH-DSA-SHA2-"` and `"SLH-DSA-SHAKE-"` followed by `128`, `192` or
+`256` (the security level in bits) and `s` (small signatures, slow
+signing) or `f` (fast signing, larger signatures). The function takes no
+arguments, has no side effects and returns the same 16 names in the same
+order on every platform.
 
 ## See also
 
@@ -47,4 +62,12 @@ pqc_backends()
 all(c("xmss-sha256", "ML-DSA-65", "SLH-DSA-SHAKE-128s") %in%
     pqc_backends())
 #> [1] TRUE
+
+# The SLH-DSA sets with fast signing, and their signature sizes in bytes.
+fast <- grep("^SLH-DSA-.*f$", pqc_backends(), value = TRUE)
+vapply(fast, function(s) fips_sizes(s)[["signature"]], integer(1))
+#>  SLH-DSA-SHA2-128f  SLH-DSA-SHA2-192f  SLH-DSA-SHA2-256f SLH-DSA-SHAKE-128f 
+#>              17088              35664              49856              17088 
+#> SLH-DSA-SHAKE-192f SLH-DSA-SHAKE-256f 
+#>              35664              49856 
 ```

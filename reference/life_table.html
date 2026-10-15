@@ -17,7 +17,7 @@ median time."><meta property="og:image" content="https://rootcoder007.github.io/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,6 +140,15 @@ its lower edge.</p>
 disposition among cases that were disposed, with no censoring; cases
 still pending are not in them, so the survival function describes the
 disposed cohort, not every case received.</p>
+<p>The median is attribute <code>"median"</code> (<code>Inf</code>, with a <code>note</code>,
+when survival never falls to one half or crosses it in the open band), and
+attribute <code>"life_table"</code> records <code>conf_level</code> and
+<code>conf_type</code>. Errors: band labels that cannot be read, or that are
+not contiguous, or with an open band other than the last; fewer than two
+increasing edges, or an infinite edge other than the last; <code>events</code>
+or <code>censored</code> that are not non-negative counts, one per band; no
+cases at all; <code>conf_level</code> outside (0, 1); an unknown
+<code>conf_type</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -182,6 +191,24 @@ Survival Data Analysis</em>, 3rd ed. Wiley, Hoboken, NJ. Chapter 4.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">lt</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="life_table-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># bands given by their labels, with some cases still open, on the log scale</span></span></span>
+<span class="r-in"><span><span class="va">lt2</span> <span class="op">&lt;-</span> <span class="fu">life_table</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Under 10"</span>, <span class="st">"10-15"</span>, <span class="st">"15-18"</span>, <span class="st">"Over 18"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                  events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">600</span>, <span class="fl">150</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span>, censored <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">40</span>, <span class="fl">20</span>, <span class="fl">10</span>, <span class="fl">0</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                  conf_type <span class="op">=</span> <span class="st">"log"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">lt2</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lower"</span>, <span class="st">"upper"</span>, <span class="st">"at_risk"</span>, <span class="st">"survival"</span>,</span></span>
+<span class="r-in"><span>                       <span class="st">"conf_lower"</span>, <span class="st">"conf_upper"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   lower upper at_risk  survival conf_lower conf_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1     0    10     950 0.3684211 0.33898914  0.4004083</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    10    15     320 0.1957237 0.17145569  0.2234266</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    15    18     155 0.1199597 0.09998399  0.1439263</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    18   Inf      90 0.0000000         NA         NA</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">lt2</span>, <span class="st">"median"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 7.916667</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># an open band can only come last</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">life_table</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="cn">Inf</span>, <span class="fl">20</span><span class="op">)</span>, events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `breaks` must be at least two increasing band edges</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

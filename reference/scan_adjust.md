@@ -26,18 +26,56 @@ scan_adjust(x, method = "BH", alpha = 0.05)
 
 - method:
 
-  Adjustment passed to
-  [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html); `"BH"`
-  (false discovery rate) by default, `"holm"` for family-wise control.
+  Character, default `"BH"`: any method of
+  [`p.adjust`](https://rdrr.io/r/stats/p.adjust.html) (`"BH"`, `"holm"`,
+  `"bonferroni"`, `"BY"`, `"hochberg"`, `"hommel"`, `"fdr"`, `"none"`).
 
 - alpha:
 
-  Level at which `significant` is decided.
+  Number, default 0.05: the level at which `significant` is decided,
+  applied to the adjusted p-values.
 
 ## Value
 
-`x` with `p_value` (if it was missing), `p_adjusted` and `significant`;
-the class and attributes of `x` are kept.
+`x` with `p_value` (if it was missing), `p_adjusted` (numeric, `NA`
+where `p_value` is) and `significant` (logical) columns; the class and
+attributes of `x` are kept, and a `scan_adjust` attribute lists
+`method`, `alpha` and `tests`.
+
+## Details
+
+For a
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+table, conditional on the two counts' total the current count is
+binomial with success probability \\t_a / (t_a + t_b)\\, the share of
+the combined exposure in the current period, and the p-value is the
+two-sided exact binomial test of that. Rows without a p-value (no
+comparison period, both counts zero) are left out of the adjustment, so
+the number of tests is the number of rows with a p-value; it is recorded
+in the `scan_adjust` attribute.
+
+The adjustment is `stats::p.adjust(p, method)`: `"BH"` controls the
+expected proportion of false discoveries among the rows declared
+significant, which suits a screen; `"holm"` and `"bonferroni"` control
+the chance of any false discovery, which a claim about one specific row
+needs. A row is `significant` when its adjusted p-value is strictly
+below `alpha`.
+
+Errors: `x` not a data frame; no `p_value` column and not a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+or
+[`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+result; a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+result without count units; a p-value outside \\\[0, 1\]\\; a method
+unknown to [`p.adjust()`](https://rdrr.io/r/stats/p.adjust.html).
+
+## See also
+
+[`yoy_pvalues`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md),
+[`falsify_family`](https://rootcoder007.github.io/rmorie-bricklayer/reference/falsify_family.md)
+for a family of falsification results,
+[`drift_calibrate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md).
 
 ## Examples
 
@@ -48,4 +86,18 @@ seg <- data.frame(year = rep(2022:2023, each = 3),
 y <- yoy(seg, value = "n", period = "year", by = "site")
 scan_adjust(y)[, c("site", "pct_change", "p_value", "p_adjusted")]
 #> <rmbl_yoy: no periods>
+
+# family-wise control instead of the false discovery rate
+scan_adjust(y, method = "holm")$p_adjusted
+#> [1]        NA 0.3160268        NA 1.0000000        NA 1.0000000
+
+# any table with a p_value column
+scan_adjust(data.frame(test = c("a", "b", "c"), p_value = c(0.001, 0.02, 0.4)))
+#>   test p_value p_adjusted significant
+#> 1    a   0.001      0.003        TRUE
+#> 2    b   0.020      0.030        TRUE
+#> 3    c   0.400      0.400       FALSE
+
+try(scan_adjust(data.frame(p_value = 1.5)))
+#> Error : `p_value` must lie in [0, 1]; row(s) 1 hold 1.5. Nothing outside that range is a probability, so no adjustment or significance decision is made.
 ```

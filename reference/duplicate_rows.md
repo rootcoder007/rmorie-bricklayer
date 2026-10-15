@@ -18,12 +18,15 @@ duplicate_rows(data, columns = NULL)
 
 - columns:
 
-  Columns defining a duplicate (default: all of them).
+  Character vector of the columns defining a duplicate, or `NULL` (the
+  default) for all of them.
 
 ## Value
 
-The duplicated rows, ordered by group, with a `dupe_count` column giving
-each group's size. Zero rows when there are none.
+A data frame: the duplicated rows (every occurrence, including the
+first), ordered so each group sits together, with an integer
+`dupe_count` column giving each group's size and row names reset. Zero
+rows (with the same columns) when there are none.
 
 ## Details
 
@@ -33,6 +36,13 @@ needs. This shows you WHICH, which is what fixing them needs – and a
 duplicate is usually a join that fanned out or a re-release appended
 rather than replaced, both of which are visible only once the offending
 rows are in front of you.
+
+Two rows are duplicates when their values, converted to text, are equal
+in every column of `columns`; two `NA`s are equal. Columns are taken by
+position when `columns = NULL`, so a table with repeated column names
+can still be inspected. Errors when `data` is not a data frame, a named
+column does not exist, or a named column's name is shared by two
+columns.
 
 ## See also
 
@@ -69,4 +79,8 @@ duplicate_rows(df, "id")
 duplicate_rows(data.frame(x = 1:3))
 #> [1] x          dupe_count
 #> <0 rows> (or 0-length row.names)
+
+# a column that does not exist is an error
+try(duplicate_rows(df, "code"))
+#> Error : no such column(s): code
 ```

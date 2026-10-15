@@ -1,10 +1,13 @@
 # Tamper-evident chain of capsule manifests
 
-Each entry records the digest of the entry before it, so the chain's
+Keeps a history of runs (one manifest per run) as a hash chain: each
+entry records the digest of the entry before it, so the chain's
 integrity covers the ORDER and COMPLETENESS of the history, not merely
 the contents of each manifest. Deleting an entry, inserting one, or
 editing one breaks the links from that point onward, and
-`chain_verify()` reports the first index where the break occurs.
+`chain_verify()` reports the first index where the break occurs. Use it
+when the record of which analyses were run, and in what order, has to be
+auditable.
 
 ## Usage
 
@@ -34,23 +37,59 @@ chain_verify(chain)
 
 - label:
 
-  Optional short character label for the entry.
+  Optional short label for the entry (the first element of
+  `as.character(label)` is kept); `NA` by default. Covered by the
+  entry's digest.
 
 ## Value
 
 `chain_new()` and `chain_append()` return an object of class
-`bricklayer_chain`. `chain_verify()` returns a list with `valid`, `n`,
-`broken_at` ( `NA` when intact) and `head`. `chain_head()` returns the
-head digest. `chain_seal()` returns a single digest over the verified
-chain's length and links, or `NA` if the chain does not verify.
+`c("bricklayer_chain", "list")` with `entries` (a list of entries, each
+with `label`, `payload`, `prev`, `scheme` and `digest`) and `genesis`
+(64 zeros). `chain_verify()` returns a list of class
+`bricklayer_chain_check` with `valid` (logical), `n` (integer, entries),
+`broken_at` (integer index of the first bad entry, `NA` when intact) and
+`head`. `chain_head()` returns the head digest (64 hex characters; the
+genesis value for an empty chain). `chain_seal()` returns a single
+digest over the verified chain's length and links, or `NA` if the chain
+does not verify.
 
 ## Details
+
+`chain_new()` starts an empty chain, `chain_append()` adds an entry,
+`chain_head()` returns the last link, `chain_verify()` checks every link
+and `chain_seal()` returns one digest to sign.
 
 This is the structure behind an append-only audit log, and it is what a
 per-manifest digest alone cannot give you: individually valid manifests
 say nothing about whether any were removed.
 
-## What the head covers, and what it does not
+Each entry stores `payload`, the SHA-256 of the entry (of its UTF-8
+bytes for a single string, otherwise of
+`serialize(entry, version = 2, xdr = TRUE)` with the four bytes that
+name the writer's R version set to zero), `prev`, the previous link (64
+zeros for the first), `scheme` (2) and `digest` = SHA-256 of
+`"v2|<prev>|<payload>|<label>"`, where `<label>` is `"0"` for a missing
+label and `"1"` followed by the label otherwise. The entry itself is not
+kept, only its digest; the label is covered, so editing it breaks the
+link. Zeroing the writer-version bytes makes the payload the same on
+every R version, for any R object (a canonical JSON encoding would cover
+only the objects JSON can hold); the rest of a version-2 stream depends
+only on the object.
+
+Entries written by 0.5.12 and earlier carry no `scheme`. Their digest is
+SHA-256 of `"<prev>:<payload>"` (the label not covered, and the payload
+of a non-string entry taken over serialized bytes that include the
+writer's R version). `chain_verify()` and `chain_seal()` still accept
+them under those rules, with a warning that they were sealed with the
+weaker scheme. Appending to such a chain adds scheme-2 entries.
+
+`chain_verify()` walks the chain from the start: an entry fails when its
+`prev` is not the previous link, its `scheme` is neither 2 nor absent,
+or its `digest` does not recompute (compared in constant time with
+[`core_digest_equal()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)).
+
+### What the head covers, and what it does not
 
 `chain_head()` is the STORED digest of the last entry. Deleting an entry
 from the MIDDLE leaves that value untouched – the stored digests do not
@@ -62,18 +101,22 @@ Conversely, truncating from the END leaves a perfectly valid prefix that
 
 The two failures are complementary, which is why `chain_seal()` exists:
 it verifies the links AND folds the entry count and every link digest
-into one value, so a single signature over the seal detects an edit, a
-deletion, a reordering, an insertion and a truncation alike. Sign the
-seal, not the head.
+into one value (SHA-256 of the count and the links joined by `"|"`), so
+a single signature over the seal detects an edit, a deletion, a
+reordering, an insertion and a truncation alike. Sign the seal, not the
+head.
 
 Signing is what turns tamper-EVIDENT into tamper-PROOF: without a
 signature an attacker who rewrites the whole chain leaves it internally
 consistent, because recomputing every link is cheap.
 
+Error: a `chain` that does not come from `chain_new()` (for
+`chain_append()`, `chain_head()` and `chain_verify()`).
+
 ## See also
 
 [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
-to sign the head,
+to sign the seal,
 [`merkle_root()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
 for pinning the contents of one capsule rather than a history.
 
@@ -91,12 +134,12 @@ ch
 #>   ✓ chain intact
 #> 
 #>   entries  3
-#>   head     2afe0e270d2b1fbbc080dd4624540c181e5b8458aaecf247ccb8c38dc4c387da
-#>   seal     de28f9277b3f9f4cb3b1a7dd80e556d0c6e1568723f1395732f9d087ee7f7353
+#>   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49
+#>   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0
 #> 
-#>     1  run-1            7947c9201969a6793f9daf05
-#>     2  run-2            9dbaa6d33259f974f30ff33e
-#>     3  run-3            2afe0e270d2b1fbbc080dd46
+#>     1  run-1            cb25fa776c693a106b2d08a1
+#>     2  run-2            03a645a531c93fbb12bb2c07
+#>     3  run-3            b9ccb96106a68f3d4d2a0cfb
 #> ──────────────────────────────────────────────────────────────────
 
 # An intact chain verifies.
@@ -133,5 +176,14 @@ capsule_verify(chain_seal(truncated), sig, signing_public_key(key))
 # A chain whose links disagree has no seal to present at all.
 chain_seal(dropped)
 #> [1] NA
+
+# any object can be an entry, such as a whole manifest list
+ch2 <- chain_append(chain_new(), list(run = 1, mean = 2.5), label = "list entry")
+chain_head(ch2)
+#> [1] "05bb042d04eb7378d536c4197e61f280f2e9f99d33d0c9cc28a475c488a4a206"
+
+# only chains are accepted
+try(chain_verify(list(entries = list())))
+#> Error : `chain` must come from chain_new()
 options(op)
 ```

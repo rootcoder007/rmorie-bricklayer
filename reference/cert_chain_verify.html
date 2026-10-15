@@ -11,7 +11,7 @@ stop a certificate being used for something it was not issued for."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,23 +94,24 @@ still have to verify.</p></dd>
 
 
 <dt id="arg-at-time">at_time<a class="anchor" aria-label="anchor" href="#arg-at-time"></a></dt>
-<dd><p>The time to check validity windows at.
-Defaults to now.</p></dd>
+<dd><p>The time to check validity windows at: a <code>POSIXct</code> or
+anything <code><a href="https://rdrr.io/r/base/as.POSIXlt.html" class="external-link">as.POSIXct()</a></code> reads, taken as UTC. Defaults to now.</p></dd>
 
 
 <dt id="arg-purpose">purpose<a class="anchor" aria-label="anchor" href="#arg-purpose"></a></dt>
 <dd><p>Optional extended key usage the leaf must
-carry, as a name ( <code>"timeStamping"</code>, <code>"codeSigning"</code>, ...) or
-an OID.</p></dd>
+carry, as a name (<code>"timeStamping"</code>, <code>"codeSigning"</code>, ...) or
+an OID. Default <code>NULL</code>: no purpose is required.</p></dd>
 
 
 <dt id="arg-crls">crls<a class="anchor" aria-label="anchor" href="#arg-crls"></a></dt>
-<dd><p>Optional list of CRLs, as raw or paths, to check
-the chain against.</p></dd>
+<dd><p>Optional list of CRLs, as raw DER or paths, to check
+the chain against. Default <code><a href="https://rdrr.io/r/base/list.html" class="external-link">list()</a></code>.</p></dd>
 
 
 <dt id="arg-policies">policies<a class="anchor" aria-label="anchor" href="#arg-policies"></a></dt>
-<dd><p>Acceptable certificate policy OIDs.
+<dd><p>Optional character vector of acceptable certificate
+policy OIDs; default <code>NULL</code>.
 Supplied, the path must yield at least one of them after policy mapping
 and the constraints in RFC 5280 section 6.1; omitted, policies are
 processed but only reported as a failure when a certificate in the path
@@ -129,8 +130,12 @@ default. <code>"none"</code> skips revocation entirely.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_certpath_check</code>: <code>ok</code>, the
-<code>path</code> that was built, and a <code>checks</code> data frame.</p>
+    <p>A list of class <code>bricklayer_certpath_check</code>: <code>ok</code>
+(logical, the verdict), <code>path</code> (the list of certificates from the
+leaf to the anchor, as built), <code>checks</code> (a data frame with
+<code>check</code>, logical <code>ok</code> and <code>detail</code>, one row per check),
+<code>at_time</code> (the time used) and <code>policies</code> (the outcome of policy
+processing). <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows the verdict and the checks.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -140,6 +145,23 @@ answer is the time the token asserts: a token signed in 2020 by a
 certificate that expired in 2021 was validly signed, and checking it
 against today would reject it for no good reason. For a signature you
 are being asked to rely on now, pass now.</p>
+<p>The path is built by following issuer names from the leaf through the
+intermediates until a certificate in <code>trust</code> is reached, at most ten
+steps (a cycle among supplied certificates cannot loop). Then every link is
+checked: the validity window at <code>at_time</code>, the signature under the
+issuer's key (RSA PKCS#1 v1.5 with SHA-1, SHA-256, SHA-384 or SHA-512;
+ECDSA with SHA-256, SHA-384 or SHA-512 on P-256, P-384 and P-521), that
+every issuer is a CA with a path length that allows the chain, name
+constraints, the policy rules of RFC 5280 section 6.1, the requested
+<code>purpose</code> (extended key usage of the leaf), that the anchor is
+self-signed, and revocation as <code>revocation</code> says. Each
+check is one row of <code>checks</code>; <code>ok</code> is <code>TRUE</code> only when every
+row passed. A failed check is a row, not an error.</p>
+<p>Errors: <code>trust</code> empty; a certificate that <code><a href="cert_parse.html">cert_parse()</a></code>
+cannot read;
+an unknown <code>revocation</code>. With <code>revocation = "fetch"</code> the network
+is used (distribution points and OCSP responders named in the
+certificates); otherwise nothing is fetched.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -149,13 +171,70 @@ are being asked to rely on now, pass now.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">cert_chain_verify</span><span class="op">(</span><span class="st">"tsa.crt"</span>,</span></span>
-<span class="r-in"><span>  trust <span class="op">=</span> <span class="st">"ca.crt"</span>,</span></span>
-<span class="r-in"><span>  purpose <span class="op">=</span> <span class="st">"timeStamping"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># A small test chain shipped as hexadecimal DER: a self-signed P-256 root</span></span></span>
+<span class="r-in"><span><span class="co"># and a leaf it issued (a throwaway test authority; trust it for nothing).</span></span></span>
+<span class="r-in"><span><span class="va">root_hex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"308201973082013ca003020102021452157dfd900c163c5027372ed4090b9d11748286300a06"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3336303932"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"393038343334315a302931123010060355040a0c09726d626c20746573743113301106035504"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"030c0a454332353620526f6f743059301306072a8648ce3d020106082a8648ce3d0301070342"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"0004624ad2e98f4566cd8f003a188f822875fa4760ed894507e8a4130a08fcb59280e958aa6c"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"e6147989d155ce20d1a6d94fe109d3d2f2bc13d1394cea3520197fdda3423040300f0603551d"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"130101ff040530030101ff300e0603551d0f0101ff040403020106301d0603551d0e04160414"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"2ef598166f5b9e6bb65d3252cf127b2c992348ae300a06082a8648ce3d040302034900304602"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"21009cd3d7968f65630677b3c7437cae5187021d553c756820d34b6a8a1240e7efb7022100a3"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"c37f0a8e1f38a5263b14414e6f916962bbd36bcbaca40b07d371352de745c0"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leaf_hex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="st">"308201ae30820154a00302010202142fa99d48ead4c033c568837b2288f9e9bf137068300a06"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"082a8648ce3d040302302931123010060355040a0c09726d626c207465737431133011060355"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"04030c0a454332353620526f6f74301e170d3236313030323038343334315a170d3331313030"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"313038343334315a302931123010060355040a0c09726d626c20746573743113301106035504"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"030c0a4543323536204c6561663059301306072a8648ce3d020106082a8648ce3d0301070342"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"00045f0ad14e657dedf3f6cc18530f9d905823b6e9f492ecc0eb1989c9ad8a11a859ebb7681a"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"e5b1f579974e3c6709e824245608c448da6fe248ebf67bf727d598f4a35a305830090603551d"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"1304023000300b0603551d0f040403020780301d0603551d0e04160414b1d22b6dd5987f0dfa"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"0ff3a5d0140351d752e0fb301f0603551d230418301680142ef598166f5b9e6bb65d3252cf12"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"7b2c992348ae300a06082a8648ce3d0403020348003045022100bc9d6ec452554adb8f33e4ac"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"53d5e29620fc19528074153028ce849d98c8c15202205c841de357dbad5042daba7fb4af3724"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"78d684f648e6ef23c68a3d764894c8fc"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">hex2raw</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">h</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/strtoi.html" class="external-link">strtoi</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">h</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">h</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nchar</a></span><span class="op">(</span><span class="va">h</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, <span class="fl">16L</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="cert_parse.html">cert_parse</a></span><span class="op">(</span><span class="fu">hex2raw</span><span class="op">(</span><span class="va">root_hex</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">leaf</span> <span class="op">&lt;-</span> <span class="fu"><a href="cert_parse.html">cert_parse</a></span><span class="op">(</span><span class="fu">hex2raw</span><span class="op">(</span><span class="va">leaf_hex</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the leaf chains to the root, checked a day after it was issued</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">cert_chain_verify</span><span class="op">(</span><span class="va">leaf</span>, trust <span class="op">=</span> <span class="va">root</span>, at_time <span class="op">=</span> <span class="va">leaf</span><span class="op">$</span><span class="va">not_before</span> <span class="op">+</span> <span class="fl">86400</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">ok</span></span></span>
-<span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">checks</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">checks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"check"</span>, <span class="st">"ok"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                    check   ok</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                         path_to_anchor TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  validity [1] O=rmbl test, CN=EC256 Le TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 signature [1] O=rmbl test, CN=EC256 Le TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  validity [2] O=rmbl test, CN=EC256 Ro TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   is a CA [2] O=rmbl test, CN=EC256 Ro TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6                     anchor_self_signed TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># after the leaf expired, the same chain fails on validity</span></span></span>
+<span class="r-in"><span><span class="fu">cert_chain_verify</span><span class="op">(</span><span class="va">leaf</span>, trust <span class="op">=</span> <span class="va">root</span>, at_time <span class="op">=</span> <span class="va">leaf</span><span class="op">$</span><span class="va">not_after</span> <span class="op">+</span> <span class="fl">86400</span><span class="op">)</span><span class="op">$</span><span class="va">ok</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a purpose the leaf was not issued for</span></span></span>
+<span class="r-in"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu">cert_chain_verify</span><span class="op">(</span><span class="va">leaf</span>, trust <span class="op">=</span> <span class="va">root</span>, at_time <span class="op">=</span> <span class="va">leaf</span><span class="op">$</span><span class="va">not_before</span> <span class="op">+</span> <span class="fl">86400</span>,</span></span>
+<span class="r-in"><span>                       purpose <span class="op">=</span> <span class="st">"timeStamping"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">r</span><span class="op">$</span><span class="va">checks</span><span class="op">[</span><span class="op">!</span><span class="va">r</span><span class="op">$</span><span class="va">checks</span><span class="op">$</span><span class="va">ok</span>, <span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     check    ok                                       detail</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7 purpose FALSE the leaf states no extended key usage at all</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a chain must end at something you trust</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">cert_chain_verify</span><span class="op">(</span><span class="va">leaf</span>, trust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `trust` must name at least one anchor; a chain that reaches nothing you have decided to believe proves nothing</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># with revocation looked up on the network</span></span></span>
+<span class="r-in"><span><span class="fu">cert_chain_verify</span><span class="op">(</span><span class="st">"tsa.crt"</span>, trust <span class="op">=</span> <span class="st">"ca.crt"</span>, purpose <span class="op">=</span> <span class="st">"timeStamping"</span>,</span></span>
+<span class="r-in"><span>                  revocation <span class="op">=</span> <span class="st">"fetch"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

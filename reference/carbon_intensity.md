@@ -98,4 +98,18 @@ carbon_intensity(120)$source
 #> [1] "user-supplied carbon intensity"
 nrow(carbon_intensity_table())
 #> [1] 378
+# the Canadian provinces in the table, lowest intensity first
+tab <- carbon_intensity_table()
+ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
+head(ca[order(ca$g_per_kwh), ])
+#>     location                              name g_per_kwh year
+#> 236    CA-NL Canada, Newfoundland and Labrador     27.60 2024
+#> 227    CA-QC                    Canada, Quebec     35.04 2024
+#> 322    CA-MB                  Canada, Manitoba     52.89 2024
+#> 367    CA-BC          Canada, British Columbia     70.34 2024
+#> 241    CA-PE      Canada, Prince Edward Island     70.94 2024
+#> 313    CA-ON                   Canada, Ontario     90.97 2024
+# a location the table does not know is an error, not a silent world average
+try(carbon_intensity("Atlantis"))
+#> Error : Unknown location 'Atlantis'. Use a code, alpha-3 code or name from carbon_intensity_table(), or pass a number in gCO2e/kWh.
 ```

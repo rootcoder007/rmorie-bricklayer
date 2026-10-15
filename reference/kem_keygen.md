@@ -1,8 +1,13 @@
 # Generate an ML-KEM key pair
 
-Generates a key for ML-KEM (FIPS 203), the standardised post-quantum key
-encapsulation mechanism. It is implemented in this package, with no
-system dependency.
+Generates a key pair for ML-KEM (FIPS 203), the standardised
+post-quantum key encapsulation mechanism, and `kem_public_key()` strips
+a key pair down to the half that can be shared. Use them when a capsule,
+a data file or a credential has to reach one recipient without being
+readable on the way: the recipient makes the key pair and publishes the
+public half, and the sender uses it with
+[`kem_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_encapsulate.md).
+It is implemented in this package, with no system dependency.
 
 ## Usage
 
@@ -16,8 +21,9 @@ kem_public_key(key)
 
 - level:
 
-  Security level: 512, 768 (the default) or 1024. 768 is the level NIST
-  and the IETF have settled on for general use.
+  Security level, one whole number: 512 (ML-KEM-512, NIST category 1),
+  768 (the default, category 3) or 1024 (category 5). 768 is the level
+  NIST and the IETF have settled on for general use.
 
 - seed:
 
@@ -27,12 +33,16 @@ kem_public_key(key)
 
 - key:
 
-  A key from `kem_keygen()`.
+  For `kem_public_key()`: a key pair from `kem_keygen()`.
 
 ## Value
 
-A list of class `bricklayer_kem_key`: `public`, `secret` (both hex), and
-`level`.
+`kem_keygen()`: a list of class `c("bricklayer_kem_key", "list")` with
+`public` (character, the encapsulation key as lower-case hex, 800, 1184
+or 1568 bytes), `secret` (character, the decapsulation key as hex, 1632,
+2400 or 3168 bytes) and `level` (integer). Printing it never shows the
+secret. `kem_public_key()`: a list of class
+`c("bricklayer_kem_public_key", "list")` with `public` and `level` only.
 
 ## Details
 
@@ -41,6 +51,22 @@ two things: a ciphertext to send, and a 32-byte shared secret to keep.
 The holder of the decapsulation key recovers the same secret from the
 ciphertext. What either side then does with that secret – feed it to a
 KDF, key an AEAD – is outside the mechanism.
+
+Key generation is ML-KEM.KeyGen of FIPS 203 (Algorithm 19) from the
+64-byte seed \\d \\ z\\: \\d\\ seeds the K-PKE key and \\z\\ is the
+implicit-rejection value kept inside the decapsulation key. With a seed
+the result is deterministic (the same seed gives the same key, which is
+how the NIST test vectors are reproduced); without one the seed is drawn
+with
+[`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md)
+from the operating system. The key sizes per level are given by
+[`kem_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/kem_sizes.md);
+the level is not recorded in a ciphertext, so both sides must agree on
+it.
+
+Errors: `level` other than one whole number 512, 768 or 1024; `seed`
+that is not a raw vector of 64 bytes; `key` passed to `kem_public_key()`
+that is not from `kem_keygen()`.
 
 ## Security
 
@@ -91,4 +117,22 @@ bad <- sent$ciphertext
 substring(bad, 1L, 2L) <- "00"
 identical(kem_decapsulate(key, bad), got)
 #> [1] FALSE
+
+# a fixed seed gives the same key every time (for test vectors only)
+k1 <- kem_keygen(512, seed = as.raw(0:63))
+k2 <- kem_keygen(512, seed = as.raw(0:63))
+identical(k1$public, k2$public)
+#> [1] TRUE
+k1
+#> ── Key encapsulation key (ML-KEM, FIPS 203) ──────────────────────
+#>   level       ML-KEM-512
+#>   public key  3995815e597d104355cf29aa5333c932... (800 bytes)
+#>   secret      <withheld>
+#> ──────────────────────────────────────────────────────────────────
+
+# levels other than the three FIPS 203 defines are refused
+try(kem_keygen(256))
+#> Error : `level` must be one of 512, 768 or 1024
+try(kem_keygen(768, seed = as.raw(1:10)))
+#> Error : `seed` must be a raw vector of 64 bytes
 ```

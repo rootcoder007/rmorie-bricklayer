@@ -4,7 +4,12 @@ Generates a key for one of the NIST-standardised signature schemes:
 ML-DSA (FIPS 204) or SLH-DSA (FIPS 205). Both are implemented in this
 package, natively, with no system dependency;
 [`pqc_backends()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_backends.md)
-lists the parameter sets.
+lists the parameter sets. The key signs capsule manifests, attestations
+and bundles with
+[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md),
+and its public half, from `fips_public_key()`, is what you give to
+anyone who should be able to check those signatures with
+[`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md).
 
 ## Usage
 
@@ -37,8 +42,12 @@ fips_public_key(key)
 
 ## Value
 
-A list of class `bricklayer_fips_key`: `public`, `secret` (both hex),
-and `scheme`.
+`fips_keygen()`: a list of class `bricklayer_fips_key` (also
+`bricklayer_oqs_key`) with `public` and `secret` (the encoded keys as
+lowercase hex strings, in the standards' byte layouts) and `scheme`.
+Printing it never shows the secret. `fips_public_key()`: a list of class
+`bricklayer_fips_public_key` (also `bricklayer_oqs_public_key`) with
+`public` and `scheme`.
 
 ## Details
 
@@ -55,6 +64,27 @@ sets have small signatures and slow signing, its `f` sets the reverse,
 and its SHAKE and SHA-2 families are equally strong: pick SHA-2 where a
 validated SHA-2 implementation is what an auditor will ask about.
 `"ML-DSA-65"` is the sensible default.
+
+Key generation expands a random seed (the length
+[`fips_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_sizes.md)
+reports as `seed`: 32 bytes for ML-DSA, three times the security level
+in bytes for SLH-DSA) into the key pair exactly as FIPS 204
+`ML-DSA.KeyGen` and FIPS 205 `slh_keygen` do, so the same seed gives the
+same key as any other conforming implementation. ML-DSA keys take
+milliseconds; SLH-DSA keys take from milliseconds (the `f` sets) to
+about a second (the `s` sets, which build a larger top tree), with a
+spinner on stderr after 0.75 s when a person is watching (see
+[`bricklayer_progress()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_progress.md))
+and Ctrl-C honoured. Nothing is written to disk: saving the key, and
+keeping its `secret` private, is up to you. `fips_public_key()` drops
+the secret half, leaving what a verifier needs.
+
+Refusals: an unknown scheme (the message lists the known ones, and
+points to
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+for XMSS), a `seed` that is not a raw vector of the right length, and
+for `fips_public_key()` a key that did not come from `fips_keygen()` or
+[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md).
 
 ## Security
 
@@ -110,4 +140,18 @@ capsule_verify("a manifest digest", sig2, key, context = "release")
 #> [1] TRUE
 capsule_verify("a manifest digest", sig2, key, context = "staging")
 #> [1] FALSE
+
+# A fixed seed reproduces the key (for test vectors only: a guessable
+# seed is a guessable key).
+seed <- as.raw(1:32)
+identical(fips_keygen("ML-DSA-44", seed)$public, fips_keygen("ML-DSA-44", seed)$public)
+#> [1] TRUE
+
+# The public half carries no secret.
+names(fips_public_key(key))
+#> [1] "public" "scheme"
+
+# An unknown parameter set is refused.
+try(fips_keygen("ML-DSA-99"))
+#> Error : unknown scheme 'ML-DSA-99'. The standardised schemes are: ML-DSA-44, ML-DSA-65, ML-DSA-87, SLH-DSA-SHA2-128s, SLH-DSA-SHA2-128f, SLH-DSA-SHA2-192s, SLH-DSA-SHA2-192f, SLH-DSA-SHA2-256s, SLH-DSA-SHA2-256f, SLH-DSA-SHAKE-128s, SLH-DSA-SHAKE-128f, SLH-DSA-SHAKE-192s, SLH-DSA-SHAKE-192f, SLH-DSA-SHAKE-256s, SLH-DSA-SHAKE-256f. For the stateful hash-based scheme use pqc_keygen().
 ```

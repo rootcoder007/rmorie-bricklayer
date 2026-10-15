@@ -1,5 +1,266 @@
 # Changelog
 
+## rmoriebricklayer 0.5.13
+
+### Live progress for long work
+
+- **`bricklayer_progress(label, total)`**, exported: the animated bar of
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  for any loop, as an object with `$update(done, info)`,
+  `$tick(by, info)`, `$wait(seconds)` and `$done(summary)`. It follows
+  the download bar’s rule (drawn while a person watches a terminal: an
+  interactive session, or a command line that sets
+  `options(morie.progress = TRUE)`; a line at each tenth when stderr is
+  not a terminal; nothing with `options(morie.quiet = TRUE)` or
+  `quiet = TRUE`). Nothing is drawn for the first 0.75 s, so a fast call
+  never flashes a bar; a bar inside another function’s running bar stays
+  silent, so nested work shows the outer loop; an update is a stored
+  value when quiet and a throttled frame when drawing. With `total = 0`
+  it is a spinner with the time so far and the current stage.
+  `on.exit(p$done(), add = TRUE)` clears the line when the work fails or
+  is interrupted.
+- **Wired into the long-running functions**: the bootstrap of
+  [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md),
+  the folds of
+  [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md),
+  the permutations of
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  and
+  [`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md),
+  the controls of
+  [`capsule_falsify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_falsify.md),
+  the repetitions of
+  [`capsule_power()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_power.md),
+  the splits of
+  [`drift_calibrate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_calibrate.md),
+  the columns of
+  [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md),
+  [`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md),
+  [`correlation_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.md)
+  and
+  [`top_correlations()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/top_correlations.md),
+  the stages of
+  [`mahalanobis_outliers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md),
+  the EM iterations of
+  [`mcar_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mcar_test.md)
+  and of `core_hawkes_fit(method = "em")`, the replicate checks of
+  [`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md),
+  the steps of
+  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  and
+  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  the receptors of
+  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md),
+  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  and
+  [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md),
+  the files of
+  [`capsule_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  and
+  [`capsule_bundle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md),
+  the columns and the writing of
+  [`make_synthetic_csv()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md),
+  the packages of
+  [`capture_dependencies()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_dependencies.md),
+  the groups and exact p-values of
+  [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  and
+  [`yoy_pvalues()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_pvalues.md),
+  and long vectors in
+  [`benford_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.md)
+  and
+  [`distinct_sketch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_distinct.md)
+  (read in blocks of a million; the counts and registers are those of
+  one pass).
+- **A spinner for long native calls**: XMSS key generation and signing
+  ([`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
+  a few seconds at the default height, about a minute at 14),
+  [`derive_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/derive_key.md),
+  the native routes of
+  [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+  (with the stage: first start, second start) and every network request
+  ([`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md),
+  the portal resolvers,
+  [`wayback_snapshot_url_native()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url_native.md),
+  revocation and service lookups, model lists) show a turning spinner
+  with the label and the seconds so far, drawn by the compiled layer
+  each time the call polls for a Ctrl-C, from 0.75 s on, on a terminal
+  only. The XMSS tree now polls every 32 leaves (it was every 1,024,
+  once in a whole default key).
+- **Live progress in the IDE consoles, and one look for it.** Whether a
+  console can redraw a line is now decided as the cli package decides
+  it, no longer by `isatty(stderr())` alone, which is `FALSE` in the
+  RStudio and Positron consoles, so most R users saw only the line at
+  each tenth. Bars, spinners and the native spinner now animate in a
+  terminal, the RStudio console (and its build and render panes), the
+  Positron console, R.app and RKWard. They draw on stdout in the RStudio
+  and Positron consoles, which print stderr in their error colour, and
+  on stderr elsewhere. Colours follow the console (24-bit, 256, 8, or
+  none; `NO_COLOR`, `R_CLI_NUM_COLORS`, `RSTUDIO_CONSOLE_COLOR`), and so
+  does the width. They never animate inside knitr, an R Markdown
+  notebook chunk or a Jupyter kernel, which get the plain lines.
+  `options(rmoriebricklayer.dynamic, rmoriebricklayer.num_colors, rmoriebricklayer.unicode, rmoriebricklayer.width)`,
+  cli’s options and `R_CLI_DYNAMIC` override the detection. The bar
+  shows the percent, the count (or the bytes), the rate, the time so far
+  and, once the rate has settled, the time left; it fits the console’s
+  width and cuts the label or stage with an ellipsis. When the work
+  ends, a green check, the label, the result and the time replace the
+  bar; a red cross replaces it when the function that made the bar
+  failed or was interrupted.
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  shows the same cross. The native spinner of long compiled calls draws
+  the same line, turns only on R’s main thread, ends with a check or a
+  cross, and in a log writes a line at 0.75 s, one every ten seconds
+  after it and one at the end.
+
+### Integrity scheme 2
+
+New Merkle trees and chain entries are hashed under scheme 2 and record
+it; anything sealed by 0.5.12 or earlier (no scheme recorded) still
+verifies under its old rules, with a warning that it was sealed with the
+weaker scheme.
+
+- **Merkle trees separate leaves from interior nodes** (RFC 6962): a
+  leaf is SHA-256 of the byte 0x00 and the chunk, a node SHA-256 of 0x01
+  and its two children. Under scheme 1 the 64 bytes of two sibling
+  digests verified as a “leaf” with the shorter proof from their parent.
+  [`merkle_root()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md),
+  [`merkle_leaves()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+  and
+  [`merkle_proof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+  take `scheme` (2 by default; 1 recomputes a root pinned by an earlier
+  version),
+  [`merkle_proof()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+  records it in the proof, and
+  [`merkle_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+  reads it from there or takes `scheme = 2` to refuse a proof without
+  one. Roots therefore differ from those of 0.5.12 for the same chunks.
+  [`capsule_report()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_report.md)
+  records `merkle_scheme` beside `merkle_root`.
+- **Chain entries cover their label.**
+  [`chain_append()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_chain.md)
+  records `scheme = 2` and links `"v2|<prev>|<payload>|<label>"`, so
+  editing a label breaks the chain; under scheme 1 it went undetected.
+- **Chain payloads no longer depend on the R version.** A non-string
+  entry is digested over `serialize(version = 2)` with the four header
+  bytes naming the writer’s R version zeroed, so the same entry gives
+  the same payload on every R version and for any R object.
+
+### Fixes
+
+- Every `conf_level` goes through one check, with one message:
+  [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md),
+  [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md),
+  [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  and
+  [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+  returned `NaN` intervals for a level outside (0, 1);
+  [`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md),
+  [`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md),
+  [`disposition_mix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md),
+  [`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md),
+  [`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md),
+  [`share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/share.md),
+  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md),
+  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+  [`stay_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stay_summary.md)
+  and
+  [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+  checked it in four different wordings. The interval helpers behind
+  them refuse it too.
+- [`manifest_recompute()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_recompute.md)
+  reports a statistic that returns `NA`, `NaN` or `Inf` as `DIFFER` (or
+  `MATCH` when the record holds the identical value) instead of failing
+  with “missing value where TRUE/FALSE needed”.
+  [`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
+  refuses a vector `observed` or `expected` in words; it failed with R’s
+  “‘length = 2’ in coercion to ‘logical(1)’”.
+- [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
+  refuses a `t` that is neither one value nor one per period (it was
+  recycled in silence) and a `period` of the wrong length;
+  [`adp()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp.md),
+  [`alos()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/alos.md),
+  [`admissions()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/admissions.md),
+  [`adp_from_counts()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/adp_from_counts.md)
+  and
+  [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)’s
+  `per` refuse several values where one is meant (only the first was
+  used).
+- [`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)
+  leaves infinite values out of the mean, spread, range, quantiles and
+  outlier count; they are still counted in `n_infinite`.
+- [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
+  with the exponential kernel also runs from a second start and keeps
+  the better optimum: from one start it could stop with the decay on its
+  bound at a worse likelihood and still report `converged = TRUE`.
+- [`reservoir_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
+  and
+  [`reservoir_sample()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
+  draw with Lemire’s unbiased method on the raw 64-bit output of
+  `std::mt19937_64` instead of `std::uniform_int_distribution`, whose
+  algorithm differs between C++ libraries: a seed now gives the same
+  sample on Linux, macOS and Windows, and samples differ from those of
+  0.5.12. A seed that is `NA`, negative or fractional, and a fractional
+  `n` or `k`, are refused (an `NA` seed was undefined behaviour in the
+  cast).
+- [`core_bootstrap_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_bootstrap_mean.md)
+  refuses an `NA`, negative or fractional seed and a fractional `B`
+  (undefined behaviour in the casts), in R and in the compiled entry
+  point; the compiled entry point of
+  [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
+  now checks its seed too (its R function already did).
+- [`core_normal_logpdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_logpdf.md)
+  refuses a vector `mean` or `sd` and a non-positive `sd`, as
+  [`core_normal_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.md)
+  does; `core_gamma_cdf(a, Inf)` is 1, as
+  [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html);
+  [`core_trimmed_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_trimmed.md)
+  and
+  [`core_winsorized_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_trimmed.md)
+  refuse a `trim` outside \[0, 0.5\] instead of returning `NaN`.
+- [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
+  warns that `rounding` and `suppression_limit` apply only to counts
+  when `units` is not `"count"`; they were ignored in silence.
+- Errors about a provenance list name
+  [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md);
+  they named a `read_provenance()` that does not exist.
+- [`capture_dependencies()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_dependencies.md)
+  gives `NA`, not `""`, as the library of a package that is not
+  installed, and the library of an installed one is the directory the
+  package is in (it was its parent).
+- [`print()`](https://rdrr.io/r/base/print.html) of a hot-spot
+  persistence result names each period with its own count of tied cells
+  (“period 2: 100 cells tied”); periods and counts were pasted into one
+  list.
+- [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  refuses an empty or malformed `name`; an empty one printed “Installed
+  ;” and failed with “subscript out of bounds”.
+- [`yoy_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
+  right-aligns every numeric column; the value and previous value were
+  left aligned.
+- With `direction = "neutral"`,
+  [`print()`](https://rdrr.io/r/base/print.html),
+  [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  and [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
+  change table draw rises and falls in the neutral colour;
+  [`print()`](https://rdrr.io/r/base/print.html),
+  [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  and
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  painted a rise in the bad colour, and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) in the good
+  one.
+- A malformed certificate, CRL, OCSP response or time-stamp token is an
+  error without the call
+  ([`cert_parse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.md)
+  errors read “Error in cert_parse(…)”).
+- Rd: `[0, 1]` in four help pages was read by roxygen as a link (an
+  `R CMD check` warning for `hotspot_persistence`).
+- The “is thinking” line of a language-model call is drawn where the
+  console says, on stdout in the RStudio and Positron consoles; it went
+  to stderr, which they show in the error colour.
+
 ## rmoriebricklayer 0.5.12
 
 The 0.5.11 stress round (commit a5a4d10) and the review of this

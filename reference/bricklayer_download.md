@@ -1,10 +1,11 @@
 # Download a file with live progress
 
-One download routine for the MORIE family: a bar with percent, size and
-rate on stderr while a person is watching (an interactive session, or a
-command line that sets `options(morie.progress = TRUE)`), milestone
-lines when stderr is not a terminal, and nothing when
-`options(morie.quiet = TRUE)` or `quiet = TRUE`.
+Downloads one file from the web to a local path, showing a progress bar
+(percent, size and rate) while a person is watching. It is the single
+download routine of the package and its sibling packages, and it applies
+the package's network safety rules: HTTPS only, no local or private
+addresses, a size cap, and checked redirects. Use it when a script must
+fetch a source file and you want a visible, safe transfer.
 
 ## Usage
 
@@ -33,11 +34,12 @@ bricklayer_download(
 
 - dest:
 
-  Path to write.
+  Character string: the path to write.
 
 - headers:
 
-  Character vector of request headers, every element named, or `NULL`.
+  Character vector of request headers, every element named (name =
+  header, value = its value), or `NULL` (the default).
 
 - label:
 
@@ -46,26 +48,28 @@ bricklayer_download(
 - size:
 
   Expected size in bytes when known (a percent bar instead of a
-  spinner).
+  spinner); otherwise the size the server announces is used.
 
 - timeout:
 
-  Seconds allowed for the whole transfer: a whole number from 1
-  to 2147483647. A transfer slower than 64 bytes a second for 30 seconds
-  is ended before that.
+  Seconds allowed for the whole transfer: a whole number from 1 to
+  2147483647, default 3600. A transfer slower than 64 bytes a second for
+  30 seconds is ended before that.
 
 - quiet:
 
-  `TRUE`, `FALSE`, or `NULL` to follow the session and options.
+  `TRUE`, `FALSE`, or `NULL` (the default) to follow the session and
+  options.
 
 - tty:
 
   Draw the live bar (`TRUE`) or print milestone lines (`FALSE`); `NULL`
-  asks whether stderr is a terminal.
+  (the default) draws the bar when the console redraws a line in place,
+  as described in Details.
 
 - allow_file:
 
-  Accept a `file://` URL (default `FALSE`).
+  Logical, default `FALSE`: accept a `file://` URL (for offline tests).
 
 - max_bytes:
 
@@ -78,9 +82,43 @@ bricklayer_download(
 
 `dest`, invisibly.
 
+## Details
+
+Progress is an animated bar, redrawn in place, when the console can
+redraw a line: a terminal, or the RStudio, Positron, R.app or RKWard
+console (never a knitr or Jupyter notebook; the options
+`rmoriebricklayer.dynamic` or `cli.dynamic`, or the environment variable
+`R_CLI_DYNAMIC`, override the choice). In the RStudio or Positron
+console the bar is drawn on stdout, elsewhere on stderr. Otherwise
+milestone lines go to stderr (every 10 percent, or every 50 MB when the
+size is unknown), and nothing is shown when quiet. By default output is
+shown in an interactive session or when `options(morie.progress = TRUE)`
+is set, and suppressed by `options(morie.quiet = TRUE)`.
+
+Network: the transfer runs in the package's compiled HTTP client. The
+URL is checked, its host resolved and pinned, and every redirect is
+checked again (no switch from https to http; credentials are not passed
+to another host). Plain `http://` is allowed only with
+`options(rmoriebricklayer.allow_http = TRUE)`. A transfer slower than 64
+bytes a second for 30 seconds is abandoned. A `file://` URL is copied
+locally through the same progress display, only with
+`allow_file = TRUE`.
+
+Errors: a URL that is not https (or allowed http/file), or that points
+at a loopback, link-local or private address; `headers` not a named
+character vector; `timeout` below 1 or above 2147483647; `max_bytes`
+below 1; a network failure; an HTTP status of 400 or more; a body larger
+than `max_bytes`. `dest` is overwritten.
+
+## See also
+
+[`bricklayer_fetch`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+for a download with a Wayback Machine fallback.
+
 ## Examples
 
 ``` r
+# offline: a local file through the same routine
 src <- tempfile(fileext = ".txt")
 writeLines("hello", src)
 dest <- tempfile(fileext = ".txt")
@@ -88,4 +126,18 @@ bricklayer_download(paste0("file://", src), dest, quiet = TRUE,
                     allow_file = TRUE)
 readLines(dest)
 #> [1] "hello"
+
+# the safety checks run before any connection is made
+try(bricklayer_download("http://example.org/table.csv", tempfile()))
+#> Error : url must be an https:// URL, not http:// ('http://example.org/table.csv'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
+try(bricklayer_download("https://127.0.0.1/table.csv", tempfile()))
+#> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))
+try(bricklayer_download(paste0("file://", src), tempfile()))
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpZSI4mI/file1dbb42c69f86.txt'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
+
+# a real download needs the network
+if (FALSE) { # \dontrun{
+bricklayer_download("https://www.ontario.ca/some/open-data/table.csv",
+                    "table.csv", max_bytes = 50e6)
+} # }
 ```

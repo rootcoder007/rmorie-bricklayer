@@ -19,7 +19,7 @@ random_bytes() directly."><meta property="og:image" content="https://rootcoder00
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,17 +79,22 @@ and known-answer tests need; for keys meant to stay secret, seed it from
 
 
 <dl><dt id="arg-entropy">entropy<a class="anchor" aria-label="anchor" href="#arg-entropy"></a></dt>
-<dd><p>Entropy input: 48 bytes, raw or hex. <code>NULL</code> (the default)
-draws them from the operating system's CSPRNG.</p></dd>
+<dd><p>Entropy input: exactly 48 bytes, as a raw vector or one
+string of 96 hexadecimal digits. <code>NULL</code> (the default) draws them from
+the operating system's CSPRNG through <code><a href="random_bytes.html">random_bytes()</a></code>.</p></dd>
 
 
 <dt id="arg-personalization">personalization<a class="anchor" aria-label="anchor" href="#arg-personalization"></a></dt>
-<dd><p>Optional personalization string of up to 48 bytes, raw or hex.</p></dd>
+<dd><p>Optional personalization string of up to 48 bytes,
+raw or hex; <code>NULL</code> (the default) is the empty string. Different
+personalization strings give independent streams from the same entropy.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>bricklayer_drbg</code>. Its state (Key, V) is not printed.</p>
+    <p>An object of class <code>bricklayer_drbg</code> (an environment holding
+the 32-byte Key, the 16-byte V, the request count and the process id). Its
+state (Key, V) is not printed.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -107,6 +112,13 @@ the entropy input marked secret (<code>inst/ctcheck</code>, case <code>drbg-port
 <p>The generator is an object that changes as it is used: every
 <code><a href="drbg_generate.html">drbg_generate()</a></code> and
 <code><a href="drbg_reseed.html">drbg_reseed()</a></code> advances it in place.</p>
+<p>The generator is an environment, so copies share one state. It is not
+meant to be saved: a generator restored from <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> or inherited
+by a forked process reseeds itself from the operating system on its next
+use, so two processes never replay the same stream (and such a stream is
+then no longer reproducible). Errors when <code>entropy</code> is not exactly 48
+bytes or <code>personalization</code> is longer than 48 bytes, or either is
+neither a raw vector nor one hexadecimal string.</p>
     </div>
     <div class="section level2">
     <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
@@ -130,13 +142,15 @@ does and does not cover.</p>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
-Using Deterministic Random Bit Generators, section 10.2.1. <a href="https://doi.org/10.6028/NIST.SP.800-90Ar1" class="external-link">doi:10.6028/NIST.SP.800-90Ar1</a></p>
+Using Deterministic Random Bit Generators, section 10.2.1.
+<a href="https://doi.org/10.6028/NIST.SP.800-90Ar1" class="external-link">doi:10.6028/NIST.SP.800-90Ar1</a></p>
 <p>NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
 <a href="https://doi.org/10.6028/NIST.FIPS.197-upd1" class="external-link">doi:10.6028/NIST.FIPS.197-upd1</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="drbg_generate.html">drbg_generate()</a></code>, <code><a href="drbg_reseed.html">drbg_reseed()</a></code>,
+    <div class="dont-index"><p><code><a href="drbg_generate.html">drbg_generate()</a></code>,
+<code><a href="drbg_reseed.html">drbg_reseed()</a></code>,
 <code><a href="random_bytes.html">random_bytes()</a></code>.</p></div>
     </div>
 
@@ -158,6 +172,10 @@ Using Deterministic Random Bit Generators, section 10.2.1. <a href="https://doi.
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu">drbg_new</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="drbg_generate.html">drbg_generate</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">32</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 32</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the entropy must be exactly 48 bytes</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">drbg_new</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">16</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `entropy` must be exactly 48 bytes, raw or hex</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

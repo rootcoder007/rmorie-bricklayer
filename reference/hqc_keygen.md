@@ -3,7 +3,16 @@
 Generates a key for HQC (Hamming Quasi-Cyclic), the code-based key
 encapsulation mechanism NIST selected for standardisation in March 2025
 (NIST IR 8545) as a second KEM next to ML-KEM. It is implemented in this
-package, with no system dependency.
+package, with no system dependency. A key encapsulation mechanism (KEM)
+lets two parties agree on a secret key: the recipient publishes the
+public half of this key pair, a sender uses it with
+[`hqc_encapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_encapsulate.md)
+to make a ciphertext and a shared secret, and only the holder of the
+secret half can recover that secret from the ciphertext with
+[`hqc_decapsulate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_decapsulate.md).
+The shared secret is then used as the key of a symmetric cipher.
+`hqc_public_key()` strips the secret half so the public key can be
+handed out.
 
 ## Usage
 
@@ -41,12 +50,19 @@ hqc_public_key(key)
 
 - key:
 
-  A key from `hqc_keygen()`.
+  A key from `hqc_keygen()` (`hqc_public_key()` only).
 
 ## Value
 
-A list of class `bricklayer_hqc_key`: `public`, `secret` (both hex),
-`level` and `version`. The v5 secret key is the specification's
+`hqc_keygen()` returns a list of class `bricklayer_hqc_key` with
+`public` and `secret` (character, lowercase hex of the encapsulation and
+decapsulation keys; see
+[`hqc_sizes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hqc_sizes.md)
+for their byte lengths), `level` (integer 1, 3 or 5) and `version`
+(`"v5"` or `"round4"`). Its print method shows the level and the start
+of the public key and withholds the secret. `hqc_public_key()` returns a
+list of class `bricklayer_hqc_public_key` with `public`, `level` and
+`version` only. The v5 secret key is the specification's
 `ek || seed_dk || sigma || seed_KEM`; the round-4 one is
 `sk_seed || sigma || ek`.
 
@@ -85,6 +101,14 @@ sampler), so its keys and ciphertexts are not interchangeable with v5's.
 It reproduces that revision's 300 official known-answer vectors (the
 package's tests check them); use it to exchange keys with software built
 on it, and v5 otherwise.
+
+Errors: a `level` other than 1, 3, 5, 128, 192 or 256 (a typo is never
+mapped to a default, because the level is not recorded in the
+ciphertext); a `seed` that is not a raw vector of exactly
+`hqc_sizes(level, version)[["seed"]]` bytes; a `version` other than
+`"v5"` or `"round4"`. `hqc_public_key()` errors on anything that is not
+a `bricklayer_hqc_key`. Key generation takes a few tens of milliseconds
+even at level 5.
 
 ## Security
 

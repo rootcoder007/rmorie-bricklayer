@@ -3,7 +3,9 @@
 Derives the schema
 [`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
 consumes from data you already trust, so a capsule can be pinned without
-writing one by hand.
+writing one by hand. Infer it once from the extract the analysis was run
+on, read it, edit it, commit it, and validate every later download
+against it.
 
 ## Usage
 
@@ -19,21 +21,26 @@ infer_schema(data, slack = 0.1, max_levels = 50L)
 
 - slack:
 
-  Fractional headroom added to row counts, numeric ranges and
-  missingness rates (default 0.1, i.e. 10%). `0` pins exactly to what
-  was observed, which will reject almost any re-release.
+  Headroom, one non-negative number (default 0.1). It is a fraction of
+  the row count and of each numeric range, and an absolute amount added
+  to each missingness rate (0.1 allows ten more percentage points of
+  `NA`). `0` pins exactly to what was observed, which will reject almost
+  any re-release.
 
 - max_levels:
 
   Maximum distinct values for a categorical column to have its value set
-  recorded (default 50). Above this the column is treated as free text
-  and no value set is pinned.
+  recorded, one positive whole number (default 50). Above this the
+  column is treated as free text and no value set is pinned.
 
 ## Value
 
-A list with `expected_columns`, `expected_types`,
-`structural_invariants`, `expected_value_sets`, `numeric_ranges` and
-`max_missing_fraction`, of class `bricklayer_schema`. Wrap it as
+A list of class `c("bricklayer_schema", "list")` with `expected_columns`
+(character), `expected_types` (named character), `structural_invariants`
+(list of `min_data_rows` and `max_data_rows`, integers),
+`expected_value_sets` (named list of character vectors),
+`numeric_ranges` (named list of `c(min =, max =)`) and
+`max_missing_fraction` (named numeric). Wrap it as
 `list(schema = <this>)` to hand to
 [`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md).
 
@@ -44,13 +51,37 @@ What it records: the column names and their types, row-count bounds with
 categorical column, the observed range of every numeric column widened
 by `slack`, and the observed missingness rate per column with headroom.
 
-## This is a starting point, not an oracle
+The rules, with \\n\\ rows:
+
+- types: the first class of each column (`"integer"`, `"numeric"`,
+  `"character"`, `"factor"`, `"Date"`, ...);
+
+- rows: `min_data_rows` \\= \lfloor n(1 - slack) \rfloor\\ (at least 0)
+  and `max_data_rows` \\= \lceil n(1 + slack) \rceil\\;
+
+- numeric ranges: \\\[lo - pad, hi + pad\]\\ with \\pad = slack \times
+  (hi - lo)\\, or \\slack \times \max(\|lo\|, 1)\\ for a constant
+  column; a column with no non-missing value gets no range;
+
+- value sets: for character, factor and logical columns with at most
+  `max_levels` distinct non-missing values, those values as sorted text;
+
+- missingness: the observed share of `NA` plus `slack` (added, not
+  multiplied), capped at 1.
+
+Other column types (dates, lists) get a type and a missingness ceiling
+only.
+
+### This is a starting point, not an oracle
 
 An inferred schema describes ONE extract. It cannot know that a category
 which happens not to occur is nonetheless legal, or that a range is a
 physical bound rather than an accident of this sample. Read what it
 produces and edit it before committing – the value is in not starting
 from a blank file, not in trusting the output blindly.
+
+Errors: `data` not a data frame or without columns; `slack` not one
+non-negative number; `max_levels` not one positive whole number.
 
 ## See also
 
@@ -101,4 +132,13 @@ length(validate_schema(df[, -3], list(schema = sch))) > 0
 bad <- df; bad$grade[1] <- "z"
 length(validate_schema(bad, list(schema = sch))) > 0
 #> [1] TRUE
+
+# no slack pins the exact observed range
+infer_schema(df, slack = 0)$numeric_ranges$score
+#>       min       max 
+#> 0.1339033 9.9190609 
+
+# a negative slack is refused
+try(infer_schema(df, slack = -0.1))
+#> Error : `slack` must be a single non-negative number
 ```

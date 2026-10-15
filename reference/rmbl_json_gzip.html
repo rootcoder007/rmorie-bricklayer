@@ -13,7 +13,7 @@ all three steps."><meta property="og:image" content="https://rootcoder007.github
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,16 +76,21 @@ all three steps.</p>
 
 
 <dt id="arg-raw">raw<a class="anchor" aria-label="anchor" href="#arg-raw"></a></dt>
-<dd><p>Return (or accept) gzip bytes instead of base64.</p></dd>
+<dd><p>Logical scalar, default <code>FALSE</code>: return (or, for the decoder,
+insist on) gzip bytes instead of base64 text.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Passed to
-<code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>.</p></dd>
+<dd><p>For <code>json_gzip_encode()</code>, passed to
+<code><a href="bricklayer_json_to_json.html">bricklayer_json_to_json()</a></code>
+(for example <code>auto_unbox</code> or <code>digits</code>); for <code>json_gzip_decode()</code>,
+passed
+to <code><a href="bricklayer_json_from_json.html">bricklayer_json_from_json()</a></code> (for example
+<code>simplifyVector</code>).</p></dd>
 
 
 <dt id="arg-txt">txt<a class="anchor" aria-label="anchor" href="#arg-txt"></a></dt>
-<dd><p>Base64 string (or raw vector) from
+<dd><p>Base64 string (or raw vector of gzip bytes) from
 <code>json_gzip_encode()</code>.</p></dd>
 
 </dl></div>
@@ -93,7 +98,8 @@ all three steps.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p><code>json_gzip_encode()</code> a length-1 character vector, or a raw
 vector when <code>raw = TRUE</code>. <code>json_gzip_decode()</code> the decoded
-object.</p>
+object, as <code><a href="bricklayer_json_from_json.html">bricklayer_json_from_json()</a></code>
+returns it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -106,6 +112,24 @@ show.</p>
 <p><code>raw = TRUE</code> skips the base64 step and returns the gzip bytes,
 which is what to use when writing to a file rather than embedding in
 text.</p>
+<p>The bytes are a real gzip member (RFC 1952, with header bytes <code>1f 8b</code>),
+readable by <code>gzip -d</code>, <code>zcat</code> and any HTTP client, not the zlib stream
+that <code>memCompress(type = "gzip")</code> returns. The modification time in the
+header is zero, so the same input always gives the same bytes and a digest
+of the result does not depend on the clock. The base64 text uses the
+standard alphabet with line breaks every 72 characters
+(<code><a href="rmbl_base64.html">bricklayer_json_base64_enc()</a></code>).</p>
+<p>The decoder takes the input's own type: a raw vector is read as gzip
+bytes whatever <code>raw</code> says, and text as base64. As a guard against
+decompression bombs it refuses a member whose declared uncompressed size
+is over 64 MiB. Errors: text given with <code>raw = TRUE</code>; text that is not
+base64; bytes that are not a gzip member (under 18 bytes or not starting
+<code>1f 8b</code>); a declared size over 64 MiB; a corrupt member; invalid JSON
+inside.</p>
+<p>Note that the JSON keeps data, not R types: a factor comes back as text and
+attributes are lost. Compress
+<code><a href="rmbl_json_serialize.html">bricklayer_json_serialize()</a></code> output when the
+object must come back exactly.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -137,6 +161,26 @@ for an uncompressed form that keeps types and attributes.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "raw"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu">json_gzip_decode</span><span class="op">(</span><span class="va">bytes</span>, raw <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">rows</span><span class="op">$</span><span class="va">id</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the bytes are ordinary gzip: a file any gzip tool can read</span></span></span>
+<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json.gz"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">writeBin</a></span><span class="op">(</span><span class="va">bytes</span>, <span class="va">f</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span>, warn <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="fl">1</span>, <span class="fl">40</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "{\"rows\":[{\"id\":1,\"value\":0.333},{\"id\":2,"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># options pass through to the JSON writer and reader</span></span></span>
+<span class="r-in"><span><span class="fu">json_gzip_decode</span><span class="op">(</span><span class="fu">json_gzip_encode</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1</span>, b <span class="op">=</span> <span class="st">"x"</span><span class="op">)</span>, auto_unbox <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                 simplifyVector <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $a</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $b</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "x"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># text that is not a gzip member is refused</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">json_gzip_decode</span><span class="op">(</span><span class="fu"><a href="rmbl_base64.html">bricklayer_json_base64_enc</a></span><span class="op">(</span><span class="st">"not gzip"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `txt` does not hold a gzip member: expected at least 18 bytes starting 1f 8b, got 8 byte(s).</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

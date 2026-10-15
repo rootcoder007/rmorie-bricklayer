@@ -1,9 +1,12 @@
 # Representative values for banded categories
 
-Turns bounds into the single number per band that a calculation needs,
-under a stated rule. The open band is the whole difficulty: it has no
-midpoint, so a cap has to be supplied or assumed, and the assumption is
-recorded in the result rather than absorbed into it.
+Gives each band a single number that a calculation can use (a mean, a
+concentration index, a regression), under a rule you choose. For closed
+bands the rule places the value at the midpoint, the lower or upper
+bound, or the geometric mean of the bounds. An open band ("50+", "under
+18") has no midpoint, so its missing bound is filled from an explicit
+assumption, and the rows that rest on that assumption are flagged in the
+result instead of being absorbed into it.
 
 ## Usage
 
@@ -22,49 +25,69 @@ band_values(
 - bands:
 
   A data frame from
-  [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md),
-  or labels to parse.
+  [`parse_bands`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md),
+  or a character vector of labels to parse with its defaults.
 
 - rule:
 
-  How to place a value inside a closed band. `"midpoint"` is the
-  arithmetic mean of the bounds. `"lower"` and `"upper"` give the
-  conservative and generous readings, which together bracket whatever
-  the truth is. `"geometric"` suits a quantity whose distribution inside
-  the band is closer to log-uniform than uniform, which is usual for
-  counts and durations.
+  Character, one of `"midpoint"` (the default), `"lower"`, `"upper"` or
+  `"geometric"`. The geometric mean suits quantities whose distribution
+  inside a band is closer to log-uniform than uniform, which is usual
+  for counts and durations.
 
 - open_upper_cap:
 
-  Upper bound to assume for an open top band. The default multiplies the
-  band's lower bound by `open_upper_factor`, which is an assumption and
-  is flagged as one.
+  Number or `NULL` (the default). The upper bound assumed for every open
+  top band, in the units of the labels.
 
 - open_upper_factor:
 
-  Multiplier used when no cap is given.
+  Number, default `2`. When no cap is given, the open top band's upper
+  bound is its lower bound times this factor (so "Greater than 10"
+  becomes 11 to 22).
 
 - open_lower_floor:
 
-  Lower bound assumed for an open lower band ("under 18"). `NULL`, the
-  default, uses 0, or the band's own upper bound when that is below 0;
-  an explicit floor above a band's upper bound is refused. for an open
-  bottom band. Defaults to zero.
+  Number or `NULL` (the default). The lower bound assumed for an open
+  bottom band ("under 18"). `NULL` uses 0, or the band's own upper bound
+  when that is below 0. A floor above a band's upper bound is refused.
 
 ## Value
 
-The band table with a `value` column and an `assumed` column marking the
-rows whose value rests on the open-band assumption.
+The band table with two added columns: `value` (numeric, the
+representative value) and `assumed` (logical, `TRUE` for the open bands
+whose value rests on the cap or floor).
+
+## Details
+
+For a band with bounds \\\[l, u\]\\ the value is \\(l + u)/2\\
+(`"midpoint"`), \\l\\ (`"lower"`), \\u\\ (`"upper"`) or \\\sqrt{l u}\\
+(`"geometric"`; when \\l \le 0\\ the arithmetic midpoint is used
+instead, because the geometric mean is undefined there). The `"lower"`
+and `"upper"` rules bracket any value that could come from the bands.
+
+An open upper band gets \\u =\\ `open_upper_cap` if given, else \\u = l
+\times\\ `open_upper_factor`. An open lower band gets \\l =\\
+`open_lower_floor` if given, else \\\min(0, u)\\. A cap below the band's
+lower bound, or a floor above its upper bound, is an error, because the
+value would lie outside the band. Unparsed bands give `NA`.
+
+Use
+[`band_sensitivity`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+to see how much a result moves with the cap, and
+[`expand_bands`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
+to turn the values into one value per unit.
 
 ## See also
 
-[`band_sensitivity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md)
+[`parse_bands`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md),
+[`band_sensitivity`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_sensitivity.md),
+[`expand_bands`](https://rootcoder007.github.io/rmorie-bricklayer/reference/expand_bands.md)
 
 ## Examples
 
 ``` r
 b <- parse_bands(c("1", "2 to 5", "6 to 10", "Greater than 10"))
-
 band_values(b)
 #>             label lower upper open_lower open_upper value assumed
 #> 1               1     1     1      FALSE      FALSE   1.0   FALSE
@@ -77,4 +100,17 @@ band_values(b, rule = "lower")$value
 #> [1]  1  2  6 11
 band_values(b, rule = "upper", open_upper_cap = 40)$value
 #> [1]  1  5 10 40
+
+# geometric placement, and an explicit floor for an open bottom band
+band_values(b, rule = "geometric", open_upper_cap = 40)$value
+#> [1]  1.000000  3.162278  7.745967 20.976177
+band_values(c("under 5", "5 to 9", "10+"), open_lower_floor = 1)
+#>     label lower upper open_lower open_upper value assumed
+#> 1 under 5    NA     4       TRUE      FALSE   2.5    TRUE
+#> 2  5 to 9     5     9      FALSE      FALSE   7.0   FALSE
+#> 3     10+    10    NA      FALSE       TRUE  15.0    TRUE
+
+# a cap inside the open band is refused
+try(band_values(b, open_upper_cap = 5))
+#> Error : the open-band cap (5) lies below the band's own lower bound (11); a midpoint there would be below every value in the band
 ```

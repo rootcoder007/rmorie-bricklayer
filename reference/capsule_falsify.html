@@ -11,7 +11,7 @@ answering a different way of being wrong:"><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,25 +90,35 @@ than silently omitted.</p></dd>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Number of permutations and subsets. The permutation
-p-value cannot be smaller than <code>1 / (n + 1)</code>, which is reported.</p></dd>
+<dd><p>Integer scalar, the number of permutations and of subsets, at
+least 9; default 199. The permutation p-value cannot be smaller than
+<code>1 / (n + 1)</code>, which is reported.</p></dd>
 
 
 <dt id="arg-subset-frac">subset_frac<a class="anchor" aria-label="anchor" href="#arg-subset-frac"></a></dt>
-<dd><p>Fraction of rows kept by the
-subset control.</p></dd>
+<dd><p>Numeric scalar strictly between 0 and 1, the fraction of
+rows kept by the subset control; default 0.8.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional integer seed. Supplied, the result is
-reproducible; omitted, the current RNG state is used and recorded.</p></dd>
+reproducible; omitted (<code>NULL</code>, the default), the current random number
+stream is used and only the generator kind is recorded.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_falsification</code>:
-<code>observed</code>, a <code>controls</code> data frame (one row per control, with
-<code>passed</code>) , and <code>permutation</code> holding the null distribution.</p>
+    <p>A list of class <code>bricklayer_falsification</code>: <code>observed</code> (the
+statistic on the data as given), <code>controls</code> (a data frame with one row per
+control: <code>control</code>, logical <code>passed</code> (<code>NA</code> when skipped), numeric
+<code>value</code>
+(the p-value, the placebo or noise statistic, or the subset spread) and
+<code>detail</code>), <code>permutation</code> (the vector of permuted statistics, <code>NULL</code>
+without
+<code>treatment</code>), <code>n</code>, <code>treatment</code>, <code>rng_kind</code> and <code>seed</code>
+(<code>NA</code> when none was
+given). <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows one line per control; <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws the
+permutation distribution.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -131,6 +141,27 @@ before it rests on a conclusion.</p></li>
 are falsification tests, so they can refute and cannot confirm: passing
 all four is consistent with a statistic that is wrong for a reason none
 of them probes.</p>
+<p>When each control passes:</p><ul><li><p>permutation – the two-sided permutation p-value
+\((1 + \#\{|s_b| \ge |s_{obs}|\}) / (1 + B)\) over the \(B\) usable
+permutations is below 0.05 (the observed statistic is unlike its null);</p></li>
+<li><p>placebo – the statistic under one more permuted treatment lies within the
+95th percentile of the absolute permutation values;</p></li>
+<li><p>random common cause – adding a column <code>.rmbl_random_common_cause</code> of
+standard normal noise changes the statistic by at most
+\(10^{-8} \max(1, |s_{obs}|)\);</p></li>
+<li><p>subset stability – the observed value lies inside the middle 95% of the
+statistic over <code>n</code> random subsets of <code>round(subset_frac * nrow(data))</code>
+rows (at least two).</p></li>
+</ul><p>A permutation or subset on which the statistic errors or is not finite is
+dropped from that control. The statistic is evaluated <code>2 n + 3</code> times, so
+its cost sets the run time; a progress bar is shown when
+<code>options(morie.progress)</code> allows it. With <code>seed</code> the random number stream
+is set for the call and the caller's stream restored afterwards.</p>
+<p>Errors: <code>data</code> not a data frame or with fewer than 4 rows; <code>statistic</code> not a
+function, or failing or not returning one finite number on the data as
+given, the placebo data or the noise-augmented data; <code>n</code> below 9;
+<code>subset_frac</code> not strictly between 0 and 1; <code>treatment</code> not a column of
+<code>data</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -161,6 +192,19 @@ survives.</p></div>
 <span class="r-in"><span>                        n <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fake</span><span class="op">$</span><span class="va">controls</span><span class="op">[</span><span class="va">fake</span><span class="op">$</span><span class="va">controls</span><span class="op">$</span><span class="va">control</span> <span class="op">==</span> <span class="st">"permutation"</span>, <span class="st">"passed"</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># without a treatment column two controls are skipped, and say so</span></span></span>
+<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">capsule_falsify</span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">z</span><span class="op">$</span><span class="va">y</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">49</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit</span><span class="op">$</span><span class="va">controls</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"control"</span>, <span class="st">"passed"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               control passed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         permutation     NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2             placebo     NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 random_common_cause   TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    subset_stability   TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the statistic must return one finite number</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">capsule_falsify</span><span class="op">(</span><span class="va">d</span>, <span class="kw">function</span><span class="op">(</span><span class="va">z</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">49</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : the statistic must return one finite number; on the data as given it returned something else</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

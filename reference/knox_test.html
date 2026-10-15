@@ -17,7 +17,7 @@ Monte Carlo permutation test gives its p-value."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,6 +148,12 @@ number of close pairs rather than with \(n^2\).</p>
 the first time band (0 to its edge). The test speaks to the timing of
 incidents relative to each other, not to what caused them; near-repeat
 patterns also arise when one offender commits a series.</p>
+<p>Errors: <code>x</code>, <code>y</code> and <code>time</code> of different lengths;
+<code>space_bands</code> or <code>time_bands</code> not positive, finite and
+increasing; <code>nsim</code> below 19; <code>max_pairs</code> below 1; longitude and
+latitude out of range under <code>coords = "lonlat"</code>; fewer than three
+incidents. With <code>seed</code> the random number stream is set for the call
+and restored afterwards.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -185,6 +191,25 @@ cross national assessment of residential burglary victimization.
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">kn</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="knox_test-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># planar coordinates in metres and times in days, on simulated points</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">150</span></span></span>
+<span class="r-in"><span><span class="va">kp</span> <span class="op">&lt;-</span> <span class="fu">knox_test</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">2000</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">2000</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span>, <span class="fl">0</span>, <span class="fl">365</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                space_bands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">400</span><span class="op">)</span>, time_bands <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">14</span>, <span class="fl">28</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                nsim <span class="op">=</span> <span class="fl">99</span>, seed <span class="op">=</span> <span class="fl">2</span>, coords <span class="op">=</span> <span class="st">"planar"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">kp</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ── Knox ratios, observed / expected pairs (150 incidents, 99 permutations)  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   distance 0-14 d 14-28 d</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    0-200 m   0.77    0.73</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  200-400 m   1.06    0.85</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   * p &lt; 0.05, ** p &lt; 0.01, one-sided per cell (not adjusted for the number of cells)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ────────────────────────────────────────────────────────────────── </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># bands must increase</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">knox_test</span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">lon</span>, <span class="va">b</span><span class="op">$</span><span class="va">lat</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">b</span><span class="op">$</span><span class="va">occ_date</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">7</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `space_bands` must be positive, finite and increasing</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

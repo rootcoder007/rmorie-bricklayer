@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       6b7cc80696f68347e41642aab027d9d566dfe760d2c432fe5e7b3542318a3e95
+#>   root       37d581becf53d40afaf1be2f3df6f6f139d68d8b06fcafb110ffa1f7e6bd1778
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    6b7cc80696f68347e41642aab027d9d566dfe760d2c432fe5e7b3542318a3e95
+#>   root    37d581becf53d40afaf1be2f3df6f6f139d68d8b06fcafb110ffa1f7e6bd1778
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -370,13 +370,13 @@ plan <- prereg_declare(c(
 
 # a declared outcome that was not reported
 prereg_check(plan, "n_rows")
-#> ── Against the declaration of 2026-10-15T06:29:09Z: departures below 
+#> ── Against the declaration of 2026-10-15T16:14:35Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
-#> ── Against the declaration of 2026-10-15T06:29:09Z: departures below 
+#> ── Against the declaration of 2026-10-15T16:14:35Z: departures below 
 #>   reported but not declared (2 addition(s)): by_year, by_precinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -428,7 +428,7 @@ capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    4121a94d3d9fc6f98274b8182d2e84465f2f
+#>   attestation:manifest_digest    ok    090a9cb3648da40370f2789879eb9bfdfe90
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────
@@ -478,7 +478,7 @@ belongs without re-reading the rest.
 chunks <- c("id,value", "1,2", "3,4", "5,6")
 root <- merkle_root(chunks)
 root
-#> [1] "43bb94e5930a98ec80fc2e06d6a9227fde4174f74e7dd15e710c97f4de80e0ab"
+#> [1] "80332968a476e13898f2d88c2632603b3fa6bcc746bf05be7ed178aced51ab16"
 ```
 
 ``` r
@@ -496,11 +496,14 @@ which(merkle_leaves(chunks) != merkle_leaves(edited_chunks))
 proof <- merkle_proof(chunks, 3)
 proof
 #> $sibling
-#> [1] "e96f71a6079688ae6f7063cb93d59d5d80d15287032b2b777d77c0f6e15452e2"
-#> [2] "a5996cc23ea660aef0bc1260431c976e7d451cceb94cab2bafa8ff2ff09ddc4c"
+#> [1] "2191ddd39af84a2334704f1bc99d7c53fc4735a5f1f44cdebdf0c3c52f5d5681"
+#> [2] "8f71896ada80f49aab101ab39dff71d81b3470c5abc14cb58f1806b16c8fe6af"
 #> 
 #> $side
-#> [1] "right" "left"
+#> [1] "right" "left" 
+#> 
+#> $scheme
+#> [1] 2
 merkle_verify(chunks[3], proof, root)
 #> [1] TRUE
 merkle_verify("3,5", proof, root)
@@ -541,12 +544,12 @@ chain
 #>   ✓ chain intact
 #> 
 #>   entries  3
-#>   head     2afe0e270d2b1fbbc080dd4624540c181e5b8458aaecf247ccb8c38dc4c387da
-#>   seal     de28f9277b3f9f4cb3b1a7dd80e556d0c6e1568723f1395732f9d087ee7f7353
+#>   head     b9ccb96106a68f3d4d2a0cfb8e2ae160f7996393e28e93d7f4650c2bbd81ff49
+#>   seal     940721e3704268b570bcbf1c9ae841bde02927f584ec44dc3cf053ef7404d8a0
 #> 
-#>     1  run-1            7947c9201969a6793f9daf05
-#>     2  run-2            9dbaa6d33259f974f30ff33e
-#>     3  run-3            2afe0e270d2b1fbbc080dd46
+#>     1  run-1            cb25fa776c693a106b2d08a1
+#>     2  run-2            03a645a531c93fbb12bb2c07
+#>     3  run-3            b9ccb96106a68f3d4d2a0cfb
 #> ──────────────────────────────────────────────────────────────────
 ```
 

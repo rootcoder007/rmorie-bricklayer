@@ -1,8 +1,11 @@
 # Label a period without changing it
 
-Attaches display labels to a change table. The arithmetic already ran on
-the period's value, so a label can only affect what is printed:
-relabelling cannot move a number.
+Attaches display labels to the periods of a change table from
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+so a fiscal year keyed as 2023 can print as "2022/23", or a year can
+carry a note such as "(COVID)". The arithmetic already ran on the
+period's value, so a label can only affect what is printed: relabelling
+cannot move a number.
 
 ## Usage
 
@@ -25,11 +28,34 @@ yoy_label(x, labels)
 
 ## Value
 
-The object, with a `period_label` column and the labels used by
-[`print()`](https://rdrr.io/r/base/print.html),
+The object, still of class `rmbl_yoy`, with an added character column
+`period_label` and `attr(x, "yoy")$period_label` set to `TRUE`, so the
+labels are used by [`print()`](https://rdrr.io/r/base/print.html),
 [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
 [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
 and the delimited writers.
+
+## Details
+
+The labels are stored in a new `period_label` column, and the table's
+`yoy` attribute is marked so that
+[`print()`](https://rdrr.io/r/base/print.html),
+[`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
+[`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+and the delimited writers show the label in place of the period. The
+period column itself is unchanged, as are all values, changes and
+verdicts.
+
+`labels` is interpreted as follows: a function is called once on the
+period column and must return one label per row; a named character
+vector maps periods (matched as strings) to labels, and periods it does
+not name keep their own value; an unnamed character vector gives one
+label per distinct period, in order of first appearance.
+
+Errors: `x` not from
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md);
+an unnamed vector whose length is not the number of distinct periods; a
+function that does not return one label per row.
 
 ## See also
 
@@ -80,4 +106,12 @@ yoy_label(y, c("2020" = "2019/20 (COVID)"))
 #> 2023             331  268       63      ▲ +23.5%  [+5%, +46%] 
 #> 
 #> lag 1 period · units: count · 95% exact rate-ratio interval
+
+# the numbers are untouched
+identical(yoy_label(y, fiscal_year_label)$change, y$change)
+#> [1] TRUE
+
+# an unnamed vector must have one label per distinct period
+try(yoy_label(y, c("a", "b")))
+#> Error : `labels` has 2 entries for 5 distinct periods; name them, or pass a function
 ```

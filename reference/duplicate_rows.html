@@ -11,7 +11,7 @@ counterpart of janitor::get_dupes()."><meta property="og:image" content="https:/
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -71,14 +71,16 @@ counterpart of <code>janitor::get_dupes()</code>.</p>
 
 
 <dt id="arg-columns">columns<a class="anchor" aria-label="anchor" href="#arg-columns"></a></dt>
-<dd><p>Columns defining a duplicate (default: all
-of them).</p></dd>
+<dd><p>Character vector of the columns defining a duplicate, or
+<code>NULL</code> (the default) for all of them.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The duplicated rows, ordered by group, with a <code>dupe_count</code>
-column giving each group's size. Zero rows when there are none.</p>
+    <p>A data frame: the duplicated rows (every occurrence, including the
+first), ordered so each group sits together, with an integer
+<code>dupe_count</code> column giving each group's size and row names reset.
+Zero rows (with the same columns) when there are none.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -87,6 +89,12 @@ is what a validation gate needs. This shows you WHICH, which is what
 fixing them needs – and a duplicate is usually a join that fanned out
 or a re-release appended rather than replaced, both of which are visible
 only once the offending rows are in front of you.</p>
+<p>Two rows are duplicates when their values, converted to text, are equal
+in every column of <code>columns</code>; two <code>NA</code>s are equal. Columns are
+taken by position when <code>columns = NULL</code>, so a table with repeated
+column names can still be inspected. Errors when <code>data</code> is not a data
+frame, a named column does not exist, or a named column's name is shared
+by two columns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -123,6 +131,10 @@ only once the offending rows are in front of you.</p>
 <span class="r-in"><span><span class="fu">duplicate_rows</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] x          dupe_count</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;0 rows&gt; (or 0-length row.names)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a column that does not exist is an error</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">duplicate_rows</span><span class="op">(</span><span class="va">df</span>, <span class="st">"code"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no such column(s): code</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

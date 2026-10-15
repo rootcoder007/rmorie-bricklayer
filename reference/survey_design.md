@@ -6,7 +6,12 @@ units (PSUs) for Taylor linearization.
 [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
 and
 [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
-take the result.
+take the result. Use it once per survey file: a public-use file from
+Statistics Canada or Health Canada ships its final weight and a set of
+bootstrap replicate weights, and estimates computed without them
+understate the standard errors. The design checks the replicate columns
+it is given and remembers the rows it was built on, so a later estimate
+cannot silently be run on a reordered or different table.
 
 ## Usage
 
@@ -37,7 +42,8 @@ survey_design(
 
 - weights:
 
-  The final (full-sample) weight: a column name or a numeric vector.
+  The final (full-sample) weight: a column name or a numeric vector with
+  one non-negative value per row.
 
 - strata, psu:
 
@@ -63,27 +69,32 @@ survey_design(
 
 - type:
 
-  How the replicates were made; see Details.
+  How the replicates were made: `"bootstrap"` (the default),
+  `"mean_bootstrap"`, `"jk1"`, `"jkn"`, `"brr"` or `"fay"`; see Details.
+  Ignored without `replicates`.
 
 - mean_size:
 
   For `type = "mean_bootstrap"`, the number of bootstrap weights
-  averaged into each replicate.
+  averaged into each replicate; default `1`.
 
 - rho:
 
-  For `type = "fay"`, Fay's coefficient.
+  For `type = "fay"`, Fay's coefficient, between 0 and 1; default
+  `NULL`.
 
 - mse:
 
-  Centre replicate deviations on the full-sample estimate (`TRUE`) or on
-  the mean of the replicate estimates.
+  Logical scalar, default `TRUE`: centre replicate deviations on the
+  full-sample estimate (`TRUE`) or on the mean of the replicate
+  estimates (`FALSE`).
 
 - lonely_psu:
 
   What to do with a stratum that has a single PSU under linearization:
-  `"fail"` (an error naming it), `"remove"` (it contributes nothing) or
-  `"adjust"` (its PSU is centred on the mean of all PSU totals).
+  `"fail"` (the default; an error naming it), `"remove"` (it contributes
+  nothing) or `"adjust"` (its PSU is centred on the mean of all PSU
+  totals).
 
 - rscales:
 
@@ -99,7 +110,12 @@ survey_design(
 
 ## Value
 
-An object of class `rmbl_svy_design`.
+An object of class `rmbl_svy_design`: a list with `n` (respondents),
+`weights`, `type` (the replicate type, or `"linearization"`), `scale`
+and `reps` (the replicate scale and weights, `NULL` under
+linearization), `mse`, `strata` and `psu` (integer codes), `lonely_psu`,
+`check` (the row names and digests used to recognise the data later) and
+`degf` (the design degrees of freedom). The print method summarises it.
 
 ## Details
 
@@ -184,6 +200,20 @@ of the weighted linearized values from their stratum mean, summed over
 strata (\\f_h\\ from `fpc`, zero without one). No strata means one
 stratum; no PSUs means every respondent is its own PSU.
 
+Errors: `data` not a data frame or with fewer than two rows; a named
+column that `data` does not have, or a vector of the wrong length;
+weights or replicate weights that are negative, missing or not finite;
+both replicates and strata or PSUs; fewer than two replicates, or
+replicate columns refused for the reasons above; BRR or Fay replicates
+not in a Hadamard order; `type = "jkn"` without `rscales`, or `rscales`
+not one non-negative number per replicate; `rho` not in \[0, 1) for Fay;
+`mean_size` or `degf` below 1; missing strata or PSU labels; an `fpc`
+that is not positive, varies within a stratum, or is smaller than the
+PSUs sampled. Nothing is computed until
+[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+is called, so a single-PSU stratum under `lonely_psu = "fail"` is
+reported then.
+
 ## See also
 
 [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md),
@@ -206,4 +236,15 @@ des
 survey_design(d, weights = "w", strata = "region")
 #> Survey design: 100 respondents, weights summing to 10,175
 #> Variance: Taylor linearization, 2 strata, 100 PSUs
+
+# delete-one jackknife replicates over ten groups of respondents
+grp <- rep(1:10, length.out = 100)
+jk <- sapply(1:10, function(g) ifelse(grp == g, 0, d$w * 10 / 9))
+survey_design(d, weights = "w", replicates = jk, type = "jk1")
+#> Survey design: 100 respondents, weights summing to 10,175
+#> Variance: 10 replicate weights, jackknife (JK1); scale 0.9, centred on the full-sample estimate
+
+# a weight column that does not exist
+try(survey_design(d, weights = "wt"))
+#> Error : `weights` names a column `data` does not have: wt
 ```

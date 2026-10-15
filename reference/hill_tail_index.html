@@ -3,11 +3,17 @@
 power law above a threshold. An exponent near 2 or below means the mean
 is barely defined and the observed maximum is not informative about the
 next one, which is the substantive point when a few units dominate a
-total."><meta property="og:description" content="The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
+total. Use it on counts per unit (placements per person, incidents per
+address) to judge whether the largest values are a heavy tail rather than
+a few outliers, and read ks and reliable before quoting the
+exponent."><meta property="og:description" content="The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
 power law above a threshold. An exponent near 2 or below means the mean
 is barely defined and the observed maximum is not informative about the
 next one, which is the substantive point when a few units dominate a
-total."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+total. Use it on counts per unit (placements per person, incidents per
+address) to judge whether the largest values are a heavy tail rather than
+a few outliers, and read ks and reliable before quoting the
+exponent."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +21,7 @@ total."><meta property="og:image" content="https://rootcoder007.github.io/rmorie
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +66,10 @@ total."><meta property="og:image" content="https://rootcoder007.github.io/rmorie
 power law above a threshold. An exponent near 2 or below means the mean
 is barely defined and the observed maximum is not informative about the
 next one, which is the substantive point when a few units dominate a
-total.</p>
+total. Use it on counts per unit (placements per person, incidents per
+address) to judge whether the largest values are a heavy tail rather than
+a few outliers, and read <code>ks</code> and <code>reliable</code> before quoting the
+exponent.</p>
     </div>
 
     <div class="section level2">
@@ -79,24 +88,27 @@ total.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Positive values, one per unit.</p></dd>
+<dd><p>Numeric vector of positive values, one per unit.</p></dd>
 
 
 <dt id="arg-x-min">x_min<a class="anchor" aria-label="anchor" href="#arg-x-min"></a></dt>
-<dd><p>Threshold above which the power law is fitted.
-A power law is a statement about the tail, so a threshold is required;
-the default takes the value that leaves at least 50 observations, or the
-minimum if the data are smaller than that.</p></dd>
+<dd><p>Numeric scalar or <code>NULL</code> (the default): the threshold at
+and above which the power law is fitted. A power law is a statement about
+the tail, so a threshold is required; <code>NULL</code> takes the 50th largest
+value (which leaves at least 50 observations in the tail), or the
+minimum if there are fewer than 50 values.</p></dd>
 
 
 <dt id="arg-discrete">discrete<a class="anchor" aria-label="anchor" href="#arg-discrete"></a></dt>
-<dd><p>Whether the quantity is integer-valued.
+<dd><p>Logical scalar, default <code>TRUE</code>: whether the quantity
+is integer-valued.
 A count is, and then the likelihood maximised is the zeta
 distribution's, whose normalising constant is a Hurwitz zeta.</p></dd>
 
 
 <dt id="arg-approx">approx<a class="anchor" aria-label="anchor" href="#arg-approx"></a></dt>
-<dd><p>For discrete data, whether to use the
+<dd><p>Logical scalar, default <code>FALSE</code>. For discrete data,
+whether to use the
 closed-form continuity-corrected estimator instead of maximising the
 exact likelihood. It is much faster and much worse: the correction is an
 asymptotic approximation in <code>x_min</code>, and at <code>x_min = 1</code> –
@@ -105,15 +117,19 @@ generated with an exponent of 2.5. Off by default for that reason.</p></dd>
 
 
 <dt id="arg-min-tail">min_tail<a class="anchor" aria-label="anchor" href="#arg-min-tail"></a></dt>
-<dd><p>Fewest tail observations for which an
-estimate is reported at all. Below it there is nothing to estimate from
-and <code>alpha</code> is <code>NA</code>.</p></dd>
+<dd><p>Integer scalar, default <code>3</code>: the fewest tail
+observations for which an estimate is reported at all (values below 2 are
+raised to 2). Below it there is nothing to estimate from and <code>alpha</code>
+is <code>NA</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>alpha</code>, its standard error, <code>x_min</code>,
-<code>n_tail</code>, <code>ks</code> and <code>reliable</code>. <code>ks</code> is the
+    <p>A list with <code>alpha</code> (numeric, the exponent), <code>se</code> (its
+standard error), <code>x_min</code> (the threshold used), <code>n_tail</code>
+(integer, the number of values at or above it), <code>ks</code>, <code>reliable</code>
+(logical) and <code>method</code> (character, the estimator used or why there is
+no estimate). <code>ks</code> is the
 Kolmogorov-Smirnov distance between the fitted tail and the data: a
 large value means the tail is not a power law, whatever <code>alpha</code>
 came out as. <code>reliable</code> is <code>FALSE</code> when fewer than 50
@@ -121,6 +137,33 @@ observations lie in the tail, which is the sample size Clauset, Shalizi
 and Newman give as the point below which the estimate should not be
 leaned on – it is reported rather than enforced, because the right
 response to a short tail is a wider interval, not a refusal.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For a power law \(p(x) \propto x^{-\alpha}\) above \(x_{min}\):</p><ul><li><p>discrete data, exact (the default): the log-likelihood of the
+zeta distribution truncated at \(x_{min}\),
+\(-n \log \zeta(\alpha, x_{min}) - \alpha \sum \log x_i\), is
+maximised over \(\alpha\) in \((1.0001, 25)\) with
+<code><a href="https://rdrr.io/r/stats/optimize.html" class="external-link">stats::optimize()</a></code>; \(\zeta\) is
+<code><a href="hurwitz_zeta.html">hurwitz_zeta()</a></code>. The
+standard error comes from the observed information, by a numerical
+second derivative.</p></li>
+<li><p>continuous data (<code>discrete = FALSE</code>): the Hill estimator
+\(\hat\alpha = 1 + n / \sum \log(x_i / x_{min})\), with standard
+error \((\hat\alpha - 1)/\sqrt{n}\).</p></li>
+<li><p>discrete data with <code>approx = TRUE</code>: the same closed form with
+\(x_{min} - 1/2\) in place of \(x_{min}\).</p></li>
+</ul><p><code>ks</code> is the Kolmogorov-Smirnov distance between the fitted
+distribution and the tail, computed once per distinct value so that ties
+(most counts are ties) are handled correctly.</p>
+<p>Only finite positive values of <code>x</code> are used; the rest are dropped
+silently. When the tail has fewer than <code>min_tail</code> values, or every
+tail value is the same, <code>alpha</code> is <code>NA</code> and <code>method</code> says
+why. An estimate at the optimiser's bound is flagged in <code>method</code> and
+is not <code>reliable</code>. Errors: no positive finite value in <code>x</code>;
+<code>x_min</code> that is not a single positive number (logical, factor and text
+are refused); <code>discrete</code> or <code>approx</code> not <code>TRUE</code> or
+<code>FALSE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -162,6 +205,10 @@ instead. (Not in the local corpus; cited from the published paper.)</p>
 <span class="r-in"><span><span class="co"># Below `min_tail` there is nothing to estimate from.</span></span></span>
 <span class="r-in"><span><span class="fu">hill_tail_index</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span>, x_min <span class="op">=</span> <span class="fl">3</span><span class="op">)</span><span class="op">$</span><span class="va">alpha</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] NA</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the threshold has to be positive</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">hill_tail_index</span><span class="op">(</span><span class="va">z</span>, x_min <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x_min` must be positive</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -13,7 +13,7 @@ machine is available on every machine."><meta property="og:image" content="https
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,7 +67,9 @@ machine is available on every machine.</p>
 
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector of scheme names, <code>"xmss-sha256"</code> first.</p>
+    <p>A character vector of 16 scheme names: <code>"xmss-sha256"</code> first,
+then the three ML-DSA sets, the six SLH-DSA SHA-2 sets and the six
+SLH-DSA SHAKE sets.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -76,7 +78,18 @@ machine is available on every machine.</p>
 standards, taken with <code><a href="fips_keygen.html">fips_keygen()</a></code>: ML-DSA
 (FIPS 204) at all three parameter sets, and SLH-DSA (FIPS 205) at all
 twelve – six over SHAKE and six over SHA-2, which are different schemes
-and not merely different code paths.</p>
+and not merely different code paths. Use it to see which names
+<code><a href="fips_keygen.html">fips_keygen()</a></code>, <code><a href="fips_sizes.html">fips_sizes()</a></code> and
+<code><a href="fips_key.html">fips_key()</a></code> accept, or to choose a
+parameter set.</p>
+<p>The names follow the standards: <code>"ML-DSA-44"</code>, <code>"ML-DSA-65"</code> and
+<code>"ML-DSA-87"</code> (NIST security categories 2, 3 and 5), then
+<code>"SLH-DSA-SHA2-"</code> and <code>"SLH-DSA-SHAKE-"</code> followed by <code>128</code>, <code>192</code>
+or
+<code>256</code> (the security level in bits) and <code>s</code> (small signatures, slow
+signing) or <code>f</code> (fast signing, larger signatures). The function takes
+no arguments, has no side effects and returns the same 16 names in the
+same order on every platform.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -98,6 +111,14 @@ and not merely different code paths.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"xmss-sha256"</span>, <span class="st">"ML-DSA-65"</span>, <span class="st">"SLH-DSA-SHAKE-128s"</span><span class="op">)</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span></span></span>
 <span class="r-in"><span>    <span class="fu">pqc_backends</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The SLH-DSA sets with fast signing, and their signature sizes in bytes.</span></span></span>
+<span class="r-in"><span><span class="va">fast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^SLH-DSA-.*f$"</span>, <span class="fu">pqc_backends</span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">fast</span>, <span class="kw">function</span><span class="op">(</span><span class="va">s</span><span class="op">)</span> <span class="fu"><a href="fips_sizes.html">fips_sizes</a></span><span class="op">(</span><span class="va">s</span><span class="op">)</span><span class="op">[[</span><span class="st">"signature"</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  SLH-DSA-SHA2-128f  SLH-DSA-SHA2-192f  SLH-DSA-SHA2-256f SLH-DSA-SHAKE-128f </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              17088              35664              49856              17088 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> SLH-DSA-SHAKE-192f SLH-DSA-SHAKE-256f </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>              35664              49856 </span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

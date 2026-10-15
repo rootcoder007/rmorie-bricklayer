@@ -2,7 +2,11 @@
 
 Evaluates `expr` and reports the electricity it used and the
 CO2-equivalent that electricity implies, by one of two methods, for the
-grid it ran on, offline.
+grid it ran on, offline. Use it to report the energy and emissions of an
+analysis next to its results (as journals and funders increasingly ask),
+or to compare two ways of running the same computation. The result keeps
+the value of `expr`, and lists every figure that was assumed rather than
+measured.
 
 ## Usage
 
@@ -27,7 +31,8 @@ compute_footprint(
 
 - expr:
 
-  The expression to evaluate.
+  The expression to evaluate. It is evaluated once, in the calling
+  environment, when the function reaches it (lazily, as a promise).
 
 - location:
 
@@ -38,7 +43,9 @@ compute_footprint(
 
 - method:
 
-  `"auto"` (RAPL when readable, else the model), `"rapl"` or `"model"`.
+  Character scalar: `"auto"` (the default; RAPL when readable, else the
+  model), `"rapl"` (measured; an error when the counters are not
+  readable) or `"model"` (always the Green Algorithms model).
 
 - cpu_power_w:
 
@@ -53,7 +60,9 @@ compute_footprint(
 
 - load_curve:
 
-  `"linear"` (Green Algorithms) or `"codecarbon"`.
+  Character scalar: `"linear"` (the default; power proportional to
+  utilisation, as Green Algorithms) or `"codecarbon"` (codecarbon's
+  curves, see Details). Applies only when `cpu_power_w` is given.
 
 - cores:
 
@@ -74,23 +83,33 @@ compute_footprint(
 
   Power usage effectiveness: 1 for a laptop or desktop (default); 1.67
   is the Green Algorithms default for a data centre, 1.56 the Uptime
-  Institute 2024 global average.
+  Institute 2024 global average. Must be a single number of at least 1.
 
 - rapl_dir:
 
-  The powercap directory holding the RAPL domains.
+  Character scalar, the powercap directory holding the RAPL domains;
+  default `"/sys/class/powercap"` (Linux).
 
 - proc_stat:
 
-  The kernel CPU accounting file read for `usage = "machine"`.
+  Character scalar, the kernel CPU accounting file read for
+  `usage = "machine"`; default `"/proc/stat"` (Linux).
 
 ## Value
 
-A list of class `rmbl_footprint`: `value` (the result of `expr`),
-`duration_s`, `cpu_time_s`, `usage`, `usage_mode` (`"process"`,
-`"machine"` or `"fixed"`), `cores`, `memory_gb`, `energy_kwh` (with
-`cpu`, `memory`, `total`), `co2e_g`, `carbon_intensity` (the row used,
-with its year and source), `method`, `assumptions` and `citations`.
+A list of class `rmbl_footprint` with elements `value` (the result of
+`expr`), `duration_s` (numeric, wall seconds), `cpu_time_s` (numeric,
+CPU seconds of this process and its children), `usage` (numeric in
+\\\[0, 1\]\\, the utilisation), `usage_mode` (`"process"`, `"machine"`
+or `"fixed"`), `cores` (integer), `memory_gb` (numeric), `energy_kwh` (a
+list of numerics `cpu`, `memory` and `total`, in kWh, PUE included),
+`co2e_g` (numeric, grams of CO2-equivalent), `carbon_intensity` (the
+list returned by
+[`carbon_intensity`](https://rootcoder007.github.io/rmorie-bricklayer/reference/carbon_intensity.md),
+with its year and source), `method` (`"rapl"` or `"model"`, the method
+actually used), `assumptions` (character vector of every default or
+fallback that stood in for a measurement) and `citations` (character
+vector). The print method shows a three-line summary.
 
 ## Details
 
@@ -107,8 +126,10 @@ is `TRUE`.
 P\_{mem})\\ PUE\$\$ with \\t\\ the running time, \\P\_{cpu}\\ the CPU's
 thermal design power in watts, \\u\\ its utilisation, \\M\\ the memory
 in GB, \\P\_{mem} = 0.3725\\ W/GB and \\PUE\\ the data-centre overhead.
-When the CPU's power is unknown the fallback is codecarbon's: 50\\
-constant 85 W.
+When the CPU's power is unknown (`cpu_power_w = NULL`) the fallback is
+codecarbon's: 50% of a constant 85 W, that is 42.5 W charged for the
+whole running time whatever the measured utilisation (the utilisation is
+still reported, but not applied).
 
 **Utilisation** is measured, not assumed, in one of two ways.
 `usage = "process"` (the default) is this R process's own CPU time,
@@ -122,12 +143,13 @@ is doing or when the question is what the machine drew. Where
 say so. A number between 0 and 1 fixes the utilisation, as the Green
 Algorithms calculator asks for it. `load_curve` chooses how power scales
 with that utilisation: linearly (Green Algorithms) or along codecarbon's
-curves, a floor at 10\\ \\P\_{cpu}\\ for a process and \\0.1 + 0.9 u^3\\
-for a machine, so a figure can be made comparable with either tool.
+curves, a floor at 10% of \\P\_{cpu}\\ for a process and \\0.1 + 0.9
+u^3\\ for a machine, so a figure can be made comparable with either
+tool.
 
 Cross-checked against codecarbon 3.3.1 on one workload with the same
 forced inputs: memory energy identical (5.96 W for 16 GB), CPU energy
-within 8\\ `load_curve = "codecarbon"` reproduces its power-from-load
+within 8%. `load_curve = "codecarbon"` reproduces its power-from-load
 curves, so what remains of the difference is the load measurement itself
 (codecarbon samples the load during the run; this function integrates
 the CPU time).
@@ -142,6 +164,21 @@ time zone or the locale
 and the detection is recorded. Every default that stood in for a
 measurement is listed in `assumptions`, so a report can say what was
 measured and what was assumed.
+
+The energy figures include the PUE factor (CPU, memory and total alike).
+The running time has a floor of the CPU time divided by the cores, so a
+computation faster than the clock's resolution does not come out at
+zero. Short computations (well under a second) give figures dominated by
+timer resolution; measure a representative workload.
+
+Every argument is checked, and the carbon intensity looked up, before
+`expr` is evaluated, so a bad argument never costs the computation.
+Errors: an unknown `location`; `pue` below 1 or not a single finite
+number; `cpu_power_w` or `cores` not a single positive number (`cores`
+also whole); `memory_gb` or `memory_power_w_per_gb` negative; `usage`
+other than `"process"`, `"machine"` or one number in \\\[0, 1\]\\;
+`method = "rapl"` where the counters are not readable. An error inside
+`expr` propagates unchanged. Nothing is written and nothing is fetched.
 
 ## References
 
@@ -158,18 +195,18 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
 fp$energy_kwh$total
-#> [1] 4.02638e-08
+#> [1] 1.342127e-08
 fp$co2e_g
-#> [1] 3.662798e-06
+#> [1] 1.220933e-06
 fp$carbon_intensity$year
 #> [1] 2024
 fp$assumptions
 #> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"
 #> [2] "memory charged: the machine's total 15.6 GB"        
 print(fp)
-#> Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores
-#>   energy: 4.03e-08 kWh (cpu 3.54e-08, memory 4.85e-09)
-#>   CO2e:   3.66e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.001 s wall, 0.001 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 1.34e-08 kWh (cpu 1.18e-08, memory 1.62e-09)
+#>   CO2e:   1.22e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 #>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB 
 # wherever you are, offline: the location is detected and recorded
 compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 8)$assumptions
@@ -178,4 +215,33 @@ compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 8)$assumptions
 compute_footprint(1 + 1, location = "FR", usage = "machine", load_curve = "codecarbon",
                   cpu_power_w = 45, memory_gb = 8)$usage_mode
 #> [1] "machine"
+# a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
+fp2 <- compute_footprint(sum(sqrt(seq_len(2e5))), location = 30, usage = 0.5,
+                         cpu_power_w = 65, memory_gb = 16, pue = 1.67, method = "model")
+fp2$energy_kwh
+#> $cpu
+#> [1] 1.507639e-08
+#> 
+#> $memory
+#> [1] 2.764778e-09
+#> 
+#> $total
+#> [1] 1.784117e-08
+#> 
+footprint_equivalents(fp2$co2e_g)
+#> $car_km
+#> [1] 3.058486e-09
+#> 
+#> $tree_months
+#> [1] 5.836805e-10
+#> 
+#> $sources
+#>                                                                  car 
+#> "175 gCO2/km, European passenger car (Green Algorithms context.csv)" 
+#>                                                                 tree 
+#>             "917 gCO2 per tree-month (Green Algorithms context.csv)" 
+#> 
+# a bad argument is refused before the expression runs
+try(compute_footprint(Sys.sleep(10), pue = 0.9))
+#> Error : `pue` must be a single number >= 1
 ```

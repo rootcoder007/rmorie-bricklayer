@@ -4,7 +4,10 @@ Runs the checks this package provides over one data frame and collects
 the findings into a single report: the structural schema check, the
 distributional comparison against a reference, the missingness picture,
 the multivariate outliers, a Benford screen on the wide numeric columns,
-and the integrity digests.
+and the integrity digests. Use it as the first look at a capsule or a
+fresh extract, before any analysis, and keep the Markdown version
+([`report_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/report_markdown.md))
+with the outputs.
 
 ## Usage
 
@@ -60,20 +63,37 @@ capsule_report(
 
 - alpha:
 
-  Significance level passed to
-  [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md).
+  Numeric scalar, the significance level passed to
+  [`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md);
+  default `0.01`.
 
 - max_rows_outliers:
 
-  Skip the outlier scan above this many rows (default 20000), since it
-  factors a covariance per call.
+  Integer scalar: skip the outlier scan above this many rows (default
+  20000), since it factors a covariance per call.
 
 ## Value
 
-A list of class `bricklayer_report`: `findings` (a data frame of
-`severity`, `check`, `subject`, `detail`) , `verdict` ( `"fatal"`,
-`"warn"`, `"note"` or `"clean"`) , `profile`, `missingness`, `drift`,
-`digest`, and `n_rows` / `n_cols`.
+A list of class `c("bricklayer_report", "list")`: `findings` (a data
+frame of character columns `severity`, `check` (`"schema"`, `"rule"`,
+`"drift"`, `"missing"`, `"shape"`, `"outliers"`, `"benford"` or
+`"signature"`), `subject` (the column, rule or row count concerned) and
+`detail`), `verdict` (the worst severity: `"fatal"`, `"warn"`, `"note"`,
+or `"clean"` when there is no finding), `profile` (from
+[`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)),
+`missingness` (from
+[`missingness_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_summary.md)),
+`drift` (the
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+result, or `NULL` without a reference), `digest` (a list with
+`data_digest`, and with `chunks` also `merkle_root`, `merkle_scheme`
+(the
+[`merkle_root()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_merkle.md)
+hashing scheme, 2) and `n_chunks`, with a signature and key also logical
+`signature_valid`), and `n_rows` / `n_cols`.
+[`print()`](https://rdrr.io/r/base/print.html) shows the verdict and the
+findings; [`summary()`](https://rdrr.io/r/base/summary.html) gives the
+verdict and the count of each severity.
 
 ## Details
 
@@ -84,13 +104,48 @@ the data is fine.
 
 ## What "severity" means
 
-- `fatal` – a required column is missing. Nothing downstream can run.
+- `fatal` – nothing downstream can run as it stands: a schema check or a
+  rule of severity `"fatal"` failed (for example a required column is
+  missing), or a column of the reference is absent from the data.
 
-- `warn` – something moved: a column drifted, a value left its pinned
-  range, missingness rose, a signature did not verify.
+- `warn` – something moved or is badly incomplete: a schema check or a
+  rule of severity `"warning"` failed (a value left its pinned range, a
+  type changed), a column drifted from the reference, a column is
+  entirely missing or more than half missing, or a signature did not
+  verify (or came with no key).
 
-- `note` – worth a look but not necessarily wrong: outliers, a Benford
-  departure, a constant column.
+- `note` – worth a look but not necessarily wrong: a column not in the
+  reference, a column whose drift could not be tested, a contiguous run
+  of missing values (one outage rather than scattered gaps), a constant
+  column, values beyond the Tukey fences, multivariate outliers or
+  collinear columns, a Benford departure.
+
+## How each check runs
+
+The drift comparison is
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+at level `alpha`. The missing run is the longest run from
+[`missing_runs()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missing_runs.md)
+of at least `max(2, nrow(data) %/% 20)` rows. The outlier scan is
+[`mahalanobis_outliers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mahalanobis_outliers.md)
+on the numeric columns that are not constant or entirely missing, run
+only when there are at least two of them, at most `max_rows_outliers`
+rows and more complete rows than columns. The Benford screen
+([`benford_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/benford_test.md))
+runs on a numeric column with at least 200 non-zero finite values whose
+largest absolute value is more than 1,000 times its smallest, and
+reports p below 0.01. The digest is
+[`digest_object()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/digest_object.md)
+of the data; a signature is checked with
+[`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+against that digest.
+
+Findings are sorted by severity, then check, then subject. Nothing is
+written and nothing is fetched. Errors when `data` is not a data frame
+or has no columns, and when `schema` or `rules` are malformed (from
+[`validate_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_schema.md)
+and
+[`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)).
 
 A clean report is not proof the data is correct. It means these
 particular checks found nothing, and every one of them has a stated
@@ -170,4 +225,17 @@ r$findings[, c("severity", "check", "subject")]
 capsule_report(bad[, c("id", "score")], reference = ref,
                schema = infer_schema(ref))$verdict
 #> [1] "fatal"
+
+# validation rules join the findings, and chunks are pinned with a Merkle root
+r2 <- capsule_report(bad, rules = list(rule_in_set("grade", c("a", "b", "c"))),
+                     chunks = c("part one", "part two"))
+summary(r2)
+#> verdict   fatal    warn    note 
+#>  "warn"     "0"     "1"     "0" 
+r2$digest$merkle_root
+#> [1] "271d0c66b493e55e2b9659fda7eddb00b0439d076eb82f36a4b8922d6bd4d062"
+
+# a data frame is required
+try(capsule_report(1:10))
+#> Error : `data` must be a data frame
 ```

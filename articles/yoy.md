@@ -310,13 +310,13 @@ Markdown, for a report:
 ``` r
 
 cat(yoy_markdown(yoy(gap, value = n, period = year), NULL))
-#> | year | n   | previous | change | change % |     interval | note                 |
-#> | ---- | --- | -------- | -----: | -------: | -----------: | -------------------- |
-#> | 2019 | 100 | —        |      — |        — |              | no comparison period |
-#> | 2020 | 120 | 100      |     20 |   +20.0% |  [-9%, +58%] |                      |
-#> | 2021 | —   | 120      |      — |        — |              | no data              |
-#> | 2022 | 140 | —        |      — |        — |              | no comparison period |
-#> | 2023 | 150 | 140      |     10 |    +7.1% | [-15%, +36%] |                      |
+#> | year |   n | previous | change | change % |     interval | note                 |
+#> | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |
+#> | 2019 | 100 |        — |      — |        — |              | no comparison period |
+#> | 2020 | 120 |      100 |     20 |   +20.0% |  [-9%, +58%] |                      |
+#> | 2021 |   — |      120 |      — |        — |              | no data              |
+#> | 2022 | 140 |        — |      — |        — |              | no comparison period |
+#> | 2023 | 150 |      140 |     10 |    +7.1% | [-15%, +36%] |                      |
 #> 
 #> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio_
 ```

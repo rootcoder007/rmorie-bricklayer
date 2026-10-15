@@ -23,7 +23,7 @@ binomial weights)."><meta property="og:image" content="https://rootcoder007.gith
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,24 +85,54 @@ binomial weights).</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>An <code>rmbl_yoy</code> or <code>rmbl_rate_change</code> object, or any data frame
-with a <code>p_value</code> column.</p></dd>
+<dd><p>An <code>rmbl_yoy</code> or <code>rmbl_rate_change</code> object, or any
+data frame with a <code>p_value</code> column.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Adjustment passed to <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code>;
-<code>"BH"</code>
-(false discovery rate) by default, <code>"holm"</code> for family-wise control.</p></dd>
+<dd><p>Character, default <code>"BH"</code>: any method of
+<code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></code> (<code>"BH"</code>, <code>"holm"</code>,
+<code>"bonferroni"</code>, <code>"BY"</code>, <code>"hochberg"</code>, <code>"hommel"</code>,
+<code>"fdr"</code>, <code>"none"</code>).</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Level at which <code>significant</code> is decided.</p></dd>
+<dd><p>Number, default 0.05: the level at which <code>significant</code>
+is decided, applied to the adjusted p-values.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>x</code> with <code>p_value</code> (if it was missing), <code>p_adjusted</code> and
-<code>significant</code>; the class and attributes of <code>x</code> are kept.</p>
+    <p><code>x</code> with <code>p_value</code> (if it was missing),
+<code>p_adjusted</code> (numeric, <code>NA</code> where <code>p_value</code> is) and
+<code>significant</code> (logical) columns; the class and attributes of
+<code>x</code> are kept, and a <code>scan_adjust</code> attribute lists
+<code>method</code>, <code>alpha</code> and <code>tests</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For a <code><a href="rate_change.html">rate_change()</a></code> table, conditional on the two counts' total
+the current count is binomial with success probability
+\(t_a / (t_a + t_b)\), the share of the combined exposure in the
+current period, and the p-value is the two-sided exact binomial test of
+that. Rows without a p-value (no comparison period, both counts zero)
+are left out of the adjustment, so the number of tests is the number of
+rows with a p-value; it is recorded in the <code>scan_adjust</code> attribute.</p>
+<p>The adjustment is <code>stats::p.adjust(p, method)</code>: <code>"BH"</code> controls
+the expected proportion of false discoveries among the rows declared
+significant, which suits a screen; <code>"holm"</code> and <code>"bonferroni"</code>
+control the chance of any false discovery, which a claim about one
+specific row needs. A row is <code>significant</code> when its adjusted p-value
+is strictly below <code>alpha</code>.</p>
+<p>Errors: <code>x</code> not a data frame; no <code>p_value</code> column and not a
+<code><a href="yoy.html">yoy()</a></code> or <code><a href="rate_change.html">rate_change()</a></code> result; a <code><a href="yoy.html">yoy()</a></code> result
+without count units; a p-value outside \([0, 1]\); a method unknown to
+<code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust()</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="yoy_pvalues.html">yoy_pvalues</a></code>, <code><a href="falsify_family.html">falsify_family</a></code> for a
+family of falsification results, <code><a href="drift_calibrate.html">drift_calibrate</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -113,6 +143,20 @@ with a <code>p_value</code> column.</p></dd>
 <span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="yoy.html">yoy</a></span><span class="op">(</span><span class="va">seg</span>, value <span class="op">=</span> <span class="st">"n"</span>, period <span class="op">=</span> <span class="st">"year"</span>, by <span class="op">=</span> <span class="st">"site"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">scan_adjust</span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"site"</span>, <span class="st">"pct_change"</span>, <span class="st">"p_value"</span>, <span class="st">"p_adjusted"</span><span class="op">)</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rmbl_yoy: no periods&gt;</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># family-wise control instead of the false discovery rate</span></span></span>
+<span class="r-in"><span><span class="fu">scan_adjust</span><span class="op">(</span><span class="va">y</span>, method <span class="op">=</span> <span class="st">"holm"</span><span class="op">)</span><span class="op">$</span><span class="va">p_adjusted</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1]        NA 0.3160268        NA 1.0000000        NA 1.0000000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># any table with a p_value column</span></span></span>
+<span class="r-in"><span><span class="fu">scan_adjust</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>test <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span>, p_value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.001</span>, <span class="fl">0.02</span>, <span class="fl">0.4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   test p_value p_adjusted significant</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    a   0.001      0.003        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    b   0.020      0.030        TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    c   0.400      0.400       FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">scan_adjust</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>p_value <span class="op">=</span> <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `p_value` must lie in [0, 1]; row(s) 1 hold 1.5. Nothing outside that range is a probability, so no adjustment or significance decision is made.</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

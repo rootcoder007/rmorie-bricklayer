@@ -3,11 +3,23 @@
 weight, and either a set of replicate weights or the strata
 and primary sampling units (PSUs) for Taylor linearization.
 survey_estimate() and
-survey_compare() take the result."><meta property="og:description" content="Collects what design-based estimation needs: the final
+survey_compare() take the result. Use it once per
+survey file: a
+public-use file from Statistics Canada or Health Canada ships its final
+weight and a set of bootstrap replicate weights, and estimates computed
+without them understate the standard errors. The design checks the
+replicate columns it is given and remembers the rows it was built on, so a
+later estimate cannot silently be run on a reordered or different table."><meta property="og:description" content="Collects what design-based estimation needs: the final
 weight, and either a set of replicate weights or the strata
 and primary sampling units (PSUs) for Taylor linearization.
 survey_estimate() and
-survey_compare() take the result."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+survey_compare() take the result. Use it once per
+survey file: a
+public-use file from Statistics Canada or Health Canada ships its final
+weight and a set of bootstrap replicate weights, and estimates computed
+without them understate the standard errors. The design checks the
+replicate columns it is given and remembers the rows it was built on, so a
+later estimate cannot silently be run on a reordered or different table."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +27,7 @@ survey_compare() take the result."><meta property="og:image" content="https://ro
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +72,13 @@ survey_compare() take the result."><meta property="og:image" content="https://ro
 weight, and either a set of replicate weights or the strata
 and primary sampling units (PSUs) for Taylor linearization.
 <code><a href="survey_estimate.html">survey_estimate()</a></code> and
-<code><a href="survey_compare.html">survey_compare()</a></code> take the result.</p>
+<code><a href="survey_compare.html">survey_compare()</a></code> take the result. Use it once per
+survey file: a
+public-use file from Statistics Canada or Health Canada ships its final
+weight and a set of bootstrap replicate weights, and estimates computed
+without them understate the standard errors. The design checks the
+replicate columns it is given and remembers the rows it was built on, so a
+later estimate cannot silently be run on a reordered or different table.</p>
     </div>
 
     <div class="section level2">
@@ -93,7 +111,7 @@ and primary sampling units (PSUs) for Taylor linearization.
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
 <dd><p>The final (full-sample) weight: a column name
-or a numeric vector.</p></dd>
+or a numeric vector with one non-negative value per row.</p></dd>
 
 
 <dt id="arg-strata-psu">strata, psu<a class="anchor" aria-label="anchor" href="#arg-strata-psu"></a></dt>
@@ -122,26 +140,31 @@ rows must already be in the same order.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>How the replicates were made; see Details.</p></dd>
+<dd><p>How the replicates were made: <code>"bootstrap"</code> (the
+default), <code>"mean_bootstrap"</code>, <code>"jk1"</code>, <code>"jkn"</code>,
+<code>"brr"</code> or <code>"fay"</code>; see Details. Ignored without
+<code>replicates</code>.</p></dd>
 
 
 <dt id="arg-mean-size">mean_size<a class="anchor" aria-label="anchor" href="#arg-mean-size"></a></dt>
 <dd><p>For <code>type = "mean_bootstrap"</code>, the number of
-bootstrap weights averaged into each replicate.</p></dd>
+bootstrap weights averaged into each replicate; default <code>1</code>.</p></dd>
 
 
 <dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
-<dd><p>For <code>type = "fay"</code>, Fay's coefficient.</p></dd>
+<dd><p>For <code>type = "fay"</code>, Fay's coefficient, between 0 and 1;
+default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-mse">mse<a class="anchor" aria-label="anchor" href="#arg-mse"></a></dt>
-<dd><p>Centre replicate deviations on the full-sample
-estimate (<code>TRUE</code>) or on the mean of the replicate estimates.</p></dd>
+<dd><p>Logical scalar, default <code>TRUE</code>: centre replicate deviations
+on the full-sample estimate (<code>TRUE</code>) or on the mean of the replicate
+estimates (<code>FALSE</code>).</p></dd>
 
 
 <dt id="arg-lonely-psu">lonely_psu<a class="anchor" aria-label="anchor" href="#arg-lonely-psu"></a></dt>
 <dd><p>What to do with a stratum that has a single
-PSU under linearization: <code>"fail"</code> (an error naming it),
+PSU under linearization: <code>"fail"</code> (the default; an error naming it),
 <code>"remove"</code> (it contributes nothing) or <code>"adjust"</code> (its PSU is
 centred on the mean of all PSU totals).</p></dd>
 
@@ -160,7 +183,14 @@ computed as described in Details.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object of class <code>rmbl_svy_design</code>.</p>
+    <p>An object of class <code>rmbl_svy_design</code>: a list with <code>n</code>
+(respondents), <code>weights</code>, <code>type</code> (the replicate type, or
+<code>"linearization"</code>), <code>scale</code> and <code>reps</code> (the replicate
+scale and weights, <code>NULL</code> under linearization), <code>mse</code>,
+<code>strata</code> and <code>psu</code> (integer codes), <code>lonely_psu</code>,
+<code>check</code> (the row names and digests used to recognise the data
+later) and <code>degf</code> (the design degrees of freedom). The print method
+summarises it.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -243,6 +273,19 @@ of squared deviations of the PSU totals of the weighted
 linearized values from their stratum mean, summed over strata
 (\(f_h\) from <code>fpc</code>, zero without one). No strata means one
 stratum; no PSUs means every respondent is its own PSU.</p>
+<p>Errors: <code>data</code> not a data frame or with fewer than two rows; a named
+column that <code>data</code> does not have, or a vector of the wrong length;
+weights or replicate weights that are negative, missing or not finite;
+both replicates and strata or PSUs; fewer than two replicates, or
+replicate columns refused for the reasons above; BRR or Fay replicates not
+in a Hadamard order; <code>type = "jkn"</code> without <code>rscales</code>, or
+<code>rscales</code> not one non-negative number per replicate; <code>rho</code> not
+in [0, 1) for Fay; <code>mean_size</code> or <code>degf</code> below 1; missing
+strata or PSU labels; an <code>fpc</code> that is not positive, varies within a
+stratum, or is smaller than the PSUs sampled.
+Nothing is computed until <code><a href="survey_estimate.html">survey_estimate()</a></code> is called,
+so a single-PSU
+stratum under <code>lonely_psu = "fail"</code> is reported then.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -266,6 +309,17 @@ stratum; no PSUs means every respondent is its own PSU.</p>
 <span class="r-in"><span><span class="fu">survey_design</span><span class="op">(</span><span class="va">d</span>, weights <span class="op">=</span> <span class="st">"w"</span>, strata <span class="op">=</span> <span class="st">"region"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Survey design: 100 respondents, weights summing to 10,175</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Variance: Taylor linearization, 2 strata, 100 PSUs</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># delete-one jackknife replicates over ten groups of respondents</span></span></span>
+<span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">jk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, <span class="kw">function</span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">grp</span> <span class="op">==</span> <span class="va">g</span>, <span class="fl">0</span>, <span class="va">d</span><span class="op">$</span><span class="va">w</span> <span class="op">*</span> <span class="fl">10</span> <span class="op">/</span> <span class="fl">9</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">survey_design</span><span class="op">(</span><span class="va">d</span>, weights <span class="op">=</span> <span class="st">"w"</span>, replicates <span class="op">=</span> <span class="va">jk</span>, type <span class="op">=</span> <span class="st">"jk1"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Survey design: 100 respondents, weights summing to 10,175</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Variance: 10 replicate weights, jackknife (JK1); scale 0.9, centred on the full-sample estimate</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a weight column that does not exist</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">survey_design</span><span class="op">(</span><span class="va">d</span>, weights <span class="op">=</span> <span class="st">"wt"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `weights` names a column `data` does not have: wt</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

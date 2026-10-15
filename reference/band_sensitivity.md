@@ -1,9 +1,11 @@
 # How much a result depends on the open band's assumed cap
 
-Recomputes a statistic across a range of assumed caps for the open top
-band and reports how far the answer moves. Everything derived from
-banded data carries this dependence; the only question is whether it was
-measured.
+Recomputes a statistic of banded data (by default the Gini coefficient)
+for a range of assumed caps on the open top band, and reports how far
+the answer moves. Every statistic computed from banded data depends on
+where the open band is assumed to end; this function measures that
+dependence, so you can report a range instead of a single figure when
+the dependence is large.
 
 ## Usage
 
@@ -25,27 +27,31 @@ print(x, ...)
 - bands:
 
   A data frame from
-  [`parse_bands()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md),
+  [`parse_bands`](https://rootcoder007.github.io/rmorie-bricklayer/reference/parse_bands.md),
   or labels to parse.
 
 - counts:
 
-  How many units fall in each band.
+  Numeric vector, one per band: how many units fall in each band.
+  Non-integer counts are truncated by
+  [`rep()`](https://rdrr.io/r/base/rep.html).
 
 - statistic:
 
-  A function of a numeric vector of per-unit values. Defaults to
-  [`gini()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md).
+  A function that takes a numeric vector of per-unit values and returns
+  one number. Default
+  [`gini`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md).
 
 - caps:
 
-  Caps to try for the open top band. Defaults to a geometric sweep from
-  the band's lower bound to twenty times it.
+  Numeric vector of caps to try, in the units of the labels. Default
+  `NULL`: the geometric sweep described in Details. Values are sorted
+  and de-duplicated.
 
 - rule:
 
-  Passed to
-  [`band_values()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md).
+  Character, default `"midpoint"`: the placement rule passed to
+  [`band_values`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md).
 
 - x:
 
@@ -57,9 +63,26 @@ print(x, ...)
 
 ## Value
 
-A data frame of `cap` and `value`, with the span and the relative span
-attached as attributes and printed by
-[`print()`](https://rdrr.io/r/base/print.html).
+A data frame of class `c("rmbl_band_sensitivity", "data.frame")` with
+numeric columns `cap` and `value`, and attributes `span`,
+`relative_span` and `base` (the lower bound \\b\\ of the open band).
+
+## Details
+
+Let \\b\\ be the smallest lower bound among the open top bands. The
+default caps are 12 points spaced evenly on the log scale from \\1.05
+b\\ to \\20 b\\. For each cap \\c\\,
+[`band_values`](https://rootcoder007.github.io/rmorie-bricklayer/reference/band_values.md)`(bands, rule, open_upper_cap = c)`
+gives one value per band, each value is repeated `counts` times, and
+`statistic` is applied to the result. A statistic that errors or does
+not return a single number gives `NA`; warnings are suppressed.
+
+The span is \\\max - \min\\ over the finite values and the relative span
+is the span divided by the median absolute value (`NA` when any value is
+zero). The print method adds a note when the relative span exceeds 0.1.
+
+Errors: `counts` not numeric or of a different length from the bands; no
+open top band.
 
 ## Examples
 
@@ -89,28 +112,25 @@ s
 #>   caps tried, so it is a property of the assumption as much as
 #>   of the data. Report the range, not a single figure.
 #> ────────────────────────────────────────────────────────────────── 
+attr(s, "relative_span")
+#> [1] 0.5366908
 
 # A statistic that barely moves has been measured; one that swings
 # has not.
-band_sensitivity(b, counts, statistic = mean)
+band_sensitivity(b, counts, statistic = mean, caps = c(12, 20, 50))
 #> ── Sensitivity to the open top band's assumed cap ──────────────── 
-#>        cap    value
-#>   11.55000 2.257283
-#>   15.09841 2.295202
-#>   19.73696 2.344771
-#>   25.80058 2.409567
-#>   33.72707 2.494271
-#>   44.08875 2.604998
-#>   57.63375 2.749742
-#>   75.34008 2.938955
-#>   98.48616 3.186298
-#>  128.74322 3.509629
-#>  168.29590 3.932296
-#>  220.00000 4.484814
+#>  cap    value
+#>   12 2.262092
+#>   20 2.347582
+#>   50 2.668166
 #> 
-#>   span over the caps tried: 2.228 (83.2% of the typical value)
+#>   span over the caps tried: 0.4061 (17.3% of the typical value)
 #>   The statistic moves by more than a tenth of itself across the
 #>   caps tried, so it is a property of the assumption as much as
 #>   of the data. Report the range, not a single figure.
 #> ────────────────────────────────────────────────────────────────── 
+
+# nothing to vary without an open band
+try(band_sensitivity(c("1", "2 to 5"), c(10, 4)))
+#> Error : no open upper band, so there is nothing to be sensitive to
 ```

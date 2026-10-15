@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -342,13 +342,13 @@ period) travels with it:</p>
 <p>Markdown, for a report:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy_delim.html">yoy_markdown</a></span><span class="op">(</span><span class="fu"><a href="../reference/yoy.html">yoy</a></span><span class="op">(</span><span class="va">gap</span>, value <span class="op">=</span> <span class="va">n</span>, period <span class="op">=</span> <span class="va">year</span><span class="op">)</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; | year | n   | previous | change | change % |     interval | note                 |</span></span>
-<span><span class="co">#&gt; | ---- | --- | -------- | -----: | -------: | -----------: | -------------------- |</span></span>
-<span><span class="co">#&gt; | 2019 | 100 | —        |      — |        — |              | no comparison period |</span></span>
-<span><span class="co">#&gt; | 2020 | 120 | 100      |     20 |   +20.0% |  [-9%, +58%] |                      |</span></span>
-<span><span class="co">#&gt; | 2021 | —   | 120      |      — |        — |              | no data              |</span></span>
-<span><span class="co">#&gt; | 2022 | 140 | —        |      — |        — |              | no comparison period |</span></span>
-<span><span class="co">#&gt; | 2023 | 150 | 140      |     10 |    +7.1% | [-15%, +36%] |                      |</span></span>
+<span><span class="co">#&gt; | year |   n | previous | change | change % |     interval | note                 |</span></span>
+<span><span class="co">#&gt; | ---- | --: | -------: | -----: | -------: | -----------: | -------------------- |</span></span>
+<span><span class="co">#&gt; | 2019 | 100 |        — |      — |        — |              | no comparison period |</span></span>
+<span><span class="co">#&gt; | 2020 | 120 |      100 |     20 |   +20.0% |  [-9%, +58%] |                      |</span></span>
+<span><span class="co">#&gt; | 2021 |   — |      120 |      — |        — |              | no data              |</span></span>
+<span><span class="co">#&gt; | 2022 | 140 |        — |      — |        — |              | no comparison period |</span></span>
+<span><span class="co">#&gt; | 2023 | 150 |      140 |     10 |    +7.1% | [-15%, +36%] |                      |</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio_</span></span></code></pre></div>
 <p>The HTML is a single self-contained file: it makes no network

@@ -3,11 +3,19 @@
 and \(1/(1-e)\) for the untreated, with the propensity score clamped
 into [trim_lo, trim_hi] FIRST. Clamping matters: an untrimmed
 score near 0 or 1 produces a weight large enough for one observation to
-dominate the entire estimate."><meta property="og:description" content="The inverse-probability-of-treatment weights \(1/e\) for the treated
+dominate the entire estimate. These weights reweight a treated and an
+untreated group so that each resembles the whole sample on the
+covariates behind the propensity score, the basis of
+inverse-probability-weighted estimates of a treatment effect
+(Rosenbaum and Rubin, 1983)."><meta property="og:description" content="The inverse-probability-of-treatment weights \(1/e\) for the treated
 and \(1/(1-e)\) for the untreated, with the propensity score clamped
 into [trim_lo, trim_hi] FIRST. Clamping matters: an untrimmed
 score near 0 or 1 produces a weight large enough for one observation to
-dominate the entire estimate."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+dominate the entire estimate. These weights reweight a treated and an
+untreated group so that each resembles the whole sample on the
+covariates behind the propensity score, the basis of
+inverse-probability-weighted estimates of a treatment effect
+(Rosenbaum and Rubin, 1983)."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +23,7 @@ dominate the entire estimate."><meta property="og:image" content="https://rootco
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +68,11 @@ dominate the entire estimate."><meta property="og:image" content="https://rootco
 and \(1/(1-e)\) for the untreated, with the propensity score clamped
 into <code>[trim_lo, trim_hi]</code> FIRST. Clamping matters: an untrimmed
 score near 0 or 1 produces a weight large enough for one observation to
-dominate the entire estimate.</p>
+dominate the entire estimate. These weights reweight a treated and an
+untreated group so that each resembles the whole sample on the
+covariates behind the propensity score, the basis of
+inverse-probability-weighted estimates of a treatment effect
+(Rosenbaum and Rubin, 1983).</p>
     </div>
 
     <div class="section level2">
@@ -73,23 +85,52 @@ dominate the entire estimate.</p>
 
 
 <dl><dt id="arg-treat">treat<a class="anchor" aria-label="anchor" href="#arg-treat"></a></dt>
-<dd><p>Numeric or logical treatment indicator;
-<code>1</code> / <code>TRUE</code> is treated.</p></dd>
+<dd><p>Numeric or logical treatment indicator, coded 0/1
+(<code>1</code> / <code>TRUE</code> is treated); <code>NA</code> allowed.</p></dd>
 
 
 <dt id="arg-propensity">propensity<a class="anchor" aria-label="anchor" href="#arg-propensity"></a></dt>
-<dd><p>Numeric vector of propensity scores,
-the same length as <code>treat</code>.</p></dd>
+<dd><p>Numeric vector of propensity scores (the estimated
+probability of treatment), each in \([0, 1]\), the same length as
+<code>treat</code>; <code>NA</code> allowed.</p></dd>
 
 
 <dt id="arg-trim-lo-trim-hi">trim_lo, trim_hi<a class="anchor" aria-label="anchor" href="#arg-trim-lo-trim-hi"></a></dt>
-<dd><p>Clamp bounds for the score
-(defaults 0.01 and 0.99).</p></dd>
+<dd><p>Clamp bounds for the score, single numbers with
+<code>0 &lt; trim_lo &lt; trim_hi &lt; 1</code> (defaults 0.01 and 0.99).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A numeric vector of weights the length of <code>treat</code>.</p>
+    <p>A numeric vector of weights the length of <code>treat</code>, each at
+least 1 (and at most <code>1 / trim_lo</code> or <code>1 / (1 - trim_hi)</code>), <code>NA</code>
+where
+the treatment or propensity is missing.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For unit \(i\) with treatment \(T_i\) and propensity \(e_i\),
+the clamped score is \(\tilde e_i = \min(\max(e_i, l), u)\) with
+\(l\) = <code>trim_lo</code> and \(u\) = <code>trim_hi</code>, and the weight is
+\(1 / \tilde e_i\) when \(T_i = 1\) and \(1 / (1 - \tilde e_i)\)
+when \(T_i = 0\). With the defaults no weight exceeds 100.</p>
+<p>Refusals: vectors of different lengths, a treatment coded other than
+0/1 (<code>"treat must be coded 0/1"</code>, naming the offending values), a
+propensity outside \([0, 1]\), and bounds that do not satisfy
+\(0 &lt; l &lt; u &lt; 1\). A missing treatment or propensity gives a missing
+weight for that unit only. The weights are not normalised; divide by
+their sum within each arm for stabilised (Hajek) estimates.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Rosenbaum PR, Rubin DB (1983). The central role of the
+propensity score in observational studies for causal effects.
+<em>Biometrika</em> 70(1), 41–55. <a href="https://doi.org/10.1093/biomet/70.1.41" class="external-link">doi:10.1093/biomet/70.1.41</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="core_weighted.html">core_weighted()</a></code> to average an outcome with
+these weights.</p></div>
     </div>
 
     <div class="section level2">
@@ -113,6 +154,10 @@ the same length as <code>treat</code>.</p></dd>
 <span class="r-in"><span><span class="co"># Logical treatment indicators work too.</span></span></span>
 <span class="r-in"><span><span class="fu">core_ipw_weights</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">TRUE</span>, <span class="cn">FALSE</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">0.4</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.500000 1.666667</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A treatment coded 1/2 is refused rather than read as all-control.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">core_ipw_weights</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `treat` must be coded 0/1 (got values 2)</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

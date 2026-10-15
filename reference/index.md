@@ -151,6 +151,8 @@ help; the rmoriebricklayer shell command.
   : Curated datasets at data.rmorie.com
 - [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
   : Download a file with live progress
+- [`bricklayer_progress()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_progress.md)
+  : Live progress for long-running work
 - [`bricklayer_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_cli.md)
   : Run the rmoriebricklayer command line
 - [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
@@ -307,7 +309,7 @@ package computes with one copy of the arithmetic.
   [`core_dist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_spread.md)
   : Standard deviation and Euclidean distance (C backend)
 - [`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
-  : Mean, variance, skewness and kurtosis in one pass (C backend)
+  : Mean, variance, skewness and kurtosis (C backend)
 - [`core_quantile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
   [`core_median()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
   [`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)

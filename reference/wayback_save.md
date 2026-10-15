@@ -1,5 +1,11 @@
 # Archive many pages in the Wayback Machine
 
+Asks the Internet Archive to take a dated copy of each web page or file
+in a list, so that the exact source an analysis used (a statistics page,
+a data download, a policy document) can be cited and checked later even
+if the original changes or disappears. It needs a free archive.org
+account and its API keys.
+
 Saves every URL in the Internet Archive's Wayback Machine with Save Page
 Now 2, the API archive.org offers to account holders, keeping several
 captures in flight at once while keeping to archive.org's rate limits. A
@@ -111,6 +117,22 @@ for the day. A server error or a lost connection is retried with
 back-off, up to six times per URL; status checks that fail back off the
 same way. A refused key (HTTP 401 or 403) stops the run.
 
+A run of many URLs is slow by design: at the default 6 captures a
+minute, 1,000 URLs take close to three hours. URLs already finished in
+`output` are skipped, so a run can be stopped and restarted.
+
+Network: every request goes to <https://web.archive.org>; the keys
+travel in the `Authorization` header and are never written to `output`
+or printed.
+
+Errors, all raised before anything is sent: no usable URL; a URL with an
+invisible or control character, or not starting with `http://` or
+`https://`; missing keys, or keys that are not letters and digits;
+`within` not of the form `"30d"`; `jobs` outside 1 to 12; `poll` below
+1; `max_wait` below `poll`; `per_minute` outside (0, 60\];
+`max_captures` below 1; `capture_all` not `TRUE` or `FALSE`; an `output`
+whose folder does not exist or that cannot be written.
+
 ## References
 
 Internet Archive. Save Page Now 2 (SPN2) public API.
@@ -126,6 +148,17 @@ to look up an existing capture;
 ## Examples
 
 ``` r
+# The checks run before any request, so these need no network or keys:
+try(wayback_save("ftp://example.org/report.pdf"))
+#> Error : not an http(s) URL: ftp://example.org/report.pdf
+try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+                 jobs = 20))
+#> Error : `jobs` must be a whole number from 1 to 12
+try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+                 output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
+#> Error : the folder for `output` does not exist: /tmp/RtmpZSI4mI/no-such-folder
+
+# A real run needs archive.org keys and the network.
 if (FALSE) { # \dontrun{
 Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")

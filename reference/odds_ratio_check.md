@@ -1,13 +1,14 @@
 # Check reported odds ratios against a labelled table, under every relabelling
 
-Given a k-by-2 table of counts (rows = groups, columns = outcome absent,
-outcome present), a reference group and the odds ratios a report states
-for the other groups, this recomputes the odds ratios from the table and
-then under every permutation of the row labels (and with the outcome
-columns swapped). It says whether the reported values follow from the
-table as labelled and, if not, which relabelling reproduces them. A
-four-fold odds ratio that a report gives as thirty-six-fold is typically
-reproduced exactly by one such permutation.
+Recomputes the odds ratios a report gives for each group from the
+underlying table of counts, and says whether the reported values follow
+from the table as it is labelled. If they do not, it tries every
+reassignment of the group labels (and the two outcome columns swapped)
+and lists the relabellings that do reproduce the reported values. Use it
+when a published odds ratio looks implausible: a four-fold ratio
+reported as thirty-six-fold is typically reproduced exactly by one such
+relabelling, which shows the groups were mislabelled rather than the
+arithmetic wrong.
 
 ## Usage
 
@@ -19,26 +20,53 @@ odds_ratio_check(counts, reference, reported, tolerance = 0.05)
 
 - counts:
 
-  Numeric matrix with row names (groups) and two columns (outcome
-  absent, outcome present), in that order.
+  Numeric matrix, data frame or table of counts with row names (the
+  groups) and exactly two columns: outcome absent, then outcome present.
 
 - reference:
 
-  Row name of the reference group.
+  Character string: the row name of the reference group.
 
 - reported:
 
-  Named numeric vector of the reported odds ratios, one per
-  non-reference row.
+  Named numeric vector of the odds ratios the report states, one per
+  non-reference group, named by group. Extra names are ignored.
 
 - tolerance:
 
-  Relative tolerance for a match (default 0.05).
+  Number, default `0.05`: the relative tolerance for a match (5
+  percent), to allow for rounding in the report.
 
 ## Value
 
-A list: `computed`, `reported`, `consistent`, `matches` (a data frame of
-the relabellings that reproduce the reported values) and `verdict`.
+A list with elements `computed` (named numeric odds ratios from the
+table as labelled), `reported` (the reported values, in the same order),
+`consistent` (logical), `matches` (a data frame with character
+`relabelling`, for example `"B -> C, C -> B"`, and logical
+`outcome_columns_swapped`, one row per relabelling that reproduces the
+reported values) and `verdict` (a one-sentence character summary).
+
+## Details
+
+With row \\r\\ holding \\a_r\\ (outcome absent) and \\b_r\\ (outcome
+present), the odds ratio of group \\r\\ against the reference \\0\\ is
+\$\$OR_r = \frac{b_r / a_r}{b_0 / a_0}.\$\$ A reported value matches
+when \\\|OR_r - \widehat{OR}\_r\| \le\\ `tolerance` \\\times
+\|\widehat{OR}\_r\|\\ for every non-reference group, and all values are
+finite. The search covers all \\k!\\ permutations of the row labels,
+each with and without the outcome columns swapped (the identity without
+a swap is the "as labelled" check), and is only run for \\k \le 7\\
+groups. A zero cell gives an infinite or undefined odds ratio, which
+never matches.
+
+Errors: `counts` not a matrix, data frame or table with two columns and
+row names; `reference` not a row name; `reported` not named by every
+non-reference row.
+
+## See also
+
+[`verify_marginals`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_marginals.md),
+[`relabel_forensics`](https://rootcoder007.github.io/rmorie-bricklayer/reference/relabel_forensics.md).
 
 ## Examples
 
@@ -47,6 +75,19 @@ tab <- matrix(c(900, 100, 700, 300, 400, 600),
   ncol = 2, byrow = TRUE,
   dimnames = list(c("A", "B", "C"), c("no", "yes"))
 )
-odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))$verdict
+# the odds ratios as labelled: B 3.86, C 13.5
+odds_ratio_check(tab, "A", c(B = 3.857, C = 13.5))$consistent
+#> [1] TRUE
+
+# a report that swapped B and C
+chk <- odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))
+chk$matches
+#>      relabelling outcome_columns_swapped
+#> 1 B -> C, C -> B                   FALSE
+chk$verdict
 #> [1] "the reported odds ratios do NOT follow from the table as labelled; they are reproduced under a relabelling (B -> C, C -> B): the groups were mislabelled, not the software"
+
+# every non-reference group needs a reported value
+try(odds_ratio_check(tab, "A", c(B = 3.857)))
+#> Error : odds_ratio_check: `reported` must be named by every non-reference row: ‘B’, ‘C’
 ```

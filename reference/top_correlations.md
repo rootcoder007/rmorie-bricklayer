@@ -1,8 +1,10 @@
 # Strongest pairwise correlations in a data frame
 
-Ranks the numeric column pairs by the strength of their association, so
-a wide table's structure can be read without squinting at a correlation
-matrix.
+Ranks the numeric column pairs by the strength of their association and
+returns the strongest, so a wide table's structure can be read without
+squinting at a correlation matrix. Use it on a new data set to find
+near-duplicate columns, derived columns and the relationships worth a
+closer look.
 
 ## Usage
 
@@ -18,7 +20,7 @@ top_correlations(data, n = 10L, method = c("spearman", "pearson"), min_abs = 0)
 
 - n:
 
-  Number of pairs to return (default 10).
+  Number of pairs to return, one positive whole number (default 10).
 
 - method:
 
@@ -26,12 +28,16 @@ top_correlations(data, n = 10L, method = c("spearman", "pearson"), min_abs = 0)
 
 - min_abs:
 
-  Report only pairs whose absolute correlation reaches this (default 0).
+  Report only pairs whose absolute correlation reaches this, a number in
+  \\\[0, 1\]\\ (default 0).
 
 ## Value
 
-A data frame of class `bricklayer_correlations` with `x`, `y`,
-`correlation` and `abs_correlation`, strongest first.
+A data frame of class `c("bricklayer_correlations", "data.frame")` with
+`x` and `y` (character, column names), `correlation` (numeric) and
+`abs_correlation` (numeric), strongest first, at most `n` rows; the
+method is in `attr(, "method")`. The print method draws a signed bar per
+pair.
 
 ## Details
 
@@ -41,10 +47,24 @@ monotone but curved, and a single outlier can manufacture or destroy it.
 On data you have not yet inspected – which is the situation this
 function is for – the rank correlation is the safer question to ask.
 
+Non-numeric columns are ignored. Each pair uses the rows where both
+values are present; a pair with fewer than three such rows, or with a
+constant column, has no correlation and is left out. Pairs are ranked by
+absolute correlation, those below `min_abs` dropped, and the first `n`
+returned.
+[`correlation_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.md)
+gives every pair, with the number of rows behind each. A progress bar is
+drawn on stderr for many pairs unless `options(morie.quiet = TRUE)`.
+
+Errors: `data` not a data frame; fewer than two numeric columns; `n` not
+one positive whole number; `min_abs` not one number in \\\[0, 1\]\\; an
+invalid `method`.
+
 ## See also
 
 [`core_cor_spearman()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_rank.md),
-[`core_cov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_cov.md)
+[`core_cov()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_cov.md),
+[`correlation_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/correlation_table.md)
 
 ## Examples
 
@@ -79,12 +99,15 @@ tp <- top_correlations(df, method = "pearson")
 tp[tp$x == "a" & tp$y == "d", "correlation"]
 #> [1] 0.8496382
 
-# Filter to the pairs worth looking at.
-top_correlations(df, min_abs = 0.5)
+# Filter to the pairs worth looking at, and keep the top two.
+top_correlations(df, n = 2, min_abs = 0.5)
 #> ── Top correlations (spearman) ─────────────────────────────────── 
 #>  x y correlation                  plot
 #>  a d       1.000           |##########
 #>  a c       0.998           |##########
-#>  c d       0.998           |##########
 #> ────────────────────────────────────────────────────────────────── 
+
+# a threshold above 1 is an error
+try(top_correlations(df, min_abs = 2))
+#> Error : `min_abs` must be a single value in [0, 1]
 ```

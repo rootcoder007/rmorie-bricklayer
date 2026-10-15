@@ -3,6 +3,13 @@
 Finds the maximal stretches of consecutive `NA` in each column, with
 where each begins and how long it is.
 
+Row order carries meaning in a capsule far more often than people allow
+for – a time series, an ordered export, a paginated download – and a
+long unbroken run of missingness means something different from the same
+count scattered about. A run says an instrument was down, a page failed
+to fetch, or a period was never collected; scattered gaps say individual
+records failed. The rate cannot distinguish them.
+
 ## Usage
 
 ``` r
@@ -13,27 +20,30 @@ missing_runs(data, min_run = 2L)
 
 - data:
 
-  A data frame.
+  A data frame, in the row order that carries meaning.
 
 - min_run:
 
-  Report only runs at least this long (default 2, since a run of 1 is an
-  isolated gap).
+  Whole number, default 2: report only runs at least this long (a run of
+  1 is an isolated gap).
 
 ## Value
 
-A data frame of class `bricklayer_runs` with `column`, `start`, `end`
-and `length`, longest first. Zero rows when there are no qualifying
-runs.
+A data frame of class `bricklayer_runs` with `column` (character),
+`start` and `end` (integer row numbers, inclusive) and `length`
+(integer), longest first and then by column name. Zero rows when there
+are no qualifying runs.
 
 ## Details
 
-Row order carries meaning in a capsule far more often than people allow
-for – a time series, an ordered export, a paginated download – and a
-long unbroken run of missingness means something different from the same
-count scattered about. A run says an instrument was down, a page failed
-to fetch, or a period was never collected; scattered gaps say individual
-records failed. The rate cannot distinguish them.
+Each column's missingness indicator `is.na(x)` is run-length encoded
+with [`rle()`](https://rdrr.io/r/base/rle.html); every run of `TRUE`
+with length at least `min_run` is reported. Rows are taken in their
+current order, so sort the data by time (or by download order) first. A
+list column counts an element as missing only when
+[`is.na()`](https://rdrr.io/r/base/NA.html) says so. Errors: `data` not
+a data frame or without columns, or with duplicated or empty names;
+`min_run` not a positive whole number.
 
 ## See also
 
@@ -75,4 +85,7 @@ missing_runs(data.frame(x = 1:5))
 #> ── Runs of consecutive missing values ──────────────────────────── 
 #>   (none)
 #> ────────────────────────────────────────────────────────────────── 
+
+try(missing_runs(df, min_run = 0))
+#> Error : `min_run` must be a single positive integer
 ```

@@ -19,7 +19,7 @@ cannot be replayed at another index or under another key.'><meta property="og:im
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -111,13 +111,31 @@ check a signature that arrived without that field.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A length-1 logical.</p>
+    <p><code>TRUE</code> or <code>FALSE</code> (a length-1 logical, never <code>NA</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Returns <code>FALSE</code> rather than erroring on a malformed or truncated
 signature: a verifier must treat unparseable input as "not verified",
 never as an exception to be caught and ignored.</p>
+<p><code>TRUE</code> means the signature is valid for <code>message</code> under <code>key</code> (and, for
+the standardised schemes, <code>context</code> and the pre-hash). Verification
+needs only public material, except for HMAC, where the verifier holds
+the same secret as the signer and could therefore also sign. HMAC tags
+are compared in constant time.</p>
+<p>Only two inputs are errors rather than <code>FALSE</code>: a <code>signature</code> that is not
+a <code>bricklayer_signature</code> at all, and, for an XMSS signature, a key that
+is not a key object (a string, say) or a <code>message</code> that is not one
+string or a raw vector. A key or signature whose class, scheme or fields were edited
+returns <code>FALSE</code>. An XMSS signature object written by 0.5.9 to 0.5.12
+(one that carries a <code>key_state</code> field) still verifies, with a warning
+that it exposed the signer's private key.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="capsule_sign.html">capsule_sign()</a></code>,
+<code><a href="signing_public_key.html">signing_public_key()</a></code>,
+<code><a href="fips_keygen.html">fips_public_key()</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -145,6 +163,15 @@ never as an exception to be caught and ignored.</p>
 <span class="r-in"><span><span class="va">trunc</span> <span class="op">&lt;-</span> <span class="va">sig</span>; <span class="va">trunc</span><span class="op">$</span><span class="va">signature</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substring</a></span><span class="op">(</span><span class="va">sig</span><span class="op">$</span><span class="va">signature</span>, <span class="fl">1</span>, <span class="fl">64</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">capsule_verify</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">trunc</span>, <span class="va">pub</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># HMAC: the verifier holds the same secret.</span></span></span>
+<span class="r-in"><span><span class="va">tag</span> <span class="op">&lt;-</span> <span class="fu"><a href="capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="st">"shared-secret"</span>, scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">capsule_verify</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="va">tag</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Something that is not a signature at all is an error, not FALSE.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">capsule_verify</span><span class="op">(</span><span class="st">"pinned-manifest"</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>signature <span class="op">=</span> <span class="st">"00"</span><span class="op">)</span>, <span class="va">pub</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `signature` must come from capsule_sign()</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

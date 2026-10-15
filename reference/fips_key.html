@@ -17,7 +17,7 @@ refused here rather than producing a signature nothing can verify."><meta proper
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,13 @@ verification-only key.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>bricklayer_fips_key</code> when <code>secret</code> is given,
-otherwise a <code>bricklayer_fips_public_key</code>.</p>
+    <p>A <code>bricklayer_fips_key</code> (<code>public</code>, <code>secret</code>, <code>scheme</code>)
+when
+<code>secret</code> is given, otherwise a <code>bricklayer_fips_public_key</code>
+(<code>public</code>,
+<code>scheme</code>); keys are held as lowercase hex, as
+<code><a href="fips_keygen.html">fips_keygen()</a></code> returns
+them.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -101,6 +106,14 @@ interoperable: an ML-DSA secret key is
 <code>rho || K || tr || s1 || s2 || t0</code> and an SLH-DSA one is
 <code>SK.seed || SK.prf || PK.seed || PK.root</code>, exactly as FIPS 204 and
 FIPS 205 encode them.</p>
+<p>Hex input may be upper or lower case and is stored lower case; raw
+input is converted to hex. Only the lengths are checked (against
+<code><a href="fips_sizes.html">fips_sizes()</a></code>): a secret key that does not belong to the
+public key is
+not detected here, and gives signatures that do not verify under that
+public key. Refusals: an unknown scheme, and material that is not hex of
+an even length or not exactly the scheme's length
+(<code>"must be N bytes of key material"</code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

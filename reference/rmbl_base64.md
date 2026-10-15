@@ -20,19 +20,28 @@ bricklayer_json_base64url_dec(input)
 
 - input:
 
-  For the encoders, a raw vector or a character vector (joined with
-  newlines first). For the decoders, base64 text or its raw bytes.
+  For the encoders, a raw vector, or a character vector (its elements
+  are joined with newlines and encoded as UTF-8 bytes), or `NULL`. For
+  `bricklayer_json_base64_dec()`, base64 text (a character vector,
+  joined with newlines) or its raw bytes. For
+  `bricklayer_json_base64url_dec()`, URL-safe base64 text, with or
+  without `=` padding.
 
 ## Value
 
-The encoders return a length-1 character vector ( `NA_character_` for
-`NULL` input); the decoders return a raw vector.
+The encoders return a character scalar (`""` for empty input,
+`NA_character_` for `NULL`); the decoders return a raw vector (use
+[`rawToChar()`](https://rdrr.io/r/base/rawConversion.html) for text).
 
 ## Details
 
-`bricklayer_json_base64_enc()` breaks its output into 72-character
-lines, matching jsonlite's encoder; the decoder ignores line breaks and
-any other character outside the alphabet, so either form round trips.
+`bricklayer_json_base64_enc()` breaks its output into 72-character lines
+(a newline after each complete block of 54 input bytes), matching
+jsonlite's encoder byte for byte; the decoder ignores line breaks, other
+white space and `=` padding, so either form round trips. Any other
+character outside the alphabet is an error rather than being skipped,
+because skipping it would decode a corrupted body into a shorter
+valid-looking one.
 
 The URL-safe variant substitutes `-` and `_` for `+` and `/` and drops
 the `=` padding, which is what makes it safe in a URL path, a query
@@ -44,6 +53,12 @@ anyone can reverse it. Use
 to pin content and
 [`core_hmac_sha256()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_keyed_digest.md)
 to authenticate it.
+
+Errors: an encoder given anything but a raw vector, a character vector
+or `NULL`; `bricklayer_json_base64_dec()` given anything but text or raw
+bytes, or text with a character outside the standard alphabet;
+`bricklayer_json_base64url_dec()` given anything but character text (raw
+bytes are refused), `NA`, or a character outside the URL-safe alphabet.
 
 ## See also
 
@@ -90,4 +105,8 @@ grepl("\n", long)
 #> [1] TRUE
 rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
 #> [1] TRUE
+
+# A character outside the alphabet is refused, not skipped.
+try(bricklayer_json_base64_dec("ab$c"))
+#> Error : base64 input contains characters outside the alphabet
 ```

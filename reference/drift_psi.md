@@ -1,7 +1,12 @@
 # Population stability index and Jensen-Shannon divergence (C backend)
 
-Two summaries of how far a new binned distribution has moved from a
-reference one.
+Two effect-size summaries of how far the distribution of a numeric
+column has moved from a reference sample. Both samples are binned on the
+reference's quantiles and the two sets of bin shares are compared.
+Unlike a p-value they do not grow with the sample size, so they say how
+large a shift is rather than whether it is detectable.
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+reports both for every numeric column.
 
 ## Usage
 
@@ -18,7 +23,8 @@ drift_psi(x, y, bins = 10L, eps = 1e-06)
 
 - bins:
 
-  Number of bins (default 10).
+  Whole number, default 10: the number of quantile bins of the
+  reference. Fewer bins are used when the reference has tied quantiles.
 
 - eps:
 
@@ -30,9 +36,20 @@ drift_psi(x, y, bins = 10L, eps = 1e-06)
 
 ## Value
 
-A named length-2 numeric: `psi` and `js_divergence`.
+A named length-2 numeric: `psi` (non-negative, unbounded) and
+`js_divergence` (in nats, between 0 and \\\log 2 \approx 0.693\\).
 
 ## Details
+
+Binning: values are rounded to 12 significant digits (so a formatting
+difference between two releases does not move tied values across an
+edge), the `bins + 1` quantiles of `x` are computed, duplicates are
+removed, and the interior quantiles become right-closed cut points with
+open ends at \\\pm\infty\\. When the reference has fewer than three
+distinct quantiles (a constant or nearly constant column), every
+distinct quantile is a cut point instead. The bin shares \\p_i\\
+(reference) and \\q_i\\ (new) are the proportions of each sample in each
+bin.
 
 The population stability index is \\\sum_i (p_i - q_i)\log(p_i/q_i)\\ –
 the symmetrised Kullback-Leibler divergence of the two discrete
@@ -49,6 +66,13 @@ absent from one side.
 Empty bins are floored at `eps` for the PSI only, since \\\log(0)\\
 would otherwise send it to infinity on a single missing category.
 
+Missing values are dropped. Errors: non-numeric or infinite input, an
+empty sample, `bins` not a whole number from 2 to 1,000,000, `eps` not
+strictly between 0 and 1. The PSI bands quoted above are heuristics with
+no calibrated null distribution; on a few hundred rows binning noise
+alone can exceed 0.25 (see `psi_min_n` in
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)).
+
 ## References
 
 Wu D, Olson DL (2010). Enterprise risk management: coping with model
@@ -59,6 +83,11 @@ risk in a large bank. *Journal of the Operational Research Society*
 Lin J (1991). Divergence measures based on the Shannon entropy. *IEEE
 Transactions on Information Theory* 37(1), 145–151.
 [doi:10.1109/18.61115](https://doi.org/10.1109/18.61115)
+
+## See also
+
+[`drift_ks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_ks.md),
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md).
 
 ## Examples
 
@@ -85,4 +114,15 @@ drift_psi(ref, ref)
 # shift, which is what makes it comparable across columns.
 drift_psi(c(1, 1, 1), c(9, 9, 9))[["js_divergence"]] <= log(2)
 #> [1] TRUE
+
+# a coarser binning, and a larger floor that damps an empty bin
+drift_psi(ref, stats::rnorm(500, mean = 1), bins = 4)
+#>           psi js_divergence 
+#>    0.69315439    0.08234528 
+drift_psi(ref, stats::rnorm(500, mean = 1), eps = 0.01)
+#>           psi js_divergence 
+#>     0.9232609     0.1061611 
+
+try(drift_psi(ref, ref, bins = 1))
+#> Error : `bins` must be one whole number of at least 2
 ```

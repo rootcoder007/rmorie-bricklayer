@@ -5,13 +5,19 @@ association and is unaffected by any order-preserving transformation of
 either variable. core_midranks() exposes the ranks themselves;
 tied values share the average of the ranks they span, which is what
 makes the result agree with stats::cor() on
-tied data."><meta property="og:description" content="core_cor_spearman() is Spearman's rho: the Pearson correlation of
+tied data. Use Spearman's rho when two variables rise and fall together
+but not along a straight line (counts against rates, incomes against
+ranks), or when a few extreme values would dominate a Pearson
+correlation."><meta property="og:description" content="core_cor_spearman() is Spearman's rho: the Pearson correlation of
 the ranks, so it measures monotone association rather than linear
 association and is unaffected by any order-preserving transformation of
 either variable. core_midranks() exposes the ranks themselves;
 tied values share the average of the ranks they span, which is what
 makes the result agree with stats::cor() on
-tied data."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+tied data. Use Spearman's rho when two variables rise and fall together
+but not along a straight line (counts against rates, incomes against
+ranks), or when a few extreme values would dominate a Pearson
+correlation."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -19,7 +25,7 @@ tied data."><meta property="og:image" content="https://rootcoder007.github.io/rm
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +72,10 @@ association and is unaffected by any order-preserving transformation of
 either variable. <code>core_midranks()</code> exposes the ranks themselves;
 tied values share the average of the ranks they span, which is what
 makes the result agree with <code><a href="https://rdrr.io/r/stats/cor.html" class="external-link">stats::cor()</a></code> on
-tied data.</p>
+tied data. Use Spearman's rho when two variables rise and fall together
+but not along a straight line (counts against rates, incomes against
+ranks), or when a few extreme values would dominate a Pearson
+correlation.</p>
     </div>
 
     <div class="section level2">
@@ -81,14 +90,41 @@ tied data.</p>
 
 
 <dl><dt id="arg-x-y">x, y<a class="anchor" aria-label="anchor" href="#arg-x-y"></a></dt>
-<dd><p>Numeric vectors of the same length.</p></dd>
+<dd><p>Numeric (or logical) vectors of the same length.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>core_cor_spearman()</code> a length-1 numeric in \ [-1, 1];
-<code>core_midranks()</code> a numeric vector the length of <code>x</code>.</p>
-<p>[-1, 1]: R:-1,%201%5C</p>
+    <p><code>core_cor_spearman()</code>: a length-1 numeric in \([-1, 1]\)
+(<code>NaN</code> as described above). <code>core_midranks()</code>: a numeric vector the
+length of <code>x</code>, the rank of each value (1 for the smallest; tied values
+share the mean of their ranks; <code>NA</code> kept as <code>NA</code>).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>With \(r_i\) and \(s_i\) the midranks of \(x_i\) and \(y_i\),
+$$\rho = \frac{\sum_i (r_i - \bar r)(s_i - \bar s)}
+  {\sqrt{\sum_i (r_i - \bar r)^2 \sum_i (s_i - \bar s)^2}},$$
+the Pearson correlation of the ranks (Spearman, 1904). Because ties get
+midranks, the shortcut \(1 - 6 \sum d_i^2 / (n(n^2 - 1))\) is NOT what
+is computed; the full formula above is, and it stays correct with ties.</p>
+<p><code>core_cor_spearman()</code> does not remove missing values: an <code>NA</code> in either
+vector gives <code>NaN</code>, and so does a constant vector (its ranks have no
+variance). <code>core_midranks()</code> leaves an <code>NA</code> in place and ranks the rest,
+as <code>rank(x, na.last = "keep")</code> does. Refusals: vectors of different
+lengths (<code>"must have the same length"</code>) and a character, factor or list
+argument (<code>"must be numeric"</code>). Ranking sorts, so the cost is
+\(O(n \log n)\).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Spearman C (1904). The proof and measurement of association
+between two things. <em>The American Journal of Psychology</em> 15(1),
+72–101. <a href="https://doi.org/10.2307/1412159" class="external-link">doi:10.2307/1412159</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="rmbl_core_stats.html">core_cor()</a></code> for the Pearson correlation.</p></div>
     </div>
 
     <div class="section level2">
@@ -117,6 +153,12 @@ tied data.</p>
 <span class="r-in"><span><span class="co"># Invariant to any monotone rescaling.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal</a></span><span class="op">(</span><span class="fu">core_cor_spearman</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span>, <span class="fu">core_cor_spearman</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="va">y</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Missing values are kept in place by core_midranks().</span></span></span>
+<span class="r-in"><span><span class="fu">core_midranks</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="cn">NA</span>, <span class="fl">1</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2.5  NA 1.0 2.5</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">core_cor_spearman</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` and `y` must have the same length</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

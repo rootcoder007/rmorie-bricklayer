@@ -3,7 +3,11 @@
 Builds an XMSS key pair: a Merkle tree over `2^height` Winternitz
 one-time keys, all derived from two 32-byte seeds. Security rests on
 SHA-256 alone – no lattice assumption, no elliptic curve, nothing Shor's
-algorithm breaks.
+algorithm breaks. The key signs a fixed number of messages, `2^height`,
+and must be carried forward after each signature (see
+[`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md));
+for a key with no such state use
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md).
 
 ## Usage
 
@@ -31,8 +35,39 @@ pqc_keygen(height = 10L, sk_seed = NULL, pub_seed = NULL, sk_prf = NULL)
 ## Value
 
 A list of class `bricklayer_signing_key`: `root` (the public
-verification value), `pub_seed`, `sk_seed` (SECRET), `sk_prf` (SECRET),
-`height`, `next_index`, `capacity`, and `scheme`.
+verification value, 64 hex characters), `pub_seed`, `sk_seed` (SECRET)
+and `sk_prf` (SECRET), each 64 hex characters, `height` (an integer),
+`next_index` (the next unused leaf, 0 for a new key), `capacity`
+(`2^height`, the number of signatures), and `scheme` (`"xmss-sha256"`).
+
+## Details
+
+Key generation walks all `2^height` leaves, so cost doubles with each
+unit of height. The default 10 gives 1024 signatures and takes a few
+seconds; heights above about 14 are slow enough to be worth avoiding
+unless the key really must last that long. A spinner on stderr shows the
+work after 0.75 s when a person is watching (see
+[`bricklayer_progress()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_progress.md)),
+and Ctrl-C stops it.
+
+The construction is single-tree XMSS with SHA-256, n = 32 and Winternitz
+parameter 16 (RFC 8391; at heights 10 and 16 these are its
+`XMSS-SHA2_10_256` and `XMSS-SHA2_16_256` parameter sets, and the other
+heights use the same construction with a smaller or larger tree). Its
+signatures are byte-identical to the XMSS reference implementation's for
+the same key material.
+
+Side effect: a key generated from fresh randomness is entered in the
+package's used-index record (the file described under
+[`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)),
+so that a stale copy of it can never sign an index twice on this
+machine. A key built from given seeds is NOT entered, and signs only
+after
+[`xmss_register_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+vouches that it never has.
+
+Refusals: a `height` that is not a whole number from 1 to 16, and a seed
+that is not 64 hex characters.
 
 ## A height-`h` key signs exactly `2^h` messages
 
@@ -43,11 +78,6 @@ signatures at one index an adversary can forge a third message.
 therefore tracks `next_index` and refuses to reuse one. Do not hand-edit
 that field, and do not copy a key to two machines that sign
 independently.
-
-Key generation walks all `2^height` leaves, so cost doubles with each
-unit of height. The default 10 gives 1024 signatures and takes a moment;
-heights above about 14 are slow enough to be worth avoiding unless the
-key really must last that long.
 
 ## Key format
 
@@ -104,5 +134,9 @@ s1 <- paste(rep("11", 32), collapse = "")
 s2 <- paste(rep("22", 32), collapse = "")
 identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
 #> [1] TRUE
+
+# The height is limited to 16 (65,536 signatures).
+try(pqc_keygen(height = 20))
+#> Error : `height` must be a single integer between 1 and 16
 options(op)
 ```

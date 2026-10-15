@@ -1,11 +1,12 @@
 # Generate One Synthetic Column From a Spec
 
-Builds a single synthetic data column according to a column spec drawn
-from a provenance synthetic recipe. Supported `type` s are `"sample"`
-(categorical, optionally weighted), `"bernoulli"` (two-label draw with
-optional per-row base rate), `"poisson"` (counts with a floor),
-`"id_pattern"` (templated IDs, optionally per-year sequenced), and
-`"sequence"` (a running integer sequence).
+Builds one column of synthetic (made-up) data from a short
+specification, such as "sample these categories with these weights" or
+"Poisson counts with mean 25". It is the building block of
+[`make_synthetic_csv`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md),
+which assembles a whole table from a recipe. Use synthetic columns to
+develop and test an analysis pipeline before, or instead of, touching
+restricted data.
 
 ## Usage
 
@@ -17,13 +18,13 @@ make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 
 - spec:
 
-  A list describing the column; recognised fields depend on `spec$type`
-  (e.g. `values`, `weights`, `p`, `p_with_baserate`, `labels`, `lambda`,
-  `min`, `pattern`, `year_col`, `from`) .
+  A list describing the column: `type` and the fields listed in Details.
+  Lists as parsed from JSON (for example `values = list("a", "b")`) are
+  accepted.
 
 - n:
 
-  Number of values to generate.
+  Whole number: how many values to generate.
 
 - ctx:
 
@@ -33,13 +34,61 @@ make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 
 - base_p:
 
-  Optional numeric vector of per-row latent propensities used by the
-  `"bernoulli"` type to add row-level variation.
+  Optional numeric vector of per-row latent propensities in \\\[0,
+  1\]\\, length `n`, used by the `"bernoulli"` type to add row-level
+  variation. Default `NULL`.
 
 ## Value
 
-A vector of length `n` for the requested column type. Errors on an
-unknown `type`.
+A vector for the requested column type: character for `"sample"` of
+strings, `"bernoulli"` and `"id_pattern"`, numeric or integer for
+`"poisson"` and `"sequence"` (and for `"sample"` of numbers). Its length
+is `n`, except for `"id_pattern"` with a `year_col`.
+
+## Details
+
+The supported `spec$type`s and the fields each reads (defaults in
+parentheses):
+
+- `"sample"` (the default type):
+
+  `values`, a vector or list of categories; `weights` (default equal),
+  their probabilities. Drawn with replacement.
+
+- `"bernoulli"`:
+
+  `p` (default 0.1), the probability of the first label; `labels`
+  (default `c("Yes", "No")`); `p_with_baserate` (default 0), added as
+  `p_with_baserate * base_p` to give row-level variation when `base_p`
+  is supplied. A per-row probability above 1 behaves as 1.
+
+- `"poisson"`:
+
+  `lambda` (default 1); `min` (default 0), a floor: draws below it are
+  raised to it (so the result is not Poisson below the floor).
+
+- `"id_pattern"`:
+
+  `pattern` (default `"id-\{seq:05d\}"`), in which `{seq:05d}` becomes a
+  five-digit zero-padded sequence number and `{year}` the year;
+  `year_col`, the name of a column in `ctx` whose values supply `{year}`
+  and restart the sequence within each year. With `year_col`, that
+  column must have `n` values. No other tokens are recognised.
+
+- `"sequence"`:
+
+  `from` (default 1): `from, from + 1, ...`.
+
+Random draws use R's random number generator, so call
+[`set.seed()`](https://rdrr.io/r/base/Random.html) first for a
+reproducible column. Errors: `spec` not a list; an unknown `type`;
+errors from [`sample()`](https://rdrr.io/r/base/sample.html) or
+[`rpois()`](https://rdrr.io/r/stats/Poisson.html) on invalid weights or
+rates.
+
+## See also
+
+[`make_synthetic_csv`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_synthetic_csv.md).
 
 ## Examples
 
@@ -59,7 +108,7 @@ make_synthetic_column(list(
 ), 5)
 #> [1] "No"  "No"  "No"  "No"  "Yes"
 
-# "poisson": counts with a floor via `min`.
+# "poisson": counts with a floor via min.
 make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
 #> [1] 2 1 4 2 4
 
@@ -70,7 +119,14 @@ make_synthetic_column(list(
 ), 3)
 #> [1] "case-00001" "case-00002" "case-00003"
 
-# "sequence": a running integer sequence from `from`.
+# ... numbered within each year of an earlier column
+yrs <- c(2024, 2024, 2025)
+unname(make_synthetic_column(list(type = "id_pattern",
+  pattern = "{year}-{seq:05d}", year_col = "year"), 3,
+  ctx = list(year = yrs)))
+#> [1] "2024-00001" "2024-00002" "2025-00001"
+
+# "sequence": a running integer sequence from from.
 make_synthetic_column(list(type = "sequence", from = 100), 4)
 #> [1] 100 101 102 103
 

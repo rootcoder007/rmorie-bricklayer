@@ -19,8 +19,9 @@ profile_columns(data, quantiles = c(0.25, 0.5, 0.75))
 
 - quantiles:
 
-  Quantile probabilities to include for numeric columns (default the
-  quartiles).
+  Numeric vector of quantile probabilities to include for numeric
+  columns, one column each named `q` and the percentage (`q25`, `q50`,
+  ...); default the quartiles. `NULL` or an empty vector adds none.
 
 ## Value
 
@@ -31,7 +32,13 @@ the classical and robust centre and spread, the range, the skewness, the
 count outside the Tukey fences, and an
 [`inline_hist()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/inline_hist.md)
 sketch of its distribution. A categorical column reports its most common
-value in `top` instead.
+value in `top` instead. The columns are `column`, `type` (the first
+class), `n`, `n_missing`, `pct_missing`, `n_distinct`, `n_zero`,
+`n_negative`, `n_infinite`, `mean`, `sd`, `median`, `mad`, `min`, `max`,
+`skewness`, `n_outliers`, `hist`, `top` and one per quantile; a
+statistic that does not apply to the column's type is `NA`. The print
+method formats the numbers to four significant digits and shows the
+histogram last.
 
 ## Details
 
@@ -39,6 +46,24 @@ Reporting the classical and robust centres side by side is the point:
 where they disagree, the column has outliers or a heavy tail, and the
 mean is not describing it. That is visible in one glance here and in no
 single number.
+
+How the numbers are computed. A column is numeric when
+[`is.numeric()`](https://rdrr.io/r/base/numeric.html) is `TRUE`; every
+other column (character, factor, logical, `Date`, ...) is treated as
+categorical, and `top` is its most frequent non-missing value as text
+(ties broken by the order of `sort(table())`). For a numeric column,
+over its non-missing values: `sd` is the sample standard deviation
+(\\n - 1\\), `mad` the median absolute deviation scaled by 1.4826,
+`skewness` the population moment ratio \\m_3 / m_2^{3/2}\\, `n_outliers`
+the count outside the Tukey fences (1.5 interquartile ranges beyond the
+quartiles), and the quantiles are type 7. Infinite values are counted in
+`n_infinite` (and in `n_negative`, `n_distinct`) and left out of every
+other numeric statistic, which are taken over the finite values only: a
+column with an infinite value keeps a finite mean and range, and a
+column with no finite value has `NA` statistics. A progress bar is shown
+for wide tables when `options(morie.progress)` allows it. Errors when
+`data` is not a data frame, has no columns, or has duplicate or empty
+column names.
 
 ## See also
 
@@ -102,4 +127,16 @@ p[, c("column", "n_zero", "n_negative", "n_infinite")]
 #> 2 skewed      0         48          0
 #> 3  grade     NA         NA         NA
 #> 4  gappy      0          0          0
+
+# deciles instead of quartiles
+names(profile_columns(df, quantiles = c(0.1, 0.9)))
+#>  [1] "column"      "type"        "n"           "n_missing"   "pct_missing"
+#>  [6] "n_distinct"  "n_zero"      "n_negative"  "n_infinite"  "mean"       
+#> [11] "sd"          "median"      "mad"         "min"         "max"        
+#> [16] "skewness"    "n_outliers"  "hist"        "top"         "q10"        
+#> [21] "q90"        
+
+# a table with no columns has nothing to profile
+try(profile_columns(df[, 0]))
+#> Error : `data` has no columns to profile
 ```

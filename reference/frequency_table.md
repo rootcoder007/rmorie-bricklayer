@@ -1,7 +1,10 @@
 # Frequency table for one column
 
-Counts, percentages, and percentages of the non-missing values, with
-missing counted as its own row. The counterpart of `janitor::tabyl()`.
+Counts how often each value of a column occurs, with percentages of all
+rows and of the non-missing rows, and missing values counted as their
+own row. It is the first look at a categorical variable (a charge type,
+a region, a response category), and the counterpart of
+`janitor::tabyl()`.
 
 ## Usage
 
@@ -17,23 +20,26 @@ frequency_table(data, column = NULL, max_levels = 25L, sort = TRUE)
 
 - column:
 
-  Column name, when `data` is a data frame.
+  Column name (a string), when `data` is a data frame; ignored for a
+  vector.
 
 - max_levels:
 
-  Maximum rows to return, most frequent first (default 25). The
+  Maximum value rows to return, most frequent first (default 25). The
   remainder are folded into one `"(other)"` row so the percentages still
   sum to 100.
 
 - sort:
 
-  Sort by descending count (default `TRUE`) ; `FALSE` keeps the natural
-  order of the values.
+  Logical: sort by descending count (default `TRUE`); `FALSE` keeps the
+  sorted order of the values.
 
 ## Value
 
-A data frame of class `bricklayer_freq`: `value`, `n`, `pct`,
-`pct_valid`.
+A data frame of class `c("bricklayer_freq", "data.frame")` with columns
+`value` (character), `n` (integer count), `pct` (numeric, percent of all
+rows) and `pct_valid` (numeric, percent of non-missing rows; `NA` on the
+missing row).
 
 ## Details
 
@@ -42,6 +48,20 @@ them is how missingness gets hidden: `pct` is the share of ALL rows,
 `pct_valid` the share of rows where the value is present. When a column
 is 40% missing those two differ enormously, and only the second
 describes the values that are actually there.
+
+Values are tabulated as text
+([`as.character()`](https://rdrr.io/r/base/character.html)), so numbers
+and factors are counted by their printed value, and factor levels that
+do not occur get no row. Rows are sorted by descending count (ties in
+the order [`table()`](https://rdrr.io/r/base/table.html) gives) or kept
+in sorted value order with `sort = FALSE`. Beyond `max_levels` distinct
+values, the rest are folded into one `"(other)"` row so the percentages
+still sum to 100. The missing row, when there is one, comes last, with
+`value` `NA` and `pct_valid` `NA`. An empty input gives a table with no
+rows. The print method adds a bar column.
+
+Errors: a data frame without `column`; a `column` that is not in `data`;
+`max_levels` not one positive whole number.
 
 ## See also
 
@@ -79,7 +99,7 @@ frequency_table(c(1, 1, 2, 3, 3, 3))
 #>      2 1 16.7      16.7              #######
 #> ────────────────────────────────────────────────────────────────── 
 
-# Natural order rather than frequency order.
+# Sorted value order rather than frequency order.
 frequency_table(c("c", "a", "b", "a"), sort = FALSE)
 #> ── Frequency table ─────────────────────────────────────────────── 
 #>  value n  pct pct_valid                  bar
@@ -103,4 +123,8 @@ ft
 #> ────────────────────────────────────────────────────────────────── 
 sum(ft$pct)
 #> [1] 100
+
+# a data frame needs a column name
+try(frequency_table(df))
+#> Error : `column` is required when `data` is a data frame
 ```

@@ -3,11 +3,17 @@
 fixed 4-byte register per bucket – 64 KB at the default p = 14
 – regardless of the column's length or cardinality. Exact counting
 needs memory proportional to the number of distinct values, which is the
-thing you cannot afford on a capsule member of unknown size."><meta property="og:description" content="HyperLogLog: estimates how many distinct values a column holds using a
+thing you cannot afford on a capsule member of unknown size.
+distinct_sketch() builds or extends the registers,
+distinct_count() turns them into an estimate, and
+sketch_merge() combines two sketches."><meta property="og:description" content="HyperLogLog: estimates how many distinct values a column holds using a
 fixed 4-byte register per bucket – 64 KB at the default p = 14
 – regardless of the column's length or cardinality. Exact counting
 needs memory proportional to the number of distinct values, which is the
-thing you cannot afford on a capsule member of unknown size."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+thing you cannot afford on a capsule member of unknown size.
+distinct_sketch() builds or extends the registers,
+distinct_count() turns them into an estimate, and
+sketch_merge() combines two sketches."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +21,7 @@ thing you cannot afford on a capsule member of unknown size."><meta property="og
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +66,10 @@ thing you cannot afford on a capsule member of unknown size."><meta property="og
 fixed 4-byte register per bucket – 64 KB at the default <code>p = 14</code>
 – regardless of the column's length or cardinality. Exact counting
 needs memory proportional to the number of distinct values, which is the
-thing you cannot afford on a capsule member of unknown size.</p>
+thing you cannot afford on a capsule member of unknown size.
+<code>distinct_sketch()</code> builds or extends the registers,
+<code>distinct_count()</code> turns them into an estimate, and
+<code>sketch_merge()</code> combines two sketches.</p>
     </div>
 
     <div class="section level2">
@@ -82,12 +91,16 @@ compared on the rendered value. <code>NA</code> is skipped.</p></dd>
 
 
 <dt id="arg-p">p<a class="anchor" aria-label="anchor" href="#arg-p"></a></dt>
-<dd><p>Log2 of the register count, 4 to 20 (default 14).</p></dd>
+<dd><p>Log2 of the register count, a whole number from 4 to 20
+(default 14, so 16,384 registers). Larger <code>p</code> is more precise and
+uses more memory.</p></dd>
 
 
 <dt id="arg-registers">registers<a class="anchor" aria-label="anchor" href="#arg-registers"></a></dt>
-<dd><p>Registers from a previous call, to
-fold another chunk into the same sketch.</p></dd>
+<dd><p>Registers from a previous call (with the same <code>p</code>),
+to fold another chunk into the same sketch; <code>NULL</code> (the default)
+starts a new one. For <code>distinct_count()</code>, the registers to estimate
+from.</p></dd>
 
 
 <dt id="arg-a-b">a, b<a class="anchor" aria-label="anchor" href="#arg-a-b"></a></dt>
@@ -96,20 +109,35 @@ fold another chunk into the same sketch.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>distinct_sketch()</code> an integer vector of registers;
-<code>distinct_count()</code> a length-1 numeric estimate;
-<code>sketch_merge()</code> the element-wise maximum of two register sets.</p>
+    <p><code>distinct_sketch()</code> an integer vector of \(2^p\) registers;
+<code>distinct_count()</code> a length-1 numeric estimate (0 for an empty or
+<code>NULL</code> sketch); <code>sketch_merge()</code> the element-wise maximum of two
+register sets, an integer vector.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The estimate carries a relative standard error of about
+    <p>Each value is hashed and the first <code>p</code> bits pick one of \(m = 2^p\)
+registers; the register keeps the longest run of leading zeros (plus one)
+seen in the remaining bits. The estimate is the bias-corrected harmonic
+mean \(\alpha_m m^2 / \sum_j 2^{-M_j}\) of Flajolet et al. (2007).</p>
+<p>The estimate carries a relative standard error of about
 <code>1.04 / sqrt(2^p)</code>, so 0.8% at the default. It is an ESTIMATE: use
 <code>length(unique(x))</code> when the column fits in memory and an exact
 answer matters. Below roughly <code>2.5 * 2^p</code> distinct values the
 estimator switches to linear counting, which is near-exact in that
-range.</p>
+range (the estimate of one value is about 1.00003, not 1).</p>
 <p>Values are hashed with the package's SHA-256, so the sketch is identical
-on every platform and across sessions.</p>
+on every platform and across sessions. Values are compared as text
+(<code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>), so <code>1</code>, <code>1.0</code> and <code>"1"</code> are one
+value. Long vectors are processed in blocks of a million with a progress
+bar on stderr unless <code>options(morie.quiet = TRUE)</code>; the registers are
+the same as in one pass. Since a register only keeps a maximum, folding
+chunks with <code>registers</code> and merging separate sketches with
+<code>sketch_merge()</code> give the same registers as one sketch of all the
+data.</p>
+<p>Errors: <code>p</code> not a whole number from 4 to 20; <code>registers</code> not of
+length \(2^p\); registers that are not whole numbers from 0 to 64; two
+sketches of different sizes.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -148,6 +176,14 @@ algorithm. <em>Analysis of Algorithms 2007</em>, 137–156.</p>
 <span class="r-in"><span><span class="co"># An empty input has no distinct values.</span></span></span>
 <span class="r-in"><span><span class="fu">distinct_count</span><span class="op">(</span><span class="fu">distinct_sketch</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a smaller sketch: less memory, more error</span></span></span>
+<span class="r-in"><span><span class="fu">distinct_count</span><span class="op">(</span><span class="fu">distinct_sketch</span><span class="op">(</span><span class="va">x</span>, p <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4772.107</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># sketches of different sizes cannot be merged</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">sketch_merge</span><span class="op">(</span><span class="fu">distinct_sketch</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, p <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>, <span class="fu">distinct_sketch</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span>, p <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : both sketches must have the same number of registers</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

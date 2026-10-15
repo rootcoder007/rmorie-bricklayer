@@ -1,11 +1,14 @@
 # Encode an R object as JSON (jsonlite's toJSON, natively)
 
-Every option of jsonlite's `toJSON()` with the same default and the same
-bytes out: `dataframe`, `matrix`, `Date`, `POSIXt`, `factor`, `complex`,
-`raw`, `null`, `na`, `auto_unbox`, `digits` ( `I(n)` for significant
-digits, `NA` for 15), `pretty` (TRUE = 2 spaces, or a width), `force`,
-plus `rownames`, `keep_vec_names`, `json_verbatim`, `always_decimal`,
-`time_format`, `UTC`, `no_dots`, `hms`.
+Converts R data (vectors, lists, data frames, matrices, dates, factors)
+to JSON text, with the same options, the same defaults and the same
+bytes out as jsonlite's `toJSON()`, but computed by this package's own
+code, so manifests, provenance records and capsules can be written where
+jsonlite is not installed and their digests stay the same either way.
+Use it to write data for an API or a person; use
+[`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+when the JSON must rebuild the exact R object (classes, factor levels,
+attributes).
 
 ## Usage
 
@@ -33,75 +36,116 @@ bricklayer_json_to_json(
 
 - x:
 
-  the object to encode.
+  The object to encode.
 
 - dataframe:
 
-  As in jsonlite.
+  How a data frame is written: `"rows"` (the default, an array of
+  records), `"columns"` (an object of column arrays) or `"values"` (an
+  array of row arrays, without names).
 
 - matrix:
 
-  As in jsonlite.
+  How a matrix is written: `"rowmajor"` (the default, an array of rows)
+  or `"columnmajor"` (an array of columns).
 
 - Date:
 
-  As in jsonlite.
+  How a `Date` is written: `"ISO8601"` (the default, `"2024-01-02"`) or
+  `"epoch"` (days since 1970-01-01).
 
 - POSIXt:
 
-  As in jsonlite.
+  How a date-time is written: `"string"` (the default,
+  `"2024-01-02 03:04:05"`), `"ISO8601"` (`"2024-01-02T03:04:05"`),
+  `"epoch"` (milliseconds since 1970) or `"mongo"` (`{"$date": ms}`).
 
 - factor:
 
-  As in jsonlite.
+  How a factor is written: `"string"` (the default, its labels) or
+  `"integer"` (its codes).
 
 - complex:
 
-  As in jsonlite.
+  How a complex number is written: `"string"` (the default, `"1+2i"`) or
+  `"list"` (an object of `real` and `imaginary` arrays).
 
 - raw:
 
-  As in jsonlite.
+  How a raw vector is written: `"base64"` (the default, one string),
+  `"hex"`, `"mongo"`, `"int"` or `"js"`.
 
 - null:
 
-  As in jsonlite: `NULL` is written as
-  [`{}`](https://rdrr.io/r/base/Paren.html) by default (a round trip
-  gives an empty list). Pass `null = "null"` for a JSON null;
-  [bricklayer_json_serialize](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+  How `NULL` inside a list is written: `"list"` (the default,
+  [`{}`](https://rdrr.io/r/base/Paren.html); a round trip gives an empty
+  list) or `"null"` (a JSON `null`).
+  [`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
   round-trips `NULL` exactly.
 
 - na:
 
-  As in jsonlite.
+  How missing values are written: `"null"` or `"string"` (`"NA"`). When
+  not given, the per-type default of jsonlite applies (see Details).
 
 - auto_unbox:
 
-  As in jsonlite.
+  Logical scalar, default `FALSE`: write length-one vectors as scalars
+  (`1`) rather than arrays (`[1]`).
 
 - digits:
 
-  As in jsonlite.
+  Numeric scalar, default `4`: decimal places kept for doubles. `I(n)`
+  means `n` significant digits (`I(17)` writes every double exactly) and
+  `NA` means 15 significant digits.
 
 - pretty:
 
-  As in jsonlite.
+  `FALSE` (the default) for compact output, `TRUE` to indent by two
+  spaces, or a number of spaces.
 
 - force:
 
-  As in jsonlite.
+  Logical scalar, default `FALSE`: write objects that have no JSON form
+  (as [`{}`](https://rdrr.io/r/base/Paren.html)) instead of failing.
 
 - ...:
 
-  As in jsonlite, plus `keep_vec_names` (a named atomic vector is
-  written as an object, as
-  [`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
-  requires) and `quiet_vec_names` (no message when names cannot be
-  kept).
+  Further options of jsonlite's `toJSON()` and of this package (see
+  Details).
 
 ## Value
 
-a length-one character vector of class `json`.
+A character scalar of class `json`, the JSON text.
+
+## Details
+
+Atomic vectors become arrays, so a single value is `[1]` unless
+`auto_unbox = TRUE`. Named lists become objects and unnamed lists
+arrays. Missing values follow jsonlite: with `na` not given, a missing
+number is written as the string `"NA"` and a missing string or logical
+as `null`; in a data frame by rows a missing value is left out of its
+record.
+
+Further options of `toJSON()` are taken through `...`: `rownames`,
+`keep_vec_names`, `json_verbatim`, `always_decimal`, `time_format`,
+`UTC`, `no_dots`, `hms` (`"string"` or `"secs"`), and two of this
+package's own: `keep_empty_names` (an empty-string key is written as
+`""` rather than replaced by its position) and `quiet_vec_names` (no
+message when `keep_vec_names` is used).
+[`manifest_canonical()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_canonical.md)
+uses both.
+
+Errors: an option value not among its choices (the message lists them);
+an object with no JSON form (a function, a symbol) unless
+`force = TRUE`.
+
+## See also
+
+[`bricklayer_json_from_json()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_json_from_json.md)
+for the reverse,
+[`bricklayer_json_serialize()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_json_serialize.md)
+for an exact round trip.
 
 ## Examples
 
@@ -118,4 +162,21 @@ bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
 #>     "id": 2
 #>   }
 #> ] 
+
+# a data frame by columns, and a date-time in ISO 8601
+df <- data.frame(id = 1:2, v = c(1.5, NA))
+bricklayer_json_to_json(df, dataframe = "columns", na = "null")
+#> {"id":[1,2],"v":[1.5,null]} 
+bricklayer_json_to_json(as.POSIXct("2024-01-02 03:04:05", tz = "UTC"), POSIXt = "ISO8601")
+#> ["2024-01-02T03:04:05"] 
+
+# digits: decimal places by default, significant digits with I()
+bricklayer_json_to_json(pi)
+#> [3.1416] 
+bricklayer_json_to_json(pi, digits = I(17))
+#> [3.1415926535897931] 
+
+# a choice that does not exist is refused
+try(bricklayer_json_to_json(df, dataframe = "table"))
+#> Error : `dataframe` must be one of "rows", "columns", "values", not "table"
 ```

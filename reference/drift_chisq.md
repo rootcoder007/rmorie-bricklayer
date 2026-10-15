@@ -1,11 +1,11 @@
 # Chi-square test for a categorical column
 
-Pearson's chi-square goodness-of-fit statistic comparing observed
-category counts with the proportions a capsule was pinned against. Use
-it where
-[`drift_ks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_ks.md)
-cannot apply, because the column is a factor or a set of codes rather
-than a number.
+Tests whether the category counts of a new sample agree with a reference
+distribution that is taken as known, such as proportions fixed by a
+specification or a published breakdown. It is Pearson's chi-square
+goodness-of-fit test. When the reference is itself a sample, use
+[`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md),
+which accounts for the reference's own sampling error.
 
 ## Usage
 
@@ -34,6 +34,13 @@ information where `p_value` underflows to 0.
 
 ## Details
 
+Pearson's chi-square goodness-of-fit statistic comparing observed
+category counts with the proportions a capsule was pinned against. Use
+it where
+[`drift_ks()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_ks.md)
+cannot apply, because the column is a factor or a set of codes rather
+than a number.
+
 Categories present in one argument and not the other are aligned by
 name, so a vanished category registers as a shortfall against its
 expected count.
@@ -46,8 +53,24 @@ it usually is when the reference is itself a finite sample – use
 [`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md)
 instead.
 
+With \\O_j\\ the observed counts and \\E_j = N e_j / \sum e\\ the
+reference scaled to the observed total \\N\\, \$\$X^2 = \sum_j
+\frac{(O_j - E_j)^2}{E_j}\$\$ over the categories with \\E_j \> 0\\, on
+\\k - 1\\ degrees of freedom. The p-value is the upper tail of the
+chi-square distribution, computed directly (not as one minus the lower
+tail), so it does not round to zero early. With a single category there
+is nothing to test: `df` is 0 and both p-values are `NA`. The chi-square
+approximation is poor when expected counts are below about 5;
+[`stats::chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) with
+`simulate.p.value = TRUE` is an alternative there.
+
+Errors: a numeric vector without names; negative, infinite or missing
+counts; a total of zero on either side.
+
 ## See also
 
+[`drift_homogeneity()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_homogeneity.md),
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md),
 [`stats::chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) for the
 full test object.
 

@@ -4,7 +4,7 @@ Kept so code written against the liboqs-backed version keeps working.
 The schemes are no longer reached through liboqs – they are implemented
 in this package – and the name no longer describes anything, so use
 [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
-instead.
+instead. New code should not call these functions.
 
 ## Usage
 
@@ -29,8 +29,21 @@ oqs_public_key(key)
 
 As
 [`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
-and
-[`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md).
+(a `bricklayer_fips_key`) and
+[`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+(a `bricklayer_fips_public_key`).
+
+## Details
+
+`oqs_keygen()` calls
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+(with a fresh random seed) and `oqs_public_key()` calls
+[`fips_public_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md),
+each after a deprecation warning from
+[`.Deprecated()`](https://rdrr.io/r/base/Deprecated.html). The keys are
+the same objects
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+returns, with the same classes.
 
 ## Security
 
@@ -60,4 +73,13 @@ README's security section lists what each check does and does not cover.
 key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
 key$scheme
 #> [1] "ML-DSA-65"
+
+# The same as the current name, after a warning.
+pub <- suppressWarnings(oqs_public_key(key))
+identical(pub, fips_public_key(key))
+#> [1] TRUE
+
+# The warning names the replacement.
+tryCatch(oqs_keygen(), warning = function(w) conditionMessage(w))
+#> [1] "'oqs_keygen' is deprecated.\nUse 'fips_keygen' instead.\nSee help(\"Deprecated\")"
 ```

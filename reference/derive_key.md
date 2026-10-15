@@ -1,8 +1,10 @@
 # Derive a key from a passphrase
 
-PBKDF2-HMAC-SHA256 (RFC 8018): stretches a passphrase into a key of full
-width by iterating a keyed hash, so guessing the passphrase costs
-`iterations` times more than a single hash would.
+Turns a passphrase that a person can remember into a fixed-length key
+(32 bytes by default) for signing or encryption, in a way that makes
+guessing the passphrase slow. The same passphrase, salt and iteration
+count always give the same key, so the key need not be stored: it can be
+derived again when needed.
 
 ## Usage
 
@@ -24,17 +26,24 @@ derive_key(passphrase, salt, iterations = 100000L, length = 32L)
 
 - iterations:
 
-  Iteration count (default 100000, minimum 1).
+  Whole number, default 100000 (minimum 1): the PBKDF2 iteration count.
+  Verification must use the same value.
 
 - length:
 
-  Derived key length in bytes (default 32).
+  Whole number from 1 to 1024, default 32: the derived key length in
+  bytes.
 
 ## Value
 
-A length-1 character vector: the key as lowercase hex.
+A length-1 character vector: the key as lowercase hex (`2 * length`
+characters).
 
 ## Details
+
+PBKDF2-HMAC-SHA256 (RFC 8018): stretches a passphrase into a key of full
+width by iterating a keyed hash, so guessing the passphrase costs
+`iterations` times more than a single hash would.
 
 The `salt` must be UNIQUE per key and need not be secret. Its job is to
 make precomputation useless: without one, a single table of common
@@ -49,6 +58,12 @@ memory-hard function is available ( `argon2` in sodium, `bcrypt_pbkdf`
 in openssl) prefer it for passwords a human chose. PBKDF2 is here
 because it needs nothing beyond the bundled SHA-256, so it works
 wherever this package works.
+
+The derivation runs in compiled code; at the default 100,000 iterations
+it takes a fraction of a second, and a busy indicator is shown in an
+interactive session. Errors: a passphrase or salt that is not a single
+non-missing string or a raw vector; `iterations` below 1; `length`
+outside 1 to 1024.
 
 ## References
 
@@ -81,7 +96,7 @@ derive_key("pw", "s", 1000) == derive_key("pw", "s", 2000)
 
 # Use it to sign a manifest from a passphrase rather than raw bytes.
 salt <- paste(format(random_bytes(16)), collapse = "")
-key <- derive_key("correct horse battery staple", salt)
+key <- derive_key("purple otter lantern", salt)
 sig <- capsule_sign("manifest-digest", key, scheme = "hmac")
 capsule_verify("manifest-digest", sig, key)
 #> [1] TRUE
@@ -92,4 +107,8 @@ identical(
   derive_key("pw", "s", 10, length = 32)
 )
 #> [1] TRUE
+
+# a vector of passphrases is refused
+try(derive_key(c("a", "b"), "salt"))
+#> Error : `passphrase` must be a length-1 character vector or raw vector
 ```

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -225,7 +225,7 @@ changed.</p>
 <code class="sourceCode R"><span><span class="va">chunks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row1,row2"</span>, <span class="st">"row3,row4"</span>, <span class="st">"row5,row6"</span>, <span class="st">"row7,row8"</span><span class="op">)</span></span>
 <span><span class="va">root</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
 <span><span class="va">root</span></span>
-<span><span class="co">#&gt; [1] "d2197affda886ecc49807b28c90a8c4ff7a07f122225ecc64788d08df5a312f3"</span></span>
+<span><span class="co">#&gt; [1] "3b1537c90e21c2e66f341b946388abbb78bf249fb433f961fba223b67141be31"</span></span>
 <span></span>
 <span><span class="va">before</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_leaves</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">)</span></span>
 <span><span class="va">after</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rmbl_merkle.html">merkle_leaves</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">chunks</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>, <span class="st">"row5,row6-EDITED"</span>, <span class="va">chunks</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
@@ -246,7 +246,7 @@ that concatenate back to its bytes:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 9</span></span>
 <span><span class="fu"><a href="../reference/rmbl_merkle.html">merkle_root</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "c4cb691d88a0dbf1dad9767c19095d54ac6958e6411e06d81dced0dba895c382"</span></span>
+<span><span class="co">#&gt; [1] "3f565b39becbebbc336618294525d7a1ff45394d68ecaec899d292bb0fd357c1"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unlist.html" class="external-link">unlist</a></span><span class="op">(</span><span class="va">ch</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">readBin</a></span><span class="op">(</span><span class="va">p</span>, <span class="st">"raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p><code><a href="../reference/capsule_bundle.html">capsule_bundle()</a></code> pins each data file by one whole-file

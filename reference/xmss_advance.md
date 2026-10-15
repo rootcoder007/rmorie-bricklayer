@@ -126,5 +126,26 @@ key$next_index
 s2 <- capsule_sign("manifest-2", key)
 capsule_verify("manifest-2", s2, signing_public_key(key))
 #> [1] TRUE
+
+# With the message, the signature is verified before the key advances.
+key <- xmss_advance(key, s2, message = "manifest-2")
+key$next_index
+#> [1] 2
+
+# A key regenerated from seeds is unknown to the record until registered.
+s <- paste(rep("ab", 32), collapse = "")
+k2 <- pqc_keygen(height = 1, sk_seed = s, pub_seed = s, sk_prf = s)
+try(capsule_sign("m", k2))
+#> Error : this XMSS key is not in the used-index record on this machine, and it claims never to have signed (next_index 0): it was generated elsewhere or from given seeds, or the record was deleted. If it has never signed, register it with xmss_register_key(key); if it has, carry it forward with xmss_advance(key, its_last_signature, message), or generate a new key with pqc_keygen()
+invisible(xmss_register_key(k2))
+capsule_verify("m", capsule_sign("m", k2), signing_public_key(k2))
+#> [1] TRUE
+
+# Reset a test key's entry so it may sign from index 0 again.
+xmss_forget_used_indices(k2)
+
+# A signature that is not an XMSS signature cannot advance a key.
+try(xmss_advance(key, list()))
+#> Error : `signature` must be an XMSS signature from capsule_sign() (or the attestation, bundle or recode manifest that carries it)
 options(op)
 ```

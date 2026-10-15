@@ -11,7 +11,7 @@ embed binary content in a text manifest wherever this package runs."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,22 +73,29 @@ embed binary content in a text manifest wherever this package runs.</p>
 
 
 <dl><dt id="arg-input">input<a class="anchor" aria-label="anchor" href="#arg-input"></a></dt>
-<dd><p>For the encoders, a raw vector or a character
-vector (joined with newlines first). For the decoders, base64 text or
-its raw bytes.</p></dd>
+<dd><p>For the encoders, a raw vector, or a character vector
+(its elements are joined with newlines and encoded as UTF-8 bytes), or
+<code>NULL</code>. For <code>bricklayer_json_base64_dec()</code>, base64 text (a
+character vector, joined with newlines) or its raw bytes. For
+<code>bricklayer_json_base64url_dec()</code>, URL-safe base64 text, with or
+without <code>=</code> padding.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>The encoders return a length-1 character vector (
-<code>NA_character_</code> for <code>NULL</code> input); the decoders return a raw
-vector.</p>
+    <p>The encoders return a character scalar (<code>""</code> for empty input,
+<code>NA_character_</code> for <code>NULL</code>); the decoders return a raw vector
+(use <code><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar()</a></code> for text).</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p><code>bricklayer_json_base64_enc()</code> breaks its output into 72-character
-lines, matching jsonlite's encoder; the decoder ignores line breaks and
-any other character outside the alphabet, so either form round trips.</p>
+lines (a newline after each complete block of 54 input bytes), matching
+jsonlite's encoder byte for byte; the decoder ignores line breaks, other
+white space and <code>=</code> padding, so either form round trips. Any other
+character outside the alphabet is an error rather than being skipped,
+because skipping it would decode a corrupted body into a shorter
+valid-looking one.</p>
 <p>The URL-safe variant substitutes <code>-</code> and <code>_</code> for <code>+</code> and
 <code>/</code> and drops the <code>=</code> padding, which is what makes it safe in
 a URL path, a query string or a filename.</p>
@@ -96,6 +103,12 @@ a URL path, a query string or a filename.</p>
 anyone can reverse it. Use <code><a href="core_sha256.html">core_sha256()</a></code> to
 pin content and <code><a href="rmbl_keyed_digest.html">core_hmac_sha256()</a></code> to
 authenticate it.</p>
+<p>Errors: an encoder given anything but a raw vector, a character vector or
+<code>NULL</code>; <code>bricklayer_json_base64_dec()</code> given anything but text or
+raw bytes, or text with a character outside the standard alphabet;
+<code>bricklayer_json_base64url_dec()</code> given anything but character text
+(raw bytes are refused), <code>NA</code>, or a character outside the URL-safe
+alphabet.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -142,6 +155,10 @@ with gzip.</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">rawToChar</a></span><span class="op">(</span><span class="fu">bricklayer_json_base64_dec</span><span class="op">(</span><span class="va">long</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/strrep.html" class="external-link">strrep</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">200</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A character outside the alphabet is refused, not skipped.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_json_base64_dec</span><span class="op">(</span><span class="st">"ab$c"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : base64 input contains characters outside the alphabet</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

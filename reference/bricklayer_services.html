@@ -23,7 +23,7 @@ network the cached copy is used, then the copy bundled with the package.'><meta 
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -90,31 +90,37 @@ network the cached copy is used, then the copy bundled with the package.</p>
 
 
 <dl><dt id="arg-refresh">refresh<a class="anchor" aria-label="anchor" href="#arg-refresh"></a></dt>
-<dd><p><code>TRUE</code> to fetch the live document even when the
-cached copy is fresh.</p></dd>
+<dd><p>Logical scalar, default <code>FALSE</code>: <code>TRUE</code> fetches
+the live document even when the cached copy is fresh.</p></dd>
 
 
 <dt id="arg-max-age">max_age<a class="anchor" aria-label="anchor" href="#arg-max-age"></a></dt>
-<dd><p>Seconds a cached copy is used without asking the site
-(default one day).</p></dd>
+<dd><p>Numeric scalar, the seconds a cached copy is used without
+asking the site; default <code>86400</code> (one day); <code>Inf</code> keeps a
+cached copy forever.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Seconds allowed for the fetch.</p></dd>
+<dd><p>Numeric scalar, the seconds allowed for each of the two
+fetches (document and signature); default <code>20</code>.</p></dd>
 
 
 <dt id="arg-offline">offline<a class="anchor" aria-label="anchor" href="#arg-offline"></a></dt>
-<dd><p><code>TRUE</code> never fetches: the cached copy, then the
-bundled one (what the examples and an offline session get).</p></dd>
+<dd><p>Logical scalar, default <code>FALSE</code>: <code>TRUE</code> never
+fetches: the session's copy, the cached copy, then the bundled one (what
+the examples and an offline session get).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list with <code>version</code>, <code>issued</code>, <code>notice</code>,
-<code>llm</code> (<code>mode</code>, <code>base_url</code>, <code>auth_url</code>: where the
-sign-in for the data key is reached) and
+    <p>A list with <code>version</code> (integer, 1), <code>issued</code> (the
+signing time, ISO 8601 UTC), <code>notice</code> (text for the user, possibly
+empty), <code>llm</code> (<code>mode</code>, <code>base_url</code>, <code>auth_url</code>: where
+the sign-in for the data key is reached; also <code>models</code>,
+<code>default_model</code> and <code>request_access</code>) and
 <code>data</code> (<code>mode</code>, <code>base_url</code>, <code>license</code>,
-<code>request_access</code>), with the attribute <code>"source"</code> set to
+<code>request_access</code>, and <code>auth_url</code> when the document has one),
+with the attribute <code>"source"</code> set to
 <code>"live"</code>, <code>"cache"</code>, <code>"bundled"</code> or <code>"off"</code>.</p>
     </div>
     <div class="section level2">
@@ -128,6 +134,27 @@ signed before that change carries the sign-in address only.</p>
 mirror of the document (its signature is fetched from the same place, with
 the suffix <code>.sig</code>); the signature check is unchanged, so a mirror can
 only serve a document the project signed.</p>
+<p>The order of resolution: a cached copy younger than <code>max_age</code> (unless
+<code>refresh</code>); the live document, fetched through the package's own
+checked transport (public https only, at most 1 MiB), verified, and kept
+only when it is not older than the copy already held or the bundled copy
+(an older signed document is a rollback and is refused); the stale cached
+copy; the bundled copy; and finally a document with every mode
+<code>"off"</code>. A cached copy no newer than the bundled one is not used, and
+one that is older is deleted. Network failures are not errors: they fall
+through to the next copy.</p>
+<p>Side effects: an accepted live document and its signature are written to
+<code>tools::R_user_dir("rmoriebricklayer", "cache")</code> as
+<code>morie-services.json</code> and <code>morie-services.sig</code>. The result is
+also kept for the session, so later <code>offline = TRUE</code> calls (which the
+rest of the package makes) return it without checking the signature again.</p>
+<p>Errors: <code>refresh</code> or <code>offline</code> not <code>TRUE</code> or <code>FALSE</code>;
+<code>max_age</code> not a single non-negative number; <code>timeout</code> not a
+single finite number of at least 1.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="bricklayer_llm_login.html">bricklayer_llm_login</a></code>, <code><a href="bricklayer_data_manifest.html">bricklayer_data_manifest</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -139,6 +166,25 @@ only serve a document the project signed.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "off"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">s</span>, <span class="st">"source"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "bundled"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># where the curated-data service is, and whether it takes a key</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">data</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mode"</span>, <span class="st">"base_url"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $mode</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "key"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $base_url</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "https://data.rmorie.com"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">issued</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "2026-10-14T00:46:57Z"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># arguments are checked</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_services</span><span class="op">(</span>max_age <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `max_age` must be a single non-negative number of seconds (Inf keeps a cached copy forever)</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># ask the site now (network), and keep the answer for a day</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_services</span><span class="op">(</span>refresh <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

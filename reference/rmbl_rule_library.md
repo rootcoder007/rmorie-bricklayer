@@ -6,7 +6,10 @@ that
 [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
 evaluates. Use
 [`rule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.md)
-directly for anything not covered here.
+directly for anything not covered here. Writing the common checks once,
+here, avoids the off-by-one or the forgotten `NA` that makes a
+hand-written rule pass silently, and gives every failure a readable
+message and the rows that failed.
 
 ## Usage
 
@@ -41,50 +44,110 @@ rule_col_count(n, severity = c("warning", "fatal"))
 
 - column:
 
-  Column the rule applies to.
+  Character scalar, the name of the column the rule applies to.
 
 - set:
 
-  Allowed values ( `rule_in_set`) .
+  Vector of allowed values (`rule_in_set()`); compared as text.
 
 - na_pass:
 
-  Treat `NA` as passing (default `TRUE`; see above).
+  Logical scalar, default `TRUE`: treat `NA` as passing (see above);
+  `FALSE` makes a missing value fail.
 
 - severity:
 
-  `"warning"` (default) or `"fatal"`.
+  `"warning"` (the default) or `"fatal"`: how
+  [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
+  and the capsule gate treat a failure.
 
 - lo, hi:
 
-  Inclusive bounds ( `rule_between`) .
+  Numeric scalars, the inclusive bounds (`rule_between()`); `lo` must
+  not exceed `hi`.
 
 - pattern:
 
-  Regular expression the values must match ( `rule_regex`) .
+  Character scalar, the regular expression the values must match
+  (`rule_regex()`); only the first element is used.
 
 - strictly:
 
-  Require a strict increase rather than non-decreasing (
-  `rule_increasing`) .
+  Logical scalar, default `FALSE`: require a strict increase rather than
+  non-decreasing (`rule_increasing()`).
 
 - n:
 
-  Multiplier for `rule_within_n_mads`, or the expected count for
-  `rule_col_count`.
+  Numeric scalar: the multiplier for `rule_within_n_mads()` (default
+  `3`), or the expected number of columns for `rule_col_count()` (a
+  whole number, no default).
 
 - columns:
 
-  Columns that jointly must be unique ( `rule_distinct_rows`) , or
-  `NULL` for all of them.
+  Character vector of columns that jointly must be unique
+  (`rule_distinct_rows()`), or `NULL` (the default) for all of them.
 
 ## Value
 
 A
 [`rule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.md)
-object.
+object: a list of class `c("bricklayer_rule", "list")` with `name`,
+`expr` (the predicate function), `column` (`NULL` for whole-table
+rules), `severity` and `message`.
 
 ## Details
+
+What each rule checks:
+
+- `rule_in_set()`: each value, compared as text, is one of `set` (so `1`
+  and `"1"` match). Name `"<column>_in_set"`.
+
+- `rule_between()`: each value lies in `[lo, hi]`, ends included. Name
+  `"<column>_between"`.
+
+- `rule_not_null()`: no value is `NA`. Name `"<column>_not_null"`.
+
+- `rule_unique()`: no value repeats an earlier one; the rows reported
+  are the repeats, not the first occurrence. Two `NA`s count as a
+  repeat. Name `"<column>_unique"`.
+
+- `rule_regex()`: each value, as text, matches `pattern` (an extended
+  regular expression, [`grepl()`](https://rdrr.io/r/base/grep.html)).
+  Name `"<column>_regex"`.
+
+- `rule_increasing()`: the column never decreases from one row to the
+  next (or always increases, with `strictly = TRUE`); missing steps are
+  skipped. A whole-column check: a failure names no rows. Name
+  `"<column>_increasing"`.
+
+- `rule_within_n_mads()`: each value lies within `n` median absolute
+  deviations (scaled by 1.4826, so comparable to standard deviations for
+  normal data) of the column's median. When the MAD is zero (more than
+  half the values equal) any value other than the median fails. The
+  column must be numeric when the rule is evaluated. Name
+  `"<column>_within_mads"`.
+
+- `rule_complete_rows()`: no row has a missing value. Name
+  `"complete_rows"`.
+
+- `rule_distinct_rows()`: no row repeats an earlier one on `columns`
+  (columns not in the data are ignored; when none is present the rule
+  passes). Name `"distinct_rows"`.
+
+- `rule_col_count()`: the data have exactly `n` columns. Name
+  `"col_count"`.
+
+The name is the key of the rule's entry in the list
+[`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
+returns, which holds only the rules that failed (with `severity`,
+`message`, and for row-wise rules `n_failed` and `rows`). A rule that
+cannot be evaluated (a missing column, text in a numeric rule) is
+reported as failed, with the reason in its message.
+
+Errors, at construction: `column` not a single non-empty string;
+`severity` other than `"warning"` or `"fatal"`; `rule_between()` with
+`lo > hi` or a missing bound; `rule_within_n_mads()` with `n` not
+positive; `rule_col_count()` with `n` not a non-negative whole number.
 
 `NA` handling is explicit and per-rule, because the right answer
 differs. `rule_not_null()` exists precisely to fail on `NA`. The value
@@ -155,4 +218,15 @@ validate_rules(df, rule_col_count(5))
 #> list()
 validate_rules(df, rule_complete_rows())
 #> list()
+
+# NA fails only when asked to
+g <- data.frame(grade = c("a", NA, "b"))
+length(validate_rules(g, rule_in_set("grade", c("a", "b"))))
+#> [1] 0
+validate_rules(g, rule_in_set("grade", c("a", "b"), na_pass = FALSE))$grade_in_set$rows
+#> [1] 2
+
+# bounds are checked when the rule is made
+try(rule_between("score", 100, 0))
+#> Error : need `lo` <= `hi`, both non-missing
 ```

@@ -1,8 +1,12 @@
 # Name a fiscal year by the years it spans
 
-Ontario's inmate data keys on the fiscal year's END year, so 2023 is the
-fiscal year running from April 2022 to March 2023. This renders that as
-`"2022/23"`.
+Turns fiscal years keyed by their END year into labels that name both
+calendar years. Ontario's inmate data (and many government series) key
+on the fiscal year's end year, so 2023 is the fiscal year running from
+April 2022 to March 2023; this renders that as `"2022/23"`, which a
+reader cannot mistake for the calendar year 2023. Pass it to
+[`yoy_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.md)
+to label a change table.
 
 ## Usage
 
@@ -14,19 +18,33 @@ fiscal_year_label(end_year, sep = "/", short = TRUE)
 
 - end_year:
 
-  The fiscal year's end year, as a number or a string.
+  The fiscal year's end year, as a number or a string; a vector of them.
 
 - sep:
 
-  Separator between the two years.
+  Separator between the two years, a string; default `"/"`.
 
 - short:
 
-  Whether to abbreviate the second year to two digits.
+  Logical. `TRUE` (the default) abbreviates the second year to two
+  digits (`"2022/23"`); `FALSE` writes it in full (`"2022/2023"`).
 
 ## Value
 
-A character vector of labels.
+A character vector of labels, the same length as `end_year`, with `NA`
+where a value is not a year.
+
+## Details
+
+Each value is converted with `as.integer(as.character(end_year))`, so a
+string such as `"2023"` works and a fractional number is truncated
+(2023.7 gives `"2022/23"`). The label is `(y - 1)`, `sep`, then `y`
+itself or its last two digits. Values that cannot be read as a year give
+`NA`. The two-digit form is unambiguous within a century (2000 gives
+`"1999/00"`).
+
+Errors: `end_year` that is neither numeric nor character (for example
+logical); a numeric year below 1.
 
 ## Examples
 
@@ -39,4 +57,12 @@ fiscal_year_label(2023, short = FALSE)
 
 fiscal_year_label(2023, sep = "-")
 #> [1] "2022-23"
+
+# strings work; something that is not a year gives NA
+fiscal_year_label(c("2023", "n/a", NA))
+#> [1] "2022/23" NA        NA       
+
+# logical input is refused
+try(fiscal_year_label(TRUE))
+#> Error : `end_year` must be numeric or character years
 ```

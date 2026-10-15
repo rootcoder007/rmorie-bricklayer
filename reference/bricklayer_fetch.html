@@ -4,12 +4,16 @@ url to dest; if the live download fails (404, network),
 it retries the Wayback Machine snapshot – so a rotated or removed
 source file (CIHI, open-data portals) stays retrievable. Backed by the
 package's C++ rmbl_fetch_with_fallback kernel (libcurl), which
-rmorie and morie share through LinkingTo."><meta property="og:description" content="The shared data-fetch foundation of the morie ecosystem. Downloads
+rmorie and morie share through LinkingTo. The return
+value says which source served the file, so a report can note that it
+used an archived copy."><meta property="og:description" content="The shared data-fetch foundation of the morie ecosystem. Downloads
 url to dest; if the live download fails (404, network),
 it retries the Wayback Machine snapshot – so a rotated or removed
 source file (CIHI, open-data portals) stays retrievable. Backed by the
 package's C++ rmbl_fetch_with_fallback kernel (libcurl), which
-rmorie and morie share through LinkingTo."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+rmorie and morie share through LinkingTo. The return
+value says which source served the file, so a report can note that it
+used an archived copy."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +21,7 @@ rmorie and morie share through LinkingTo."><meta property="og:image" content="ht
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +67,9 @@ rmorie and morie share through LinkingTo."><meta property="og:image" content="ht
 it retries the Wayback Machine snapshot – so a rotated or removed
 source file (CIHI, open-data portals) stays retrievable. Backed by the
 package's C++ <code>rmbl_fetch_with_fallback</code> kernel (libcurl), which
-<span class="pkg">rmorie</span> and <span class="pkg">morie</span> share through <code>LinkingTo</code>.</p>
+<span class="pkg">rmorie</span> and <span class="pkg">morie</span> share through <code>LinkingTo</code>. The return
+value says which source served the file, so a report can note that it
+used an archived copy.</p>
     </div>
 
     <div class="section level2">
@@ -76,27 +82,49 @@ package's C++ <code>rmbl_fetch_with_fallback</code> kernel (libcurl), which
 
 
 <dl><dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
-<dd><p>Live source URL.</p></dd>
+<dd><p>Live source URL, a single <code>https</code> string.</p></dd>
 
 
 <dt id="arg-dest">dest<a class="anchor" aria-label="anchor" href="#arg-dest"></a></dt>
-<dd><p>Destination file path.</p></dd>
+<dd><p>Destination file path, a single string; its directory must
+exist.</p></dd>
 
 
 <dt id="arg-wayback">wayback<a class="anchor" aria-label="anchor" href="#arg-wayback"></a></dt>
-<dd><p>Optional explicit Wayback snapshot URL.
-<code>""</code> (default) auto-resolves one via
-<code><a href="wayback_snapshot_url.html">wayback_snapshot_url</a></code>.</p></dd>
+<dd><p>Optional explicit Wayback snapshot URL, a string.
+<code>""</code> (default) or <code>NULL</code> auto-resolves one via
+<code><a href="wayback_snapshot_url.html">wayback_snapshot_url</a></code>'s API when the live download fails.</p></dd>
 
 
 <dt id="arg-timeout">timeout<a class="anchor" aria-label="anchor" href="#arg-timeout"></a></dt>
-<dd><p>Per-request timeout, seconds.</p></dd>
+<dd><p>Per-request timeout in seconds, a positive whole number
+(default 120).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Invisibly, one of <code>"live"</code>, <code>"wayback"</code>, or throws on
-total failure.</p>
+    <p>Invisibly, <code>"live"</code> or <code>"wayback"</code>: the source that
+served the file. Throws on total failure.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Before any network use the arguments are checked: <code>url</code> must be one
+<code>https</code> URL to a public host (plain <code>http</code> only with
+<code>options(rmoriebricklayer.allow_http = TRUE)</code>; loopback, private,
+link-local and metadata addresses are refused), the directory of
+<code>dest</code> must exist and be writable, and <code>timeout</code> must be at
+least one second. The compiled layer then resolves the host, pins the
+connection to the checked addresses and re-checks every redirect.</p>
+<p>If the live download fails, the fallback is the <code>wayback</code> URL when
+given, else a snapshot looked up through the Wayback availability API
+(as <code><a href="wayback_snapshot_url_native.html">wayback_snapshot_url_native()</a></code> does).
+<code>dest</code> is overwritten. A
+spinner is drawn on stderr while waiting, unless
+<code>options(morie.quiet = TRUE)</code>.</p>
+<p>Errors: invalid arguments as above; and, when both sources fail, an error
+saying whether the live URL could not be reached or answered an HTTP
+status, and whether the Wayback Machine had no snapshot or its copy could
+not be downloaded.</p>
     </div>
 
     <div class="section level2">
@@ -104,30 +132,34 @@ total failure.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Inputs are validated before any network access:</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>          <span class="co"># empty url -&gt; error</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error : `url` must be one non-empty URL string</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">"ftp://example.org/data.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : bricklayer_fetch: 'ftp://example.org/data.csv' is not an http(s) URL</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">"https://127.0.0.1/data.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : url points at a local or private address ('https://127.0.0.1/data.csv'): refused (a local or private address (127.0.0.1))</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">"https://example.org/data.csv"</span>,</span></span>
+<span class="r-in"><span>                     <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"no-such-dir"</span>, <span class="st">"data.csv"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : bricklayer_fetch: cannot write /tmp/RtmpZSI4mI/no-such-dir/data.csv (its directory does not exist)</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="co"># Downloads from the live web service; try() keeps the example graceful</span></span></span>
-<span class="r-in"><span><span class="co"># when neither the live URL nor its Wayback fallback is reachable.</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># needs the network</span></span></span>
 <span class="r-in"><span><span class="va">dst</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".xlsx"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Live download; auto-resolves a Wayback snapshot only if the live URL fails.</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_fetch</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"https://www.cihi.ca/sites/default/files/document/"</span>,</span></span>
 <span class="r-in"><span>         <span class="st">"hospital-beds-2024-2025-data-tables-en.xlsx"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>  <span class="va">dst</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">dst</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_fetch</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"https://example.org/rotated-file.csv"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  wayback <span class="op">=</span> <span class="st">"https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv"</span>,</span></span>
-<span class="r-in"><span>  timeout <span class="op">=</span> <span class="fl">60</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Error : bricklayer_fetch: https://example.org/rotated-file.csv answered HTTP 404; the Wayback fallback failed too (its copy could not be downloaded)</span>
+<span class="r-in"><span>  timeout <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The return value tells you which source served the file.</span></span></span>
-<span class="r-in"><span><span class="va">status</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">"https://cloud.r-project.org/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">status</span> <span class="op">&lt;-</span> <span class="fu">bricklayer_fetch</span><span class="op">(</span><span class="st">"https://cloud.r-project.org/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">status</span>   <span class="co"># "live" or "wayback"</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "live"</span>
-<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

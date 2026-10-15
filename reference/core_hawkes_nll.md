@@ -21,26 +21,31 @@ core_hawkes_nll(
 
 - times:
 
-  Sorted numeric vector of event times in `[0, horizon]`.
+  Numeric vector of event times, sorted increasing, each in
+  `[0, horizon]`, in the time unit of your data (days, hours, ...). May
+  be empty.
 
 - horizon:
 
-  End of the observation window (length-1, \> 0).
+  End of the observation window, a single positive finite number in the
+  same unit; the window starts at 0.
 
 - kernel:
 
-  One of `"exponential"`, `"weibull"`, `"lomax"`, `"gamma"`.
+  The triggering kernel: one of `"exponential"` (the default),
+  `"weibull"`, `"lomax"`, `"gamma"`. Partial names are matched.
 
 - par:
 
-  Numeric parameter vector, as described above: length 3 for
-  `"exponential"`, length 4 for the others.
+  Numeric parameter vector, as described above: length 3 (`a0`, `eta`,
+  `beta`) for `"exponential"`, length 4 (`a0`, `eta` and the kernel's
+  two parameters) for the others. Rates are per unit of `times`.
 
 ## Value
 
 A length-1 numeric: the negative log-likelihood, to be MINIMISED. A
-parameter set outside the core's feasible region returns the sentinel
-`1e12` rather than erroring, so the value can be handed straight to
+parameter set outside the feasible region returns the sentinel `1e12`
+rather than erroring, so the value can be handed straight to
 [`stats::optim()`](https://rdrr.io/r/stats/optim.html) without the
 optimiser walking off the domain.
 
@@ -61,6 +66,28 @@ c)^{-(\alpha + 1)}\\), `alpha, beta` (gamma: shape and rate). This is
 the likelihood
 [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
 maximises, on the same parameters.
+
+The conditional intensity is \\\lambda(t) = \nu + \eta \sum\_{t_i \< t}
+g(t - t_i)\\ with \\g\\ a probability density on \\(0, \infty)\\ (so
+\\\eta\\ is the branching ratio), and the value returned is \$\$-\ell =
+-\sum_i \log \lambda(t_i) + \int_0^T \lambda(t)\\dt,\$\$ with \\T\\ =
+`horizon` (Hawkes, 1971). For the exponential kernel \\g(u) = \beta
+e^{-\beta u}\\. With no events the value is the compensator alone, \\\nu
+T\\.
+
+The feasible region, outside which the sentinel `1e12` is returned
+instead of a value: \\-20 \< a_0 \< 20\\; \\10^{-6} \< \eta \< 0.999\\;
+and for the kernel parameters, exponential \\0.05 \le \beta \le 30\\;
+Weibull shape in \\\[0.05, 20\]\\ and scale in \\\[0.001, 1000\]\\;
+Lomax shape in \\\[0.05, 30\]\\ and scale in \\\[0.001, 100\]\\; gamma
+shape in \\\[0.05, 20\]\\ and rate in \\\[0.05, 30\]\\. A missing
+parameter also gives the sentinel.
+
+Refusals (errors, not the sentinel): `times` with a missing value, not
+sorted, or outside \\\[0, T\]\\; a `horizon` that is not a single
+positive finite number; a `kernel` not among the four; and a `par` of
+the wrong length for the kernel. The quadratic kernels poll for a Ctrl-C
+as they run, so a long evaluation can be interrupted.
 
 ## References
 
@@ -92,4 +119,8 @@ core_hawkes_nll(times, 10, "exponential", c(-0.5, 1.5, 1.2)) == 1e12
 # The heavier-tailed kernels take two shape parameters.
 core_hawkes_nll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
 #> [1] -1.550628
+
+# Unsorted times are an error, not the sentinel.
+try(core_hawkes_nll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
+#> Error : `times` must be sorted in increasing order
 ```

@@ -19,7 +19,7 @@ drawn at k IQRs beyond the quartiles."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,13 +87,13 @@ drawn at <code>k</code> IQRs beyond the quartiles.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric vector (coerced with
-<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>) .</p></dd>
+<dd><p>Numeric (or logical) vector; coerced with
+<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>.</p></dd>
 
 
 <dt id="arg-probs">probs<a class="anchor" aria-label="anchor" href="#arg-probs"></a></dt>
-<dd><p>Numeric vector of probabilities in \ [0, 1].</p>
-<p>[0, 1]: R:0,%201%5C</p></dd>
+<dd><p>Numeric vector of probabilities, each in \([0, 1]\)
+(default the minimum, quartiles and maximum).</p></dd>
 
 
 <dt id="arg-constant">constant<a class="anchor" aria-label="anchor" href="#arg-constant"></a></dt>
@@ -107,16 +107,18 @@ The unrounded consistency constant is <code>1 / qnorm(3/4)</code> =
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
-<dd><p>Fence width in IQRs (default 1.5, Tukey's convention;
-3 is the usual "far out" cutoff).</p></dd>
+<dd><p>Fence width in IQRs, a single non-negative number (default
+1.5, Tukey's convention; 3 is the usual "far out" cutoff).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>core_quantile()</code> returns a numeric vector the length of
-<code>probs</code>; <code>core_median()</code>, <code>core_mad()</code> and
-<code>core_iqr()</code> a length-1 numeric; <code>core_tukey_fences()</code> a named
-length-2 numeric ( <code>lower</code>, <code>upper</code>) .</p>
+    <p><code>core_quantile()</code>: a numeric vector the length of <code>probs</code>, in
+the units of <code>x</code>, named by percentage (<code>"25%"</code>, ...) as
+<code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">stats::quantile()</a></code> names them. <code>core_median()</code>,
+<code>core_mad()</code> and
+<code>core_iqr()</code>: a length-1 numeric in the units of <code>x</code>.
+<code>core_tukey_fences()</code>: a named length-2 numeric, <code>lower</code> and <code>upper</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -124,7 +126,38 @@ length-2 numeric ( <code>lower</code>, <code>upper</code>) .</p>
 <code><a href="core_moments.html">core_moments()</a></code>: a single corrupted row can
 move a mean or a variance arbitrarily far, but moves a median or a MAD
 hardly at all – which is what you want when deciding whether a freshly
-fetched column is still the column a capsule was pinned against.</p>
+fetched column is still the column a capsule was pinned against, or
+when screening a column for values to inspect by hand.</p>
+<p>The type-7 quantile at probability \(p\) interpolates linearly between
+the order statistics \(x_{(j)}\) and \(x_{(j+1)}\) with
+\(h = (n - 1)p + 1\), \(j = \lfloor h \rfloor\):
+\(Q(p) = x_{(j)} + (h - j)(x_{(j+1)} - x_{(j)})\) (Hyndman and Fan,
+1996). The MAD is \(c \cdot \mathrm{median}_i |x_i - \mathrm{median}(x)|\)
+with \(c\) = <code>constant</code>; the IQR is \(Q(0.75) - Q(0.25)\); and the
+fences are \(Q(0.25) - k \cdot \mathrm{IQR}\) and
+\(Q(0.75) + k \cdot \mathrm{IQR}\) (Tukey, 1977).</p>
+<p>Missing values are not removed: an <code>NA</code> or <code>NaN</code> anywhere in <code>x</code> makes
+every result <code>NaN</code> (unlike <code><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">stats::quantile()</a></code>, which
+stops). An empty
+<code>x</code> gives <code>NaN</code>. <code>core_quantile()</code> refuses an empty <code>probs</code>
+(<code>"probs is empty"</code>) and any probability outside \([0, 1]\) or missing
+(<code>"must lie in [0, 1]"</code>); every function refuses a character, factor or
+list <code>x</code> (<code>"must be numeric"</code>). The quantiles sort a copy of <code>x</code>, so
+the
+cost is \(O(n \log n)\).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Hyndman RJ, Fan Y (1996). Sample quantiles in statistical
+packages. <em>The American Statistician</em> 50(4), 361–365.
+<a href="https://doi.org/10.1080/00031305.1996.10473566" class="external-link">doi:10.1080/00031305.1996.10473566</a></p>
+<p>Tukey JW (1977). <em>Exploratory Data Analysis</em>. Addison-Wesley.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="core_moments.html">core_moments()</a></code> for the non-robust moments,
+<code><a href="rmbl_core_trimmed.html">core_trimmed_mean()</a></code> for a robust centre that still
+averages.</p></div>
     </div>
 
     <div class="section level2">
@@ -165,6 +198,14 @@ fetched column is still the column a capsule was pinned against.</p>
 <span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu">core_tukey_fences</span><span class="op">(</span><span class="va">wild</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">wild</span><span class="op">[</span><span class="va">wild</span> <span class="op">&lt;</span> <span class="va">f</span><span class="op">[[</span><span class="st">"lower"</span><span class="op">]</span><span class="op">]</span> <span class="op">|</span> <span class="va">wild</span> <span class="op">&gt;</span> <span class="va">f</span><span class="op">[[</span><span class="st">"upper"</span><span class="op">]</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1000</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A missing value is not dropped: the answer is NaN.</span></span></span>
+<span class="r-in"><span><span class="fu">core_median</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="cn">NA</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] NaN</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A probability outside [0, 1] is refused.</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">core_quantile</span><span class="op">(</span><span class="va">x</span>, <span class="fl">1.5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `probs` must lie in [0, 1]</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

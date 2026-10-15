@@ -1,9 +1,10 @@
 # Generate a Data Citation From Provenance
 
-Builds a ready-to-paste data citation (plain text and BibTeX `@misc`)
-from a provenance object's `dataset` and `resource` blocks, using
-publisher, resource name, source system, retrieval date, license, the
-pinned URL, and a DOI when one is recorded ( `dataset$doi`) .
+Builds a ready-to-paste data citation, as plain text and as a BibTeX
+`@misc` entry, from the `dataset` and `resource` blocks of a provenance
+record. Use it so that every report and paper built from a capsule cites
+the data set in the same words, with the retrieval date and licence that
+were actually pinned.
 
 ## Usage
 
@@ -16,12 +17,39 @@ cite_capsule(provenance)
 - provenance:
 
   A provenance list as returned by
-  [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md).
+  [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md),
+  or `NULL`.
 
 ## Value
 
-A list with `text` and `bibtex` character scalars, or `NULL` if
-`provenance` is `NULL`.
+A list with `text` and `bibtex`, each a length-1 character string (the
+BibTeX entry has embedded newlines), or `NULL` if `provenance` is
+`NULL`.
+
+## Details
+
+The fields used, with their fallbacks:
+
+- author: `dataset$publisher`, else `"Unknown publisher"`;
+
+- title: `resource$name`, else `dataset$package_slug`, else
+  `"Untitled dataset"`;
+
+- year: the first four characters of `captured_at_utc`, else the current
+  year; retrieval date: its first ten characters (omitted if absent);
+
+- link: `https://doi.org/<dataset$doi>` when a DOI is recorded, else
+  `resource$direct_url`, else `dataset$catalogue_page`;
+
+- licence: `dataset$licence_short`, else `dataset$licence_name`.
+
+The text form is
+`Publisher (year). Title [Data set]. link Retrieved date. Licence: x.`
+The BibTeX key is the package slug with non-alphanumeric characters
+removed, followed by the year. In the BibTeX entry the licence is
+written in the `note` field only when a retrieval date is present. No
+character in the fields is escaped for LaTeX. Error: `provenance` that
+is not a list.
 
 ## Examples
 
@@ -50,7 +78,16 @@ cat(cit$bibtex)
 #>   note = {Retrieved 2026-06-23; licence: OGL-Ontario},
 #> }
 
+# a recorded DOI replaces the URL
+prov$dataset$doi <- "10.5683/SP3/EXAMPLE"
+cat(cite_capsule(prov)$text)
+#> Ontario Ministry of the Solicitor General (2026). Restrictive Confinement - Detailed Dataset [Data set]. https://doi.org/10.5683/SP3/EXAMPLE Retrieved 2026-06-23. Licence: OGL-Ontario.
+
 # NULL provenance returns NULL (composes safely).
 cite_capsule(NULL)
 #> NULL
+
+# anything else that is not a list is an error
+try(cite_capsule("data-on-inmates-in-ontario"))
+#> Error : `provenance` must be a provenance list (load_provenance())
 ```

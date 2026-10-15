@@ -1,8 +1,12 @@
 # Chi-square test of homogeneity for two categorical samples
 
-Tests whether two SAMPLES were drawn from the same categorical
-distribution, by Pearson's chi-square on the 2-by-k contingency table of
-their counts.
+Tests whether two samples of a categorical variable (for example race,
+offence type or region in an old and a new data extract) were drawn from
+the same distribution, by Pearson's chi-square on the 2-by-k contingency
+table of their counts. Use it to ask whether the mix of categories has
+changed between two samples; it is the categorical test that
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md)
+runs.
 
 ## Usage
 
@@ -19,9 +23,10 @@ drift_homogeneity(x, y, seed = 1L)
 
 - seed:
 
-  Seed for the Monte Carlo branch (small expected counts). The draw is
-  made under this seed and the caller's RNG stream is restored, so the
-  same inputs give the same p-value and nothing downstream moves.
+  Integer, default 1: seed for the Monte Carlo branch (small expected
+  counts). The draw is made under this seed and the caller's RNG stream
+  is restored, so the same inputs give the same p-value and nothing
+  downstream moves.
 
 ## Value
 
@@ -32,6 +37,30 @@ information where `p_value` underflows to 0. On the Monte Carlo branch
 log, so it carries no extra range there. The attribute `method` names
 the branch, or says why the test was inapplicable (one category, no
 counts).
+
+## Details
+
+With pooled shares \\\hat\pi_j = (x_j + y_j)/(n_x + n_y)\\ and expected
+counts \\n_x \hat\pi_j\\ and \\n_y \hat\pi_j\\, \$\$X^2 = \sum_j
+\frac{(x_j - n_x\hat\pi_j)^2}{n_x\hat\pi_j} + \frac{(y_j -
+n_y\hat\pi_j)^2}{n_y\hat\pi_j}\$\$ on \\k - 1\\ degrees of freedom.
+Three branches, named in the `method` attribute:
+
+- `"chi-square approximation"`: every expected count is at least 5; the
+  p-value is the chi-square upper tail.
+
+- `"Monte Carlo permutation (small expected counts)"`: some expected
+  count is below 5; the p-value comes from
+  [`stats::chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) with
+  `simulate.p.value = TRUE` and `B = 10000` tables with the same
+  margins, drawn under `seed`.
+
+- `"inapplicable: ..."`: a single category, or fewer than two
+  observations per category (for example two disjoint sets of dates); no
+  test has power there, so `p_value` is `NA` rather than 1.
+
+Errors: a numeric vector without names; negative, infinite or missing
+counts; an empty sample.
 
 ## Why this and not [`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md)
 
@@ -88,4 +117,16 @@ all.equal(drift_homogeneity(a, b)[["statistic"]],
 # is exactly the point.
 drift_homogeneity(a, b)[["p_value"]] >= drift_chisq(b, a)[["p_value"]]
 #> [1] TRUE
+
+# named count vectors, and a small table that takes the Monte Carlo branch
+drift_homogeneity(c(a = 30, b = 20), c(a = 25, b = 25))
+#>   statistic          df     p_value log_p_value 
+#>   1.0101010   1.0000000   0.3148786  -1.1555680 
+#> attr(,"method")
+#> [1] "chi-square approximation"
+attr(drift_homogeneity(c(a = 3, b = 1, c = 2), c(a = 1, b = 4, c = 1)), "method")
+#> [1] "Monte Carlo permutation (small expected counts)"
+
+try(drift_homogeneity(c(1, 2), c(a = 3)))
+#> Error : a numeric `x`/`y` must be named
 ```

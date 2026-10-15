@@ -7,6 +7,11 @@ figures that were rounded, truncated, capped, re-scaled, or invented
 typically do not. That makes it a cheap screen for a numeric column that
 arrived looking plausible but is not the measurement it claims to be.
 
+It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication.
+
 ## Usage
 
 ``` r
@@ -24,22 +29,35 @@ benford_test(x)
 A list of class `bricklayer_benford`: `counts` (observed digit
 frequencies 1–9), `expected`, `proportion`, `statistic`, `df`,
 `p_value`, `log_p_value` (the log of the upper tail, which keeps its
-information where `p_value` underflows to 0), and `n`.
+information where `p_value` underflows to 0), and `n` (the number of
+values used). `counts`, `expected` and `proportion` are named numeric
+vectors with names `"1"` to `"9"`. The print method shows the verdict
+and a bar chart of observed against expected shares.
 
 ## Details
 
-It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
-or ceiling, or an assigned-identifier structure (postcodes, year fields,
-prices ending in 99) legitimately violate Benford's law. Treat a small
-p-value as a reason to look, never as evidence of fabrication.
-
 Zeros and non-finite values have no leading significant digit and are
 excluded; the sign is ignored.
+
+With \\n\\ usable values, \\O_d\\ the count with leading digit \\d\\ and
+\\E_d = n \log\_{10}(1 + 1/d)\\, \$\$X^2 = \sum\_{d=1}^{9} \frac{(O_d -
+E_d)^2}{E_d}\$\$ on 8 degrees of freedom. The smallest Benford share is
+0.046 (digit 9), so the chi-square approximation needs about \\n \ge
+110\\ for every expected count to reach 5; below that treat the p-value
+as rough. Digits are counted in compiled code in blocks of a million
+values, and a long vector shows a progress bar in an interactive session
+(silenced by `options(morie.quiet = TRUE)`). Errors: non-numeric input,
+or no finite non-zero value.
 
 ## References
 
 Benford F (1938). The law of anomalous numbers. *Proceedings of the
 American Philosophical Society* 78(4), 551–572.
+
+## See also
+
+[`drift_chisq()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drift_chisq.md),
+[`capsule_drift()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_drift.md).
 
 ## Examples
 
@@ -97,4 +115,7 @@ all.equal(b$expected / b$n, log10(1 + 1 / (1:9)))
 # Zeros carry no leading digit and are excluded from n.
 benford_test(c(0, 0, 1, 2, 3))$n
 #> [1] 3
+
+try(benford_test(c(0, NA)))
+#> Error : `x` has no finite non-zero values to take a leading digit from
 ```

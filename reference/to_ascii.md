@@ -6,6 +6,10 @@ example, an accented capital A becomes a plain "A"). Falls back to
 dropping any character that has no transliteration. This is the
 deterministic "fallback" used by
 [`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md).
+Use it for destinations that accept only ASCII – a package
+`DESCRIPTION`, a file name, a legacy system – so a name written with an
+accented letter arrives with the plain letter rather than as an encoding
+error or a question mark.
 
 ## Usage
 
@@ -17,11 +21,38 @@ to_ascii(x)
 
 - x:
 
-  A character vector.
+  A character vector (other types are converted with
+  [`as.character()`](https://rdrr.io/r/base/character.html)).
 
 ## Value
 
-A character vector containing only ASCII characters.
+A character vector the length of `x`, containing only printable ASCII
+characters (bytes 32 to 126); `NA` elements become `""`.
+
+## Details
+
+Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
+first. Then, when the stringi package is installed, the ICU transform
+`"Any-Latin; Latin-ASCII"` romanises any script and folds accents
+(Cyrillic, Greek and Chinese become Latin letters). Without stringi, a
+fixed table folds the common Latin accents and ligatures (sharp s to
+"ss", the ae ligature to "ae", thorn to "th" and so on) and every other
+non-ASCII character is dropped, so non-Latin scripts disappear rather
+than being romanised. Either way the result is then stripped of anything
+outside the printable ASCII range (space to tilde), so control
+characters such as newlines and tabs are removed too. The result never
+depends on the session's locale.
+
+A missing value becomes `""`; non-character input is converted with
+[`as.character()`](https://rdrr.io/r/base/character.html) first (so
+numbers pass through as their digits).
+
+## See also
+
+[`ascii_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/ascii_fallback.md)
+to transliterate only when needed,
+[`write_text_fallback()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/write_text_fallback.md)
+to write text with an ASCII retry.
 
 ## Examples
 
@@ -42,4 +73,8 @@ if (requireNamespace("stringi", quietly = TRUE))
 # Either way the result is guaranteed pure 7-bit ASCII (never "?").
 all(charToRaw(to_ascii("caf\u00e9")) < 128)
 #> [1] TRUE
+
+# Missing values become empty strings; line breaks are removed.
+to_ascii(c(NA, "two\nlines"))
+#> [1] ""         "twolines"
 ```

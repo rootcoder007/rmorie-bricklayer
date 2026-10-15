@@ -1,9 +1,11 @@
 # The panel-reviewed SIU report field schema
 
-The sixteen fields extracted from every Special Investigations Unit
-director's report. Count-type fields ( `is_count = TRUE`) count distinct
-entities and zero is a real answer – a witness-official-only
-investigation has zero subject officials.
+Returns the sixteen fields that the package extracts from every Ontario
+Special Investigations Unit (SIU) director's report, with a one-line
+description of each. Use it to see what
+[`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+returns, to build an empty coding sheet for hand review, or to check
+which fields are counts before summing them across reports.
 
 ## Usage
 
@@ -13,44 +15,55 @@ bricklayer_siu_schema()
 
 ## Value
 
-A data.frame with columns `name`, `is_count`, and `description`.
+A data.frame with 16 rows and three columns: `name` (character, the
+field name used by
+[`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)),
+`is_count` (logical, `TRUE` for the five count fields) and `description`
+(character, what the field records).
+
+## Details
+
+The schema is held in the native core (src/siu_schema.h) and is the same
+list that
+[`bricklayer_parse_siu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_parse_siu.md)
+fills. Three fields are dates in ISO `YYYY-MM-DD` form, five are counts
+and the rest are free text. Count-type fields (`is_count = TRUE`) count
+distinct entities, and zero is a real answer: a witness-official-only
+investigation has zero subject officials. The function takes no
+arguments, reads no files and uses no network.
 
 ## Examples
 
 ``` r
-bricklayer_siu_schema()
-#>                             name is_count
-#> 1                 police_service    FALSE
-#> 2           date_of_incident_iso    FALSE
-#> 3          date_siu_notified_iso    FALSE
-#> 4  date_of_director_decision_iso    FALSE
-#> 5              siu_investigators     TRUE
-#> 6    siu_forensics_investigators     TRUE
-#> 7    number_of_witness_officials     TRUE
-#> 8   number_of_civilian_witnesses     TRUE
-#> 9    number_of_subject_officials     TRUE
-#> 10                  age_affected    FALSE
-#> 11           sex_gender_affected    FALSE
-#> 12           charges_recommended    FALSE
-#> 13                directors_name    FALSE
-#> 14              location_of_call    FALSE
-#> 15             specific_injuries    FALSE
-#> 16          relevant_legislation    FALSE
-#>                                                                                         description
-#> 1                                        the police service(s) whose officials the SIU investigated
-#> 2                                                   the date the incident occurred (ISO YYYY-MM-DD)
-#> 3                                            the date the SIU was notified/invoked (ISO YYYY-MM-DD)
-#> 4                                              the date of the Director's decision (ISO YYYY-MM-DD)
-#> 5                                                          the number of SIU investigators assigned
-#> 6                                                 the number of SIU forensic investigators assigned
-#> 7                                             the count of distinct WITNESS officers/officials (WO)
-#> 8                                                     the count of distinct civilian witnesses (CW)
-#> 9  the count of distinct SUBJECT officers/officials (SO); a witness-officer-only investigation is 0
-#> 10                                        the age (or age range) of the affected person/complainant
-#> 11                                                the sex/gender of the affected person/complainant
-#> 12                                          whether charges were recommended/laid, and against whom
-#> 13                                                         the name of the SIU Director who decided
-#> 14                                                 the location/address where the incident occurred
-#> 15                                              the specific injuries the affected person sustained
-#> 16                                     the legislation/Criminal Code sections the Director analysed
+s <- bricklayer_siu_schema()
+s$name
+#>  [1] "police_service"                "date_of_incident_iso"         
+#>  [3] "date_siu_notified_iso"         "date_of_director_decision_iso"
+#>  [5] "siu_investigators"             "siu_forensics_investigators"  
+#>  [7] "number_of_witness_officials"   "number_of_civilian_witnesses" 
+#>  [9] "number_of_subject_officials"   "age_affected"                 
+#> [11] "sex_gender_affected"           "charges_recommended"          
+#> [13] "directors_name"                "location_of_call"             
+#> [15] "specific_injuries"             "relevant_legislation"         
+
+# only the count fields
+s[s$is_count, c("name", "description")]
+#>                           name
+#> 5            siu_investigators
+#> 6  siu_forensics_investigators
+#> 7  number_of_witness_officials
+#> 8 number_of_civilian_witnesses
+#> 9  number_of_subject_officials
+#>                                                                                        description
+#> 5                                                         the number of SIU investigators assigned
+#> 6                                                the number of SIU forensic investigators assigned
+#> 7                                            the count of distinct WITNESS officers/officials (WO)
+#> 8                                                    the count of distinct civilian witnesses (CW)
+#> 9 the count of distinct SUBJECT officers/officials (SO); a witness-officer-only investigation is 0
+
+# an empty hand-coding sheet with one column per field
+sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
+                                 s$name))
+ncol(sheet)
+#> [1] 16
 ```

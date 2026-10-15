@@ -21,16 +21,22 @@ drbg_new(entropy = NULL, personalization = NULL)
 
 - entropy:
 
-  Entropy input: 48 bytes, raw or hex. `NULL` (the default) draws them
-  from the operating system's CSPRNG.
+  Entropy input: exactly 48 bytes, as a raw vector or one string of 96
+  hexadecimal digits. `NULL` (the default) draws them from the operating
+  system's CSPRNG through
+  [`random_bytes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/random_bytes.md).
 
 - personalization:
 
-  Optional personalization string of up to 48 bytes, raw or hex.
+  Optional personalization string of up to 48 bytes, raw or hex; `NULL`
+  (the default) is the empty string. Different personalization strings
+  give independent streams from the same entropy.
 
 ## Value
 
-An object of class `bricklayer_drbg`. Its state (Key, V) is not printed.
+An object of class `bricklayer_drbg` (an environment holding the 32-byte
+Key, the 16-byte V, the request count and the process id). Its state
+(Key, V) is not printed.
 
 ## Details
 
@@ -51,6 +57,15 @@ The generator is an object that changes as it is used: every
 and
 [`drbg_reseed()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/drbg_reseed.md)
 advances it in place.
+
+The generator is an environment, so copies share one state. It is not
+meant to be saved: a generator restored from
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html) or inherited by a
+forked process reseeds itself from the operating system on its next use,
+so two processes never replay the same stream (and such a stream is then
+no longer reproducible). Errors when `entropy` is not exactly 48 bytes
+or `personalization` is longer than 48 bytes, or either is neither a raw
+vector nor one hexadecimal string.
 
 ## Security
 
@@ -103,4 +118,8 @@ identical(drbg_generate(a, 16), drbg_generate(b, 16))
 d <- drbg_new()
 length(drbg_generate(d, 32))
 #> [1] 32
+
+# the entropy must be exactly 48 bytes
+try(drbg_new(as.raw(1:16)))
+#> Error : `entropy` must be exactly 48 bytes, raw or hex
 ```

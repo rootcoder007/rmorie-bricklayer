@@ -4,12 +4,20 @@ Benford's law, \(P(d) = \log_{10}(1 + 1/d)\). Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
 typically do not. That makes it a cheap screen for a numeric column that
-arrived looking plausible but is not the measurement it claims to be."><meta property="og:description" content="Compares the distribution of leading significant digits in x with
+arrived looking plausible but is not the measurement it claims to be.
+It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication."><meta property="og:description" content="Compares the distribution of leading significant digits in x with
 Benford's law, \(P(d) = \log_{10}(1 + 1/d)\). Naturally occurring
 quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
 typically do not. That makes it a cheap screen for a numeric column that
-arrived looking plausible but is not the measurement it claims to be."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+arrived looking plausible but is not the measurement it claims to be.
+It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +25,7 @@ arrived looking plausible but is not the measurement it claims to be."><meta pro
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +72,10 @@ quantities that span several orders of magnitude follow it closely;
 figures that were rounded, truncated, capped, re-scaled, or invented
 typically do not. That makes it a cheap screen for a numeric column that
 arrived looking plausible but is not the measurement it claims to be.</p>
+<p>It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
+or ceiling, or an assigned-identifier structure (postcodes, year fields,
+prices ending in 99) legitimately violate Benford's law. Treat a small
+p-value as a reason to look, never as evidence of fabrication.</p>
     </div>
 
     <div class="section level2">
@@ -85,21 +97,35 @@ arrived looking plausible but is not the measurement it claims to be.</p>
 (observed digit frequencies 1–9), <code>expected</code>, <code>proportion</code>,
 <code>statistic</code>, <code>df</code>, <code>p_value</code>, <code>log_p_value</code> (the log of the upper
 tail, which keeps its information where <code>p_value</code> underflows to 0),
-and <code>n</code>.</p>
+and <code>n</code> (the number of values used). <code>counts</code>, <code>expected</code> and
+<code>proportion</code> are named numeric vectors with names <code>"1"</code> to <code>"9"</code>. The
+print method shows the verdict and a bar chart of observed against
+expected shares.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>It is a SCREEN, not a verdict. Columns with a narrow range, a unit floor
-or ceiling, or an assigned-identifier structure (postcodes, year fields,
-prices ending in 99) legitimately violate Benford's law. Treat a small
-p-value as a reason to look, never as evidence of fabrication.</p>
-<p>Zeros and non-finite values have no leading significant digit and are
+    <p>Zeros and non-finite values have no leading significant digit and are
 excluded; the sign is ignored.</p>
+<p>With \(n\) usable values, \(O_d\) the count with leading digit
+\(d\) and \(E_d = n \log_{10}(1 + 1/d)\),
+$$X^2 = \sum_{d=1}^{9} \frac{(O_d - E_d)^2}{E_d}$$
+on 8 degrees of freedom. The smallest Benford share is 0.046 (digit 9),
+so the chi-square approximation needs about \(n \ge 110\) for every
+expected count to reach 5; below that treat the p-value as rough.
+Digits are counted in compiled code in blocks of a million values, and
+a long vector shows a progress bar in an interactive session
+(silenced by <code>options(morie.quiet = TRUE)</code>). Errors: non-numeric input,
+or no finite non-zero value.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Benford F (1938). The law of anomalous numbers.
 <em>Proceedings of the American Philosophical Society</em> 78(4), 551–572.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="drift_chisq.html">drift_chisq()</a></code>,
+<code><a href="capsule_drift.html">capsule_drift()</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -157,6 +183,9 @@ excluded; the sign is ignored.</p>
 <span class="r-in"><span><span class="co"># Zeros carry no leading digit and are excluded from n.</span></span></span>
 <span class="r-in"><span><span class="fu">benford_test</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">n</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">benford_test</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="cn">NA</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `x` has no finite non-zero values to take a leading digit from</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

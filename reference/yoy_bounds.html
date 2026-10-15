@@ -19,7 +19,7 @@ range for a figure read off a rounded table."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,12 +84,14 @@ range for a figure read off a rounded table.</p>
 
 
 <dl><dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>An <code>rmbl_yoy</code> object with count units.</p></dd>
+<dd><p>An <code>rmbl_yoy</code> object from <code><a href="yoy.html">yoy()</a></code>, with counts as
+values.</p></dd>
 
 
 <dt id="arg-rounding">rounding<a class="anchor" aria-label="anchor" href="#arg-rounding"></a></dt>
-<dd><p>The base the release rounds to (<code>5</code>, <code>10</code>, ...), or
-<code>NULL</code> when the counts are exact.</p></dd>
+<dd><p>Numeric scalar, the base the release rounds to
+(<code>5</code>, <code>10</code>, ...), or <code>NULL</code> (the default) when the
+counts are exact.</p></dd>
 
 
 <dt id="arg-rounding-kind">rounding_kind<a class="anchor" aria-label="anchor" href="#arg-rounding-kind"></a></dt>
@@ -101,16 +103,42 @@ Canada's random rounding, where the observed value lies within
 
 
 <dt id="arg-suppression-limit">suppression_limit<a class="anchor" aria-label="anchor" href="#arg-suppression-limit"></a></dt>
-<dd><p>For a cell printed as suppressed with no
-explicit limit, the smallest count that would have been published:
-the cell then lies in <code>[0, suppression_limit - 1]</code>.</p></dd>
+<dd><p>Numeric scalar or <code>NULL</code> (the default). For
+a cell printed as suppressed with no explicit limit, the smallest count
+that would have been published: the cell then lies in
+<code>[0, suppression_limit - 1]</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>y</code> with columns <code>env_change_lower</code>, <code>env_change_upper</code>,
-<code>env_pct_lower</code>, <code>env_pct_upper</code>, <code>combined_pct_lower</code>,
-<code>combined_pct_upper</code> and the rounding recorded in an attribute.</p>
+    <p><code>y</code> (still an <code>rmbl_yoy</code>) with added numeric columns
+<code>env_change_lower</code>, <code>env_change_upper</code>,
+<code>env_pct_lower</code>, <code>env_pct_upper</code> and, when <code>y</code> has
+percent-change intervals, <code>combined_pct_lower</code> and
+<code>combined_pct_upper</code>. The rounding settings are recorded as
+<code>bounds</code> in the <code>"yoy"</code> attribute.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The <code>value</code> and <code>previous</code> columns of <code>y</code> are passed to
+<code><a href="published_bounds.html">published_bounds()</a></code> with the same rounding and
+suppression settings, and
+the two intervals to <code><a href="change_envelope.html">change_envelope()</a></code>. The combined
+interval is the
+smallest interval that contains both the sampling interval
+(<code>pct_lower</code>, <code>pct_upper</code>) and the publication envelope: its
+lower end is the smaller of the two lower ends, its upper end the larger of
+the two upper ends. Where either is <code>NA</code> (the first period, or a
+previous cell that could be zero) the combined end is <code>NA</code>. The
+function does not check that <code>y</code> holds counts; publication bounds
+make sense only for counts.</p>
+<p>Errors when <code>y</code> does not come from <code><a href="yoy.html">yoy()</a></code>, and for the reasons
+<code><a href="published_bounds.html">published_bounds()</a></code> gives.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="published_bounds.html">published_bounds()</a></code>,
+<code><a href="change_envelope.html">change_envelope()</a></code>, <code><a href="yoy.html">yoy()</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -126,6 +154,19 @@ the cell then lies in <code>[0, suppression_limit - 1]</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2023  60  45        15      ▲ +33.3%  [-11%, +101%]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># random rounding to base 5 widens the envelope</span></span></span>
+<span class="r-in"><span><span class="va">yb</span> <span class="op">&lt;-</span> <span class="fu">yoy_bounds</span><span class="op">(</span><span class="va">y</span>, rounding <span class="op">=</span> <span class="fl">5</span>, rounding_kind <span class="op">=</span> <span class="st">"random"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">yb</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"year"</span>, <span class="st">"env_pct_lower"</span>, <span class="st">"env_pct_upper"</span>,</span></span>
+<span class="r-in"><span>                      <span class="st">"combined_pct_lower"</span>, <span class="st">"combined_pct_upper"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   year env_pct_lower env_pct_upper combined_pct_lower combined_pct_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2021            NA            NA                 NA                 NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2022     -6.818182      36.11111          -28.16209           76.74679</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2023     14.285714      56.09756          -10.91249          100.82285</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># only yoy() results are accepted</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">yoy_bounds</span><span class="op">(</span><span class="va">seg</span>, rounding <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `y` must come from yoy()</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

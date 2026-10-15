@@ -3,6 +3,13 @@
 Tests the MCAR assumption: that whether a value is missing is unrelated
 to any value in the data, observed or not.
 
+The assumption matters because it is what licenses the easy options.
+Dropping incomplete rows is unbiased under MCAR and biased otherwise;
+mean imputation understates variance under MCAR and distorts the centre
+as well otherwise. A small p-value here says the easy options are not
+available. Run it on the numeric columns of a table before deciding how
+to handle its missing values.
+
 ## Usage
 
 ``` r
@@ -18,29 +25,28 @@ mcar_test(data, max_iter = 500L, tol = 1e-07)
 
 - max_iter:
 
-  Maximum EM iterations (default 500).
+  Whole number, default 500: the maximum number of EM iterations.
 
 - tol:
 
-  Convergence tolerance on the largest parameter change (default 1e-7).
+  Number, default 1e-7: EM stops when the largest absolute change in any
+  mean or covariance entry between iterations falls below it.
 
 ## Value
 
 A list of class `bricklayer_mcar`: `statistic`, `df`, `p_value`,
 `log_p_value` (the log of `p_value`, finite where `p_value` underflows
-to 0), `n_patterns`, `n_used`, `n_vars`, `iterations`, `mu`, `sigma`,
-and `note` (a caveat when the test is degenerate). With complete data
-`df` is 0 and `p_value` is `NA` – there is nothing to test.
+to 0), `n_patterns` (distinct missingness patterns), `n_used` (rows in
+the patterns that entered the statistic), `n_vars` (columns used),
+`iterations` (EM iterations), `mu` (named ML means), `sigma` (ML
+covariance matrix), and `note` (a caveat when the test is degenerate or
+a pattern was skipped, else `NA`). The print method gives the verdict in
+words. With complete data `df` is 0 and `p_value` is `NA` – there is
+nothing to test.
 
 ## Details
 
-The assumption matters because it is what licenses the easy options.
-Dropping incomplete rows is unbiased under MCAR and biased otherwise;
-mean imputation understates variance under MCAR and distorts the centre
-as well otherwise. A small p-value here says the easy options are not
-available.
-
-## How it works
+### How it works
 
 Rows are grouped by their pattern of missingness. If missingness is
 unrelated to the values, then each pattern's observed-variable means
@@ -55,7 +61,7 @@ estimates under multivariate normality WITH the missing data, obtained
 by expectation-maximisation – not the complete-case estimates, which
 would already embed the bias the test is looking for.
 
-## What it cannot do
+### What it cannot do
 
 A large p-value is NOT evidence that the data are MCAR; it is a failure
 to detect a departure, and the test has little power on small samples or
@@ -72,6 +78,22 @@ Collinear or constant columns are refused rather than worked around: the
 likelihood is degenerate there, and the EM step's eigenvalue floor would
 otherwise return a statistic governed by that floor instead of by the
 data.
+
+### Practicalities
+
+Columns that are entirely missing and rows with no observed value are
+dropped before the test. The EM loop is written in R and visits every
+row on every iteration, so it takes about \\n \times\\ iterations small
+matrix solves: seconds for a few thousand rows and a handful of columns,
+longer for large tables. A progress indicator is shown in an interactive
+session. If EM has not converged after `max_iter` iterations the last
+estimates are used; `iterations` then equals `max_iter`.
+
+Errors: `data` neither a data frame nor a matrix; fewer than two numeric
+columns, or fewer than two usable rows or columns after the drops;
+collinear or constant columns (smallest covariance eigenvalue at most
+\\10^{-8}\\ times the largest); EM estimates that cannot be inverted.
+Non-numeric columns are dropped with a warning.
 
 ## References
 

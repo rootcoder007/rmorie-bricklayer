@@ -1,8 +1,11 @@
 # Normal log-density (C backend)
 
-The logarithm of the normal density, computed directly rather than as
-`log(dnorm(x))`, so it stays finite far into the tails where the density
-itself underflows to zero.
+The logarithm of the normal (Gaussian) density at each value of `x`,
+computed directly from the formula rather than as `log(dnorm(x))`. Use
+it for log-likelihoods: summing log-densities is how a normal model is
+scored, and computing them directly keeps the sum finite far into the
+tails, where the density itself underflows to zero and its logarithm
+would be `-Inf`.
 
 ## Usage
 
@@ -14,20 +17,44 @@ core_normal_logpdf(x, mean = 0, sd = 1)
 
 - x:
 
-  Numeric vector of quantiles.
+  Numeric vector of quantiles (the observed values).
 
 - mean:
 
-  Distribution mean (length-1, default 0).
+  The distribution's mean, a single number in the units of `x` (default
+  0).
 
 - sd:
 
-  Distribution standard deviation (length-1, default 1, \> 0).
+  The distribution's standard deviation, a single positive number in the
+  units of `x` (default 1).
 
 ## Value
 
-A numeric vector the length of `x`. Equivalent to
+A numeric vector the length of `x`: the natural-log density at each
+value (in log units per unit of `x`). Equivalent to
 `stats::dnorm(x, mean, sd, log = TRUE)`.
+
+## Details
+
+Each value is \$\$\log \phi(x; \mu, \sigma) = -\log \sigma - \tfrac12
+\log(2\pi) - \frac{(x - \mu)^2}{2\sigma^2},\$\$ evaluated by the shared
+core, and agrees with `stats::dnorm(x, mean, sd, log = TRUE)` to
+rounding.
+
+`mean` and `sd` are single numbers: a vector of either is refused, so
+this is not vectorised over the parameters the way
+[`stats::dnorm()`](https://rdrr.io/r/stats/Normal.html) is. A non-finite
+`mean`, and an `sd` that is not a positive finite number, are errors, as
+in
+[`core_normal_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.md);
+a missing `x` gives `NA`. A character, factor or list `x` is refused
+(`"must be numeric"`).
+
+## See also
+
+[`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
+for estimating `mean` and `sd` from data.
 
 ## Examples
 
@@ -45,4 +72,18 @@ stats::dnorm(50)                  # 0
 #> [1] 0
 core_normal_logpdf(50)            # about -1251
 #> [1] -1250.919
+
+# A log-likelihood: the sum of the log-densities of a sample.
+y <- c(4.8, 5.1, 5.6, 4.9, 5.3)
+sum(core_normal_logpdf(y, mean = mean(y), sd = stats::sd(y)))
+#> [1] -0.9121269
+
+# A standard deviation of zero has no density, and the parameters are
+# single numbers.
+try(core_normal_logpdf(1, sd = 0))
+#> Error : `sd` must be a single positive number
+try(core_normal_logpdf(1, mean = c(0, 1)))
+#> Error : `mean` must be a single finite number
+try(core_normal_logpdf("1"))
+#> Error : `x` must be numeric, got character
 ```

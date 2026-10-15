@@ -1,7 +1,12 @@
 # Change in a rate between periods
 
-The change in a rate from one period to the period `lag` places earlier,
-with the exact conditional interval for the rate ratio.
+Compares each period's rate with the rate `lag` periods earlier (for
+example this year's stops per 100,000 residents with last year's), and
+gives the rate ratio, the percent change and an exact confidence
+interval for the change. Use it instead of the percent change of two
+published rates: both the counts and the populations move between
+periods, and the interval here accounts for the randomness in the
+counts.
 
 ## Usage
 
@@ -38,48 +43,51 @@ rate_change(
 
 - count:
 
-  Column of counts: non-negative whole numbers.
+  Column of counts (unquoted or a string): non-negative whole numbers.
 
 - population:
 
-  Column of exposure: positive.
+  Column of exposure (unquoted or a string): positive.
 
 - period:
 
-  Column of periods. Sorted, and compared on the period value rather
-  than on row position, so a missing year gives no comparison instead of
-  a silent comparison against the wrong year.
+  Column of periods (unquoted or a string). Sorted within each group;
+  see Details for how the earlier period is found.
 
 - by:
 
-  Character vector of grouping columns.
+  Character vector of grouping columns, default `NULL`.
 
 - lag:
 
-  How many periods back to compare against. Default 1.
+  Whole number, default 1: how many periods back to compare against.
 
 - per:
 
   The rate denominator: a positive number, or `"1k"`, `"10k"`, `"100k"`,
-  `"1m"`.
+  `"1m"`. Default 1000.
 
 - conf_level:
 
-  Confidence level for the interval.
+  Number in (0, 1), default 0.95: the confidence level of the interval.
 
 - min_count:
 
-  Comparisons where the earlier count is at or below this are flagged as
-  resting on a small count; the percent change and its exact interval
-  are still reported, as
-  [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  Number, default 0. Comparisons where the earlier count is at or below
+  this are flagged as resting on a small count; the percent change and
+  its exact interval are still reported, as
+  [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
   does.
 
 ## Value
 
-A data frame of class `rmbl_rate_change` with the grouping columns,
-`period`, `count`, `population`, `rate`, `previous_rate`, `rate_ratio`,
-`pct_change`, `pct_lower`, `pct_upper` and `flag`.
+A data frame of class `c("rmbl_rate_change", "data.frame")` with one row
+per group and period: the grouping columns, the period column, `count`,
+`population`, `rate`, `previous_rate`, `previous_count`,
+`previous_population`, `rate_ratio`, `pct_change`, `pct_lower`,
+`pct_upper` (numeric) and `flag` (character: `"no comparison period"`,
+`"earlier period is zero"`, a small-count note, or `NA`). The
+`rate_change` attribute records the settings.
 
 ## Details
 
@@ -88,14 +96,36 @@ Both the counts and the denominators move between periods, and an
 interval that ignores the denominators understates the uncertainty of
 the change. The construction here conditions on the total of the two
 counts and corrects for the ratio of the two exposures, which is
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)'s
+[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)'s
 exact conditional-binomial interval generalised to unequal denominators:
 with equal populations it reduces to exactly that.
 
+With counts \\a\\ (now) and \\b\\ (earlier) and exposures \\t_a\\,
+\\t_b\\, conditional on \\a + b\\ the count \\a\\ is binomial with
+success probability \\p = RR\\t_a / (RR\\t_a + t_b)\\. The
+Clopper-Pearson limits for \\p\\, \\p_L = B^{-1}(\alpha/2;\\ a, b + 1)\\
+and \\p_U = B^{-1}(1 - \alpha/2;\\ a + 1, b)\\ (0 when \\a = 0\\, 1 when
+\\b = 0\\), give \\RR = (t_b / t_a)\\ p / (1 - p)\\ and the percent
+change \\100 (RR - 1)\\. When \\b = 0\\ the upper limit is `Inf` and the
+percent change itself is `NA`; when both counts are 0 there is no
+interval.
+
+Counts and populations are summed within each period (and `by` group).
+Matching to the earlier period: for a numeric period column the
+comparison is the period whose value is exactly `lag` less, so a missing
+year gives no comparison instead of a silent comparison against the
+wrong year. For any other period type (character, factor, Date) the
+earlier period is `lag` steps back along the periods observed in the
+group, so a gap in such a column is not detected.
+
+Errors: `x` not a data frame; columns not found; `lag` not a positive
+whole number; `conf_level` outside (0, 1); a population of zero or
+below.
+
 ## See also
 
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md),
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`rate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md),
+[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
 for change in a count or a measured quantity.
 
 ## Examples
@@ -133,4 +163,40 @@ rate_change(d, stops, residents, year, by = "division", per = "100k")
 #>                  <NA>
 #>                  <NA>
 #> ────────────────────────────────────────────────────────────────── 
+
+# a missing year gives no comparison rather than a wrong one
+gap <- data.frame(year = c(2019, 2020, 2022), n = c(10, 14, 12),
+                  pop = c(1000, 1000, 1100))
+rate_change(gap, n, pop, year)$flag
+#> [1] "no comparison period" NA                     "no comparison period"
+
+# two-year change, flagging small earlier counts
+rate_change(d, stops, residents, year, by = "division", lag = 2,
+            min_count = 65)
+#> ── Change in rate per 1,000, lag 2, 95% exact conditional interval  
+#>  division year count population     rate previous_rate previous_count
+#>     North 2021   400     120000 3.333333            NA             NA
+#>     North 2022   430     122000 3.524590            NA             NA
+#>     North 2023   455     125000 3.640000      3.333333            400
+#>     South 2021    70      41000 1.707317            NA             NA
+#>     South 2022    66      41500 1.590361            NA             NA
+#>     South 2023    61      42000 1.452381      1.707317             70
+#>  previous_population rate_ratio pct_change  pct_lower pct_upper
+#>                   NA         NA         NA         NA        NA
+#>                   NA         NA         NA         NA        NA
+#>               120000  1.0920000    9.20000  -4.737636  25.21520
+#>                   NA         NA         NA         NA        NA
+#>                   NA         NA         NA         NA        NA
+#>                41000  0.8506803  -14.93197 -40.656914  21.65731
+#>                  flag
+#>  no comparison period
+#>  no comparison period
+#>                  <NA>
+#>  no comparison period
+#>  no comparison period
+#>                  <NA>
+#> ────────────────────────────────────────────────────────────────── 
+
+try(rate_change(1:3))
+#> Error : `x` must be a data frame, not integer
 ```

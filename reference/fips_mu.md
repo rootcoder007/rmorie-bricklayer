@@ -2,7 +2,10 @@
 
 The external-mu interface. `fips_mu()` reduces a message to the 64-byte
 value mu that is the only thing ML-DSA signing actually consumes;
-`fips_sign_mu()` signs that value and `fips_verify_mu()` checks it.
+`fips_sign_mu()` signs that value and `fips_verify_mu()` checks it. Use
+it when the message and the signing key are in different places: the
+machine with the data computes mu from the public key, and only those 64
+bytes travel to the signer.
 
 ## Usage
 
@@ -73,8 +76,9 @@ fips_verify_mu(key, mu, signature)
 
 ## Value
 
-`fips_mu()` returns 64 raw bytes; `fips_sign_mu()` a
-`bricklayer_signature`; `fips_verify_mu()` a length-1 logical.
+`fips_mu()`: a raw vector of 64 bytes. `fips_sign_mu()`: a list of class
+`bricklayer_signature` with `scheme` and `signature` (hex).
+`fips_verify_mu()`: `TRUE` or `FALSE`.
 
 ## Details
 
@@ -88,6 +92,25 @@ cannot be signed under another to any useful effect.
 The resulting signature is an ordinary ML-DSA signature.
 [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
 accepts it, given the same message and context.
+
+mu is FIPS 204's \\\mu = \mathrm{SHAKE256}(tr \\ M', 64)\\ with \\tr =
+\mathrm{SHAKE256}(pk, 64)\\ and \\M'\\ the message prefixed by the
+domain byte, the context length and the context (or, with a `prehash`,
+the pre-hash's identifier and digest), as in FIPS 204 Algorithm 7.
+Signing from mu is Algorithm 7 from that point on, and
+`fips_verify_mu()` is Algorithm 8 from mu.
+
+Refusals: a key that is not an ML-DSA key from
+[`fips_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_keygen.md)
+or
+[`fips_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_key.md)
+(SLH-DSA keys are refused with `"external mu is an ML-DSA interface"`),
+`fips_sign_mu()` with a public key only
+(`"signing needs a key with its secret half"`) or a `mu` that is not 64
+raw bytes. `fips_verify_mu()` returns `FALSE`, not an error, for a
+mismatched scheme, a wrong-length mu or a malformed signature; it errors
+only when `signature` is not a `bricklayer_signature` or `key` is not a
+list.
 
 ## References
 
@@ -121,4 +144,12 @@ capsule_verify("a manifest digest", sig, key, context = "release")
 identical(fips_mu(fips_public_key(key), "a manifest digest",
                   context = "release"), mu)
 #> [1] TRUE
+
+# A different context gives a different mu.
+identical(fips_mu(key, "a manifest digest", context = "staging"), mu)
+#> [1] FALSE
+
+# SLH-DSA has no external-mu interface.
+try(fips_mu(fips_keygen("SLH-DSA-SHA2-128f"), "m"))
+#> Error : external mu is an ML-DSA interface; SLH-DSA-SHA2-128f has no equivalent
 ```

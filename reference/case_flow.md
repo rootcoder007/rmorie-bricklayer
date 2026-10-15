@@ -77,6 +77,13 @@ plus the net flow – courts reactivate cases on bench warrants and
 transfer them – so `pending_change` is reported next to `net` rather
 than derived from it.
 
+The result carries attribute `"case_flow"`: `window`, `conf_level` and
+the totals received and disposed. Errors: `received` empty; a count
+vector that is not numeric, has a missing, negative or infinite value,
+or a length other than `received`'s; `period` of another length, with
+missing or repeated values; `window` not a whole number of at least 1;
+`conf_level` outside (0, 1).
+
 ## References
 
 Ostrom, B. J. and Hanson, R. A. (1999). *Efficiency, Timeliness, and
@@ -159,4 +166,20 @@ cf
 #>   148473              7.2
 #> ────────────────────────────────────────────────────────────────── 
 plot(cf)
+
+
+# without the pending count, a quarterly rolling window and 90% intervals
+cq <- case_flow(f$received, f$disposed, period = f$month, window = 3, conf_level = 0.90)
+head(as.data.frame(cq)[, c("period", "clearance", "rolling_clearance", "cumulative_net")])
+#>    period clearance rolling_clearance cumulative_net
+#> 1 2024-04 1.0370562                NA           -788
+#> 2 2024-05 1.0476279                NA          -1813
+#> 3 2024-06 1.0441504         1.0429344          -2684
+#> 4 2024-07 0.8696348         0.9837601            247
+#> 5 2024-08 0.8745897         0.9257315           2883
+#> 6 2024-09 0.8777027         0.8738594           5417
+
+# one value per period in every count
+try(case_flow(c(100, 120, 90), c(95, 130)))
+#> Error : `disposed` must have 3 values (one per period), got 2
 ```

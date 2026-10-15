@@ -1,8 +1,10 @@
 # Exact summary statistics accumulated in blocks
 
-An accumulator for the mean, variance, skewness and kurtosis of a column
-that does not fit in memory. Feed it blocks with `summary_update()` and
-read the result with `summary_stats()`.
+An accumulator for the count, mean, variance, skewness and kurtosis of a
+numeric column that does not fit in memory, or that arrives in pieces (a
+file read in chunks, results from several machines). Start one with
+`online_summary()`, feed it blocks with `summary_update()`, combine two
+with `summary_merge()` and read the result with `summary_stats()`.
 
 ## Usage
 
@@ -20,7 +22,8 @@ summary_stats(acc)
 
 - x:
 
-  Numeric vector: the first block, or `NULL` for an empty accumulator.
+  Numeric vector: the first block, or `NULL` (the default) for an empty
+  accumulator; for `summary_update()`, the next block.
 
 - acc, a, b:
 
@@ -29,8 +32,10 @@ summary_stats(acc)
 ## Value
 
 `online_summary()`, `summary_update()` and `summary_merge()` return an
-object of class `bricklayer_online`; `summary_stats()` returns a named
-numeric with `n`, `mean`, `variance`, `sd`, `skewness` and `kurtosis`.
+object of class `c("bricklayer_online", "list")` (its `state` element is
+the numeric vector described in Details); `summary_stats()` returns a
+named numeric vector with `n`, `mean`, `variance`, `sd`, `skewness` and
+`kurtosis` (excess).
 
 ## Details
 
@@ -43,9 +48,22 @@ over the whole column at once. That is what makes it usable for a
 capsule member of any size: memory stays constant in the number of
 blocks.
 
+The state is \\(n, \bar{x}, M_2, M_3, M_4)\\ with \\M_k = \sum (x_i -
+\bar{x})^k\\. `summary_stats()` reports the sample variance \\M_2 / (n -
+1)\\, the moment skewness \\g_1 = (M_3/n) / (M_2/n)^{3/2}\\ and the
+excess kurtosis \\g_2 = (M_4/n) / (M_2/n)^2 - 3\\ (the biased moment
+estimators, without small-sample correction). `NA` values are dropped
+from every block. Undefined quantities are `NaN`: the mean for \\n =
+0\\, the variance for \\n \< 2\\, the skewness for \\n \< 3\\ and the
+kurtosis for \\n \< 4\\, and both shape statistics for a constant
+column.
+
 The object is a plain list and is copied on assignment like any other R
-value, so `update` returns the new accumulator and you must keep it:
-`acc <- summary_update(acc, block)`.
+value, so `summary_update()` returns the new accumulator and you must
+keep it: `acc <- summary_update(acc, block)`.
+
+Errors: a block that is not numeric; an accumulator that does not come
+from `online_summary()`.
 
 ## References
 
@@ -93,4 +111,17 @@ all.equal(summary_stats(summary_merge(a, b)), summary_stats(acc))
 summary_stats(online_summary())
 #>        n     mean variance       sd skewness kurtosis 
 #>        0      NaN      NaN      NaN      NaN      NaN 
+
+# NA values are skipped; text is refused
+summary_stats(online_summary(c(1, NA, 3)))[c("n", "mean")]
+#>    n mean 
+#>    2    2 
+try(online_summary(c("1", "2")))
+#> ── Accumulated summary ─────────────────────────────────────────── 
+#>   n         2
+#>   mean          1.5
+#>   sd        0.707107
+#>   skewness    NaN
+#>   kurtosis    NaN
+#> ────────────────────────────────────────────────────────────────── 
 ```

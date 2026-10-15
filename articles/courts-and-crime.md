@@ -265,7 +265,7 @@ h
 #>         0     26.8%             0.17
 #>        12     13.3%             0.10
 #> Cells hot in at least half the periods: 7
-#> Note: in Q4, 12 cells tied with the busiest 7 were left out of the hot set; the counts are too even (or the cells too small) to single out hot spots
+#> Note: cells tied with the busiest 7 were left out of the hot set (period Q4: 12 cells tied); the counts are too even (or the cells too small) to single out hot spots
 plot(h)
 ```
 

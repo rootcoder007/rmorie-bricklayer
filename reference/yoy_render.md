@@ -1,6 +1,15 @@
 # Render a change table to HTML or PDF
 
-Render a change table to HTML or PDF
+Writes a change table from
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+to a file for people who will not run R: `yoy_html()` to a single
+self-contained web page, `yoy_pdf()` to a PDF. Each row shows the
+period, the value, the previous value, the change and the percent
+change, coloured by whether it is better or worse, with the exact
+interval and any flags; the HTML page also has summary cards from
+[`yoy_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_summary.md).
+Use them to hand a reviewed set of period-over-period changes to a
+manager, a journalist or a court.
 
 ## Usage
 
@@ -42,13 +51,14 @@ yoy_pdf(
 
 - file:
 
-  Output path. `yoy_html()` writes a single self-contained HTML file
-  with no external requests; `yoy_pdf()` writes a PDF using R's own
-  device, so neither needs a package beyond base R.
+  Output path (a string). `yoy_html()` writes a single self-contained
+  HTML file with no external requests; `yoy_pdf()` writes a PDF using
+  R's own device, so neither needs a package beyond base R.
 
 - title:
 
-  Heading for the page.
+  Heading for the page (and the HTML page title or PDF title), a string;
+  default `"Year-over-year change"`.
 
 - subtitle:
 
@@ -59,20 +69,21 @@ yoy_pdf(
 - palette:
 
   One of
-  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md).
+  [`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md):
+  `"diverging"` (the default), `"safe"` or `"mono"`.
 
 - digits:
 
-  Digits for the percent column.
+  Digits for the percent column, default 1.
 
 - bars:
 
-  Whether to draw an in-cell bar proportional to the change, scaled to
-  the largest absolute change in the table.
+  Logical (HTML only): draw an in-cell bar proportional to the change,
+  scaled to the largest absolute change in the table (default `TRUE`).
 
 - interval:
 
-  Whether to show the exact interval column for counts.
+  Logical: show the exact interval column for counts (default `TRUE`).
 
 - notes:
 
@@ -84,11 +95,38 @@ yoy_pdf(
 
 - width, height:
 
-  PDF page size in inches.
+  PDF page size in inches (default 11 by 8.5, landscape US letter).
 
 ## Value
 
-The path, invisibly.
+The path `file`, invisibly.
+
+## Details
+
+Neither backend needs a package beyond base R. The HTML page inlines its
+stylesheet, makes no external requests (no fonts, scripts or images from
+the network) and escapes every value, so the file stays the artefact and
+renders the same later. Rows are coloured by the table's `verdict`:
+`"worse"` in the palette's bad colour, `"better"` in its good colour,
+everything else (including the `"up"` and `"down"` of
+`direction = "neutral"`) in its neutral grey. Labels set with
+[`yoy_label()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_label.md)
+replace the period. For percentage units the change is shown in points.
+The page ends with the package version that wrote it.
+
+The PDF is drawn on R's own
+[`pdf()`](https://rdrr.io/r/grDevices/pdf.html) device with its standard
+fonts, which cannot draw arrows or dashes, so those are written in ASCII
+(`+`, `-`). Long tables are split over pages at 0.22 inch per row, with
+"page i of n" labels; notes go under the last page's rows when they fit
+and on pages of their own otherwise. The interval column appears only
+when the table has `pct_lower` and `pct_upper` (counts).
+
+Both overwrite `file`. Errors: `x` not from
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md);
+a `palette` not in
+[`yoy_palettes()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_palettes.md);
+a file that cannot be written.
 
 ## Examples
 
@@ -109,5 +147,17 @@ yoy_pdf(y, p, title = "Placements by region")
 file.exists(p)
 #> [1] TRUE
 
+# a colour-blind-safe palette, no bars or intervals, and a footnote
+yoy_html(y, h, palette = "safe", bars = FALSE, interval = FALSE,
+         notes = "Counts below 10 are suppressed at source.")
+any(grepl("suppressed", readLines(h)))
+#> [1] TRUE
+
+# portrait letter pages, with fiscal-year labels
+yoy_pdf(yoy_label(y, fiscal_year_label), p, width = 8.5, height = 11)
+
+# only yoy() tables can be rendered
+try(yoy_html(d, h))
+#> Error : `x` must be an rmbl_yoy object from yoy()
 unlink(c(h, p))
 ```

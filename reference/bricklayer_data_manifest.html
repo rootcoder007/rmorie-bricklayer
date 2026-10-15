@@ -41,7 +41,7 @@ rmoriebricklayer data pull db/table [--out FILE.csv]."><meta property="og:image"
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,26 +116,113 @@ From the shell: <code>rmoriebricklayer data list</code> and
 
 
 <dl><dt id="arg-refresh">refresh<a class="anchor" aria-label="anchor" href="#arg-refresh"></a></dt>
-<dd><p>Fetch again even when a day-old copy is cached.</p></dd>
+<dd><p>Logical scalar, default <code>FALSE</code>: fetch again even when a
+day-old copy (of the manifest, or for <code>bricklayer_data_load()</code> of the
+table) is cached.</p></dd>
 
 
 <dt id="arg-key">key<a class="anchor" aria-label="anchor" href="#arg-key"></a></dt>
-<dd><p>A <code>db/table</code> key from the manifest.</p></dd>
+<dd><p>Character scalar, a <code>db/table</code> key from the manifest (the
+<code>key</code> column of <code>bricklayer_data_tables()</code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p><code>bricklayer_data_manifest()</code>: a list;
+    <p><code>bricklayer_data_manifest()</code>: the manifest as a list (element
+<code>datasets</code>, one list per table with at least <code>key</code>, and as the
+service provides them <code>rows</code>, <code>columns</code>, sizes, the SHA-256 of
+the compressed file and the BigQuery <code>source</code>);
 <code>bricklayer_data_tables()</code>: a data frame with <code>key</code>,
-<code>name</code>, <code>rows</code> and <code>source</code> (class
+<code>name</code> (the description, else the source, else the key), integer
+<code>rows</code> and <code>source</code> (class
 <code>bricklayer_data_tables</code>, which prints one left-aligned line per
 table, cut to the console width);
 <code>bricklayer_data_load()</code>: the table as a data frame.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The manifest is cached as <code>manifest.json</code> in the cache folder and
+fetched again when it is more than a day old or <code>refresh = TRUE</code>. A
+reply that is not a manifest (not a JSON object with a list of datasets
+each carrying a <code>key</code>), or one that lists no tables while the cached
+copy lists some, is refused and the cached copy kept.</p>
+<p><code>bricklayer_data_load()</code> downloads <code>db/table.csv.gz</code> once into the
+cache folder (as <code>db__table.csv.gz</code>) and checks its SHA-256 against the
+manifest before every use, cached or not: a file that does not match is
+deleted and refused (after one refresh of the manifest, since a table
+rebuilt upstream has a new digest). When the manifest cannot be fetched,
+the last copy on disk, however old, supplies the digest; with none, a fresh
+download is not kept and a cached file is kept but not used. The CSV is
+read in compiled code with the same result as
+<code>read.csv(gzfile(f), stringsAsFactors = FALSE)</code>; tables that inflate
+past 512 MiB are read by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> itself, a piece at a time.</p>
+<p>The key is sent only to the address of the signed services document. With
+<code>MORIE_DATA_URL</code> set to another address the key is not sent and the
+download fails with a message saying so. Some tables (ICPSR studies, the
+NCVS 38604 extract, the A2AJ case law) open only after their terms are
+accepted at <a href="https://data.rmorie.com/terms" class="external-link">https://data.rmorie.com/terms</a>. Downloads draw a progress
+bar when <code>options(morie.progress)</code> allows it.</p>
+<p>Errors: <code>refresh</code> not <code>TRUE</code> or <code>FALSE</code>; no key stored (the
+message says how to sign in); the service unavailable, or the key rejected;
+a <code>key</code> that is not of the form <code>db/table</code>, or not listed in the
+manifest; a digest mismatch; a restricted table whose terms were not
+accepted.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="bricklayer_llm_login.html">bricklayer_llm_login</a></code>, <code><a href="bricklayer_services.html">bricklayer_services</a></code>.</p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Offline, against a cache folder holding a manifest and one table made</span></span></span>
+<span class="r-in"><span><span class="co"># here (no key is stored and nothing is fetched).</span></span></span>
+<span class="r-in"><span><span class="va">old_env</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"XDG_CONFIG_HOME"</span>, <span class="st">"MORIE_HOSTED_KEY"</span><span class="op">)</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>XDG_CONFIG_HOME <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"MORIE_HOSTED_KEY"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cache</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"data-hub-example"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="va">cache</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.data_cache <span class="op">=</span> <span class="va">cache</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">cache</span>, <span class="st">"demo__counts.csv.gz"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"w"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>region <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">5L</span><span class="op">)</span><span class="op">)</span>, <span class="va">con</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/connections.html" class="external-link">close</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>datasets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>key <span class="op">=</span> <span class="st">"demo/counts"</span>, rows <span class="op">=</span> <span class="fl">2</span>, source <span class="op">=</span> <span class="st">"an example"</span>,</span></span>
+<span class="r-in"><span>                               meta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>description <span class="op">=</span> <span class="st">"Counts by region"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                               sha256_gz <span class="op">=</span> <span class="fu"><a href="core_sha256.html">core_sha256</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">readBin</a></span><span class="op">(</span><span class="va">f</span>, <span class="st">"raw"</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.info.html" class="external-link">file.size</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span><span class="fu"><a href="bricklayer_json_to_json.html">bricklayer_json_to_json</a></span><span class="op">(</span><span class="va">m</span>, auto_unbox <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>           <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">cache</span>, <span class="st">"manifest.json"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_data_tables</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> key          rows  name</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> demo/counts     2  Counts by region</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 tables; bricklayer_data_load("KEY") loads one</span>
+<span class="r-in"><span><span class="fu">bricklayer_data_load</span><span class="op">(</span><span class="st">"demo/counts"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   region n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      a 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      b 5</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># keys are checked against the manifest</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_data_load</span><span class="op">(</span><span class="st">"counts"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : key must be db/table (see bricklayer_data_tables())</span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_data_load</span><span class="op">(</span><span class="st">"demo/other"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : no table demo/other at data.rmorie.com (`rmoriebricklayer data list` shows them)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a cached file that no longer matches its digest is deleted and refused</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readBin.html" class="external-link">writeBin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/raw.html" class="external-link">as.raw</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>, <span class="va">f</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">bricklayer_data_load</span><span class="op">(</span><span class="st">"demo/counts"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : demo/counts does not match the manifest's SHA-256 (c848e1013f9f... vs c346413f308c...): the cached file was deleted; run again to download it, and if it still fails the file was tampered with in transit</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">cache</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">old_env</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old_env</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">Sys.setenv</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="va">old_env</span><span class="op">[</span><span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># the real service: needs a key and the network</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"sk-..."</span><span class="op">)</span>  <span class="co"># a key issued at www.rmorie.com/access/</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">bricklayer_data_tables</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">bricklayer_data_load</span><span class="op">(</span><span class="st">"chicago_crime/incidents"</span><span class="op">)</span></span></span>

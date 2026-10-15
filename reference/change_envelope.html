@@ -21,7 +21,7 @@ about what the release withheld."><meta property="og:image" content="https://roo
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,24 +88,51 @@ about what the release withheld.</p>
 
 
 <dl><dt id="arg-now-previous">now, previous<a class="anchor" aria-label="anchor" href="#arg-now-previous"></a></dt>
-<dd><p><code>rmbl_bounds</code> (or data frames with <code>lower</code> and
-<code>upper</code>) for the current and the earlier cell, of equal length.</p></dd>
+<dd><p><code>rmbl_bounds</code> objects from
+<code><a href="published_bounds.html">published_bounds()</a></code> (or data frames with numeric
+<code>lower</code> and
+<code>upper</code>) for the current and the earlier cell, with the same number
+of rows.</p></dd>
 
 
 <dt id="arg-population-previous-population">population, previous_population<a class="anchor" aria-label="anchor" href="#arg-population-previous-population"></a></dt>
-<dd><p>Optional exposures for a rate
-envelope; the rate is <code>per * count / population</code>.</p></dd>
+<dd><p>Optional numeric exposures (for
+example residents) for a rate envelope of the current and the previous
+cell; the rate is <code>per * count / population</code>. Default <code>NULL</code>.
+<code>previous_population</code> is used only with <code>population</code>.</p></dd>
 
 
 <dt id="arg-per">per<a class="anchor" aria-label="anchor" href="#arg-per"></a></dt>
-<dd><p>Rate denominator when exposures are given.</p></dd>
+<dd><p>Numeric scalar, the rate base when exposures are given; default
+<code>1000</code> (per 1,000).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A data frame with <code>change_lower</code>, <code>change_upper</code>,
-<code>pct_lower</code>, <code>pct_upper</code> (<code>NA</code> where the previous cell could have been
-zero) and, with exposures, <code>rate_lower</code>, <code>rate_upper</code>.</p>
+    <p>A data frame, one row per cell, with numeric columns
+<code>change_lower</code>, <code>change_upper</code>, <code>pct_lower</code>,
+<code>pct_upper</code> (<code>NA</code> where the previous cell could have been
+zero); with <code>population</code> also <code>rate_lower</code> and
+<code>rate_upper</code>; with <code>previous_population</code> as well
+<code>previous_rate_lower</code> and <code>previous_rate_upper</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>With current interval \([a_l, a_u]\) and previous interval
+\([b_l, b_u]\): the change lies in \([a_l - b_u, a_u - b_l]\) and the
+percent change in \([100(a_l / b_u - 1), 100(a_u / b_l - 1)]\). An end of
+the percent interval is <code>NA</code> when its denominator could be zero (an
+upper bound needs \(b_l &gt; 0\), a lower bound \(b_u &gt; 0\)), since a
+change from zero has no percentage. A rate interval is
+\([per \cdot a_l / pop, per \cdot a_u / pop]\); the population is taken
+as exact.</p>
+<p>Errors when <code>now</code> and <code>previous</code> have different numbers of
+rows. The populations are not checked; give one per row (or one value).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="published_bounds.html">published_bounds()</a></code>,
+<code><a href="yoy_bounds.html">yoy_bounds()</a></code>.</p></div>
     </div>
 
     <div class="section level2">
@@ -116,6 +143,25 @@ zero) and, with exposures, <code>rate_lower</code>, <code>rate_upper</code>.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   change_lower change_upper pct_lower pct_upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1            0           10   0.00000  26.66667</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2           15           25  14.63415  25.64103</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># with rates per 1,000 residents in both years</span></span></span>
+<span class="r-in"><span><span class="fu">change_envelope</span><span class="op">(</span><span class="va">now</span>, <span class="va">prev</span>, population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">20000</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                previous_population <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">19000</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   change_lower change_upper pct_lower pct_upper rate_lower rate_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            0           10   0.00000  26.66667      4.250      4.750</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           15           25  14.63415  25.64103      5.875      6.125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   previous_rate_lower previous_rate_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            3.750000            4.250000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2            5.131579            5.394737</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a suppressed previous cell could have been zero: no upper percentage</span></span></span>
+<span class="r-in"><span><span class="fu">change_envelope</span><span class="op">(</span><span class="fu"><a href="published_bounds.html">published_bounds</a></span><span class="op">(</span><span class="fl">12</span><span class="op">)</span>, <span class="fu"><a href="published_bounds.html">published_bounds</a></span><span class="op">(</span><span class="st">"&lt;5"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   change_lower change_upper pct_lower pct_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1            8           12       200        NA</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># the two sides must line up</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">change_envelope</span><span class="op">(</span><span class="va">now</span>, <span class="va">prev</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `now` and `previous` must have the same number of rows</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

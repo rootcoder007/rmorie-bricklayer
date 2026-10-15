@@ -16,13 +16,15 @@ manifest_digest(manifest)
 
 - manifest:
 
-  A manifest, as from
-  [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md).
+  A manifest (a list), as from
+  [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md);
+  any list is accepted.
 
 ## Value
 
-`manifest_canonical()` a length-1 character vector; `manifest_digest()`
-64 hex characters.
+`manifest_canonical()`: a character scalar, the one-line JSON.
+`manifest_digest()`: a character scalar of 64 lower-case hexadecimal
+characters, the SHA-256 of the canonical bytes.
 
 ## Details
 
@@ -50,6 +52,8 @@ integer arithmetic with a remainder that decides the rounding. A
 manifest written on one machine reads back bit-identically on another,
 and a caller does nothing to get that.
 
+Errors when `manifest` is not a list.
+
 ## See also
 
 [`make_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/make_manifest.md),
@@ -69,4 +73,14 @@ identical(manifest_digest(a), manifest_digest(b))
 m <- make_manifest(list(x = 1 / 3), environment = FALSE)
 grepl("0.33333333333333331", manifest_canonical(m), fixed = TRUE)
 #> [1] TRUE
+
+# any change to a recorded value changes the digest
+m2 <- record(m, "check", observed = 1, expected = 1)
+#>   check                                        observed = 1.0000       expected = 1.0000       [INFO]
+manifest_digest(m) == manifest_digest(m2)
+#> [1] FALSE
+
+# only lists can be serialised this way
+try(manifest_digest("not a manifest"))
+#> Error : `manifest` must be a list
 ```

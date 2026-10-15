@@ -1,6 +1,12 @@
 # Share of a total, in percent
 
-What fraction of a total each count is, with the Wilson interval.
+Expresses each count as a percentage of a total (for example each
+division's share of all stops), with a Wilson confidence interval. A
+share's denominator is the total of the same events, so shares over a
+complete grouping sum to 100. Use
+[`rate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+instead when the denominator is a population; "40% of stops" and "40
+stops per 1,000 residents" are different claims.
 
 ## Usage
 
@@ -26,7 +32,7 @@ share(x, total = NULL, conf_level = 0.95, ...)
 
 - count:
 
-  Column of counts: non-negative whole numbers.
+  Column of counts, unquoted or as a string: non-negative whole numbers.
 
 - by:
 
@@ -36,38 +42,52 @@ share(x, total = NULL, conf_level = 0.95, ...)
 - total:
 
   The denominator. `NULL` (default) sums `count`, which makes the shares
-  sum to 100. A number, or a column name, uses that instead – for the
-  case where some of the total is not in the table.
+  sum to 100. A number uses that number; a column name (data-frame
+  method) uses the sum of that column – for the case where some of the
+  total is not in the table.
 
 - conf_level:
 
-  Confidence level for the interval.
+  Number in (0, 1), default 0.95: the confidence level of the interval.
 
 ## Value
 
-A data frame of class `rmbl_share` with the grouping columns, `count`,
-`total`, `share`, `lower` and `upper`, plus a `share` attribute
-recording the denominator and the confidence level.
+A data frame of class `c("rmbl_share", "data.frame")` with the grouping
+columns (or `label`, for a named vector), `count`, `total`, `share`,
+`lower` and `upper` (percent), plus a `share` attribute: a list of
+`count`, `by`, `total` and `conf_level`.
 
 ## Details
 
-A share and a rate are different quantities: a share's denominator is
-the total of the same events, so shares over a complete grouping sum to
-100. Use
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
-when the denominator is a population.
+For count \\y\\ out of total \\n\\, the share is \\100\\y/n\\ and the
+interval is Wilson's score interval for \\\hat p = y/n\\, \$\$\frac{\hat
+p + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat p(1-\hat p)}{n} +
+\frac{z^2}{4n^2}}}{1 + z^2/n},\$\$ with \\z\\ the standard normal
+quantile for `conf_level`, reported in percent and clipped to \\\[0,
+100\]\\.
 
 The interval is Wilson's, not the textbook normal approximation. The
 normal interval on a proportion is wrong in exactly the cases people
 reach for it – small counts and shares near 0 or 100, where it runs past
 the ends of the scale and reports a negative percentage. Wilson's stays
-inside the scale and is accurate at those counts.
+inside the scale and is accurate at those counts. It treats each count
+as a binomial draw from the total, which is an approximation when the
+total is itself the sum of the counts.
+
+With a data frame, counts are summed within each combination of the `by`
+columns (missing values ignored), groups sorted. The default method
+treats each element of `x` as a row; when `x` is named, its names become
+a leading `label` column.
+
+Errors: a count column that is not numeric or not found; negative
+counts; a total of zero or below; a count larger than the total;
+`conf_level` outside (0, 1).
 
 ## See also
 
-[`rate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
+[`rate`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate.md)
 for events per population,
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
 for change between periods.
 
 ## Examples
@@ -99,4 +119,16 @@ share(stops, stops, by = "division", total = 10000)
 #>     North   412 10000  4.12 3.74774662 4.52748907
 #>     South    77 10000  0.77 0.61657440 0.96123408
 #> ────────────────────────────────────────────────────────────────── 
+
+# a plain vector
+share(c(3, 7))
+#> ── Share of 10, 95% Wilson interval ────────────────────────────── 
+#>  count total share    lower    upper
+#>      3    10    30 10.77913 60.32219
+#>      7    10    70 39.67781 89.22087
+#> ────────────────────────────────────────────────────────────────── 
+
+# a count larger than its total is not a share
+try(share(c(5, 2), total = 4))
+#> Error : a count is larger than the total, so these are not shares of it. Did you mean rate()?
 ```

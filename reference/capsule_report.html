@@ -3,11 +3,15 @@
 the findings into a single report: the structural schema check, the
 distributional comparison against a reference, the missingness picture,
 the multivariate outliers, a Benford screen on the wide numeric columns,
-and the integrity digests."><meta property="og:description" content="Runs the checks this package provides over one data frame and collects
+and the integrity digests. Use it as the first look at a capsule or a fresh
+extract, before any analysis, and keep the Markdown version
+(report_markdown()) with the outputs."><meta property="og:description" content="Runs the checks this package provides over one data frame and collects
 the findings into a single report: the structural schema check, the
 distributional comparison against a reference, the missingness picture,
 the multivariate outliers, a Benford screen on the wide numeric columns,
-and the integrity digests."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+and the integrity digests. Use it as the first look at a capsule or a fresh
+extract, before any analysis, and keep the Markdown version
+(report_markdown()) with the outputs."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -15,7 +19,7 @@ and the integrity digests."><meta property="og:image" content="https://rootcoder
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +64,9 @@ and the integrity digests."><meta property="og:image" content="https://rootcoder
 the findings into a single report: the structural schema check, the
 distributional comparison against a reference, the missingness picture,
 the multivariate outliers, a Benford screen on the wide numeric columns,
-and the integrity digests.</p>
+and the integrity digests. Use it as the first look at a capsule or a fresh
+extract, before any analysis, and keep the Markdown version
+(<code><a href="report_markdown.html">report_markdown()</a></code>) with the outputs.</p>
     </div>
 
     <div class="section level2">
@@ -115,23 +121,38 @@ checked against the data's own digest.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Significance level passed to
-<code><a href="capsule_drift.html">capsule_drift()</a></code>.</p></dd>
+<dd><p>Numeric scalar, the significance level passed to
+<code><a href="capsule_drift.html">capsule_drift()</a></code>; default <code>0.01</code>.</p></dd>
 
 
 <dt id="arg-max-rows-outliers">max_rows_outliers<a class="anchor" aria-label="anchor" href="#arg-max-rows-outliers"></a></dt>
-<dd><p>Skip the outlier scan
+<dd><p>Integer scalar: skip the outlier scan
 above this many rows (default 20000), since it factors a covariance per
 call.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of class <code>bricklayer_report</code>: <code>findings</code> (a
-data frame of <code>severity</code>, <code>check</code>, <code>subject</code>,
-<code>detail</code>) , <code>verdict</code> ( <code>"fatal"</code>, <code>"warn"</code>,
-<code>"note"</code> or <code>"clean"</code>) , <code>profile</code>, <code>missingness</code>,
-<code>drift</code>, <code>digest</code>, and <code>n_rows</code> / <code>n_cols</code>.</p>
+    <p>A list of class <code>c("bricklayer_report", "list")</code>: <code>findings</code> (a
+data frame of character columns <code>severity</code>, <code>check</code> (<code>"schema"</code>,
+<code>"rule"</code>, <code>"drift"</code>, <code>"missing"</code>, <code>"shape"</code>, <code>"outliers"</code>,
+<code>"benford"</code> or
+<code>"signature"</code>), <code>subject</code> (the column, rule or row count concerned) and
+<code>detail</code>), <code>verdict</code> (the worst severity: <code>"fatal"</code>, <code>"warn"</code>,
+<code>"note"</code>, or
+<code>"clean"</code> when there is no finding), <code>profile</code> (from
+<code><a href="profile_columns.html">profile_columns()</a></code>),
+<code>missingness</code> (from <code><a href="missingness_summary.html">missingness_summary()</a></code>),
+<code>drift</code> (the
+<code><a href="capsule_drift.html">capsule_drift()</a></code> result, or <code>NULL</code> without a
+reference), <code>digest</code> (a list
+with <code>data_digest</code>, and with <code>chunks</code> also <code>merkle_root</code>,
+<code>merkle_scheme</code>
+(the <code><a href="rmbl_merkle.html">merkle_root()</a></code> hashing scheme, 2) and <code>n_chunks</code>,
+with a signature and key also logical <code>signature_valid</code>), and <code>n_rows</code> /
+<code>n_cols</code>. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> shows the verdict and the findings; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>
+gives
+the verdict and the count of each severity.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -143,12 +164,42 @@ the data is fine.</p>
     <div class="section level2">
     <h2 id="what-severity-means">What "severity" means<a class="anchor" aria-label="anchor" href="#what-severity-means"></a></h2>
 
-<ul><li><p><code>fatal</code> – a required column is missing. Nothing downstream can run.</p></li>
-<li><p><code>warn</code> – something moved: a column drifted, a value left its pinned
-range, missingness rose, a signature did not verify.</p></li>
-<li><p><code>note</code> – worth a look but not necessarily wrong: outliers, a
-Benford departure, a constant column.</p></li>
-</ul><p>A clean report is not proof the data is correct. It means these
+<ul><li><p><code>fatal</code> – nothing downstream can run as it stands: a schema check or a
+rule of severity <code>"fatal"</code> failed (for example a required column is
+missing), or a column of the reference is absent from the data.</p></li>
+<li><p><code>warn</code> – something moved or is badly incomplete: a schema check or a
+rule of severity <code>"warning"</code> failed (a value left its pinned range, a type
+changed), a column drifted from the reference, a column is entirely
+missing or more than half missing, or a signature did not verify (or came
+with no key).</p></li>
+<li><p><code>note</code> – worth a look but not necessarily wrong: a column not in the
+reference, a column whose drift could not be tested, a contiguous run of
+missing values (one outage rather than scattered gaps), a constant column,
+values beyond the Tukey fences, multivariate outliers or collinear columns,
+a Benford departure.</p></li>
+</ul></div>
+    <div class="section level2">
+    <h2 id="how-each-check-runs">How each check runs<a class="anchor" aria-label="anchor" href="#how-each-check-runs"></a></h2>
+    <p>The drift comparison is <code><a href="capsule_drift.html">capsule_drift()</a></code> at level
+<code>alpha</code>. The missing
+run is the longest run from <code><a href="missing_runs.html">missing_runs()</a></code> of at least
+<code>max(2, nrow(data) %/% 20)</code> rows. The outlier scan is
+<code><a href="mahalanobis_outliers.html">mahalanobis_outliers()</a></code> on the numeric columns
+that are not constant or
+entirely missing, run only when there are at least two of them, at most
+<code>max_rows_outliers</code> rows and more complete rows than columns. The Benford
+screen (<code><a href="benford_test.html">benford_test()</a></code>) runs on a numeric column with at
+least 200
+non-zero finite values whose largest absolute value is more than 1,000
+times its smallest, and reports p below 0.01. The digest is
+<code><a href="digest_object.html">digest_object()</a></code> of the data; a signature is checked with
+<code><a href="capsule_verify.html">capsule_verify()</a></code> against that digest.</p>
+<p>Findings are sorted by severity, then check, then subject. Nothing is
+written and nothing is fetched. Errors when <code>data</code> is not a data frame or
+has no columns, and when <code>schema</code> or <code>rules</code> are malformed (from
+<code><a href="validate_schema.html">validate_schema()</a></code> and
+<code><a href="validate_rules.html">validate_rules()</a></code>).</p>
+<p>A clean report is not proof the data is correct. It means these
 particular checks found nothing, and every one of them has a stated
 blind spot – see <code><a href="capsule_drift.html">capsule_drift()</a></code> on
 statistical power and <code><a href="benford_test.html">benford_test()</a></code> on why
@@ -223,6 +274,19 @@ a departure is a screen rather than a verdict.</p>
 <span class="r-in"><span><span class="fu">capsule_report</span><span class="op">(</span><span class="va">bad</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"score"</span><span class="op">)</span><span class="op">]</span>, reference <span class="op">=</span> <span class="va">ref</span>,</span></span>
 <span class="r-in"><span>               schema <span class="op">=</span> <span class="fu"><a href="infer_schema.html">infer_schema</a></span><span class="op">(</span><span class="va">ref</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">verdict</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "fatal"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># validation rules join the findings, and chunks are pinned with a Merkle root</span></span></span>
+<span class="r-in"><span><span class="va">r2</span> <span class="op">&lt;-</span> <span class="fu">capsule_report</span><span class="op">(</span><span class="va">bad</span>, rules <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="rmbl_rule_library.html">rule_in_set</a></span><span class="op">(</span><span class="st">"grade"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                     chunks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"part one"</span>, <span class="st">"part two"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">r2</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> verdict   fatal    warn    note </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  "warn"     "0"     "1"     "0" </span>
+<span class="r-in"><span><span class="va">r2</span><span class="op">$</span><span class="va">digest</span><span class="op">$</span><span class="va">merkle_root</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "271d0c66b493e55e2b9659fda7eddb00b0439d076eb82f36a4b8922d6bd4d062"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># a data frame is required</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/try.html" class="external-link">try</a></span><span class="op">(</span><span class="fu">capsule_report</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error : `data` must be a data frame</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

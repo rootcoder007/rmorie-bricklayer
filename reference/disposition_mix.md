@@ -56,6 +56,12 @@ the Holm adjustment covers the \\k\\ tests. Counts of court cases are
 large, so these tests detect small changes; the shares and their
 intervals show whether a change is large enough to matter.
 
+Errors: `counts` not a numeric matrix or data frame, with a non-numeric
+column, fewer than one period or two outcomes, or a negative, missing or
+infinite count; a period with no cases; `scores` not one finite number
+per period, or all equal; `period` of the wrong length or with repeats;
+`conf_level` outside (0, 1).
+
 ## References
 
 Goodman, L. A. (1965). On simultaneous confidence intervals for
@@ -110,4 +116,54 @@ mix
 #>                following_trial   2172.85   <2e-16   <2e-16 -0.0131
 #> ────────────────────────────────────────────────────────────────── 
 plot(mix)
+
+
+# the parts of the result
+head(mix$shares)
+#>   period                       outcome count  total     share     lower
+#> 1   2012 withdrawn_stayed_before_trial 93775 247047 0.3795836 0.3769607
+#> 2   2013 withdrawn_stayed_before_trial 90864 231681 0.3921944 0.3894691
+#> 3   2014 withdrawn_stayed_before_trial 83626 210098 0.3980333 0.3951641
+#> 4   2015 withdrawn_stayed_before_trial 82430 205249 0.4016098 0.3987024
+#> 5   2016 withdrawn_stayed_before_trial 84787 207160 0.4092827 0.4063797
+#> 6   2017 withdrawn_stayed_before_trial 91440 214137 0.4270163 0.4241433
+#>       upper
+#> 1 0.3822136
+#> 2 0.3949265
+#> 3 0.4009096
+#> 4 0.4045240
+#> 5 0.4121920
+#> 6 0.4298943
+mix$trend
+#>                         outcome   statistic      p_value       p_holm
+#> 1 withdrawn_stayed_before_trial 29543.56265 0.000000e+00 0.000000e+00
+#> 2      guilty_plea_before_trial 10090.69293 0.000000e+00 0.000000e+00
+#> 3            other_before_trial    20.29329 6.643309e-06 6.643309e-06
+#> 4            withdrawn_at_trial  3208.77296 0.000000e+00 0.000000e+00
+#> 5          guilty_plea_at_trial  7080.54897 0.000000e+00 0.000000e+00
+#> 6                other_at_trial   187.10154 1.364671e-42 2.729342e-42
+#> 7               following_trial  2172.84508 0.000000e+00 0.000000e+00
+#>          change
+#> 1  0.1292036827
+#> 2 -0.0805960172
+#> 3 -0.0002635828
+#> 4 -0.0127761314
+#> 5 -0.0218969033
+#> 6 -0.0006064793
+#> 7 -0.0130645687
+
+# years as trend scores, so the gap where no row exists is respected
+disposition_mix(d[, -(1:2)], period = d$year, scores = d$year)$trend[, 1:3]
+#>                         outcome    statistic      p_value
+#> 1 withdrawn_stayed_before_trial 30150.915355 0.000000e+00
+#> 2      guilty_plea_before_trial 10825.914695 0.000000e+00
+#> 3            other_before_trial     7.296441 6.909133e-03
+#> 4            withdrawn_at_trial  2890.841438 0.000000e+00
+#> 5          guilty_plea_at_trial  6782.412494 0.000000e+00
+#> 6                other_at_trial   175.420561 4.845824e-40
+#> 7               following_trial  2044.569303 0.000000e+00
+
+# outcome columns only: a text column is refused
+try(disposition_mix(data.frame(year = c("a", "b"), x = 1:2, y = 3:4)))
+#> Error : `counts` has a column that is not numeric (year); pass only the outcome columns
 ```

@@ -1,8 +1,10 @@
-# Mean, variance, skewness and kurtosis in one pass (C backend)
+# Mean, variance, skewness and kurtosis (C backend)
 
-A single streaming pass (Welford's recurrence, extended to the third and
-fourth central moments) over `x`. One pass matters for capsule members
-large enough that reading the column twice is the expensive part.
+The four standard descriptive moments of a numeric vector – where it is
+centred, how spread out it is, whether it leans to one side and how
+heavy its tails are – in one call to the compiled core. These are the
+four numbers a data description or a drift check usually reports
+together.
 
 ## Usage
 
@@ -14,29 +16,54 @@ core_moments(x)
 
 - x:
 
-  Numeric vector (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
+  Numeric (or logical) vector; coerced with
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html).
 
 ## Value
 
-A named length-4 numeric: `mean`, `variance`, `skewness`, `kurtosis`.
-`skewness` needs at least 3 observations and `kurtosis` at least 4; both
-are `NaN` below that, as is everything if `x` contains NA/NaN.
+A named length-4 numeric vector: `mean` (units of `x`), `variance`
+(squared units of `x`, `n - 1` denominator), `skewness` and `kurtosis`
+(both unitless; kurtosis as excess over the normal's 3).
 
 ## Details
 
-The variance uses the `n - 1` denominator, matching
+The mean is base R's (an extended-precision sum followed by a corrective
+pass); the deviations from it are then divided by their largest
+magnitude before any power is taken, and the scale is restored at the
+end. That avoids both the cancellation of the textbook "sum of squares
+minus square of sum" formula and overflow of fourth powers for values
+beyond about \\10^{77}\\. It reads the data three times (mean, largest
+deviation, moments), in \\O(n)\\ time. The variance uses the `n - 1`
+denominator, matching
 [`stats::var()`](https://rdrr.io/r/stats/cor.html). The shape statistics
-use the *sample moment* definitions \\m_3 / m_2^{3/2}\\ and \\m_4 /
-m_2^2 - 3\\, with \\m_k\\ the k-th central moment divided by `n` – so
-kurtosis is reported as EXCESS kurtosis and a normal sample sits near
-zero, not near three.
+use the *sample moment* definitions \$\$g_1 = m_3 / m_2^{3/2}, \qquad
+g_2 = m_4 / m_2^2 - 3,\$\$ with \\m_k = n^{-1} \sum_i (x_i - \bar
+x)^k\\, so kurtosis is reported as EXCESS kurtosis: a normal sample sits
+near zero, not near three. These are the uncorrected moment ratios (type
+1 in the classification of Joanes and Gill, 1998), not the bias-adjusted
+versions some software reports.
+
+Edge cases are `NaN`, never an error: an empty vector gives four `NaN`;
+one value gives its mean and `NaN` for the rest; `skewness` needs at
+least 3 values and `kurtosis` at least 4; any `NA` or `NaN` in `x` makes
+every entry `NaN`. A constant vector has variance 0 and `NaN` shape
+statistics. A character, factor or list `x` is refused
+(`"must be numeric"`).
 
 ## References
 
-Welford BP (1962). Note on a method for calculating corrected sums of
-squares and products. *Technometrics* 4(3), 419–420.
-[doi:10.1080/00401706.1962.10490022](https://doi.org/10.1080/00401706.1962.10490022)
+Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
+kurtosis. *Journal of the Royal Statistical Society: Series D (The
+Statistician)* 47(1), 183–189.
+[doi:10.1111/1467-9884.00122](https://doi.org/10.1111/1467-9884.00122)
+
+## See also
+
+[`core_sd()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_spread.md),
+[`core_quantile()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+and
+[`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+for robust alternatives that one extreme value cannot move.
 
 ## Examples
 

@@ -1,8 +1,13 @@
 # Standard deviation and Euclidean distance (C backend)
 
-`core_sd()` is the square root of the variance computed by the shared
-core; `core_dist()` is the Euclidean distance between two equal-length
-vectors.
+`core_sd()` returns the standard deviation of a numeric vector and
+`core_dist()` the straight-line (Euclidean) distance between two vectors
+of the same length. Both run in the package's compiled core, the same
+code that rmorie and rmoriedata reach through
+`LinkingTo: rmoriebricklayer`, so a figure computed here is the figure
+those packages compute. Use them when you want the shared core's answer
+rather than base R's, for example when checking a capsule's recorded
+summary statistics against a fresh computation.
 
 ## Usage
 
@@ -16,30 +21,52 @@ core_dist(a, b)
 
 - x, a, b:
 
-  Numeric vectors (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
+  Numeric (or logical) vectors; coerced with
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html). `a` and `b`
+  must have the same length.
 
 - ddof:
 
-  Denominator degrees of freedom. The default `1` gives the sample
-  standard deviation, matching
-  [`stats::sd()`](https://rdrr.io/r/stats/sd.html); `0` gives the
-  population figure.
+  Delta degrees of freedom, a single number truncated to an integer by
+  [`as.integer()`](https://rdrr.io/r/base/integer.html): the divisor is
+  `n - ddof`. The default `1` gives the sample standard deviation,
+  matching [`stats::sd()`](https://rdrr.io/r/stats/sd.html); `0` gives
+  the population figure.
 
 ## Value
 
-A length-1 numeric.
+`core_sd()`: a length-1 numeric, the standard deviation in the units of
+`x` (`NA` when `x` holds a missing value, `NaN` when
+`length(x) <= ddof`). `core_dist()`: a length-1 non-negative numeric,
+the distance in the units of `a` and `b`.
 
 ## Details
 
-NA/NaN propagate – there is no `na.rm`. Call
-[`stats::na.omit()`](https://rdrr.io/r/stats/na.fail.html) first if you
-need NA handling.
+`core_sd()` computes \$\$s = \sqrt{\frac{1}{n - \mathrm{ddof}}
+\sum\_{i=1}^n (x_i - \bar x)^2},\$\$ so `ddof = 1` is the sample
+standard deviation of [`stats::sd()`](https://rdrr.io/r/stats/sd.html)
+and `ddof = 0` the population figure. `core_dist()` computes
+\\\sqrt{\sum_i (a_i - b_i)^2}\\.
+
+Missing values propagate: there is no `na.rm`, and one `NA` makes the
+result `NA`. Remove them first (for example with
+[`stats::na.omit()`](https://rdrr.io/r/stats/na.fail.html)) when that is
+what you want. A vector with no more than `ddof` values has no defined
+spread and gives `NaN` (one value with the default `ddof = 1`, or an
+empty vector). Two empty vectors are at distance 0.
+
+Refusals: a character, factor, list or data-frame `x`, `a` or `b`
+(`"must be numeric"`), and for `core_dist()` vectors of different
+lengths (`"must have the same length"`). Logical input is accepted and
+counted as 0/1. Both run in one pass over the data and allocate nothing
+beyond the coerced input.
 
 ## See also
 
 [`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
-for the mean, variance, skewness and kurtosis in a single pass.
+for the mean, variance, skewness and kurtosis in a single pass;
+[`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+for a spread that one wild value cannot move.
 
 ## Examples
 
@@ -56,9 +83,19 @@ core_sd(1:10, ddof = 0)
 all.equal(core_sd(1:10, ddof = 0), sqrt(mean((1:10 - mean(1:10))^2)))
 #> [1] TRUE
 
+# Missing values propagate; remove them first if they should be ignored.
+core_sd(c(3, NA, 5))
+#> [1] NA
+core_sd(stats::na.omit(c(3, NA, 5)))
+#> [1] 1.414214
+
 # Euclidean distance between two points.
 core_dist(c(0, 0), c(3, 4))     # 5
 #> [1] 5
 core_dist(1:5, 1:5)             # 0 -- a point is zero from itself
 #> [1] 0
+
+# Vectors of different lengths are refused rather than recycled.
+try(core_dist(1:3, 1:2))
+#> Error : `a` and `b` must have the same length
 ```

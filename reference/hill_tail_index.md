@@ -4,7 +4,10 @@ The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
 power law above a threshold. An exponent near 2 or below means the mean
 is barely defined and the observed maximum is not informative about the
 next one, which is the substantive point when a few units dominate a
-total.
+total. Use it on counts per unit (placements per person, incidents per
+address) to judge whether the largest values are a heavy tail rather
+than a few outliers, and read `ks` and `reliable` before quoting the
+exponent.
 
 ## Usage
 
@@ -22,45 +25,83 @@ hill_tail_index(
 
 - x:
 
-  Positive values, one per unit.
+  Numeric vector of positive values, one per unit.
 
 - x_min:
 
-  Threshold above which the power law is fitted. A power law is a
-  statement about the tail, so a threshold is required; the default
-  takes the value that leaves at least 50 observations, or the minimum
-  if the data are smaller than that.
+  Numeric scalar or `NULL` (the default): the threshold at and above
+  which the power law is fitted. A power law is a statement about the
+  tail, so a threshold is required; `NULL` takes the 50th largest value
+  (which leaves at least 50 observations in the tail), or the minimum if
+  there are fewer than 50 values.
 
 - discrete:
 
-  Whether the quantity is integer-valued. A count is, and then the
-  likelihood maximised is the zeta distribution's, whose normalising
-  constant is a Hurwitz zeta.
+  Logical scalar, default `TRUE`: whether the quantity is
+  integer-valued. A count is, and then the likelihood maximised is the
+  zeta distribution's, whose normalising constant is a Hurwitz zeta.
 
 - approx:
 
-  For discrete data, whether to use the closed-form continuity-corrected
-  estimator instead of maximising the exact likelihood. It is much
-  faster and much worse: the correction is an asymptotic approximation
-  in `x_min`, and at `x_min = 1` – where administrative counts start –
-  it returns about 2.0 from data generated with an exponent of 2.5. Off
-  by default for that reason.
+  Logical scalar, default `FALSE`. For discrete data, whether to use the
+  closed-form continuity-corrected estimator instead of maximising the
+  exact likelihood. It is much faster and much worse: the correction is
+  an asymptotic approximation in `x_min`, and at `x_min = 1` – where
+  administrative counts start – it returns about 2.0 from data generated
+  with an exponent of 2.5. Off by default for that reason.
 
 - min_tail:
 
-  Fewest tail observations for which an estimate is reported at all.
-  Below it there is nothing to estimate from and `alpha` is `NA`.
+  Integer scalar, default `3`: the fewest tail observations for which an
+  estimate is reported at all (values below 2 are raised to 2). Below it
+  there is nothing to estimate from and `alpha` is `NA`.
 
 ## Value
 
-A list with `alpha`, its standard error, `x_min`, `n_tail`, `ks` and
-`reliable`. `ks` is the Kolmogorov-Smirnov distance between the fitted
-tail and the data: a large value means the tail is not a power law,
-whatever `alpha` came out as. `reliable` is `FALSE` when fewer than 50
-observations lie in the tail, which is the sample size Clauset, Shalizi
-and Newman give as the point below which the estimate should not be
-leaned on – it is reported rather than enforced, because the right
-response to a short tail is a wider interval, not a refusal.
+A list with `alpha` (numeric, the exponent), `se` (its standard error),
+`x_min` (the threshold used), `n_tail` (integer, the number of values at
+or above it), `ks`, `reliable` (logical) and `method` (character, the
+estimator used or why there is no estimate). `ks` is the
+Kolmogorov-Smirnov distance between the fitted tail and the data: a
+large value means the tail is not a power law, whatever `alpha` came out
+as. `reliable` is `FALSE` when fewer than 50 observations lie in the
+tail, which is the sample size Clauset, Shalizi and Newman give as the
+point below which the estimate should not be leaned on – it is reported
+rather than enforced, because the right response to a short tail is a
+wider interval, not a refusal.
+
+## Details
+
+For a power law \\p(x) \propto x^{-\alpha}\\ above \\x\_{min}\\:
+
+- discrete data, exact (the default): the log-likelihood of the zeta
+  distribution truncated at \\x\_{min}\\, \\-n \log \zeta(\alpha,
+  x\_{min}) - \alpha \sum \log x_i\\, is maximised over \\\alpha\\ in
+  \\(1.0001, 25)\\ with
+  [`stats::optimize()`](https://rdrr.io/r/stats/optimize.html);
+  \\\zeta\\ is
+  [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md).
+  The standard error comes from the observed information, by a numerical
+  second derivative.
+
+- continuous data (`discrete = FALSE`): the Hill estimator \\\hat\alpha
+  = 1 + n / \sum \log(x_i / x\_{min})\\, with standard error
+  \\(\hat\alpha - 1)/\sqrt{n}\\.
+
+- discrete data with `approx = TRUE`: the same closed form with
+  \\x\_{min} - 1/2\\ in place of \\x\_{min}\\.
+
+`ks` is the Kolmogorov-Smirnov distance between the fitted distribution
+and the tail, computed once per distinct value so that ties (most counts
+are ties) are handled correctly.
+
+Only finite positive values of `x` are used; the rest are dropped
+silently. When the tail has fewer than `min_tail` values, or every tail
+value is the same, `alpha` is `NA` and `method` says why. An estimate at
+the optimiser's bound is flagged in `method` and is not `reliable`.
+Errors: no positive finite value in `x`; `x_min` that is not a single
+positive number (logical, factor and text are refused); `discrete` or
+`approx` not `TRUE` or `FALSE`.
 
 ## References
 
@@ -102,4 +143,8 @@ c(alpha = round(short$alpha, 2), n = short$n_tail,
 # Below `min_tail` there is nothing to estimate from.
 hill_tail_index(c(3, 4), x_min = 3)$alpha
 #> [1] NA
+
+# the threshold has to be positive
+try(hill_tail_index(z, x_min = 0))
+#> Error : `x_min` must be positive
 ```

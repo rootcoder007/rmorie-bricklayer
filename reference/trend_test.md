@@ -1,9 +1,11 @@
 # Trend in a short series
 
-The Mann-Kendall rank test for monotone trend with the Theil-Sen
-median-of-slopes estimator: no distributional assumption, resistant to a
-single aberrant period, and meaningful at the series lengths an annual
-administrative extract actually has.
+Tests whether a short series (for example five to ten fiscal years of an
+administrative count) is rising or falling, and estimates the size of
+the change per period. It uses the Mann-Kendall rank test for monotone
+trend and the Theil-Sen median-of-slopes estimator: no distributional
+assumption, resistant to a single aberrant period, and meaningful at the
+series lengths an annual administrative extract actually has.
 
 ## Usage
 
@@ -23,49 +25,75 @@ trend_test(
 
 - y:
 
-  The series, in period order, or a data frame.
+  Numeric vector, the series in period order, or a data frame.
 
 - x:
 
-  The periods. Defaults to the position, which is right for an evenly
-  spaced series.
+  Numeric vector of periods, default `NULL`: the position `1, 2, ...`,
+  which is right for an evenly spaced series. Ignored when `y` is a data
+  frame and `period` is given.
 
 - value, period:
 
-  Column names, when `y` is a data frame.
+  Column names (strings), when `y` is a data frame. `value` is required;
+  `period` is optional and must be convertible with
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html).
 
 - exact:
 
-  Whether to compute the exact null distribution of Mann-Kendall's S by
-  enumeration. Feasible and used by default up to `n = 8` (40,320
-  orderings); above that the normal approximation with the tie and
-  continuity corrections is used.
+  Logical or `NULL` (the default). Whether to compute the exact null
+  distribution of Mann-Kendall's \\S\\ by enumeration. `NULL` uses it up
+  to `n = 8` (40,320 orderings); above that the normal approximation
+  with the tie and continuity corrections is used.
 
 - alternative:
 
-  `"two.sided"`, `"increasing"` or `"decreasing"`.
+  `"two.sided"` (the default), `"increasing"` or `"decreasing"`.
 
 - conf_level:
 
-  Confidence level for the slope interval.
+  Number in (0, 1), default 0.95: the confidence level of the slope
+  interval.
 
 ## Value
 
-A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen), `intercept`,
-`slope_lower` / `slope_upper`, `slope_ci_clamped` (`TRUE` when the
+A list with `S`, `tau`, `p_value`, `slope` (Theil-Sen, in units of `y`
+per unit of `x`), `intercept`, `slope_lower` and `slope_upper` (the
+distribution-free interval), `slope_ci_clamped` (`TRUE` when the
 pairwise slopes do not reach the requested confidence on a side, so that
-bound is the extreme slope and the true interval is wider) (the
-distribution-free interval), `n` and `method`.
+bound is the extreme slope and the true interval is wider), `n`, `var_S`
+(the tie-corrected variance of \\S\\), `alternative`, `conf_level` and
+`method`.
 
 ## Details
 
-Kendall's tau here is S over the number of comparable pairs, so it is
-the rank correlation between the value and the period.
+With values \\y_1, \dots, y_n\\ in period order, \$\$S = \sum\_{i \< j}
+\mathrm{sign}(y_j - y_i),\$\$ and Kendall's tau here is \\S /
+(n(n-1)/2)\\, the rank correlation between the value and the period. The
+Theil-Sen slope is the median of the pairwise slopes \\(y_j -
+y_i)/(x_j - x_i)\\; `intercept` is the line's intercept from the
+compiled Theil-Sen routine.
+
+For \\n \le 8\\ the p-value is exact by default: \\S\\ is computed over
+every ordering of the observed values (with ties kept, so tied data get
+the correct conditional null). Otherwise the normal approximation is
+used, with the tie-corrected variance of \\S\\ and a continuity
+correction of one unit toward zero. Exact tables are cached in the
+session, up to 32 of them.
 
 The slope interval is the standard rank-based one: the pairwise slopes
 are sorted and the interval runs between the order statistics that
 Mann-Kendall's variance places at the chosen level, so it is consistent
-with the test rather than derived from a different model.
+with the test rather than derived from a different model. At small \\n\\
+the slopes may not reach the requested confidence; the bound is then the
+most extreme slope and `slope_ci_clamped` is `TRUE`.
+
+Missing periods are dropped and the series is sorted by `x`. Errors:
+fewer than three periods; infinite values; `x` and `y` of different
+lengths; a data frame without `value` or with a column not found; more
+than 20,000 periods (the pairwise slopes would not fit in memory); a
+`conf_level` outside (0, 1). `exact = TRUE` with \\n \> 8\\ warns and
+uses the normal approximation.
 
 ## References
 
@@ -81,8 +109,8 @@ it on a series this short.
 
 ## See also
 
-[`step_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md),
-[`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
+[`step_change`](https://rootcoder007.github.io/rmorie-bricklayer/reference/step_change.md),
+[`count_trend`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md)
 
 ## Examples
 
@@ -177,8 +205,11 @@ trend_test(c(1, 2, 3, 4, 5))
 trend_test(c(100, 100, 100, 100, 900))$p_value
 #> [1] 0.4
 
-# From a data frame.
+# From a data frame, testing for a decrease only.
 d <- data.frame(year = 2019:2023, n = y)
-trend_test(d, value = "n", period = "year")$slope
-#> [1] -21.375
+trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
+#> [1] 0.2416667
+
+try(trend_test(c(5, 6)))
+#> Error : a trend needs at least three periods
 ```

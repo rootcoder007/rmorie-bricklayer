@@ -1,13 +1,13 @@
 # Exact p-values for the rows of a year-over-year table
 
-For count units the interval in
-[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-is the exact conditional binomial interval for the ratio of two Poisson
-means; this is the matching two-sided test, so a scan over many groups
-can be corrected for multiple comparisons with
-[`scan_adjust()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md).
-The test conditions on the total of the two periods and asks whether the
-split is compatible with equal means.
+Adds a two-sided exact p-value to each row of a period-over-period
+change table of counts from
+[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md),
+testing whether the count changed by more than chance between the two
+periods. Use it when you want a test to go with each change, and then
+pass the table to
+[`scan_adjust`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md)
+to correct for the number of rows tested.
 
 ## Usage
 
@@ -19,12 +19,44 @@ yoy_pvalues(y)
 
 - y:
 
-  An `rmbl_yoy` object with count units.
+  An `rmbl_yoy` object from
+  [`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  with `units = "count"`.
 
 ## Value
 
-`y` with a `p_value` column; `NA` where there is no comparison period or
-both counts are zero.
+`y`, with its class and attributes, and an added numeric `p_value`
+column; `NA` where there is no comparison period or both counts are
+zero.
+
+## Details
+
+For count units the interval in
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+is the exact conditional binomial interval for the ratio of two Poisson
+means; this is the matching two-sided test. The test conditions on the
+total of the two periods and asks whether the split is compatible with
+equal means: with current count \\a\\ and previous count \\b\\, \\a \sim
+\mathrm{Binomial}(a + b, 1/2)\\ under the null, and the p-value is that
+of `stats::binom.test(a, a + b, p = 0.5)`. The two periods are treated
+as having equal exposure; for changing populations use
+[`rate_change`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+and
+[`scan_adjust`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md),
+which weight by the exposures. Counts are rounded to whole numbers.
+
+Errors: `y` not a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+result; a
+[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+result whose units are not counts (percentages and measured values have
+no Poisson test). A progress indicator is shown for long tables in an
+interactive session.
+
+## See also
+
+[`scan_adjust`](https://rootcoder007.github.io/rmorie-bricklayer/reference/scan_adjust.md),
+[`yoy`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md).
 
 ## Examples
 
@@ -35,4 +67,12 @@ seg <- data.frame(year = rep(2022:2023, each = 3),
 y <- yoy(seg, value = "n", period = "year", by = "site")
 yoy_pvalues(y)$p_value
 #> [1]        NA 0.1053423        NA 0.9211910        NA 1.0000000
+
+# the same test by hand for site A: 45 against 30
+stats::binom.test(45, 75)$p.value
+#> [1] 0.1053423
+
+# anything that is not a yoy() table is refused
+try(yoy_pvalues(seg))
+#> Error : `y` must come from yoy()
 ```

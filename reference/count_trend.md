@@ -1,9 +1,11 @@
 # Trend in a count series, as a rate ratio per period
 
-Fits a Poisson log-linear trend by iteratively reweighted least squares
-and reports the multiplicative change per period, which is what a count
-series' trend actually is. An offset carries the denominator when the
-exposure varies.
+Estimates the trend in a series of counts (arrests, admissions,
+incidents per year) as a rate ratio per period: 0.85 means the count
+falls by 15% a year. It fits a Poisson log-linear model and, when the
+counts vary more than a Poisson model allows, widens the interval. An
+offset carries the denominator when the exposure varies, so the trend is
+then in the rate rather than in the count.
 
 ## Usage
 
@@ -15,33 +17,54 @@ count_trend(y, x = NULL, offset = NULL, conf_level = 0.95)
 
 - y:
 
-  Counts, in period order.
+  Numeric vector of counts (non-negative whole numbers), in period
+  order.
 
 - x:
 
-  Periods. Defaults to the position.
+  Numeric vector of periods, default `NULL` (the position). The rate
+  ratio is per unit of `x`.
 
 - offset:
 
-  Exposure for each period – a population, a number of admissions, a
-  number of days. The trend is then in the rate rather than in the
-  count.
+  Optional numeric vector of exposures, one per period – a population, a
+  number of admissions, a number of days. Positive. The trend is then in
+  the rate rather than in the count.
 
 - conf_level:
 
-  Confidence level for the rate ratio.
+  Number in (0, 1), default 0.95: the confidence level of the rate-ratio
+  interval.
 
 ## Value
 
-A list with `rate_ratio` (per period), its interval, `p_value`, the
-fitted values, the dispersion, and `overdispersed`.
+A list of class `c("rmbl_count_trend", "list")` with `rate_ratio` (per
+period), `lower`, `upper`, `p_value` (test of no trend), `log_slope`
+(\\\beta_1\\), `se` (its standard error, scaled when overdispersed),
+`fitted` (fitted counts), `dispersion`, `overdispersed` (logical), `n`,
+`data` (list of the `x` and `y` used) and `method`.
 
 ## Details
 
-The dispersion is reported because a Poisson fit assumes it is one. When
-it is well above one the interval is too narrow, and the quasi-Poisson
-interval – which scales the standard error by the square root of the
-dispersion – is returned instead, with `overdispersed` set.
+The model is \\\log \mu_t = \beta_0 + \beta_1 (x_t - \bar x) + \log
+o_t\\, with \\o_t\\ the offset (1 when none), fitted by iteratively
+reweighted least squares (at most 50 iterations). The rate ratio is
+\\e^{\beta_1}\\, with a Wald interval \\e^{\beta_1 \pm z\\
+\mathrm{se}}\\.
+
+The dispersion is reported because a Poisson fit assumes it is one. It
+is the Pearson statistic \\\sum (y - \mu)^2/\mu\\ divided by \\n - 2\\.
+When it exceeds 1.5 the quasi-Poisson interval is returned instead: the
+standard error is multiplied by the square root of the dispersion and
+the \\t\\ distribution on \\n - 2\\ degrees of freedom replaces the
+normal, and `overdispersed` is set.
+
+Missing values are dropped. Errors: negative or fractional counts; `x`
+and `y` of different lengths; infinite `x`; every count zero; an offset
+of the wrong length or not positive; fewer than three periods; a
+`conf_level` outside (0, 1). There is a
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) method for the
+result.
 
 ## References
 
@@ -52,6 +75,11 @@ dispersion, which widens the interval while leaving the point estimate
 alone. That is the behaviour reported here through `dispersion` and
 `overdispersed`.
 
+## See also
+
+[`trend_test`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md),
+[`rate_change`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md).
+
 ## Examples
 
 ``` r
@@ -61,8 +89,20 @@ y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))
 fit <- count_trend(y)
 round(fit$rate_ratio, 3)
 #> [1] 0.869
+c(fit$lower, fit$upper)
+#> [1] 0.8444785 0.8942357
 
 # With a varying denominator the trend is in the rate.
 count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
 #> [1] 0.7708656
+
+# Counts that swing far more than Poisson noise get the wider interval.
+wild <- count_trend(c(10, 50, 5, 60, 8, 70))
+wild$dispersion
+#> [1] 26.27417
+wild$method
+#> [1] "quasi-Poisson (dispersion above 1.5)"
+
+try(count_trend(c(1.5, 2, 3)))
+#> Error : `y` must be non-negative whole numbers
 ```

@@ -19,19 +19,43 @@ core_winsorized_mean(x, trim = 0.1)
 
 - x:
 
-  Numeric vector (coerced with
-  [`as.numeric()`](https://rdrr.io/r/base/numeric.html)) .
+  Numeric (or logical) vector; coerced with
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html).
 
 - trim:
 
-  Proportion trimmed from *each* end, in \\ \[0, 0.5\]. At `0.5` both
+  Proportion trimmed (or winsorized) at *each* end, a single number in
+  \\\[0, 0.5\]\\ (default 0.1, i.e. 10% at each end). At `0.5` both
   reduce to the median.
-
-  \[0, 0.5\]: R:0,%200.5%5C
 
 ## Value
 
-A length-1 numeric.
+A length-1 numeric in the units of `x`.
+
+## Details
+
+With \\g = \lfloor n \cdot \mathrm{trim} \rfloor\\ and the sorted values
+\\x\_{(1)} \le \dots \le x\_{(n)}\\, the trimmed mean is \\\frac{1}{n -
+2g} \sum\_{i=g+1}^{n-g} x\_{(i)}\\ and the winsorized mean replaces
+\\x\_{(1)}, \dots, x\_{(g)}\\ by \\x\_{(g+1)}\\ and \\x\_{(n-g+1)},
+\dots, x\_{(n)}\\ by \\x\_{(n-g)}\\ before averaging all \\n\\ values.
+At `trim = 0.5` both return the median, as
+[`mean()`](https://rdrr.io/r/base/mean.html) does.
+
+A `trim` that is not a single number in \\\[0, 0.5\]\\ is an error. An
+empty `x`, or any `NA`/`NaN` in `x`, gives `NaN` (missing values are not
+removed). A character, factor or list `x` is refused
+(`"must be numeric"`). Both sort a copy of `x`, so the cost is \\O(n
+\log n)\\.
+
+## See also
+
+[`core_median()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+and
+[`core_mad()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_robust.md)
+for the other robust summaries;
+[`core_moments()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_moments.md)
+for the ordinary mean.
 
 ## Examples
 
@@ -54,4 +78,10 @@ all.equal(core_trimmed_mean(x, 0), mean(x))
 #> [1] TRUE
 all.equal(core_trimmed_mean(x, 0.5), core_median(x))
 #> [1] TRUE
+
+# A trim past one half is not a trim.
+try(core_winsorized_mean(x, 0.7))
+#> Error : `trim` must be a single number in [0, 0.5]
+try(core_trimmed_mean(letters))
+#> Error : `x` must be numeric, got character
 ```

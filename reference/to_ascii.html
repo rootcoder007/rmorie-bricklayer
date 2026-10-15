@@ -4,12 +4,20 @@ accented or non-Latin characters to their nearest ASCII equivalent (for
 example, an accented capital A becomes a plain "A"). Falls back to
 dropping any character that has no transliteration. This is the
 deterministic "fallback" used by
-ascii_fallback().'><meta property="og:description" content='Converts a character vector to plain 7-bit ASCII, transliterating
+ascii_fallback(). Use it for destinations that accept
+only ASCII –
+a package DESCRIPTION, a file name, a legacy system – so a name
+written with an accented letter arrives with the plain letter rather
+than as an encoding error or a question mark.'><meta property="og:description" content='Converts a character vector to plain 7-bit ASCII, transliterating
 accented or non-Latin characters to their nearest ASCII equivalent (for
 example, an accented capital A becomes a plain "A"). Falls back to
 dropping any character that has no transliteration. This is the
 deterministic "fallback" used by
-ascii_fallback().'><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
+ascii_fallback(). Use it for destinations that accept
+only ASCII –
+a package DESCRIPTION, a file name, a legacy system – so a name
+written with an accented letter arrives with the plain letter rather
+than as an encoding error or a question mark.'><meta property="og:image" content="https://rootcoder007.github.io/rmorie-bricklayer/logo.png"><meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -17,7 +25,7 @@ ascii_fallback().'><meta property="og:image" content="https://rootcoder007.githu
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +71,11 @@ accented or non-Latin characters to their nearest ASCII equivalent (for
 example, an accented capital A becomes a plain "A"). Falls back to
 dropping any character that has no transliteration. This is the
 deterministic "fallback" used by
-<code><a href="ascii_fallback.html">ascii_fallback()</a></code>.</p>
+<code><a href="ascii_fallback.html">ascii_fallback()</a></code>. Use it for destinations that accept
+only ASCII –
+a package <code>DESCRIPTION</code>, a file name, a legacy system – so a name
+written with an accented letter arrives with the plain letter rather
+than as an encoding error or a question mark.</p>
     </div>
 
     <div class="section level2">
@@ -76,12 +88,38 @@ deterministic "fallback" used by
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A character vector.</p></dd>
+<dd><p>A character vector (other types are converted with
+<code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>).</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector containing only ASCII characters.</p>
+    <p>A character vector the length of <code>x</code>, containing only printable
+ASCII characters (bytes 32 to 126); <code>NA</code> elements become <code>""</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
+first. Then, when the <span class="pkg">stringi</span> package is installed, the ICU
+transform <code>"Any-Latin; Latin-ASCII"</code> romanises any script and folds
+accents (Cyrillic, Greek and Chinese become Latin letters). Without
+<span class="pkg">stringi</span>, a fixed table folds the common Latin accents and
+ligatures (sharp s to "ss", the ae ligature to "ae", thorn to "th" and so on) and
+every other non-ASCII character is dropped, so non-Latin scripts
+disappear rather than being romanised. Either way the result is then
+stripped of anything outside the printable ASCII range (space to
+tilde), so control characters such as newlines and tabs are removed
+too. The result never depends on the session's locale.</p>
+<p>A missing value becomes <code>""</code>; non-character input is converted with
+<code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code> first (so numbers pass through as their
+digits).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="ascii_fallback.html">ascii_fallback()</a></code> to transliterate only when
+needed,
+<code><a href="write_text_fallback.html">write_text_fallback()</a></code> to write text with an
+ASCII retry.</p></div>
     </div>
 
     <div class="section level2">
@@ -102,6 +140,10 @@ deterministic "fallback" used by
 <span class="r-in"><span><span class="co"># Either way the result is guaranteed pure 7-bit ASCII (never "?").</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rawConversion.html" class="external-link">charToRaw</a></span><span class="op">(</span><span class="fu">to_ascii</span><span class="op">(</span><span class="st">"caf\u00e9"</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">128</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Missing values become empty strings; line breaks are removed.</span></span></span>
+<span class="r-in"><span><span class="fu">to_ascii</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="st">"two\nlines"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] ""         "twolines"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

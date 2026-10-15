@@ -1,6 +1,12 @@
 # Report the language-model routes available from this machine
 
-Report the language-model routes available from this machine
+Shows, in one table, every way
+[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+could reach a language model from this machine and whether each is
+ready: your own endpoint, each provider whose key is set, and a local
+Ollama server. Use it to find out why a question fails with "no route",
+or which model a route would use. The command line prints it as part of
+`rmoriebricklayer doctor`.
 
 ## Usage
 
@@ -10,27 +16,57 @@ bricklayer_llm_status()
 
 ## Value
 
-A data frame with one row per route, in the order
-[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
-tries them (own endpoint, each provider whose key is set, local Ollama;
-the providers without a key share one row): `route`, `status` and
-`detail`. Nothing is sent to a provider; a local Ollama server is asked
-for its model list. Printed by `rmoriebricklayer doctor`.
+A data frame with one row per route and three character columns: `route`
+(`"own endpoint"`, a provider label such as `"Anthropic"`,
+`"other providers"` or `"local Ollama"`), `status` (`"not set"` or
+`"configured"` for your own endpoint; `"key set"` for a provider;
+`"no key"` for the shared row; `"disabled"`, `"not running"`,
+`"no models"` or `"available"` for Ollama) and `detail` (the address and
+model, or what to set up).
+
+## Details
+
+Rows come in the order
+[`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+tries the routes. The providers without a key share one row that names
+each one with its key variable. Key values are never shown. Nothing is
+sent to a provider; the only network contact is a `GET /api/tags` to the
+Ollama address (`OLLAMA_HOST`, default `http://localhost:11434`; 2
+second timeout) unless `OLLAMA_HOST=off`.
+
+A settings file (`llm.json` next to the credentials file) that cannot be
+read does not make the call fail: the result is then a single row with
+`route = "settings"` and `status = "unreadable"`, with the reason and
+the command that moves the file aside.
+
+## See also
+
+[`bricklayer_llm_route_info`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_route_info.md)
+for the one route a question would take;
+[`bricklayer_llm_providers`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md).
 
 ## Examples
 
 ``` r
-# with the local route off the call reaches no network
-old <- Sys.getenv("OLLAMA_HOST", unset = NA)
-Sys.setenv(OLLAMA_HOST = "off")
-bricklayer_llm_status()
+old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST",
+                    "MORIE_LLM_BASE_URL", "MORIE_LLM_MODEL"),
+                  unset = NA)
+# a scratch settings folder and the local route off: no network at all
+Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
+st <- bricklayer_llm_status()
+st[, c("route", "status")]
 #>             route   status
 #> 1    own endpoint  not set
 #> 2 other providers   no key
 #> 3    local Ollama disabled
-#>                                                                                                                                                                                                                                                                                                                                                                                                                                              detail
-#> 1                                                                                                                                                                                                                                                                                                                                                           MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server
-#> 2 openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY), gemini (GEMINI_API_KEY), openrouter (OPENROUTER_API_KEY), groq (GROQ_API_KEY), together (TOGETHER_API_KEY), fireworks (FIREWORKS_API_KEY), deepseek (DEEPSEEK_API_KEY), mistral (MISTRAL_API_KEY), xai (XAI_API_KEY), cerebras (CEREBRAS_API_KEY), perplexity (PERPLEXITY_API_KEY), huggingface (HF_TOKEN), opencode (OPENCODE_API_KEY), cohere (COHERE_API_KEY), nvidia (NVIDIA_API_KEY)
-#> 3                                                                                                                                                                                                                                                                                                                                                                                                                                   OLLAMA_HOST=off
-if (is.na(old)) Sys.unsetenv("OLLAMA_HOST") else Sys.setenv(OLLAMA_HOST = old)
+
+# your own OpenAI-compatible server shows as configured (it is not contacted)
+Sys.setenv(MORIE_LLM_BASE_URL = "http://localhost:8080", MORIE_LLM_MODEL = "llama3")
+bricklayer_llm_status()[1, ]
+#>          route     status                               detail
+#> 1 own endpoint configured http://localhost:8080  model: llama3
+
+for (v in names(old)) {
+  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+}
 ```

@@ -47,74 +47,138 @@ bricklayer_llm_ask(
 
 - prompt:
 
-  Character scalar.
+  Character scalar: the question, in plain text.
 
 - model:
 
-  Model id; default the route's own (see above).
+  Character scalar or `NULL` (the default): the model id to use. `NULL`
+  uses the route's own choice: `MORIE_LLM_MODEL` for your own endpoint,
+  `OLLAMA_MODEL` or the first pulled model for Ollama, the saved
+  `PROVIDER.model` or the provider's default model (see
+  [`bricklayer_llm_providers`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)).
 
 - timeout:
 
-  Seconds to wait for the reply.
+  Numeric scalar, seconds to wait for each reply; default `120`. With
+  `docs = TRUE` the whole exchange gets at most three times this.
 
 - system_prompt:
 
-  Optional system message.
+  Character scalar or `NULL` (the default): extra instructions sent as
+  the system message (added to the package's own instructions when
+  `docs = TRUE`).
 
 - route:
 
-  `NULL` (the saved route, else the first that is set up), `"auto"` (the
-  automatic order this time, ignoring a saved route), or `"own"`,
-  `"ollama"` or a provider id to insist on one.
+  Character scalar or `NULL` (the default: the saved route, else the
+  first that is set up). `"auto"` uses the automatic order and ignores a
+  saved route; `"own"`, `"ollama"` or a provider id insists on that one.
 
 - docs:
 
-  Give the model the packages' help (see Details); `FALSE` sends the
-  prompt alone.
+  Logical scalar, default `TRUE`: give the model the packages' help and
+  the lookup tools (see Details). `FALSE` sends the prompt alone.
 
 - packages:
 
-  The installed packages whose help the model gets; default
-  rmoriebricklayer (or the comma-separated list in `RMBL_PACKAGES`,
-  which a package built on this one sets for its own command line).
+  Character vector or `NULL` (the default): the installed packages whose
+  help the model gets. `NULL` means `"rmoriebricklayer"`, or the
+  comma-separated list in the environment variable `RMBL_PACKAGES`
+  (which a package built on this one sets for its own command line).
+  Ignored when `docs = FALSE`.
 
 - fresh:
 
-  `TRUE` asks the model even when an answer to the same question is
-  saved on this machine, and keeps the new one. A person at a terminal
-  (the command line with the terminal on stdin and stdout) or in an
-  interactive session gets a saved answer back at once when the question
-  (spacing aside; case counts), route, model, packages and their
-  versions all match, for 30 days; the first save in a session says so.
-  The answers are owner-only files under
-  `tools::R_user_dir("rmoriebricklayer", "cache")`, nothing is kept
-  elsewhere, nothing is kept from a script or a pipeline, and
-  `MORIE_LLM_CACHE=off` (or
-  `options(rmoriebricklayer.llm_cache = FALSE)`) turns it off.
+  Logical scalar, default `FALSE`. `TRUE` asks the model even when a
+  saved answer matches (see Details), and saves the new answer in its
+  place.
 
 ## Value
 
-Character scalar with the reply; a saved answer carries the time it was
-saved as attribute `cached`. Errors, saying what to set up, when no
-route answers, and when the server answers with an error.
+A character scalar with the reply. A saved answer carries the time it
+was saved as attribute `cached`.
 
 ## Details
 
-With `docs = TRUE` (the default) the model knows the packages: its
-instructions carry an index of every exported function of the packages
-(`packages`; name, arguments, title, read from the help pages installed
-here), and it may call five read-only tools to search the help, read a
-page or its examples, list the datasets and read a vignette before it
-answers. A model that cannot call tools gets the help pages that best
-match the question (a BM25 search in R) instead. Nothing the model asks
-for is run: it answers with code for you to run.
+With `docs = TRUE` (the default) the model is given the help of the
+packages named in `packages` (read from the help pages installed here)
+and may call five read-only tools before it answers: `search_docs`,
+`get_help`, `get_examples`, `list_datasets` and `get_vignette`. How much
+help goes into the instructions depends on the model's context size: a
+model with at least 32,000 tokens gets an index of every exported
+function (name, arguments, title) and up to six rounds of lookups; 8,000
+to 32,000 tokens, the 120 functions nearest the question and four
+rounds; smaller, the 40 nearest and three rounds. A package with very
+many pages is never listed whole: its functions nearest the question are
+listed and the tools reach the rest. "Nearest" is a BM25 search over the
+help text in R (\\k_1 = 1.2\\, \\b = 0.75\\). A model that cannot call
+tools gets the best matching pages in the prompt instead. Nothing the
+model asks for is run: it answers with code for you to run.
+
+With `docs = TRUE` the whole exchange is given at most three times
+`timeout`; a lookup round that would start after that is not started and
+the call errors. With `docs = FALSE` one request is made with
+`system_prompt` (when given) and `prompt`.
+
+Saved answers: a person at a terminal (the command line with a terminal
+on both stdin and stdout) or in an interactive GUI session gets a saved
+answer back at once when the question (spacing aside; case counts),
+route, address, model, packages and their versions, and `system_prompt`
+all match. Answers are kept 30 days
+(`options(rmoriebricklayer.llm_cache_days)`), at most the 200 newest
+(`options(rmoriebricklayer.llm_cache_max)`), as owner-only files under
+`tools::R_user_dir("rmoriebricklayer", "cache")`. The first save in a
+session says where answers go. Nothing is saved from a script, a
+pipeline, a test run, `R CMD check`, or with
+`options(morie.quiet = TRUE)`; `MORIE_LLM_CACHE=off` or
+`options(rmoriebricklayer.llm_cache = FALSE)` turns saving off.
+
+Errors: `prompt` is not a single non-empty string; `fresh` or `docs` is
+not `TRUE` or `FALSE`; `route = "hosted"` or an unknown route; no route
+is set up (the message lists what to set); no model is chosen for the
+route; `packages` names a package that is not installed; and, after
+sending, an unreachable server, a rejected key (HTTP 401 or 403) or an
+error reply. The key is redacted from any error text a server echoes
+back.
+
+## See also
+
+[`bricklayer_llm_chat`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_chat.md)
+for a conversation without the help;
+[`bricklayer_llm_status`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+and
+[`bricklayer_llm_route_info`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_route_info.md)
+to see where a question would go.
 
 ## Examples
 
 ``` r
+old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
+
+# arguments are checked before any route is resolved
+try(bricklayer_llm_ask(c("two", "questions")))
+#> Error : `prompt` must be a single non-empty string
+
+# a provider named explicitly without its key
+try(bricklayer_llm_ask("What is a capsule?", route = "anthropic"))
+#> Error : no key for Anthropic: set ANTHROPIC_API_KEY, or `rmoriebricklayer config set anthropic.key` (it asks for the key)
+
+# no route set up: the error lists what to set up
+try(bricklayer_llm_ask("What is a capsule?", route = "ollama", docs = FALSE))
+#> Error : No language-model route is set up on this machine: bring your own key, or run a model locally:
+#>   local Ollama: OLLAMA_HOST=off
+#> `rmoriebricklayer config setup` walks through it.
+
+for (v in names(old)) {
+  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
+}
 if (FALSE) { # \dontrun{
-Sys.setenv(ANTHROPIC_API_KEY = "...")   # your own key
+# needs your own key or a local model, and the network
+Sys.setenv(ANTHROPIC_API_KEY = "...")
 bricklayer_llm_ask("What does a SHA-256 provenance record protect against?")
 bricklayer_llm_ask("Explain an E-value of 2.1", route = "ollama")
+bricklayer_llm_ask("Summarise Benford's law in two lines", docs = FALSE,
+                   system_prompt = "You are terse.")
 } # }
 ```
