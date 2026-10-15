@@ -18,6 +18,12 @@ Data", <https://data.tps.ca/> (retrieved 2026-10-13); contains
 information licensed under the Open Government Licence - Toronto Police
 Service. See `inst/COPYRIGHTS`.
 
+## Value
+
+No R object: each file is a CSV in `inst/extdata`, read into a data
+frame with
+`read.csv(system.file("extdata", <file>, package = "rmoriebricklayer"))`.
+
 ## Details
 
 - `ocj_flow_ontario.csv`:
