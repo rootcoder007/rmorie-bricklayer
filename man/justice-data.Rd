@@ -13,6 +13,11 @@ dataset "Break and Enter Open Data", \url{https://data.tps.ca/}
 Open Government Licence - Toronto Police Service. See
 \code{inst/COPYRIGHTS}.
 }
+\value{
+No R object: each file is a CSV in \code{inst/extdata}, read
+into a data frame with \code{read.csv(system.file("extdata", <file>,
+  package = "rmoriebricklayer"))}.
+}
 \description{
 Small excerpts of published court and police statistics, in
 \code{inst/extdata}, used by the examples, tests and the

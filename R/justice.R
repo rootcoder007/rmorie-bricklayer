@@ -112,6 +112,9 @@
 #'   (retrieved 2026-10-13); contains information licensed under the
 #'   Open Government Licence - Toronto Police Service. See
 #'   \code{inst/COPYRIGHTS}.
+#' @return No R object: each file is a CSV in \code{inst/extdata}, read
+#'   into a data frame with \code{read.csv(system.file("extdata", <file>,
+#'   package = "rmoriebricklayer"))}.
 #' @name justice-data
 #' @seealso \code{\link{case_flow}}, \code{\link{life_table}},
 #'   \code{\link{disposition_mix}}, \code{\link{clearance_decomposition}},
