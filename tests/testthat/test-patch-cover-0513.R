@@ -25,6 +25,10 @@ test_that("R.app and Rgui get no colour; a console under 20 columns falls back t
   withr::local_envvar(COLUMNS = "5")
   withr::local_options(rmoriebricklayer.width = NULL, cli.width = NULL, width = 77)
   expect_identical(ns$.bl_console_width(""), 77L)
+  withr::local_options(width = 15)      # R's width under 20 too: the 80-column default
+  expect_identical(ns$.bl_console_width(""), 80L)
+  withr::local_options(rmoriebricklayer.width = 900)   # capped at 500
+  expect_identical(ns$.bl_console_width(""), 500L)
 })
 
 test_that("the last line of a byte count, a count with no total, and a stopped run", {
@@ -38,6 +42,11 @@ test_that("the last line of a byte count, a count with no total, and a stopped r
   b$sty <- ns$.bl_styles(b$rgb, 1L)
   expect_match(ns$.bl_anim_final(b, 1), "Spin \\(1.0s\\)")
   expect_match(ns$.bl_anim_final(b, 1, ok = FALSE), "Spin  stopped \\(1.0s\\)")
+  # the last stage follows the count, or stands alone when there is none
+  b$info <- "fitting"
+  expect_match(ns$.bl_anim_final(b, 1), "Spin  fitting \\(1.0s\\)")
+  a$info <- "verified"
+  expect_match(ns$.bl_anim_final(a, 1), "Get  1.0 KB of 2.0 KB  verified", fixed = TRUE)
 })
 
 test_that("a provider GET goes through the network spinner", {

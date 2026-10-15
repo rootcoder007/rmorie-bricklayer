@@ -93,18 +93,17 @@ test_that("Positron, R.app and RKWard redraw in an interactive session only", {
 })
 
 test_that("knitr, a notebook chunk and a Jupyter kernel never redraw; overrides come first", {
-  # with knitr.in.progress set before knitr is loaded, anything that loads knitr meanwhile sees the
-  # option during knitr's own load and loads it again: "cyclic namespace dependency" (pkgcheck, ASAN)
-  if (requireNamespace("knitr", quietly = TRUE)) loadNamespace("knitr")
+  # knitr.in.progress is set only around the call itself: withr's defer() (behind every local_*(),
+  # testthat's own included) calls knitr::knit_global() while the option is TRUE, which fails where
+  # knitr is not installed and recurses into knitr's load where it is (ASAN, pkgcheck)
+  in_opts <- function(opts) withr::with_options(opts, ns$.bl_console())
   plain_console()
   rstudio_console()
   expect_true(ns$.bl_console()$dynamic)
   for (o in c("knitr.in.progress", "rstudio.notebook.executing", "jupyter.in_kernel")) {
-    withr::with_options(stats::setNames(list(TRUE), o), {
-      expect_false(ns$.bl_console()$dynamic, info = o)
-    })
+    expect_false(in_opts(stats::setNames(list(TRUE), o))$dynamic, info = o)
   }
-  withr::with_options(list(knitr.in.progress = TRUE), expect_identical(ns$.bl_console()$colors, 1L))
+  expect_identical(in_opts(list(knitr.in.progress = TRUE))$colors, 1L)
   # an override: this package's option, then cli's, then R_CLI_DYNAMIC
   withr::local_envvar(R_CLI_DYNAMIC = "false")
   expect_false(ns$.bl_console()$dynamic)
@@ -112,8 +111,8 @@ test_that("knitr, a notebook chunk and a Jupyter kernel never redraw; overrides 
   expect_true(ns$.bl_console()$dynamic)
   withr::local_options(rmoriebricklayer.dynamic = FALSE)
   expect_false(ns$.bl_console()$dynamic)
-  withr::local_options(knitr.in.progress = TRUE, rmoriebricklayer.dynamic = TRUE)
-  expect_true(ns$.bl_console()$dynamic)
+  expect_true(in_opts(list(knitr.in.progress = TRUE, rmoriebricklayer.dynamic = TRUE))$dynamic)
+  withr::local_options(rmoriebricklayer.dynamic = TRUE)
   # tty = TRUE or FALSE is the caller's word
   expect_false(ns$.bl_console(tty = FALSE)$dynamic)
 })
