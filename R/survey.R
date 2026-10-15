@@ -54,7 +54,9 @@
 #' full-sample weight than chance draws; under the bootstrap or
 #' Fay's method, a replicate within 1 percent of the weight on
 #' every row;
-#' under JK1, JKn and BRR, a replicate that leaves no row out; and a
+#' under JK1, JKn and BRR, a replicate that leaves no row out; a
+#' replicate more than ten times the weight on a typical row (a
+#' column on another scale, such as an outcome); and a
 #' set whose replicates total, on average, under a tenth or over ten
 #' times the weight (multipliers such as \pkg{survey}'s
 #' `$repweights` passed in place of replicate weights). A column of
@@ -451,6 +453,15 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       # factors; a rounded weight or a constant does not (rounded weights were kept silently)
       warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
                                   nm, toupper(type)))
+    }
+    # a replicate weight is the weight times a multiplier of a few at most on a typical row (a bootstrap
+    # PSU drawn k times, 0 or n / (n - 1) for a jackknife, 0 or 2 for BRR); a column ten times the
+    # weight there is on another scale: api99 among the replicates raised the SE 21% silently
+    # (statistics stress test of 5e1dce5). A genuine bootstrap reaches it only if a PSU holding most
+    # rows is drawn ten times (about 1e-7 a replicate)
+    typical <- stats::median(r / pmax(w, .Machine$double.xmin))
+    if (is.finite(typical) && typical > 10) {
+      warned <- c(warned, sprintf("replicate %s is %.3g times the full-sample weight on a typical row", nm, typical))
     }
     if (!is.null(idv) && identical(r, idv)) refuse(b, "the id")
     if (identical(r, rown) || (!is.null(rn) && identical(r, rn))) refuse(b, "the row number")

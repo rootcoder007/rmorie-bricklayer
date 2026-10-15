@@ -80,7 +80,8 @@ claims the earlier fixes overstated corrected.
   key-shaped word, and anything after it is an option `ask` takes (`rmbl "how?" --fresh` works).
   `rmbl explain-eror "object 'x' not found"`, `rmbl "My Documents/urls.txt"` and `rmbl conifg set
   anthropic.key "$(cat key.txt)"` with a CRLF key file went to the model before, the key with
-  them. An unknown verb now names the nearest one (`did you mean ...`).
+  them. An unknown verb now names the nearest one (`did you mean ...`); one that looks like a key
+  is not printed back.
 * **A Ctrl-C during a GET is raised** (`rmbl models` exited 0 with "did not answer", a Wayback run
   polled on past its time limit): the transfer's callback records the interrupt it takes. The
   plain GET behind the Wayback lookups takes Ctrl-C too.
@@ -101,14 +102,20 @@ claims the earlier fixes overstated corrected.
   quotes are newlines, a line holding only `""` is blank, blanks before a quote and text after
   one are kept. A quote inside an unquoted field (`ab"c`, where `read.csv()` swallows the rest of
   the file) is refused in words. Deliberate differences from `read.csv()`: a UTF-8 byte-order mark
-  is not part of the first name, and ragged rows, extra fields and an unclosed quote are refused.
+  is not part of the first name, and extra fields and an unclosed quote are refused. Short rows
+  are filled, as `read.csv()` fills them, unless filling makes more cells than the text has bytes
+  plus ten million (a 2,000-column header over short lines made 4e8 cells from a few megabytes).
+  A Ctrl-C while a table is inflated or split is looked for every million fields or blank lines
+  (by rows it waited 53 s on a wide table), the inflating goes in 16 MiB steps on its second pass
+  too, and either comes back as R's interrupt, not an ordinary error.
 * **Survey replicates**: what is refused, what is said and what cannot be told apart is in
   `?survey_design`. New: a copy of the weight within 1 percent on every row is refused under JK1,
   JKn and BRR; warnings for more replicates equal to the weight than a bootstrap draws (judged
   against the m!/m^m chance for the PSUs read from the replicates), a near copy under the
   bootstrap or Fay, a JK or BRR replicate that leaves no row out and is no rescaled weight, and
   replicates totalling on average under a tenth or over ten times the weight (`$repweights`
-  multipliers). 360 generated genuine sets: 0 refused, 0 warned; survey's JK1 and bootstrap
+  multipliers), and a replicate over ten times the weight on a typical row (`api99` among the
+  bootstrap replicates raised the SE 21% in silence). 360 generated genuine sets: 0 refused, 0 warned; survey's JK1 and bootstrap
   subsets of apiclus1: no warning. A second column with the id's name and other values is refused
   (it was kept); the weight beside the replicates under its own name is recognised within 1e-12.
 * **Reordered survey data is caught by a key per row**, computed every time: rows reordered within

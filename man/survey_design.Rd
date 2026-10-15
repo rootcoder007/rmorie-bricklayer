@@ -118,7 +118,9 @@ rarely does: under the bootstrap, more replicates equal to the
 full-sample weight than chance draws; under the bootstrap or
 Fay's method, a replicate within 1 percent of the weight on
 every row;
-under JK1, JKn and BRR, a replicate that leaves no row out; and a
+under JK1, JKn and BRR, a replicate that leaves no row out; a
+replicate more than ten times the weight on a typical row (a
+column on another scale, such as an outcome); and a
 set whose replicates total, on average, under a tenth or over ten
 times the weight (multipliers such as \pkg{survey}'s
 \verb{$repweights} passed in place of replicate weights). A column of
