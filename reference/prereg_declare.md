@@ -103,7 +103,7 @@ prereg_check(plan, c("ate", "n_rows", "ate_by_year",
 
 # the full check prints the departures
 prereg_check(plan, c("ate", "ate_by_year"))
-#> ── Against the declaration of 2026-10-15T17:45:08Z: departures below 
+#> ── Against the declaration of 2026-10-15T19:02:46Z: departures below 
 #>   declared but not reported (outcome switching): n_rows
 #>   reported but not declared (1 addition(s)): ate_by_year
 #> ──────────────────────────────────────────────────────────────────

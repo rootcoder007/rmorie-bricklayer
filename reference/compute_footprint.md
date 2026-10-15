@@ -197,7 +197,7 @@ fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
 fp$energy_kwh$total
 #> [1] 2.684254e-08
 fp$co2e_g
-#> [1] 2.441866e-06
+#> [1] 2.441865e-06
 fp$carbon_intensity$year
 #> [1] 2024
 fp$assumptions
