@@ -399,7 +399,7 @@
 <li>
 <strong>Ollama</strong>, found at <code>OLLAMA_HOST</code> (or <code>OLLAMA_BASE_URL</code>), default <code>http://localhost:11434</code>. Its server has to be running: <code>ollama serve</code> in a terminal (or the Ollama desktop app, or the <code>ollama</code> system service the Linux installer sets up), then <code>ollama pull NAME</code> for a model. <code>rmbl doctor</code> says “not running” until it answers; the model is <code>OLLAMA_MODEL</code> or the first one the server lists, including the cloud models Ollama serves. Ollama’s own cloud API works the same way: <code>rmbl config set ollama.url https://ollama.com</code> and <code>rmbl config set ollama.key</code> (your Ollama API key). <code>OLLAMA_HOST=off</code> skips it.</li>
 </ol>
-<p>While it works, <code>rmbl ask</code> shows a spinner with the seconds so far. The same question again is answered from this machine at once (<code>--fresh</code> asks the model again; <code>MORIE_LLM_CACHE=off</code> turns that off), and an error of these packages can be explained without any model: <code>rmbl explain-error "the error text"</code> (R: <code><a href="reference/bricklayer_explain_error.html">bricklayer_explain_error()</a></code>) names the function that raised it, the exported functions it comes from and what the message asks for.</p>
+<p>While it works, <code>rmbl ask</code> (or <code>rmbl aye</code>, <code>rmbl tellme</code>) shows a spinner with the seconds so far. The same question again is answered from this machine at once (<code>--fresh</code> asks the model again; <code>MORIE_LLM_CACHE=off</code> turns that off), and an error of these packages can be explained without any model: <code>rmbl explain-error "the error text"</code> (R: <code><a href="reference/bricklayer_explain_error.html">bricklayer_explain_error()</a></code>) names the function that raised it, the exported functions it comes from and what the message asks for.</p>
 <p>The model gets the packages’ help: the name, arguments and title of every function of rmoriebricklayer (and of rmoriedata and rmorie when installed), and tools to search the help, read a page, its examples, a vignette and the dataset list before it writes code. A large model (a provider’s, or an Ollama cloud model) gets all of it; a small model running locally gets the functions nearest the question and can still look up any other. <code>MORIE_LLM_CONTEXT</code> sets the size by hand.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/rootcoder007/rmorie-bricklayer" class="external-link">rmoriebricklayer</a></span><span class="op">)</span></span>
@@ -476,34 +476,39 @@
 <span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"your question"</span>            <span class="co"># own endpoint, a provider with a key, then Ollama</span></span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--model</span> NAME <span class="st">"your question"</span></span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> anthropic <span class="st">"your question"</span>   <span class="co"># one route, this time</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> aye <span class="st">"your question"</span>            <span class="co"># aye and tellme are ask under other names</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> tellme <span class="st">"your question"</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config                         <span class="co"># every language-model setting and where it comes from</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup                   <span class="co"># pick a provider, paste its key, pick a model</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set route anthropic     <span class="co"># always this provider</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set anthropic.key       <span class="co"># asks for the key; saved privately</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set ollama.url http://192.168.1.20:11434</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config set own.url http://localhost:1234/v1</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config unset route             <span class="co"># back to the automatic order</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> ollama          <span class="co"># the models a route offers, the one in use marked</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>                  <span class="co"># the data key: paste the key you were issued</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com  <span class="co"># or: a code is emailed, type it at the prompt</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--email</span> you@example.com <span class="at">--code</span> 123456   <span class="co"># the same, code passed (scripts)</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login                          <span class="co"># or: GitHub device flow</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--no-browser</span>             <span class="co"># server / SSH: prints a link + code for any device</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> logout                         <span class="co"># forget the data key</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data list                      <span class="co"># the curated tables at data.rmorie.com</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> data pull db/table <span class="at">--out</span> t.csv <span class="co"># download one (your MORIE key)</span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> bundle <span class="st">"your request"</span>          <span class="co"># agent_bundle() from the shell</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> functions <span class="pp">[</span><span class="ss">PATTERN</span><span class="pp">]</span>            <span class="co"># exported functions and their titles</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> describe NAME                  <span class="co"># one function's help page</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> examples NAME                  <span class="co"># its examples</span></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> version</span></code></pre></div>
 <p><code>rmbl</code> is the same command under a short name; every verb works under either:</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="ex">rmbl</span> help</span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="ex">rmbl</span> doctor</span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="ex">rmbl</span> config setup</span>
 <span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="ex">rmbl</span> ask <span class="st">"your question"</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="ex">rmbl</span> aye <span class="st">"your question"</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="ex">rmbl</span> tellme <span class="st">"your question"</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="ex">rmbl</span> <span class="st">"how do I weight a survey?"</span>               <span class="co"># a quoted question with no verb is asked too</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="ex">rmbl</span> login <span class="at">--token</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="ex">rmbl</span> models</span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
