@@ -146,3 +146,14 @@ SEXP C_rmbl_progress_frame(SEXP frac, SEXP t, SEXP width, SEXP color, SEXP unico
 SEXP C_rmbl_progress_spinner(SEXP t, SEXP unicode) {
     return Rf_ScalarString(Rf_mkCharCE(rmbl_progress_spinner(num1(t, "t"), flag1(unicode, "unicode")), CE_UTF8));
 }
+
+int rmbl_interrupt_pending(void);             /* rmbl_barrier.cpp: take a pending Ctrl-C */
+void rmbl_interrupt_raise_unbarriered(void);   /* rmbl_barrier.cpp: raise R's interrupt condition */
+
+/* A Ctrl-C already pending is raised now, as R's interrupt (.bl_readline, before the terminal read:
+ * left pending it was lost once the read began; network stress test of 5e1dce5). Plain C, registered
+ * directly: no barrier is active, so the raise happens here, over no live object. */
+SEXP C_rmbl_check_interrupt(void) {
+    if (rmbl_interrupt_pending()) rmbl_interrupt_raise_unbarriered();
+    return R_NilValue;
+}

@@ -24,6 +24,8 @@
 #include <zlib.h>
 
 int rmbl_interrupt_pending(void);   /* rmbl_barrier.cpp: a Ctrl-C is pending */
+void rmbl_interrupt_raise_unbarriered(void);   /* rmbl_barrier.cpp: raise R's interrupt condition */
+static const char rmbl_gunzip_interrupted[] = "was interrupted (Ctrl-C)";
 
 #define RMBL_GUNZIP_MAX_MEMBERS 100000
 #define RMBL_GUNZIP_SCRATCH 65536
@@ -72,13 +74,15 @@ static const char *rmbl_gunzip_pass(z_stream *zs, const unsigned char *src, size
                 zs->next_out = scratch;
                 room = RMBL_GUNZIP_SCRATCH;
             } else {
-                room = (uInt) ((cap - len) > 0x7fffffffu ? 0x7fffffffu : (cap - len));
+                /* 16 MiB a call: one call filling the whole vector could not be interrupted (network
+                 * stress test of 5e1dce5) */
+                room = (uInt) ((cap - len) > 0x1000000u ? 0x1000000u : (cap - len));
                 zs->next_out = dst + len;
             }
             zs->avail_out = room;
             /* a Ctrl-C is honoured between calls (a gigabyte ignored it for seconds; review of
              * 46de6a9): the state is freed by the caller, the interrupt is raised by R afterwards */
-            if (rmbl_interrupt_pending()) return "was interrupted (Ctrl-C)";
+            if (rmbl_interrupt_pending()) return rmbl_gunzip_interrupted;
             rc = inflate(zs, Z_NO_FLUSH);
             len += (size_t) (room - zs->avail_out);
             if (dst != NULL && spill && room != zs->avail_out) return "decompressed differently on the second pass";
@@ -113,6 +117,8 @@ SEXP C_rmbl_gunzip_checked(SEXP in, SEXP max_out) {
     size_t total = 0;
     const char *why = rmbl_gunzip_pass(&zs, src, n, lim, scratch, NULL, 0, &total);
     inflateEnd(&zs);
+    /* a Ctrl-C comes back as R's interrupt, with zlib's state freed; it was an ordinary error */
+    if (why == rmbl_gunzip_interrupted) rmbl_interrupt_raise_unbarriered();
     if (why != NULL) error("%s", why);
     /* nothing of zlib's is held here, so an allocation error leaks nothing */
     SEXP res = PROTECT(allocVector(RAWSXP, (R_xlen_t) total));
@@ -123,6 +129,7 @@ SEXP C_rmbl_gunzip_checked(SEXP in, SEXP max_out) {
         why = rmbl_gunzip_pass(&zs, src, n, lim, scratch, RAW(res), total, &got);
         inflateEnd(&zs);
         if (why == NULL && got != total) why = "decompressed differently on the second pass";
+        if (why == rmbl_gunzip_interrupted) rmbl_interrupt_raise_unbarriered();
         if (why != NULL) error("%s", why);
     }
     UNPROTECT(1);

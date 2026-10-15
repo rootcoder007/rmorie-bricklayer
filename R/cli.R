@@ -454,8 +454,10 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   v <- .bl_verb_names()
   d <- utils::adist(tolower(verb), v)
   near <- if (min(d) <= 2L) sprintf(" (did you mean `%s %s`?)", prog, v[which.min(d)]) else ""
+  # a pasted key is not printed back to the terminal and its scrollback (network stress test of 5e1dce5)
+  shown <- if (grepl("[A-Za-z0-9_+=.:-]{24,}", verb)) "(an argument like a key, not shown)" else .rmbl_printable(verb)
   sprintf("unknown verb '%s'%s; try `%s help`, or `%s ask \"QUESTION\"` for a model",
-          .rmbl_printable(verb), near, prog, prog)
+          shown, near, prog, prog)
 }
 
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {

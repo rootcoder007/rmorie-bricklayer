@@ -362,3 +362,106 @@ test_that("a Ctrl-C (or a time limit) during a GET is raised at once, not lost (
               info = paste(utils::capture.output(str(r)), collapse = " "))
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 10)
 })
+
+test_that("the lines of PR #56 codecov left unhit are reached (patch coverage of 610b335)", {
+  # hurwitz_zeta's Fourier route at a trivial zero: the cosine series is exactly 0
+  expect_identical(hurwitz_zeta(-6, 1), 0)
+  expect_identical(hurwitz_zeta(-8, 0.5), 0)
+  # and off a zero, by the duplication formula zeta(s, q) + zeta(s, q + 1/2) = 2^s zeta(s, 2 q)
+  expect_equal(hurwitz_zeta(-5.5, 0.3) + hurwitz_zeta(-5.5, 0.8), 2^-5.5 * hurwitz_zeta(-5.5, 0.6), tolerance = 1e-10)
+  # knox_test: a point too far out to index is compared with every other one, within max_pairs
+  set.seed(1)
+  x <- c(runif(19), 1e300)
+  expect_error(knox_test(x, runif(20), 1:20, space_bands = 0.1, time_bands = 2, nsim = 19,
+                         coords = "planar", max_pairs = 10),
+               "too far out for the largest distance band", fixed = TRUE)
+  # two columns with one name are refused in words
+  d <- data.frame(a = 1:3, b = 4:6)
+  names(d) <- c("a", "a")
+  expect_error(analyse_table(d, "a", "a"), "has two columns named a", fixed = TRUE)
+  names(d) <- c("a", "")
+  expect_error(analyse_table(d, "a", "a"), "must have a name", fixed = TRUE)
+  # a file named .gz that is plain CSV, larger than the in-memory limit, is read streamed
+  p <- tempfile(fileext = ".csv.gz")
+  on.exit(unlink(p), add = TRUE)
+  write.csv(data.frame(u = 1:5, v = letters[1:5]), p, row.names = FALSE)
+  got <- asNamespace("rmoriebricklayer")$.bl_read_csv_gz(p, in_memory = 10)
+  expect_identical(got, utils::read.csv(p))
+  # gzip data that is damaged is an error, not a fall back to the streamed reader
+  writeBin(as.raw(c(0x1f, 0x8b, 8, 0, 0, 0, 0, 0, 0, 3, 1:8)), p)
+  expect_error(asNamespace("rmoriebricklayer")$.bl_read_csv_gz(p), "not valid gzip data", fixed = TRUE)
+  # a complex column takes part in the survey row key
+  set.seed(2)
+  s <- data.frame(y = rnorm(30), w = runif(30, 1, 2), z = complex(real = 1:30, imaginary = 30:1))
+  des <- survey_design(s, weights = "w")
+  expect_s3_class(survey_estimate(des, s, "y"), "data.frame")
+  s2 <- s[c(2, 1, 3:30), ]
+  rownames(s2) <- NULL   # a reorder the row names do not show
+  expect_error(survey_estimate(des, s2, "y"), "not the data frame the design was built on", fixed = TRUE)
+})
+
+test_that("a Ctrl-C while a table is split or inflated comes back as R's interrupt, soon (network stress test of 5e1dce5)", {
+  skip_on_cran()
+  ns <- asNamespace("rmoriebricklayer")
+  # an argument check's R error inside a guarded entry jumped past the barrier and left its depth
+  # raised, so every later interrupt here was dropped as an ordinary error (in the full test run)
+  for (i in 1:3) expect_error(.Call(ns$C_rmbl_http_download, "https://example.org/", tempfile(), 5L, 1L, NULL, 1e6, FALSE),
+                              "must be a character vector")
+  # an elapsed time limit is seen where a Ctrl-C is: both reach the reader's poll the same way
+  bytes <- rep(charToRaw("1,2,3,4,5,6,7,8,9,10\n"), 3e6)
+  bytes <- c(charToRaw(paste0(paste0("c", 1:10, collapse = ","), "\n")), bytes)
+  t0 <- Sys.time()
+  setTimeLimit(elapsed = 0.3, transient = TRUE)
+  r <- tryCatch(.Call(ns$C_rmbl_csv_split, bytes, FALSE), interrupt = function(e) "INTERRUPTED",
+                error = function(e) conditionMessage(e))
+  setTimeLimit(elapsed = Inf)
+  expect_identical(r, "INTERRUPTED")
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
+  p <- tempfile(fileext = ".gz")
+  on.exit(unlink(p), add = TRUE)
+  con <- gzfile(p, "wb")
+  for (i in 1:4) writeBin(raw(2^26), con)
+  close(con)
+  z <- readBin(p, "raw", file.size(p))
+  t0 <- Sys.time()
+  setTimeLimit(elapsed = 0.02, transient = TRUE)
+  r <- tryCatch(.Call(ns$C_rmbl_gunzip_checked, z, 2^31), interrupt = function(e) "INTERRUPTED",
+                error = function(e) conditionMessage(e))
+  setTimeLimit(elapsed = Inf)
+  expect_identical(r, "INTERRUPTED")
+  expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
+})
+
+test_that("short records under a wide header are refused, not filled to millions of cells (network stress test of 5e1dce5)", {
+  ns <- asNamespace("rmoriebricklayer")
+  bytes <- charToRaw(paste0(paste0("c", 1:2000, collapse = ","), "\n", strrep("1\n", 20000)))
+  expect_error(.Call(ns$C_rmbl_csv_split, bytes, FALSE), "mostly filling short records", fixed = TRUE)
+  # a ragged table of ordinary size is still filled, as read.csv(fill = TRUE) fills it
+  ok <- ns$.bl_csv_from_bytes(charToRaw("a,b,c\n1,2\n3,4,5\n"))
+  expect_identical(ok, utils::read.csv(text = "a,b,c\n1,2\n3,4,5\n"))
+})
+
+test_that("an unknown verb that looks like a key is not printed back (network stress test of 5e1dce5)", {
+  key <- paste0("sk-ant-api03-", strrep("A", 40), "\r")
+  msg <- asNamespace("rmoriebricklayer")$.bl_unknown_verb(key, "rmbl")
+  expect_false(grepl("AAAAAAAAAAAAAAAAAAAAAAAA", msg, fixed = TRUE))
+  expect_match(msg, "an argument like a key, not shown", fixed = TRUE)
+  expect_match(asNamespace("rmoriebricklayer")$.bl_unknown_verb("conifg", "rmbl"), "'conifg'.*did you mean `rmbl config`")
+})
+
+test_that("a replicate column on another scale than the weight is said (statistics stress test of 5e1dce5)", {
+  skip_if_not_installed("survey")
+  data(api, package = "survey", envir = environment())
+  set.seed(7)
+  bs <- survey::as.svrepdesign(survey::svydesign(id = ~1, weights = ~pw, data = apisrs), type = "bootstrap", replicates = 15)
+  rw <- stats::weights(bs, "analysis")
+  d <- apisrs
+  for (b in 1:15) d[[paste0("bw", b)]] <- rw[, b]
+  expect_warning(survey_design(d, weights = "pw", replicates = c(paste0("bw", 1:15), "api99"), type = "bootstrap"),
+                 "replicate api99 is .* times the full-sample weight on a typical row")
+  expect_no_warning(survey_design(d, weights = "pw", replicates = paste0("bw", 1:15), type = "bootstrap"))
+})
+
+test_that("the prompt's interrupt check returns at once when no Ctrl-C is pending (network stress test of 5e1dce5)", {
+  expect_null(.Call(asNamespace("rmoriebricklayer")$C_rmbl_check_interrupt))
+})

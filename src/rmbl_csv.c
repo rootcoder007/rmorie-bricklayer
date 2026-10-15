@@ -16,6 +16,18 @@
 #include <R_ext/Utils.h>   /* R_strtod */
 
 int rmbl_interrupt_pending(void);   /* rmbl_barrier.cpp: a Ctrl-C is pending */
+void rmbl_interrupt_raise_unbarriered(void);   /* rmbl_barrier.cpp: raise R's interrupt condition */
+
+/* A Ctrl-C is looked for every 2^20 fields or blank records, whatever the shape: by rows, a wide table
+ * ignored it for 53 s, and blank lines were never counted. It is raised as R's interrupt, not an
+ * error (network stress test of 5e1dce5). Only R_alloc'd memory is live, which R frees on the jump. */
+static void rmbl_csv_poll(size_t *work, size_t add) {
+    *work += add;
+    if (*work < ((size_t) 1 << 20)) return;
+    *work = 0;
+    /* the error is reached only under another package's barrier, which raises the interrupt itself */
+    if (rmbl_interrupt_pending()) { rmbl_interrupt_raise_unbarriered(); error("interrupted (Ctrl-C)"); }
+}
 
 /* the fields of one record, as spans into the buffer: the field (inside its quotes when quoted),
  * and for a quoted field the blanks before its opening quote and the text after its closing one,
@@ -226,9 +238,10 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     for (size_t j = 0; j < ncol; j++) { type[j] = RMBL_T_LGL; word[j] = 0; }
     char *buf = NULL;
     size_t bufcap = 0;
-    size_t nrow = 0;
+    size_t nrow = 0, work = 0;
     while (pos < n) {
         size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
+        rmbl_csv_poll(&work, nf + 1);
         if (err) error("the CSV cannot be read: %s (record %lu)", err, (unsigned long) (nrow + 2));
         if (empty) continue;
         if (nf > ncol) {
@@ -253,7 +266,15 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
             type[j] = RMBL_T_STR;
         }
         nrow++;
-        if ((nrow & 0xffff) == 0 && rmbl_interrupt_pending()) error("interrupted (Ctrl-C)");
+    }
+    /* short records are filled to the header's width, as read.csv(fill = TRUE) fills them; a wide header
+     * over many short lines made 4e8 cells from a few megabytes (network stress test of 5e1dce5). A
+     * cell present in the text takes at least one byte, so more cells than bytes and ten million is
+     * mostly filling */
+    if ((double) nrow * (double) ncol > (double) n + 1e7) {
+        error("%lu records under a %lu-column header make %.3g cells from %lu bytes, mostly filling short "
+              "records: not a table this reader takes", (unsigned long) nrow, (unsigned long) ncol,
+              (double) nrow * (double) ncol, (unsigned long) n);
     }
     /* a logical column that mixed TRUE with 1 is text for type.convert(); a column with no value at
      * all is logical NA, as type.convert() makes it */
@@ -283,6 +304,7 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     size_t i = 0;
     while (pos < n) {
         size_t nf = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err);
+        rmbl_csv_poll(&work, ncol + 1);
         if (empty) continue;
         for (size_t j = 0; j < ncol; j++) {
             SEXP col = VECTOR_ELT(columns, (R_xlen_t) j);
@@ -298,7 +320,6 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
             }
         }
         i++;
-        if ((i & 0xffff) == 0 && rmbl_interrupt_pending()) error("interrupted (Ctrl-C)");
     }
     SET_VECTOR_ELT(out, 0, names);
     SET_VECTOR_ELT(out, 1, columns);

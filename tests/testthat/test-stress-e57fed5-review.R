@@ -124,7 +124,10 @@ test_that("E9: the full weight, the id or a data column is never taken as a repl
   # replicate because it was asked for (the explicit contract; review of 46de6a9, H1/H5), one passed
   # under another name is refused, and nothing is guessed from values
   dd$meals <- runif(nrow(dd), 0, 100)
-  expect_s3_class(survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "meals")]), "rmbl_svy_design")
+  # (a column on another scale than the weight is said: statistics stress test of 5e1dce5)
+  expect_warning(des_m <- survey_design(dd, weights = "w", replicates = dd[c(paste0("bw", 1:20), "meals")]),
+                 "replicate meals is .* times the full-sample weight on a typical row")
+  expect_s3_class(des_m, "rmbl_svy_design")
   expect_error(survey_design(dd, weights = "w", replicates = cbind(dd[paste0("bw", 1:20)], zz = dd$meals)),
                "column meals of `data`")
   # an unnamed matrix of the same columns is a replicate set
