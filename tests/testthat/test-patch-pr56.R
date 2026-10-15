@@ -400,13 +400,15 @@ test_that("the lines of PR #56 codecov left unhit are reached (patch coverage of
   expect_error(survey_estimate(des, s2, "y"), "not the data frame the design was built on", fixed = TRUE)
 })
 
-test_that("a Ctrl-C while a table is split or inflated comes back as R's interrupt, soon (network stress test of 5e1dce5)", {
+test_that("a Ctrl-C while a table is split or inflated is R's interrupt, soon (network stress test of 5e1dce5)", {
   skip_on_cran()
   ns <- asNamespace("rmoriebricklayer")
   # an argument check's R error inside a guarded entry jumped past the barrier and left its depth
   # raised, so every later interrupt here was dropped as an ordinary error (in the full test run)
-  for (i in 1:3) expect_error(.Call(ns$C_rmbl_http_download, "https://example.org/", tempfile(), 5L, 1L, NULL, 1e6, FALSE),
-                              "must be a character vector")
+  for (i in 1:3) {
+    expect_error(.Call(ns$C_rmbl_http_download, "https://example.org/", tempfile(), 5L, 1L, NULL, 1e6, FALSE),
+                 "must be a character vector")
+  }
   # an elapsed time limit is seen where a Ctrl-C is: both reach the reader's poll the same way
   bytes <- rep(charToRaw("1,2,3,4,5,6,7,8,9,10\n"), 3e6)
   bytes <- c(charToRaw(paste0(paste0("c", 1:10, collapse = ","), "\n")), bytes)
@@ -432,7 +434,7 @@ test_that("a Ctrl-C while a table is split or inflated comes back as R's interru
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
 })
 
-test_that("short records under a wide header are refused, not filled to millions of cells (network stress test of 5e1dce5)", {
+test_that("short records under a wide header are refused, not filled out (network stress test of 5e1dce5)", {
   ns <- asNamespace("rmoriebricklayer")
   bytes <- charToRaw(paste0(paste0("c", 1:2000, collapse = ","), "\n", strrep("1\n", 20000)))
   expect_error(.Call(ns$C_rmbl_csv_split, bytes, FALSE), "mostly filling short records", fixed = TRUE)
@@ -446,14 +448,16 @@ test_that("an unknown verb that looks like a key is not printed back (network st
   msg <- asNamespace("rmoriebricklayer")$.bl_unknown_verb(key, "rmbl")
   expect_false(grepl("AAAAAAAAAAAAAAAAAAAAAAAA", msg, fixed = TRUE))
   expect_match(msg, "an argument like a key, not shown", fixed = TRUE)
-  expect_match(asNamespace("rmoriebricklayer")$.bl_unknown_verb("conifg", "rmbl"), "'conifg'.*did you mean `rmbl config`")
+  expect_match(asNamespace("rmoriebricklayer")$.bl_unknown_verb("conifg", "rmbl"),
+               "'conifg'.*did you mean `rmbl config`")
 })
 
 test_that("a replicate column on another scale than the weight is said (statistics stress test of 5e1dce5)", {
   skip_if_not_installed("survey")
   data(api, package = "survey", envir = environment())
   set.seed(7)
-  bs <- survey::as.svrepdesign(survey::svydesign(id = ~1, weights = ~pw, data = apisrs), type = "bootstrap", replicates = 15)
+  bs <- survey::as.svrepdesign(survey::svydesign(id = ~1, weights = ~pw, data = apisrs),
+                               type = "bootstrap", replicates = 15)
   rw <- stats::weights(bs, "analysis")
   d <- apisrs
   for (b in 1:15) d[[paste0("bw", b)]] <- rw[, b]
