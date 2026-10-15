@@ -7,24 +7,46 @@
 core_ipw_weights(treat, propensity, trim_lo = 0.01, trim_hi = 0.99)
 }
 \arguments{
-\item{treat}{Numeric or logical treatment indicator;
-\code{1} / \code{TRUE} is treated.}
+\item{treat}{Numeric or logical treatment indicator, coded 0/1
+(\code{1} / \code{TRUE} is treated); \code{NA} allowed.}
 
-\item{propensity}{Numeric vector of propensity scores,
-the same length as \code{treat}.}
+\item{propensity}{Numeric vector of propensity scores (the estimated
+probability of treatment), each in \eqn{[0, 1]}, the same length as
+\code{treat}; \code{NA} allowed.}
 
-\item{trim_lo, trim_hi}{Clamp bounds for the score
-(defaults 0.01 and 0.99).}
+\item{trim_lo, trim_hi}{Clamp bounds for the score, single numbers with
+\verb{0 < trim_lo < trim_hi < 1} (defaults 0.01 and 0.99).}
 }
 \value{
-A numeric vector of weights the length of \code{treat}.
+A numeric vector of weights the length of \code{treat}, each at
+least 1 (and at most \code{1 / trim_lo} or \code{1 / (1 - trim_hi)}), \code{NA}
+where
+the treatment or propensity is missing.
 }
 \description{
 The inverse-probability-of-treatment weights \eqn{1/e} for the treated
 and \eqn{1/(1-e)} for the untreated, with the propensity score clamped
 into \verb{[trim_lo, trim_hi]} FIRST. Clamping matters: an untrimmed
 score near 0 or 1 produces a weight large enough for one observation to
-dominate the entire estimate.
+dominate the entire estimate. These weights reweight a treated and an
+untreated group so that each resembles the whole sample on the
+covariates behind the propensity score, the basis of
+inverse-probability-weighted estimates of a treatment effect
+(Rosenbaum and Rubin, 1983).
+}
+\details{
+For unit \eqn{i} with treatment \eqn{T_i} and propensity \eqn{e_i},
+the clamped score is \eqn{\tilde e_i = \min(\max(e_i, l), u)} with
+\eqn{l} = \code{trim_lo} and \eqn{u} = \code{trim_hi}, and the weight is
+\eqn{1 / \tilde e_i} when \eqn{T_i = 1} and \eqn{1 / (1 - \tilde e_i)}
+when \eqn{T_i = 0}. With the defaults no weight exceeds 100.
+
+Refusals: vectors of different lengths, a treatment coded other than
+0/1 (\code{"treat must be coded 0/1"}, naming the offending values), a
+propensity outside \eqn{[0, 1]}, and bounds that do not satisfy
+\eqn{0 < l < u < 1}. A missing treatment or propensity gives a missing
+weight for that unit only. The weights are not normalised; divide by
+their sum within each arm for stabilised (Hajek) estimates.
 }
 \examples{
 treat <- c(1, 0, 1, 0)
@@ -42,4 +64,16 @@ core_ipw_weights(treat, e, trim_lo = 0.10)
 
 # Logical treatment indicators work too.
 core_ipw_weights(c(TRUE, FALSE), c(0.4, 0.4))
+
+# A treatment coded 1/2 is refused rather than read as all-control.
+try(core_ipw_weights(c(1, 2), c(0.5, 0.5)))
+}
+\references{
+Rosenbaum PR, Rubin DB (1983). The central role of the
+propensity score in observational studies for causal effects.
+\emph{Biometrika} 70(1), 41--55. \doi{10.1093/biomet/70.1.41}
+}
+\seealso{
+\code{\link[=core_weighted]{core_weighted()}} to average an outcome with
+these weights.
 }

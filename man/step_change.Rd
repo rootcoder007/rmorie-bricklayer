@@ -7,45 +7,79 @@
 step_change(y, x = NULL, min_segment = 2L, n_perm = 9999L, seed = 1L)
 }
 \arguments{
-\item{y}{The series, in period order.}
+\item{y}{Numeric vector, the series in period order.}
 
-\item{x}{The periods. Used only for labelling the break.}
+\item{x}{Vector of periods, default \code{NULL} (the position). Used only
+to label the break.}
 
-\item{min_segment}{Fewest periods either side of the
-break.}
+\item{min_segment}{Whole number, default 2: the fewest periods allowed on
+either side of the break.}
 
-\item{n_perm}{Permutations for the null distribution. The
-exact enumeration is used instead when the series is short enough for
-it.}
+\item{n_perm}{Whole number, default 9999: the number of random
+permutations for the null distribution. The exact enumeration is used
+instead when \eqn{n!} is at most \code{n_perm}.}
 
-\item{seed}{Seed for the permutations, so the p-value is
-reproducible.}
+\item{seed}{Integer, default 1: the seed for the permutations, so the
+p-value is reproducible.}
 }
 \value{
 A list with \code{break_after} (the period the series changes
-after), \code{index}, \code{before}, \code{after}, \code{difference},
-\code{statistic}, \code{p_value}, \code{n_perm} and \code{method}.
+after, from \code{x}), \code{index} (its position), \code{before} and
+\code{after} (the segment means), \code{difference} (after minus
+before), \code{statistic} (\eqn{T_{\max}}), \code{p_value},
+\code{n_perm} (orderings or permutations used) and \code{method}.
 }
 \description{
-Scans every admissible split of the series, reports the one with the
-largest mean difference, and gives it a p-value from the permutation
+Asks whether a series shifted to a new level at some point (for example
+after a policy change) and, if so, where. It scans every admissible
+split of the series, reports the one with the largest difference between
+the before and after means, and gives it a p-value from the permutation
 distribution of the MAXIMUM over splits -- not from the best split's own
 test, which is the standard way to find a change point in noise.
 }
+\details{
+For a split after period \eqn{k}, with \eqn{n_a = k} and
+\eqn{n_b = n - k} periods and means \eqn{\bar y_a}, \eqn{\bar y_b}, the
+statistic is the between-segment sum of squares
+\deqn{T_k = \frac{n_a n_b}{n} (\bar y_a - \bar y_b)^2,}
+over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{min_segment}. The
+observed \eqn{\max_k T_k} is compared with the same maximum over
+reorderings of the series, and \eqn{p = (1 + \mathrm{count}(T^*_{\max} \ge
+T_{\max}))/(1 + B)}. When \eqn{n! \le} \code{n_perm} (with the default,
+\eqn{n \le 7}) every ordering is enumerated and the p-value is exact;
+otherwise \code{n_perm} random permutations are drawn under \code{seed},
+and the caller's random number stream is restored afterwards.
+
+The test assumes the periods are exchangeable under no change, so it
+ignores autocorrelation and smooth trends; a steady trend can produce a
+"step". With very few periods even a clean step cannot reach small
+p-values (six periods allow only 720 orderings). Missing values are
+dropped. Errors: infinite values; fewer than \code{2 * min_segment}
+periods. A progress bar is shown in an interactive session.
+}
 \examples{
-# A clear step down after the third period.
-step_change(c(100, 104, 98, 60, 63, 58))
+# A step down after the third period. With six periods there are only
+# 720 orderings, so even a clean step has p near 0.1.
+step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+
+# A longer series with the same step is clearly significant.
+step_change(c(100, 104, 98, 101, 97, 60, 63, 58, 61, 59), n_perm = 999)$p_value
 
 # Pure noise: the best split is still found, and is not significant.
 set.seed(2)
-step_change(stats::rnorm(12))$p_value
+step_change(stats::rnorm(12), n_perm = 999)$p_value
+
+try(step_change(c(1, 2, 3)))
 }
 \references{
 The permutation distribution of the maximum over splits, rather than the
 chosen split's own test, is what makes this a test of whether there is a
 break rather than a way of locating the largest wobble. See any
-treatment of the change-point problem, e.g. Coles, S. \emph{An Introduction
-to Statistical Modeling of Extreme Values} (Springer), which discusses
-change-point detection alongside the threshold choices that raise the
-same multiple-comparison issue.
+treatment of the change-point problem, e.g. Coles, S. \emph{An
+Introduction to Statistical Modeling of Extreme Values} (Springer), which
+discusses change-point detection alongside the threshold choices that
+raise the same multiple-comparison issue.
+}
+\seealso{
+\code{\link{trend_test}}, \code{\link{count_trend}}.
 }

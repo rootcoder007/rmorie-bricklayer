@@ -13,31 +13,38 @@ hill_tail_index(
 )
 }
 \arguments{
-\item{x}{Positive values, one per unit.}
+\item{x}{Numeric vector of positive values, one per unit.}
 
-\item{x_min}{Threshold above which the power law is fitted.
-A power law is a statement about the tail, so a threshold is required;
-the default takes the value that leaves at least 50 observations, or the
-minimum if the data are smaller than that.}
+\item{x_min}{Numeric scalar or \code{NULL} (the default): the threshold at
+and above which the power law is fitted. A power law is a statement about
+the tail, so a threshold is required; \code{NULL} takes the 50th largest
+value (which leaves at least 50 observations in the tail), or the
+minimum if there are fewer than 50 values.}
 
-\item{discrete}{Whether the quantity is integer-valued.
+\item{discrete}{Logical scalar, default \code{TRUE}: whether the quantity
+is integer-valued.
 A count is, and then the likelihood maximised is the zeta
 distribution's, whose normalising constant is a Hurwitz zeta.}
 
-\item{approx}{For discrete data, whether to use the
+\item{approx}{Logical scalar, default \code{FALSE}. For discrete data,
+whether to use the
 closed-form continuity-corrected estimator instead of maximising the
 exact likelihood. It is much faster and much worse: the correction is an
 asymptotic approximation in \code{x_min}, and at \code{x_min = 1} --
 where administrative counts start -- it returns about 2.0 from data
 generated with an exponent of 2.5. Off by default for that reason.}
 
-\item{min_tail}{Fewest tail observations for which an
-estimate is reported at all. Below it there is nothing to estimate from
-and \code{alpha} is \code{NA}.}
+\item{min_tail}{Integer scalar, default \code{3}: the fewest tail
+observations for which an estimate is reported at all (values below 2 are
+raised to 2). Below it there is nothing to estimate from and \code{alpha}
+is \code{NA}.}
 }
 \value{
-A list with \code{alpha}, its standard error, \code{x_min},
-\code{n_tail}, \code{ks} and \code{reliable}. \code{ks} is the
+A list with \code{alpha} (numeric, the exponent), \code{se} (its
+standard error), \code{x_min} (the threshold used), \code{n_tail}
+(integer, the number of values at or above it), \code{ks}, \code{reliable}
+(logical) and \code{method} (character, the estimator used or why there is
+no estimate). \code{ks} is the
 Kolmogorov-Smirnov distance between the fitted tail and the data: a
 large value means the tail is not a power law, whatever \code{alpha}
 came out as. \code{reliable} is \code{FALSE} when fewer than 50
@@ -51,7 +58,40 @@ The Clauset-Shalizi-Newman maximum-likelihood estimator for a discrete
 power law above a threshold. An exponent near 2 or below means the mean
 is barely defined and the observed maximum is not informative about the
 next one, which is the substantive point when a few units dominate a
-total.
+total. Use it on counts per unit (placements per person, incidents per
+address) to judge whether the largest values are a heavy tail rather than
+a few outliers, and read \code{ks} and \code{reliable} before quoting the
+exponent.
+}
+\details{
+For a power law \eqn{p(x) \propto x^{-\alpha}} above \eqn{x_{min}}:
+\itemize{
+\item discrete data, exact (the default): the log-likelihood of the
+zeta distribution truncated at \eqn{x_{min}},
+\eqn{-n \log \zeta(\alpha, x_{min}) - \alpha \sum \log x_i}, is
+maximised over \eqn{\alpha} in \eqn{(1.0001, 25)} with
+\code{stats::optimize()}; \eqn{\zeta} is
+\code{\link[=hurwitz_zeta]{hurwitz_zeta()}}. The
+standard error comes from the observed information, by a numerical
+second derivative.
+\item continuous data (\code{discrete = FALSE}): the Hill estimator
+\eqn{\hat\alpha = 1 + n / \sum \log(x_i / x_{min})}, with standard
+error \eqn{(\hat\alpha - 1)/\sqrt{n}}.
+\item discrete data with \code{approx = TRUE}: the same closed form with
+\eqn{x_{min} - 1/2} in place of \eqn{x_{min}}.
+}
+\code{ks} is the Kolmogorov-Smirnov distance between the fitted
+distribution and the tail, computed once per distinct value so that ties
+(most counts are ties) are handled correctly.
+
+Only finite positive values of \code{x} are used; the rest are dropped
+silently. When the tail has fewer than \code{min_tail} values, or every
+tail value is the same, \code{alpha} is \code{NA} and \code{method} says
+why. An estimate at the optimiser's bound is flagged in \code{method} and
+is not \code{reliable}. Errors: no positive finite value in \code{x};
+\code{x_min} that is not a single positive number (logical, factor and text
+are refused); \code{discrete} or \code{approx} not \code{TRUE} or
+\code{FALSE}.
 }
 \examples{
 # A continuous Pareto tail with exponent 2.5.
@@ -76,6 +116,9 @@ c(alpha = round(short$alpha, 2), n = short$n_tail,
 
 # Below `min_tail` there is nothing to estimate from.
 hill_tail_index(c(3, 4), x_min = 3)$alpha
+
+# the threshold has to be positive
+try(hill_tail_index(z, x_min = 0))
 }
 \references{
 Clauset, A., Shalizi, C. R. and Newman, M. E. J. (2009). Power-law

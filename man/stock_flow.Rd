@@ -15,35 +15,59 @@ stock_flow(
 )
 }
 \arguments{
-\item{days}{Person-days, one element per period.}
+\item{days}{Numeric vector of person-days, one element per period;
+non-negative, no \code{NA} or \code{Inf}.}
 
-\item{people}{Number of people, one element per period.}
+\item{people}{Numeric vector of the number of people (admissions or
+persons served), one element per period, the same length as
+\code{days}; positive.}
 
-\item{period}{Optional labels for the periods.}
+\item{period}{Optional labels for the periods (any vector, converted to
+character), one per period. Default \code{NULL} labels them
+\code{1, 2, ...}.}
 
-\item{t}{Length of each period in days, one value or one per period.
-Default 365. \code{\link[=period_days]{period_days()}} turns dates into this.}
+\item{t}{Numeric, the length of each period in days: one value for all
+periods, or one per period; positive. Default \code{365}.
+\code{\link[=period_days]{period_days()}} turns dates into this.}
 
-\item{exposure}{Optional population to express rates against, one per
-period; for example provincial residents.}
+\item{exposure}{Optional numeric population to express rates against,
+one value or one per period, positive; for example provincial
+residents. Default \code{NULL} (no rate columns).}
 
-\item{per}{Rate denominator when \code{exposure} is given. Default 100000.}
+\item{per}{Numeric scalar, the rate base when \code{exposure} is given:
+rates are per \code{per} residents. Default \code{100000}.}
 
-\item{baseline}{What the change columns compare against: \code{"first"}
-(the default) measures every period against the first, which is
-what a report on a whole window wants; \code{"previous"} measures each
-period against the one before it, which is what a series wants.}
+\item{baseline}{Character scalar, what the change columns compare
+against: \code{"first"} (the default) measures every period against the
+first, which is what a report on a whole window wants;
+\code{"previous"} measures each period against the one before it,
+which is what a series wants (the first row's changes are then
+\code{NA}).}
 }
 \value{
-A data frame of class \code{rmbl_stock_flow}, one row per period:
-\code{people}, \code{days}, \code{alos}, \code{adp}, and when \code{exposure} is supplied
-\code{flow_rate} and \code{stock_rate}. Change columns compare each period
-with the first.
+A data frame of class \code{c("rmbl_stock_flow", "data.frame")},
+one row per period, with columns \code{period} (character),
+\code{people}, \code{days}, \code{alos} (days per person),
+\code{adp} (days divided by \code{t}); when \code{exposure} is given
+also \code{exposure}, \code{flow_rate} (people per \code{per}
+residents) and \code{stock_rate} (\code{adp} per \code{per}
+residents). Then the percentage changes against the baseline:
+\code{people_change}, \code{alos_change}, \code{days_change},
+\code{adp_change}, and with \code{exposure} also
+\code{flow_rate_change} and \code{stock_rate_change}. Attribute
+\code{"stock_flow"} is a list with \code{t} (the period lengths),
+\code{baseline} and \code{per} (\code{NA} without \code{exposure}).
+The print method shows the levels and a footer with the change from the
+baseline to the last period, flagging rates with opposite signs.
 }
 \description{
 Reports the same person-days as a stock and as a flow, and says how
 much of any change in the stock came from the number of people and
 how much from how long they stayed.
+Use it whenever a report compares periods: the count of people (a flow)
+and the population held (a stock) can move in opposite directions when the
+length of stay changes, and a table with only one of them implies the wrong
+direction for the other.
 }
 \details{
 The decomposition is exact, because days are people times length of
@@ -51,6 +75,16 @@ stay: a change in days is \eqn{(1+p)(1+l) - 1} for proportional
 changes \eqn{p} in people and \eqn{l} in stay. The two rates can
 therefore carry OPPOSITE signs, and the point of putting them in one
 table is that neither can then be quoted alone.
+
+Changes are percentages: \eqn{100 (v_i / v_b - 1)} with \eqn{b} the
+baseline row. Errors when \code{days} and \code{people} differ in length,
+when \code{exposure} has a length other than 1 or the number of periods,
+when \code{t} has a length other than 1 or the number of periods, when
+\code{period} has a length other than the number of periods, when
+\code{per} has more than one value, when any input has \code{NA},
+\code{Inf}, text, or a value that is negative (\code{days}) or not
+positive (the others), and when \code{baseline} is not one of the two
+choices.
 }
 \examples{
 # Fewer people, held longer: the flow falls while the stock rises.
@@ -59,6 +93,16 @@ stock_flow(
   period = c("2023", "2025"),
   exposure = c(15495050, 16256538)
 )
+
+# a series of three years against the previous year, with leap-year lengths
+sf <- stock_flow(
+  days = c(100200, 104000, 99000), people = c(9800, 9500, 9900),
+  period = 2023:2025, t = c(365, 366, 365), baseline = "previous"
+)
+as.data.frame(sf)[, c("period", "alos", "adp", "people_change", "adp_change")]
+
+# days and people must line up period by period
+try(stock_flow(days = c(100, 120), people = c(10, 12, 14)))
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

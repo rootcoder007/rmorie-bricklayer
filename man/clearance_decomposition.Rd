@@ -102,6 +102,17 @@ g <- g[g$year \%in\% c(2014, 2022), ]
 cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
 cd
 plot(cd)
+
+# Simpson's paradox in four numbers: each part clears better in B, yet the
+# aggregate falls, because B's workload moved to the part that clears less
+toy <- clearance_decomposition(numerator = c(90, 20, 19, 60),
+                               denominator = c(100, 50, 20, 140),
+                               group = c("minor", "serious", "minor", "serious"),
+                               compare = c("A", "A", "B", "B"))
+toy
+
+# every part must appear in both comparisons
+try(clearance_decomposition(c(5, 6, 7), c(10, 10, 10), c("x", "y", "x"), c(1, 1, 2)))
 }
 \references{
 Simpson, E. H. (1951). The interpretation of interaction in contingency

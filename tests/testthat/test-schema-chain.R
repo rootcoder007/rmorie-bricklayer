@@ -157,10 +157,11 @@ test_that("the chain links each entry to the one before it", {
   expect_equal(ch$entries[[1]]$prev, paste(rep("0", 64), collapse = ""))
   expect_equal(ch$entries[[2]]$prev, ch$entries[[1]]$digest)
   expect_equal(ch$entries[[3]]$prev, ch$entries[[2]]$digest)
-  # the link digest covers the payload AND the predecessor
+  # the link digest covers the payload, the label AND the predecessor (scheme 2 since 0.5.13;
+  # scheme 1 was "<prev>:<payload>", without the label)
   expect_equal(ch$entries[[2]]$digest,
-               core_sha256(paste0(ch$entries[[1]]$digest, ":",
-                                  ch$entries[[2]]$payload)))
+               core_sha256(paste0("v2|", ch$entries[[1]]$digest, "|",
+                                  ch$entries[[2]]$payload, "|1run-2")))
   expect_equal(ch$entries[[1]]$payload, core_sha256("manifest 1"))
   expect_equal(ch$entries[[2]]$label, "run-2")
 

@@ -7,30 +7,38 @@
 region_map_from_points(x, y, unit, boundaries, fields, crs = 4326)
 }
 \arguments{
-\item{x, y}{Longitude and latitude of each point.}
+\item{x, y}{Longitude and latitude of each point (numeric vectors, no
+\code{NA}), in the coordinate reference system \code{crs}.}
 
-\item{unit}{Identifier for each point, same length.}
+\item{unit}{Identifier for each point, same length (character, no
+missing or empty values).}
 
-\item{boundaries}{Path to a boundary file \code{sf} can read.}
+\item{boundaries}{Path to a boundary file \code{sf} can read (a shapefile,
+GeoPackage, GeoJSON, ...).}
 
-\item{fields}{Columns of the boundary file to carry onto the result.}
+\item{fields}{Character vector of columns of the boundary file to carry
+onto the result.}
 
-\item{crs}{Coordinate reference system the points are in. Default
-\code{4326}, that is WGS84, which is what published latitude and
-longitude columns almost always are.}
+\item{crs}{Coordinate reference system the points are in, anything
+\code{sf::st_crs()} accepts. Default \code{4326}, that is WGS84, which is
+what published latitude and longitude columns almost always are.}
 }
 \value{
-A data frame: \code{unit}, the requested \code{fields}, and \code{n_regions},
+A data frame: \code{unit}, the requested \code{fields} (factors
+converted to character; \code{NA} for a point in no polygon, the first
+polygon's values for a point in several), and \code{n_regions} (integer),
 the number of polygons that contained the point. Any value of
 \code{n_regions} other than 1 is a failure -- zero means the point fell
 outside the geography, more than one means the boundaries overlap --
-so it is returned rather than silently resolved. \code{NULL} if \code{sf} is
-not installed or \code{boundaries} does not exist.
+so it is returned rather than silently resolved. \code{NULL} if \code{sf}
+is not installed or \code{boundaries} does not exist.
 }
 \description{
-Assigns each point to the polygon that contains it. Requires the \code{sf}
-package and a boundary file; returns \code{NULL} when either is absent, so
-a verification script can record the check as unavailable instead of
+Assigns each point (a facility's longitude and latitude) to the polygon of
+a boundary file that contains it, and carries the polygon's identifier
+and name columns onto the result. Requires the \code{sf} package and a
+boundary file; returns \code{NULL} when either is absent, so a
+verification script can record the check as unavailable instead of
 failing for a missing optional dependency.
 }
 \details{
@@ -38,7 +46,10 @@ The points are projected onto the boundary file's own coordinate
 reference system before matching, never the other way round: a
 cartographic boundary file is published in a projection chosen for the
 country it covers, and reprojecting the polygons to compare them
-against unprojected points moves the edges.
+against unprojected points moves the edges. Containment is
+\code{sf::st_within()}, so a point exactly on a shared edge is in neither
+polygon. The whole boundary file is read into memory with
+\code{sf::st_read()}; national files can take some seconds.
 
 Point in polygon is preferred to matching place names against
 subdivision names whenever both are available. Names fail on exactly
@@ -48,18 +59,43 @@ larger one, a township absorbed by a neighbour. The geometry has no
 opinion about any of that.
 
 Use \code{\link[=region_map_second_route]{region_map_second_route()}}
-to check this result against the name route, with those cases named.
+to check this result against the name route, with those cases named,
+and \code{\link[=region_map_compare]{region_map_compare()}} to compare it with a
+published map.
+
+Errors (when \code{sf} and the file are present): missing or empty
+\code{unit}; \code{x}, \code{y} and \code{unit} of different lengths;
+missing coordinates; a field the boundary file does not have.
 }
 \examples{
-# Needs sf and a boundary file, so this is the shape of the call
-# rather than a run of it.
-\dontrun{
-obs <- region_map_from_points(
-  x = inst$Longitude, y = inst$Latitude, unit = inst$Institution,
-  boundaries = "lcd_000b21a_e.shp", fields = c("CDUID", "CDNAME")
-)
-stopifnot(all(obs$n_regions == 1))
+# Two square regions as a small GeoJSON boundary file.
+gj <- tempfile(fileext = ".geojson")
+writeLines(paste0(
+  '{"type":"FeatureCollection","features":[',
+  '{"type":"Feature","properties":{"CDUID":"A","CDNAME":"West"},"geometry":',
+  '{"type":"Polygon","coordinates":[[[-80,43],[-79,43],[-79,44],[-80,44],[-80,43]]]}},',
+  '{"type":"Feature","properties":{"CDUID":"B","CDNAME":"East"},"geometry":',
+  '{"type":"Polygon","coordinates":[[[-79,43],[-78,43],[-78,44],[-79,44],[-79,43]]]}}]}'
+), gj)
+
+if (requireNamespace("sf", quietly = TRUE)) {
+  obs <- region_map_from_points(
+    x = c(-79.5, -78.5, -70), y = c(43.5, 43.5, 43.5),
+    unit = c("North Jail", "South Jail", "Far Jail"),
+    boundaries = gj, fields = c("CDUID", "CDNAME")
+  )
+  print(obs)
+  # the point outside both regions is reported, not dropped
+  obs$unit[obs$n_regions != 1]
+
+  # a field the file does not have is an error
+  print(try(region_map_from_points(-79.5, 43.5, "North Jail", gj, fields = "PRUID")))
 }
+
+# no boundary file: NULL, so a script can record the check as unavailable
+region_map_from_points(-79.5, 43.5, "North Jail",
+                       boundaries = file.path(tempdir(), "missing.shp"), fields = "CDUID")
+unlink(gj)
 }
 \seealso{
 \code{\link[=region_map_compare]{region_map_compare()}},

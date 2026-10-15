@@ -40,17 +40,39 @@ vectors or paths.}
 Defaults to the time the token asserts, which is usually what is wanted.}
 }
 \value{
-A list of class \code{bricklayer_timestamp}: \code{ok},
-\code{time} (a \code{POSIXct} in UTC), \code{serial}, \code{policy},
-\code{hash_algorithm}, \code{signature_algorithm}, and a \code{checks}
-data frame.
+\code{timestamp_verify()} returns a list of class
+\code{bricklayer_timestamp}: \code{ok} (logical), \code{time} (a \code{POSIXct} in
+UTC, or
+\code{NA} when the token could not be read), \code{serial} and \code{policy}
+(character), \code{hash_algorithm} (for example \code{"sha256"}),
+\code{signature_algorithm} (an OID string), and a \code{checks} data frame with
+columns \code{check}, \code{ok} and \code{detail}. The print method lists the checks.
+\code{timestamp_info()} returns a plain list with \code{time}, \code{serial},
+\code{policy},
+\code{hash_algorithm}, \code{imprint} (hex), \code{signature_algorithm} and
+\code{has_certificate} (logical).
 }
 \description{
-Checks that a timestamp token covers the bytes given, reports the time
-it asserts, and verifies the timestamping authority's signature under a
-certificate you supply.
+A timestamp token is a small file, signed by an independent timestamping
+authority, saying that a given set of bytes (for example a manifest of
+results) existed at a given time. \code{timestamp_verify()} checks that a
+token covers the bytes given, reports the time it asserts, and verifies
+the timestamping authority's signature under a certificate you supply or
+the one the token carries. \code{timestamp_info()} reads the token's fields
+without verifying anything. Use them to prove that an analysis output
+existed by a certain date.
 }
 \details{
+Every step is recorded as a row of \code{checks}: \code{token_parses},
+\code{token_structure}, \code{message_imprint} (the hash of \code{data} equals the
+token's imprint), \code{certificate_source}, \code{signature}, \code{attribute_digest}
+(the signed attributes commit to the token's contents),
+\code{certificate_trust}, and with \code{trust} the \verb{chain:} checks of
+\code{\link[=cert_chain_verify]{cert_chain_verify()}}. \code{ok} is \code{TRUE} only
+when every row passes. A token
+that cannot be parsed is not an error: it gives \code{ok = FALSE} and the
+rows up to the failure.
+
 Pass \code{trust} and the certificate is validated too: the chain is
 built to an anchor you name, every signature in it is verified, every
 validity window is checked, an issuer must be a CA, and the leaf must
@@ -70,13 +92,28 @@ verified. Anything else -- a post-quantum signature, a compressed EC
 point, an Edwards curve -- is reported as unverifiable rather than
 treated as valid, which is the safe direction for a verifier.
 
-Still not done: name constraints, policy mapping, and fetching
-revocation data. A CRL has to be handed in through \code{crls}; nothing
-is retrieved over the network.
+Revocation data are not fetched: a CRL has to be handed in through
+\code{crls}, and nothing is retrieved over the network (chain checks such as
+name constraints and certificate policies are done by
+\code{\link[=cert_chain_verify]{cert_chain_verify()}}). Nothing is written to disk.
+
+Errors: \code{token}, \code{data} or \code{certificate} neither a raw vector nor the
+path of an existing file. \code{timestamp_info()} errors on a token it cannot
+parse.
 }
 \examples{
-# Tokens come from a timestamping authority, so there is nothing to
-# demonstrate offline; this is the shape of the call.
+# Offline: bytes that are not a timestamp token are reported, not
+# thrown, so a batch check can carry on.
+bad <- timestamp_verify(as.raw(c(0x30, 0x03, 0x02, 0x01, 0x05)),
+                        data = charToRaw("manifest"))
+bad$ok
+bad$checks
+
+# timestamp_info() does refuse an unreadable token
+try(timestamp_info(as.raw(1:10)))
+
+# Real tokens come from a timestamping authority; this is the shape of
+# the call.
 \dontrun{
 res <- timestamp_verify("response.tsr", data = "manifest.json")
 res$ok

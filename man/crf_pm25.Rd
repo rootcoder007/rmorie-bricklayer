@@ -16,7 +16,8 @@ crf_no2(
 }
 \arguments{
 \item{exposure}{Ambient concentration in micrograms per cubic metre, a
-scalar or a vector.}
+single non-negative number or a vector of them (one per area, day or
+person).}
 
 \item{outcome}{PM2.5: \code{"all_cause_mortality"}, \code{"ihd"} or
 \code{"stroke"} (deaths). NO2: \code{"all_cause_mortality"} and
@@ -30,18 +31,36 @@ risk is assumed. PM2.5 default 5.8, the lower bound of the GBD 2019
 theoretical minimum risk exposure level (the WHO 2021 guideline is 5);
 NO2 default 10, the WHO 2021 guideline.}
 
-\item{beta_per_10}{Optional log-RR per 10 units overriding the NO2 outcome
-table.}
+\item{beta_per_10}{Optional log relative risk per 10 micrograms per cubic
+metre (a single finite number, e.g. \code{log(1.04)}) overriding the
+NO2 outcome table; \code{NULL} (the default) uses the table.}
 }
 \value{
-A list of class \code{rmbl_crf} with \code{rr}, \code{log_rr},
-\code{reference_conc}, \code{exposure_conc}, \code{pollutant},
-\code{citation} and \code{extra}.
+A list of class \code{rmbl_crf} (\code{plot()} draws the curve)
+with: \code{rr} and \code{log_rr}, the relative risk and its logarithm
+at the exposure (their means over a vector of exposures);
+\code{rr_lower} and \code{rr_upper}, the RR at the published 95\%
+limits (\code{NA} where there are none); \code{reference_conc};
+\code{exposure_conc} (the exposure, or the mean of a vector);
+\code{pollutant} (\code{"PM2.5"} or \code{"NO2"}); \code{citation}
+(the source as a string); and \code{extra}, a list with the
+coefficient (\code{beta_per_10} and \code{beta_per_10_ci} for the
+log-linear forms, \code{alpha}, \code{gamma}, \code{delta} for the
+IER), \code{form} (PM2.5 only), \code{outcome}, and for a vector of
+exposures \code{rr_per_unit}, the RR at each one.
 }
 \description{
+A concentration-response function (CRF) turns an air-pollution
+concentration into the relative risk (RR) of a health outcome compared
+with a counterfactual "clean air" level: an RR of 1.05 means 5\% more
+deaths (or cases) than at the reference concentration. These are the
+first step of any burden estimate; \code{\link{pollution_burden}} and
+\code{\link{verify_pollution}} call them for you.
+}
+\details{
 \code{crf_pm25()} is log-linear for all-cause mortality with the pooled
 cohort estimate of the WHO 2021 guideline review (Chen and Hoek 2020:
-RR 1.08, 95\\% CI 1.06-1.09, per 10 micrograms per cubic metre),
+RR 1.08, 95\% CI 1.06-1.09, per 10 micrograms per cubic metre),
 \deqn{RR(z) = \exp(\ln(1.08) (z - z_{cf}) / 10)}
 for \eqn{z > z_{cf}} and 1 otherwise; for the cause-specific outcomes
 (ischaemic heart disease, stroke) it is the Integrated Exposure-Response
@@ -49,17 +68,49 @@ curve of Burnett et al. (2014, equation 1),
 \deqn{RR(z) = 1 + \alpha (1 - e^{-\gamma (z - z_{cf})^{\delta}}),}
 with the GBD 2013 parameter triples; the IER was fitted per cause and has no
 all-cause form. \code{crf_no2()} is the log-linear function of the WHO 2021
-review (Huangfu and Atkinson 2020: RR 1.02, 95\\% CI 1.01-1.04, per 10
+review (Huangfu and Atkinson 2020: RR 1.02, 95\% CI 1.01-1.04, per 10
 micrograms per cubic metre for all-cause mortality),
 \deqn{RR(z) = \exp(\beta (z - z_{cf}) / 10).}
 A vector of exposures gives the mean RR and log-RR, with the per-unit
 relative risks under \code{extra$rr_per_unit}.
+
+Every function has zero excess risk at and below the reference
+concentration (\eqn{z \le z_{cf}} gives RR 1). The published 95\%
+limits of the log-linear coefficients are carried through the same
+curve into \code{rr_lower} and \code{rr_upper}; the IER parameters come
+without an interval, so those are \code{NA} for \code{"ihd"} and
+\code{"stroke"}, and also when \code{beta_per_10} is supplied.
+
+Refusals: an unknown \code{outcome} (the message lists the available
+ones); an exposure that is missing, infinite, negative, logical or
+empty; and a \code{reference_conc} (or \code{beta_per_10}) that is not
+a single finite number, or a negative \code{reference_conc}. A supplied
+\code{beta_per_10} may be negative (a protective association) and
+replaces the table, in which case \code{outcome} is only a label.
+The functions are pure computations: no file, network or option is
+used.
 }
 \examples{
-crf_pm25(12)$rr
+# All-cause mortality at an annual PM2.5 of 12 micrograms per cubic metre.
+r <- crf_pm25(12)
+c(rr = r$rr, lower = r$rr_lower, upper = r$rr_upper)
+
+# The cause-specific IER curve for ischaemic heart disease.
 crf_pm25(12, outcome = "ihd")$rr
+
+# NO2 and respiratory deaths; at or below the reference there is no
+# excess risk.
 crf_no2(25, outcome = "respiratory")$rr
+crf_no2(8)$rr
+
+# A vector of exposures (one per area): the mean RR and each area's RR.
 crf_pm25(c(5, 12, 20))$extra$rr_per_unit
+
+# Your own coefficient: RR 1.04 per 10 micrograms per cubic metre.
+crf_no2(30, beta_per_10 = log(1.04))$rr
+
+# An outcome without a published function is refused.
+try(crf_pm25(12, outcome = "asthma"))
 }
 \references{
 Chen, J. and Hoek, G. (2020). Long-term exposure to PM and

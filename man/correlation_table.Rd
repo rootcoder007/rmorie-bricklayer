@@ -9,23 +9,43 @@ correlation_table(data, method = c("spearman", "pearson"), min_pairs = 3L)
 \arguments{
 \item{data}{A data frame; non-numeric columns are ignored.}
 
-\item{method}{\code{"spearman"} (default) or
-\code{"pearson"}. See
-\code{\link[=top_correlations]{top_correlations()}} for why the rank
-correlation is the default.}
+\item{method}{\code{"spearman"} (default) or \code{"pearson"}. See
+\code{\link[=top_correlations]{top_correlations()}} for why the rank correlation is
+the default.}
 
 \item{min_pairs}{Minimum complete pairs required before
-a correlation is computed (default 3). Below it the pair is \code{NA}
-rather than a number computed from almost nothing.}
+a correlation is computed, a whole number of at least 2 (default 3).
+Below it the pair is \code{NA} rather than a number computed from almost
+nothing.}
 }
 \value{
-A data frame of class \code{bricklayer_cortable} with \code{x},
-\code{y}, \code{correlation} and \code{n_pairs}.
+A data frame of class \code{c("bricklayer_cortable", "data.frame")}
+with one row per pair of numeric columns and the columns \code{x} and
+\code{y} (character, the column names), \code{correlation} (numeric, in
+\eqn{[-1, 1]} or \code{NA}) and \code{n_pairs} (integer); the method is
+in \code{attr(, "method")}.
 }
 \description{
-Every numeric pair's correlation in long form -- one row per pair, which
-is easier to sort, filter and join than a matrix. The counterpart of
-\code{corrr::correlate()}.
+Computes the correlation of every pair of numeric columns and returns it
+in long form -- one row per pair, which is easier to sort, filter and join
+than a matrix -- with the number of complete pairs each figure rests on.
+The counterpart of \code{corrr::correlate()}.
+}
+\details{
+Non-numeric columns are ignored. For each pair, rows where either value is
+missing are dropped (pairwise deletion), so different pairs can rest on
+different rows; \code{n_pairs} says how many. Spearman's rank correlation
+(the default) is the Pearson correlation of the ranks, robust to outliers
+and to monotone transformations; see
+\code{\link[=top_correlations]{top_correlations()}} for why it is
+the default. A pair with fewer than \code{min_pairs} complete rows, or
+with a constant column (no variance), gets \code{NA}. The pairs are listed
+in column order (\code{utils::combn()}). A progress bar is drawn on stderr
+for many pairs unless \code{options(morie.quiet = TRUE)}.
+
+Errors: \code{data} not a data frame; fewer than two numeric columns;
+\code{min_pairs} not a whole number of at least 2; an invalid
+\code{method}.
 }
 \examples{
 set.seed(1)
@@ -33,6 +53,9 @@ df <- data.frame(a = stats::rnorm(100), b = stats::rnorm(100))
 df$c <- df$a + stats::rnorm(100, sd = 0.2)
 
 correlation_table(df)
+
+# Pearson instead of Spearman
+correlation_table(df, method = "pearson")
 
 # n_pairs shows how much data each figure rests on.
 gappy <- df
@@ -43,6 +66,9 @@ correlation_table(gappy)
 thin <- df
 thin$a[1:99] <- NA
 correlation_table(thin)$correlation
+
+# one numeric column cannot be correlated
+try(correlation_table(data.frame(a = 1:5, b = letters[1:5])))
 }
 \seealso{
 \code{\link[=top_correlations]{top_correlations()}} for just the

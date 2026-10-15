@@ -14,51 +14,81 @@
 
 #' Trend in a short series
 #'
-#' The Mann-Kendall rank test for monotone trend with the Theil-Sen
-#' median-of-slopes estimator: no distributional assumption, resistant to a
-#' single aberrant period, and meaningful at the series lengths an annual
-#' administrative extract actually has.
+#' @description
+#' Tests whether a short series (for example five to ten fiscal years of an
+#' administrative count) is rising or falling, and estimates the size of the
+#' change per period. It uses the Mann-Kendall rank test for monotone trend
+#' and the Theil-Sen median-of-slopes estimator: no distributional
+#' assumption, resistant to a single aberrant period, and meaningful at the
+#' series lengths an annual administrative extract actually has.
 #'
-#' @param y The series, in period order, or a data frame.
-#' @param x The periods. Defaults to the position, which is right
-#' for an evenly spaced series.
-#' @param value,period Column names, when `y` is a
-#' data frame.
-#' @param exact Whether to compute the exact null distribution
-#' of Mann-Kendall's S by enumeration. Feasible and used by default up to
-#' `n = 8` (40,320 orderings); above that the normal approximation
-#' with the tie and continuity corrections is used.
-#' @param alternative `"two.sided"`,
-#' `"increasing"` or `"decreasing"`.
-#' @param conf_level Confidence level for the slope
-#' interval.
-#' @return A list with `S`, `tau`, `p_value`, `slope`
-#' (Theil-Sen), `intercept`, `slope_lower` / `slope_upper`,
-#' `slope_ci_clamped` (`TRUE` when the pairwise slopes do not reach the
-#' requested confidence on a side, so that bound is the extreme slope and
-#' the true interval is wider)
-#' (the distribution-free interval), `n` and `method`.
 #' @details
-#' Kendall's tau here is S over the number of comparable pairs, so it is
-#' the rank correlation between the value and the period.
+#' With values \eqn{y_1, \dots, y_n} in period order,
+#' \deqn{S = \sum_{i < j} \mathrm{sign}(y_j - y_i),}
+#' and Kendall's tau here is \eqn{S / (n(n-1)/2)}, the rank correlation
+#' between the value and the period. The Theil-Sen slope is the median of
+#' the pairwise slopes \eqn{(y_j - y_i)/(x_j - x_i)};
+#' \code{intercept} is the line's intercept from the compiled Theil-Sen
+#' routine.
+#'
+#' For \eqn{n \le 8} the p-value is exact by default: \eqn{S} is computed
+#' over every ordering of the observed values (with ties kept, so tied data
+#' get the correct conditional null). Otherwise the normal approximation is
+#' used, with the tie-corrected variance of \eqn{S} and a continuity
+#' correction of one unit toward zero. Exact tables are cached in the
+#' session, up to 32 of them.
 #'
 #' The slope interval is the standard rank-based one: the pairwise slopes
 #' are sorted and the interval runs between the order statistics that
 #' Mann-Kendall's variance places at the chosen level, so it is consistent
-#' with the test rather than derived from a different model.
+#' with the test rather than derived from a different model. At small
+#' \eqn{n} the slopes may not reach the requested confidence; the bound is
+#' then the most extreme slope and \code{slope_ci_clamped} is \code{TRUE}.
+#'
+#' Missing periods are dropped and the series is sorted by \code{x}.
+#' Errors: fewer than three periods; infinite values; \code{x} and \code{y}
+#' of different lengths; a data frame without \code{value} or with a column
+#' not found; more than 20,000 periods (the pairwise slopes would not fit in
+#' memory); a \code{conf_level} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
+#' warns and uses the normal
+#' approximation.
+#'
+#' @param y Numeric vector, the series in period order, or a data frame.
+#' @param x Numeric vector of periods, default \code{NULL}: the position
+#'   \code{1, 2, ...}, which is right for an evenly spaced series. Ignored
+#'   when \code{y} is a data frame and \code{period} is given.
+#' @param value,period Column names (strings), when \code{y} is a data
+#'   frame. \code{value} is required; \code{period} is optional and must be
+#'   convertible with \code{as.numeric()}.
+#' @param exact Logical or \code{NULL} (the default). Whether to compute the
+#'   exact null distribution of Mann-Kendall's \eqn{S} by enumeration.
+#'   \code{NULL} uses it up to \code{n = 8} (40,320 orderings); above that
+#'   the normal approximation with the tie and continuity corrections is
+#'   used.
+#' @param alternative \code{"two.sided"} (the default), \code{"increasing"}
+#'   or \code{"decreasing"}.
+#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#'   the slope interval.
+#' @return A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
+#'   (Theil-Sen, in units of \code{y} per unit of \code{x}),
+#'   \code{intercept}, \code{slope_lower} and \code{slope_upper} (the
+#'   distribution-free interval), \code{slope_ci_clamped} (\code{TRUE} when
+#'   the pairwise slopes do not reach the requested confidence on a side, so
+#'   that bound is the extreme slope and the true interval is wider),
+#'   \code{n}, \code{var_S} (the tie-corrected variance of \eqn{S}),
+#'   \code{alternative}, \code{conf_level} and \code{method}.
 #' @references
 #' Sen, P. K. (1968). Estimates of the regression coefficient based on
-#' Kendall's tau. *Journal of the American Statistical Association*
+#' Kendall's tau. \emph{Journal of the American Statistical Association}
 #' 63(324), 1379-1389, for the median-of-slopes estimator and the
 #' distribution-free interval.
 #'
-#' Wilcox, R. R. *Modern Statistics for the Social and Behavioral Sciences:
-#' A Practical Introduction* treats Theil-Sen among the regression methods
-#' that carry no normality assumption, which is the reason for preferring
-#' it on a series this short.
+#' Wilcox, R. R. \emph{Modern Statistics for the Social and Behavioral
+#' Sciences: A Practical Introduction} treats Theil-Sen among the regression
+#' methods that carry no normality assumption, which is the reason for
+#' preferring it on a series this short.
 #' @seealso
-#' [step_change()],
-#' [count_trend()]
+#' \code{\link{step_change}}, \code{\link{count_trend}}
 #' @examples
 #' # Five years of placements.
 #' y <- c(402, 377, 190, 268, 331)
@@ -71,9 +101,11 @@
 #' # One aberrant period does not create a trend.
 #' trend_test(c(100, 100, 100, 100, 900))$p_value
 #'
-#' # From a data frame.
+#' # From a data frame, testing for a decrease only.
 #' d <- data.frame(year = 2019:2023, n = y)
-#' trend_test(d, value = "n", period = "year")$slope
+#' trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
+#'
+#' try(trend_test(c(5, 6)))
 #' @export
 trend_test <- function(y, x = NULL, value = NULL, period = NULL,
                        exact = NULL,
@@ -83,6 +115,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
                        ),
                        conf_level = 0.95) {
   alternative <- .rmbl_arg(alternative)
+  conf_level <- .rmbl_conf_level(conf_level)
   if (is.data.frame(y)) {
     if (is.null(value)) {
       stop("`value` is required for a data frame",
@@ -258,6 +291,7 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 # places at the level. Consistent with the test, rather than borrowed
 # from a normal-errors model the data was never claimed to follow.
 .rmbl_sen_ci <- function(x, y, var_s, conf_level) {
+  conf_level <- .rmbl_conf_level(conf_level)
   slopes <- .Call(C_rmbl_sen_slopes, as.numeric(x), as.numeric(y))
   m <- length(slopes)
   if (m < 2L || is.na(var_s) || var_s <= 0) {
@@ -280,38 +314,71 @@ trend_test <- function(y, x = NULL, value = NULL, period = NULL,
 
 #' A single step change, with the scan's own null distribution
 #'
-#' Scans every admissible split of the series, reports the one with the
-#' largest mean difference, and gives it a p-value from the permutation
+#' @description
+#' Asks whether a series shifted to a new level at some point (for example
+#' after a policy change) and, if so, where. It scans every admissible
+#' split of the series, reports the one with the largest difference between
+#' the before and after means, and gives it a p-value from the permutation
 #' distribution of the MAXIMUM over splits -- not from the best split's own
 #' test, which is the standard way to find a change point in noise.
 #'
-#' @param y The series, in period order.
-#' @param x The periods. Used only for labelling the break.
-#' @param min_segment Fewest periods either side of the
-#' break.
-#' @param n_perm Permutations for the null distribution. The
-#' exact enumeration is used instead when the series is short enough for
-#' it.
-#' @param seed Seed for the permutations, so the p-value is
-#' reproducible.
-#' @return A list with `break_after` (the period the series changes
-#' after), `index`, `before`, `after`, `difference`,
-#' `statistic`, `p_value`, `n_perm` and `method`.
+#' @details
+#' For a split after period \eqn{k}, with \eqn{n_a = k} and
+#' \eqn{n_b = n - k} periods and means \eqn{\bar y_a}, \eqn{\bar y_b}, the
+#' statistic is the between-segment sum of squares
+#' \deqn{T_k = \frac{n_a n_b}{n} (\bar y_a - \bar y_b)^2,}
+#' over \eqn{k = m, \dots, n - m} with \eqn{m} = \code{min_segment}. The
+#' observed \eqn{\max_k T_k} is compared with the same maximum over
+#' reorderings of the series, and \eqn{p = (1 + \mathrm{count}(T^*_{\max} \ge
+#' T_{\max}))/(1 + B)}. When \eqn{n! \le} \code{n_perm} (with the default,
+#' \eqn{n \le 7}) every ordering is enumerated and the p-value is exact;
+#' otherwise \code{n_perm} random permutations are drawn under \code{seed},
+#' and the caller's random number stream is restored afterwards.
+#'
+#' The test assumes the periods are exchangeable under no change, so it
+#' ignores autocorrelation and smooth trends; a steady trend can produce a
+#' "step". With very few periods even a clean step cannot reach small
+#' p-values (six periods allow only 720 orderings). Missing values are
+#' dropped. Errors: infinite values; fewer than \code{2 * min_segment}
+#' periods. A progress bar is shown in an interactive session.
+#'
+#' @param y Numeric vector, the series in period order.
+#' @param x Vector of periods, default \code{NULL} (the position). Used only
+#'   to label the break.
+#' @param min_segment Whole number, default 2: the fewest periods allowed on
+#'   either side of the break.
+#' @param n_perm Whole number, default 9999: the number of random
+#'   permutations for the null distribution. The exact enumeration is used
+#'   instead when \eqn{n!} is at most \code{n_perm}.
+#' @param seed Integer, default 1: the seed for the permutations, so the
+#'   p-value is reproducible.
+#' @return A list with \code{break_after} (the period the series changes
+#'   after, from \code{x}), \code{index} (its position), \code{before} and
+#'   \code{after} (the segment means), \code{difference} (after minus
+#'   before), \code{statistic} (\eqn{T_{\max}}), \code{p_value},
+#'   \code{n_perm} (orderings or permutations used) and \code{method}.
 #' @references
 #' The permutation distribution of the maximum over splits, rather than the
 #' chosen split's own test, is what makes this a test of whether there is a
 #' break rather than a way of locating the largest wobble. See any
-#' treatment of the change-point problem, e.g. Coles, S. *An Introduction
-#' to Statistical Modeling of Extreme Values* (Springer), which discusses
-#' change-point detection alongside the threshold choices that raise the
-#' same multiple-comparison issue.
+#' treatment of the change-point problem, e.g. Coles, S. \emph{An
+#' Introduction to Statistical Modeling of Extreme Values} (Springer), which
+#' discusses change-point detection alongside the threshold choices that
+#' raise the same multiple-comparison issue.
+#' @seealso \code{\link{trend_test}}, \code{\link{count_trend}}.
 #' @examples
-#' # A clear step down after the third period.
-#' step_change(c(100, 104, 98, 60, 63, 58))
+#' # A step down after the third period. With six periods there are only
+#' # 720 orderings, so even a clean step has p near 0.1.
+#' step_change(c(100, 104, 98, 60, 63, 58), x = 2018:2023)
+#'
+#' # A longer series with the same step is clearly significant.
+#' step_change(c(100, 104, 98, 101, 97, 60, 63, 58, 61, 59), n_perm = 999)$p_value
 #'
 #' # Pure noise: the best split is still found, and is not significant.
 #' set.seed(2)
-#' step_change(stats::rnorm(12))$p_value
+#' step_change(stats::rnorm(12), n_perm = 999)$p_value
+#'
+#' try(step_change(c(1, 2, 3)))
 #' @export
 step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
                         seed = 1L) {
@@ -364,9 +431,15 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
   # same MAXIMUM over splits. Comparing the best split against its own
   # null would find a break in any series.
   nfact <- if (n <= 8L) factorial(n) else Inf
+  pg <- bricklayer_progress("step change", .bl_count(min(nfact, n_perm)))
+  on.exit(pg$done(), add = TRUE)
   if (nfact <= n_perm) {
     perms <- .rmbl_permutations(n)
-    null <- apply(perms, 1L, function(p) max(stat(y[p])$vals))
+    np <- nrow(perms)
+    null <- vapply(seq_len(np), function(i) {
+      pg$update(i - 1L, sprintf("ordering %d/%d", i, np))
+      max(stat(y[perms[i, ]])$vals)
+    }, 0)
     method <- sprintf("exact over all %d orderings", nrow(perms))
     np <- nrow(perms)
   } else {
@@ -378,7 +451,10 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
     .rmbl_local_seed(seed)
     null <- vapply(
       seq_len(n_perm),
-      function(i) max(stat(sample(y))$vals), 0
+      function(i) {
+        pg$update(i - 1L, sprintf("permutation %d/%d", i, n_perm))
+        max(stat(sample(y))$vals)
+      }, 0
     )
     if (is.null(old)) {
       suppressWarnings(rm(".Random.seed", envir = globalenv()))
@@ -403,43 +479,78 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
 
 #' Trend in a count series, as a rate ratio per period
 #'
-#' Fits a Poisson log-linear trend by iteratively reweighted least squares
-#' and reports the multiplicative change per period, which is what a count
-#' series' trend actually is. An offset carries the denominator when the
-#' exposure varies.
+#' @description
+#' Estimates the trend in a series of counts (arrests, admissions,
+#' incidents per year) as a rate ratio per period: 0.85 means the count
+#' falls by 15% a year. It fits a Poisson log-linear model and, when the
+#' counts vary more than a Poisson model allows, widens the interval. An
+#' offset carries the denominator when the exposure varies, so the trend is
+#' then in the rate rather than in the count.
 #'
-#' @param y Counts, in period order.
-#' @param x Periods. Defaults to the position.
-#' @param offset Exposure for each period -- a population, a
-#' number of admissions, a number of days. The trend is then in the rate
-#' rather than in the count.
-#' @param conf_level Confidence level for the rate ratio.
-#' @return A list with `rate_ratio` (per period), its interval,
-#' `p_value`, the fitted values, the dispersion, and
-#' `overdispersed`.
 #' @details
-#' The dispersion is reported because a Poisson fit assumes it is one. When
-#' it is well above one the interval is too narrow, and the quasi-Poisson
-#' interval -- which scales the standard error by the square root of the
-#' dispersion -- is returned instead, with `overdispersed` set.
+#' The model is \eqn{\log \mu_t = \beta_0 + \beta_1 (x_t - \bar x) +
+#' \log o_t}, with \eqn{o_t} the offset (1 when none), fitted by iteratively
+#' reweighted least squares (at most 50 iterations). The rate ratio is
+#' \eqn{e^{\beta_1}}, with a Wald interval \eqn{e^{\beta_1 \pm z\,
+#' \mathrm{se}}}.
+#'
+#' The dispersion is reported because a Poisson fit assumes it is one. It
+#' is the Pearson statistic \eqn{\sum (y - \mu)^2/\mu} divided by
+#' \eqn{n - 2}. When it exceeds 1.5 the quasi-Poisson interval is returned
+#' instead: the standard error is multiplied by the square root of the
+#' dispersion and the \eqn{t} distribution on \eqn{n - 2} degrees of freedom
+#' replaces the normal, and \code{overdispersed} is set.
+#'
+#' Missing values are dropped. Errors: negative or fractional counts;
+#' \code{x} and \code{y} of different lengths; infinite \code{x}; every count
+#' zero; an offset of the wrong length or not positive; fewer than three
+#' periods; a \code{conf_level} outside (0, 1). There is a \code{plot()} method for the
+#' result.
+#'
+#' @param y Numeric vector of counts (non-negative whole numbers), in period
+#'   order.
+#' @param x Numeric vector of periods, default \code{NULL} (the position).
+#'   The rate ratio is per unit of \code{x}.
+#' @param offset Optional numeric vector of exposures, one per period -- a
+#'   population, a number of admissions, a number of days. Positive. The
+#'   trend is then in the rate rather than in the count.
+#' @param conf_level Number in (0, 1), default 0.95: the confidence level of
+#'   the rate-ratio interval.
+#' @return A list of class \code{c("rmbl_count_trend", "list")} with
+#'   \code{rate_ratio} (per period), \code{lower}, \code{upper},
+#'   \code{p_value} (test of no trend), \code{log_slope} (\eqn{\beta_1}),
+#'   \code{se} (its standard error, scaled when overdispersed),
+#'   \code{fitted} (fitted counts), \code{dispersion}, \code{overdispersed}
+#'   (logical), \code{n}, \code{data} (list of the \code{x} and \code{y}
+#'   used) and \code{method}.
 #' @references
-#' Bilder, C. R. and Loughin, T. M. *Analysis of Categorical Data with
-#' R*, 2nd edn. Chapman and Hall/CRC, on the quasi-likelihood treatment of
+#' Bilder, C. R. and Loughin, T. M. \emph{Analysis of Categorical Data with
+#' R}, 2nd edn. Chapman and Hall/CRC, on the quasi-likelihood treatment of
 #' an overdispersed Poisson fit: the variance is scaled by an estimated
 #' dispersion, which widens the interval while leaving the point estimate
-#' alone. That is the behaviour reported here through `dispersion` and
-#' `overdispersed`.
+#' alone. That is the behaviour reported here through \code{dispersion} and
+#' \code{overdispersed}.
+#' @seealso \code{\link{trend_test}}, \code{\link{rate_change}}.
 #' @examples
 #' # A count falling by about 15% a year.
 #' set.seed(3)
 #' y <- stats::rpois(8, lambda = 200 * 0.85^(0:7))
 #' fit <- count_trend(y)
 #' round(fit$rate_ratio, 3)
+#' c(fit$lower, fit$upper)
 #'
 #' # With a varying denominator the trend is in the rate.
 #' count_trend(c(20, 25, 30), offset = c(1000, 1500, 2500))$rate_ratio
+#'
+#' # Counts that swing far more than Poisson noise get the wider interval.
+#' wild <- count_trend(c(10, 50, 5, 60, 8, 70))
+#' wild$dispersion
+#' wild$method
+#'
+#' try(count_trend(c(1.5, 2, 3)))
 #' @export
 count_trend <- function(y, x = NULL, offset = NULL, conf_level = 0.95) {
+  conf_level <- .rmbl_conf_level(conf_level)
   y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
   x <- .rmbl_num(x, "x")

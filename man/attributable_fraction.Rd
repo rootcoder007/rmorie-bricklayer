@@ -25,20 +25,56 @@ gives at them (Levin's formula is monotone in the relative risk, so the
 interval of the fraction is the image of the interval of the risk).}
 }
 \value{
-A number in \code{[0, 1)} for \code{rr >= 1}, with an attribute
-\code{ci} (\code{lower}, \code{upper}) when the limits were given.
+A single number, the attributable fraction: in \code{[0, 1)} for
+\code{rr >= 1}, negative for a protective exposure. When the limits
+were given it carries an attribute \code{ci}, a named numeric vector
+(\code{lower}, \code{upper}).
 }
 \description{
-Levin's formula (Rothman, Greenland and Lash 2008, chapter 5):
+The share of all cases in a population that is due to an exposure: the
+fraction that would not occur if the exposure were removed and nothing
+else changed. It combines how strongly the exposure raises risk (the
+relative risk) with how common it is (the prevalence); multiplied by the
+number of cases it gives the attributable cases, as
+\code{\link{pollution_burden}} does.
+}
+\details{
+Levin's formula (Levin 1953; Rothman, Greenland and Lash 2008, chapter
+5):
 \deqn{PAF = p (RR - 1) / (1 + p (RR - 1)),}
-the fraction of cases that would be avoided if the exposure were removed.
+with \eqn{p} the proportion exposed. With everyone exposed it is
+\eqn{1 - 1/RR}. It assumes the relative risk is causal and unconfounded
+and that removing the exposure changes nothing else. A relative risk
+below 1 gives a negative fraction (the exposure protects).
+
+When both confidence limits of the RR are given, the fraction's limits
+are the formula applied to them: the formula increases with the RR, so
+the interval of the fraction is the image of the interval of the risk.
+Refusals: an \code{rr} or limit that is not a single finite positive
+number (logical values included), a prevalence outside \eqn{[0, 1]}, only
+one of the two limits, or limits that do not enclose \code{rr}.
 }
 \examples{
 attributable_fraction(1.5, 0.4)
 attributable_fraction(2, 1)      # everyone exposed: 1 - 1/RR
+
+# With the confidence limits of the relative risk.
+paf <- attributable_fraction(1.08, 1, rr_lower = 1.06, rr_upper = 1.09)
+attr(paf, "ci")
+
+# A protective exposure gives a negative fraction.
+attributable_fraction(0.8, 0.5)
+
+# A prevalence above 1 is refused.
+try(attributable_fraction(1.5, 40))
 }
 \references{
 Rothman, K. J., Greenland, S. and Lash, T. L. (2008). Modern
 Epidemiology, 3rd ed., chapter 5. Levin, M. L. (1953). The occurrence of
 lung cancer in man. Acta Unio Internationalis Contra Cancrum 9, 531-541.
+}
+\seealso{
+\code{\link{crf_pm25}} for a relative risk from a
+concentration, \code{\link{pollution_burden}} for the attributable
+cases.
 }

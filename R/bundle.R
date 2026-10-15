@@ -26,28 +26,72 @@
 #' that key. What it does not: that the key belongs to anyone in
 #' particular, or that the manifest's claims are true.
 #'
-#' @param dir Directory the capsule lives in.
-#' @param manifest A manifest, as from
-#' [make_manifest()].
+#' How it is built. Each file is hashed with SHA-256
+#' ([sha256_file()]); the
+#' payload is the list of `path`, `sha256` and `size_bytes`, the
+#' manifest's
+#' [manifest_digest()] and the UTC time;
+#' [capsule_attest()] signs a manifest
+#' whose `meta` is that payload, and the bundle (payload plus attestation) is
+#' written as pretty JSON with doubles at 17 digits. With `files = NULL` every
+#' regular file under `dir` is hashed, recursively and including dot-files
+#' (a `.Rprofile` dropped into a capsule runs code), except the bundle file
+#' itself. A progress bar is shown when `options(morie.progress)` allows it.
+#'
+#' How it is checked. `capsule_bundle_verify()` re-hashes every listed file
+#' (a path that is absolute or climbs out of `dir` fails its row), reports
+#' every file on disk the bundle does not list (the bundle's own file
+#' excepted), checks the attestation with
+#' [capsule_check_attestation()]
+#' (signature, digest, and `key_expected` when given), and, when `manifest`
+#' is given, compares its digest with the bundled one. Every check is a row of
+#' `checks`; `ok` is `TRUE` only when all pass. A failed check is a row,
+#' not
+#' an error.
+#'
+#' Errors: `dir` missing or not a directory; no files to bundle, or a named
+#' file not in `dir`; a key [capsule_attest()] cannot
+#' sign with;
+#' `capsule_bundle_read()` given a file that is not a bundle;
+#' `capsule_bundle_verify()` given something other than a bundle or a path.
+#' Reading a bundle whose signature records a stateful key's state warns (see
+#' [capsule_attest()]).
+#'
+#' @param dir Character scalar, the directory the capsule lives in. For
+#' `capsule_bundle_verify()`, the directory to check the files in.
+#' @param manifest A manifest, as from [make_manifest()].
+#'   Required by
+#' `capsule_bundle()`; optional for `capsule_bundle_verify()`, where it adds
+#' a check that the manifest still has the bundled digest.
 #' @param key A signing key from
 #' [fips_keygen()] or
 #' [pqc_keygen()].
-#' @param files Paths relative to `dir`. Defaults to
-#' every regular file in `dir`, excluding the bundle itself.
+#' @param files Character vector of paths relative to `dir`. Defaults to
+#' every regular file in `dir` (recursively, dot-files included), excluding
+#' the bundle itself.
 #' @param context,prehash,note As in
 #' [capsule_attest()].
-#' @param path Where to write the bundle. Defaults to
-#' `capsule_bundle.json` inside `dir`.
+#' @param path Character scalar. For `capsule_bundle()`, where to write the
+#' bundle; defaults to `capsule_bundle.json` inside `dir` (an existing file
+#' is overwritten). For `capsule_bundle_read()`, the bundle file to read.
 #' @param bundle A bundle read back with
 #' `capsule_bundle_read()`, or the path to one.
 #' @param key_expected Optional public key hex the
 #' bundle's attestation must carry. Supply it when you know which key
 #' should have signed: without it the check confirms the bundle is
 #' internally consistent, which any key's holder could arrange.
-#' @return `capsule_bundle()` the bundle, invisibly, with the path it
-#' was written to as an attribute; `capsule_bundle_read()` the bundle;
-#' `capsule_bundle_verify()` a list with `ok` and a `checks`
-#' data frame.
+#' @return `capsule_bundle()`: the bundle, invisibly, a list of class
+#' `bricklayer_bundle` with `files` (a list of `path`, `sha256`,
+#' `size_bytes`), `manifest_digest`, `bundled_utc` and `attestation`
+#' (from
+#' [capsule_attest()]), and the path it was written to as
+#' attribute
+#' `"path"`. `capsule_bundle_read()`: the same structure read from the file.
+#' `capsule_bundle_verify()`: a list of class `bricklayer_bundle_check` with
+#' `ok` (logical) and `checks` (a data frame of `check`, logical `ok`
+#' and
+#' `detail`: one `file:PATH` row per listed file, `no_unlisted_files`, the
+#' `attestation:` rows and, with a manifest, `manifest_digest`).
 #' @seealso
 #' [capsule_attest()],
 #' [verify_capsule()],
@@ -66,7 +110,21 @@
 #' # touch a byte of the data and the bundle no longer holds
 #' write.csv(data.frame(x = 1:4), file.path(dir, "data.csv"),
 #'           row.names = FALSE)
-#' capsule_bundle_verify(attr(b, "path"), dir, manifest = m)$ok
+#' res <- capsule_bundle_verify(attr(b, "path"), dir, manifest = m)
+#' res$ok
+#' res$checks[!res$checks$ok, c("check", "detail")]
+#'
+#' # read back, and checked against the key you expected to have signed
+#' b2 <- capsule_bundle_read(attr(b, "path"))
+#' b2
+#' capsule_bundle_verify(b2, dir, key_expected = "00ff")$ok
+#'
+#' # a file added beside the bundle is reported too
+#' writeLines("x", file.path(dir, "extra.txt"))
+#' capsule_bundle_verify(b2, dir)$checks[, c("check", "ok")]
+#'
+#' # a directory that does not exist
+#' try(capsule_bundle(file.path(tempdir(), "no-such-capsule"), m, key))
 #' unlink(dir, recursive = TRUE)
 #' @export
 capsule_bundle <- function(dir, manifest, key, files = NULL,
@@ -100,10 +158,15 @@ capsule_bundle <- function(dir, manifest, key, files = NULL,
     stop("these files are not in `dir`: ",
          paste(utils::head(missing, 5L), collapse = ", "), call. = FALSE)
   }
-  entries <- lapply(files, function(f) {
+  pg <- bricklayer_progress("bundling", length(files))
+  on.exit(pg$done(), add = TRUE)
+  entries <- lapply(seq_along(files), function(i) {
+    f <- files[[i]]
+    pg$update(i - 1L, sprintf("hashing %s", basename(f)))
     p <- file.path(dir, f)
     list(path = f, sha256 = sha256_file(p), size_bytes = file.size(p))
   })
+  pg$update(length(files), "signing")
   payload <- list(
     files = entries,
     manifest_digest = manifest_digest(manifest),
@@ -157,8 +220,11 @@ capsule_bundle_verify <- function(bundle, dir, manifest = NULL,
       check = check, ok = isTRUE(ok), detail = as.character(detail),
       stringsAsFactors = FALSE)
   }
+  pg <- bricklayer_progress("verifying bundle", length(bundle$files))
+  on.exit(pg$done(), add = TRUE)
   for (e in bundle$files) {
     f <- as.character(e$path)[1L]
+    pg$tick(1, sprintf("hashing %s", basename(f)))
     p <- .rmbl_safe_rel(f, dir)
     if (is.null(p)) {
       note_row(paste0("file:", f), FALSE,

@@ -9,30 +9,68 @@ verify_marginals(x, published, tolerance = 0, strict = TRUE)
 \arguments{
 \item{x}{A character or factor vector after recoding.}
 
-\item{published}{Named numeric vector: label = published count.}
+\item{published}{Named numeric vector, label = published count.}
 
-\item{tolerance}{Absolute count tolerance per label (default 0).}
+\item{tolerance}{Non-negative number, default \code{0}. The absolute
+difference in counts allowed per label, for releases that round or
+suppress small counts.}
 
-\item{strict}{When \code{TRUE} (the default) a mismatch is an error, so a
-pipeline stops on the day. When \code{FALSE} the result is returned with
-\code{ok = FALSE}, the \code{permutation} that would explain the counts, and the
+\item{strict}{Logical, default \code{TRUE}: a mismatch is an error, so a
+pipeline stops. \code{FALSE} returns the result with \code{ok = FALSE},
+the \code{permutation} that would explain the counts and the
 \code{message} the error would have carried, for callers that want to
-report or hand the permutation to \code{\link[=relabel_forensics]{relabel_forensics()}}.}
+report it or pass the permutation to \code{\link{relabel_forensics}}.}
 }
 \value{
-Invisibly, a list with \code{counts}, \code{published}, \code{ok},
-\code{permutation} (the relabelling that matches, or \code{NULL}) and \code{message}
-(\code{NULL} when \code{ok}). Errors when the counts disagree and \code{strict} is
-\code{TRUE}.
+A list with elements \code{counts} (named numeric, observed count
+per published label), \code{published} (named numeric), \code{ok}
+(logical), \code{permutation} (named character, true label = label it
+would have to be read as, or \code{NULL}) and \code{message}
+(character, or \code{NULL} when \code{ok}). It is returned invisibly
+when the counts match and visibly when \code{strict = FALSE} and they do
+not. With \code{strict = TRUE} a mismatch is an error instead.
 }
 \description{
-After a recode, the number of rows per label must equal the counts the
-source published for those labels. If they do not, every permutation of
-the labels is tried and the one under which the observed counts match the
-published ones is named: the signature of labels attached to the wrong
-groups.
+Compares the number of rows per category after a recode with the counts
+the data source published for those categories (for example the
+frequency table in a codebook or a statistical release). If they disagree,
+it tries every reordering of the labels and names the one under which the
+observed counts would match, which is the signature of labels attached to
+the wrong groups. Use it after decoding or recoding a column whenever
+published totals exist.
+}
+\details{
+For each label \eqn{l} in \code{names(published)} the observed count is
+\eqn{n_l = \sum_i 1[x_i = l]} (missing values excluded). The counts match
+when \eqn{|n_l - p_l| \le} \code{tolerance} for every label.
+
+On a mismatch, and when there are at most 7 labels, the function searches
+the \eqn{k!} permutations of the labels (5040 at \eqn{k = 7}) for the
+first non-identity one under which the observed counts match the
+published counts, and names it in the message. With more than 7 labels no
+search is done and \code{permutation} is \code{NULL}. Several
+permutations can match when counts are tied; only the first is reported.
+
+A label that occurs in \code{x} but not in \code{published} is always a
+failure (no permutation search). \code{published} must be a named numeric
+vector, otherwise an error.
 }
 \examples{
 x <- c("White", "White", "Black", "Indigenous", "White", "Black")
-verify_marginals(x, c(White = 3, Black = 2, Indigenous = 1))
+verify_marginals(x, c(White = 3, Black = 2, Indigenous = 1))$ok
+
+# swapped labels: the permutation that explains the counts is named
+r <- verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1),
+                      strict = FALSE)
+r$permutation
+
+# a release that rounds counts to the nearest 5
+verify_marginals(rep(c("A", "B"), c(48, 21)), c(A = 50, B = 20),
+                 tolerance = 2)$ok
+
+# the default is to stop
+try(verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1)))
+}
+\seealso{
+\code{\link{transfer_verify}}, \code{\link{relabel_forensics}}.
 }

@@ -10,20 +10,25 @@ missingness_pattern(data, max_patterns = 20L)
 \item{data}{A data frame.}
 
 \item{max_patterns}{Maximum patterns to return, most
-frequent first (default 20).}
+frequent first, one positive whole number (default 20).}
 }
 \value{
-A data frame of class \code{bricklayer_missingness}, one row per
-pattern: \code{pattern} (a string of \code{.} for present and \code{X}
-for missing, in column order), \code{n_rows}, \code{pct_rows},
-\code{n_missing} (columns missing in that pattern), and \code{columns}
-(their names). Carries the column order as the \code{"columns"}
+A data frame of class \code{c("bricklayer_missingness",
+  "data.frame")}, one row per pattern: \code{pattern} (character, \code{.}
+for present and \code{X} for missing, in column order), \code{n_rows}
+(integer), \code{pct_rows} (numeric, percent of all rows),
+\code{n_missing} (integer, columns missing in that pattern) and
+\code{columns} (character, their names comma-separated, \code{""} for the
+complete pattern). Carries the column order as the \code{"columns"}
 attribute.
 }
 \description{
-Counts the distinct PATTERNS of missingness across rows, rather than the
-per-column rates \code{\link[=profile_columns]{profile_columns()}}
-reports.
+Counts the distinct PATTERNS of missingness across rows -- which
+combination of columns is missing in each row -- rather than the
+per-column rates \code{\link[=profile_columns]{profile_columns()}} reports. Use it
+before deciding how
+to handle gaps (drop rows, impute, model separately), because the right
+choice depends on whether columns are missing together.
 }
 \details{
 The distinction decides what to do about the gaps. Two columns each 30\%
@@ -32,6 +37,16 @@ in THE SAME rows -- the second is one structural gap (a join that
 failed, a form section nobody filled in) and often means those rows
 should be dropped or modelled separately, while the first does not. A
 per-column rate cannot tell the two apart; this can.
+
+Each row is coded as a string with one character per column, \code{X}
+where \code{is.na()} is true and \code{.} otherwise, and the codes are
+tabulated. Patterns are sorted by descending frequency and the first
+\code{max_patterns} kept, so \code{pct_rows} may not sum to 100 when
+patterns are cut. A frame with no rows gives an empty table. The work is
+one pass over the rows; very wide frames give long codes.
+
+Errors: \code{data} not a data frame, without columns, or with missing or
+duplicated names; \code{max_patterns} not one positive whole number.
 }
 \examples{
 # Two columns missing in the SAME rows: one structural gap.
@@ -52,6 +67,12 @@ missingness_pattern(scattered)
 
 # A complete frame has exactly one pattern.
 missingness_pattern(data.frame(x = 1:3, y = 4:6))
+
+# keep only the most common pattern
+missingness_pattern(scattered, max_patterns = 1)
+
+# a frame without columns has no patterns
+try(missingness_pattern(data.frame()))
 }
 \seealso{
 \code{\link[=profile_columns]{profile_columns()}} for

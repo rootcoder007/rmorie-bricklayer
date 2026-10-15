@@ -32,6 +32,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cstddef>
+#include <cmath>
 
 #include "morie_core.h"   /* vendored canonical morie kernels (morie::core) */
 
@@ -303,10 +304,25 @@ void rmbl_ipw_weights(const double *treat, const double *propensity,
                                      trim_lo, trim_hi, out);
 }
 
+/* Registered for LinkingTo callers, so it must not throw: the core's interrupt hook
+ * (rmbl_core_interrupt_hook, below) throws rmbl::Interrupt on a pending Ctrl-C, which is
+ * caught here; the replicates not yet drawn are NaN, the flag tells the entry point's
+ * barrier, and with no barrier (another package's .Call) R's interrupt is raised once no C++
+ * object is alive. */
 void rmbl_bootstrap_mean(const double *x, R_xlen_t n, R_xlen_t B,
                          unsigned long long seed, double *out) {
-    morie::core::bootstrap_mean(x, static_cast<std::size_t>(n),
-                                static_cast<std::size_t>(B), seed, out);
+    bool stopped = false;
+    try {
+        morie::core::bootstrap_mean(x, static_cast<std::size_t>(n),
+                                    static_cast<std::size_t>(B), seed, out);
+    } catch (const rmbl::Interrupt &) {
+        stopped = true;
+    }
+    if (stopped) {
+        for (R_xlen_t b = 0; b < B; ++b) out[b] = R_NaN;
+        rmbl_kernel_interrupted = 1;
+        rmbl_interrupt_raise_unbarriered();
+    }
 }
 
 double rmbl_gamma_cdf(double shape, double x) {
@@ -390,15 +406,18 @@ SEXP C_rmbl_ipw_impl(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
 }
 
 SEXP C_rmbl_bootstrap_mean_impl(SEXP x, SEXP B, SEXP seed) {
+    /* checked before the casts: a NaN, negative or fractional double cast to an integer type
+     * is undefined behaviour (a seed of -1 or NA reached `unsigned long long` that way) */
+    const double bd = Rf_asReal(B), sd = Rf_asReal(seed);
+    if (!R_FINITE(bd) || bd < 1 || bd != std::floor(bd) || bd > 4503599627370496.0)
+        Rf_error("`B` must be a whole number >= 1");
+    if (!R_FINITE(sd) || sd < 0 || sd != std::floor(sd) || sd >= 9007199254740992.0)
+        Rf_error("`seed` must be a whole number in [0, 2^53)");
     x = PROTECT(Rf_coerceVector(x, REALSXP));
-    R_xlen_t nb = (R_xlen_t) Rf_asReal(B);
-    if (nb < 1) {
-        UNPROTECT(1);
-        Rf_error("`B` must be at least 1");
-    }
+    R_xlen_t nb = static_cast<R_xlen_t>(bd);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, nb));
     rmbl_bootstrap_mean(REAL(x), XLENGTH(x), nb,
-                        (unsigned long long) Rf_asReal(seed), REAL(out));
+                        static_cast<unsigned long long>(sd), REAL(out));
     UNPROTECT(2);
     return out;
 }
@@ -408,7 +427,11 @@ SEXP C_rmbl_gamma_cdf_impl(SEXP shape, SEXP x) {
     double a = Rf_asReal(shape);
     R_xlen_t n = XLENGTH(x);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
-    for (R_xlen_t i = 0; i < n; i++) REAL(out)[i] = rmbl_gamma_cdf(a, REAL(x)[i]);
+    /* P(a, Inf) = 1, as pgamma(): the shared core's continued fraction gives NaN there */
+    for (R_xlen_t i = 0; i < n; i++) {
+        const double xi = REAL(x)[i];
+        REAL(out)[i] = xi == R_PosInf ? 1.0 : rmbl_gamma_cdf(a, xi);
+    }
     UNPROTECT(2);
     return out;
 }
@@ -565,8 +588,12 @@ SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP me
 }
 
 SEXP C_rmbl_uniforms_impl(SEXP n, SEXP seed) {
-    const R_xlen_t m = static_cast<R_xlen_t>(Rf_asReal(n));
-    const double sd = Rf_asReal(seed);
+    const double nd = Rf_asReal(n), sd = Rf_asReal(seed);
+    if (!R_FINITE(nd) || nd < 0 || nd != std::floor(nd) || nd > 4503599627370496.0)
+        Rf_error("`n` must be a whole number >= 0");
+    if (!R_FINITE(sd) || sd < 0 || sd != std::floor(sd) || sd >= 9007199254740992.0)
+        Rf_error("`seed` must be a whole number in [0, 2^53)");
+    const R_xlen_t m = static_cast<R_xlen_t>(nd);
     SEXP out = PROTECT(Rf_allocVector(REALSXP, m));
     morie::core::splitmix64_uniforms(static_cast<std::uint64_t>(sd), static_cast<std::size_t>(m), REAL(out));
     UNPROTECT(1);
@@ -634,6 +661,43 @@ SEXP C_rmbl_sha256_impl(SEXP x) {
     }
     rmbl_sha256_hex(data, len, out);
     return Rf_mkString(out);
+}
+
+/* SHA-256 over input that arrives in pieces (sha256_file() reads a file 8 MB at a time): the
+ * context travels between calls as a raw vector. `state` NULL starts a digest; `chunk` (raw, or
+ * NULL) is absorbed; with `final` TRUE the result is the lowercase hex digest, otherwise the new
+ * state. The digest of the pieces is the digest of their concatenation. */
+SEXP C_rmbl_sha256_chunk_impl(SEXP state, SEXP chunk, SEXP final) {
+    sha256_ctx ctx;
+    if (Rf_isNull(state)) {
+        sha256_init(&ctx);
+    } else {
+        if (TYPEOF(state) != RAWSXP || XLENGTH(state) != (R_xlen_t) sizeof ctx) {
+            Rf_error("`state` must be a SHA-256 state returned by an earlier call");
+        }
+        std::memcpy(&ctx, RAW(state), sizeof ctx);
+        if (ctx.datalen >= 64) Rf_error("`state` must be a SHA-256 state returned by an earlier call");
+    }
+    if (!Rf_isNull(chunk)) {
+        if (TYPEOF(chunk) != RAWSXP) Rf_error("`chunk` must be a raw vector or NULL");
+        sha256_update(&ctx, (const uint8_t *) RAW(chunk), (size_t) XLENGTH(chunk));
+    }
+    if (Rf_asLogical(final) == TRUE) {
+        uint8_t h[32];
+        char hex[65];
+        static const char digits[] = "0123456789abcdef";
+        sha256_final(&ctx, h);
+        for (int i = 0; i < 32; ++i) {
+            hex[2 * i] = digits[h[i] >> 4];
+            hex[2 * i + 1] = digits[h[i] & 15];
+        }
+        hex[64] = '\0';
+        return Rf_mkString(hex);
+    }
+    SEXP out = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t) sizeof ctx));
+    std::memcpy(RAW(out), &ctx, sizeof ctx);
+    UNPROTECT(1);
+    return out;
 }
 
 }  // extern "C"

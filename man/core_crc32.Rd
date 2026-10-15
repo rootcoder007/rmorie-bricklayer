@@ -7,17 +7,21 @@
 core_crc32(x)
 }
 \arguments{
-\item{x}{A character vector or a raw vector.}
+\item{x}{A character vector (one checksum per element) or a raw vector
+(one checksum of all its bytes).}
 }
 \value{
 A numeric vector of unsigned 32-bit checksums (one per element
-for character input; length-1 for raw input). Returned as \code{double}
-rather than \code{integer} because values above \code{2^31 - 1} are not
-representable as an R integer.
+for character input, \code{NA} for \code{NA}; length 1 for raw input).
+Returned as \code{double} rather than \code{integer} because values
+above \code{2^31 - 1} are not representable as an R integer.
 }
 \description{
-The CRC-32 of ITU V.42 and zip (reflected polynomial \code{0xEDB88320})
-.
+Computes the CRC-32 checksum of character or raw input: the CRC of ITU
+V.42, zip and PNG (reflected polynomial \code{0xEDB88320}, initial value
+and final XOR \code{0xFFFFFFFF}). Use it as a fast first check that a
+large file or capsule member arrived intact, or to compare with the CRC
+a zip archive records for its members.
 }
 \details{
 A CRC is NOT a cryptographic digest: it detects accidental corruption
@@ -27,6 +31,11 @@ used where \code{\link[=core_sha256]{core_sha256()}} is meant. It is
 here because it is far cheaper than SHA-256 over gigabyte-scale capsule
 members, which makes it the right first pass when the question is only
 "did this file arrive intact".
+
+Character input is checked element by element, as its bytes, with
+\code{NA} giving \code{NA}; other atomic input is converted with
+\code{as.character()}. A raw vector gives one checksum. For files use
+\code{\link[=crc32_file]{crc32_file()}}.
 }
 \examples{
 # The standard check value: CRC-32("123456789") is 0xCBF43926.

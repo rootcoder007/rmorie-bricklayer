@@ -13,18 +13,27 @@ bricklayer_llm_login(
 )
 }
 \arguments{
-\item{token}{A key issued at \url{https://www.rmorie.com/access/}.}
+\item{token}{Character scalar or \code{NULL} (the default): a key you
+already have, issued at \url{https://www.rmorie.com/access/}.
+Surrounding spaces are removed. Takes precedence over \code{email}.}
 
-\item{email}{Sign in with a code sent to this address.}
+\item{email}{Character scalar or \code{NULL} (the default): sign in with
+a 6-digit code sent to this address. Lower-cased before use.}
 
-\item{code}{The emailed code, when you already have it.}
+\item{code}{Character scalar or \code{NULL} (the default): the emailed
+code when you already have it; \code{NULL} sends a new code and asks
+for it at the console. Used only with \code{email}.}
 
-\item{open_browser}{Open the GitHub page for the device flow.}
+\item{open_browser}{Logical scalar, default \code{interactive()}: open
+the GitHub page for the device flow in the system browser (only a
+public \code{https} address is opened).}
 
-\item{poll_max_seconds}{How long the device flow waits for approval.}
+\item{poll_max_seconds}{Numeric scalar, default \code{600}: how many
+seconds the device flow waits for you to approve the sign-in.}
 }
 \value{
-The key, invisibly.
+The key (character scalar), invisibly. A message names the file
+it was stored in.
 }
 \description{
 Stores your personal MORIE data key in
@@ -47,10 +56,47 @@ github.com, and the key arrives once you approve.
 }
 Nothing is written except by this explicit call.
 }
+\details{
+The credentials file is edited as text: only the three members this
+package owns (\code{hosted_key}, \code{hosted_user} and
+\code{hosted_base_url}, the address the key was issued for) are set, and
+every other byte stays, so entries written by the other packages survive.
+The file is written through a fresh temporary name, created owner-only
+(mode 0600, folder 0700 on Unix) before the key is written. A file that
+is not a JSON object, is not valid JSON or names a member twice is
+refused rather than overwritten. \code{XDG_CONFIG_HOME} moves the file;
+when unset it is \code{~/.config/morie/credentials.json}.
+
+The sign-in service address is the signed services document's
+\code{data.auth_url} (see \code{\link{bricklayer_services}}), or
+\code{MORIE_HOSTED_AUTH_URL} when set (it must be a public \code{https}
+address). The device flow polls every \code{interval} seconds the
+service names (5 by default), prints a progress line about every 30
+seconds, and stops with an error after \code{poll_max_seconds}.
+
+Errors: an empty \code{token}; a \code{token} the data service does not
+accept, or no answer from it (nothing is stored); an \code{email} that is
+empty or not of the form \code{name@domain.tld}; no code typed at the
+prompt; a refused code; a sign-in service that answers with an error or
+returns no key; a credentials file that cannot be edited safely.
+}
 \examples{
+old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile())   # never touch your real credentials
+
+# input checks that need no network
+try(bricklayer_llm_login(token = "   "))
+try(bricklayer_llm_login(email = "not-an-email"))
+
+if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 \dontrun{
+# these contact the sign-in service
 bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 bricklayer_llm_login(email = "you@example.com")
+bricklayer_llm_login(email = "you@example.com", code = "123456")
 bricklayer_llm_login() # GitHub device flow
 }
+}
+\seealso{
+\code{\link{bricklayer_llm_logout}} to remove the key.
 }

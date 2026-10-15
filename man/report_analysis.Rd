@@ -13,28 +13,50 @@ report_analysis(
 )
 }
 \arguments{
-\item{x}{A \code{bricklayer_analysis}.}
+\item{x}{A \code{bricklayer_analysis} from
+\code{\link[=analyse_table]{analyse_table()}}.}
 
-\item{path}{Where to write. With \code{NULL} the text is returned invisibly
-and nothing is written.}
+\item{path}{Where to write, a file path. With \code{NULL} (the default)
+the text is returned invisibly and nothing is written.}
 
-\item{format}{\code{"markdown"} or \code{"html"}; guessed from \code{path} when it
-ends in \code{.html} or \code{.md}.}
+\item{format}{\code{"markdown"} (the default) or \code{"html"}. When
+\code{format} is not given and \code{path} ends in \code{.html} or
+\code{.htm}, HTML is written; any other path gives Markdown.}
 
-\item{title}{Report title.}
+\item{title}{Report title, a string; the top heading and, for HTML, the
+page title.}
 
-\item{digits}{Digits for percentages and rates.}
+\item{digits}{Number of decimals for percentages and rates, default 1.}
 }
 \value{
-The report text, invisibly.
+The report text (a length-1 character string, Markdown or a full
+HTML document), invisibly.
 }
 \description{
-Renders a \code{\link[=analyse_table]{analyse_table()}} result: the profile,
-the change table
-with its intervals and adjusted p-values, the rates, the trends and
-the drift screen, each with one sentence saying how to read it. The
-Markdown is plain enough to paste into a notebook; the HTML is a
-single self-contained file.
+Renders an \code{\link[=analyse_table]{analyse_table()}} result as a report: the
+change table with
+its intervals and adjusted p-values, the rates, the trends, the drift
+screen and the column profile, each with one sentence saying how to read
+it. The Markdown is plain enough to paste into a notebook or a pull
+request; the HTML is a single self-contained file with no external
+resources, suitable for e-mailing to a reviewer.
+}
+\details{
+Sections appear in this order: a header line (value, period, groups,
+rows, period range and the time of the analysis), "Change between
+periods", "Rates per ..." (when there were rates), "Trend over the
+series", "Drift against the prior capsule" (when a prior was given) and
+"What is in the table" (with "Missing values" when any are missing).
+Tables use pipe syntax; numbers are rounded to \code{digits} decimals,
+whole numbers of 10,000 and above get thousands separators, logicals are
+written yes/no and \code{NA} is blank. When the values are percentages
+the change is reported in percentage points. The HTML is produced by a
+small built-in converter (headings, paragraphs, tables and inline code,
+with the text escaped). The file is written as UTF-8 and overwritten if
+it exists.
+
+Errors: \code{x} not from \code{\link[=analyse_table]{analyse_table()}}; an invalid
+\code{format}.
 }
 \examples{
 path <- system.file("extdata", "otis_a01_individuals.csv",
@@ -43,4 +65,13 @@ a <- analyse_table(read.csv(path), value = "individuals",
                    period = "year", by = c("table", "group"))
 md <- report_analysis(a)
 cat(substr(md, 1, 400))
+
+# HTML, chosen from the file extension
+out <- tempfile(fileext = ".html")
+report_analysis(a, out, title = "OTIS A01: individuals in custody", digits = 2)
+readLines(out, n = 3)
+
+# only an analyse_table() result can be reported
+try(report_analysis(read.csv(path)))
+unlink(out)
 }

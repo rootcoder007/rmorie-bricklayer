@@ -7,17 +7,23 @@
 random_bytes(n)
 }
 \arguments{
-\item{n}{Number of bytes (1 to 1048576).}
+\item{n}{Whole number from 1 to 1048576: the number of bytes.}
 }
 \value{
-A raw vector of length \code{n}.
+A raw vector of length \code{n}. Print it as hex with
+\code{paste(format(x), collapse = "")}.
 }
 \description{
+Returns \code{n} random bytes that are suitable for keys, salts and
+nonces. Use it whenever a value must be unguessable; use
+\code{set.seed()} and \code{runif()} for simulations, where
+reproducibility is the point.
+}
+\details{
 Reads the operating system's own random source -- \verb{/dev/urandom} on
 Unix and macOS, \code{RtlGenRandom} on Windows -- rather than R's
 Mersenne Twister.
-}
-\details{
+
 This distinction matters for anything that becomes a key.
 \code{\link[=set.seed]{set.seed()}} makes R's generator reproducible BY
 DESIGN, and its state can be recovered from its output; a key drawn from
@@ -27,6 +33,9 @@ untouched, so generating a key does not perturb a reproducible analysis.
 If no OS source can be read the function FAILS rather than falling back
 to a weaker generator, because a silent downgrade in a key is worse than
 an error.
+
+Errors: \code{n} not a single whole number from 1 to 1,048,576 (1 MiB);
+no readable operating-system source.
 }
 \examples{
 random_bytes(8)
@@ -43,6 +52,8 @@ identical(stats::runif(1), a)
 
 # As hex, for a seed argument.
 paste(format(random_bytes(4)), collapse = "")
+
+try(random_bytes(0))
 }
 \seealso{
 \code{\link[=derive_key]{derive_key()}} to stretch a passphrase instead,

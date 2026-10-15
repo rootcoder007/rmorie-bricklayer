@@ -69,6 +69,16 @@ Court statistics that count only disposed cases describe time to
 disposition among cases that were disposed, with no censoring; cases
 still pending are not in them, so the survival function describes the
 disposed cohort, not every case received.
+
+The median is attribute \code{"median"} (\code{Inf}, with a \code{note},
+when survival never falls to one half or crosses it in the open band), and
+attribute \code{"life_table"} records \code{conf_level} and
+\code{conf_type}. Errors: band labels that cannot be read, or that are
+not contiguous, or with an open band other than the last; fewer than two
+increasing edges, or an infinite edge other than the last; \code{events}
+or \code{censored} that are not non-negative counts, one per band; no
+cases at all; \code{conf_level} outside (0, 1); an unknown
+\code{conf_type}.
 }
 \examples{
 d <- read.csv(system.file("extdata", "ocj_time_to_disposition.csv",
@@ -80,6 +90,17 @@ shares <- unlist(d[last, c("under_10", "m10_15", "m15_18", "over_18")])
 lt <- life_table(c(0, 10, 15, 18, Inf), events = shares * f$disposed[last])
 lt
 plot(lt)
+
+# bands given by their labels, with some cases still open, on the log scale
+lt2 <- life_table(c("Under 10", "10-15", "15-18", "Over 18"),
+                  events = c(600, 150, 60, 90), censored = c(40, 20, 10, 0),
+                  conf_type = "log")
+as.data.frame(lt2)[, c("lower", "upper", "at_risk", "survival",
+                       "conf_lower", "conf_upper")]
+attr(lt2, "median")
+
+# an open band can only come last
+try(life_table(c(0, Inf, 20), events = c(5, 5)))
 }
 \references{
 Cutler, S. J. and Ederer, F. (1958). Maximum utilization of the life

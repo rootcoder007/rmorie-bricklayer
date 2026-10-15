@@ -24,9 +24,11 @@ survey_estimate(
 
 \item{data}{The data frame the design was built on.}
 
-\item{y}{The analysis column.}
+\item{y}{Character scalar, the analysis column: numeric for a mean, total
+or ratio; any type for a proportion (each distinct value is a category).}
 
-\item{by}{Optional domain columns.}
+\item{by}{Optional character vector of domain columns; \code{NULL} (the
+default) estimates for the whole population.}
 
 \item{stat}{\code{"mean"}, \code{"total"}, \code{"proportion"} or \code{"ratio"}
 (of \code{y} to \code{denominator}).}
@@ -36,12 +38,15 @@ survey_estimate(
 \item{levels}{For a proportion, the categories to report
 (default all observed).}
 
-\item{conf_level}{Confidence level.}
+\item{conf_level}{Numeric scalar in (0, 1), the confidence level; default
+\code{0.95}.}
 
-\item{ci}{Interval method: \code{"auto"} (Wilson for proportions,
-Wald otherwise), \code{"wilson"}, \code{"logit"} or \code{"wald"}.}
+\item{ci}{Interval method: \code{"auto"} (the default; Wilson for
+proportions, Wald otherwise), \code{"wilson"}, \code{"logit"} or
+\code{"wald"}. Wilson and logit apply to proportions only.}
 
-\item{min_n}{Domains with fewer respondents are flagged.}
+\item{min_n}{Numeric scalar, default \code{30}: domains with fewer
+respondents are flagged.}
 
 \item{df}{Degrees of freedom for the interval: \code{Inf} (the
 default) for the normal quantile, a number for Student's t,
@@ -49,11 +54,17 @@ or \code{"design"} for the design's own (PSUs less strata under
 linearization, replicates less one otherwise).}
 }
 \value{
-A data frame of class \code{rmbl_svy_estimate}: the domain
-(and \code{level}) columns, then \code{estimate}, \code{se}, \code{lower},
-\code{upper}, \code{cv} (percent), \code{n} (respondents counted) and
-\code{flag}. The covariance of the estimates is the \code{vcov}
-attribute.
+A data frame of class \code{c("rmbl_svy_estimate", "data.frame")},
+one row per domain (and category, for a proportion): the domain columns
+(and \code{level}), then numeric \code{estimate}, \code{se},
+\code{lower}, \code{upper}, \code{cv} (coefficient of variation,
+percent), integer \code{n} (respondents counted) and character
+\code{flag} (\code{NA} when there is nothing to say). Attributes:
+\code{vcov} (the covariance matrix of the estimates, used by
+\code{\link[=survey_compare]{survey_compare()}}), \code{stat}, \code{y}, \code{by},
+\code{ci},
+\code{conf_level}, \code{df}, \code{method} (the variance method) and
+\code{denominator}.
 }
 \description{
 Design-based point estimates with standard errors, confidence
@@ -61,9 +72,20 @@ intervals and coefficients of variation, for the whole
 population or for each domain of \code{by}. A respondent outside a
 domain, or missing the analysis variable, counts zero in that
 domain and stays in the design, so the variance of a subgroup
-estimate reflects the whole sample design.
+estimate reflects the whole sample design. Use it for the figures a
+survey report publishes (the prevalence of a behaviour by region, the mean
+number of drinks, a population total) with the standard errors the survey's
+design implies rather than those of a simple random sample.
 }
 \details{
+The estimates are ratios of weighted totals: a mean is
+\eqn{\sum w_i y_i / \sum w_i} over the domain, a total
+\eqn{\sum w_i y_i}, a proportion the mean of the 0/1 indicator of each
+category, and a ratio \eqn{\sum w_i y_i / \sum w_i x_i} with \eqn{x} the
+\code{denominator}. Their variances come from the design: the replicate
+formula, or Taylor linearization of the ratio (see
+\code{\link[=survey_design]{survey_design()}}).
+
 Proportions are reported for every category of \code{y} (or those
 in \code{levels}), each with its own interval. The default
 interval for a proportion is Wilson's score interval at the
@@ -71,17 +93,29 @@ modified effective sample size of SAS PROC SURVEYFREQ, the
 software behind Health Canada's published Canadian Substance
 Use Survey intervals: \eqn{n / \mathrm{Deff}}, with the
 design effect taken against the simple-random-sampling
-variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(z /
+variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(t_{n-1} /
 t_{df})^2} for the design's degrees of freedom (Korn and
-Graubard 1998) and capped at the \eqn{n} respondents behind
-the estimate. \code{ci = "logit"} builds the interval on the logit
+Graubard 1998; \eqn{t_{df}} is the normal quantile when the design's
+degrees of freedom are infinite) and capped at the \eqn{n} respondents
+behind the estimate. \code{ci = "logit"} builds the interval on the logit
 scale and \code{"wald"} symmetrically. Means, totals and ratios
 get the symmetric normal interval.
 
 A domain with fewer than \code{min_n} respondents is flagged, not
 withheld: Health Canada suppresses such CSUS estimates in its
 data tool (denominator under 30), and the flag lets the
-reader do the same.
+reader do the same. Other flags say why a standard error is missing (no
+stratum with two PSUs, a replicate that left the domain empty, weights all
+zero) or that a domain has no respondents.
+
+Errors: \code{design} not from \code{\link[=survey_design]{survey_design()}};
+\code{data} not the rows
+the design was built on, in the same order; \code{y}, \code{by} or
+\code{denominator} naming a column \code{data} does not have; a ratio
+without \code{denominator}; \code{conf_level} outside (0, 1); \code{df}
+not positive, \code{Inf} or \code{"design"}, or a design with no degrees
+of freedom under \code{df = "design"}; a single-PSU stratum under
+\code{lonely_psu = "fail"}.
 }
 \examples{
 set.seed(1)
@@ -92,6 +126,17 @@ des <- survey_design(d, weights = "w", strata = "region")
 survey_estimate(des, d, "smoker", by = "region", stat = "proportion", levels = "1")
 survey_estimate(des, d, "drinks", stat = "mean")
 survey_estimate(des, d, "drinks", by = "region", stat = "total")
+
+# a ratio of two totals, with Student's t on the design's degrees of freedom
+d$visits <- rpois(100, 6)
+survey_estimate(des, d, "drinks", stat = "ratio", denominator = "visits", df = "design")
+
+# a logit interval at 90 percent
+survey_estimate(des, d, "smoker", stat = "proportion", levels = "1", ci = "logit",
+                conf_level = 0.90)
+
+# the design remembers its rows: a subset is refused
+try(survey_estimate(des, d[-1, ], "drinks"))
 }
 \seealso{
 \code{\link[=survey_design]{survey_design()}},

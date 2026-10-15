@@ -17,23 +17,26 @@ summary_merge(a, b)
 summary_stats(acc)
 }
 \arguments{
-\item{x}{Numeric vector: the first block, or \code{NULL} for an
-empty accumulator.}
+\item{x}{Numeric vector: the first block, or \code{NULL} (the default) for
+an empty accumulator; for \code{summary_update()}, the next block.}
 
 \item{acc, a, b}{Accumulators from \code{online_summary()}.}
 }
 \value{
 \code{online_summary()}, \code{summary_update()} and
 \code{summary_merge()} return an object of class
-\code{bricklayer_online}; \code{summary_stats()} returns a named numeric
-with \code{n}, \code{mean}, \code{variance}, \code{sd}, \code{skewness}
-and \code{kurtosis}.
+\code{c("bricklayer_online", "list")} (its \code{state} element is the
+numeric vector described in Details); \code{summary_stats()} returns a
+named numeric vector with \code{n}, \code{mean}, \code{variance},
+\code{sd}, \code{skewness} and \code{kurtosis} (excess).
 }
 \description{
-An accumulator for the mean, variance, skewness and kurtosis of a column
-that does not fit in memory. Feed it blocks with
-\code{\link[=summary_update]{summary_update()}} and read the result with
-\code{\link[=summary_stats]{summary_stats()}}.
+An accumulator for the count, mean, variance, skewness and kurtosis of a
+numeric column that does not fit in memory, or that arrives in pieces
+(a file read in chunks, results from several machines). Start one with
+\code{online_summary()}, feed it blocks with \code{summary_update()},
+combine two with \code{summary_merge()} and read the result with
+\code{summary_stats()}.
 }
 \details{
 The merge is EXACT, not approximate: it uses Chan, Golub and LeVeque's
@@ -43,9 +46,22 @@ answer as \code{\link[=core_moments]{core_moments()}} over the whole
 column at once. That is what makes it usable for a capsule member of any
 size: memory stays constant in the number of blocks.
 
+The state is \eqn{(n, \bar{x}, M_2, M_3, M_4)} with
+\eqn{M_k = \sum (x_i - \bar{x})^k}. \code{summary_stats()} reports the
+sample variance \eqn{M_2 / (n - 1)}, the moment skewness
+\eqn{g_1 = (M_3/n) / (M_2/n)^{3/2}} and the excess kurtosis
+\eqn{g_2 = (M_4/n) / (M_2/n)^2 - 3} (the biased moment estimators, without
+small-sample correction). \code{NA} values are dropped from every block.
+Undefined quantities are \code{NaN}: the mean for \eqn{n = 0}, the variance
+for \eqn{n < 2}, the skewness for \eqn{n < 3} and the kurtosis for
+\eqn{n < 4}, and both shape statistics for a constant column.
+
 The object is a plain list and is copied on assignment like any other R
-value, so \code{update} returns the new accumulator and you must keep
-it: \code{acc <- summary_update(acc, block)}.
+value, so \code{summary_update()} returns the new accumulator and you must
+keep it: \code{acc <- summary_update(acc, block)}.
+
+Errors: a block that is not numeric; an accumulator that does not come
+from \code{online_summary()}.
 }
 \examples{
 set.seed(1)
@@ -70,6 +86,10 @@ all.equal(summary_stats(summary_merge(a, b)), summary_stats(acc))
 
 # An empty accumulator reports nothing rather than zero.
 summary_stats(online_summary())
+
+# NA values are skipped; text is refused
+summary_stats(online_summary(c(1, NA, 3)))[c("n", "mean")]
+try(online_summary(c("1", "2")))
 }
 \references{
 Chan TF, Golub GH, LeVeque RJ (1983). Algorithms for

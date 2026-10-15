@@ -20,14 +20,18 @@ compute_footprint(
 )
 }
 \arguments{
-\item{expr}{The expression to evaluate.}
+\item{expr}{The expression to evaluate. It is evaluated once, in the
+calling environment, when the function reaches it (lazily, as a
+promise).}
 
 \item{location}{Passed to \code{\link{carbon_intensity}}: a location code,
 alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
 default) to detect it.}
 
-\item{method}{\code{"auto"} (RAPL when readable, else the model),
-\code{"rapl"} or \code{"model"}.}
+\item{method}{Character scalar: \code{"auto"} (the default; RAPL when
+readable, else the model), \code{"rapl"} (measured; an error when the
+counters are not readable) or \code{"model"} (always the Green
+Algorithms model).}
 
 \item{cpu_power_w}{The CPU's total thermal design power in watts (the
 model's \eqn{P_{cpu}}); \code{NULL} uses codecarbon's unknown-CPU fallback.}
@@ -36,7 +40,10 @@ model's \eqn{P_{cpu}}); \code{NULL} uses codecarbon's unknown-CPU fallback.}
 \code{"machine"} (measured from the whole machine's CPU accounting), or a
 number in between 0 and 1. \code{NULL} means \code{"process"}.}
 
-\item{load_curve}{\code{"linear"} (Green Algorithms) or \code{"codecarbon"}.}
+\item{load_curve}{Character scalar: \code{"linear"} (the default; power
+proportional to utilisation, as Green Algorithms) or \code{"codecarbon"}
+(codecarbon's curves, see Details). Applies only when
+\code{cpu_power_w} is given.}
 
 \item{cores}{Number of logical cores the process utilisation is measured
 against; \code{NULL} detects it.}
@@ -49,26 +56,38 @@ Green Algorithms; codecarbon v2 used 0.375).}
 
 \item{pue}{Power usage effectiveness: 1 for a laptop or desktop (default);
 1.67 is the Green Algorithms default for a data centre, 1.56 the Uptime
-Institute 2024 global average.}
+Institute 2024 global average. Must be a single number of at least 1.}
 
-\item{rapl_dir}{The powercap directory holding the RAPL domains.}
+\item{rapl_dir}{Character scalar, the powercap directory holding the RAPL
+domains; default \code{"/sys/class/powercap"} (Linux).}
 
-\item{proc_stat}{The kernel CPU accounting file read for
-\code{usage = "machine"}.}
+\item{proc_stat}{Character scalar, the kernel CPU accounting file read for
+\code{usage = "machine"}; default \code{"/proc/stat"} (Linux).}
 }
 \value{
-A list of class \code{rmbl_footprint}: \code{value} (the result of
-\code{expr}), \code{duration_s}, \code{cpu_time_s}, \code{usage},
-\code{usage_mode} (\code{"process"}, \code{"machine"} or \code{"fixed"}),
-\code{cores}, \code{memory_gb}, \code{energy_kwh} (with \code{cpu},
-\code{memory}, \code{total}), \code{co2e_g}, \code{carbon_intensity} (the
-row used, with its year and source), \code{method}, \code{assumptions}
-and \code{citations}.
+A list of class \code{rmbl_footprint} with elements \code{value}
+(the result of \code{expr}), \code{duration_s} (numeric, wall seconds),
+\code{cpu_time_s} (numeric, CPU seconds of this process and its
+children), \code{usage} (numeric in \eqn{[0, 1]}, the utilisation),
+\code{usage_mode} (\code{"process"}, \code{"machine"} or
+\code{"fixed"}), \code{cores} (integer), \code{memory_gb} (numeric),
+\code{energy_kwh} (a list of numerics \code{cpu}, \code{memory} and
+\code{total}, in kWh, PUE included), \code{co2e_g} (numeric, grams of
+CO2-equivalent), \code{carbon_intensity} (the list returned by
+\code{\link{carbon_intensity}}, with its year and source), \code{method}
+(\code{"rapl"} or \code{"model"}, the method actually used),
+\code{assumptions} (character vector of every default or fallback that
+stood in for a measurement) and \code{citations} (character vector).
+The print method shows a three-line summary.
 }
 \description{
 Evaluates \code{expr} and reports the electricity it used and the
 CO2-equivalent that electricity implies, by one of two methods, for the
-grid it ran on, offline.
+grid it ran on, offline. Use it to report the energy and emissions of an
+analysis next to its results (as journals and funders increasingly ask),
+or to compare two ways of running the same computation. The result keeps
+the value of \code{expr}, and lists every figure that was assumed rather
+than measured.
 }
 \details{
 \strong{Measured} (\code{method = "rapl"}): the CPU package energy
@@ -84,8 +103,10 @@ memory is still modelled. Available when \code{\link{rapl_available}()} is
 with \eqn{t} the running time, \eqn{P_{cpu}} the CPU's thermal design
 power in watts, \eqn{u} its utilisation, \eqn{M} the memory in GB,
 \eqn{P_{mem} = 0.3725} W/GB and \eqn{PUE} the data-centre overhead. When
-the CPU's power is unknown the fallback is codecarbon's: 50\\% of a
-constant 85 W.
+the CPU's power is unknown (\code{cpu_power_w = NULL}) the fallback is
+codecarbon's: 50\% of a constant 85 W, that is 42.5 W charged for the whole
+running time whatever the measured utilisation (the utilisation is still
+reported, but not applied).
 
 \strong{Utilisation} is measured, not assumed, in one of two ways.
 \code{usage = "process"} (the default) is this R process's own CPU time,
@@ -98,12 +119,12 @@ question is what the machine drew. Where \code{/proc/stat} is absent the
 process figure is used and the assumptions say so. A number between 0 and 1
 fixes the utilisation, as the Green Algorithms calculator asks for it.
 \code{load_curve} chooses how power scales with that utilisation: linearly
-(Green Algorithms) or along codecarbon's curves, a floor at 10\\% of
+(Green Algorithms) or along codecarbon's curves, a floor at 10\% of
 \eqn{P_{cpu}} for a process and \eqn{0.1 + 0.9 u^3} for a machine, so a
 figure can be made comparable with either tool.
 
 Cross-checked against codecarbon 3.3.1 on one workload with the same forced
-inputs: memory energy identical (5.96 W for 16 GB), CPU energy within 8\\%.
+inputs: memory energy identical (5.96 W for 16 GB), CPU energy within 8\%.
 \code{load_curve = "codecarbon"} reproduces its power-from-load curves, so
 what remains of the difference is the load measurement itself (codecarbon
 samples the load during the run; this function integrates the CPU time).
@@ -116,6 +137,23 @@ from the environment, the time zone or the locale
 (\code{\link{detect_location}}) and the detection is recorded. Every
 default that stood in for a measurement is listed in \code{assumptions}, so
 a report can say what was measured and what was assumed.
+
+The energy figures include the PUE factor (CPU, memory and total alike).
+The running time has a floor of the CPU time divided by the cores, so a
+computation faster than the clock's resolution does not come out at zero.
+Short computations (well under a second) give figures dominated by timer
+resolution; measure a representative workload.
+
+Every argument is checked, and the carbon intensity looked up, before
+\code{expr} is evaluated, so a bad argument never costs the computation.
+Errors: an unknown \code{location}; \code{pue} below 1 or not a single
+finite number; \code{cpu_power_w} or \code{cores} not a single positive
+number (\code{cores} also whole); \code{memory_gb} or
+\code{memory_power_w_per_gb} negative; \code{usage} other than
+\code{"process"}, \code{"machine"} or one number in \eqn{[0, 1]};
+\code{method = "rapl"} where the counters are not readable. An error
+inside \code{expr} propagates unchanged. Nothing is written and nothing is
+fetched.
 }
 \examples{
 fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
@@ -129,6 +167,13 @@ compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 8)$assumptions
 # the whole machine's utilisation, on codecarbon's machine curve
 compute_footprint(1 + 1, location = "FR", usage = "machine", load_curve = "codecarbon",
                   cpu_power_w = 45, memory_gb = 8)$usage_mode
+# a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
+fp2 <- compute_footprint(sum(sqrt(seq_len(2e5))), location = 30, usage = 0.5,
+                         cpu_power_w = 65, memory_gb = 16, pue = 1.67, method = "model")
+fp2$energy_kwh
+footprint_equivalents(fp2$co2e_g)
+# a bad argument is refused before the expression runs
+try(compute_footprint(Sys.sleep(10), pue = 0.9))
 }
 \references{
 Lannelongue, L., Grealey, J. and Inouye, M. (2021). Green

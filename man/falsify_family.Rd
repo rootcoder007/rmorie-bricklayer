@@ -13,22 +13,24 @@ objects, or a named numeric vector of p-values.}
 \item{method}{\code{"holm"} (the default), \code{"bh"},
 \code{"bonferroni"} or \code{"none"}.}
 
-\item{alpha}{Threshold applied to the adjusted values.}
+\item{alpha}{Number, default 0.05: the threshold applied to the adjusted
+values.}
 }
 \value{
-A list of class \code{bricklayer_falsify_family}: a
-\code{results} data frame ( \code{name}, \code{p}, \code{adjusted},
-\code{survives}) , the \code{method}, the family size, and
-\code{at_floor}, the names whose p-value equals the smallest their
-permutation count could produce.
+A list of class \code{bricklayer_falsify_family} with \code{results} (a data
+frame of \code{name}, \code{p}, \code{adjusted} and logical \code{survives}, sorted by
+\code{p}),
+\code{method}, \code{family_size} (integer), \code{alpha}, and \code{at_floor} (the
+names
+whose p-value equals the smallest their permutation count could produce;
+empty for a numeric vector). The print method shows the table.
 }
 \description{
 Takes the p-values from several
 \code{\link[=capsule_falsify]{capsule_falsify()}} runs -- or a plain
 numeric vector -- and reports which survive once the size of the family
 is accounted for.
-}
-\details{
+
 Running the permutation control over twenty statistics and reporting the
 one that came in under 0.05 is not a finding: at that family size
 roughly one spurious result is what chance produces. Which correction to
@@ -43,6 +45,25 @@ small number of permutations a whole family can be uncorrectable --
 every p sits at the floor. That is reported rather than hidden, because
 the alternative is a table of adjusted values that look like evidence of
 nothing in particular.
+}
+\details{
+With the \eqn{m} p-values sorted, \eqn{p_{(1)} \le \dots \le p_{(m)}}, the
+adjusted values are: Holm, \eqn{\max_{j \le i} (m - j + 1) p_{(j)}};
+Benjamini-Hochberg, \eqn{\min_{j \ge i} (m / j) p_{(j)}}; Bonferroni,
+\eqn{m p_{(i)}}; all capped at 1. They agree with
+\code{stats::p.adjust()} with methods \code{"holm"}, \code{"BH"} and
+\code{"bonferroni"}. A member survives when its adjusted value is at
+most \code{alpha}.
+
+For a list of \code{\link[=capsule_falsify]{capsule_falsify()}} results the p-value
+used is that of
+each result's permutation control, and the floor is \eqn{1/(n + 1)} for
+its \code{n} permutations. For a numeric vector there is no floor to check and
+unnamed values are named \code{p1}, \code{p2}, ....
+
+Errors: a list whose members are not all falsification results, or that
+is unnamed; a member without a permutation p-value; a missing p-value; a
+p-value outside \eqn{[0, 1]}.
 }
 \examples{
 # four statistics, one of which is real
@@ -63,6 +84,11 @@ falsify_family(fam)
 # the correction is what stops the smallest of several from being
 # read as the finding
 falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
+
+# the false-discovery rate is less strict than Holm
+falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), method = "bh")$results
+
+try(falsify_family(c(a = 0.01, b = 1.2)))
 }
 \seealso{
 \code{\link[=capsule_falsify]{capsule_falsify()}},

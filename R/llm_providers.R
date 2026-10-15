@@ -318,8 +318,12 @@
   req <- .bl_llm_request(rt, model, messages, tools, max_tokens)
   lbl <- .bl_llm_wait_label(model %||% rt$model)
   if (nzchar(lbl)) {
-    .Call(C_rmbl_wait_label, lbl, isTRUE(l10n_info()[["UTF-8"]]), !nzchar(Sys.getenv("NO_COLOR")))
-    on.exit(.Call(C_rmbl_wait_label, "", FALSE, FALSE), add = TRUE)
+    # the console's mode, as .bl_busy() passes it: c(colours, redraws, to stdout). The old logical
+    # form always drew on stderr, which RStudio shows in the error colour
+    con <- .bl_console()
+    mode <- as.numeric(c(con$colors, TRUE, identical(con$out, "stdout")))
+    .Call(C_rmbl_wait_label, lbl, con$unicode, mode)
+    on.exit(.Call(C_rmbl_wait_label, "", con$unicode, mode), add = TRUE)
   }
   send <- function() {
     .bl_post_json(req$url, req$body, timeout = timeout, headers = .bl_llm_headers(rt), local = isTRUE(rt$local))

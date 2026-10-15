@@ -7,9 +7,9 @@
 chunk_file(path, chunk_bytes = 1048576L)
 }
 \arguments{
-\item{path}{Path to an existing file.}
+\item{path}{Path to an existing file, a single string.}
 
-\item{chunk_bytes}{Chunk size in bytes (default
+\item{chunk_bytes}{Chunk size in bytes, a positive whole number (default
 1048576, i.e. 1 MiB).}
 }
 \value{
@@ -19,10 +19,25 @@ a file is bytes: an R string cannot hold a zero byte, so a character
 chunk could not represent an arbitrary binary file at all.
 }
 \description{
-Reads \code{path} as bytes and returns them as chunk strings suitable
-for \code{\link[=merkle_root]{merkle_root()}} and friends. The default 1
-MiB chunk is a compromise: smaller chunks localise a change more
-precisely but make the tree and its proofs larger.
+Reads a file as bytes and returns it as consecutive chunks of a fixed
+size, ready for \code{\link[=merkle_root]{merkle_root()}},
+\code{\link[=merkle_leaves]{merkle_leaves()}} and
+\code{\link[=merkle_proof]{merkle_proof()}}. Use it to pin a large data file as a
+Merkle root, so
+that a later change can be traced to the chunk that moved.
+}
+\details{
+The file is read sequentially with \code{readBin()} in pieces of
+\code{chunk_bytes}; every chunk has exactly that many bytes except the
+last, which holds the remainder. All chunks are held in memory at once,
+so the memory used is about the size of the file. The default 1 MiB
+chunk is a compromise: smaller chunks localise a change more precisely
+but make the tree and its proofs larger. An edit that changes the file's
+length shifts every later chunk boundary, so only edits that keep the
+length localise to one chunk.
+
+Errors: \code{path} that does not name an existing file (or names a
+directory); \code{chunk_bytes} that is not a positive whole number.
 }
 \examples{
 p <- tempfile()
@@ -31,15 +46,24 @@ writeLines(rep("some capsule content", 50), p)
 # One small chunk size to show the splitting.
 ch <- chunk_file(p, chunk_bytes = 128)
 length(ch)
+lengths(ch)
 
-# The chunks reconstruct the file and pin it as a Merkle root.
+# The chunks pin the file as a Merkle root.
 merkle_root(ch)
 
 # They are the file's bytes, so they concatenate back to it exactly.
 identical(unlist(ch), readBin(p, "raw", file.size(p)))
 
-# Editing the file changes exactly one leaf.
-unlink(p)
+# Overwriting bytes in place changes exactly one leaf.
+b <- readBin(p, "raw", file.size(p))
+b[300] <- as.raw(0x58)
+q <- tempfile()
+writeBin(b, q)
+which(merkle_leaves(ch) != merkle_leaves(chunk_file(q, chunk_bytes = 128)))
+
+# a chunk size must be positive
+try(chunk_file(p, chunk_bytes = 0))
+unlink(c(p, q))
 }
 \seealso{
 \code{\link[=merkle_root]{merkle_root()}},

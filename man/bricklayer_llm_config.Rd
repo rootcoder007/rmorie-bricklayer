@@ -8,47 +8,119 @@ bricklayer_llm_config(...)
 }
 \arguments{
 \item{...}{Settings to save, as \code{key = value}: \code{route}
-(\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id),
-\code{<provider>.key} and \code{<provider>.model} (e.g.
-\code{anthropic.key}, \code{openai.model}), \code{own.url},
-\code{own.key}, \code{own.model}, \code{ollama.url},
-\code{ollama.model}, \code{ollama.key}. \code{NULL} or \code{""}
-removes a saved setting. With no arguments nothing is written.}
+(\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id such as
+\code{"anthropic"}; case is ignored), \code{<provider>.key} and
+\code{<provider>.model} (e.g. \code{anthropic.key},
+\code{openai.model}), \code{own.url}, \code{own.key},
+\code{own.model}, \code{ollama.url}, \code{ollama.model},
+\code{ollama.key}. Each value is a single string (leading and trailing
+spaces are removed). \code{NULL}, \code{NA} or \code{""} removes a
+saved setting. With no arguments nothing is written.}
 }
 \value{
-A data frame with one row per setting: \code{key}, \code{value}
-(a key only as \code{"set"}), \code{source} (\code{"environment"},
-\code{"saved"} or \code{"default"}), \code{env} (the variable that
-overrides it) and \code{help}; visibly when called with no settings.
+A data frame with one row per setting (seven general settings
+followed by a key and a model row for each provider) and five character
+columns: \code{key} (the setting's name), \code{value} (its current
+value, the default spelled out; a key only as \code{"set"} or
+\code{"(not set)"}), \code{source} (\code{"environment"},
+\code{"saved"} or \code{"default"}), \code{env} (the environment
+variable that overrides it) and \code{help} (what it is for). Returned
+visibly when called with no settings, invisibly after saving.
 }
 \description{
 Every setting that decides how \code{\link{bricklayer_llm_ask}} reaches a
 model, in one place: which route to use; your key and model for each
 provider (bring your own key: see \code{\link{bricklayer_llm_providers}});
 the address, key and model of your own OpenAI-compatible server; and of a
-local or LAN Ollama server. Settings are saved in
-\code{$XDG_CONFIG_HOME/morie/llm.json} (default \code{~/.config/morie/}),
-a private file (owner-only) this function writes only when you pass a
-setting; keys are never printed. An environment variable that is set (the
-\code{env} column, e.g. \code{ANTHROPIC_API_KEY}) wins over a saved value.
+local or LAN Ollama server. Called with no arguments it only reads: it
+returns a table of every setting, its current value, and where that value
+comes from. Called with \code{key = value} pairs it saves those settings
+first. Keys are never printed, only whether one is set.
 }
 \details{
+\strong{Where settings live.} Saved settings are kept in
+\code{$XDG_CONFIG_HOME/morie/llm.json} (\code{~/.config/morie/llm.json}
+when \code{XDG_CONFIG_HOME} is unset), a private file (mode 0600, in a
+private directory) next to the shared \code{credentials.json}. The file is
+written only when you pass a setting; only the settings that change are
+rewritten in place, so the rest of the file stays exactly as it was. An
+empty set of settings removes the file.
+
+\strong{Precedence.} An environment variable that is set (the \code{env}
+column, for example \code{ANTHROPIC_API_KEY} or \code{OLLAMA_HOST}) wins
+over a saved value, which wins over the built-in default. Saving a
+setting whose variable is set warns that the variable still wins. A
+provider key is also read from the provider's alternative variable where
+it has one (\code{GOOGLE_API_KEY} for Gemini, \code{HUGGINGFACE_HUB_TOKEN}
+for Hugging Face, \code{CO_API_KEY} for Cohere).
+
+\strong{Checks when saving.} Names must be among the settings listed in
+the \code{key} column (\code{"unknown setting"} otherwise) and every value
+passed as \code{key = value} with one value each. \code{route} must be
+\code{"auto"}, \code{"own"}, \code{"ollama"} or a provider id; the
+retired \code{"hosted"} route is refused. \code{own.url} must be an
+\code{http(s)://} address and \code{ollama.url} an address or
+\code{host:port}; both are refused if they contain spaces, a fragment or
+user information, and, unless they point at this machine or a private LAN
+address, they get the package's public-address check (a metadata or
+link-local address is refused). \code{"off"}, \code{"none"} or
+\code{"disabled"} turns a server off. A key with a line break or control
+character in it is refused. A new \code{own.url} or \code{ollama.url}
+drops the key saved for the old server (with a message), so a key is
+never sent to a server it was not saved for. A settings file that is not
+a JSON object, or holds a setting that is not a non-empty string, stops
+every call until it is fixed or moved aside with \code{rmbl config reset}.
+
+Reading the settings takes a few milliseconds: the table of settings is
+built once per session and the file is read once per call. Nothing is
+sent over the network by this function.
+
 The same is available from the shell: \code{rmbl config} lists the
 settings, \code{rmbl config set KEY VALUE} and \code{rmbl config unset KEY}
 change one (a key is asked for without echo when no value is given), and
 \code{rmbl config setup} walks through them.
 }
 \examples{
-# reading the settings writes nothing
-head(bricklayer_llm_config())
+# Work in a temporary settings directory so your own settings are
+# untouched.
+old <- Sys.getenv("XDG_CONFIG_HOME", unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile("cfg"))
+
+# Reading the settings writes nothing.
+cfg <- bricklayer_llm_config()
+head(cfg[, c("key", "value", "source")])
+nrow(cfg)
+
+# Save a local Ollama model and use it for every request; the key column
+# shows where each value now comes from.
+bricklayer_llm_config(ollama.model = "qwen3:8b", route = "ollama")
+cfg <- bricklayer_llm_config()
+cfg[cfg$key \%in\% c("route", "ollama.model"), c("key", "value", "source")]
+
+# A key is shown only as set or not set.
+bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.key = "k-123")
+cfg <- bricklayer_llm_config()
+cfg$value[cfg$key == "own.key"]
+
+# Back to the defaults: NULL removes a saved setting.
+bricklayer_llm_config(route = NULL, ollama.model = NULL, own.url = NULL,
+                      own.key = NULL)
+
+# Unknown settings and retired routes are refused.
+try(bricklayer_llm_config(colour = "blue"))
+try(bricklayer_llm_config(route = "hosted"))
+
+if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 \dontrun{
 # your Anthropic key and model, and always use them
 bricklayer_llm_config(anthropic.key = "sk-ant-...", route = "anthropic")
 # an Ollama server on another machine
 bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
-# your own OpenAI-compatible server
-bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "my-model")
-# back to the automatic order
-bricklayer_llm_config(route = NULL)
 }
+}
+\seealso{
+\code{\link{bricklayer_llm_providers}} for the providers and
+their variables, \code{\link{bricklayer_llm_status}} for which routes
+are reachable, \code{\link{bricklayer_llm_ask}} which uses these
+settings.
 }

@@ -303,15 +303,19 @@ test_that("the gzip codec is real gzip", {
 test_that("the Merkle tree matches a tree rebuilt with digest", {
   skip_if_no("digest")
   hexraw <- function(h) .rmbl_hex_to_raw(h)
-  ref_root <- function(chunks) {
+  # scheme 2 (0.5.13 on) prefixes a leaf with 0x00 and a node with 0x01 (RFC 6962); scheme 1,
+  # which roots pinned by 0.5.12 use, has no prefixes
+  ref_root <- function(chunks, scheme = 2L) {
+    lp <- if (scheme == 2L) as.raw(0L) else raw(0)
+    np <- if (scheme == 2L) as.raw(1L) else raw(0)
     lvl <- vapply(chunks, function(b) {
-      digest::digest(b, algo = "sha256", serialize = FALSE)
+      digest::digest(c(lp, b), algo = "sha256", serialize = FALSE)
     }, "")
     while (length(lvl) > 1L) {
       up <- character(0)
       i <- 1L
       while (i + 1L <= length(lvl)) {
-        up <- c(up, digest::digest(c(hexraw(lvl[i]), hexraw(lvl[i + 1L])),
+        up <- c(up, digest::digest(c(np, hexraw(lvl[i]), hexraw(lvl[i + 1L])),
                                    algo = "sha256", serialize = FALSE))
         i <- i + 2L
       }
@@ -327,9 +331,10 @@ test_that("the Merkle tree matches a tree rebuilt with digest", {
   for (k in 1:17) {
     ch <- lapply(seq_len(k), function(i) rnd(10L + i, 300L + i))
     expect_identical(merkle_root(ch), ref_root(ch))
+    expect_identical(merkle_root(ch, scheme = 1), ref_root(ch, 1L))
     expect_identical(merkle_leaves(ch),
                      vapply(ch, function(b) {
-                       digest::digest(b, algo = "sha256", serialize = FALSE)
+                       digest::digest(c(as.raw(0L), b), algo = "sha256", serialize = FALSE)
                      }, ""))
   }
   # promotion, demonstrated: duplicating the last leaf of a three-leaf
@@ -371,7 +376,7 @@ test_that("a file's digest is the digest of its bytes", {
   ch <- chunk_file(p, chunk_bytes = 64L)
   expect_length(ch, 4L)
   expect_identical(unlist(ch), as.raw(0:255))
-  expect_identical(merkle_leaves(ch)[1L], core_sha256(as.raw(0:63)))
+  expect_identical(merkle_leaves(ch)[1L], core_sha256(c(as.raw(0L), as.raw(0:63))))  # leaf prefix, scheme 2
   # an empty file has no chunks
   writeBin(raw(0), p)
   expect_length(chunk_file(p), 0L)

@@ -12,24 +12,39 @@ digest_object(x, algo = c("sha256", "sha512", "blake2b", "crc32"), key = NULL)
 \item{algo}{\code{"sha256"} (default), \code{"sha512"},
 \code{"blake2b"} or \code{"crc32"}.}
 
-\item{key}{Optional key, for \code{"blake2b"} only: gives a
-keyed fingerprint that only a key holder can reproduce.}
+\item{key}{Optional key (a single string or raw vector), default \code{NULL}.
+Only for \code{"sha256"} (HMAC-SHA-256) and \code{"blake2b"} (keyed BLAKE2b): gives
+a keyed fingerprint that only a key holder can reproduce.}
 }
 \value{
-A length-1 character vector (or numeric for \code{"crc32"}) .
+A length-1 character vector of lowercase hex (64 characters for
+\code{"sha256"} and \code{"blake2b"}, 128 for \code{"sha512"}), or a length-1 numeric
+for \code{"crc32"}.
 }
 \description{
 Fingerprints any R object by hashing its serialization, so a list, a
 data frame, a function or a fitted model all get a stable digest. The
 counterpart of \code{digest::digest()}, computed with this package's own
 hashes.
-}
-\details{
+
 Serialization is pinned to version 2 with XDR byte order, so the digest
 is the same on a big-endian machine as on a little-endian one. Two
 objects that are \code{identical()} produce the same digest; two that
 merely print the same need not, because attributes are part of the
 serialization.
+}
+\details{
+The object is serialized with \code{serialize(x, NULL, version = 2,
+xdr = TRUE)} and the bytes are hashed with \code{\link[=core_sha256]{core_sha256()}},
+\code{\link[=core_sha512]{core_sha512()}}, \code{\link[=core_blake2b]{core_blake2b()}}
+(32 bytes) or \code{\link[=core_crc32]{core_crc32()}}. CRC-32 is
+a checksum for accidental corruption, not a cryptographic hash. With a
+\code{key} the digest is HMAC-SHA-256 for \code{"sha256"} and keyed BLAKE2b for
+\code{"blake2b"}; a key with \code{"sha512"} or \code{"crc32"} is an error rather than
+a
+silently unkeyed digest. Objects that contain environments (functions,
+many fitted models) serialize their enclosing environments too, so
+their digest can change between sessions even when the code does not.
 }
 \examples{
 digest_object(list(a = 1L, b = "x"))
@@ -48,6 +63,9 @@ digest_object(mtcars, algo = "blake2b", key = "secret")
 
 # A data frame's digest pins the data, so it can go in a manifest.
 digest_object(data.frame(x = 1:3))
+
+# a key with an algorithm that has no keyed form is refused
+try(digest_object(1:3, algo = "crc32", key = "secret"))
 }
 \seealso{
 \code{\link[=core_sha256]{core_sha256()}} for hashing text or bytes

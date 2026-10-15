@@ -9,16 +9,32 @@ inline_hist(x, bins = 10L)
 \arguments{
 \item{x}{Numeric vector.}
 
-\item{bins}{Number of bins (default 10).}
+\item{bins}{Number of bins, and so of characters, one positive whole
+number (default 10).}
 }
 \value{
 A length-1 character vector of \code{bins} characters.
 }
 \description{
-A one-line sketch of a column's distribution, as block characters (or
-ASCII where the console cannot render them). The point is density of
+Draws a one-line sketch of a column's distribution, as block characters
+(or ASCII where the console cannot render them). The point is density of
 information: a mean and a standard deviation cannot tell you a column is
-bimodal, and this can, in the width of a table cell.
+bimodal, skewed or has a gap, and this can, in the width of a table cell.
+\code{\link[=profile_columns]{profile_columns()}} shows one for every numeric column.
+}
+\details{
+Non-finite values (\code{NA}, \code{NaN}, \code{Inf}) are dropped. The
+range of the rest is cut into \code{bins} equal-width bins (as
+\code{graphics::hist()} with those breaks) and each bin's count is drawn
+as one of eight Unicode block heights, scaled to the largest bin; an
+empty bin is a space, and a bin with any values is at least the lowest
+block. When the session is not UTF-8, or the environment variable
+\code{RMBL_ASCII_ONLY} is set, five ASCII levels (\code{. : - = #}) are
+used instead. A column with no spread gives one full block in the middle;
+no finite values give spaces.
+
+Errors: \code{x} that is not numeric; \code{bins} that is not one
+positive whole number.
 }
 \examples{
 set.seed(1)
@@ -33,6 +49,12 @@ inline_hist(c(stats::rnorm(500, -3), stats::rnorm(500, 3)))
 
 # A constant column has no spread to show.
 inline_hist(rep(5, 10))
+
+# more bins for more detail
+inline_hist(stats::rexp(1000), bins = 30)
+
+# text is not a distribution
+try(inline_hist(c("a", "b")))
 }
 \seealso{
 \code{\link[=profile_columns]{profile_columns()}}, which includes one

@@ -7,28 +7,87 @@
 bricklayer_llm_chat(messages, model = NULL, route = NULL, timeout = 120)
 }
 \arguments{
-\item{messages}{A list of turns, each \code{list(role = , content = )} with
-role \code{"system"}, \code{"user"} or \code{"assistant"}.}
+\item{messages}{A non-empty list of turns, each a list with two
+character scalars: \code{role}, one of \code{"system"}, \code{"user"}
+or \code{"assistant"}, and \code{content}, the text of that turn. The
+last turn is normally a \code{"user"} turn. Other elements of a turn are
+dropped.}
 
-\item{model}{Model id; default the route's own (see above).}
+\item{model}{Character scalar or \code{NULL} (the default): the model id
+to use. \code{NULL} uses the route's own choice: \code{MORIE_LLM_MODEL}
+for your own endpoint, \code{OLLAMA_MODEL} or the first pulled model
+for Ollama, the saved \code{PROVIDER.model} or the provider's default
+model (see \code{\link{bricklayer_llm_providers}}).}
 
-\item{route}{\code{NULL} (the saved route, else the first that is set up),
-\code{"auto"} (the automatic order this time, ignoring a saved route),
-or \code{"own"}, \code{"ollama"} or a provider id to insist on one.}
+\item{route}{Character scalar or \code{NULL} (the default: the saved
+route, else the first that is set up). \code{"auto"} uses the
+automatic order and ignores a saved route; \code{"own"},
+\code{"ollama"} or a provider id insists on that one.}
 
-\item{timeout}{Seconds to wait for the reply.}
+\item{timeout}{Numeric scalar, seconds to wait for each reply; default
+\code{120}. With \code{docs = TRUE} the whole exchange gets at most
+three times this.}
 }
 \value{
-The reply text.
+A character scalar: the text of the model's reply.
 }
 \description{
-Sends a whole conversation (system, user and assistant turns) to the route
-\code{\link{bricklayer_llm_ask}} would take, and returns the reply. Unlike
-\code{bricklayer_llm_ask()} it adds nothing to the conversation: no help
-pages, no tools.
+Sends a whole conversation (system, user and earlier assistant turns) to
+the route \code{\link{bricklayer_llm_ask}} would take, and returns the
+model's next reply. Use it when you manage the conversation yourself, for
+example to keep a multi-turn exchange or to give the model earlier answers
+as context. Unlike \code{bricklayer_llm_ask()} it adds nothing to the
+conversation (no help pages, no tools) and it never reads or writes the
+saved-answer cache.
+}
+\details{
+The route is resolved exactly as in \code{\link{bricklayer_llm_route_info}}.
+The turns are sent in the provider's own wire format (the OpenAI chat
+completions format for most providers, your own endpoint and Ollama;
+Anthropic's Messages API; Google's Gemini \code{generateContent}). One
+request is made, through the package's own libcurl binding, and waits at
+most \code{timeout} seconds.
+
+Errors, before anything is sent: \code{messages} is not a non-empty list
+of turns each with a single \code{role} among \code{"system"},
+\code{"user"} and \code{"assistant"} and a single non-missing character
+\code{content}; \code{route = "hosted"} or an unknown route; no route is
+set up (the message says what to set); the route has no model and
+\code{model} is not given. After sending: the server cannot be reached,
+rejects the key (HTTP 401 or 403), or answers with an error. The key is
+redacted from any error text a server echoes back.
 }
 \examples{
-\dontrun{
-bricklayer_llm_chat(list(list(role = "user", content = "Name one survey weight type.")))
+old <- Sys.getenv(c("XDG_CONFIG_HOME", "OLLAMA_HOST"), unset = NA)
+Sys.setenv(XDG_CONFIG_HOME = tempfile(), OLLAMA_HOST = "off")
+
+# a conversation is a list of role/content turns
+turns <- list(
+  list(role = "system", content = "Answer in one sentence."),
+  list(role = "user", content = "Name one type of survey weight.")
+)
+str(turns)
+
+# a malformed turn is refused before anything is sent
+try(bricklayer_llm_chat(list("Name one type of survey weight.")))
+
+# with no route set up the error says what to set up
+try(bricklayer_llm_chat(turns, route = "ollama"))
+
+for (v in names(old)) {
+  if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
+\dontrun{
+# needs a key or a local model, and the network
+Sys.setenv(ANTHROPIC_API_KEY = "...")
+bricklayer_llm_chat(turns)
+bricklayer_llm_chat(c(turns, list(
+  list(role = "assistant", content = "A design weight."),
+  list(role = "user", content = "And a second one?")
+)))
+}
+}
+\seealso{
+\code{\link{bricklayer_llm_ask}} for one question with the
+package help at hand.
 }

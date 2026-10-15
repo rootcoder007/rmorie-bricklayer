@@ -7,35 +7,70 @@
 odds_ratio_check(counts, reference, reported, tolerance = 0.05)
 }
 \arguments{
-\item{counts}{Numeric matrix with row names (groups) and two columns
-(outcome absent, outcome present), in that order.}
+\item{counts}{Numeric matrix, data frame or table of counts with row names
+(the groups) and exactly two columns: outcome absent, then outcome
+present.}
 
-\item{reference}{Row name of the reference group.}
+\item{reference}{Character string: the row name of the reference group.}
 
-\item{reported}{Named numeric vector of the reported odds ratios, one per
-non-reference row.}
+\item{reported}{Named numeric vector of the odds ratios the report states,
+one per non-reference group, named by group. Extra names are ignored.}
 
-\item{tolerance}{Relative tolerance for a match (default 0.05).}
+\item{tolerance}{Number, default \code{0.05}: the relative tolerance for a
+match (5 percent), to allow for rounding in the report.}
 }
 \value{
-A list: \code{computed}, \code{reported}, \code{consistent}, \code{matches} (a data
-frame of the relabellings that reproduce the reported values) and
-\code{verdict}.
+A list with elements \code{computed} (named numeric odds ratios
+from the table as labelled), \code{reported} (the reported values, in
+the same order), \code{consistent} (logical), \code{matches} (a data frame
+with character \code{relabelling}, for example \code{"B -> C, C -> B"},
+and logical \code{outcome_columns_swapped}, one row per relabelling that
+reproduces the reported values) and \code{verdict} (a one-sentence
+character summary).
 }
 \description{
-Given a k-by-2 table of counts (rows = groups, columns = outcome absent,
-outcome present), a reference group and the odds ratios a report states
-for the other groups, this recomputes the odds ratios from the table and
-then under every permutation of the row labels (and with the outcome
-columns swapped). It says whether the reported values follow from the
-table as labelled and, if not, which relabelling reproduces them. A
-four-fold odds ratio that a report gives as thirty-six-fold is typically
-reproduced exactly by one such permutation.
+Recomputes the odds ratios a report gives for each group from the
+underlying table of counts, and says whether the reported values follow
+from the table as it is labelled. If they do not, it tries every
+reassignment of the group labels (and the two outcome columns swapped) and
+lists the relabellings that do reproduce the reported values. Use it when
+a published odds ratio looks implausible: a four-fold ratio reported as
+thirty-six-fold is typically reproduced exactly by one such relabelling,
+which shows the groups were mislabelled rather than the arithmetic wrong.
+}
+\details{
+With row \eqn{r} holding \eqn{a_r} (outcome absent) and \eqn{b_r}
+(outcome present), the odds ratio of group \eqn{r} against the reference
+\eqn{0} is
+\deqn{OR_r = \frac{b_r / a_r}{b_0 / a_0}.}
+A reported value matches when \eqn{|OR_r - \widehat{OR}_r| \le}
+\code{tolerance} \eqn{\times |\widehat{OR}_r|} for every non-reference
+group, and all values are finite. The search covers all \eqn{k!}
+permutations of the row labels, each with and without the outcome columns
+swapped (the identity without a swap is the "as labelled" check), and is
+only run for \eqn{k \le 7} groups. A zero cell gives an infinite or
+undefined odds ratio, which never matches.
+
+Errors: \code{counts} not a matrix, data frame or table with two columns
+and row names; \code{reference} not a row name; \code{reported} not named
+by every non-reference row.
 }
 \examples{
 tab <- matrix(c(900, 100, 700, 300, 400, 600),
   ncol = 2, byrow = TRUE,
   dimnames = list(c("A", "B", "C"), c("no", "yes"))
 )
-odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))$verdict
+# the odds ratios as labelled: B 3.86, C 13.5
+odds_ratio_check(tab, "A", c(B = 3.857, C = 13.5))$consistent
+
+# a report that swapped B and C
+chk <- odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))
+chk$matches
+chk$verdict
+
+# every non-reference group needs a reported value
+try(odds_ratio_check(tab, "A", c(B = 3.857)))
+}
+\seealso{
+\code{\link{verify_marginals}}, \code{\link{relabel_forensics}}.
 }

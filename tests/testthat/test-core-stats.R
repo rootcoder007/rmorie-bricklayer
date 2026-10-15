@@ -50,9 +50,10 @@ test_that("core_normal_logpdf is dnorm on the log scale", {
   expect_equal(stats::dnorm(50), 0)
   expect_true(is.finite(core_normal_logpdf(50)))
   expect_equal(core_normal_logpdf(50), stats::dnorm(50, log = TRUE))
-  # a non-positive scale is not a distribution
-  expect_true(is.nan(core_normal_logpdf(0, 0, 0)))
-  expect_true(is.nan(core_normal_logpdf(0, 0, -1)))
+  # a non-positive scale is not a distribution: refused since 0.5.13, as core_normal_pdf() does
+  # (it returned NaN)
+  expect_error(core_normal_logpdf(0, 0, 0), "single positive number")
+  expect_error(core_normal_logpdf(0, 0, -1), "single positive number")
 })
 
 test_that("core_moments computes all four moments in one pass", {
@@ -189,8 +190,9 @@ test_that("trimmed and winsorized means behave as documented", {
   expect_true(all(diff(tms) <= 0))
   expect_lt(tms[length(tms)], tms[1])
 
-  expect_true(is.nan(core_trimmed_mean(x, 0.6)))
-  expect_true(is.nan(core_trimmed_mean(x, -0.1)))
+  # a trim outside [0, 0.5] is refused since 0.5.13 (it returned NaN)
+  expect_error(core_trimmed_mean(x, 0.6), "in \\[0, 0.5\\]")
+  expect_error(core_trimmed_mean(x, -0.1), "in \\[0, 0.5\\]")
   expect_true(is.na(core_trimmed_mean(c(1, NA), 0.1)))
 })
 

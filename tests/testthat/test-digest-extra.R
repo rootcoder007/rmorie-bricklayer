@@ -135,18 +135,20 @@ test_that("digest comparison is length-aware and constant-time", {
 
 test_that("the Merkle root is the hand-computed construction", {
   # hashing the concatenated BYTES of two child digests, which is what
-  # the tree does -- not the concatenated hex spelling
+  # the tree does -- not the concatenated hex spelling. Scheme 2 (0.5.13 on) prefixes a node
+  # with 0x01 and a leaf with 0x00 (RFC 6962); scheme 1 had neither
   pair <- function(h1, h2) {
     hex <- paste0(h1, h2)
-    core_sha256(as.raw(strtoi(substring(
+    core_sha256(c(as.raw(1L), as.raw(strtoi(substring(
       hex, seq(1L, 127L, 2L),
       seq(2L, 128L, 2L)
-    ), 16L)))
+    ), 16L))))
   }
-  la <- core_sha256("a")
-  lb <- core_sha256("b")
-  lc <- core_sha256("c")
-  ld <- core_sha256("d")
+  leaf <- function(x) core_sha256(c(as.raw(0L), charToRaw(x)))
+  la <- leaf("a")
+  lb <- leaf("b")
+  lc <- leaf("c")
+  ld <- leaf("d")
 
   # a single chunk's root is its own leaf digest
   expect_equal(merkle_root("a"), la)
@@ -246,7 +248,7 @@ test_that("chunk_file splits a file and pins it", {
   expect_equal(length(chunk_file(p, chunk_bytes = 1e6)), 1L)
   expect_equal(
     merkle_root(chunk_file(p, 1e6)),
-    core_sha256(chunk_file(p, 1e6)[[1L]])
+    core_sha256(c(as.raw(0L), chunk_file(p, 1e6)[[1L]]))  # the leaf prefix of scheme 2
   )
   # editing one chunk's worth of bytes moves exactly one leaf
   before <- merkle_leaves(ch)

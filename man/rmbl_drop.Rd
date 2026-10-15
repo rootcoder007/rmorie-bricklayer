@@ -14,22 +14,25 @@ drop_constant(data, na_as_value = FALSE)
 \item{data}{A data frame.}
 
 \item{which}{\code{"rows"}, \code{"cols"}, or both (the
-default).}
+default, \code{c("rows", "cols")}).}
 
-\item{na_as_value}{Treat \code{NA} as a distinct
-value, so a column of \code{NA} s plus one real value counts as two
-(default \code{FALSE}) .}
+\item{na_as_value}{Logical: treat \code{NA} as a distinct
+value, so a column of \code{NA}s plus one real value counts as two
+(default \code{FALSE}).}
 }
 \value{
 The data frame, with the offending rows or columns removed. The
-names of what was dropped are attached as the \code{"dropped"}
-attribute.
+names of the columns that were dropped are attached as the
+\code{"dropped"} attribute (a character vector, empty when none); dropped
+rows are not listed.
 }
 \description{
 \code{drop_empty()} removes rows or columns that are entirely missing.
 \code{drop_constant()} removes columns that hold a single distinct
 value. The counterparts of \code{janitor::remove_empty()} and
-\code{janitor::remove_constant()}.
+\code{janitor::remove_constant()}. Use them after reading a spreadsheet
+export, which often carries blank padding rows, empty columns and
+columns that repeat one value (a year, a jurisdiction) on every row.
 }
 \details{
 A constant column carries no information and breaks anything that scales
@@ -38,6 +41,16 @@ column that was informative in the pinned capsule and is constant in a
 fresh fetch means the source changed, so check
 \code{\link[=capsule_drift]{capsule_drift()}} before deleting it and
 moving on.
+
+\code{drop_empty()} removes all-\code{NA} columns first, then all-\code{NA}
+rows among the remaining columns, and resets the row names. An empty
+string is a value, not missing. \code{drop_constant()} counts the distinct
+non-missing values of each column (with \code{na_as_value = TRUE},
+\code{NA} counts as a value), so an all-\code{NA} column is also dropped
+by default. Neither function modifies anything in place.
+
+Errors: \code{data} not a data frame (or with missing or duplicated names);
+\code{which} other than \code{"rows"} and/or \code{"cols"}.
 }
 \examples{
 df <- data.frame(
@@ -51,6 +64,7 @@ drop_empty(df)
 attr(drop_empty(df), "dropped")
 
 drop_constant(df)
+attr(drop_constant(df), "dropped")
 
 # Rows only.
 drop_empty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
@@ -60,6 +74,9 @@ drop_empty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
 x <- data.frame(v = c(NA, NA, 5))
 ncol(drop_constant(x))
 ncol(drop_constant(x, na_as_value = TRUE))
+
+# only data frames
+try(drop_empty(c(1, NA)))
 }
 \seealso{
 \code{\link[=profile_columns]{profile_columns()}}, which reports

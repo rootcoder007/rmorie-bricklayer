@@ -8,18 +8,40 @@ cite_capsule(provenance)
 }
 \arguments{
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}.}
+\code{\link[=load_provenance]{load_provenance()}},
+or \code{NULL}.}
 }
 \value{
-A list with \code{text} and \code{bibtex} character scalars, or
-\code{NULL} if \code{provenance} is \code{NULL}.
+A list with \code{text} and \code{bibtex}, each a length-1
+character string (the BibTeX entry has embedded newlines), or \code{NULL}
+if \code{provenance} is \code{NULL}.
 }
 \description{
-Builds a ready-to-paste data citation (plain text and BibTeX
-\verb{@misc}) from a provenance object's \code{dataset} and
-\code{resource} blocks, using publisher, resource name, source system,
-retrieval date, license, the pinned URL, and a DOI when one is recorded
-( \code{dataset$doi}) .
+Builds a ready-to-paste data citation, as plain text and as a BibTeX
+\code{@misc} entry, from the \code{dataset} and \code{resource} blocks of a
+provenance record. Use it so that every report and paper built from a
+capsule cites the data set in the same words, with the retrieval date and
+licence that were actually pinned.
+}
+\details{
+The fields used, with their fallbacks:
+\itemize{
+\item author: \code{dataset$publisher}, else \code{"Unknown publisher"};
+\item title: \code{resource$name}, else \code{dataset$package_slug}, else
+\code{"Untitled dataset"};
+\item year: the first four characters of \code{captured_at_utc}, else the current
+year; retrieval date: its first ten characters (omitted if absent);
+\item link: \code{https://doi.org/<dataset$doi>} when a DOI is recorded, else
+\code{resource$direct_url}, else \code{dataset$catalogue_page};
+\item licence: \code{dataset$licence_short}, else \code{dataset$licence_name}.
+}
+The text form is
+\code{Publisher (year). Title [Data set]. link Retrieved date. Licence: x.}
+The BibTeX key is the package slug with non-alphanumeric characters
+removed, followed by the year. In the BibTeX entry the licence is written
+in the \code{note} field only when a retrieval date is present. No
+character in the fields is escaped for LaTeX. Error: \code{provenance}
+that is not a list.
 }
 \examples{
 prov <- list(
@@ -38,6 +60,13 @@ cat(cit$text)
 # BibTeX @misc entry for LaTeX bibliographies.
 cat(cit$bibtex)
 
+# a recorded DOI replaces the URL
+prov$dataset$doi <- "10.5683/SP3/EXAMPLE"
+cat(cite_capsule(prov)$text)
+
 # NULL provenance returns NULL (composes safely).
 cite_capsule(NULL)
+
+# anything else that is not a list is an error
+try(cite_capsule("data-on-inmates-in-ontario"))
 }

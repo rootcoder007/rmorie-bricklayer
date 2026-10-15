@@ -17,14 +17,17 @@ bricklayer_json_base64url_enc(input)
 bricklayer_json_base64url_dec(input)
 }
 \arguments{
-\item{input}{For the encoders, a raw vector or a character
-vector (joined with newlines first). For the decoders, base64 text or
-its raw bytes.}
+\item{input}{For the encoders, a raw vector, or a character vector
+(its elements are joined with newlines and encoded as UTF-8 bytes), or
+\code{NULL}. For \code{bricklayer_json_base64_dec()}, base64 text (a
+character vector, joined with newlines) or its raw bytes. For
+\code{bricklayer_json_base64url_dec()}, URL-safe base64 text, with or
+without \code{=} padding.}
 }
 \value{
-The encoders return a length-1 character vector (
-\code{NA_character_} for \code{NULL} input); the decoders return a raw
-vector.
+The encoders return a character scalar (\code{""} for empty input,
+\code{NA_character_} for \code{NULL}); the decoders return a raw vector
+(use \code{rawToChar()} for text).
 }
 \description{
 Encodes and decodes base64, in both the standard alphabet and the
@@ -33,8 +36,12 @@ embed binary content in a text manifest wherever this package runs.
 }
 \details{
 \code{bricklayer_json_base64_enc()} breaks its output into 72-character
-lines, matching jsonlite's encoder; the decoder ignores line breaks and
-any other character outside the alphabet, so either form round trips.
+lines (a newline after each complete block of 54 input bytes), matching
+jsonlite's encoder byte for byte; the decoder ignores line breaks, other
+white space and \code{=} padding, so either form round trips. Any other
+character outside the alphabet is an error rather than being skipped,
+because skipping it would decode a corrupted body into a shorter
+valid-looking one.
 
 The URL-safe variant substitutes \code{-} and \verb{_} for \code{+} and
 \code{/} and drops the \code{=} padding, which is what makes it safe in
@@ -44,6 +51,13 @@ Base64 is an ENCODING, not encryption or a digest: it hides nothing and
 anyone can reverse it. Use \code{\link[=core_sha256]{core_sha256()}} to
 pin content and \code{\link[=core_hmac_sha256]{core_hmac_sha256()}} to
 authenticate it.
+
+Errors: an encoder given anything but a raw vector, a character vector or
+\code{NULL}; \code{bricklayer_json_base64_dec()} given anything but text or
+raw bytes, or text with a character outside the standard alphabet;
+\code{bricklayer_json_base64url_dec()} given anything but character text
+(raw bytes are refused), \code{NA}, or a character outside the URL-safe
+alphabet.
 }
 \examples{
 # Round trip through the standard alphabet.
@@ -71,6 +85,9 @@ bricklayer_json_base64url_dec(
 long <- bricklayer_json_base64_enc(strrep("x", 200))
 grepl("\n", long)
 rawToChar(bricklayer_json_base64_dec(long)) == strrep("x", 200)
+
+# A character outside the alphabet is refused, not skipped.
+try(bricklayer_json_base64_dec("ab$c"))
 }
 \seealso{
 \code{\link[=json_gzip_encode]{json_gzip_encode()}}, which composes this

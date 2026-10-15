@@ -134,7 +134,8 @@
 #'     or change the language-model settings (\code{\link{bricklayer_llm_config}}):
 #'     the route \code{ask} uses and the address, key and model of each route;
 #'     \code{setup} walks through them}
-#'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send a prompt to the
+#'   \item{\code{ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...}}{send
+#'     a prompt to the
 #'     model (or the named one, on the named route) and print the reply; the
 #'     same question again is answered from this machine (\code{--fresh} asks anew).
 #'     \code{aye} and \code{tellme} are the same verb, and a quoted question with no
@@ -143,23 +144,84 @@
 #'     (\code{\link{bricklayer_explain_error}}), without a model or the network}
 #'   \item{\code{bundle REQUEST...}}{\code{\link{agent_bundle}} from the
 #'     shell}
+#'   \item{\code{wayback FILE [--out FILE.jsonl] [--jobs N] [--within 30d]
+#'     [--max N]}}{save every URL listed in FILE (one per line; blank lines and
+#'     \code{#} comments skipped) in the Internet Archive's Wayback Machine
+#'     with \code{\link{wayback_save}}, results in \code{--out} (default
+#'     \code{FILE.wayback.jsonl}), so a stopped run carries on;
+#'     \code{wayback --retry FILE.jsonl [--include-gone]} retries the failures
+#'     of an earlier run (\code{\link{wayback_retry}})}
 #'   \item{\code{functions [PATTERN]}}{list the exported functions with
 #'     their one-line titles, optionally filtered by a regular expression}
 #'   \item{\code{describe NAME}}{title, usage, arguments and description of
 #'     one function, from its help page}
 #'   \item{\code{examples NAME}}{print the examples of one function}
-#'   \item{\code{version}}{print the package version}
-#'   \item{\code{help}}{this list}
+#'   \item{\code{version}}{print the package version (also
+#'     \code{--version}, \code{-v})}
+#'   \item{\code{help [VERB]}}{this list, or one verb's usage (also
+#'     \code{--help}, \code{-h}; \code{VERB --help} shows a verb's usage
+#'     without running it)}
 #' }
-#' @param args Character vector of arguments; defaults to the command line.
-#' @param out Function that receives the output text (default: the
-#'   console).
-#' @return The exit status, invisibly (0 on success).
+#' The launcher installed by \code{\link{install_cli}} calls this function
+#' with the shell's arguments and exits with its status. Calling it from R is
+#' the same as typing the command, which is how the examples below work.
+#'
+#' @details
+#' An option a verb does not take is refused with exit status 2 rather than
+#' ignored or sent as part of a prompt; everything after a bare \code{--} is
+#' positional (for a prompt that itself starts with \code{--}) and only
+#' \code{ask}, \code{bundle} and \code{explain-error} accept it. A first
+#' argument that is plainly a question (two or more words, or ending in
+#' \code{?}, with no path, line break or key-shaped word) and no verb is
+#' asked as \code{ask} would ask it.
+#'
+#' Errors are not raised: every error is written to \code{out} as
+#' \code{"PROG: message"} and turned into the exit status. The status is 0
+#' on success, 1 when the verb failed (an error, nothing found, no route), 2
+#' for a usage error (an unknown verb or option, a missing value) and 130 when
+#' interrupted (Ctrl-C). The command name in messages is the environment
+#' variable \code{RMBL_PROG}, else \code{rmoriebricklayer}.
+#'
+#' Side effects: during the call \code{options(morie.progress = TRUE)} is set,
+#' so downloads draw a progress bar; when \code{RMBL_PROG} is set (the
+#' launcher sets it) and \code{options(rmoriebricklayer.data_cache)} is not,
+#' the data.rmorie.com manifest and tables are kept in
+#' \code{tools::R_user_dir("rmoriebricklayer", "cache")} rather than a fresh
+#' temporary folder. The verbs \code{login}, \code{logout} and
+#' \code{config} write the shared credentials and settings files;
+#' \code{ask}, \code{models}, \code{data}, \code{bundle} and
+#' \code{wayback} use the network; \code{functions}, \code{describe},
+#' \code{examples}, \code{explain-error}, \code{version} and \code{help}
+#' only read the installed help.
+#'
+#' @param args Character vector of arguments, verb first; defaults to the
+#'   command line (\code{commandArgs(trailingOnly = TRUE)}). An empty vector
+#'   prints the help.
+#' @param out Function that receives the output text, one string at a time
+#'   (default \code{cat}, the console). Pass a function that collects the
+#'   strings to capture the output.
+#' @return The exit status (integer scalar), invisibly: 0 on success, 1 on
+#'   failure, 2 for a usage error, 130 when interrupted.
+#' @seealso \code{\link{install_cli}} to put the command on your PATH.
 #' @examples
 #' bricklayer_cli("version")
 #' bricklayer_cli("help")
 #' bricklayer_cli(c("functions", "json"))
 #' bricklayer_cli(c("describe", "analyse_table"))
+#'
+#' # one verb's usage, and the examples of a help page
+#' bricklayer_cli(c("help", "data"))
+#' bricklayer_cli(c("examples", "period_days"))
+#'
+#' # capture the output instead of printing it
+#' lines <- character()
+#' status <- bricklayer_cli(c("functions", "^drbg_"),
+#'                          out = function(x) lines <<- c(lines, x))
+#' status
+#' lines
+#'
+#' # an unknown verb is a usage error: status 2, nothing run
+#' bricklayer_cli("nonsense")
 #' @export
 bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
                            out = cat) {
@@ -572,27 +634,63 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 #' Install the rmoriebricklayer command-line launcher
 #'
-#' Links the launcher shipped in the package (\code{inst/bin/rmoriebricklayer})
-#' into a directory on your PATH so that \code{rmoriebricklayer login},
-#' \code{rmbl ask ...} and the other verbs of
-#' \code{\link{bricklayer_cli}} work from any shell. On Windows a
-#' \code{rmoriebricklayer.cmd} wrapper is written instead of a symlink.
-#' Nothing outside \code{dir} is touched, and only when you call this.
-#' @param dir Target directory (default \code{~/.local/bin}; created if
-#'   absent).
-#' @param name Command names to install (default both \code{rmoriebricklayer}
-#'   and its short form \code{rmbl}; every verb works under either).
-#' @return The path of the installed \code{rmoriebricklayer} launcher,
-#'   invisibly (\code{rmbl} is written beside it).
+#' Writes small launcher scripts into a directory on your PATH so that
+#' \code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
+#' \code{\link{bricklayer_cli}} work from any shell. Run it once after
+#' installing or upgrading the package. Nothing outside \code{dir} is
+#' touched, and only when you call this.
+#'
+#' @details
+#' On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
+#' sets \code{RMBL_PROG} to its own name and runs
+#' \code{Rscript -e "rmoriebricklayer::bricklayer_cli()"} with the shell's
+#' arguments, exiting with the function's status (130 on Ctrl-C). The library
+#' this copy of the package is installed in is pinned inside R with
+#' \code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
+#' \code{~/.Renviron} cannot make the command run another copy. An existing
+#' file or link of the same name in \code{dir} is replaced. On Windows a
+#' \code{NAME.cmd} batch wrapper doing the same is written instead. A message
+#' names the files written and, when \code{dir} is not on the \code{PATH},
+#' says to add it. Re-run it after moving the package to another library.
+#'
+#' Errors when the package installation has no launcher in
+#' \code{inst/bin} (a damaged installation), and from base R when \code{dir}
+#' cannot be created or written; when \code{dir} is not one string; and
+#' when \code{name} is not a character vector of one or more command names
+#' (empty, \code{NA}, an empty string or a name with a directory part is
+#' refused).
+#'
+#' @param dir Character scalar, the target directory; default
+#'   \code{~/.local/bin}. Created (with its parents) if absent.
+#' @param name Character vector of command names to install; default both
+#'   \code{rmoriebricklayer} and its short form \code{rmbl} (every verb works
+#'   under either).
+#' @return The path of the first launcher written (normally
+#'   \code{rmoriebricklayer}), invisibly; the others are written beside it.
+#' @seealso \code{\link{bricklayer_cli}} for the verbs.
 #' @examples
+#' # into a scratch folder, so nothing on your PATH changes
+#' d <- file.path(tempdir(), "bin")
+#' p <- install_cli(dir = d)
+#' list.files(d)
+#' readLines(p)[1:4]
+#'
+#' # one name only
+#' install_cli(dir = d, name = "rmbl")
 #' \dontrun{
-#' install_cli()
+#' install_cli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 #' }
 #' @export
 install_cli <- function(dir = file.path(path.expand("~"), ".local", "bin"),
                         name = c("rmoriebricklayer", "rmbl")) {
+  # an empty `name` wrote nothing, printed "Installed ;" and failed on targets[[1L]]
+  if (!is.character(name) || !length(name) || anyNA(name) || any(!nzchar(name)) ||
+        any(basename(name) != name)) {
+    stop("`name` must be one or more command names (non-empty, no NA, no directory part)", call. = FALSE)
+  }
+  dir <- .rmbl_string1(dir, "dir")
   src <- system.file("bin", "rmoriebricklayer", package = "rmoriebricklayer")
-  if (!nzchar(src)) stop("the launcher is missing from this installation")
+  if (!nzchar(src)) stop("the launcher is missing from this installation", call. = FALSE)
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   # the launcher pins the library this copy of the package lives in, inside R with .libPaths(),
   # so the shell's R_LIBS or an R_LIBS in ~/.Renviron cannot swap in another copy

@@ -7,15 +7,39 @@
 bricklayer_siu_schema()
 }
 \value{
-A data.frame with columns \code{name}, \code{is_count}, and
-\code{description}.
+A data.frame with 16 rows and three columns: \code{name}
+(character, the field name used by
+\code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}}),
+\code{is_count} (logical, \code{TRUE} for the five count fields) and
+\code{description} (character, what the field records).
 }
 \description{
-The sixteen fields extracted from every Special Investigations Unit
-director's report. Count-type fields ( \code{is_count = TRUE}) count
-distinct entities and zero is a real answer -- a witness-official-only
-investigation has zero subject officials.
+Returns the sixteen fields that the package extracts from every Ontario
+Special Investigations Unit (SIU) director's report, with a one-line
+description of each. Use it to see what
+\code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}} returns,
+to build an empty coding sheet for hand review, or to check which fields
+are counts before summing them across reports.
+}
+\details{
+The schema is held in the native core (src/siu_schema.h) and is the same
+list that \code{\link[=bricklayer_parse_siu]{bricklayer_parse_siu()}} fills. Three
+fields are dates in ISO
+\code{YYYY-MM-DD} form, five are counts and the rest are free text.
+Count-type fields (\code{is_count = TRUE}) count distinct entities, and
+zero is a real answer: a witness-official-only investigation has zero
+subject officials. The function takes no arguments, reads no files and
+uses no network.
 }
 \examples{
-bricklayer_siu_schema()
+s <- bricklayer_siu_schema()
+s$name
+
+# only the count fields
+s[s$is_count, c("name", "description")]
+
+# an empty hand-coding sheet with one column per field
+sheet <- as.data.frame(setNames(replicate(nrow(s), character(0), simplify = FALSE),
+                                 s$name))
+ncol(sheet)
 }

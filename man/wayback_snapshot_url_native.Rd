@@ -7,26 +7,42 @@
 wayback_snapshot_url_native(url, timeout = 30L)
 }
 \arguments{
-\item{url}{URL to resolve.}
+\item{url}{URL to resolve, a single string (\code{http} or \code{https}).}
 
-\item{timeout}{Request timeout, seconds.}
+\item{timeout}{Request timeout in seconds, default 30.}
 }
 \value{
-The https snapshot URL, or \code{NULL} if none is archived.
+The \code{https} snapshot URL (a length-1 character string), or
+\code{NULL} if none is archived or the lookup failed.
 }
 \description{
 Queries the Internet Archive \dQuote{available} API for the closest
-archived snapshot of \code{url}. C++ backend; supersedes the older
+archived snapshot of \code{url} and returns its address, or \code{NULL}
+when nothing is archived. Use it to find an archived copy of a data file
+or page that has moved or been removed. C++ backend; supersedes the older
 R-level resolver \code{\link{wayback_snapshot_url}}, which is kept for
 the pure-R path and now parses with the package's own JSON codec.
+}
+\details{
+\code{url} is only a query parameter of the lookup, never fetched, so a
+plain \code{http://} page can be looked up; a local or private address is
+still refused. One request is made to \code{https://archive.org/}; the
+most recent snapshot is asked for (there is no timestamp argument; use
+\code{\link[=wayback_snapshot_url]{wayback_snapshot_url()}} for one). Any network
+failure, and a URL that was
+never archived, give \code{NULL} rather than an error. A spinner is drawn
+on stderr while waiting, unless \code{options(morie.quiet = TRUE)}.
+
+Errors: \code{url} not a single non-empty string; a local or private
+address.
 }
 \examples{
 # Input is validated before any network call:
 try(wayback_snapshot_url_native(""))     # empty url -> error
+try(wayback_snapshot_url_native("http://localhost/report.csv"))
 
-\donttest{
-# Uses the live Wayback service; degrades gracefully offline: any
-# network failure returns NULL rather than erroring.
+\dontrun{
+# needs the network; any network failure returns NULL rather than erroring.
 # Closest archived snapshot of a live page (or NULL if none archived).
 wayback_snapshot_url_native("https://www.r-project.org/")
 

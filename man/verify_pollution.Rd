@@ -48,7 +48,8 @@ is an error. With a CSV or the demo data the exposed are the rows above
 \item{exposure_mean, exposure_prevalence}{Scalar inputs used when neither
 \code{demo} nor \code{exposure_csv} is given: the mean exposure among
 the exposed and the share of the population exposed.
-A wrapper must never default one of them to zero: a prevalence of zero silently zeroes
+A wrapper must never default one of them to zero: a prevalence of zero silently
+zeroes
 the burden, which is why the two are required together.}
 
 \item{reference}{Counterfactual reference concentration; \code{NULL} takes
@@ -62,10 +63,14 @@ the pollutant's default (PM2.5 5.8, NO2 10; see \code{\link{crf_pm25}}).}
 
 \item{population}{Population at risk (persons).}
 
-\item{rare_outcome}{\code{TRUE} when the outcome really is rarer than one case per 100,000
-per year. Without it a rate that converts to less than that is an assumption failure,
-because it is also what a rate per person-year passed as per 100,000 looks like (0.008
-per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times too
+\item{rare_outcome}{\code{TRUE} when the outcome really is rarer than one case per
+100,000
+per year. Without it a rate that converts to less than that is an assumption
+failure,
+because it is also what a rate per person-year passed as per 100,000 looks like
+(0.008
+per person-year is 800 per 100,000; as 0.008 per 100,000 the burden is 100,000 times
+too
 small). The check is on the converted rate, so it holds whatever
 \code{baseline_rate_per} is.}
 
@@ -73,7 +78,8 @@ small). The check is on the converted rate, so it holds whatever
 than 10,000 per 100,000 a year (no population's all-cause death
 rate is); without it such a rate is an assumption failure.}
 
-\item{report}{A result of \code{verify_pollution()}.}
+\item{report}{A result of \code{verify_pollution()} (or a list with the
+same parts); anything else is refused with an R error.}
 }
 \value{
 \code{verify_pollution()}: the report as a list of class
@@ -87,7 +93,15 @@ report with exit status 2, never a raw R error; an exposure at or below
 the reference is a valid run with zero attributable cases, and the
 scalar inputs \code{exposure_mean} and \code{exposure_prevalence} go
 together (one without the other is an error report).
-\code{pollution_report_text()}: a character string.
+On \code{"ok"} the report also holds \code{inputs} (the resolved
+exposure mean and prevalence, the rate per 100,000, the population,
+the reference and the rows dropped), \code{assumptions} (a list of
+\code{assumption}, \code{ok}, \code{note}) and \code{pipeline}
+(\code{crf}, \code{paf}, \code{paf_ci}, \code{displaced},
+\code{burden} and \code{equity}, which is \code{NULL} without income
+data). \code{pollution_report_text()}: a single character string with
+embedded newlines, ending in a \code{STATUS:} line (or \code{"ERROR:"}
+and the message for an error report).
 }
 \description{
 Resolves the exposure (synthetic demo data, a CSV with an \code{exposure}
@@ -95,11 +109,66 @@ column and an optional \code{income} column, a NAPS-style pull with a
 \code{value} column and a \code{unit}, or scalar arguments), logs the
 assumptions, and when they all hold runs the concentration-response,
 attributable-fraction, displaced-mortality, burden and equity stages.
-\code{pollution_report_text()} renders the result as plain text.
+\code{pollution_report_text()} renders the result as plain text. It is the
+one-call version of the pollution functions, made for scripts and the
+command line: it never stops with an R error for bad input, but returns
+a report whose status says what went wrong.
+}
+\details{
+The assumption log checks that the exposure mean is finite and
+non-negative and at most 10,000 micrograms per cubic metre, the
+prevalence is in \eqn{[0, 1]}, the baseline rate (converted to per
+100,000) is zero or between 1 and 10,000 per 100,000 a year (from 1e-6
+with \code{rare_outcome}, up to 100,000 with \code{high_rate}), the
+population is positive and at most 10 billion, the reference is finite
+and non-negative, and the pollutant has a CRF. Any failure gives status
+\code{"assumption_failure"} and skips the stages.
+
+With data (a CSV or the demo), the "exposed" are the rows above the
+reference: their mean is \code{exposure_mean} and their share
+\code{exposure_prevalence}. Empty cells and missing-value tokens
+(\code{NA}, \code{n/a}, \code{null}, \code{-} ...) are dropped with a
+message; text that is not a number (a detection-limit flag such as
+\code{"<2"}) and negative values stop the run with an error report. A
+gzip, bzip2 or xz file is decompressed; UTF-16 and Latin-1 files are
+decoded. An \code{income} column, when present and numeric, gives the
+equity stage (\code{\link{exposure_concentration_index}}).
+
+The stages: \code{\link{crf_pm25}} or \code{\link{crf_no2}};
+\code{\link{attributable_fraction}} with the CRF's interval;
+\code{\link{mortality_displaced}} for removing the excess exposure over
+the exposed population, with \eqn{\beta = \log(RR) / (\bar x - x_{ref})};
+and \code{\link{pollution_burden}}. The demo data are 1,000 synthetic
+units with lognormal exposures at the scale of Toronto NO2 or PM2.5
+levels and five income groups, drawn with a fixed seed (R's own random
+stream is restored).
 }
 \examples{
 r <- verify_pollution("no2", demo = TRUE)
 r$status
 r$pipeline$paf
 cat(pollution_report_text(r))
+
+# Scalar inputs: a city of 2.8 million at a PM2.5 mean of 9.
+s <- verify_pollution("pm25", exposure_mean = 9, exposure_prevalence = 1,
+                      baseline_rate = 750, population = 2.8e6, region = "Toronto")
+s$pipeline$burden$attributable_cases
+attr(s, "exit_status")
+
+# A CSV of measurements with an income column.
+f <- tempfile(fileext = ".csv")
+utils::write.csv(data.frame(exposure = c(12, 18, 25, 31, 9), income = 1:5), f,
+                 row.names = FALSE)
+verify_pollution("no2", exposure_csv = f)$pipeline$equity$concentration_index
+
+# A rate per person-year passed as per 100,000 fails an assumption ...
+bad <- verify_pollution("no2", exposure_mean = 20, exposure_prevalence = 1,
+                        baseline_rate = 0.008)
+bad$status
+# ... and an argument it cannot use is an error report, not an R error.
+verify_pollution("no2")$error
+}
+\seealso{
+\code{\link{pollution_burden}} and the other stage functions
+to run one step on its own.
 }

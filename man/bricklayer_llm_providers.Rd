@@ -7,16 +7,43 @@
 bricklayer_llm_providers()
 }
 \value{
-A data frame: \code{id} (the route name), \code{label},
-\code{key_env} (and \code{alt_env}), \code{base}, \code{api}
-(\code{"openai"}, \code{"anthropic"} or \code{"gemini"}),
-\code{default_model} and \code{key_set} (whether a key is set here).
+A data frame with one row per provider (16 rows) and eight
+columns: \code{id} (character, the value \code{route =} takes),
+\code{label} (character, readable name), \code{base} (character, the
+API base address), \code{api} (character, the wire format:
+\code{"openai"}, \code{"anthropic"} or \code{"gemini"}),
+\code{key_env} (character, the environment variable for the key),
+\code{alt_env} (character, an alternative variable, \code{""} when
+none), \code{default_model} (character, the model used when none is
+chosen, \code{NA} when the provider has no default) and \code{key_set}
+(logical, whether a key is set here).
 }
 \description{
-Every provider \code{\link{bricklayer_llm_ask}} can reach with your own
-key, with the environment variable that holds it, the address it is sent
-to and the wire format used. Nothing is contacted.
+Lists every provider \code{\link{bricklayer_llm_ask}} can reach with your
+own key: the environment variable that holds the key, the address the key
+and prompts are sent to, the wire format used, and whether a key is set on
+this machine. Use it to find the variable name to set for a provider, or
+the \code{id} to pass as \code{route}. Nothing is contacted.
+}
+\details{
+The table is fixed in the package (the providers' documented addresses
+and key variables). A key counts as set when the provider's variable
+(\code{key_env}), its alternative spelling (\code{alt_env}), or a key
+saved with \code{rmoriebricklayer config set ID.key} is non-empty; key
+values are never returned. A key with a line break or control character
+in it is an error. A server that speaks the OpenAI format but is not in
+the table is used as your own endpoint (\code{MORIE_LLM_BASE_URL}).
 }
 \examples{
-bricklayer_llm_providers()[, c("id", "key_env", "key_set")]
+p <- bricklayer_llm_providers()
+p[, c("id", "key_env", "key_set")]
+
+# the providers that use the Anthropic or Gemini wire format
+p[p$api != "openai", c("id", "api", "base")]
+
+# providers with a default model
+p[!is.na(p$default_model), c("id", "default_model")]
+}
+\seealso{
+\code{\link{bricklayer_llm_status}}, \code{\link{bricklayer_llm_route_info}}.
 }

@@ -8,27 +8,55 @@ resolve_via_ckan_search(provenance)
 }
 \arguments{
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}. Uses
-\code{resource$search_query}, \code{resource$name_match_pattern},
-\code{resource$format}, and \code{dataset$ckan_api_endpoint}.}
+\code{\link[=load_provenance]{load_provenance()}}, or
+\code{NULL}. Reads \code{dataset$ckan_api_endpoint},
+\code{resource$name_match_pattern} (a regular expression, required for
+a match), \code{resource$search_query} (optional search words) and
+\code{resource$format} (optional format name such as \code{"XLSX"}).}
 }
 \value{
-The matched resource URL as a character string, or \code{NULL}
-if no query or base URL can be derived, the request fails, or nothing
-matches.
+The matched resource URL as a length-1 character string, or
+\code{NULL}.
 }
 \description{
-Fallback for \code{\link[=resolve_via_ckan]{resolve_via_ckan()}} when
-the dataset slug has changed. Derives the CKAN portal base URL from the
-provenance's \code{package_show} endpoint, runs a \code{package_search}
-query (from \code{resource$search_query}, or derived from the name-match
-pattern), and returns the URL of the first matching resource, preferring
-CSV format when specified.
+The fallback for \code{\link[=resolve_via_ckan]{resolve_via_ckan()}} when a dataset's
+slug has changed
+and \code{package_show} no longer finds it. It runs a full-text
+\code{package_search} on the same CKAN portal and returns the URL of the
+first resource, across all datasets returned, whose name matches the
+pinned pattern.
+}
+\details{
+The portal base is the part of \code{dataset$ckan_api_endpoint} before
+\code{/api/3/}; the request is
+\code{<base>/api/3/action/package_search?q=<query>}. The query is
+\code{resource$search_query} when given, otherwise the
+\code{resource$name_match_pattern} with every character other than a
+letter, digit or space replaced by a space. Datasets are walked in the
+order CKAN ranks them, and their resources in listed order. A resource is
+taken when its \code{name} matches \code{resource$name_match_pattern}
+(case-insensitively) and either its format is CSV, or
+\code{resource$format} is unset, or its format equals
+\code{resource$format} (case-insensitively). A CSV resource is therefore
+accepted even when \code{resource$format} asks for another format.
+
+\code{NULL} is returned when \code{provenance} is \code{NULL}, when no
+query can be formed, when there is no endpoint to derive the base from,
+when the request fails, or when nothing matches. Errors: a
+\code{provenance} that is not a list; a search URL or matched resource
+URL that is not public \code{https}. One network request.
 }
 \examples{
 # Missing fields return NULL rather than erroring:
 resolve_via_ckan_search(list())
-\donttest{
+
+# no endpoint to derive the portal from: NULL, no request made
+resolve_via_ckan_search(list(resource = list(name_match_pattern = "2014")))
+
+# a provenance must be a list
+try(resolve_via_ckan_search("data.ontario.ca"))
+\dontrun{
+# needs the network: searches data.ontario.ca
 prov <- list(
   dataset = list(ckan_api_endpoint = paste0(
     "https://data.ontario.ca/api/3/action/package_show",

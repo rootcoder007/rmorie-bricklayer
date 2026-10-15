@@ -7,16 +7,40 @@
 guard_binary(x, col)
 }
 \arguments{
-\item{x}{The column.}
+\item{x}{The column to check.}
 
-\item{col}{Its name, for the message.}
+\item{col}{Character string: the column's name, used only in the error
+message.}
 }
 \value{
-\code{TRUE}, invisibly; errors otherwise.
+\code{TRUE}, invisibly, when the column is a 0/1 indicator;
+otherwise an error.
 }
 \description{
-Refuse a categorical column where a numeric 0/1 treatment is required
+Checks that a column meant as a binary treatment or outcome indicator is
+numeric 0/1 and not a factor or character column. Coercing a factor with
+\code{as.numeric()} returns the level indices (1, 2, ...) rather than the
+data, and a mis-ordered level silently flips every observation; this guard
+stops before that happens. Call it at the top of any function that needs a
+0/1 column.
+}
+\details{
+The checks are: \code{x} is an atomic vector; it is not a factor or
+character vector; its distinct non-missing values are all \code{0} or
+\code{1}. Logical vectors pass, because \code{TRUE} and \code{FALSE}
+compare equal to \code{1} and \code{0}. Missing values are ignored. Each
+failure is an error that names the column.
 }
 \examples{
-guard_binary(c(0, 1, 1, 0), "treated")
+guard_binary(c(0, 1, 1, 0, NA), "treated")
+guard_binary(c(TRUE, FALSE), "arrested")
+
+# a factor is refused rather than coerced
+try(guard_binary(factor(c("control", "treated")), "treated"))
+
+# so is a numeric column with other values
+try(guard_binary(c(0, 1, 2), "treated"))
+}
+\seealso{
+\code{\link{guard_recode}} to build an explicit indicator.
 }

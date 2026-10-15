@@ -452,18 +452,25 @@ int rmbl_digest_equal(const char *a, const char *b, size_t n) {
 namespace {
 
 /* Merkle level reduction over raw 32-byte digests. An unpaired node is
- * promoted unchanged. */
-std::vector<unsigned char> merkle_reduce(const std::vector<unsigned char> &lvl) {
+ * promoted unchanged. Scheme 2 (0.5.13 on) prefixes each interior node's
+ * input with 0x01 and each leaf's with 0x00 (RFC 6962 domain separation),
+ * so an interior node can no longer be presented as a leaf; scheme 1
+ * (0.5.12 and earlier) hashes both the same way and is kept only so that
+ * roots pinned by those versions still recompute. */
+std::vector<unsigned char> merkle_reduce(const std::vector<unsigned char> &lvl,
+                                         int scheme) {
     const size_t nodes = lvl.size() / 32;
     std::vector<unsigned char> up;
     up.reserve(((nodes + 1) / 2) * 32);
     size_t i = 0;
     while (i + 1 < nodes) {
-        unsigned char pair[64];
-        std::memcpy(pair, lvl.data() + i * 32, 32);
-        std::memcpy(pair + 32, lvl.data() + (i + 1) * 32, 32);
+        unsigned char pair[65];
+        const size_t off = scheme == 2 ? 1 : 0;
+        pair[0] = 0x01;
+        std::memcpy(pair + off, lvl.data() + i * 32, 32);
+        std::memcpy(pair + off + 32, lvl.data() + (i + 1) * 32, 32);
         unsigned char h[32];
-        rmbl_sha256_raw(pair, 64, h);
+        rmbl_sha256_raw(pair, 64 + off, h);
         up.insert(up.end(), h, h + 32);
         i += 2;
     }
@@ -479,7 +486,7 @@ std::vector<unsigned char> merkle_reduce(const std::vector<unsigned char> &lvl) 
  * The R layer is responsible for normalising its argument to this shape
  * (see .rmbl_chunk_bytes), which keeps the byte sequence for a character
  * chunk identical to what earlier versions hashed. */
-std::vector<unsigned char> leaves_from_chunks(SEXP x) {
+std::vector<unsigned char> leaves_from_chunks(SEXP x, int scheme) {
     const R_xlen_t n = XLENGTH(x);
     std::vector<unsigned char> lvl;
     lvl.reserve(static_cast<size_t>(n) * 32);
@@ -489,7 +496,14 @@ std::vector<unsigned char> leaves_from_chunks(SEXP x) {
             Rf_error("each chunk must be a raw vector");
         }
         unsigned char h[32];
-        rmbl_sha256_raw(RAW(e), static_cast<size_t>(XLENGTH(e)), h);
+        if (scheme == 2) {
+            std::vector<unsigned char> b(static_cast<size_t>(XLENGTH(e)) + 1);
+            b[0] = 0x00;
+            if (XLENGTH(e) > 0) std::memcpy(b.data() + 1, RAW(e), static_cast<size_t>(XLENGTH(e)));
+            rmbl_sha256_raw(b.data(), b.size(), h);
+        } else {
+            rmbl_sha256_raw(RAW(e), static_cast<size_t>(XLENGTH(e)), h);
+        }
         lvl.insert(lvl.end(), h, h + 32);
     }
     return lvl;
@@ -497,10 +511,13 @@ std::vector<unsigned char> leaves_from_chunks(SEXP x) {
 
 /* Shared entry guard: the three Merkle entry points all take the same
  * normalised list of raw chunks. */
-void check_chunk_list(SEXP x) {
+int check_chunk_list(SEXP x, SEXP scheme) {
     if (TYPEOF(x) != VECSXP) {
         Rf_error("`chunks` must be a list of raw vectors");
     }
+    const int sc = Rf_asInteger(scheme);
+    if (sc != 1 && sc != 2) Rf_error("`scheme` must be 1 or 2");
+    return sc;
 }
 
 }  // namespace
@@ -622,11 +639,11 @@ SEXP C_rmbl_digest_equal_impl(SEXP a, SEXP b) {
     return Rf_ScalarLogical(eq);
 }
 
-SEXP C_rmbl_merkle_root_impl(SEXP x) {
-    check_chunk_list(x);
+SEXP C_rmbl_merkle_root_impl(SEXP x, SEXP scheme) {
+    const int sc = check_chunk_list(x, scheme);
     if (XLENGTH(x) < 1) return Rf_ScalarString(NA_STRING);
-    std::vector<unsigned char> lvl = leaves_from_chunks(x);
-    while (lvl.size() > 32) lvl = merkle_reduce(lvl);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x, sc);
+    while (lvl.size() > 32) lvl = merkle_reduce(lvl, sc);
     char out[65];
     hexlify(lvl.data(), 32, out);
     return Rf_mkString(out);
@@ -634,10 +651,10 @@ SEXP C_rmbl_merkle_root_impl(SEXP x) {
 
 /* Leaf hashes, one per chunk -- the level-0 digests the root is built
  * from, so a caller can see WHICH chunk moved. */
-SEXP C_rmbl_merkle_leaves_impl(SEXP x) {
-    check_chunk_list(x);
+SEXP C_rmbl_merkle_leaves_impl(SEXP x, SEXP scheme) {
+    const int sc = check_chunk_list(x, scheme);
     const R_xlen_t n = XLENGTH(x);
-    std::vector<unsigned char> lvl = leaves_from_chunks(x);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x, sc);
     SEXP res = PROTECT(Rf_allocVector(STRSXP, n));
     char out[65];
     for (R_xlen_t i = 0; i < n; ++i) {
@@ -650,14 +667,14 @@ SEXP C_rmbl_merkle_leaves_impl(SEXP x) {
 
 /* Inclusion proof for leaf `index` (1-based): the sibling digests from
  * the leaf up to the root, with the side each sibling sits on. */
-SEXP C_rmbl_merkle_proof_impl(SEXP x, SEXP index) {
-    check_chunk_list(x);
+SEXP C_rmbl_merkle_proof_impl(SEXP x, SEXP index, SEXP scheme) {
+    const int sc = check_chunk_list(x, scheme);
     const R_xlen_t n = XLENGTH(x);
     R_xlen_t pos = static_cast<R_xlen_t>(Rf_asInteger(index)) - 1;
     if (n < 1 || pos < 0 || pos >= n) {
         Rf_error("`index` must be between 1 and the number of chunks");
     }
-    std::vector<unsigned char> lvl = leaves_from_chunks(x);
+    std::vector<unsigned char> lvl = leaves_from_chunks(x, sc);
     std::vector<std::string> sib;
     std::vector<int> side;   /* 0 = sibling on the left, 1 = on the right */
     char out[65];
@@ -678,7 +695,7 @@ SEXP C_rmbl_merkle_proof_impl(SEXP x, SEXP index) {
             side.push_back(0);
             pos = static_cast<R_xlen_t>(p / 2);
         }
-        lvl = merkle_reduce(lvl);
+        lvl = merkle_reduce(lvl, sc);
     }
     const R_xlen_t m = static_cast<R_xlen_t>(sib.size());
     SEXP sh = PROTECT(Rf_allocVector(STRSXP, m));

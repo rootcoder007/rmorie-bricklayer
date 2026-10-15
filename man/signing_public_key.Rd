@@ -11,13 +11,25 @@ signing_public_key(key)
 \code{\link[=pqc_keygen]{pqc_keygen()}}.}
 }
 \value{
-A list of class \code{bricklayer_public_key}: \code{root},
-\code{pub_seed}, \code{height}, \code{scheme}.
+A list of class \code{bricklayer_public_key}: \code{root} and \code{pub_seed}
+(64 hex characters each), \code{height} and \code{scheme}.
 }
 \description{
-Strips the secret seed, leaving only what a verifier needs. Publish
-this; never the object returned by
-\code{\link[=pqc_keygen]{pqc_keygen()}}.
+Strips the secret seeds from an XMSS signing key, leaving only what a
+verifier needs. Publish this, or hand it to whoever must check your
+signatures; never the object returned by \code{\link[=pqc_keygen]{pqc_keygen()}},
+which lets its
+holder sign in your name. The public key does not change as the signing
+key is used, so it is made once.
+}
+\details{
+The public key is the Merkle root and the public seed that masks the
+hashes (RFC 8391's \code{root || SEED}), with the tree height and scheme
+name. \code{sk_seed}, \code{sk_prf} and \code{next_index} are dropped. For a
+standardised key from \code{\link[=fips_keygen]{fips_keygen()}} use
+\code{\link[=fips_public_key]{fips_public_key()}} instead:
+this function refuses any key that is not a \code{bricklayer_signing_key}
+(\code{"key must come from pqc_keygen()"}).
 }
 \examples{
 op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
@@ -31,5 +43,11 @@ is.null(pub$sk_seed)
 # And verification works from the public half alone.
 sig <- capsule_sign("manifest-digest", key)
 capsule_verify("manifest-digest", sig, pub)
+
+# A standardised key has its own function.
+try(signing_public_key(fips_keygen("ML-DSA-44")))
 options(op)
+}
+\seealso{
+\code{\link[=capsule_verify]{capsule_verify()}}, which takes it.
 }

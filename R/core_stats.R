@@ -17,24 +17,53 @@
 
 #' Standard deviation and Euclidean distance (C backend)
 #'
-#' `core_sd()` is the square root of the variance computed by the
-#' shared core; `core_dist()` is the Euclidean distance between two
-#' equal-length vectors.
+#' `core_sd()` returns the standard deviation of a numeric vector and
+#' `core_dist()` the straight-line (Euclidean) distance between two
+#' vectors of the same length. Both run in the package's compiled core,
+#' the same code that rmorie and rmoriedata reach through
+#' `LinkingTo: rmoriebricklayer`, so a figure computed here is the figure
+#' those packages compute. Use them when you want the shared core's
+#' answer rather than base R's, for example when checking a capsule's
+#' recorded summary statistics against a fresh computation.
 #'
-#' NA/NaN propagate -- there is no `na.rm`. Call
-#' [stats::na.omit()] first if you need NA
-#' handling.
+#' @details
+#' `core_sd()` computes
+#' \deqn{s = \sqrt{\frac{1}{n - \mathrm{ddof}} \sum_{i=1}^n (x_i - \bar x)^2},}
+#' so `ddof = 1` is the sample standard deviation of [stats::sd()]
+#' and
+#' `ddof = 0` the population figure. `core_dist()` computes
+#' \eqn{\sqrt{\sum_i (a_i - b_i)^2}}.
 #'
-#' @param x,a,b Numeric vectors (coerced with
-#' [as.numeric()]) .
-#' @param ddof Denominator degrees of freedom. The default
-#' `1` gives the sample standard deviation, matching
-#' [stats::sd()]; `0` gives the population
-#' figure.
-#' @return A length-1 numeric.
+#' Missing values propagate: there is no `na.rm`, and one `NA` makes the
+#' result `NA`. Remove them first (for example with
+#' [stats::na.omit()]) when
+#' that is what you want. A vector with no more than `ddof` values has no
+#' defined spread and gives `NaN` (one value with the default `ddof = 1`,
+#' or an empty vector). Two empty vectors are at distance 0.
+#'
+#' Refusals: a character, factor, list or data-frame `x`, `a` or `b`
+#' (`"must be numeric"`), and for `core_dist()` vectors of different lengths
+#' (`"must have the same length"`). Logical input is accepted and counted
+#' as 0/1. Both run in one pass over the data and allocate nothing beyond
+#' the coerced input.
+#'
+#' @param x,a,b Numeric (or logical) vectors; coerced with
+#'   [as.numeric()].
+#'   `a` and `b` must have the same length.
+#' @param ddof Delta degrees of freedom, a single number truncated to an
+#'   integer by [as.integer()]: the divisor is `n - ddof`.
+#'   The default `1` gives the sample standard
+#'   deviation, matching [stats::sd()]; `0` gives the population
+#'   figure.
+#' @return `core_sd()`: a length-1 numeric, the standard deviation in the
+#'   units of `x` (`NA` when `x` holds a missing value, `NaN` when
+#'   `length(x) <= ddof`). `core_dist()`: a length-1 non-negative numeric,
+#'   the distance in the units of `a` and `b`.
 #' @seealso
-#' [core_moments()] for the mean, variance,
-#' skewness and kurtosis in a single pass.
+#' [core_moments()] for the mean, variance, skewness and
+#' kurtosis in a
+#' single pass; [core_mad()] for a spread that one wild value
+#' cannot move.
 #' @examples
 #' # Sample standard deviation, matching stats::sd().
 #' core_sd(c(2, 4, 4, 4, 5, 5, 7, 9))
@@ -44,9 +73,16 @@
 #' core_sd(1:10, ddof = 0)
 #' all.equal(core_sd(1:10, ddof = 0), sqrt(mean((1:10 - mean(1:10))^2)))
 #'
+#' # Missing values propagate; remove them first if they should be ignored.
+#' core_sd(c(3, NA, 5))
+#' core_sd(stats::na.omit(c(3, NA, 5)))
+#'
 #' # Euclidean distance between two points.
 #' core_dist(c(0, 0), c(3, 4))     # 5
 #' core_dist(1:5, 1:5)             # 0 -- a point is zero from itself
+#'
+#' # Vectors of different lengths are refused rather than recycled.
+#' try(core_dist(1:3, 1:2))
 #' @name rmbl_core_spread
 #' @export
 core_sd <- function(x, ddof = 1L) {
@@ -66,16 +102,38 @@ core_dist <- function(a, b) {
 
 #' Normal log-density (C backend)
 #'
-#' The logarithm of the normal density, computed directly rather than as
-#' `log(dnorm(x))`, so it stays finite far into the tails where the
-#' density itself underflows to zero.
+#' The logarithm of the normal (Gaussian) density at each value of `x`,
+#' computed directly from the formula rather than as `log(dnorm(x))`. Use
+#' it for log-likelihoods: summing log-densities is how a normal model is
+#' scored, and computing them directly keeps the sum finite far into the
+#' tails, where the density itself underflows to zero and its logarithm
+#' would be `-Inf`.
 #'
-#' @param x Numeric vector of quantiles.
-#' @param mean Distribution mean (length-1, default 0).
-#' @param sd Distribution standard deviation (length-1, default
-#' 1, > 0).
-#' @return A numeric vector the length of `x`. Equivalent to
-#' `stats::dnorm(x, mean, sd, log = TRUE)`.
+#' @details
+#' Each value is
+#' \deqn{\log \phi(x; \mu, \sigma) = -\log \sigma - \tfrac12 \log(2\pi)
+#'   - \frac{(x - \mu)^2}{2\sigma^2},}
+#' evaluated by the shared core, and agrees with
+#' `stats::dnorm(x, mean, sd, log = TRUE)` to rounding.
+#'
+#' `mean` and `sd` are single numbers: a vector of either is refused, so
+#' this is not vectorised over the parameters the way
+#' [stats::dnorm()] is.
+#' A non-finite `mean`, and an `sd` that is not a positive finite number,
+#' are errors, as in [core_normal_pdf()]; a missing
+#' `x` gives `NA`. A
+#' character, factor or list `x` is refused (`"must be numeric"`).
+#'
+#' @param x Numeric vector of quantiles (the observed values).
+#' @param mean The distribution's mean, a single number in the units of
+#'   `x` (default 0).
+#' @param sd The distribution's standard deviation, a single positive
+#'   number in the units of `x` (default 1).
+#' @return A numeric vector the length of `x`: the natural-log density at
+#'   each value (in log units per unit of `x`). Equivalent to
+#'   `stats::dnorm(x, mean, sd, log = TRUE)`.
+#' @seealso [core_moments()] for estimating `mean` and
+#'   `sd` from data.
 #' @examples
 #' core_normal_logpdf(c(-1, 0, 1))
 #'
@@ -86,35 +144,73 @@ core_dist <- function(a, b) {
 #' # Still finite where the density itself underflows to zero.
 #' stats::dnorm(50)                  # 0
 #' core_normal_logpdf(50)            # about -1251
+#'
+#' # A log-likelihood: the sum of the log-densities of a sample.
+#' y <- c(4.8, 5.1, 5.6, 4.9, 5.3)
+#' sum(core_normal_logpdf(y, mean = mean(y), sd = stats::sd(y)))
+#'
+#' # A standard deviation of zero has no density, and the parameters are
+#' # single numbers.
+#' try(core_normal_logpdf(1, sd = 0))
+#' try(core_normal_logpdf(1, mean = c(0, 1)))
+#' try(core_normal_logpdf("1"))
 #' @export
 core_normal_logpdf <- function(x, mean = 0, sd = 1) {
-  .Call(C_rmbl_normal_logpdf, .rmbl_num_input(x, "x"), as.numeric(mean),
-        as.numeric(sd))
+  # the core reads only the first element of each parameter, so a vector was used in part
+  mean <- .rmbl_num(mean, "mean")
+  sd <- .rmbl_num(sd, "sd")
+  if (length(mean) != 1L || !is.finite(mean)) stop("`mean` must be a single finite number", call. = FALSE)
+  if (length(sd) != 1L || !is.finite(sd) || sd <= 0) stop("`sd` must be a single positive number", call. = FALSE)
+  .Call(C_rmbl_normal_logpdf, .rmbl_num_input(x, "x"), mean, sd)
 }
 
-#' Mean, variance, skewness and kurtosis in one pass (C backend)
+#' Mean, variance, skewness and kurtosis (C backend)
 #'
-#' A single streaming pass (Welford's recurrence, extended to the third and
-#' fourth central moments) over `x`. One pass matters for capsule
-#' members large enough that reading the column twice is the expensive
-#' part.
+#' The four standard descriptive moments of a numeric vector -- where it is
+#' centred, how spread out it is, whether it leans to one side and how
+#' heavy its tails are -- in one call to the compiled core. These are the
+#' four numbers a data description or a drift check usually reports
+#' together.
 #'
-#' The variance uses the `n - 1` denominator, matching
-#' [stats::var()]. The shape statistics use the
-#' *sample moment* definitions
-#' \eqn{m_3 / m_2^{3/2}} and \eqn{m_4 / m_2^2 - 3}, with \eqn{m_k} the
-#' k-th central moment divided by `n` -- so kurtosis is reported as
-#' EXCESS kurtosis and a normal sample sits near zero, not near three.
+#' @details
+#' The mean is base R's (an extended-precision sum followed by a
+#' corrective pass); the deviations from it are then divided by their
+#' largest magnitude before any power is taken, and the scale is restored
+#' at the end. That avoids both the cancellation of the textbook "sum of
+#' squares minus square of sum" formula and overflow of fourth powers for
+#' values beyond about \eqn{10^{77}}. It reads the data three times
+#' (mean, largest deviation, moments), in \eqn{O(n)} time. The variance uses
+#' the `n - 1` denominator, matching [stats::var()]. The shape
+#' statistics
+#' use the *sample moment* definitions
+#' \deqn{g_1 = m_3 / m_2^{3/2}, \qquad g_2 = m_4 / m_2^2 - 3,}
+#' with \eqn{m_k = n^{-1} \sum_i (x_i - \bar x)^k}, so kurtosis is reported
+#' as EXCESS kurtosis: a normal sample sits near zero, not near three.
+#' These are the uncorrected moment ratios (type 1 in the classification
+#' of Joanes and Gill, 1998), not the bias-adjusted versions some software
+#' reports.
 #'
-#' @param x Numeric vector (coerced with
-#' [as.numeric()]) .
-#' @return A named length-4 numeric: `mean`, `variance`,
-#' `skewness`, `kurtosis`. `skewness` needs at least 3
-#' observations and `kurtosis` at least 4; both are `NaN` below
-#' that, as is everything if `x` contains NA/NaN.
-#' @references Welford BP (1962). Note on a method for calculating
-#' corrected sums of squares and products. *Technometrics* 4(3),
-#' 419--420. \doi{10.1080/00401706.1962.10490022}
+#' Edge cases are `NaN`, never an error: an empty vector gives four `NaN`;
+#' one value gives its mean and `NaN` for the rest; `skewness` needs at
+#' least 3 values and `kurtosis` at least 4; any `NA` or `NaN` in `x`
+#' makes
+#' every entry `NaN`. A constant vector has variance 0 and `NaN` shape
+#' statistics. A character, factor or list `x` is refused
+#' (`"must be numeric"`).
+#'
+#' @param x Numeric (or logical) vector; coerced with
+#'   [as.numeric()].
+#' @return A named length-4 numeric vector: `mean` (units of `x`),
+#'   `variance` (squared units of `x`, `n - 1` denominator),
+#'   `skewness` and
+#'   `kurtosis` (both unitless; kurtosis as excess over the normal's 3).
+#' @seealso [core_sd()],
+#'   [core_quantile()] and
+#'   [core_mad()] for robust
+#'   alternatives that one extreme value cannot move.
+#' @references Joanes DN, Gill CA (1998). Comparing measures of sample skewness and
+#' kurtosis. *Journal of the Royal Statistical Society: Series D (The
+#' Statistician)* 47(1), 183--189. \doi{10.1111/1467-9884.00122}
 #' @examples
 #' core_moments(c(2, 4, 4, 4, 5, 5, 7, 9))
 #'
@@ -147,11 +243,33 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' [core_moments()]: a single corrupted row can
 #' move a mean or a variance arbitrarily far, but moves a median or a MAD
 #' hardly at all -- which is what you want when deciding whether a freshly
-#' fetched column is still the column a capsule was pinned against.
+#' fetched column is still the column a capsule was pinned against, or
+#' when screening a column for values to inspect by hand.
 #'
-#' @param x Numeric vector (coerced with
-#' [as.numeric()]) .
-#' @param probs Numeric vector of probabilities in \ [0, 1\].
+#' @details
+#' The type-7 quantile at probability \eqn{p} interpolates linearly between
+#' the order statistics \eqn{x_{(j)}} and \eqn{x_{(j+1)}} with
+#' \eqn{h = (n - 1)p + 1}, \eqn{j = \lfloor h \rfloor}:
+#' \eqn{Q(p) = x_{(j)} + (h - j)(x_{(j+1)} - x_{(j)})} (Hyndman and Fan,
+#' 1996). The MAD is \eqn{c \cdot \mathrm{median}_i |x_i - \mathrm{median}(x)|}
+#' with \eqn{c} = `constant`; the IQR is \eqn{Q(0.75) - Q(0.25)}; and the
+#' fences are \eqn{Q(0.25) - k \cdot \mathrm{IQR}} and
+#' \eqn{Q(0.75) + k \cdot \mathrm{IQR}} (Tukey, 1977).
+#'
+#' Missing values are not removed: an `NA` or `NaN` anywhere in `x` makes
+#' every result `NaN` (unlike [stats::quantile()], which
+#' stops). An empty
+#' `x` gives `NaN`. `core_quantile()` refuses an empty `probs`
+#' (`"probs is empty"`) and any probability outside \eqn{[0, 1]} or missing
+#' (`"must lie in [0, 1]"`); every function refuses a character, factor or
+#' list `x` (`"must be numeric"`). The quantiles sort a copy of `x`, so
+#' the
+#' cost is \eqn{O(n \log n)}.
+#'
+#' @param x Numeric (or logical) vector; coerced with
+#'   [as.numeric()].
+#' @param probs Numeric vector of probabilities, each in \eqn{[0, 1]}
+#'   (default the minimum, quartiles and maximum).
 #' @param constant Scale factor for `core_mad()`. The
 #' default `1.4826` makes the MAD consistent for the standard
 #' deviation under normality, and is the same rounded value
@@ -159,12 +277,22 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' The unrounded consistency constant is `1 / qnorm(3/4)` =
 #' 1.4826022185...; pass it explicitly if you want the extra digits, or
 #' `1` for the unscaled median deviation.
-#' @param k Fence width in IQRs (default 1.5, Tukey's convention;
-#' 3 is the usual "far out" cutoff).
-#' @return `core_quantile()` returns a numeric vector the length of
-#' `probs`; `core_median()`, `core_mad()` and
-#' `core_iqr()` a length-1 numeric; `core_tukey_fences()` a named
-#' length-2 numeric ( `lower`, `upper`) .
+#' @param k Fence width in IQRs, a single non-negative number (default
+#'   1.5, Tukey's convention; 3 is the usual "far out" cutoff).
+#' @return `core_quantile()`: a numeric vector the length of `probs`, in
+#'   the units of `x`, named by percentage (`"25%"`, ...) as
+#'   [stats::quantile()] names them. `core_median()`,
+#'   `core_mad()` and
+#'   `core_iqr()`: a length-1 numeric in the units of `x`.
+#'   `core_tukey_fences()`: a named length-2 numeric, `lower` and `upper`.
+#' @references Hyndman RJ, Fan Y (1996). Sample quantiles in statistical
+#'   packages. *The American Statistician* 50(4), 361--365.
+#'   \doi{10.1080/00031305.1996.10473566}
+#'
+#' Tukey JW (1977). *Exploratory Data Analysis*. Addison-Wesley.
+#' @seealso [core_moments()] for the non-robust moments,
+#'   [core_trimmed_mean()] for a robust centre that still
+#'   averages.
 #' @examples
 #' x <- c(2, 4, 4, 4, 5, 5, 7, 9)
 #' core_quantile(x, c(0.25, 0.5, 0.75))
@@ -188,6 +316,12 @@ core_moments <- function(x) .Call(C_rmbl_moments, .rmbl_num_input(x, "x"))
 #' # Values outside the fences are the candidates to inspect.
 #' f <- core_tukey_fences(wild)
 #' wild[wild < f[["lower"]] | wild > f[["upper"]]]
+#'
+#' # A missing value is not dropped: the answer is NaN.
+#' core_median(c(1, NA, 3))
+#'
+#' # A probability outside [0, 1] is refused.
+#' try(core_quantile(x, 1.5))
 #' @name rmbl_core_robust
 #' @export
 core_quantile <- function(x, probs = c(0, 0.25, 0.5, 0.75, 1)) {
@@ -237,11 +371,30 @@ core_tukey_fences <- function(x, k = 1.5) {
 #' usually the better choice when the extremes are real measurements rather
 #' than errors.
 #'
-#' @param x Numeric vector (coerced with
-#' [as.numeric()]) .
-#' @param trim Proportion trimmed from *each* end, in \
-#' [0, 0.5\]. At `0.5` both reduce to the median.
-#' @return A length-1 numeric.
+#' @details
+#' With \eqn{g = \lfloor n \cdot \mathrm{trim} \rfloor} and the sorted values
+#' \eqn{x_{(1)} \le \dots \le x_{(n)}}, the trimmed mean is
+#' \eqn{\frac{1}{n - 2g} \sum_{i=g+1}^{n-g} x_{(i)}} and the winsorized mean
+#' replaces \eqn{x_{(1)}, \dots, x_{(g)}} by \eqn{x_{(g+1)}} and
+#' \eqn{x_{(n-g+1)}, \dots, x_{(n)}} by \eqn{x_{(n-g)}} before averaging all
+#' \eqn{n} values. At `trim = 0.5` both return the median, as `mean()` does.
+#'
+#' A `trim` that is not a single number in \eqn{[0, 0.5]} is an error. An
+#' empty `x`, or any `NA`/`NaN` in `x`, gives `NaN` (missing
+#' values are not
+#' removed). A character, factor or list `x` is refused
+#' (`"must be numeric"`). Both sort a copy of `x`, so the cost is
+#' \eqn{O(n \log n)}.
+#'
+#' @param x Numeric (or logical) vector; coerced with
+#'   [as.numeric()].
+#' @param trim Proportion trimmed (or winsorized) at *each* end, a single
+#'   number in \eqn{[0, 0.5]} (default 0.1, i.e. 10% at each end). At
+#'   `0.5` both reduce to the median.
+#' @return A length-1 numeric in the units of `x`.
+#' @seealso [core_median()] and
+#'   [core_mad()] for the other robust
+#'   summaries; [core_moments()] for the ordinary mean.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
 #'
@@ -255,30 +408,67 @@ core_tukey_fences <- function(x, k = 1.5) {
 #' # trim = 0 is the plain mean; trim = 0.5 is the median.
 #' all.equal(core_trimmed_mean(x, 0), mean(x))
 #' all.equal(core_trimmed_mean(x, 0.5), core_median(x))
+#'
+#' # A trim past one half is not a trim.
+#' try(core_winsorized_mean(x, 0.7))
+#' try(core_trimmed_mean(letters))
 #' @name rmbl_core_trimmed
 #' @export
 core_trimmed_mean <- function(x, trim = 0.1) {
-  .Call(C_rmbl_trimmed_mean, .rmbl_num_input(x, "x"), as.numeric(trim))
+  .Call(C_rmbl_trimmed_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
 }
 
 #' @rdname rmbl_core_trimmed
 #' @export
 core_winsorized_mean <- function(x, trim = 0.1) {
-  .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), as.numeric(trim))
+  .Call(C_rmbl_winsorized_mean, .rmbl_num_input(x, "x"), .rmbl_trim(trim))
+}
+
+# one proportion in [0, 0.5]: outside it the core returned NaN, which reads as a result
+.rmbl_trim <- function(trim) {
+  trim <- .rmbl_num(trim, "trim")
+  if (length(trim) != 1L || is.na(trim) || trim < 0 || trim > 0.5) {
+    stop("`trim` must be a single number in [0, 0.5]", call. = FALSE)
+  }
+  trim
 }
 
 #' Weighted mean and variance (C backend)
 #'
-#' The weights are treated as RELIABILITY weights (how precisely each
-#' observation is known), so the variance carries the bias correction
-#' \eqn{\sum w - \sum w^2 / \sum w} in the denominator rather than
-#' `n - 1`. With every weight equal to 1 it reduces exactly to
-#' [stats::var()].
+#' The weighted mean and weighted variance of a numeric vector, for data
+#' where some observations count for more than others: an average over
+#' areas weighted by population, or measurements weighted by how precise
+#' each one is. Both come from the compiled core in one pass.
+#'
+#' @details
+#' The mean is \eqn{\bar x_w = \sum_i w_i x_i / \sum_i w_i}. The weights
+#' are treated as RELIABILITY weights (how precisely each observation is
+#' known), so the variance is
+#' \deqn{s_w^2 = \frac{\sum_i w_i (x_i - \bar x_w)^2}
+#'   {\sum_i w_i - \sum_i w_i^2 / \sum_i w_i},}
+#' the unbiased estimator under that reading. With every weight equal to 1
+#' it reduces exactly to [stats::var()]. Frequency weights
+#' (a weight of
+#' 3
+#' meaning three identical rows) call for the denominator
+#' \eqn{\sum w - 1} instead, and survey design weights call for a
+#' design-based variance, so do not use this variance for those.
+#'
+#' Refusals: `x` and `w` of different lengths
+#' (`"must have the same length"`), any negative weight
+#' (`"must be non-negative"`), and a character, factor or list argument
+#' (`"must be numeric"`). All-zero weights, or an `NA` in either vector,
+#' give `NaN` for both entries.
 #'
 #' @param x Numeric vector of observations.
-#' @param w Numeric vector of non-negative weights, the same
-#' length as `x`.
-#' @return A named length-2 numeric: `mean` and `variance`.
+#' @param w Numeric vector of non-negative weights, the same length as
+#'   `x`. Only their relative sizes matter for the mean; the variance's
+#'   correction uses them as given.
+#' @return A named length-2 numeric vector: `mean` (units of `x`) and
+#'   `variance` (squared units of `x`).
+#' @seealso [core_moments()] for the unweighted moments,
+#'   [core_ipw_weights()] for inverse-probability weights
+#'   to feed in here.
 #' @examples
 #' x <- c(10, 20, 30, 40)
 #' w <- c(1, 1, 2, 4)
@@ -292,6 +482,9 @@ core_winsorized_mean <- function(x, trim = 0.1) {
 #'
 #' # A single dominant weight pulls the mean onto that observation.
 #' core_weighted(x, c(1, 1, 1, 1000))[["mean"]]
+#'
+#' # A negative weight is refused.
+#' try(core_weighted(x, c(1, -1, 1, 1)))
 #' @export
 core_weighted <- function(x, w) {
   x <- .rmbl_num_input(x, "x")
@@ -315,11 +508,36 @@ core_weighted <- function(x, w) {
 #' either variable. `core_midranks()` exposes the ranks themselves;
 #' tied values share the average of the ranks they span, which is what
 #' makes the result agree with [stats::cor()] on
-#' tied data.
+#' tied data. Use Spearman's rho when two variables rise and fall together
+#' but not along a straight line (counts against rates, incomes against
+#' ranks), or when a few extreme values would dominate a Pearson
+#' correlation.
 #'
-#' @param x,y Numeric vectors of the same length.
-#' @return `core_cor_spearman()` a length-1 numeric in \ [-1, 1\];
-#' `core_midranks()` a numeric vector the length of `x`.
+#' @details
+#' With \eqn{r_i} and \eqn{s_i} the midranks of \eqn{x_i} and \eqn{y_i},
+#' \deqn{\rho = \frac{\sum_i (r_i - \bar r)(s_i - \bar s)}
+#'   {\sqrt{\sum_i (r_i - \bar r)^2 \sum_i (s_i - \bar s)^2}},}
+#' the Pearson correlation of the ranks (Spearman, 1904). Because ties get
+#' midranks, the shortcut \eqn{1 - 6 \sum d_i^2 / (n(n^2 - 1))} is NOT what
+#' is computed; the full formula above is, and it stays correct with ties.
+#'
+#' `core_cor_spearman()` does not remove missing values: an `NA` in either
+#' vector gives `NaN`, and so does a constant vector (its ranks have no
+#' variance). `core_midranks()` leaves an `NA` in place and ranks the rest,
+#' as `rank(x, na.last = "keep")` does. Refusals: vectors of different
+#' lengths (`"must have the same length"`) and a character, factor or list
+#' argument (`"must be numeric"`). Ranking sorts, so the cost is
+#' \eqn{O(n \log n)}.
+#'
+#' @param x,y Numeric (or logical) vectors of the same length.
+#' @return `core_cor_spearman()`: a length-1 numeric in \eqn{[-1, 1]}
+#'   (`NaN` as described above). `core_midranks()`: a numeric vector the
+#'   length of `x`, the rank of each value (1 for the smallest; tied values
+#'   share the mean of their ranks; `NA` kept as `NA`).
+#' @references Spearman C (1904). The proof and measurement of association
+#'   between two things. *The American Journal of Psychology* 15(1),
+#'   72--101. \doi{10.2307/1412159}
+#' @seealso [core_cor()] for the Pearson correlation.
 #' @examples
 #' x <- c(1, 2, 3, 4, 5)
 #' y <- c(2, 4, 9, 16, 25)
@@ -339,6 +557,10 @@ core_weighted <- function(x, w) {
 #'
 #' # Invariant to any monotone rescaling.
 #' all.equal(core_cor_spearman(x, y), core_cor_spearman(exp(x), log(y)))
+#'
+#' # Missing values are kept in place by core_midranks().
+#' core_midranks(c(3, NA, 1, 3))
+#' try(core_cor_spearman(1:3, 1:4))
 #' @name rmbl_core_rank
 #' @export
 core_cor_spearman <- function(x, y) {
@@ -362,13 +584,36 @@ core_midranks <- function(x) {
 
 #' Covariance matrix of a numeric matrix (C backend)
 #'
-#' Column covariances with the `n - 1` denominator, matching
-#' [stats::cov()]. Column names are carried through
-#' to both dimensions of the result.
+#' The covariance of every pair of columns of a numeric matrix or data
+#' frame, computed by the compiled core. Covariances describe how
+#' variables move together; the matrix is the input to principal
+#' components, Mahalanobis distances and multivariate drift checks.
+#' Column names are carried through to both dimensions of the result.
 #'
-#' @param x A numeric matrix or data frame of numeric columns
-#' (rows = observations, columns = variables).
-#' @return A symmetric `ncol(x)` by `ncol(x)` numeric matrix.
+#' @details
+#' Entry \eqn{(j, k)} is
+#' \eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar x_j)(x_{ik} - \bar x_k)}, the
+#' `n - 1` denominator of [stats::cov()], with which it agrees to
+#' rounding.
+#' The diagonal holds the column variances.
+#'
+#' Missing values are not removed: an `NA` in a column makes every
+#' covariance involving that column `NA` (pairwise or complete-case
+#' deletion is not done; use [stats::cov()] with `use =` for
+#' those). A
+#' single row gives `NaN` throughout. Refusals: a vector that is not a
+#' matrix (`"must be a matrix or data frame"`) and a data frame with a
+#' non-numeric column (`"every column of x must be numeric"`). Logical and
+#' integer matrices are converted to double. The cost is
+#' \eqn{O(n p^2)} for \eqn{n} rows and \eqn{p} columns.
+#'
+#' @param x A numeric matrix, or a data frame whose columns are all
+#'   numeric (rows = observations, columns = variables).
+#' @return A symmetric `ncol(x)` by `ncol(x)` numeric matrix, with the
+#'   column names of `x` (if any) as both row and column names; entry
+#'   units are the product of the two columns' units.
+#' @seealso [core_cor()] for a single Pearson correlation,
+#'   [core_moments()] for one column's variance.
 #' @examples
 #' X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
 #' core_cov(X)
@@ -381,6 +626,9 @@ core_midranks <- function(x) {
 #'
 #' # Data frames are accepted.
 #' core_cov(data.frame(u = 1:5, v = c(2, 1, 4, 3, 6)))
+#'
+#' # A plain vector is not a matrix of variables.
+#' try(core_cov(1:5))
 #' @export
 core_cov <- function(x) {
   if (is.data.frame(x)) {
@@ -400,16 +648,53 @@ core_cov <- function(x) {
 #' Bootstrap replicate means (C backend)
 #'
 #' `B` resamples of `x`, drawn with replacement and each the same
-#' length as `x`, with the mean of every resample returned. The
+#' length as `x`, with the mean of every resample returned. The spread of
+#' these replicate means estimates the standard error of the sample mean,
+#' and their quantiles give a percentile confidence interval, without
+#' assuming the data are normal (Efron and Tibshirani, 1993). The
 #' resampling uses the core's own 64-bit Mersenne Twister seeded by
 #' `seed`, NOT R's RNG, so a given `seed` reproduces the same
 #' replicates in every binding of the core and R's own random stream is
 #' left untouched.
 #'
-#' @param x Numeric vector to resample.
-#' @param B Number of bootstrap replicates (default 1000).
-#' @param seed Seed for the core's generator (default 42).
-#' @return A numeric vector of length `B`: the replicate means.
+#' @details
+#' Replicate \eqn{b} draws \eqn{n} indices uniformly from
+#' \eqn{1, \dots, n} with replacement (C++ `std::mt19937_64` seeded with
+#' `seed`, then `std::uniform_int_distribution`, whose algorithm is the C++
+#' library's own, so the replicates for a seed can differ between libstdc++
+#' and libc++) and returns the mean of the
+#' drawn values, accumulated in extended precision. The replicates are a
+#' single stream: the first `B` replicates for a seed are the same whatever
+#' larger `B` is asked for later.
+#'
+#' Edge cases: an empty `x` gives `B` values of `NaN`; an `NA` in
+#' `x` makes
+#' every replicate that draws it `NA`, so remove missing values first.
+#' `B` must be a whole number of at least 1
+#' (`"B must be a single whole number >= 1"`); a character, factor or list `x`
+#' is refused (`"must be numeric"`). `seed` must be a whole number from 0 to
+#' below \eqn{2^{53}}:
+#' `NA`, a negative or a fractional seed is refused.
+#'
+#' Performance: the work is \eqn{B \times n} draws (about 0.4 s for
+#' \eqn{B = 2000}, \eqn{n = 20000} on a laptop). The kernel polls for a
+#' Ctrl-C after about every million draws, so a long run can be
+#' interrupted; while it runs, an interactive session (or one with
+#' `options(morie.progress = TRUE)`) shows a spinner on stderr from 0.75 s
+#' on, and `options(morie.quiet = TRUE)` silences it.
+#'
+#' @param x Numeric (or logical) vector to resample.
+#' @param B Number of bootstrap replicates, a single whole number of at
+#'   least 1 (default 1000).
+#' @param seed Seed for the core's generator, a single non-negative whole
+#'   number (default 42). It does not use or change [set.seed()]'s
+#'   stream.
+#' @return A numeric vector of length `B`: the replicate means, in the
+#'   units of `x`.
+#' @references Efron B, Tibshirani RJ (1993). *An Introduction to the
+#'   Bootstrap*. Chapman and Hall.
+#' @seealso [exposure_response_plr()] for a bootstrap
+#'   of a model estimate.
 #' @examples
 #' set.seed(1)
 #' x <- stats::rnorm(50, mean = 5)
@@ -430,14 +715,24 @@ core_cov <- function(x) {
 #' # random stream is not consumed.
 #' identical(core_bootstrap_mean(x, 100, seed = 1),
 #'           core_bootstrap_mean(x, 100, seed = 1))
+#'
+#' # A longer run continues the same stream.
+#' identical(core_bootstrap_mean(x, 10, seed = 1),
+#'           core_bootstrap_mean(x, 100, seed = 1)[1:10])
+#'
+#' # At least one replicate is needed.
+#' try(core_bootstrap_mean(x, B = 0))
 #' @export
 core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
   B <- .rmbl_num(B, "B")
-  if (length(B) != 1L || is.na(B) || B < 1) {
-    stop("`B` must be a single number >= 1", call. = FALSE)
+  if (length(B) != 1L || is.na(B) || B < 1 || B != floor(B)) {
+    stop("`B` must be a single whole number >= 1", call. = FALSE)
   }
-  .Call(C_rmbl_bootstrap_mean, as.numeric(x), B, as.numeric(seed))
+  seed <- .rmbl_seed(seed)
+  # the kernel polls for a Ctrl-C about every million draws, and each poll turns the busy spinner
+  .bl_busy(sprintf("bootstrap: %s replicates of %s values", .bl_n(B), .bl_n(length(x))),
+           .Call(C_rmbl_bootstrap_mean, as.numeric(x), B, seed))
 }
 
 #' Trimmed inverse-probability weights (C backend)
@@ -446,15 +741,42 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #' and \eqn{1/(1-e)} for the untreated, with the propensity score clamped
 #' into `[trim_lo, trim_hi]` FIRST. Clamping matters: an untrimmed
 #' score near 0 or 1 produces a weight large enough for one observation to
-#' dominate the entire estimate.
+#' dominate the entire estimate. These weights reweight a treated and an
+#' untreated group so that each resembles the whole sample on the
+#' covariates behind the propensity score, the basis of
+#' inverse-probability-weighted estimates of a treatment effect
+#' (Rosenbaum and Rubin, 1983).
 #'
-#' @param treat Numeric or logical treatment indicator;
-#' `1` / `TRUE` is treated.
-#' @param propensity Numeric vector of propensity scores,
-#' the same length as `treat`.
-#' @param trim_lo,trim_hi Clamp bounds for the score
-#' (defaults 0.01 and 0.99).
-#' @return A numeric vector of weights the length of `treat`.
+#' @details
+#' For unit \eqn{i} with treatment \eqn{T_i} and propensity \eqn{e_i},
+#' the clamped score is \eqn{\tilde e_i = \min(\max(e_i, l), u)} with
+#' \eqn{l} = `trim_lo` and \eqn{u} = `trim_hi`, and the weight is
+#' \eqn{1 / \tilde e_i} when \eqn{T_i = 1} and \eqn{1 / (1 - \tilde e_i)}
+#' when \eqn{T_i = 0}. With the defaults no weight exceeds 100.
+#'
+#' Refusals: vectors of different lengths, a treatment coded other than
+#' 0/1 (`"treat must be coded 0/1"`, naming the offending values), a
+#' propensity outside \eqn{[0, 1]}, and bounds that do not satisfy
+#' \eqn{0 < l < u < 1}. A missing treatment or propensity gives a missing
+#' weight for that unit only. The weights are not normalised; divide by
+#' their sum within each arm for stabilised (Hajek) estimates.
+#'
+#' @param treat Numeric or logical treatment indicator, coded 0/1
+#'   (`1` / `TRUE` is treated); `NA` allowed.
+#' @param propensity Numeric vector of propensity scores (the estimated
+#'   probability of treatment), each in \eqn{[0, 1]}, the same length as
+#'   `treat`; `NA` allowed.
+#' @param trim_lo,trim_hi Clamp bounds for the score, single numbers with
+#'   `0 < trim_lo < trim_hi < 1` (defaults 0.01 and 0.99).
+#' @return A numeric vector of weights the length of `treat`, each at
+#'   least 1 (and at most `1 / trim_lo` or `1 / (1 - trim_hi)`), `NA`
+#'   where
+#'   the treatment or propensity is missing.
+#' @references Rosenbaum PR, Rubin DB (1983). The central role of the
+#'   propensity score in observational studies for causal effects.
+#'   *Biometrika* 70(1), 41--55. \doi{10.1093/biomet/70.1.41}
+#' @seealso [core_weighted()] to average an outcome with
+#'   these weights.
 #' @examples
 #' treat <- c(1, 0, 1, 0)
 #' e <- c(0.5, 0.25, 0.02, 0.9)
@@ -471,6 +793,9 @@ core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
 #'
 #' # Logical treatment indicators work too.
 #' core_ipw_weights(c(TRUE, FALSE), c(0.4, 0.4))
+#'
+#' # A treatment coded 1/2 is refused rather than read as all-control.
+#' try(core_ipw_weights(c(1, 2), c(0.5, 0.5)))
 #' @export
 core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
                              trim_hi = 0.99) {
@@ -513,12 +838,27 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 #' the CDF of a Gamma distribution with shape `a` and unit rate.
 #' Exposed because it is the building block of the chi-square tail used by
 #' [drift_chisq()] and
-#' [benford_test()].
+#' [benford_test()]: the p-value of a chi-square statistic
+#' \eqn{q} on
+#' \eqn{k} degrees of freedom is \eqn{1 - P(k/2, q/2)}.
 #'
-#' @param shape Shape parameter \eqn{a} (length-1, > 0).
-#' @param x Numeric vector of quantiles (>= 0).
-#' @return A numeric vector the length of `x`, each entry in \
-#' [0, 1\].
+#' @details
+#' \deqn{P(a, x) = \frac{1}{\Gamma(a)} \int_0^x t^{a-1} e^{-t} \, dt,}
+#' evaluated by the shared core (a series for small \eqn{x}, a continued
+#' fraction otherwise, the standard pairing), and agreeing with
+#' `stats::pgamma(x, shape)` to rounding. For a gamma distribution with
+#' rate \eqn{r}, pass `x * r`.
+#'
+#' `shape` must be a single positive number
+#' (`"shape must be a single positive number"`). A negative `x` gives 0,
+#' a missing `x` gives `NA`, and `Inf` gives 1, as in
+#' [stats::pgamma()].
+#'
+#' @param shape Shape parameter \eqn{a}, a single positive number.
+#' @param x Numeric vector of quantiles.
+#' @return A numeric vector the length of `x`, each entry a probability in
+#'   \eqn{[0, 1]}.
+#' @seealso [stats::pgamma()], the base R equivalent.
 #' @examples
 #' core_gamma_cdf(3.5, c(0.5, 1, 4, 12))
 #'
@@ -531,6 +871,9 @@ core_ipw_weights <- function(treat, propensity, trim_lo = 0.01,
 #'
 #' # A chi-square tail on k degrees of freedom is 1 - P(k/2, q/2).
 #' 1 - core_gamma_cdf(2 / 2, 5.99 / 2)      # about 0.05 on 2 df
+#'
+#' # The shape must be positive.
+#' try(core_gamma_cdf(0, 1))
 #' @export
 core_gamma_cdf <- function(shape, x) {
   shape <- .rmbl_num(shape, "shape")
@@ -563,19 +906,49 @@ core_gamma_cdf <- function(shape, x) {
 #' `alpha, beta` (gamma: shape and rate). This is the likelihood
 #' [core_hawkes_fit()] maximises, on the same parameters.
 #'
-#' @param times Sorted numeric vector of event times in
-#' `[0, horizon]`.
-#' @param horizon End of the observation window (length-1, >
-#' 0).
-#' @param kernel One of `"exponential"`,
-#' `"weibull"`, `"lomax"`, `"gamma"`.
-#' @param par Numeric parameter vector, as described above:
-#' length 3 for `"exponential"`, length 4 for the others.
+#' @details
+#' The conditional intensity is
+#' \eqn{\lambda(t) = \nu + \eta \sum_{t_i < t} g(t - t_i)} with \eqn{g} a
+#' probability density on \eqn{(0, \infty)} (so \eqn{\eta} is the
+#' branching ratio), and the value returned is
+#' \deqn{-\ell = -\sum_i \log \lambda(t_i) + \int_0^T \lambda(t)\,dt,}
+#' with \eqn{T} = `horizon` (Hawkes, 1971). For the exponential kernel
+#' \eqn{g(u) = \beta e^{-\beta u}}. With no events the value is the
+#' compensator alone, \eqn{\nu T}.
+#'
+#' The feasible region, outside which the sentinel `1e12` is returned
+#' instead of a value: \eqn{-20 < a_0 < 20}; \eqn{10^{-6} < \eta < 0.999};
+#' and for the kernel parameters, exponential \eqn{0.05 \le \beta \le 30};
+#' Weibull shape in \eqn{[0.05, 20]} and scale in \eqn{[0.001, 1000]};
+#' Lomax shape in \eqn{[0.05, 30]} and scale in \eqn{[0.001, 100]}; gamma
+#' shape in \eqn{[0.05, 20]} and rate in \eqn{[0.05, 30]}. A missing
+#' parameter also gives the sentinel.
+#'
+#' Refusals (errors, not the sentinel): `times` with a missing value, not
+#' sorted, or outside \eqn{[0, T]}; a `horizon` that is not a single
+#' positive finite number; a `kernel` not among the four; and a `par` of
+#' the wrong length for the kernel. The quadratic kernels poll for a
+#' Ctrl-C as they run, so a long evaluation can be interrupted.
+#'
+#' @param times Numeric vector of event times, sorted increasing, each in
+#'   `[0, horizon]`, in the time unit of your data (days, hours, ...).
+#'   May be empty.
+#' @param horizon End of the observation window, a single positive finite
+#'   number in the same unit; the window starts at 0.
+#' @param kernel The triggering kernel: one of `"exponential"` (the
+#'   default), `"weibull"`, `"lomax"`, `"gamma"`. Partial names are
+#'   matched.
+#' @param par Numeric parameter vector, as described above: length 3
+#'   (`a0`, `eta`, `beta`) for `"exponential"`, length 4 (`a0`,
+#'   `eta` and
+#'   the kernel's two parameters) for the others. Rates are per unit of
+#'   `times`.
 #' @return A length-1 numeric: the negative log-likelihood, to be
-#' MINIMISED. A parameter set outside the core's feasible region returns
-#' the sentinel `1e12` rather than erroring, so the value can be
-#' handed straight to [stats::optim()] without the
-#' optimiser walking off the domain.
+#'   MINIMISED. A parameter set outside the feasible region returns the
+#'   sentinel `1e12` rather than erroring, so the value can be handed
+#'   straight to [stats::optim()] without the optimiser walking off
+#'   the
+#'   domain.
 #' @references Hawkes AG (1971). Spectra of some self-exciting and mutually
 #' exciting point processes. *Biometrika* 58(1), 83--90.
 #'   \doi{10.1093/biomet/58.1.83}
@@ -597,6 +970,9 @@ core_gamma_cdf <- function(shape, x) {
 #'
 #' # The heavier-tailed kernels take two shape parameters.
 #' core_hawkes_nll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
+#'
+#' # Unsorted times are an error, not the sentinel.
+#' try(core_hawkes_nll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
 #' @export
 core_hawkes_nll <- function(times, horizon,
                             kernel = c("exponential", "weibull", "lomax",

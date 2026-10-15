@@ -9,8 +9,8 @@ core_blake2b(x, key = NULL, length = 32L)
 \arguments{
 \item{x}{A character vector or a raw vector.}
 
-\item{key}{Optional key, at most 64 bytes. \code{NULL}
-(default) gives the plain digest.}
+\item{key}{Optional key: a single string or a raw vector of at most 64
+bytes. \code{NULL} (default) gives the plain digest.}
 
 \item{length}{Digest length in bytes, 1 to 64 (default 32,
 matching SHA-256's width).}
@@ -20,17 +20,32 @@ A character vector of lowercase hex digests -- one per element
 for character input, length-1 for raw input.
 }
 \description{
+Computes the BLAKE2b hash of text or bytes as lowercase hex, with any
+digest length from 1 to 64 bytes. With a key it becomes a message
+authentication code: only someone holding the key can produce or check
+the digest. Use it for fingerprints and keyed checks inside your own
+workflow; use \code{\link[=core_sha256]{core_sha256()}} or
+\code{\link[=core_hmac_sha256]{core_hmac_sha256()}} where other tools
+must reproduce the value.
+}
+\details{
 BLAKE2b (RFC 7693): a modern cryptographic hash, faster than SHA-256 in
 software, that takes a key natively and produces any digest length from
 1 to 64 bytes.
-}
-\details{
+
 The native key is the interesting part. A keyed BLAKE2b IS a message
 authentication code, with no HMAC wrapper and so no doubled hashing --
 \code{core_blake2b(msg, key = k)} does the job of
 \code{\link[=core_hmac_sha256]{core_hmac_sha256()}} at lower cost. Use
 SHA-256 or HMAC where interoperability with other tools matters; use
 this where it does not and speed does.
+
+Character input is hashed element by element, as the bytes of each
+string; \code{NA} elements give \code{NA}. A raw vector is one message.
+The digest length is a parameter of BLAKE2b, so a 32-byte digest is not
+the first half of the 64-byte digest of the same input. Errors: \code{length}
+outside 1 to 64; a key that is not a single string or raw vector, or is
+longer than 64 bytes.
 }
 \examples{
 # The RFC 7693 test vector for BLAKE2b-512 of "abc".
@@ -51,6 +66,8 @@ core_blake2b("manifest", key = "secret") ==
 # Vectorised, and raw input hashes the same bytes.
 core_blake2b(c("a", "b"))
 identical(core_blake2b("abc"), core_blake2b(charToRaw("abc")))
+
+try(core_blake2b("abc", length = 65))
 }
 \references{
 Saarinen MJ, Aumasson JP (2015). The BLAKE2 Cryptographic

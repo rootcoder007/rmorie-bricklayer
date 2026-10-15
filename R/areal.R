@@ -16,42 +16,61 @@
 
 #' Expected counts under indirect standardisation
 #'
-#' The count each area would have if it experienced the overall rate in
-#' every stratum, given its own composition. Comparing observed against
-#' this rather than against a raw rate removes the part of the difference
-#' that is explained by who the area holds.
+#' @description
+#' Computes, for each area (region, district, institution), the count it
+#' would have if it experienced the overall rate in every stratum, given its
+#' own population in each stratum. Comparing an area's observed count with
+#' this expected count, rather than comparing raw rates, removes the part of
+#' the difference that is explained by who lives in (or is held in) the
+#' area. The result feeds \code{\link{sir}}, \code{\link{eb_rates}} and
+#' \code{\link{funnel_limits}}.
 #'
-#' @param counts Observed counts.
-#' @param population Population at risk, the same length
-#' as `counts`.
-#' @param area Area label for each row.
-#' @param strata Optional stratum label for each row -- an
-#' age band, a gender, or their interaction. With strata the
-#' standardisation is indirect in the usual sense: the overall
-#' stratum-specific rates are applied to each area's own stratum
-#' populations.
-#' @return A data frame with one row per area: `observed`,
-#' `population` and `expected`.
 #' @details
+#' With \eqn{O_{as}} and \eqn{P_{as}} the count and population of area
+#' \eqn{a} in stratum \eqn{s}, the reference rate of a stratum is pooled over
+#' all areas, \eqn{r_s = \sum_a O_{as} / \sum_a P_{as}}, and
+#' \deqn{E_a = \sum_s P_{as} r_s.}
 #' Without strata the expected count is just the area's population times
 #' the overall rate, which adjusts for size but not for composition. The
 #' two are worth distinguishing: a region holding disproportionately many
 #' young men will show an excess on the first and may show none on the
 #' second, and only the second is evidence about the region.
+#'
+#' Rows may repeat an area-stratum pair; they are summed. Rows with a
+#' missing count, population, area or stratum are dropped. The output is
+#' sorted by area label. Because the reference rates come from the same
+#' data, \eqn{\sum_a E_a = \sum_a O_a}.
+#'
+#' Errors: non-numeric, negative or infinite counts or populations; a
+#' population of zero; \code{counts}, \code{population}, \code{area} or
+#' \code{strata} of different lengths.
+#'
+#' @param counts Numeric vector of observed counts (non-negative), one per
+#'   row of the area-by-stratum table.
+#' @param population Numeric vector of the population at risk (positive),
+#'   the same length as \code{counts}.
+#' @param area Vector of area labels, one per row (converted to character).
+#' @param strata Optional vector of stratum labels, one per row: an age
+#'   band, a gender, or their interaction. Default \code{NULL}: one stratum,
+#'   so only size is adjusted for. With strata the standardisation is
+#'   indirect in the usual sense: the overall stratum-specific rates are
+#'   applied to each area's own stratum populations.
+#' @return A data frame with one row per area and columns \code{area}
+#'   (character), \code{observed}, \code{population} and \code{expected}
+#'   (numeric totals over the area's rows).
 #' @references
-#' Lawson, A. B. *Using R for Bayesian Spatial and Spatio-Temporal Health
-#' Modeling*. Chapman and Hall/CRC. Chapter 1 sets out the convention used
+#' Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+#' Modeling}. Chapman and Hall/CRC. Chapter 1 sets out the convention used
 #' here: the expected counts come from applying the overall population rate
 #' to each area, and the standardised incidence ratio is the ratio of count
 #' to expected.
 #'
-#' Hedderich, J. and Sachs, L. (2020). *Applied Statistics: Methods Using
-#' R*. Springer, on the distinction between indirect standardisation, which
+#' Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using
+#' R}. Springer, on the distinction between indirect standardisation, which
 #' applies the reference's stratum-specific rates to the study population,
 #' and direct standardisation, which does the reverse.
 #' @seealso
-#' [sir()], [eb_rates()],
-#' [funnel_limits()]
+#' \code{\link{sir}}, \code{\link{eb_rates}}, \code{\link{funnel_limits}}
 #' @examples
 #' d <- data.frame(
 #'   region = rep(c("North", "South", "East"), each = 2),
@@ -65,7 +84,14 @@
 #'
 #' # Adjusting for size AND age composition, which is the comparison
 #' # that says something about the region.
-#' expected_counts(d$n, d$pop, d$region, strata = d$age)
+#' e <- expected_counts(d$n, d$pop, d$region, strata = d$age)
+#' e
+#'
+#' # the expected counts feed the standardised ratio
+#' sir(e$observed, e$expected, area = e$area)
+#'
+#' # a population of zero has no rate
+#' try(expected_counts(c(1, 2), c(10, 0), c("a", "b")))
 #' @export
 expected_counts <- function(counts, population, area, strata = NULL) {
   counts <- .rmbl_finite_input(counts, "counts", nonneg = TRUE)
@@ -109,30 +135,51 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 
 #' Standardised incidence ratio, with an exact interval
 #'
-#' The ratio of observed to expected, with the exact Poisson interval for
-#' it. A ratio of one is the overall experience; above one is an excess.
+#' @description
+#' Divides each area's observed count by its expected count to give the
+#' standardised incidence ratio (SIR), and adds an exact Poisson confidence
+#' interval. A ratio of one is the overall experience; above one is an
+#' excess and below one a deficit. Use it after \code{\link{expected_counts}}
+#' to say which areas differ from the overall rate by more than chance.
 #'
-#' @param observed Observed counts.
-#' @param expected Expected counts, from
-#' [expected_counts()].
-#' @param area Optional labels.
-#' @param conf_level Confidence level.
-#' @return A data frame with `observed`, `expected`, `sir`,
-#' `lower`, `upper`, `excess` (the interval lies above one), `deficit`
-#'   (the interval lies below one) and `significant` -- whether the interval
-#' excludes one.
 #' @details
-#' The interval is the exact Poisson one, from the relation between the
-#' Poisson and gamma distributions, and so is identical to
-#' `stats::poisson.test` 's. It is the interval to use here because
-#' the counts that matter are small: a normal approximation on an observed
-#' count of three is not an interval, it is a decoration.
+#' With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}. The
+#' interval for \eqn{1 - \alpha} coverage is
+#' \deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\, O+1)}{E}\right]}
+#' where \eqn{G^{-1}(p; k)} is the gamma quantile with shape \eqn{k}; the
+#' lower limit is 0 when \eqn{O = 0}. This is the exact Poisson interval,
+#' from the relation between the Poisson and gamma distributions, and so is
+#' identical to \code{stats::poisson.test()}'s. It is the interval to use
+#' here because the counts that matter are small: a normal approximation on
+#' an observed count of three is not an interval, it is a decoration.
+#'
+#' Each area's interval is a separate test; with many areas some will
+#' exclude one by chance (see \code{\link{scan_adjust}}). Missing values are
+#' dropped before the lengths are compared.
+#'
+#' Errors: negative, infinite or non-numeric counts; an expected count of
+#' zero or below; lengths that differ (a single \code{expected} is recycled).
+#' A \code{conf_level} outside (0, 1) is an error.
+#'
+#' @param observed Numeric vector of observed counts (non-negative).
+#' @param expected Numeric vector of expected counts (positive), for example
+#'   from \code{\link{expected_counts}}; the same length as \code{observed},
+#'   or length one.
+#' @param area Optional vector of area labels, added as the first column.
+#'   Default \code{NULL}.
+#' @param conf_level Number in (0, 1), default \code{0.95}: the two-sided
+#'   confidence level of the interval.
+#' @return A data frame with one row per area: \code{area} (when given),
+#' \code{observed}, \code{expected}, \code{sir}, \code{lower}, \code{upper}
+#' (numeric), and logical \code{excess} (the interval lies above one),
+#' \code{deficit} (the interval lies below one) and \code{significant}
+#' (either).
 #' @references
-#' Lawson, A. B. *Using R for Bayesian Spatial and Spatio-Temporal Health
-#' Modeling*. Chapman and Hall/CRC, Chapter 1.
+#' Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+#' Modeling}. Chapman and Hall/CRC, Chapter 1.
 #' @seealso
-#' [eb_rates()],
-#' [funnel_limits()]
+#' \code{\link{expected_counts}}, \code{\link{eb_rates}},
+#' \code{\link{funnel_limits}}
 #' @examples
 #' sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
 #'     area = c("North", "South", "East"))
@@ -140,6 +187,11 @@ expected_counts <- function(counts, population, area, strata = NULL) {
 #' # An observed count of three carries almost no information, and the
 #' # interval says so rather than hiding it.
 #' sir(3, 5)
+#'
+#' # a 90 percent interval, and a zero count (lower limit exactly 0)
+#' sir(c(0, 40), c(2, 25), conf_level = 0.90)
+#'
+#' try(sir(c(3, 4), c(5, 0)))
 #' @export
 sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   observed <- .rmbl_finite_input(observed, "observed", nonneg = TRUE,
@@ -153,6 +205,7 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   if (any(expected <= 0, na.rm = TRUE)) {
     stop("`expected` must be positive", call. = FALSE)
   }
+  conf_level <- .rmbl_conf_level(conf_level)
   a <- 1 - conf_level
   # the exact Poisson interval, via the gamma relation: an observed
   # count of zero has a lower limit of exactly zero rather than a
@@ -174,47 +227,69 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
 
 #' Empirical Bayes rates, shrunk toward the overall experience
 #'
-#' A small area's rate is mostly noise, so ranking areas by their raw rates
+#' @description
+#' A small area's rate is mostly noise, so ranking areas by their raw ratios
 #' puts the smallest areas at both ends of the table by construction. This
-#' borrows strength across areas: each rate is pulled toward the overall
-#' one by an amount that depends on how little information the area
-#' carries.
+#' function borrows strength across areas: each area's ratio of observed to
+#' expected is pulled toward the overall ratio by an amount that depends on
+#' how little information the area carries. Use the shrunk estimates for
+#' maps and rankings; use \code{\link{sir}} for each area's own evidence.
 #'
-#' @param observed Observed counts.
-#' @param expected Expected counts.
-#' @param area Optional labels.
-#' @return A data frame with the raw `sir`, the shrunk `eb`, the
-#' `shrinkage` applied (zero means untouched, one means replaced by
-#' the overall rate), and the fitted prior's `nu` and `alpha`.
 #' @details
-#' The Clayton-Kaldor construction: the area-specific relative risks are
-#' taken to come from a gamma prior, whose two parameters are estimated
-#' from the observed and expected counts by the method of moments, and the
-#' posterior mean `(O + nu) / (E + alpha)` is reported. Where the
-#' expected count is large the data dominate and the estimate barely moves;
-#' where it is small the prior does, which is the intended behaviour and
-#' not a defect.
+#' The area relative risks \eqn{\theta_a} are taken to come from a gamma
+#' prior with shape \eqn{\nu} and rate \eqn{\alpha}. Its mean is the overall
+#' ratio \eqn{m = \sum O_a / \sum E_a}, and its variance is estimated by the
+#' method of moments,
+#' \deqn{s^2 = \frac{\sum_a E_a (\theta_a - m)^2}{\sum_a E_a} - \frac{m}{\bar E},}
+#' with \eqn{\theta_a = O_a / E_a} and \eqn{\bar E} the mean expected count;
+#' the subtracted term is the spread that Poisson sampling alone would
+#' produce. Then \eqn{\alpha = m / s^2}, \eqn{\nu = m^2 / s^2}, and the
+#' posterior mean \eqn{(O_a + \nu)/(E_a + \alpha)} is reported, with
+#' shrinkage \eqn{\alpha / (E_a + \alpha)}. Where the expected count is large
+#' the data dominate and the estimate barely moves; where it is small the
+#' prior does, which is the intended behaviour and not a defect.
 #'
 #' When the between-area variance estimate comes out at or below zero there
 #' is no evidence of any real variation between areas, and every estimate
-#' collapses to the overall rate. That is reported through `shrinkage`
-#' rather than hidden.
+#' collapses to the overall rate. That is reported through \code{shrinkage}
+#' (all ones) and \code{NA} prior parameters rather than hidden.
+#'
+#' Errors: lengths that differ; missing, negative or infinite counts;
+#' missing, infinite or non-positive expected counts; fewer than two areas.
+#'
+#' @param observed Numeric vector of observed counts (non-negative, no
+#'   \code{NA}).
+#' @param expected Numeric vector of expected counts (positive), the same
+#'   length, for example from \code{\link{expected_counts}}.
+#' @param area Optional vector of area labels, added as the first column.
+#'   Default \code{NULL}.
+#' @return A data frame with one row per area: \code{area} (when given),
+#' \code{observed}, \code{expected}, the raw ratio \code{sir}, the shrunk
+#' estimate \code{eb}, the \code{shrinkage} applied (zero means untouched,
+#' one means replaced by the overall rate), and the fitted prior's \code{nu}
+#' (shape) and \code{alpha} (rate), the same on every row.
 #' @references
 #' Clayton, D. and Kaldor, J. (1987). Empirical Bayes estimates of
 #' age-standardized relative risks for use in disease mapping.
-#' *Biometrics* 43(3), 671-681.
+#' \emph{Biometrics} 43(3), 671-681.
 #'
-#' Lawson, A. B. *Using R for Bayesian Spatial and Spatio-Temporal Health
-#' Modeling*. Chapman and Hall/CRC, which cites Clayton and Kaldor as the
+#' Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+#' Modeling}. Chapman and Hall/CRC, which cites Clayton and Kaldor as the
 #' empirical-Bayes approximation in the development of Bayesian disease
 #' mapping.
 #' @seealso
-#' [sir()], [funnel_limits()]
+#' \code{\link{sir}}, \code{\link{funnel_limits}}
 #' @examples
 #' # Three areas, one of them tiny. The tiny area's raw ratio is
 #' # extreme; its shrunk one is not.
 #' eb_rates(observed = c(30, 45, 2), expected = c(25, 50, 0.5),
 #'          area = c("North", "South", "Tiny"))
+#'
+#' # no variation beyond chance: every estimate is the overall ratio
+#' eb_rates(c(10, 11, 9), c(10, 10, 10))
+#'
+#' # one area has nothing to borrow from
+#' try(eb_rates(5, 4))
 #' @export
 eb_rates <- function(observed, expected, area = NULL) {
   observed <- .rmbl_num(observed, "observed")
@@ -273,38 +348,73 @@ eb_rates <- function(observed, expected, area = NULL) {
 
 #' Funnel-plot control limits
 #'
-#' The limits within which an area's ratio would fall, given its expected
-#' count, if it were no different from the overall experience. A funnel
-#' plot is the alternative to a league table: it shows directly that a
-#' small area's ratio can wander far from one without meaning anything.
+#' @description
+#' Gives the range within which an area's ratio of observed to expected
+#' would fall, for a given expected count, if the area were no different
+#' from the overall experience. Plotted against the expected count these
+#' limits form a funnel: wide for small areas, narrow for large ones. A
+#' funnel plot is the alternative to a league table: it shows directly that
+#' a small area's ratio can wander far from one without meaning anything.
 #'
-#' @param expected Expected counts to compute limits at.
-#' @param target The ratio the limits are centred on. One is
-#' the overall experience.
-#' @param levels Two-sided coverage levels for the limit
-#' pairs.
-#' @return A data frame of `expected`, `level`, `lower` and
-#' `upper` on the ratio scale.
 #' @details
-#' The limits are exact Poisson quantiles divided by the expected count, so
-#' they are the discrete counterpart of the usual normal funnel and stay
-#' correct at the small expected counts where the normal version goes below
-#' zero.
+#' For expected count \eqn{E}, target ratio \eqn{\rho} and coverage
+#' \eqn{1 - a}, the limits are
+#' \deqn{\frac{Q(a/2;\ \rho E)}{E},\quad \frac{Q(1 - a/2;\ \rho E)}{E}}
+#' with \eqn{Q} the Poisson quantile function. They are exact Poisson
+#' quantiles divided by the expected count, so they are the discrete
+#' counterpart of the usual normal funnel and stay correct at the small
+#' expected counts where the normal version goes below zero. Because the
+#' Poisson is discrete the limits move in steps of \eqn{1/E}. The usual pair
+#' of levels, 0.95 and 0.998, corresponds to about two and three standard
+#' deviations.
+#'
+#' Errors: non-positive, infinite or missing expected counts (missing
+#' values are dropped); a non-positive \code{target}; a level outside
+#' (0, 1).
+#'
+#' @param expected Numeric vector of expected counts (positive) at which to
+#'   compute limits, for example a grid from the smallest to the largest
+#'   area.
+#' @param target Number, default \code{1}: the ratio the limits are centred
+#'   on. One is the overall experience.
+#' @param levels Numeric vector of two-sided coverage levels in (0, 1),
+#'   default \code{c(0.95, 0.998)}; one pair of limits per level.
+#' @return A data frame with one row per expected count and level, sorted by
+#' level then expected count, with numeric columns \code{expected},
+#' \code{level}, \code{lower} and \code{upper} (the limits on the ratio
+#' scale).
 #' @references
-#' *Advanced Statistics in Criminology and Criminal Justice* discusses
+#' Spiegelhalter, D. J. (2005). Funnel plots for comparing institutional
+#' performance. \emph{Statistics in Medicine} 24(8), 1185-1202.
+#' \doi{10.1002/sim.1970}
+#'
+#' \emph{Advanced Statistics in Criminology and Criminal Justice} discusses
 #' the funnel plot as the display of the relationship between an estimate
 #' and the sample size behind it.
 #'
-#' Lawson, A. B. *Using R for Bayesian Spatial and Spatio-Temporal Health
-#' Modeling*. Chapman and Hall/CRC, on the Poisson counts these limits are
+#' Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
+#' Modeling}. Chapman and Hall/CRC, on the Poisson counts these limits are
 #' built from.
 #' @seealso
-#' [sir()], [eb_rates()]
+#' \code{\link{sir}}, \code{\link{eb_rates}}
 #' @examples
 #' # The funnel narrows as the expected count grows, which is the whole
 #' # point: a ratio of 2 means nothing at an expected count of 2 and a
 #' # great deal at an expected count of 200.
 #' funnel_limits(c(2, 20, 200))
+#'
+#' # one 90 percent funnel around a target ratio of 1.2
+#' funnel_limits(c(5, 50), target = 1.2, levels = 0.90)
+#'
+#' # a funnel drawn with base graphics
+#' e <- c(1, 2, 5, 10, 20, 50, 100, 200)
+#' f <- funnel_limits(e, levels = 0.95)
+#' plot(f$expected, f$upper, type = "s", log = "x", ylim = c(0, 4),
+#'      xlab = "expected count", ylab = "ratio")
+#' lines(f$expected, f$lower, type = "s")
+#' abline(h = 1, lty = 2)
+#'
+#' try(funnel_limits(10, levels = 1))
 #' @export
 funnel_limits <- function(expected, target = 1,
                           levels = c(0.95, 0.998)) {
@@ -331,36 +441,60 @@ funnel_limits <- function(expected, target = 1,
 
 #' Global Moran's I over a neighbour list
 #'
-#' Spatial autocorrelation for an areal variable, with a permutation
-#' p-value. A neighbour list is required and is not invented: an
+#' @description
+#' Measures spatial autocorrelation in a variable measured on areas: whether
+#' neighbouring areas tend to have similar values (positive I), dissimilar
+#' values (negative I), or neither. The p-value comes from randomly
+#' permuting the values over the areas. You must supply the neighbour
+#' structure (a list or a weight matrix); none is invented, because an
 #' administrative extract keyed on a region ships no geometry, and guessing
 #' adjacency would make the answer a property of the guess.
 #'
-#' @param x The variable, one value per area.
-#' @param neighbours Either a list with one integer
-#' vector of neighbour indices per area, or a square weight matrix.
-#' @param style `"W"` row-standardises the weights, so
-#' each area's neighbours carry a total weight of one; `"B"` leaves
-#' them binary. Row standardisation is the usual choice, and stops an area
-#' with many neighbours from dominating.
-#' @param n_perm Permutations for the null distribution.
-#' @return A list with `I`, its expectation under the null (
-#' `-1/(n-1)`, which is not zero), the permutation mean and standard
-#' deviation, a `z` score, `p_value`, and `W`, the total
-#' weight.
 #' @details
-#' The expectation of I under the null is `-1/(n - 1)`, not zero, so a
+#' With weights \eqn{w_{ij}}, total \eqn{W = \sum_{ij} w_{ij}} and
+#' \eqn{z_i = x_i - \bar x},
+#' \deqn{I = \frac{n}{W}\,\frac{\sum_{i}\sum_{j} w_{ij} z_i z_j}{\sum_i z_i^2}.}
+#' The expectation of I under the null is \eqn{-1/(n - 1)}, not zero, so a
 #' small negative I is what independence looks like in a small set of
 #' areas. The p-value comes from permuting the values over the areas, which
 #' needs no distributional assumption -- and with a handful of regions no
-#' distributional assumption is safe.
+#' distributional assumption is safe. It is two-sided around
+#' \eqn{-1/(n - 1)}, \eqn{(1 + \mathrm{count}(|I^* - E| \ge |I - E|))/(1 + B)} over the
+#' \eqn{B} finite permuted values, so it is never exactly zero.
+#'
+#' A neighbour list is binary; a weight matrix keeps its magnitudes (for
+#' example inverse distances). Self-neighbours and the diagonal are dropped.
+#' \code{style = "W"} divides each area's weights by their total. The
+#' permutations use R's random number generator, so call
+#' \code{set.seed()} first for a reproducible p-value. The work is done in
+#' compiled code.
+#'
+#'
+#' Errors: fewer than three areas; missing values in \code{x}; a constant
+#' \code{x}; a neighbour index outside \code{1..n}; a list of the wrong
+#' length; a weight matrix that is not \eqn{n \times n}, not finite, or has
+#' negative weights; no area with any neighbour.
+#'
+#' @param x Numeric vector, one value per area, no missing values.
+#' @param neighbours Either a list with one integer vector of neighbour
+#'   indices per area (in the order of \code{x}), or a square \eqn{n \times
+#'   n} weight matrix.
+#' @param style \code{"W"} (the default) row-standardises the weights, so
+#'   each area's neighbours carry a total weight of one; \code{"B"} leaves
+#'   them as given (binary for a list). Row standardisation is the usual
+#'   choice, and stops an area with many neighbours from dominating.
+#' @param n_perm Integer, default \code{9999}: the number of random
+#'   permutations for the null distribution.
+#' @return A list with \code{I} (the statistic), \code{expectation}
+#' (\eqn{-1/(n-1)}), \code{null_mean} and \code{null_sd} (mean and standard
+#' deviation of the permuted values), \code{z} (\code{(I - null_mean) /
+#' null_sd}), \code{p_value}, \code{W} (the total weight), \code{n} (number
+#' of areas), \code{n_perm} (permutations used) and \code{style}.
 #' @references
 #' Moran, P. A. P. (1950). Notes on continuous stochastic phenomena.
-#' *Biometrika* 37(1/2), 17-23. (Not in the local corpus; cited from the
-#' published paper. The corpus does carry applied uses of the statistic,
-#' including Laniyonu (2017) on policing practices in gentrifying
-#' neighbourhoods, where it is used exactly as here -- to establish that
-#' areal residuals are spatially dependent.)
+#' \emph{Biometrika} 37(1/2), 17-23. Laniyonu (2017), on policing practices
+#' in gentrifying neighbourhoods, uses the statistic as here, to establish
+#' that areal residuals are spatially dependent.
 #' @examples
 #' # Six areas in a line, each adjacent to the next.
 #' nb <- list(2L, c(1L, 3L), c(2L, 4L), c(3L, 5L), c(4L, 6L), 5L)
@@ -375,6 +509,15 @@ funnel_limits <- function(expected, target = 1,
 #'
 #' # And the null expectation is not zero.
 #' -1 / (6 - 1)
+#'
+#' # the same line as a binary weight matrix, unstandardised
+#' w <- matrix(0, 6, 6)
+#' for (i in 1:5) w[i, i + 1] <- w[i + 1, i] <- 1
+#' set.seed(1)
+#' morans_i(c(1, 2, 3, 4, 5, 6), w, style = "B", n_perm = 999L)$I
+#'
+#' # a constant variable has no autocorrelation to measure
+#' try(morans_i(c(2, 2, 2), list(2L, c(1L, 3L), 2L)))
 #' @export
 morans_i <- function(x, neighbours, style = c("W", "B"),
                      n_perm = 9999L) {

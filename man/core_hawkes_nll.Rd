@@ -12,24 +12,30 @@ core_hawkes_nll(
 )
 }
 \arguments{
-\item{times}{Sorted numeric vector of event times in
-\verb{[0, horizon]}.}
+\item{times}{Numeric vector of event times, sorted increasing, each in
+\verb{[0, horizon]}, in the time unit of your data (days, hours, ...).
+May be empty.}
 
-\item{horizon}{End of the observation window (length-1, >
-0).}
+\item{horizon}{End of the observation window, a single positive finite
+number in the same unit; the window starts at 0.}
 
-\item{kernel}{One of \code{"exponential"},
-\code{"weibull"}, \code{"lomax"}, \code{"gamma"}.}
+\item{kernel}{The triggering kernel: one of \code{"exponential"} (the
+default), \code{"weibull"}, \code{"lomax"}, \code{"gamma"}. Partial names are
+matched.}
 
-\item{par}{Numeric parameter vector, as described above:
-length 3 for \code{"exponential"}, length 4 for the others.}
+\item{par}{Numeric parameter vector, as described above: length 3
+(\code{a0}, \code{eta}, \code{beta}) for \code{"exponential"}, length 4 (\code{a0},
+\code{eta} and
+the kernel's two parameters) for the others. Rates are per unit of
+\code{times}.}
 }
 \value{
 A length-1 numeric: the negative log-likelihood, to be
-MINIMISED. A parameter set outside the core's feasible region returns
-the sentinel \code{1e12} rather than erroring, so the value can be
-handed straight to \code{\link[stats:optim]{stats::optim()}} without the
-optimiser walking off the domain.
+MINIMISED. A parameter set outside the feasible region returns the
+sentinel \code{1e12} rather than erroring, so the value can be handed
+straight to \code{\link[stats:optim]{stats::optim()}} without the optimiser walking off
+the
+domain.
 }
 \description{
 The negative log-likelihood of a univariate self-exciting Hawkes process
@@ -53,6 +59,29 @@ kernel's own shape parameters: \code{beta} (exponential),
 and scale, \eqn{g(u) = \alpha c^\alpha (u + c)^{-(\alpha + 1)}}),
 \verb{alpha, beta} (gamma: shape and rate). This is the likelihood
 \code{\link[=core_hawkes_fit]{core_hawkes_fit()}} maximises, on the same parameters.
+
+The conditional intensity is
+\eqn{\lambda(t) = \nu + \eta \sum_{t_i < t} g(t - t_i)} with \eqn{g} a
+probability density on \eqn{(0, \infty)} (so \eqn{\eta} is the
+branching ratio), and the value returned is
+\deqn{-\ell = -\sum_i \log \lambda(t_i) + \int_0^T \lambda(t)\,dt,}
+with \eqn{T} = \code{horizon} (Hawkes, 1971). For the exponential kernel
+\eqn{g(u) = \beta e^{-\beta u}}. With no events the value is the
+compensator alone, \eqn{\nu T}.
+
+The feasible region, outside which the sentinel \code{1e12} is returned
+instead of a value: \eqn{-20 < a_0 < 20}; \eqn{10^{-6} < \eta < 0.999};
+and for the kernel parameters, exponential \eqn{0.05 \le \beta \le 30};
+Weibull shape in \eqn{[0.05, 20]} and scale in \eqn{[0.001, 1000]};
+Lomax shape in \eqn{[0.05, 30]} and scale in \eqn{[0.001, 100]}; gamma
+shape in \eqn{[0.05, 20]} and rate in \eqn{[0.05, 30]}. A missing
+parameter also gives the sentinel.
+
+Refusals (errors, not the sentinel): \code{times} with a missing value, not
+sorted, or outside \eqn{[0, T]}; a \code{horizon} that is not a single
+positive finite number; a \code{kernel} not among the four; and a \code{par} of
+the wrong length for the kernel. The quadratic kernels poll for a
+Ctrl-C as they run, so a long evaluation can be interrupted.
 }
 \examples{
 set.seed(4)
@@ -72,6 +101,9 @@ core_hawkes_nll(times, 10, "exponential", c(-0.5, 1.5, 1.2)) == 1e12
 
 # The heavier-tailed kernels take two shape parameters.
 core_hawkes_nll(times, 10, "gamma", c(-0.5, 0.3, 2, 1.5))
+
+# Unsorted times are an error, not the sentinel.
+try(core_hawkes_nll(rev(times), 10, "exponential", c(-0.5, 0.3, 1.2)))
 }
 \references{
 Hawkes AG (1971). Spectra of some self-exciting and mutually

@@ -20,34 +20,65 @@ plain codes (with \code{code_book}), or already-decoded labels.}
 the source program (SPSS FREQUENCIES, Stata tabulate).}
 
 \item{code_book}{Optional named character vector, code = label, from the
-source program's variable view. When \code{imported} carries a \code{labels}
-attribute the two are compared and any disagreement is an error.}
+source program's variable view. Default \code{NULL}. When
+\code{imported} carries a \code{labels} attribute the two are compared
+and any disagreement fails the check.}
 
-\item{tolerance}{Passed to \code{\link{verify_marginals}}.}
+\item{tolerance}{Non-negative number, default \code{0}: the absolute
+difference in count allowed per label, passed to
+\code{\link{verify_marginals}}.}
 
-\item{strict}{When \code{TRUE} (the default) any disagreement is an error.
-When \code{FALSE} the result comes back with \code{ok = FALSE}, \code{reasons}, and
-\code{marginals$permutation} ready for \code{\link{relabel_forensics}}.}
+\item{strict}{Logical, default \code{TRUE}: any disagreement is an error.
+When \code{FALSE} the result comes back with \code{ok = FALSE},
+\code{reasons}, and \code{marginals$permutation} ready for
+\code{\link{relabel_forensics}}.}
 }
 \value{
-A list with \code{ok}, \code{decoded} (a factor in code order), \code{marginals}
-(the \code{\link{verify_marginals}} result), \code{code_book_ok} and
-\code{reasons} (character, empty when \code{ok}).
+A list with \code{ok} (logical), \code{decoded} (a factor; in code
+order when decoded from codes), \code{marginals} (the
+\code{\link{verify_marginals}} result), \code{code_book_ok} (logical, or
+\code{NA} when there was nothing to compare) and \code{reasons}
+(character messages, or \code{NULL} when \code{ok}).
 }
 \description{
-The transfer that matters is SPSS/Stata/SAS to R or Python: the source
-program stores codes plus value labels, the destination is handed the
-codes, and the labels are re-attached in the analysis. This function
-takes what the source program printed for that variable (its frequency
-table, label = count, and optionally its code book, code = label) and
-refuses to continue unless the imported vector reproduces it exactly.
-Rotated, swapped or positionally relabelled groups fail here, on the day
-of the import, with the permutation named.
+Checks a categorical variable that was moved from SPSS, Stata or SAS into
+R against what the source program reported for it. You give the frequency
+table the source program printed (label = count) and, optionally, its code
+book (code = label); the function decodes the imported vector and refuses
+to continue unless it reproduces those counts exactly and its value labels
+agree with the code book. Rotated, swapped or positionally relabelled
+groups fail at import, with the permutation named.
+}
+\details{
+Steps:
+\enumerate{
+\item When \code{imported} has a \code{labels} attribute and
+\code{code_book} is given, the two are compared code by code; any
+code whose label differs (or that is present in only one) is a
+disagreement.
+\item The vector is decoded: by its \code{labels} attribute
+(\code{\link{decode_labelled}}), else by \code{code_book}, else taken
+as already-decoded labels.
+\item The decoded labels are checked with
+\code{\link{verify_marginals}} against \code{source_counts}.
+}
+With \code{strict = TRUE} the first disagreement is an error. With
+\code{strict = FALSE} both checks run and are reported. A code without a
+label is an error in either mode (from the decoding step).
 }
 \examples{
 x <- structure(c(1, 1, 2, 4, 1),
                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 transfer_verify(x, c(White = 3, Black = 1, Unknown = 1))$ok
+
+# counts that only match under swapped labels, reported without stopping
+r <- transfer_verify(x, c(White = 1, Black = 3, Unknown = 1), strict = FALSE)
+r$ok
+r$marginals$permutation
+
+# value labels that disagree with the source code book
+try(transfer_verify(x, c(White = 3, Black = 1, Unknown = 1),
+  code_book = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")))
 }
 \seealso{
 \code{\link{decode_labelled}}, \code{\link{verify_marginals}},

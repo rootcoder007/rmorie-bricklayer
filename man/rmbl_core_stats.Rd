@@ -14,27 +14,50 @@ core_var(x)
 core_cor(x, y)
 }
 \arguments{
-\item{x, y}{Numeric vectors (coerced with
-\code{\link[=as.numeric]{as.numeric()}}) .}
+\item{x, y}{Numeric (or logical) vectors. \code{core_cor()} needs
+\code{x} and \code{y} of the same length.}
 }
 \value{
-\code{core_mean()}, \code{core_var()} and \code{core_cor()}
-return a length-1 numeric. \code{core_var()} uses the \code{n - 1}
-(sample) denominator, matching \code{\link[stats:var]{stats::var()}}.
+\code{core_mean()}, \code{core_var()} and \code{core_cor()} each
+return a length-1 numeric.
 }
 \description{
-Thin R wrappers over the \code{rmoriebricklayer} compiled core -- the
-same kernels that sibling packages reach through
-\code{LinkingTo: rmoriebricklayer}. NA/NaN values propagate (there is no
-\code{na.rm}) ; call \code{\link[stats:na.omit]{stats::na.omit()}} first
-if you need NA handling.
+\code{core_mean()}, \code{core_var()} and \code{core_cor()} compute the
+mean, the sample variance and the Pearson correlation in compiled code.
+They are thin R wrappers over the kernels in the package's C/C++ core,
+the same ones that other packages call through
+\code{LinkingTo: rmoriebricklayer}, so an R result and a compiled
+result agree exactly. Use them where you want those shared kernels; for
+everyday work \code{mean()}, \code{var()} and \code{cor()} give the same
+numbers.
+}
+\details{
+With \eqn{n} values,
+\deqn{\bar x = \frac{1}{n}\sum_i x_i, \qquad
+  s^2 = \frac{1}{n - 1}\sum_i (x_i - \bar x)^2, \qquad
+  r = \frac{\sum_i (x_i - \bar x)(y_i - \bar y)}
+  {\sqrt{\sum_i (x_i - \bar x)^2 \sum_i (y_i - \bar y)^2}}.}
+The variance uses the \eqn{n - 1} (sample) denominator, as
+\code{\link[stats]{var}} does. The mean is accumulated so that a sum of
+finite values that would overflow a double (for example two values of
+\code{1e308}) still gives the finite mean.
+
+There is no \code{na.rm}: any \code{NA} or \code{NaN} gives \code{NA} or
+\code{NaN}; remove missing values first, for example with
+\code{\link[stats]{na.omit}}. Edge cases return \code{NaN} rather than an
+error: an empty vector for the mean, fewer than two values for the
+variance, and a constant vector for the correlation.
+
+Errors: input that is a character vector, factor, list or data frame
+(logical input is accepted and read as 0/1); \code{x} and \code{y} of
+different lengths in \code{core_cor()}.
 }
 \examples{
 ## core_mean(): sample mean (NA/NaN propagate; no na.rm)
 core_mean(1:10)                 # 5.5
-core_mean(c(2.5, 3.5))          # 3
 core_mean(c(1, 2, NA))          # NA -- call stats::na.omit() first if needed
 core_mean(stats::na.omit(c(1, 2, NA)))
+core_mean(c(1e308, 1e308))      # no overflow
 
 ## core_var(): n-1 (sample) variance, matching stats::var()
 core_var(c(2, 4, 4, 4, 5, 5, 7, 9))
@@ -43,4 +66,11 @@ all.equal(core_var(1:10), stats::var(1:10))   # agrees with base R
 ## core_cor(): Pearson correlation of two equal-length vectors
 core_cor(1:10, (1:10)^2)        # strong positive, near 0.97
 core_cor(1:10, 10:1)            # perfect negative: -1
+
+## refusals
+try(core_mean(c("1", "2")))     # character input is not coerced
+try(core_cor(1:3, 1:4))         # lengths differ
+}
+\seealso{
+\code{\link{core_normal_pdf}}, \code{\link{core_sha256}}.
 }

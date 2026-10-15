@@ -8,21 +8,25 @@ bricklayer_explain_error(message = geterrmessage(), packages = NULL, n = 3L)
 }
 \arguments{
 \item{message}{The message: the text of an error, as R printed it ("Error
-in f(x) : ..." is fine), or a condition. Default: the last error of this
-session (\code{geterrmessage()}).}
+in f(x) : ..." is fine), a condition object, or a \code{try()} result.
+Default: the last error of this session (\code{geterrmessage()}).}
 
-\item{packages}{The installed packages to search; default
-rmoriebricklayer (or the comma-separated list in \code{RMBL_PACKAGES}, which a
-package built on this one sets for its own command line).}
+\item{packages}{Character vector of installed packages to search; default
+\code{NULL}, meaning rmoriebricklayer (or the comma-separated list in the
+environment variable \code{RMBL_PACKAGES}, which a package built on this
+one sets for its own command line).}
 
-\item{n}{How many matches to return, best first.}
+\item{n}{How many matches to return, best first: a whole number, default
+3.}
 }
 \value{
-A data frame, best match first: \code{package}, \code{raised_by}
+A data frame with at most \code{n} rows, best match first, and the
+character columns \code{package}, \code{raised_by}
 (the function whose code raises it), \code{exported} (the exported
-functions that reach it), \code{kind} (error or warning), \code{message}
-(the message as written, with \code{...} where a value goes) and
-\code{match} ("exact" or the share of its words found). No rows when the
+functions that reach it, comma-separated), \code{kind} (\code{"error"} or
+\code{"warning"}), \code{message} (the message as written, with
+\code{...} where a value goes) and \code{match} (\code{"exact"} or the share
+of its words found, such as \code{"80\% of its words"}). No rows when the
 message is not one of these packages' own: it came from another package
 or from R, and \code{\link{bricklayer_llm_ask}} can help with it.
 }
@@ -36,9 +40,55 @@ that raises it, the exported functions it is reached from (their help pages
 say what they expect), and the message as written, which usually says what
 to do.
 }
+\details{
+The first call in a session walks the body of every function in the
+searched packages and collects each \code{stop()}, \code{warning()} and
+usage error whose literal text has at least 12 letters. A message built
+with \code{sprintf()}, \code{gettextf()}, \code{paste()} or \code{paste0()}
+becomes a template with its computed parts as wildcards. Each raising
+function is traced up to four calls to the exported functions that reach
+it (at most six are listed). The table is kept in memory for the session
+(about a second to build for this package), and, while a person is
+watching an interactive session and the answer cache is on, also saved as
+an \code{.rds} file in the answer-cache directory
+(\code{tools::R_user_dir("rmoriebricklayer", "cache")}, or
+\code{options(rmoriebricklayer.llm_cache_dir)}); the cache is off under
+\code{options(morie.quiet = TRUE)}, \code{MORIE_LLM_CACHE=off}, tests and
+\code{R CMD check}.
+
+The message is cleaned first: an "Error in f(x) :" or "Warning message:"
+prefix is dropped, curly quotes become straight ones and white space is
+collapsed. A template that matches the start of the message as a regular
+expression is an exact match and ranks first (longer templates before
+shorter ones). Otherwise a template scores
+\eqn{0.6 h / |m| + 0.4 h / |t|}, where \eqn{h} is the number of shared
+words (three letters or more, common words left out, at least two
+needed), \eqn{|m|} the words of the message and \eqn{|t|} those of the
+template; scores of 0.55 and above are kept.
+
+Errors: \code{message} that is not character text or a condition;
+\code{n} not a whole number of 1 or more; \code{packages} that are not
+installed.
+}
 \examples{
 msg <- "`prompt` must be a single non-empty string"
 bricklayer_explain_error(msg, packages = "rmoriebricklayer")
 r <- try(bricklayer_llm_config(no.such = 1), silent = TRUE)
 bricklayer_explain_error(r, packages = "rmoriebricklayer")
+
+# the message as R prints it, with the call in front
+bricklayer_explain_error(
+  "Error in merkle_proof(x, 9) : `index` must be between 1 and the number of chunks",
+  n = 1)
+
+# a condition object, and a message retyped from memory
+e <- tryCatch(kem_sizes(3), error = identity)
+bricklayer_explain_error(e, n = 1)
+bricklayer_explain_error("index between number chunks", n = 1)
+
+# R's own messages are not in the table: no rows
+nrow(bricklayer_explain_error("object 'x' not found"))
+
+# n must be at least 1
+try(bricklayer_explain_error(msg, n = 0))
 }

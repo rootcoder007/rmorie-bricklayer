@@ -9,21 +9,49 @@
 
 #' Concentration of a total across units
 #'
-#' @param x Non-negative values, one per unit.
-#' @param na.rm Whether to drop missing values. They are
-#' dropped either way; this argument exists so the call reads the same as
-#' base R's.
-#' @return `gini()` a single number in `[0, 1]`, `NA` when
-#' the total is zero. `lorenz()` a data frame of cumulative population
-#' and value shares, including the origin. `top_share()` a data frame
-#' of the requested fractions, the share each holds, and how many units
-#' that was.
+#' Measures how unevenly a total is spread across units: whether a few
+#' people account for most of the placements, or a few regions for most of
+#' the days. \code{gini()} gives the Gini coefficient, \code{lorenz()} the
+#' points of the Lorenz curve (for plotting, for example with
+#' [plot_lorenz()]), and \code{top_share()} the share of the
+#' total held by
+#' the largest units ("the top 1% of people account for 20% of the
+#' days"). The three are computed in compiled code from the same sorted
+#' values.
+#'
+#' @param x Numeric vector of non-negative values, one per unit (for example
+#'   the days or the count of placements of each person). \code{NA} values
+#'   are dropped; \code{Inf}, negative values and non-numeric input are
+#'   errors.
+#' @param na.rm Logical. Missing values are dropped whatever its value; the
+#'   argument exists so the call reads the same as base R's. Default
+#'   \code{TRUE}.
+#' @return \code{gini()}: a numeric scalar in \code{[0, 1 - 1/n]}.
+#'   \code{lorenz()}: a data frame with numeric columns \code{population}
+#'   (cumulative share of units, from 0 to 1) and \code{value} (cumulative
+#'   share of the total, units in ascending order), \code{n + 1} rows
+#'   including the origin. \code{top_share()}: a data frame with columns
+#'   \code{fraction} (the requested fraction of units), \code{units} (how
+#'   many of the largest units that fraction is) and \code{share} (the share
+#'   of the total those units hold).
 #' @details
 #' Gini is the mean absolute difference between pairs of units over twice
-#' the mean, which is also twice the area between the Lorenz curve and the
-#' diagonal. Zero is a perfectly even spread; the maximum for `n`
-#' units is `1 - 1/n`, not 1, so a Gini near 1 requires many units as
-#' well as an uneven spread.
+#' the mean, \eqn{G = \sum_i \sum_j |x_i - x_j| / (2 n^2 \bar{x})}, which is
+#' also twice the area between the Lorenz curve and the diagonal. Zero is a
+#' perfectly even spread; the maximum for \code{n} units is \code{1 - 1/n},
+#' not 1, so a Gini near 1 requires many units as well as an uneven spread.
+#'
+#' A Gini computed from banded or rounded data inherits that coarsening:
+#' compare with [band_sensitivity()] when the values are
+#' bands. For a tail
+#' that a few units dominate, [hill_tail_index()] says
+#' whether the largest
+#' values follow a power law.
+#'
+#' Errors: \code{x} not numeric, with \code{Inf} or a negative value, or with
+#' no non-missing value; \code{gini()} when every value is zero (the Gini of
+#' a zero total is undefined); \code{top_share()} when \code{fractions} is not
+#' numeric, is empty, has \code{NA} or lies outside \code{[0, 1]}.
 #' @references
 #' Hedderich, J. and Sachs, L. (2020). *Applied Statistics: Methods Using
 #' R*. Springer-Verlag, Berlin Heidelberg. Section 3.14, p. 117, gives the
@@ -50,6 +78,12 @@
 #' top_share(placements, c(0.01, 0.05, 0.1))
 #'
 #' head(lorenz(placements))
+#'
+#' # missing values are dropped
+#' gini(c(1, NA, 3))
+#'
+#' # a zero total has no Gini coefficient
+#' try(gini(c(0, 0, 0)))
 #' @name concentration
 #' @export
 gini <- function(x, na.rm = TRUE) {
@@ -68,8 +102,10 @@ lorenz <- function(x, na.rm = TRUE) {
   data.frame(population = r$population, value = r$value)
 }
 
-#' @param fractions Fractions of the units, largest first,
-#' to report the share of.
+#' @param fractions Numeric vector of fractions of the units, each in
+#'   \code{[0, 1]}: for each one the share of the total held by that fraction
+#'   of units, taking the largest units first. Default
+#'   \code{c(0.01, 0.05, 0.1, 0.25)}.
 #' @rdname concentration
 #' @export
 top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
@@ -100,27 +136,67 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 #' power law above a threshold. An exponent near 2 or below means the mean
 #' is barely defined and the observed maximum is not informative about the
 #' next one, which is the substantive point when a few units dominate a
-#' total.
+#' total. Use it on counts per unit (placements per person, incidents per
+#' address) to judge whether the largest values are a heavy tail rather than
+#' a few outliers, and read \code{ks} and \code{reliable} before quoting the
+#' exponent.
 #'
-#' @param x Positive values, one per unit.
-#' @param x_min Threshold above which the power law is fitted.
-#' A power law is a statement about the tail, so a threshold is required;
-#' the default takes the value that leaves at least 50 observations, or the
-#' minimum if the data are smaller than that.
-#' @param discrete Whether the quantity is integer-valued.
+#' @details
+#' For a power law \eqn{p(x) \propto x^{-\alpha}} above \eqn{x_{min}}:
+#' \itemize{
+#'   \item discrete data, exact (the default): the log-likelihood of the
+#'     zeta distribution truncated at \eqn{x_{min}},
+#'     \eqn{-n \log \zeta(\alpha, x_{min}) - \alpha \sum \log x_i}, is
+#'     maximised over \eqn{\alpha} in \eqn{(1.0001, 25)} with
+#'     \code{stats::optimize()}; \eqn{\zeta} is
+#'     [hurwitz_zeta()]. The
+#'     standard error comes from the observed information, by a numerical
+#'     second derivative.
+#'   \item continuous data (\code{discrete = FALSE}): the Hill estimator
+#'     \eqn{\hat\alpha = 1 + n / \sum \log(x_i / x_{min})}, with standard
+#'     error \eqn{(\hat\alpha - 1)/\sqrt{n}}.
+#'   \item discrete data with \code{approx = TRUE}: the same closed form with
+#'     \eqn{x_{min} - 1/2} in place of \eqn{x_{min}}.
+#' }
+#' \code{ks} is the Kolmogorov-Smirnov distance between the fitted
+#' distribution and the tail, computed once per distinct value so that ties
+#' (most counts are ties) are handled correctly.
+#'
+#' Only finite positive values of \code{x} are used; the rest are dropped
+#' silently. When the tail has fewer than \code{min_tail} values, or every
+#' tail value is the same, \code{alpha} is \code{NA} and \code{method} says
+#' why. An estimate at the optimiser's bound is flagged in \code{method} and
+#' is not \code{reliable}. Errors: no positive finite value in \code{x};
+#' \code{x_min} that is not a single positive number (logical, factor and text
+#' are refused); \code{discrete} or \code{approx} not \code{TRUE} or
+#' \code{FALSE}.
+#'
+#' @param x Numeric vector of positive values, one per unit.
+#' @param x_min Numeric scalar or \code{NULL} (the default): the threshold at
+#' and above which the power law is fitted. A power law is a statement about
+#' the tail, so a threshold is required; \code{NULL} takes the 50th largest
+#' value (which leaves at least 50 observations in the tail), or the
+#' minimum if there are fewer than 50 values.
+#' @param discrete Logical scalar, default \code{TRUE}: whether the quantity
+#' is integer-valued.
 #' A count is, and then the likelihood maximised is the zeta
 #' distribution's, whose normalising constant is a Hurwitz zeta.
-#' @param approx For discrete data, whether to use the
+#' @param approx Logical scalar, default \code{FALSE}. For discrete data,
+#' whether to use the
 #' closed-form continuity-corrected estimator instead of maximising the
 #' exact likelihood. It is much faster and much worse: the correction is an
 #' asymptotic approximation in `x_min`, and at `x_min = 1` --
 #' where administrative counts start -- it returns about 2.0 from data
 #' generated with an exponent of 2.5. Off by default for that reason.
-#' @param min_tail Fewest tail observations for which an
-#' estimate is reported at all. Below it there is nothing to estimate from
-#' and `alpha` is `NA`.
-#' @return A list with `alpha`, its standard error, `x_min`,
-#' `n_tail`, `ks` and `reliable`. `ks` is the
+#' @param min_tail Integer scalar, default \code{3}: the fewest tail
+#' observations for which an estimate is reported at all (values below 2 are
+#' raised to 2). Below it there is nothing to estimate from and \code{alpha}
+#' is \code{NA}.
+#' @return A list with \code{alpha} (numeric, the exponent), \code{se} (its
+#' standard error), \code{x_min} (the threshold used), \code{n_tail}
+#' (integer, the number of values at or above it), \code{ks}, \code{reliable}
+#' (logical) and \code{method} (character, the estimator used or why there is
+#' no estimate). \code{ks} is the
 #' Kolmogorov-Smirnov distance between the fitted tail and the data: a
 #' large value means the tail is not a power law, whatever `alpha`
 #' came out as. `reliable` is `FALSE` when fewer than 50
@@ -158,6 +234,9 @@ top_share <- function(x, fractions = c(0.01, 0.05, 0.1, 0.25),
 #'
 #' # Below `min_tail` there is nothing to estimate from.
 #' hill_tail_index(c(3, 4), x_min = 3)$alpha
+#'
+#' # the threshold has to be positive
+#' try(hill_tail_index(z, x_min = 0))
 #' @export
 hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
                             approx = FALSE, min_tail = 3L) {
@@ -266,18 +345,40 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 
 #' Hurwitz zeta function
 #'
-#' `zeta(s, q) = sum over k >= 0 of (q + k)^-s`, by Euler-Maclaurin.
-#' It is the normalising constant of the discrete power law truncated below
-#' at `q`, which is why it is here; `zeta(s, 1)` is the Riemann
-#' zeta.
+#' Computes the Hurwitz zeta function
+#' \eqn{\zeta(s, q) = \sum_{k \ge 0} (q + k)^{-s}} for a vector of exponents
+#' \code{s} and one lower limit \code{q}. It is the normalising constant of
+#' the discrete power law truncated below at \code{q}, which is why it is
+#' here (see [hill_tail_index()]); \code{zeta(s, 1)} is the
+#' Riemann zeta.
 #'
-#' @param s Exponent. The series converges for \code{s > 1}; below 1 the value is
+#' @details
+#' For \eqn{s > 1} and \eqn{q > 0} the series is evaluated in compiled code
+#' by Euler-Maclaurin summation: direct terms, the integral of the tail, and
+#' Bernoulli-number corrections. For \eqn{s < 1} the value is the analytic
+#' continuation: exact Bernoulli polynomials for whole \eqn{s > -5}
+#' (\eqn{\zeta(-n, q) = -B_{n+1}(q)/(n+1)}), Riemann's functional equation at
+#' \eqn{q = 1}, Hurwitz's Fourier series for \eqn{s \le -5}, Hermite's
+#' integral (by \code{stats::integrate()}) for \eqn{-5 < s < 1}, and the
+#' asymptotic series for large \eqn{q}, with the shift
+#' \eqn{\zeta(s, q) = q^{-s} + \zeta(s, q + 1)} to move \eqn{q} into range.
+#' A negative non-integer \code{q} uses the reflection of its negative terms.
+#'
+#' Values that do not exist are \code{NA}, not errors: \code{s = 1} (a pole),
+#' \code{q} zero or a negative integer (poles), a fractional \code{s} with a
+#' negative \code{q} (a complex value), and a non-finite \code{s}. Errors
+#' when \code{s} or \code{q} is logical or not numeric, and when \code{q} is
+#' not a single finite number.
+#'
+#' @param s Numeric vector of exponents. The series converges for \code{s > 1}; below 1
+#'   the value is
 #' the analytic continuation (so \code{hurwitz_zeta(0.5, 0.5)} is \eqn{-0.6049}), and
 #' \code{s = 1} is a pole (\code{NA}).
-#' @param q Lower limit: any real number but zero or a negative integer (poles, \code{NA}).
+#' @param q Numeric scalar, the lower limit; default \code{1} (the Riemann
+#' zeta). Any real number but zero or a negative integer (poles, \code{NA}).
 #' For a negative non-integer \code{q} the value is real only for a whole \code{s}; a
 #' fractional \code{s} gives \code{NA}.
-#' @return A numeric vector the length of `s`.
+#' @return A numeric vector the length of \code{s}.
 #' @references
 #' The Euler-Maclaurin expansion used here -- direct terms to `q + N`,
 #' then the integral tail, then the Bernoulli-number corrections -- is the
@@ -300,6 +401,12 @@ hill_tail_index <- function(x, x_min = NULL, discrete = TRUE,
 #'
 #' # Outside the domain of convergence there is no value to return.
 #' hurwitz_zeta(1)
+#'
+#' # several exponents at once, including the analytic continuation
+#' hurwitz_zeta(c(2, 0.5, -1))  # -1/12 at s = -1
+#'
+#' # one lower limit per call
+#' try(hurwitz_zeta(2, q = c(1, 2)))
 #' @export
 hurwitz_zeta <- function(s, q = 1) {
   if (is.logical(q) || is.logical(s)) stop("`s` and `q` must be numeric, not logical", call. = FALSE)
@@ -482,16 +589,44 @@ hurwitz_zeta <- function(s, q = 1) {
 #'
 #' Cramer's V, with the bias correction of Bergsma (2013) available, and
 #' the small-expected-count condition reported rather than assumed away.
+#' Use it to say how strongly two categorical variables are associated (0 is
+#' none, 1 is complete), for example region by outcome in a cross-tabulation,
+#' on a scale that does not depend on the number of rows and columns.
 #'
-#' @param tbl A table or matrix of counts.
-#' @param bias_correct Whether to apply Bergsma's
+#' @details
+#' With \eqn{\chi^2} the Pearson statistic (no continuity correction),
+#' \eqn{n} the total, \eqn{r} rows and \eqn{k} columns, \eqn{\phi^2 =
+#' \chi^2/n} and the uncorrected \eqn{V = \sqrt{\phi^2 / \min(r-1, k-1)}}.
+#' Bergsma's correction replaces \eqn{\phi^2} with
+#' \eqn{\max(0, \phi^2 - (r-1)(k-1)/(n-1))} and \eqn{r, k} with
+#' \eqn{r - (r-1)^2/(n-1)} and \eqn{k - (k-1)^2/(n-1)}.
+#'
+#' Empty rows and columns (an unused factor level) are dropped first, and
+#' \code{method} says so. When fewer than two rows or columns remain, every
+#' statistic is \code{NA}. When any expected count is below
+#' \code{min_expected}, the p-value comes from
+#' \code{stats::chisq.test(simulate.p.value = TRUE, B = 10000)} under
+#' \code{seed}, and the caller's random number stream is restored afterwards.
+#'
+#' Errors: \code{tbl} \code{NULL}, not numeric, or with a negative or
+#' non-finite count; \code{bias_correct} not \code{TRUE} or \code{FALSE};
+#' \code{min_expected} not a single non-negative number.
+#'
+#' @param tbl A table or matrix of non-negative counts, at least 2 by 2
+#' after empty rows and columns are dropped.
+#' @param bias_correct Logical scalar, default \code{TRUE}: whether to apply
+#' Bergsma's
 #' correction, which removes most of V's upward bias in a sparse table.
 #' Worth having: uncorrected V on a sparse table reports association that
 #' is an artefact of the table's size.
-#' @param min_expected Expected count below which the
-#' chi-square approximation is unreliable. Reported, not enforced.
-#' @return A list with `v`, `chisq`, `df`, `p_value`,
-#' `n`, `min_expected`, and `cells_below`, the number of
+#' @param min_expected Numeric scalar, default \code{5}: the expected count
+#' below which the chi-square approximation is treated as unreliable.
+#' Reported, and it switches the p-value to the Monte Carlo one; it does not
+#' stop the calculation.
+#' @return A list with \code{v} (numeric, Cramer's V), \code{chisq} (the
+#' Pearson statistic), \code{df} (integer), \code{p_value}, \code{n} (the
+#' total count), \code{min_expected} (the smallest expected count in the
+#' table), \code{cells_below} (integer), the number of
 #' cells whose expected count falls under the threshold. When any does,
 #' `p_value` comes from a Monte Carlo permutation instead of the
 #' chi-square approximation, and `method` says which was used.
@@ -510,8 +645,17 @@ hurwitz_zeta <- function(s, q = 1) {
 #' sparse <- rbind(c(3, 1), c(1, 3))
 #' c(raw = cramers_v(sparse, bias_correct = FALSE)$v,
 #'   corrected = cramers_v(sparse)$v)
-#' @param seed Seed for the Monte Carlo branch; the caller's RNG stream is
-#'   restored afterwards.
+#'
+#' # small expected counts: a Monte Carlo p-value, and the method says so
+#' cramers_v(sparse)$method
+#'
+#' # an unused level is dropped
+#' cramers_v(rbind(c(30, 10), c(0, 0), c(12, 28)))$method
+#'
+#' # negative counts are refused
+#' try(cramers_v(rbind(c(-1, 2), c(1, 2))))
+#' @param seed Integer scalar, default \code{1}: the seed for the Monte Carlo
+#'   branch; the caller's random number stream is restored afterwards.
 #' @export
 cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
   # "abc" silently meant FALSE, and an NA threshold failed deep inside (review of 52a8883)

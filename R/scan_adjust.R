@@ -2,23 +2,48 @@
 
 #' Exact p-values for the rows of a year-over-year table
 #'
+#' @description
+#' Adds a two-sided exact p-value to each row of a period-over-period change
+#' table of counts from \code{\link{yoy}}, testing whether the count changed
+#' by more than chance between the two periods. Use it when you want a test
+#' to go with each change, and then pass the table to
+#' \code{\link{scan_adjust}} to correct for the number of rows tested.
+#'
+#' @details
 #' For count units the interval in [yoy()] is the exact conditional
 #' binomial interval for the ratio of two Poisson means; this is the
-#' matching two-sided test, so a scan over many groups can be corrected
-#' for multiple comparisons with
-#' [scan_adjust()]. The test conditions on
+#' matching two-sided test. The test conditions on
 #' the total of the two periods and asks whether the split is
-#' compatible with equal means.
+#' compatible with equal means: with current count \eqn{a} and previous
+#' count \eqn{b}, \eqn{a \sim \mathrm{Binomial}(a + b, 1/2)} under the null,
+#' and the p-value is that of \code{stats::binom.test(a, a + b, p = 0.5)}.
+#' The two periods are treated as having equal exposure; for changing
+#' populations use \code{\link{rate_change}} and \code{\link{scan_adjust}},
+#' which weight by the exposures. Counts are rounded to whole numbers.
 #'
-#' @param y An `rmbl_yoy` object with count units.
-#' @return `y` with a `p_value` column; `NA` where there is no
-#'   comparison period or both counts are zero.
+#' Errors: \code{y} not a \code{yoy()} result; a \code{yoy()} result whose
+#' units are not counts (percentages and measured values have no Poisson
+#' test). A progress indicator is shown for long tables in an interactive
+#' session.
+#'
+#' @param y An \code{rmbl_yoy} object from \code{\link{yoy}} with
+#'   \code{units = "count"}.
+#' @return \code{y}, with its class and attributes, and an added numeric
+#'   \code{p_value} column; \code{NA} where there is no comparison period or
+#'   both counts are zero.
+#' @seealso \code{\link{scan_adjust}}, \code{\link{yoy}}.
 #' @examples
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
 #' y <- yoy(seg, value = "n", period = "year", by = "site")
 #' yoy_pvalues(y)$p_value
+#'
+#' # the same test by hand for site A: 45 against 30
+#' stats::binom.test(45, 75)$p.value
+#'
+#' # anything that is not a yoy() table is refused
+#' try(yoy_pvalues(seg))
 #' @export
 yoy_pvalues <- function(y) {
   if (!inherits(y, "rmbl_yoy")) {
@@ -40,7 +65,10 @@ yoy_pvalues <- function(y) {
   w1 <- rep_len(w1, n)
   w2 <- rep_len(w2, n)
   p <- rep(NA_real_, n)
+  pg <- bricklayer_progress("exact p-values", n)
+  on.exit(pg$done(), add = TRUE)
   for (i in seq_len(n)) {
+    pg$update(i - 1L, sprintf("comparison %d/%d", i, n))
     if (is.na(v1[i]) || is.na(v2[i]) || is.na(w1[i]) || is.na(w2[i])) next
     tot <- v1[i] + v2[i]
     if (tot <= 0 || w1[i] <= 0 || w2[i] <= 0) next
@@ -52,6 +80,7 @@ yoy_pvalues <- function(y) {
 
 #' Adjust a scan of many comparisons for multiple testing
 #'
+#' @description
 #' A change table over fifty institutions is fifty tests. Reporting the
 #' raw p-values invites reading the largest of fifty noise draws as a
 #' finding. This adds `p_adjusted` (Benjamini-Hochberg by default, which
@@ -62,20 +91,56 @@ yoy_pvalues <- function(y) {
 #' (with the exposures as the
 #' binomial weights).
 #'
-#' @param x An `rmbl_yoy` or `rmbl_rate_change` object, or any data frame
-#'   with a `p_value` column.
-#' @param method Adjustment passed to [stats::p.adjust()];
-#'   `"BH"`
-#'   (false discovery rate) by default, `"holm"` for family-wise control.
-#' @param alpha Level at which `significant` is decided.
-#' @return `x` with `p_value` (if it was missing), `p_adjusted` and
-#'   `significant`; the class and attributes of `x` are kept.
+#' @details
+#' For a \code{rate_change()} table, conditional on the two counts' total
+#' the current count is binomial with success probability
+#' \eqn{t_a / (t_a + t_b)}, the share of the combined exposure in the
+#' current period, and the p-value is the two-sided exact binomial test of
+#' that. Rows without a p-value (no comparison period, both counts zero)
+#' are left out of the adjustment, so the number of tests is the number of
+#' rows with a p-value; it is recorded in the \code{scan_adjust} attribute.
+#'
+#' The adjustment is \code{stats::p.adjust(p, method)}: \code{"BH"} controls
+#' the expected proportion of false discoveries among the rows declared
+#' significant, which suits a screen; \code{"holm"} and \code{"bonferroni"}
+#' control the chance of any false discovery, which a claim about one
+#' specific row needs. A row is \code{significant} when its adjusted p-value
+#' is strictly below \code{alpha}.
+#'
+#' Errors: \code{x} not a data frame; no \code{p_value} column and not a
+#' \code{yoy()} or \code{rate_change()} result; a \code{yoy()} result
+#' without count units; a p-value outside \eqn{[0, 1]}; a method unknown to
+#' \code{p.adjust()}.
+#'
+#' @param x An \code{rmbl_yoy} or \code{rmbl_rate_change} object, or any
+#'   data frame with a \code{p_value} column.
+#' @param method Character, default \code{"BH"}: any method of
+#'   \code{\link[stats]{p.adjust}} (\code{"BH"}, \code{"holm"},
+#'   \code{"bonferroni"}, \code{"BY"}, \code{"hochberg"}, \code{"hommel"},
+#'   \code{"fdr"}, \code{"none"}).
+#' @param alpha Number, default 0.05: the level at which \code{significant}
+#'   is decided, applied to the adjusted p-values.
+#' @return \code{x} with \code{p_value} (if it was missing),
+#'   \code{p_adjusted} (numeric, \code{NA} where \code{p_value} is) and
+#'   \code{significant} (logical) columns; the class and attributes of
+#'   \code{x} are kept, and a \code{scan_adjust} attribute lists
+#'   \code{method}, \code{alpha} and \code{tests}.
+#' @seealso \code{\link{yoy_pvalues}}, \code{\link{falsify_family}} for a
+#'   family of falsification results, \code{\link{drift_calibrate}}.
 #' @examples
 #' seg <- data.frame(year = rep(2022:2023, each = 3),
 #'                   site = rep(c("A", "B", "C"), 2),
 #'                   n = c(30, 50, 80, 45, 52, 79))
 #' y <- yoy(seg, value = "n", period = "year", by = "site")
 #' scan_adjust(y)[, c("site", "pct_change", "p_value", "p_adjusted")]
+#'
+#' # family-wise control instead of the false discovery rate
+#' scan_adjust(y, method = "holm")$p_adjusted
+#'
+#' # any table with a p_value column
+#' scan_adjust(data.frame(test = c("a", "b", "c"), p_value = c(0.001, 0.02, 0.4)))
+#'
+#' try(scan_adjust(data.frame(p_value = 1.5)))
 #' @export
 scan_adjust <- function(x, method = "BH", alpha = 0.05) {
   if (!is.data.frame(x)) {
@@ -109,6 +174,7 @@ scan_adjust <- function(x, method = "BH", alpha = 0.05) {
 
 #' Calibrate the drift screens on data known not to have drifted
 #'
+#' @description
 #' [capsule_drift()] flags a column when a
 #' Kolmogorov-Smirnov, chi-square
 #' or population-stability screen fires. How often that happens when
@@ -116,24 +182,57 @@ scan_adjust <- function(x, method = "BH", alpha = 0.05) {
 #' capsule, and it depends on the columns, their sizes and `alpha`. This
 #' estimates it by splitting the same data at random into two halves
 #' `n` times and running the screens on the halves, which is the null of
-#' "a re-fetch of identical data". A capsule whose screens fire on 30% of
-#' identical re-fetches needs a smaller `alpha` or fewer screened
+#' "a re-fetch of identical data". A capsule whose screens fire on 30
+#' percent of identical re-fetches needs a smaller `alpha` or fewer screened
 #' columns before a drift verdict means anything.
 #'
+#' @details
+#' Each split draws \code{floor(nrow(data) / 2)} rows at random as the
+#' reference and uses the rest as the current table, then runs
+#' \code{\link{capsule_drift}} on the pair. A column's false-alarm rate is
+#' the share of splits on which it was flagged; \code{any_flag} is the share
+#' of splits on which any column was. Each half has half the rows of the
+#' real data, so the rates describe a comparison at that size: smaller
+#' samples make the p-value screens less sensitive, and the PSI screen only
+#' counts once both halves reach \code{psi_min_n} rows.
+#'
+#' The splits are drawn under \code{seed} and the caller's random number
+#' stream is restored afterwards (\code{seed = NULL} uses and advances the
+#' current stream instead). Run time is about \code{n} times one
+#' \code{capsule_drift()} call; a progress bar is shown in an interactive
+#' session.
+#'
+#' Errors: \code{data} not a data frame with at least four rows; \code{n}
+#' not a whole number of at least 1; any error from \code{capsule_drift()}.
+#'
 #' @param data The capsule's data frame.
-#' @param n Number of random half-splits.
-#' @param alpha Significance level passed to [capsule_drift()].
-#' @param seed Seed for the splits.
-#' @param ... Passed to [capsule_drift()].
-#' @return A list of class `rmbl_drift_calibration`: `columns` (per
-#'   column, the share of splits on which it was flagged), `any_flag`
-#'   (share of splits with at least one flag), `alpha`, `n`, and
-#'   `alpha_familywise` (the per-screen level that would hold the
-#'   family-wise false-alarm rate at `alpha`, Bonferroni).
+#' @param n Whole number, default 50: the number of random half-splits.
+#' @param alpha Number in (0, 1), default 0.01: the significance level
+#'   passed to [capsule_drift()].
+#' @param seed Integer or \code{NULL}, default 1: the seed for the splits.
+#' @param ... Further arguments to [capsule_drift()], such
+#'   as
+#'   \code{psi_threshold}, \code{psi_min_n}, \code{bins} or
+#'   \code{identifier_levels}.
+#' @return A list of class `rmbl_drift_calibration`: `columns` (a data frame
+#'   of `column` and `false_alarm_rate`, the share of splits on which it was
+#'   flagged), `any_flag` (share of splits with at least one flag), `alpha`,
+#'   `n`, and `alpha_familywise` (`alpha` divided by the number of
+#'   columns:
+#'   the Bonferroni per-screen level that would hold the family-wise
+#'   false-alarm rate at `alpha`). The print method lists the columns that
+#'   fired.
+#' @seealso \code{\link{capsule_drift}}, \code{\link{scan_adjust}}.
 #' @examples
 #' set.seed(1)
 #' d <- data.frame(a = rnorm(400), b = sample(letters[1:4], 400, TRUE))
 #' drift_calibrate(d, n = 10)
+#'
+#' # a stricter level, and the per-column rates
+#' cal <- drift_calibrate(d, n = 10, alpha = 0.001)
+#' cal$columns
+#'
+#' try(drift_calibrate(d[1:3, ]))
 #' @export
 drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
   if (!is.data.frame(data) || nrow(data) < 4L) {
@@ -146,7 +245,10 @@ drift_calibrate <- function(data, n = 50L, alpha = 0.01, seed = 1L, ...) {
   .rmbl_local_seed(seed)
   hits <- NULL
   any_flag <- logical(n)
+  pg <- bricklayer_progress("drift calibration", n)
+  on.exit(pg$done(), add = TRUE)
   for (i in seq_len(n)) {
+    pg$update(i - 1L, sprintf("split %d/%d", i, n))
     idx <- sample.int(nrow(data), nrow(data) %/% 2L)
     res <- capsule_drift(data[idx, , drop = FALSE],
                          data[-idx, , drop = FALSE], alpha = alpha, ...)

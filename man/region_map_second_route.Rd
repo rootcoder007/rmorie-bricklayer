@@ -9,28 +9,33 @@ region_map_second_route(map, unit, region, route, known = character())
 \arguments{
 \item{map}{Data frame, one row per unit.}
 
-\item{unit}{Name of the unit identifier column.}
+\item{unit}{Name of the unit identifier column (a string).}
 
-\item{region}{Name of the assigned region column.}
+\item{region}{Name of the assigned region column (a string).}
 
-\item{route}{Named character vector, or a data frame with the same two
-column names, giving the second method's assignment. Units it does
-not cover are skipped rather than counted as disagreements.}
+\item{route}{Named character vector (names are units, values regions),
+or a data frame with the same two column names as \code{map}, giving the
+second method's assignment. Units it does not cover, and entries that
+are \code{NA} or blank, are skipped rather than counted as disagreements.}
 
-\item{known}{Units whose disagreement is expected and documented --
-the cases the second route is known to get wrong.}
+\item{known}{Character vector of units whose disagreement is expected and
+documented -- the cases the second route is known to get wrong. Default
+none.}
 }
 \value{
-A data frame of disagreements: \code{unit}, \code{primary}, \code{second} and
-\code{known}. \code{sum(!x$known)} is the number of unexplained disagreements
-and zero is the passing value; \code{nrow(x)} should equal the number of
-documented cases, because a documented case that stops disagreeing
-means the second route changed underneath the documentation.
+A data frame of disagreements, sorted with unexplained ones first,
+with the columns \code{unit}, \code{primary} (the map's region),
+\code{second} (the route's region), all character, and \code{known}
+(logical). \code{sum(!x$known)} is the number of unexplained
+disagreements and zero is the passing value; \code{nrow(x)} should equal
+the number of documented cases, because a documented case that stops
+disagreeing means the second route changed underneath the documentation.
 }
 \description{
 Compares the region each unit was assigned with the region a DIFFERENT
 method assigns it, and marks the disagreements that are already known
-and explained.
+and explained. Use it to catch errors in the method that built the map,
+which re-running that same method can never find.
 }
 \details{
 This is the only check here that can catch an error in the original
@@ -46,6 +51,10 @@ municipality, an amalgamated city, a township absorbed into a
 neighbour. Listing them keeps the check sharp instead of loosening the
 tolerance until everything passes, and listing them by NAME means an
 unexpected disagreement cannot hide inside an allowance.
+
+Units and regions are compared as text with spaces trimmed. Errors:
+\code{map} not a data frame or without the named columns; a \code{route}
+vector without names; a \code{route} data frame without the two columns.
 }
 \examples{
 cw <- data.frame(
@@ -65,6 +74,13 @@ region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 route["South Jail"] <- "3521"
 d <- region_map_second_route(cw, "inst", "cd", route, known = "Hill Jail")
 sum(!d$known)
+
+# the route as a data frame with the same column names
+route_df <- data.frame(inst = c("North Jail", "Hill Jail"), cd = c("3557", "3506"))
+nrow(region_map_second_route(cw, "inst", "cd", route_df))
+
+# an unnamed vector cannot be matched to units
+try(region_map_second_route(cw, "inst", "cd", c("3557", "3520")))
 }
 \seealso{
 \code{\link[=region_map_compare]{region_map_compare()}},

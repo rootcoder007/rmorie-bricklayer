@@ -13,21 +13,24 @@ bricklayer_palette(
 bricklayer_plot_options(...)
 }
 \arguments{
-\item{name}{Palette name.}
+\item{name}{Character scalar, the palette: \code{"okabe"} (the default),
+\code{"diverging"}, \code{"sequential"} or \code{"grey"}.}
 
-\item{n}{Number of colours; the categorical palettes recycle, the
-sequential and diverging ones interpolate.}
+\item{n}{Integer scalar or \code{NULL} (the default: the palette's own
+colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
+recycle, \code{"sequential"} and \code{"diverging"} interpolate.}
 
-\item{...}{For \code{bricklayer_plot_options()}, named options to set
-(\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg},
-\code{panel}: the plot region's fill behind white grid lines, \code{NA}
-for none);
-none to read the current values.}
+\item{...}{For \code{bricklayer_plot_options()}, named options to set:
+\code{palette} (a palette name), \code{grid} (logical, draw grid
+lines), \code{cex} (numeric text and symbol size), \code{las} (axis label
+orientation, as in \code{par()}), \code{bg} (background colour) and
+\code{panel} (the plot region's fill behind white grid lines, \code{NA}
+for none). With no arguments, the current values are returned.}
 }
 \value{
-\code{bricklayer_palette()}: a character vector of colours.
-\code{bricklayer_plot_options()}: the options in force, invisibly when
-setting.
+\code{bricklayer_palette()}: a character vector of hexadecimal
+colours. \code{bricklayer_plot_options()}: a named list of the six
+options in force (after the change), invisibly when setting.
 }
 \description{
 Every \code{plot()} method in the package draws with base graphics and
@@ -40,11 +43,49 @@ method uses, for the session: \code{palette}, \code{grid}, \code{cex},
 \code{las} and \code{bg}. Each method also takes \code{main},
 \code{col} (which overrides the palette), \code{palette} and \code{...}
 passed to the underlying base-graphics call, so a single plot can be
-changed without changing the session.
+changed without changing the session. Use \code{bricklayer_palette()} also
+to colour your own plots so they match the package's.
+}
+\details{
+The palettes: \code{"okabe"} is the eight-colour set of Okabe and Ito
+(2008), distinguishable under the common forms of colour-vision
+deficiency; \code{"diverging"} has three anchors (blue \code{#2166AC},
+grey \code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes
+(decrease, no change, increase); \code{"sequential"} has five blues from
+light to dark; \code{"grey"} five greys from dark to light. With \code{n}
+given, \code{"okabe"} and \code{"grey"} repeat their colours
+(\code{rep_len()}) and \code{"diverging"} and \code{"sequential"} are
+interpolated with \code{grDevices::colorRampPalette()}.
+
+The session options are stored in \code{options(rmoriebricklayer.plot)};
+the defaults are \code{palette = "okabe"}, \code{grid = TRUE},
+\code{cex = 1}, \code{las = 1}, \code{bg = "white"} and
+\code{panel = "#EEF1F6"}. Setting some options keeps the others.
+
+Errors: an unknown palette \code{name}; \code{n} not a positive whole
+number; an option name other than the six above, or an unnamed value; an
+unknown \code{palette} option.
 }
 \examples{
 bricklayer_palette("okabe", 3)
 old <- bricklayer_plot_options(palette = "grey", grid = FALSE)
 bricklayer_plot_options()
 bricklayer_plot_options(palette = old$palette, grid = old$grid)
+
+# an interpolated sequential scale, shown as swatches
+cols <- bricklayer_palette("sequential", 7)
+barplot(rep(1, 7), col = cols, border = NA, axes = FALSE, names.arg = cols, las = 2,
+        cex.names = 0.6)
+
+# the same palette in a base plot of your own
+plot(1:8, pch = 19, cex = 3, col = bricklayer_palette("okabe"))
+
+# names are checked
+try(bricklayer_palette("viridis"))
+try(bricklayer_plot_options(colour = "red"))
+}
+\references{
+Okabe, M. and Ito, K. (2008). Color Universal Design (CUD):
+how to make figures and presentations that are friendly to colorblind
+people. \url{https://jfly.uni-koeln.de/color/}
 }

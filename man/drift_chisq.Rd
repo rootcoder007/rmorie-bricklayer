@@ -20,12 +20,20 @@ A named length-4 numeric: \code{statistic}, \code{df},
 keeps its information where \code{p_value} underflows to 0.
 }
 \description{
+Tests whether the category counts of a new sample agree with a reference
+distribution that is taken as known, such as proportions fixed by a
+specification or a published breakdown. It is Pearson's chi-square
+goodness-of-fit test. When the reference is itself a sample, use
+\code{\link[=drift_homogeneity]{drift_homogeneity()}}, which accounts for the
+reference's own sampling
+error.
+}
+\details{
 Pearson's chi-square goodness-of-fit statistic comparing observed
 category counts with the proportions a capsule was pinned against. Use
 it where \code{\link[=drift_ks]{drift_ks()}} cannot apply, because the
 column is a factor or a set of codes rather than a number.
-}
-\details{
+
 Categories present in one argument and not the other are aligned by
 name, so a vanished category registers as a shortfall against its
 expected count.
@@ -37,6 +45,21 @@ unbounded; \code{statistic} is then \code{Inf} and \code{p_value} is
 contradiction -- which it usually is when the reference is itself a
 finite sample -- use
 \code{\link[=drift_homogeneity]{drift_homogeneity()}} instead.
+
+With \eqn{O_j} the observed counts and \eqn{E_j = N e_j / \sum e} the
+reference scaled to the observed total \eqn{N},
+\deqn{X^2 = \sum_j \frac{(O_j - E_j)^2}{E_j}}
+over the categories with \eqn{E_j > 0}, on \eqn{k - 1} degrees of freedom.
+The p-value is the upper tail of the chi-square distribution, computed
+directly (not as one minus the lower tail), so it does not round to zero
+early. With a single category there is nothing to test: \code{df} is 0 and
+both p-values are \code{NA}. The chi-square approximation is poor when
+expected counts are below about 5;
+\code{\link[stats:chisq.test]{stats::chisq.test()}} with
+\code{simulate.p.value = TRUE} is an alternative there.
+
+Errors: a numeric vector without names; negative, infinite or missing
+counts; a total of zero on either side.
 }
 \examples{
 ref <- c(a = 50, b = 30, c = 20)
@@ -63,6 +86,7 @@ drift_chisq(c("a", "a", "b", "d"), c("a", "a", "b", "b"))
 drift_homogeneity(c("a", "a", "b", "b"), c("a", "a", "b", "d"))
 }
 \seealso{
-\code{\link[stats:chisq.test]{stats::chisq.test()}} for the
-full test object.
+\code{\link[=drift_homogeneity]{drift_homogeneity()}},
+\code{\link[=capsule_drift]{capsule_drift()}},
+\code{\link[stats:chisq.test]{stats::chisq.test()}} for the full test object.
 }

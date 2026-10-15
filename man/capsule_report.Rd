@@ -37,26 +37,43 @@ objects.}
 verifying key, as from \code{\link[=capsule_sign]{capsule_sign()}},
 checked against the data's own digest.}
 
-\item{alpha}{Significance level passed to
-\code{\link[=capsule_drift]{capsule_drift()}}.}
+\item{alpha}{Numeric scalar, the significance level passed to
+\code{\link[=capsule_drift]{capsule_drift()}}; default \code{0.01}.}
 
-\item{max_rows_outliers}{Skip the outlier scan
+\item{max_rows_outliers}{Integer scalar: skip the outlier scan
 above this many rows (default 20000), since it factors a covariance per
 call.}
 }
 \value{
-A list of class \code{bricklayer_report}: \code{findings} (a
-data frame of \code{severity}, \code{check}, \code{subject},
-\code{detail}) , \code{verdict} ( \code{"fatal"}, \code{"warn"},
-\code{"note"} or \code{"clean"}) , \code{profile}, \code{missingness},
-\code{drift}, \code{digest}, and \code{n_rows} / \code{n_cols}.
+A list of class \code{c("bricklayer_report", "list")}: \code{findings} (a
+data frame of character columns \code{severity}, \code{check} (\code{"schema"},
+\code{"rule"}, \code{"drift"}, \code{"missing"}, \code{"shape"}, \code{"outliers"},
+\code{"benford"} or
+\code{"signature"}), \code{subject} (the column, rule or row count concerned) and
+\code{detail}), \code{verdict} (the worst severity: \code{"fatal"}, \code{"warn"},
+\code{"note"}, or
+\code{"clean"} when there is no finding), \code{profile} (from
+\code{\link[=profile_columns]{profile_columns()}}),
+\code{missingness} (from \code{\link[=missingness_summary]{missingness_summary()}}),
+\code{drift} (the
+\code{\link[=capsule_drift]{capsule_drift()}} result, or \code{NULL} without a
+reference), \code{digest} (a list
+with \code{data_digest}, and with \code{chunks} also \code{merkle_root},
+\code{merkle_scheme}
+(the \code{\link[=merkle_root]{merkle_root()}} hashing scheme, 2) and \code{n_chunks},
+with a signature and key also logical \code{signature_valid}), and \code{n_rows} /
+\code{n_cols}. \code{print()} shows the verdict and the findings; \code{summary()}
+gives
+the verdict and the count of each severity.
 }
 \description{
 Runs the checks this package provides over one data frame and collects
 the findings into a single report: the structural schema check, the
 distributional comparison against a reference, the missingness picture,
 the multivariate outliers, a Benford screen on the wide numeric columns,
-and the integrity digests.
+and the integrity digests. Use it as the first look at a capsule or a fresh
+extract, before any analysis, and keep the Markdown version
+(\code{\link[=report_markdown]{report_markdown()}}) with the outputs.
 }
 \details{
 Nothing here is new arithmetic. The value is that the answers arrive
@@ -66,12 +83,43 @@ the data is fine.
 }
 \section{What "severity" means}{
 \itemize{
-\item \code{fatal} -- a required column is missing. Nothing downstream can run.
-\item \code{warn} -- something moved: a column drifted, a value left its pinned
-range, missingness rose, a signature did not verify.
-\item \code{note} -- worth a look but not necessarily wrong: outliers, a
-Benford departure, a constant column.
+\item \code{fatal} -- nothing downstream can run as it stands: a schema check or a
+rule of severity \code{"fatal"} failed (for example a required column is
+missing), or a column of the reference is absent from the data.
+\item \code{warn} -- something moved or is badly incomplete: a schema check or a
+rule of severity \code{"warning"} failed (a value left its pinned range, a type
+changed), a column drifted from the reference, a column is entirely
+missing or more than half missing, or a signature did not verify (or came
+with no key).
+\item \code{note} -- worth a look but not necessarily wrong: a column not in the
+reference, a column whose drift could not be tested, a contiguous run of
+missing values (one outage rather than scattered gaps), a constant column,
+values beyond the Tukey fences, multivariate outliers or collinear columns,
+a Benford departure.
 }
+}
+
+\section{How each check runs}{
+The drift comparison is \code{\link[=capsule_drift]{capsule_drift()}} at level
+\code{alpha}. The missing
+run is the longest run from \code{\link[=missing_runs]{missing_runs()}} of at least
+\code{max(2, nrow(data) \%/\% 20)} rows. The outlier scan is
+\code{\link[=mahalanobis_outliers]{mahalanobis_outliers()}} on the numeric columns
+that are not constant or
+entirely missing, run only when there are at least two of them, at most
+\code{max_rows_outliers} rows and more complete rows than columns. The Benford
+screen (\code{\link[=benford_test]{benford_test()}}) runs on a numeric column with at
+least 200
+non-zero finite values whose largest absolute value is more than 1,000
+times its smallest, and reports p below 0.01. The digest is
+\code{\link[=digest_object]{digest_object()}} of the data; a signature is checked with
+\code{\link[=capsule_verify]{capsule_verify()}} against that digest.
+
+Findings are sorted by severity, then check, then subject. Nothing is
+written and nothing is fetched. Errors when \code{data} is not a data frame or
+has no columns, and when \code{schema} or \code{rules} are malformed (from
+\code{\link[=validate_schema]{validate_schema()}} and
+\code{\link[=validate_rules]{validate_rules()}}).
 
 A clean report is not proof the data is correct. It means these
 particular checks found nothing, and every one of them has a stated
@@ -106,6 +154,15 @@ r$findings[, c("severity", "check", "subject")]
 # A missing column is fatal, because nothing downstream can run.
 capsule_report(bad[, c("id", "score")], reference = ref,
                schema = infer_schema(ref))$verdict
+
+# validation rules join the findings, and chunks are pinned with a Merkle root
+r2 <- capsule_report(bad, rules = list(rule_in_set("grade", c("a", "b", "c"))),
+                     chunks = c("part one", "part two"))
+summary(r2)
+r2$digest$merkle_root
+
+# a data frame is required
+try(capsule_report(1:10))
 }
 \seealso{
 \code{\link[=capsule_drift]{capsule_drift()}},

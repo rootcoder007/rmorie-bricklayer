@@ -4,7 +4,7 @@
 # narrow question -- is the schema satisfied, did the distribution move,
 # where are the gaps, who signed it -- and a person deciding whether to
 # trust a capsule has to run all of them and hold the answers in their
-# head. This runs the battery and puts the findings in one place, worst
+# head. This runs them all and puts the findings in one place, worst
 # first.
 
 #' Assess a capsule in one call
@@ -13,7 +13,9 @@
 #' the findings into a single report: the structural schema check, the
 #' distributional comparison against a reference, the missingness picture,
 #' the multivariate outliers, a Benford screen on the wide numeric columns,
-#' and the integrity digests.
+#' and the integrity digests. Use it as the first look at a capsule or a fresh
+#' extract, before any analysis, and keep the Markdown version
+#' ([report_markdown()]) with the outputs.
 #'
 #' Nothing here is new arithmetic. The value is that the answers arrive
 #' together and ordered by severity, because the failure mode this is built
@@ -22,11 +24,42 @@
 #'
 #' # What "severity" means
 #'
-#' * `fatal` -- a required column is missing. Nothing downstream can run.
-#' * `warn` -- something moved: a column drifted, a value left its pinned
-#' range, missingness rose, a signature did not verify.
-#' * `note` -- worth a look but not necessarily wrong: outliers, a
-#' Benford departure, a constant column.
+#' * `fatal` -- nothing downstream can run as it stands: a schema check or a
+#' rule of severity `"fatal"` failed (for example a required column is
+#' missing), or a column of the reference is absent from the data.
+#' * `warn` -- something moved or is badly incomplete: a schema check or a
+#' rule of severity `"warning"` failed (a value left its pinned range, a type
+#' changed), a column drifted from the reference, a column is entirely
+#' missing or more than half missing, or a signature did not verify (or came
+#' with no key).
+#' * `note` -- worth a look but not necessarily wrong: a column not in the
+#' reference, a column whose drift could not be tested, a contiguous run of
+#' missing values (one outage rather than scattered gaps), a constant column,
+#' values beyond the Tukey fences, multivariate outliers or collinear columns,
+#' a Benford departure.
+#'
+#' # How each check runs
+#'
+#' The drift comparison is [capsule_drift()] at level
+#' `alpha`. The missing
+#' run is the longest run from [missing_runs()] of at least
+#' `max(2, nrow(data) %/% 20)` rows. The outlier scan is
+#' [mahalanobis_outliers()] on the numeric columns
+#' that are not constant or
+#' entirely missing, run only when there are at least two of them, at most
+#' `max_rows_outliers` rows and more complete rows than columns. The Benford
+#' screen ([benford_test()]) runs on a numeric column with at
+#' least 200
+#' non-zero finite values whose largest absolute value is more than 1,000
+#' times its smallest, and reports p below 0.01. The digest is
+#' [digest_object()] of the data; a signature is checked with
+#' [capsule_verify()] against that digest.
+#'
+#' Findings are sorted by severity, then check, then subject. Nothing is
+#' written and nothing is fetched. Errors when `data` is not a data frame or
+#' has no columns, and when `schema` or `rules` are malformed (from
+#' [validate_schema()] and
+#' [validate_rules()]).
 #'
 #' A clean report is not proof the data is correct. It means these
 #' particular checks found nothing, and every one of them has a stated
@@ -48,16 +81,31 @@
 #' @param signature,key Optional signature and
 #' verifying key, as from [capsule_sign()],
 #' checked against the data's own digest.
-#' @param alpha Significance level passed to
-#' [capsule_drift()].
-#' @param max_rows_outliers Skip the outlier scan
+#' @param alpha Numeric scalar, the significance level passed to
+#' [capsule_drift()]; default `0.01`.
+#' @param max_rows_outliers Integer scalar: skip the outlier scan
 #' above this many rows (default 20000), since it factors a covariance per
 #' call.
-#' @return A list of class `bricklayer_report`: `findings` (a
-#' data frame of `severity`, `check`, `subject`,
-#' `detail`) , `verdict` ( `"fatal"`, `"warn"`,
-#' `"note"` or `"clean"`) , `profile`, `missingness`,
-#' `drift`, `digest`, and `n_rows` / `n_cols`.
+#' @return A list of class `c("bricklayer_report", "list")`: `findings` (a
+#' data frame of character columns `severity`, `check` (`"schema"`,
+#' `"rule"`, `"drift"`, `"missing"`, `"shape"`, `"outliers"`,
+#' `"benford"` or
+#' `"signature"`), `subject` (the column, rule or row count concerned) and
+#' `detail`), `verdict` (the worst severity: `"fatal"`, `"warn"`,
+#' `"note"`, or
+#' `"clean"` when there is no finding), `profile` (from
+#' [profile_columns()]),
+#' `missingness` (from [missingness_summary()]),
+#' `drift` (the
+#' [capsule_drift()] result, or `NULL` without a
+#' reference), `digest` (a list
+#' with `data_digest`, and with `chunks` also `merkle_root`,
+#' `merkle_scheme`
+#' (the [merkle_root()] hashing scheme, 2) and `n_chunks`,
+#' with a signature and key also logical `signature_valid`), and `n_rows` /
+#' `n_cols`. `print()` shows the verdict and the findings; `summary()`
+#' gives
+#' the verdict and the count of each severity.
 #' @seealso
 #' [capsule_drift()],
 #' [profile_columns()],
@@ -89,6 +137,15 @@
 #' # A missing column is fatal, because nothing downstream can run.
 #' capsule_report(bad[, c("id", "score")], reference = ref,
 #'                schema = infer_schema(ref))$verdict
+#'
+#' # validation rules join the findings, and chunks are pinned with a Merkle root
+#' r2 <- capsule_report(bad, rules = list(rule_in_set("grade", c("a", "b", "c"))),
+#'                      chunks = c("part one", "part two"))
+#' summary(r2)
+#' r2$digest$merkle_root
+#'
+#' # a data frame is required
+#' try(capsule_report(1:10))
 #' @export
 capsule_report <- function(data, reference = NULL, schema = NULL,
                            rules = NULL, chunks = NULL, signature = NULL,
@@ -245,6 +302,7 @@ capsule_report <- function(data, reference = NULL, schema = NULL,
   dig <- list(data_digest = digest_object(data))
   if (!is.null(chunks)) {
     dig$merkle_root <- merkle_root(chunks)
+    dig$merkle_scheme <- 2L
     dig$n_chunks <- length(chunks)
   }
   if (!is.null(signature)) {
@@ -342,13 +400,29 @@ summary.bricklayer_report <- function(object, ...) {
 #'
 #' Renders a [capsule_report()] as Markdown,
 #' so the assessment can travel with the capsule instead of living in a
-#' console someone has since closed.
+#' console someone has since closed. The document renders on GitHub, in
+#' R Markdown and Quarto, and in any Markdown viewer, and reads well as plain
+#' text.
 #'
-#' @param report A `bricklayer_report`.
-#' @param path Optional file to write. Without one the lines
-#' are returned.
-#' @param title Heading for the document.
-#' @return The Markdown lines, invisibly when written to a file.
+#' @details
+#' The document has a level-one heading (`title`), the verdict in one
+#' sentence, a two-column table of rows, columns, missing cells, complete rows
+#' and the full data digest (with the Merkle root and the signature result when
+#' the report has them), a "Findings" table of severity, check, subject and
+#' detail (left out when there is none), and a closing caveat that no finding
+#' is proof of correctness. The text of the findings is written as it is: a
+#' `|` in a column name would break the table. An existing file at `path` is
+#' overwritten. Errors when `report` does not come from
+#' [capsule_report()].
+#'
+#' @param report A `bricklayer_report` from
+#'   [capsule_report()].
+#' @param path Optional character scalar, the file to write. Without one
+#' (`NULL`, the default) the lines are returned.
+#' @param title Character scalar, the heading for the document; default
+#' `"Capsule report"`.
+#' @return A character vector of Markdown lines; returned visibly when `path`
+#' is `NULL`, invisibly when written to a file.
 #' @seealso [capsule_report()]
 #' @examples
 #' set.seed(1)
@@ -364,6 +438,15 @@ summary.bricklayer_report <- function(object, ...) {
 #' report_markdown(r, p)
 #' file.exists(p)
 #' unlink(p)
+#'
+#' # a report with findings, under its own title
+#' r2 <- capsule_report(transform(df, v = ifelse(seq_along(v) <= 60, NA, v)))
+#' md2 <- report_markdown(r2, title = "Extract of 2024-03-01")
+#' md2[1]
+#' md2[grep("^## Findings", md2) + 0:4]
+#'
+#' # only a capsule_report() result is accepted
+#' try(report_markdown(list(verdict = "clean")))
 #' @export
 report_markdown <- function(report, path = NULL,
                             title = "Capsule report") {

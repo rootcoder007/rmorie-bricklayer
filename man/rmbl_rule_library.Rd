@@ -40,40 +40,99 @@ rule_distinct_rows(columns = NULL, severity = c("warning", "fatal"))
 rule_col_count(n, severity = c("warning", "fatal"))
 }
 \arguments{
-\item{column}{Column the rule applies to.}
+\item{column}{Character scalar, the name of the column the rule applies
+to.}
 
-\item{set}{Allowed values ( \code{rule_in_set}) .}
+\item{set}{Vector of allowed values (\code{rule_in_set()}); compared as
+text.}
 
-\item{na_pass}{Treat \code{NA} as passing (default
-\code{TRUE}; see above).}
+\item{na_pass}{Logical scalar, default \code{TRUE}: treat \code{NA} as
+passing (see above); \code{FALSE} makes a missing value fail.}
 
-\item{severity}{\code{"warning"} (default) or
-\code{"fatal"}.}
+\item{severity}{\code{"warning"} (the default) or \code{"fatal"}: how
+\code{\link[=validate_rules]{validate_rules()}} and the capsule gate treat a
+failure.}
 
-\item{lo, hi}{Inclusive bounds ( \code{rule_between}) .}
+\item{lo, hi}{Numeric scalars, the inclusive bounds (\code{rule_between()});
+\code{lo} must not exceed \code{hi}.}
 
-\item{pattern}{Regular expression the values must match (
-\code{rule_regex}) .}
+\item{pattern}{Character scalar, the regular expression the values must
+match (\code{rule_regex()}); only the first element is used.}
 
-\item{strictly}{Require a strict increase rather than
-non-decreasing ( \code{rule_increasing}) .}
+\item{strictly}{Logical scalar, default \code{FALSE}: require a strict
+increase rather than non-decreasing (\code{rule_increasing()}).}
 
-\item{n}{Multiplier for \code{rule_within_n_mads}, or the
-expected count for \code{rule_col_count}.}
+\item{n}{Numeric scalar: the multiplier for \code{rule_within_n_mads()}
+(default \code{3}), or the expected number of columns for
+\code{rule_col_count()} (a whole number, no default).}
 
-\item{columns}{Columns that jointly must be unique (
-\code{rule_distinct_rows}) , or \code{NULL} for all of them.}
+\item{columns}{Character vector of columns that jointly must be unique
+(\code{rule_distinct_rows()}), or \code{NULL} (the default) for all of
+them.}
 }
 \value{
-A \code{\link[=rule]{rule()}} object.
+A \code{\link[=rule]{rule()}} object: a list of class
+\code{c("bricklayer_rule", "list")} with
+\code{name}, \code{expr} (the predicate function), \code{column}
+(\code{NULL} for whole-table rules), \code{severity} and
+\code{message}.
 }
 \description{
 Constructors for the checks most schemas need, each returning a
 \code{\link[=rule]{rule()}} that
 \code{\link[=validate_rules]{validate_rules()}} evaluates. Use
-\code{\link[=rule]{rule()}} directly for anything not covered here.
+\code{\link[=rule]{rule()}} directly for anything not covered here. Writing the common
+checks once, here, avoids the off-by-one or the forgotten \code{NA} that
+makes a hand-written rule pass silently, and gives every failure a
+readable message and the rows that failed.
 }
 \details{
+What each rule checks:
+\itemize{
+\item \code{rule_in_set()}: each value, compared as text, is one of
+\code{set} (so \code{1} and \code{"1"} match). Name
+\code{"<column>_in_set"}.
+\item \code{rule_between()}: each value lies in \code{[lo, hi]}, ends
+included. Name \code{"<column>_between"}.
+\item \code{rule_not_null()}: no value is \code{NA}. Name
+\code{"<column>_not_null"}.
+\item \code{rule_unique()}: no value repeats an earlier one; the rows
+reported are the repeats, not the first occurrence. Two \code{NA}s count
+as a repeat. Name \code{"<column>_unique"}.
+\item \code{rule_regex()}: each value, as text, matches \code{pattern}
+(an extended regular expression, \code{grepl()}). Name
+\code{"<column>_regex"}.
+\item \code{rule_increasing()}: the column never decreases from one row to
+the next (or always increases, with \code{strictly = TRUE}); missing
+steps are skipped. A whole-column check: a failure names no rows. Name
+\code{"<column>_increasing"}.
+\item \code{rule_within_n_mads()}: each value lies within \code{n}
+median absolute deviations (scaled by 1.4826, so comparable to standard
+deviations for normal data) of the column's median. When the MAD is zero
+(more than half the values equal) any value other than the median fails.
+The column must be numeric when the rule is evaluated. Name
+\code{"<column>_within_mads"}.
+\item \code{rule_complete_rows()}: no row has a missing value. Name
+\code{"complete_rows"}.
+\item \code{rule_distinct_rows()}: no row repeats an earlier one on
+\code{columns} (columns not in the data are ignored; when none is
+present the rule passes). Name \code{"distinct_rows"}.
+\item \code{rule_col_count()}: the data have exactly \code{n} columns.
+Name \code{"col_count"}.
+}
+The name is the key of the rule's entry in the list
+\code{\link[=validate_rules]{validate_rules()}} returns, which holds only the rules
+that failed (with
+\code{severity}, \code{message}, and for row-wise rules \code{n_failed}
+and \code{rows}). A rule that cannot be evaluated (a missing column, text
+in a numeric rule) is reported as failed, with the reason in its message.
+
+Errors, at construction: \code{column} not a single non-empty string;
+\code{severity} other than \code{"warning"} or \code{"fatal"};
+\code{rule_between()} with \code{lo > hi} or a missing bound;
+\code{rule_within_n_mads()} with \code{n} not positive;
+\code{rule_col_count()} with \code{n} not a non-negative whole number.
+
 \code{NA} handling is explicit and per-rule, because the right answer
 differs. \code{rule_not_null()} exists precisely to fail on \code{NA}.
 The value rules ( \code{rule_in_set}, \code{rule_between},
@@ -125,6 +184,14 @@ validate_rules(
 validate_rules(df, rule_distinct_rows())
 validate_rules(df, rule_col_count(5))
 validate_rules(df, rule_complete_rows())
+
+# NA fails only when asked to
+g <- data.frame(grade = c("a", NA, "b"))
+length(validate_rules(g, rule_in_set("grade", c("a", "b"))))
+validate_rules(g, rule_in_set("grade", c("a", "b"), na_pass = FALSE))$grade_in_set$rows
+
+# bounds are checked when the rule is made
+try(rule_between("score", 100, 0))
 }
 \seealso{
 \code{\link[=rule]{rule()}} for an arbitrary predicate,

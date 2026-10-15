@@ -38,7 +38,7 @@ yoy(x, ...)
 \method{print}{rmbl_yoy}(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object.}
+\item{x}{An \code{rmbl_yoy} object returned by \code{yoy()}.}
 
 \item{...}{Ignored.}
 
@@ -57,11 +57,12 @@ year-over-year on annual data; for a \code{ts} the default follows the
 series' own frequency, so monthly data compares with the same month a
 year earlier.}
 
-\item{fun}{How several rows of one period are combined: \code{NULL} (the default)
-sums counts and averages continuous values and percentages; pass a
-function to choose.
-period and group, when there is more than one row. Default
-\code{\link[=sum]{sum()}}, which is what a count needs.}
+\item{fun}{How several rows of one period (and group) are combined into
+one value: \code{NULL} (the default) sums counts (\code{\link[=sum]{sum()}}) and
+averages
+continuous values and percentages (\code{\link[=mean]{mean()}}); pass a function of
+a
+numeric vector returning one number to choose.}
 
 \item{units}{What the measure is. \code{"count"} gets the
 exact rate-ratio interval. \code{"continuous"} gets the percent change
@@ -75,40 +76,89 @@ quantity.}
 its percent change and exact interval, which is as wide as the base is
 small. Defaults to 0 (no note); only a zero base has no percent change.}
 
-\item{conf_level}{Confidence level for the count
-interval.}
+\item{conf_level}{Numeric scalar in (0, 1), the confidence level for the
+count interval; default 0.95.}
 
 \item{direction}{Which way is an improvement:
 \code{"higher_is_better"}, \code{"lower_is_better"} (segregation days,
 deaths in custody, use of force), or \code{"neutral"}. Affects colour
 and the \code{verdict} column only, never the arithmetic.}
 
-\item{complete}{Whether to insert the missing periods in
-the observed range so that a gap is visible as a gap instead of closing
+\item{complete}{Logical scalar, default \code{TRUE}: insert the missing periods
+in the observed range so that a gap is visible as a gap instead of closing
 up.}
 
-\item{digits}{Digits for the percent column.}
+\item{digits}{Integer, default \code{1}. Decimal places shown in the
+percent (or percentage-point) change column. The interval column is
+always shown to whole percent.}
 
-\item{palette}{One of
-\code{\link[=yoy_palettes]{yoy_palettes()}}.}
+\item{palette}{Character, default \code{"diverging"}. One of
+\code{\link{yoy_palettes}()}; chooses the colours used when
+\code{color = TRUE}. An unknown name is an error.}
 
-\item{color}{Whether to emit ANSI colour. Defaults to
-colour only when writing to a terminal that has it, so a redirected or
-captured output stays plain text.}
+\item{color}{Logical or \code{NULL} (the default). \code{TRUE} wraps each
+row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
+prints plain text. \code{NULL} means colour only in an interactive
+session with the \code{NO_COLOR} environment variable unset, so output
+that is redirected or captured stays plain text.}
 
-\item{n}{Maximum rows to print.}
+\item{n}{Integer, default \code{30}. Maximum number of rows printed; the
+number of rows left out is reported on a final line.}
 }
 \value{
-An \code{rmbl_yoy} object: a data frame with one row per period
-(and group), and columns \code{period}, \code{value}, \code{previous},
-\code{change}, \code{pct_change} (or \code{pp_change} for percentages),
-\code{pct_lower} and \code{pct_upper} for counts, \code{verdict}, and
-\code{flag} noting a zero, missing or (if \code{min_base} is set) small base.
+An \code{rmbl_yoy} object (a data frame of class
+\code{c("rmbl_yoy", "data.frame")}) with one row per period (and group): the
+period column under its own name (\code{period} for a vector or a \code{ts}), the
+grouping columns, then \code{value}, \code{previous}, \code{change}, \code{pct_change}
+(or
+\code{pp_change} for percentages), \code{flag} (character: "no comparison period",
+"no data", "previous period is zero", or a small-base note when
+\code{min_base} is set; \code{NA} otherwise), \code{pct_lower} and \code{pct_upper}
+for counts,
+and \code{verdict}. Attribute \code{"yoy"} records \code{value}, \code{period},
+\code{by}, \code{lag},
+\code{units}, \code{min_base}, \code{conf_level}, \code{direction} and the display
+digits;
+the writers (\code{\link[=yoy_write]{yoy_write()}}) and
+\code{\link[=yoy_summary]{yoy_summary()}} read it.
 }
 \description{
 Computes the change from one period to the period \code{lag} places
 before it, matched on the period's own value rather than on row order,
-and carries an exact interval for count data.
+and carries an exact interval for count data. Use it for the
+"up 12\% on last year" figures of an annual report or an open-data
+release: a missing year shows as a gap instead of shifting every
+comparison, a percentage is compared in percentage points, and a change
+off a small count comes with an interval as wide as the count is small.
+}
+\details{
+Rows are first combined to one per period (and group) with \code{fun}. With
+\code{complete = TRUE} the periods missing from a regular grid (numbers, \code{Date}
+or \code{POSIXct} with a common step) are inserted with \code{NA} values and flagged
+"no data". Each period is then compared with the period \code{lag} steps
+earlier in that grid: \code{change} is the difference, \code{pct_change}
+\eqn{100 (v_t / v_{t-lag} - 1)} (\code{NA} off a zero base), and for percentages
+\code{pp_change} is the difference in percentage points.
+
+For counts, conditional on their sum \eqn{n = a + b} the current count
+\eqn{a} is binomial with probability \eqn{\rho / (1 + \rho)}, \eqn{\rho}
+the rate ratio; the Clopper-Pearson interval for that probability,
+transformed back, is an exact interval for the ratio, reported as
+\code{pct_lower} and \code{pct_upper} (percent change). It is the interval
+\code{stats::poisson.test()} gives for two counts with equal exposure. A zero
+base has no percent change but still an interval (with an infinite upper
+end).
+
+\code{verdict} is \code{"up"}, \code{"down"} or \code{"unchanged"} for
+\code{direction = "neutral"}, and \code{"better"}, \code{"worse"} or
+\code{"unchanged"} otherwise; it reads
+the sign of the change only and makes no claim of significance.
+
+Errors: \code{x} neither a data frame, a numeric vector nor a \code{ts}; \code{value},
+\code{period} or \code{by} naming a column that does not exist; a non-numeric or
+infinite \code{value}; for \code{units = "count"}, negative or fractional values;
+\code{lag} not a positive whole number; \code{conf_level} outside (0, 1); an unknown
+\code{units} or \code{direction}.
 }
 \examples{
 seg <- data.frame(
@@ -131,6 +181,16 @@ subset(as.data.frame(y), Gender == "Female")
 # percent.
 rate <- data.frame(year = 2019:2023, share = c(4.1, 4.6, 5.2, 5.0, 5.4))
 yoy(rate, value = "share", period = "year", units = "percent")
+
+# a missing year stays a gap; a bare column name works too
+yoy(data.frame(year = c(2019, 2021, 2022), n = c(10, 12, 15)), value = n, period = year)
+
+# a quarterly series compares each quarter with the same quarter a year earlier
+q <- ts(c(5, 6, 7, 8, 6, 7, 9, 9), frequency = 4, start = c(2020, 1))
+as.data.frame(yoy(q))[5:8, c("period", "value", "previous", "pct_change")]
+
+# counts must be whole numbers
+try(yoy(data.frame(year = 1:3, n = c(1.5, 2, 3)), "n", "year"))
 }
 \references{
 The exact interval for a ratio of two counts is the conditional-binomial

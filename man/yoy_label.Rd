@@ -7,8 +7,7 @@
 yoy_label(x, labels)
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from
-\code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
 
 \item{labels}{Either a function applied to the period
 column, or a character vector the same length as the number of distinct
@@ -16,14 +15,38 @@ periods, or a named character vector mapping a period (as a string) to
 its label.}
 }
 \value{
-The object, with a \code{period_label} column and the labels
-used by \code{print()}, \code{\link[=yoy_html]{yoy_html()}},
+The object, still of class \code{rmbl_yoy}, with an added
+character column \code{period_label} and \code{attr(x, "yoy")$period_label}
+set to \code{TRUE}, so the labels are used by \code{print()},
+\code{\link[=yoy_html]{yoy_html()}},
 \code{\link[=yoy_pdf]{yoy_pdf()}} and the delimited writers.
 }
 \description{
-Attaches display labels to a change table. The arithmetic already ran on
-the period's value, so a label can only affect what is printed:
-relabelling cannot move a number.
+Attaches display labels to the periods of a change table from
+\code{\link[=yoy]{yoy()}},
+so a fiscal year keyed as 2023 can print as "2022/23", or a year can
+carry a note such as "(COVID)". The arithmetic already ran on the
+period's value, so a label can only affect what is printed: relabelling
+cannot move a number.
+}
+\details{
+The labels are stored in a new \code{period_label} column, and the
+table's \code{yoy} attribute is marked so that \code{print()},
+\code{\link[=yoy_html]{yoy_html()}}, \code{\link[=yoy_pdf]{yoy_pdf()}} and the
+delimited writers show the label in
+place of the period. The period column itself is unchanged, as are all
+values, changes and verdicts.
+
+\code{labels} is interpreted as follows: a function is called once on the
+period column and must return one label per row; a named character vector
+maps periods (matched as strings) to labels, and periods it does not name
+keep their own value; an unnamed character vector gives one label per
+distinct period, in order of first appearance.
+
+Errors: \code{x} not from \code{\link[=yoy]{yoy()}}; an unnamed vector whose length is
+not
+the number of distinct periods; a function that does not return one label
+per row.
 }
 \examples{
 seg <- data.frame(EndFiscalYear = 2019:2023,
@@ -38,6 +61,12 @@ yoy_label(y, function(p) paste0("FY", substr(p, 3, 4)))
 
 # Or an explicit mapping, for the periods that need one.
 yoy_label(y, c("2020" = "2019/20 (COVID)"))
+
+# the numbers are untouched
+identical(yoy_label(y, fiscal_year_label)$change, y$change)
+
+# an unnamed vector must have one label per distinct period
+try(yoy_label(y, c("a", "b")))
 }
 \seealso{
 \code{\link[=fiscal_year_label]{fiscal_year_label()}}

@@ -23,54 +23,113 @@ bricklayer_json_to_json(
 )
 }
 \arguments{
-\item{x}{the object to encode.}
+\item{x}{The object to encode.}
 
-\item{dataframe}{As in jsonlite.}
+\item{dataframe}{How a data frame is written: \code{"rows"} (the default,
+an array of records), \code{"columns"} (an object of column arrays) or
+\code{"values"} (an array of row arrays, without names).}
 
-\item{matrix}{As in jsonlite.}
+\item{matrix}{How a matrix is written: \code{"rowmajor"} (the default, an
+array of rows) or \code{"columnmajor"} (an array of columns).}
 
-\item{Date}{As in jsonlite.}
+\item{Date}{How a \code{Date} is written: \code{"ISO8601"} (the default,
+\code{"2024-01-02"}) or \code{"epoch"} (days since 1970-01-01).}
 
-\item{POSIXt}{As in jsonlite.}
+\item{POSIXt}{How a date-time is written: \code{"string"} (the default,
+\code{"2024-01-02 03:04:05"}), \code{"ISO8601"}
+(\code{"2024-01-02T03:04:05"}), \code{"epoch"} (milliseconds since
+1970) or \code{"mongo"} (\code{{"$date": ms}}).}
 
-\item{factor}{As in jsonlite.}
+\item{factor}{How a factor is written: \code{"string"} (the default, its
+labels) or \code{"integer"} (its codes).}
 
-\item{complex}{As in jsonlite.}
+\item{complex}{How a complex number is written: \code{"string"} (the
+default, \code{"1+2i"}) or \code{"list"} (an object of \code{real} and
+\code{imaginary} arrays).}
 
-\item{raw}{As in jsonlite.}
+\item{raw}{How a raw vector is written: \code{"base64"} (the default, one
+string), \code{"hex"}, \code{"mongo"}, \code{"int"} or \code{"js"}.}
 
-\item{null}{As in jsonlite: \code{NULL} is written as \code{{}} by default
-(a round trip gives an empty list). Pass \code{null = "null"} for a
-JSON null; \link{bricklayer_json_serialize} round-trips \code{NULL} exactly.}
+\item{null}{How \code{NULL} inside a list is written: \code{"list"} (the
+default, \code{{}}; a round trip gives an empty list) or \code{"null"}
+(a JSON \code{null}).
+\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}} round-trips
+\code{NULL} exactly.}
 
-\item{na}{As in jsonlite.}
+\item{na}{How missing values are written: \code{"null"} or
+\code{"string"} (\code{"NA"}). When not given, the per-type default of
+jsonlite applies (see Details).}
 
-\item{auto_unbox}{As in jsonlite.}
+\item{auto_unbox}{Logical scalar, default \code{FALSE}: write length-one
+vectors as scalars (\code{1}) rather than arrays (\code{[1]}).}
 
-\item{digits}{As in jsonlite.}
+\item{digits}{Numeric scalar, default \code{4}: decimal places kept for
+doubles. \code{I(n)} means \code{n} significant digits (\code{I(17)}
+writes every double exactly) and \code{NA} means 15 significant digits.}
 
-\item{pretty}{As in jsonlite.}
+\item{pretty}{\code{FALSE} (the default) for compact output, \code{TRUE}
+to indent by two spaces, or a number of spaces.}
 
-\item{force}{As in jsonlite.}
+\item{force}{Logical scalar, default \code{FALSE}: write objects that have
+no JSON form (as \code{{}}) instead of failing.}
 
-\item{...}{As in jsonlite, plus \code{keep_vec_names} (a named atomic
-vector is written as an object, as \code{manifest_canonical()} requires)
-and \code{quiet_vec_names} (no message when names cannot be kept).}
+\item{...}{Further options of jsonlite's \code{toJSON()} and of this
+package (see Details).}
 }
 \value{
-a length-one character vector of class \code{json}.
+A character scalar of class \code{json}, the JSON text.
 }
 \description{
-Every option of jsonlite's \code{toJSON()} with the same default and the
-same bytes out: \code{dataframe}, \code{matrix}, \code{Date},
-\code{POSIXt}, \code{factor}, \code{complex}, \code{raw}, \code{null},
-\code{na}, \code{auto_unbox}, \code{digits} ( \code{I(n)} for
-significant digits, \code{NA} for 15), \code{pretty} (TRUE = 2 spaces,
-or a width), \code{force}, plus \code{rownames}, \code{keep_vec_names},
-\code{json_verbatim}, \code{always_decimal}, \code{time_format},
-\code{UTC}, \code{no_dots}, \code{hms}.
+Converts R data (vectors, lists, data frames, matrices, dates, factors)
+to JSON text, with the same options, the same defaults and the same bytes
+out as jsonlite's \code{toJSON()}, but computed by this package's own
+code, so manifests, provenance records and capsules can be written where
+jsonlite is not installed and their digests stay the same either way. Use
+it to write data for an API or a person; use
+\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}}
+when the JSON must rebuild the exact R object (classes, factor levels,
+attributes).
+}
+\details{
+Atomic vectors become arrays, so a single value is \code{[1]} unless
+\code{auto_unbox = TRUE}. Named lists become objects and unnamed lists
+arrays. Missing values follow jsonlite: with \code{na} not given, a
+missing number is written as the string \code{"NA"} and a missing string
+or logical as \code{null}; in a data frame by rows a missing value is
+left out of its record.
+
+Further options of \code{toJSON()} are taken through \code{...}:
+\code{rownames}, \code{keep_vec_names}, \code{json_verbatim},
+\code{always_decimal}, \code{time_format}, \code{UTC}, \code{no_dots},
+\code{hms} (\code{"string"} or \code{"secs"}), and two of this package's
+own: \code{keep_empty_names} (an empty-string key is written as
+\code{""} rather than replaced by its position) and
+\code{quiet_vec_names} (no message when \code{keep_vec_names} is used).
+\code{\link[=manifest_canonical]{manifest_canonical()}} uses both.
+
+Errors: an option value not among its choices (the message lists them);
+an object with no JSON form (a function, a symbol) unless
+\code{force = TRUE}.
 }
 \examples{
 bricklayer_json_to_json(list(a = 1:3, b = "x"), auto_unbox = TRUE)
 bricklayer_json_to_json(data.frame(id = 1:2, v = c(1.5, NA)), pretty = TRUE)
+
+# a data frame by columns, and a date-time in ISO 8601
+df <- data.frame(id = 1:2, v = c(1.5, NA))
+bricklayer_json_to_json(df, dataframe = "columns", na = "null")
+bricklayer_json_to_json(as.POSIXct("2024-01-02 03:04:05", tz = "UTC"), POSIXt = "ISO8601")
+
+# digits: decimal places by default, significant digits with I()
+bricklayer_json_to_json(pi)
+bricklayer_json_to_json(pi, digits = I(17))
+
+# a choice that does not exist is refused
+try(bricklayer_json_to_json(df, dataframe = "table"))
+}
+\seealso{
+\code{\link[=bricklayer_json_from_json]{bricklayer_json_from_json()}} for the
+reverse,
+\code{\link[=bricklayer_json_serialize]{bricklayer_json_serialize()}} for an exact
+round trip.
 }

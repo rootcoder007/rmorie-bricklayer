@@ -17,37 +17,59 @@ share(x, ...)
 
 \item{...}{Passed to methods.}
 
-\item{count}{Column of counts: non-negative whole numbers.}
+\item{count}{Column of counts, unquoted or as a string: non-negative
+whole numbers.}
 
 \item{by}{Character vector of grouping columns. Shares are computed
 over the groups, so they sum to 100 unless \code{total} says otherwise.}
 
-\item{total}{The denominator. \code{NULL} (default) sums \code{count}, which
-makes the shares sum to 100. A number, or a column name, uses that
-instead -- for the case where some of the total is not in the table.}
+\item{total}{The denominator. \code{NULL} (default) sums \code{count},
+which makes the shares sum to 100. A number uses that number; a column
+name (data-frame method) uses the sum of that column -- for the case
+where some of the total is not in the table.}
 
-\item{conf_level}{Confidence level for the interval.}
+\item{conf_level}{Number in (0, 1), default 0.95: the confidence level
+of the interval.}
 }
 \value{
-A data frame of class \code{rmbl_share}
-with the grouping columns, \code{count}, \code{total},
-\code{share}, \code{lower} and \code{upper}, plus a \code{share}
-attribute recording the denominator and the
-confidence level.
+A data frame of class \code{c("rmbl_share", "data.frame")} with
+the grouping columns (or \code{label}, for a named vector), \code{count},
+\code{total}, \code{share},
+\code{lower} and \code{upper} (percent), plus a \code{share} attribute:
+a list of \code{count}, \code{by}, \code{total} and \code{conf_level}.
 }
 \description{
-What fraction of a total each count is, with the Wilson interval.
+Expresses each count as a percentage of a total (for example each
+division's share of all stops), with a Wilson confidence interval. A
+share's denominator is the total of the same events, so shares over a
+complete grouping sum to 100. Use \code{\link{rate}} instead when the
+denominator is a population; "40\% of stops" and "40 stops per 1,000
+residents" are different claims.
 }
 \details{
-A share and a rate are different quantities: a share's denominator is
-the total of the same events, so shares over a complete grouping sum
-to 100. Use \code{\link[=rate]{rate()}} when the denominator is a population.
+For count \eqn{y} out of total \eqn{n}, the share is \eqn{100\,y/n} and
+the interval is Wilson's score interval for \eqn{\hat p = y/n},
+\deqn{\frac{\hat p + \frac{z^2}{2n} \pm z\sqrt{\frac{\hat p(1-\hat p)}{n}
+  + \frac{z^2}{4n^2}}}{1 + z^2/n},}
+with \eqn{z} the standard normal quantile for \code{conf_level}, reported
+in percent and clipped to \eqn{[0, 100]}.
 
 The interval is Wilson's, not the textbook normal approximation.
 The normal interval on a proportion is wrong in exactly the cases
 people reach for it -- small counts and shares near 0 or 100, where
 it runs past the ends of the scale and reports a negative percentage.
-Wilson's stays inside the scale and is accurate at those counts.
+Wilson's stays inside the scale and is accurate at those counts. It
+treats each count as a binomial draw from the total, which is an
+approximation when the total is itself the sum of the counts.
+
+With a data frame, counts are summed within each combination of the
+\code{by} columns (missing values ignored), groups sorted. The default
+method treats each element of \code{x} as a row; when \code{x} is named,
+its names become a leading \code{label} column.
+
+Errors: a count column that is not numeric or not found; negative counts;
+a total of zero or below; a count larger than the total;
+\code{conf_level} outside (0, 1).
 }
 \examples{
 stops <- data.frame(
@@ -63,8 +85,14 @@ share(stops, stops, by = "division")$lower
 
 # a denominator from outside the table
 share(stops, stops, by = "division", total = 10000)
+
+# a plain vector
+share(c(3, 7))
+
+# a count larger than its total is not a share
+try(share(c(5, 2), total = 4))
 }
 \seealso{
-\code{\link[=rate]{rate()}} for events per population,
-\code{\link[=yoy]{yoy()}} for change between periods.
+\code{\link{rate}} for events per population,
+\code{\link{yoy}} for change between periods.
 }

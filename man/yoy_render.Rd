@@ -34,42 +34,76 @@ yoy_pdf(
 )
 }
 \arguments{
-\item{x}{An \code{rmbl_yoy} object from
-\code{\link[=yoy]{yoy()}}.}
+\item{x}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}.}
 
-\item{file}{Output path. \code{yoy_html()} writes a single
+\item{file}{Output path (a string). \code{yoy_html()} writes a single
 self-contained HTML file with no external requests; \code{yoy_pdf()}
 writes a PDF using R's own device, so neither needs a package beyond
 base R.}
 
-\item{title}{Heading for the page.}
+\item{title}{Heading for the page (and the HTML page title or PDF title),
+a string; default \code{"Year-over-year change"}.}
 
 \item{subtitle}{Optional line under the heading.
 Defaults to the table's own settings -- lag, units, interval and base
 gate -- so the reader can see what the percentages mean.}
 
-\item{palette}{One of
-\code{\link[=yoy_palettes]{yoy_palettes()}}.}
+\item{palette}{One of \code{\link[=yoy_palettes]{yoy_palettes()}}:
+\code{"diverging"} (the default),
+\code{"safe"} or \code{"mono"}.}
 
-\item{digits}{Digits for the percent column.}
+\item{digits}{Digits for the percent column, default 1.}
 
-\item{bars}{Whether to draw an in-cell bar proportional to
-the change, scaled to the largest absolute change in the table.}
+\item{bars}{Logical (HTML only): draw an in-cell bar proportional to
+the change, scaled to the largest absolute change in the table
+(default \code{TRUE}).}
 
-\item{interval}{Whether to show the exact interval
-column for counts.}
+\item{interval}{Logical: show the exact interval column for counts
+(default \code{TRUE}).}
 
 \item{notes}{Optional character vector of footnotes.}
 
 \item{...}{Ignored.}
 
-\item{width, height}{PDF page size in inches.}
+\item{width, height}{PDF page size in inches (default 11 by 8.5,
+landscape US letter).}
 }
 \value{
-The path, invisibly.
+The path \code{file}, invisibly.
 }
 \description{
-Render a change table to HTML or PDF
+Writes a change table from \code{\link[=yoy]{yoy()}} to a file for people who will not
+run
+R: \code{yoy_html()} to a single self-contained web page, \code{yoy_pdf()}
+to a PDF. Each row shows the period, the value, the previous value, the
+change and the percent change, coloured by whether it is better or worse,
+with the exact interval and any flags; the HTML page also has summary
+cards from \code{\link[=yoy_summary]{yoy_summary()}}. Use them to hand a reviewed set
+of
+period-over-period changes to a manager, a journalist or a court.
+}
+\details{
+Neither backend needs a package beyond base R. The HTML page inlines its
+stylesheet, makes no external requests (no fonts, scripts or images from
+the network) and escapes every value, so the file stays the artefact and
+renders the same later. Rows are coloured by the table's \code{verdict}:
+\code{"worse"} in the palette's bad colour, \code{"better"} in its good
+colour, everything else (including the \code{"up"} and \code{"down"} of
+\code{direction = "neutral"}) in its neutral grey. Labels set
+with \code{\link[=yoy_label]{yoy_label()}} replace the period. For percentage units
+the change is
+shown in points. The page ends with the package version that wrote it.
+
+The PDF is drawn on R's own \code{pdf()} device with its standard fonts,
+which cannot draw arrows or dashes, so those are written in ASCII
+(\code{+}, \code{-}). Long tables are split over pages at 0.22 inch per row,
+with "page i of n" labels; notes go under the last page's rows when they
+fit and on pages of their own otherwise. The interval column appears only
+when the table has \code{pct_lower} and \code{pct_upper} (counts).
+
+Both overwrite \code{file}. Errors: \code{x} not from \code{\link[=yoy]{yoy()}}; a
+\code{palette} not in \code{\link[=yoy_palettes]{yoy_palettes()}}; a file that cannot
+be written.
 }
 \examples{
 d <- data.frame(year = rep(2019:2023, each = 2),
@@ -86,5 +120,15 @@ p <- file.path(tempdir(), "change.pdf")
 yoy_pdf(y, p, title = "Placements by region")
 file.exists(p)
 
+# a colour-blind-safe palette, no bars or intervals, and a footnote
+yoy_html(y, h, palette = "safe", bars = FALSE, interval = FALSE,
+         notes = "Counts below 10 are suppressed at source.")
+any(grepl("suppressed", readLines(h)))
+
+# portrait letter pages, with fiscal-year labels
+yoy_pdf(yoy_label(y, fiscal_year_label), p, width = 8.5, height = 11)
+
+# only yoy() tables can be rendered
+try(yoy_html(d, h))
 unlink(c(h, p))
 }
