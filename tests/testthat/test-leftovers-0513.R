@@ -32,7 +32,9 @@ test_that("core_bootstrap_mean() gives the 0.5.13 replicates for the same seed",
   set.seed(3)
   x <- stats::rnorm(20000)
   reps <- core_bootstrap_mean(x, 60L, seed = 11)
-  expect_identical(sprintf("%a", reps[1:2]), c("-0x1.564a2aa5fd3d7p-6", "-0x1.9dbc36011be11p-7"))
+  # the resamples are the same on every platform (Lemire's draw on mt19937_64); the sums run in
+  # long double, which is 80-bit on x86 and plain double on arm64, so the means agree to rounding
+  expect_equal(reps[1:2], c(-0x1.564a2aa5fd3d7p-6, -0x1.9dbc36011be11p-7), tolerance = 1e-12)
   # a poll falls every 52 replicates at n = 20000: the replicates on both sides of it follow the
   # same stream as a run too short to poll
   expect_identical(reps[1:40], core_bootstrap_mean(x, 40L, seed = 11))
@@ -47,7 +49,7 @@ test_that("sha256_file() streams: empty, small, exact chunk multiples and one by
   writeBin(raw(0), f0)
   expect_identical(sha256_file(f0), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
   f1 <- file.path(d, "small")
-  writeLines("hello capsule", f1)
+  writeBin(charToRaw("hello capsule\n"), f1)  # bytes, not text: Windows would write \r\n
   expect_identical(sha256_file(f1), "55d6110230c260319d580bb6274db530b7e751c4f687fc00d0736ec531260a02")
   set.seed(9)
   bytes <- as.raw(sample.int(256L, 4096L * 3L + 1L, replace = TRUE) - 1L)

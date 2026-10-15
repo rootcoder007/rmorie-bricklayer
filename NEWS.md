@@ -75,6 +75,12 @@ was sealed with the weaker scheme.
 
 ## Fixes
 
+* `core_bootstrap_mean()` draws its resamples with Lemire's unbiased bounded draw on
+  `mt19937_64`, as the reservoir sampler already does, instead of `std::uniform_int_distribution`,
+  whose algorithm differs between libstdc++ and libc++: the same seed now gives the same resamples
+  on Linux, Windows and macOS (the Linux and Windows results are unchanged). The means are summed
+  in `long double`, so they still agree only to rounding between x86 and arm64.
+
 * Every `conf_level` goes through one check, with one message: `trend_test()`, `count_trend()`,
   `analyse_table()` and `survey_compare()` returned `NaN` intervals for a level outside (0, 1);
   `case_flow()`, `life_table()`, `disposition_mix()`, `clearance_decomposition()`, `rate()`,

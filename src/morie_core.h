@@ -201,11 +201,33 @@ inline void trimmed_ipw_weights(const double *treat, const double *propensity,
     }
 }
 
+// An unbiased draw from [0, s), s >= 1: Lemire's multiply-and-reject ("Fast random integer
+// generation in an interval", ACM TOMACS 2019) on mt19937_64's raw outputs, whose sequence the
+// standard fixes. std::uniform_int_distribution's algorithm is the library's choice, so a seed
+// drew different resamples under libstdc++ (Linux, Windows) and libc++ (macOS). The 64x64->128
+// multiply is written out: no __int128 on every compiler.
+inline std::uint64_t bounded_draw(std::mt19937_64 &rng, std::uint64_t s) {
+    auto mul = [](std::uint64_t x, std::uint64_t y, std::uint64_t &hi, std::uint64_t &lo) {
+        const std::uint64_t x0 = x & 0xFFFFFFFFULL, x1 = x >> 32, y0 = y & 0xFFFFFFFFULL, y1 = y >> 32;
+        const std::uint64_t p00 = x0 * y0, p01 = x0 * y1, p10 = x1 * y0, p11 = x1 * y1;
+        const std::uint64_t mid = (p00 >> 32) + (p01 & 0xFFFFFFFFULL) + (p10 & 0xFFFFFFFFULL);
+        hi = p11 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
+        lo = (mid << 32) | (p00 & 0xFFFFFFFFULL);
+    };
+    std::uint64_t hi, lo;
+    mul(static_cast<std::uint64_t>(rng()), s, hi, lo);
+    if (lo < s) {
+        const std::uint64_t t = (0 - s) % s;   // 2^64 mod s
+        while (lo < t) mul(static_cast<std::uint64_t>(rng()), s, hi, lo);
+    }
+    return hi;
+}
+
 // Bootstrap-replicate means: B resamples of size n drawn with
 // replacement from `a`, each replicate's mean written to out[b].
-// Uses std::mt19937_64 seeded with `seed` -- fully reproducible for a
-// given seed. (There is intentionally no pure-numpy equivalent: a
-// different RNG would silently change the replicates.)
+// Uses std::mt19937_64 seeded with `seed` and bounded_draw() above, so the resamples are the
+// same on every platform. (There is intentionally no pure-numpy equivalent: a different RNG
+// would silently change the replicates.)
 inline void bootstrap_mean(const double *a, std::size_t n, std::size_t B,
                            unsigned long long seed, double *out) {
     if (n == 0) {
@@ -213,7 +235,7 @@ inline void bootstrap_mean(const double *a, std::size_t n, std::size_t B,
         return;
     }
     std::mt19937_64 rng(seed);
-    std::uniform_int_distribution<std::size_t> idx(0, n - 1);
+    const std::uint64_t n64 = static_cast<std::uint64_t>(n);
     // the interrupt hook (when the host installed one) after about every 2^20 draws: a poll
     // every few milliseconds of work at any n; it touches neither the generator nor the sums,
     // so the replicates are the same with and without it
@@ -221,7 +243,7 @@ inline void bootstrap_mean(const double *a, std::size_t n, std::size_t B,
     for (std::size_t b = 0; b < B; ++b) {
         long double s = 0.0L;
         for (std::size_t i = 0; i < n; ++i) {
-            s += a[idx(rng)];
+            s += a[static_cast<std::size_t>(bounded_draw(rng, n64))];
         }
         out[b] = static_cast<double>(s / static_cast<long double>(n));
         if ((b + 1) % poll_every == 0) {

@@ -47,13 +47,18 @@
 
 # where R runs inside RStudio: "console", "terminal", "build", "render", "job", "subprocess", or ""
 # outside it (cli's rstudio_detect(), without its rstudioapi probe)
+# the GUI and whether stdin is a terminal, as bindings the tests can replace (a test cannot change
+# .Platform$GUI, and its stdin is never a terminal)
+.bl_gui <- function() .Platform$GUI
+.bl_stdin_tty <- function() isatty(stdin())
+
 .bl_rstudio <- function() {
   if (!identical(Sys.getenv("RSTUDIO"), "1")) return("")
-  if (identical(.Platform$GUI, "RStudio") ||
+  if (identical(.bl_gui(), "RStudio") ||
         identical(Sys.getenv("RSTUDIO_SESSION_PID"), as.character(Sys.getpid()))) {
     return("console")
   }
-  if (isatty(stdin()) && !identical(Sys.getenv("ASCIICAST"), "true")) return("terminal")
+  if (.bl_stdin_tty() && !identical(Sys.getenv("ASCIICAST"), "true")) return("terminal")
   pane <- Sys.getenv("RSTUDIO_CHILD_PROCESS_PANE")
   if (pane %in% c("build", "render", "job")) pane else "subprocess"
 }
@@ -63,7 +68,7 @@
 
 .bl_console <- function(tty = NULL) {
   rs <- .bl_rstudio()
-  positron <- identical(.Platform$GUI, "Positron") || identical(Sys.getenv("POSITRON"), "1")
+  positron <- identical(.bl_gui(), "Positron") || identical(Sys.getenv("POSITRON"), "1")
   knit <- isTRUE(getOption("knitr.in.progress")) || isTRUE(getOption("rstudio.notebook.executing"))
   notebook <- knit || isTRUE(getOption("jupyter.in_kernel"))
   free_out <- sink.number() == 0L
@@ -103,7 +108,7 @@
   if (!tty && identical(getOption("crayon.enabled"), FALSE)) return(1L)
   if (nzchar(Sys.getenv("NO_COLOR")) || knit || !free) return(1L)
   if (!tty && !is.null(v <- getOption("cli.default_num_colors"))) return(n(v))
-  if (.Platform$GUI %in% c("AQUA", "Rgui") && rs == "") return(1L)
+  if (.bl_gui() %in% c("AQUA", "Rgui") && rs == "") return(1L)
   if (rs %in% c("console", "build", "job")) return(n(Sys.getenv("RSTUDIO_CONSOLE_COLOR")))
   # ponytail: a Positron console without ark's cli.default_num_colors is taken as 256 colours
   # (cli's is_ansi_tty() says its console is ANSI); not checked in a live Positron session

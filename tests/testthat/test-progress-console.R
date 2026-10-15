@@ -93,6 +93,9 @@ test_that("Positron, R.app and RKWard redraw in an interactive session only", {
 })
 
 test_that("knitr, a notebook chunk and a Jupyter kernel never redraw; overrides come first", {
+  # with knitr.in.progress set before knitr is loaded, anything that loads knitr meanwhile sees the
+  # option during knitr's own load and loads it again: "cyclic namespace dependency" (pkgcheck, ASAN)
+  if (requireNamespace("knitr", quietly = TRUE)) loadNamespace("knitr")
   plain_console()
   rstudio_console()
   expect_true(ns$.bl_console()$dynamic)
@@ -257,13 +260,15 @@ test_that("the line fits the console, cutting the stage, the extras and then the
 })
 
 test_that("the end replaces the bar: a check and the time, a cross when the work stopped", {
+  # forcing a$unicode = TRUE prints U+2714 whatever the locale; a C locale writes it as <U+2714>
+  utf8 <- isTRUE(l10n_info()[["UTF-8"]])
   withr::local_envvar(COLUMNS = "100")
   withr::local_options(rmoriebricklayer.width = NULL, cli.width = NULL)
   a <- anim("Fit", 10)
   a$unicode <- TRUE
   a$done <- 10
   out <- paste(capture.output(type = "message", ns$.bl_anim_done(a)), collapse = "\n")
-  expect_match(out, "^\r\u2714 Fit  10 \u00b7 [0-9.]+s *$")
+  if (utf8) expect_match(out, "^\r\u2714 Fit  10 \u00b7 [0-9.]+s *$")
   a <- anim("Fit", 10)
   a$unicode <- FALSE
   a$done <- 3
@@ -277,7 +282,7 @@ test_that("the end replaces the bar: a check and the time, a cross when the work
   a$unicode <- TRUE
   a$sty <- ns$.bl_styles(a$rgb, 256L)
   out <- paste(capture.output(type = "message", ns$.bl_anim_done(a)), collapse = "\n")
-  expect_match(out, paste0(ns$.bl_sgr(c(120, 220, 140), 256L), paste0("\u2714", "\033[0m")), fixed = TRUE)
+  if (utf8) expect_match(out, paste0(ns$.bl_sgr(c(120, 220, 140), 256L), paste0("\u2714", "\033[0m")), fixed = TRUE)
   # quiet: nothing
   q <- ns$.bl_anim_new("Q", 3, quiet = TRUE)
   expect_identical(capture.output(type = "message", ns$.bl_anim_done(q, ok = FALSE)), character())
@@ -333,7 +338,9 @@ test_that("the native spinner: a redrawn line ending in a check, or lines where 
   expect_length(out, 2L)
   expect_match(out[1], "^  hashing \\([0-9.]+s\\)$")
   expect_match(out[2], "^  hashing: done \\([0-9.]+s\\)$")
-  # a console that redraws: \r frames, then a check line with the time
+  # a console that redraws: \r frames, then a check line with the time (the unicode spinner and
+  # check are forced on here, so only a UTF-8 locale can show them as written)
+  skip_if_not(isTRUE(l10n_info()[["UTF-8"]]), "the forced unicode frames need a UTF-8 locale")
   out <- paste(capture.output(type = "message", {
     wl("hashing", TRUE, c(256, 1, 0))
     Sys.sleep(0.8)
