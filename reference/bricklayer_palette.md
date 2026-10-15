@@ -36,7 +36,8 @@ bricklayer_plot_options(...)
 - ...:
 
   For `bricklayer_plot_options()`, named options to set (`palette`,
-  `grid`, `cex`, `las`, `bg`); none to read the current values.
+  `grid`, `cex`, `las`, `bg`, `panel`: the plot region's fill behind
+  white grid lines, `NA` for none); none to read the current values.
 
 ## Value
 
@@ -65,6 +66,9 @@ bricklayer_plot_options()
 #> 
 #> $bg
 #> [1] "white"
+#> 
+#> $panel
+#> [1] "#EEF1F6"
 #> 
 bricklayer_plot_options(palette = old$palette, grid = old$grid)
 ```

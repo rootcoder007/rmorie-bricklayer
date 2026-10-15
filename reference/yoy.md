@@ -91,10 +91,10 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 
 - min_base:
 
-  Smallest previous-period value for which a percent change is reported.
-  Below it the percent is `NA` and the reason is recorded, rather than a
-  large number that describes the denominator. Defaults to 20 for counts
-  and to no gate otherwise.
+  Optional: previous-period values below this get a "small base" note.
+  Nothing is withheld either way: every non-zero base gets its percent
+  change and exact interval, which is as wide as the base is small.
+  Defaults to 0 (no note); only a zero base has no percent change.
 
 - conf_level:
 
@@ -135,7 +135,8 @@ print(x, digits = 1L, palette = "diverging", color = NULL, n = 30, ...)
 An `rmbl_yoy` object: a data frame with one row per period (and group),
 and columns `period`, `value`, `previous`, `change`, `pct_change` (or
 `pp_change` for percentages), `pct_lower` and `pct_upper` for counts,
-`verdict`, and `flag` recording why a percent was withheld.
+`verdict`, and `flag` noting a zero, missing or (if `min_base` is set)
+small base.
 
 ## References
 
@@ -168,24 +169,22 @@ y <- yoy(seg,
   by = "Gender", direction = "lower_is_better"
 )
 y
-#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval    
-#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ────────────
-#> Female  2019           31                    —         —         —       —           
-#>     ↳ percent withheld: no comparison period
-#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%]
-#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%]
-#> Female  2022           19                    12        7         —       —           
-#>     ↳ percent withheld: base below 20
-#> Female  2023           24                    19        5         —       —           
-#>     ↳ percent withheld: base below 20
-#> Male    2019           402                   —         —         —       —           
-#>     ↳ percent withheld: no comparison period
-#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%] 
-#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%]
-#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%]
-#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%] 
+#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     
+#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────
+#> Female  2019           31                    —         —         —       —            
+#>     ↳ note: no comparison period
+#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] 
+#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] 
+#> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]
+#> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]
+#> Male    2019           402                   —         —         —       —            
+#>     ↳ note: no comparison period
+#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  
+#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] 
+#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] 
+#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20 · lower is better
+#> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better
 
 # The interval is exact, so a small group does not get a confident
 # percent it has not earned.
@@ -194,14 +193,14 @@ subset(as.data.frame(y), Gender == "Female")
 #> 1 Female          2019    31       NA     NA         NA no comparison period
 #> 2 Female          2020    28       31     -3  -9.677419                 <NA>
 #> 3 Female          2021    12       28    -16 -57.142857                 <NA>
-#> 4 Female          2022    19       12      7         NA        base below 20
-#> 5 Female          2023    24       19      5         NA        base below 20
+#> 4 Female          2022    19       12      7  58.333333                 <NA>
+#> 5 Female          2023    24       19      5  26.315789                 <NA>
 #>   pct_lower pct_upper verdict
 #> 1        NA        NA    <NA>
 #> 2 -47.79679  55.62836  better
 #> 3 -80.14950 -12.97354  better
-#> 4        NA        NA   worse
-#> 5        NA        NA   worse
+#> 4 -27.02865 257.66674   worse
+#> 5 -33.67876 143.90121   worse
 
 # A percentage is handled as percentage points, not as a percent of a
 # percent.
@@ -210,7 +209,7 @@ yoy(rate, value = "share", period = "year", units = "percent")
 #> year  share  previous  change  points  
 #> ────  ─────  ────────  ──────  ────────
 #> 2019  4.1    —         —         —     
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2020  4.6    4.1       0.5     ▲ +0.5pp
 #> 2021  5.2    4.6       0.6     ▲ +0.6pp
 #> 2022  5.0    5.2       -0.2    ▼ -0.2pp

@@ -28,9 +28,11 @@ network, recovers the secret bit by bit.
 The secret key is marked *undefined* to valgrind memcheck (Langley’s
 ctgrind, 2010). Memcheck then reports every conditional jump and every
 memory address that depends on undefined data, which is exactly the set
-a timing attacker can observe. A clean run is a proof for that binary,
-for every input of that length. The only branches allowed are the ones
-the standards publish by design (a rejected sample in ML-DSA, the
+a timing attacker can observe. A clean run shows that, for the inputs
+the harness exercised, no branch or address of that binary depended on
+the secret; it is evidence about that binary and those inputs, not a
+proof over every input of that length. The only branches allowed are the
+ones the standards publish by design (a rejected sample in ML-DSA, the
 challenge, the hints), each passed through an explicit declassification
 point. The harness is built from the package’s own sources with GCC and
 Clang, and it also scans the dead stack after each operation for
@@ -195,19 +197,19 @@ Each has a software route (richer fitted leakage models such as ELMO, a
 fault campaign in the same emulator, higher-order gadgets, formal
 verification of the gadgets with maskVerif) and, for EM and for
 confirming a given chip, a hardware route. The repository’s
-`SECURITY.md` states the current boundary. The side-channel review
-bundle distributed alongside the release (a separate archive, not part
-of the package) carries firmware for a ChipWhisperer Cortex-M4 target
-(CW-Lite Arm, CW308 STM32F3) running the same kernels, and a
-fixed-versus-random capture script; no capture has been run yet, and
+`SECURITY.md` states the current boundary. The package itself ships no
+firmware; the side-channel review bundle distributed alongside the
+release (a separate archive) carries firmware for a ChipWhisperer
+Cortex-M4 target (CW-Lite Arm, CW308 STM32F3) running the same kernels,
+and a fixed-versus-random capture script. No capture has been run, and
 every power figure above comes from the emulator.
 
 ## 4. Choosing the plain path
 
-Masking costs about 3 to 12 times the plain time on decapsulation (4 ms
-for ML-KEM-768 against 1.2 ms on this package’s test machine) and 13 to
-24 times on signing (26 ms for ML-DSA-65 against 2 ms), depending on the
-CPU. Where the threat model has no physical attacker,
+Masking costs about 2.3 to 3.4 times the plain time on decapsulation (4
+ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and 7
+to 10 times on signing (17 ms for ML-DSA-65 against 2.4 ms), depending
+on the CPU. Where the threat model has no physical attacker,
 `kem_decapsulate(masked = FALSE)`, `capsule_sign(masked = FALSE)` and
 `fips_sign_mu(masked = FALSE)` keep the plain path, and
 `options(rmoriebricklayer.masked = FALSE)` makes that the default for a

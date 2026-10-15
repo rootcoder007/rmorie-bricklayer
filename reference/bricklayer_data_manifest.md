@@ -6,9 +6,9 @@ NOAA, NHTSA, Hacker News, Ethereum, World Bank, ...) and serves their
 tables from the edge, under the data access terms at
 <https://www.rmorie.com/data-license/>. They open with the key
 [`bricklayer_llm_login`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
-stores, the same key rmorie and morie use; keys are personal and issued
-on request at <https://www.rmorie.com/access/>. The service address
-comes from
+stores, the same key rmorie and morie use; keys are personal: sign in
+with GitHub or an emailed code, or ask at
+<https://www.rmorie.com/access/>. The service address comes from
 [`bricklayer_services`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md).
 `bricklayer_data_manifest()` returns the gateway's manifest (every table
 with rows, columns, size, SHA-256 and its BigQuery source), kept for a

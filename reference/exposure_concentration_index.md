@@ -2,9 +2,11 @@
 
 Wagstaff, Paci and van Doorslaer (1991): \$\$CI = (2 / \mu) \\
 \mathrm{cov}(h_i, R_i)\$\$ with \\R_i = (rank_i - 0.5) / n\\ the
-fractional income rank (ties kept in input order, as a stable sort does)
-and the population covariance. Negative values mean lower-income units
-bear more exposure.
+fractional income rank (tied incomes share their average rank, so the
+index does not depend on row order) and the population covariance.
+Negative values mean lower-income units bear more exposure. Both columns
+must be numeric: a factor or character income is refused rather than
+ranked by its level codes, and exposures must be non-negative.
 
 ## Usage
 
@@ -25,8 +27,8 @@ exposure_concentration_index(data, exposure, income)
 ## Value
 
 A list of class `rmbl_equity` with `concentration_index`,
-`interpretation`, `n_quintiles`, `exposure_mean`, `citation` and
-`extra`.
+`interpretation`, `exposure_mean`, `citation` and `extra` (`n`, the
+covariance and the concentration curve).
 
 ## References
 

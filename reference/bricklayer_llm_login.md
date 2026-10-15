@@ -1,19 +1,21 @@
-# Sign in to the hosted MORIE language model
+# Sign in for the curated tables at data.rmorie.com
 
-Stores a personal key for the hosted MORIE tier in
+Stores your personal MORIE data key in
 `$XDG_CONFIG_HOME/morie/credentials.json` (owner-only; the file the
 `morie`, `rmorie` and `rmoriedata` packages read too, so one sign-in
-serves all of them). The tier is a last resort behind a local model or
-your own endpoint (see
-[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md));
-keys are personal and issued on request at
-<https://www.rmorie.com/access/>. The sign-in addresses come from
+serves all of them). The key opens the curated tables
+([`bricklayer_data_load`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md));
+it is not used for language models, which run on your own key or a local
+model
+([`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)).
+Keys are personal: the GitHub or emailed-code sign-in issues one, or ask
+at <https://www.rmorie.com/access/>. The sign-in addresses come from
 [`bricklayer_services`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md).
 Three ways in:
 
 - `token`: a key you already have, from the website or an email. It is
-  checked with the gateway first and stored only when the gateway
-  accepts it; a refused key, or no answer, stores nothing.
+  checked with the service first and stored only when it is accepted; a
+  refused key, or no answer, stores nothing.
 
 - `email`: a 6-digit code is sent to the address (valid ten minutes,
   single use); you type it, or pass `code`.

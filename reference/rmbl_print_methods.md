@@ -146,6 +146,8 @@ what to do when capturing output into a fixed-width log.
 ## Examples
 
 ``` r
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 set.seed(7)
 ref <- data.frame(v = stats::rnorm(200),
                   g = sample(c("a", "b"), 200, TRUE))
@@ -201,7 +203,7 @@ key <- pqc_keygen(height = 2)
 key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       d0362137a810c5e1fa48c3703afdd32cc6e5307371a4e0694840422c9507f5cd
+#>   root       4011f54db18a3d71ee61d3e4463d2809b94b3f04394b6ad7a957732004ccf42f
 #>   height     2
 #>   used       0 of 4 signatures
 #>   remaining  4
@@ -212,8 +214,9 @@ capsule_sign("a-manifest", key)
 #> ── Capsule signature ─────────────────────────────────────────────
 #>   scheme     xmss-sha256
 #>   index      0
-#>   root       d0362137a810c5e1fa48c3703afdd32cc6e5307371a4e0694840422c9507f5cd
-#>   signature  05934f46b13cc8c0f96c0e8de9a757c1... (2144 bytes)
+#>   root       4011f54db18a3d71ee61d3e4463d2809b94b3f04394b6ad7a957732004ccf42f
+#>   signature  0aa6d5e3bea69408644162caf4851a55... (2144 bytes)
 #>   auth path  2 nodes
 #> ──────────────────────────────────────────────────────────────────
+options(op)
 ```

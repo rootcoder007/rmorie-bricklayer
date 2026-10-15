@@ -1,5 +1,1501 @@
 # Changelog
 
+## rmoriebricklayer 0.5.12
+
+The 0.5.11 stress round (commit a5a4d10) and the review of this
+release’s own branch (head 6e80794, 2026-10-12): the findings of both
+fixed, each fix applied to its siblings, and the claims the earlier
+fixes overstated corrected.
+
+### Language models: bring your own key; the hosted tier is retired
+
+- **Any major provider, or your own model.**
+  [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+  takes, in order, an endpoint of your own, then the first provider
+  whose key is set, then Ollama. Sixteen providers are built in
+  ([`bricklayer_llm_providers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)):
+  OpenAI, Anthropic, Google Gemini, OpenRouter, Groq, Together AI,
+  Fireworks AI, DeepSeek, Mistral, xAI, Cerebras, Perplexity, Hugging
+  Face, OpenCode Zen, Cohere and NVIDIA, each from its usual key
+  variable or a key saved privately with
+  `rmbl config set <provider>.key`. Anthropic’s Messages API and
+  Gemini’s `generateContent` are spoken natively, tool calls included;
+  the others are OpenAI-compatible. `route = "anthropic"` (or any
+  provider id) takes one route only; `bricklayer_llm_models(route)` and
+  `rmbl models --route` list a route’s models; `rmbl config setup` asks
+  for a provider, its key and its model.
+
+- **The model knows the packages.** With `docs = TRUE` (the default) the
+  model is given the name, arguments and title of every function of the
+  installed MORIE packages (rmoriebricklayer, and rmoriedata and rmorie
+  when present), read from their installed help, and five read-only
+  tools: a search over every help page, a help page, its examples, the
+  dataset list and a vignette. A model that does not take tools gets the
+  matching pages in its prompt. How much goes into the prompt follows
+  the model’s context: everything for a provider’s model or an Ollama
+  cloud model, the functions nearest the question for a model Ollama
+  runs on this machine; `MORIE_LLM_CONTEXT` overrides.
+  [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  asks the same way (its `backend` argument is now `route`).
+
+- [`bricklayer_llm_route_info()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_route_info.md)
+  says which route would answer, without sending anything;
+  [`bricklayer_llm_chat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_chat.md)
+  sends a whole conversation as it is (no help, no tools), for chat
+  loops in the other MORIE packages. rmorie’s help, thousands of pages,
+  is searched by the tools, and only its functions nearest the question
+  are listed for the model.
+
+- **The hosted MORIE tier is retired.** No route, setting or model list
+  for it remains; `route = "hosted"` says so, and a saved `hosted` route
+  falls back to the automatic order with a one-time message. Signing in
+  (`rmbl login`) is for the curated tables at data.rmorie.com only, and
+  `rmbl doctor` reports the data key.
+
+- A model the route does not have is named as such, with the number it
+  has; a refused key is said as such, and the key never appears in an
+  error.
+
+- **The data key is checked and issued by the data service.**
+  `login --token` asks data.rmorie.com (`/v1/whoami`) whether it knows
+  the key before storing it; the sign-in address is the services
+  document’s `data.auth_url`, then its `llm.auth_url` for documents
+  signed earlier. A document may now leave out the `llm` block. A
+  restricted table (the ICPSR studies, NCVS 38604, the a2aj case law)
+  refused with 403 says to accept the terms at
+  <https://data.rmorie.com/terms>.
+
+- API calls no longer end a reply that is slow to start: a model that
+  thinks before answering is not cut off by the 30-second low-speed
+  limit.
+
+- **It shows that it is working.** While a model thinks, the terminal
+  shows a turning spinner, “ is thinking” and the seconds so far, then
+  how many help pages it has read; the line is wiped when the answer
+  comes. Only for a person at a terminal (never in a script, a log or
+  `options(morie.quiet = TRUE)`); Ctrl-C now ends a long wait for a
+  model.
+
+- **A repeated question is answered at once.** The answer to the same
+  question (spacing aside; case counts), on the same route, model,
+  packages and versions, is kept on this machine for 30 days and comes
+  back without asking the model: `rmbl ask` says so, `--fresh` (R:
+  `fresh = TRUE`) asks again. Owner-only files under
+  [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html), at most
+  200, outdated ones removed on each save, the first save in a session
+  says where; only for a person at a terminal (the command line with the
+  terminal on stdin and stdout) or an interactive session, never from a
+  script, a pipeline or a check; `MORIE_LLM_CACHE=off` turns it off.
+  Nothing is hosted.
+
+- **Servers can reuse the instructions.** The instructions a model gets
+  are the same for every question (the functions picked for a question
+  travel with the question), so the prompt caches of Ollama, OpenAI,
+  DeepSeek and Gemini apply, and long instructions are marked for
+  Anthropic’s cache: a faster, cheaper first answer on every route.
+
+- **Better retrieval.** The help search matches inflected words
+  (“emissions” finds “emission”, “testing” finds “test”) and leaves out
+  question words; the closest help pages go with every question, to
+  large models too; and the model is told never to say the packages lack
+  something before it has searched under other words.
+
+- **[`bricklayer_explain_error()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md)
+  and `rmbl explain-error "MESSAGE"`**: where an error or warning of
+  rmoriebricklayer, rmoriedata or rmorie comes from, without a model or
+  the network. Every message is read from the packages’ own code
+  (stop(), warning(), usage errors; sprintf() and paste() parts as
+  wildcards), matched exactly or by its words, and traced to the
+  exported functions that reach it, whose help pages say what they
+  expect. With no argument, the last error of the session. rmorie’s
+  18,000 messages are read once per installed version and kept beside
+  the saved answers.
+
+- **Ollama has to be running.** `rmbl doctor` and the help now say to
+  start it (`ollama serve`, the Ollama app, or its system service) when
+  nothing answers at its address. \## Network and statistics stress
+  tests of 5e1dce5 (2026-10-14)
+
+- **A typo, a file name or a key is never sent to a model.** A line with
+  no verb is asked only when it plainly is a question: the first
+  argument is the question itself (two words or more, or ending in `?`),
+  it is not a verb or one or two letters from one, it holds no path,
+  line break or key-shaped word, and anything after it is an option
+  `ask` takes (`rmbl "how?" --fresh` works).
+  `rmbl explain-eror "object 'x' not found"`,
+  `rmbl "My Documents/urls.txt"` and
+  `rmbl conifg set anthropic.key "$(cat key.txt)"` with a CRLF key file
+  went to the model before, the key with them. An unknown verb now names
+  the nearest one (`did you mean ...`); one that looks like a key is not
+  printed back.
+
+- **A Ctrl-C during a GET is raised** (`rmbl models` exited 0 with “did
+  not answer”, a Wayback run polled on past its time limit): the
+  transfer’s callback records the interrupt it takes. The plain GET
+  behind the Wayback lookups takes Ctrl-C too.
+
+- **The key prompt finds `stty` and `sh` on PATH** without a child
+  process (only `/bin` and `/usr/bin` were looked in, so on a
+  NixOS-style layout the key was echoed), runs the `sh` it found, and
+  takes a Ctrl-C already pending before the read starts. `config setup`
+  prints its key explanation as part of the prompt the shell shows once
+  echo is off.
+
+- **A settings or cache folder left open by an earlier version is made
+  owner-only**, not only a new one. `config set` writes only the
+  settings it changes into `llm.json` (a full rewrite cut floats to 4
+  digits, unboxed arrays, renamed a `""` key and rounded integers past
+  2^53). Answers are kept only with a person at a terminal or in a GUI
+  session (`R --interactive < file` kept them). The note after the
+  tool-call cap goes with the last tool result (Anthropic and Gemini got
+  two user turns in a row).
+
+- **The native CSV reader**: a table that would decompress past 512 MiB
+  is read the streamed way (`read.csv(gzfile())`; a 2.6 MB file of blank
+  lines got the process killed for memory), and a `.csv.gz` that is
+  plain text is read as such. As
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) reads them:
+  unquoted header names are trimmed (`" Operational_Capacity "` came out
+  `X.Operational_Capacity.`), CR and CRLF inside quotes are newlines, a
+  line holding only `""` is blank, blanks before a quote and text after
+  one are kept. A quote inside an unquoted field (`ab"c`, where
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) swallows the
+  rest of the file) is refused in words. Deliberate differences from
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html): a UTF-8
+  byte-order mark is not part of the first name, and extra fields and an
+  unclosed quote are refused. Short rows are filled, as
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) fills them,
+  unless filling makes more cells than the text has bytes plus ten
+  million (a 2,000-column header over short lines made 4e8 cells from a
+  few megabytes). A Ctrl-C while a table is inflated or split is looked
+  for every million fields or blank lines (by rows it waited 53 s on a
+  wide table), the inflating goes in 16 MiB steps on its second pass
+  too, and either comes back as R’s interrupt, not an ordinary error.
+
+- **Survey replicates**: what is refused, what is said and what cannot
+  be told apart is in
+  [`?survey_design`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md).
+  New: a copy of the weight within 1 percent on every row is refused
+  under JK1, JKn and BRR; warnings for more replicates equal to the
+  weight than a bootstrap draws (judged against the m!/m^m chance for
+  the PSUs read from the replicates), a near copy under the bootstrap or
+  Fay, a JK or BRR replicate that leaves no row out and is no rescaled
+  weight, and replicates totalling on average under a tenth or over ten
+  times the weight (`$repweights` multipliers), and a replicate over ten
+  times the weight on a typical row (`api99` among the bootstrap
+  replicates raised the SE 21% in silence). 360 generated genuine sets:
+  0 refused, 0 warned; survey’s JK1 and bootstrap subsets of apiclus1:
+  no warning. A second column with the id’s name and other values is
+  refused (it was kept); the weight beside the replicates under its own
+  name is recognised within 1e-12.
+
+- **Reordered survey data is caught by a key per row**, computed every
+  time: rows reordered within strata or PSUs are refused now, a permuted
+  outcome (a permutation test) is not a reorder, and a million rows of
+  ten columns take 0.6 s per estimate (the per-column digests took 88
+  s). Only the columns the design uses must have unique names.
+
+- **[`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  with a whole `q`** beside the trivial zeros goes through Riemann’s
+  zeta and the finite sum (5.4e-8 relative at q = 2 near s = -30); 144
+  points against mpmath at the exact doubles agree to 3e-15.
+
+- **[`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)**
+  compares incidents too far out for the distance band to index with
+  every other one directly (one outlier at 1e300, or a band of 1e-300,
+  refused the whole test), and measures distances in band units.
+  **[`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)**:
+  a period whose hot set a tie emptied has no overlap to report (it
+  showed 0); the courts vignette says how ties work.
+
+- **Refusals in words**: a `NULL`, empty or missing column name in
+  [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md),
+  [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md),
+  [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+  and
+  [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md).
+  [`missingness_summary()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/missingness_summary.md)
+  and
+  [`duplicate_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/duplicate_rows.md)
+  take data with duplicate column names, which is the messy data they
+  exist to inspect.
+
+- **Tests**: none reaches a real host without `RMBL_LIVE_TESTS=1`
+  (`online_now()`, the LinkingTo fallback, an `invalid.invalid` lookup,
+  a route test’s status lookup); the tibble reorder test resets row
+  names as a tibble does (it passed on builds that never compared
+  values).
+
+### CI on 84840ac, and asking in other words (2026-10-14)
+
+- **`aye`, `tellme`, or just the question.** `rmbl aye "..."`,
+  `rmbl tellme "..."` and `rmbl "how do I weight a survey?"` all ask,
+  with every option `ask` takes. A first word that is no verb is asked
+  when a word holds a space or the last word ends in `?`. A lone unknown
+  word is still an unknown verb, so a typo is never sent to a model.
+- **Ctrl-C reaching the top level exits 130.** The launchers
+  (`inst/bin/rmbl`, `inst/bin/rmoriebricklayer`, and what
+  [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
+  writes) catch an interrupt that gets past the command’s own handler,
+  which exited 1 with “Execution halted” on the release legs of 84840ac.
+  A Ctrl-C in the first tenth of a second, while R itself starts and
+  before the package loads, is R’s own and still exits 1.
+- **A Ctrl-C just before a key prompt is no longer lost.** The prompt
+  looked for `sh` and `stty` with
+  [`Sys.which()`](https://rdrr.io/r/base/Sys.which.html), which runs a
+  child process. R ignores Ctrl-C while a child runs, so the interrupt
+  killed only the child. The prompt then fell back to a read that
+  ignores Ctrl-C, and the command waited. They are now found on disk,
+  with no child process.
+- **The otis-mrp bundle runs again.** `analysis.R` sources the package’s
+  argument checks (`aaa_input_guards.R`, `lib_helpers.R`) before the
+  package files it loads on its own. Those files call `.rmbl_arg()`
+  since the `match.arg` sweep, and the bundle check failed with “could
+  not find function”.
+- **Keys from earlier logins.** A key a pre-0.5.12 login saved for
+  `https://llm.rmorie.com` (the retired gateway, the same issuer and key
+  store) goes to the signed document’s data address again, instead of
+  asking to sign in anew. Any other address stays bound to itself.
+- **A spent time budget stops the help lookups.** When no time was left
+  for another turn, the error was taken for a model that cannot use
+  tools, and the question went out again without them, with a full
+  timeout. It now stops with the time-budget message.
+- **Schema check warning.** The misspelling check on structural
+  invariants compared names of two lengths and warned “longer object
+  length is not a multiple of shorter object length”.
+- **Coverage.** The coverage job runs the live transport checks, as the
+  check job does.
+- **This package names no package built on it.**
+  [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
+  and
+  [`bricklayer_explain_error()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md)
+  read this package’s help and messages by default; before, they also
+  loaded rmoriedata and rmorie when those were installed. A package
+  built on this one passes its own (`packages =`), and its command line
+  sets `RMBL_PACKAGES` (comma-separated) for the verbs it hands over, as
+  `RMBL_PROG` names the command.
+- **explain-error announces a long read by its size.** The “Reading the
+  messages …” note came only when rmorie was among the packages; it now
+  comes for any set of namespaces over 5,000 objects (rmorie has 18,709,
+  this package about 1,200).
+- **No warnings in the build or the tests.** The checked writer’s
+  message buffer holds a whole path (gcc `-Wformat-truncation`); two
+  unused Keccak helpers and an unused constant are gone (clang
+  `-Wunused`). The tests expect the warnings they provoke: the stability
+  bound, the exhausted XMSS key and the record switched off.
+
+### Re-test of 46de6a9 (2026-10-14)
+
+- **Survey replicates: an explicit contract, nothing guessed.** The
+  totals and constancy checks added in 46de6a9 refused 13.5% of 1,320
+  genuine sets (a dominant PSU; a jackknife replicate constant on a
+  subset) while a data column still rode along with replicates taken
+  from the analysis file. Every value heuristic is gone. The replicates
+  are exactly the columns you give, by name or as the object passed: a
+  column of `data` passed under its own name is a replicate because it
+  was asked for. What is refused is exact: the full-sample weight itself
+  (for a jackknife, BRR or Fay design; a bootstrap replicate that draws
+  every PSU once is the weight, legitimately), the id’s values, the row
+  numbers, a column of `data` passed under another name, and a name
+  collision with the weight or the id whose values differ. A genuine
+  replicate that shares the id’s name is kept. A reordered tibble with a
+  vector weight is caught: the design keeps a digest of every column as
+  given and sorted, and the same values in another order are a reorder
+  whatever the row names say; a column changed afterwards is not.
+- **The prompt goes once.** A model call is never retried: a POST that
+  timed out may have been read by the provider. A conversation with
+  help-page lookups that runs out of its time budget says so instead of
+  shrinking the last call to five seconds; past the cap of 12 tool calls
+  in a turn the rest are dropped from the turn and the model told,
+  rather than 3,000 “not run” rows being sent back. `rmbl models` and
+  any GET take Ctrl-C; so does a gzip decompression.
+- **The answer cache** makes a stored answer printable on the way out
+  (an answer cached by an earlier build carried a clipboard write),
+  writes through a fresh temporary name, treats a file that is not a
+  record as a miss, and takes `MORIE_LLM_CACHE` as `off`, `0`, `false`,
+  `no`, `none` or `disabled` (spaces aside), and the option as those
+  words too. A script run at a terminal with stdin and stdout on it is a
+  person watching; `</dev/null`, a pipe or a redirect is not. Model
+  names from a server and `config` values print clean. The saved
+  settings directory is created 0700 whatever the umask.
+- **Wayback.** The daily-limit default message is what
+  [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+  looks for, so a URL captured already today is left for tomorrow; the
+  per-run resubmission cap counts only resubmissions since the last
+  capture that got through, so a slow archive finishes.
+- **Tests** run in a fresh, empty config directory with the developer’s
+  saved keys, hosted key and `MORIE_DATA_URL` unset; every test that
+  reaches the live internet needs `RMBL_LIVE_TESTS=1`.
+- Pre-0.5.12 logins stored the address of the retired model tier; such a
+  key is withheld with a message, so those users log in once more.
+- **The curated tables load in a fraction of the time.** A
+  gzip-compressed CSV is decompressed by the checked reader, split into
+  columns in C and typed as
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) types it
+  (plain integers, decimals and `TRUE`/`FALSE`/`T`/`F` decided from the
+  bytes, everything else by
+  [`type.convert()`](https://rdrr.io/r/utils/type.convert.html)): the
+  same table, byte for byte of meaning, in a fifth of the time (a
+  million-row table: 1.3 s where
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html) took 6.6 s). A
+  record with more fields than the header and a quote that never closes
+  are refused in words.
+- **Hot spots made by a tie are not hot spots.** When the cells tied
+  with the k-th busiest would make more than twice k cells hot, the tied
+  group is left out (`tied_out` says how many, and printing says so);
+  `cell = 0.1` on even counts no longer calls 100 of 100 cells hot.
+- **Refusals in words, every time.** A choice argument given a wrong
+  value says what it must be and what it got
+  ([`match.arg()`](https://rdrr.io/r/base/match.arg.html)’s “‘arg’
+  should be one of” named neither); a data frame with an empty or
+  repeated column name is refused before anything is looked up;
+  `drift_psi(bins = )` takes one whole number up to a million;
+  `clearance_decomposition(base = )` takes one of the two values of
+  `compare` and keeps its type; an estimate without a standard error
+  plots without a warning.
+- **[`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  beside the trivial zeros** takes the distance to the nearest integer
+  exactly before [`sinpi()`](https://rdrr.io/r/base/Trig.html) (R’s
+  `sinpi(x)` beside `x = -1` is `sin(pi * x)`, which loses the digits of
+  a value of order that distance: up to 8.9% at -2 +/- 1e-15, on glibc
+  as on other libms); the test compares against mpmath at the exact
+  doubles. A whole `q` of 2 or more beside the trivial zeros goes
+  through Riemann’s zeta and the finite sum (5.4e-8 relative at q = 2
+  near s = -30 before).
+  **[`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)**
+  keeps every incident on a map that runs past 180 degrees (the points
+  are in the grid’s frame).
+  [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+  says when it drops an incident without a location or period. A planar
+  cell index past 2^53 is refused rather than merged with its
+  neighbours. A burden at rate 0 or population 0 draws. The age-specific
+  rate message in
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+  and its siblings no longer says such a rate cannot exist.
+
+### Review of 29a55d8 (the stress round of 2026-10-14)
+
+- **Ctrl-C while a model thinks is a Ctrl-C (G1).** The wait consumed
+  the interrupt and the POST came back as a dropped connection, which
+  was retried: the prompt went to the provider twice and the answer
+  printed. The interrupted POST now raises the interrupt (exit 130 from
+  `rmbl ask`, one request at the provider), and nothing is retried after
+  one.
+- **A stored key stays bound to its address (G2, G3).** With the model
+  tier off the comparison had no address to compare against, so a key
+  saved for another server went to the data service, and a new login
+  recorded no address. The address is now the data service’s when the
+  document names no model tier; `login --token` checks the key at the
+  signed document’s address only, never at `MORIE_DATA_URL`.
+- **The answer cache is for a person at a terminal (G4).** It wrote from
+  `rmbl ask` in a script or a pipeline (the command line always turns
+  the progress option on); now it needs the terminal on stdin and
+  stdout, or an interactive session. The question keeps its case (`df$X`
+  is not `df$x`), the stored question is checked on a hit, and the first
+  save in a session says where the answers go.
+- **Wayback status-reply throttles stop (G5).** A throttle in the status
+  reply requeued the URL and the next job id reset the strike count: one
+  URL made 174 POSTs. Strikes now reset only when a capture gets
+  through, the eighth stops the run, a run resubmits at most as many
+  times as it has URLs, the target page’s own 503 and bandwidth errors
+  fail that URL rather than count as account throttles, and a job id
+  that reads like an error code is refused.
+- **The XMSS lock is released whatever happens (G6).** The lock is taken
+  and the locked call run in one C frame whose cleanup is the release
+  (`R_ExecWithCleanup`): an
+  [`on.exit()`](https://rdrr.io/r/base/on.exit.html) handler is R code
+  an interrupt can cut short before its `.Call`, and 73 to 95 locks per
+  5,000 interrupts stayed held; 5,000 interrupts now leave none. A
+  record whose name starts with another’s keeps its temporary files.
+- **Survey replicates (F1, F2, E9 residual).** Replicate columns taken
+  out of the analysis file itself (`replicates = d[paste0("bw", 1:24)]`)
+  are accepted again; a genuine replicate under the weight’s name is
+  refused, not dropped; a replicate that sums to less than a fifth or
+  more than five times the full weights (a row number, an id, survey’s
+  multiplier matrix) or is the same for every row (a constant) is
+  refused. `survey_compare(ref = 2023)` takes the number as the label.
+- **[`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  near the antimeridian (F4)** draws: grid nodes past 180 degrees keep
+  their continued values when wrapping would put them out of order.
+  [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  past the double range is a signed infinity, not NaN. (This entry first
+  called F5 a reference artefact; it was a real loss of digits, fixed in
+  the re-test above.)
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  drops an incident without a location or time and says so, as its
+  siblings do;
+  [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+  says when it drops (0, 0); `max_pairs = TRUE` is refused; the planar
+  cell key writes whole numbers in full.
+- **Model and provider text is made printable (L1)**: answers, model
+  lists, the spinner’s model name and error bodies lose screen-clearing,
+  title and clipboard escapes. **Tool calls keep the text-only contract
+  (L2)**: a nameless call is answered in words, the dataset filter is
+  plain text, at most 12 calls are run per turn, an empty reply is
+  “returned no text”, never `""`. **A key with a line break is refused
+  (L3)** in R and in C, so it never becomes a second request header.
+  **The settings file is written through a fresh temporary name (L5)**.
+  A conversation with help-page lookups gets three times one call’s
+  timeout (L6). The progress frame takes a NaN time. An assumption with
+  `ok = NA` prints as NA. The age-specific rate message no longer says
+  such a rate cannot exist. The live transport tests need
+  `RMBL_LIVE_TESTS=1` exactly, and the model tests clear a developer’s
+  own endpoint and keys (L4).
+
+### Review of e57fed5 (the stress round of 2026-10-13)
+
+- **The spinner frame stays in its table (E1).**
+  `rmbl_progress_spinner()`, a public C-callable, cast `t * 10` to an
+  integer, which overflowed past about 9e17 (nanoseconds) and read
+  another table’s string; the frame is now taken in double, so every
+  time maps to a frame. A bar wider than an `int` is clamped before the
+  cast (E13).
+- **The gzip reader’s memory is bounded by its output (E8).** It
+  inflates twice: once into a 64 kB scratch buffer to check everything
+  and count the output (a bomb is refused having held 64 kB), then
+  straight into the result, allocated once at its size; one zlib state
+  serves every member, and more than 100,000 members are refused. A
+  million empty members (20 MB) had taken 3.56 GB, a 4 MB bomb 3.19 GB;
+  both are now refused within a few megabytes. Each kind of damage is
+  named (a bad CRC, a length trailer that does not match, a damaged
+  header, no gzip magic), not all as a CRC failure. A 600 MB file under
+  a 3.5 GB memory limit is read; under a smaller one the report says the
+  memory ran out, as an error report.
+- **Bulk archiving keeps to archive.org’s limits (E7).** Captures start
+  no faster than `per_minute` (default 6; the SPN2 documentation allows
+  an account 7). A slow-down reply, as a 429 or inside an HTTP 200
+  (`error:user-session-limit` and the other throttle codes the SPN2
+  documentation lists), holds every submission back for its
+  `Retry-After` or 15 s doubling to 10 minutes, and sends the URL again;
+  eight in a row stop the run. The account’s daily cap stops submitting.
+  Status checks that fail back off the same way. `max_captures`
+  (default 1000) caps a run; the rest are left for the next. Before, 300
+  URLs went out in 32 s.
+- **No test captures a page on archive.org (E6).** The live test runs
+  only with `RMBL_LIVE_TESTS=1`, and never posts to `/save`.
+- **Wayback reply handling.** A job id that is not a short token (`TRUE`
+  looped for ever, `123` stopped the run) is a failure; two URLs given
+  one id each keep their entry; a timestamp that is not one is recorded
+  as missing, and a results file holding one reads back; a reply over 64
+  kB is not parsed. An API call takes its answer only from the host it
+  asked: after a redirect to another host, that host’s JSON had been
+  recorded as archive.org’s; the transport now refuses such a redirect
+  for API calls (Save Page Now, model endpoints, OCSP), and reports
+  `Retry-After`. An http page is looked up (it is a parameter of the
+  lookup, never fetched); a key file other users can read is warned
+  about; a URL with a control or bidirectional character is refused, and
+  printed results show only what the URLs show. A run that is stopped
+  records the captures it had started, and the next run polls them
+  instead of sending them again; a missing folder for the results file
+  is refused before anything is sent.
+  [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+  looks failures up one a second and leaves a daily limit hit today for
+  tomorrow.
+- **Survey replicate columns are only replicates (E9).** A column
+  holding the full-sample weight, the id or any other column of `data`
+  is refused by name (the full weight given as a vector and the id had
+  been averaged in: a standard error of 0.2599 or 0.2704 where it is
+  0.2836), BRR and Fay replicates must come in a Hadamard order, and a
+  matrix with a class of its own is read as the matrix. The full weight
+  named in `weights` and shipped beside the replicates is dropped by
+  name, as before.
+- **Wilson at 0% and 100% (E2).** The interval is Wilson’s at the
+  respondents (the design effect is 0/0 there): 40 of 40 gives \[0.912,
+  1\], where it collapsed to \[1, 1\]. The logit interval takes the same
+  at the ends. The degrees-of-freedom factor of the modified effective
+  sample size is `(t_(n-1) / t_df)^2`, as the SAS documentation gives it
+  (it was `(z / t_df)^2`; the same for a large n).
+- **Survey design.** New `type = "jkn"` with `rscales` (JKn weights
+  passed as JK1 overstated the standard error by 37%); the replicate
+  design’s degrees of freedom are the rank of the replicate weight
+  matrix less one, as the survey package computes them (twelve BRR
+  half-samples of an eight-stratum design have 8, not 11), or `degf`.
+  [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+  checks the data is the design’s rows in the design’s order (reordered
+  data gave a wrong answer silently). A design with no stratum of two
+  PSUs has no variance to report: the standard error is missing and
+  flagged, not zero; a certainty stratum is not a lonely PSU; the flag
+  for a domain whose weights are all zero says so. `by = character(0)`,
+  `conf_level = NA` and a two-element `ref` are refused in words.
+- **(0, 0) is “no location” in Knox too (E3).**
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  drops it, as
+  [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  and
+  [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+  do (twenty such rows had made the closest cell 163 observed against 33
+  expected). The three share one way onto the plane: points across the
+  antimeridian are one place, and an extent past 2,000 km is said.
+  [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  refuses a bandwidth longer than half the earth’s circumference and
+  says when one is ten times the incidents’ spread;
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  checks `max_pairs`; hot spots made by ties are counted (`tied_in`) and
+  said when they are most of the active cells.
+- **One rate band for every pollution entry point (E4).**
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
+  [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)
+  and
+  [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+  take a rate per person-year between 1e-5 and 0.1 (1 to 10,000 per
+  100,000), `rare_outcome = TRUE` below and `high_rate = TRUE` above, as
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  now does on its rate per 100,000 (0.5 had been taken as a rate per
+  person-year: 14,634 deaths from a million people).
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  passes the switches on to its stages.
+  [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  refuses a list that only looks like a report.
+- **The bundled TPS data, one row per occurrence (E5).** Rebuilt from
+  the Service’s Break and Enter file by
+  `data-raw/tps_break_enter_d14_2024.R`: 508 occurrences (the Service
+  publishes one row per offence record; five occurrences have two, kept
+  as `offence_records`), every one located. The old file’s all-NA row
+  was a subsetting artefact (an NA year in a logical index), and it
+  carried one 2025 occurrence and missed one of 2024. The vignette’s
+  Knox ratio is computed from the data. The lone 2026 court row is gone.
+  Sources and licences: `inst/COPYRIGHTS`, and the DESCRIPTION’s
+  `Copyright` field.
+- **The manifest (E10).** An empty dataset list does not replace a
+  cached manifest that lists tables, and a table the manifest does not
+  list is not loaded unverified.
+- **The XMSS record (E11, E12).** Temporary files carry their record’s
+  name, and a writer removes only its own record’s (with three records
+  in one folder, 117 of 900 writes had failed); the lock is taken with
+  interrupts held off and released by a handler registered before it. A
+  record of 100,000 keys is read without the regular-expression passes:
+  a whole signature took 0.5 s on an x86-64 laptop (the documentation
+  said 0.7 s; the reviewer measured 1.4-1.8 s).
+- **The 02a38be leftovers.**
+  [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  uses the functional equation for Riemann’s zeta at negative s (full
+  relative accuracy beside the trivial zeros) and no longer overflows a
+  Bernoulli polynomial whose value is finite (`hurwitz_zeta(-4, 5e61)`).
+  The terminal prompt is printed by the shell that reads it, once its
+  trap is set and the echo is off, and a read that never finished is an
+  interrupt (a Ctrl-C in the first milliseconds had exited 2; a key
+  typed at once was echoed).
+  [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
+  and `rmbl models` say a key is stored for another address instead of
+  “not logged in”. An empty schema is said to check nothing (and refused
+  by
+  [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md));
+  only a one-letter slip or a swap in a structural invariant’s name is
+  taken for a misspelling (`min_data_cols` is a field of its own).
+  Printing keeps the zero-width joiner and non-joiner, variation
+  selectors and flag tag sequences. `drift_calibrate(n = 0)` is refused.
+  The README counts the 8 entry points written in plain C. The exposure
+  CSV reader no longer runs two regular expressions over the whole text
+  to see whether it is blank.
+
+### Retrying a bulk Wayback run
+
+- **New:
+  [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+  and `rmbl wayback --retry FILE.jsonl`.** Reads the results file of an
+  earlier
+  [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+  run and retries every URL whose latest result is a failure: each is
+  first looked up in the Wayback Machine and recorded as `existing` when
+  a capture is already there (the daily limit’s refusals, pages captured
+  by another run), the rest are captured again into the same file, and
+  pages their source no longer has (HTTP 404 or 410) are left alone
+  unless `include_gone = TRUE` (`--include-gone`). Returns the whole run
+  as it now stands, with the retry’s counts.
+
+### Timing tests
+
+- **dudect: both classes are written the same way.** The 150-tick ML-KEM
+  compare-and-select was flagged intermittently on GitHub’s x86 runners
+  (\|t\| up to 30). Its compiled code is branch-free with a fixed memory
+  access pattern; the difference came from the harness, which copied the
+  fixed class into place and generated the random class in place,
+  leaving the slots in different cache states. Random inputs now go
+  through the same copy, and a new target,
+  `mlkem768_fo_select_validity`, compares a pool ciphertext against
+  itself and against another, both made by the same code, so only the
+  match bit differs. Every target shows no evidence of leakage locally
+  (x86-64, max \|t\| 2.8) and the positive control is still flagged.
+
+### Hot spots over time, and rates over time
+
+- **New:
+  [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md).**
+  Incidents counted in grid cells per period: the share of places
+  holding half the incidents (the law of crime concentration), the hot
+  cells (the busiest `top` share, ties included) and their share of
+  incidents, the Jaccard overlap of each period’s hot spots with the
+  previous period’s, and per cell how many periods it was hot. Plot: the
+  concentration and persistence over time and a map of the cells by how
+  often they were hot.
+- **[`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a rate
+  takes `period =`.** A rate by group and period draws one panel per
+  group, the rate as a line over its interval band on a shared scale.
+
+### Complex survey estimation
+
+- **New:
+  [`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md),
+  [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md),
+  [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md).**
+  Design-based means, totals, proportions and ratios, overall and by
+  domain, with variances from replicate weights (Statistics Canada’s
+  bootstrap, mean bootstrap, jackknife, BRR, Fay’s BRR) or from Taylor
+  linearization over strata and PSUs with a finite population correction
+  and a choice for single-PSU strata. Domain estimates keep the whole
+  design. Replicate totals are computed in C straight from the data
+  frame’s columns (CSUS 2023: 36,180 respondents by 1,000 mean bootstrap
+  weights in about 1.6 s). Proportions default to the modified Wilson
+  interval of SAS PROC SURVEYFREQ that Health Canada’s published CSUS
+  intervals use. Estimates, standard errors and intervals match the
+  survey package to machine precision for linearized, JK1, bootstrap and
+  Fay designs, domain estimates and contrasts; CSUS 2023 lifetime
+  cannabis use reproduces Health Infobase’s published percentages from
+  the public-use file. Domains under 30 respondents are flagged (Health
+  Canada’s suppression rule), not withheld. Plots for both.
+
+### A new look for every plot
+
+- **One theme across all 33 plot methods.** The plot region is a tinted
+  panel crossed by white major and minor grid lines
+  (`bricklayer_plot_options(panel = )`, `NA` for none), with no box and
+  softer axes. Intervals are translucent bands with haloed points; lines
+  carry a soft fill to the axis and a labelled, emphasised last value;
+  bars sit on the panel with a sheen along the leading edge and their
+  value at the end; the sequential palette runs deeper for fields and
+  heatmaps. Drift calibration draws each column’s false-alarm rate with
+  its exact interval over the splits (an all-zero result drew an empty
+  frame). Axis titles, row notes and panel keys shrink and wrap to fit;
+  labels that fit are not cut.
+- **Every plot is in the examples.** `?plot-methods` draws every class,
+  the courts and crime plots on the shipped data included, and
+  [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md)
+  gains a courts and crime section.
+
+### Small bases compute
+
+- **[`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
+  and
+  [`rate_change()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rate_change.md)
+  report every percent change.** A small base no longer withholds the
+  percent: 2 to 20 reports +900% with its exact rate-ratio interval, and
+  a change of a few tenths of a percent off a base of 15 is reported as
+  such. `min_base` now defaults to 0 for every unit and, when set, only
+  adds a “small base” note; `min_count` likewise notes without hiding.
+  Only a zero base has no percent change. Printed, CSV, Markdown and
+  HTML footers say “note” where they said “percent withheld”, and the
+  period-over-period plot draws small-base percentages.
+- **[`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)
+  no longer reads 0 g for fast work.** A call shorter than the elapsed
+  clock’s resolution had 0 s of wall time and so 0 energy; the duration
+  is now at least the CPU time spread over the cores.
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
+  footprint shows CPU, memory and total in one unit chosen to fit (kg to
+  micrograms), and says “Too short to measure” when even CPU time is 0.
+
+### Archiving in bulk, and animated progress
+
+- **New:
+  [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+  and `rmbl wayback FILE`.** Save many URLs in the Wayback Machine with
+  archive.org’s Save Page Now 2 API and your account’s S3-like keys
+  (`IA_S3_ACCESS_KEY` and `IA_S3_SECRET_KEY`, or `..._FILE` naming files
+  that hold them). Several captures run in flight at once through the
+  package’s own checked libcurl transport; a page captured recently is
+  kept (`within`), a page captured already today is recorded with that
+  capture, rate limits and server errors back off and retry, a refused
+  key stops the run, and each result is written to a JSON Lines file as
+  it lands so an interrupted run carries on where it stopped. Run live
+  with real keys on the ledger’s sources before release.
+- **Animated progress, drawn in C.** `src/rmbl_progress.c` renders the
+  bar (a shimmer along the filled part, a head that fills in eighths and
+  pulses while work goes on, a spinner) in 24-bit colour or plain, block
+  characters or ASCII; the R side eases it to each new value at up to 12
+  frames a second, only on a terminal a person is watching, with
+  milestone lines elsewhere and `NO_COLOR` honoured.
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
+  and
+  [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+  use it, and `rmbl_progress_bar()` / `rmbl_progress_spinner()` are C
+  callables for the MORIE packages that link to this one.
+
+### Courts and police-reported crime
+
+- **New:
+  [`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md),
+  [`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md),
+  [`disposition_mix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md),
+  [`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md),
+  [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  and
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)**,
+  each with print and plot methods. The clearance rate with exact
+  intervals and months to clear the inventory; the actuarial life table
+  for banded times (equal to Kaplan-Meier at the band edges without
+  censoring, checked against
+  [`survival::survfit()`](https://rdrr.io/pkg/survival/man/survfit.html));
+  outcome shares with Goodman’s simultaneous intervals and
+  Cochran-Armitage trends; Kitagawa’s decomposition of a change in a
+  clearance rate into rate and case-mix effects with a Mantel-Haenszel
+  rate ratio and a Simpson’s-paradox verdict (on the Court’s own
+  figures, 2014 to 2022: the aggregate fell while the rate at a fixed
+  mix rose); binned Gaussian kernel density with highest-density regions
+  (checked against
+  [`MASS::kde2d()`](https://rdrr.io/pkg/MASS/man/kde2d.html)); and the
+  Knox test with exact expected counts (checked against a full
+  enumeration of permutations).
+- **Real data in `inst/extdata`** (`?justice-data`): Ontario Court of
+  Justice monthly flow and time to disposition (2024-2026), outcomes,
+  offence groups and courts by calendar year 2012-2025, each reconciled
+  to the published provincial totals; Toronto Police Service break and
+  enter occurrences in division D14, 2024. Vignette `courts-and-crime`.
+- **Plots fit the device.** Multi-panel plots choose rows and columns
+  from the device (one row squeezed four panels into a 3.5-inch device);
+  y-axis titles sit outside the tick labels actually drawn (a five-digit
+  tick label overprinted the title at line 3) or are left off when there
+  is no room; the key under lettered panels is measured at the size it
+  is drawn ([`strwidth()`](https://rdrr.io/r/graphics/strwidth.html)
+  scales by `par("cex")`, which a panel grid lowers, and
+  [`mtext()`](https://rdrr.io/r/graphics/mtext.html) does not, so the
+  key ran off the device); the plume and particle titles fit their
+  panel.
+- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+  checks for a data frame before the schema.
+
+### Review of 02a38be (the sixth pass)
+
+- **[`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  is accurate below s = 1.** The Euler-Maclaurin shift added in the
+  fifth pass summed \|s\| + 20 terms and cancelled them against a small
+  result: every digit was lost below s = -5 (zeta(-11) came back as 5.4,
+  zeta(-15) as -2.3e7, where 52a8883 had returned NA), and near s = -5
+  only six digits were right. Now s \<= -5 uses Hurwitz’s Fourier
+  formula on (0, 1\] (exact zeros at the even negative integers,
+  zeta(-200, 2) = -1 exactly), -5 \< s \< 1 Hermite’s integral on \[1,
+  2), the integer s in (-5, 0\] the Bernoulli polynomial, and any other
+  q is shifted into range by sums that do not cancel. Checked against
+  mpmath at 40-60 digits over 112 points: the largest relative error is
+  1.9e-13. A tiny q keeps its own term (`hurwitz_zeta(0.5, 1e-20)` was
+  `Inf`). The fifth pass’s test compared against a reference that was
+  wrong in the fifth digit with an absolute tolerance that accepted 0;
+  it is relative now.
+- **A truncated or damaged compressed exposure file is refused.** R’s
+  [`gzfile()`](https://rdrr.io/r/base/connections.html) returns what a
+  cut gzip or bzip2 file decodes to, with no error and no warning, so
+  half a file was read as a whole one (status ok). gzip is now inflated
+  in C with zlib, every member’s CRC-32 and length checked (several
+  members, as `gzip -c a b` and
+  [`data.table::fwrite()`](https://rdrr.io/pkg/data.table/man/fwrite.html)
+  write, are read whole); a bzip2 file must end with its end-of-stream
+  marker; an xz decoder warning is an error. The decompressed size is
+  capped while it is read (`options(rmoriebricklayer.max_csv_bytes)`, 1
+  GiB): a few megabytes of gzip no longer grow to gigabytes before
+  anything is refused. zlib is now a system requirement (it ships with
+  R’s own build dependencies).
+- **A baseline rate below one per 100,000 needs `rare_outcome = TRUE`,
+  whatever its unit.** The check ran only when `baseline_rate_per` was
+  missing, so a wrapper or
+  [`do.call()`](https://rdrr.io/r/base/do.call.html) that always passes
+  it turned 0.008 per person-year into 0.008 per 100,000 and a burden
+  100,000 times too small, with status ok. The check is on the converted
+  rate now, and below 1e-6 per 100,000 no rate is accepted
+  (`baseline_rate_per = 1e300` was).
+- **A NAPS `value` column with `"<2"` is refused, as an `exposure`
+  column is.** The value was converted before the text check and counted
+  as a row with no measurement (prevalence 1.0 instead of 0.4).
+- **`--force` belongs to `config reset` alone.**
+  `config set own.key --force` stored “–force” as the key.
+  `config show`, `help`, `get` and `unset` refuse extra arguments, and
+  arguments after a bare `--` are refused by every verb but `ask` and
+  `bundle` (`functions -- a b` listed everything).
+- **A FIFO, device or directory at the legacy record path is refused at
+  once.** The migration read it with
+  [`file.exists()`](https://rdrr.io/r/base/files.html) only, so a FIFO
+  blocked signing for good while the lock was held.
+- **Parallel manifest refreshes no longer collide**: each writes its own
+  temporary file (one shared name let them delete each other’s, 11 of 12
+  workers failed). A reply that is not a manifest
+  ([`{}`](https://rdrr.io/r/base/Paren.html), an error object, a
+  `datasets` that is not a list of tables) is refused and the cached
+  copy kept.
+- **A cached table is deleted only when it fails a known digest.**
+  Offline, a stale manifest that lists the table without a digest now
+  loads it, as the live manifest does; with no manifest at all the
+  cached table is refused but kept for the next run, where it is checked
+  again before use (it was deleted, and had to be downloaded again).
+- **Ctrl-C at a prompt exits 130 where `/bin/sh` is dash** (Debian,
+  Ubuntu). The shell’s trap ran, but
+  [`system2()`](https://rdrr.io/r/base/system2.html) reported no exit
+  status for it, so the interrupt came back as an empty line and a usage
+  error (exit 2, or 1 at the e-mail code prompt). The trap now also
+  prints a marker R recognises. The fifth pass’s test mocked
+  [`system2()`](https://rdrr.io/r/base/system2.html); this one runs the
+  launcher in a real terminal (util-linux `script`), under dash and
+  bash.
+- The CSV reader: a UTF-32 file with a byte-order mark is read (its
+  decoding error quoted a kilobyte of the file); a row with more or
+  fewer fields than the header is refused by line number (it wrapped
+  into an extra row); a column name given twice is refused (the second
+  column was ignored); a numeric exposure column is no longer turned
+  back into text to be searched (15 of the 24 s on a 102 MB file).
+- A `next_index` past 2^31 - 1 is the damaged-key error, not a raw `NA`
+  comparison error.
+- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+  needs something to validate against: `NULL`, an empty list or a
+  provenance without `schema` (a typo such as `scheme`) is an error, not
+  `TRUE`. A schema field a few letters from a known one
+  (`expected_colums`, `min_data_row`) is fatal with a “did you mean”;
+  other unknown fields are said. `expected_dtypes`, the name the
+  provenance files use, is checked as `expected_types` (the OTIS file’s
+  column types never were), and a factor matches a character column.
+- A hosted key saved for another address is said once per session, and
+  `ask` with no route says the key is stored for the other address
+  instead of “no key stored”.
+- `data list` removes every default-ignorable code point (soft hyphen,
+  U+034F, Hangul fillers, U+180E, the byte-order mark, the interlinear
+  annotation marks, tag characters), not only the bidirectional and
+  zero-width ones.
+- The credentials file is read as bytes: a NUL byte, a file that is not
+  UTF-8 and a file over 1 MB are refused with a plain reason (a NUL
+  silently cut the file, a 10 MB file took minutes).
+- A temporary record file left by a writer that died mid-write is
+  removed at the next write.
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  refuses a non-numeric scalar such as `as.raw(25)`; the dispersion
+  solvers refuse `n_steps` past 2^31 - 1 even with `max_work = Inf`, and
+  a particle grid larger than `max_work` cells;
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of what is
+  not a pollution report says so.
+- Plots fit small devices: the margins are scaled to the figure at the
+  text size in use and the labels are cut by their measured width
+  (`cex = 2` on a 2-3 inch device failed, and a 4-inch plot cut labels
+  it had room for); the bar for missing values never takes a real
+  level’s name.
+- The record documentation gives the measured cost: about 0.7 s per
+  signature at 100,000 keys.
+- The lock wait is interruptible (one non-blocking attempt at a time,
+  the wait in R); releasing descriptor 0, 1 or 2 is refused; the record
+  writer checks the written size and flushes the directory after the
+  rename (the fifth pass’s NEWS said “size-checked” before it was); a
+  lock file owned by another user is named as such, not as a read-only
+  directory. The barrier generator registers the five entry points
+  written in plain C directly (they throw no C++ exception) instead of
+  stopping, and the README counts both kinds.
+- Tests: a test compared a mean with its own formula and now checks two
+  independent predictions.
+
+### Review of 52a8883 (the fifth pass over the branch)
+
+- **A tampered cached table no longer loads when the manifest cannot be
+  fetched at all.** The fourth pass covered only the retry: when the
+  cached manifest was over a day old (or absent) and the server was
+  down, the first manifest read failed, that failure counted as “no
+  digest”, and the tampered file loaded and stayed. Now a manifest that
+  cannot be had is never “no digest”: the check falls back on the last
+  manifest on disk, however old, and with no copy at all the table
+  cannot be verified and is not kept. A refreshed manifest is written
+  beside the cached one and moved over it only once it parses, so a
+  failed refresh no longer destroys the copy the fallback needs. The
+  fourth pass’s NEWS item below overstated what it covered.
+- **The XMSS used-index record is locked by the operating system.** The
+  lock directory of the fourth pass was taken over after 60 s by
+  check-then-delete, which let two signers hold it at once and sign one
+  index (reproduced 1 time in 60), and spun for ever on a lock it could
+  not delete. The record is now locked with `flock()` (Unix) or
+  `LockFileEx()` (Windows) on `xmss_used_indices.txt.flock`, in C: the
+  kernel releases the lock when the process ends, so a crashed session
+  leaves nothing to take over, and the 10 s wait is bounded and draws no
+  random numbers (lock contention no longer moves
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) streams). A
+  read-only directory is said as such.
+- **The record is written in C and checked.** It is written to a
+  temporary file, flushed to the disk with `fsync()`, size-checked and
+  only then renamed over the old one; a full disk stops the signature
+  and leaves the old record in place (it emptied the record before).
+- **A key’s record id is a fingerprint of its secret seed**, not the
+  `root` field it carries: a stale copy whose `root` was upper-cased,
+  padded or swapped is still the same key, and a signature whose `root`
+  does not match the seeds is withheld (its index stays retired).
+- **A key built from given seeds is not registered at birth**: it may
+  have signed elsewhere, so it signs from index 0 only after
+  [`xmss_register_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  vouches for it.
+- **The record of the releases before 0.5.12 is migrated**:
+  `xmss_index.json` next to the record is read and merged, and kept as
+  `xmss_index.json.migrated` once the new record is written; an
+  unreadable one stops signing. Lines of the 0.5.12 pre-release format
+  are read as well.
+- **The record path must be an absolute path to a regular file** (or to
+  one that does not exist yet): `/dev/null`, a directory, `"none"`,
+  `"-"` and relative paths are refused.
+- [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  without `message` accepts a signature index only up to the highest
+  index the record shows this key has used here, so an edited index
+  cannot burn the leaves in between; a bundle is accepted as documented;
+  a damaged `next_index` is a clear error.
+  `xmss_forget_used_indices(key)` takes the signing key (the record is
+  keyed by its seed). The help says what to do in CI or a container with
+  a fresh home directory.
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  reads gzip, bzip2 and xz CSVs again (the byte reader of the fourth
+  pass refused them as “NUL bytes”), decodes UTF-16 without a byte-order
+  mark, and stops on a parse problem such as an unbalanced quote instead
+  of returning the rows before it (status ok with mean 12.2 instead of
+  36). The decoded text is parsed from a file, not a text connection, so
+  a large file is no longer several times slower, and it is held once
+  rather than with a file-sized logical vector beside it.
+- A baseline rate below one per 100,000 is accepted when its unit is
+  given (`baseline_rate_per = 1e5` for a rare outcome, `1` for a rate
+  per person-year); the note now says which to pass. Exposure cells that
+  are text rather than numbers (`"<2"`) stop the run and are named,
+  since dropping them biased the mean and the prevalence; empty and
+  missing cells are dropped and the report prints how many.
+  `exposure_csv` with `demo = TRUE`, a population above ten billion and
+  an empty income column are handled with a reason.
+- `credentials.json` is validated with the real parser before it is
+  edited, and the edited text is parsed again before it is written: bare
+  words, missing or trailing commas, trailing garbage and duplicate keys
+  are refused instead of written into (every later read failed).
+- `rmbl config setup` reads the MORIE key and your own API key without
+  echo, and the echo is switched off and on by the shell child itself,
+  so Ctrl-C cannot leave the terminal silent; Ctrl-C at any prompt
+  exits 130. A key given on the command line (`login --token KEY`) is
+  warned about. `data list`, `data pull`, `functions`, `config path` and
+  `config setup` refuse extra arguments. `config reset` moves a readable
+  file only with `--force`, never overwrites an earlier backup, and is
+  listed in the help.
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  sums a negative `q` in closed form: no cap, no billion-term sum, and
+  none of the cancellation that returned 0 for `s = 5` at
+  `q = -99999.5`; below `s = 1` it returns the analytic continuation
+  (`hurwitz_zeta(0.5, 0.5)` is -0.6049).
+- [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  has the `max_work` cap of
+  [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  (particles x steps);
+  [`gaussian_plume()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  and
+  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  take at most 1,000 lid image pairs; a step count above 2^31 no longer
+  fails in the report title.
+- Bar labels cut to fit stay distinct (a number tells apart levels the
+  cut made identical), a real level named `(missing)` keeps its name,
+  and labels are cut to the device’s width.
+- [`print()`](https://rdrr.io/r/base/print.html) of an attestation or
+  bundle written by 0.5.9 to 7703a04 warns that it carries the signer’s
+  private key.
+  [`fips_verify_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
+  returns `FALSE` for an edited verifier key instead of an error, and a
+  scheme given as two names is refused.
+  `hill_tail_index(x_min = factor(...))`,
+  `cramers_v(bias_correct = "abc")`, `cramers_v(min_expected = NA)`,
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  with a bad `levels` or `target` and
+  [`pollution_report_text()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  of a non-report are refused with a reason.
+
+### Review of fcdce03 (the fourth pass over the branch)
+
+- **A tampered cached table loaded when the manifest could not be
+  re-read.** The digest retry of the second pass re-fetched the manifest
+  on a mismatch and, when that fetch failed, had no digest left to
+  compare and accepted the file. The digest the check started with now
+  stands unless a refreshed manifest is actually fetched and lists
+  another; a failed refresh refuses the file. A manifest digest that is
+  a list, or not a digest, refuses the file and removes it from the
+  cache; a `MORIE_DATA_URL` that is not the document’s address is named
+  in the error.
+- **The XMSS used-index record is locked and fails closed.** Every
+  reservation runs under an exclusive lock directory next to the record,
+  so two processes signing with copies of one key cannot both take an
+  index (and two keys cannot wipe each other’s lines); the record is one
+  line per key (`xmss_used_indices.txt`), written through a unique
+  temporary name whose rename is checked; a malformed line stops signing
+  until the file is repaired or removed; the off switch warns on every
+  signature; a value that is not a path (`TRUE`, `"0"`) is refused.
+  [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+  registers every key in the record at birth, so a key the record does
+  not know that claims never to have signed is refused (a deleted
+  record, or a key from another machine) until
+  [`xmss_register_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  vouches for it or
+  [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  carries it forward.
+  [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  checks the index against the key’s height, verifies the signature when
+  the message is given, never advances below what the record knows,
+  accepts an attestation, bundle or recode manifest, and warns when the
+  key is exhausted;
+  [`xmss_forget_used_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  can forget one key and is documented as removing the protection.
+  Examples and vignettes point the record at a temporary file so checks
+  and builds leave the configuration directory alone.
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  reads the exposure CSV whole: UTF-16 is decoded, a UTF-8 BOM dropped,
+  a file that is not UTF-8 read as Latin-1 and said, NUL bytes refused
+  (the fifth pass found a quote that swallowed the rest of the file
+  still did, and that compressed files were refused).
+  `population = NULL` or `baseline_rate = NULL` is an error report with
+  a reason. `baseline_rate` may be zero (a measured zero); a value
+  between 0 and 1 per 100,000 fails the assumption and suggests
+  `baseline_rate_per = 1`, the new argument for a rate quoted per
+  person-year.
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  refuses `q` below -1e6 instead of allocating the recurrence’s billion
+  terms; logical `q`, `x_min`, `fractions` and non-logical
+  `discrete`/`approx` are refused.
+- [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  has one cap for every run, `max_work` (100 million cell updates, `Inf`
+  lifts it): the same physics costs the same whether the caller
+  sub-steps it or the scheme does, so a run cannot be refused in one
+  spelling and accepted in another.
+- `credentials.json` is edited as text: login and logout touch only this
+  package’s three members and every other byte (another package’s
+  floats, large integers, empty keys, non-ASCII text) stays as it was.
+- The review’s section-1 leftovers:
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`capsule_bundle_read()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_bundle.md)
+  warn about an old object that carries `key_state`; an edited verifier
+  key object is “not verified”, not an error;
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  refuses scalars beside a CSV or the demo, refuses list and complex
+  scalars, says how many non-numeric exposure rows it dropped and skips
+  the equity index when fewer than two rows have an income; bar labels
+  over 28 characters are cut so a long level cannot make the figure
+  margins too large; own-endpoint settings without an address are said
+  when the hosted tier is used instead; `OLLAMA_BASE_URL` in the
+  environment wins over a saved address; `own.key` and `own.url` in one
+  call keep the key; `rmbl config reset` moves an unreadable settings
+  file aside and `doctor` reports the file instead of failing; verbs
+  that take no arguments refuse extra ones and Ctrl-C exits 130; U+061C,
+  U+2028 and U+2029 are stripped from listings; a `schema` that is not a
+  list is a clear error; a stack within half a kelvin of the air has
+  zero rise (no cliff); Anguilla uses Antigua’s grid and Jersey and
+  Guernsey France’s; Ukraine’s 2022 row is named as such; a note line is
+  never under a tenth of an inch and one inline note no longer shrinks
+  every page of a
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md).
+- Tests: a tampered cache with a failed refresh, two processes signing
+  with one key, a malformed and a deleted record, the off switch,
+  Latin-1 and UTF-16 CSVs, the large negative `q`, the cap’s
+  consistency, and the credentials bytes.
+
+### Review of 7703a04 (the second pass over the branch)
+
+- **The XMSS signature object carried the private key too.** The
+  attestation fix of the first pass stripped `key_state` from
+  attestations only;
+  [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
+  itself still returned the advanced key, with `sk_seed` and `sk_prf`,
+  inside every XMSS signature, so every shared signature, bundle JSON
+  file, chain and report made with XMSS from 0.5.9 to 7703a04 handed out
+  the private key, and anyone holding one could attest or sign anything
+  under the victim’s root. The signature object now carries no key
+  material of any scheme, and the next key state is
+  `xmss_advance(key, signature)` (new, exported, with
+  [`xmss_forget_used_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)).
+  **Treat every XMSS key whose signature, attestation, bundle or report
+  left your machine under 0.5.9 to 7703a04 as compromised: generate a
+  new key and sign again.** A test checks that no signature,
+  attestation, bundle, JSON or serialisation of any scheme contains
+  private-key bytes.
+- XMSS index reuse across sessions: the registry of used indices now
+  persists in `xmss_index.json` under
+  `tools::R_user_dir("rmoriebricklayer", "config")` (the directory CRAN
+  policy sets aside for a package’s own configuration), so a key
+  reloaded from disk with a stale `next_index` is refused on the same
+  machine, in a fresh session too. The option
+  `rmoriebricklayer.xmss_index_file` or `RMBL_XMSS_INDEX_FILE` moves the
+  file; `""` or `FALSE` turns it off. The record does not travel with
+  the key: save the advanced key after every signature, as before.
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  with a mean but no prevalence (or the reverse) is an error report
+  (exit 2), not “ok, 0 cases”: the first pass’s zero-exposure fix had
+  made the omitted input a silent zero. Both scalar defaults are now
+  `NULL`. A per-100,000 `baseline_rate` below 0.01 fails an assumption
+  as a per-person rate typed in the wrong box; an exposure above 10,000
+  ug/m3 fails the range assumption instead of throwing; a UTF-8 BOM, a
+  negative row and a date are handled; the attributable-fraction step is
+  inside the report contract.
+- The French SIU resolver keeps a line break that ends a stripped
+  boilerplate sentence (the first pass replaced it with a space and
+  glued the next roster line, or the next section header, onto it); the
+  property test now inserts the sentence at the line end too.
+- [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  caps only runs that sub-stepping inflates: a large stable run is the
+  caller’s to wait for. The number in the message is formatted properly
+  and the advice is correct (a smaller dt lowers the sub-step count).
+  [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  refuses more than 100 million particles;
+  [`gaussian_puff()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  warns about receptors below ground or above the lid.
+- [`plot()`](https://rdrr.io/r/graphics/plot.default.html) of a
+  frequency table with a missing level draws it as “(missing)” instead
+  of failing on the margin (broken since 0.5.11).
+- HMAC
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+  answers FALSE to any edited `signature` field;
+  [`capsule_check_attestation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+  accepts a public-key object as `key_expected` (for XMSS the root and
+  seed both) and reports a missing digest instead of throwing.
+- Language models: a local Ollama selected by model or key at the
+  default address that does not answer is announced before the hosted
+  tier is used; a setting of the wrong type in `llm.json` (`route: 5`,
+  an array, `true`, `""`) is an error, not “auto”; a credentials file
+  without `hosted_base_url` (morie writes one) sends the key only to the
+  services document’s address; `MORIE_DATA_URL` receives the stored key
+  only when it is the document’s curated-data address; login and logout
+  keep another package’s entries byte for byte (the file is edited as
+  text); a saved address may not contain whitespace, a fragment or user
+  information.
+- `rmbl data list` strips the C1 controls and the bidirectional format
+  characters as bytes, in any locale; the help never shows
+  `--token KEY`.
+- [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  refuses a manifest digest that is not a digest (a `sha256:` prefix is
+  accepted), and a mismatch refreshes the manifest once before calling
+  the file bad, so a table rebuilt upstream does not fail until the
+  cached manifest expires.
+- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+  warns when the provenance list has no `schema` (a typo such as
+  `scheme` is no longer silent) and refuses an environment.
+- Territory proxies: Saint-Barthélemy and Saint-Martin use Guadeloupe’s
+  grid, Wallis and Futuna New Caledonia’s, Saipan Guam’s; Kerguelen the
+  world average. The carbon-intensity note names Ukraine (2022) among
+  the older rows.
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  handles a non-positive non-integer `q` (8.93 at `q = -0.5` for
+  `s = 2`) and refuses a pole;
+  [`top_share()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/concentration.md)
+  refuses a fraction outside \[0, 1\] (0 is a share of nothing);
+  [`hill_tail_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hill_tail_index.md)
+  refuses a vector `x_min`;
+  [`rapl_available()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rapl_available.md)
+  refuses a non-path;
+  [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+  refuses an infinite exposure. The masking-cost sentence of the
+  side-channel vignette carries the measured 17 ms against 2.4 ms.
+  [`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  and
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  refuse a logical exposure.
+- Third pass over the branch (4b4af29): `top_share(x, 0)` is zero units
+  again and `apply_schema_validation(data, NULL)` means nothing to
+  validate (two guards of the second pass overshot and turned CI red);
+  [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+  checks the shape of a signature before the type of the key, so an HMAC
+  signature whose scheme was edited to XMSS is FALSE while a real XMSS
+  signature with a string for a key is still an error; a FIPS signature
+  whose recorded `context` or `prehash` is not a string is FALSE;
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  with a missing `reference` is a report, not a crash;
+  [`briggs_plume_rise()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  at ambient temperature has zero flux and zero rise (a cooler stack is
+  refused); Ctrl-C at the `rmbl login --token` prompt interrupts at once
+  (the terminal line is read by a shell child, so the interrupt is not
+  held until Enter); the
+  [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  notes test asserts the page rule instead of comparing a value with
+  itself; the dead-stack note on the two gadget pairs says what they
+  hold. Verifying an XMSS signature or attestation that still carries
+  `key_state` warns that the key is compromised.
+
+### Review of the 0.5.12 branch
+
+- **An XMSS attestation carried the signer’s private key.**
+  [`capsule_attest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_attest.md)
+  embedded the whole signature object, and an XMSS signature carries
+  `key_state` (the advanced key, with `sk_seed` and `sk_prf`) so the
+  signer can save it. Anyone given such an attestation could attest
+  anything under the victim’s public key. The key is stripped before the
+  signature is embedded (as the recode manifest already did), and a test
+  checks no attestation carries a secret. **If you shared an XMSS
+  attestation made by 0.5.11 or earlier, treat that key as compromised:
+  generate a new one and re-attest.** HMAC and ML-DSA attestations were
+  never affected.
+- The composed TVLA kernels never ran: the harness wrote only the fifth
+  argument to the stack, so the six-argument kernels faulted before a
+  trace was taken, and the ML-DSA kernel’s conditional subtraction
+  compiled to a branch, so its trace length varied. Fixed: every stack
+  argument is written per the AAPCS, the subtraction is an
+  arithmetic-shift mask, and the kernels’ glue handles one share per
+  pass with the registers scrubbed between passes (the first measurement
+  put 174 and 34 transition-model leaks in that glue, none in a gadget).
+  The 0.5.12 note below says what the measurement now shows.
+- (Superseded by the second pass above, which keeps the line break.) The
+  French SIU boilerplate fix overshot: a stripped sentence was replaced
+  by a line break, so boilerplate in the middle of a roster line turned
+  the rest of the line into a line of its own and counted 3 officers
+  where every earlier version counted 1 (147 new divergences on a
+  6,017-input fuzz). The sentence is replaced by a space, the two 0.5.11
+  cases still count, and a property test inserts the boilerplate at
+  every position of a line and checks the count never moves.
+- `verify_pollution(exposure_mean = 0, exposure_prevalence = 1)` and
+  `(25, 0)` are valid runs with zero attributable cases again; “no data”
+  is now only a call that passed neither. Every pipeline stage runs
+  inside the status contract (a text `income` column, all-zero exposure,
+  one row and a per-100,000 `baseline_rate` are reports, not raw
+  errors); a factor argument is refused; the assumption log prints
+  `population=1,000,000`.
+- The baseline-rate check went into
+  [`pollution_burden()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md)
+  and
+  [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)
+  (800 per 100,000 taken per person-year gave 110 million deaths from a
+  million people), and the message says which function takes the
+  per-100,000 form.
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  refuses a logical or factor `beta_per_10` (TRUE gave a relative risk
+  of e). `n_bootstrap` must be whole.
+- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+  refuses a list that mixes rules with anything else, a nested rule list
+  and a data frame, instead of falling through to the provenance checker
+  and passing.
+- [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  caps the work (cells x steps x sub-steps, 10 million, about five
+  seconds) rather than the sub-step count: a 5 x 5 grid at 10,001
+  sub-steps runs in a tenth of a second and is allowed, a 201 x 201 grid
+  at 9,999 for 100 steps would take hours and is refused. The cap no
+  longer rounds 10,000 up to 10,001. A negative `source` and a logical
+  `u` are refused; a receptor below ground or above the mixing lid is
+  warned about; the open boundary is documented.
+- A configured Ollama server that does not answer is skipped with a
+  message, like one with no model pulled, so a prompt that leaves for
+  the hosted tier because a local route failed is always said.
+  `credentials.json` (shared with morie and rmorie) that does not parse
+  is an error and is never written over; `llm.json` that is not a JSON
+  object (`[]`, `"x"`, `5`) is an error too, not a warning that fired
+  once and then let a saved route be dropped. The hosted key is tied to
+  the address it was saved for; a new `own.url` or `ollama.url` drops
+  the key saved for the old server; `ollama.url` refuses a metadata or
+  link-local address when saved.
+- [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+  checks the manifest’s SHA-256 of a cached or downloaded table and
+  deletes and refuses one that does not match.
+- [`fips_verify_mu()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/fips_mu.md)
+  answers FALSE to a length-2 `signature` field (the shared hex helper
+  takes one string); an XMSS signature whose `index` or `height` is not
+  a whole number, or whose `root`, `height`, `wire` or `randomizer` was
+  removed, is not verified, and a missing randomiser is FALSE rather
+  than an error.
+- Time zones of territories the carbon table has no row for (Monaco,
+  Vaduz, Andorra, the Channel Islands, the Antarctic stations: 41 zones)
+  resolve to the grid of the country they draw on or to the world
+  average, with the method saying so; they fell through to the locale,
+  which made them the United States under `en_US`.
+- `rmbl data list` keeps accents in a C locale (control characters only
+  are stripped); `rmbl ask -- --like-this` passes a prompt that starts
+  with `--`; `inst/bin/rmbl` is executable in git; the help and the
+  vignette suggest `login --token` with the key pasted at the prompt,
+  never on the command line.
+- [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  sizes its notes to the line allowance the pagination made, and many
+  notes go on pages of their own (30 notes on a 5-inch page lost notes
+  24 to 30).
+- [`plot_lorenz()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  sorts a hand-made frame and refuses one that is not a Lorenz curve; an
+  all-NA axis no longer breaks the margin computation.
+  `lagrangian_particles(n = 2.7)` and
+  `compute_footprint(usage = c(...))` are refused.
+- Documentation: masking costs the measured 2.3 to 3.4 times on
+  decapsulation and 7 to 10 times on signing (the help said 3 to 12 and
+  13 to 24). `location = "GLOBAL"` is an error since the duplicate row
+  went (use `"WORLD"`); the rows older than 2024 include Ukraine (2022).
+
+### Cryptography
+
+- Masked ML-KEM decapsulation left the re-encryption shares on the dead
+  stack: `r0/r1`, `e10/e11`, `e20/e21`, `u0/u1`, `v0/v1`, the FO-check
+  shares `ok`/`msk` and the masked PRF’s input and output buffers (whose
+  sum is the coins `G(m' || h)[32..64]`). Summing the two halves of
+  `r-hat` recovers `m'` from the public key and ciphertext alone, so a
+  memory disclosure anywhere in the process was a decryption oracle for
+  an attacker-chosen ciphertext. Every pair the scanner can see is wiped
+  now, with the per-group and per-word temporaries; two gadget-internal
+  32-coefficient pairs (`sec_in_interval`, `sec_b2a`) remain on the dead
+  stack (they hold `e2 + eta` and `v' - lo`; `v'` contains
+  Decompress(m’), so the second pair also encodes 32 bits of m’ for a
+  chosen ciphertext: partial leakage, no key recovery shown), and one
+  `dsa_bprime` pair remains on clang -O2. The 0.5.10 note that “every
+  share pair is now wiped” was false and is corrected.
+- Masked ML-DSA signing wipes the bitsliced share temporaries of every
+  32-coefficient chunk (the low-bits test of `v = w - c s2`, the high
+  bits of `w` and of the hint) as it goes; one chunk of `v` survived on
+  some builds and revealed part of `c t0`.
+- Two composed TVLA kernels, next to the single gadgets: the ML-KEM
+  decapsulation spine (`s*u`, `w = v - su`, `Compress_1`, a Keccak
+  permutation over the message shares) and the ML-DSA z path (`y` from
+  Boolean shares, `z = y + c s1`, the norm test, the low-bits test), so
+  the hand-over between gadgets is measured too (the harness fix that
+  let them run is above; the `tvla` workflow reports the value-model and
+  transition-model t-statistics). The dudect gate on a DIT-capable CPU
+  is the no-evidence line (\|t\| \> 4.5 after the tripled re-measurement
+  fails), not \|t\| \> 10.
+- The ctcheck harness scans the dead stack for share pairs, not only for
+  copies of a secret: any two windows whose coefficient-wise sum mod q
+  (or XOR, for Boolean shares) is a known value count as a remnant. The
+  ML-KEM case recomputes `r-hat` and `m'` from the message it
+  encapsulated and scans for both after the masked decapsulation; this
+  is the check that would have caught the gap above.
+- [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
+  answers `FALSE`, not an error, for a signature whose `signature` field
+  is not one string, whose `prehash` names no digest, or whose XMSS
+  `auth`, `randomizer` or `index` is missing; and an XMSS signature
+  whose own `root`, `height` or `wire` disagrees with the key or with
+  its parts no longer verifies (verification used the key’s values and
+  ignored the edited fields).
+
+### Location, emissions
+
+- Time-zone aliases map to their own country. The table gave every
+  `backward` alias the country of the zone it links to, which is wrong
+  whenever the link crosses a border: `Iceland` was Ivory Coast
+  (Africa/Abidjan), `Atlantic/Jan_Mayen` Germany,
+  `America/Coral_Harbour` Panama, `Africa/Asmera` Kenya, `Pacific/Truk`
+  Papua New Guinea. The builder now reads the `#=` annotation of the
+  IANA `backward` file (the zone the alias stood for before the merge),
+  takes the target’s country only when that target serves a single
+  country in `zone1970.tab`, and keeps a reviewed table
+  (`tools/timezone_alias_countries.csv`) for the remaining cross-border
+  aliases; the generic zones `CET`, `EET`, `MET`, `WET`, `EST`, `HST`,
+  `MST` and the `*ST*DT` names resolve to no country. Rebuilt from
+  tzdata 2026e.
+- [`detect_location()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/detect_location.md)
+  warns when `RMBL_LOCATION` names a location the table does not know
+  instead of silently moving on to the time zone.
+- [`compute_footprint()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/compute_footprint.md)
+  rejects a fractional `cores`.
+- The duplicate `GLOBAL` row (480 gCO2e/kWh from the Green Algorithms
+  file) is gone from the carbon-intensity table; `WORLD` (Ember, 458.29)
+  is the world average, and `location = "GLOBAL"` is now an error. The
+  documentation no longer claims every row is from 2024 or 2025.
+
+### Air pollution and dispersion
+
+- [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  with no exposure data at all (no CSV, no demo, mean and prevalence
+  both zero) is an `"error"` report with exit status 2, not a clean run
+  with zero deaths; an exposure at or below the reference stays a valid
+  run with zero attributable cases. The input contract is enforced in
+  the report rather than as raw R errors: a vector where a single number
+  is expected, a missing or negative `reference`, an unknown `outcome`,
+  a non-logical `demo`, a directory as `exposure_csv`. The report prints
+  the population as `1,000,000`, not `1e+06`. The vignette’s failure
+  demo fails again.
+- [`advection_diffusion_2d()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  refuses a run that would need more than 10,000 sub-steps per step
+  (`dt = 1e5` on the previous round’s reproducer meant 7.8 million
+  sub-steps, with the warning deferred until the end) and a wind that
+  overflowed the sub-step count to `NA`; `c0` must be a non-negative
+  numeric matrix (a vector gave a field of mass 0) and `source` finite.
+- [`briggs_plume_rise()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  rejects temperatures below 150 K, which are Celsius values typed where
+  kelvin is expected (111 m of rise instead of 51).
+- [`lagrangian_particles()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
+  rejects a `grid` whose bounds are reversed or whose cell counts are
+  not whole (it gave a negative concentration).
+- [`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  and
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  take exactly one finite `reference_conc` (a vector recycled against
+  the exposures; `NA` gave `NA` risks).
+  [`attributable_fraction()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/attributable_fraction.md)
+  rejects a logical relative risk.
+  [`mortality_displaced()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/mortality_displaced.md)
+  rejects a baseline rate above 1 (a per-100,000 figure passed where a
+  per person-year rate is expected gave 23 million deaths from a million
+  people).
+- [`plr_crossfit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plr_crossfit.md)
+  requires a whole `k_folds` (2.7 ran with 2) and numeric columns (a
+  factor outcome was analysed by its level codes).
+- [`exposure_concentration_index()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_concentration_index.md)
+  refuses a factor or character income instead of ranking level codes,
+  and negative exposures;
+  [`pollution_burden_by_area()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden_by_area.md)
+  requires numeric exposure, population and baseline columns. The
+  index’s `n_quintiles` field, a constant 5, is gone, and the
+  documentation says ties share their average rank.
+- [`hurwitz_zeta()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hurwitz_zeta.md)
+  takes one `q`.
+- `attributable_fraction(rr_lower =, rr_upper =)` carries the relative
+  risk’s confidence limits through Levin’s formula;
+  [`crf_pm25()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  and
+  [`crf_no2()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)
+  carry the published 95 percent limits of their risks (`rr_lower`,
+  `rr_upper`; NA for the IER forms), and
+  [`verify_pollution()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  reports the fraction’s interval.
+
+### Language models
+
+- In the automatic order, a local Ollama server that answers with no
+  model pulled, or a configured one that does not answer, is skipped
+  with a message naming the route taken instead (“local Ollama at … has
+  no model pulled; using the hosted MORIE tier”), so a prompt never
+  leaves the machine silently.
+- A malformed `llm.json` is an error and no setting is written over it:
+  the next `config set` used to rewrite the file with only the new
+  value, deleting the saved keys and addresses.
+- A saved key belongs to the address it was saved with:
+  `MORIE_LLM_BASE_URL=...` or `OLLAMA_HOST=...` set for one call
+  receives the environment’s key or none, never the key saved for
+  another server (the `/api/tags` probe included).
+- `rmbl ask --model x --model y ...` is a usage error instead of sending
+  “–model y” in the prompt; `--route auto` takes the automatic order
+  over a saved route; an invalid `MORIE_LLM_ROUTE` is an error, not
+  silently “auto”.
+- `config set own.url` runs the same address check as use (a metadata or
+  link-local address is refused when saved); `ollama.url` must be
+  http(s).
+- A key typed at a terminal prompt is not echoed (where `stty` exists),
+  and the help no longer suggests putting the key on the command line.
+- `rmbl data list` strips control characters from the manifest before
+  printing.
+
+### Data validation, plots, reports
+
+- [`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
+  accepts a rule list and runs it with
+  [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
+  under the same stop-on-fatal contract; it used to ignore a rule list
+  in its second argument and report a pass, which is what the vignette
+  told readers to do.
+- The French SIU resolver: a stripped boilerplate sentence is replaced
+  by a space, so a roster entry after it on the same line (“… n’est pas
+  divulgué. AI no 3 A participé”) is counted again; the 0.5.11 speed
+  rewrite kept the sentence’s terminator and lost those entries (an
+  unresolved report and a count of 1 instead of 3 on the two cases now
+  pinned as tests).
+- Plot state is reset when a panel plot errors (the next plot’s title
+  showed as “A”).
+  [`plot_funnel()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot_lorenz.md)
+  requires one `area` label per point. An empty
+  [`frequency_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/frequency_table.md)
+  draws an empty page with a title, and
+  [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
+  requires increasing coordinates, with messages of their own instead of
+  errors from inside the palette or base graphics.
+- [`yoy_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md)
+  paginates on the rows that fit the page height after the title block,
+  the page label and the notes (`.yoy_rows_per_page()`, with a test); a
+  24-inch page planned 98 rows where 88 fit and dropped the last rows.
+- PBKDF2-HMAC-SHA256 is checked against the RFC 7914 vectors; the
+  [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
+  help says which route the request takes.
+
+### Packaging
+
+- The rOpenSci `pkgcheck` workflow fails when pkgcheck does, and no
+  longer asks for `issues: write`.
+- Text corrections: 118 registered entry points (not 113); the ACVP
+  PBKDF set is SHA2-224 only and does not cover PBKDF2-HMAC-SHA256; the
+  plain path’s speed advantage is three to four times for decapsulation
+  and seven to eleven for signing (not “about five”); a clean ctgrind
+  run is evidence for that binary on the inputs run, not a proof for
+  every input; the ChipWhisperer firmware is in the separate review
+  archive, not in the package.
+
 ## rmoriebricklayer 0.5.11
 
 ### Language models: set everything from the shell or R
@@ -183,7 +1679,8 @@ tells them apart, and for the fixes below; this is both.
 
 - Masked ML-KEM decapsulation left both shares of the decrypted message,
   the hash input and K-bar on the dead stack after returning (the plain
-  path guarded them); every share pair is now wiped.
+  path guarded them); those share pairs were wiped (the re-encryption
+  and comparison shares were not: see 0.5.12).
 - Masked ML-DSA signing can be switched off:
   `capsule_sign(masked = FALSE)`, `fips_sign_mu(masked = FALSE)`, and
   the option `rmoriebricklayer.masked` sets the default for all three
@@ -1596,12 +3093,13 @@ was fixed, and each has a test that fails on 0.5.5).
   [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
   and
   [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
-  talk to the hosted MORIE LLM tier at <https://llm.rmorie.com> through
-  the package’s own libcurl POST. Sign in with the GitHub device flow, a
-  code sent to your email, or a key you already have; the key is kept in
-  `$XDG_CONFIG_HOME/morie/credentials.json` (owner-only, written only by
-  an explicit `login`), the file `morie` and `rmorie` read as well, so
-  one sign-in serves all three. Nothing is imported from either.
+  talk to the hosted MORIE LLM tier at llm.rmorie.com (retired in
+  0.5.12) through the package’s own libcurl POST. Sign in with the
+  GitHub device flow, a code sent to your email, or a key you already
+  have; the key is kept in `$XDG_CONFIG_HOME/morie/credentials.json`
+  (owner-only, written only by an explicit `login`), the file `morie`
+  and `rmorie` read as well, so one sign-in serves all three. Nothing is
+  imported from either.
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   answers through that route when a key is stored and only then falls
   back to the optional rmorie-cli agent; it recognises the launcher that

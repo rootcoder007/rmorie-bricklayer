@@ -11,7 +11,7 @@ and carries an exact interval for count data."><meta property="og:image" content
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -146,10 +146,10 @@ quantity.</p></dd>
 
 
 <dt id="arg-min-base">min_base<a class="anchor" aria-label="anchor" href="#arg-min-base"></a></dt>
-<dd><p>Smallest previous-period value for which
-a percent change is reported. Below it the percent is <code>NA</code> and the
-reason is recorded, rather than a large number that describes the
-denominator. Defaults to 20 for counts and to no gate otherwise.</p></dd>
+<dd><p>Optional: previous-period values below this get a
+"small base" note. Nothing is withheld either way: every non-zero base gets
+its percent change and exact interval, which is as wide as the base is
+small. Defaults to 0 (no note); only a zero base has no percent change.</p></dd>
 
 
 <dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
@@ -195,7 +195,7 @@ captured output stays plain text.</p></dd>
 (and group), and columns <code>period</code>, <code>value</code>, <code>previous</code>,
 <code>change</code>, <code>pct_change</code> (or <code>pp_change</code> for percentages),
 <code>pct_lower</code> and <code>pct_upper</code> for counts, <code>verdict</code>, and
-<code>flag</code> recording why a percent was withheld.</p>
+<code>flag</code> noting a zero, missing or (if <code>min_base</code> is set) small base.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -226,24 +226,22 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-in"><span>  by <span class="op">=</span> <span class="st">"Gender"</span>, direction <span class="op">=</span> <span class="st">"lower_is_better"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">y</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ────────────</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2019           31                    —         —         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ percent withheld: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2022           19                    12        7         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ percent withheld: base below 20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2023           24                    19        5         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ percent withheld: base below 20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2019           402                   —         —         —       —           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ percent withheld: no comparison period</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%] </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2019           31                    —         —         —       —            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2019           402                   —         —         —       —            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20 · lower is better</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># The interval is exact, so a small group does not get a confident</span></span></span>
 <span class="r-in"><span><span class="co"># percent it has not earned.</span></span></span>
@@ -252,14 +250,14 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 Female          2019    31       NA     NA         NA no comparison period</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 Female          2020    28       31     -3  -9.677419                 &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 Female          2021    12       28    -16 -57.142857                 &lt;NA&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Female          2022    19       12      7         NA        base below 20</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Female          2023    24       19      5         NA        base below 20</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Female          2022    19       12      7  58.333333                 &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Female          2023    24       19      5  26.315789                 &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   pct_lower pct_upper verdict</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        NA        NA    &lt;NA&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 -47.79679  55.62836  better</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 -80.14950 -12.97354  better</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4        NA        NA   worse</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5        NA        NA   worse</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 -27.02865 257.66674   worse</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 -33.67876 143.90121   worse</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A percentage is handled as percentage points, not as a percent of a</span></span></span>
 <span class="r-in"><span><span class="co"># percent.</span></span></span>
@@ -268,7 +266,7 @@ administrative extract, and is the shape this function is built for.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> year  share  previous  change  points  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ────  ─────  ────────  ──────  ────────</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2019  4.1    —         —         —     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ percent withheld: no comparison period</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ↳ note: no comparison period</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2020  4.6    4.1       0.5     ▲ +0.5pp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2021  5.2    4.6       0.6     ▲ +0.6pp</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2022  5.0    5.2       -0.2    ▼ -0.2pp</span>

@@ -67,7 +67,7 @@ grid."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,7 +180,19 @@ grid.</p>
 <span>  n_images <span class="op">=</span> <span class="fl">3</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">advection_diffusion_2d</span><span class="op">(</span><span class="va">c0</span>, <span class="va">u</span>, <span class="va">v</span>, <span class="va">kx</span>, <span class="va">ky</span>, <span class="va">dx</span>, <span class="va">dy</span>, <span class="va">dt</span>, <span class="va">n_steps</span>, source <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="fu">advection_diffusion_2d</span><span class="op">(</span></span>
+<span>  <span class="va">c0</span>,</span>
+<span>  <span class="va">u</span>,</span>
+<span>  <span class="va">v</span>,</span>
+<span>  <span class="va">kx</span>,</span>
+<span>  <span class="va">ky</span>,</span>
+<span>  <span class="va">dx</span>,</span>
+<span>  <span class="va">dy</span>,</span>
+<span>  <span class="va">dt</span>,</span>
+<span>  <span class="va">n_steps</span>,</span>
+<span>  source <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_work <span class="op">=</span> <span class="fl">1e+08</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">lagrangian_particles</span><span class="op">(</span></span>
 <span>  <span class="va">n</span>,</span>
@@ -194,7 +206,8 @@ grid.</p>
 <span>  <span class="va">n_steps</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  grid <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  normals <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  normals <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_work <span class="op">=</span> <span class="fl">1e+08</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -220,7 +233,9 @@ grid.</p>
 
 <dt id="arg-diameter-exit-velocity-stack-temp-ambient-temp">diameter, exit_velocity, stack_temp, ambient_temp<a class="anchor" aria-label="anchor" href="#arg-diameter-exit-velocity-stack-temp-ambient-temp"></a></dt>
 <dd><p>Stack diameter (m),
-exit velocity (m/s), stack gas and ambient temperatures (K).</p></dd>
+exit velocity (m/s), stack gas and ambient temperatures (K).
+Only buoyant rise is modelled: a stack at the air's temperature (within half a
+kelvin) has zero rise, and momentum rise from the exit velocity is not added.</p></dd>
 
 
 <dt id="arg-dtheta-dz">dtheta_dz<a class="anchor" aria-label="anchor" href="#arg-dtheta-dz"></a></dt>
@@ -289,6 +304,14 @@ vectors.</p></dd>
 <dd><p>Source grid (concentration per unit time), or <code>NULL</code>.</p></dd>
 
 
+<dt id="arg-max-work">max_work<a class="anchor" aria-label="anchor" href="#arg-max-work"></a></dt>
+<dd><p>The most cell updates (cells x steps x sub-steps; for
+<code>lagrangian_particles()</code>, particles x steps) a run may take, 100
+million by default (a few minutes of the explicit loop); <code>Inf</code> lifts it. The
+same physical run costs the same whether the caller sub-steps it or the scheme does,
+so the cap reads the same either way.</p></dd>
+
+
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
 <dd><p>Number of particles.</p></dd>
 
@@ -330,10 +353,17 @@ draws as an image; <code>lagrangian_particles()</code> a list of class
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws as points. Every physical input is
 checked: emission rates, masses, heights and distances are non-negative,
 wind speed, travel time and grid steps positive, <code>n_images</code> a
-whole number, the stack hotter than the air, and <code>x0</code>, <code>y0</code>
+whole number up to 1,000, the stack as hot as the air or hotter,
+and <code>x0</code>, <code>y0</code>
 single numbers; a release above <code>mixing_height</code> warns.
 <code>lagrangian_particles()</code>: a list with <code>x</code>, <code>y</code>,
 <code>mean_x</code>, <code>mean_y</code> and, with a grid, <code>concentration</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="boundary">Boundary<a class="anchor" aria-label="anchor" href="#boundary"></a></h2>
+    <p>the outermost ring of cells is held at zero (an open boundary): mass
+that reaches it leaves the domain and <code>mass</code> falls accordingly. Pad <code>c0</code> with
+empty cells so the plume of interest stays inside the ring.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

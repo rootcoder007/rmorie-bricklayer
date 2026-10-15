@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,8 +143,10 @@ finding to report. And a rule that <em>errors</em> is a
 <span><span class="co">#&gt; [1] 7</span></span></code></pre></div>
 <p><code><a href="../reference/rmbl_rule_library.html">rule_increasing()</a></code>, <code><a href="../reference/rmbl_rule_library.html">rule_distinct_rows()</a></code> and
 <code><a href="../reference/rmbl_rule_library.html">rule_complete_rows()</a></code> complete the set.
-<code><a href="../reference/apply_schema_validation.html">apply_schema_validation()</a></code> runs a rule list and stops on any
-fatal issue, which is the call a pipeline makes.</p>
+<code>apply_schema_validation(df, rules2)</code> runs a rule list the
+same way and stops on any fatal issue, which is the call a pipeline
+makes (it takes a provenance list or a rule list; until 0.5.12 a rule
+list was silently ignored and reported a pass).</p>
 </div>
 </div>
 <div class="section level2">

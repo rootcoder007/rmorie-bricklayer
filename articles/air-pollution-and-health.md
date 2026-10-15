@@ -248,14 +248,15 @@ cat(pollution_report_text(r))
 #>   exposure mean:      24.261
 #>   exposure prevalence:0.981
 #>   baseline rate/100k: 500.00
-#>   population:         1e+06
+#>   population:         1,000,000
 #>   reference conc:     10
 #> 
 #> Assumption log
 #>   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10
+#>   [PASS] exposure within the concentration-response range (at most 10,000 ug/m3) -- exposure_mean=24.26114
 #>   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981
-#>   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year
-#>   [PASS] population finite and positive -- population=1e+06
+#>   [PASS] baseline_rate finite: zero, or between 1 and 10,000 per 100k -- baseline_rate=500 per 100k per year
+#>   [PASS] population finite, positive and at most 10 billion -- population=1,000,000
 #>   [PASS] reference finite and non-negative -- reference=10
 #>   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.
 #> 
@@ -263,7 +264,7 @@ cat(pollution_report_text(r))
 #>   RR:       1.0286
 #>   source:   Huangfu & Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines
 #> 
-#> Attributable fraction (PAF): 0.0273
+#> Attributable fraction (PAF): 0.0273  (95% CI 0.0138 to 0.0534, from the risk's limits)
 #> 
 #> Mortality displaced
 #>   expected avoided deaths: 136.6
@@ -278,15 +279,23 @@ cat(pollution_report_text(r))
 ```
 
 An input that violates an assumption stops the pipeline and says why,
-with a non-zero exit status for scripts:
+with a non-zero exit status for scripts (a negative exposure here); an
+exposure at or below the reference is a valid run with zero attributable
+cases, and a call with no exposure data at all is an error, not a clean
+zero:
 
 ``` r
 
-bad <- verify_pollution("pm25", exposure_mean = 3, exposure_prevalence = 0.5)
+bad <- verify_pollution("pm25", exposure_mean = -3, exposure_prevalence = 0.5)
 bad$status
-#> [1] "ok"
+#> [1] "assumption_failure"
 attr(bad, "exit_status")
-#> [1] 0
+#> [1] 1
+none <- verify_pollution("pm25")
+none$status
+#> [1] "error"
+attr(none, "exit_status")
+#> [1] 2
 ```
 
 A CSV with an `exposure` column (and optionally `income`) replaces the
@@ -311,9 +320,9 @@ rapl_available()
 fp <- compute_footprint(sum(sqrt(seq_len(3e5))), location = "CA-ON", cpu_power_w = 45,
                         memory_gb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.003 s wall, 0.003 s CPU, utilisation 0.25 (process) on 4 cores
-#>   energy: 1.43e-08 kWh (cpu 9.38e-09, memory 4.97e-09)
-#>   CO2e:   1.3e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.004 s wall, 0.005 s CPU, utilisation 0.31 (process) on 4 cores
+#>   energy: 2.22e-08 kWh (cpu 1.56e-08, memory 6.62e-09)
+#>   CO2e:   2.02e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 fp$assumptions
 #> character(0)
 ```
@@ -343,9 +352,9 @@ b <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb =
                        usage = "machine", load_curve = "codecarbon")
 rbind(process_linear = c(usage = a$usage, cpu_kwh = a$energy_kwh$cpu),
       machine_codecarbon = c(usage = b$usage, cpu_kwh = b$energy_kwh$cpu))
-#>                        usage  cpu_kwh
-#> process_linear     0.1666667 6.25e-09
-#> machine_codecarbon 0.3333333 2.00e-08
+#>                        usage      cpu_kwh
+#> process_linear     0.2500000 9.375000e-09
+#> machine_codecarbon 0.2857143 2.117347e-08
 b$usage_mode
 #> [1] "machine"
 ```
@@ -355,13 +364,15 @@ b$usage_mode
 The carbon intensity comes from a table bundled with the package, so
 nothing is fetched and it works in any country: every country at the
 latest year Our World in Data publishes from Ember’s yearly electricity
-data (2024 or 2025 at this release), sub-national zones from Electricity
-Maps’ 2024 yearly data as redistributed by Green Algorithms (Canadian
-provinces, US balancing authorities, Australian states, Indian and
-Japanese regions, …), and the world average. Each row carries its year
-and source, so a report can cite them. A location is matched by code,
-alpha-3 code or name; an unknown zone falls back to its country and says
-so; a number of your own is accepted when you have a better figure:
+data (2024 or 2025 at this release for all but a few grids whose latest
+row is older, Ukraine’s 2022 among them; every row carries its year),
+sub-national zones from Electricity Maps’ 2024 yearly data as
+redistributed by Green Algorithms (Canadian provinces, US balancing
+authorities, Australian states, Indian and Japanese regions, …), and the
+world average. Each row carries its year and source, so a report can
+cite them. A location is matched by code, alpha-3 code or name; an
+unknown zone falls back to its country and says so; a number of your own
+is accepted when you have a better figure:
 
 ``` r
 
@@ -387,11 +398,11 @@ carbon_intensity("CA-XX")$note
 #> [1] "no row for zone CA-XX; its country CA used"
 tab <- carbon_intensity_table()
 nrow(tab)
-#> [1] 379
+#> [1] 378
 table(nchar(tab$location) == 2, tab$year)[, c("2024", "2025")]
 #>        
 #>         2024 2025
-#>   FALSE  156    3
+#>   FALSE  155    3
 #>   TRUE   125   91
 ```
 
@@ -428,10 +439,10 @@ the two the Green Algorithms calculator prints:
 
 footprint_equivalents(fp$co2e_g * 1e4)   # if this ran ten thousand times
 #> $car_km
-#> [1] 7.455208e-05
+#> [1] 0.0001156474
 #> 
 #> $tree_months
-#> [1] 1.42275e-05
+#> [1] 2.207012e-05
 #> 
 #> $sources
 #>                                                                  car 

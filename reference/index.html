@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -256,6 +256,20 @@
 
         </dt>
         <dd>Resolve a Wayback Machine snapshot URL (C++/libcurl)</dd>
+
+        <dt>
+
+          <code><a href="wayback_save.html">wayback_save()</a></code>
+
+        </dt>
+        <dd>Archive many pages in the Wayback Machine</dd>
+
+        <dt>
+
+          <code><a href="wayback_retry.html">wayback_retry()</a></code>
+
+        </dt>
+        <dd>Retry the failures of a bulk Wayback run</dd>
       </dl></div><div class="section level2">
       <h2 id="provenance-reproducibility-capsules">Provenance &amp; reproducibility capsules<a class="anchor" aria-label="anchor" href="#provenance-reproducibility-capsules"></a></h2>
 
@@ -352,7 +366,7 @@
       </dl></div><div class="section level2">
       <h2 id="language-model-and-command-line">Language model and command line<a class="anchor" aria-label="anchor" href="#language-model-and-command-line"></a></h2>
 
-      <div class="section-desc"><p>The hosted MORIE LLM tier at llm.rmorie.com, reached through rmorie’s provider chain when that package is installed and natively otherwise; the rmoriebricklayer shell command.</p></div>
+      <div class="section-desc"><p>Language models you bring (a provider’s key, an OpenAI-compatible server of your own, or a local Ollama), answering from the MORIE packages’ help; the rmoriebricklayer shell command.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -375,6 +389,13 @@
 
         <dt>
 
+          <code><a href="bricklayer_explain_error.html">bricklayer_explain_error()</a></code>
+
+        </dt>
+        <dd>Explain an error from rmoriebricklayer (or a package built on it)</dd>
+
+        <dt>
+
           <code><a href="bricklayer_llm_config.html">bricklayer_llm_config()</a></code>
 
         </dt>
@@ -385,14 +406,14 @@
           <code><a href="bricklayer_llm_login.html">bricklayer_llm_login()</a></code>
 
         </dt>
-        <dd>Sign in to the hosted MORIE language model</dd>
+        <dd>Sign in for the curated tables at data.rmorie.com</dd>
 
         <dt>
 
           <code><a href="bricklayer_llm_logout.html">bricklayer_llm_logout()</a></code>
 
         </dt>
-        <dd>Forget the hosted MORIE language-model key</dd>
+        <dd>Forget the MORIE data key</dd>
 
         <dt>
 
@@ -413,7 +434,28 @@
           <code><a href="bricklayer_llm_models.html">bricklayer_llm_models()</a></code>
 
         </dt>
-        <dd>Models offered by the hosted MORIE LLM tier</dd>
+        <dd>Models a language-model route offers</dd>
+
+        <dt>
+
+          <code><a href="bricklayer_llm_providers.html">bricklayer_llm_providers()</a></code>
+
+        </dt>
+        <dd>The language-model providers a key can be brought for</dd>
+
+        <dt>
+
+          <code><a href="bricklayer_llm_route_info.html">bricklayer_llm_route_info()</a></code>
+
+        </dt>
+        <dd>The language-model route that would answer</dd>
+
+        <dt>
+
+          <code><a href="bricklayer_llm_chat.html">bricklayer_llm_chat()</a></code>
+
+        </dt>
+        <dd>A conversation with a language model</dd>
 
         <dt>
 
@@ -1051,6 +1093,13 @@
 
         <dt>
 
+          <code><a href="xmss_advance.html">xmss_advance()</a></code> <code><a href="xmss_advance.html">xmss_register_key()</a></code> <code><a href="xmss_advance.html">xmss_forget_used_indices()</a></code>
+
+        </dt>
+        <dd>Advance an XMSS key past a signature it made</dd>
+
+        <dt>
+
           <code><a href="capsule_verify.html">capsule_verify()</a></code>
 
         </dt>
@@ -1662,6 +1711,101 @@
         </dt>
         <dd>A Gaussian-plume concentration field on a grid</dd>
       </dl></div><div class="section level2">
+      <h2 id="courts-and-police-reported-crime">Courts and police-reported crime<a class="anchor" aria-label="anchor" href="#courts-and-police-reported-crime"></a></h2>
+
+      <div class="section-desc"><p>Case flow and clearance through a court, time to disposition from banded shares, the mix of outcomes, the change in a clearance rate split into rate and case-mix effects (Simpson’s paradox), where incidents cluster, and near-repeat space-time clustering; with real Ontario Court of Justice and Toronto Police Service data.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="case_flow.html">case_flow()</a></code>
+
+        </dt>
+        <dd>Case flow through a court: clearance, backlog and time to clear</dd>
+
+        <dt>
+
+          <code><a href="life_table.html">life_table()</a></code>
+
+        </dt>
+        <dd>Life table for grouped times: how long cases take</dd>
+
+        <dt>
+
+          <code><a href="disposition_mix.html">disposition_mix()</a></code>
+
+        </dt>
+        <dd>The mix of outcomes over time, with simultaneous intervals and trend tests</dd>
+
+        <dt>
+
+          <code><a href="clearance_decomposition.html">clearance_decomposition()</a></code>
+
+        </dt>
+        <dd>Decompose a change in a clearance rate into rate and case-mix effects</dd>
+
+        <dt>
+
+          <code><a href="crime_density.html">crime_density()</a></code>
+
+        </dt>
+        <dd>Where incidents cluster: a kernel density surface</dd>
+
+        <dt>
+
+          <code><a href="hotspot_persistence.html">hotspot_persistence()</a></code>
+
+        </dt>
+        <dd>Hot spots and how long they last</dd>
+
+        <dt>
+
+          <code><a href="knox_test.html">knox_test()</a></code>
+
+        </dt>
+        <dd>Near-repeat analysis: the Knox test for space-time clustering</dd>
+
+        <dt>
+
+          <code><a href="justice-data.html">justice-data</a></code>
+
+        </dt>
+        <dd>Court and police data shipped with the package</dd>
+      </dl></div><div class="section level2">
+      <h2 id="complex-survey-estimation">Complex survey estimation<a class="anchor" aria-label="anchor" href="#complex-survey-estimation"></a></h2>
+
+      <div class="section-desc"><p>Design-based means, totals, proportions and ratios, overall and by domain, with variances from replicate weights (Statistics Canada bootstrap, mean bootstrap, jackknife, BRR, Fay) or Taylor linearization over strata and PSUs, and design-based comparisons between domains.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="survey_design.html">survey_design()</a></code>
+
+        </dt>
+        <dd>Describe a complex survey design</dd>
+
+        <dt>
+
+          <code><a href="survey_estimate.html">survey_estimate()</a></code>
+
+        </dt>
+        <dd>Estimate a mean, total, proportion or ratio from a survey design</dd>
+
+        <dt>
+
+          <code><a href="survey_compare.html">survey_compare()</a></code>
+
+        </dt>
+        <dd>Compare survey estimates between domains</dd>
+      </dl></div><div class="section level2">
       <h2 id="the-footprint-of-the-computation">The footprint of the computation<a class="anchor" aria-label="anchor" href="#the-footprint-of-the-computation"></a></h2>
 
       <div class="section-desc"><p>Electricity and CO2-equivalent of an expression, measured from RAPL energy counters where the operating system exposes them, otherwise modelled with the Green Algorithms method, against a sourced carbon-intensity table.</p></div>
@@ -1988,7 +2132,7 @@
 
       <dl><dt>
 
-          <code><a href="plot-methods.html">plot(<i>&lt;rmbl_stock_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_drift_calibration&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_freq&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_missingness&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_region_coverage&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_outliers&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_correlations&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_cortable&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_crf&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_burden&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_equity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_pollution_report&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_footprint&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_field&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_particles&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_count_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_analysis&gt;</i>)</a></code>
+          <code><a href="plot-methods.html">plot(<i>&lt;rmbl_hotspot&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_case_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_life_table&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_disposition_mix&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_density&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_knox&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_clearance_decomposition&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_stock_flow&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_yoy&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_share&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_rate_change&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_band_sensitivity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_drift_calibration&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_drift&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_benford&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_power&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_freq&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_missingness&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_region_coverage&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_outliers&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_correlations&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_cortable&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_falsification&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_bounds&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_crf&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_burden&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_equity&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_pollution_report&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_footprint&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_field&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_particles&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_count_trend&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;bricklayer_analysis&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_estimate&gt;</i>)</a></code> <code><a href="plot-methods.html">plot(<i>&lt;rmbl_svy_compare&gt;</i>)</a></code>
 
         </dt>
         <dd>Plot methods for the package's results</dd>

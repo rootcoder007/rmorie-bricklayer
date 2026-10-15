@@ -74,16 +74,16 @@ capsule_sign(
   for a session, so chain- and bundle-heavy code that has no physical
   attacker in its threat model can take the plain path everywhere with
   `options(rmoriebricklayer.masked = FALSE)`. SLH-DSA and XMSS signing
-  are not masked and ignore it. Masking costs about 3 to 12 times the
+  are not masked and ignore it. Masking costs about 2.3 to 3.4 times the
   plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-  package's test machine) and 13 to 24 times on ML-DSA signing (26 ms
-  for ML-DSA-65), depending on the CPU.
+  package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
+  ML-DSA-65), depending on the CPU.
 
 ## Value
 
 A list of class `bricklayer_signature`: `scheme`, `signature`, and for
-XMSS also `auth`, `index`, `root`, `height`, `key_state`, `randomizer`
-(the per-signature `R` of RFC 8391, which a verifier needs and which
+XMSS also `auth`, `index`, `root`, `height`, `randomizer` (the
+per-signature `R` of RFC 8391, which a verifier needs and which
 therefore travels with the signature) and `wire` – the signature in the
 RFC's own byte order, `index || R || WOTS || auth`, hex-encoded. `wire`
 is byte-identical to what the XMSS reference implementation produces
@@ -102,17 +102,19 @@ object and the result is a post-quantum one-time signature under the
 key's Merkle root. Asymmetric: a verifier holding only the public root
 cannot forge.
 
-## The returned key state must be carried forward
+## The key must be advanced after every signature
 
-An XMSS signature consumes a leaf. The returned object therefore carries
-`key_state`, the key with `next_index` advanced, and **subsequent
-signing must use that** – reusing an index breaks the scheme. The key is
-an R value, so `capsule_sign()` cannot advance the caller's copy;
-instead it remembers, for the session, the highest index each key has
-signed with and refuses that index or an earlier one (signing twice with
-one key object, or with a stale copy). Across sessions the saved key
-must be the latest `key_state`: save it after every signature. Passing
-an exhausted key is an error, not a silent wrap-around.
+An XMSS signature consumes a leaf, and **subsequent signing must use the
+advanced key** – reusing an index breaks the scheme. The signature
+object carries no key material (it is what verifiers are handed); the
+advanced key is `xmss_advance(key, signature)`, and that is what to
+save. The key is an R value, so `capsule_sign()` cannot advance the
+caller's copy; instead it records, in the session and in the index file
+described under
+[`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md),
+the highest index each key has signed with, and refuses that index or an
+earlier one. Passing an exhausted key is an error, not a silent
+wrap-around.
 
 ## Security
 
@@ -139,6 +141,8 @@ README's security section lists what each check does and does not cover.
 ## Examples
 
 ``` r
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 # Symmetric: one shared secret.
 sig <- capsule_sign("sha256:abc123", key = "shared-secret",
                     scheme = "hmac")
@@ -153,8 +157,8 @@ s1 <- capsule_sign("manifest-1", key)
 capsule_verify("manifest-1", s1, signing_public_key(key))
 #> [1] TRUE
 
-# Carry the advanced key state forward for the next signature.
-key <- s1$key_state
+# Advance the key past the signature before signing again.
+key <- xmss_advance(key, s1)
 key$next_index
 #> [1] 1
 s2 <- capsule_sign("manifest-2", key)
@@ -164,4 +168,5 @@ capsule_verify("manifest-2", s2, signing_public_key(key))
 # A signature does not transfer to another message.
 capsule_verify("manifest-1", s2, signing_public_key(key))
 #> [1] FALSE
+options(op)
 ```

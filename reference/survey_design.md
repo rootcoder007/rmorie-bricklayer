@@ -1,0 +1,209 @@
+# Describe a complex survey design
+
+Collects what design-based estimation needs: the final weight, and
+either a set of replicate weights or the strata and primary sampling
+units (PSUs) for Taylor linearization.
+[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+and
+[`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+take the result.
+
+## Usage
+
+``` r
+survey_design(
+  data,
+  weights,
+  strata = NULL,
+  psu = NULL,
+  fpc = NULL,
+  replicates = NULL,
+  id = NULL,
+  type = c("bootstrap", "mean_bootstrap", "jk1", "jkn", "brr", "fay"),
+  mean_size = 1,
+  rho = NULL,
+  mse = TRUE,
+  lonely_psu = c("fail", "remove", "adjust"),
+  rscales = NULL,
+  degf = NULL
+)
+```
+
+## Arguments
+
+- data:
+
+  A data frame, one row per respondent.
+
+- weights:
+
+  The final (full-sample) weight: a column name or a numeric vector.
+
+- strata, psu:
+
+  Optional stratum and primary sampling unit: column names or vectors. A
+  PSU label need only be unique within its stratum.
+
+- fpc:
+
+  Optional finite population correction per row: a column name or vector
+  holding either the stratum's population count of PSUs or (all values
+  at most 1) the sampling fraction.
+
+- replicates:
+
+  Optional replicate weights: a data frame or matrix with one column per
+  replicate, or the names of replicate weight columns in `data`.
+
+- id:
+
+  With a `replicates` data frame, the column (present in both) that
+  matches its rows to `data`'s; without it the rows must already be in
+  the same order.
+
+- type:
+
+  How the replicates were made; see Details.
+
+- mean_size:
+
+  For `type = "mean_bootstrap"`, the number of bootstrap weights
+  averaged into each replicate.
+
+- rho:
+
+  For `type = "fay"`, Fay's coefficient.
+
+- mse:
+
+  Centre replicate deviations on the full-sample estimate (`TRUE`) or on
+  the mean of the replicate estimates.
+
+- lonely_psu:
+
+  What to do with a stratum that has a single PSU under linearization:
+  `"fail"` (an error naming it), `"remove"` (it contributes nothing) or
+  `"adjust"` (its PSU is centred on the mean of all PSU totals).
+
+- rscales:
+
+  Per-replicate factors: required for `type = "jkn"` (\\(n_h - 1)/n_h\\
+  for each replicate's stratum), optional otherwise (multiplying the
+  type's scale).
+
+- degf:
+
+  The design's degrees of freedom, when known (a public-use file's
+  documentation gives them); by default computed as described in
+  Details.
+
+## Value
+
+An object of class `rmbl_svy_design`.
+
+## Details
+
+Replicate variances are \\v = s \sum_r (\hat\theta_r - c)^2\\, where
+\\\hat\theta_r\\ is the estimate under replicate weight \\r\\, \\c\\ is
+the full-sample estimate (`mse = TRUE`) or the mean of the replicate
+estimates, and the scale \\s\\ depends on how the replicates were made,
+for \\B\\ replicates:
+
+- `"bootstrap"`:
+
+  \\1/B\\: the Rao-Wu rescaled bootstrap Statistics Canada ships with
+  its public-use files.
+
+- `"mean_bootstrap"`:
+
+  \\R/B\\, where each replicate weight is the mean of \\R\\ bootstrap
+  weights (`mean_size`). The Canadian Substance Use Survey 2023 ships
+  1,000 mean bootstrap weights with \\R = 12\\; Health Canada's
+  technical notes give the factor of 12, equivalently Fay's BRR with
+  \\\rho = 1 - 1/\sqrt{12}\\.
+
+- `"jk1"`:
+
+  \\(B - 1)/B\\, the delete-one jackknife.
+
+- `"brr"`:
+
+  \\1/B\\, balanced repeated replication.
+
+- `"fay"`:
+
+  \\1/(B (1 - \rho)^2)\\, Fay's BRR with coefficient `rho`.
+
+- `"jkn"`:
+
+  the stratified delete-one-PSU jackknife: each replicate has its own
+  factor \\(n_h - 1)/n_h\\ for the \\n_h\\ PSUs of the stratum it
+  deletes from, given as `rscales` (passed as `"jk1"`, JKn weights
+  overstated the standard error by 37 percent in a test design).
+
+The replicate columns are taken as given: which columns are replicates
+is not guessed from their values (rules that tried refused genuine
+designs, a dominant PSU or a jackknife on a subset). Refused, because no
+genuine replicate can be it: the `id`'s values, the row numbers, a
+column of `data` passed under another name, a second column named like
+the weight or the `id` that holds other values, and under JK1, JKn and
+BRR a copy of the full-sample weight (equal to it, or within 1 percent
+of it on every row). Warned about, because a genuine set can produce it
+but rarely does: under the bootstrap, more replicates equal to the
+full-sample weight than chance draws; under the bootstrap or Fay's
+method, a replicate within 1 percent of the weight on every row; under
+JK1, JKn and BRR, a replicate that leaves no row out; a replicate more
+than ten times the weight on a typical row (a column on another scale,
+such as an outcome); and a set whose replicates total, on average, under
+a tenth or over ten times the weight (multipliers such as survey's
+`$repweights` passed in place of replicate weights). A column of `data`
+named in `replicates`, and every column of an unnamed matrix, is a
+replicate because it was given as one; a stray that is itself shaped
+like a replicate (another design's multipliers, a constant under the
+bootstrap) cannot be told from one. BRR and Fay replicates must come in
+a Hadamard order (2, or a multiple of 4).
+
+The data passed to
+[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+must be the rows the design was built on, in the same order: rows in
+another order are refused (within strata or PSUs too), and a column
+changed since (a permuted outcome for a permutation test) is not a
+reorder.
+
+The design's degrees of freedom (`df = "design"` in
+[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md))
+are PSUs less strata under linearization; for replicate weights, the
+rank of the replicate weight matrix less one, as the `survey` package
+computes them (twelve BRR half-samples of an eight-stratum design have
+8, not 11), or `degf` when given.
+
+Without replicates, the variance is the with-replacement Taylor
+linearization: within each stratum \\h\\ with \\n_h\\ PSUs, \\(1 - f_h)
+n_h / (n_h - 1)\\ times the sum of squared deviations of the PSU totals
+of the weighted linearized values from their stratum mean, summed over
+strata (\\f_h\\ from `fpc`, zero without one). No strata means one
+stratum; no PSUs means every respondent is its own PSU.
+
+## See also
+
+[`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md),
+[`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+
+## Examples
+
+``` r
+set.seed(1)
+d <- data.frame(region = rep(c("north", "south"), each = 50),
+                smoker = rbinom(100, 1, rep(c(0.2, 0.35), each = 50)),
+                w = runif(100, 50, 150))
+# ten bootstrap replicates, made here by resampling for the example
+reps <- replicate(10, d$w * tabulate(sample(100, replace = TRUE), 100))
+des <- survey_design(d, weights = "w", replicates = reps, type = "bootstrap")
+des
+#> Survey design: 100 respondents, weights summing to 10,175
+#> Variance: 10 replicate weights, bootstrap; scale 0.1, centred on the full-sample estimate
+# the same data as a stratified design, variance by linearization
+survey_design(d, weights = "w", strata = "region")
+#> Survey design: 100 respondents, weights summing to 10,175
+#> Variance: Taylor linearization, 2 strata, 100 PSUs
+```

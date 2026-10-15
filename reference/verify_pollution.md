@@ -17,11 +17,14 @@ verify_pollution(
   years = NULL,
   demo = FALSE,
   exposure_csv = NULL,
-  exposure_mean = 0,
-  exposure_prevalence = 0,
+  exposure_mean = NULL,
+  exposure_prevalence = NULL,
   reference = NULL,
   baseline_rate = 500,
-  population = 1e+06
+  baseline_rate_per = 1e+05,
+  population = 1e+06,
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 
 pollution_report_text(report)
@@ -44,7 +47,7 @@ pollution_report_text(report)
 
 - demo:
 
-  Use synthetic demo data.
+  Use synthetic demo data (`TRUE` or `FALSE`).
 
 - exposure_csv:
 
@@ -61,7 +64,9 @@ pollution_report_text(report)
 
   Scalar inputs used when neither `demo` nor `exposure_csv` is given:
   the mean exposure among the exposed and the share of the population
-  exposed.
+  exposed. A wrapper must never default one of them to zero: a
+  prevalence of zero silently zeroes the burden, which is why the two
+  are required together.
 
 - reference:
 
@@ -75,9 +80,30 @@ pollution_report_text(report)
   [`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md),
   which takes a rate per person-year).
 
+- baseline_rate_per:
+
+  The denominator `baseline_rate` is quoted per: 100,000 (the default),
+  or 1 for a rate per person-year such as a crude death rate of 0.012.
+
 - population:
 
   Population at risk (persons).
+
+- rare_outcome:
+
+  `TRUE` when the outcome really is rarer than one case per 100,000 per
+  year. Without it a rate that converts to less than that is an
+  assumption failure, because it is also what a rate per person-year
+  passed as per 100,000 looks like (0.008 per person-year is 800 per
+  100,000; as 0.008 per 100,000 the burden is 100,000 times too small).
+  The check is on the converted rate, so it holds whatever
+  `baseline_rate_per` is.
+
+- high_rate:
+
+  `TRUE` when the outcome really is more common than 10,000 per 100,000
+  a year (no population's all-cause death rate is); without it such a
+  rate is an assumption failure.
 
 - report:
 
@@ -89,8 +115,15 @@ pollution_report_text(report)
 `rmbl_pollution_report`
 ([`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws it); its
 `status` is `"ok"`, `"assumption_failure"` or `"error"`, and the
-attribute `exit_status` carries a command-line exit code (0, 1 or 2).
-`pollution_report_text()`: a character string.
+attribute `exit_status` carries a command-line exit code (0, 1 or 2). An
+argument the pipeline cannot use (no exposure data at all, a vector
+where a single number is expected, an unknown outcome, a missing
+reference, a directory as `exposure_csv`) is an `"error"` report with
+exit status 2, never a raw R error; an exposure at or below the
+reference is a valid run with zero attributable cases, and the scalar
+inputs `exposure_mean` and `exposure_prevalence` go together (one
+without the other is an error report). `pollution_report_text()`: a
+character string.
 
 ## Examples
 
@@ -110,14 +143,15 @@ cat(pollution_report_text(r))
 #>   exposure mean:      24.261
 #>   exposure prevalence:0.981
 #>   baseline rate/100k: 500.00
-#>   population:         1e+06
+#>   population:         1,000,000
 #>   reference conc:     10
 #> 
 #> Assumption log
 #>   [PASS] exposure finite and non-negative -- mean 24.26113743 vs ref 10
+#>   [PASS] exposure within the concentration-response range (at most 10,000 ug/m3) -- exposure_mean=24.26114
 #>   [PASS] prevalence in [0,1] -- exposure_prevalence=0.981
-#>   [PASS] baseline_rate finite and non-negative -- baseline_rate=500 per 100k per year
-#>   [PASS] population finite and positive -- population=1e+06
+#>   [PASS] baseline_rate finite: zero, or between 1 and 10,000 per 100k -- baseline_rate=500 per 100k per year
+#>   [PASS] population finite, positive and at most 10 billion -- population=1,000,000
 #>   [PASS] reference finite and non-negative -- reference=10
 #>   [PASS] pollutant supported by the CRFs -- Current CRFs: NO2 (log-linear), PM2.5 (log-linear all-cause; Burnett IER for IHD and stroke). Other pollutants reject.
 #> 
@@ -125,7 +159,7 @@ cat(pollution_report_text(r))
 #>   RR:       1.0286
 #>   source:   Huangfu & Atkinson (2020) Environ Int 144:105998; WHO (2021) Global AQ Guidelines
 #> 
-#> Attributable fraction (PAF): 0.0273
+#> Attributable fraction (PAF): 0.0273  (95% CI 0.0138 to 0.0534, from the risk's limits)
 #> 
 #> Mortality displaced
 #>   expected avoided deaths: 136.6

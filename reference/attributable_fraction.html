@@ -11,7 +11,7 @@ the fraction of cases that would be avoided if the exposure were removed."><meta
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,12 @@ the fraction of cases that would be avoided if the exposure were removed.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">attributable_fraction</span><span class="op">(</span><span class="va">rr</span>, <span class="va">exposure_prevalence</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">attributable_fraction</span><span class="op">(</span></span>
+<span>  <span class="va">rr</span>,</span>
+<span>  <span class="va">exposure_prevalence</span>,</span>
+<span>  rr_lower <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rr_upper <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -76,10 +81,18 @@ exposure); 0, negative, infinite and missing values are errors.</p></dd>
 <dd><p>Proportion of the population exposed, in
 <code>[0, 1]</code>.</p></dd>
 
+
+<dt id="arg-rr-lower-rr-upper">rr_lower, rr_upper<a class="anchor" aria-label="anchor" href="#arg-rr-lower-rr-upper"></a></dt>
+<dd><p>Optional confidence limits of <code>rr</code>; when
+both are given the fraction carries the limits that the same formula
+gives at them (Levin's formula is monotone in the relative risk, so the
+interval of the fraction is the image of the interval of the risk).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A number in <code>[0, 1)</code> for <code>rr &gt;= 1</code>.</p>
+    <p>A number in <code>[0, 1)</code> for <code>rr &gt;= 1</code>, with an attribute
+<code>ci</code> (<code>lower</code>, <code>upper</code>) when the limits were given.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

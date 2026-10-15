@@ -61,6 +61,8 @@ never as an exception to be caught and ignored.
 ## Examples
 
 ``` r
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 key <- pqc_keygen(height = 2)
 sig <- capsule_sign("pinned-manifest", key)
 pub <- signing_public_key(key)
@@ -82,4 +84,5 @@ capsule_verify("pinned-manifest", sig,
 trunc <- sig; trunc$signature <- substring(sig$signature, 1, 64)
 capsule_verify("pinned-manifest", trunc, pub)
 #> [1] FALSE
+options(op)
 ```

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Language-model routes and the signed services document • rmoriebricklayer</title>
+<title>Language models (your own key) and the signed services document • rmoriebricklayer</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -15,7 +15,7 @@
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Language-model routes and the signed services document">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Language models (your own key) and the signed services document">
 <meta name="google-site-verification" content="8ORzeHrfoPIOrujfV-km-kXCi9HD8dvL5GYH-GqwjYI">
 </head>
 <body>
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Language-model routes and the signed services document</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Language models (your own key) and the signed services document</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/vignettes/language-model-routes.Rmd" class="external-link"><code>vignettes/language-model-routes.Rmd</code></a></small>
@@ -82,11 +82,12 @@
     
     
 <p><code><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask()</a></code> sends a question to a language
-model and returns the answer. Which model answers is decided by a fixed
-order of routes, and every address the package would connect to is
-either yours or comes from a signed document. This vignette explains the
-order, the document, and what the package will and will not do on the
-network.</p>
+model and returns the answer. You bring the model: a key for a provider
+you already use, a model on your own machine, or a server of your own.
+Nothing is sent anywhere you did not set up, and the package runs no
+model service of its own. This vignette explains the routes, how the
+model is given the packages’ help, and what the package will and will
+not do on the network.</p>
 <div class="section level2">
 <h2 id="the-route-order">The route order<a class="anchor" aria-label="anchor" href="#the-route-order"></a>
 </h2>
@@ -94,59 +95,120 @@ network.</p>
 <li>
 <strong>An endpoint of your own</strong>:
 <code>MORIE_LLM_BASE_URL</code> (with <code>MORIE_LLM_API_KEY</code> and
-<code>MORIE_LLM_MODEL</code>), any OpenAI-compatible server. Taken when
-configured, not probed.</li>
+<code>MORIE_LLM_MODEL</code>), any OpenAI-compatible server (LM Studio,
+vLLM, llama.cpp’s <code>llama-server</code>, a company gateway). Taken
+when configured, not probed.</li>
 <li>
-<strong>A local Ollama</strong> at <code>OLLAMA_HOST</code> (default
-<code>localhost:11434</code>); <code>OLLAMA_HOST=off</code> disables the
-probe.</li>
+<strong>A provider whose key is set</strong>, in the order
+<code><a href="../reference/bricklayer_llm_providers.html">bricklayer_llm_providers()</a></code> lists them: OpenAI, Anthropic,
+Google Gemini, OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek,
+Mistral, xAI, Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere
+and NVIDIA. Each reads its usual variable (<code>OPENAI_API_KEY</code>,
+<code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code>, …) or a key
+saved with <code>bricklayer_llm_config(anthropic.key = ...)</code>; the
+model is <code>MORIE_&lt;PROVIDER&gt;_MODEL</code> or
+<code>&lt;provider&gt;.model</code>. Anthropic’s Messages API and
+Gemini’s <code>generateContent</code> are spoken natively; the others
+are OpenAI-compatible.</li>
 <li>
-<strong>The hosted MORIE tier</strong>, last, and only with a
-personal key issued on request at <a href="https://www.rmorie.com/access/" class="external-link uri">https://www.rmorie.com/access/</a>. A cloud provider’s own
-API (Gemini, OpenAI) is reached through route 1 when its endpoint speaks
-the OpenAI protocol; there is no separate route.</li>
+<strong>Ollama</strong> at <code>OLLAMA_HOST</code> (default
+<code>localhost:11434</code>), on this machine or another, once its
+server is running (<code>ollama serve</code>, the Ollama app, or the
+system service its Linux installer sets up) and has a model
+(<code>ollama pull NAME</code>), or Ollama’s own cloud API
+(<code>ollama.url = https://ollama.com</code> with your
+<code>ollama.key</code>); <code>OLLAMA_HOST=off</code> disables the
+probe. Its first listed model is the default.</li>
 </ol>
+<p><code>route = "anthropic"</code> (or
+<code>rmbl config set route anthropic</code>) takes one route only.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_providers.html">bricklayer_llm_providers</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"label"</span>, <span class="st">"key_env"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;             id         label            key_env</span></span>
+<span><span class="co">#&gt; 1       openai        OpenAI     OPENAI_API_KEY</span></span>
+<span><span class="co">#&gt; 2    anthropic     Anthropic  ANTHROPIC_API_KEY</span></span>
+<span><span class="co">#&gt; 3       gemini Google Gemini     GEMINI_API_KEY</span></span>
+<span><span class="co">#&gt; 4   openrouter    OpenRouter OPENROUTER_API_KEY</span></span>
+<span><span class="co">#&gt; 5         groq          Groq       GROQ_API_KEY</span></span>
+<span><span class="co">#&gt; 6     together   Together AI   TOGETHER_API_KEY</span></span>
+<span><span class="co">#&gt; 7    fireworks  Fireworks AI  FIREWORKS_API_KEY</span></span>
+<span><span class="co">#&gt; 8     deepseek      DeepSeek   DEEPSEEK_API_KEY</span></span>
+<span><span class="co">#&gt; 9      mistral       Mistral    MISTRAL_API_KEY</span></span>
+<span><span class="co">#&gt; 10         xai           xAI        XAI_API_KEY</span></span>
+<span><span class="co">#&gt; 11    cerebras      Cerebras   CEREBRAS_API_KEY</span></span>
+<span><span class="co">#&gt; 12  perplexity    Perplexity PERPLEXITY_API_KEY</span></span>
+<span><span class="co">#&gt; 13 huggingface  Hugging Face           HF_TOKEN</span></span>
+<span><span class="co">#&gt; 14    opencode  OpenCode Zen   OPENCODE_API_KEY</span></span>
+<span><span class="co">#&gt; 15      cohere        Cohere     COHERE_API_KEY</span></span>
+<span><span class="co">#&gt; 16      nvidia    NVIDIA NIM     NVIDIA_API_KEY</span></span></code></pre></div>
 <p><code><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status()</a></code> reports what is available from
 this machine. With the local route off the call reaches no network:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"OLLAMA_HOST"</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OLLAMA_HOST <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bricklayer_llm_status.html">bricklayer_llm_status</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;               route        status</span></span>
-<span><span class="co">#&gt; 1      own endpoint       not set</span></span>
-<span><span class="co">#&gt; 2      local Ollama      disabled</span></span>
-<span><span class="co">#&gt; 3 hosted MORIE tier not logged in</span></span>
-<span><span class="co">#&gt;                                                                                                                                                                                                                  detail</span></span>
-<span><span class="co">#&gt; 1                                                                                                                               MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server</span></span>
-<span><span class="co">#&gt; 2                                                                                                                                                                                                       OLLAMA_HOST=off</span></span>
-<span><span class="co">#&gt; 3 https://llm.rmorie.com  (request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code)</span></span>
+<span><span class="co">#&gt;             route   status</span></span>
+<span><span class="co">#&gt; 1    own endpoint  not set</span></span>
+<span><span class="co">#&gt; 2 other providers   no key</span></span>
+<span><span class="co">#&gt; 3    local Ollama disabled</span></span>
+<span><span class="co">#&gt;                                                                                                                                                                                                                                                                                                                                                                                                                                              detail</span></span>
+<span><span class="co">#&gt; 1                                                                                                                                                                                                                                                                                                                                                           MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server</span></span>
+<span><span class="co">#&gt; 2 openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY), gemini (GEMINI_API_KEY), openrouter (OPENROUTER_API_KEY), groq (GROQ_API_KEY), together (TOGETHER_API_KEY), fireworks (FIREWORKS_API_KEY), deepseek (DEEPSEEK_API_KEY), mistral (MISTRAL_API_KEY), xai (XAI_API_KEY), cerebras (CEREBRAS_API_KEY), perplexity (PERPLEXITY_API_KEY), huggingface (HF_TOKEN), opencode (OPENCODE_API_KEY), cohere (COHERE_API_KEY), nvidia (NVIDIA_API_KEY)</span></span>
+<span><span class="co">#&gt; 3                                                                                                                                                                                                                                                                                                                                                                                                                                   OLLAMA_HOST=off</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"OLLAMA_HOST"</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OLLAMA_HOST <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="asking">Asking<a class="anchor" aria-label="anchor" href="#asking"></a>
+<h2 id="asking-with-the-packages-help-at-hand">Asking, with the packages’ help at hand<a class="anchor" aria-label="anchor" href="#asking-with-the-packages-help-at-hand"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"In one sentence, what does a Merkle root pin?"</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="st">"How do I estimate a weighted proportion with bootstrap replicate weights?"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bricklayer_llm_ask.html">bricklayer_llm_ask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Summarise this table:"</span>, <span class="fu"><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">mtcars</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                         collapse <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span>,</span>
-<span>                   system_prompt <span class="op">=</span> <span class="st">"Answer in two sentences."</span><span class="op">)</span></span></code></pre></div>
-<p><code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> uses the same route to explain a
-reproducibility bundle’s verification output in plain language, when a
-key is stored and only then.</p>
+<span>                   system_prompt <span class="op">=</span> <span class="st">"Answer in two sentences."</span>, docs <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p>With <code>docs = TRUE</code> (the default) the model is told every
+function of the MORIE packages installed here (rmoriebricklayer, and
+rmoriedata and rmorie when present), read from their installed help, and
+gets five tools it can call: <code>search_docs</code> (a search over
+every help page), <code>get_help</code>, <code>get_examples</code>,
+<code>list_datasets</code> and <code>get_vignette</code>. It reads the
+pages it needs before it writes code. A model that does not take tools
+gets the pages nearest the question in its prompt instead. The tools
+only read help; nothing the model says is run.</p>
+<p>How much of the help goes into the prompt follows what the model can
+take in:</p>
+<ul>
+<li>a provider’s model, a model Ollama serves from its cloud
+(<code>minimax-m3:cloud</code> reports a 512,000-token context) and a
+remote server of your own get the whole index of functions, full help
+pages and up to six rounds of lookups;</li>
+<li>a model Ollama runs on this machine works in Ollama’s context window
+(4,096 tokens unless the server was started with
+<code>OLLAMA_CONTEXT_LENGTH</code>), so it gets the functions nearest
+the question, shorter pages and fewer rounds; a server of your own on
+this machine gets a middle size;</li>
+<li>
+<code>MORIE_LLM_CONTEXT</code> (tokens) says what your model takes,
+whatever the route.</li>
+</ul>
+<p>Every size can still reach every function: <code>search_docs</code>
+and <code>get_help</code> look up any page.</p>
+<p><code><a href="../reference/agent_bundle.html">agent_bundle()</a></code> asks over the same routes, with the
+bundle task added, and with no route it returns the setup hint
+(<code>rmbl bundle</code> exits 1).</p>
 </div>
 <div class="section level2">
 <h2 id="the-signed-services-document">The signed services document<a class="anchor" aria-label="anchor" href="#the-signed-services-document"></a>
 </h2>
-<p>The hosted tier’s addresses, its model list and its sign-in service
-are <strong>not</strong> hard-coded in the package. They come from a
+<p>The data service’s addresses and its sign-in service are
+<strong>not</strong> hard-coded in the package. They come from a
 document at
 <code>https://rmorie.com/.well-known/morie-services.json</code>, signed
 with ML-DSA-44 under a key pinned in the package, so the endpoints can
 change without a release while no one but the project can change them. A
 copy ships with the package as the fallback and the floor:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">s</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bricklayer_services.html">bricklayer_services</a></span><span class="op">(</span>offline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">s</span><span class="op">$</span><span class="va">llm</span><span class="op">$</span><span class="va">mode</span></span>
+<span><span class="va">s</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">mode</span></span>
 <span><span class="co">#&gt; [1] "key"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">s</span>, <span class="st">"source"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "bundled"</span></span></code></pre></div>
@@ -186,34 +248,41 @@ has the key that was sent, any <code>Bearer</code> token and any
 <code>sk-</code> key removed before it becomes an R condition.</li>
 <li>Bytes a server sent are parsed as text, never as a second
 address.</li>
-<li>A transfer under 64 bytes/s for 30 s is ended; an in-memory reply
-past 16 MiB is dropped; the services document and JSON fetches cap at 1
-MiB and 16 MiB.</li>
+<li>A download under 64 bytes/s for 30 s is ended. A model call is not:
+a model may think for a minute before its first byte, so a call has one
+deadline, the <code>timeout</code> (120 s), a conversation with
+help-page lookups three times that, and Ctrl-C ends the wait at once
+without sending the prompt again. An in-memory reply past 16 MiB is
+dropped; the services document and JSON fetches cap at 1 MiB and 16
+MiB.</li>
 <li>The sign-in service’s <code>verification_uri</code> is opened in a
 browser only when it is a public https address.</li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="signing-in-to-the-hosted-tier">Signing in to the hosted tier<a class="anchor" aria-label="anchor" href="#signing-in-to-the-hosted-tier"></a>
+<h2 id="the-data-key">The data key<a class="anchor" aria-label="anchor" href="#the-data-key"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<p>Signing in is for the curated tables at <code>data.rmorie.com</code>
+only; it is never a language model.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://www.rmorie.com/access/&gt;"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login</a></span><span class="op">(</span><span class="op">)</span>          <span class="co"># or: GitHub device flow / emailed code</span></span>
-<span><span class="fu"><a href="../reference/bricklayer_llm_models.html">bricklayer_llm_models</a></span><span class="op">(</span><span class="op">)</span>         <span class="co"># what the tier offers</span></span>
 <span><span class="fu"><a href="../reference/bricklayer_llm_logout.html">bricklayer_llm_logout</a></span><span class="op">(</span><span class="op">)</span>         <span class="co"># forget the key</span></span></code></pre></div>
 <p>The key is stored with mode 0600 in the user’s configuration
-directory and never written anywhere else. Prompts and responses are not
-stored by the tier; the published terms are at
-<code>https://llm.rmorie.com/</code>.</p>
+directory and never written anywhere else. <code>rmbl doctor</code> says
+whether one is stored.</p>
 </div>
 <div class="section level2">
 <h2 id="from-the-command-line">From the command line<a class="anchor" aria-label="anchor" href="#from-the-command-line"></a>
 </h2>
 <p>The same routes serve the CLI installed by
 <code><a href="../reference/install_cli.html">install_cli()</a></code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> status</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"what does capsule_bundle() cover?"</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span> KEY</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> config setup       <span class="co"># pick a provider, paste its key (saved privately), pick a model</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> doctor             <span class="co"># the routes, and the one ask takes</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> models <span class="at">--route</span> anthropic</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="st">"what does capsule_bundle() cover?"</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> ask <span class="at">--route</span> ollama <span class="at">--model</span> gemma3:4b <span class="st">"how do I verify a capsule?"</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="ex">rmoriebricklayer</span> login <span class="at">--token</span>      <span class="co"># the data key: paste it when asked; it never sits in the shell history</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

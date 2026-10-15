@@ -32,24 +32,22 @@ y <- yoy(seg,
   direction = "lower_is_better"
 )
 y
-#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval    
-#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ────────────
-#> Female  2019           31                    —         —         —       —           
-#>     ↳ percent withheld: no comparison period
-#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%]
-#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%]
-#> Female  2022           19                    12        7         —       —           
-#>     ↳ percent withheld: base below 20
-#> Female  2023           24                    19        5         —       —           
-#>     ↳ percent withheld: base below 20
-#> Male    2019           402                   —         —         —       —           
-#>     ↳ percent withheld: no comparison period
-#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%] 
-#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%]
-#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%]
-#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%] 
+#> Gender  EndFiscalYear  Number_Of_Placements  previous  change  change %  interval     
+#> ──────  ─────────────  ────────────────────  ────────  ──────  ────────  ─────────────
+#> Female  2019           31                    —         —         —       —            
+#>     ↳ note: no comparison period
+#> Female  2020           28                    31        -3      ▼ -9.7%   [-48%, +56%] 
+#> Female  2021           12                    28        -16     ▼ -57.1%  [-80%, -13%] 
+#> Female  2022           19                    12        7       ▲ +58.3%  [-27%, +258%]
+#> Female  2023           24                    19        5       ▲ +26.3%  [-34%, +144%]
+#> Male    2019           402                   —         —         —       —            
+#>     ↳ note: no comparison period
+#> Male    2020           377                   402       -25     ▼ -6.2%   [-19%, +8%]  
+#> Male    2021           190                   377       -187    ▼ -49.6%  [-58%, -40%] 
+#> Male    2022           268                   190       78      ▲ +41.1%  [+17%, +71%] 
+#> Male    2023           331                   268       63      ▲ +23.5%  [+5%, +46%]  
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20 · lower is better
+#> lag 1 period · units: count · 95% exact rate-ratio interval · lower is better
 ```
 
 The interval is exact. Conditional on the two periods’ total, the
@@ -79,15 +77,15 @@ yoy(gap, value = n, period = year)
 #> year  n    previous  change  change %  interval    
 #> ────  ───  ────────  ──────  ────────  ────────────
 #> 2019  100  —         —         —       —           
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2020  120  100       20      ▲ +20.0%  [-9%, +58%] 
 #> 2021  —    120       —         —       —           
-#>     ↳ percent withheld: no data
+#>     ↳ note: no data
 #> 2022  140  —         —         —       —           
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2023  150  140       10      ▲ +7.1%   [-15%, +36%]
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+#> lag 1 period · units: count · 95% exact rate-ratio interval
 ```
 
 2021 appears as a row with no value, and 2022 has no comparison period
@@ -95,32 +93,29 @@ rather than a quietly three-year one.
 
 ## The second failure: a percent off a small base
 
-Two placements becoming twenty is a 900% rise and also nothing at all.
-The number describes how small the denominator was:
+Two placements becoming twenty is a 900% rise, and the same rise off a
+base of two is far less certain than off a base of two hundred. The
+percent is still the right number; what changes is its interval:
 
 ``` r
 
 tiny <- data.frame(year = 2019:2021, n = c(2, 20, 25))
-yoy(tiny, value = n, period = year)
-#> year  n   previous  change  change %  interval     
-#> ────  ──  ────────  ──────  ────────  ─────────────
-#> 2019  2   —         —         —       —            
-#>     ↳ percent withheld: no comparison period
-#> 2020  20  2         18        —       —            
-#>     ↳ percent withheld: base below 20
-#> 2021  25  20        5       ▲ +25.0%  [-33%, +137%]
-#> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+as.data.frame(yoy(tiny, value = n, period = year))[, c("year", "pct_change",
+                                                     "pct_lower", "pct_upper")]
+#>   year pct_change pct_lower pct_upper
+#> 1 2019         NA        NA        NA
+#> 2 2020        900  142.9205 8724.1205
+#> 3 2021         25  -33.3407  137.3319
 ```
 
-The change of `+18` is still reported, and so is the direction: those
-are facts. Only the percent is withheld, with the reason attached. Lower
-the gate if the small base is the point:
+Every non-zero base gets its percent and exact interval, however small
+the base or the change. Set `min_base` to add a note to small-base rows;
+nothing is withheld either way:
 
 ``` r
 
-as.data.frame(yoy(tiny, value = n, period = year, min_base = 0))$pct_change
-#> [1]  NA 900  25
+as.data.frame(yoy(tiny, value = n, period = year, min_base = 20))$flag
+#> [1] "no comparison period"  "small base (below 20)" NA
 ```
 
 ## The third failure: a percent of a percent
@@ -135,7 +130,7 @@ yoy(rate, value = share, period = year, units = "percent")
 #> year  share  previous  change  points  
 #> ────  ─────  ────────  ──────  ────────
 #> 2019  4.1    —         —         —     
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2020  4.6    4.1       0.5     ▲ +0.5pp
 #> 2021  5.2    4.6       0.6     ▲ +0.6pp
 #> 2022  5.0    5.2       -0.2    ▼ -0.2pp
@@ -170,7 +165,7 @@ head(as.data.frame(yoy(m, min_base = 0))[12:14, c("period", "value",
 
 yoy_summary(y)
 #>   Gender from   to first last total_pct  cagr_pct periods up down flat
-#> 1 Female 2019 2023    31   24 -22.58065 -6.197938       5  0    2    0
+#> 1 Female 2019 2023    31   24 -22.58065 -6.197938       5  2    2    0
 #> 2   Male 2019 2023   402  331 -17.66169 -4.742214       5  2    2    0
 ```
 
@@ -281,28 +276,28 @@ for (ext in c("csv", "tsv", "json", "md", "html", "pdf")) {
   yoy_write(y, f, title = "Placements by gender")
   cat(sprintf("%-5s %6d bytes\n", ext, file.size(f)))
 }
-#> csv      931 bytes
-#> tsv      931 bytes
-#> json    3374 bytes
-#> md      1630 bytes
-#> html    6853 bytes
-#> pdf     5104 bytes
+#> csv      966 bytes
+#> tsv      966 bytes
+#> json    3373 bytes
+#> md      1601 bytes
+#> html    6772 bytes
+#> pdf     5095 bytes
 ```
 
 The delimited writers lead with the settings as comments, and carry the
-`flag` column, so a withheld percentage stays marked as withheld
-wherever it lands:
+`flag` column, so a row’s note (a zero base, a missing period) travels
+with it:
 
 ``` r
 
 cat(yoy_csv(y, NULL, digits = 1L))
-#> # value: Number_Of_Placements; period: EndFiscalYear; by: Gender; lag: 1; units: count; interval: 95% exact rate ratio; percent withheld below a base of 20; direction: lower is better
+#> # value: Number_Of_Placements; period: EndFiscalYear; by: Gender; lag: 1; units: count; interval: 95% exact rate ratio; direction: lower is better
 #> Gender,EndFiscalYear,value,previous,change,pct_change,flag,pct_lower,pct_upper,verdict
 #> Female,2019,31,,,,no comparison period,,,
 #> Female,2020,28,31,-3,-9.7,,-47.8,55.6,better
 #> Female,2021,12,28,-16,-57.1,,-80.1,-13,better
-#> Female,2022,19,12,7,,base below 20,,,worse
-#> Female,2023,24,19,5,,base below 20,,,worse
+#> Female,2022,19,12,7,58.3,,-27,257.7,worse
+#> Female,2023,24,19,5,26.3,,-33.7,143.9,worse
 #> Male,2019,402,,,,no comparison period,,,
 #> Male,2020,377,402,-25,-6.2,,-18.7,8.2,better
 #> Male,2021,190,377,-187,-49.6,,-57.9,-39.8,better
@@ -323,7 +318,7 @@ cat(yoy_markdown(yoy(gap, value = n, period = year), NULL))
 #> | 2022 | 140 | —        |      — |        — |              | no comparison period |
 #> | 2023 | 150 | 140      |     10 |    +7.1% | [-15%, +36%] |                      |
 #> 
-#> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio; percent withheld below a base of 20_
+#> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio_
 ```
 
 The HTML is a single self-contained file: it makes no network request,

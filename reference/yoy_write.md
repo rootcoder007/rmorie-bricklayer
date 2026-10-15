@@ -55,9 +55,9 @@ for (ext in c("csv", "tsv", "json", "md", "html")) {
   cat(ext, file.size(f), "bytes\n")
   unlink(f)
 }
-#> csv 519 bytes
-#> tsv 519 bytes
-#> json 1553 bytes
-#> md 712 bytes
-#> html 4873 bytes
+#> csv 482 bytes
+#> tsv 482 bytes
+#> json 1552 bytes
+#> md 675 bytes
+#> html 4822 bytes
 ```

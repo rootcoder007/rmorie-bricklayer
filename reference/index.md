@@ -77,6 +77,10 @@ resource URL — CKAN, Socrata, ArcGIS, and Wayback snapshots.
   : Resolve a Wayback Machine snapshot URL
 - [`wayback_snapshot_url_native()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url_native.md)
   : Resolve a Wayback Machine snapshot URL (C++/libcurl)
+- [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+  : Archive many pages in the Wayback Machine
+- [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+  : Retry the failures of a bulk Wayback run
 
 ## Provenance & reproducibility capsules
 
@@ -112,27 +116,35 @@ verify it later so an analysis reproduces from the same inputs.
 
 ## Language model and command line
 
-The hosted MORIE LLM tier at llm.rmorie.com, reached through rmorie’s
-provider chain when that package is installed and natively otherwise;
-the rmoriebricklayer shell command.
+Language models you bring (a provider’s key, an OpenAI-compatible server
+of your own, or a local Ollama), answering from the MORIE packages’
+help; the rmoriebricklayer shell command.
 
 - [`agent_bundle()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/agent_bundle.md)
   : Agent-assisted reproducibility-bundle help
 - [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
   : Ask a language model
+- [`bricklayer_explain_error()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md)
+  : Explain an error from rmoriebricklayer (or a package built on it)
 - [`bricklayer_llm_config()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_config.md)
   : Show or save the language-model settings
 - [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
-  : Sign in to the hosted MORIE language model
+  : Sign in for the curated tables at data.rmorie.com
 - [`bricklayer_llm_logout()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_logout.md)
-  : Forget the hosted MORIE language-model key
+  : Forget the MORIE data key
 - [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
   : Report the language-model routes available from this machine
 - [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)
   : The hosted MORIE services, as the project site currently describes
   them
 - [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
-  : Models offered by the hosted MORIE LLM tier
+  : Models a language-model route offers
+- [`bricklayer_llm_providers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)
+  : The language-model providers a key can be brought for
+- [`bricklayer_llm_route_info()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_route_info.md)
+  : The language-model route that would answer
+- [`bricklayer_llm_chat()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_chat.md)
+  : A conversation with a language model
 - [`bricklayer_data_manifest()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
   [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
   [`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
@@ -387,6 +399,10 @@ history itself tamper-evident.
   : Fetch revocation data for a certificate path
 - [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
   : Sign a capsule manifest
+- [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  [`xmss_register_key()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  [`xmss_forget_used_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+  : Advance an XMSS key past a signature it made
 - [`capsule_verify()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_verify.md)
   : Verify a capsule manifest signature
 - [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
@@ -661,6 +677,47 @@ assumption log.
 - [`plume_field()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plume_field.md)
   : A Gaussian-plume concentration field on a grid
 
+## Courts and police-reported crime
+
+Case flow and clearance through a court, time to disposition from banded
+shares, the mix of outcomes, the change in a clearance rate split into
+rate and case-mix effects (Simpson’s paradox), where incidents cluster,
+and near-repeat space-time clustering; with real Ontario Court of
+Justice and Toronto Police Service data.
+
+- [`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md)
+  : Case flow through a court: clearance, backlog and time to clear
+- [`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md)
+  : Life table for grouped times: how long cases take
+- [`disposition_mix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md)
+  : The mix of outcomes over time, with simultaneous intervals and trend
+  tests
+- [`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md)
+  : Decompose a change in a clearance rate into rate and case-mix
+  effects
+- [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  : Where incidents cluster: a kernel density surface
+- [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md)
+  : Hot spots and how long they last
+- [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  : Near-repeat analysis: the Knox test for space-time clustering
+- [`justice-data`](https://rootcoder007.github.io/rmorie-bricklayer/reference/justice-data.md)
+  : Court and police data shipped with the package
+
+## Complex survey estimation
+
+Design-based means, totals, proportions and ratios, overall and by
+domain, with variances from replicate weights (Statistics Canada
+bootstrap, mean bootstrap, jackknife, BRR, Fay) or Taylor linearization
+over strata and PSUs, and design-based comparisons between domains.
+
+- [`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md)
+  : Describe a complex survey design
+- [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+  : Estimate a mean, total, proportion or ratio from a survey design
+- [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+  : Compare survey estimates between domains
+
 ## The footprint of the computation
 
 Electricity and CO2-equivalent of an expression, measured from RAPL
@@ -841,7 +898,14 @@ Every result draws itself with plot(), on base graphics, with one shared
 look and the same customisation everywhere; palettes and session
 options; Lorenz and funnel plots for results that are plain data frames.
 
-- [`plot(`*`<rmbl_stock_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+- [`plot(`*`<rmbl_hotspot>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_case_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_life_table>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_disposition_mix>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_density>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_knox>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_clearance_decomposition>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_stock_flow>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_yoy>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_rate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_share>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
@@ -868,6 +932,8 @@ options; Lorenz and funnel plots for results that are plain data frames.
   [`plot(`*`<rmbl_particles>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<rmbl_count_trend>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   [`plot(`*`<bricklayer_analysis>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_svy_estimate>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
+  [`plot(`*`<rmbl_svy_compare>`*`)`](https://rootcoder007.github.io/rmorie-bricklayer/reference/plot-methods.md)
   : Plot methods for the package's results
 - [`bricklayer_palette()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)
   [`bricklayer_plot_options()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_palette.md)

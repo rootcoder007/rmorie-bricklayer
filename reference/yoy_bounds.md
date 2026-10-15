@@ -60,9 +60,9 @@ yoy_bounds(y, rounding = 5)
 #> year  n   previous  change  change %  interval     
 #> ────  ──  ────────  ──────  ────────  ─────────────
 #> 2021  40  —         —         —       —            
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2022  45  40        5       ▲ +12.5%  [-28%, +77%] 
 #> 2023  60  45        15      ▲ +33.3%  [-11%, +101%]
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+#> lag 1 period · units: count · 95% exact rate-ratio interval
 ```

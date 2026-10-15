@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,9 +59,11 @@
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per route, in the order
-<code><a href="bricklayer_llm_ask.html">bricklayer_llm_ask</a></code> tries them (own endpoint, local Ollama,
-hosted MORIE tier): <code>route</code>, <code>status</code> and <code>detail</code>.
-Printed by <code>rmoriebricklayer doctor</code>.</p>
+<code><a href="bricklayer_llm_ask.html">bricklayer_llm_ask</a></code> tries them (own endpoint, each provider
+whose key is set, local Ollama; the providers without a key share one
+row): <code>route</code>, <code>status</code> and <code>detail</code>. Nothing is sent to a
+provider; a local Ollama server is asked for its model list. Printed by
+<code>rmoriebricklayer doctor</code>.</p>
     </div>
 
     <div class="section level2">
@@ -70,14 +72,14 @@ Printed by <code>rmoriebricklayer doctor</code>.</p>
 <span class="r-in"><span><span class="va">old</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"OLLAMA_HOST"</span>, unset <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OLLAMA_HOST <span class="op">=</span> <span class="st">"off"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_status</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               route        status</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      own endpoint       not set</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      local Ollama      disabled</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 hosted MORIE tier not logged in</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                                                                  detail</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                                                                                               MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2                                                                                                                                                                                                       OLLAMA_HOST=off</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 https://llm.rmorie.com  (request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             route   status</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1    own endpoint  not set</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 other providers   no key</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    local Ollama disabled</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                                                                                                                                                                                                                                                                                                                                                                              detail</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                                                                                                                                                                                                                                                                                                                                           MORIE_LLM_BASE_URL (+ MORIE_LLM_API_KEY, MORIE_LLM_MODEL): any OpenAI-compatible server</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 openai (OPENAI_API_KEY), anthropic (ANTHROPIC_API_KEY), gemini (GEMINI_API_KEY), openrouter (OPENROUTER_API_KEY), groq (GROQ_API_KEY), together (TOGETHER_API_KEY), fireworks (FIREWORKS_API_KEY), deepseek (DEEPSEEK_API_KEY), mistral (MISTRAL_API_KEY), xai (XAI_API_KEY), cerebras (CEREBRAS_API_KEY), perplexity (PERPLEXITY_API_KEY), huggingface (HF_TOKEN), opencode (OPENCODE_API_KEY), cohere (COHERE_API_KEY), nvidia (NVIDIA_API_KEY)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                                                                                                                                                                                                                                                                                                                                                                                                                                   OLLAMA_HOST=off</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">old</span><span class="op">)</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.unsetenv</a></span><span class="op">(</span><span class="st">"OLLAMA_HOST"</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.setenv.html" class="external-link">Sys.setenv</a></span><span class="op">(</span>OLLAMA_HOST <span class="op">=</span> <span class="va">old</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

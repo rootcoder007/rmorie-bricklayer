@@ -7,6 +7,7 @@ articles:
   banded-tables-and-concentration: banded-tables-and-concentration.html
   capsules: capsules.html
   categorical-integrity: categorical-integrity.html
+  courts-and-crime: courts-and-crime.html
   describe: describe.html
   drift: drift.html
   falsification-and-power: falsification-and-power.html
@@ -24,11 +25,12 @@ articles:
   siu-reports: siu-reports.html
   small-area-rates: small-area-rates.html
   stock-and-flow: stock-and-flow.html
+  survey-estimation: survey-estimation.html
   tables: tables.html
   trends-and-change: trends-and-change.html
   validation-rules-and-synthetic-data: validation-rules-and-synthetic-data.html
   yoy: yoy.html
-last_built: 2026-10-10T10:45Z
+last_built: 2026-10-15T05:06Z
 urls:
   reference: https://rootcoder007.github.io/rmorie-bricklayer/reference
   article: https://rootcoder007.github.io/rmorie-bricklayer/articles

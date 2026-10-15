@@ -25,7 +25,7 @@ never silently applies one country's grid to another's computation."><meta prope
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,12 +108,20 @@ caller or a test can supply them; the defaults read the running session.</p></dd
 <code>tools/build_timezones.R</code> from the IANA database) holds every zone
 of <code>zone.tab</code>, which names exactly one country per zone
 (<code>Europe/Stockholm</code> is Sweden even though the database now keeps
-its rules under <code>Europe/Berlin</code>), plus every alias and old name in
-the <code>backward</code> file (<code>US/Eastern</code>, <code>Asia/Calcutta</code>,
-<code>America/Montreal</code>) under the country of the zone it links to.
-Every geographic zone <code><a href="https://rdrr.io/r/base/timezones.html" class="external-link">OlsonNames()</a></code> lists resolves; the
-<code>Etc/</code>, <code>UTC</code> and fixed-offset zones name no country and fall
-through to the locale.</p>
+its rules under <code>Europe/Berlin</code>), plus the aliases and old names of
+the <code>backward</code> file under their own country: the country of the zone
+the alias stood for before the database merged it (<code>Iceland</code> is
+<code>Atlantic/Reykjavik</code>, Iceland, not Abidjan's Ivory Coast), the
+link target's country when that target serves a single country
+(<code>Asia/Calcutta</code>, <code>US/Eastern</code>), and a reviewed list for the
+rest (<code>Atlantic/Jan_Mayen</code>, <code>America/Coral_Harbour</code>,
+<code>Canada/Eastern</code>). Every geographic zone <code><a href="https://rdrr.io/r/base/timezones.html" class="external-link">OlsonNames()</a></code> lists
+resolves to a country or territory; a territory the carbon table has no
+row of its own for (Monaco, Jersey, Vaduz, the Antarctic stations) uses
+the grid of the country it draws on or the world average, and the method
+says which. The <code>Etc/</code>, <code>UTC</code>, fixed-offset and generic zones
+(<code>CET</code>, <code>EST</code>, <code>WET</code>) name no country and fall through
+to the locale.</p>
     </div>
 
     <div class="section level2">

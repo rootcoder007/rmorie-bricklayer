@@ -84,19 +84,16 @@ produced the data.
   fixed on the day, not blamed on the software.
 - **Asking a model** —
   [`bricklayer_llm_ask()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)
-  puts a question to the first language-model route that answers: an
-  OpenAI-compatible endpoint of your own, a local Ollama server, then
-  the hosted MORIE tier as a last resort
-  ([`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
-  stores its key,
-  [`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
-  lists its models,
+  puts a question to a language model you bring: a key for any major
+  provider (OpenAI, Anthropic, Gemini, OpenRouter, Groq, Mistral,
+  DeepSeek, xAI, Hugging Face, OpenCode and more:
+  [`bricklayer_llm_providers()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_providers.md)),
+  an Ollama server, or an OpenAI-compatible server of your own. The
+  model is given every function of the installed MORIE packages and
+  tools to read their help, as much as it can take in;
   [`bricklayer_llm_status()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_status.md)
-  shows which route answers). The hosted addresses come from a signed
-  services document
-  ([`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)),
-  so they can change without a release; the `rmoriebricklayer` launcher
-  offers the same as shell verbs.
+  shows which route answers, and the `rmoriebricklayer` launcher offers
+  the same as shell verbs.
 - **Schema validation** —
   [`infer_schema()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/infer_schema.md)
   derives a pinnable schema from data you trust;
@@ -272,6 +269,60 @@ produced the data.
   cover the results that are plain data frames. Every method returns the
   numbers it drew.
   [`vignette("plotting-results")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/plotting-results.md).
+- **Archiving in bulk** —
+  [`wayback_save()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_save.md)
+  (and `rmbl wayback FILE`) saves many URLs in the Wayback Machine with
+  archive.org’s Save Page Now 2 API and your S3-like keys: captures in
+  flight at once but started no faster than archive.org allows an
+  account (`per_minute`, and a cap per run), every slow-down reply and
+  `Retry-After` waited out, recent captures kept, results written as
+  they land so a stopped run resumes (captures already started are
+  polled, not sent again),
+  [`wayback_retry()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_retry.md)
+  for the failures, and a live animated progress bar (drawn in C, shared
+  with
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)).
+- **Courts and police-reported crime** —
+  [`case_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/case_flow.md)
+  (clearance rate with exact intervals, rolling clearance, net flow and
+  months to clear the pending inventory),
+  [`life_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/life_table.md)
+  (actuarial life table with Greenwood intervals from banded times such
+  as “disposed within 10 months”),
+  [`disposition_mix()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/disposition_mix.md)
+  (outcome shares with Goodman simultaneous intervals, homogeneity and
+  Cochran-Armitage trend tests),
+  [`clearance_decomposition()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/clearance_decomposition.md)
+  (Kitagawa’s exact split of a change in a clearance rate into rate and
+  case-mix effects, a Mantel-Haenszel rate ratio within parts, and a
+  Simpson’s-paradox verdict),
+  [`crime_density()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crime_density.md)
+  (kernel density of incident locations in incidents per square
+  kilometre, with highest-density regions) and
+  [`knox_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/knox_test.md)
+  (near-repeat space-time clustering, exact expectations, permutation
+  p-values). Each has a plot. Real Ontario Court of Justice and Toronto
+  Police Service excerpts ship in `inst/extdata` (`?justice-data`);
+  [`vignette("courts-and-crime")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md).
+- **Complex surveys** —
+  [`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md)
+  (replicate weights: bootstrap, mean bootstrap, JK1, JKn, BRR and Fay’s
+  BRR; or strata, PSUs and a finite population correction for Taylor
+  linearization),
+  [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
+  (means, totals, proportions and ratios by domain, with the whole
+  design kept for every subgroup, Wilson intervals at SAS’s modified
+  effective sample size, and small domains flagged, not withheld) and
+  [`survey_compare()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_compare.md)
+  (domain differences with the design covariance). Matches the `survey`
+  package;
+  [`vignette("survey-estimation")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/survey-estimation.md)
+  reproduces Health Canada’s published CSUS intervals.
+- **Hot spots over time** —
+  [`hotspot_persistence()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/hotspot_persistence.md):
+  how concentrated incidents are in place, which cells are hot each
+  period (ties counted and said), and how much each period’s hot spots
+  overlap the last.
 - **Air pollution, from source to burden** — where a plume goes:
   [`pg_sigmas()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pg_sigmas.md)
   (Pasquill-Gifford coefficients with Briggs’s fits, rural and urban),
@@ -348,9 +399,10 @@ produced the data.
   [`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
   both signing through
   [`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
-  (an XMSS index never signs twice: carry each signature’s `key_state`
-  forward); and HQC-KEM in both revisions: `hqc_keygen(version = "v5")`,
-  the default (specification of 2025-08-22, 32-byte shared secret), and
+  (an XMSS index never signs twice: carry each key forward with
+  [`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md));
+  and HQC-KEM in both revisions: `hqc_keygen(version = "v5")`, the
+  default (specification of 2025-08-22, 32-byte shared secret), and
   `hqc_keygen(version = "round4")` (the fourth-round submission of
   2023-04-30 — the HQC of liboqs up to 0.12 and of PQClean — with a
   64-byte shared secret). Keys carry their revision and
@@ -409,12 +461,15 @@ produced the data.
   beside it.
 - **Curated tables** —
   [`bricklayer_data_tables()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
-  lists the tables served at data.rmorie.com (161 databases and 203
-  tables on 2026-10-05, materialised from Google BigQuery public
-  datasets), and `bricklayer_data_load("db/table")` opens one with your
-  MORIE key (issued on request at <https://www.rmorie.com/access/>,
-  under the terms at <https://www.rmorie.com/data-license/>), cached
-  locally.
+  lists the tables served at data.rmorie.com (175 databases and 716
+  tables on 2026-10-13: Google BigQuery public datasets and the survey,
+  court and justice data the MORIE ledger uses), and
+  `bricklayer_data_load("db/table")` opens one with your MORIE key
+  (`rmoriebricklayer login` signs in with GitHub or an emailed code; or
+  ask at <https://www.rmorie.com/access/>), under the terms at
+  <https://www.rmorie.com/data-license/>, cached locally. The ICPSR,
+  NCVS 38604 and a2aj tables open once you accept their terms at
+  <https://data.rmorie.com/terms>.
   [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
   downloads any URL with an Internet Archive fallback (libcurl).
 
@@ -434,10 +489,10 @@ about the design.
 | Constant time | ctgrind: every operation that touches a secret runs under valgrind memcheck with the secret marked undefined, so a branch or a memory address depending on it is an error. 22 cases – ML-KEM 512/768/1024 (keygen, encaps, decaps and implicit rejection), ML-DSA 44/65/87 (keygen, sign), SLH-DSA (SHAKE and SHA-2 families), HQC 1/3/5 and round 4, XMSS, CTR_DRBG on the portable and the AES-NI path, HMAC, PBKDF2, keyed BLAKE2b, SHA-2, SHA-3, digest comparison – all clean with GCC and with Clang. The only values the schemes branch on are the ones their specifications publish (a rejected sample, the challenge, the hints, R), each declassified at one named line | `inst/ctcheck/`, workflow `constant-time` |
 | Secrets are wiped | After each of those operations the harness scans the dead stack below it for copies of the seed, the signing key, the password: none remain | same harness, `ZEROISATION` lines |
 | Memory safe | The whole test suite under AddressSanitizer and UndefinedBehaviorSanitizer (R-devel built with both) | workflow `sanitizers` |
-| Survives hostile arguments | Every one of the 113 registered entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`); argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
+| Survives hostile arguments | Every one of the 119 C++ entry points runs behind a generated try/catch barrier (a C++ exception is an R error, never `std::terminate`), and the 11 written in plain C (the file lock, its release and the locked call, the path probe, the CSV splitter, the checked writer, the checked gzip reader, the progress bar and spinner, the survey replicate totals, and the interrupt check before a key prompt) report errors through R itself; argument types, lengths and sizes are checked before any allocation; quadratic loops and the RSA arithmetic are interruptible; the RSA exponent, SHAKE output, PBKDF2 iterations and SIU inputs are bounded. A C stack overflow is not an exception, so the SIU text passes over a whole document are loops, not regexes, and every line the extractors see is capped; a test runs ten hostile inputs through every one-string SIU entry point in a subprocess | `src/rmbl_barrier.cpp`, `inst/scripts/gen_barrier.R`, `tests/testthat/test-review2.R`, `tests/testthat/test-review3.R` |
 | No request to a private address | One check in the transport: the authority parsed as a URL parser does, IPv4/IPv6 literals canonicalised (`127.1`, `0x7f000001`, `::ffff:7f00:1`), local names refused by suffix, every resolved address tested and the connection pinned to it (no DNS rebinding), redirects re-checked hop by hop, `https` never downgraded | `src/rmbl_fetch.cpp`, `tests/testthat/test-review2.R` |
 | Robust against hostile input | libFuzzer with ASan + UBSan over the DER parser and RSA arithmetic, the decimal-to-double conversion (checked against the C library bit for bit on every input both accept), and the SIU report parsers; weekly long runs | `inst/fuzz/`, workflow `fuzz` |
-| Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE, HMAC and PBKDF2: 6,848 checks, 0 failures, each not-applicable vector named with its reason; the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
+| Standards vectors | The C2SP Wycheproof post-quantum sets and the NIST ACVP sets for ML-KEM, ML-DSA, SLH-DSA, SHA-3, SHAKE and HMAC: 6,848 checks, 0 failures, each not-applicable vector named with its reason (the published ACVP PBKDF set is SHA2-224 only, so none of its vectors apply to this package’s PBKDF2-HMAC-SHA256, which the test suite checks against the RFC 7914 vectors instead); the masked and the plain paths are compared on every ML-KEM decapsulation and ML-DSA signing vector | `tools/vectors/`, workflow `vectors` |
 | Agrees with OpenSSL on any input | libFuzzer differential fuzzing against OpenSSL 3.5: ML-KEM, ML-DSA, SLH-DSA-SHA2-128f, the SHA-2, SHA-3 and SHAKE digests, BLAKE2b, HMAC and PBKDF2 must agree byte for byte | `inst/fuzz/fuzz_ossl.cpp`, workflow `fuzz` |
 | Timing on hardware | dudect fixed-versus-random Welch t on x86-64 and arm64 Linux and on Apple silicon (with and without DIT): ML-KEM decapsulation plain and masked, valid against invalid with both classes varying, each phase alone, encapsulation, HQC decapsulation, the digest comparison, PBKDF2; an early-exit comparison is the control that must be flagged | `inst/dudect/`, workflow `dudect` |
 | Power, in simulation | TVLA on the code compiled for a Cortex-M4 and run in an emulator, under the Hamming-weight and the Hamming-distance models: every masked kernel shows no first-order leakage under either, every unmasked control leaks | `inst/tvla/`, workflow `tvla` |
@@ -625,7 +680,7 @@ Rscript -e 'if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak"
 Rscript -e 'repos <- c("https://rootcoder007.r-universe.dev", "https://cloud.r-project.org"); install.packages("remotes", repos = repos); remotes::install_github("rootcoder007/rmorie-bricklayer", repos = repos, upgrade = "always")'
 ```
 
-On macOS, CRAN’s R (from <https://cloud.r-project.org/bin/macosx/>)
+On macOS, CRAN’s R (from <https://CRAN.R-project.org/bin/macosx/>)
 installs r-universe’s prebuilt binaries in seconds. Homebrew’s R cannot
 use them, so there every package is compiled from source.
 
@@ -722,8 +777,22 @@ digest <- sha256_file(file.path(tempdir(), "manifest.json"))
 key <- pqc_keygen()                       # post-quantum, hash-based
 sig <- capsule_sign(digest, key)
 capsule_verify(digest, sig, signing_public_key(key))
-key <- sig$key_state                     # the next signature must use this
+key <- xmss_advance(key, sig)            # the next signature must use this
 ```
+
+An XMSS index must never sign twice, so the package keeps a record of
+the highest index each key has used (`xmss_used_indices.txt` in
+`tools::R_user_dir("rmoriebricklayer", "config")`, locked by the
+operating system while a signature reserves its index). A key generated
+by
+[`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md)
+is entered at birth. A key from another machine, one rebuilt from its
+seeds, or one used in CI or a container with a fresh home directory is
+unknown to the record and is refused at index 0 until
+`xmss_register_key(key)` vouches that it has never signed; or point
+`options(rmoriebricklayer.xmss_index_file = )` at a record that
+persists. See
+[`?xmss_advance`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md).
 
 See
 [`vignette("drift")`](https://rootcoder007.github.io/rmorie-bricklayer/articles/drift.md)
@@ -734,46 +803,59 @@ for signing, Merkle pinning and manifest chains.
 ## Asking a model
 
 The package can put a question to a language model, from R or from the
-shell. Three routes are tried, in this order, and the first that answers
-is used:
+shell. You bring the model; the package runs no model service of its own
+and sends nothing anywhere you did not set up. The routes are tried in
+this order, and the first that is set up is used:
 
 1.  **An endpoint of your own.** Set `MORIE_LLM_BASE_URL` to any
     OpenAI-compatible server (with `MORIE_LLM_API_KEY` and
     `MORIE_LLM_MODEL` when it needs them).
-2.  **A local Ollama server.** Found at `OLLAMA_HOST` (or
-    `OLLAMA_BASE_URL`), default `http://localhost:11434`; the model is
-    `OLLAMA_MODEL` or the first one the server lists. `OLLAMA_HOST=off`
-    skips it.
-3.  **The hosted MORIE tier**, a last resort for people who can run
-    neither. Its address and model list come from the signed services
-    document at `https://rmorie.com/.well-known/morie-services.json`
-    (ML-DSA-44, the public key pinned in the package:
-    [`bricklayer_services()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_services.md)),
-    so the endpoint can move or be paused without a package release.
-    Keys are personal, rate limited and issued on request at
-    <https://www.rmorie.com/access/>; a key is stored once, in
-    `~/.config/morie/credentials.json`, and shared with rmorie,
-    rmoriedata and the Python package morie.
+2.  **A provider whose key is set**: OpenAI, Anthropic, Google Gemini,
+    OpenRouter, Groq, Together AI, Fireworks AI, DeepSeek, Mistral, xAI,
+    Cerebras, Perplexity, Hugging Face, OpenCode Zen, Cohere and NVIDIA,
+    each from its usual variable (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`,
+    `GEMINI_API_KEY`, …) or a key saved with
+    `rmbl config set <provider>.key`. Anthropic’s and Gemini’s own APIs
+    are spoken natively.
+3.  **Ollama**, found at `OLLAMA_HOST` (or `OLLAMA_BASE_URL`), default
+    `http://localhost:11434`. Its server has to be running:
+    `ollama serve` in a terminal (or the Ollama desktop app, or the
+    `ollama` system service the Linux installer sets up), then
+    `ollama pull NAME` for a model. `rmbl doctor` says “not running”
+    until it answers; the model is `OLLAMA_MODEL` or the first one the
+    server lists, including the cloud models Ollama serves. Ollama’s own
+    cloud API works the same way:
+    `rmbl config set ollama.url https://ollama.com` and
+    `rmbl config set ollama.key` (your Ollama API key).
+    `OLLAMA_HOST=off` skips it.
+
+While it works, `rmbl ask` shows a spinner with the seconds so far. The
+same question again is answered from this machine at once (`--fresh`
+asks the model again; `MORIE_LLM_CACHE=off` turns that off), and an
+error of these packages can be explained without any model:
+`rmbl explain-error "the error text"` (R:
+[`bricklayer_explain_error()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md))
+names the function that raised it, the exported functions it comes from
+and what the message asks for.
+
+The model gets the packages’ help: the name, arguments and title of
+every function of rmoriebricklayer (and of rmoriedata and rmorie when
+installed), and tools to search the help, read a page, its examples, a
+vignette and the dataset list before it writes code. A large model (a
+provider’s, or an Ollama cloud model) gets all of it; a small model
+running locally gets the functions nearest the question and can still
+look up any other. `MORIE_LLM_CONTEXT` sets the size by hand.
 
 ``` r
 
 library(rmoriebricklayer)
 
+bricklayer_llm_providers()   # the providers, their addresses and key variables
 bricklayer_llm_status()      # which route would answer from this machine, and why
-bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.")
+Sys.setenv(ANTHROPIC_API_KEY = "...")    # or bricklayer_llm_config(anthropic.key = "...")
+bricklayer_llm_ask("How do I estimate a weighted proportion with bootstrap replicate weights?")
 bricklayer_llm_ask("The same question, on the local model.", route = "ollama")
-
-# The hosted tier: store the key you were issued, or sign in
-bricklayer_llm_login(token = "sk-...")                    # the key from rmorie.com/access
-bricklayer_llm_login(email = "you@example.org")           # or: a code is emailed, then
-bricklayer_llm_login(email = "you@example.org", code = "123456")
-bricklayer_llm_login()                                   # or: GitHub device flow
-bricklayer_llm_models()      # the hosted models your key can use; attr(, "default")
-bricklayer_llm_ask("Summarise what a Benford screen can and cannot show.",
-                  model = "gpt-oss-120b:cf", route = "hosted")
-bricklayer_llm_logout()      # forget the key
-
-bricklayer_services()        # the signed document: endpoints, modes, models, notice
+bricklayer_llm_models(route = "anthropic")   # the models that route offers; attr(, "default")
 ```
 
 ### Choosing the route and model
@@ -786,8 +868,8 @@ that is set still wins for that session.
 ``` r
 
 bricklayer_llm_config()                                        # every setting, its value and source
-bricklayer_llm_config(route = "hosted")                        # always the hosted tier
-bricklayer_llm_config(hosted.model = "gpt-oss-120b:cf")        # its default model
+bricklayer_llm_config(route = "anthropic")                     # always this provider
+bricklayer_llm_config(anthropic.model = "claude-opus-5-5")     # its model
 bricklayer_llm_config(ollama.url = "http://192.168.1.20:11434", ollama.model = "qwen3:8b")
 bricklayer_llm_config(own.url = "http://localhost:1234/v1", own.model = "my-model", own.key = "sk-...")
 bricklayer_llm_config(route = NULL)                            # back to the automatic order
@@ -795,22 +877,18 @@ bricklayer_llm_config(route = NULL)                            # back to the aut
 
 | Setting | What it does | Environment variable |
 |----|----|----|
-| `route` | `auto` (own endpoint, Ollama, then hosted), `own`, `ollama` or `hosted` | `MORIE_LLM_ROUTE` |
-| `own.url`, `own.model`, `own.key` | your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a provider) | `MORIE_LLM_BASE_URL`, `MORIE_LLM_MODEL`, `MORIE_LLM_API_KEY` |
+| `route` | `auto` (own endpoint, a provider with a key, then Ollama), `own`, `ollama` or a provider id | `MORIE_LLM_ROUTE` |
+| `own.url`, `own.model`, `own.key` | your OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a gateway) | `MORIE_LLM_BASE_URL`, `MORIE_LLM_MODEL`, `MORIE_LLM_API_KEY` |
 | `ollama.url`, `ollama.model`, `ollama.key` | an Ollama server here or on your network; `ollama.url off` skips it | `OLLAMA_HOST`, `OLLAMA_MODEL`, `OLLAMA_API_KEY` |
-| `hosted.url`, `hosted.model`, `hosted.key` | the hosted tier; the key is checked, then stored like `login --token` | `MORIE_HOSTED_BASE_URL`, `MORIE_HOSTED_MODEL`, `MORIE_HOSTED_KEY` |
+| `<provider>.key`, `<provider>.model` | a provider’s key (stored privately, shown only as “set”) and model | the provider’s key variable, `MORIE_<PROVIDER>_MODEL` |
 
 With `route = "auto"`, a local Ollama server that has no model pulled is
-passed over, so a stored hosted key is used rather than an empty Ollama.
+passed over.
 
-`MORIE_HOSTED_KEY` in the environment overrides the stored key, and
-`MORIE_HOSTED_BASE_URL` points the package at another gateway (set it to
-`off` to disable the hosted tier). The hosted tier serves ollama.com
-cloud models (minimax-m3:cloud, the default; minimax-m2.7:cloud,
-glm-5.2:cloud, deepseek-v4-pro:cloud, gemma4:31b-cloud,
-gpt-oss:20b-cloud and gpt-oss:120b-cloud) and additional AI models;
-[`bricklayer_llm_models()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_models.md)
-reports what your key can use now.
+Signing in
+([`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md),
+`rmbl login`) is for the curated tables at data.rmorie.com only; it is
+never a language model.
 
 The same verbs exist on the command line once the launcher is on your
 `PATH`:
@@ -819,23 +897,23 @@ The same verbs exist on the command line once the launcher is on your
 Rscript -e 'rmoriebricklayer::install_cli()'   # links ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 rmoriebricklayer help                           # every verb; `help start`, `help llm`, `help config`, `help r`
 rmoriebricklayer doctor                         # which routes answer here, and the one ask will use
-rmoriebricklayer ask "your question"            # own endpoint, local Ollama, then the hosted tier
+rmoriebricklayer ask "your question"            # own endpoint, a provider with a key, then Ollama
 rmoriebricklayer ask --model NAME "your question"
-rmoriebricklayer ask --route hosted "your question"   # one route, this time
+rmoriebricklayer ask --route anthropic "your question"   # one route, this time
 rmoriebricklayer config                         # every language-model setting and where it comes from
-rmoriebricklayer config setup                   # a few questions that set them all
-rmoriebricklayer config set route hosted        # always the hosted tier
-rmoriebricklayer config set hosted.model gpt-oss-120b:cf
+rmoriebricklayer config setup                   # pick a provider, paste its key, pick a model
+rmoriebricklayer config set route anthropic     # always this provider
+rmoriebricklayer config set anthropic.key       # asks for the key; saved privately
 rmoriebricklayer config set ollama.url http://192.168.1.20:11434
 rmoriebricklayer config set own.url http://localhost:1234/v1
 rmoriebricklayer config unset route             # back to the automatic order
-rmoriebricklayer login --token                  # paste the key you were issued (or pipe it in)
+rmoriebricklayer models --route ollama          # the models a route offers, the one in use marked
+rmoriebricklayer login --token                  # the data key: paste the key you were issued
 rmoriebricklayer login --email you@example.com  # or: a code is emailed, type it at the prompt
 rmoriebricklayer login --email you@example.com --code 123456   # the same, code passed (scripts)
 rmoriebricklayer login                          # or: GitHub device flow
 rmoriebricklayer login --no-browser             # server / SSH: prints a link + code for any device
-rmoriebricklayer models                         # hosted models your key can use, default marked
-rmoriebricklayer logout                         # forget the key
+rmoriebricklayer logout                         # forget the data key
 rmoriebricklayer data list                      # the curated tables at data.rmorie.com
 rmoriebricklayer data pull db/table --out t.csv # download one (your MORIE key)
 rmoriebricklayer bundle "your request"          # agent_bundle() from the shell

@@ -11,7 +11,7 @@ returns the rows sorted by attributable cases, worst first."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,9 @@ returns the rows sorted by attributable cases, worst first.</p>
 <span>  population_col <span class="op">=</span> <span class="st">"population"</span>,</span>
 <span>  baseline_rate_col <span class="op">=</span> <span class="st">"baseline_rate"</span>,</span>
 <span>  pollutant <span class="op">=</span> <span class="st">"NO2"</span>,</span>
-<span>  outcome <span class="op">=</span> <span class="st">"all_cause_mortality"</span></span>
+<span>  outcome <span class="op">=</span> <span class="st">"all_cause_mortality"</span>,</span>
+<span>  rare_outcome <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  high_rate <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,8 +86,9 @@ rate per person-year.</p></dd>
 <dd><p>Column names.</p></dd>
 
 
-<dt id="arg-pollutant-outcome">pollutant, outcome<a class="anchor" aria-label="anchor" href="#arg-pollutant-outcome"></a></dt>
-<dd><p>Passed to <code><a href="pollution_burden.html">pollution_burden</a></code>.</p></dd>
+<dt id="arg-pollutant-outcome-rare-outcome-high-rate">pollutant, outcome, rare_outcome, high_rate<a class="anchor" aria-label="anchor" href="#arg-pollutant-outcome-rare-outcome-high-rate"></a></dt>
+<dd><p>Passed to
+<code><a href="pollution_burden.html">pollution_burden</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

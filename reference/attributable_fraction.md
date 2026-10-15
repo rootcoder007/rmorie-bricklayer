@@ -7,7 +7,12 @@ avoided if the exposure were removed.
 ## Usage
 
 ``` r
-attributable_fraction(rr, exposure_prevalence)
+attributable_fraction(
+  rr,
+  exposure_prevalence,
+  rr_lower = NULL,
+  rr_upper = NULL
+)
 ```
 
 ## Arguments
@@ -22,9 +27,17 @@ attributable_fraction(rr, exposure_prevalence)
 
   Proportion of the population exposed, in `[0, 1]`.
 
+- rr_lower, rr_upper:
+
+  Optional confidence limits of `rr`; when both are given the fraction
+  carries the limits that the same formula gives at them (Levin's
+  formula is monotone in the relative risk, so the interval of the
+  fraction is the image of the interval of the risk).
+
 ## Value
 
-A number in `[0, 1)` for `rr >= 1`.
+A number in `[0, 1)` for `rr >= 1`, with an attribute `ci` (`lower`,
+`upper`) when the limits were given.
 
 ## References
 

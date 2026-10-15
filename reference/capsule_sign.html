@@ -11,7 +11,7 @@ the key and has not been altered since."><meta property="og:image" content="http
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -129,9 +129,9 @@ signature for the same randomness. The option
 chain- and bundle-heavy code that has no physical attacker in its threat
 model can take the plain path everywhere with
 <code>options(rmoriebricklayer.masked = FALSE)</code>. SLH-DSA and XMSS
-signing are not masked and ignore it. Masking costs about 3 to 12 times
+signing are not masked and ignore it. Masking costs about 2.3 to 3.4 times
 the plain time on ML-KEM decapsulation (4 ms for ML-KEM-768 on this
-package's test machine) and 13 to 24 times on ML-DSA signing (26 ms for
+package's test machine) and 7 to 10 times on ML-DSA signing (26 ms for
 ML-DSA-65), depending on the CPU.</p></dd>
 
 </dl></div>
@@ -139,7 +139,7 @@ ML-DSA-65), depending on the CPU.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list of class <code>bricklayer_signature</code>: <code>scheme</code>,
 <code>signature</code>, and for XMSS also <code>auth</code>, <code>index</code>,
-<code>root</code>, <code>height</code>, <code>key_state</code>, <code>randomizer</code> (the
+<code>root</code>, <code>height</code>, <code>randomizer</code> (the
 per-signature <code>R</code> of RFC 8391, which a verifier needs and which
 therefore travels with the signature) and <code>wire</code> – the signature
 in the RFC's own byte order, <code>index || R || WOTS || auth</code>,
@@ -158,16 +158,17 @@ post-quantum one-time signature under the key's Merkle root. Asymmetric:
 a verifier holding only the public root cannot forge.</p>
     </div>
     <div class="section level2">
-    <h2 id="the-returned-key-state-must-be-carried-forward">The returned key state must be carried forward<a class="anchor" aria-label="anchor" href="#the-returned-key-state-must-be-carried-forward"></a></h2>
-    <p>An XMSS signature consumes a leaf. The returned object therefore carries
-<code>key_state</code>, the key with <code>next_index</code> advanced, and
-<strong>subsequent signing must use that</strong> – reusing an index breaks the
-scheme. The key is an R value, so <code>capsule_sign()</code> cannot advance the
-caller's copy; instead it remembers, for the session, the highest index
-each key has signed with and refuses that index or an earlier one (signing
-twice with one key object, or with a stale copy). Across sessions the
-saved key must be the latest <code>key_state</code>: save it after every signature.
-Passing an exhausted key is an error, not a silent wrap-around.</p>
+    <h2 id="the-key-must-be-advanced-after-every-signature">The key must be advanced after every signature<a class="anchor" aria-label="anchor" href="#the-key-must-be-advanced-after-every-signature"></a></h2>
+    <p>An XMSS signature consumes a leaf, and <strong>subsequent signing must use the
+advanced key</strong> – reusing an index breaks the scheme. The signature object
+carries no key material (it is what verifiers are handed); the advanced
+key is <code>xmss_advance(key, signature)</code>, and that is what to save. The key is
+an R value, so <code>capsule_sign()</code> cannot advance the caller's copy; instead it
+records, in the session and in the index file described under
+<code><a href="xmss_advance.html">xmss_advance()</a></code>,
+the highest index each key has signed with, and
+refuses that index or an earlier one. Passing an exhausted key is an error,
+not a silent wrap-around.</p>
     </div>
     <div class="section level2">
     <h2 id="security">Security<a class="anchor" aria-label="anchor" href="#security"></a></h2>
@@ -196,7 +197,9 @@ README's security section lists what each check does and does not cover.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Symmetric: one shared secret.</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">op</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>rmoriebricklayer.xmss_index_file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>  <span class="co"># keep this example's</span></span></span>
+<span class="r-in"><span><span class="co"># one-time index record out of your configuration directory; leave the default in use</span></span></span>
+<span class="r-in"><span><span class="co"># Symmetric: one shared secret.</span></span></span>
 <span class="r-in"><span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu">capsule_sign</span><span class="op">(</span><span class="st">"sha256:abc123"</span>, key <span class="op">=</span> <span class="st">"shared-secret"</span>,</span></span>
 <span class="r-in"><span>                    scheme <span class="op">=</span> <span class="st">"hmac"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"sha256:abc123"</span>, <span class="va">sig</span>, <span class="st">"shared-secret"</span><span class="op">)</span></span></span>
@@ -210,8 +213,8 @@ README's security section lists what each check does and does not cover.</p>
 <span class="r-in"><span><span class="fu"><a href="capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest-1"</span>, <span class="va">s1</span>, <span class="fu"><a href="signing_public_key.html">signing_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Carry the advanced key state forward for the next signature.</span></span></span>
-<span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="va">s1</span><span class="op">$</span><span class="va">key_state</span></span></span>
+<span class="r-in"><span><span class="co"># Advance the key past the signature before signing again.</span></span></span>
+<span class="r-in"><span><span class="va">key</span> <span class="op">&lt;-</span> <span class="fu"><a href="xmss_advance.html">xmss_advance</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">s1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">key</span><span class="op">$</span><span class="va">next_index</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
 <span class="r-in"><span><span class="va">s2</span> <span class="op">&lt;-</span> <span class="fu">capsule_sign</span><span class="op">(</span><span class="st">"manifest-2"</span>, <span class="va">key</span><span class="op">)</span></span></span>
@@ -221,6 +224,7 @@ README's security section lists what each check does and does not cover.</p>
 <span class="r-in"><span><span class="co"># A signature does not transfer to another message.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest-1"</span>, <span class="va">s2</span>, <span class="fu"><a href="signing_public_key.html">signing_public_key</a></span><span class="op">(</span><span class="va">key</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span><span class="va">op</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

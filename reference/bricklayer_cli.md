@@ -2,26 +2,26 @@
 
 Dispatches the verbs of the `rmoriebricklayer` launcher:
 
-- `login [--token [KEY]] [--email ADDRESS [--code CODE]] [--no-browser]`:
+- `login [--token] [--email ADDRESS [--code CODE]] [--no-browser]`:
 
-  sign in to the hosted MORIE tier (a last resort behind a local model
-  or your own endpoint; keys are issued on request at
-  <https://www.rmorie.com/access/>): a key you paste with `--token`
-  (read from the terminal or a pipe when KEY is omitted), a code sent to
-  `--email`, or the GitHub device flow
+  sign in for the curated tables at data.rmorie.com (a free MORIE data
+  key, issued at <https://www.rmorie.com/access/>): a key you paste with
+  `--token` (read from the terminal or a pipe when KEY is omitted), a
+  code sent to `--email`, or the GitHub device flow
 
 - `logout`:
 
-  forget the hosted key
+  forget the data key
 
 - `doctor`:
 
-  report the language-model routes available here (own endpoint, local
-  Ollama, hosted tier), in the order `ask` tries them
+  report the language-model routes available here (own endpoint, each
+  provider with your key, local Ollama), in the order `ask` tries them
 
-- `models`:
+- `models [--route ROUTE]`:
 
-  list the models the hosted tier offers your key (default marked)
+  list the models your provider (or server) offers, the one in use
+  marked
 
 - `data list`:
 
@@ -38,10 +38,19 @@ Dispatches the verbs of the `rmoriebricklayer` launcher:
   the route `ask` uses and the address, key and model of each route;
   `setup` walks through them
 
-- `ask [--route ROUTE] [--model NAME] PROMPT...`:
+- `ask [--route ROUTE] [--model NAME] [--fresh] PROMPT...`:
 
   send a prompt to the model (or the named one, on the named route) and
-  print the reply
+  print the reply; the same question again is answered from this machine
+  (`--fresh` asks anew). `aye` and `tellme` are the same verb, and a
+  quoted question with no verb (`rmbl "how do I weight a survey?"`) is
+  asked too
+
+- `explain-error MESSAGE...`:
+
+  where an error of these packages comes from
+  ([`bricklayer_explain_error`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_explain_error.md)),
+  without a model or the network
 
 - `bundle REQUEST...`:
 
@@ -94,25 +103,30 @@ The exit status, invisibly (0 on success).
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.11
+#> rmoriebricklayer 0.5.12
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 
-#> Language models
-#>   ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply
+#> Language models (your own key, or a model on your machine)
+#>   ask [--route R] [--model NAME] PROMPT...  ask a model and print the reply (--fresh: ask anew)
+#>   aye, tellme, or just "QUESTION?"          the same as ask
+#>   explain-error "MESSAGE"                   where an error comes from and what to do, no model needed
 #>   doctor                                    what is set up, and which route ask will use
 #>   config                                    show every language-model setting
 #>   config setup                              answer a few questions to set them all
 #>   config set KEY VALUE | unset KEY          change one (keys: config help)
-#>   login [--token [KEY]] [--email ADDRESS]   sign in to the hosted MORIE tier
-#>         [--code CODE] [--no-browser]
-#>   logout                                    forget the hosted key
-#>   models                                    models the hosted tier offers your key
+#>   config reset [--force]                    move an unreadable settings file aside
+#>   models [--route R]                        models your provider or server offers
 #>   bundle REQUEST...                         agent_bundle() from the shell
 #> 
 #> Data and functions
+#>   login [--token] [--email ADDRESS]         sign in for the curated tables at data.rmorie.com
+#>         [--code CODE] [--no-browser]
+#>   logout                                    forget the data key
 #>   data list                                 curated tables at data.rmorie.com
-#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE key)
+#>   data pull db/table [--out FILE.csv]       download one of them (your MORIE data key)
+#>   wayback FILE [--out F.jsonl] [--jobs N]   archive every URL in FILE (archive.org keys)
+#>   wayback --retry F.jsonl                   retry the failed URLs of an earlier wayback run
 #>   functions [PATTERN]                       exported functions and their titles
 #>   describe NAME                             help page of one function
 #>   examples NAME                             its examples
@@ -120,7 +134,7 @@ bricklayer_cli("help")
 #> 
 #> More help
 #>   rmoriebricklayer help start      getting started, step by step
-#>   rmoriebricklayer help llm        every way to point ask at a model (hosted, Ollama, your own server)
+#>   rmoriebricklayer help llm        every way to point ask at a model (your key, Ollama, your own server)
 #>   rmoriebricklayer help config     every setting, its environment variable, and examples
 #>   rmoriebricklayer help r          the same from R and Rscript
 #>   rmoriebricklayer VERB --help     one verb's usage

@@ -1,14 +1,14 @@
 # The hosted MORIE services, as the project site currently describes them
 
 Reads `https://rmorie.com/.well-known/morie-services.json`, a signed
-document naming the language-model tier and the curated-data service:
-their endpoints, whether each is `"key"` (reachable with a key requested
-on the site) or `"off"`, the model list, and a notice. The signature
-(ML-DSA-44, public key pinned in this package) is checked before
-anything in it is believed, so the endpoints can move or be switched off
-on the site without a package release, and a document that does not
-verify is ignored. The result is cached for a day; without a network the
-cached copy is used, then the copy bundled with the package.
+document naming the curated-data service and its sign-in: their
+endpoints, whether each is `"key"` (reachable with a key requested on
+the site) or `"off"`, and a notice. The signature (ML-DSA-44, public key
+pinned in this package) is checked before anything in it is believed, so
+the endpoints can move or be switched off on the site without a package
+release, and a document that does not verify is ignored. The result is
+cached for a day; without a network the cached copy is used, then the
+copy bundled with the package.
 
 ## Usage
 
@@ -44,7 +44,7 @@ bricklayer_services(
 ## Value
 
 A list with `version`, `issued`, `notice`, `llm` (`mode`, `base_url`,
-`auth_url`, `default_model`, `models`, `request_access`) and `data`
+`auth_url`: where the sign-in for the data key is reached) and `data`
 (`mode`, `base_url`, `license`, `request_access`), with the attribute
 `"source"` set to `"live"`, `"cache"`, `"bundled"` or `"off"`.
 
@@ -52,8 +52,10 @@ A list with `version`, `issued`, `notice`, `llm` (`mode`, `base_url`,
 
 Every other MORIE package reads the same document through this function,
 so one sign-in and one document serve rmorie, rmoriedata and morie
-alike. The hosted tier is a last resort: a local model or your own API
-key is always preferred where the caller offers the choice.
+alike. Language models are never hosted: you bring your own key or model
+([`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)).
+The `llm` block of documents signed before that change carries the
+sign-in address only.
 
 The environment variable `MORIE_SERVICES_URL` points the fetch at a
 mirror of the document (its signature is fetched from the same place,
@@ -67,7 +69,7 @@ can only serve a document the project signed.
 # document bundled with the package.
 s <- bricklayer_services(offline = TRUE)
 s$llm$mode
-#> [1] "key"
+#> [1] "off"
 attr(s, "source")
 #> [1] "bundled"
 ```

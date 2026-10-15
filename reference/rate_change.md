@@ -69,10 +69,11 @@ rate_change(
 
 - min_count:
 
-  Comparisons where the earlier count is at or below this are flagged
-  and their percent change withheld, the way
+  Comparisons where the earlier count is at or below this are flagged as
+  resting on a small count; the percent change and its exact interval
+  are still reported, as
   [`yoy()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy.md)
-  withholds a percent change off a tiny base.
+  does.
 
 ## Value
 

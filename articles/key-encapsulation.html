@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -153,10 +153,11 @@ byte-identical to the plain computation:</p>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="../reference/kem_decapsulate.html">kem_decapsulate</a></span><span class="op">(</span><span class="va">key</span>, <span class="va">bad</span>, masked <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="va">other</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<p><code>masked = FALSE</code> is about five times faster and is the
-right choice where no physical attacker is in the threat model (a server
-in a locked room). The <em>Side-channel assurance</em> vignette explains
-what the masking defends against and how it was verified.</p>
+<p><code>masked = FALSE</code> is three to four times faster for
+decapsulation (seven to eleven for ML-DSA signing) and is the right
+choice where no physical attacker is in the threat model (a server in a
+locked room). The <em>Side-channel assurance</em> vignette explains what
+the masking defends against and how it was verified.</p>
 </div>
 <div class="section level3">
 <h3 id="key-validation">Key validation<a class="anchor" aria-label="anchor" href="#key-validation"></a>

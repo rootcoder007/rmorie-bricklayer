@@ -161,9 +161,11 @@ capsule_verify("a large artifact", p, key, prehash = "sha3_512")
 ## XMSS: hash-based, stateful
 
 An XMSS key of height *h* signs 2^h messages. The package stores the
-next index in the key and returns the advanced key with every signature;
-reusing an index would break security, so always carry `key_state`
-forward:
+next index in the key and `xmss_advance(key, signature)` gives the
+advanced key after every signature; reusing an index would break
+security, so always advance the key with
+[`xmss_advance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+and save that:
 
 ``` r
 
@@ -177,7 +179,7 @@ s1 <- capsule_sign("manifest-1", xkey)
 capsule_verify("manifest-1", s1, signing_public_key(xkey))
 #> [1] TRUE
 
-xkey <- s1$key_state
+xkey <- xmss_advance(xkey, s1)
 xkey$next_index
 #> [1] 1
 s2 <- capsule_sign("manifest-2", xkey)
@@ -188,6 +190,16 @@ capsule_verify("manifest-2", s2, signing_public_key(xkey))
 capsule_verify("manifest-1", s2, signing_public_key(xkey))
 #> [1] FALSE
 ```
+
+The key is a value, so an old copy of it still says an old `next_index`.
+The package therefore also keeps a record of the highest index each key
+has used on this machine
+([`?xmss_advance`](https://rootcoder007.github.io/rmorie-bricklayer/reference/xmss_advance.md)
+says where), and refuses a used index even from a stale copy. A key
+generated here is entered at birth; a key from another machine, one
+rebuilt from its seeds, or one used in a CI job or a container with a
+fresh home directory is unknown to the record and must be vouched for
+once with `xmss_register_key(key)` before it signs from index 0.
 
 ## Every way of being wrong returns FALSE
 

@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -222,9 +222,10 @@ so two digests of the same length never verify for each other:</p>
 <h2 id="xmss-hash-based-stateful">XMSS: hash-based, stateful<a class="anchor" aria-label="anchor" href="#xmss-hash-based-stateful"></a>
 </h2>
 <p>An XMSS key of height <em>h</em> signs 2^h messages. The package
-stores the next index in the key and returns the advanced key with every
-signature; reusing an index would break security, so always carry
-<code>key_state</code> forward:</p>
+stores the next index in the key and
+<code>xmss_advance(key, signature)</code> gives the advanced key after
+every signature; reusing an index would break security, so always
+advance the key with <code><a href="../reference/xmss_advance.html">xmss_advance()</a></code> and save that:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">xkey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pqc_keygen.html">pqc_keygen</a></span><span class="op">(</span>height <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="va">xkey</span><span class="op">$</span><span class="va">capacity</span></span>
@@ -236,7 +237,7 @@ signature; reusing an index would break security, so always carry
 <span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest-1"</span>, <span class="va">s1</span>, <span class="fu"><a href="../reference/signing_public_key.html">signing_public_key</a></span><span class="op">(</span><span class="va">xkey</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span></span>
-<span><span class="va">xkey</span> <span class="op">&lt;-</span> <span class="va">s1</span><span class="op">$</span><span class="va">key_state</span></span>
+<span><span class="va">xkey</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/xmss_advance.html">xmss_advance</a></span><span class="op">(</span><span class="va">xkey</span>, <span class="va">s1</span><span class="op">)</span></span>
 <span><span class="va">xkey</span><span class="op">$</span><span class="va">next_index</span></span>
 <span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="va">s2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/capsule_sign.html">capsule_sign</a></span><span class="op">(</span><span class="st">"manifest-2"</span>, <span class="va">xkey</span><span class="op">)</span></span>
@@ -246,6 +247,15 @@ signature; reusing an index would break security, so always carry
 <span><span class="co"># a signature does not transfer to another message</span></span>
 <span><span class="fu"><a href="../reference/capsule_verify.html">capsule_verify</a></span><span class="op">(</span><span class="st">"manifest-1"</span>, <span class="va">s2</span>, <span class="fu"><a href="../reference/signing_public_key.html">signing_public_key</a></span><span class="op">(</span><span class="va">xkey</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p>The key is a value, so an old copy of it still says an old
+<code>next_index</code>. The package therefore also keeps a record of
+the highest index each key has used on this machine
+(<code><a href="../reference/xmss_advance.html">?xmss_advance</a></code> says where), and refuses a used index even
+from a stale copy. A key generated here is entered at birth; a key from
+another machine, one rebuilt from its seeds, or one used in a CI job or
+a container with a fresh home directory is unknown to the record and
+must be vouched for once with <code>xmss_register_key(key)</code> before
+it signs from index 0.</p>
 </div>
 <div class="section level2">
 <h2 id="every-way-of-being-wrong-returns-false">Every way of being wrong returns FALSE<a class="anchor" aria-label="anchor" href="#every-way-of-being-wrong-returns-false"></a>

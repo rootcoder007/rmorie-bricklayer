@@ -68,7 +68,19 @@ gaussian_puff(
   n_images = 3
 )
 
-advection_diffusion_2d(c0, u, v, kx, ky, dx, dy, dt, n_steps, source = NULL)
+advection_diffusion_2d(
+  c0,
+  u,
+  v,
+  kx,
+  ky,
+  dx,
+  dy,
+  dt,
+  n_steps,
+  source = NULL,
+  max_work = 1e+08
+)
 
 lagrangian_particles(
   n,
@@ -82,7 +94,8 @@ lagrangian_particles(
   n_steps,
   seed = 0,
   grid = NULL,
-  normals = NULL
+  normals = NULL,
+  max_work = 1e+08
 )
 ```
 
@@ -107,7 +120,9 @@ lagrangian_particles(
 - diameter, exit_velocity, stack_temp, ambient_temp:
 
   Stack diameter (m), exit velocity (m/s), stack gas and ambient
-  temperatures (K).
+  temperatures (K). Only buoyant rise is modelled: a stack at the air's
+  temperature (within half a kelvin) has zero rise, and momentum rise
+  from the exit velocity is not added.
 
 - dtheta_dz:
 
@@ -174,6 +189,14 @@ lagrangian_particles(
 
   Source grid (concentration per unit time), or `NULL`.
 
+- max_work:
+
+  The most cell updates (cells x steps x sub-steps; for
+  `lagrangian_particles()`, particles x steps) a run may take, 100
+  million by default (a few minutes of the explicit loop); `Inf` lifts
+  it. The same physical run costs the same whether the caller sub-steps
+  it or the scheme does, so the cap reads the same either way.
+
 - n:
 
   Number of particles.
@@ -216,10 +239,16 @@ image; `lagrangian_particles()` a list of class `rmbl_particles`
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws as
 points. Every physical input is checked: emission rates, masses, heights
 and distances are non-negative, wind speed, travel time and grid steps
-positive, `n_images` a whole number, the stack hotter than the air, and
-`x0`, `y0` single numbers; a release above `mixing_height` warns.
-`lagrangian_particles()`: a list with `x`, `y`, `mean_x`, `mean_y` and,
-with a grid, `concentration`.
+positive, `n_images` a whole number up to 1,000, the stack as hot as the
+air or hotter, and `x0`, `y0` single numbers; a release above
+`mixing_height` warns. `lagrangian_particles()`: a list with `x`, `y`,
+`mean_x`, `mean_y` and, with a grid, `concentration`.
+
+## Boundary
+
+the outermost ring of cells is held at zero (an open boundary): mass
+that reaches it leaves the domain and `mass` falls accordingly. Pad `c0`
+with empty cells so the plume of interest stays inside the ring.
 
 ## References
 

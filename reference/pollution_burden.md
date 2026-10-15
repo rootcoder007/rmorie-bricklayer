@@ -14,7 +14,9 @@ pollution_burden(
   population,
   pollutant = "NO2",
   outcome = "all_cause_mortality",
-  reference_conc = NULL
+  reference_conc = NULL,
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 ```
 
@@ -54,6 +56,14 @@ pollution_burden(
   Counterfactual concentration; `NULL` takes the pollutant's default
   (PM2.5 5.8, NO2 10; see
   [`crf_pm25`](https://rootcoder007.github.io/rmorie-bricklayer/reference/crf_pm25.md)).
+
+- rare_outcome, high_rate:
+
+  `TRUE` to admit a baseline rate below 1e-5 (one per 100,000) or above
+  0.1 (10,000 per 100,000) per person-year, as
+  [`verify_pollution`](https://rootcoder007.github.io/rmorie-bricklayer/reference/verify_pollution.md)
+  does: without them such a rate is refused, being also what a rate in
+  the wrong unit looks like.
 
 ## Value
 

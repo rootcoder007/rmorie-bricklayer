@@ -83,6 +83,8 @@ does and does not cover.
 ## Examples
 
 ``` r
+op <- options(rmoriebricklayer.xmss_index_file = tempfile())  # keep this example's
+# one-time index record out of your configuration directory; leave the default in use
 # A small key, to keep the example quick.
 key <- pqc_keygen(height = 3)
 key$capacity            # 8 signatures
@@ -95,9 +97,12 @@ pub <- signing_public_key(key)
 names(pub)
 #> [1] "root"     "pub_seed" "height"   "scheme"  
 
-# Deterministic seeds reproduce the same key -- for tests only.
+# Deterministic seeds reproduce the same key -- for tests only. A key built from given
+# seeds is not entered in the used-index record (it may have signed elsewhere): it signs
+# only after xmss_register_key() vouches that it never has.
 s1 <- paste(rep("11", 32), collapse = "")
 s2 <- paste(rep("22", 32), collapse = "")
 identical(pqc_keygen(3, s1, s2)$root, pqc_keygen(3, s1, s2)$root)
 #> [1] TRUE
+options(op)
 ```

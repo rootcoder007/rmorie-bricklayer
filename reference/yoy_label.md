@@ -47,37 +47,37 @@ yoy_label(y, fiscal_year_label)
 #> EndFiscalYear  n    previous  change  change %  interval    
 #> ─────────────  ───  ────────  ──────  ────────  ────────────
 #> 2018/19        402  —         —         —       —           
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2019/20        377  402       -25     ▼ -6.2%   [-19%, +8%] 
 #> 2020/21        190  377       -187    ▼ -49.6%  [-58%, -40%]
 #> 2021/22        268  190       78      ▲ +41.1%  [+17%, +71%]
 #> 2022/23        331  268       63      ▲ +23.5%  [+5%, +46%] 
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+#> lag 1 period · units: count · 95% exact rate-ratio interval
 
 # Any function will do.
 yoy_label(y, function(p) paste0("FY", substr(p, 3, 4)))
 #> EndFiscalYear  n    previous  change  change %  interval    
 #> ─────────────  ───  ────────  ──────  ────────  ────────────
 #> FY19           402  —         —         —       —           
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> FY20           377  402       -25     ▼ -6.2%   [-19%, +8%] 
 #> FY21           190  377       -187    ▼ -49.6%  [-58%, -40%]
 #> FY22           268  190       78      ▲ +41.1%  [+17%, +71%]
 #> FY23           331  268       63      ▲ +23.5%  [+5%, +46%] 
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+#> lag 1 period · units: count · 95% exact rate-ratio interval
 
 # Or an explicit mapping, for the periods that need one.
 yoy_label(y, c("2020" = "2019/20 (COVID)"))
 #> EndFiscalYear    n    previous  change  change %  interval    
 #> ───────────────  ───  ────────  ──────  ────────  ────────────
 #> 2019             402  —         —         —       —           
-#>     ↳ percent withheld: no comparison period
+#>     ↳ note: no comparison period
 #> 2019/20 (COVID)  377  402       -25     ▼ -6.2%   [-19%, +8%] 
 #> 2021             190  377       -187    ▼ -49.6%  [-58%, -40%]
 #> 2022             268  190       78      ▲ +41.1%  [+17%, +71%]
 #> 2023             331  268       63      ▲ +23.5%  [+5%, +46%] 
 #> 
-#> lag 1 period · units: count · 95% exact rate-ratio interval · percent withheld below a base of 20
+#> lag 1 period · units: count · 95% exact rate-ratio interval
 ```

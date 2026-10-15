@@ -76,7 +76,7 @@ y <- yoy(d, value = "n", period = "year")
 
 # Straight to text, for inspection.
 cat(yoy_csv(y, NULL))
-#> # value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio; percent withheld below a base of 20
+#> # value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio
 #> year,value,previous,change,pct_change,flag,pct_lower,pct_upper,verdict
 #> 2019,402,,,,no comparison period,,,
 #> 2020,377,402,-25,-6.21890547263682,,-18.7301481792582,8.20024314312362,down
@@ -94,7 +94,7 @@ cat(yoy_markdown(y, NULL))
 #> | 2022 | 268 | 190      |     78 |   +41.1% | [+17%, +71%] |                      |
 #> | 2023 | 331 | 268      |     63 |   +23.5% |  [+5%, +46%] |                      |
 #> 
-#> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio; percent withheld below a base of 20_
+#> _value: n; period: year; lag: 1; units: count; interval: 95% exact rate ratio_
 
 # JSON keeps the settings as fields rather than as comments.
 substr(yoy_json(y, NULL), 1, 80)

@@ -16,7 +16,9 @@ pollution_burden_by_area(
   population_col = "population",
   baseline_rate_col = "baseline_rate",
   pollutant = "NO2",
-  outcome = "all_cause_mortality"
+  outcome = "all_cause_mortality",
+  rare_outcome = FALSE,
+  high_rate = FALSE
 )
 ```
 
@@ -32,7 +34,7 @@ pollution_burden_by_area(
 
   Column names.
 
-- pollutant, outcome:
+- pollutant, outcome, rare_outcome, high_rate:
 
   Passed to
   [`pollution_burden`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pollution_burden.md).

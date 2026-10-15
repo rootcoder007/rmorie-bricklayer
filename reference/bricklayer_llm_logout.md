@@ -1,4 +1,4 @@
-# Forget the hosted MORIE language-model key
+# Forget the MORIE data key
 
 Removes the key from the shared credentials file (and the file itself
 when nothing else is stored in it).

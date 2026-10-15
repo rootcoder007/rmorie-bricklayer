@@ -14,11 +14,15 @@ hurwitz_zeta(s, q = 1)
 
 - s:
 
-  Exponent, which must exceed 1 for the series to converge.
+  Exponent. The series converges for `s > 1`; below 1 the value is the
+  analytic continuation (so `hurwitz_zeta(0.5, 0.5)` is \\-0.6049\\),
+  and `s = 1` is a pole (`NA`).
 
 - q:
 
-  Lower limit, which must be positive.
+  Lower limit: any real number but zero or a negative integer (poles,
+  `NA`). For a negative non-integer `q` the value is real only for a
+  whole `s`; a fractional `s` gives `NA`.
 
 ## Value
 

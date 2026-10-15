@@ -21,7 +21,12 @@ apply_schema_validation(df_raw, provenance)
 - provenance:
 
   A provenance list as returned by
-  [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md).
+  [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md),
+  or a rule list from
+  [`rule()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rule.md)
+  and the `rule_*()` constructors, run with
+  [`validate_rules()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/validate_rules.md)
+  under the same stop-on-fatal contract.
 
 ## Value
 

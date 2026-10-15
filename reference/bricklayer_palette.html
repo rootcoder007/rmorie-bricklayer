@@ -27,7 +27,7 @@ changed without changing the session.'><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,7 +106,9 @@ sequential and diverging ones interpolate.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>For <code>bricklayer_plot_options()</code>, named options to set
-(<code>palette</code>, <code>grid</code>, <code>cex</code>, <code>las</code>, <code>bg</code>);
+(<code>palette</code>, <code>grid</code>, <code>cex</code>, <code>las</code>, <code>bg</code>,
+<code>panel</code>: the plot region's fill behind white grid lines, <code>NA</code>
+for none);
 none to read the current values.</p></dd>
 
 </dl></div>
@@ -137,6 +139,9 @@ setting.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $bg</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "white"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $panel</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "#EEF1F6"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="fu">bricklayer_plot_options</span><span class="op">(</span>palette <span class="op">=</span> <span class="va">old</span><span class="op">$</span><span class="va">palette</span>, grid <span class="op">=</span> <span class="va">old</span><span class="op">$</span><span class="va">grid</span><span class="op">)</span></span></span>
 </code></pre></div>

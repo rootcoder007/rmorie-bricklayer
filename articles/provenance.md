@@ -85,7 +85,7 @@ signing_key <- pqc_keygen(height = 3)
 signing_key
 #> ── Signing key (post-quantum) ────────────────────────────────────
 #>   scheme     xmss-sha256
-#>   root       27742ca526fcc1629b026d20934d651e05abb7066c8db8f734d4d1d3c382bc3d
+#>   root       de1b147d5e5f79f3264c2e0e0f93142849419d988eb803c97cd8d9b0e6b138b7
 #>   height     3
 #>   used       0 of 8 signatures
 #>   remaining  8
@@ -102,7 +102,7 @@ pub <- signing_public_key(signing_key)
 pub
 #> ── Public verification key ───────────────────────────────────────
 #>   scheme  xmss-sha256
-#>   root    27742ca526fcc1629b026d20934d651e05abb7066c8db8f734d4d1d3c382bc3d
+#>   root    de1b147d5e5f79f3264c2e0e0f93142849419d988eb803c97cd8d9b0e6b138b7
 #>   height  3
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -122,13 +122,12 @@ capsule_verify(core_sha256(edited), s1, pub)
 
 A Winternitz key signs **once**. Signing two different messages at one
 leaf index leaks enough chain material to forge a third. So the key is
-stateful, and
-[`capsule_sign()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capsule_sign.md)
-returns the advanced state for you to carry forward:
+stateful, and `xmss_advance(key, signature)` returns the advanced state
+for you to carry forward:
 
 ``` r
 
-signing_key <- s1$key_state
+signing_key <- xmss_advance(signing_key, s1)
 signing_key$next_index
 #> [1] 1
 
@@ -137,7 +136,7 @@ capsule_verify(core_sha256("a second manifest"), s2, pub)
 #> [1] TRUE
 
 # and forward again, for the next signature
-signing_key <- s2$key_state
+signing_key <- xmss_advance(signing_key, s2)
 ```
 
 An exhausted key is an error rather than a silent wrap-around:
@@ -145,8 +144,10 @@ An exhausted key is an error rather than a silent wrap-around:
 ``` r
 
 k <- pqc_keygen(height = 1)          # signs exactly 2 messages
-k <- capsule_sign("one", k)$key_state
-k <- capsule_sign("two", k)$key_state
+k <- xmss_advance(k, capsule_sign("one", k))
+k <- xmss_advance(k, capsule_sign("two", k))
+#> Warning: this key has used all 2 of its one-time indices: generate a new one
+#> with pqc_keygen()
 capsule_sign("three", k)
 #> Error:
 #> ! this key is exhausted: a height-1 key signs 2 messages and all of them are used. Generate a new key -- reusing an index would break the signature scheme.
@@ -369,13 +370,13 @@ plan <- prereg_declare(c(
 
 # a declared outcome that was not reported
 prereg_check(plan, "n_rows")
-#> ── Against the declaration of 2026-10-10T10:46:38Z: departures below 
+#> ── Against the declaration of 2026-10-15T05:08:53Z: departures below 
 #>   declared but not reported (outcome switching): ate
 #> ──────────────────────────────────────────────────────────────────
 
 # statistics reported that were never declared
 prereg_check(plan, c("ate", "n_rows", "by_year", "by_precinct"))
-#> ── Against the declaration of 2026-10-10T10:46:38Z: departures below 
+#> ── Against the declaration of 2026-10-15T05:08:53Z: departures below 
 #>   reported but not declared (2 addition(s)): by_year, by_precinct
 #> ──────────────────────────────────────────────────────────────────
 ```
@@ -427,7 +428,7 @@ capsule_bundle_verify(attr(b, "path"), dir, manifest = man)
 #>   file:data.csv                  ok    95aecaa7399a39092c9e716ce1e18bb1c606
 #>   no_unlisted_files              ok    
 #>   attestation:attestation_comple ok    
-#>   attestation:manifest_digest    ok    11f7b7eb8925b34c91795343c30548fd2521
+#>   attestation:manifest_digest    ok    0d3cafdd6da141c9011cdf8580ca00a07d1b
 #>   attestation:signature          ok    
 #>   manifest_digest                ok    5f711161c72a5bcf5b5918d69a6a59fbe38a
 #> ──────────────────────────────────────────────────────────────────

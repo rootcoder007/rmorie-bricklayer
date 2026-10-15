@@ -13,7 +13,7 @@ zeta."><meta property="og:image" content="https://rootcoder007.github.io/rmorie-
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,12 +70,15 @@ zeta.</p>
 
 
 <dl><dt id="arg-s">s<a class="anchor" aria-label="anchor" href="#arg-s"></a></dt>
-<dd><p>Exponent, which must exceed 1 for the series to
-converge.</p></dd>
+<dd><p>Exponent. The series converges for <code>s &gt; 1</code>; below 1 the value is
+the analytic continuation (so <code>hurwitz_zeta(0.5, 0.5)</code> is \(-0.6049\)), and
+<code>s = 1</code> is a pole (<code>NA</code>).</p></dd>
 
 
 <dt id="arg-q">q<a class="anchor" aria-label="anchor" href="#arg-q"></a></dt>
-<dd><p>Lower limit, which must be positive.</p></dd>
+<dd><p>Lower limit: any real number but zero or a negative integer (poles, <code>NA</code>).
+For a negative non-integer <code>q</code> the value is real only for a whole <code>s</code>; a
+fractional <code>s</code> gives <code>NA</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

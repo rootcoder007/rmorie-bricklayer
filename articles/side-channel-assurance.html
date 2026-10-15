@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.11</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.12</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,13 +109,15 @@ network, recovers the secret bit by bit.</p>
 <p>The secret key is marked <em>undefined</em> to valgrind memcheck
 (Langley’s ctgrind, 2010). Memcheck then reports every conditional jump
 and every memory address that depends on undefined data, which is
-exactly the set a timing attacker can observe. A clean run is a proof
-for that binary, for every input of that length. The only branches
-allowed are the ones the standards publish by design (a rejected sample
-in ML-DSA, the challenge, the hints), each passed through an explicit
-declassification point. The harness is built from the package’s own
-sources with GCC and Clang, and it also scans the dead stack after each
-operation for surviving copies of the secret.</p>
+exactly the set a timing attacker can observe. A clean run shows that,
+for the inputs the harness exercised, no branch or address of that
+binary depended on the secret; it is evidence about that binary and
+those inputs, not a proof over every input of that length. The only
+branches allowed are the ones the standards publish by design (a
+rejected sample in ML-DSA, the challenge, the hints), each passed
+through an explicit declassification point. The harness is built from
+the package’s own sources with GCC and Clang, and it also scans the dead
+stack after each operation for surviving copies of the secret.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">bash</span> inst/ctcheck/build.sh     <span class="co"># needs R, a C++17 compiler, valgrind headers</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">bash</span> inst/ctcheck/run.sh       <span class="co"># exit 0 = every case clean</span></span></code></pre></div>
 </div>
@@ -274,20 +276,20 @@ a second-order attacker combines two leakage points.</li>
 a fault campaign in the same emulator, higher-order gadgets, formal
 verification of the gadgets with maskVerif) and, for EM and for
 confirming a given chip, a hardware route. The repository’s
-<code>SECURITY.md</code> states the current boundary. The side-channel
-review bundle distributed alongside the release (a separate archive, not
-part of the package) carries firmware for a ChipWhisperer Cortex-M4
-target (CW-Lite Arm, CW308 STM32F3) running the same kernels, and a
-fixed-versus-random capture script; no capture has been run yet, and
+<code>SECURITY.md</code> states the current boundary. The package itself
+ships no firmware; the side-channel review bundle distributed alongside
+the release (a separate archive) carries firmware for a ChipWhisperer
+Cortex-M4 target (CW-Lite Arm, CW308 STM32F3) running the same kernels,
+and a fixed-versus-random capture script. No capture has been run, and
 every power figure above comes from the emulator.</p>
 </div>
 <div class="section level2">
 <h2 id="choosing-the-plain-path">4. Choosing the plain path<a class="anchor" aria-label="anchor" href="#choosing-the-plain-path"></a>
 </h2>
-<p>Masking costs about 3 to 12 times the plain time on decapsulation (4
-ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and 13
-to 24 times on signing (26 ms for ML-DSA-65 against 2 ms), depending on
-the CPU. Where the threat model has no physical attacker,
+<p>Masking costs about 2.3 to 3.4 times the plain time on decapsulation
+(4 ms for ML-KEM-768 against 1.2 ms on this package’s test machine) and
+7 to 10 times on signing (17 ms for ML-DSA-65 against 2.4 ms), depending
+on the CPU. Where the threat model has no physical attacker,
 <code>kem_decapsulate(masked = FALSE)</code>,
 <code>capsule_sign(masked = FALSE)</code> and
 <code>fips_sign_mu(masked = FALSE)</code> keep the plain path, and

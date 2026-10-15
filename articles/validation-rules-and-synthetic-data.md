@@ -77,10 +77,10 @@ length(rules2)
 [`rule_distinct_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
 and
 [`rule_complete_rows()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_rule_library.md)
-complete the set.
-[`apply_schema_validation()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/apply_schema_validation.md)
-runs a rule list and stops on any fatal issue, which is the call a
-pipeline makes.
+complete the set. `apply_schema_validation(df, rules2)` runs a rule list
+the same way and stops on any fatal issue, which is the call a pipeline
+makes (it takes a provenance list or a rule list; until 0.5.12 a rule
+list was silently ignored and reported a pass).
 
 ## Inferring a schema
 

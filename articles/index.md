@@ -36,7 +36,7 @@
   analysis](https://rootcoder007.github.io/rmorie-bricklayer/articles/side-channel-assurance.md):
 - [JSON without jsonlite: parsing, encoding and exact
   serialisation](https://rootcoder007.github.io/rmorie-bricklayer/articles/json-and-serialisation.md):
-- [Language-model routes and the signed services
+- [Language models (your own key) and the signed services
   document](https://rootcoder007.github.io/rmorie-bricklayer/articles/language-model-routes.md):
 
 ### Statistics for published tables
@@ -45,6 +45,8 @@
   series](https://rootcoder007.github.io/rmorie-bricklayer/articles/trends-and-change.md):
 - [Small-area rates: expected counts, shrinkage, funnels and spatial
   autocorrelation](https://rootcoder007.github.io/rmorie-bricklayer/articles/small-area-rates.md):
+- [Complex survey
+  estimation](https://rootcoder007.github.io/rmorie-bricklayer/articles/survey-estimation.md):
 - [Hawkes processes: self-exciting event
   series](https://rootcoder007.github.io/rmorie-bricklayer/articles/hawkes-processes.md):
 - [Banded tables and concentration: from '6 to 10' to a
@@ -56,6 +58,8 @@
 - [Air pollution: dispersion, health burden, equity, and the footprint
   of the
   computation](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md):
+- [Courts and crime: flow, time, outcomes, place and case
+  mix](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md):
 
 ### Data handling
 

@@ -6,7 +6,14 @@ The BenMAP-CE health-impact function (US EPA 2018; Anenberg et al.
 ## Usage
 
 ``` r
-mortality_displaced(exposure_delta, population, baseline_rate, beta_per_unit)
+mortality_displaced(
+  exposure_delta,
+  population,
+  baseline_rate,
+  beta_per_unit,
+  rare_outcome = FALSE,
+  high_rate = FALSE
+)
 ```
 
 ## Arguments
@@ -27,6 +34,12 @@ mortality_displaced(exposure_delta, population, baseline_rate, beta_per_unit)
 - beta_per_unit:
 
   Log-RR per unit of exposure (per unit, not per 10).
+
+- rare_outcome, high_rate:
+
+  `TRUE` to admit a baseline rate below 1e-5 (one per 100,000) or above
+  0.1 (10,000 per 100,000) per person-year; without them such a rate is
+  refused, being also what a rate in the wrong unit looks like.
 
 ## Value
 

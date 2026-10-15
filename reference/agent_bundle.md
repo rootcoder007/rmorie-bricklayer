@@ -1,14 +1,16 @@
 # Agent-assisted reproducibility-bundle help
 
-Sends a bundle-building request, with a rmoriebricklayer-focused
-preamble, to the first language-model route that answers (your own
-endpoint, a local Ollama server, then the hosted MORIE tier; see
-[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md)).
+Asks a language model to plan a brick-proof, reproducible data bundle,
+through
+[`bricklayer_llm_ask`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_ask.md):
+your own key, your own endpoint or a local Ollama server, with the
+packages' help at hand (the model reads the help pages of the functions
+it proposes before it answers).
 
 ## Usage
 
 ``` r
-agent_bundle(request, model = NULL, backend = "auto")
+agent_bundle(request, model = NULL, route = NULL)
 ```
 
 ## Arguments
@@ -19,13 +21,13 @@ agent_bundle(request, model = NULL, backend = "auto")
 
 - model:
 
-  Optional model id, e.g. `"minimax-m3:cloud"`; `NULL` uses the default
-  (`rmbl models` lists them).
+  Optional model id; `NULL` uses the route's model (`rmbl models` lists
+  them).
 
-- backend:
+- route:
 
-  `"auto"` (default): the first route that answers; `"hosted"`: the
-  hosted MORIE tier only.
+  `NULL` (the saved route, else the first that is set up), `"auto"`,
+  `"own"`, `"ollama"` or a provider id.
 
 ## Value
 
@@ -36,24 +38,22 @@ route answers.
 
 ``` r
 # \donttest{
-# Needs a language-model route: a stored key (bricklayer_llm_login()), your
-# own endpoint or a local Ollama. try() keeps the example graceful when no
-# route answers or the hosted tier is slow.
+# Needs a language model: a provider key (e.g. ANTHROPIC_API_KEY), your own
+# endpoint or a local Ollama. try() keeps the example graceful when none answers.
 try(agent_bundle("scaffold a bundle for analysis.R from the Toronto CKAN data"))
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or `rmoriebricklayer config set ollama.url ADDRESS`)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
-try(agent_bundle("add a Wayback fallback to my fetch step", model = "minimax-m3:cloud"))
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: nothing answers at http://localhost:11434 (install Ollama and pull a model, or `rmoriebricklayer config set ollama.url ADDRESS`)\n  hosted MORIE tier: no key stored; request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
+#> [1] "No language-model route is set up on this machine: bring your own key, or run a model locally:\n  a provider's key: set its variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, ...) or `rmoriebricklayer config set PROVIDER.key`; providers: openai, anthropic, gemini, openrouter, groq, together, fireworks, deepseek, mistral, xai, cerebras, perplexity, huggingface, opencode, cohere, nvidia\n  local Ollama: nothing answers at http://localhost:11434 (installed? start its server with `ollama serve`, or open the Ollama app; not installed: https://ollama.com, then `ollama pull NAME`; on another machine: `rmoriebricklayer config set ollama.url ADDRESS`)\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a company gateway)\n`rmoriebricklayer config setup` walks through it."
 # }
 
 # With every route switched off the call returns a setup hint, not an
 # error, and reaches no network -- safe to run anywhere:
-routes <- c("MORIE_HOSTED_BASE_URL", "OLLAMA_HOST", "MORIE_LLM_BASE_URL")
-old <- Sys.getenv(routes, unset = NA)
-Sys.setenv(MORIE_HOSTED_BASE_URL = "off", OLLAMA_HOST = "off",
-           MORIE_LLM_BASE_URL = "off")
+keys <- c("OLLAMA_HOST", "MORIE_LLM_BASE_URL", bricklayer_llm_providers()$key_env,
+          bricklayer_llm_providers()$alt_env[nzchar(bricklayer_llm_providers()$alt_env)])
+old <- Sys.getenv(keys, unset = NA)
+Sys.setenv(OLLAMA_HOST = "off", MORIE_LLM_BASE_URL = "off")
+Sys.unsetenv(setdiff(keys, c("OLLAMA_HOST", "MORIE_LLM_BASE_URL")))
 agent_bundle("hello")
-#> [1] "No language-model route is set up on this machine:\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server\n  local Ollama: OLLAMA_HOST=off\n  hosted MORIE tier: disabled (MORIE_HOSTED_BASE_URL=off); request a key at https://rmorie.com/access, then `rmoriebricklayer login --token KEY` (R: bricklayer_llm_login(token = )); `rmoriebricklayer login` signs in with GitHub or an emailed code\n`rmoriebricklayer config setup` walks through every setting."
-for (v in routes) {
+#> [1] "No language-model route is set up on this machine: bring your own key, or run a model locally:\n  a provider's key: set its variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, ...) or `rmoriebricklayer config set PROVIDER.key`; providers: openai, anthropic, gemini, openrouter, groq, together, fireworks, deepseek, mistral, xai, cerebras, perplexity, huggingface, opencode, cohere, nvidia\n  local Ollama: OLLAMA_HOST=off\n  own endpoint: `rmoriebricklayer config set own.url URL` (and own.model, own.key) for any OpenAI-compatible server (LM Studio, vLLM, llama.cpp, a company gateway)\n`rmoriebricklayer config setup` walks through it."
+for (v in keys) {
   if (is.na(old[[v]])) Sys.unsetenv(v) else do.call(Sys.setenv, as.list(old[v]))
 }
 ```
