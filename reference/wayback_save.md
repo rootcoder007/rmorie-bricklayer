@@ -156,7 +156,7 @@ try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
 #> Error : `jobs` must be a whole number from 1 to 12
 try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
                  output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
-#> Error : the folder for `output` does not exist: /tmp/RtmpU9DUjt/no-such-folder
+#> Error : the folder for `output` does not exist: /tmp/Rtmp2CmH4b/no-such-folder
 
 # A real run needs archive.org keys and the network.
 if (FALSE) { # \dontrun{

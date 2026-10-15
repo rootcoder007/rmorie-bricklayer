@@ -69,7 +69,7 @@ verify_sha256(f, list(toupper(sha256_file(f))))$match
 
 # a missing file, or more than one expected digest, is an error
 try(verify_sha256(file.path(tempdir(), "missing.csv"), strrep("0", 64L)))
-#> Error : sha256_file: /tmp/RtmpU9DUjt/missing.csv is not a file
+#> Error : sha256_file: /tmp/Rtmp2CmH4b/missing.csv is not a file
 try(verify_sha256(f, c("a", "b")))
 #> Error : `expected_sha` must be a single SHA-256 hex string
 ```
