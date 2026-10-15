@@ -50,12 +50,15 @@ non-missing string.
 rapl_available()
 #> [1] FALSE
 
-# a fake powercap tree with one readable package domain
-d <- file.path(tempfile(), "intel-rapl:0")
-dir.create(d, recursive = TRUE)
-writeLines("package-0", file.path(d, "name"))
-writeLines("123456789", file.path(d, "energy_uj"))
-rapl_available(dirname(d))
+# a fake powercap tree with one readable package domain (Linux names the domain
+# "intel-rapl:0"; a colon is not allowed in a Windows file name)
+if (.Platform$OS.type != "windows") {
+  d <- file.path(tempfile(), "intel-rapl:0")
+  dir.create(d, recursive = TRUE)
+  writeLines("package-0", file.path(d, "name"))
+  writeLines("123456789", file.path(d, "energy_uj"))
+  rapl_available(dirname(d))
+}
 #> [1] TRUE
 
 # a folder that does not exist is simply FALSE; a non-path is an error

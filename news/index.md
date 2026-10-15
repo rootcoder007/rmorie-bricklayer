@@ -148,6 +148,15 @@ weaker scheme.
 
 ### Fixes
 
+- [`core_bootstrap_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_bootstrap_mean.md)
+  draws its resamples with Lemire’s unbiased bounded draw on
+  `mt19937_64`, as the reservoir sampler already does, instead of
+  `std::uniform_int_distribution`, whose algorithm differs between
+  libstdc++ and libc++: the same seed now gives the same resamples on
+  Linux, Windows and macOS (the Linux and Windows results are
+  unchanged). The means are summed in `long double`, so they still agree
+  only to rounding between x86 and arm64.
+
 - Every `conf_level` goes through one check, with one message:
   [`trend_test()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/trend_test.md),
   [`count_trend()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/count_trend.md),
@@ -168,6 +177,7 @@ weaker scheme.
   [`survey_estimate()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_estimate.md)
   checked it in four different wordings. The interval helpers behind
   them refuse it too.
+
 - [`manifest_recompute()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/manifest_recompute.md)
   reports a statistic that returns `NA`, `NaN` or `Inf` as `DIFFER` (or
   `MATCH` when the record holds the identical value) instead of failing
@@ -175,6 +185,7 @@ weaker scheme.
   [`record()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/record.md)
   refuses a vector `observed` or `expected` in words; it failed with R’s
   “‘length = 2’ in coercion to ‘logical(1)’”.
+
 - [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)
   refuses a `t` that is neither one value nor one per period (it was
   recycled in silence) and a `period` of the wrong length;
@@ -186,13 +197,16 @@ weaker scheme.
   [`stock_flow()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/stock_flow.md)’s
   `per` refuse several values where one is meant (only the first was
   used).
+
 - [`profile_columns()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/profile_columns.md)
   leaves infinite values out of the mean, spread, range, quantiles and
   outlier count; they are still counted in `n_infinite`.
+
 - [`core_hawkes_fit()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_hawkes_fit.md)
   with the exponential kernel also runs from a second start and keeps
   the better optimum: from one start it could stop with the decay on its
   bound at a worse likelihood and still report `converged = TRUE`.
+
 - [`reservoir_indices()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
   and
   [`reservoir_sample()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_reservoir.md)
@@ -203,12 +217,14 @@ weaker scheme.
   0.5.12. A seed that is `NA`, negative or fractional, and a fractional
   `n` or `k`, are refused (an `NA` seed was undefined behaviour in the
   cast).
+
 - [`core_bootstrap_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_bootstrap_mean.md)
   refuses an `NA`, negative or fractional seed and a fractional `B`
   (undefined behaviour in the casts), in R and in the compiled entry
   point; the compiled entry point of
   [`core_uniforms()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_uniforms.md)
   now checks its seed too (its R function already did).
+
 - [`core_normal_logpdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_logpdf.md)
   refuses a vector `mean` or `sd` and a non-positive `sd`, as
   [`core_normal_pdf()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/core_normal_pdf.md)
@@ -218,26 +234,33 @@ weaker scheme.
   and
   [`core_winsorized_mean()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_core_trimmed.md)
   refuse a `trim` outside \[0, 0.5\] instead of returning `NaN`.
+
 - [`analyse_table()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/analyse_table.md)
   warns that `rounding` and `suppression_limit` apply only to counts
   when `units` is not `"count"`; they were ignored in silence.
+
 - Errors about a provenance list name
   [`load_provenance()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/load_provenance.md);
   they named a `read_provenance()` that does not exist.
+
 - [`capture_dependencies()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/capture_dependencies.md)
   gives `NA`, not `""`, as the library of a package that is not
   installed, and the library of an installed one is the directory the
   package is in (it was its parent).
+
 - [`print()`](https://rdrr.io/r/base/print.html) of a hot-spot
   persistence result names each period with its own count of tied cells
   (“period 2: 100 cells tied”); periods and counts were pasted into one
   list.
+
 - [`install_cli()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/install_cli.md)
   refuses an empty or malformed `name`; an empty one printed “Installed
   ;” and failed with “subscript out of bounds”.
+
 - [`yoy_markdown()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_delim.md)
   right-aligns every numeric column; the value and previous value were
   left aligned.
+
 - With `direction = "neutral"`,
   [`print()`](https://rdrr.io/r/base/print.html),
   [`yoy_html()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/yoy_render.md),
@@ -251,12 +274,15 @@ weaker scheme.
   painted a rise in the bad colour, and
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) in the good
   one.
+
 - A malformed certificate, CRL, OCSP response or time-stamp token is an
   error without the call
   ([`cert_parse()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/cert_parse.md)
   errors read “Error in cert_parse(…)”).
+
 - Rd: `[0, 1]` in four help pages was read by roxygen as a link (an
   `R CMD check` warning for `hotspot_persistence`).
+
 - The “is thinking” line of a language-model call is drawn where the
   console says, on stdout in the RStudio and Positron consoles; it went
   to stderr, which they show in the error colour.
