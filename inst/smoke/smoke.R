@@ -20,6 +20,13 @@ cases <- list(
   ask = function() {
     r <- run("ask", "Reply with the single word pong."); check((r$status == 0 && nzchar(trimws(r$text))) || no_route(r), r$text)
   },
+  # the help lists "aye, tellme" as ask under other names: both are run as ask is
+  aye = function() {
+    for (v in c("aye", "tellme")) {
+      r <- run(v, "Reply with the single word pong.")
+      check((r$status == 0 && nzchar(trimws(r$text))) || no_route(r), paste(v, r$text))
+    }
+  },
   launcher = function() {
     # what inst/bin/rmoriebricklayer does under R 4.6 (which keeps "--args" in commandArgs)
     load <- if (nzchar(tree)) sprintf("pkgload::load_all(%s, quiet = TRUE)", shQuote(tree)) else "library(rmoriebricklayer)"

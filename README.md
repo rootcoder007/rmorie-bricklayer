@@ -616,7 +616,7 @@ order, and the first that is set up is used:
    API works the same way: `rmbl config set ollama.url https://ollama.com` and
    `rmbl config set ollama.key` (your Ollama API key). `OLLAMA_HOST=off` skips it.
 
-While it works, `rmbl ask` shows a spinner with the seconds so far. The same question again
+While it works, `rmbl ask` (or `rmbl aye`, `rmbl tellme`) shows a spinner with the seconds so far. The same question again
 is answered from this machine at once (`--fresh` asks the model again; `MORIE_LLM_CACHE=off`
 turns that off), and an error of these packages can be explained without any model:
 `rmbl explain-error "the error text"` (R: `bricklayer_explain_error()`) names the function that
@@ -680,6 +680,8 @@ rmoriebricklayer doctor                         # which routes answer here, and 
 rmoriebricklayer ask "your question"            # own endpoint, a provider with a key, then Ollama
 rmoriebricklayer ask --model NAME "your question"
 rmoriebricklayer ask --route anthropic "your question"   # one route, this time
+rmoriebricklayer aye "your question"            # aye and tellme are ask under other names
+rmoriebricklayer tellme "your question"
 rmoriebricklayer config                         # every language-model setting and where it comes from
 rmoriebricklayer config setup                   # pick a provider, paste its key, pick a model
 rmoriebricklayer config set route anthropic     # always this provider
@@ -710,6 +712,9 @@ rmbl help
 rmbl doctor
 rmbl config setup
 rmbl ask "your question"
+rmbl aye "your question"
+rmbl tellme "your question"
+rmbl "how do I weight a survey?"               # a quoted question with no verb is asked too
 rmbl login --token
 rmbl models
 ```
