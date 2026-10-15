@@ -20,15 +20,17 @@ yoy_markdown(x, file, digits = 1L, align = TRUE, ...)
 \item{x}{An \code{rmbl_yoy} object from
 \code{\link[=yoy]{yoy()}}.}
 
-\item{file}{Output path, or \code{NULL} to return the text
-instead of writing it.}
+\item{file}{Character scalar, the output path, or \code{NULL} to return the
+text instead of writing it.}
 
-\item{digits}{Digits for the percent columns. \code{NULL},
-the default, writes them unrounded, which is what a downstream
-calculation wants; give a number for a figure meant to be read.}
+\item{digits}{Integer scalar or \code{NULL}: decimal places for the percent
+columns. For the CSV, TSV and JSON writers \code{NULL}, the default, writes them
+unrounded, which is what a downstream calculation wants; give a number for
+a figure meant to be read. For \code{yoy_markdown()} the default is \code{1}.}
 
-\item{na}{How to write a missing value. The default empty
-string is what most readers expect; \code{"NA"} keeps R's own spelling.}
+\item{na}{Character scalar, how to write a missing value (CSV and TSV). The
+default empty string is what most readers expect; \code{"NA"} keeps R's own
+spelling.}
 
 \item{metadata}{Whether to lead with comment lines
 recording the lag, units, confidence level, base gate and direction. On
@@ -36,24 +38,46 @@ by default, because a percent column means different things under
 different settings and the file is the only place a later reader can
 look. Markdown and JSON carry the same information structurally.}
 
-\item{comment}{Comment prefix for the metadata lines.}
+\item{comment}{Character scalar, the comment prefix for the metadata
+lines; default \code{"#"}.}
 
 \item{...}{Ignored.}
 
-\item{pretty}{Whether to indent the JSON.}
+\item{pretty}{Logical scalar, default \code{TRUE}: indent the JSON.}
 
-\item{align}{Whether to pad the Markdown columns so the
-source table is readable unrendered.}
+\item{align}{Logical scalar, default \code{TRUE}: pad the Markdown columns so
+the source table is readable unrendered.}
 }
 \value{
-The path, invisibly; or the text, when \code{file} is
-\code{NULL}.
+\code{file}, invisibly; or, when \code{file} is \code{NULL}, the text as a
+character scalar.
 }
 \description{
 \code{yoy_csv()} separates fields with a comma and quotes any field that
 contains one; \code{yoy_tsv()} separates with a tab and replaces any tab
 inside a field, since a tab-separated field cannot contain one and
 writing it would shift every column after it.
+\code{yoy_json()} writes an object with \code{settings} (value, period, grouping,
+lag, units, minimum base, confidence level, direction), \code{summary} (from
+\code{\link[=yoy_summary]{yoy_summary()}}) and \code{rows}, using the package's own
+JSON codec.
+\code{yoy_markdown()} writes a pipe table meant for reading: values formatted
+(every numeric column right-aligned),
+percentages signed and rounded, the interval as \verb{[lower, upper]}, notes in
+the last column, and the settings in an italic line under the table.
+}
+\details{
+The CSV and TSV writers export every column of the object (the period and
+grouping columns, \code{value}, \code{previous}, \code{change}, the percent or
+percentage-point change, \code{flag}, the interval and \code{verdict}), so the note
+explaining a missing or flagged figure stays with its row. Quoting in the
+CSV follows RFC 4180 (a field with a comma, a quote or a line break is
+quoted, quotes doubled). The metadata line names the value and period
+columns, the grouping, the lag, the units, and for counts the interval's
+confidence level and the base below which changes are noted. A pipe inside
+a Markdown cell is escaped. An existing file is overwritten. Errors when
+\code{x} does not come from \code{\link[=yoy]{yoy()}}, or \code{digits} is not a whole
+number.
 }
 \examples{
 d <- data.frame(year = 2019:2023, n = c(402, 377, 190, 268, 331))
@@ -67,4 +91,15 @@ cat(yoy_markdown(y, NULL))
 
 # JSON keeps the settings as fields rather than as comments.
 substr(yoy_json(y, NULL), 1, 80)
+
+# rounded percentages, no metadata line, and R's own NA
+cat(yoy_tsv(y, NULL, digits = 1, metadata = FALSE, na = "NA"))
+
+# written to a file
+f <- tempfile(fileext = ".csv")
+yoy_csv(y, f)
+read.csv(f, comment.char = "#")[, c("year", "pct_change", "flag")]
+
+# only yoy() results are accepted
+try(yoy_csv(d, NULL))
 }

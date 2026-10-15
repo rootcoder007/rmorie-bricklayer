@@ -18,13 +18,33 @@ system's CSPRNG. Reusing it across encapsulations to the same key reuses
 the shared secret, so supply it only deliberately.}
 }
 \value{
-A list of class \code{bricklayer_kem_capsule}: \code{ciphertext}
-and \code{shared} (both hex), and \code{level}.
+A list of class \code{c("bricklayer_kem_capsule", "list")} with
+\code{ciphertext} (character, hex,
+\code{\link[=kem_sizes]{kem_sizes()}}\code{[["ciphertext"]]}
+bytes: send this), \code{shared} (character, 64 hex characters, the
+32-byte shared secret: keep this) and \code{level} (integer). Printing
+it never shows the shared secret.
 }
 \description{
 Produces a ciphertext and the 32-byte shared secret it carries. Only the
 public key is needed, which is the point: the sender never holds
-anything the recipient has to trust them with.
+anything the recipient has to trust them with. The sender keeps the
+shared secret (to derive an encryption key, for example) and sends the
+ciphertext; the recipient gets the same secret back with
+\code{\link[=kem_decapsulate]{kem_decapsulate()}}.
+}
+\details{
+This is ML-KEM.Encaps of FIPS 203 (Algorithm 20) on the 32-byte message
+\code{m}. Without \code{m}, fresh randomness is drawn with
+\code{\link[=random_bytes]{random_bytes()}}, so two encapsulations to one key give
+different
+ciphertexts and secrets. A full key pair works as well as a public key;
+only its public half is read.
+
+Errors: \code{key} not from \code{\link[=kem_keygen]{kem_keygen()}} or
+\code{\link[=kem_public_key]{kem_public_key()}}; a key
+whose public half is not valid hex ("key has no usable public key");
+\code{m} that is not a raw vector of 32 bytes.
 }
 \examples{
 key <- kem_keygen(512)
@@ -38,6 +58,13 @@ identical(a$shared, b$shared)
 # both decapsulate correctly
 identical(kem_decapsulate(key, a$ciphertext), a$shared)
 identical(kem_decapsulate(key, b$ciphertext), b$shared)
+
+# fixed randomness makes the result reproducible (test vectors only)
+m <- as.raw(1:32)
+identical(kem_encapsulate(key, m = m)$shared, kem_encapsulate(key, m = m)$shared)
+
+# the randomness must be exactly 32 bytes
+try(kem_encapsulate(key, m = as.raw(1:8)))
 }
 \seealso{
 \code{\link[=kem_decapsulate]{kem_decapsulate()}},

@@ -7,17 +7,26 @@
 adp_from_counts(counts, t = 365)
 }
 \arguments{
-\item{counts}{Headcounts, one per day on which a count was taken.}
+\item{counts}{Numeric vector of headcounts, one per day on which a count
+was taken; non-negative, no \code{NA} or \code{Inf}. The days need not
+be consecutive.}
 
-\item{t}{Length of the period in days. Default 365.}
+\item{t}{Numeric scalar, the length of the period in days; must be
+positive. Default \code{365}.}
 }
 \value{
-Estimated person-days over the period.
+A numeric scalar: the estimated person-days over the period,
+\code{mean(counts) * t}. Despite the function's name this is a total of
+person-days, not an average daily population; divide by \code{t} (or
+pass it to \code{\link[=adp]{adp()}}) for the population held on an average day.
 }
 \description{
 When only a count of people present on certain days is available --
 not a record per person -- the person-days over the period are the
 mean of those counts scaled to the period's length.
+Use it with \code{\link[=adp]{adp()}} or \code{\link[=alos]{alos()}} when the source
+is a daily or weekly
+count sheet rather than admission and release dates.
 }
 \details{
 Lakner's \eqn{X_t = (\frac{1}{C}\sum N_i) t} (1976, p.21). The counts
@@ -31,6 +40,14 @@ where weekend admissions are released before Monday, for instance.
 # Lakner (p.21): counts on 255 days summing to 34,935 imply just over
 # fifty thousand detention days across the year.
 adp_from_counts(rep(34935 / 255, 255))
+
+# weekly counts over a 31-day month, then the average daily population
+pd <- adp_from_counts(c(120, 130, 125, 128), t = 31)
+pd
+adp(pd, t = 31)
+
+# a missing count must be dropped or filled first
+try(adp_from_counts(c(120, NA, 125)))
 }
 \seealso{
 \code{\link[=adp]{adp()}}

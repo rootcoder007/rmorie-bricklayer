@@ -65,6 +65,14 @@ of the series). The published pending count need not equal the previous
 count plus the net flow -- courts reactivate cases on bench warrants and
 transfer them -- so \code{pending_change} is reported next to
 \code{net} rather than derived from it.
+
+The result carries attribute \code{"case_flow"}: \code{window},
+\code{conf_level} and the totals received and disposed. Errors:
+\code{received} empty; a count vector that is not numeric, has a missing,
+negative or infinite value, or a length other than \code{received}'s;
+\code{period} of another length, with missing or repeated values;
+\code{window} not a whole number of at least 1; \code{conf_level}
+outside (0, 1).
 }
 \examples{
 f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
@@ -72,6 +80,13 @@ f <- read.csv(system.file("extdata", "ocj_flow_ontario.csv",
 cf <- case_flow(f$received, f$disposed, pending = f$pending, period = f$month)
 cf
 plot(cf)
+
+# without the pending count, a quarterly rolling window and 90\% intervals
+cq <- case_flow(f$received, f$disposed, period = f$month, window = 3, conf_level = 0.90)
+head(as.data.frame(cq)[, c("period", "clearance", "rolling_clearance", "cumulative_net")])
+
+# one value per period in every count
+try(case_flow(c(100, 120, 90), c(95, 130)))
 }
 \references{
 Ostrom, B. J. and Hanson, R. A. (1999). \emph{Efficiency, Timeliness,

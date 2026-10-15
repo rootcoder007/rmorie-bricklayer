@@ -36,7 +36,7 @@ test_that("core stats match base R", {
 test_that("core stats handle degenerate input the way R's contract implies", {
   expect_true(is.nan(core_var(1)))             # sample variance needs n >= 2
   expect_true(is.nan(core_cor(c(1, 1, 1), c(2, 3, 4))))  # zero variance
-  expect_true(is.nan(core_normal_pdf(0, sd = 0)))        # sd must be > 0
+  expect_error(core_normal_pdf(0, sd = 0), "positive")  # sd must be > 0: refused, not a silent NaN
 })
 
 test_that("core_sha256 handles multi-block input (FIPS 180-4 two-block vector)", {

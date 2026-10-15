@@ -10,25 +10,36 @@ kem_keygen(level = 768L, seed = NULL)
 kem_public_key(key)
 }
 \arguments{
-\item{level}{Security level: 512, 768 (the default) or
-1024. 768 is the level NIST and the IETF have settled on for general
-use.}
+\item{level}{Security level, one whole number: 512 (ML-KEM-512, NIST
+category 1), 768 (the default, category 3) or 1024 (category 5). 768 is
+the level NIST and the IETF have settled on for general use.}
 
 \item{seed}{Optional raw vector of 64 seed bytes (
 \code{d || z}) . Supplying it makes the key reproducible, which is what
 the standard's test vectors need; the default draws from the operating
 system's CSPRNG.}
 
-\item{key}{A key from \code{kem_keygen()}.}
+\item{key}{For \code{kem_public_key()}: a key pair from \code{kem_keygen()}.}
 }
 \value{
-A list of class \code{bricklayer_kem_key}: \code{public},
-\code{secret} (both hex), and \code{level}.
+\code{kem_keygen()}: a list of class
+\code{c("bricklayer_kem_key", "list")} with \code{public} (character,
+the encapsulation key as lower-case hex, 800, 1184 or 1568 bytes),
+\code{secret} (character, the decapsulation key as hex, 1632, 2400 or
+3168 bytes) and \code{level} (integer). Printing it never shows the
+secret. \code{kem_public_key()}: a list of class
+\code{c("bricklayer_kem_public_key", "list")} with \code{public} and
+\code{level} only.
 }
 \description{
-Generates a key for ML-KEM (FIPS 203), the standardised post-quantum key
-encapsulation mechanism. It is implemented in this package, with no
-system dependency.
+Generates a key pair for ML-KEM (FIPS 203), the standardised post-quantum
+key encapsulation mechanism, and \code{kem_public_key()} strips a key pair
+down to the half that can be shared. Use them when a capsule, a data file
+or a credential has to reach one recipient without being readable on the
+way: the recipient makes the key pair and publishes the public half, and
+the sender uses it with \code{\link[=kem_encapsulate]{kem_encapsulate()}}. It is
+implemented in this
+package, with no system dependency.
 }
 \details{
 A KEM is not a signature scheme and not a cipher. Encapsulation produces
@@ -36,6 +47,21 @@ two things: a ciphertext to send, and a 32-byte shared secret to keep.
 The holder of the decapsulation key recovers the same secret from the
 ciphertext. What either side then does with that secret -- feed it to a
 KDF, key an AEAD -- is outside the mechanism.
+
+Key generation is ML-KEM.KeyGen of FIPS 203 (Algorithm 19) from the
+64-byte seed \eqn{d \| z}: \eqn{d} seeds the K-PKE key and \eqn{z} is the
+implicit-rejection value kept inside the decapsulation key. With a seed
+the result is deterministic (the same seed gives the same key, which is
+how the NIST test vectors are reproduced); without one the seed is drawn
+with \code{\link[=random_bytes]{random_bytes()}} from the operating system. The key
+sizes per level
+are given by \code{\link[=kem_sizes]{kem_sizes()}}; the level is not recorded in a
+ciphertext, so
+both sides must agree on it.
+
+Errors: \code{level} other than one whole number 512, 768 or 1024;
+\code{seed} that is not a raw vector of 64 bytes; \code{key} passed to
+\code{kem_public_key()} that is not from \code{kem_keygen()}.
 }
 \section{Security}{
 
@@ -69,6 +95,16 @@ identical(sent$shared, got)
 bad <- sent$ciphertext
 substring(bad, 1L, 2L) <- "00"
 identical(kem_decapsulate(key, bad), got)
+
+# a fixed seed gives the same key every time (for test vectors only)
+k1 <- kem_keygen(512, seed = as.raw(0:63))
+k2 <- kem_keygen(512, seed = as.raw(0:63))
+identical(k1$public, k2$public)
+k1
+
+# levels other than the three FIPS 203 defines are refused
+try(kem_keygen(256))
+try(kem_keygen(768, seed = as.raw(1:10)))
 }
 \references{
 National Institute of Standards and Technology (2024).

@@ -56,4 +56,8 @@ detect_location()
 detect_location(env_location = "", codecarbon_location = "", tz = "Europe/Paris")
 detect_location(env_location = "", codecarbon_location = "", tz = "",
                 locale = "en_IN.UTF-8")
+# an explicit setting wins over everything else
+detect_location(env_location = "CA-QC", tz = "Europe/Paris")
+# nothing usable: the world average, and the method says so
+detect_location(env_location = "", codecarbon_location = "", tz = "UTC", locale = "C")
 }

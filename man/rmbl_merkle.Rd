@@ -8,38 +8,53 @@
 \alias{merkle_verify}
 \title{Merkle tree over capsule chunks (C backend)}
 \usage{
-merkle_root(chunks)
+merkle_root(chunks, scheme = 2L)
 
-merkle_leaves(chunks)
+merkle_leaves(chunks, scheme = 2L)
 
-merkle_proof(chunks, index)
+merkle_proof(chunks, index, scheme = 2L)
 
-merkle_verify(leaf, proof, root)
+merkle_verify(leaf, proof, root, scheme = NULL)
 }
 \arguments{
-\item{chunks}{Character vector of chunk contents, in
-order. Use \code{\link[=chunk_file]{chunk_file()}} to produce it from a
-file.}
+\item{chunks}{Chunk contents, in order: a character vector (one chunk per
+element), a single raw vector (one chunk), or a list of raw vectors and
+single strings, such as \code{\link[=chunk_file]{chunk_file()}} returns.}
 
-\item{index}{1-based index of the chunk to prove.}
+\item{scheme}{The hashing scheme: 2 (the default for building, with leaf
+and node prefixes) or 1 (no prefixes, as 0.5.12 and earlier built
+them). For \code{merkle_verify()}, \code{NULL} (the default) reads the
+scheme from \code{proof}; a number requires that scheme, and a proof
+that records a different one does not verify.}
 
-\item{leaf}{The chunk whose membership is being verified.}
+\item{index}{The chunk to prove, one whole number from 1 to the number of
+chunks.}
+
+\item{leaf}{The chunk whose membership is being verified: one string or
+one raw vector.}
 
 \item{proof}{The list returned by \code{merkle_proof()}.}
 
-\item{root}{The expected root digest.}
+\item{root}{The expected root digest, a 64-character hex string as
+\code{merkle_root()} returns.}
 }
 \value{
-\code{merkle_root()} a length-1 character vector (64 hex
+\code{merkle_root()} a length-1 character vector (64 lowercase hex
 characters), or \code{NA} for no chunks. \code{merkle_leaves()} a
-character vector of per-chunk digests. \code{merkle_proof()} a list with
-\code{sibling} (character) and \code{side} ( \code{"left"} /
-\code{"right"}) . \code{merkle_verify()} a length-1 logical.
+character vector of per-chunk digests, one per chunk
+(\code{character(0)} for none). \code{merkle_proof()} a list with
+\code{sibling} (character, the sibling digests from the leaf upward),
+\code{side} (character, \code{"left"} or \code{"right"}: the side the
+sibling is on) and \code{scheme} (integer). \code{merkle_verify()} a
+length-1 logical.
 }
 \description{
 A single SHA-256 over a whole file tells you it changed. A Merkle tree
 over its chunks tells you WHICH chunk changed, and proves that one chunk
-belongs to the pinned file without re-reading the rest of it.
+belongs to the pinned file without re-reading the rest of it. Use these
+functions to pin a large data file as a root digest, to find the part of
+a re-released file that differs, or to hand someone one chunk with a
+short proof that it is part of the pinned file.
 }
 \details{
 \code{merkle_root()} reduces the chunks to one root digest.
@@ -48,11 +63,44 @@ from, so two capsules can be diffed chunk by chunk.
 \code{merkle_proof()} returns the sibling digests on the path from one
 leaf to the root, and \code{merkle_verify()} replays that path.
 
+Each leaf is the SHA-256 of the byte 0x00 followed by a chunk's bytes.
+Each parent is the SHA-256 of the byte 0x01 followed by the 64 bytes of
+its left and right child digests (the bytes, not their hex spelling).
+Levels are paired left to right. This is \code{scheme = 2}, the default
+from 0.5.13 on.
+
 An unpaired node at an odd level is PROMOTED unchanged rather than
 hashed against a duplicate of itself. Duplicating it would let two
 different chunk lists produce the same root -- the weakness behind
 CVE-2012-2459 -- so promotion is a correctness requirement, not a
-preference.
+preference. A promoted node adds no step to a proof, so a proof can be
+shorter than \eqn{\lceil \log_2 n \rceil}.
+
+The two prefix bytes are the leaf and node domain separation of RFC
+6962: without them an interior node, given as the 64 bytes of its two
+child digests, verifies as a "leaf" with the shorter proof from its
+parent. Roots and proofs made by 0.5.12 and earlier have no prefixes
+(\code{scheme = 1}, the weaker scheme). Pass \code{scheme = 1} to
+\code{merkle_root()}, \code{merkle_leaves()} or \code{merkle_proof()} to
+recompute such a root. \code{merkle_proof()} records its scheme in the
+proof, and \code{merkle_verify()} reads it from there unless
+\code{scheme} is given. A proof with no recorded scheme was made by
+0.5.12 or earlier: it is verified under scheme 1, with a warning. Pass
+\code{scheme = 2} to \code{merkle_verify()} to refuse such a proof,
+since a scheme-1 check still accepts an interior node as a leaf.
+
+Character chunks are taken as their bytes, so a root computed from
+character input equals the root of the same bytes as raw vectors. The
+comparison in \code{merkle_verify()} is
+\code{\link[=core_digest_equal]{core_digest_equal()}}
+(constant time, case-sensitive).
+
+Errors: \code{chunks} that is not character, raw or a list of raw vectors
+and single strings, or that contains \code{NA}; \code{index} outside
+\code{1..length(chunks)}; a \code{scheme} other than 1 or 2; a \code{leaf} that is
+more than one chunk; a
+\code{proof} without \code{sibling} and \code{side}, or with the two of
+different lengths.
 }
 \examples{
 chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
@@ -60,8 +108,8 @@ chunks <- c("row1,row2", "row3,row4", "row5,row6", "row7,row8")
 root <- merkle_root(chunks)
 root
 
-# A single chunk's root is just its own digest.
-merkle_root("only") == core_sha256("only")
+# A single chunk's root is just its own leaf digest.
+merkle_root("only") == core_sha256(c(as.raw(0), charToRaw("only")))
 
 # The leaves are the per-chunk digests, so a diff names the culprit.
 before <- merkle_leaves(chunks)
@@ -78,4 +126,18 @@ merkle_verify("row5,row6-EDITED", pr, root)
 
 # Any change to any chunk changes the root.
 merkle_root(chunks) == merkle_root(c(chunks[1:3], "row7,row8 "))
+
+# an odd count: the last node is promoted, so its proof has one step
+merkle_proof(c("a", "b", "c"), 3)
+
+# an index past the end is refused
+try(merkle_proof(chunks, 5))
+
+# a root pinned by 0.5.12 or earlier recomputes with scheme = 1, and its
+# proofs (which record no scheme) verify with a warning
+old <- merkle_proof(chunks, 3, scheme = 1)
+old$scheme <- NULL
+withCallingHandlers(
+  merkle_verify(chunks[3], old, merkle_root(chunks, scheme = 1)),
+  warning = function(w) invokeRestart("muffleWarning"))
 }

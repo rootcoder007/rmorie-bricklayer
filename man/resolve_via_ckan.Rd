@@ -8,26 +8,57 @@ resolve_via_ckan(provenance)
 }
 \arguments{
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}. Must contain
-\code{dataset$ckan_api_endpoint} and \code{resource$name_match_pattern}.}
+\code{\link[=load_provenance]{load_provenance()}}, or
+\code{NULL}. It must contain \code{dataset$ckan_api_endpoint} and
+\code{resource$name_match_pattern} for a lookup to be made.}
 }
 \value{
-The matched resource URL as a character string, or \code{NULL}
-if the endpoint is missing, the request fails, CKAN reports failure, or
-no resource name matches.
+The matched resource URL as a length-1 character string, or
+\code{NULL} as described in Details.
 }
 \description{
-Queries the CKAN \code{package_show} endpoint recorded in a provenance
-object and returns the URL of the first resource whose name matches the
-provenance's name-match pattern. CKAN powers data.ontario.ca,
-data.gov.uk, data.gov, and most government open-data portals, so this
-recovers the current download URL even if the underlying resource UUID
-has been replaced.
+Asks a CKAN open-data portal for the current list of files in a dataset
+and returns the URL of the first file whose name matches the pattern
+pinned in the provenance record. CKAN powers data.ontario.ca,
+data.gov.uk, data.gov and most government open-data portals; when a
+portal replaces a file (a new resource UUID, a new URL) the dataset page
+stays the same, so this recovers the current download URL without editing
+the project.
+}
+\details{
+The function reads \code{dataset$ckan_api_endpoint} (the full
+\code{.../api/3/action/package_show?id=<slug>} URL) and
+\code{resource$name_match_pattern} (a regular expression), fetches the
+endpoint as JSON, and walks \code{result$resources} in the order the
+portal lists them. The first resource whose \code{name} matches the
+pattern (case-insensitively, with \code{\link[=grepl]{grepl()}}) wins. If the slug
+itself has
+changed, \code{\link[=resolve_via_ckan_search]{resolve_via_ckan_search()}} is the
+fallback.
+
+\code{NULL} is returned, without an error, when \code{provenance} is
+\code{NULL}, when either field is missing or empty, when the request
+fails (offline, HTTP error, invalid JSON), when CKAN answers
+\code{"success": false}, or when no resource name matches. Errors are
+raised for a \code{provenance} that is not a list, for an endpoint that is
+not a public \code{https} URL (plain \code{http} only with
+\code{options(rmoriebricklayer.allow_http = TRUE)}; loopback, private and
+link-local addresses are refused), and for a matched resource URL that
+fails the same check. One network request; nothing is written.
 }
 \examples{
 # Missing fields return NULL rather than erroring:
 resolve_via_ckan(list())
-\donttest{
+resolve_via_ckan(NULL)
+
+# the endpoint must be public https, checked before any request
+prov <- list(
+  dataset = list(ckan_api_endpoint = "http://localhost/api/3/action/package_show?id=x"),
+  resource = list(name_match_pattern = "2014")
+)
+try(resolve_via_ckan(prov))
+\dontrun{
+# needs the network: asks data.ontario.ca for the current file URL
 prov <- list(
   dataset = list(ckan_api_endpoint = paste0(
     "https://data.ontario.ca/api/3/action/package_show",

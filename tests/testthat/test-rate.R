@@ -226,13 +226,14 @@ test_that("share() on a bare vector totals itself by default", {
 })
 
 test_that("a confidence level outside (0, 1) is refused everywhere", {
+  # the shared .rmbl_conf_level() message since 0.5.13
   d <- data.frame(n = 10, pop = 1000)
-  expect_error(rate(d, n, pop, conf_level = 0), "strictly inside")
-  expect_error(rate(d, n, pop, conf_level = 1), "strictly inside")
-  expect_error(share(10, total = 100, conf_level = 2), "strictly inside")
+  expect_error(rate(d, n, pop, conf_level = 0), "strictly between 0 and 1")
+  expect_error(rate(d, n, pop, conf_level = 1), "strictly between 0 and 1")
+  expect_error(share(10, total = 100, conf_level = 2), "strictly between 0 and 1")
   g <- data.frame(year = c(2022, 2023), n = c(1, 2), pop = c(10, 10))
   expect_error(rate_change(g, n, pop, year, conf_level = NA),
-               "strictly inside")
+               "strictly between 0 and 1")
   expect_error(rate_change(g, n, pop, year, lag = 0), "positive integer")
 })
 

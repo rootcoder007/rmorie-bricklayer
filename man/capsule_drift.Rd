@@ -49,25 +49,43 @@ not a distribution: it gets \code{type = "identifier"}, its \code{unseen_share}
 dates (\code{type = "date"}).}
 
 \item{seed}{Seed for the Monte Carlo branch of the homogeneity test,
-\code{\link[=drift_homogeneity]{drift_homogeneity()}}. The caller's RNG stream is left
+\code{\link[=drift_homogeneity]{drift_homogeneity()}}. The caller's RNG stream is
+left
 untouched.}
 }
 \value{
-A list of class \code{bricklayer_drift}: \code{columns} (a data
-frame, one row per shared column, with \code{column}, \code{type},
-\code{statistic}, \code{p_value}, \code{psi}, \code{js_divergence} and
-\code{drifted}) , \code{added}, \code{removed}, \code{n_reference},
-\code{n_current}, \code{alpha}, and \code{any_drift}.
+A list of class \code{bricklayer_drift} with elements:
+\describe{
+\item{\code{columns}}{a data frame, one row per shared column, with
+\code{column}, \code{type} (\code{"numeric"}, \code{"date"}, \code{"categorical"}
+or
+\code{"identifier"}), \code{statistic} (KS \eqn{D} or chi-square), \code{p_value},
+\code{psi}, \code{js_divergence}, \code{unseen_share} (share of current values the
+reference never had; categorical and identifier columns only),
+\code{drifted} (logical, \code{NA} when no test applies) and \code{note}
+(why a column was not tested, or \code{""});}
+\item{\code{added}, \code{removed}}{character vectors of column names;}
+\item{\code{n_reference}, \code{n_current}}{row counts;}
+\item{\code{alpha}}{the level used;}
+\item{\code{any_drift}}{logical.}
+}
+The print method lists the per-column verdicts, drifted columns first.
 }
 \description{
+Checks whether the data in a freshly downloaded table still look like the
+data an analysis was built on, column by column. A digest only says
+whether the bytes changed; this says whether the distributions changed,
+which is what invalidates a result. Use it when re-running an analysis on
+a re-released extract.
+}
+\details{
 Runs the appropriate drift test on every shared column and collects the
 verdicts in one report: \code{\link[=drift_ks]{drift_ks()}} plus
 \code{\link[=drift_psi]{drift_psi()}} for a numeric column,
 \code{\link[=drift_homogeneity]{drift_homogeneity()}} for a categorical
 one. Columns that appeared or vanished are listed separately, since no
 test applies to them.
-}
-\details{
+
 The categorical test is the two-sample homogeneity test, NOT
 \code{\link[=drift_chisq]{drift_chisq()}} 's goodness-of-fit against a
 known distribution: the reference here is itself a finite sample, and
@@ -78,6 +96,29 @@ extract legitimately has a different SHA-256 while being the same data
 statistically; conversely a column can keep its name, type and row count
 while having been silently rescaled. \code{capsule_drift()} asks whether
 the DATA moved.
+
+Column types: a column numeric on both sides is \code{"numeric"}; a character
+or factor column whose every value is an ISO date (\code{YYYY-MM-DD}) or
+date-time on both sides is converted and tested as \code{"date"}; a
+categorical column with more than \code{identifier_levels} distinct values, or
+with at least 20 distinct values that number more than a fifth of the
+rows, is an \code{"identifier"} and is not tested; anything else is
+\code{"categorical"}. Missing values are dropped. For a categorical column the
+PSI is computed over the reference's categories with every unseen current
+value pooled into one extra bin.
+
+A column is \code{drifted} when its p-value is below \code{alpha}, or when its PSI
+exceeds \code{psi_threshold} and both samples have at least \code{psi_min_n}
+values. \code{any_drift} is also \code{TRUE} when a column was added or removed.
+Each column runs one or two tests, so with many columns some will fall
+below \code{alpha} by chance; see \code{\link[=scan_adjust]{scan_adjust()}} for a
+multiplicity
+correction and \code{\link[=drift_calibrate]{drift_calibrate()}} for an empirical
+false-alarm rate.
+A progress bar is shown in an interactive session for many columns.
+
+Errors: either argument not a data frame; \code{alpha} not strictly between
+0 and 1; \code{psi_min_n} negative; \code{identifier_levels} below 2.
 }
 \examples{
 set.seed(5)
@@ -109,6 +150,8 @@ capsule_drift(ref, same)$columns$psi
 
 # Structural changes are reported rather than tested.
 capsule_drift(ref, same[, c("value", "grade")])$removed
+
+try(capsule_drift(ref, as.matrix(same)))
 }
 \seealso{
 \code{\link[=validate_schema]{validate_schema()}} for the structural

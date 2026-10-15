@@ -33,7 +33,11 @@ static void rmbl_raise_interrupt(void) {
 static int rmbl_barrier_depth = 0;
 
 static void rmbl_chk_(void *) { R_CheckUserInterrupt(); }
+/* rmbl_fetch.cpp: turns the busy spinner when R has set a label (a no-op otherwise); every kernel's
+ * poll for a Ctrl-C comes through here, so every polling kernel animates it */
+extern "C" void rmbl_wait_tick(void);
 extern "C" int rmbl_interrupt_pending(void) {
+    rmbl_wait_tick();
     /* R_CheckUserInterrupt() longjmps when one is pending; run it under
      * R_ToplevelExec so the jump is caught here. With a barrier active the
      * kernel stops, sets the flag and the barrier raises after its
@@ -129,6 +133,7 @@ SEXP C_rmbl_var_impl(SEXP);
 SEXP C_rmbl_cor_impl(SEXP, SEXP);
 SEXP C_rmbl_normal_pdf_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_sha256_impl(SEXP);
+SEXP C_rmbl_sha256_chunk_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_sha512_impl(SEXP);
 SEXP C_rmbl_hash_two_part_impl(SEXP, SEXP);
 SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP);
@@ -227,9 +232,9 @@ SEXP C_rmbl_slhdsa_verify_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_morans_i_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_hmac_sha256_impl(SEXP, SEXP);
 SEXP C_rmbl_digest_equal_impl(SEXP, SEXP);
-SEXP C_rmbl_merkle_root_impl(SEXP);
-SEXP C_rmbl_merkle_leaves_impl(SEXP);
-SEXP C_rmbl_merkle_proof_impl(SEXP, SEXP);
+SEXP C_rmbl_merkle_root_impl(SEXP, SEXP);
+SEXP C_rmbl_merkle_leaves_impl(SEXP, SEXP);
+SEXP C_rmbl_merkle_proof_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_xmss_keygen_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_xmss_sign_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_xmss_verify_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -262,6 +267,9 @@ SEXP C_rmbl_normal_pdf(SEXP a0, SEXP a1, SEXP a2) {
 }
 SEXP C_rmbl_sha256(SEXP a0) {
     return rmbl_guard("C_rmbl_sha256", [&] { return C_rmbl_sha256_impl(a0); });
+}
+SEXP C_rmbl_sha256_chunk(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_sha256_chunk", [&] { return C_rmbl_sha256_chunk_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_sha512(SEXP a0) {
     return rmbl_guard("C_rmbl_sha512", [&] { return C_rmbl_sha512_impl(a0); });
@@ -557,14 +565,14 @@ SEXP C_rmbl_hmac_sha256(SEXP a0, SEXP a1) {
 SEXP C_rmbl_digest_equal(SEXP a0, SEXP a1) {
     return rmbl_guard("C_rmbl_digest_equal", [&] { return C_rmbl_digest_equal_impl(a0, a1); });
 }
-SEXP C_rmbl_merkle_root(SEXP a0) {
-    return rmbl_guard("C_rmbl_merkle_root", [&] { return C_rmbl_merkle_root_impl(a0); });
+SEXP C_rmbl_merkle_root(SEXP a0, SEXP a1) {
+    return rmbl_guard("C_rmbl_merkle_root", [&] { return C_rmbl_merkle_root_impl(a0, a1); });
 }
-SEXP C_rmbl_merkle_leaves(SEXP a0) {
-    return rmbl_guard("C_rmbl_merkle_leaves", [&] { return C_rmbl_merkle_leaves_impl(a0); });
+SEXP C_rmbl_merkle_leaves(SEXP a0, SEXP a1) {
+    return rmbl_guard("C_rmbl_merkle_leaves", [&] { return C_rmbl_merkle_leaves_impl(a0, a1); });
 }
-SEXP C_rmbl_merkle_proof(SEXP a0, SEXP a1) {
-    return rmbl_guard("C_rmbl_merkle_proof", [&] { return C_rmbl_merkle_proof_impl(a0, a1); });
+SEXP C_rmbl_merkle_proof(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_merkle_proof", [&] { return C_rmbl_merkle_proof_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_xmss_keygen(SEXP a0, SEXP a1, SEXP a2) {
     return rmbl_guard("C_rmbl_xmss_keygen", [&] { return C_rmbl_xmss_keygen_impl(a0, a1, a2); });

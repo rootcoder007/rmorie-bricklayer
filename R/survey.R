@@ -12,8 +12,15 @@
 #' weight, and either a set of replicate weights or the strata
 #' and primary sampling units (PSUs) for Taylor linearization.
 #' [survey_estimate()] and
-#' [survey_compare()] take the result.
+#' [survey_compare()] take the result. Use it once per
+#' survey file: a
+#' public-use file from Statistics Canada or Health Canada ships its final
+#' weight and a set of bootstrap replicate weights, and estimates computed
+#' without them understate the standard errors. The design checks the
+#' replicate columns it is given and remembers the rows it was built on, so a
+#' later estimate cannot silently be run on a reordered or different table.
 #'
+#' @details
 #' Replicate variances are \eqn{v = s \sum_r (\hat\theta_r -
 #' c)^2}, where \eqn{\hat\theta_r} is the estimate under
 #' replicate weight \eqn{r}, \eqn{c} is the full-sample estimate
@@ -88,9 +95,23 @@
 #' (\eqn{f_h} from `fpc`, zero without one). No strata means one
 #' stratum; no PSUs means every respondent is its own PSU.
 #'
+#' Errors: \code{data} not a data frame or with fewer than two rows; a named
+#' column that \code{data} does not have, or a vector of the wrong length;
+#' weights or replicate weights that are negative, missing or not finite;
+#' both replicates and strata or PSUs; fewer than two replicates, or
+#' replicate columns refused for the reasons above; BRR or Fay replicates not
+#' in a Hadamard order; \code{type = "jkn"} without \code{rscales}, or
+#' \code{rscales} not one non-negative number per replicate; \code{rho} not
+#' in [0, 1) for Fay; \code{mean_size} or \code{degf} below 1; missing
+#' strata or PSU labels; an \code{fpc} that is not positive, varies within a
+#' stratum, or is smaller than the PSUs sampled.
+#' Nothing is computed until [survey_estimate()] is called,
+#' so a single-PSU
+#' stratum under \code{lonely_psu = "fail"} is reported then.
+#'
 #' @param data A data frame, one row per respondent.
 #' @param weights The final (full-sample) weight: a column name
-#'   or a numeric vector.
+#'   or a numeric vector with one non-negative value per row.
 #' @param strata,psu Optional stratum and primary sampling unit:
 #'   column names or vectors. A PSU label need only be unique
 #'   within its stratum.
@@ -104,23 +125,35 @@
 #' @param id With a `replicates` data frame, the column (present
 #'   in both) that matches its rows to `data`'s; without it the
 #'   rows must already be in the same order.
-#' @param type How the replicates were made; see Details.
-#' @param mean_size For `type = "mean_bootstrap"`, the number of
-#'   bootstrap weights averaged into each replicate.
-#' @param rho For `type = "fay"`, Fay's coefficient.
+#' @param type How the replicates were made: \code{"bootstrap"} (the
+#'   default), \code{"mean_bootstrap"}, \code{"jk1"}, \code{"jkn"},
+#'   \code{"brr"} or \code{"fay"}; see Details. Ignored without
+#'   \code{replicates}.
+#' @param mean_size For \code{type = "mean_bootstrap"}, the number of
+#'   bootstrap weights averaged into each replicate; default \code{1}.
+#' @param rho For \code{type = "fay"}, Fay's coefficient, between 0 and 1;
+#'   default \code{NULL}.
 #' @param rscales Per-replicate factors: required for
 #'   `type = "jkn"` (\eqn{(n_h - 1)/n_h} for each replicate's
 #'   stratum), optional otherwise (multiplying the type's scale).
 #' @param degf The design's degrees of freedom, when known (a
 #'   public-use file's documentation gives them); by default
 #'   computed as described in Details.
-#' @param mse Centre replicate deviations on the full-sample
-#'   estimate (`TRUE`) or on the mean of the replicate estimates.
+#' @param mse Logical scalar, default \code{TRUE}: centre replicate deviations
+#'   on the full-sample estimate (\code{TRUE}) or on the mean of the replicate
+#'   estimates (\code{FALSE}).
 #' @param lonely_psu What to do with a stratum that has a single
-#'   PSU under linearization: `"fail"` (an error naming it),
-#'   `"remove"` (it contributes nothing) or `"adjust"` (its PSU is
+#'   PSU under linearization: \code{"fail"} (the default; an error naming it),
+#'   \code{"remove"} (it contributes nothing) or \code{"adjust"} (its PSU is
 #'   centred on the mean of all PSU totals).
-#' @return An object of class `rmbl_svy_design`.
+#' @return An object of class \code{rmbl_svy_design}: a list with \code{n}
+#'   (respondents), \code{weights}, \code{type} (the replicate type, or
+#'   \code{"linearization"}), \code{scale} and \code{reps} (the replicate
+#'   scale and weights, \code{NULL} under linearization), \code{mse},
+#'   \code{strata} and \code{psu} (integer codes), \code{lonely_psu},
+#'   \code{check} (the row names and digests used to recognise the data
+#'   later) and \code{degf} (the design degrees of freedom). The print method
+#'   summarises it.
 #' @seealso [survey_estimate()],
 #'   [survey_compare()]
 #' @examples
@@ -134,6 +167,14 @@
 #' des
 #' # the same data as a stratified design, variance by linearization
 #' survey_design(d, weights = "w", strata = "region")
+#'
+#' # delete-one jackknife replicates over ten groups of respondents
+#' grp <- rep(1:10, length.out = 100)
+#' jk <- sapply(1:10, function(g) ifelse(grp == g, 0, d$w * 10 / 9))
+#' survey_design(d, weights = "w", replicates = jk, type = "jk1")
+#'
+#' # a weight column that does not exist
+#' try(survey_design(d, weights = "wt"))
 #' @export
 survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, replicates = NULL,
                           id = NULL, type = c("bootstrap", "mean_bootstrap", "jk1", "jkn", "brr", "fay"),
@@ -430,7 +471,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   keys <- lapply(numcols, function(v) key(as.numeric(v)))
   warned <- character()
   equal <- integer()
+  pg <- bricklayer_progress("checking replicate weights", length(reps))
+  on.exit(pg$done(), add = TRUE)
   for (b in seq_along(reps)) {
+    pg$update(b - 1L, sprintf("replicate %d/%d", b, length(reps)))
     r <- reps[[b]]
     rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     nm <- names(reps)[[b]] %||% as.character(b)
@@ -660,6 +704,7 @@ print.rmbl_svy_design <- function(x, ...) {
 }
 
 .svy_ci <- function(est, se, n_used, stat, ci, conf_level, df = Inf, design_df = Inf) {
+  conf_level <- .rmbl_conf_level(conf_level)
   z <- if (is.finite(df)) stats::qt(1 - (1 - conf_level) / 2, df) else stats::qnorm(1 - (1 - conf_level) / 2)
   lower <- est - z * se
   upper <- est + z * se
@@ -717,7 +762,19 @@ print.rmbl_svy_design <- function(x, ...) {
 #' population or for each domain of `by`. A respondent outside a
 #' domain, or missing the analysis variable, counts zero in that
 #' domain and stays in the design, so the variance of a subgroup
-#' estimate reflects the whole sample design.
+#' estimate reflects the whole sample design. Use it for the figures a
+#' survey report publishes (the prevalence of a behaviour by region, the mean
+#' number of drinks, a population total) with the standard errors the survey's
+#' design implies rather than those of a simple random sample.
+#'
+#' @details
+#' The estimates are ratios of weighted totals: a mean is
+#' \eqn{\sum w_i y_i / \sum w_i} over the domain, a total
+#' \eqn{\sum w_i y_i}, a proportion the mean of the 0/1 indicator of each
+#' category, and a ratio \eqn{\sum w_i y_i / \sum w_i x_i} with \eqn{x} the
+#' \code{denominator}. Their variances come from the design: the replicate
+#' formula, or Taylor linearization of the ratio (see
+#' [survey_design()]).
 #'
 #' Proportions are reported for every category of `y` (or those
 #' in `levels`), each with its own interval. The default
@@ -726,40 +783,63 @@ print.rmbl_svy_design <- function(x, ...) {
 #' software behind Health Canada's published Canadian Substance
 #' Use Survey intervals: \eqn{n / \mathrm{Deff}}, with the
 #' design effect taken against the simple-random-sampling
-#' variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(z /
+#' variance \eqn{p(1 - p)/(n - 1)}, scaled by \eqn{(t_{n-1} /
 #' t_{df})^2} for the design's degrees of freedom (Korn and
-#' Graubard 1998) and capped at the \eqn{n} respondents behind
-#' the estimate. `ci = "logit"` builds the interval on the logit
+#' Graubard 1998; \eqn{t_{df}} is the normal quantile when the design's
+#' degrees of freedom are infinite) and capped at the \eqn{n} respondents
+#' behind the estimate. `ci = "logit"` builds the interval on the logit
 #' scale and `"wald"` symmetrically. Means, totals and ratios
 #' get the symmetric normal interval.
 #'
 #' A domain with fewer than `min_n` respondents is flagged, not
 #' withheld: Health Canada suppresses such CSUS estimates in its
 #' data tool (denominator under 30), and the flag lets the
-#' reader do the same.
+#' reader do the same. Other flags say why a standard error is missing (no
+#' stratum with two PSUs, a replicate that left the domain empty, weights all
+#' zero) or that a domain has no respondents.
+#'
+#' Errors: \code{design} not from [survey_design()];
+#' \code{data} not the rows
+#' the design was built on, in the same order; \code{y}, \code{by} or
+#' \code{denominator} naming a column \code{data} does not have; a ratio
+#' without \code{denominator}; \code{conf_level} outside (0, 1); \code{df}
+#' not positive, \code{Inf} or \code{"design"}, or a design with no degrees
+#' of freedom under \code{df = "design"}; a single-PSU stratum under
+#' \code{lonely_psu = "fail"}.
 #'
 #' @param design A [survey_design()] built on `data`.
 #' @param data The data frame the design was built on.
-#' @param y The analysis column.
-#' @param by Optional domain columns.
+#' @param y Character scalar, the analysis column: numeric for a mean, total
+#'   or ratio; any type for a proportion (each distinct value is a category).
+#' @param by Optional character vector of domain columns; \code{NULL} (the
+#'   default) estimates for the whole population.
 #' @param stat `"mean"`, `"total"`, `"proportion"` or `"ratio"`
 #'   (of `y` to `denominator`).
 #' @param denominator For a ratio, the denominator column.
 #' @param levels For a proportion, the categories to report
 #'   (default all observed).
-#' @param conf_level Confidence level.
-#' @param ci Interval method: `"auto"` (Wilson for proportions,
-#'   Wald otherwise), `"wilson"`, `"logit"` or `"wald"`.
-#' @param min_n Domains with fewer respondents are flagged.
+#' @param conf_level Numeric scalar in (0, 1), the confidence level; default
+#'   \code{0.95}.
+#' @param ci Interval method: \code{"auto"} (the default; Wilson for
+#'   proportions, Wald otherwise), \code{"wilson"}, \code{"logit"} or
+#'   \code{"wald"}. Wilson and logit apply to proportions only.
+#' @param min_n Numeric scalar, default \code{30}: domains with fewer
+#'   respondents are flagged.
 #' @param df Degrees of freedom for the interval: `Inf` (the
 #'   default) for the normal quantile, a number for Student's t,
 #'   or `"design"` for the design's own (PSUs less strata under
 #'   linearization, replicates less one otherwise).
-#' @return A data frame of class `rmbl_svy_estimate`: the domain
-#'   (and `level`) columns, then `estimate`, `se`, `lower`,
-#'   `upper`, `cv` (percent), `n` (respondents counted) and
-#'   `flag`. The covariance of the estimates is the `vcov`
-#'   attribute.
+#' @return A data frame of class \code{c("rmbl_svy_estimate", "data.frame")},
+#'   one row per domain (and category, for a proportion): the domain columns
+#'   (and \code{level}), then numeric \code{estimate}, \code{se},
+#'   \code{lower}, \code{upper}, \code{cv} (coefficient of variation,
+#'   percent), integer \code{n} (respondents counted) and character
+#'   \code{flag} (\code{NA} when there is nothing to say). Attributes:
+#'   \code{vcov} (the covariance matrix of the estimates, used by
+#'   [survey_compare()]), \code{stat}, \code{y}, \code{by},
+#'   \code{ci},
+#'   \code{conf_level}, \code{df}, \code{method} (the variance method) and
+#'   \code{denominator}.
 #' @seealso [survey_design()],
 #'   [survey_compare()]
 #' @examples
@@ -771,6 +851,17 @@ print.rmbl_svy_design <- function(x, ...) {
 #' survey_estimate(des, d, "smoker", by = "region", stat = "proportion", levels = "1")
 #' survey_estimate(des, d, "drinks", stat = "mean")
 #' survey_estimate(des, d, "drinks", by = "region", stat = "total")
+#'
+#' # a ratio of two totals, with Student's t on the design's degrees of freedom
+#' d$visits <- rpois(100, 6)
+#' survey_estimate(des, d, "drinks", stat = "ratio", denominator = "visits", df = "design")
+#'
+#' # a logit interval at 90 percent
+#' survey_estimate(des, d, "smoker", stat = "proportion", levels = "1", ci = "logit",
+#'                 conf_level = 0.90)
+#'
+#' # the design remembers its rows: a subset is refused
+#' try(survey_estimate(des, d[-1, ], "drinks"))
 #' @export
 survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total", "proportion", "ratio"),
                             denominator = NULL, levels = NULL, conf_level = 0.95,
@@ -781,10 +872,7 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
   .svy_check_data(design, data)
   if (!length(by)) by <- NULL
   if (!is.character(by) && !is.null(by)) stop("`by` must name columns of `data`", call. = FALSE)
-  if (!is.numeric(conf_level) || length(conf_level) != 1L || is.na(conf_level) ||
-        !(conf_level > 0 && conf_level < 1)) {
-    stop("`conf_level` must be a number between 0 and 1", call. = FALSE)
-  }
+  conf_level <- .rmbl_conf_level(conf_level)
   if (stat == "ratio" && is.null(denominator)) stop("a ratio needs a `denominator` column", call. = FALSE)
   if (ci == "auto") ci <- if (stat == "proportion") "wilson" else "wald"
   if (identical(df, "design")) {
@@ -824,16 +912,36 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
 #' covariance between the two estimates included, which is what
 #' a pair of separate intervals leaves out), a confidence
 #' interval and a two-sided p-value from the normal
-#' approximation.
+#' approximation. Use it to test whether two regions or groups differ, rather
+#' than checking whether their separate intervals overlap: overlapping
+#' intervals do not mean no difference, and domains of one survey are not
+#' independent.
+#'
+#' @details
+#' The estimates come from [survey_estimate()] with Wald
+#' intervals. For domain
+#' \eqn{i} and reference \eqn{0} the difference is \eqn{d = \hat\theta_i -
+#' \hat\theta_0} with \eqn{SE(d) = \sqrt{V_{ii} + V_{00} - 2V_{i0}}} from the
+#' design covariance; the interval is \eqn{d \pm z\,SE(d)} and the p-value
+#' \eqn{2\Phi(-|d|/SE(d))}, both on the normal distribution (there is no
+#' \code{df} argument). For a proportion every category is compared
+#' separately. No adjustment for multiple comparisons is made.
+#'
+#' Errors: \code{by} missing or empty; fewer than two domains; a \code{ref}
+#' that is not a single domain label present in the data; and every error of
+#' [survey_estimate()].
 #'
 #' @inheritParams survey_estimate
 #' @param by The domain columns to compare across.
 #' @param ref The reference domain, as its label (for several
-#'   `by` columns, the labels joined with `" / "`); default the
-#'   first.
-#' @return A data frame of class `rmbl_svy_compare`: `domain`,
-#'   `level` (for a proportion), `estimate`, `reference`,
-#'   `difference`, `se`, `lower`, `upper`, `p_value`.
+#'   \code{by} columns, the labels joined with \code{" / "}); a number is
+#'   matched as the label it prints as. Default \code{NULL}: the first domain.
+#' @return A data frame of class \code{c("rmbl_svy_compare", "data.frame")},
+#'   one row per non-reference domain (and category): \code{domain},
+#'   \code{level} (for a proportion only), numeric \code{estimate} (the
+#'   domain's), \code{reference} (the reference domain's), \code{difference},
+#'   \code{se}, \code{lower}, \code{upper} and \code{p_value}. Attributes
+#'   \code{ref}, \code{stat}, \code{y} and \code{conf_level}.
 #' @examples
 #' set.seed(1)
 #' d <- data.frame(region = rep(c("north", "south", "east"), length.out = 150),
@@ -841,10 +949,18 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
 #' des <- survey_design(d, weights = "w")
 #' survey_compare(des, d, "smoker", by = "region", stat = "proportion",
 #'                levels = "1", ref = "north")
+#'
+#' # means, against the default (first) domain, at 90 percent
+#' d$drinks <- rpois(150, 3)
+#' survey_compare(des, d, "drinks", by = "region", conf_level = 0.90)
+#'
+#' # the reference must be one of the domains
+#' try(survey_compare(des, d, "drinks", by = "region", ref = "west"))
 #' @export
 survey_compare <- function(design, data, y, by, stat = c("mean", "total", "proportion", "ratio"),
                            denominator = NULL, levels = NULL, ref = NULL, conf_level = 0.95) {
   stat <- .rmbl_arg(stat)
+  conf_level <- .rmbl_conf_level(conf_level)
   if (missing(by) || !length(by)) stop("`by` must name the domains to compare", call. = FALSE)
   e <- survey_estimate(design, data, y, by = by, stat = stat, denominator = denominator, levels = levels,
                        conf_level = conf_level, ci = "wald")

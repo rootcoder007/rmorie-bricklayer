@@ -7,7 +7,8 @@
 drift_ks(x, y)
 }
 \arguments{
-\item{x, y}{Numeric vectors, the reference and the new sample.}
+\item{x, y}{Numeric vectors, the reference and the new sample. Logical
+vectors are read as 0/1.}
 }
 \value{
 A named length-3 numeric: \code{statistic} (the KS \eqn{D}) ,
@@ -15,19 +16,32 @@ A named length-3 numeric: \code{statistic} (the KS \eqn{D}) ,
 \eqn{n_xn_y/(n_x+n_y)}).
 }
 \description{
-The largest vertical gap between the two empirical distribution
+Tests whether two numeric samples come from the same distribution, for
+example a column in a pinned data extract and the same column in a fresh
+download. It needs no assumption about the shape of either distribution,
+and it reacts to any kind of change: a shift, a change in spread, or a
+change in shape. It is the numeric test that
+\code{\link[=capsule_drift]{capsule_drift()}} runs on
+every shared numeric or date column.
+}
+\details{
+The statistic is the largest vertical gap between the two empirical distribution
 functions, with the asymptotic two-sided p-value from the Kolmogorov
 distribution. Distribution-free: it assumes nothing about the shape of
 either sample, which is what makes it the right first test on a column
 whose distribution was never specified.
-}
-\details{
+
 The p-value is the ASYMPTOTIC one, \eqn{2\sum_k (-1)^{k-1} e^{-2k^2t^2}}
 with \eqn{t = \sqrt{n_{\mathrm{eff}}}D}. It is accurate for moderate
 samples and conservative for small ones; for an exact small-sample
 p-value use \code{\link[stats:ks.test]{stats::ks.test()}}. Ties are
 handled by comparing the two EDFs at each distinct value, so tied data
 does not produce a warning the way \code{ks.test()} does.
+
+Missing values are dropped. Errors: non-numeric input (character,
+factor, list), any infinite value, or no non-missing value left in
+either sample. One value per sample is enough to compute the statistic,
+but the p-value is only meaningful for samples of a few dozen or more.
 }
 \examples{
 set.seed(1)

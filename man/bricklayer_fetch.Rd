@@ -7,19 +7,21 @@
 bricklayer_fetch(url, dest, wayback = "", timeout = 120L)
 }
 \arguments{
-\item{url}{Live source URL.}
+\item{url}{Live source URL, a single \code{https} string.}
 
-\item{dest}{Destination file path.}
+\item{dest}{Destination file path, a single string; its directory must
+exist.}
 
-\item{wayback}{Optional explicit Wayback snapshot URL.
-\code{""} (default) auto-resolves one via
-\code{\link{wayback_snapshot_url}}.}
+\item{wayback}{Optional explicit Wayback snapshot URL, a string.
+\code{""} (default) or \code{NULL} auto-resolves one via
+\code{\link{wayback_snapshot_url}}'s API when the live download fails.}
 
-\item{timeout}{Per-request timeout, seconds.}
+\item{timeout}{Per-request timeout in seconds, a positive whole number
+(default 120).}
 }
 \value{
-Invisibly, one of \code{"live"}, \code{"wayback"}, or throws on
-total failure.
+Invisibly, \code{"live"} or \code{"wayback"}: the source that
+served the file. Throws on total failure.
 }
 \description{
 The shared data-fetch foundation of the morie ecosystem. Downloads
@@ -27,31 +29,57 @@ The shared data-fetch foundation of the morie ecosystem. Downloads
 it retries the Wayback Machine snapshot -- so a rotated or removed
 source file (CIHI, open-data portals) stays retrievable. Backed by the
 package's C++ \code{rmbl_fetch_with_fallback} kernel (libcurl), which
-\pkg{rmorie} and \pkg{morie} share through \code{LinkingTo}.
+\pkg{rmorie} and \pkg{morie} share through \code{LinkingTo}. The return
+value says which source served the file, so a report can note that it
+used an archived copy.
+}
+\details{
+Before any network use the arguments are checked: \code{url} must be one
+\code{https} URL to a public host (plain \code{http} only with
+\code{options(rmoriebricklayer.allow_http = TRUE)}; loopback, private,
+link-local and metadata addresses are refused), the directory of
+\code{dest} must exist and be writable, and \code{timeout} must be at
+least one second. The compiled layer then resolves the host, pins the
+connection to the checked addresses and re-checks every redirect.
+
+If the live download fails, the fallback is the \code{wayback} URL when
+given, else a snapshot looked up through the Wayback availability API
+(as \code{\link[=wayback_snapshot_url_native]{wayback_snapshot_url_native()}} does).
+\code{dest} is overwritten. A
+spinner is drawn on stderr while waiting, unless
+\code{options(morie.quiet = TRUE)}.
+
+Errors: invalid arguments as above; and, when both sources fail, an error
+saying whether the live URL could not be reached or answered an HTTP
+status, and whether the Wayback Machine had no snapshot or its copy could
+not be downloaded.
 }
 \examples{
 # Inputs are validated before any network access:
 try(bricklayer_fetch("", tempfile()))          # empty url -> error
+try(bricklayer_fetch("ftp://example.org/data.csv", tempfile()))
+try(bricklayer_fetch("https://127.0.0.1/data.csv", tempfile()))
+try(bricklayer_fetch("https://example.org/data.csv",
+                     file.path(tempdir(), "no-such-dir", "data.csv")))
 
-\donttest{
-# Downloads from the live web service; try() keeps the example graceful
-# when neither the live URL nor its Wayback fallback is reachable.
+\dontrun{
+# needs the network
 dst <- tempfile(fileext = ".xlsx")
 
 # Live download; auto-resolves a Wayback snapshot only if the live URL fails.
-try(bricklayer_fetch(
+bricklayer_fetch(
   paste0("https://www.cihi.ca/sites/default/files/document/",
          "hospital-beds-2024-2025-data-tables-en.xlsx"),
-  dst))
+  dst)
 
 # Pin an explicit Wayback snapshot to fall back to, and a shorter timeout.
-try(bricklayer_fetch(
+bricklayer_fetch(
   "https://example.org/rotated-file.csv", tempfile(fileext = ".csv"),
   wayback = "https://web.archive.org/web/2024id_/https://example.org/rotated-file.csv",
-  timeout = 60))
+  timeout = 60)
 
 # The return value tells you which source served the file.
-status <- try(bricklayer_fetch("https://cloud.r-project.org/", tempfile()))
+status <- bricklayer_fetch("https://cloud.r-project.org/", tempfile())
 status   # "live" or "wayback"
 }
 }

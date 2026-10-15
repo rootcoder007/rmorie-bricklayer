@@ -10,34 +10,60 @@ core_hawkes_jitter(times, resolution = 1, seed = 42, horizon = Inf)
 \item{times}{Numeric event times, each the start of its resolution
 interval (for example whole days since an origin).}
 
-\item{resolution}{The width of the interval a recorded time stands for
-(positive; 1 for daily dates in days).}
+\item{resolution}{The width of the interval a recorded time stands for,
+one positive number in the unit of \code{times}: 1 (the default) for
+daily dates in days, \code{1/24} for hourly times in days.}
 
-\item{seed}{Seed of the uniforms, as in \code{\link[=core_uniforms]{core_uniforms()}}.}
+\item{seed}{Seed of the uniforms, as in
+\code{\link[=core_uniforms]{core_uniforms()}}; default 42.}
 
-\item{horizon}{End of the observation window, when it cuts an interval short: an event
-recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]}, so a
-time dated on the horizon itself stays there (\code{Inf}: no window).}
+\item{horizon}{End of the observation window, when it cuts an interval short: an
+event
+recorded at \code{t} is spread over \code{[t, min(t + resolution, horizon)]},
+so a
+time dated on the horizon itself stays there (\code{Inf}, the default: no window).}
 }
 \value{
-The jittered times, sorted.
+A numeric vector of the jittered times, the same length as
+\code{times}, sorted increasingly.
 }
 \description{
 Daily (or hourly, or second) timestamps put every event of an interval at
 one time, but a Hawkes process never has two events at one instant, and
 fitting the rounded times as exact biases the estimates (Filimonov &
-Sornette 2015). The remedy they use is to redistribute each timestamp
-uniformly within its interval of uncertainty: \code{times + resolution * U},
-with \code{U} uniform on [0, 1), then sorted. The uniforms are the splitmix64
-stream of \code{\link[=core_uniforms]{core_uniforms()}}, so the result is reproducible
-and, on daily
-dates with \code{seed = 42}, the same as the jitter rmorie and morie (Python)
-apply before their TPS Hawkes fits.
+Sornette 2015). This function spreads each recorded time uniformly over
+the interval it stands for, so the times can be passed to
+\code{\link[=core_hawkes_fit]{core_hawkes_fit()}}.
+}
+\details{
+Each time becomes \code{t + w * U}, with
+\code{w = min(resolution, horizon - t)} and \code{U} uniform on [0, 1),
+and the result is sorted; this is the remedy Filimonov and Sornette use.
+The times are sorted (radix order) before the uniforms are assigned, so
+the result does not depend on the input order. The uniforms are the
+splitmix64 stream of \code{\link[=core_uniforms]{core_uniforms()}}, so the result is
+reproducible
+and, on daily dates with \code{seed = 42}, the same as the jitter rmorie
+and morie (Python) apply before their TPS Hawkes fits. R's random number
+generator is not used.
+
+Errors: \code{times} with \code{NA} or non-finite values; \code{resolution}
+not one positive finite number; \code{horizon} not one number; a time
+past \code{horizon}.
 }
 \examples{
 days <- c(0, 0, 0, 1, 3, 3)
 core_hawkes_jitter(days)
 anyDuplicated(core_hawkes_jitter(days))
+
+# a horizon keeps the last day inside the window
+core_hawkes_jitter(c(0, 1, 2), horizon = 2)
+
+# hourly resolution, in days, and another seed
+core_hawkes_jitter(c(0, 0, 0), resolution = 1 / 24, seed = 7)
+
+# times past the horizon are refused
+try(core_hawkes_jitter(c(0, 5), horizon = 3))
 }
 \references{
 Filimonov V, Sornette D (2015). Apparent criticality and

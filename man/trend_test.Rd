@@ -15,47 +15,76 @@ trend_test(
 )
 }
 \arguments{
-\item{y}{The series, in period order, or a data frame.}
+\item{y}{Numeric vector, the series in period order, or a data frame.}
 
-\item{x}{The periods. Defaults to the position, which is right
-for an evenly spaced series.}
+\item{x}{Numeric vector of periods, default \code{NULL}: the position
+\code{1, 2, ...}, which is right for an evenly spaced series. Ignored
+when \code{y} is a data frame and \code{period} is given.}
 
-\item{value, period}{Column names, when \code{y} is a
-data frame.}
+\item{value, period}{Column names (strings), when \code{y} is a data
+frame. \code{value} is required; \code{period} is optional and must be
+convertible with \code{as.numeric()}.}
 
-\item{exact}{Whether to compute the exact null distribution
-of Mann-Kendall's S by enumeration. Feasible and used by default up to
-\code{n = 8} (40,320 orderings); above that the normal approximation
-with the tie and continuity corrections is used.}
+\item{exact}{Logical or \code{NULL} (the default). Whether to compute the
+exact null distribution of Mann-Kendall's \eqn{S} by enumeration.
+\code{NULL} uses it up to \code{n = 8} (40,320 orderings); above that
+the normal approximation with the tie and continuity corrections is
+used.}
 
-\item{alternative}{\code{"two.sided"},
-\code{"increasing"} or \code{"decreasing"}.}
+\item{alternative}{\code{"two.sided"} (the default), \code{"increasing"}
+or \code{"decreasing"}.}
 
-\item{conf_level}{Confidence level for the slope
-interval.}
+\item{conf_level}{Number in (0, 1), default 0.95: the confidence level of
+the slope interval.}
 }
 \value{
 A list with \code{S}, \code{tau}, \code{p_value}, \code{slope}
-(Theil-Sen), \code{intercept}, \code{slope_lower} / \code{slope_upper},
-\code{slope_ci_clamped} (\code{TRUE} when the pairwise slopes do not reach the
-requested confidence on a side, so that bound is the extreme slope and
-the true interval is wider)
-(the distribution-free interval), \code{n} and \code{method}.
+(Theil-Sen, in units of \code{y} per unit of \code{x}),
+\code{intercept}, \code{slope_lower} and \code{slope_upper} (the
+distribution-free interval), \code{slope_ci_clamped} (\code{TRUE} when
+the pairwise slopes do not reach the requested confidence on a side, so
+that bound is the extreme slope and the true interval is wider),
+\code{n}, \code{var_S} (the tie-corrected variance of \eqn{S}),
+\code{alternative}, \code{conf_level} and \code{method}.
 }
 \description{
-The Mann-Kendall rank test for monotone trend with the Theil-Sen
-median-of-slopes estimator: no distributional assumption, resistant to a
-single aberrant period, and meaningful at the series lengths an annual
-administrative extract actually has.
+Tests whether a short series (for example five to ten fiscal years of an
+administrative count) is rising or falling, and estimates the size of the
+change per period. It uses the Mann-Kendall rank test for monotone trend
+and the Theil-Sen median-of-slopes estimator: no distributional
+assumption, resistant to a single aberrant period, and meaningful at the
+series lengths an annual administrative extract actually has.
 }
 \details{
-Kendall's tau here is S over the number of comparable pairs, so it is
-the rank correlation between the value and the period.
+With values \eqn{y_1, \dots, y_n} in period order,
+\deqn{S = \sum_{i < j} \mathrm{sign}(y_j - y_i),}
+and Kendall's tau here is \eqn{S / (n(n-1)/2)}, the rank correlation
+between the value and the period. The Theil-Sen slope is the median of
+the pairwise slopes \eqn{(y_j - y_i)/(x_j - x_i)};
+\code{intercept} is the line's intercept from the compiled Theil-Sen
+routine.
+
+For \eqn{n \le 8} the p-value is exact by default: \eqn{S} is computed
+over every ordering of the observed values (with ties kept, so tied data
+get the correct conditional null). Otherwise the normal approximation is
+used, with the tie-corrected variance of \eqn{S} and a continuity
+correction of one unit toward zero. Exact tables are cached in the
+session, up to 32 of them.
 
 The slope interval is the standard rank-based one: the pairwise slopes
 are sorted and the interval runs between the order statistics that
 Mann-Kendall's variance places at the chosen level, so it is consistent
-with the test rather than derived from a different model.
+with the test rather than derived from a different model. At small
+\eqn{n} the slopes may not reach the requested confidence; the bound is
+then the most extreme slope and \code{slope_ci_clamped} is \code{TRUE}.
+
+Missing periods are dropped and the series is sorted by \code{x}.
+Errors: fewer than three periods; infinite values; \code{x} and \code{y}
+of different lengths; a data frame without \code{value} or with a column
+not found; more than 20,000 periods (the pairwise slopes would not fit in
+memory); a \code{conf_level} outside (0, 1). \code{exact = TRUE} with \eqn{n > 8}
+warns and uses the normal
+approximation.
 }
 \examples{
 # Five years of placements.
@@ -69,9 +98,11 @@ trend_test(c(1, 2, 3, 4, 5))
 # One aberrant period does not create a trend.
 trend_test(c(100, 100, 100, 100, 900))$p_value
 
-# From a data frame.
+# From a data frame, testing for a decrease only.
 d <- data.frame(year = 2019:2023, n = y)
-trend_test(d, value = "n", period = "year")$slope
+trend_test(d, value = "n", period = "year", alternative = "decreasing")$p_value
+
+try(trend_test(c(5, 6)))
 }
 \references{
 Sen, P. K. (1968). Estimates of the regression coefficient based on
@@ -79,12 +110,11 @@ Kendall's tau. \emph{Journal of the American Statistical Association}
 63(324), 1379-1389, for the median-of-slopes estimator and the
 distribution-free interval.
 
-Wilcox, R. R. \emph{Modern Statistics for the Social and Behavioral Sciences:
-A Practical Introduction} treats Theil-Sen among the regression methods
-that carry no normality assumption, which is the reason for preferring
-it on a series this short.
+Wilcox, R. R. \emph{Modern Statistics for the Social and Behavioral
+Sciences: A Practical Introduction} treats Theil-Sen among the regression
+methods that carry no normality assumption, which is the reason for
+preferring it on a series this short.
 }
 \seealso{
-\code{\link[=step_change]{step_change()}},
-\code{\link[=count_trend]{count_trend()}}
+\code{\link{step_change}}, \code{\link{count_trend}}
 }

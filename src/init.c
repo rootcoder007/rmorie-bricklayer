@@ -22,6 +22,7 @@ extern SEXP C_rmbl_var(SEXP);
 extern SEXP C_rmbl_cor(SEXP, SEXP);
 extern SEXP C_rmbl_normal_pdf(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_sha256(SEXP);
+extern SEXP C_rmbl_sha256_chunk(SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_core.cpp) -- vendored morie kernels, now bound */
 extern SEXP C_rmbl_sd(SEXP, SEXP);
 extern SEXP C_rmbl_euclid(SEXP, SEXP);
@@ -139,9 +140,9 @@ extern void     rmbl_theil_sen(const double *, const double *, R_xlen_t,
 extern double   rmbl_hurwitz_zeta(double, double);
 extern SEXP C_rmbl_hmac_sha256(SEXP, SEXP);
 extern SEXP C_rmbl_digest_equal(SEXP, SEXP);
-extern SEXP C_rmbl_merkle_root(SEXP);
-extern SEXP C_rmbl_merkle_leaves(SEXP);
-extern SEXP C_rmbl_merkle_proof(SEXP, SEXP);
+extern SEXP C_rmbl_merkle_root(SEXP, SEXP);
+extern SEXP C_rmbl_merkle_leaves(SEXP, SEXP);
+extern SEXP C_rmbl_merkle_proof(SEXP, SEXP, SEXP);
 /* .Call wrappers (rmbl_pqc.cpp) -- post-quantum capsule signatures */
 extern SEXP C_rmbl_xmss_keygen(SEXP, SEXP, SEXP);
 extern SEXP C_rmbl_xmss_sign(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -258,6 +259,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_cor",            (DL_FUNC) &C_rmbl_cor,            2},
     {"C_rmbl_normal_pdf",     (DL_FUNC) &C_rmbl_normal_pdf,     3},
     {"C_rmbl_sha256",         (DL_FUNC) &C_rmbl_sha256,         1},
+    {"C_rmbl_sha256_chunk",   (DL_FUNC) &C_rmbl_sha256_chunk,   3},
     {"C_rmbl_sha512",         (DL_FUNC) &C_rmbl_sha512,         1},
     {"C_rmbl_hash_two_part",  (DL_FUNC) &C_rmbl_hash_two_part,  2},
     {"C_rmbl_fetch_fallback", (DL_FUNC) &C_rmbl_fetch_fallback, 4},
@@ -356,9 +358,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"C_rmbl_morans_i",          (DL_FUNC) &C_rmbl_morans_i,          7},
     {"C_rmbl_hmac_sha256",       (DL_FUNC) &C_rmbl_hmac_sha256,       2},
     {"C_rmbl_digest_equal",      (DL_FUNC) &C_rmbl_digest_equal,      2},
-    {"C_rmbl_merkle_root",       (DL_FUNC) &C_rmbl_merkle_root,       1},
-    {"C_rmbl_merkle_leaves",     (DL_FUNC) &C_rmbl_merkle_leaves,     1},
-    {"C_rmbl_merkle_proof",      (DL_FUNC) &C_rmbl_merkle_proof,      2},
+    {"C_rmbl_merkle_root",       (DL_FUNC) &C_rmbl_merkle_root,       2},
+    {"C_rmbl_merkle_leaves",     (DL_FUNC) &C_rmbl_merkle_leaves,     2},
+    {"C_rmbl_merkle_proof",      (DL_FUNC) &C_rmbl_merkle_proof,      3},
     {"C_rmbl_xmss_keygen",       (DL_FUNC) &C_rmbl_xmss_keygen,       3},
     {"C_rmbl_xmss_sign",         (DL_FUNC) &C_rmbl_xmss_sign,         6},
     {"C_rmbl_xmss_verify",       (DL_FUNC) &C_rmbl_xmss_verify,       8},

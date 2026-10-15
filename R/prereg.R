@@ -12,12 +12,16 @@
 
 #' Declare an analysis before running it
 #'
-#' Records the statistics an analysis intends to report and what each is
-#' meant to show, so that what was actually reported can be compared
-#' against it afterwards. Seal it with
-#' [capsule_attest()] and the declaration
-#' acquires a date it cannot be moved off.
+#' @description
+#' `prereg_declare()` records, before the analysis is run, the statistics
+#' it intends to report and the claim each one is meant to test, with a UTC
+#' timestamp. `prereg_check()` compares that declaration with what was
+#' actually reported and lists the departures in both directions. Seal the
+#' declaration with [capsule_attest()] and it acquires a
+#' date it cannot be
+#' moved off. Use the pair to make a pre-analysis plan checkable.
 #'
+#' @details
 #' The comparison [prereg_check()] makes is
 #' asymmetric on purpose, because the two ways of departing from a plan are
 #' different failures:
@@ -30,17 +34,29 @@
 #' Neither is misconduct on its own and both are invisible without a
 #' declaration made in advance.
 #'
+#' Statistics are matched by exact name. The timestamp is the computer's
+#' clock at the time of the call, so on its own it proves nothing; the
+#' attestation is what fixes the date. Nothing is written to disk.
+#'
+#' Errors: `hypotheses` not a non-empty character vector with non-empty,
+#' unique names; `prereg` not from `prereg_declare()`.
+#'
 #' @param hypotheses Named character vector: one claim
 #' per statistic, named by the statistic's name as it will be recorded.
-#' @param note Optional free text -- the design, the data
-#' source, what would count as a refutation.
+#' @param note Optional character string, default `NULL`: free text -- the
+#' design, the data source, what would count as a refutation. Only the first
+#' element is kept.
 #' @param prereg A declaration from `prereg_declare()`.
 #' @param reported Character vector of the statistic names
-#' actually reported, or a manifest from which they are taken.
-#' @return `prereg_declare()` a list of class
-#' `bricklayer_prereg`; `prereg_check()` a list with `ok`,
-#' `declared_not_reported`, `reported_not_declared` and a
-#' `hypotheses` data frame.
+#' actually reported, or a manifest (any list with a named `results`
+#' element, such as a capsule manifest), whose result names are used.
+#' @return `prereg_declare()` returns a list of class `bricklayer_prereg`
+#' with `statistics` (the names), `hypotheses` (the claims), `note` and
+#' `declared_utc` (ISO 8601 time). `prereg_check()` returns a list of class
+#' `bricklayer_prereg_check` with `ok` (logical: no departures),
+#' `declared_not_reported` and `reported_not_declared` (character vectors),
+#' `hypotheses` (a data frame of `statistic`, `hypothesis` and logical
+#' `reported`) and `declared_utc`. Both print a short summary.
 #' @seealso
 #' [capsule_attest()] to seal a declaration,
 #' [capsule_falsify()] for the controls
@@ -61,6 +77,11 @@
 #' # and adding undeclared ones is what makes a nominal p meaningless
 #' prereg_check(plan, c("ate", "n_rows", "ate_by_year",
 #'                      "ate_by_precinct"))$reported_not_declared
+#'
+#' # the full check prints the departures
+#' prereg_check(plan, c("ate", "ate_by_year"))
+#'
+#' try(prereg_declare(c("an unnamed claim")))
 #' @export
 prereg_declare <- function(hypotheses, note = NULL) {
   if (!is.character(hypotheses) || !length(hypotheses) ||
@@ -150,6 +171,7 @@ print.bricklayer_prereg_check <- function(x, ...) {
 
 #' Correct a family of falsification results for multiple testing
 #'
+#' @description
 #' Takes the p-values from several
 #' [capsule_falsify()] runs -- or a plain
 #' numeric vector -- and reports which survive once the size of the family
@@ -170,16 +192,38 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #' the alternative is a table of adjusted values that look like evidence of
 #' nothing in particular.
 #'
+#' @details
+#' With the \eqn{m} p-values sorted, \eqn{p_{(1)} \le \dots \le p_{(m)}}, the
+#' adjusted values are: Holm, \eqn{\max_{j \le i} (m - j + 1) p_{(j)}};
+#' Benjamini-Hochberg, \eqn{\min_{j \ge i} (m / j) p_{(j)}}; Bonferroni,
+#' \eqn{m p_{(i)}}; all capped at 1. They agree with
+#' \code{stats::p.adjust()} with methods \code{"holm"}, \code{"BH"} and
+#' \code{"bonferroni"}. A member survives when its adjusted value is at
+#' most `alpha`.
+#'
+#' For a list of [capsule_falsify()] results the p-value
+#' used is that of
+#' each result's permutation control, and the floor is \eqn{1/(n + 1)} for
+#' its `n` permutations. For a numeric vector there is no floor to check and
+#' unnamed values are named `p1`, `p2`, ....
+#'
+#' Errors: a list whose members are not all falsification results, or that
+#' is unnamed; a member without a permutation p-value; a missing p-value; a
+#' p-value outside \eqn{[0, 1]}.
+#'
 #' @param x A named list of `bricklayer_falsification`
 #' objects, or a named numeric vector of p-values.
 #' @param method `"holm"` (the default), `"bh"`,
 #' `"bonferroni"` or `"none"`.
-#' @param alpha Threshold applied to the adjusted values.
-#' @return A list of class `bricklayer_falsify_family`: a
-#' `results` data frame ( `name`, `p`, `adjusted`,
-#' `survives`) , the `method`, the family size, and
-#' `at_floor`, the names whose p-value equals the smallest their
-#' permutation count could produce.
+#' @param alpha Number, default 0.05: the threshold applied to the adjusted
+#' values.
+#' @return A list of class `bricklayer_falsify_family` with `results` (a data
+#' frame of `name`, `p`, `adjusted` and logical `survives`, sorted by
+#' `p`),
+#' `method`, `family_size` (integer), `alpha`, and `at_floor` (the
+#' names
+#' whose p-value equals the smallest their permutation count could produce;
+#' empty for a numeric vector). The print method shows the table.
 #' @seealso
 #' [capsule_falsify()],
 #' [prereg_declare()].
@@ -202,6 +246,11 @@ print.bricklayer_prereg_check <- function(x, ...) {
 #' # the correction is what stops the smallest of several from being
 #' # read as the finding
 #' falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5))$results
+#'
+#' # the false-discovery rate is less strict than Holm
+#' falsify_family(c(a = 0.01, b = 0.04, c = 0.2, d = 0.5), method = "bh")$results
+#'
+#' try(falsify_family(c(a = 0.01, b = 1.2)))
 #' @export
 falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
                                          "none"),
@@ -294,6 +343,7 @@ print.bricklayer_falsify_family <- function(x, ...) {
 
 #' How strong would an unmeasured confounder have to be
 #'
+#' @description
 #' The E-value of VanderWeele and Ding (2017): the minimum strength of
 #' association, on the risk-ratio scale, that an unmeasured confounder
 #' would need with BOTH the exposure and the outcome to explain away an
@@ -311,12 +361,25 @@ print.bricklayer_falsify_family <- function(x, ...) {
 #' interval already includes no effect, and no confounding is needed at
 #' all.
 #'
+#' @details
+#' For a risk ratio \eqn{RR \ge 1} (after dividing by `true`, and
+#' inverting a ratio below 1),
+#' \deqn{E = RR + \sqrt{RR (RR - 1)}.}
+#' For the interval, the limit nearer the null is used: the lower limit when
+#' it is above 1, else the reciprocal of the upper limit when it is below 1;
+#' when the interval contains 1 the limit E-value is 1. The formula is for
+#' risk ratios; VanderWeele and Ding (2017) give approximate conversions for
+#' odds ratios with a common outcome and for hazard ratios, which this
+#' function does not apply. Only the first element of each argument is
+#' used. Errors: a ratio or limit that is not finite and positive.
+#'
 #' @param rr Observed risk ratio, greater than 0. Protective
 #' effects (below 1) are inverted first, as the measure is symmetric.
 #' @param lo,hi Optional confidence limits on the same scale.
 #' The limit nearer the null is the one used.
-#' @param true The value to move the estimate to. Defaults to
-#' 1, the null.
+#' @param true Number, default 1 (the null): the value to move the estimate
+#' to. A value other than 1 asks how much confounding would move the
+#' estimate to `true` instead of to no effect.
 #' @return A named numeric vector: `evalue_point` and, when limits are
 #' given, `evalue_limit`.
 #' @references VanderWeele, T. J., and Ding, P. (2017). Sensitivity
@@ -339,6 +402,11 @@ print.bricklayer_falsify_family <- function(x, ...) {
 #' # and a strong result with a limit well above the null is harder to
 #' # explain away
 #' evalue_rr(3, lo = 2.1, hi = 4.3)
+#'
+#' # how much confounding would bring a risk ratio of 3 down to 1.5
+#' evalue_rr(3, true = 1.5)
+#'
+#' try(evalue_rr(-2))
 #' @export
 evalue_rr <- function(rr, lo = NULL, hi = NULL, true = 1) {
   one <- function(v) {

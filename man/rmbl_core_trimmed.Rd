@@ -11,16 +11,15 @@ core_trimmed_mean(x, trim = 0.1)
 core_winsorized_mean(x, trim = 0.1)
 }
 \arguments{
-\item{x}{Numeric vector (coerced with
-\code{\link[=as.numeric]{as.numeric()}}) .}
+\item{x}{Numeric (or logical) vector; coerced with
+\code{\link[=as.numeric]{as.numeric()}}.}
 
-\item{trim}{Proportion trimmed from \emph{each} end, in \
-[0, 0.5]. At \code{0.5} both reduce to the median.
-
-[0, 0.5]: R:0,\%200.5\%5C}
+\item{trim}{Proportion trimmed (or winsorized) at \emph{each} end, a single
+number in \eqn{[0, 0.5]} (default 0.1, i.e. 10\% at each end). At
+\code{0.5} both reduce to the median.}
 }
 \value{
-A length-1 numeric.
+A length-1 numeric in the units of \code{x}.
 }
 \description{
 Two ways to stop a handful of extreme rows dominating a column's centre.
@@ -30,6 +29,21 @@ and smallest values, matching \code{mean(x, trim = )}.
 surviving values, so every observation still contributes weight --
 usually the better choice when the extremes are real measurements rather
 than errors.
+}
+\details{
+With \eqn{g = \lfloor n \cdot \mathrm{trim} \rfloor} and the sorted values
+\eqn{x_{(1)} \le \dots \le x_{(n)}}, the trimmed mean is
+\eqn{\frac{1}{n - 2g} \sum_{i=g+1}^{n-g} x_{(i)}} and the winsorized mean
+replaces \eqn{x_{(1)}, \dots, x_{(g)}} by \eqn{x_{(g+1)}} and
+\eqn{x_{(n-g+1)}, \dots, x_{(n)}} by \eqn{x_{(n-g)}} before averaging all
+\eqn{n} values. At \code{trim = 0.5} both return the median, as \code{mean()} does.
+
+A \code{trim} that is not a single number in \eqn{[0, 0.5]} is an error. An
+empty \code{x}, or any \code{NA}/\code{NaN} in \code{x}, gives \code{NaN} (missing
+values are not
+removed). A character, factor or list \code{x} is refused
+(\code{"must be numeric"}). Both sort a copy of \code{x}, so the cost is
+\eqn{O(n \log n)}.
 }
 \examples{
 x <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 100)
@@ -44,4 +58,13 @@ all.equal(core_trimmed_mean(x, 0.2), mean(x, trim = 0.2))
 # trim = 0 is the plain mean; trim = 0.5 is the median.
 all.equal(core_trimmed_mean(x, 0), mean(x))
 all.equal(core_trimmed_mean(x, 0.5), core_median(x))
+
+# A trim past one half is not a trim.
+try(core_winsorized_mean(x, 0.7))
+try(core_trimmed_mean(letters))
+}
+\seealso{
+\code{\link[=core_median]{core_median()}} and
+\code{\link[=core_mad]{core_mad()}} for the other robust
+summaries; \code{\link[=core_moments]{core_moments()}} for the ordinary mean.
 }

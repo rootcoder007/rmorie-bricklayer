@@ -13,25 +13,52 @@
 
 #' Generate an ML-KEM key pair
 #'
-#' Generates a key for ML-KEM (FIPS 203), the standardised post-quantum key
-#' encapsulation mechanism. It is implemented in this package, with no
-#' system dependency.
+#' Generates a key pair for ML-KEM (FIPS 203), the standardised post-quantum
+#' key encapsulation mechanism, and \code{kem_public_key()} strips a key pair
+#' down to the half that can be shared. Use them when a capsule, a data file
+#' or a credential has to reach one recipient without being readable on the
+#' way: the recipient makes the key pair and publishes the public half, and
+#' the sender uses it with [kem_encapsulate()]. It is
+#' implemented in this
+#' package, with no system dependency.
 #'
+#' @details
 #' A KEM is not a signature scheme and not a cipher. Encapsulation produces
 #' two things: a ciphertext to send, and a 32-byte shared secret to keep.
 #' The holder of the decapsulation key recovers the same secret from the
 #' ciphertext. What either side then does with that secret -- feed it to a
 #' KDF, key an AEAD -- is outside the mechanism.
 #'
-#' @param level Security level: 512, 768 (the default) or
-#' 1024. 768 is the level NIST and the IETF have settled on for general
-#' use.
+#' Key generation is ML-KEM.KeyGen of FIPS 203 (Algorithm 19) from the
+#' 64-byte seed \eqn{d \| z}: \eqn{d} seeds the K-PKE key and \eqn{z} is the
+#' implicit-rejection value kept inside the decapsulation key. With a seed
+#' the result is deterministic (the same seed gives the same key, which is
+#' how the NIST test vectors are reproduced); without one the seed is drawn
+#' with [random_bytes()] from the operating system. The key
+#' sizes per level
+#' are given by [kem_sizes()]; the level is not recorded in a
+#' ciphertext, so
+#' both sides must agree on it.
+#'
+#' Errors: \code{level} other than one whole number 512, 768 or 1024;
+#' \code{seed} that is not a raw vector of 64 bytes; \code{key} passed to
+#' \code{kem_public_key()} that is not from \code{kem_keygen()}.
+#'
+#' @param level Security level, one whole number: 512 (ML-KEM-512, NIST
+#' category 1), 768 (the default, category 3) or 1024 (category 5). 768 is
+#' the level NIST and the IETF have settled on for general use.
 #' @param seed Optional raw vector of 64 seed bytes (
 #' `d || z`) . Supplying it makes the key reproducible, which is what
 #' the standard's test vectors need; the default draws from the operating
 #' system's CSPRNG.
-#' @return A list of class `bricklayer_kem_key`: `public`,
-#' `secret` (both hex), and `level`.
+#' @return \code{kem_keygen()}: a list of class
+#'   \code{c("bricklayer_kem_key", "list")} with \code{public} (character,
+#'   the encapsulation key as lower-case hex, 800, 1184 or 1568 bytes),
+#'   \code{secret} (character, the decapsulation key as hex, 1632, 2400 or
+#'   3168 bytes) and \code{level} (integer). Printing it never shows the
+#'   secret. \code{kem_public_key()}: a list of class
+#'   \code{c("bricklayer_kem_public_key", "list")} with \code{public} and
+#'   \code{level} only.
 #' @references National Institute of Standards and Technology (2024).
 #' Module-Lattice-Based Key-Encapsulation Mechanism Standard. FIPS 203.
 #'   \doi{10.6028/NIST.FIPS.203}
@@ -54,6 +81,16 @@
 #' bad <- sent$ciphertext
 #' substring(bad, 1L, 2L) <- "00"
 #' identical(kem_decapsulate(key, bad), got)
+#'
+#' # a fixed seed gives the same key every time (for test vectors only)
+#' k1 <- kem_keygen(512, seed = as.raw(0:63))
+#' k2 <- kem_keygen(512, seed = as.raw(0:63))
+#' identical(k1$public, k2$public)
+#' k1
+#'
+#' # levels other than the three FIPS 203 defines are refused
+#' try(kem_keygen(256))
+#' try(kem_keygen(768, seed = as.raw(1:10)))
 #' @section Security:
 #' A hand-written implementation. The standardised schemes are checked byte
 #' for byte against OpenSSL 3.5 and NIST known-answer vectors in the test
@@ -86,7 +123,7 @@ kem_keygen <- function(level = 768L, seed = NULL) {
 }
 
 #' @rdname kem_keygen
-#' @param key A key from `kem_keygen()`.
+#' @param key For \code{kem_public_key()}: a key pair from \code{kem_keygen()}.
 #' @export
 kem_public_key <- function(key) {
   if (!inherits(key, "bricklayer_kem_key")) {
@@ -99,13 +136,33 @@ kem_public_key <- function(key) {
 
 #' Byte lengths of an ML-KEM parameter set
 #'
-#' Reports the sizes FIPS 203 fixes, so a caller never has to hard-code
-#' them.
+#' Reports the byte sizes that FIPS 203 fixes for one ML-KEM parameter set:
+#' the public (encapsulation) key, the secret (decapsulation) key, the
+#' ciphertext, the key-generation seed and the shared secret. Use it to
+#' check a key or ciphertext before storing or sending it, or to size a
+#' buffer or a database column, so a caller never has to hard-code the
+#' numbers.
 #'
-#' @param level Security level: 512, 768 or 1024.
-#' @return A named integer vector: `encapsulation_key`,
-#' `decapsulation_key`, `ciphertext`, `seed` and
-#' `shared_secret`, all in bytes.
+#' @details
+#' The values come from the native core and are those of FIPS 203, Table 3:
+#' \tabular{lrrr}{
+#'   \tab 512 \tab 768 \tab 1024 \cr
+#'   encapsulation key \tab 800 \tab 1184 \tab 1568 \cr
+#'   decapsulation key \tab 1632 \tab 2400 \tab 3168 \cr
+#'   ciphertext \tab 768 \tab 1088 \tab 1568 \cr
+#'   seed \tab 64 \tab 64 \tab 64 \cr
+#'   shared secret \tab 32 \tab 32 \tab 32
+#' }
+#' Hex strings from [kem_keygen()] and
+#' [kem_encapsulate()] are twice these
+#' lengths in characters. Error: \code{level} other than one whole number
+#' 512, 768 or 1024.
+#'
+#' @param level Security level, one whole number: 512, 768 or 1024. There is
+#'   no default.
+#' @return A named integer vector of five elements, all in bytes:
+#'   \code{encapsulation_key}, \code{decapsulation_key}, \code{ciphertext},
+#'   \code{seed} and \code{shared_secret}.
 #' @seealso [kem_keygen()].
 #' @examples
 #' kem_sizes(768)
@@ -114,6 +171,14 @@ kem_public_key <- function(key) {
 #' # security margin, not a longer secret
 #' vapply(c(512, 768, 1024),
 #'        function(l) kem_sizes(l)[["shared_secret"]], integer(1))
+#'
+#' # check a ciphertext's length before sending it
+#' key <- kem_keygen(768)
+#' ct <- kem_encapsulate(key)$ciphertext
+#' nchar(ct) / 2 == kem_sizes(768)[["ciphertext"]]
+#'
+#' # an unknown level is an error, not a default
+#' try(kem_sizes(2048))
 #' @export
 kem_sizes <- function(level) {
   .Call(C_rmbl_mlkem_sizes, .rmbl_kem_level(level))
@@ -123,7 +188,23 @@ kem_sizes <- function(level) {
 #'
 #' Produces a ciphertext and the 32-byte shared secret it carries. Only the
 #' public key is needed, which is the point: the sender never holds
-#' anything the recipient has to trust them with.
+#' anything the recipient has to trust them with. The sender keeps the
+#' shared secret (to derive an encryption key, for example) and sends the
+#' ciphertext; the recipient gets the same secret back with
+#' [kem_decapsulate()].
+#'
+#' @details
+#' This is ML-KEM.Encaps of FIPS 203 (Algorithm 20) on the 32-byte message
+#' \code{m}. Without \code{m}, fresh randomness is drawn with
+#' [random_bytes()], so two encapsulations to one key give
+#' different
+#' ciphertexts and secrets. A full key pair works as well as a public key;
+#' only its public half is read.
+#'
+#' Errors: \code{key} not from [kem_keygen()] or
+#' [kem_public_key()]; a key
+#' whose public half is not valid hex ("key has no usable public key");
+#' \code{m} that is not a raw vector of 32 bytes.
 #'
 #' @param key A key or public key from
 #' [kem_keygen()] /
@@ -133,8 +214,12 @@ kem_sizes <- function(level) {
 #' the standard's test vectors need; the default draws from the operating
 #' system's CSPRNG. Reusing it across encapsulations to the same key reuses
 #' the shared secret, so supply it only deliberately.
-#' @return A list of class `bricklayer_kem_capsule`: `ciphertext`
-#' and `shared` (both hex), and `level`.
+#' @return A list of class \code{c("bricklayer_kem_capsule", "list")} with
+#'   \code{ciphertext} (character, hex,
+#'   [kem_sizes()]\code{[["ciphertext"]]}
+#'   bytes: send this), \code{shared} (character, 64 hex characters, the
+#'   32-byte shared secret: keep this) and \code{level} (integer). Printing
+#'   it never shows the shared secret.
 #' @seealso
 #' [kem_decapsulate()],
 #' [kem_keygen()].
@@ -150,6 +235,13 @@ kem_sizes <- function(level) {
 #' # both decapsulate correctly
 #' identical(kem_decapsulate(key, a$ciphertext), a$shared)
 #' identical(kem_decapsulate(key, b$ciphertext), b$shared)
+#'
+#' # fixed randomness makes the result reproducible (test vectors only)
+#' m <- as.raw(1:32)
+#' identical(kem_encapsulate(key, m = m)$shared, kem_encapsulate(key, m = m)$shared)
+#'
+#' # the randomness must be exactly 32 bytes
+#' try(kem_encapsulate(key, m = as.raw(1:8)))
 #' @export
 kem_encapsulate <- function(key, m = NULL) {
   level <- .rmbl_kem_key_level(key)
@@ -170,9 +262,17 @@ kem_encapsulate <- function(key, m = NULL) {
 
 #' Recover a shared secret from an ML-KEM ciphertext
 #'
-#' Returns the 32-byte shared secret the ciphertext carries, as hex.
+#' Returns the 32-byte shared secret that a ciphertext from
+#' [kem_encapsulate()] carries, as hex. This is the
+#' recipient's side of the
+#' exchange: with the secret half of the key pair, the recipient recovers
+#' the same secret the sender kept, and the two can then use it as a common
+#' key.
 #'
-#' There is no failure path, and that is deliberate. A ciphertext that was
+#' @details
+#' This is ML-KEM.Decaps of FIPS 203 (Algorithm 21). For a ciphertext of
+#' the right length there is no failure path, and that is deliberate. A ciphertext that
+#' was
 #' not produced by a correct encapsulation under this key yields a shared
 #' secret derived from a value held only inside the decapsulation key -- so
 #' it is a real secret, just not the sender's. Whoever sent it learns
@@ -195,14 +295,25 @@ kem_encapsulate <- function(key, m = NULL) {
 #' plain constant-time decapsulation, and the option
 #' `rmoriebricklayer.masked` sets the default for a session.
 #'
+#' Errors (checked before any decapsulation): \code{key} not from
+#' [kem_keygen()], or a public key only ("decapsulation needs a
+#' key with its
+#' secret half"); a ciphertext that is not hex or raw of exactly
+#' [kem_sizes()]\code{[["ciphertext"]]} bytes for the key's
+#' level (768,
+#' 1088 or 1568); \code{masked} not \code{TRUE} or \code{FALSE}.
+#'
 #' @param key A key from
 #' [kem_keygen()], with its secret half.
-#' @param ciphertext Ciphertext from
-#' [kem_encapsulate()], hex or raw.
-#' @param masked `TRUE` (the default, or the option `rmoriebricklayer.masked`)
-#' for the first-order masked decapsulation, `FALSE` for the plain one. Both
-#' return the same secret.
-#' @return 64 hex characters: the 32-byte shared secret.
+#' @param ciphertext The \code{ciphertext} element from
+#'   [kem_encapsulate()],
+#'   as a hex string or a raw vector, of the length for the key's level.
+#' @param masked Logical, \code{TRUE} or \code{FALSE}. \code{TRUE} (the
+#'   default, taken from the option \code{rmoriebricklayer.masked} when set)
+#'   runs the first-order masked decapsulation, \code{FALSE} the plain one.
+#'   Both return the same secret.
+#' @return A length-1 character vector of 64 lower-case hex characters: the
+#'   32-byte shared secret.
 #' @seealso [kem_encapsulate()].
 #' @examples
 #' key <- kem_keygen(512)
@@ -218,6 +329,10 @@ kem_encapsulate <- function(key, m = NULL) {
 #'
 #' # the masked and the plain decapsulation agree
 #' identical(kem_decapsulate(key, bad, masked = FALSE), other)
+#'
+#' # a public key alone cannot decapsulate, and a short ciphertext is refused
+#' try(kem_decapsulate(kem_public_key(key), sent$ciphertext))
+#' try(kem_decapsulate(key, "abcd"))
 #' @export
 kem_decapsulate <- function(key, ciphertext, masked = getOption("rmoriebricklayer.masked", TRUE)) {
   masked <- .rmbl_masked_flag(masked)

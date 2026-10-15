@@ -7,14 +7,17 @@
 ascii_fallback(x, force = FALSE)
 }
 \arguments{
-\item{x}{A character vector.}
+\item{x}{A character vector (other types are converted with
+\code{\link[=as.character]{as.character()}}).}
 
-\item{force}{Logical; always transliterate to ASCII
-(default \code{FALSE}) .}
+\item{force}{A single logical: \code{TRUE} always transliterates every
+element to ASCII; \code{FALSE} (the default) only the elements that are not
+valid UTF-8. Anything other than \code{TRUE} counts as \code{FALSE}.}
 }
 \value{
-A character vector: \code{x} where it can be represented, ASCII
-otherwise.
+A character vector the length of \code{x}: each element unchanged
+when it is valid UTF-8 (and \code{force} is not \code{TRUE}), otherwise its
+ASCII transliteration.
 }
 \description{
 Returns \code{x} unchanged when it is valid, well-formed text (so
@@ -25,6 +28,18 @@ when the text is not valid UTF-8 (an encoding error) or when
 \code{DESCRIPTION}) . This lets author and supervisor names keep their
 accents wherever UTF-8 is supported while degrading gracefully instead
 of erroring where it is not.
+}
+\details{
+Each element is tested on its bytes with \code{\link[=validUTF8]{validUTF8()}}, so the
+outcome
+does not depend on the session locale. Valid elements (including plain
+ASCII and properly encoded accented text) are returned unchanged;
+invalid ones go through \code{\link[=to_ascii]{to_ascii()}}, which drops the bytes
+that are
+not UTF-8 and transliterates the rest. With \code{force = TRUE} every
+element goes through \code{\link[=to_ascii]{to_ascii()}}. A missing value is kept as
+\code{NA}
+unless \code{force = TRUE}, when it becomes \code{""}.
 }
 \examples{
 # By default valid UTF-8 is preserved (accents kept where supported).
@@ -39,4 +54,12 @@ ascii_fallback("plain name")
 
 # Vectorised; each element handled independently.
 ascii_fallback(c("caf\u00e9", "resume"), force = TRUE)
+
+# Bytes that are not UTF-8 (a Latin-1 file read as UTF-8) are repaired.
+bad <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
+validUTF8(bad)
+ascii_fallback(bad)
+}
+\seealso{
+\code{\link[=to_ascii]{to_ascii()}}, which does the transliteration.
 }

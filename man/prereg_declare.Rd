@@ -13,26 +13,33 @@ prereg_check(prereg, reported)
 \item{hypotheses}{Named character vector: one claim
 per statistic, named by the statistic's name as it will be recorded.}
 
-\item{note}{Optional free text -- the design, the data
-source, what would count as a refutation.}
+\item{note}{Optional character string, default \code{NULL}: free text -- the
+design, the data source, what would count as a refutation. Only the first
+element is kept.}
 
 \item{prereg}{A declaration from \code{prereg_declare()}.}
 
 \item{reported}{Character vector of the statistic names
-actually reported, or a manifest from which they are taken.}
+actually reported, or a manifest (any list with a named \code{results}
+element, such as a capsule manifest), whose result names are used.}
 }
 \value{
-\code{prereg_declare()} a list of class
-\code{bricklayer_prereg}; \code{prereg_check()} a list with \code{ok},
-\code{declared_not_reported}, \code{reported_not_declared} and a
-\code{hypotheses} data frame.
+\code{prereg_declare()} returns a list of class \code{bricklayer_prereg}
+with \code{statistics} (the names), \code{hypotheses} (the claims), \code{note} and
+\code{declared_utc} (ISO 8601 time). \code{prereg_check()} returns a list of class
+\code{bricklayer_prereg_check} with \code{ok} (logical: no departures),
+\code{declared_not_reported} and \code{reported_not_declared} (character vectors),
+\code{hypotheses} (a data frame of \code{statistic}, \code{hypothesis} and logical
+\code{reported}) and \code{declared_utc}. Both print a short summary.
 }
 \description{
-Records the statistics an analysis intends to report and what each is
-meant to show, so that what was actually reported can be compared
-against it afterwards. Seal it with
-\code{\link[=capsule_attest]{capsule_attest()}} and the declaration
-acquires a date it cannot be moved off.
+\code{prereg_declare()} records, before the analysis is run, the statistics
+it intends to report and the claim each one is meant to test, with a UTC
+timestamp. \code{prereg_check()} compares that declaration with what was
+actually reported and lists the departures in both directions. Seal the
+declaration with \code{\link[=capsule_attest]{capsule_attest()}} and it acquires a
+date it cannot be
+moved off. Use the pair to make a pre-analysis plan checkable.
 }
 \details{
 The comparison \code{\link[=prereg_check]{prereg_check()}} makes is
@@ -47,6 +54,13 @@ twenty of them is why a nominal p of 0.05 means nothing.
 
 Neither is misconduct on its own and both are invisible without a
 declaration made in advance.
+
+Statistics are matched by exact name. The timestamp is the computer's
+clock at the time of the call, so on its own it proves nothing; the
+attestation is what fixes the date. Nothing is written to disk.
+
+Errors: \code{hypotheses} not a non-empty character vector with non-empty,
+unique names; \code{prereg} not from \code{prereg_declare()}.
 }
 \examples{
 plan <- prereg_declare(c(
@@ -63,6 +77,11 @@ prereg_check(plan, "n_rows")$declared_not_reported
 # and adding undeclared ones is what makes a nominal p meaningless
 prereg_check(plan, c("ate", "n_rows", "ate_by_year",
                      "ate_by_precinct"))$reported_not_declared
+
+# the full check prints the departures
+prereg_check(plan, c("ate", "ate_by_year"))
+
+try(prereg_declare(c("an unnamed claim")))
 }
 \seealso{
 \code{\link[=capsule_attest]{capsule_attest()}} to seal a declaration,

@@ -25,48 +25,77 @@ analyse_table(
 \arguments{
 \item{data}{A data frame in long form: one row per period and group.}
 
-\item{value}{Column with the published count (or measure).}
+\item{value}{Name of the column (a string) with the published count (or
+measure).}
 
-\item{period}{Column with the period (fiscal year, quarter, ...).}
+\item{period}{Name of the column with the period (fiscal year, quarter,
+...); numeric periods are used as the time axis of the trend tests.}
 
-\item{by}{Optional grouping columns (institution, region, ...).}
+\item{by}{Optional character vector of grouping column names
+(institution, region, ...). \code{NULL} (the default) treats the table as
+one series.}
 
-\item{population}{Optional exposure column for rates.}
+\item{population}{Optional name of an exposure column for rates
+(\code{NULL}, the default, skips the rate step).}
 
 \item{prior}{Optional data frame: the previous capsule of the same
-table, for the drift screen.}
+table, for the drift screen. \code{NULL} (the default) skips it.}
 
-\item{units}{\code{"count"}, \code{"continuous"} or \code{"percent"}, as in
-\code{\link[=yoy]{yoy()}}.}
+\item{units}{\code{"count"} (the default), \code{"continuous"} or
+\code{"percent"}, as in \code{\link[=yoy]{yoy()}}.}
 
 \item{rounding, rounding_kind, suppression_limit}{How the release rounds
-or suppresses cells; see
-\code{\link[=published_bounds]{published_bounds()}}. \code{NULL} when the
-counts are exact.}
+or suppresses cells; see \code{\link[=published_bounds]{published_bounds()}}.
+\code{rounding} is the
+rounding base (for example 5), \code{rounding_kind} \code{"nearest"} (the
+default) or \code{"random"}, \code{suppression_limit} the threshold below
+which cells are suppressed. \code{NULL} when the counts are exact. Used
+only for counts: with other \code{units} they are ignored, with a
+warning.}
 
-\item{direction}{Which way is an improvement, as in \code{\link[=yoy]{yoy()}}.}
+\item{direction}{Which way is an improvement, as in \code{\link[=yoy]{yoy()}}:
+\code{"neutral"} (the default), \code{"higher_is_better"} or
+\code{"lower_is_better"}.}
 
-\item{per}{Rate denominator, as in \code{\link[=rate]{rate()}}.}
+\item{per}{Rate denominator, as in \code{\link[=rate]{rate()}}; default 1000 (rates
+per
+1,000 of \code{population}).}
 
-\item{conf_level}{Confidence level for every interval.}
+\item{conf_level}{Confidence level for every interval, default 0.95.}
 
 \item{alpha}{Level for the multiple-comparison decision and the drift
-screens.}
+screens, default 0.05.}
 
-\item{adjust}{Multiple-comparison method for \code{\link[=scan_adjust]{scan_adjust()}}.}
+\item{adjust}{Multiple-comparison method for
+\code{\link[=scan_adjust]{scan_adjust()}}, default
+\code{"BH"} (Benjamini-Hochberg).}
 }
 \value{
-A list of class \code{bricklayer_analysis} with \code{profile}
-(\code{\link[=profile_columns]{profile_columns()}}), \code{missingness}
-(\code{\link[=missingness_summary]{missingness_summary()}}),
-\code{change} (\code{\link[=yoy]{yoy()}} with p-values, adjustment and,
-if \code{rounding} or
-\code{suppression_limit} was given, publication bounds), \code{rates} and
-\code{rate_change} (when \code{population} is given), \code{trend} (one row per
-group with \code{\link[=trend_test]{trend_test()}} and, for counts,
-\code{\link[=count_trend]{count_trend()}}),
-\code{drift} (\code{\link[=capsule_drift]{capsule_drift()}} against \code{prior}),
-and \code{meta}.
+A list of class \code{bricklayer_analysis} (with a print method that
+summarises it in a few lines):
+\describe{
+\item{\code{profile}}{\code{\link[=profile_columns]{profile_columns()}} of
+\code{data}.}
+\item{\code{missingness}}{named numeric from
+\code{\link[=missingness_summary]{missingness_summary()}}.}
+\item{\code{change}}{the \code{\link[=yoy]{yoy()}} table; for counts with the
+added columns
+\code{p_value}, \code{p_adjusted} and \code{significant}, and with
+\code{env_*} and \code{combined_pct_lower}/\code{combined_pct_upper} when
+publication bounds were requested.}
+\item{\code{rates}, \code{rate_change}}{the \code{\link[=rate]{rate()}} and
+\code{\link[=rate_change]{rate_change()}}
+tables when \code{population} is given, otherwise \code{NULL}.}
+\item{\code{trend}}{data frame with one row per group: the \code{by} columns,
+\code{periods}, \code{first}, \code{last}, \code{tau}, \code{trend_p},
+\code{slope}, \code{rate_ratio}, \code{rate_ratio_lower},
+\code{rate_ratio_upper}.}
+\item{\code{drift}}{\code{\link[=capsule_drift]{capsule_drift()}} result against
+\code{prior}, or
+\code{NULL}.}
+\item{\code{meta}}{list of the arguments used, \code{n_rows}, the sorted
+\code{periods}, \code{prior} (logical) and \code{when} (a time stamp).}
+}
 }
 \description{
 The questions asked of a published table are always the same: what
@@ -79,6 +108,45 @@ intervals on every change, multiple-comparison adjustment over the
 groups scanned, the envelope that rounding and suppression in the
 release imply, and a drift screen against the prior capsule.
 }
+\details{
+The steps, in order:
+\enumerate{
+\item profile: \code{\link[=profile_columns]{profile_columns()}} and
+\code{\link[=missingness_summary]{missingness_summary()}} on \code{data};
+\item change: \code{\link[=yoy]{yoy()}} between consecutive periods within each
+\code{by} group.
+For \code{units = "count"} the exact p-values are then adjusted across all
+comparisons with \code{\link[=scan_adjust]{scan_adjust()}}, and, when
+\code{rounding} or
+\code{suppression_limit} is given, \code{\link[=yoy_bounds]{yoy_bounds()}} adds
+the publication
+envelope (see \code{\link[=published_bounds]{published_bounds()}}). For
+\code{"continuous"} and
+\code{"percent"} units neither step runs: \code{rounding} and
+\code{suppression_limit} are then ignored, with a warning;
+\item rates (only with \code{population}): \code{\link[=rate]{rate()}} per group and
+period, and
+\code{\link[=rate_change]{rate_change()}} between periods, adjusted with
+\code{\link[=scan_adjust]{scan_adjust()}};
+\item trend: per group, the values summed within each period, then
+\code{\link[=trend_test]{trend_test()}} (Mann-Kendall tau, p-value and Theil-Sen
+slope) and, for
+counts, \code{\link[=count_trend]{count_trend()}} (Poisson rate ratio per period).
+A group with fewer
+than three periods gets \code{NA}; a test that fails gets \code{NA} rather
+than an error;
+\item drift (only with \code{prior}): \code{\link[=capsule_drift]{capsule_drift()}}
+of \code{data} against
+\code{prior}.
+}
+Nothing is written and nothing is fetched; a progress bar for the trend
+step is drawn on stderr unless \code{options(morie.quiet = TRUE)}.
+Errors: \code{data} or \code{prior} not a data frame; a named column not
+in \code{data}; an invalid \code{units}, \code{direction} or
+\code{rounding_kind}; a \code{conf_level} outside (0, 1); and any error of the
+functions called (for example
+negative counts in \code{\link[=yoy]{yoy()}}).
+}
 \examples{
 path <- system.file("extdata", "otis_a01_individuals.csv",
                     package = "rmoriebricklayer")
@@ -87,8 +155,25 @@ a <- analyse_table(otis, value = "individuals", period = "year",
                    by = c("table", "group"))
 a
 a$change[, c("table", "group", "year", "pct_change", "p_adjusted")]
+a$trend[, c("group", "tau", "trend_p", "rate_ratio")]
+
+# counts published rounded to base 5: the intervals widen
+b <- analyse_table(otis, value = "individuals", period = "year",
+                   by = c("table", "group"), rounding = 5)
+b$change[1:3, c("group", "year", "pct_lower", "combined_pct_lower")]
+
+# rates with an exposure column
+d <- data.frame(year = rep(2019:2022, 2), site = rep(c("A", "B"), each = 4),
+                n = c(10, 12, 15, 9, 30, 28, 35, 40),
+                pop = rep(c(1000, 2000), each = 4))
+r <- analyse_table(d, "n", "year", by = "site", population = "pop", per = 1000)
+r$rate_change[, c("site", "year", "rate", "rate_ratio", "p_adjusted")]
+
+# a column that is not in the data is an error
+try(analyse_table(otis, value = "count", period = "year"))
 }
 \seealso{
-\code{\link[=report_analysis]{report_analysis()}} writes the result as a Markdown or HTML
+\code{\link[=report_analysis]{report_analysis()}} writes the result as a
+Markdown or HTML
 report.
 }

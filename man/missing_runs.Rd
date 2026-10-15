@@ -7,27 +7,36 @@
 missing_runs(data, min_run = 2L)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame, in the row order that carries meaning.}
 
-\item{min_run}{Report only runs at least this long
-(default 2, since a run of 1 is an isolated gap).}
+\item{min_run}{Whole number, default 2: report only runs at least this
+long (a run of 1 is an isolated gap).}
 }
 \value{
-A data frame of class \code{bricklayer_runs} with \code{column},
-\code{start}, \code{end} and \code{length}, longest first. Zero rows
+A data frame of class \code{bricklayer_runs} with \code{column}
+(character), \code{start} and \code{end} (integer row numbers, inclusive) and
+\code{length} (integer), longest first and then by column name. Zero rows
 when there are no qualifying runs.
 }
 \description{
 Finds the maximal stretches of consecutive \code{NA} in each column,
 with where each begins and how long it is.
-}
-\details{
+
 Row order carries meaning in a capsule far more often than people allow
 for -- a time series, an ordered export, a paginated download -- and a
 long unbroken run of missingness means something different from the same
 count scattered about. A run says an instrument was down, a page failed
 to fetch, or a period was never collected; scattered gaps say individual
 records failed. The rate cannot distinguish them.
+}
+\details{
+Each column's missingness indicator \code{is.na(x)} is run-length
+encoded with \code{rle()}; every run of \code{TRUE} with length at least
+\code{min_run} is reported. Rows are taken in their current order, so sort
+the data by time (or by download order) first. A list column counts an
+element as missing only when \code{is.na()} says so. Errors: \code{data} not a
+data frame or without columns, or with duplicated or empty names;
+\code{min_run} not a positive whole number.
 }
 \examples{
 # One long outage and two isolated gaps, with the same total count.
@@ -44,6 +53,8 @@ missing_runs(df, min_run = 1)
 
 # A complete column has no runs.
 missing_runs(data.frame(x = 1:5))
+
+try(missing_runs(df, min_run = 0))
 }
 \seealso{
 \code{\link[=missingness_pattern]{missingness_pattern()}} for which

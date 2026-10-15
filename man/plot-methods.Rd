@@ -160,10 +160,12 @@ each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
 \item{points}{For \code{rmbl_density}, whether to draw the incidents
 over the surface.}
 
-\item{max_parts}{For \code{rmbl_clearance_decomposition}, the most parts drawn: past it,
+\item{max_parts}{For \code{rmbl_clearance_decomposition}, the most parts drawn: past
+it,
 the parts that moved the aggregate most, and the rest summed into one row.}
 
-\item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate is
+\item{period}{For \code{rmbl_rate}, a \code{by} column holding the period: the rate
+is
 drawn over time with its interval band, one panel per group of the other \code{by}
 columns.}
 
@@ -263,10 +265,13 @@ incidents as a heat map, with the highest-density regions outlined.}
 \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
 distance-by-time cell, coloured on a log scale around 1.}
 \item{\code{rmbl_hotspot}}{(\code{\link{hotspot_persistence}}) the share of places
-holding half the incidents and the overlap of hot spots with the period before, over
+holding half the incidents and the overlap of hot spots with the period before,
+over
 time, and a map of the cells coloured by how often they were hot.}
-\item{\code{rmbl_svy_estimate}, \code{rmbl_svy_compare}}{(\code{\link{survey_estimate}},
-\code{\link{survey_compare}}) each domain's estimate with its interval, flagged domains
+\item{\code{rmbl_svy_estimate},
+\code{rmbl_svy_compare}}{(\code{\link{survey_estimate}},
+\code{\link{survey_compare}}) each domain's estimate with its interval, flagged
+domains
 marked; each difference from the reference domain with its interval.}
 \item{\code{rmbl_clearance_decomposition}}{(\code{\link{clearance_decomposition}})
 the parts' rates in both comparisons with the aggregate on top, where the

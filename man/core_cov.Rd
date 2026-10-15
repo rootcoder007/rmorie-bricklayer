@@ -7,16 +7,37 @@
 core_cov(x)
 }
 \arguments{
-\item{x}{A numeric matrix or data frame of numeric columns
-(rows = observations, columns = variables).}
+\item{x}{A numeric matrix, or a data frame whose columns are all
+numeric (rows = observations, columns = variables).}
 }
 \value{
-A symmetric \code{ncol(x)} by \code{ncol(x)} numeric matrix.
+A symmetric \code{ncol(x)} by \code{ncol(x)} numeric matrix, with the
+column names of \code{x} (if any) as both row and column names; entry
+units are the product of the two columns' units.
 }
 \description{
-Column covariances with the \code{n - 1} denominator, matching
-\code{\link[stats:cov]{stats::cov()}}. Column names are carried through
-to both dimensions of the result.
+The covariance of every pair of columns of a numeric matrix or data
+frame, computed by the compiled core. Covariances describe how
+variables move together; the matrix is the input to principal
+components, Mahalanobis distances and multivariate drift checks.
+Column names are carried through to both dimensions of the result.
+}
+\details{
+Entry \eqn{(j, k)} is
+\eqn{\frac{1}{n - 1} \sum_i (x_{ij} - \bar x_j)(x_{ik} - \bar x_k)}, the
+\code{n - 1} denominator of \code{\link[stats:cov]{stats::cov()}}, with which it agrees to
+rounding.
+The diagonal holds the column variances.
+
+Missing values are not removed: an \code{NA} in a column makes every
+covariance involving that column \code{NA} (pairwise or complete-case
+deletion is not done; use \code{\link[stats:cov]{stats::cov()}} with \verb{use =} for
+those). A
+single row gives \code{NaN} throughout. Refusals: a vector that is not a
+matrix (\code{"must be a matrix or data frame"}) and a data frame with a
+non-numeric column (\code{"every column of x must be numeric"}). Logical and
+integer matrices are converted to double. The cost is
+\eqn{O(n p^2)} for \eqn{n} rows and \eqn{p} columns.
 }
 \examples{
 X <- cbind(a = c(1, 2, 3, 4), b = c(2, 4, 7, 8), c = c(5, 3, 2, 1))
@@ -30,4 +51,11 @@ all.equal(diag(core_cov(X)), apply(X, 2, stats::var))
 
 # Data frames are accepted.
 core_cov(data.frame(u = 1:5, v = c(2, 1, 4, 3, 6)))
+
+# A plain vector is not a matrix of variables.
+try(core_cov(1:5))
+}
+\seealso{
+\code{\link[=core_cor]{core_cor()}} for a single Pearson correlation,
+\code{\link[=core_moments]{core_moments()}} for one column's variance.
 }

@@ -7,22 +7,41 @@
 adp(days, t = 365)
 }
 \arguments{
-\item{days}{Person-days served during the period. A vector is summed,
-so one element per person is the usual input.}
+\item{days}{Numeric vector of person-days served during the period,
+non-negative, no \code{NA} or \code{Inf}. The vector is summed, so one
+element per person and a single pre-computed total give the same result.}
 
-\item{t}{Length of the period in days. Default 365.}
+\item{t}{Numeric scalar, the length of the period in days; must be
+positive. Default \code{365}. A vector of several values is refused.
+\code{\link{period_days}} turns two dates into this.}
 }
 \value{
-A single number: person-days per day.
+A numeric scalar: person-days per day, that is the average number
+of people held on any one day of the period.
 }
 \description{
 The mean number of person-days served per day over a period: a
-STOCK, answering how many people are held at one time.
+STOCK, answering how many people are held at one time. Use it to report
+how much confinement (or bed occupancy, shelter use, open caseload) a
+system used over a year or any other window, from the days each person
+spent in it. It is the measure capacity planning needs, because it counts
+beds in use rather than people who passed through.
 }
 \details{
-This is Lakner's \eqn{\bar{X}_{hc} = \sum X_i / t} (1976, p.15). The
+This is Lakner's \eqn{\bar{X}_{hc} = \sum X_i / t} (1976, p.15), where
+\eqn{X_i} is the days served by person \eqn{i} inside the period. The
 denominator is TIME, which is what makes it a stock. Compare
-\code{\link[=alos]{alos()}}, whose denominator is people.
+\code{\link[=alos]{alos()}}, whose denominator is people: the two are linked by
+\eqn{\mathrm{ADP} = N \times \mathrm{ALOS} / t} (Little's law), so
+\code{\link[=admissions]{admissions()}} and \code{\link[=stock_flow]{stock_flow()}}
+can move between them.
+
+Only days served inside the period should be counted: a stay that began
+before the period or ends after it contributes its days within the window.
+
+Errors when \code{days} is not numeric (text and factors are refused),
+is empty, has \code{NA}, \code{Inf} or a negative value, or when
+\code{t} is not a single positive number.
 }
 \examples{
 # Lakner's own worked example (p.15): 3,000 inmates served 13,500
@@ -31,6 +50,12 @@ adp(13500)
 
 # per-person days give the same total
 adp(c(10, 20, 30), t = 30)
+
+# a leap year, with the period length taken from the dates
+adp(13500, t = period_days("2024-01-01", "2024-12-31"))
+
+# negative days are refused
+try(adp(c(10, -2)))
 }
 \references{
 Lakner, E. (1976) \emph{A Manual of Statistical Sampling Methods for

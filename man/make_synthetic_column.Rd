@@ -7,32 +7,62 @@
 make_synthetic_column(spec, n, ctx = list(), base_p = NULL)
 }
 \arguments{
-\item{spec}{A list describing the column; recognised fields
-depend on \code{spec$type} (e.g. \code{values}, \code{weights},
-\code{p}, \code{p_with_baserate}, \code{labels}, \code{lambda},
-\code{min}, \code{pattern}, \code{year_col}, \code{from}) .}
+\item{spec}{A list describing the column: \code{type} and the fields
+listed in Details. Lists as parsed from JSON (for example
+\code{values = list("a", "b")}) are accepted.}
 
-\item{n}{Number of values to generate.}
+\item{n}{Whole number: how many values to generate.}
 
 \item{ctx}{Named list of already-generated columns, letting
 later columns (such as \code{id_pattern} with a \code{year_col})
 reference earlier ones. Defaults to an empty list.}
 
-\item{base_p}{Optional numeric vector of per-row latent
-propensities used by the \code{"bernoulli"} type to add row-level
-variation.}
+\item{base_p}{Optional numeric vector of per-row latent propensities in
+\eqn{[0, 1]}, length \code{n}, used by the \code{"bernoulli"} type to add
+row-level variation. Default \code{NULL}.}
 }
 \value{
-A vector of length \code{n} for the requested column type.
-Errors on an unknown \code{type}.
+A vector for the requested column type: character for
+\code{"sample"} of strings, \code{"bernoulli"} and \code{"id_pattern"},
+numeric or integer for \code{"poisson"} and \code{"sequence"} (and for
+\code{"sample"} of numbers). Its length is \code{n}, except for
+\code{"id_pattern"} with a \code{year_col}.
 }
 \description{
-Builds a single synthetic data column according to a column spec drawn
-from a provenance synthetic recipe. Supported \code{type} s are
-\code{"sample"} (categorical, optionally weighted), \code{"bernoulli"}
-(two-label draw with optional per-row base rate), \code{"poisson"}
-(counts with a floor), \code{"id_pattern"} (templated IDs, optionally
-per-year sequenced), and \code{"sequence"} (a running integer sequence).
+Builds one column of synthetic (made-up) data from a short specification,
+such as "sample these categories with these weights" or "Poisson counts
+with mean 25". It is the building block of
+\code{\link{make_synthetic_csv}}, which assembles a whole table from a
+recipe. Use synthetic columns to develop and test an analysis pipeline
+before, or instead of, touching restricted data.
+}
+\details{
+The supported \code{spec$type}s and the fields each reads (defaults in
+parentheses):
+\describe{
+\item{\code{"sample"} (the default type)}{\code{values}, a vector or
+list of categories; \code{weights} (default equal), their probabilities.
+Drawn with replacement.}
+\item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the first
+label; \code{labels} (default \code{c("Yes", "No")}); \code{p_with_baserate}
+(default 0), added as \code{p_with_baserate * base_p} to give row-level
+variation when \code{base_p} is supplied. A per-row probability above
+1 behaves as 1.}
+\item{\code{"poisson"}}{\code{lambda} (default 1); \code{min} (default 0), a floor:
+draws below it are raised to it (so the result is not Poisson below
+the floor).}
+\item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}), in
+which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence
+number and \code{\{year\}} the year; \code{year_col}, the name of a
+column in \code{ctx} whose values supply \code{\{year\}} and restart
+the sequence within each year. With \code{year_col}, that column must
+have \code{n} values. No other tokens are recognised.}
+\item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
+}
+Random draws use R's random number generator, so call \code{set.seed()}
+first for a reproducible column. Errors: \code{spec} not a list; an
+unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
+invalid weights or rates.
 }
 \examples{
 set.seed(1)
@@ -48,7 +78,7 @@ make_synthetic_column(list(
   labels = list("Yes", "No")
 ), 5)
 
-# "poisson": counts with a floor via `min`.
+# "poisson": counts with a floor via min.
 make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
 
 # "id_pattern": templated IDs (the {seq:05d} token is zero-padded).
@@ -57,9 +87,18 @@ make_synthetic_column(list(
   pattern = "case-{seq:05d}"
 ), 3)
 
-# "sequence": a running integer sequence from `from`.
+# ... numbered within each year of an earlier column
+yrs <- c(2024, 2024, 2025)
+unname(make_synthetic_column(list(type = "id_pattern",
+  pattern = "{year}-{seq:05d}", year_col = "year"), 3,
+  ctx = list(year = yrs)))
+
+# "sequence": a running integer sequence from from.
 make_synthetic_column(list(type = "sequence", from = 100), 4)
 
 # An unknown type errors.
 try(make_synthetic_column(list(type = "nope"), 3))
+}
+\seealso{
+\code{\link{make_synthetic_csv}}.
 }

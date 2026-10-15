@@ -567,14 +567,18 @@ test_that("a model's wait draws a spinner with its label and seconds on stderr, 
   Sys.sleep(1)
   on.exit(.Call(C_rmbl_wait_label, "", FALSE, FALSE), add = TRUE)
   .Call(C_rmbl_wait_label, "test-model is thinking", FALSE, FALSE)
-  err <- capture.output(res <- .Call(C_rmbl_http_post, sprintf("http://127.0.0.1:%d/", port), charToRaw("{}"),
-                                     "application/json", 10L, NULL, TRUE), type = "message")
-  .Call(C_rmbl_wait_label, "", FALSE, FALSE)
+  # since the 0.5.13 progress work the spinner starts at 0.75 s, shows tenths ("1.0s"), and the
+  # line is wiped when the label is cleared, so the clearing call is inside the capture
+  err <- capture.output(type = "message", {
+    res <- .Call(C_rmbl_http_post, sprintf("http://127.0.0.1:%d/", port), charToRaw("{}"),
+                 "application/json", 10L, NULL, TRUE)
+    .Call(C_rmbl_wait_label, "", FALSE, FALSE)
+  })
   txt <- paste(err, collapse = "")
   expect_identical(res$status, 200L)
   expect_identical(rawToChar(res$body), "ok")
-  expect_match(txt, "test-model is thinking  1s", fixed = TRUE)
-  expect_match(txt, "[|/\\-] test-model is thinking  0s")
+  expect_match(txt, "test-model is thinking 1.[0-9]s")
+  expect_match(txt, "[|/\\-] test-model is thinking [0-9.]+s")
   expect_match(txt, "\r *\r$")  # wiped: the reply starts on a clean line
   expect_error(.Call(C_rmbl_wait_label, NA_character_, FALSE, FALSE), "single string")
 })

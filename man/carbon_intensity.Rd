@@ -27,7 +27,8 @@ location, with the year and source of the figure. The table is bundled with
 the package, so it works offline in any country: every country at the
 latest year published by Our World in Data from Ember's yearly electricity
 data (the latest year each grid reports: 2025 or 2024 for nearly all, older
-for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones from
+for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones
+from
 Electricity
 Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 v3.1 (Canadian provinces and territories, US balancing authorities,
@@ -61,6 +62,12 @@ carbon_intensity("Canada")$year
 carbon_intensity("CA-XX")$note
 carbon_intensity(120)$source
 nrow(carbon_intensity_table())
+# the Canadian provinces in the table, lowest intensity first
+tab <- carbon_intensity_table()
+ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
+head(ca[order(ca$g_per_kwh), ])
+# a location the table does not know is an error, not a silent world average
+try(carbon_intensity("Atlantis"))
 }
 \references{
 Ember (2026). Yearly Electricity Data, via Our World in Data,

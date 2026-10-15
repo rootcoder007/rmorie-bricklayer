@@ -14,31 +14,59 @@ lorenz(x, na.rm = TRUE)
 top_share(x, fractions = c(0.01, 0.05, 0.1, 0.25), na.rm = TRUE)
 }
 \arguments{
-\item{x}{Non-negative values, one per unit.}
+\item{x}{Numeric vector of non-negative values, one per unit (for example
+the days or the count of placements of each person). \code{NA} values
+are dropped; \code{Inf}, negative values and non-numeric input are
+errors.}
 
-\item{na.rm}{Whether to drop missing values. They are
-dropped either way; this argument exists so the call reads the same as
-base R's.}
+\item{na.rm}{Logical. Missing values are dropped whatever its value; the
+argument exists so the call reads the same as base R's. Default
+\code{TRUE}.}
 
-\item{fractions}{Fractions of the units, largest first,
-to report the share of.}
+\item{fractions}{Numeric vector of fractions of the units, each in
+\code{[0, 1]}: for each one the share of the total held by that fraction
+of units, taking the largest units first. Default
+\code{c(0.01, 0.05, 0.1, 0.25)}.}
 }
 \value{
-\code{gini()} a single number in \verb{[0, 1]}, \code{NA} when
-the total is zero. \code{lorenz()} a data frame of cumulative population
-and value shares, including the origin. \code{top_share()} a data frame
-of the requested fractions, the share each holds, and how many units
-that was.
+\code{gini()}: a numeric scalar in \code{[0, 1 - 1/n]}.
+\code{lorenz()}: a data frame with numeric columns \code{population}
+(cumulative share of units, from 0 to 1) and \code{value} (cumulative
+share of the total, units in ascending order), \code{n + 1} rows
+including the origin. \code{top_share()}: a data frame with columns
+\code{fraction} (the requested fraction of units), \code{units} (how
+many of the largest units that fraction is) and \code{share} (the share
+of the total those units hold).
 }
 \description{
-Concentration of a total across units
+Measures how unevenly a total is spread across units: whether a few
+people account for most of the placements, or a few regions for most of
+the days. \code{gini()} gives the Gini coefficient, \code{lorenz()} the
+points of the Lorenz curve (for plotting, for example with
+\code{\link[=plot_lorenz]{plot_lorenz()}}), and \code{top_share()} the share of the
+total held by
+the largest units ("the top 1\% of people account for 20\% of the
+days"). The three are computed in compiled code from the same sorted
+values.
 }
 \details{
 Gini is the mean absolute difference between pairs of units over twice
-the mean, which is also twice the area between the Lorenz curve and the
-diagonal. Zero is a perfectly even spread; the maximum for \code{n}
-units is \code{1 - 1/n}, not 1, so a Gini near 1 requires many units as
-well as an uneven spread.
+the mean, \eqn{G = \sum_i \sum_j |x_i - x_j| / (2 n^2 \bar{x})}, which is
+also twice the area between the Lorenz curve and the diagonal. Zero is a
+perfectly even spread; the maximum for \code{n} units is \code{1 - 1/n},
+not 1, so a Gini near 1 requires many units as well as an uneven spread.
+
+A Gini computed from banded or rounded data inherits that coarsening:
+compare with \code{\link[=band_sensitivity]{band_sensitivity()}} when the values are
+bands. For a tail
+that a few units dominate, \code{\link[=hill_tail_index]{hill_tail_index()}} says
+whether the largest
+values follow a power law.
+
+Errors: \code{x} not numeric, with \code{Inf} or a negative value, or with
+no non-missing value; \code{gini()} when every value is zero (the Gini of
+a zero total is undefined); \code{top_share()} when \code{fractions} is not
+numeric, is empty, has \code{NA} or lies outside \code{[0, 1]}.
 }
 \examples{
 # Ten units holding one each: no concentration.
@@ -55,6 +83,12 @@ gini(placements)
 top_share(placements, c(0.01, 0.05, 0.1))
 
 head(lorenz(placements))
+
+# missing values are dropped
+gini(c(1, NA, 3))
+
+# a zero total has no Gini coefficient
+try(gini(c(0, 0, 0)))
 }
 \references{
 Hedderich, J. and Sachs, L. (2020). \emph{Applied Statistics: Methods Using

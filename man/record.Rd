@@ -18,31 +18,57 @@ record(
 \item{manifest}{A manifest as returned by
 \code{\link[=make_manifest]{make_manifest()}}.}
 
-\item{name}{Unique name for this cross-check; used as the
-result key.}
+\item{name}{Character scalar, the name of this cross-check; used as the
+key in \code{manifest$results}, so it should be unique.}
 
-\item{observed}{The observed value (numeric or
-otherwise).}
+\item{observed}{The value the analysis produced: a numeric scalar for a
+tolerance check, or any single value to be stored as information.}
 
-\item{expected}{The expected value to compare against.}
+\item{expected}{The value to compare against, of the same kind.}
 
-\item{tol}{Numeric tolerance; a numeric pair within
-\code{tol} is \code{PASS}. Defaults to \code{0.0001}.}
+\item{tol}{Numeric scalar, the absolute tolerance: a numeric pair at most
+\code{tol} apart is \code{PASS}. Default \code{0.0001}.}
 
-\item{group}{Optional grouping label for the entry.
-Defaults to \code{"general"}.}
+\item{group}{Character scalar, a grouping label stored with the entry (for
+example the table the number comes from). Default \code{"general"}.}
 
-\item{synthetic}{Logical; if \code{TRUE} the entry is
-marked \code{INFO} because comparison against synthetic data is not
-meaningful.}
+\item{synthetic}{Logical scalar; \code{TRUE} marks this entry \code{INFO}
+because a comparison on synthetic data is not meaningful. Default
+\code{FALSE}.}
 }
 \value{
-The updated manifest, returned so calls can be chained.
+The manifest with \code{results[[name]]} set to a list with
+\code{group}, \code{observed}, \code{expected}, \code{diff} (the
+absolute difference, \code{NA} when the pair is not numeric),
+\code{status} (\code{"PASS"}, \code{"DIFFER"} or \code{"INFO"}),
+\code{tol} and \code{note} (a sentence for synthetic entries, else
+\code{NULL}).
 }
 \description{
-Appends one named cross-check entry to a manifest, classifying it as
-\code{PASS}, \code{DIFFER}, or \code{INFO}, printing a formatted line to
-the console, and returning the updated manifest.
+Appends one named cross-check to a manifest: a number your analysis
+produced (\code{observed}) next to the number it should reproduce
+(\code{expected}, for example a published table value). Each entry is
+classified \code{PASS}, \code{DIFFER} or \code{INFO}, a one-line report
+is shown as a message, and the updated manifest is returned so calls can
+be chained. The tallies appear in
+\code{\link[=write_summary_txt]{write_summary_txt()}} and the entries in
+\code{\link[=write_manifest_json]{write_manifest_json()}}.
+}
+\details{
+The status is decided in this order: \code{INFO} when \code{synthetic =
+TRUE} or the manifest's \code{meta$synthetic} is \code{TRUE} (a comparison
+on generated data is not meaningful); \code{PASS} when both values are
+numeric and \eqn{|observed - expected| \le tol}; \code{DIFFER} when both are
+numeric and further apart; \code{INFO} otherwise (for example a text or
+logical value, or an \code{NA}). The tolerance is absolute, not relative:
+scale it to the size of the quantity.
+
+\code{observed} and \code{expected} must be single values: a vector of
+another length (including an empty one) is an error naming the argument;
+record a vector's elements under separate names, or a summary of it.
+Recording under an existing \code{name} replaces that
+entry. The message line is a side effect; wrap the call in
+\code{suppressMessages()} to silence it.
 }
 \examples{
 man <- make_manifest(list(project = "demo"), environment = FALSE)
@@ -65,6 +91,15 @@ man <- record(man, "synthetic_row",
 )
 man$results$synthetic_row$status # "INFO"
 
+# a non-numeric value is stored as information, silently
+man <- suppressMessages(record(man, "country", observed = "CA", expected = "CA",
+                               group = "metadata"))
+man$results$country$status # "INFO"
+
 # Calls chain: record() returns the mutated manifest.
-length(man$results) # 3
+length(man$results) # 4
+}
+\seealso{
+\code{\link[=make_manifest]{make_manifest()}},
+\code{\link[=write_summary_txt]{write_summary_txt()}}.
 }

@@ -57,7 +57,8 @@
 #' the package, so it works offline in any country: every country at the
 #' latest year published by Our World in Data from Ember's yearly electricity
 #' data (the latest year each grid reports: 2025 or 2024 for nearly all, older
-#' for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones from
+#' for a few grids, Ukraine (2022) among them, named in \code{year}), sub-national zones
+#' from
 #' Electricity
 #' Maps' 2024 yearly data as redistributed in the Green Algorithms data release
 #' v3.1 (Canadian provinces and territories, US balancing authorities,
@@ -102,6 +103,12 @@
 #' carbon_intensity("CA-XX")$note
 #' carbon_intensity(120)$source
 #' nrow(carbon_intensity_table())
+#' # the Canadian provinces in the table, lowest intensity first
+#' tab <- carbon_intensity_table()
+#' ca <- tab[startsWith(tab$location, "CA-"), c("location", "name", "g_per_kwh", "year")]
+#' head(ca[order(ca$g_per_kwh), ])
+#' # a location the table does not know is an error, not a silent world average
+#' try(carbon_intensity("Atlantis"))
 #' @export
 carbon_intensity <- function(location = "WORLD") {
   if (is.numeric(location)) {
@@ -186,6 +193,10 @@ carbon_intensity_table <- function() .rmbl_ci_table()
 #' detect_location(env_location = "", codecarbon_location = "", tz = "Europe/Paris")
 #' detect_location(env_location = "", codecarbon_location = "", tz = "",
 #'                 locale = "en_IN.UTF-8")
+#' # an explicit setting wins over everything else
+#' detect_location(env_location = "CA-QC", tz = "Europe/Paris")
+#' # nothing usable: the world average, and the method says so
+#' detect_location(env_location = "", codecarbon_location = "", tz = "UTC", locale = "C")
 #' @export
 detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
                             codecarbon_location = Sys.getenv("CODECARBON_COUNTRY_ISO_CODE"),
@@ -293,10 +304,39 @@ detect_location <- function(env_location = Sys.getenv("RMBL_LOCATION"),
 #' common answer for an ordinary user, and \code{\link{compute_footprint}}
 #' then falls back to its model.
 #'
-#' @param rapl_dir The powercap directory; the default is the Linux location.
-#' @return A single logical.
+#' @details
+#' A domain counts when it is a directory named \code{intel-rapl:N} (the
+#' \code{intel-rapl:N:M} subdomains are parts of a package and would count
+#' the same energy twice) whose \code{name} file starts with
+#' \code{"package"} and whose \code{energy_uj} file holds a number. Every
+#' such domain must be readable: if any is not, the answer is \code{FALSE}.
+#' Only files under \code{rapl_dir} are read; nothing is written. On macOS
+#' and Windows there is no such directory and the answer is \code{FALSE}.
+#' Errors when \code{rapl_dir} is not a single non-missing string.
+#'
+#' @param rapl_dir Character scalar, the powercap directory; default
+#'   \code{"/sys/class/powercap"}, the Linux location. Another path is useful
+#'   for testing against a copy of the directory tree.
+#' @return A logical scalar: \code{TRUE} when every CPU-package energy counter
+#'   under \code{rapl_dir} is readable, \code{FALSE} otherwise (including
+#'   when the directory does not exist).
+#' @seealso \code{\link{compute_footprint}}
 #' @examples
 #' rapl_available()
+#'
+#' # a fake powercap tree with one readable package domain (Linux names the domain
+#' # "intel-rapl:0"; a colon is not allowed in a Windows file name)
+#' if (.Platform$OS.type != "windows") {
+#'   d <- file.path(tempfile(), "intel-rapl:0")
+#'   dir.create(d, recursive = TRUE)
+#'   writeLines("package-0", file.path(d, "name"))
+#'   writeLines("123456789", file.path(d, "energy_uj"))
+#'   rapl_available(dirname(d))
+#' }
+#'
+#' # a folder that does not exist is simply FALSE; a non-path is an error
+#' rapl_available(file.path(tempdir(), "no-such-dir"))
+#' try(rapl_available(NA_character_))
 #' @export
 rapl_available <- function(rapl_dir = "/sys/class/powercap") {
   if (!is.character(rapl_dir) || length(rapl_dir) != 1L || is.na(rapl_dir)) {
@@ -361,8 +401,13 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #'
 #' Evaluates \code{expr} and reports the electricity it used and the
 #' CO2-equivalent that electricity implies, by one of two methods, for the
-#' grid it ran on, offline.
+#' grid it ran on, offline. Use it to report the energy and emissions of an
+#' analysis next to its results (as journals and funders increasingly ask),
+#' or to compare two ways of running the same computation. The result keeps
+#' the value of \code{expr}, and lists every figure that was assumed rather
+#' than measured.
 #'
+#' @details
 #' \strong{Measured} (\code{method = "rapl"}): the CPU package energy
 #' counters (RAPL, microjoules, read from \code{rapl_dir}) before and after,
 #' with wrap-around handled through \code{max_energy_range_uj}. This is what
@@ -376,8 +421,10 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' with \eqn{t} the running time, \eqn{P_{cpu}} the CPU's thermal design
 #' power in watts, \eqn{u} its utilisation, \eqn{M} the memory in GB,
 #' \eqn{P_{mem} = 0.3725} W/GB and \eqn{PUE} the data-centre overhead. When
-#' the CPU's power is unknown the fallback is codecarbon's: 50\% of a
-#' constant 85 W.
+#' the CPU's power is unknown (\code{cpu_power_w = NULL}) the fallback is
+#' codecarbon's: 50% of a constant 85 W, that is 42.5 W charged for the whole
+#' running time whatever the measured utilisation (the utilisation is still
+#' reported, but not applied).
 #'
 #' \strong{Utilisation} is measured, not assumed, in one of two ways.
 #' \code{usage = "process"} (the default) is this R process's own CPU time,
@@ -390,12 +437,12 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' process figure is used and the assumptions say so. A number between 0 and 1
 #' fixes the utilisation, as the Green Algorithms calculator asks for it.
 #' \code{load_curve} chooses how power scales with that utilisation: linearly
-#' (Green Algorithms) or along codecarbon's curves, a floor at 10\% of
+#' (Green Algorithms) or along codecarbon's curves, a floor at 10% of
 #' \eqn{P_{cpu}} for a process and \eqn{0.1 + 0.9 u^3} for a machine, so a
 #' figure can be made comparable with either tool.
 #'
 #' Cross-checked against codecarbon 3.3.1 on one workload with the same forced
-#' inputs: memory energy identical (5.96 W for 16 GB), CPU energy within 8\%.
+#' inputs: memory energy identical (5.96 W for 16 GB), CPU energy within 8%.
 #' \code{load_curve = "codecarbon"} reproduces its power-from-load curves, so
 #' what remains of the difference is the load measurement itself (codecarbon
 #' samples the load during the run; this function integrates the CPU time).
@@ -409,18 +456,42 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' default that stood in for a measurement is listed in \code{assumptions}, so
 #' a report can say what was measured and what was assumed.
 #'
-#' @param expr The expression to evaluate.
+#' The energy figures include the PUE factor (CPU, memory and total alike).
+#' The running time has a floor of the CPU time divided by the cores, so a
+#' computation faster than the clock's resolution does not come out at zero.
+#' Short computations (well under a second) give figures dominated by timer
+#' resolution; measure a representative workload.
+#'
+#' Every argument is checked, and the carbon intensity looked up, before
+#' \code{expr} is evaluated, so a bad argument never costs the computation.
+#' Errors: an unknown \code{location}; \code{pue} below 1 or not a single
+#' finite number; \code{cpu_power_w} or \code{cores} not a single positive
+#' number (\code{cores} also whole); \code{memory_gb} or
+#' \code{memory_power_w_per_gb} negative; \code{usage} other than
+#' \code{"process"}, \code{"machine"} or one number in \eqn{[0, 1]};
+#' \code{method = "rapl"} where the counters are not readable. An error
+#' inside \code{expr} propagates unchanged. Nothing is written and nothing is
+#' fetched.
+#'
+#' @param expr The expression to evaluate. It is evaluated once, in the
+#'   calling environment, when the function reaches it (lazily, as a
+#'   promise).
 #' @param location Passed to \code{\link{carbon_intensity}}: a location code,
 #'   alpha-3 code or name, a number in gCO2e/kWh, or \code{NULL} (the
 #'   default) to detect it.
-#' @param method \code{"auto"} (RAPL when readable, else the model),
-#'   \code{"rapl"} or \code{"model"}.
+#' @param method Character scalar: \code{"auto"} (the default; RAPL when
+#'   readable, else the model), \code{"rapl"} (measured; an error when the
+#'   counters are not readable) or \code{"model"} (always the Green
+#'   Algorithms model).
 #' @param cpu_power_w The CPU's total thermal design power in watts (the
 #'   model's \eqn{P_{cpu}}); \code{NULL} uses codecarbon's unknown-CPU fallback.
 #' @param usage \code{"process"} (measured from this process's CPU time),
 #'   \code{"machine"} (measured from the whole machine's CPU accounting), or a
 #'   number in between 0 and 1. \code{NULL} means \code{"process"}.
-#' @param load_curve \code{"linear"} (Green Algorithms) or \code{"codecarbon"}.
+#' @param load_curve Character scalar: \code{"linear"} (the default; power
+#'   proportional to utilisation, as Green Algorithms) or \code{"codecarbon"}
+#'   (codecarbon's curves, see Details). Applies only when
+#'   \code{cpu_power_w} is given.
 #' @param cores Number of logical cores the process utilisation is measured
 #'   against; \code{NULL} detects it.
 #' @param memory_gb Memory charged to the computation in GB; \code{NULL}
@@ -429,17 +500,25 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #'   Green Algorithms; codecarbon v2 used 0.375).
 #' @param pue Power usage effectiveness: 1 for a laptop or desktop (default);
 #'   1.67 is the Green Algorithms default for a data centre, 1.56 the Uptime
-#'   Institute 2024 global average.
-#' @param rapl_dir The powercap directory holding the RAPL domains.
-#' @param proc_stat The kernel CPU accounting file read for
-#'   \code{usage = "machine"}.
-#' @return A list of class \code{rmbl_footprint}: \code{value} (the result of
-#'   \code{expr}), \code{duration_s}, \code{cpu_time_s}, \code{usage},
-#'   \code{usage_mode} (\code{"process"}, \code{"machine"} or \code{"fixed"}),
-#'   \code{cores}, \code{memory_gb}, \code{energy_kwh} (with \code{cpu},
-#'   \code{memory}, \code{total}), \code{co2e_g}, \code{carbon_intensity} (the
-#'   row used, with its year and source), \code{method}, \code{assumptions}
-#'   and \code{citations}.
+#'   Institute 2024 global average. Must be a single number of at least 1.
+#' @param rapl_dir Character scalar, the powercap directory holding the RAPL
+#'   domains; default \code{"/sys/class/powercap"} (Linux).
+#' @param proc_stat Character scalar, the kernel CPU accounting file read for
+#'   \code{usage = "machine"}; default \code{"/proc/stat"} (Linux).
+#' @return A list of class \code{rmbl_footprint} with elements \code{value}
+#'   (the result of \code{expr}), \code{duration_s} (numeric, wall seconds),
+#'   \code{cpu_time_s} (numeric, CPU seconds of this process and its
+#'   children), \code{usage} (numeric in \eqn{[0, 1]}, the utilisation),
+#'   \code{usage_mode} (\code{"process"}, \code{"machine"} or
+#'   \code{"fixed"}), \code{cores} (integer), \code{memory_gb} (numeric),
+#'   \code{energy_kwh} (a list of numerics \code{cpu}, \code{memory} and
+#'   \code{total}, in kWh, PUE included), \code{co2e_g} (numeric, grams of
+#'   CO2-equivalent), \code{carbon_intensity} (the list returned by
+#'   \code{\link{carbon_intensity}}, with its year and source), \code{method}
+#'   (\code{"rapl"} or \code{"model"}, the method actually used),
+#'   \code{assumptions} (character vector of every default or fallback that
+#'   stood in for a measurement) and \code{citations} (character vector).
+#'   The print method shows a three-line summary.
 #' @references Lannelongue, L., Grealey, J. and Inouye, M. (2021). Green
 #'   Algorithms: quantifying the carbon footprint of computation. Advanced
 #'   Science 8(12), 2100707. Courty, B. et al. (2024). CodeCarbon: estimate
@@ -459,6 +538,13 @@ rapl_available <- function(rapl_dir = "/sys/class/powercap") {
 #' # the whole machine's utilisation, on codecarbon's machine curve
 #' compute_footprint(1 + 1, location = "FR", usage = "machine", load_curve = "codecarbon",
 #'                   cpu_power_w = 45, memory_gb = 8)$usage_mode
+#' # a fixed utilisation and a data-centre PUE, with a carbon intensity given as a number
+#' fp2 <- compute_footprint(sum(sqrt(seq_len(2e5))), location = 30, usage = 0.5,
+#'                          cpu_power_w = 65, memory_gb = 16, pue = 1.67, method = "model")
+#' fp2$energy_kwh
+#' footprint_equivalents(fp2$co2e_g)
+#' # a bad argument is refused before the expression runs
+#' try(compute_footprint(Sys.sleep(10), pue = 0.9))
 #' @export
 compute_footprint <- function(expr, location = NULL, method = c("auto", "rapl", "model"),
                               cpu_power_w = NULL, usage = "process",
@@ -635,17 +721,41 @@ print.rmbl_footprint <- function(x, ...) {
 
 #' Everyday equivalents of a quantity of CO2-equivalent
 #'
-#' Kilometres driven in an average European passenger car (175 gCO2/km) and
+#' Converts grams of CO2-equivalent into two everyday comparisons:
+#' kilometres driven in an average European passenger car (175 gCO2/km) and
 #' tree-months of carbon sequestration (917 gCO2 per tree per month), the two
 #' comparisons the Green Algorithms calculator prints, with their sources.
+#' Use it to make the \code{co2e_g} of \code{\link{compute_footprint}}
+#' easier to read in a report.
 #'
-#' @param co2e_g Grams of CO2-equivalent.
-#' @return A list with \code{car_km}, \code{tree_months} and \code{sources}.
+#' @details
+#' The conversions are plain divisions: \eqn{\mathrm{km} = g / 175} and
+#' \eqn{\mathrm{tree\ months} = g / 917}. Both factors are averages and the
+#' comparisons are illustrations, not offsets: a tree-month is the carbon one
+#' mature tree takes up in a month, not a promise that planting one cancels
+#' the emission. Errors when \code{co2e_g} is not a single finite,
+#' non-negative number.
+#'
+#' @param co2e_g Numeric scalar, grams of CO2-equivalent; finite and
+#'   non-negative (for example the \code{co2e_g} element of a
+#'   \code{\link{compute_footprint}} result).
+#' @return A list with \code{car_km} (numeric, kilometres),
+#'   \code{tree_months} (numeric) and \code{sources} (named character vector,
+#'   \code{car} and \code{tree}, naming each factor's source).
 #' @references Green Algorithms data v3.1, context.csv: car factor from
 #'   Helmers et al. (2019) Atmospheric Environment and UK BEIS 2019 conversion
 #'   factors; tree sequestration from Bernal et al. (2018) via the same file.
+#' @seealso \code{\link{compute_footprint}}
 #' @examples
 #' footprint_equivalents(1200)
+#'
+#' # the footprint of a small computation, in everyday terms
+#' fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON",
+#'                         cpu_power_w = 45, memory_gb = 8)
+#' unlist(footprint_equivalents(fp$co2e_g)[c("car_km", "tree_months")])
+#'
+#' # a vector is refused: convert one total at a time
+#' try(footprint_equivalents(c(10, 20)))
 #' @export
 footprint_equivalents <- function(co2e_g) {
   if (!is.numeric(co2e_g) || length(co2e_g) != 1L || !is.finite(co2e_g) || co2e_g < 0) {

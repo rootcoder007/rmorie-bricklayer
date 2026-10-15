@@ -72,6 +72,13 @@ Ties in time -- incidents recorded to the day -- put same-day pairs in
 the first time band (0 to its edge). The test speaks to the timing of
 incidents relative to each other, not to what caused them; near-repeat
 patterns also arise when one offender commits a series.
+
+Errors: \code{x}, \code{y} and \code{time} of different lengths;
+\code{space_bands} or \code{time_bands} not positive, finite and
+increasing; \code{nsim} below 19; \code{max_pairs} below 1; longitude and
+latitude out of range under \code{coords = "lonlat"}; fewer than three
+incidents. With \code{seed} the random number stream is set for the call
+and restored afterwards.
 }
 \examples{
 b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
@@ -81,6 +88,17 @@ kn <- knox_test(b$lon, b$lat, as.Date(b$occ_date), space_bands = c(100, 200, 400
                 time_bands = c(7, 14, 28), nsim = 199, seed = 1)
 kn
 plot(kn)
+
+# planar coordinates in metres and times in days, on simulated points
+set.seed(5)
+n <- 150
+kp <- knox_test(runif(n, 0, 2000), runif(n, 0, 2000), runif(n, 0, 365),
+                space_bands = c(200, 400), time_bands = c(14, 28),
+                nsim = 99, seed = 2, coords = "planar")
+kp
+
+# bands must increase
+try(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(400, 100), c(7, 14)))
 }
 \references{
 Knox, E. G. (1964). The detection of space-time interactions.

@@ -16,8 +16,13 @@ fips_key(scheme, public, secret = NULL)
 verification-only key.}
 }
 \value{
-A \code{bricklayer_fips_key} when \code{secret} is given,
-otherwise a \code{bricklayer_fips_public_key}.
+A \code{bricklayer_fips_key} (\code{public}, \code{secret}, \code{scheme})
+when
+\code{secret} is given, otherwise a \code{bricklayer_fips_public_key}
+(\code{public},
+\code{scheme}); keys are held as lowercase hex, as
+\code{\link[=fips_keygen]{fips_keygen()}} returns
+them.
 }
 \description{
 Wraps key bytes that came from somewhere else -- another implementation,
@@ -33,6 +38,15 @@ interoperable: an ML-DSA secret key is
 \code{rho || K || tr || s1 || s2 || t0} and an SLH-DSA one is
 \code{SK.seed || SK.prf || PK.seed || PK.root}, exactly as FIPS 204 and
 FIPS 205 encode them.
+
+Hex input may be upper or lower case and is stored lower case; raw
+input is converted to hex. Only the lengths are checked (against
+\code{\link[=fips_sizes]{fips_sizes()}}): a secret key that does not belong to the
+public key is
+not detected here, and gives signatures that do not verify under that
+public key. Refusals: an unknown scheme, and material that is not hex of
+an even length or not exactly the scheme's length
+(\code{"must be N bytes of key material"}).
 }
 \examples{
 key <- fips_keygen("ML-DSA-44")

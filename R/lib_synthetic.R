@@ -50,26 +50,58 @@
 
 #' Generate One Synthetic Column From a Spec
 #'
-#' Builds a single synthetic data column according to a column spec drawn
-#' from a provenance synthetic recipe. Supported `type` s are
-#' `"sample"` (categorical, optionally weighted), `"bernoulli"`
-#' (two-label draw with optional per-row base rate), `"poisson"`
-#' (counts with a floor), `"id_pattern"` (templated IDs, optionally
-#' per-year sequenced), and `"sequence"` (a running integer sequence).
+#' @description
+#' Builds one column of synthetic (made-up) data from a short specification,
+#' such as "sample these categories with these weights" or "Poisson counts
+#' with mean 25". It is the building block of
+#' \code{\link{make_synthetic_csv}}, which assembles a whole table from a
+#' recipe. Use synthetic columns to develop and test an analysis pipeline
+#' before, or instead of, touching restricted data.
 #'
-#' @param spec A list describing the column; recognised fields
-#' depend on `spec$type` (e.g. `values`, `weights`,
-#' `p`, `p_with_baserate`, `labels`, `lambda`,
-#' `min`, `pattern`, `year_col`, `from`) .
-#' @param n Number of values to generate.
+#' @details
+#' The supported \code{spec$type}s and the fields each reads (defaults in
+#' parentheses):
+#' \describe{
+#'   \item{\code{"sample"} (the default type)}{\code{values}, a vector or
+#'     list of categories; \code{weights} (default equal), their probabilities.
+#'     Drawn with replacement.}
+#'   \item{\code{"bernoulli"}}{\code{p} (default 0.1), the probability of the first
+#'     label; \code{labels} (default \code{c("Yes", "No")}); \code{p_with_baserate}
+#'     (default 0), added as \code{p_with_baserate * base_p} to give row-level
+#'     variation when \code{base_p} is supplied. A per-row probability above
+#'     1 behaves as 1.}
+#'   \item{\code{"poisson"}}{\code{lambda} (default 1); \code{min} (default 0), a floor:
+#'     draws below it are raised to it (so the result is not Poisson below
+#'     the floor).}
+#'   \item{\code{"id_pattern"}}{\code{pattern} (default \code{"id-\{seq:05d\}"}), in
+#'     which \code{\{seq:05d\}} becomes a five-digit zero-padded sequence
+#'     number and \code{\{year\}} the year; \code{year_col}, the name of a
+#'     column in \code{ctx} whose values supply \code{\{year\}} and restart
+#'     the sequence within each year. With \code{year_col}, that column must
+#'     have \code{n} values. No other tokens are recognised.}
+#'   \item{\code{"sequence"}}{\code{from} (default 1): \code{from, from + 1, ...}.}
+#' }
+#' Random draws use R's random number generator, so call \code{set.seed()}
+#' first for a reproducible column. Errors: \code{spec} not a list; an
+#' unknown \code{type}; errors from \code{sample()} or \code{rpois()} on
+#' invalid weights or rates.
+#'
+#' @param spec A list describing the column: \code{type} and the fields
+#'   listed in Details. Lists as parsed from JSON (for example
+#'   \code{values = list("a", "b")}) are accepted.
+#' @param n Whole number: how many values to generate.
 #' @param ctx Named list of already-generated columns, letting
-#' later columns (such as `id_pattern` with a `year_col`)
-#' reference earlier ones. Defaults to an empty list.
-#' @param base_p Optional numeric vector of per-row latent
-#' propensities used by the `"bernoulli"` type to add row-level
-#' variation.
-#' @return A vector of length `n` for the requested column type.
-#' Errors on an unknown `type`.
+#'   later columns (such as \code{id_pattern} with a \code{year_col})
+#'   reference earlier ones. Defaults to an empty list.
+#' @param base_p Optional numeric vector of per-row latent propensities in
+#'   \eqn{[0, 1]}, length \code{n}, used by the \code{"bernoulli"} type to add
+#'   row-level variation. Default \code{NULL}.
+#' @return A vector for the requested column type: character for
+#'   \code{"sample"} of strings, \code{"bernoulli"} and \code{"id_pattern"},
+#'   numeric or integer for \code{"poisson"} and \code{"sequence"} (and for
+#'   \code{"sample"} of numbers). Its length is \code{n}, except for
+#'   \code{"id_pattern"} with a \code{year_col}.
+#' @seealso \code{\link{make_synthetic_csv}}.
 #' @examples
 #' set.seed(1)
 #' # "sample": categorical draw, optionally weighted.
@@ -84,7 +116,7 @@
 #'   labels = list("Yes", "No")
 #' ), 5)
 #'
-#' # "poisson": counts with a floor via `min`.
+#' # "poisson": counts with a floor via min.
 #' make_synthetic_column(list(type = "poisson", lambda = 3, min = 1), 5)
 #'
 #' # "id_pattern": templated IDs (the {seq:05d} token is zero-padded).
@@ -93,7 +125,13 @@
 #'   pattern = "case-{seq:05d}"
 #' ), 3)
 #'
-#' # "sequence": a running integer sequence from `from`.
+#' # ... numbered within each year of an earlier column
+#' yrs <- c(2024, 2024, 2025)
+#' unname(make_synthetic_column(list(type = "id_pattern",
+#'   pattern = "{year}-{seq:05d}", year_col = "year"), 3,
+#'   ctx = list(year = yrs)))
+#'
+#' # "sequence": a running integer sequence from from.
 #' make_synthetic_column(list(type = "sequence", from = 100), 4)
 #'
 #' # An unknown type errors.
@@ -127,11 +165,14 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
       year_col <- spec$year_col %||% NULL
       if (!is.null(year_col) && year_col %in% names(ctx)) {
         years <- ctx[[year_col]]
+        if (length(years) != n) {
+          stop(sprintf("`ctx$%s` has %d values but n = %d", year_col, length(years), n), call. = FALSE)
+        }
         seq_per_yr <- stats::ave(seq_along(years), years, FUN = seq_along)
         ids <- mapply(function(y, s) {
           out <- gsub("\\{year\\}", as.character(y), pattern)
           gsub("\\{seq:05d\\}", sprintf("%05d", s), out)
-        }, years, seq_per_yr)
+        }, years, seq_per_yr, USE.NAMES = FALSE)
         return(ids)
       }
       # vapply: gsub vectorises over x, not replacement -- a bare gsub here
@@ -166,26 +207,55 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 
 #' Generate a Synthetic CSV From a Schema Recipe
 #'
-#' Generates a reproducible synthetic data set from the
-#' `schema$synthetic_recipe` block of a provenance object and writes
-#' it to a CSV. Columns are produced in declaration order so later columns
-#' can reference earlier ones, a shared per-row latent propensity drives
-#' any Bernoulli columns, and an optional row-replication block expands
-#' per-person rows.
+#' @description
+#' Generates a reproducible synthetic data set from a recipe (the
+#' \code{schema$synthetic_recipe} block of a provenance object, or a list
+#' written by hand) and writes it to a CSV file. Each column is described as
+#' in \code{\link{make_synthetic_column}}. Next to the CSV it writes a
+#' \code{.synthetic} marker file, so the generated rows can never be
+#' mistaken for real data later. Use it to share a runnable version of an
+#' analysis without sharing restricted records.
 #'
-#' @param schema The synthetic recipe (a list with
-#' `columns`, and optional `n_rows`, `seed`, and
-#' `row_replication`) .
-#' @param out_path Path where the CSV is written.
-#' @param n_rows Number of rows (persons, if replicating) to
-#' generate. Defaults to `schema$n_rows`, then 50000.
+#' @details
+#' Columns are produced in declaration order so later columns can reference
+#' earlier ones. A shared per-person latent propensity, uniform on
+#' \eqn{[0, 1]}, drives every \code{"bernoulli"} column through its
+#' \code{p_with_baserate} field, so those columns are correlated with each
+#' other. An optional \code{row_replication} block (\code{values} and
+#' \code{weights}) draws how many rows each person gets: person-level
+#' columns are drawn once per person and repeated, while \code{"bernoulli"}
+#' columns are drawn once per row. With replication the file therefore has
+#' more than \code{n_rows} rows.
+#'
+#' The data are drawn under \code{seed} and the caller's random number
+#' stream is restored afterwards, so the same recipe and seed give the same
+#' file and the surrounding analysis is not disturbed.
+#'
+#' Side effects: writes \code{out_path} (overwriting it) and
+#' \code{paste0(out_path, ".synthetic")}, a small JSON file with
+#' \code{synthetic: true}, the row count, the seed, the recipe's SHA-256 and
+#' the time; and marks the R session as having made synthetic data, so a
+#' manifest built later in the same session is labelled synthetic. A
+#' progress bar is shown in an interactive session.
+#'
+#' Errors: \code{schema} not a list; any error from
+#' \code{\link{make_synthetic_column}}; an unwritable \code{out_path}.
+#'
+#' @param schema The synthetic recipe: a list with \code{columns} (a named
+#'   list of column specs), and optional \code{n_rows}, \code{seed} and
+#'   \code{row_replication}.
+#' @param out_path Character string: the path of the CSV to write.
+#' @param n_rows Whole number: the number of rows (persons, if replicating)
+#'   to generate. Defaults to \code{schema$n_rows}, then 50000.
 #' @param seed Random seed for reproducibility. Defaults to
-#' `schema$seed`, then 91735246.
-#' @return Invisibly, an object of class `bricklayer_synthetic`: a list
-#' with `path`, `sidecar` (the `<path>.synthetic` marker file;
-#' [verify_capsule()] treats its presence as a failed check),
-#' `recipe_sha256`, `rows` (rows written),
-#' and `seed` used.
+#'   \code{schema$seed}, then 91735246.
+#' @return Invisibly, an object of class \code{bricklayer_synthetic}: a list
+#'   with \code{path}, \code{sidecar} (the \code{<path>.synthetic} marker file;
+#'   \code{\link{verify_capsule}} treats its presence as a failed check),
+#'   \code{rows} (rows written), \code{seed} (the seed used) and
+#'   \code{recipe_sha256} (the recipe's digest, \code{NA} when it could not
+#'   be computed). Its print method labels the file as synthetic.
+#' @seealso \code{\link{make_synthetic_column}}, \code{\link{verify_capsule}}.
 #' @examples
 #' recipe <- list(
 #'   n_rows = 20, seed = 42,
@@ -206,8 +276,17 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #' dim(df)
 #' names(df)
 #'
-#' # `n_rows` overrides the recipe's own row count.
+#' # and the marker file says it is synthetic
+#' file.exists(res$sidecar)
+#'
+#' # n_rows overrides the recipe's own row count.
 #' make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+#'
+#' # one to three rows per person
+#' recipe$row_replication <- list(values = list(1, 2, 3))
+#' make_synthetic_csv(recipe, tempfile(fileext = ".csv"), n_rows = 5)$rows
+#'
+#' try(make_synthetic_csv("not a recipe", tempfile()))
 #' @export
 make_synthetic_csv <- function(schema, out_path,
                                n_rows = NULL, seed = NULL) {
@@ -250,7 +329,13 @@ make_synthetic_csv <- function(schema, out_path,
   out <- list()
   ctx <- list() # one entry per row
   ctx_person <- list() # one entry per person, before replication
+  # base R only when sourced standalone in a bundle: the bar only when the package is there
+  pg <- if (exists("bricklayer_progress", mode = "function")) {
+    bricklayer_progress("synthetic data", length(schema$columns) + 1L)
+  }
+  if (!is.null(pg)) on.exit(pg$done(), add = TRUE)
   for (col_name in names(schema$columns)) {
+    if (!is.null(pg)) pg$tick(0, sprintf("column %s", col_name))
     spec <- schema$columns[[col_name]]
     type <- spec$type %||% "sample"
     if (identical(type, "bernoulli")) {
@@ -265,7 +350,9 @@ make_synthetic_csv <- function(schema, out_path,
     }
     ctx[[col_name]] <- vals
     out[[col_name]] <- vals
+    if (!is.null(pg)) pg$tick()
   }
+  if (!is.null(pg)) pg$tick(0, sprintf("writing %s rows", format(n_total, big.mark = ",")))
   out_df <- as.data.frame(out, stringsAsFactors = FALSE)
   utils::write.csv(out_df, out_path, row.names = FALSE)
   # The CSV stays a plain CSV so every reader opens it; the sidecar beside

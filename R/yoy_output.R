@@ -22,11 +22,48 @@
 
 #' Colour palettes for change tables
 #'
-#' @return A character vector of palette names accepted by
-#' [yoy_html()], [yoy_pdf()]
-#' and `print()`.
+#' @description
+#' Lists the names of the colour palettes that the change-table renderers
+#' accept. In every palette the colour says whether a change is good or bad
+#' news for the series, not whether the number went up or down: the arrow in
+#' the table carries the sign, and the colour carries the
+#' \code{direction} chosen in \code{\link{yoy}}. Use this to see which values
+#' the \code{palette} argument of \code{print()}, \code{\link{yoy_html}} and
+#' \code{\link{yoy_pdf}} takes.
+#'
+#' @details
+#' Three palettes are defined:
+#' \describe{
+#'   \item{\code{"diverging"}}{the default; red-orange (\code{#c2492f}) for bad
+#'     news and teal (\code{#1b7f6b}) for good news, hues pulled apart so the
+#'     pair stays distinguishable in the common forms of colour blindness.}
+#'   \item{\code{"safe"}}{orange (\code{#b8621b}) and blue (\code{#18567d}),
+#'     safe for deuteranopia and protanopia alike.}
+#'   \item{\code{"mono"}}{black on grey; \code{print()} emits no colour codes
+#'     at all with this palette.}
+#' }
+#' Unchanged rows and rows without a comparison use grey (\code{#6b6b6b}).
+#' The verdict-to-colour mapping is: \code{"worse"} uses the bad colour and
+#' \code{"better"} the good colour. With \code{direction = "neutral"} in
+#' \code{\link{yoy}} the verdicts are \code{"up"}/\code{"down"}, which say
+#' nothing about good or bad news, so those rows use the grey as well; the
+#' arrow still shows the sign.
+#' A palette name not in this list is an error in every renderer.
+#'
+#' @return A character vector of palette names, currently
+#' \code{c("diverging", "safe", "mono")}.
+#' @seealso \code{\link{yoy}}, \code{\link{yoy_summary}},
+#'   \code{\link{yoy_html}}, \code{\link{yoy_pdf}}.
 #' @examples
+#' # the palette names
 #' yoy_palettes()
+#'
+#' # use one of them when printing a change table
+#' d <- data.frame(year = 2019:2023, n = c(40, 46, 38, 52, 49))
+#' print(yoy(d, value = "n", period = "year"), palette = "safe", color = FALSE)
+#'
+#' # a name that is not a palette is refused
+#' try(print(yoy(d, value = "n", period = "year"), palette = "rainbow"))
 #' @export
 yoy_palettes <- function() names(.YOY_PALETTES)
 
@@ -39,6 +76,16 @@ yoy_palettes <- function() names(.YOY_PALETTES)
 
 .yoy_change_col <- function(x) {
   if ("pp_change" %in% names(x)) "pp_change" else "pct_change"
+}
+
+# The colour class of each verdict: good or bad news only when a direction says which is which.
+# "up" and "down" (direction = "neutral") are neither, so they are flat; they had been painted
+# bad and good, which called every neutral rise bad news.
+.yoy_verdict_class <- function(v) {
+  out <- rep("flat", length(v))
+  out[!is.na(v) & v == "worse"] <- "bad"
+  out[!is.na(v) & v == "better"] <- "good"
+  out
 }
 
 # The arrow carries the sign; the colour carries whether the sign is
@@ -69,14 +116,20 @@ yoy_palettes <- function() names(.YOY_PALETTES)
   out
 }
 
-#' @param x An `rmbl_yoy` object.
-#' @param digits Digits for the percent column.
-#' @param palette One of
-#' [yoy_palettes()].
-#' @param color Whether to emit ANSI colour. Defaults to
-#' colour only when writing to a terminal that has it, so a redirected or
-#' captured output stays plain text.
-#' @param n Maximum rows to print.
+#' @param x An \code{rmbl_yoy} object returned by \code{yoy()}.
+#' @param digits Integer, default \code{1}. Decimal places shown in the
+#'   percent (or percentage-point) change column. The interval column is
+#'   always shown to whole percent.
+#' @param palette Character, default \code{"diverging"}. One of
+#'   \code{\link{yoy_palettes}()}; chooses the colours used when
+#'   \code{color = TRUE}. An unknown name is an error.
+#' @param color Logical or \code{NULL} (the default). \code{TRUE} wraps each
+#'   row in 24-bit ANSI colour codes chosen from its verdict; \code{FALSE}
+#'   prints plain text. \code{NULL} means colour only in an interactive
+#'   session with the \code{NO_COLOR} environment variable unset, so output
+#'   that is redirected or captured stays plain text.
+#' @param n Integer, default \code{30}. Maximum number of rows printed; the
+#'   number of rows left out is reported on a final line.
 #' @param ... Ignored.
 #' @rdname yoy
 #' @export
@@ -135,8 +188,7 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
                   collapse = "  ")
     if (isTRUE(color)) {
       v <- d$verdict[r]
-      hex <- if (is.na(v)) NULL else if (v %in% c("worse", "up")) pal$bad
-      else if (v %in% c("better", "down")) pal$good else pal$flat
+      hex <- if (is.na(v)) NULL else pal[[.yoy_verdict_class(v)]]
       if (!is.null(hex) && !identical(palette, "mono")) {
         line <- paste0(.yoy_ansi(hex), line, "\033[0m")
       }
@@ -180,14 +232,57 @@ print.rmbl_yoy <- function(x, digits = 1L, palette = "diverging",
 
 #' Summarise a change table
 #'
-#' @param object An `rmbl_yoy` object.
+#' @description
+#' Collapses a period-over-period change table from \code{\link{yoy}} into
+#' one row per series (or one row per group when \code{yoy()} was called with
+#' \code{by}). Each row gives the first and last observed periods, the total
+#' change between them, the compound annual growth rate, and how many
+#' period-to-period changes went up, went down or stayed flat. Use it to
+#' report the whole span of a series in one line next to the detailed table.
+#'
+#' @details
+#' Rows whose \code{value} is missing are dropped before the summary, and
+#' the remaining rows are sorted by period. With \eqn{v_1} the first and
+#' \eqn{v_T} the last observed value, the total change is
+#' \deqn{100 (v_T / v_1 - 1)}
+#' and, with \eqn{s = (T - 1) / \mathrm{lag}} steps of length \code{lag},
+#' \deqn{100 \left( (v_T / v_1)^{1/s} - 1 \right).}
+#' Both are \code{NA} when \eqn{v_1 \le 0}, because a growth rate out of zero
+#' does not exist; \code{cagr_pct} is also \code{NA} for a single period.
+#' "Annual" in CAGR assumes one period is a year; for monthly or quarterly
+#' data read it as the compound rate per \code{lag} periods.
+#'
+#' The \code{up}, \code{down} and \code{flat} counts are taken from the
+#' percent-change column (\code{pct_change}, or \code{pp_change} for
+#' \code{units = "percent"}). A change out of a zero base has no percent
+#' change and is not counted in any of the three. A group with no non-missing
+#' value gives a row of \code{NA} with \code{periods = 0}.
+#'
+#' Anything other than a \code{yoy()} result is refused with the error
+#' "\code{object} must be a yoy() result".
+#'
+#' @param object An \code{rmbl_yoy} object returned by \code{\link{yoy}}.
 #' @param ... Ignored.
-#' @return A data frame with one row per group giving the first and last
-#' period, the total change across the span, the compound annual growth
-#' rate, and how many periods moved each way.
+#' @return A data frame with one row per series or group and columns: the
+#' \code{by} columns (character), when \code{yoy()} had \code{by};
+#' \code{from}, \code{to} (the first and last observed period, same type as
+#' the period column); \code{first}, \code{last} (numeric values at those
+#' periods); \code{total_pct}, \code{cagr_pct} (numeric, percent);
+#' \code{periods} (integer, observed periods); \code{up}, \code{down},
+#' \code{flat} (integer counts of period-to-period changes).
+#' @seealso \code{\link{yoy}}, \code{\link{yoy_palettes}}.
 #' @examples
+#' # one series
 #' d <- data.frame(year = 2018:2023, n = c(120, 131, 98, 140, 155, 149))
 #' yoy_summary(yoy(d, value = "n", period = "year"))
+#'
+#' # one row per group; a zero base gives no percent change
+#' g <- data.frame(year = rep(2019:2022, 2), unit = rep(c("A", "B"), each = 4),
+#'                 n = c(10, 12, 0, 15, 5, 7, 6, 9))
+#' yoy_summary(yoy(g, value = "n", period = "year", by = "unit"))
+#'
+#' # anything that is not a yoy() result is refused
+#' try(yoy_summary(d))
 #' @export
 yoy_summary <- function(object, ...) UseMethod("yoy_summary")
 

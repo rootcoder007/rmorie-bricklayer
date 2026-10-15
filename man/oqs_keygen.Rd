@@ -16,14 +16,25 @@ oqs_public_key(key)
 \item{key}{A key from \code{oqs_keygen()}.}
 }
 \value{
-As \code{\link[=fips_keygen]{fips_keygen()}} and
-\code{\link[=fips_public_key]{fips_public_key()}}.
+As \code{\link[=fips_keygen]{fips_keygen()}} (a \code{bricklayer_fips_key})
+and
+\code{\link[=fips_public_key]{fips_public_key()}} (a
+\code{bricklayer_fips_public_key}).
 }
 \description{
 Kept so code written against the liboqs-backed version keeps working.
 The schemes are no longer reached through liboqs -- they are implemented
 in this package -- and the name no longer describes anything, so use
-\code{\link[=fips_keygen]{fips_keygen()}} instead.
+\code{\link[=fips_keygen]{fips_keygen()}} instead. New code should not call these
+functions.
+}
+\details{
+\code{oqs_keygen()} calls \code{\link[=fips_keygen]{fips_keygen()}} (with a fresh
+random seed) and
+\code{oqs_public_key()} calls \code{\link[=fips_public_key]{fips_public_key()}}, each
+after a deprecation
+warning from \code{\link[=.Deprecated]{.Deprecated()}}. The keys are the same objects
+\code{\link[=fips_keygen]{fips_keygen()}} returns, with the same classes.
 }
 \section{Security}{
 
@@ -47,6 +58,13 @@ README's security section lists what each check does and does not cover.
 # Deprecated: use fips_keygen().
 key <- suppressWarnings(oqs_keygen("ML-DSA-65"))
 key$scheme
+
+# The same as the current name, after a warning.
+pub <- suppressWarnings(oqs_public_key(key))
+identical(pub, fips_public_key(key))
+
+# The warning names the replacement.
+tryCatch(oqs_keygen(), warning = function(w) conditionMessage(w))
 }
 \seealso{
 \code{\link[=fips_keygen]{fips_keygen()}}.

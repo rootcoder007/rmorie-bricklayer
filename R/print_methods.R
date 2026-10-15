@@ -350,9 +350,28 @@ summary.bricklayer_benford <- function(object, ...) {
 #' mean is not describing it. That is visible in one glance here and in no
 #' single number.
 #'
+#' How the numbers are computed. A column is numeric when `is.numeric()` is
+#' `TRUE`; every other column (character, factor, logical, `Date`, ...) is
+#' treated as categorical, and `top` is its most frequent non-missing value as
+#' text (ties broken by the order of `sort(table())`). For a numeric column,
+#' over its non-missing values: `sd` is the sample standard deviation
+#' (\eqn{n - 1}), `mad` the median absolute deviation scaled by 1.4826,
+#' `skewness` the population moment ratio \eqn{m_3 / m_2^{3/2}},
+#' `n_outliers` the count outside the Tukey fences (1.5 interquartile ranges
+#' beyond the quartiles), and the quantiles are type 7. Infinite values are
+#' counted in `n_infinite` (and in `n_negative`, `n_distinct`) and left
+#' out
+#' of every other numeric statistic, which are taken over the finite values
+#' only: a column with an infinite value keeps a finite mean and range, and
+#' a column with no finite value has `NA` statistics. A progress bar is shown for
+#' wide tables when
+#' `options(morie.progress)` allows it. Errors when `data` is not a data
+#' frame, has no columns, or has duplicate or empty column names.
+#'
 #' @param data A data frame.
-#' @param quantiles Quantile probabilities to include for
-#' numeric columns (default the quartiles).
+#' @param quantiles Numeric vector of quantile probabilities to include for
+#' numeric columns, one column each named `q` and the percentage (`q25`,
+#' `q50`, ...); default the quartiles. `NULL` or an empty vector adds none.
 #' @return A data frame of class `bricklayer_profile`, one row per
 #' column: the type, the missing count and share, the number of distinct
 #' values, and for a numeric column the counts of zero, negative and
@@ -360,6 +379,15 @@ summary.bricklayer_benford <- function(object, ...) {
 #' the skewness, the count outside the Tukey fences, and an
 #' [inline_hist()] sketch of its distribution. A
 #' categorical column reports its most common value in `top` instead.
+#' The columns are `column`, `type` (the first class), `n`,
+#' `n_missing`,
+#' `pct_missing`, `n_distinct`, `n_zero`, `n_negative`,
+#' `n_infinite`,
+#' `mean`, `sd`, `median`, `mad`, `min`, `max`,
+#' `skewness`, `n_outliers`,
+#' `hist`, `top` and one per quantile; a statistic that does not apply to the
+#' column's type is `NA`. The print method formats the numbers to four
+#' significant digits and shows the histogram last.
 #' @seealso
 #' [capsule_drift()] to compare two of these,
 #' [core_moments()] for the underlying kernel.
@@ -386,6 +414,12 @@ summary.bricklayer_benford <- function(object, ...) {
 #' # each breaks a different downstream computation (a log, a square
 #' # root, an average).
 #' p[, c("column", "n_zero", "n_negative", "n_infinite")]
+#'
+#' # deciles instead of quartiles
+#' names(profile_columns(df, quantiles = c(0.1, 0.9)))
+#'
+#' # a table with no columns has nothing to profile
+#' try(profile_columns(df[, 0]))
 #' @export
 profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
@@ -393,7 +427,10 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (ncol(data) == 0L) {
     stop("`data` has no columns to profile", call. = FALSE)
   }
+  pg <- bricklayer_progress("profiling columns", ncol(data))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(names(data), function(nm) {
+    pg$tick(info = nm)
     v <- data[[nm]]
     n_missing <- sum(is.na(v))
     base <- data.frame(column = nm, type = class(v)[1L], n = length(v),
@@ -411,14 +448,20 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
                      n_outliers = NA_integer_, hist = NA_character_,
                      top = NA_character_, stringsAsFactors = FALSE))
       }
-      st <- .rmbl_column_stats(ok)
+      # the statistics are over the finite values: an Inf counted in
+      # n_infinite made the mean and the range infinite as well
+      fin <- ok[is.finite(ok)]
+      st <- if (length(fin)) .rmbl_column_stats(fin) else
+        list(mean = NA_real_, sd = NA_real_, median = NA_real_, mad = NA_real_,
+             skewness = NA_real_, lower = NA_real_, upper = NA_real_, hist = NA_character_)
       cbind(base, n_distinct = length(unique(ok)),
             n_zero = sum(ok == 0), n_negative = sum(ok < 0),
             n_infinite = sum(is.infinite(v)),
             mean = st$mean, sd = st$sd,
             median = st$median, mad = st$mad,
-            min = min(ok), max = max(ok), skewness = st$skewness,
-            n_outliers = sum(ok < st$lower | ok > st$upper),
+            min = if (length(fin)) min(fin) else NA_real_,
+            max = if (length(fin)) max(fin) else NA_real_, skewness = st$skewness,
+            n_outliers = if (length(fin)) sum(fin < st$lower | fin > st$upper) else NA_integer_,
             hist = st$hist, top = NA_character_,
             stringsAsFactors = FALSE)
     } else {
@@ -437,8 +480,8 @@ profile_columns <- function(data, quantiles = c(0.25, 0.5, 0.75)) {
   if (length(quantiles)) {
     qs <- lapply(names(data), function(nm) {
       v <- data[[nm]]
-      if (is.numeric(v) && any(!is.na(v))) {
-        as.numeric(.Call(C_rmbl_quantile, as.numeric(v[!is.na(v)]),
+      if (is.numeric(v) && any(is.finite(v))) {
+        as.numeric(.Call(C_rmbl_quantile, as.numeric(v[is.finite(v)]),
                          as.numeric(quantiles)))
       } else {
         rep(NA_real_, length(quantiles))

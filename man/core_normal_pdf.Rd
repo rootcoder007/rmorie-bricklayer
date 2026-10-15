@@ -9,17 +9,30 @@ core_normal_pdf(x, mean = 0, sd = 1)
 \arguments{
 \item{x}{Numeric vector of quantiles.}
 
-\item{mean}{Distribution mean (length-1, default 0).}
+\item{mean}{Number, default \code{0}: the mean \eqn{\mu}.}
 
-\item{sd}{Distribution standard deviation (length-1, default
-1, > 0).}
+\item{sd}{Number, default \code{1}: the standard deviation \eqn{\sigma};
+must be positive for a finite result.}
 }
 \value{
-A numeric vector the length of \code{x}. Equivalent to
-\code{stats::dnorm(x, mean, sd)}.
+A numeric vector the length of \code{x}.
 }
 \description{
-Vectorised over \code{x}; \code{mean} and \code{sd} are length-1.
+Evaluates the density of the normal distribution with a given mean and
+standard deviation at each value of \code{x}, in compiled code. It is the
+same kernel that other packages reach through
+\code{LinkingTo: rmoriebricklayer}, and for a positive standard deviation
+it agrees with \code{\link[stats]{dnorm}}.
+}
+\details{
+\deqn{f(x) = \frac{1}{\sigma\sqrt{2\pi}}
+  \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right).}
+The function is vectorised over \code{x} only; \code{mean} must be a single
+finite number and \code{sd} a single positive number, and anything else is
+an error (\code{dnorm()} recycles them, and gives \code{Inf} or \code{NaN} for
+\code{sd = 0} or below).
+\code{NA} in \code{x} gives \code{NA}; \code{x = Inf} gives 0. Character,
+factor or list input for \code{x} is an error.
 }
 \examples{
 # Standard normal density at a few quantiles.
@@ -28,10 +41,16 @@ core_normal_pdf(c(-1, 0, 1))
 # Peak of the standard normal is 1/sqrt(2*pi) at x = 0.
 core_normal_pdf(0)
 
-# Shift and scale via `mean` and `sd`.
-core_normal_pdf(5, mean = 5, sd = 2)       # peak of N(5, 2)
+# Shift and scale via mean and sd.
 core_normal_pdf(c(0, 5, 10), mean = 5, sd = 2)
 
 # Identical to stats::dnorm().
 all.equal(core_normal_pdf(-2:2, 0, 1), stats::dnorm(-2:2, 0, 1))
+
+# a non-positive sd and text are refused
+try(core_normal_pdf(0, sd = 0))
+try(core_normal_pdf("0"))
+}
+\seealso{
+\code{\link{rmbl_core_stats}}, \code{\link[stats]{dnorm}}.
 }

@@ -15,32 +15,54 @@ write_summary_txt(
 }
 \arguments{
 \item{manifest}{A manifest as returned by
-\code{\link[=make_manifest]{make_manifest()}}; its \code{meta} supplies
-project/author/run details.}
+\code{\link[=make_manifest]{make_manifest()}}; its
+\code{meta} supplies the header and its \code{results} the counts.}
 
-\item{output_dir}{Directory to write
-\code{SUMMARY.txt} into and to list produced files from.}
+\item{output_dir}{Character scalar, an existing folder to write
+\code{SUMMARY.txt} into and to list the files of.}
 
-\item{paths}{A named list of absolute paths to report (e.g.
+\item{paths}{A named list (or named character vector) of paths to report,
+one line each, labelled by the capitalised name (for example
 \code{capsule}, \code{input}, \code{results}, \code{analysis_script},
-\code{provenance}) .}
+\code{provenance}). \code{list()} reports none.}
 
-\item{what_was_done}{Optional character vector of
-bullet points describing what the run did.}
+\item{what_was_done}{Optional character vector, one line each, describing
+what the run did. Default \code{NULL} (no section).}
 
-\item{contact}{Optional contact string appended to the
-summary.}
+\item{contact}{Optional character scalar appended as a \code{Contact:}
+line. Default \code{NULL}.}
 
-\item{licence}{Optional licence string appended to the
-summary.}
+\item{licence}{Optional character scalar appended as a \code{Licence:}
+line. Default \code{NULL}.}
 }
 \value{
-The path to the written \code{SUMMARY.txt}, returned invisibly.
+The path to the written \code{SUMMARY.txt} (character scalar),
+invisibly.
 }
 \description{
-Writes a human-readable \code{SUMMARY.txt} into the output directory,
-covering run metadata, the exact absolute paths used, result counts, the
-files produced, and optional notes, contact, and licence lines.
+Writes \code{SUMMARY.txt} into an output folder: a plain-text page a
+person can read without any software, giving the project, author, time,
+operating system and R version of the run, whether it ran on real or
+synthetic data, the paths it used, the tally of cross-check results, the
+files in the folder, and optional notes, contact and licence lines. It is
+the human-readable companion of
+\code{\link[=write_manifest_json]{write_manifest_json()}}.
+}
+\details{
+Header fields come from \code{manifest$meta}: \code{project} (default
+\code{"(unnamed)"}), \code{author} (\code{"(unknown)"}), \code{run_at}
+(default the current time), \code{os} (default \code{Sys.info()}),
+\code{r_version} (default \code{R.version.string}) and \code{synthetic}.
+When \code{meta$r_package_versions} is present a section lists those
+versions. Result counts are tallied from the \code{status} of each entry
+of \code{manifest$results} (PASS, DIFFER, WARN, INFO).
+
+The file list is \code{list.files(output_dir)} at the time of the call,
+sorted, so write the summary last. The paths are printed as given (they
+are not made absolute). An existing \code{SUMMARY.txt} is overwritten.
+
+Errors when \code{manifest} is not a list, and (from base R) when
+\code{output_dir} does not exist or cannot be written.
 }
 \examples{
 man <- make_manifest(list(project = "demo", author = "A. Author"),
@@ -51,4 +73,18 @@ out <- file.path(tempdir(), "demo-run")
 dir.create(out, showWarnings = FALSE)
 s <- write_summary_txt(man, out, paths = list(results = out))
 readLines(s)[7:8]
+
+# with notes, contact and licence lines
+s <- write_summary_txt(man, out, paths = list(results = out),
+  what_was_done = c("- read the extract", "- recomputed table 2"),
+  contact = "analyst at example.org", licence = "CC BY 4.0")
+tail(readLines(s), 6)
+
+# the manifest has to be a list
+try(write_summary_txt("demo", out, paths = list()))
+}
+\seealso{
+\code{\link[=make_manifest]{make_manifest()}},
+\code{\link[=record]{record()}},
+\code{\link[=write_manifest_json]{write_manifest_json()}}.
 }

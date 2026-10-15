@@ -7,13 +7,18 @@
 drbg_new(entropy = NULL, personalization = NULL)
 }
 \arguments{
-\item{entropy}{Entropy input: 48 bytes, raw or hex. \code{NULL} (the default)
-draws them from the operating system's CSPRNG.}
+\item{entropy}{Entropy input: exactly 48 bytes, as a raw vector or one
+string of 96 hexadecimal digits. \code{NULL} (the default) draws them from
+the operating system's CSPRNG through \code{\link[=random_bytes]{random_bytes()}}.}
 
-\item{personalization}{Optional personalization string of up to 48 bytes, raw or hex.}
+\item{personalization}{Optional personalization string of up to 48 bytes,
+raw or hex; \code{NULL} (the default) is the empty string. Different
+personalization strings give independent streams from the same entropy.}
 }
 \value{
-An object of class \code{bricklayer_drbg}. Its state (Key, V) is not printed.
+An object of class \code{bricklayer_drbg} (an environment holding
+the 32-byte Key, the 16-byte V, the request count and the process id). Its
+state (Key, V) is not printed.
 }
 \description{
 Creates the counter-mode DRBG of NIST SP 800-90A Rev. 1, section 10.2.1,
@@ -40,6 +45,14 @@ the entropy input marked secret (\code{inst/ctcheck}, case \code{drbg-portable} 
 The generator is an object that changes as it is used: every
 \code{\link[=drbg_generate]{drbg_generate()}} and
 \code{\link[=drbg_reseed]{drbg_reseed()}} advances it in place.
+
+The generator is an environment, so copies share one state. It is not
+meant to be saved: a generator restored from \code{saveRDS()} or inherited
+by a forked process reseeds itself from the operating system on its next
+use, so two processes never replay the same stream (and such a stream is
+then no longer reproducible). Errors when \code{entropy} is not exactly 48
+bytes or \code{personalization} is longer than 48 bytes, or either is
+neither a raw vector nor one hexadecimal string.
 }
 \section{Security}{
 
@@ -72,15 +85,20 @@ identical(drbg_generate(a, 16), drbg_generate(b, 16))
 # seeded from the operating system
 d <- drbg_new()
 length(drbg_generate(d, 32))
+
+# the entropy must be exactly 48 bytes
+try(drbg_new(as.raw(1:16)))
 }
 \references{
 NIST SP 800-90A Rev. 1 (2015). Recommendation for Random Number Generation
-Using Deterministic Random Bit Generators, section 10.2.1. \doi{10.6028/NIST.SP.800-90Ar1}
+Using Deterministic Random Bit Generators, section 10.2.1.
+\doi{10.6028/NIST.SP.800-90Ar1}
 
 NIST FIPS 197 (2001, updated 2023). Advanced Encryption Standard (AES).
 \doi{10.6028/NIST.FIPS.197-upd1}
 }
 \seealso{
-\code{\link[=drbg_generate]{drbg_generate()}}, \code{\link[=drbg_reseed]{drbg_reseed()}},
+\code{\link[=drbg_generate]{drbg_generate()}},
+\code{\link[=drbg_reseed]{drbg_reseed()}},
 \code{\link[=random_bytes]{random_bytes()}}.
 }

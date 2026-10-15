@@ -7,26 +7,50 @@
 wayback_snapshot_url(url, timestamp = NULL)
 }
 \arguments{
-\item{url}{The original source URL to look up.}
+\item{url}{The original source URL to look up, a single string.}
 
-\item{timestamp}{Optional 14-digit
-\code{YYYYMMDDhhmmss} target; the API returns the snapshot closest to
-it. Defaults to the most recent.}
+\item{timestamp}{Optional target time as a string of digits
+\code{YYYYMMDDhhmmss} (or a prefix such as \code{"2023"} or
+\code{"20230115"}); the API returns the snapshot closest to it.
+\code{NULL} or \code{""} (the default) asks for the most recent.}
 }
 \value{
-A character scalar snapshot URL, or \code{NULL}.
+A length-1 character string, the \code{https} snapshot URL of the
+form \code{https://web.archive.org/web/<timestamp>/<url>}, or
+\code{NULL}.
 }
 \description{
-Queries the Internet Archive availability API (
-\code{https://archive.org/wayback/available}) for the closest archived
-snapshot of \code{url} and returns a directly-downloadable snapshot URL,
-or \code{NULL} if no snapshot exists or the lookup fails. This is the
-shared fetch failsafe the wider morie package family relies on: callers
-attempt the live source first and fall back to this snapshot when the
-source is unreachable.
+Asks the Internet Archive which archived copy of a web address is closest
+to a given time and returns a URL that downloads that copy. This is the
+fetch failsafe the wider morie package family relies on: callers try the
+live source first and fall back to the snapshot when the source is down,
+has moved or has been taken offline.
+\code{\link[=friendly_download]{friendly_download()}} uses it
+automatically.
+}
+\details{
+The function sends one request to the availability API,
+\code{https://archive.org/wayback/available?url=<url>[&timestamp=<ts>]},
+and reads \code{archived_snapshots$closest}. When the API reports an
+available snapshot its URL is returned, with \code{http://} rewritten to
+\code{https://} and passed through the same public-URL check as every
+other URL the package fetches. The timestamp is passed to the API as
+given; the API accepts any prefix of \code{YYYYMMDDhhmmss} and returns the
+snapshot nearest to it, before or after.
+
+\code{NULL} is returned when the API has no snapshot, when the request
+fails (offline, an HTTP error, invalid JSON) or when the answer has no
+usable URL. Error: \code{url} that is not a single non-empty string.
+Nothing is written.
 }
 \examples{
-\donttest{
+# argument errors come before any request
+try(wayback_snapshot_url(NA))
+try(wayback_snapshot_url(c("https://a.org", "https://b.org")))
+\dontrun{
+# needs the network
 wayback_snapshot_url("https://www.r-project.org/")
+# the snapshot nearest to January 2020
+wayback_snapshot_url("https://www.r-project.org/", timestamp = "202001")
 }
 }

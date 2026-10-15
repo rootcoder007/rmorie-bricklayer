@@ -7,22 +7,54 @@
 make_manifest(meta, environment = TRUE)
 }
 \arguments{
-\item{meta}{A named list of run metadata (e.g.
-\code{project}, \code{author}, \code{run_at}, \code{synthetic}) .}
+\item{meta}{A list of run metadata, normally named (for example
+\code{project}, \code{author}, \code{run_at}, \code{synthetic}). May be
+\code{list()}.}
 
-\item{environment}{Logical; when \code{TRUE} (the
-default) the manifest also records the analysis environment via
-\code{\link[=capture_environment]{capture_environment()}} (R version,
-platform, OS, UTC timestamp, loaded package versions).}
+\item{environment}{Logical scalar; when \code{TRUE} (the default) the
+manifest also records the analysis environment via
+\code{\link[=capture_environment]{capture_environment()}}: R version, platform, OS,
+UTC timestamp, random
+number generator kind and whether it was seeded, and the version of
+every loaded package. Any other value leaves it out.}
 }
 \value{
-A manifest list with elements \code{meta}, an empty
-\code{results} list, and (when requested) \code{environment}.
+A list with elements \code{meta} (the list given, plus
+\code{synthetic = TRUE} when flagged), \code{results} (an empty list,
+filled by \code{\link[=record]{record()}}) and, when \code{environment = TRUE},
+\code{environment} (the list from
+\code{\link[=capture_environment]{capture_environment()}}).
 }
 \description{
-Creates an empty manifest object that accumulates cross-check entries
-via \code{\link[=record]{record()}} and is later serialized with
-\code{\link[=write_manifest_json]{write_manifest_json()}}.
+Creates an empty manifest: the record of one analysis run that collects
+the run's metadata, the cross-checks of its results against expected
+values (added with \code{\link[=record]{record()}}), and optionally a snapshot of the
+R
+environment it ran in. Write it out with
+\code{\link[=write_manifest_json]{write_manifest_json()}} and
+\code{\link[=write_summary_txt]{write_summary_txt()}}, or hash and sign it with
+\code{\link[=manifest_digest]{manifest_digest()}} and
+\code{\link[=capsule_attest]{capsule_attest()}}, so a reader can later see what was
+run, where, and
+whether the numbers matched.
+}
+\details{
+The manifest is a plain list, so you can add your own elements to
+\code{meta} before writing it. The package owns the synthetic-data flag:
+\code{meta$synthetic} is set to \code{TRUE} when you pass it, when the
+environment variable \code{BRICKLAYER_SYNTHETIC} is set to a value other
+than \code{0}, \code{false}, \code{no} or \code{off}, or when the package
+generated synthetic data earlier in the session. It is written only when
+\code{TRUE}, so a manifest of real data keeps the digest it had before the
+flag existed. On a synthetic manifest every \code{\link[=record]{record()}} entry is
+\code{INFO}.
+
+Fields of \code{meta} that \code{\link[=write_summary_txt]{write_summary_txt()}}
+reads: \code{project},
+\code{author}, \code{run_at}, \code{os}, \code{r_version} and
+\code{r_package_versions} (a named list or vector of versions).
+
+Errors when \code{meta} is not a list. Nothing is written.
 }
 \examples{
 # Minimal manifest, no environment capture.
@@ -36,4 +68,17 @@ man$meta$project
 full <- make_manifest(list(project = "demo"), environment = TRUE)
 names(full) # adds "environment"
 full$environment$r_version
+
+# a run on generated data is flagged, and its checks become INFO
+syn <- make_manifest(list(project = "demo", synthetic = TRUE), environment = FALSE)
+syn$meta$synthetic
+
+# meta must be a list
+try(make_manifest("demo"))
+}
+\seealso{
+\code{\link[=record]{record()}},
+\code{\link[=write_manifest_json]{write_manifest_json()}},
+\code{\link[=write_summary_txt]{write_summary_txt()}},
+\code{\link[=manifest_digest]{manifest_digest()}}.
 }

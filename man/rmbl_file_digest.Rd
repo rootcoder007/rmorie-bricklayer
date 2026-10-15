@@ -11,18 +11,35 @@ sha512_file(path, block_bytes = 1048576L)
 crc32_file(path, block_bytes = 1048576L)
 }
 \arguments{
-\item{path}{Path to an existing file.}
+\item{path}{Path to an existing file, a single string.}
 
-\item{block_bytes}{Read size in bytes (default
+\item{block_bytes}{Read size in bytes, a positive whole number (default
 1048576). Affects speed only, never the result.}
 }
 \value{
-A length-1 character vector ( \code{sha512_file()}) or numeric (
-\code{crc32_file()}) .
+\code{sha512_file()}: a length-1 character vector, 128 lowercase hex
+characters. \code{crc32_file()}: a length-1 numeric (double) checksum
+between 0 and \code{2^32 - 1}.
 }
 \description{
-Streams the file in blocks, so memory use does not grow with the file.
-The SHA-256 counterpart is \code{\link[=sha256_file]{sha256_file()}}.
+\code{sha512_file()} returns the SHA-512 digest of a file's bytes and
+\code{crc32_file()} its CRC-32 checksum. Use the first to pin a data file
+for the long term and the second as a fast check that a large file
+arrived intact (it is the checksum zip archives record). The SHA-256
+counterpart is \code{\link[=sha256_file]{sha256_file()}}.
+}
+\details{
+The file is read in blocks of \code{block_bytes} with \code{readBin()},
+the blocks are joined into one raw vector, and the digest of that vector
+is computed with \code{\link[=core_sha512]{core_sha512()}} or
+\code{\link[=core_crc32]{core_crc32()}}. The whole file is
+therefore held in memory once: memory use grows with the file size.
+\code{block_bytes} affects only the reading, never the result. An empty
+file gives the digest of no bytes (\code{cf83e135...} for SHA-512, 0 for
+CRC-32).
+
+Errors: \code{path} that does not name an existing file (or names a
+directory); \code{block_bytes} that is not a positive whole number.
 }
 \examples{
 p <- tempfile()
@@ -34,5 +51,10 @@ crc32_file(p)
 # The block size is a speed knob and cannot change the digest.
 identical(sha512_file(p, 16), sha512_file(p, 1048576))
 
+# the same as hashing the bytes directly
+identical(sha512_file(p), core_sha512(readBin(p, "raw", file.size(p))))
+
+# a missing file is an error
+try(crc32_file(file.path(tempdir(), "no-such-file")))
 unlink(p)
 }

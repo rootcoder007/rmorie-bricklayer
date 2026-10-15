@@ -7,16 +7,41 @@
 sha256_file(path)
 }
 \arguments{
-\item{path}{Path to the file to hash.}
+\item{path}{A single string: the path of the file to hash (\code{~} is
+expanded as usual by R's file functions).}
 }
 \value{
-The SHA256 digest as a character string.
+A single string of 64 lowercase hexadecimal characters, the
+SHA-256 digest of the file's bytes.
 }
 \description{
-Returns the SHA256 digest of a file as a lowercase hex string, computed
-by the package's own compiled SHA-256 core (or, when the file is sourced
-standalone inside a capsule bundle, by the pure-R FIPS 180-4
-implementation it ships). Used to record and verify data provenance.
+Returns the SHA-256 digest of a file as a lowercase hex string. A
+digest is a 64-character fingerprint of the file's exact bytes: any
+change to the file, even one byte, gives a different digest, so
+recording it when data are downloaded and checking it later shows
+whether the file used in an analysis is the one that was recorded. The
+package uses it to record and verify data provenance in capsules and
+manifests.
+}
+\details{
+The digest is SHA-256 as specified in FIPS 180-4 (National Institute of
+Standards and Technology, 2015), computed by the package's own compiled
+core; it is identical to \code{digest::digest(file = path, algo = "sha256")}
+and to the \code{sha256sum} command-line tool. The file is read in binary
+mode, 8 MB at a time, so memory use stays at one chunk whatever the
+file's size, and line endings or encodings are never altered. A file
+larger than one chunk shows a byte-progress bar on stderr after 0.75 s
+when a person is watching (an interactive session, or
+\code{options(morie.progress = TRUE)}); \code{options(morie.quiet = TRUE)} silences
+it. Hashing runs at roughly 100 MB a second or faster.
+
+When this file is sourced on its own inside a capsule bundle (outside
+the package), the same digest comes from the bundle's pure-R SHA-256
+implementation, which reads the whole file at once.
+
+Refusals: anything other than a single string naming an existing
+regular file -- a missing path, a directory, \code{NA}, a number or a vector
+of several paths -- stops with \code{"sha256_file: <path> is not a file"}.
 }
 \examples{
 f <- tempfile()
@@ -35,4 +60,25 @@ before == after      # FALSE
 # Provenance pin: record a digest, verify it later.
 pinned <- sha256_file(f)
 stopifnot(sha256_file(f) == pinned)
+
+# An empty file has the well-known empty-input digest.
+e <- tempfile()
+file.create(e)
+sha256_file(e)
+
+# The file's bytes and the same bytes in memory hash alike.
+identical(sha256_file(f), core_sha256(readBin(f, "raw", file.size(f))))
+
+# A directory or a missing file is refused.
+try(sha256_file(tempdir()))
+}
+\references{
+National Institute of Standards and Technology (2015).
+Secure Hash Standard (SHS). FIPS PUB 180-4.
+\doi{10.6028/NIST.FIPS.180-4}
+}
+\seealso{
+\code{\link[=core_sha256]{core_sha256()}} for the digest of a string or raw
+vector held
+in memory.
 }

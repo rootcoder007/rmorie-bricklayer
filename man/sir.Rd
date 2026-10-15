@@ -7,31 +7,50 @@
 sir(observed, expected, area = NULL, conf_level = 0.95)
 }
 \arguments{
-\item{observed}{Observed counts.}
+\item{observed}{Numeric vector of observed counts (non-negative).}
 
-\item{expected}{Expected counts, from
-\code{\link[=expected_counts]{expected_counts()}}.}
+\item{expected}{Numeric vector of expected counts (positive), for example
+from \code{\link{expected_counts}}; the same length as \code{observed},
+or length one.}
 
-\item{area}{Optional labels.}
+\item{area}{Optional vector of area labels, added as the first column.
+Default \code{NULL}.}
 
-\item{conf_level}{Confidence level.}
+\item{conf_level}{Number in (0, 1), default \code{0.95}: the two-sided
+confidence level of the interval.}
 }
 \value{
-A data frame with \code{observed}, \code{expected}, \code{sir},
-\code{lower}, \code{upper}, \code{excess} (the interval lies above one), \code{deficit}
-(the interval lies below one) and \code{significant} -- whether the interval
-excludes one.
+A data frame with one row per area: \code{area} (when given),
+\code{observed}, \code{expected}, \code{sir}, \code{lower}, \code{upper}
+(numeric), and logical \code{excess} (the interval lies above one),
+\code{deficit} (the interval lies below one) and \code{significant}
+(either).
 }
 \description{
-The ratio of observed to expected, with the exact Poisson interval for
-it. A ratio of one is the overall experience; above one is an excess.
+Divides each area's observed count by its expected count to give the
+standardised incidence ratio (SIR), and adds an exact Poisson confidence
+interval. A ratio of one is the overall experience; above one is an
+excess and below one a deficit. Use it after \code{\link{expected_counts}}
+to say which areas differ from the overall rate by more than chance.
 }
 \details{
-The interval is the exact Poisson one, from the relation between the
-Poisson and gamma distributions, and so is identical to
-\code{stats::poisson.test} 's. It is the interval to use here because
-the counts that matter are small: a normal approximation on an observed
-count of three is not an interval, it is a decoration.
+With observed count \eqn{O} and expected \eqn{E}, \eqn{SIR = O / E}. The
+interval for \eqn{1 - \alpha} coverage is
+\deqn{\left[\frac{G^{-1}(\alpha/2;\, O)}{E},\ \frac{G^{-1}(1-\alpha/2;\, O+1)}{E}\right]}
+where \eqn{G^{-1}(p; k)} is the gamma quantile with shape \eqn{k}; the
+lower limit is 0 when \eqn{O = 0}. This is the exact Poisson interval,
+from the relation between the Poisson and gamma distributions, and so is
+identical to \code{stats::poisson.test()}'s. It is the interval to use
+here because the counts that matter are small: a normal approximation on
+an observed count of three is not an interval, it is a decoration.
+
+Each area's interval is a separate test; with many areas some will
+exclude one by chance (see \code{\link{scan_adjust}}). Missing values are
+dropped before the lengths are compared.
+
+Errors: negative, infinite or non-numeric counts; an expected count of
+zero or below; lengths that differ (a single \code{expected} is recycled).
+A \code{conf_level} outside (0, 1) is an error.
 }
 \examples{
 sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
@@ -40,12 +59,17 @@ sir(observed = c(30, 12, 3), expected = c(20, 14, 5),
 # An observed count of three carries almost no information, and the
 # interval says so rather than hiding it.
 sir(3, 5)
+
+# a 90 percent interval, and a zero count (lower limit exactly 0)
+sir(c(0, 40), c(2, 25), conf_level = 0.90)
+
+try(sir(c(3, 4), c(5, 0)))
 }
 \references{
 Lawson, A. B. \emph{Using R for Bayesian Spatial and Spatio-Temporal Health
 Modeling}. Chapman and Hall/CRC, Chapter 1.
 }
 \seealso{
-\code{\link[=eb_rates]{eb_rates()}},
-\code{\link[=funnel_limits]{funnel_limits()}}
+\code{\link{expected_counts}}, \code{\link{eb_rates}},
+\code{\link{funnel_limits}}
 }

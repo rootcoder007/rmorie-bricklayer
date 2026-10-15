@@ -11,32 +11,39 @@ mcar_test(data, max_iter = 500L, tol = 1e-07)
 columns are dropped with a warning, since the statistic is defined on
 moments.}
 
-\item{max_iter}{Maximum EM iterations (default 500).}
+\item{max_iter}{Whole number, default 500: the maximum number of EM
+iterations.}
 
-\item{tol}{Convergence tolerance on the largest parameter
-change (default 1e-7).}
+\item{tol}{Number, default 1e-7: EM stops when the largest absolute
+change in any mean or covariance entry between iterations falls below
+it.}
 }
 \value{
 A list of class \code{bricklayer_mcar}: \code{statistic},
 \code{df}, \code{p_value}, \code{log_p_value} (the log of \code{p_value}, finite where
-\code{p_value} underflows to 0), \code{n_patterns}, \code{n_used},
-\code{n_vars}, \code{iterations}, \code{mu}, \code{sigma}, and
-\code{note} (a caveat when the test is degenerate). With complete data
+\code{p_value} underflows to 0), \code{n_patterns} (distinct missingness
+patterns), \code{n_used} (rows in the patterns that entered the statistic),
+\code{n_vars} (columns used), \code{iterations} (EM iterations), \code{mu} (named ML
+means), \code{sigma} (ML covariance matrix), and \code{note} (a caveat when the
+test is degenerate or a pattern was skipped, else \code{NA}). The print
+method gives the verdict in words. With complete data
 \code{df} is 0 and \code{p_value} is \code{NA} -- there is nothing to
 test.
 }
 \description{
 Tests the MCAR assumption: that whether a value is missing is unrelated
 to any value in the data, observed or not.
-}
-\details{
+
 The assumption matters because it is what licenses the easy options.
 Dropping incomplete rows is unbiased under MCAR and biased otherwise;
 mean imputation understates variance under MCAR and distorts the centre
 as well otherwise. A small p-value here says the easy options are not
-available.
+available. Run it on the numeric columns of a table before deciding
+how to handle its missing values.
 }
-\section{How it works}{
+\details{
+\subsection{How it works}{
+
 Rows are grouped by their pattern of missingness. If missingness is
 unrelated to the values, then each pattern's observed-variable means
 should agree with the overall estimates, up to sampling error. The
@@ -53,7 +60,8 @@ complete-case estimates, which would already embed the bias the test is
 looking for.
 }
 
-\section{What it cannot do}{
+\subsection{What it cannot do}{
+
 A large p-value is NOT evidence that the data are MCAR; it is a failure
 to detect a departure, and the test has little power on small samples or
 with many patterns. The test also assumes multivariate normality, so on
@@ -71,6 +79,24 @@ otherwise return a statistic governed by that floor instead of by the
 data.
 }
 
+\subsection{Practicalities}{
+
+Columns that are entirely missing and rows with no observed value are
+dropped before the test. The EM loop is written in R and visits every
+row on every iteration, so it takes about \eqn{n \times} iterations
+small matrix solves: seconds for a few thousand rows and a handful of
+columns, longer for large tables. A progress indicator is shown in an
+interactive session. If EM has not converged after \code{max_iter}
+iterations the last estimates are used; \code{iterations} then equals
+\code{max_iter}.
+
+Errors: \code{data} neither a data frame nor a matrix; fewer than two
+numeric columns, or fewer than two usable rows or columns after the
+drops; collinear or constant columns (smallest covariance eigenvalue at
+most \eqn{10^{-8}} times the largest); EM estimates that cannot be
+inverted. Non-numeric columns are dropped with a warning.
+}
+}
 \examples{
 set.seed(1)
 n <- 300

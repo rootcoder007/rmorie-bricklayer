@@ -9,44 +9,62 @@ environment_diff(a, b)
 \arguments{
 \item{a, b}{Environment records from
 \code{\link[=capture_environment]{capture_environment()}}, or whole
-manifests containing an \code{environment} element.}
+manifests containing an \code{environment} element (such as
+\code{\link[=make_manifest]{make_manifest()}} returns).}
 }
 \value{
-A list of class \code{bricklayer_env_diff}: \code{identical}
-(logical), \code{r_version} (a length-2 character vector when they
-differ, else \code{NULL}) , \code{platform} (likewise), and
-\code{packages} (a data frame of \code{package}, \code{a}, \code{b},
-\code{change}, where \code{change} is \code{"added"}, \code{"removed"}
-or \code{"changed"}) .
+A list of class \code{c("bricklayer_env_diff", "list")}:
+\code{identical} (logical, \code{TRUE} when R version, platform and all
+package versions agree), \code{r_version} (a named length-2 character
+vector \code{c(a = , b = )} when they differ, else \code{NULL}),
+\code{platform} (likewise), and \code{packages} (a data frame with
+character columns \code{package}, \code{a}, \code{b} and \code{change},
+where \code{change} is \code{"added"}, \code{"removed"} or
+\code{"changed"}; no rows when nothing differs).
 }
 \description{
 Reports what changed between the environment captured by one run and
 another: the R version, the platform, and every package whose version
-differs, was added, or disappeared.
+differs, was added, or disappeared. Use it when a result does not
+reproduce, to see first whether the software around it changed.
 }
 \details{
 This is the question a failed reproduction actually raises. A manifest
 records the environment; comparing two manifests by eye across a few
 hundred packages does not scale, and the one line that matters -- a
 dependency that moved a minor version -- is exactly what gets missed.
+
+Versions are compared as strings. A package recorded in \code{b} but not
+in \code{a} (or recorded with an \code{NA} version in \code{a}) is
+\code{"added"}; the reverse is \code{"removed"}. The operating-system
+string, the capture time and the random number generator settings are
+not compared. Rows follow the order of \code{a}'s packages, then
+\code{b}'s new ones.
+
+Error: \code{a} or \code{b} that is not a list.
 }
 \examples{
-a <- capture_environment()
+a <- capture_environment(c("stats", "utils"))
 b <- a
 
 # An environment matches itself.
 environment_diff(a, b)$identical
 
-# Stage a moved dependency and a removed one.
-if (length(b$packages)) {
-  nm <- names(b$packages)[1]
-  b$packages[[nm]] <- "0.0.0"
-  environment_diff(a, b)$packages
-}
+# Stage a moved dependency, an added one and a newer R.
+b$packages[["stats"]] <- "0.0.0"
+b$packages[["tools"]] <- "4.9.0"
+b$r_version <- "9.9.9"
+d <- environment_diff(a, b)
+d$packages
+d$r_version
+d
 
 # Whole manifests are accepted, not just the environment block.
 m <- make_manifest(list(run = "demo"))
 environment_diff(m, m)$identical
+
+# anything other than a record is refused
+try(environment_diff("4.5.1", a))
 }
 \seealso{
 \code{\link[=capture_environment]{capture_environment()}},

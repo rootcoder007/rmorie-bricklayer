@@ -32,21 +32,65 @@
 
 #' Decode numeric category codes with an explicit code-to-label dictionary
 #'
-#' The guard for data that arrives from SPSS, Stata or SAS as integer codes:
-#' every code observed must be listed in `value_labels`, and the result is
-#' the label, never the code. A code without a label is an error, because
-#' treating codes as categories (or `as.numeric()` on a factor of them) is
-#' how groups get renumbered.
+#' @description
+#' Turns a vector of category codes (for example \code{1}, \code{2}, \code{3}
+#' from an SPSS, Stata or SAS file) into the category labels they stand for,
+#' using a code-to-label dictionary that you write out. Every code that occurs
+#' in the data must be in the dictionary; a code without a label is an error
+#' rather than a silent \code{NA} or a pass-through. Use it whenever a column
+#' arrives as numbers that are really categories, before any table or model,
+#' so that a group can never be renumbered by treating codes (or
+#' \code{as.numeric()} on a factor of them) as the categories.
 #'
-#' @param x Numeric or character vector of codes.
-#' @param value_labels Named character vector:
-#'   `c("1" = "White", "2" = "Black", ...)`
-#'   with the codes as names.
-#' @param keep_na Logical; `NA` codes stay `NA` (default) rather than error.
-#' @return A character vector of labels with a `recode_audit` attribute.
+#' @details
+#' \code{x} is converted to character (a factor by its labels, a number by
+#' \code{as.character()}, so \code{1} and \code{1.0} both become \code{"1"})
+#' and every distinct non-missing code is looked up by name in
+#' \code{value_labels}. The lookup itself is done by
+#' \code{\link{guard_recode}}, so the result carries the same
+#' \code{recode_audit} attribute, including a SHA-256 of the dictionary.
+#'
+#' Errors:
+#' \itemize{
+#'   \item \code{value_labels} not a character vector with non-empty names;
+#'   \item a code in \code{x} that is not a name of \code{value_labels}
+#'     (the message lists the unmapped codes);
+#'   \item any \code{NA} in \code{x} when \code{keep_na = FALSE}.
+#' }
+#' For a haven-style labelled vector, which carries its dictionary as a
+#' \code{labels} attribute, use \code{\link{decode_labelled}}, which returns a
+#' factor with the levels in code order.
+#'
+#' @param x Vector of codes: numeric, integer, character or factor. A factor
+#'   is read through its labels, not its integer codes.
+#' @param value_labels Named character vector, code = label, for example
+#'   \code{c("1" = "White", "2" = "Black")}. The names are the codes as they
+#'   print with \code{as.character()}; the values are the labels. Codes in the
+#'   dictionary that do not occur in \code{x} are allowed.
+#' @param keep_na Logical, default \code{TRUE}: \code{NA} codes stay
+#'   \code{NA} in the result. \code{FALSE} makes any \code{NA} code an error,
+#'   for columns where missingness should not occur.
+#' @return A character vector of labels, the same length as \code{x}, with
+#'   \code{NA} where \code{x} is \code{NA}. It carries a \code{recode_audit}
+#'   attribute: a list with \code{mapping} (the dictionary), \code{kept}
+#'   (\code{character(0)}) and \code{checksum} (64-character hexadecimal
+#'   SHA-256 of the \code{code=label} pairs).
+#' @seealso \code{\link{decode_labelled}}, \code{\link{guard_recode}},
+#'   \code{\link{audit_categories}}.
 #' @examples
-#' decode_codes(c(1, 2, 2, 3),
-#'              c("1" = "White", "2" = "Black", "3" = "Indigenous"))
+#' # codes from a survey file with their code book
+#' race <- c(1, 2, 2, 3, NA)
+#' book <- c("1" = "White", "2" = "Black", "3" = "Indigenous")
+#' decode_codes(race, book)
+#'
+#' # the dictionary that was applied is kept on the result
+#' attr(decode_codes(race, book), "recode_audit")$checksum
+#'
+#' # a code with no label is refused, never passed through
+#' try(decode_codes(c(1, 2, 9), book))
+#'
+#' # missing codes can be refused too
+#' try(decode_codes(race, book, keep_na = FALSE))
 #' @export
 decode_codes <- function(x, value_labels, keep_na = TRUE) {
   if (is.factor(x)) x <- as.character(x)
@@ -68,20 +112,56 @@ decode_codes <- function(x, value_labels, keep_na = TRUE) {
 
 #' Recode a categorical column by explicit name-to-name mapping
 #'
-#' Every mapping is written `old_label = "new_label"` by name; positional and
-#' index-based recoding are impossible, and any value not covered by the
-#' mapping is an error (never a silent `NA` or pass-through) unless listed
-#' in `keep`. The result carries a `recode_audit` attribute with the mapping
-#' and its SHA-256, so the mapping that was applied is on the record.
+#' @description
+#' Recodes a categorical variable with a mapping written out by name,
+#' \code{old_label = "new_label"}, so that the recode cannot depend on the
+#' order of the levels. Any value that the mapping does not cover is an error
+#' unless you list it in \code{keep}; nothing is silently set to \code{NA} or
+#' passed through. The result records the mapping and its SHA-256, so the
+#' recode that was applied can be shown later. Use it for collapsing or
+#' renaming categories (race, offence type, region) before analysis.
 #'
-#' @param x A factor or character vector.
-#' @param mapping Named character vector: `c(old_label = "new_label", ...)`.
-#' @param keep Optional character vector of labels allowed to pass through
-#'   unchanged.
-#' @return A character vector with a `recode_audit` attribute
-#'   (`mapping`, `kept`, `checksum`).
+#' @details
+#' Let \eqn{S} be the set of distinct non-missing values of \code{x}. The
+#' function refuses unless \eqn{S \subseteq} \code{names(mapping)} \eqn{\cup}
+#' \code{keep}. Each value found in \code{names(mapping)} is replaced by its
+#' mapped label; values in \code{keep} are returned unchanged; \code{NA}
+#' stays \code{NA}. Several old labels may map to the same new label (a
+#' collapse). Matching is exact: case and whitespace count.
+#'
+#' The checksum is \code{\link{core_sha256}} of the string
+#' \code{"old1=new1;old2=new2;..."} built from the mapping in its given order,
+#' so the same mapping written in a different order has a different checksum.
+#'
+#' Errors: \code{mapping} not a character vector with non-empty names; any
+#' observed value that is neither mapped nor kept (the message lists them).
+#'
+#' \code{\link{relabel}} is the same check but returns a factor;
+#' \code{\link{verify_recode}} proves the result against the declared mapping;
+#' \code{\link{recode_manifest}} records it.
+#'
+#' @param x A factor or character vector (other atomic vectors are compared
+#'   through \code{as.character()} matching of their values).
+#' @param mapping Named character vector, \code{c(old_label = "new_label", ...)}.
+#'   Every name must be non-empty.
+#' @param keep Character vector, default empty. Labels allowed to pass
+#'   through unchanged.
+#' @return A character vector the same length as \code{x}, with a
+#'   \code{recode_audit} attribute: a list with \code{mapping} (the mapping as
+#'   given), \code{kept} (the \code{keep} vector) and \code{checksum}
+#'   (hexadecimal SHA-256 of the mapping).
 #' @examples
-#' guard_recode(c("W", "B", "O", "W"), c(W = "White", B = "Black", O = "Other"))
+#' # rename three codes
+#' x <- c("W", "B", "O", "W", NA)
+#' guard_recode(x, c(W = "White", B = "Black", O = "Other"))
+#'
+#' # collapse two categories and let one pass through unchanged
+#' off <- c("assault", "robbery", "theft", "fraud")
+#' guard_recode(off, c(assault = "violent", robbery = "violent",
+#'                     theft = "property"), keep = "fraud")
+#'
+#' # a value with no mapping is an error
+#' try(guard_recode(x, c(W = "White", B = "Black")))
 #' @seealso \code{\link{verify_recode}} to prove the recode,
 #'   \code{\link{guard_levels}} to fix the levels,
 #'   \code{\link{recode_manifest}} to record the chain.
@@ -118,19 +198,46 @@ guard_recode <- function(x, mapping, keep = character()) {
 
 #' Build a factor with explicit, verified levels
 #'
-#' `factor(x)` orders levels alphabetically, which silently decides the
-#' reference category of every downstream regression. This constructor
-#' requires the level set to be written out, errors on values outside it,
-#' and asserts the declared reference level.
+#' @description
+#' Creates a factor whose levels you write out in full and in order, instead
+#' of letting \code{factor()} sort them alphabetically. The first level is
+#' the reference category of every regression fitted on the factor, so
+#' writing the levels out decides the baseline on purpose. Values outside the
+#' declared levels are an error, and you can assert which level is the
+#' reference so that a later edit to \code{levels} cannot change it unnoticed.
 #'
-#' @param x Character (or factor) vector.
-#' @param levels Complete character vector of allowed levels, in the intended
-#'   order; the first is the reference category.
-#' @param reference Optional; assert which level is the reference (must equal
-#'   `levels[1]`).
-#' @return A factor with exactly the declared levels.
+#' @details
+#' The function checks that every non-missing value of \code{x} is in
+#' \code{levels}, then returns \code{factor(x, levels = levels)}. Declared
+#' levels that do not occur are kept as empty levels (they still appear in
+#' tables with a count of zero).
+#'
+#' Errors:
+#' \itemize{
+#'   \item \code{levels} not a non-empty character vector, or containing \code{NA};
+#'   \item a value of \code{x} not in \code{levels} (listed in the message);
+#'   \item \code{reference} given and not identical to \code{levels[1]}.
+#' }
+#'
+#' @param x Character or factor vector. A factor is read through its labels.
+#' @param levels Character vector of every allowed level, in the intended
+#'   order. The first element is the reference category.
+#' @param reference Optional character string, default \code{NULL} (no
+#'   check). When given it must equal \code{levels[1]}; use it to state the
+#'   intended baseline next to the code that fits the model.
+#' @return A factor with exactly the levels in \code{levels}, in that order.
+#' @seealso \code{\link{guard_recode}}, \code{\link{audit_categories}}.
 #' @examples
-#' guard_levels(c("White", "Black", "White"), c("White", "Black"), "White")
+#' # reference category chosen on purpose, not by alphabet
+#' g <- guard_levels(c("White", "Black", "White"), c("White", "Black"), "White")
+#' levels(g)
+#'
+#' # a declared level that does not occur is kept, with a zero count
+#' table(guard_levels(c("a", "a"), c("a", "b")))
+#'
+#' # a stray value, or a reference that is not first, is refused
+#' try(guard_levels(c("White", "Blak"), c("White", "Black")))
+#' try(guard_levels(c("White", "Black"), c("White", "Black"), reference = "Black"))
 #' @export
 guard_levels <- function(x, levels, reference = NULL) {
   if (!is.character(levels) || !length(levels) || any(is.na(levels))) {
@@ -156,23 +263,71 @@ guard_levels <- function(x, levels, reference = NULL) {
 
 #' Audit the categorical columns of a data frame for coding hazards
 #'
-#' One call after every import, before any model. Reports, per categorical
-#' column: storage, levels in order, the reference level R would use, and
-#' the known hazards: numeric-looking labels (codes imported without their
-#' value labels), still-labelled foreign columns, case-variant duplicate
-#' labels, unused levels, and high-cardinality accidents.
+#' @description
+#' Checks every categorical column of a data frame for the coding problems
+#' that silently change results: numbers that are really category codes
+#' whose labels were lost, labels still in foreign value-label form, labels
+#' that differ only by case or by an invisible space, empty strings or
+#' \code{"NA"} stored as a category, unused levels, and identifiers mistaken
+#' for categories. Run it once after every import, before any model. It also
+#' reports which level R will use as the reference category.
+#'
+#' @details
+#' For each column the levels are \code{levels(x)} for a factor and the
+#' sorted distinct values (radix sort, as \code{factor()} would order them)
+#' otherwise. A hazard is reported when:
+#' \itemize{
+#'   \item the column is haven \code{labelled} (it still carries value labels
+#'     and must be decoded with \code{\link{decode_codes}} or
+#'     \code{\link{decode_labelled}});
+#'   \item every level looks like a number (\code{^[0-9.]+$});
+#'   \item every level starts with a code prefix such as \code{"1. White"};
+#'   \item a level has leading or trailing whitespace, including non-breaking
+#'     and other Unicode spaces, or two levels are equal once trimmed;
+#'   \item a level is empty, or is a missing-value sentinel (\code{NA},
+#'     \code{N/A}, \code{NAN}, \code{NULL}, \code{NONE}, \code{.}, \code{-},
+#'     \code{?}, compared case-insensitively);
+#'   \item the reference (first) level is empty, a sentinel, or padded;
+#'   \item two different trimmed levels agree once lower-cased;
+#'   \item a factor has levels that never occur;
+#'   \item there are more than 50 levels.
+#' }
+#' The function only reports; it never changes \code{data}. It errors when
+#' \code{data} is not a data frame.
 #'
 #' @param data A data frame.
-#' @param cols Columns to audit (default: every factor, character or
-#'   labelled column).
-#' @return A data frame of class `bricklayer_category_audit` with one row per
-#'   column (`column`, `storage`, `n_levels`, `levels`, `reference`,
-#'   `hazards`) and a `clean` attribute.
+#' @param cols Character vector of column names to audit, default
+#'   \code{NULL}: every factor, character or haven-labelled column. Columns of
+#'   other types can be named explicitly and are audited by their distinct
+#'   values.
+#' @return A data frame of class \code{c("bricklayer_category_audit",
+#'   "data.frame")}, one row per audited column, with character columns
+#'   \code{column}, \code{storage} (the column's class), \code{levels} (up to
+#'   eight levels joined with \code{"|"}), \code{reference} (the first level)
+#'   and \code{hazards} (all hazards joined with \code{" ;; "}, or \code{""}),
+#'   and integer \code{n_levels}. The attribute \code{clean} is \code{TRUE}
+#'   when no hazard was found. The print method lists each column and its
+#'   hazards.
+#' @seealso \code{\link{decode_codes}}, \code{\link{guard_levels}},
+#'   \code{\link{transfer_verify}}.
 #' @examples
-#' audit_categories(data.frame(
+#' # codes without labels, and a case-variant city name
+#' a <- audit_categories(data.frame(
 #'   race = factor(c("1", "2", "2", "3")),
 #'   city = c("Toronto", "toronto", "Ottawa")[c(1, 2, 3, 3)]
 #' ))
+#' a
+#' attr(a, "clean")
+#'
+#' # padded, empty and sentinel labels, and an unused level
+#' audit_categories(data.frame(
+#'   g = factor(c(" A", "A", "NA", ""), levels = c("", " A", "A", "NA", "B"))
+#' ))
+#'
+#' # a clean frame; non-categorical columns are skipped by default
+#' audit_categories(data.frame(sex = c("F", "M", "F"), age = c(31, 45, 27)))
+#'
+#' try(audit_categories(1:3))
 #' @export
 audit_categories <- function(data, cols = NULL) {
   if (!is.data.frame(data)) {
@@ -322,21 +477,51 @@ print.bricklayer_category_audit <- function(x, ...) {
 
 #' Prove a recode with a before/after cross-tabulation
 #'
-#' Cross-tabulates the original against the recoded values and errors unless
-#' the realized mapping is a function (each old category to exactly one new
-#' category) that matches the declared mapping, with no rows lost and no
-#' change in missingness.
+#' @description
+#' Checks, after the fact, that a recode did what you said it did. It
+#' cross-tabulates the original values against the recoded ones and stops
+#' with an error unless each original category went to exactly one new
+#' category, that category is the one in your declared mapping, no rows were
+#' lost or added, and no value became missing (or was filled in). Use it
+#' directly after any recode, including recodes done by other code or other
+#' software, to catch swapped groups before a model runs.
 #'
-#' @param original,recoded Parallel vectors (before and after).
-#' @param declared Named character vector: the mapping the analyst claims was
-#'   applied. Identity is assumed for old values absent from `declared`.
-#' @return Invisibly, the cross-tabulation as a data frame, if and only if
-#'   every check passes.
+#' @details
+#' Factors are compared through their labels. The checks, in order:
+#' \enumerate{
+#'   \item \code{original} and \code{recoded} are atomic and the same length;
+#'   \item \code{is.na(original)} equals \code{is.na(recoded)} element by element;
+#'   \item in the table of non-missing pairs, no original value has more than
+#'     one recoded value (the recode is a function of the label);
+#'   \item each original value's recoded value equals \code{declared[old]};
+#'     an original value that is not a name of \code{declared} must be
+#'     unchanged (identity).
+#' }
+#' The first failed check is an error naming the offending categories.
+#'
+#' @param original,recoded Atomic vectors of the same length: the values
+#'   before and after the recode, row for row.
+#' @param declared Named character vector, old = new: the mapping the analyst
+#'   says was applied. Old values not listed are expected to be unchanged.
+#' @return Invisibly, when every check passes, the cross-tabulation as a data
+#'   frame with columns \code{original}, \code{recoded} (factors) and
+#'   \code{Freq} (integer), including the zero cells of the full table.
+#'   Otherwise an error.
+#' @seealso \code{\link{guard_recode}}, \code{\link{recode_manifest}}.
 #' @examples
-#' verify_recode(
-#'   c("W", "B", "W"), c("White", "Black", "White"),
-#'   c(W = "White", B = "Black")
-#' )
+#' before <- c("W", "B", "W", NA)
+#' after <- c("White", "Black", "White", NA)
+#' tab <- verify_recode(before, after, c(W = "White", B = "Black"))
+#' tab[tab$Freq > 0, ]
+#'
+#' # a value not in the declared mapping must be unchanged
+#' verify_recode(c("W", "X"), c("White", "X"), c(W = "White"))
+#'
+#' # swapped groups are caught
+#' try(verify_recode(c("W", "B"), c("Black", "White"), c(W = "White", B = "Black")))
+#'
+#' # a value that became NA is caught
+#' try(verify_recode(c("W", "B"), c("White", NA), c(W = "White", B = "Black")))
 #' @export
 verify_recode <- function(original, recoded, declared) {
   if (!is.atomic(original) || is.null(original) ||
@@ -384,27 +569,64 @@ verify_recode <- function(original, recoded, declared) {
 
 #' Verify recoded category counts against the counts a release published
 #'
-#' After a recode, the number of rows per label must equal the counts the
-#' source published for those labels. If they do not, every permutation of
-#' the labels is tried and the one under which the observed counts match the
-#' published ones is named: the signature of labels attached to the wrong
-#' groups.
+#' @description
+#' Compares the number of rows per category after a recode with the counts
+#' the data source published for those categories (for example the
+#' frequency table in a codebook or a statistical release). If they disagree,
+#' it tries every reordering of the labels and names the one under which the
+#' observed counts would match, which is the signature of labels attached to
+#' the wrong groups. Use it after decoding or recoding a column whenever
+#' published totals exist.
+#'
+#' @details
+#' For each label \eqn{l} in \code{names(published)} the observed count is
+#' \eqn{n_l = \sum_i 1[x_i = l]} (missing values excluded). The counts match
+#' when \eqn{|n_l - p_l| \le} \code{tolerance} for every label.
+#'
+#' On a mismatch, and when there are at most 7 labels, the function searches
+#' the \eqn{k!} permutations of the labels (5040 at \eqn{k = 7}) for the
+#' first non-identity one under which the observed counts match the
+#' published counts, and names it in the message. With more than 7 labels no
+#' search is done and \code{permutation} is \code{NULL}. Several
+#' permutations can match when counts are tied; only the first is reported.
+#'
+#' A label that occurs in \code{x} but not in \code{published} is always a
+#' failure (no permutation search). \code{published} must be a named numeric
+#' vector, otherwise an error.
 #'
 #' @param x A character or factor vector after recoding.
-#' @param published Named numeric vector: label = published count.
-#' @param tolerance Absolute count tolerance per label (default 0).
-#' @param strict When `TRUE` (the default) a mismatch is an error, so a
-#'   pipeline stops on the day. When `FALSE` the result is returned with
-#'   `ok = FALSE`, the `permutation` that would explain the counts, and the
-#'   `message` the error would have carried, for callers that want to
-#'   report or hand the permutation to [relabel_forensics()].
-#' @return Invisibly, a list with `counts`, `published`, `ok`,
-#'   `permutation` (the relabelling that matches, or `NULL`) and `message`
-#'   (`NULL` when `ok`). Errors when the counts disagree and `strict` is
-#'   `TRUE`.
+#' @param published Named numeric vector, label = published count.
+#' @param tolerance Non-negative number, default \code{0}. The absolute
+#'   difference in counts allowed per label, for releases that round or
+#'   suppress small counts.
+#' @param strict Logical, default \code{TRUE}: a mismatch is an error, so a
+#'   pipeline stops. \code{FALSE} returns the result with \code{ok = FALSE},
+#'   the \code{permutation} that would explain the counts and the
+#'   \code{message} the error would have carried, for callers that want to
+#'   report it or pass the permutation to \code{\link{relabel_forensics}}.
+#' @return A list with elements \code{counts} (named numeric, observed count
+#'   per published label), \code{published} (named numeric), \code{ok}
+#'   (logical), \code{permutation} (named character, true label = label it
+#'   would have to be read as, or \code{NULL}) and \code{message}
+#'   (character, or \code{NULL} when \code{ok}). It is returned invisibly
+#'   when the counts match and visibly when \code{strict = FALSE} and they do
+#'   not. With \code{strict = TRUE} a mismatch is an error instead.
+#' @seealso \code{\link{transfer_verify}}, \code{\link{relabel_forensics}}.
 #' @examples
 #' x <- c("White", "White", "Black", "Indigenous", "White", "Black")
-#' verify_marginals(x, c(White = 3, Black = 2, Indigenous = 1))
+#' verify_marginals(x, c(White = 3, Black = 2, Indigenous = 1))$ok
+#'
+#' # swapped labels: the permutation that explains the counts is named
+#' r <- verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1),
+#'                       strict = FALSE)
+#' r$permutation
+#'
+#' # a release that rounds counts to the nearest 5
+#' verify_marginals(rep(c("A", "B"), c(48, 21)), c(A = 50, B = 20),
+#'                  tolerance = 2)$ok
+#'
+#' # the default is to stop
+#' try(verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1)))
 #' @export
 verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
   if (is.factor(x)) x <- as.character(x)
@@ -472,30 +694,64 @@ verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
 
 #' Check reported odds ratios against a labelled table, under every relabelling
 #'
-#' Given a k-by-2 table of counts (rows = groups, columns = outcome absent,
-#' outcome present), a reference group and the odds ratios a report states
-#' for the other groups, this recomputes the odds ratios from the table and
-#' then under every permutation of the row labels (and with the outcome
-#' columns swapped). It says whether the reported values follow from the
-#' table as labelled and, if not, which relabelling reproduces them. A
-#' four-fold odds ratio that a report gives as thirty-six-fold is typically
-#' reproduced exactly by one such permutation.
+#' @description
+#' Recomputes the odds ratios a report gives for each group from the
+#' underlying table of counts, and says whether the reported values follow
+#' from the table as it is labelled. If they do not, it tries every
+#' reassignment of the group labels (and the two outcome columns swapped) and
+#' lists the relabellings that do reproduce the reported values. Use it when
+#' a published odds ratio looks implausible: a four-fold ratio reported as
+#' thirty-six-fold is typically reproduced exactly by one such relabelling,
+#' which shows the groups were mislabelled rather than the arithmetic wrong.
 #'
-#' @param counts Numeric matrix with row names (groups) and two columns
-#'   (outcome absent, outcome present), in that order.
-#' @param reference Row name of the reference group.
-#' @param reported Named numeric vector of the reported odds ratios, one per
-#'   non-reference row.
-#' @param tolerance Relative tolerance for a match (default 0.05).
-#' @return A list: `computed`, `reported`, `consistent`, `matches` (a data
-#'   frame of the relabellings that reproduce the reported values) and
-#'   `verdict`.
+#' @details
+#' With row \eqn{r} holding \eqn{a_r} (outcome absent) and \eqn{b_r}
+#' (outcome present), the odds ratio of group \eqn{r} against the reference
+#' \eqn{0} is
+#' \deqn{OR_r = \frac{b_r / a_r}{b_0 / a_0}.}
+#' A reported value matches when \eqn{|OR_r - \widehat{OR}_r| \le}
+#' \code{tolerance} \eqn{\times |\widehat{OR}_r|} for every non-reference
+#' group, and all values are finite. The search covers all \eqn{k!}
+#' permutations of the row labels, each with and without the outcome columns
+#' swapped (the identity without a swap is the "as labelled" check), and is
+#' only run for \eqn{k \le 7} groups. A zero cell gives an infinite or
+#' undefined odds ratio, which never matches.
+#'
+#' Errors: \code{counts} not a matrix, data frame or table with two columns
+#' and row names; \code{reference} not a row name; \code{reported} not named
+#' by every non-reference row.
+#'
+#' @param counts Numeric matrix, data frame or table of counts with row names
+#'   (the groups) and exactly two columns: outcome absent, then outcome
+#'   present.
+#' @param reference Character string: the row name of the reference group.
+#' @param reported Named numeric vector of the odds ratios the report states,
+#'   one per non-reference group, named by group. Extra names are ignored.
+#' @param tolerance Number, default \code{0.05}: the relative tolerance for a
+#'   match (5 percent), to allow for rounding in the report.
+#' @return A list with elements \code{computed} (named numeric odds ratios
+#'   from the table as labelled), \code{reported} (the reported values, in
+#'   the same order), \code{consistent} (logical), \code{matches} (a data frame
+#'   with character \code{relabelling}, for example \code{"B -> C, C -> B"},
+#'   and logical \code{outcome_columns_swapped}, one row per relabelling that
+#'   reproduces the reported values) and \code{verdict} (a one-sentence
+#'   character summary).
+#' @seealso \code{\link{verify_marginals}}, \code{\link{relabel_forensics}}.
 #' @examples
 #' tab <- matrix(c(900, 100, 700, 300, 400, 600),
 #'   ncol = 2, byrow = TRUE,
 #'   dimnames = list(c("A", "B", "C"), c("no", "yes"))
 #' )
-#' odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))$verdict
+#' # the odds ratios as labelled: B 3.86, C 13.5
+#' odds_ratio_check(tab, "A", c(B = 3.857, C = 13.5))$consistent
+#'
+#' # a report that swapped B and C
+#' chk <- odds_ratio_check(tab, "A", c(B = 13.5, C = 3.857))
+#' chk$matches
+#' chk$verdict
+#'
+#' # every non-reference group needs a reported value
+#' try(odds_ratio_check(tab, "A", c(B = 3.857)))
 #' @export
 odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
   if (is.null(counts) || !(is.matrix(counts) || is.data.frame(counts) || is.table(counts))) {
@@ -589,11 +845,36 @@ odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
 
 #' Refuse a categorical column where a numeric 0/1 treatment is required
 #'
-#' @param x The column.
-#' @param col Its name, for the message.
-#' @return `TRUE`, invisibly; errors otherwise.
+#' @description
+#' Checks that a column meant as a binary treatment or outcome indicator is
+#' numeric 0/1 and not a factor or character column. Coercing a factor with
+#' \code{as.numeric()} returns the level indices (1, 2, ...) rather than the
+#' data, and a mis-ordered level silently flips every observation; this guard
+#' stops before that happens. Call it at the top of any function that needs a
+#' 0/1 column.
+#'
+#' @details
+#' The checks are: \code{x} is an atomic vector; it is not a factor or
+#' character vector; its distinct non-missing values are all \code{0} or
+#' \code{1}. Logical vectors pass, because \code{TRUE} and \code{FALSE}
+#' compare equal to \code{1} and \code{0}. Missing values are ignored. Each
+#' failure is an error that names the column.
+#'
+#' @param x The column to check.
+#' @param col Character string: the column's name, used only in the error
+#'   message.
+#' @return \code{TRUE}, invisibly, when the column is a 0/1 indicator;
+#'   otherwise an error.
+#' @seealso \code{\link{guard_recode}} to build an explicit indicator.
 #' @examples
-#' guard_binary(c(0, 1, 1, 0), "treated")
+#' guard_binary(c(0, 1, 1, 0, NA), "treated")
+#' guard_binary(c(TRUE, FALSE), "arrested")
+#'
+#' # a factor is refused rather than coerced
+#' try(guard_binary(factor(c("control", "treated")), "treated"))
+#'
+#' # so is a numeric column with other values
+#' try(guard_binary(c(0, 1, 2), "treated"))
 #' @export
 guard_binary <- function(x, col) {
   if (is.null(x) || !is.atomic(x)) {
@@ -622,31 +903,68 @@ guard_binary <- function(x, col) {
 
 #' Record a recode as a manifest that can be signed and verified later
 #'
-#' The accountable end of the chain: the mapping and its SHA-256, the counts
-#' per label before and after, the before/after cross-tabulation check, the
-#' match against published counts when given, a timestamp, and (with a key)
-#' a signature over the whole record via \code{\link{capsule_sign}}.
-#' Written with \code{\link{write_recode_manifest}} and re-checked with
-#' \code{\link{verify_recode_manifest}},
-#' so a later reader can prove which labels went where and that nothing was
-#' changed afterwards.
+#' @description
+#' Builds a record of a recode that a later reader can check: the mapping
+#' and its SHA-256, the counts per label before and after, the results of the
+#' before/after cross-tabulation check and (when given) of the match against
+#' published counts, a UTC timestamp, and, with a key, a signature over the
+#' whole record. Write it to disk with \code{\link{write_recode_manifest}}
+#' and re-check it with \code{\link{verify_recode_manifest}}, so anyone can
+#' confirm which labels went where and that nothing was changed afterwards.
 #'
-#' @param original,recoded Parallel vectors (before and after the recode).
-#' @param mapping The named mapping that was applied.
+#' @details
+#' The function first runs \code{\link{verify_recode}(original, recoded,
+#' mapping)} and, when \code{published} is given,
+#' \code{\link{verify_marginals}(recoded, published)} with the default
+#' \code{strict = TRUE}. Either check failing is an error, so a manifest is
+#' only produced for a recode that passed; \code{checks$matches_published} is
+#' therefore \code{TRUE} or \code{NA} (no published counts), never
+#' \code{FALSE}.
+#'
+#' \code{body_sha256} is \code{\link{core_sha256}} of the canonical JSON of
+#' every other field. With a \code{key}, \code{\link{capsule_sign}} signs that
+#' hash and the manifest also stores the public key: a
+#' \code{bricklayer_signing_key} from \code{\link{pqc_keygen}} (XMSS, which
+#' consumes one one-time leaf per signature) or a key from
+#' \code{\link{fips_keygen}} (ML-DSA or SLH-DSA). Nothing is written to disk.
+#'
+#' @param original,recoded Vectors of the same length: the values before and
+#'   after the recode.
+#' @param mapping Named character vector, old = new: the mapping that was
+#'   applied.
 #' @param published Optional named numeric vector of published counts per
-#'   recoded label.
-#' @param key Optional signing key (from \code{\link{pqc_keygen}} or
-#'   \code{\link{fips_keygen}});
-#'   when given the manifest carries a signature and the public key.
-#' @param context Optional free-text context (dataset, table, analyst).
-#' @return A list of class `bricklayer_recode_manifest`.
+#'   recoded label, default \code{NULL} (no check).
+#' @param key Optional signing key, default \code{NULL} (unsigned): a key from
+#'   \code{\link{pqc_keygen}} or \code{\link{fips_keygen}}. When given the
+#'   manifest carries a signature and the public key.
+#' @param context Optional character string, default \code{NULL}: free text
+#'   such as the dataset, table and analyst. Only the first element is kept.
+#' @return A list of class \code{c("bricklayer_recode_manifest", "list")}
+#'   with elements \code{context}, \code{created} (ISO 8601 UTC time),
+#'   \code{mapping} (list), \code{mapping_sha256}, \code{n} (number of rows),
+#'   \code{n_missing}, \code{counts_before} and \code{counts_after} (named
+#'   lists of counts), \code{checks} (list of \code{crosstab_is_function},
+#'   \code{missingness_unchanged}, \code{matches_published}),
+#'   \code{published} (list or \code{NULL}), \code{body_sha256}, and with a
+#'   key \code{signature} and \code{public_key}.
 #' @examples
 #' x <- c("W", "B", "W", "I")
-#' y <- guard_recode(x, c(W = "White", B = "Black", I = "Indigenous"))
-#' m <- recode_manifest(x, y, c(W = "White", B = "Black", I = "Indigenous"),
-#'   published = c(White = 2, Black = 1, Indigenous = 1)
+#' map <- c(W = "White", B = "Black", I = "Indigenous")
+#' y <- guard_recode(x, map)
+#' m <- recode_manifest(x, y, map,
+#'   published = c(White = 2, Black = 1, Indigenous = 1),
+#'   context = "example survey, race item"
 #' )
 #' m$checks
+#' m$counts_after
+#'
+#' # signed with an ML-DSA key
+#' k <- fips_keygen(seed = as.raw(1:32))
+#' ms <- recode_manifest(x, y, map, key = k)
+#' names(ms)
+#'
+#' # a recode that does not match the published counts is refused
+#' try(recode_manifest(x, y, map, published = c(White = 1, Black = 2, Indigenous = 1)))
 #' @export
 recode_manifest <- function(original, recoded, mapping, published = NULL,
                             key = NULL, context = NULL) {
@@ -690,15 +1008,53 @@ recode_manifest <- function(original, recoded, mapping, published = NULL,
 
 #' Write and verify a recode manifest
 #'
-#' @param manifest A [recode_manifest()].
-#' @param path File to write (JSON).
-#' @return `write_recode_manifest()` returns the path invisibly.
+#' @description
+#' \code{write_recode_manifest()} saves a manifest from
+#' \code{\link{recode_manifest}} as a JSON file. \code{verify_recode_manifest()}
+#' reads such a file back and checks it against the data: that the mapping
+#' and the manifest body are unchanged since they were written, that the
+#' recode in the data still matches the recorded mapping, that the recoded
+#' counts are the recorded counts, and, for a signed manifest, that the
+#' signature verifies. Use the pair to hand a recode to a reviewer or to
+#' re-check it before a later analysis.
+#'
+#' @details
+#' \code{verify_recode_manifest()} collects every failure in \code{reasons}
+#' instead of stopping at the first:
+#' \itemize{
+#'   \item the SHA-256 of the stored mapping differs from \code{mapping_sha256};
+#'   \item the SHA-256 of the body (all fields except \code{body_sha256},
+#'     \code{signature} and \code{public_key}) differs from \code{body_sha256},
+#'     meaning the file was edited after it was written;
+#'   \item \code{\link{verify_recode}(original, recoded, mapping)} fails;
+#'   \item the counts of \code{recoded} differ from \code{counts_after}.
+#' }
+#' The signature, when present, is checked with \code{\link{capsule_verify}}
+#' over the stored \code{body_sha256}. It therefore proves who wrote that
+#' hash; the body check above proves the body still matches it. Both are
+#' needed for \code{ok = TRUE}.
+#'
+#' \code{write_recode_manifest()} errors when \code{manifest} is not a
+#' \code{bricklayer_recode_manifest}; it overwrites \code{path}.
+#'
+#' @param manifest A manifest returned by \code{\link{recode_manifest}}.
+#' @param path Character string: the JSON file to write
+#'   (\code{write_recode_manifest()}) or read (\code{verify_recode_manifest()}).
+#' @return \code{write_recode_manifest()} returns \code{path} invisibly.
 #' @examples
 #' x <- c("W", "B", "W")
 #' y <- guard_recode(x, c(W = "White", B = "Black"))
 #' m <- recode_manifest(x, y, c(W = "White", B = "Black"))
 #' p <- write_recode_manifest(m, tempfile(fileext = ".json"))
 #' verify_recode_manifest(p, x, y)$ok
+#'
+#' # the data changed after the manifest was written
+#' y2 <- y
+#' y2[2] <- "White"
+#' verify_recode_manifest(p, x, y2)$reasons
+#'
+#' # only manifests can be written
+#' try(write_recode_manifest(list(a = 1), tempfile()))
 #' @export
 write_recode_manifest <- function(manifest, path) {
   if (!inherits(manifest, "bricklayer_recode_manifest")) {
@@ -711,10 +1067,12 @@ write_recode_manifest <- function(manifest, path) {
 }
 
 #' @rdname write_recode_manifest
-#' @param original,recoded The vectors to check the manifest against.
-#' @return `verify_recode_manifest()` returns a list with `ok`, `reasons`
-#'   (character, empty when ok), `signature_ok` (`NA` when unsigned) and the
-#'   manifest.
+#' @param original,recoded The vectors before and after the recode, to check
+#'   the manifest against.
+#' @return \code{verify_recode_manifest()} returns a list with \code{ok}
+#'   (logical), \code{reasons} (character, \code{character(0)} when
+#'   \code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
+#'   unsigned) and \code{manifest} (the parsed JSON as a list).
 #' @export
 verify_recode_manifest <- function(path, original, recoded) {
   path <- .rmbl_file1(path, "path")
@@ -782,23 +1140,49 @@ verify_recode_manifest <- function(path, original, recoded) {
 
 #' Relabel a categorical variable by name, never by position
 #'
-#' A relabel is only safe when every old level is mapped BY NAME to its new
-#' label. Assigning a vector of labels by position (the `levels<-` idiom,
-#' or `factor(x, labels = ...)` with labels in a different order from the
-#' codes) is the mechanism behind the documented four-way rotation in the
-#' OHRC 2023 correction, so this function refuses unnamed mappings outright.
+#' @description
+#' Gives a factor or character vector new labels with a mapping written by
+#' name, old label = new label, and returns a factor. Assigning a vector of
+#' labels by position (the \code{levels(x) <- ...} idiom, or
+#' \code{factor(x, labels = ...)} with labels in a different order from the
+#' codes) is how the four race categories were rotated in the analysis that
+#' the Ontario Human Rights Commission corrected on 26 January 2023; this
+#' function refuses unnamed mappings outright, and refuses levels that the
+#' mapping does not cover.
+#'
+#' @details
+#' The old levels are \code{levels(x)} for a factor and the sorted distinct
+#' values otherwise; all of them must be names of \code{mapping} or members
+#' of \code{keep}, so for a factor even an unused level must be mapped. The
+#' recode itself is \code{\link{guard_recode}}. The levels of the result are
+#' the distinct values of \code{mapping} in the order given, followed by the
+#' \code{keep} labels that occur in the data.
+#'
+#' Errors: \code{mapping} without names (including a plain vector of new
+#' labels); a level with no mapping.
 #'
 #' @param x A factor or character vector.
-#' @param mapping Named character vector, old label to new label. Every
-#'   observed level must appear as a name unless listed in `keep`.
-#' @param keep Levels allowed to pass through unchanged.
-#' @return A factor with the new labels, levels in the order of `mapping`,
-#'   carrying a `recode_audit` attribute (see \code{\link{guard_recode}}).
+#' @param mapping Named character vector, old label = new label. Every level
+#'   of \code{x} must appear as a name unless listed in \code{keep}. Several
+#'   old labels may map to one new label.
+#' @param keep Character vector, default empty: levels allowed to pass
+#'   through unchanged.
+#' @return A factor with the new labels, levels in the order of
+#'   \code{mapping}, carrying a \code{recode_audit} attribute (see
+#'   \code{\link{guard_recode}}).
 #' @seealso \code{\link{guard_recode}}, \code{\link{relabel_forensics}},
 #'   \code{\link{decode_labelled}}
 #' @examples
 #' f <- factor(c("W", "B", "O", "W"))
 #' relabel(f, c(W = "White", B = "Black", O = "Other"))
+#'
+#' # the level order follows the mapping, not the alphabet
+#' levels(relabel(f, c(W = "White", O = "Other", B = "Black")))
+#'
+#' # a kept label passes through
+#' relabel(c("W", "B", "X"), c(W = "White", B = "Black"), keep = "X")
+#'
+#' # positional labels are refused
 #' try(relabel(f, c("Black", "Other", "White")))
 #' @export
 relabel <- function(x, mapping, keep = character()) {
@@ -833,24 +1217,46 @@ relabel <- function(x, mapping, keep = character()) {
 
 #' Decode a labelled import by its value labels, by code
 #'
-#' Vectors read from SPSS, Stata or SAS carry their categories as numeric
-#' codes with a `labels` attribute (label = code). The categories are the
-#' labels looked up BY CODE; the codes themselves, their order, and the
-#' alphabetical order of the labels are all irrelevant, and treating any of
-#' them as the category is the documented failure. This function looks each
-#' code up in the attribute and refuses codes that have no label.
+#' @description
+#' Converts a vector read from SPSS, Stata or SAS (for example by
+#' \code{haven::read_sav()}), which stores categories as numeric codes with a
+#' \code{labels} attribute, into a factor of the labels. Each code is looked
+#' up by its value, so neither the order of the codes nor the alphabetical
+#' order of the labels can affect which label a row gets. Codes with no label
+#' are refused. The factor's levels are in code order, which keeps the
+#' source program's reference category.
 #'
-#' @param x A vector with a `labels` attribute (as produced by haven), or a
-#'   plain numeric vector with `value_labels` supplied.
-#' @param value_labels Optional named vector, code = label, used when `x`
-#'   carries no attribute.
-#' @return A factor whose levels are the labels in CODE order (not
-#'   alphabetical), with a `recode_audit` attribute.
-#' @seealso \code{\link{decode_codes}}, \code{\link{relabel}}
+#' @details
+#' When \code{x} has a \code{labels} attribute (a named vector, label = code)
+#' it is used and \code{value_labels} is ignored; otherwise
+#' \code{value_labels} (code = label) is required. Decoding is done by
+#' \code{\link{decode_codes}}. The levels are the labels ordered by their
+#' numeric code (codes that are not numbers are ordered after the numeric
+#' ones, by string), and include labels of codes that do not occur.
+#'
+#' Errors: a \code{labels} attribute without names; no attribute and no
+#' \code{value_labels}; a code with no label.
+#'
+#' @param x A vector with a \code{labels} attribute (as produced by haven),
+#'   or a plain vector of codes when \code{value_labels} is supplied.
+#' @param value_labels Optional named character vector, code = label, used
+#'   only when \code{x} carries no \code{labels} attribute. Default
+#'   \code{NULL}.
+#' @return A factor whose levels are the labels in code order (not
+#'   alphabetical), with a \code{recode_audit} attribute as described in
+#'   \code{\link{guard_recode}}.
+#' @seealso \code{\link{decode_codes}}, \code{\link{relabel}},
+#'   \code{\link{transfer_verify}}
 #' @examples
 #' x <- structure(c(1, 2, 2, 4),
 #'                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 #' decode_labelled(x)
+#'
+#' # plain codes with a code book; levels follow the codes 1, 2, 10
+#' decode_labelled(c(2, 1, 10), value_labels = c("10" = "Ten", "2" = "Two", "1" = "One"))
+#'
+#' # codes alone are not categories
+#' try(decode_labelled(c(1, 2, 2)))
 #' @export
 decode_labelled <- function(x, value_labels = NULL) {
   lab <- attr(x, "labels", exact = TRUE)
@@ -880,29 +1286,58 @@ decode_labelled <- function(x, value_labels = NULL) {
 
 #' Name the mechanical step that reproduces a label permutation
 #'
-#' When categories came out permuted and the transfer between two programs
-#' is being blamed, the question is which deterministic step, applied to
-#' the code book, yields exactly the observed permutation. This function
-#' tries the known ones: labels sorted alphabetically (or reversed, or
-#' case-insensitively) and assigned by code position, labels reversed,
-#' every rotation, codes sorted as strings, and labels ordered by frequency
-#' when counts are supplied. A match is a reconstruction, not a proof of
-#' intent; but a transfer fault has no reason to select the sort order of
-#' the labels, so a match on a sort-based mechanism exonerates the software.
+#' @description
+#' When categories come out permuted (each true group reported under another
+#' group's label), this function asks which deterministic step, applied to
+#' the code book, produces exactly that permutation. It tries the known
+#' mechanisms: labels sorted alphabetically (also reversed or
+#' case-insensitive) and assigned by code position, labels reversed, every
+#' rotation, codes sorted as strings, and, when counts are given, labels
+#' ordered by frequency. A match is a reconstruction, not proof of intent;
+#' but a file transfer has no reason to pick the sort order of the labels, so
+#' a match on a sort-based mechanism points to a positional relabel in the
+#' analysis rather than to the software.
+#'
+#' @details
+#' With labels \eqn{L_1, \dots, L_k} in code order, each mechanism produces
+#' a sequence \eqn{M_1, \dots, M_k} meaning "true group \eqn{L_i} was seen as
+#' \eqn{M_i}". It matches when \eqn{M_i =} \code{observed[L_i]} for all
+#' \eqn{i}. There are five fixed mechanisms, \eqn{k - 1} rotations, and two
+#' frequency orders with \code{counts}. When \code{observed} is the identity
+#' no mechanism is reported as matching.
+#'
+#' Errors: either argument unnamed; \code{observed} not a permutation of the
+#' labels in \code{value_labels}.
 #'
 #' @param value_labels Named character vector, code = true label, in code
-#'   order.
+#'   order (the source program's code book).
 #' @param observed Named character vector, true label = label it was seen
-#'   under.
-#' @param counts Optional named numeric vector of frequencies per true
-#'   label, enabling the frequency-order mechanism.
-#' @return A data frame with one row per mechanism (`mechanism`,
-#'   `permutation`, `matches`) and a `verdict` attribute.
+#'   under, covering every label once.
+#' @param counts Optional named numeric vector of frequencies per true label,
+#'   default \code{NULL}. Enables the two frequency-order mechanisms.
+#' @return A data frame of class \code{c("bricklayer_relabel_forensics",
+#'   "data.frame")} with one row per mechanism tried and columns
+#'   \code{mechanism} (character), \code{permutation} (character,
+#'   \code{"A -> B, ..."}) and \code{matches} (logical). The \code{verdict}
+#'   attribute is a character summary. The print method shows only the
+#'   matching mechanisms and the verdict.
+#' @seealso \code{\link{verify_marginals}}, \code{\link{relabel}}.
 #' @examples
+#' # the OHRC 2023 case: alphabetical labels assigned to codes 1-4
 #' vl <- c("1" = "White", "2" = "Black", "3" = "Other", "4" = "Unknown")
 #' obs <- c(White = "Black", Black = "Other", Other = "Unknown",
 #'          Unknown = "White")
-#' attr(relabel_forensics(vl, obs), "verdict")
+#' relabel_forensics(vl, obs)
+#'
+#' # a frequency-ordered relabel needs the counts
+#' obs2 <- c(White = "White", Black = "Other", Other = "Black",
+#'           Unknown = "Unknown")
+#' rf <- relabel_forensics(vl, obs2, counts = c(White = 50, Black = 10,
+#'                                              Other = 30, Unknown = 5))
+#' rf$mechanism[rf$matches]
+#'
+#' # observed must be a permutation of the labels
+#' try(relabel_forensics(vl, c(White = "Black")))
 #' @export
 relabel_forensics <- function(value_labels, observed, counts = NULL) {
   if (is.null(names(value_labels)) || is.null(names(observed))) {
@@ -1003,35 +1438,67 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 
 #' Verify a categorical variable that crossed from one program to another
 #'
-#' The transfer that matters is SPSS/Stata/SAS to R or Python: the source
-#' program stores codes plus value labels, the destination is handed the
-#' codes, and the labels are re-attached in the analysis. This function
-#' takes what the source program printed for that variable (its frequency
-#' table, label = count, and optionally its code book, code = label) and
-#' refuses to continue unless the imported vector reproduces it exactly.
-#' Rotated, swapped or positionally relabelled groups fail here, on the day
-#' of the import, with the permutation named.
+#' @description
+#' Checks a categorical variable that was moved from SPSS, Stata or SAS into
+#' R against what the source program reported for it. You give the frequency
+#' table the source program printed (label = count) and, optionally, its code
+#' book (code = label); the function decodes the imported vector and refuses
+#' to continue unless it reproduces those counts exactly and its value labels
+#' agree with the code book. Rotated, swapped or positionally relabelled
+#' groups fail at import, with the permutation named.
+#'
+#' @details
+#' Steps:
+#' \enumerate{
+#'   \item When \code{imported} has a \code{labels} attribute and
+#'     \code{code_book} is given, the two are compared code by code; any
+#'     code whose label differs (or that is present in only one) is a
+#'     disagreement.
+#'   \item The vector is decoded: by its \code{labels} attribute
+#'     (\code{\link{decode_labelled}}), else by \code{code_book}, else taken
+#'     as already-decoded labels.
+#'   \item The decoded labels are checked with
+#'     \code{\link{verify_marginals}} against \code{source_counts}.
+#' }
+#' With \code{strict = TRUE} the first disagreement is an error. With
+#' \code{strict = FALSE} both checks run and are reported. A code without a
+#' label is an error in either mode (from the decoding step).
 #'
 #' @param imported The vector as it arrived: a haven-style labelled vector,
-#'   plain codes (with `code_book`), or already-decoded labels.
+#'   plain codes (with \code{code_book}), or already-decoded labels.
 #' @param source_counts Named numeric vector, label = count, as printed by
 #'   the source program (SPSS FREQUENCIES, Stata tabulate).
 #' @param code_book Optional named character vector, code = label, from the
-#'   source program's variable view. When `imported` carries a `labels`
-#'   attribute the two are compared and any disagreement is an error.
-#' @param tolerance Passed to \code{\link{verify_marginals}}.
-#' @param strict When `TRUE` (the default) any disagreement is an error.
-#'   When `FALSE` the result comes back with `ok = FALSE`, `reasons`, and
-#'   `marginals$permutation` ready for \code{\link{relabel_forensics}}.
-#' @return A list with `ok`, `decoded` (a factor in code order), `marginals`
-#'   (the \code{\link{verify_marginals}} result), `code_book_ok` and
-#'   `reasons` (character, empty when `ok`).
+#'   source program's variable view. Default \code{NULL}. When
+#'   \code{imported} carries a \code{labels} attribute the two are compared
+#'   and any disagreement fails the check.
+#' @param tolerance Non-negative number, default \code{0}: the absolute
+#'   difference in count allowed per label, passed to
+#'   \code{\link{verify_marginals}}.
+#' @param strict Logical, default \code{TRUE}: any disagreement is an error.
+#'   When \code{FALSE} the result comes back with \code{ok = FALSE},
+#'   \code{reasons}, and \code{marginals$permutation} ready for
+#'   \code{\link{relabel_forensics}}.
+#' @return A list with \code{ok} (logical), \code{decoded} (a factor; in code
+#'   order when decoded from codes), \code{marginals} (the
+#'   \code{\link{verify_marginals}} result), \code{code_book_ok} (logical, or
+#'   \code{NA} when there was nothing to compare) and \code{reasons}
+#'   (character messages, or \code{NULL} when \code{ok}).
 #' @seealso \code{\link{decode_labelled}}, \code{\link{verify_marginals}},
 #'   \code{\link{relabel_forensics}}
 #' @examples
 #' x <- structure(c(1, 1, 2, 4, 1),
 #'                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 #' transfer_verify(x, c(White = 3, Black = 1, Unknown = 1))$ok
+#'
+#' # counts that only match under swapped labels, reported without stopping
+#' r <- transfer_verify(x, c(White = 1, Black = 3, Unknown = 1), strict = FALSE)
+#' r$ok
+#' r$marginals$permutation
+#'
+#' # value labels that disagree with the source code book
+#' try(transfer_verify(x, c(White = 3, Black = 1, Unknown = 1),
+#'   code_book = c("1" = "White", "2" = "Other", "3" = "Black", "4" = "Unknown")))
 #' @export
 transfer_verify <- function(imported, source_counts, code_book = NULL,
                             tolerance = 0, strict = TRUE) {

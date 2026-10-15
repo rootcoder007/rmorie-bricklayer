@@ -10,21 +10,45 @@ hqc_encapsulate(key, m = NULL, salt = NULL)
 \item{key}{A key or public key from \code{\link[=hqc_keygen]{hqc_keygen()}} /
 \code{\link[=hqc_public_key]{hqc_public_key()}}.}
 
-\item{m, salt}{Optional raw vectors of encapsulation randomness: \code{m} of
-\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or 32)
-and \code{salt} of 16 bytes.
-Supplying them makes the operation reproducible, which is what the
-known-answer tests need; the default draws both from the operating
-system's CSPRNG. Reusing them for the same key repeats the shared secret,
-so supply them only deliberately.}
+\item{m, salt}{Optional raw vectors of encapsulation randomness, default
+\code{NULL} (drawn fresh): \code{m} of
+\code{\link[=hqc_sizes]{hqc_sizes()}}\verb{["message"]} bytes (16, 24 or
+32) and \code{salt} of 16 bytes. Supplying them makes the operation
+reproducible, which is what the known-answer tests need. Reusing them for
+the same key repeats the shared secret, so supply them only deliberately.}
 }
 \value{
-A list of class \code{bricklayer_hqc_capsule}: \code{ciphertext} and
-\code{shared} (both hex), \code{level} and \code{version}.
+A list of class \code{bricklayer_hqc_capsule} with \code{ciphertext} and
+\code{shared} (character, lowercase hex; see \code{\link[=hqc_sizes]{hqc_sizes()}} for
+the byte
+lengths: the shared secret is 32 bytes, 64 for a round-4 key), \code{level}
+(integer) and \code{version} (character). The print method withholds the
+shared secret.
 }
 \description{
-Produces a ciphertext and the shared secret it carries (32 bytes; 64 for a
-round-4 key). Only the public key is needed.
+The sender's half of an HQC key exchange. Given the recipient's public
+key, it draws fresh randomness and produces a ciphertext together with the
+shared secret that the ciphertext carries. The sender keeps the shared
+secret (for example as the key of a symmetric cipher) and sends the
+ciphertext; the recipient recovers the same secret with
+\code{\link[=hqc_decapsulate]{hqc_decapsulate()}}. Only the public key is needed, and
+a full key from
+\code{\link[=hqc_keygen]{hqc_keygen()}} is accepted too (its public half is used).
+}
+\details{
+The level and version are taken from the key. The randomness is a message
+\code{m} of \code{hqc_sizes(level)[["message"]]} bytes and a 16-byte \code{salt},
+both
+drawn with \code{\link[=random_bytes]{random_bytes()}} from the operating system's
+generator unless
+supplied. With the same key, \code{m} and \code{salt}, the ciphertext and secret
+are the same; that is what the known-answer tests need, and it is why
+fixed values must never be used for real traffic.
+
+Errors: \code{key} not from \code{\link[=hqc_keygen]{hqc_keygen()}} or
+\code{\link[=hqc_public_key]{hqc_public_key()}}; a public key
+of the wrong length for its level; \code{m} or \code{salt} of the wrong type or
+length.
 }
 \examples{
 key <- hqc_keygen(1)
@@ -38,6 +62,14 @@ identical(a$shared, b$shared)
 # both decapsulate correctly
 identical(hqc_decapsulate(key, a$ciphertext), a$shared)
 identical(hqc_decapsulate(key, b$ciphertext), b$shared)
+
+# fixed randomness repeats the result (for tests only)
+r1 <- hqc_encapsulate(key, m = as.raw(1:16), salt = as.raw(1:16))
+r2 <- hqc_encapsulate(key, m = as.raw(1:16), salt = as.raw(1:16))
+identical(r1$ciphertext, r2$ciphertext)
+
+# randomness of the wrong length is refused
+try(hqc_encapsulate(key, m = as.raw(1:3)))
 }
 \seealso{
 \code{\link[=hqc_decapsulate]{hqc_decapsulate()}},

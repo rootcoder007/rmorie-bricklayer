@@ -12,10 +12,12 @@ yoy_bounds(
 )
 }
 \arguments{
-\item{y}{An \code{rmbl_yoy} object with count units.}
+\item{y}{An \code{rmbl_yoy} object from \code{\link[=yoy]{yoy()}}, with counts as
+values.}
 
-\item{rounding}{The base the release rounds to (\code{5}, \code{10}, ...), or
-\code{NULL} when the counts are exact.}
+\item{rounding}{Numeric scalar, the base the release rounds to
+(\code{5}, \code{10}, ...), or \code{NULL} (the default) when the
+counts are exact.}
 
 \item{rounding_kind}{\code{"nearest"} (the printed value is the observed
 value rounded to the nearest multiple of \code{rounding}, so the
@@ -23,14 +25,18 @@ observed value lies within half a base) or \code{"random"} (Statistics
 Canada's random rounding, where the observed value lies within
 \code{rounding - 1}).}
 
-\item{suppression_limit}{For a cell printed as suppressed with no
-explicit limit, the smallest count that would have been published:
-the cell then lies in \verb{[0, suppression_limit - 1]}.}
+\item{suppression_limit}{Numeric scalar or \code{NULL} (the default). For
+a cell printed as suppressed with no explicit limit, the smallest count
+that would have been published: the cell then lies in
+\code{[0, suppression_limit - 1]}.}
 }
 \value{
-\code{y} with columns \code{env_change_lower}, \code{env_change_upper},
-\code{env_pct_lower}, \code{env_pct_upper}, \code{combined_pct_lower},
-\code{combined_pct_upper} and the rounding recorded in an attribute.
+\code{y} (still an \code{rmbl_yoy}) with added numeric columns
+\code{env_change_lower}, \code{env_change_upper},
+\code{env_pct_lower}, \code{env_pct_upper} and, when \code{y} has
+percent-change intervals, \code{combined_pct_lower} and
+\code{combined_pct_upper}. The rounding settings are recorded as
+\code{bounds} in the \code{"yoy"} attribute.
 }
 \description{
 \code{\link[=yoy]{yoy()}} gives an exact conditional-binomial interval for the percent
@@ -41,8 +47,37 @@ interval that rounding and suppression in the published cells imply
 combined interval that is the union of the two, which is the honest
 range for a figure read off a rounded table.
 }
+\details{
+The \code{value} and \code{previous} columns of \code{y} are passed to
+\code{\link[=published_bounds]{published_bounds()}} with the same rounding and
+suppression settings, and
+the two intervals to \code{\link[=change_envelope]{change_envelope()}}. The combined
+interval is the
+smallest interval that contains both the sampling interval
+(\code{pct_lower}, \code{pct_upper}) and the publication envelope: its
+lower end is the smaller of the two lower ends, its upper end the larger of
+the two upper ends. Where either is \code{NA} (the first period, or a
+previous cell that could be zero) the combined end is \code{NA}. The
+function does not check that \code{y} holds counts; publication bounds
+make sense only for counts.
+
+Errors when \code{y} does not come from \code{\link[=yoy]{yoy()}}, and for the reasons
+\code{\link[=published_bounds]{published_bounds()}} gives.
+}
 \examples{
 seg <- data.frame(year = 2021:2023, n = c(40, 45, 60))
 y <- yoy(seg, value = "n", period = "year")
 yoy_bounds(y, rounding = 5)
+
+# random rounding to base 5 widens the envelope
+yb <- yoy_bounds(y, rounding = 5, rounding_kind = "random")
+as.data.frame(yb)[, c("year", "env_pct_lower", "env_pct_upper",
+                      "combined_pct_lower", "combined_pct_upper")]
+
+# only yoy() results are accepted
+try(yoy_bounds(seg, rounding = 5))
+}
+\seealso{
+\code{\link[=published_bounds]{published_bounds()}},
+\code{\link[=change_envelope]{change_envelope()}}, \code{\link[=yoy]{yoy()}}.
 }

@@ -77,6 +77,12 @@ start (\code{max_captures}, or archive.org's daily cap for the
 account).
 }
 \description{
+Asks the Internet Archive to take a dated copy of each web page or file
+in a list, so that the exact source an analysis used (a statistics page,
+a data download, a policy document) can be cited and checked later even
+if the original changes or disappears. It needs a free archive.org
+account and its API keys.
+
 Saves every URL in the Internet Archive's Wayback Machine
 with Save Page Now 2, the API archive.org offers to account
 holders, keeping several captures in flight at once while
@@ -100,8 +106,34 @@ reached stops submitting for the day. A server error or a lost
 connection is retried with back-off, up to six times per URL;
 status checks that fail back off the same way. A refused key
 (HTTP 401 or 403) stops the run.
+
+A run of many URLs is slow by design: at the default 6 captures a
+minute, 1,000 URLs take close to three hours. URLs already finished in
+\code{output} are skipped, so a run can be stopped and restarted.
+
+Network: every request goes to \url{https://web.archive.org}; the
+keys travel in the \code{Authorization} header and are never written
+to \code{output} or printed.
+
+Errors, all raised before anything is sent: no usable URL; a URL with
+an invisible or control character, or not starting with
+\code{http://} or \code{https://}; missing keys, or keys that are not
+letters and digits; \code{within} not of the form \code{"30d"};
+\code{jobs} outside 1 to 12; \code{poll} below 1; \code{max_wait}
+below \code{poll}; \code{per_minute} outside (0, 60];
+\code{max_captures} below 1; \code{capture_all} not \code{TRUE} or
+\code{FALSE}; an \code{output} whose folder does not exist or that
+cannot be written.
 }
 \examples{
+# The checks run before any request, so these need no network or keys:
+try(wayback_save("ftp://example.org/report.pdf"))
+try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+                 jobs = 20))
+try(wayback_save("https://example.org/", access_key = "abc", secret_key = "def",
+                 output = file.path(tempdir(), "no-such-folder", "runs.jsonl")))
+
+# A real run needs archive.org keys and the network.
 \dontrun{
 Sys.setenv(IA_S3_ACCESS_KEY_FILE = "~/.config/ia/s3_access_key.txt",
            IA_S3_SECRET_KEY_FILE = "~/.config/ia/s3_secret_key.txt")

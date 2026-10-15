@@ -9,8 +9,9 @@ profile_columns(data, quantiles = c(0.25, 0.5, 0.75))
 \arguments{
 \item{data}{A data frame.}
 
-\item{quantiles}{Quantile probabilities to include for
-numeric columns (default the quartiles).}
+\item{quantiles}{Numeric vector of quantile probabilities to include for
+numeric columns, one column each named \code{q} and the percentage (\code{q25},
+\code{q50}, ...); default the quartiles. \code{NULL} or an empty vector adds none.}
 }
 \value{
 A data frame of class \code{bricklayer_profile}, one row per
@@ -20,6 +21,15 @@ infinite values, the classical and robust centre and spread, the range,
 the skewness, the count outside the Tukey fences, and an
 \code{\link[=inline_hist]{inline_hist()}} sketch of its distribution. A
 categorical column reports its most common value in \code{top} instead.
+The columns are \code{column}, \code{type} (the first class), \code{n},
+\code{n_missing},
+\code{pct_missing}, \code{n_distinct}, \code{n_zero}, \code{n_negative},
+\code{n_infinite},
+\code{mean}, \code{sd}, \code{median}, \code{mad}, \code{min}, \code{max},
+\code{skewness}, \code{n_outliers},
+\code{hist}, \code{top} and one per quantile; a statistic that does not apply to the
+column's type is \code{NA}. The print method formats the numbers to four
+significant digits and shows the histogram last.
 }
 \description{
 One row per column: type, missingness, and the summaries that suit the
@@ -32,6 +42,24 @@ Reporting the classical and robust centres side by side is the point:
 where they disagree, the column has outliers or a heavy tail, and the
 mean is not describing it. That is visible in one glance here and in no
 single number.
+
+How the numbers are computed. A column is numeric when \code{is.numeric()} is
+\code{TRUE}; every other column (character, factor, logical, \code{Date}, ...) is
+treated as categorical, and \code{top} is its most frequent non-missing value as
+text (ties broken by the order of \code{sort(table())}). For a numeric column,
+over its non-missing values: \code{sd} is the sample standard deviation
+(\eqn{n - 1}), \code{mad} the median absolute deviation scaled by 1.4826,
+\code{skewness} the population moment ratio \eqn{m_3 / m_2^{3/2}},
+\code{n_outliers} the count outside the Tukey fences (1.5 interquartile ranges
+beyond the quartiles), and the quantiles are type 7. Infinite values are
+counted in \code{n_infinite} (and in \code{n_negative}, \code{n_distinct}) and left
+out
+of every other numeric statistic, which are taken over the finite values
+only: a column with an infinite value keeps a finite mean and range, and
+a column with no finite value has \code{NA} statistics. A progress bar is shown for
+wide tables when
+\code{options(morie.progress)} allows it. Errors when \code{data} is not a data
+frame, has no columns, or has duplicate or empty column names.
 }
 \examples{
 set.seed(9)
@@ -56,6 +84,12 @@ p[, c("column", "hist")]
 # each breaks a different downstream computation (a log, a square
 # root, an average).
 p[, c("column", "n_zero", "n_negative", "n_infinite")]
+
+# deciles instead of quartiles
+names(profile_columns(df, quantiles = c(0.1, 0.9)))
+
+# a table with no columns has nothing to profile
+try(profile_columns(df[, 0]))
 }
 \seealso{
 \code{\link[=capsule_drift]{capsule_drift()}} to compare two of these,

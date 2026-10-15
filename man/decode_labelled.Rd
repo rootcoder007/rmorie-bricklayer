@@ -7,29 +7,50 @@
 decode_labelled(x, value_labels = NULL)
 }
 \arguments{
-\item{x}{A vector with a \code{labels} attribute (as produced by haven), or a
-plain numeric vector with \code{value_labels} supplied.}
+\item{x}{A vector with a \code{labels} attribute (as produced by haven),
+or a plain vector of codes when \code{value_labels} is supplied.}
 
-\item{value_labels}{Optional named vector, code = label, used when \code{x}
-carries no attribute.}
+\item{value_labels}{Optional named character vector, code = label, used
+only when \code{x} carries no \code{labels} attribute. Default
+\code{NULL}.}
 }
 \value{
-A factor whose levels are the labels in CODE order (not
-alphabetical), with a \code{recode_audit} attribute.
+A factor whose levels are the labels in code order (not
+alphabetical), with a \code{recode_audit} attribute as described in
+\code{\link{guard_recode}}.
 }
 \description{
-Vectors read from SPSS, Stata or SAS carry their categories as numeric
-codes with a \code{labels} attribute (label = code). The categories are the
-labels looked up BY CODE; the codes themselves, their order, and the
-alphabetical order of the labels are all irrelevant, and treating any of
-them as the category is the documented failure. This function looks each
-code up in the attribute and refuses codes that have no label.
+Converts a vector read from SPSS, Stata or SAS (for example by
+\code{haven::read_sav()}), which stores categories as numeric codes with a
+\code{labels} attribute, into a factor of the labels. Each code is looked
+up by its value, so neither the order of the codes nor the alphabetical
+order of the labels can affect which label a row gets. Codes with no label
+are refused. The factor's levels are in code order, which keeps the
+source program's reference category.
+}
+\details{
+When \code{x} has a \code{labels} attribute (a named vector, label = code)
+it is used and \code{value_labels} is ignored; otherwise
+\code{value_labels} (code = label) is required. Decoding is done by
+\code{\link{decode_codes}}. The levels are the labels ordered by their
+numeric code (codes that are not numbers are ordered after the numeric
+ones, by string), and include labels of codes that do not occur.
+
+Errors: a \code{labels} attribute without names; no attribute and no
+\code{value_labels}; a code with no label.
 }
 \examples{
 x <- structure(c(1, 2, 2, 4),
                labels = c(White = 1, Black = 2, Other = 3, Unknown = 4))
 decode_labelled(x)
+
+# plain codes with a code book; levels follow the codes 1, 2, 10
+decode_labelled(c(2, 1, 10), value_labels = c("10" = "Ten", "2" = "Two", "1" = "One"))
+
+# codes alone are not categories
+try(decode_labelled(c(1, 2, 2)))
 }
 \seealso{
-\code{\link{decode_codes}}, \code{\link{relabel}}
+\code{\link{decode_codes}}, \code{\link{relabel}},
+\code{\link{transfer_verify}}
 }

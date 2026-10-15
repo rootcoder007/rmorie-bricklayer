@@ -17,24 +17,63 @@
 #' \code{las} and \code{bg}. Each method also takes \code{main},
 #' \code{col} (which overrides the palette), \code{palette} and \code{...}
 #' passed to the underlying base-graphics call, so a single plot can be
-#' changed without changing the session.
+#' changed without changing the session. Use \code{bricklayer_palette()} also
+#' to colour your own plots so they match the package's.
 #'
-#' @param name Palette name.
-#' @param n Number of colours; the categorical palettes recycle, the
-#'   sequential and diverging ones interpolate.
-#' @param ... For \code{bricklayer_plot_options()}, named options to set
-#'   (\code{palette}, \code{grid}, \code{cex}, \code{las}, \code{bg},
-#'   \code{panel}: the plot region's fill behind white grid lines, \code{NA}
-#'   for none);
-#'   none to read the current values.
-#' @return \code{bricklayer_palette()}: a character vector of colours.
-#'   \code{bricklayer_plot_options()}: the options in force, invisibly when
-#'   setting.
+#' @details
+#' The palettes: \code{"okabe"} is the eight-colour set of Okabe and Ito
+#' (2008), distinguishable under the common forms of colour-vision
+#' deficiency; \code{"diverging"} has three anchors (blue \code{#2166AC},
+#' grey \code{#8C8C8C}, orange-red \code{#D6604D}) and is used for changes
+#' (decrease, no change, increase); \code{"sequential"} has five blues from
+#' light to dark; \code{"grey"} five greys from dark to light. With \code{n}
+#' given, \code{"okabe"} and \code{"grey"} repeat their colours
+#' (\code{rep_len()}) and \code{"diverging"} and \code{"sequential"} are
+#' interpolated with \code{grDevices::colorRampPalette()}.
+#'
+#' The session options are stored in \code{options(rmoriebricklayer.plot)};
+#' the defaults are \code{palette = "okabe"}, \code{grid = TRUE},
+#' \code{cex = 1}, \code{las = 1}, \code{bg = "white"} and
+#' \code{panel = "#EEF1F6"}. Setting some options keeps the others.
+#'
+#' Errors: an unknown palette \code{name}; \code{n} not a positive whole
+#' number; an option name other than the six above, or an unnamed value; an
+#' unknown \code{palette} option.
+#'
+#' @param name Character scalar, the palette: \code{"okabe"} (the default),
+#'   \code{"diverging"}, \code{"sequential"} or \code{"grey"}.
+#' @param n Integer scalar or \code{NULL} (the default: the palette's own
+#'   colours). The number of colours wanted; \code{"okabe"} and \code{"grey"}
+#'   recycle, \code{"sequential"} and \code{"diverging"} interpolate.
+#' @param ... For \code{bricklayer_plot_options()}, named options to set:
+#'   \code{palette} (a palette name), \code{grid} (logical, draw grid
+#'   lines), \code{cex} (numeric text and symbol size), \code{las} (axis label
+#'   orientation, as in \code{par()}), \code{bg} (background colour) and
+#'   \code{panel} (the plot region's fill behind white grid lines, \code{NA}
+#'   for none). With no arguments, the current values are returned.
+#' @return \code{bricklayer_palette()}: a character vector of hexadecimal
+#'   colours. \code{bricklayer_plot_options()}: a named list of the six
+#'   options in force (after the change), invisibly when setting.
+#' @references Okabe, M. and Ito, K. (2008). Color Universal Design (CUD):
+#'   how to make figures and presentations that are friendly to colorblind
+#'   people. \url{https://jfly.uni-koeln.de/color/}
 #' @examples
 #' bricklayer_palette("okabe", 3)
 #' old <- bricklayer_plot_options(palette = "grey", grid = FALSE)
 #' bricklayer_plot_options()
 #' bricklayer_plot_options(palette = old$palette, grid = old$grid)
+#'
+#' # an interpolated sequential scale, shown as swatches
+#' cols <- bricklayer_palette("sequential", 7)
+#' barplot(rep(1, 7), col = cols, border = NA, axes = FALSE, names.arg = cols, las = 2,
+#'         cex.names = 0.6)
+#'
+#' # the same palette in a base plot of your own
+#' plot(1:8, pch = 19, cex = 3, col = bricklayer_palette("okabe"))
+#'
+#' # names are checked
+#' try(bricklayer_palette("viridis"))
+#' try(bricklayer_plot_options(colour = "red"))
 #' @export
 bricklayer_palette <- function(name = c("okabe", "diverging", "sequential", "grey"), n = NULL) {
   name <- .rmbl_arg(name)
@@ -634,10 +673,13 @@ bricklayer_plot_options <- function(...) {
 #'   \item{\code{rmbl_knox}}{(\code{\link{knox_test}}) the Knox ratio of each
 #'     distance-by-time cell, coloured on a log scale around 1.}
 #'   \item{\code{rmbl_hotspot}}{(\code{\link{hotspot_persistence}}) the share of places
-#'     holding half the incidents and the overlap of hot spots with the period before, over
+#'     holding half the incidents and the overlap of hot spots with the period before,
+#'     over
 #'     time, and a map of the cells coloured by how often they were hot.}
-#'   \item{\code{rmbl_svy_estimate}, \code{rmbl_svy_compare}}{(\code{\link{survey_estimate}},
-#'     \code{\link{survey_compare}}) each domain's estimate with its interval, flagged domains
+#'   \item{\code{rmbl_svy_estimate},
+#'     \code{rmbl_svy_compare}}{(\code{\link{survey_estimate}},
+#'     \code{\link{survey_compare}}) each domain's estimate with its interval, flagged
+#'     domains
 #'     marked; each difference from the reference domain with its interval.}
 #'   \item{\code{rmbl_clearance_decomposition}}{(\code{\link{clearance_decomposition}})
 #'     the parts' rates in both comparisons with the aggregate on top, where the
@@ -664,7 +706,8 @@ bricklayer_plot_options <- function(...) {
 #' @param exposure For \code{rmbl_crf} and \code{rmbl_burden}, the exposure
 #'   range to draw the curve over; the default runs from 0 to 1.5 times the
 #'   exposure in the object.
-#' @param period For \code{rmbl_rate}, a \code{by} column holding the period: the rate is
+#' @param period For \code{rmbl_rate}, a \code{by} column holding the period: the rate
+#'   is
 #'   drawn over time with its interval band, one panel per group of the other \code{by}
 #'   columns.
 #' @param which For \code{bricklayer_analysis}, the panels: any of
@@ -821,8 +864,9 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
   if (length(by)) label <- paste(do.call(paste, c(d[by], sep = " / ")), label, sep = ": ")
   verdict <- as.character(d$verdict)
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
-  cols <- ifelse(verdict %in% c("better", "up"), pal[3L],
-                 ifelse(verdict %in% c("worse", "down"), pal[1L], pal[2L]))
+  # good and bad news only when a direction says which is which; "up" and "down" (neutral) take
+  # the middle colour, as in print(), yoy_html() and yoy_pdf()
+  cols <- unname(c(bad = pal[1L], flat = pal[2L], good = pal[3L])[.yoy_verdict_class(verdict)])
   if (!is.null(col)) cols <- rep_len(col, nrow(d))
   # no percentage anywhere (zero bases, or one period): the counts are drawn instead, and the title says why,
   # rather than an empty frame of notes
@@ -1405,19 +1449,58 @@ plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL)
 #'
 #' Evaluates \code{\link{gaussian_plume}} at every point of an \code{x} by
 #' \code{y} ground-level grid (or at height \code{z}) and returns the field
-#' as a matrix with the axes, ready for \code{plot()}.
+#' as a matrix with the axes, ready for \code{plot()}. Use it to map where the
+#' plume from a single stack touches the ground, how far downwind the
+#' highest concentration lies, and how wide the affected area is.
+#'
+#' @details
+#' Every grid point \eqn{(x_i, y_j, z)} is passed to
+#' \code{\link{gaussian_plume}} in one call, with the source at the origin
+#' and the wind along \eqn{+x}; the field is therefore zero (or vanishingly
+#' small) upwind and at \eqn{x \le 0}. The concentration is in the mass unit
+#' of \code{q} per cubic metre (grams per cubic metre for \code{q} in grams
+#' per second). \code{dx} and \code{dy} are the median grid spacings, used by
+#' the plot method for the cell size. The cost is one plume evaluation per
+#' grid point, so a 100 by 100 grid is 10,000 evaluations.
+#'
+#' Errors: \code{x} or \code{y} not numeric or not strictly increasing;
+#' \code{z} negative; and every check of \code{\link{gaussian_plume}}
+#' (\code{q}, \code{u}, \code{h}, the stability class, the setting, the
+#' mixing height).
 #'
 #' @param q,u,h,stability,setting,mixing_height,n_images As in
-#'   \code{\link{gaussian_plume}}.
-#' @param x,y Downwind and crosswind coordinates of the grid (metres).
-#' @param z Receptor height (metres).
-#' @return A list of class \code{rmbl_field}: \code{field} (a matrix,
-#'   rows along \code{x}, columns along \code{y}), \code{x}, \code{y},
-#'   \code{dx}, \code{dy}, \code{units} and \code{title}.
+#'   \code{\link{gaussian_plume}}: emission rate (mass per second), wind
+#'   speed (m/s), effective stack height (m), Pasquill class \code{"A"} to
+#'   \code{"F"} (default \code{"D"}), \code{"rural"} (default) or
+#'   \code{"urban"}, mixing-lid height in metres (default \code{NULL}, no
+#'   lid), number of lid image pairs (default \code{3}).
+#' @param x,y Numeric vectors, strictly increasing: the downwind and
+#'   crosswind coordinates of the grid, in metres from the source.
+#' @param z Numeric scalar, the receptor height in metres; default \code{0}
+#'   (ground level).
+#' @return A list of class \code{rmbl_field}: \code{field} (a numeric
+#'   matrix of concentrations, rows along \code{x}, columns along
+#'   \code{y}), \code{x}, \code{y}, \code{dx} and \code{dy} (median
+#'   spacings, \code{NA} for a single coordinate), \code{units}
+#'   (\code{"concentration"}) and \code{title} (character, used by the plot
+#'   method).
+#' @seealso \code{\link{gaussian_plume}}; \code{plot()} draws the field as an
+#'   image with contours (see \code{\link{plot-methods}}).
 #' @examples
 #' f <- plume_field(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50))
 #' dim(f$field)
 #' plot(f)
+#'
+#' # where the ground-level maximum lies, downwind
+#' f$x[which.max(apply(f$field, 1, max))]
+#'
+#' # a more unstable atmosphere brings the plume down sooner
+#' fb <- plume_field(100, 5, 50, x = seq(100, 3000, by = 100), y = seq(-500, 500, by = 50),
+#'                   stability = "B")
+#' fb$x[which.max(apply(fb$field, 1, max))]
+#'
+#' # the coordinates must increase
+#' try(plume_field(100, 5, 50, x = c(300, 100), y = c(-50, 0, 50)))
 #' @export
 plume_field <- function(q, u, h, x, y, z = 0, stability = "D", setting = "rural",
                         mixing_height = NULL, n_images = 3) {
@@ -1538,19 +1621,70 @@ plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
 #' \code{plot_funnel()} draws every area's ratio of observed to expected
 #' against its expected count, inside the control limits of
 #' \code{\link{funnel_limits}}, the standard small-area funnel plot.
+#' Use the Lorenz plot to show how concentrated a total is across units, and
+#' the funnel plot to judge which areas' rates differ from the target by more
+#' than chance would allow given their size.
 #'
-#' @param x For \code{plot_lorenz()}, a numeric vector or the data frame
-#'   \code{lorenz()} returns.
-#' @param observed,expected Observed and expected counts per area.
-#' @param area Optional labels, drawn for the areas outside the limits.
-#' @param levels Control-limit levels, as in \code{\link{funnel_limits}}.
-#' @param target The ratio the limits are drawn around.
-#' @param main,col,palette,... As in \code{\link{plot-methods}}.
-#' @return The data drawn, invisibly.
+#' @details
+#' \code{plot_lorenz()}: from a numeric vector the curve is computed by
+#' \code{\link{lorenz}} and the title carries \code{\link{gini}}; a data
+#' frame is used as given (sorted, with the origin added when missing) and
+#' the title has no Gini. The dashed diagonal is perfect equality.
+#'
+#' \code{plot_funnel()}: each area's ratio observed / expected is drawn
+#' against its expected count. The limits are exact Poisson quantiles around
+#' \code{target}, computed by \code{\link{funnel_limits}} at the expected
+#' counts present: the widest level is drawn solid, the others dashed. A point
+#' outside the widest limits is coloured and, with \code{area}, labelled.
+#'
+#' Errors: \code{plot_lorenz()} given a data frame whose columns are not
+#' cumulative shares in \eqn{[0, 1]} that never decrease, or invalid values for
+#' \code{\link{lorenz}}; \code{plot_funnel()} given negative or non-finite
+#' counts, an expected count of zero or less, \code{observed} and
+#' \code{expected} of different lengths, \code{area} of another length,
+#' \code{levels} outside (0, 1), or a \code{target} that is not one positive
+#' number. Both draw on the current device.
+#'
+#' @param x For \code{plot_lorenz()}, a numeric vector of non-negative values
+#'   (one per unit), or the data frame \code{lorenz()} returns (columns
+#'   \code{population} and \code{value}).
+#' @param observed,expected Numeric vectors of observed and expected counts
+#'   per area, the same length; \code{observed} non-negative, \code{expected}
+#'   positive.
+#' @param area Optional vector of labels, one per area, drawn for the areas
+#'   outside the limits. Default \code{NULL}.
+#' @param levels Numeric vector of control-limit levels strictly between 0
+#'   and 1, as in \code{\link{funnel_limits}}; default \code{c(0.95, 0.998)}
+#'   (about two and three standard deviations).
+#' @param target Numeric scalar, the ratio the limits are drawn around;
+#'   default \code{1} (observed equals expected).
+#' @param main,col,palette,... As in \code{\link{plot-methods}}: the title,
+#'   colours overriding the palette, a \code{\link{bricklayer_palette}} name,
+#'   and arguments passed to \code{plot()}.
+#' @return The data drawn, invisibly. \code{plot_lorenz()}: a data frame with
+#'   \code{population} and \code{value}, starting at the origin.
+#'   \code{plot_funnel()}: a data frame with \code{area}, \code{observed},
+#'   \code{expected}, \code{ratio} and \code{outside} (logical, outside the
+#'   widest limits).
 #' @examples
 #' plot_lorenz(c(1, 1, 2, 3, 5, 8, 13))
 #' plot_funnel(observed = c(4, 20, 50, 9), expected = c(5, 22, 40, 20),
 #'             area = c("a", "b", "c", "d"))
+#'
+#' # a funnel with one area well above expectation, around a target of 1
+#' set.seed(4)
+#' e <- c(5, 10, 20, 40, 80, 160)
+#' o <- rpois(6, e)
+#' o[5] <- 130
+#' fd <- plot_funnel(o, e, area = LETTERS[1:6], levels = 0.95)
+#' fd[fd$outside, ]
+#'
+#' # a curve from lorenz(), styled
+#' plot_lorenz(lorenz(c(rep(1, 50), rep(10, 5), 200)), col = "darkred",
+#'             main = "Placements per person")
+#'
+#' # a hand-made frame must be cumulative shares
+#' try(plot_lorenz(data.frame(population = c(0, 0.5, 1), value = c(0, 0.8, 0.5))))
 #' @export
 plot_lorenz <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   d <- if (is.data.frame(x) && all(c("population", "value") %in% names(x))) x else lorenz(x)

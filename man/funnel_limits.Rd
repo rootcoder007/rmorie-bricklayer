@@ -7,37 +7,70 @@
 funnel_limits(expected, target = 1, levels = c(0.95, 0.998))
 }
 \arguments{
-\item{expected}{Expected counts to compute limits at.}
+\item{expected}{Numeric vector of expected counts (positive) at which to
+compute limits, for example a grid from the smallest to the largest
+area.}
 
-\item{target}{The ratio the limits are centred on. One is
-the overall experience.}
+\item{target}{Number, default \code{1}: the ratio the limits are centred
+on. One is the overall experience.}
 
-\item{levels}{Two-sided coverage levels for the limit
-pairs.}
+\item{levels}{Numeric vector of two-sided coverage levels in (0, 1),
+default \code{c(0.95, 0.998)}; one pair of limits per level.}
 }
 \value{
-A data frame of \code{expected}, \code{level}, \code{lower} and
-\code{upper} on the ratio scale.
+A data frame with one row per expected count and level, sorted by
+level then expected count, with numeric columns \code{expected},
+\code{level}, \code{lower} and \code{upper} (the limits on the ratio
+scale).
 }
 \description{
-The limits within which an area's ratio would fall, given its expected
-count, if it were no different from the overall experience. A funnel
-plot is the alternative to a league table: it shows directly that a
-small area's ratio can wander far from one without meaning anything.
+Gives the range within which an area's ratio of observed to expected
+would fall, for a given expected count, if the area were no different
+from the overall experience. Plotted against the expected count these
+limits form a funnel: wide for small areas, narrow for large ones. A
+funnel plot is the alternative to a league table: it shows directly that
+a small area's ratio can wander far from one without meaning anything.
 }
 \details{
-The limits are exact Poisson quantiles divided by the expected count, so
-they are the discrete counterpart of the usual normal funnel and stay
-correct at the small expected counts where the normal version goes below
-zero.
+For expected count \eqn{E}, target ratio \eqn{\rho} and coverage
+\eqn{1 - a}, the limits are
+\deqn{\frac{Q(a/2;\ \rho E)}{E},\quad \frac{Q(1 - a/2;\ \rho E)}{E}}
+with \eqn{Q} the Poisson quantile function. They are exact Poisson
+quantiles divided by the expected count, so they are the discrete
+counterpart of the usual normal funnel and stay correct at the small
+expected counts where the normal version goes below zero. Because the
+Poisson is discrete the limits move in steps of \eqn{1/E}. The usual pair
+of levels, 0.95 and 0.998, corresponds to about two and three standard
+deviations.
+
+Errors: non-positive, infinite or missing expected counts (missing
+values are dropped); a non-positive \code{target}; a level outside
+(0, 1).
 }
 \examples{
 # The funnel narrows as the expected count grows, which is the whole
 # point: a ratio of 2 means nothing at an expected count of 2 and a
 # great deal at an expected count of 200.
 funnel_limits(c(2, 20, 200))
+
+# one 90 percent funnel around a target ratio of 1.2
+funnel_limits(c(5, 50), target = 1.2, levels = 0.90)
+
+# a funnel drawn with base graphics
+e <- c(1, 2, 5, 10, 20, 50, 100, 200)
+f <- funnel_limits(e, levels = 0.95)
+plot(f$expected, f$upper, type = "s", log = "x", ylim = c(0, 4),
+     xlab = "expected count", ylab = "ratio")
+lines(f$expected, f$lower, type = "s")
+abline(h = 1, lty = 2)
+
+try(funnel_limits(10, levels = 1))
 }
 \references{
+Spiegelhalter, D. J. (2005). Funnel plots for comparing institutional
+performance. \emph{Statistics in Medicine} 24(8), 1185-1202.
+\doi{10.1002/sim.1970}
+
 \emph{Advanced Statistics in Criminology and Criminal Justice} discusses
 the funnel plot as the display of the relationship between an estimate
 and the sample size behind it.
@@ -47,5 +80,5 @@ Modeling}. Chapman and Hall/CRC, on the Poisson counts these limits are
 built from.
 }
 \seealso{
-\code{\link[=sir]{sir()}}, \code{\link[=eb_rates]{eb_rates()}}
+\code{\link{sir}}, \code{\link{eb_rates}}
 }

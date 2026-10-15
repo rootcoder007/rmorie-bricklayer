@@ -18,15 +18,28 @@
 
 #' Fetch revocation data for a certificate path
 #'
-#' Retrieves CRLs from the distribution points named in the certificates,
-#' and asks any OCSP responder they name about each one. Called by
+#' @description
+#' Checks over the network whether any certificate in a chain has been
+#' revoked by its issuer. It downloads the certificate revocation lists
+#' (CRLs) that the certificates point to, and asks each OCSP responder they
+#' name about the certificate. It is called by
 #' [cert_chain_verify()] when
-#' `revocation = "fetch"`.
+#' `revocation = "fetch"`; you would call it directly only to inspect the
+#' raw revocation data. Nothing in the package does this unless asked,
+#' because a verifier that goes online stops working offline, can give
+#' different answers on different days, and tells the responder which
+#' certificates are being checked.
 #'
-#' The OCSP request is sent by GET with the DER request base64-encoded into
-#' the URL, as RFC 6960 appendix A.1.1 allows. That avoids needing to POST,
-#' and works with responders that accept it; one that requires POST is
-#' reported as unreachable rather than treated as a pass.
+#' @details
+#' For each certificate, every http(s) URL in its CRL distribution points
+#' extension (2.5.29.31) is fetched; a PEM CRL is converted to DER. For each
+#' certificate except the last (which has no issuer in the path), every OCSP
+#' URL in its authority information access extension is asked about it. The
+#' OCSP request is sent by POST first, which RFC 6960 requires responders to
+#' accept, and if that gets no answer, by GET with the DER request
+#' base64-encoded into the URL, as RFC 6960 appendix A.1.1 allows. A
+#' responder that answers neither is reported as unreachable rather than
+#' treated as a pass.
 #'
 #' A responder's answer is only believed when its signature verifies under
 #' a certificate in the path or one it carries that the path issued. An
@@ -34,15 +47,40 @@
 #' "good" would make revocation checking worse than skipping it, since it
 #' would look like it had happened.
 #'
+#' The fetched CRLs are returned, not checked:
+#' [cert_chain_verify()] checks
+#' the certificates against them. Network: plain http is allowed here,
+#' because CRLs and OCSP answers are signed and RFC 5280 and RFC 6960
+#' distribute them over http, but URLs that point at local or private
+#' addresses are refused (and reported as not retrieved). A certificate with
+#' no CRL or OCSP URL produces no request at all.
+#'
+#' Errors: `path` not a non-empty list of parsed certificates (each a list
+#' with a raw `der` element); `timeout` not positive. Network failures are
+#' not errors; they are reported in `ok` and `notes`.
+#'
 #' @param path A certificate path, leaf first, as
 #' [cert_chain_verify()] builds it.
-#' @param timeout Seconds to allow each request.
-#' @return A list with `crls` (raw vectors fetched), `ok` (a
-#' logical per note) and `notes` (a named list of details).
+#' @param timeout Number, default 10: seconds to allow each request.
+#' @return A list with `crls` (a list of raw DER vectors fetched), `ok` (a
+#' logical vector, one element per CRL fetch or OCSP query, `TRUE` for a
+#' success) and `notes` (a named list of character details, named like
+#' `"crl fetch [1]"` or `"ocsp [1]"` by the certificate's position in
+#' the
+#' path; a later attempt for the same certificate overwrites an earlier
+#' note of the same name).
 #' @seealso
 #' [cert_chain_verify()],
 #' [timestamp_verify()].
 #' @examples
+#' # Offline: a path entry that names no CRL or OCSP URL (here, bytes that
+#' # are not a certificate at all) makes no request and returns empty results.
+#' str(revocation_fetch(list(list(der = as.raw(1:3)))))
+#'
+#' # the input checks
+#' try(revocation_fetch(list()))
+#' try(revocation_fetch(list(list(der = as.raw(1:3))), timeout = 0))
+#'
 #' # Reaches the network, so it is not run here.
 #' \dontrun{
 #' res <- cert_chain_verify("leaf.crt", trust = "ca.crt",
@@ -66,6 +104,8 @@ revocation_fetch <- function(path, timeout = 10) {
   notes <- list()
   ok <- logical(0)
   add <- function(name, good, detail) {
+    # one certificate can carry several CRL or OCSP URLs: number repeats so none is overwritten
+    if (!is.null(notes[[name]])) name <- sprintf("%s #%d", name, sum(startsWith(names(notes), name)) + 1L)
     notes[[name]] <<- detail
     ok <<- c(ok, isTRUE(good))
   }
@@ -108,7 +148,7 @@ revocation_fetch <- function(path, timeout = 10) {
 .rmbl_ext_urls <- function(cert, oid, method) {
   der <- cert$der
   top <- tryCatch(.Call(C_rmbl_der_parse, der), error = function(e) NULL)
-  if (is.null(top)) return(character(0))
+  if (is.null(top) || !length(top$children)) return(character(0))
   k <- top$children[[1]]$children
   ext <- NULL
   for (nd in k) {
@@ -198,14 +238,14 @@ revocation_fetch <- function(path, timeout = 10) {
 # The two network calls, each one line, so the protocol logic above and
 # below can be exercised against recorded answers.
 .rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
-  tryCatch(.Call(C_rmbl_fetch_fallback, url, fallback, tmp,
-                 as.integer(timeout)),
+  tryCatch(.bl_net(url, .Call(C_rmbl_fetch_fallback, url, fallback, tmp,
+                              as.integer(timeout))),
            error = function(e) NULL)
 }
 
 .rmbl_net_post <- function(url, body, content_type, timeout) {
-  tryCatch(.Call(C_rmbl_http_post, url, body, content_type,
-                 as.integer(timeout), NULL, FALSE),
+  tryCatch(.bl_net(url, .Call(C_rmbl_http_post, url, body, content_type,
+                              as.integer(timeout), NULL, FALSE)),
            error = function(e) NULL)
 }
 

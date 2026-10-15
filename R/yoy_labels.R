@@ -8,19 +8,42 @@
 
 #' Label a period without changing it
 #'
-#' Attaches display labels to a change table. The arithmetic already ran on
-#' the period's value, so a label can only affect what is printed:
-#' relabelling cannot move a number.
+#' Attaches display labels to the periods of a change table from
+#' [yoy()],
+#' so a fiscal year keyed as 2023 can print as "2022/23", or a year can
+#' carry a note such as "(COVID)". The arithmetic already ran on the
+#' period's value, so a label can only affect what is printed: relabelling
+#' cannot move a number.
 #'
-#' @param x An `rmbl_yoy` object from
-#' [yoy()].
+#' @details
+#' The labels are stored in a new \code{period_label} column, and the
+#' table's \code{yoy} attribute is marked so that \code{print()},
+#' [yoy_html()], [yoy_pdf()] and the
+#' delimited writers show the label in
+#' place of the period. The period column itself is unchanged, as are all
+#' values, changes and verdicts.
+#'
+#' \code{labels} is interpreted as follows: a function is called once on the
+#' period column and must return one label per row; a named character vector
+#' maps periods (matched as strings) to labels, and periods it does not name
+#' keep their own value; an unnamed character vector gives one label per
+#' distinct period, in order of first appearance.
+#'
+#' Errors: \code{x} not from [yoy()]; an unnamed vector whose length is
+#' not
+#' the number of distinct periods; a function that does not return one label
+#' per row.
+#'
+#' @param x An \code{rmbl_yoy} object from [yoy()].
 #' @param labels Either a function applied to the period
-#' column, or a character vector the same length as the number of distinct
-#' periods, or a named character vector mapping a period (as a string) to
-#' its label.
-#' @return The object, with a `period_label` column and the labels
-#' used by `print()`, [yoy_html()],
-#' [yoy_pdf()] and the delimited writers.
+#'   column, or a character vector the same length as the number of distinct
+#'   periods, or a named character vector mapping a period (as a string) to
+#'   its label.
+#' @return The object, still of class \code{rmbl_yoy}, with an added
+#'   character column \code{period_label} and \code{attr(x, "yoy")$period_label}
+#'   set to \code{TRUE}, so the labels are used by \code{print()},
+#'   [yoy_html()],
+#'   [yoy_pdf()] and the delimited writers.
 #' @seealso [fiscal_year_label()]
 #' @examples
 #' seg <- data.frame(EndFiscalYear = 2019:2023,
@@ -35,6 +58,12 @@
 #'
 #' # Or an explicit mapping, for the periods that need one.
 #' yoy_label(y, c("2020" = "2019/20 (COVID)"))
+#'
+#' # the numbers are untouched
+#' identical(yoy_label(y, fiscal_year_label)$change, y$change)
+#'
+#' # an unnamed vector must have one label per distinct period
+#' try(yoy_label(y, c("a", "b")))
 #' @export
 yoy_label <- function(x, labels) {
   if (!inherits(x, "rmbl_yoy")) {
@@ -70,22 +99,46 @@ yoy_label <- function(x, labels) {
 
 #' Name a fiscal year by the years it spans
 #'
-#' Ontario's inmate data keys on the fiscal year's END year, so 2023 is the
-#' fiscal year running from April 2022 to March 2023. This renders that as
-#' `"2022/23"`.
+#' Turns fiscal years keyed by their END year into labels that name both
+#' calendar years. Ontario's inmate data (and many government series) key on
+#' the fiscal year's end year, so 2023 is the fiscal year running from April
+#' 2022 to March 2023; this renders that as \code{"2022/23"}, which a reader
+#' cannot mistake for the calendar year 2023. Pass it to
+#' [yoy_label()] to
+#' label a change table.
+#'
+#' @details
+#' Each value is converted with \code{as.integer(as.character(end_year))},
+#' so a string such as \code{"2023"} works and a fractional number is
+#' truncated (2023.7 gives \code{"2022/23"}). The label is
+#' \code{(y - 1)}, \code{sep}, then \code{y} itself or its last two digits.
+#' Values that cannot be read as a year give \code{NA}. The two-digit form
+#' is unambiguous within a century (2000 gives \code{"1999/00"}).
+#'
+#' Errors: \code{end_year} that is neither numeric nor character (for
+#' example logical); a numeric year below 1.
 #'
 #' @param end_year The fiscal year's end year, as a number
-#' or a string.
-#' @param sep Separator between the two years.
-#' @param short Whether to abbreviate the second year to two
-#' digits.
-#' @return A character vector of labels.
+#'   or a string; a vector of them.
+#' @param sep Separator between the two years, a string; default
+#'   \code{"/"}.
+#' @param short Logical. \code{TRUE} (the default) abbreviates the second year
+#'   to two digits (\code{"2022/23"}); \code{FALSE} writes it in full
+#'   (\code{"2022/2023"}).
+#' @return A character vector of labels, the same length as
+#'   \code{end_year}, with \code{NA} where a value is not a year.
 #' @examples
 #' fiscal_year_label(2019:2023)
 #'
 #' fiscal_year_label(2023, short = FALSE)
 #'
 #' fiscal_year_label(2023, sep = "-")
+#'
+#' # strings work; something that is not a year gives NA
+#' fiscal_year_label(c("2023", "n/a", NA))
+#'
+#' # logical input is refused
+#' try(fiscal_year_label(TRUE))
 #' @export
 fiscal_year_label <- function(end_year, sep = "/", short = TRUE) {
   if (!is.null(end_year) && !is.numeric(end_year) && !is.character(end_year)) {

@@ -45,8 +45,11 @@
   }
 
   iter <- 0L
+  pg <- bricklayer_progress("EM (normal, missing data)", 0)
+  on.exit(pg$done(), add = TRUE)
   for (it in seq_len(max_iter)) {
     iter <- it
+    pg$update(info = sprintf("iteration %d", it))
     T1 <- numeric(p)              # accumulated first moments
     T2 <- matrix(0, p, p)         # accumulated second moments
     for (i in seq_len(n)) {
@@ -101,6 +104,7 @@
 
 #' Little's test for data missing completely at random
 #'
+#' @description
 #' Tests the MCAR assumption: that whether a value is missing is unrelated
 #' to any value in the data, observed or not.
 #'
@@ -108,9 +112,11 @@
 #' Dropping incomplete rows is unbiased under MCAR and biased otherwise;
 #' mean imputation understates variance under MCAR and distorts the centre
 #' as well otherwise. A small p-value here says the easy options are not
-#' available.
+#' available. Run it on the numeric columns of a table before deciding
+#' how to handle its missing values.
 #'
-#' # How it works
+#' @details
+#' ## How it works
 #'
 #' Rows are grouped by their pattern of missingness. If missingness is
 #' unrelated to the values, then each pattern's observed-variable means
@@ -127,7 +133,7 @@
 #' complete-case estimates, which would already embed the bias the test is
 #' looking for.
 #'
-#' # What it cannot do
+#' ## What it cannot do
 #'
 #' A large p-value is NOT evidence that the data are MCAR; it is a failure
 #' to detect a departure, and the test has little power on small samples or
@@ -145,17 +151,39 @@
 #' otherwise return a statistic governed by that floor instead of by the
 #' data.
 #'
+#' ## Practicalities
+#'
+#' Columns that are entirely missing and rows with no observed value are
+#' dropped before the test. The EM loop is written in R and visits every
+#' row on every iteration, so it takes about \eqn{n \times} iterations
+#' small matrix solves: seconds for a few thousand rows and a handful of
+#' columns, longer for large tables. A progress indicator is shown in an
+#' interactive session. If EM has not converged after `max_iter`
+#' iterations the last estimates are used; `iterations` then equals
+#' `max_iter`.
+#'
+#' Errors: `data` neither a data frame nor a matrix; fewer than two
+#' numeric columns, or fewer than two usable rows or columns after the
+#' drops; collinear or constant columns (smallest covariance eigenvalue at
+#' most \eqn{10^{-8}} times the largest); EM estimates that cannot be
+#' inverted. Non-numeric columns are dropped with a warning.
+#'
 #' @param data A data frame or numeric matrix. Non-numeric
 #' columns are dropped with a warning, since the statistic is defined on
 #' moments.
-#' @param max_iter Maximum EM iterations (default 500).
-#' @param tol Convergence tolerance on the largest parameter
-#' change (default 1e-7).
+#' @param max_iter Whole number, default 500: the maximum number of EM
+#' iterations.
+#' @param tol Number, default 1e-7: EM stops when the largest absolute
+#' change in any mean or covariance entry between iterations falls below
+#' it.
 #' @return A list of class `bricklayer_mcar`: `statistic`,
 #' `df`, `p_value`, `log_p_value` (the log of `p_value`, finite where
-#' `p_value` underflows to 0), `n_patterns`, `n_used`,
-#' `n_vars`, `iterations`, `mu`, `sigma`, and
-#' `note` (a caveat when the test is degenerate). With complete data
+#' `p_value` underflows to 0), `n_patterns` (distinct missingness
+#' patterns), `n_used` (rows in the patterns that entered the statistic),
+#' `n_vars` (columns used), `iterations` (EM iterations), `mu` (named ML
+#' means), `sigma` (ML covariance matrix), and `note` (a caveat when the
+#' test is degenerate or a pattern was skipped, else `NA`). The print
+#' method gives the verdict in words. With complete data
 #' `df` is 0 and `p_value` is `NA` -- there is nothing to
 #' test.
 #' @references Little RJA (1988). A test of missing completely at random

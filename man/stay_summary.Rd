@@ -7,13 +7,20 @@
 stay_summary(days_per_person, conf_level = 0.95)
 }
 \arguments{
-\item{days_per_person}{Days served, one element per person.}
+\item{days_per_person}{Numeric vector of days served, one element per
+person; non-negative, no \code{NA} or \code{Inf}, at least one value.}
 
-\item{conf_level}{Confidence level for the interval on the mean.}
+\item{conf_level}{Numeric scalar strictly between 0 and 1, the
+confidence level for the interval on the mean. Default \code{0.95}.}
 }
 \value{
-A one-row data frame: \code{n}, \code{total_days}, \code{mean}, \code{sd},
-\code{median}, \code{iqr}, \code{max}, \code{se}, \code{lower}, \code{upper}.
+A one-row data frame with numeric columns \code{n} (people),
+\code{total_days}, \code{mean}, \code{sd} (sample standard
+deviation), \code{median}, \code{iqr} (interquartile range, quantile
+type 7), \code{max}, \code{se} (standard error of the mean),
+\code{lower} and \code{upper} (the t interval on the mean). With a
+single person \code{sd}, \code{se}, \code{lower} and \code{upper}
+are \code{NA}.
 }
 \description{
 Where \code{\link[=alos]{alos()}} takes the total days and returns a mean, this takes
@@ -21,7 +28,8 @@ one value per person and reports the spread as well, because a mean
 stay is a poor summary of a distribution that is usually skewed.
 }
 \details{
-The interval is the ordinary t interval on a mean. It describes
+The interval is the ordinary t interval on a mean,
+\eqn{\bar{x} \pm t_{n-1, 1-\alpha/2}\, s / \sqrt{n}}. It describes
 uncertainty about the AVERAGE stay, not the spread of stays, and on a
 skewed distribution the median and the interquartile range say more
 about a typical stay than the mean does -- which is why they are
@@ -30,6 +38,10 @@ returned beside it rather than left to be asked for.
 Lakner's caveat on \code{\link[=alos]{alos()}} applies here too (1976, p.16-17): a
 person still held has an unfinished stay, so a window shorter than
 the longest stay biases the mean DOWNWARD.
+
+Errors when \code{days_per_person} is not numeric, is empty, or has
+\code{NA}, \code{Inf} or negative values, and when \code{conf_level}
+is not strictly inside (0, 1).
 }
 \examples{
 # a skewed distribution: most stays short, a few long
@@ -38,6 +50,12 @@ stay_summary(stays)
 
 # the mean is pulled well above the median by the long tail
 stay_summary(stays)[, c("mean", "median", "max")]
+
+# a 90\% interval instead of 95\%
+stay_summary(stays, conf_level = 0.90)[, c("mean", "lower", "upper")]
+
+# a confidence level of 1 is refused
+try(stay_summary(stays, conf_level = 1))
 }
 \seealso{
 \code{\link[=alos]{alos()}},

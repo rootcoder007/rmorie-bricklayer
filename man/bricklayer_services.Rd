@@ -12,23 +12,29 @@ bricklayer_services(
 )
 }
 \arguments{
-\item{refresh}{\code{TRUE} to fetch the live document even when the
-cached copy is fresh.}
+\item{refresh}{Logical scalar, default \code{FALSE}: \code{TRUE} fetches
+the live document even when the cached copy is fresh.}
 
-\item{max_age}{Seconds a cached copy is used without asking the site
-(default one day).}
+\item{max_age}{Numeric scalar, the seconds a cached copy is used without
+asking the site; default \code{86400} (one day); \code{Inf} keeps a
+cached copy forever.}
 
-\item{timeout}{Seconds allowed for the fetch.}
+\item{timeout}{Numeric scalar, the seconds allowed for each of the two
+fetches (document and signature); default \code{20}.}
 
-\item{offline}{\code{TRUE} never fetches: the cached copy, then the
-bundled one (what the examples and an offline session get).}
+\item{offline}{Logical scalar, default \code{FALSE}: \code{TRUE} never
+fetches: the session's copy, the cached copy, then the bundled one (what
+the examples and an offline session get).}
 }
 \value{
-A list with \code{version}, \code{issued}, \code{notice},
-\code{llm} (\code{mode}, \code{base_url}, \code{auth_url}: where the
-sign-in for the data key is reached) and
+A list with \code{version} (integer, 1), \code{issued} (the
+signing time, ISO 8601 UTC), \code{notice} (text for the user, possibly
+empty), \code{llm} (\code{mode}, \code{base_url}, \code{auth_url}: where
+the sign-in for the data key is reached; also \code{models},
+\code{default_model} and \code{request_access}) and
 \code{data} (\code{mode}, \code{base_url}, \code{license},
-\code{request_access}), with the attribute \code{"source"} set to
+\code{request_access}, and \code{auth_url} when the document has one),
+with the attribute \code{"source"} set to
 \code{"live"}, \code{"cache"}, \code{"bundled"} or \code{"off"}.
 }
 \description{
@@ -53,6 +59,26 @@ The environment variable \code{MORIE_SERVICES_URL} points the fetch at a
 mirror of the document (its signature is fetched from the same place, with
 the suffix \code{.sig}); the signature check is unchanged, so a mirror can
 only serve a document the project signed.
+
+The order of resolution: a cached copy younger than \code{max_age} (unless
+\code{refresh}); the live document, fetched through the package's own
+checked transport (public https only, at most 1 MiB), verified, and kept
+only when it is not older than the copy already held or the bundled copy
+(an older signed document is a rollback and is refused); the stale cached
+copy; the bundled copy; and finally a document with every mode
+\code{"off"}. A cached copy no newer than the bundled one is not used, and
+one that is older is deleted. Network failures are not errors: they fall
+through to the next copy.
+
+Side effects: an accepted live document and its signature are written to
+\code{tools::R_user_dir("rmoriebricklayer", "cache")} as
+\code{morie-services.json} and \code{morie-services.sig}. The result is
+also kept for the session, so later \code{offline = TRUE} calls (which the
+rest of the package makes) return it without checking the signature again.
+
+Errors: \code{refresh} or \code{offline} not \code{TRUE} or \code{FALSE};
+\code{max_age} not a single non-negative number; \code{timeout} not a
+single finite number of at least 1.
 }
 \examples{
 # Nothing is fetched here: the cached copy if there is one, else the
@@ -60,4 +86,18 @@ only serve a document the project signed.
 s <- bricklayer_services(offline = TRUE)
 s$llm$mode
 attr(s, "source")
+
+# where the curated-data service is, and whether it takes a key
+s$data[c("mode", "base_url")]
+s$issued
+
+# arguments are checked
+try(bricklayer_services(max_age = -1))
+\dontrun{
+# ask the site now (network), and keep the answer for a day
+bricklayer_services(refresh = TRUE)
+}
+}
+\seealso{
+\code{\link{bricklayer_llm_login}}, \code{\link{bricklayer_data_manifest}}.
 }

@@ -7,20 +7,36 @@
 report_markdown(report, path = NULL, title = "Capsule report")
 }
 \arguments{
-\item{report}{A \code{bricklayer_report}.}
+\item{report}{A \code{bricklayer_report} from
+\code{\link[=capsule_report]{capsule_report()}}.}
 
-\item{path}{Optional file to write. Without one the lines
-are returned.}
+\item{path}{Optional character scalar, the file to write. Without one
+(\code{NULL}, the default) the lines are returned.}
 
-\item{title}{Heading for the document.}
+\item{title}{Character scalar, the heading for the document; default
+\code{"Capsule report"}.}
 }
 \value{
-The Markdown lines, invisibly when written to a file.
+A character vector of Markdown lines; returned visibly when \code{path}
+is \code{NULL}, invisibly when written to a file.
 }
 \description{
 Renders a \code{\link[=capsule_report]{capsule_report()}} as Markdown,
 so the assessment can travel with the capsule instead of living in a
-console someone has since closed.
+console someone has since closed. The document renders on GitHub, in
+R Markdown and Quarto, and in any Markdown viewer, and reads well as plain
+text.
+}
+\details{
+The document has a level-one heading (\code{title}), the verdict in one
+sentence, a two-column table of rows, columns, missing cells, complete rows
+and the full data digest (with the Merkle root and the signature result when
+the report has them), a "Findings" table of severity, check, subject and
+detail (left out when there is none), and a closing caveat that no finding
+is proof of correctness. The text of the findings is written as it is: a
+\code{|} in a column name would break the table. An existing file at \code{path} is
+overwritten. Errors when \code{report} does not come from
+\code{\link[=capsule_report]{capsule_report()}}.
 }
 \examples{
 set.seed(1)
@@ -36,6 +52,15 @@ p <- tempfile(fileext = ".md")
 report_markdown(r, p)
 file.exists(p)
 unlink(p)
+
+# a report with findings, under its own title
+r2 <- capsule_report(transform(df, v = ifelse(seq_along(v) <= 60, NA, v)))
+md2 <- report_markdown(r2, title = "Extract of 2024-03-01")
+md2[1]
+md2[grep("^## Findings", md2) + 0:4]
+
+# only a capsule_report() result is accepted
+try(report_markdown(list(verdict = "clean")))
 }
 \seealso{
 \code{\link[=capsule_report]{capsule_report()}}

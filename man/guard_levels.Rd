@@ -7,23 +7,51 @@
 guard_levels(x, levels, reference = NULL)
 }
 \arguments{
-\item{x}{Character (or factor) vector.}
+\item{x}{Character or factor vector. A factor is read through its labels.}
 
-\item{levels}{Complete character vector of allowed levels, in the intended
-order; the first is the reference category.}
+\item{levels}{Character vector of every allowed level, in the intended
+order. The first element is the reference category.}
 
-\item{reference}{Optional; assert which level is the reference (must equal
-\code{levels[1]}).}
+\item{reference}{Optional character string, default \code{NULL} (no
+check). When given it must equal \code{levels[1]}; use it to state the
+intended baseline next to the code that fits the model.}
 }
 \value{
-A factor with exactly the declared levels.
+A factor with exactly the levels in \code{levels}, in that order.
 }
 \description{
-\code{factor(x)} orders levels alphabetically, which silently decides the
-reference category of every downstream regression. This constructor
-requires the level set to be written out, errors on values outside it,
-and asserts the declared reference level.
+Creates a factor whose levels you write out in full and in order, instead
+of letting \code{factor()} sort them alphabetically. The first level is
+the reference category of every regression fitted on the factor, so
+writing the levels out decides the baseline on purpose. Values outside the
+declared levels are an error, and you can assert which level is the
+reference so that a later edit to \code{levels} cannot change it unnoticed.
+}
+\details{
+The function checks that every non-missing value of \code{x} is in
+\code{levels}, then returns \code{factor(x, levels = levels)}. Declared
+levels that do not occur are kept as empty levels (they still appear in
+tables with a count of zero).
+
+Errors:
+\itemize{
+\item \code{levels} not a non-empty character vector, or containing \code{NA};
+\item a value of \code{x} not in \code{levels} (listed in the message);
+\item \code{reference} given and not identical to \code{levels[1]}.
+}
 }
 \examples{
-guard_levels(c("White", "Black", "White"), c("White", "Black"), "White")
+# reference category chosen on purpose, not by alphabet
+g <- guard_levels(c("White", "Black", "White"), c("White", "Black"), "White")
+levels(g)
+
+# a declared level that does not occur is kept, with a zero count
+table(guard_levels(c("a", "a"), c("a", "b")))
+
+# a stray value, or a reference that is not first, is refused
+try(guard_levels(c("White", "Blak"), c("White", "Black")))
+try(guard_levels(c("White", "Black"), c("White", "Black"), reference = "Black"))
+}
+\seealso{
+\code{\link{guard_recode}}, \code{\link{audit_categories}}.
 }

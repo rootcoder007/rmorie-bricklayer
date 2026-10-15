@@ -1,3 +1,138 @@
+# rmoriebricklayer 0.5.13
+
+## Live progress for long work
+
+* **`bricklayer_progress(label, total)`**, exported: the animated bar of `bricklayer_download()`
+  for any loop, as an object with `$update(done, info)`, `$tick(by, info)`, `$wait(seconds)` and
+  `$done(summary)`. It follows the download bar's rule (drawn while a person watches a terminal:
+  an interactive session, or a command line that sets `options(morie.progress = TRUE)`; a line at
+  each tenth when stderr is not a terminal; nothing with `options(morie.quiet = TRUE)` or
+  `quiet = TRUE`). Nothing is drawn for the first 0.75 s, so a fast call never flashes a bar; a
+  bar inside another function's running bar stays silent, so nested work shows the outer loop; an
+  update is a stored value when quiet and a throttled frame when drawing. With `total = 0` it is a
+  spinner with the time so far and the current stage. `on.exit(p$done(), add = TRUE)` clears the
+  line when the work fails or is interrupted.
+* **Wired into the long-running functions**: the bootstrap of `exposure_response_plr()`, the folds
+  of `plr_crossfit()`, the permutations of `knox_test()` and `step_change()`, the controls of
+  `capsule_falsify()`, the repetitions of `capsule_power()`, the splits of `drift_calibrate()`,
+  the columns of `capsule_drift()`, `profile_columns()`, `correlation_table()` and
+  `top_correlations()`, the stages of `mahalanobis_outliers()`, the EM iterations of
+  `mcar_test()` and of `core_hawkes_fit(method = "em")`, the replicate checks of
+  `survey_design()`, the steps of `lagrangian_particles()` and `advection_diffusion_2d()`, the
+  receptors of `gaussian_plume()`, `gaussian_puff()` and `plume_field()`, the files of
+  `capsule_bundle()` and `capsule_bundle_verify()`, the columns and the writing of
+  `make_synthetic_csv()`, the packages of `capture_dependencies()`, the groups and exact p-values
+  of `analyse_table()` and `yoy_pvalues()`, and long vectors in `benford_test()` and
+  `distinct_sketch()` (read in blocks of a million; the counts and registers are those of one
+  pass).
+* **A spinner for long native calls**: XMSS key generation and signing (`pqc_keygen()`, a few
+  seconds at the default height, about a minute at 14), `derive_key()`, the native routes of
+  `core_hawkes_fit()` (with the stage: first start, second start) and every network request
+  (`bricklayer_fetch()`, the portal resolvers, `wayback_snapshot_url_native()`, revocation and
+  service lookups, model lists) show a turning spinner with the label and the seconds so far,
+  drawn by the compiled layer each time the call polls for a Ctrl-C, from 0.75 s on, on a
+  terminal only. The XMSS tree now polls every 32 leaves (it was every 1,024, once in a whole
+  default key).
+* **Live progress in the IDE consoles, and one look for it.** Whether a console can redraw a
+  line is now decided as the cli package decides it, no longer by `isatty(stderr())` alone,
+  which is `FALSE` in the RStudio and Positron consoles, so most R users saw only the line at
+  each tenth. Bars, spinners and the native spinner now animate in a terminal, the RStudio
+  console (and its build and render panes), the Positron console, R.app and RKWard. They draw
+  on stdout in the RStudio and Positron consoles, which print stderr in their error colour,
+  and on stderr elsewhere. Colours follow the console (24-bit, 256, 8, or none; `NO_COLOR`,
+  `R_CLI_NUM_COLORS`, `RSTUDIO_CONSOLE_COLOR`), and so does the width. They never animate
+  inside knitr, an R Markdown notebook chunk or a Jupyter kernel, which get the plain lines.
+  `options(rmoriebricklayer.dynamic, rmoriebricklayer.num_colors, rmoriebricklayer.unicode,
+  rmoriebricklayer.width)`, cli's options and `R_CLI_DYNAMIC` override the detection. The bar
+  shows the percent, the count (or the bytes), the rate, the time so far and, once the rate
+  has settled, the time left; it fits the console's width and cuts the label or stage with an
+  ellipsis. When the work ends, a green check, the label, the result and the time replace the
+  bar; a red cross replaces it when the function that made the bar failed or was interrupted.
+  `bricklayer_download()` shows the same cross. The native spinner of long compiled calls draws
+  the same line, turns only on R's main thread, ends with a check or a cross, and in a log
+  writes a line at 0.75 s, one every ten seconds after it and one at the end.
+
+## Integrity scheme 2
+
+New Merkle trees and chain entries are hashed under scheme 2 and record it; anything sealed by
+0.5.12 or earlier (no scheme recorded) still verifies under its old rules, with a warning that it
+was sealed with the weaker scheme.
+
+* **Merkle trees separate leaves from interior nodes** (RFC 6962): a leaf is SHA-256 of the byte
+  0x00 and the chunk, a node SHA-256 of 0x01 and its two children. Under scheme 1 the 64 bytes
+  of two sibling digests verified as a "leaf" with the shorter proof from their parent.
+  `merkle_root()`, `merkle_leaves()` and `merkle_proof()` take `scheme` (2 by default; 1
+  recomputes a root pinned by an earlier version), `merkle_proof()` records it in the proof, and
+  `merkle_verify()` reads it from there or takes `scheme = 2` to refuse a proof without one.
+  Roots therefore differ from those of 0.5.12 for the same chunks. `capsule_report()` records
+  `merkle_scheme` beside `merkle_root`.
+* **Chain entries cover their label.** `chain_append()` records `scheme = 2` and links
+  `"v2|<prev>|<payload>|<label>"`, so editing a label breaks the chain; under scheme 1 it went
+  undetected.
+* **Chain payloads no longer depend on the R version.** A non-string entry is digested over
+  `serialize(version = 2)` with the four header bytes naming the writer's R version zeroed, so
+  the same entry gives the same payload on every R version and for any R object.
+
+## Fixes
+
+* `core_bootstrap_mean()` draws its resamples with Lemire's unbiased bounded draw on
+  `mt19937_64`, as the reservoir sampler already does, instead of `std::uniform_int_distribution`,
+  whose algorithm differs between libstdc++ and libc++: the same seed now gives the same resamples
+  on Linux, Windows and macOS (the Linux and Windows results are unchanged). The means are summed
+  in `long double`, so they still agree only to rounding between x86 and arm64.
+
+* Every `conf_level` goes through one check, with one message: `trend_test()`, `count_trend()`,
+  `analyse_table()` and `survey_compare()` returned `NaN` intervals for a level outside (0, 1);
+  `case_flow()`, `life_table()`, `disposition_mix()`, `clearance_decomposition()`, `rate()`,
+  `share()`, `rate_change()`, `yoy()`, `stay_summary()` and `survey_estimate()` checked it in
+  four different wordings. The interval helpers behind them refuse it too.
+* `manifest_recompute()` reports a statistic that returns `NA`, `NaN` or `Inf` as `DIFFER`
+  (or `MATCH` when the record holds the identical value) instead of failing with "missing value
+  where TRUE/FALSE needed". `record()` refuses a vector `observed` or `expected` in words; it
+  failed with R's "'length = 2' in coercion to 'logical(1)'".
+* `stock_flow()` refuses a `t` that is neither one value nor one per period (it was recycled in
+  silence) and a `period` of the wrong length; `adp()`, `alos()`, `admissions()`,
+  `adp_from_counts()` and `stock_flow()`'s `per` refuse several values where one is meant (only
+  the first was used).
+* `profile_columns()` leaves infinite values out of the mean, spread, range, quantiles and
+  outlier count; they are still counted in `n_infinite`.
+* `core_hawkes_fit()` with the exponential kernel also runs from a second start and keeps the
+  better optimum: from one start it could stop with the decay on its bound at a worse likelihood
+  and still report `converged = TRUE`.
+* `reservoir_indices()` and `reservoir_sample()` draw with Lemire's unbiased method on the raw
+  64-bit output of `std::mt19937_64` instead of `std::uniform_int_distribution`, whose algorithm
+  differs between C++ libraries: a seed now gives the same sample on Linux, macOS and Windows,
+  and samples differ from those of 0.5.12. A seed that is `NA`, negative or fractional, and a
+  fractional `n` or `k`, are refused (an `NA` seed was undefined behaviour in the cast).
+* `core_bootstrap_mean()` refuses an `NA`, negative or fractional seed and a fractional `B`
+  (undefined behaviour in the casts), in R and in the compiled entry point; the compiled entry
+  point of `core_uniforms()` now checks its seed too (its R function already did).
+* `core_normal_logpdf()` refuses a vector `mean` or `sd` and a non-positive `sd`, as
+  `core_normal_pdf()` does; `core_gamma_cdf(a, Inf)` is 1, as `pgamma()`; `core_trimmed_mean()`
+  and `core_winsorized_mean()` refuse a `trim` outside [0, 0.5] instead of returning `NaN`.
+* `analyse_table()` warns that `rounding` and `suppression_limit` apply only to counts when
+  `units` is not `"count"`; they were ignored in silence.
+* Errors about a provenance list name `load_provenance()`; they named a `read_provenance()`
+  that does not exist.
+* `capture_dependencies()` gives `NA`, not `""`, as the library of a package that is not
+  installed, and the library of an installed one is the directory the package is in (it was its
+  parent).
+* `print()` of a hot-spot persistence result names each period with its own count of tied
+  cells ("period 2: 100 cells tied"); periods and counts were pasted into one list.
+* `install_cli()` refuses an empty or malformed `name`; an empty one printed "Installed ;" and
+  failed with "subscript out of bounds".
+* `yoy_markdown()` right-aligns every numeric column; the value and previous value were left
+  aligned.
+* With `direction = "neutral"`, `print()`, `yoy_html()`, `yoy_pdf()` and `plot()` of a change
+  table draw rises and falls in the neutral colour; `print()`, `yoy_html()` and `yoy_pdf()`
+  painted a rise in the bad colour, and `plot()` in the good one.
+* A malformed certificate, CRL, OCSP response or time-stamp token is an error without the call
+  (`cert_parse()` errors read "Error in cert_parse(...)").
+* Rd: `[0, 1]` in four help pages was read by roxygen as a link (an `R CMD check` warning for
+  `hotspot_persistence`).
+* The "is thinking" line of a language-model call is drawn where the console says, on stdout in
+  the RStudio and Positron consoles; it went to stderr, which they show in the error colour.
+
 # rmoriebricklayer 0.5.12
 
 The 0.5.11 stress round (commit a5a4d10) and the review of this release's own branch (head

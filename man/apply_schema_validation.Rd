@@ -10,23 +10,61 @@ apply_schema_validation(df_raw, provenance)
 \item{df_raw}{The data frame to validate.}
 
 \item{provenance}{A provenance list as returned by
-\code{\link[=load_provenance]{load_provenance()}}, or a rule list from
-\code{\link[=rule]{rule()}} and the \verb{rule_*()} constructors, run
-with \code{\link[=validate_rules]{validate_rules()}} under the same
+\code{\link[=load_provenance]{load_provenance()}} (with a \code{schema} element), or
+one rule or a list
+of rules from \code{\link[=rule]{rule()}}, run with
+\code{\link[=validate_rules]{validate_rules()}} under the same
 stop-on-fatal contract.}
 }
 \value{
 Invisibly, \code{TRUE} if no issues were found and \code{FALSE}
-otherwise. Errors if any fatal issue is present.
+if only warning-severity issues were found (each raised as a warning).
+Errors if any fatal issue is present.
 }
 \description{
-Runs \code{\link[=validate_schema]{validate_schema()}} and acts on the
-result: fatal issues raise an error via \code{\link[=stop]{stop()}},
-warning-severity issues emit a \code{\link[=warning]{warning()}}.
+Runs \code{\link[=validate_schema]{validate_schema()}} (or, for a list of rules,
+\code{\link[=validate_rules]{validate_rules()}}) and
+acts on the result: the first fatal issue stops with an error, and every
+warning-severity issue is raised as an R warning. Put it at the top of an
+analysis script so that a re-released file with a missing column stops
+the run before any result is computed.
+}
+\details{
+Issues are handled in the order the validator returns them; a fatal issue
+stops at once, so warnings after it are not raised. With a list of rules
+the same contract applies to each rule's \code{severity}.
+
+Unlike \code{\link[=validate_schema]{validate_schema()}}, this function refuses to
+check against
+nothing, because a validation that checks nothing must not report success.
+Errors: \code{df_raw} not a data frame; \code{provenance} a data frame;
+\code{provenance} \code{NULL} or an empty list; a list that mixes rules
+with other elements; an unnamed list that is not all rules; something
+other than a list; a provenance list with no \code{schema} element (the
+message names the elements it has, so a typo such as \code{scheme}
+shows); an empty schema (\code{list(schema = list())}).
 }
 \examples{
 prov <- list(schema = list(expected_columns = "id"))
 apply_schema_validation(data.frame(id = 1), prov)
 # A missing required column is fatal:
 try(apply_schema_validation(data.frame(x = 1), prov))
+
+# a warning-level issue is raised as a warning and the result is FALSE
+ranged <- list(schema = list(numeric_ranges = list(v = c(min = 0, max = 1))))
+ok <- withCallingHandlers(
+  apply_schema_validation(data.frame(v = c(0.5, 3)), ranged),
+  warning = function(w) {
+    message("warning: ", conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+)
+ok
+
+# rules work the same way
+rules <- list(rule("id_positive", function(v) v > 0, column = "id", severity = "fatal"))
+try(apply_schema_validation(data.frame(id = c(1, -2)), rules))
+
+# a provenance without a schema is refused, not passed
+try(apply_schema_validation(data.frame(id = 1), list(scheme = list())))
 }

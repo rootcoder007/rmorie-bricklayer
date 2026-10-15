@@ -7,18 +7,41 @@
 capture_environment(packages = loadedNamespaces())
 }
 \arguments{
-\item{packages}{Character vector of package names to
-record. Defaults to every currently loaded namespace.}
+\item{packages}{Character vector of package names to record. Defaults to
+every currently loaded namespace (\code{loadedNamespaces()}).}
 }
 \value{
-A list with \code{r_version}, \code{platform}, \code{os},
-\code{captured_utc}, and \code{packages} (a named character vector of
-versions).
+A list of seven elements:
+\describe{
+\item{\code{r_version}}{character, e.g. \code{"4.5.1"}.}
+\item{\code{platform}}{character, \code{R.version$platform}.}
+\item{\code{os}}{character, the system name and release.}
+\item{\code{captured_utc}}{character, ISO 8601 time \code{YYYY-MM-DDThh:mm:ssZ}.}
+\item{\code{rng_kind}}{character, the three \code{RNGkind()} values joined by
+commas.}
+\item{\code{rng_seeded}}{logical, whether \code{.Random.seed} exists.}
+\item{\code{packages}}{named character vector of versions, sorted by name
+(\code{NA} for a package that is not installed).}
+}
 }
 \description{
-Records the facts a replicator needs to rebuild the session: R version,
-platform, operating system, a UTC timestamp, and the versions of the
-requested packages.
+Records the facts a replicator needs to rebuild the session in which a
+result was produced: the R version, platform and operating system, a UTC
+timestamp, the random number generator in use and whether it was seeded,
+and the versions of the packages involved. Store the result in a results
+manifest (for example with \code{\link[=write_manifest_json]{write_manifest_json()}})
+next to the numbers
+it produced, and compare two captures with
+\code{\link[=environment_diff]{environment_diff()}}.
+}
+\details{
+Package versions come from \code{utils::packageVersion()}; a package that
+is not installed gets \code{NA} rather than an error. The packages are
+sorted and de-duplicated. The generator kinds come from \code{RNGkind()}
+(R has changed its default \code{sample()} algorithm before, so a
+recorded seed means nothing without the kind it was fed to), and
+\code{rng_seeded} says whether \code{.Random.seed} exists in the global
+environment. Nothing is written and the random state is not touched.
 }
 \examples{
 # Record specific packages' versions alongside the session facts.
@@ -28,5 +51,12 @@ env$os
 env$packages          # named character vector of versions
 
 # Default captures every currently loaded namespace.
-names(capture_environment())[1:4]
+names(capture_environment())
+
+# the generator and whether it was seeded
+set.seed(42)
+capture_environment("stats")[c("rng_kind", "rng_seeded")]
+
+# a package that is not installed is recorded as NA, not an error
+capture_environment(c("stats", "notapackage123"))$packages
 }

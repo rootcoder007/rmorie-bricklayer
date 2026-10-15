@@ -36,14 +36,30 @@
 
 #' Inline histogram for a numeric vector
 #'
-#' A one-line sketch of a column's distribution, as block characters (or
-#' ASCII where the console cannot render them). The point is density of
+#' Draws a one-line sketch of a column's distribution, as block characters
+#' (or ASCII where the console cannot render them). The point is density of
 #' information: a mean and a standard deviation cannot tell you a column is
-#' bimodal, and this can, in the width of a table cell.
+#' bimodal, skewed or has a gap, and this can, in the width of a table cell.
+#' [profile_columns()] shows one for every numeric column.
+#'
+#' @details
+#' Non-finite values (\code{NA}, \code{NaN}, \code{Inf}) are dropped. The
+#' range of the rest is cut into \code{bins} equal-width bins (as
+#' \code{graphics::hist()} with those breaks) and each bin's count is drawn
+#' as one of eight Unicode block heights, scaled to the largest bin; an
+#' empty bin is a space, and a bin with any values is at least the lowest
+#' block. When the session is not UTF-8, or the environment variable
+#' \code{RMBL_ASCII_ONLY} is set, five ASCII levels (\code{. : - = #}) are
+#' used instead. A column with no spread gives one full block in the middle;
+#' no finite values give spaces.
+#'
+#' Errors: \code{x} that is not numeric; \code{bins} that is not one
+#' positive whole number.
 #'
 #' @param x Numeric vector.
-#' @param bins Number of bins (default 10).
-#' @return A length-1 character vector of `bins` characters.
+#' @param bins Number of bins, and so of characters, one positive whole
+#'   number (default 10).
+#' @return A length-1 character vector of \code{bins} characters.
 #' @seealso
 #' [profile_columns()], which includes one
 #' per numeric column.
@@ -60,6 +76,12 @@
 #'
 #' # A constant column has no spread to show.
 #' inline_hist(rep(5, 10))
+#'
+#' # more bins for more detail
+#' inline_hist(stats::rexp(1000), bins = 30)
+#'
+#' # text is not a distribution
+#' try(inline_hist(c("a", "b")))
 #' @export
 inline_hist <- function(x, bins = 10L) {
   x <- .rmbl_num_input(x, "x")
@@ -72,26 +94,44 @@ inline_hist <- function(x, bins = 10L) {
 
 #' Frequency table for one column
 #'
-#' Counts, percentages, and percentages of the non-missing values, with
-#' missing counted as its own row. The counterpart of
-#' `janitor::tabyl()`.
+#' Counts how often each value of a column occurs, with percentages of all
+#' rows and of the non-missing rows, and missing values counted as their
+#' own row. It is the first look at a categorical variable (a charge type,
+#' a region, a response category), and the counterpart of
+#' \code{janitor::tabyl()}.
 #'
+#' @details
 #' Two percentage columns, because both questions get asked and conflating
-#' them is how missingness gets hidden: `pct` is the share of ALL
-#' rows, `pct_valid` the share of rows where the value is present.
+#' them is how missingness gets hidden: \code{pct} is the share of ALL
+#' rows, \code{pct_valid} the share of rows where the value is present.
 #' When a column is 40% missing those two differ enormously, and only the
 #' second describes the values that are actually there.
 #'
+#' Values are tabulated as text (\code{as.character()}), so numbers and
+#' factors are counted by their printed value, and factor levels that do not
+#' occur get no row. Rows are sorted by descending count (ties in the order
+#' \code{table()} gives) or kept in sorted value order with
+#' \code{sort = FALSE}. Beyond \code{max_levels} distinct values, the rest are
+#' folded into one \code{"(other)"} row so the percentages still sum to 100.
+#' The missing row, when there is one, comes last, with \code{value} \code{NA}
+#' and \code{pct_valid} \code{NA}. An empty input gives a table with no rows.
+#' The print method adds a bar column.
+#'
+#' Errors: a data frame without \code{column}; a \code{column} that is not
+#' in \code{data}; \code{max_levels} not one positive whole number.
+#'
 #' @param data A data frame, or a vector.
-#' @param column Column name, when `data` is a data
-#' frame.
-#' @param max_levels Maximum rows to return, most
-#' frequent first (default 25). The remainder are folded into one
-#' `"(other)"` row so the percentages still sum to 100.
-#' @param sort Sort by descending count (default `TRUE`) ;
-#' `FALSE` keeps the natural order of the values.
-#' @return A data frame of class `bricklayer_freq`: `value`,
-#' `n`, `pct`, `pct_valid`.
+#' @param column Column name (a string), when \code{data} is a data
+#'   frame; ignored for a vector.
+#' @param max_levels Maximum value rows to return, most
+#'   frequent first (default 25). The remainder are folded into one
+#'   \code{"(other)"} row so the percentages still sum to 100.
+#' @param sort Logical: sort by descending count (default \code{TRUE});
+#'   \code{FALSE} keeps the sorted order of the values.
+#' @return A data frame of class \code{c("bricklayer_freq", "data.frame")}
+#'   with columns \code{value} (character), \code{n} (integer count),
+#'   \code{pct} (numeric, percent of all rows) and \code{pct_valid} (numeric,
+#'   percent of non-missing rows; \code{NA} on the missing row).
 #' @seealso [profile_columns()] for every
 #' column at once.
 #' @examples
@@ -105,7 +145,7 @@ inline_hist <- function(x, bins = 10L) {
 #' # A vector works directly.
 #' frequency_table(c(1, 1, 2, 3, 3, 3))
 #'
-#' # Natural order rather than frequency order.
+#' # Sorted value order rather than frequency order.
 #' frequency_table(c("c", "a", "b", "a"), sort = FALSE)
 #'
 #' # Long tails are folded so the percentages still total 100.
@@ -113,6 +153,9 @@ inline_hist <- function(x, bins = 10L) {
 #' ft <- frequency_table(sample(letters, 500, TRUE), max_levels = 5)
 #' ft
 #' sum(ft$pct)
+#'
+#' # a data frame needs a column name
+#' try(frequency_table(df))
 #' @export
 frequency_table <- function(data, column = NULL, max_levels = 25L,
                             sort = TRUE) {
@@ -196,20 +239,40 @@ print.bricklayer_freq <- function(x, ...) {
 
 #' Full pairwise correlation table
 #'
-#' Every numeric pair's correlation in long form -- one row per pair, which
-#' is easier to sort, filter and join than a matrix. The counterpart of
-#' `corrr::correlate()`.
+#' Computes the correlation of every pair of numeric columns and returns it
+#' in long form -- one row per pair, which is easier to sort, filter and join
+#' than a matrix -- with the number of complete pairs each figure rests on.
+#' The counterpart of \code{corrr::correlate()}.
+#'
+#' @details
+#' Non-numeric columns are ignored. For each pair, rows where either value is
+#' missing are dropped (pairwise deletion), so different pairs can rest on
+#' different rows; \code{n_pairs} says how many. Spearman's rank correlation
+#' (the default) is the Pearson correlation of the ranks, robust to outliers
+#' and to monotone transformations; see
+#' [top_correlations()] for why it is
+#' the default. A pair with fewer than \code{min_pairs} complete rows, or
+#' with a constant column (no variance), gets \code{NA}. The pairs are listed
+#' in column order (\code{utils::combn()}). A progress bar is drawn on stderr
+#' for many pairs unless \code{options(morie.quiet = TRUE)}.
+#'
+#' Errors: \code{data} not a data frame; fewer than two numeric columns;
+#' \code{min_pairs} not a whole number of at least 2; an invalid
+#' \code{method}.
 #'
 #' @param data A data frame; non-numeric columns are ignored.
-#' @param method `"spearman"` (default) or
-#' `"pearson"`. See
-#' [top_correlations()] for why the rank
-#' correlation is the default.
+#' @param method \code{"spearman"} (default) or \code{"pearson"}. See
+#'   [top_correlations()] for why the rank correlation is
+#'   the default.
 #' @param min_pairs Minimum complete pairs required before
-#' a correlation is computed (default 3). Below it the pair is `NA`
-#' rather than a number computed from almost nothing.
-#' @return A data frame of class `bricklayer_cortable` with `x`,
-#' `y`, `correlation` and `n_pairs`.
+#'   a correlation is computed, a whole number of at least 2 (default 3).
+#'   Below it the pair is \code{NA} rather than a number computed from almost
+#'   nothing.
+#' @return A data frame of class \code{c("bricklayer_cortable", "data.frame")}
+#'   with one row per pair of numeric columns and the columns \code{x} and
+#'   \code{y} (character, the column names), \code{correlation} (numeric, in
+#'   \eqn{[-1, 1]} or \code{NA}) and \code{n_pairs} (integer); the method is
+#'   in \code{attr(, "method")}.
 #' @seealso
 #' [top_correlations()] for just the
 #' strongest, [core_cov()] for the matrix form.
@@ -220,6 +283,9 @@ print.bricklayer_freq <- function(x, ...) {
 #'
 #' correlation_table(df)
 #'
+#' # Pearson instead of Spearman
+#' correlation_table(df, method = "pearson")
+#'
 #' # n_pairs shows how much data each figure rests on.
 #' gappy <- df
 #' gappy$a[1:80] <- NA
@@ -229,6 +295,9 @@ print.bricklayer_freq <- function(x, ...) {
 #' thin <- df
 #' thin$a[1:99] <- NA
 #' correlation_table(thin)$correlation
+#'
+#' # one numeric column cannot be correlated
+#' try(correlation_table(data.frame(a = 1:5, b = letters[1:5])))
 #' @export
 correlation_table <- function(data, method = c("spearman", "pearson"),
                               min_pairs = 3L) {
@@ -244,7 +313,10 @@ correlation_table <- function(data, method = c("spearman", "pearson"),
     stop("`min_pairs` must be a single integer of at least 2", call. = FALSE)
   }
   pairs <- utils::combn(num, 2L)
+  pg <- bricklayer_progress("correlations", ncol(pairs))
+  on.exit(pg$done(), add = TRUE)
   rows <- lapply(seq_len(ncol(pairs)), function(j) {
+    pg$update(j - 1L, sprintf("pair %d/%d", j, ncol(pairs)))
     a <- data[[pairs[1L, j]]]
     b <- data[[pairs[2L, j]]]
     ok <- !is.na(a) & !is.na(b)
@@ -281,11 +353,14 @@ print.bricklayer_cortable <- function(x, ...) {
 
 #' Drop empty or constant columns and rows
 #'
-#' `drop_empty()` removes rows or columns that are entirely missing.
-#' `drop_constant()` removes columns that hold a single distinct
-#' value. The counterparts of `janitor::remove_empty()` and
-#' `janitor::remove_constant()`.
+#' \code{drop_empty()} removes rows or columns that are entirely missing.
+#' \code{drop_constant()} removes columns that hold a single distinct
+#' value. The counterparts of \code{janitor::remove_empty()} and
+#' \code{janitor::remove_constant()}. Use them after reading a spreadsheet
+#' export, which often carries blank padding rows, empty columns and
+#' columns that repeat one value (a year, a jurisdiction) on every row.
 #'
+#' @details
 #' A constant column carries no information and breaks anything that scales
 #' by variance, so it is worth removing -- but it is also a FINDING. A
 #' column that was informative in the pinned capsule and is constant in a
@@ -293,18 +368,29 @@ print.bricklayer_cortable <- function(x, ...) {
 #' [capsule_drift()] before deleting it and
 #' moving on.
 #'
+#' \code{drop_empty()} removes all-\code{NA} columns first, then all-\code{NA}
+#' rows among the remaining columns, and resets the row names. An empty
+#' string is a value, not missing. \code{drop_constant()} counts the distinct
+#' non-missing values of each column (with \code{na_as_value = TRUE},
+#' \code{NA} counts as a value), so an all-\code{NA} column is also dropped
+#' by default. Neither function modifies anything in place.
+#'
+#' Errors: \code{data} not a data frame (or with missing or duplicated names);
+#' \code{which} other than \code{"rows"} and/or \code{"cols"}.
+#'
 #' @param data A data frame.
-#' @param which `"rows"`, `"cols"`, or both (the
-#' default).
-#' @param na_as_value Treat `NA` as a distinct
-#' value, so a column of `NA` s plus one real value counts as two
-#' (default `FALSE`) .
+#' @param which \code{"rows"}, \code{"cols"}, or both (the
+#'   default, \code{c("rows", "cols")}).
+#' @param na_as_value Logical: treat \code{NA} as a distinct
+#'   value, so a column of \code{NA}s plus one real value counts as two
+#'   (default \code{FALSE}).
 #' @return The data frame, with the offending rows or columns removed. The
-#' names of what was dropped are attached as the `"dropped"`
-#' attribute.
+#'   names of the columns that were dropped are attached as the
+#'   \code{"dropped"} attribute (a character vector, empty when none); dropped
+#'   rows are not listed.
 #' @seealso
 #' [profile_columns()], which reports
-#' `n_distinct` without removing anything.
+#' \code{n_distinct} without removing anything.
 #' @examples
 #' df <- data.frame(
 #'   keep = c(1, 2, NA),
@@ -317,6 +403,7 @@ print.bricklayer_cortable <- function(x, ...) {
 #' attr(drop_empty(df), "dropped")
 #'
 #' drop_constant(df)
+#' attr(drop_constant(df), "dropped")
 #'
 #' # Rows only.
 #' drop_empty(data.frame(a = c(1, NA), b = c(2, NA)), which = "rows")
@@ -326,6 +413,9 @@ print.bricklayer_cortable <- function(x, ...) {
 #' x <- data.frame(v = c(NA, NA, 5))
 #' ncol(drop_constant(x))
 #' ncol(drop_constant(x, na_as_value = TRUE))
+#'
+#' # only data frames
+#' try(drop_empty(c(1, NA)))
 #' @name rmbl_drop
 #' @export
 drop_empty <- function(data, which = c("rows", "cols")) {
@@ -368,30 +458,47 @@ drop_constant <- function(data, na_as_value = FALSE) {
 
 #' Tidy the column names of an ingested table
 #'
-#' Converts names to a consistent, syntactically valid form: transliterated
-#' to ASCII, non-alphanumerics collapsed to a single separator, and
-#' duplicates disambiguated with a numeric suffix. The counterpart of
-#' `janitor::clean_names()`.
+#' Converts column names to a consistent, syntactically valid form:
+#' transliterated to ASCII, non-alphanumerics collapsed to a single
+#' separator, and duplicates disambiguated with a numeric suffix. The
+#' counterpart of \code{janitor::clean_names()}. Use it right after reading
+#' an open-data file, so the rest of the script can refer to columns without
+#' backticks.
 #'
+#' @details
 #' Open-data extracts arrive with names like
-#' `"Total Population (2021)"` and `"% change"`, which need
+#' \code{"Total Population (2021)"} and \code{"\% change"}, which need
 #' backticks everywhere and break silently when a re-release renames
-#' `"% change"` to `"% change"`. Normalising once at ingestion
-#' makes the schema stable against that.
+#' \code{"\% change"} to \code{"\% Change"} or adds a trailing space.
+#' Normalising once at ingestion makes the schema stable against that.
+#'
+#' The steps, in order: transliterate to ASCII (\code{iconv(...,
+#' "ASCII//TRANSLIT")}, keeping the original where that fails); replace
+#' \code{\%} by \code{pct}, \code{&} by \code{and} and \code{#} by \code{n}
+#' as words; split camelCase at a lower-to-upper boundary; turn every run of
+#' other characters into one word break; an empty name becomes \code{x};
+#' join the words in the chosen case; prefix \code{x} to a name starting
+#' with a digit; and give repeated names the suffixes \code{<sep>2},
+#' \code{<sep>3}, ... in order of appearance (the first keeps its name).
+#' The transliteration depends on the platform's iconv, so an accented
+#' letter may come out slightly differently on different systems.
 #'
 #' Record the mapping in the capsule manifest. Cleaning names changes what
 #' a downstream script must refer to, so an unrecorded cleaning is itself a
 #' reproducibility hazard -- the returned object carries the original names
-#' in its `"original_names"` attribute for exactly that.
+#' in its \code{"original_names"} attribute for exactly that.
 #'
 #' @param data A data frame, or a character vector of names.
-#' @param case `"snake"` (default), `"lower_camel"`,
-#' `"upper_camel"`, `"screaming_snake"`, or `"none"` to
-#' normalise separators only.
-#' @param sep Separator for `"snake"` and
-#' `"screaming_snake"` (default `"_"`) .
-#' @return The data frame with new names (and an `"original_names"`
-#' attribute), or the cleaned character vector.
+#' @param case \code{"snake"} (default, \code{total_pop}), \code{"lower_camel"}
+#'   (\code{totalPop}), \code{"upper_camel"} (\code{TotalPop}),
+#'   \code{"screaming_snake"} (\code{TOTAL_POP}), or \code{"none"} to normalise
+#'   separators only and keep the letters' case.
+#' @param sep Separator, a string, used between words for \code{"snake"},
+#'   \code{"screaming_snake"} and \code{"none"}, and before the number that
+#'   disambiguates a duplicate in every case (default \code{"_"}).
+#' @return For a data frame, the data frame with new names and an
+#'   \code{"original_names"} attribute (character, the names before cleaning);
+#'   for a character vector, the cleaned character vector.
 #' @examples
 #' clean_column_names(c("Total  Population (2021)", "% change",
 #'                      "Ville / City", "dup", "dup"))
@@ -407,6 +514,12 @@ drop_constant <- function(data, na_as_value = FALSE) {
 #' clean_column_names(c("Total Pop"), case = "lower_camel")
 #' clean_column_names(c("Total Pop"), case = "upper_camel")
 #' clean_column_names(c("Total Pop"), case = "screaming_snake")
+#'
+#' # a different separator, and a name that starts with a digit
+#' clean_column_names(c("2021 count", "Rate per 1000"), sep = ".")
+#'
+#' # an unknown case is an error
+#' try(clean_column_names("a b", case = "kebab"))
 #' @export
 clean_column_names <- function(data, case = c("snake", "lower_camel",
                                               "upper_camel",

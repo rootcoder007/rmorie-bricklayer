@@ -10,21 +10,50 @@ write_recode_manifest(manifest, path)
 verify_recode_manifest(path, original, recoded)
 }
 \arguments{
-\item{manifest}{A \code{\link[=recode_manifest]{recode_manifest()}}.}
+\item{manifest}{A manifest returned by \code{\link{recode_manifest}}.}
 
-\item{path}{File to write (JSON).}
+\item{path}{Character string: the JSON file to write
+(\code{write_recode_manifest()}) or read (\code{verify_recode_manifest()}).}
 
-\item{original, recoded}{The vectors to check the manifest against.}
+\item{original, recoded}{The vectors before and after the recode, to check
+the manifest against.}
 }
 \value{
-\code{write_recode_manifest()} returns the path invisibly.
+\code{write_recode_manifest()} returns \code{path} invisibly.
 
-\code{verify_recode_manifest()} returns a list with \code{ok}, \code{reasons}
-(character, empty when ok), \code{signature_ok} (\code{NA} when unsigned) and the
-manifest.
+\code{verify_recode_manifest()} returns a list with \code{ok}
+(logical), \code{reasons} (character, \code{character(0)} when
+\code{ok}), \code{signature_ok} (logical, \code{NA} when the manifest is
+unsigned) and \code{manifest} (the parsed JSON as a list).
 }
 \description{
-Write and verify a recode manifest
+\code{write_recode_manifest()} saves a manifest from
+\code{\link{recode_manifest}} as a JSON file. \code{verify_recode_manifest()}
+reads such a file back and checks it against the data: that the mapping
+and the manifest body are unchanged since they were written, that the
+recode in the data still matches the recorded mapping, that the recoded
+counts are the recorded counts, and, for a signed manifest, that the
+signature verifies. Use the pair to hand a recode to a reviewer or to
+re-check it before a later analysis.
+}
+\details{
+\code{verify_recode_manifest()} collects every failure in \code{reasons}
+instead of stopping at the first:
+\itemize{
+\item the SHA-256 of the stored mapping differs from \code{mapping_sha256};
+\item the SHA-256 of the body (all fields except \code{body_sha256},
+\code{signature} and \code{public_key}) differs from \code{body_sha256},
+meaning the file was edited after it was written;
+\item \code{\link{verify_recode}(original, recoded, mapping)} fails;
+\item the counts of \code{recoded} differ from \code{counts_after}.
+}
+The signature, when present, is checked with \code{\link{capsule_verify}}
+over the stored \code{body_sha256}. It therefore proves who wrote that
+hash; the body check above proves the body still matches it. Both are
+needed for \code{ok = TRUE}.
+
+\code{write_recode_manifest()} errors when \code{manifest} is not a
+\code{bricklayer_recode_manifest}; it overwrites \code{path}.
 }
 \examples{
 x <- c("W", "B", "W")
@@ -32,4 +61,12 @@ y <- guard_recode(x, c(W = "White", B = "Black"))
 m <- recode_manifest(x, y, c(W = "White", B = "Black"))
 p <- write_recode_manifest(m, tempfile(fileext = ".json"))
 verify_recode_manifest(p, x, y)$ok
+
+# the data changed after the manifest was written
+y2 <- y
+y2[2] <- "White"
+verify_recode_manifest(p, x, y2)$reasons
+
+# only manifests can be written
+try(write_recode_manifest(list(a = 1), tempfile()))
 }

@@ -23,21 +23,38 @@ A data frame of class \code{bricklayer_outliers} with
 \code{row}, \code{distance} (the square root of the squared Mahalanobis
 distance), \code{p_value}, \code{log_p_value} (the log of the chi-square upper
 tail, which keeps its information where \code{p_value} underflows to 0) and
-\code{outlier}, ordered by descending distance.
+\code{outlier} (logical), ordered by descending distance, with skipped rows
+(\code{NA} distance) last. \code{row} is the row number in \code{data}. The attributes
+\code{robust} and \code{alpha} record the settings. The print method shows the
+number of flagged rows and the ten most distant.
 }
 \description{
+Finds the rows of a numeric table that are unusual as a combination of
+values, not just on one variable at a time, and gives each row a
+distance, a p-value and an outlier flag. Use it before modelling to find
+records that are probably data-entry or linkage errors.
+}
+\details{
 Ranks rows by how far they sit from the centre of the data ONCE THE
 CORRELATIONS ARE ACCOUNTED FOR, which is what a per-column check cannot
 do: a row can be unremarkable on every variable separately and still be
 impossible jointly -- a person 1.5 m tall weighing 140 kg is inside both
 marginal ranges and outside the cloud.
-}
-\details{
-Under multivariate normality the squared distance is chi-square on
-\code{p} degrees of freedom, which gives the p-value and the cut-off.
 
-\code{robust = TRUE} centres on the coordinate-wise median and scales by
-a MAD-based covariance instead of the mean and sample covariance. This
+With centre \eqn{c} and scatter matrix \eqn{S}, the squared distance of
+row \eqn{x} is \deqn{d^2 = (x - c)^\top S^{-1} (x - c).}
+Under multivariate normality the squared distance is chi-square on
+\code{p} degrees of freedom (the number of numeric columns), which gives the
+p-value and the cut-off.
+
+\code{robust = TRUE} centres each column on its median and scales it by its
+MAD (\code{core_mad()}, the 1.4826-scaled median absolute deviation;
+a column whose MAD is zero falls back to its standard deviation), then
+takes \eqn{S} as the sample covariance of the standardised data.
+\code{robust = FALSE} uses the column means and the sample covariance. The
+robust centre and scales resist outliers; the correlation shape in
+\eqn{S} is still a classical estimate, so this is not a high-breakdown
+estimator such as the minimum covariance determinant. The choice
 matters more than it sounds: outliers inflate the very covariance used
 to judge them, so with several of them the classical distance hides
 exactly the rows it is meant to find (the masking effect).
@@ -47,6 +64,11 @@ is undefined there, and flooring the covariance's eigenvalues to make it
 invertible would return numbers governed by the floor rather than by the
 data. Drop the redundant column first --
 \code{\link[=top_correlations]{top_correlations()}} will identify it.
+
+Errors: \code{data} neither a data frame nor a matrix; no numeric columns;
+no more complete rows than columns; collinear columns (smallest
+eigenvalue of \eqn{S} at most \eqn{10^{-8}} times the largest); \code{alpha}
+outside (0, 1). A progress indicator is shown in an interactive session.
 }
 \examples{
 set.seed(1)

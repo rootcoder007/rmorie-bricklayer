@@ -6,12 +6,21 @@
 
 #' Hot spots and how long they last
 #'
-#' Counts incidents in square cells of side `cell` (kilometres
+#' Counts incidents (break-ins, shootings, calls for service) in square
+#' grid cells for each period, measures how concentrated they are, picks out
+#' the hot cells of each period and says how much the hot set of one period
+#' overlaps the next. A hot spot that persists is a place problem; one that
+#' moves from period to period is not, and the two call for different
+#' responses.
+#'
+#' @details
+#' Counts incidents in square cells of side \code{cell} (kilometres
 #' for longitude and latitude, map units otherwise) for each
 #' period and reports, per period: the incidents, the cells with
 #' any, the share of the ever-active cells that holds half the
-#' incidents, the hot cells (the `top` share of the ever-active
-#' cells with the most incidents, with the cells tied at the cut
+#' incidents (the law of crime concentration: a small share of places
+#' holds half the incidents), the hot cells (the \code{top} share of the
+#' ever-active cells with the most incidents, with the cells tied at the cut
 #' included unless the tie would more than double the hot set) and
 #' their share of the incidents, and the Jaccard
 #' overlap of the hot set with the previous period's (shared hot
@@ -21,26 +30,54 @@
 #' The ever-active cells (a cell with at least one incident in
 #' some period) are the base for the shares, so the empty land
 #' and water inside a city's bounding box do not dilute the
-#' concentration.
+#' concentration. The number of hot cells per period is
+#' \eqn{k = \max(1, \lceil top \times n_{cells} \rceil)}.
+#'
+#' Longitude and latitude are projected onto a flat map through the median
+#' point (equirectangular, Earth radius 6371.0088 km), which is accurate for
+#' a city or region; a warning is given when the incidents span more than
+#' 2000 km. The grid starts at the smallest projected coordinate. Points at
+#' (0, 0), the raw exports' "no location", are dropped with a message, as
+#' are incidents with a non-finite coordinate or a missing period; longitudes
+#' across the antimeridian are taken on one side of it. When a tie empties a
+#' period's hot set, its overlap with the neighbouring periods is \code{NA},
+#' not 0. The plot method draws the concentration, the overlap and a map of
+#' the cells.
+#'
+#' Errors: \code{lon}, \code{lat} and \code{period} of different lengths;
+#' \code{cell} not one positive number; \code{top} not in (0, 1];
+#' coordinates outside the degree ranges with \code{coords = "lonlat"}; fewer
+#' than two usable incidents.
 #'
 #' @param lon,lat Incident coordinates: longitude and latitude
-#'   in degrees, or planar coordinates with `coords = "planar"`.
+#'   in degrees, or planar coordinates with \code{coords = "planar"}.
 #' @param period The period of each incident (a year, a month, a
-#'   date); periods are taken in sorted order.
+#'   date, a label such as \code{"Q1"}); periods are taken in sorted order.
 #' @param cell Side of a grid cell: kilometres for longitude and
-#'   latitude, map units otherwise.
+#'   latitude, map units otherwise; one positive number, default 0.25.
 #' @param top Share of the ever-active cells counted as hot in
-#'   each period.
-#' @param coords `"lonlat"` or `"planar"`.
-#' @return An object of class `rmbl_hotspot`: `periods` (one row
-#'   per period; `tied_in` counts the cells made hot only by a tie
-#'   with the k-th busiest, `tied_out` the tied cells left out when
-#'   the tie would have made more than twice `k` cells hot, which
-#'   printing says), `cells` (one row per ever-active cell, with
-#'   its centre in the input's units), and the settings. Points at
-#'   (0, 0), the raw exports' "no location", are dropped, and
-#'   longitudes across the antimeridian are taken on one side of
-#'   it.
+#'   each period, in (0, 1]; default 0.05 (the busiest 5%).
+#' @param coords \code{"lonlat"} (the default, degrees) or \code{"planar"}
+#'   (projected coordinates, such as metres in a UTM zone).
+#' @return An object of class \code{rmbl_hotspot}, a list:
+#'   \describe{
+#'     \item{\code{periods}}{data frame, one row per period: \code{period}
+#'       (character), \code{incidents}, \code{active_cells}, \code{cells_for_half}
+#'       (fewest cells holding half the incidents), \code{share_for_half}
+#'       (that number over the ever-active cells), \code{hot_cells},
+#'       \code{tied_in} (the cells made hot only by a tie with the k-th busiest),
+#'       \code{tied_out} (the tied cells left out when the tie would have made
+#'       more than twice \code{k} cells hot, which printing says),
+#'       \code{hot_share} (share of the incidents in hot cells) and
+#'       \code{jaccard_previous} (\code{NA} for the first period). Shares are
+#'       proportions in \eqn{[0, 1]}.}
+#'     \item{\code{cells}}{data frame, one row per ever-active cell: \code{x}, \code{y}
+#'       (its centre in the input's units), \code{incidents} and
+#'       \code{periods_hot}.}
+#'     \item{\code{cell}, \code{top}, \code{coords}}{the settings.}
+#'     \item{\code{n_cells}, \code{hot_k}}{the number of ever-active cells and
+#'       \eqn{k}.}
+#'   }
 #' @examples
 #' b <- read.csv(system.file("extdata", "tps_break_enter_d14_2024.csv",
 #'                           package = "rmoriebricklayer"))
@@ -49,6 +86,21 @@
 #' h <- hotspot_persistence(b$lon, b$lat, q, cell = 0.3)
 #' h$periods
 #' plot(h)
+#'
+#' # the cells hot in every quarter
+#' subset(h$cells, periods_hot == 4)
+#'
+#' # larger cells and a wider hot set
+#' h2 <- hotspot_persistence(b$lon, b$lat, q, cell = 0.5, top = 0.1)
+#' h2$periods[, c("period", "hot_cells", "hot_share", "jaccard_previous")]
+#'
+#' # planar coordinates, here in kilometres
+#' set.seed(3)
+#' hotspot_persistence(stats::runif(200, 0, 10), stats::runif(200, 0, 10),
+#'                     rep(2023:2024, 100), cell = 2, top = 0.2, coords = "planar")
+#'
+#' # a share of zero hot cells is refused
+#' try(hotspot_persistence(b$lon, b$lat, q, top = 0))
 #' @export
 hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coords = c("lonlat", "planar")) {
   coords <- .rmbl_arg(coords)
@@ -173,9 +225,12 @@ print.rmbl_hotspot <- function(x, ...) {
   # the counts are too even (or the cells too small) to single out hot spots
   tied <- !is.na(d$tied_out) & d$tied_out > 0
   if (any(tied)) {
-    cat(sprintf(paste("Note: in %s, %s cells tied with the busiest %d were left out of the hot set; the counts",
+    # one "period p: n cells tied" per period: pasting the periods and the counts as two lists read
+    # as one list ("in 1, 2, 100, 100 cells tied")
+    cat(sprintf(paste("Note: cells tied with the busiest %d were left out of the hot set (%s); the counts",
                       "are too even (or the cells too small) to single out hot spots\n"),
-                paste(d$period[tied], collapse = ", "), paste(d$tied_out[tied], collapse = ", "), x$hot_k))
+                x$hot_k, paste(sprintf("period %s: %d cells tied", d$period[tied], d$tied_out[tied]),
+                               collapse = "; ")))
   }
   invisible(x)
 }

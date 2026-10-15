@@ -7,18 +7,37 @@
 core_sha256(x)
 }
 \arguments{
-\item{x}{A character vector or a raw vector.}
+\item{x}{A character vector, or a raw vector. Other atomic vectors are
+converted with \code{as.character()}.}
 }
 \value{
-A character vector of 64-character lowercase hex digests (one
-per element for character input; length-1 for raw input).
+A character vector of 64-character lowercase hex digests: one per
+element for character input, length 1 for raw input
+(\code{character(0)} for an empty character vector).
 }
 \description{
-Hashes character or raw input with the self-contained SHA-256 in the
-\code{rmoriebricklayer} core. For a character vector each element is
-hashed as its UTF-8/native bytes; for a raw vector the raw bytes are
-hashed. This is the same routine sibling packages use for provenance via
+Computes the SHA-256 hash (FIPS 180-4) of text or raw bytes with the
+self-contained implementation in the package's compiled core, and returns
+it as a 64-character lowercase hexadecimal string. A hash is a short
+fingerprint: any change to the input changes it, so it is used throughout
+the package to record exactly which data, mapping or file a result came
+from. Sibling packages use the same routine through
 \code{LinkingTo: rmoriebricklayer}.
+}
+\details{
+For a raw vector the bytes are hashed as one message and one digest is
+returned. Any other input is converted with \code{as.character()} and each
+element is hashed separately, as the bytes of the string as stored in
+memory (no re-encoding). In a UTF-8 session those are the UTF-8 bytes;
+for a string marked latin1 they are the latin1 bytes, so use
+\code{enc2utf8()} first when the digest must be the same on every
+platform. \code{NA} gives \code{NA}. Numbers are hashed through their
+printed form (\code{1} hashes as \code{"1"}), and a factor through its
+labels.
+
+For a digest of a whole R object, hash its serialization (see the
+examples) or use \code{\link{digest_object}}; for BLAKE2b use
+\code{\link{core_blake2b}}.
 }
 \examples{
 # Hash a character scalar (NIST test vector for "abc").
@@ -26,11 +45,18 @@ core_sha256("abc")
 # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 
 # Vectorised over character input: one digest per element.
-core_sha256(c("abc", "def"))
+core_sha256(c("abc", "def", NA))
 
 # Raw input hashes the bytes directly; identical to the character form.
 identical(core_sha256("abc"), core_sha256(charToRaw("abc")))
 
+# The empty message.
+core_sha256(raw(0))
+
 # Fingerprint an arbitrary object via its serialization.
 core_sha256(serialize(list(a = 1L, b = "x"), NULL))
+}
+\references{
+National Institute of Standards and Technology (2015). Secure Hash
+Standard (SHS). FIPS PUB 180-4. \doi{10.6028/NIST.FIPS.180-4}
 }

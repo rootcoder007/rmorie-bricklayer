@@ -10,26 +10,57 @@ install_cli(
 )
 }
 \arguments{
-\item{dir}{Target directory (default \code{~/.local/bin}; created if
-absent).}
+\item{dir}{Character scalar, the target directory; default
+\code{~/.local/bin}. Created (with its parents) if absent.}
 
-\item{name}{Command names to install (default both \code{rmoriebricklayer}
-and its short form \code{rmbl}; every verb works under either).}
+\item{name}{Character vector of command names to install; default both
+\code{rmoriebricklayer} and its short form \code{rmbl} (every verb works
+under either).}
 }
 \value{
-The path of the installed \code{rmoriebricklayer} launcher,
-invisibly (\code{rmbl} is written beside it).
+The path of the first launcher written (normally
+\code{rmoriebricklayer}), invisibly; the others are written beside it.
 }
 \description{
-Links the launcher shipped in the package (\code{inst/bin/rmoriebricklayer})
-into a directory on your PATH so that \code{rmoriebricklayer login},
-\code{rmbl ask ...} and the other verbs of
-\code{\link{bricklayer_cli}} work from any shell. On Windows a
-\code{rmoriebricklayer.cmd} wrapper is written instead of a symlink.
-Nothing outside \code{dir} is touched, and only when you call this.
+Writes small launcher scripts into a directory on your PATH so that
+\code{rmoriebricklayer login}, \code{rmbl ask ...} and the other verbs of
+\code{\link{bricklayer_cli}} work from any shell. Run it once after
+installing or upgrading the package. Nothing outside \code{dir} is
+touched, and only when you call this.
+}
+\details{
+On Unix-alikes each launcher is a \code{/bin/sh} script (mode 0755) that
+sets \code{RMBL_PROG} to its own name and runs
+\code{Rscript -e "rmoriebricklayer::bricklayer_cli()"} with the shell's
+arguments, exiting with the function's status (130 on Ctrl-C). The library
+this copy of the package is installed in is pinned inside R with
+\code{.libPaths()}, so an \code{R_LIBS} set in the shell or in
+\code{~/.Renviron} cannot make the command run another copy. An existing
+file or link of the same name in \code{dir} is replaced. On Windows a
+\code{NAME.cmd} batch wrapper doing the same is written instead. A message
+names the files written and, when \code{dir} is not on the \code{PATH},
+says to add it. Re-run it after moving the package to another library.
+
+Errors when the package installation has no launcher in
+\code{inst/bin} (a damaged installation), and from base R when \code{dir}
+cannot be created or written; when \code{dir} is not one string; and
+when \code{name} is not a character vector of one or more command names
+(empty, \code{NA}, an empty string or a name with a directory part is
+refused).
 }
 \examples{
+# into a scratch folder, so nothing on your PATH changes
+d <- file.path(tempdir(), "bin")
+p <- install_cli(dir = d)
+list.files(d)
+readLines(p)[1:4]
+
+# one name only
+install_cli(dir = d, name = "rmbl")
 \dontrun{
-install_cli()
+install_cli()   # ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl
 }
+}
+\seealso{
+\code{\link{bricklayer_cli}} for the verbs.
 }

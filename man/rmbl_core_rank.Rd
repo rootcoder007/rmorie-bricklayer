@@ -11,13 +11,13 @@ core_cor_spearman(x, y)
 core_midranks(x)
 }
 \arguments{
-\item{x, y}{Numeric vectors of the same length.}
+\item{x, y}{Numeric (or logical) vectors of the same length.}
 }
 \value{
-\code{core_cor_spearman()} a length-1 numeric in \ [-1, 1];
-\code{core_midranks()} a numeric vector the length of \code{x}.
-
-[-1, 1]: R:-1,\%201\%5C
+\code{core_cor_spearman()}: a length-1 numeric in \eqn{[-1, 1]}
+(\code{NaN} as described above). \code{core_midranks()}: a numeric vector the
+length of \code{x}, the rank of each value (1 for the smallest; tied values
+share the mean of their ranks; \code{NA} kept as \code{NA}).
 }
 \description{
 \code{core_cor_spearman()} is Spearman's rho: the Pearson correlation of
@@ -26,7 +26,26 @@ association and is unaffected by any order-preserving transformation of
 either variable. \code{core_midranks()} exposes the ranks themselves;
 tied values share the average of the ranks they span, which is what
 makes the result agree with \code{\link[stats:cor]{stats::cor()}} on
-tied data.
+tied data. Use Spearman's rho when two variables rise and fall together
+but not along a straight line (counts against rates, incomes against
+ranks), or when a few extreme values would dominate a Pearson
+correlation.
+}
+\details{
+With \eqn{r_i} and \eqn{s_i} the midranks of \eqn{x_i} and \eqn{y_i},
+\deqn{\rho = \frac{\sum_i (r_i - \bar r)(s_i - \bar s)}
+  {\sqrt{\sum_i (r_i - \bar r)^2 \sum_i (s_i - \bar s)^2}},}
+the Pearson correlation of the ranks (Spearman, 1904). Because ties get
+midranks, the shortcut \eqn{1 - 6 \sum d_i^2 / (n(n^2 - 1))} is NOT what
+is computed; the full formula above is, and it stays correct with ties.
+
+\code{core_cor_spearman()} does not remove missing values: an \code{NA} in either
+vector gives \code{NaN}, and so does a constant vector (its ranks have no
+variance). \code{core_midranks()} leaves an \code{NA} in place and ranks the rest,
+as \code{rank(x, na.last = "keep")} does. Refusals: vectors of different
+lengths (\code{"must have the same length"}) and a character, factor or list
+argument (\code{"must be numeric"}). Ranking sorts, so the cost is
+\eqn{O(n \log n)}.
 }
 \examples{
 x <- c(1, 2, 3, 4, 5)
@@ -47,4 +66,16 @@ all.equal(core_midranks(xt), rank(xt))
 
 # Invariant to any monotone rescaling.
 all.equal(core_cor_spearman(x, y), core_cor_spearman(exp(x), log(y)))
+
+# Missing values are kept in place by core_midranks().
+core_midranks(c(3, NA, 1, 3))
+try(core_cor_spearman(1:3, 1:4))
+}
+\references{
+Spearman C (1904). The proof and measurement of association
+between two things. \emph{The American Journal of Psychology} 15(1),
+72--101. \doi{10.2307/1412159}
+}
+\seealso{
+\code{\link[=core_cor]{core_cor()}} for the Pearson correlation.
 }

@@ -14,18 +14,27 @@ change_envelope(
 )
 }
 \arguments{
-\item{now, previous}{\code{rmbl_bounds} (or data frames with \code{lower} and
-\code{upper}) for the current and the earlier cell, of equal length.}
+\item{now, previous}{\code{rmbl_bounds} objects from
+\code{\link[=published_bounds]{published_bounds()}} (or data frames with numeric
+\code{lower} and
+\code{upper}) for the current and the earlier cell, with the same number
+of rows.}
 
-\item{population, previous_population}{Optional exposures for a rate
-envelope; the rate is \code{per * count / population}.}
+\item{population, previous_population}{Optional numeric exposures (for
+example residents) for a rate envelope of the current and the previous
+cell; the rate is \code{per * count / population}. Default \code{NULL}.
+\code{previous_population} is used only with \code{population}.}
 
-\item{per}{Rate denominator when exposures are given.}
+\item{per}{Numeric scalar, the rate base when exposures are given; default
+\code{1000} (per 1,000).}
 }
 \value{
-A data frame with \code{change_lower}, \code{change_upper},
-\code{pct_lower}, \code{pct_upper} (\code{NA} where the previous cell could have been
-zero) and, with exposures, \code{rate_lower}, \code{rate_upper}.
+A data frame, one row per cell, with numeric columns
+\code{change_lower}, \code{change_upper}, \code{pct_lower},
+\code{pct_upper} (\code{NA} where the previous cell could have been
+zero); with \code{population} also \code{rate_lower} and
+\code{rate_upper}; with \code{previous_population} as well
+\code{previous_rate_lower} and \code{previous_rate_upper}.
 }
 \description{
 Given the intervals from \code{\link[=published_bounds]{published_bounds()}}
@@ -37,8 +46,35 @@ the ratio are monotone in each argument. This is interval arithmetic,
 not a confidence interval; it says nothing about sampling and everything
 about what the release withheld.
 }
+\details{
+With current interval \eqn{[a_l, a_u]} and previous interval
+\eqn{[b_l, b_u]}: the change lies in \eqn{[a_l - b_u, a_u - b_l]} and the
+percent change in \eqn{[100(a_l / b_u - 1), 100(a_u / b_l - 1)]}. An end of
+the percent interval is \code{NA} when its denominator could be zero (an
+upper bound needs \eqn{b_l > 0}, a lower bound \eqn{b_u > 0}), since a
+change from zero has no percentage. A rate interval is
+\eqn{[per \cdot a_l / pop, per \cdot a_u / pop]}; the population is taken
+as exact.
+
+Errors when \code{now} and \code{previous} have different numbers of
+rows. The populations are not checked; give one per row (or one value).
+}
 \examples{
 now <- published_bounds(c(45, 120), rounding = 5)
 prev <- published_bounds(c(40, 100), rounding = 5)
 change_envelope(now, prev)
+
+# with rates per 1,000 residents in both years
+change_envelope(now, prev, population = c(10000, 20000),
+                previous_population = c(10000, 19000))
+
+# a suppressed previous cell could have been zero: no upper percentage
+change_envelope(published_bounds(12), published_bounds("<5"))
+
+# the two sides must line up
+try(change_envelope(now, prev[1, ]))
+}
+\seealso{
+\code{\link[=published_bounds]{published_bounds()}},
+\code{\link[=yoy_bounds]{yoy_bounds()}}.
 }
