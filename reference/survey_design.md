@@ -128,7 +128,11 @@ for \\B\\ replicates:
 - `"bootstrap"`:
 
   \\1/B\\: the Rao-Wu rescaled bootstrap Statistics Canada ships with
-  its public-use files.
+  its public-use files. It is not the survey package's
+  `type = "bootstrap"` (Canty and Davison's), whose scale is \\m/((m -
+  1)(B - 1))\\ for \\m\\ PSUs a stratum: for those replicates give that
+  factor over \\1/B\\ in `rscales`, \\B m/((m - 1)(B - 1))\\ for each,
+  with `mse = FALSE` (survey's default centring).
 
 - `"mean_bootstrap"`:
 

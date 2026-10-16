@@ -74,7 +74,7 @@ try(bricklayer_fetch("https://127.0.0.1/data.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/data.csv'): refused (a local or private address (127.0.0.1))
 try(bricklayer_fetch("https://example.org/data.csv",
                      file.path(tempdir(), "no-such-dir", "data.csv")))
-#> Error : bricklayer_fetch: cannot write /tmp/RtmpmyxrsO/no-such-dir/data.csv (its directory does not exist)
+#> Error : bricklayer_fetch: cannot write /tmp/Rtmp4S3sau/no-such-dir/data.csv (its directory does not exist)
 
 if (FALSE) { # \dontrun{
 # needs the network

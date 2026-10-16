@@ -156,14 +156,24 @@ plot(cd)
 
 ![](courts-and-crime_files/figure-html/simpson-1.png)
 
+``` r
+
+# a group's share of the cases received in a year, as a percentage
+share <- function(group, yr) {
+  sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
+}
+```
+
 Between 2014 and 2022 the province-wide clearance rate moved by -0.0011.
-Held at a fixed mix it moved by +0.0096; the shift of work – toward
-crimes against the person, the group with the lowest clearance rate, and
-away from federal-statute cases, the group with the highest –
-contributed -0.0107. The crude ratio’s interval includes 1; within
-offence groups the ratio is 1.0085 (1.0024 to 1.0146). Read alone, the
-aggregate would say nothing changed; within the groups, clearance
-improved.
+Held at a fixed mix it moved by +0.0096; the shift of work contributed
+-0.0107. Crimes against the person, the group with the lowest clearance
+rate in both years, grew from 26% to 32% of the cases received, and
+federal-statute cases, the group with the highest rate in 2022, fell
+from 11% to 5%. 4 of the 6 groups cleared a larger share in 2022 and 2 a
+smaller one. The crude ratio’s interval includes 1; the Mantel-Haenszel
+ratio within offence groups is 1.0085 (1.0024 to 1.0146). Read alone,
+the aggregate would say nothing changed; within the groups, taken
+together, clearance improved, though not in every group.
 
 The grouping matters, and so does the pair of years. By court, with
 Toronto’s courthouses taken together (they were consolidated in 2023),

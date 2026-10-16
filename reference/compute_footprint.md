@@ -195,18 +195,18 @@ Quantifying the carbon emissions of machine learning. arXiv:1910.09700.
 ``` r
 fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON")
 fp$energy_kwh$total
-#> [1] 2.684254e-08
+#> [1] 1.342127e-08
 fp$co2e_g
-#> [1] 2.441866e-06
+#> [1] 1.220933e-06
 fp$carbon_intensity$year
 #> [1] 2024
 fp$assumptions
 #> [1] "CPU power unknown: 85 W x 50% (codecarbon fallback)"
 #> [2] "memory charged: the machine's total 15.6 GB"        
 print(fp)
-#> Computation footprint (modelled): 0.002 s wall, 0.002 s CPU, utilisation 0.25 (process) on 4 cores
-#>   energy: 2.68e-08 kWh (cpu 2.36e-08, memory 3.23e-09)
-#>   CO2e:   2.44e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.001 s wall, 0.001 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 1.34e-08 kWh (cpu 1.18e-08, memory 1.62e-09)
+#>   CO2e:   1.22e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 #>   assumed: CPU power unknown: 85 W x 50% (codecarbon fallback); memory charged: the machine's total 15.6 GB 
 # wherever you are, offline: the location is detected and recorded
 compute_footprint(1 + 1, cpu_power_w = 45, memory_gb = 8)$assumptions
@@ -220,20 +220,20 @@ fp2 <- compute_footprint(sum(sqrt(seq_len(2e5))), location = 30, usage = 0.5,
                          cpu_power_w = 65, memory_gb = 16, pue = 1.67, method = "model")
 fp2$energy_kwh
 #> $cpu
-#> [1] 4.522917e-08
+#> [1] 1.507639e-08
 #> 
 #> $memory
-#> [1] 8.294333e-09
+#> [1] 2.764778e-09
 #> 
 #> $total
-#> [1] 5.35235e-08
+#> [1] 1.784117e-08
 #> 
 footprint_equivalents(fp2$co2e_g)
 #> $car_km
-#> [1] 9.175457e-09
+#> [1] 3.058486e-09
 #> 
 #> $tree_months
-#> [1] 1.751041e-09
+#> [1] 5.836805e-10
 #> 
 #> $sources
 #>                                                                  car 

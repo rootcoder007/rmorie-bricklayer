@@ -72,7 +72,8 @@ CSV is read in compiled code with the same result as
 `read.csv(gzfile(f), stringsAsFactors = FALSE)`; tables that inflate
 past 512 MiB are read by
 [`read.csv()`](https://rdrr.io/r/utils/read.table.html) itself, a piece
-at a time.
+at a time. A table that decompresses to more than the option
+`rmoriebricklayer.max_csv_bytes` (1 GiB by default) is refused.
 
 The key is sent only to the address of the signed services document.
 With `MORIE_DATA_URL` set to another address the key is not sent and the

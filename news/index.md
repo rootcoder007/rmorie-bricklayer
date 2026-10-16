@@ -17,6 +17,79 @@
   on data.rmorie.com), moves the observational estimate against the PSID
   controls from -15,205 to 618 dollars, against the experimental 1,794.
 
+### Fixes from the CRAN stress test of b617a3f
+
+- **A key next to punctuation never reaches a model.** A question with
+  no verb is refused as one when a key-shaped run appears anywhere in it
+  (`KEY?`, `"my key is KEY, thanks?"`, a key after a no-break or
+  zero-width space), not only as a whole word: those went to the first
+  provider, the wrong one for the key. Function names
+  (`bricklayer_json_base64url_dec`) are not taken for keys. A verb typo
+  with a `?` apart (`rmbl "doctr ?"`), a leading ideographic space or
+  quotes is a near miss, named in “did you mean”; a CJK question ending
+  in a full-width question mark is asked.
+- **[`survey_design()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/survey_design.md)**:
+  genuine replicates passed by name are no longer refused when two of
+  them are identical (216 of 2,400 test designs); JKn replicates of
+  other strata, which equal the weight on a stratum subset, are accepted
+  (every replicate equal to the weight is refused); a stratified
+  bootstrap whose replicates equal the weight by chance, and
+  post-stratified or calibrated jackknife subsets, are no longer warned
+  about; a replicate a tenth of the weight’s scale (a normalised weight,
+  a multiplier column) is said, as one ten times it was. Rows reordered
+  and then a column dropped or one cell edited are refused (the SE was
+  silently wrong); a row-name reset is accepted. The Rd says how to read
+  the survey package’s own bootstrap replicates.
+- **Interrupts and time limits**: every POST polls for Ctrl-C and
+  [`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html), not only
+  when the wait label shows (Wayback `/save`, OCSP, the data-key check,
+  `ask` with stderr redirected); a Ctrl-C in
+  [`bricklayer_fetch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_fetch.md)
+  or
+  [`wayback_snapshot_url_native()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/wayback_snapshot_url_native.md)
+  is raised at once instead of running the Wayback lookups on to their
+  timeouts; the Wayback back-off without a terminal sleeps a second at a
+  time, so a time limit ends it.
+- **[`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)**
+  applies the option `rmoriebricklayer.max_csv_bytes` (1 GiB by default)
+  on both of its read paths.
+- **CSV reader parity with
+  [`read.csv()`](https://rdrr.io/r/utils/read.table.html)**: a line of
+  NUL bytes is skipped; integers with leading zeros past ten characters
+  are integers; a header of `""` alone is a table of no columns; blanks
+  outside a quoted header name are dropped; quotes after a closing quote
+  are read as quotes; a header past a million fields is refused before
+  it is held.
+- **Language models**: the last turn after the help-page lookups keeps
+  the tools declared with calls turned off and rides on the last tool
+  result (it was a second user turn with no tools, which Anthropic
+  refuses); an SSE error event, or a 200 that carries an error, is said
+  with its message; the saved-answer key includes a digest of the API
+  key in use.
+- **C and C++**: argument errors and large allocations inside the entry
+  points unwind through the barrier, so their buffers are freed
+  (`sen_slopes()` leaked 858 MB at a failed allocation; small leaks in
+  the HTTP header, gini, merkle, XMSS and BLAKE2b paths); a NaN or huge
+  `timeout` is no longer cast to an integer (undefined behaviour).
+- **Statistics**: `hurwitz_zeta(s, 1/2)` is `(2^s - 1) zeta(s)`, exact
+  beside the trivial zeros; a point at -1e300 no longer collapses the
+  Knox and hot-spot grids.
+- **Arguments**: a seed that is not one whole number is refused in words
+  wherever a function seeds the RNG, and seeds now run from -2147483647
+  to 2^53 - 1: past [`set.seed()`](https://rdrr.io/r/base/Random.html)’s
+  32 bits the Mersenne-Twister state is built from the seed (each seed
+  its own stream; seeds in the integer range give the stream they always
+  did); `lagrangian_particles(normals =)` must be a function returning
+  `n` finite numbers; a plot method given something its class’s function
+  did not make says so.
+- **SIU parsing** of a long run of letters is linear (a 1 MB
+  `<p>AAAA...` took four minutes; now 2.4 s).
+- The courts vignette’s case-mix paragraph is computed from its table; a
+  test no longer writes `Rplots.pdf` into the tests directory; a
+  complex-NA test follows R’s own coercion (it failed on R 4.3); the
+  heaviest signature-vector blocks (about 100 s) are skipped on CRAN and
+  run in CI.
+
 ### Live progress for long work
 
 - **`bricklayer_progress(label, total)`**, exported: the animated bar of

@@ -155,7 +155,9 @@ the last copy on disk, however old, supplies the digest; with none, a fresh
 download is not kept and a cached file is kept but not used. The CSV is
 read in compiled code with the same result as
 <code>read.csv(gzfile(f), stringsAsFactors = FALSE)</code>; tables that inflate
-past 512 MiB are read by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> itself, a piece at a time.</p>
+past 512 MiB are read by <code><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv()</a></code> itself, a piece at a time. A
+table that decompresses to more than the option
+<code>rmoriebricklayer.max_csv_bytes</code> (1 GiB by default) is refused.</p>
 <p>The key is sent only to the address of the signed services document. With
 <code>MORIE_DATA_URL</code> set to another address the key is not sent and the
 download fails with a message saying so. Some tables (ICPSR studies, the
