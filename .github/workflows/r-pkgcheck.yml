@@ -102,9 +102,40 @@ jobs:
           # blocking the whole job on a stuck sibling would hide those.
           echo "gave up waiting; pkgcheck may read an unfinished run"
       # pkgcheck's verdict is the job's verdict: an advisory step that
-      # never fails is a check nobody reads
-      - uses: ropensci-review-tools/pkgcheck-action@562177730fb5e50099fcaccc19425457894c250a # main
+      # never fails is a check nobody reads.
+      #
+      # This runs pkgcheck-action's own container and its own /check.R,
+      # with one line added. pkgcheck 0.3.4 (CRAN, 2026-10-14) returns the
+      # CI-badges section of the report as a list whenever every
+      # 'cmd|coverage' workflow passed (output_pkgchk_ci()), so
+      # checks_to_markdown() returns a list and the action's
+      # writeLines(md, ...) stops with "can only write character objects"
+      # -- the job failed precisely because our CI was green. The action
+      # pulls the image as :latest, so pkgcheck cannot be pinned there.
+      # unlist() restores the character vector the script expects; every
+      # check, and the pass/fail rule, is the action's own.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.sha }}
-          post-to-issue: false
-          summary-only: false
+          fetch-depth: 0
+      - name: pkgcheck (pkgcheck-action container)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e GITHUB_TOKEN -e GITHUB_ACTIONS -e GITHUB_REPOSITORY \
+            -e GITHUB_SHA -e GITHUB_REF -e GITHUB_SERVER_URL -e GITHUB_API_URL \
+            -v "$GITHUB_WORKSPACE":/github/workspace -w /github/workspace \
+            --entrypoint bash ghcr.io/ropensci-review-tools/pkgcheck-action:latest -c '
+              set -euo pipefail
+              awk "{print} /^md <- checks_to_markdown\\(/{print \"md <- unlist(md, use.names = FALSE)\"}" /check.R > /tmp/check.R
+              grep -q "^md <- unlist(md" /tmp/check.R
+              echo "quit(status = as.integer(length(errors) > 0))" >> /tmp/check.R
+              Rscript /tmp/check.R'
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pkgcheck-report
+          path: .pkgcheck/
+          if-no-files-found: ignore
