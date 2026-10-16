@@ -2,7 +2,14 @@
 
 ## rmoriebricklayer 0.5.13
 
-### Live progress for long work
+- The survey-estimation vignette loads the CSUS 2023 public-use file and
+  its 1,000 mean bootstrap weights with
+  `bricklayer_data_load("csus_2023/pumf")` and
+  `("csus_2023/bootstrap")`, now hosted on data.rmorie.com, or downloads
+  them from Health Canada with
+  [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md);
+  it no longer calls rmorie, which this package never depends on. \##
+  Live progress for long work
 
 - **`bricklayer_progress(label, total)`**, exported: the animated bar of
   [`bricklayer_download()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_download.md)
@@ -19,6 +26,7 @@
   it is a spinner with the time so far and the current stage.
   `on.exit(p$done(), add = TRUE)` clears the line when the work fails or
   is interrupted.
+
 - **Wired into the long-running functions**: the bootstrap of
   [`exposure_response_plr()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/exposure_response_plr.md),
   the folds of
@@ -72,6 +80,7 @@
   [`distinct_sketch()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/rmbl_distinct.md)
   (read in blocks of a million; the counts and registers are those of
   one pass).
+
 - **A spinner for long native calls**: XMSS key generation and signing
   ([`pqc_keygen()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/pqc_keygen.md),
   a few seconds at the default height, about a minute at 14),
@@ -87,6 +96,7 @@
   each time the call polls for a Ctrl-C, from 0.75 s on, on a terminal
   only. The XMSS tree now polls every 32 leaves (it was every 1,024,
   once in a whole default key).
+
 - **Live progress in the IDE consoles, and one look for it.** Whether a
   console can redraw a line is now decided as the cli package decides
   it, no longer by `isatty(stderr())` alone, which is `FALSE` in the

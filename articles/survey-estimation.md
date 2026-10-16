@@ -111,14 +111,37 @@ plot(cmp)
 CSUS 2023 ships 1,000 **mean bootstrap** weights, each the average of 12
 bootstrap weights, so the bootstrap variance is multiplied by 12 (Health
 Canada’s technical notes; the same as Fay’s BRR with
-$`\rho = 1 - 1/\sqrt{12}`$). With the public-use file and its weights
-from data.rmorie.com (through rmorie), the design and the lifetime
-cannabis question are:
+$`\rho = 1 - 1/\sqrt{12}`$). The public-use file and its weights are on
+data.rmorie.com (sign in once with `rmbl login`), where
+[`bricklayer_data_load()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_data_manifest.md)
+checks each table against the SHA-256 its manifest lists:
 
 ``` r
 
-a <- rmorie::morie_load_dataset("cu23mf")   # 36,180 respondents
-b <- rmorie::morie_load_dataset("cu23bt")   # PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000
+a <- bricklayer_data_load("csus_2023/pumf")        # 36,180 respondents
+b <- bricklayer_data_load("csus_2023/bootstrap")   # PUMF_ID, WGT_PUMF and BWGT1 ... BWGT1000
+```
+
+Or, without signing in, from Health Canada’s own copies on the Open
+Government Portal (the same files, 612 MB for the weights):
+
+``` r
+
+src <- "https://open.canada.ca/data/dataset/65e2d45e-efc6-4c29-9a9b-db59bc96aa0e/resource"
+pumf <- file.path(tempdir(), "csus2023_pumf_final.csv")
+bwt <- file.path(tempdir(), "csus2023_pumf_bwt.csv")
+bricklayer_download(paste0(src, "/c2c1795b-4501-49ba-9dd1-5b8360cc3b2e/download/",
+                           "csus2023_pumf_final.csv"), pumf)
+bricklayer_download(paste0(src, "/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/",
+                           "csus2023_pumf_bwt.csv"), bwt)
+a <- utils::read.csv(pumf)
+b <- utils::read.csv(bwt)
+```
+
+Either way, the design and the lifetime cannabis question are:
+
+``` r
+
 a$can <- ifelse(a$CAN_Q01 < 0, NA, a$CAN_Q01)   # -8: not stated
 des <- survey_design(a, weights = "WGT_PUMF", replicates = b, id = "PUMF_ID",
                      type = "mean_bootstrap", mean_size = 12)
