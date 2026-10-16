@@ -300,7 +300,8 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
       # arguments after a bare `--` are a prompt or a request: only ask and bundle take one, and
       # every other verb ignored them (`functions -- a b` listed everything)
       if (length(tail_args) && !verb %in% c("ask", "bundle", "explain-error")) {
-        usage_error(sprintf("%s takes no arguments after --", verb))
+        # the verb as it prints: an escape sequence typed into it is not sent to the terminal
+        usage_error(sprintf("%s takes no arguments after --", .rmbl_printable(verb)))
       }
       switch(verb,
         login = {
@@ -484,12 +485,19 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   if (!length(args)) return(FALSE)
   q <- args[[1L]]
   if (!nzchar(q) || startsWith(q, "-") || grepl("[\r\n\v\f]", q) || grepl("[/\\]", q)) return(FALSE)
+  # a key-shaped run anywhere in the line, not only as a whole word: "KEY?", "KEY," or "my key is
+  # KEY, thanks" went to a model, and to the wrong provider (CRAN stress test of b617a3f, #2)
+  if (.bl_key_shaped(q)) return(FALSE)
+  # ideographic, no-break and zero-width spaces split words like a space
+  q <- gsub("[\u3000\u00a0\u2007\u202f\u200b\u200c\u200d\u2060\ufeff]", " ", q)
+  q <- gsub("\uff1f", "?", q, fixed = TRUE)
   words <- strsplit(trimws(q), "[[:space:]]+")[[1L]]
   if (!any(grepl("[[:alpha:]]{2,}", words))) return(FALSE)
-  if (length(words) < 2L && !endsWith(q, "?")) return(FALSE)
-  if (any(grepl("^[A-Za-z0-9_+=.:-]{24,}$", words))) return(FALSE)
-  if (length(words) == 1L) {
-    w <- tolower(sub("[?!.]+$", "", words[[1L]]))
+  # a lone "?" or "!" is punctuation, not a word: `doctr ?` is a near miss of `doctor`
+  wordy <- words[grepl("[[:alnum:]]", words)]
+  if (length(wordy) < 2L && !endsWith(q, "?")) return(FALSE)
+  if (length(wordy) == 1L) {
+    w <- tolower(gsub("[[:punct:]]+", "", wordy[[1L]]))
     if (min(utils::adist(w, .bl_verb_names())) <= 2L) return(FALSE)
   }
   rest <- args[-1L]
@@ -506,6 +514,17 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   TRUE
 }
 
+# TRUE when the text holds a run of 24 or more key characters anywhere, not only as a whole word.
+# A function name is not one: an export of the package, or snake_case words of up to 15 characters
+# each (survey_design_replicates); a key's random part is one long run, in one case or mixed.
+.bl_key_shaped <- function(x) {
+  runs <- regmatches(x, gregexpr("[A-Za-z0-9_+=.:-]{24,}", x))[[1L]]
+  runs <- sub("[.:=-]+$", "", runs)
+  runs <- runs[nchar(runs) >= 24L & !grepl("^[a-z][a-z0-9]{0,14}([_.][a-z0-9]{1,15})+$", runs) &
+                 !runs %in% getNamespaceExports(asNamespace("rmoriebricklayer"))]
+  length(runs) > 0L
+}
+
 # Every verb and spelling the command takes, for the bare-question rule and "did you mean".
 .bl_verb_names <- function() {
   c(.bl_verb_usage(NULL), "help", "version", "aye", "tellme")
@@ -514,10 +533,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # The line for an unknown verb: the nearest verb when one is close, and how to ask a model.
 .bl_unknown_verb <- function(verb, prog) {
   v <- .bl_verb_names()
-  d <- utils::adist(tolower(verb), v)
+  # quotes and a trailing ? or ! around a typo are not part of it: `"doctr?"` is a near miss too
+  d <- utils::adist(tolower(gsub("[\"'?!.,\uff1f\u3000[:space:]]+", "", verb)), v)
   near <- if (min(d) <= 2L) sprintf(" (did you mean `%s %s`?)", prog, v[which.min(d)]) else ""
   # a pasted key is not printed back to the terminal and its scrollback (network stress test of 5e1dce5)
-  shown <- if (grepl("[A-Za-z0-9_+=.:-]{24,}", verb)) "(an argument like a key, not shown)" else .rmbl_printable(verb)
+  shown <- if (.bl_key_shaped(verb)) "(an argument like a key, not shown)" else .rmbl_printable(verb)
   sprintf("unknown verb '%s'%s; try `%s help`, or `%s ask \"QUESTION\"` for a model",
           shown, near, prog, prog)
 }

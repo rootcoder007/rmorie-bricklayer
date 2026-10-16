@@ -239,7 +239,7 @@ revocation_fetch <- function(path, timeout = 10) {
 # below can be exercised against recorded answers.
 .rmbl_net_get_file <- function(url, fallback, tmp, timeout) {
   tryCatch(.bl_net(url, .Call(C_rmbl_fetch_fallback, url, fallback, tmp,
-                              as.integer(timeout))),
+                              as.integer(timeout), "")),
            error = function(e) NULL)
 }
 

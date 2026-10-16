@@ -454,6 +454,10 @@ hurwitz_zeta <- function(s, q = 1) {
 }
 
 .rmbl_hurwitz_below_one <- function(si, q) {
+  # zeta(s, 1/2) = (2^s - 1) zeta(s) exactly, and zeta(s) is accurate beside its trivial zeros, where the
+  # Fourier series lost relative digits (34% near s = -32 at b617a3f, 3.6e-5 at -32 + 1e-10 since;
+  # CRAN stress test of b617a3f). expm1() keeps 2^s - 1 exact beside s = 0
+  if (q == 0.5) return(expm1(si * log(2)) * .rmbl_hurwitz_below_one(si, 1))
   if (q == 1 && si < 0) {
     # Riemann's zeta by its functional equation, zeta(s) = 2^s pi^(s-1) sin(pi s / 2) Gamma(1-s)
     # zeta(1-s): sinpi() is exact at the trivial zeros and accurate beside them, where the general

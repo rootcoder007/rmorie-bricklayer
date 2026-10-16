@@ -1638,10 +1638,7 @@ pollution_report_text <- function(report) {
 # (option rmoriebricklayer.max_csv_bytes, 1 GiB by default): a few megabytes of gzip no longer
 # expand to gigabytes before anything is refused.
 .rmbl_decompress_checked <- function(path, head = readBin(path, "raw", 6L)) {
-  lim <- getOption("rmoriebricklayer.max_csv_bytes", 2^30)
-  if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0)
-    stop("option rmoriebricklayer.max_csv_bytes must be a single non-negative number", call. = FALSE)
-  lim <- min(lim, 2^31 - 2)   # rawToChar() takes at most 2^31 - 1 bytes
+  lim <- min(.rmbl_max_csv_bytes(), 2^31 - 2)   # rawToChar() takes at most 2^31 - 1 bytes
   if (length(head) >= 2L && identical(head[1:2], as.raw(c(0x1f, 0x8b)))) {
     return(.Call(C_rmbl_gunzip_checked, readBin(path, "raw", file.size(path)), lim))
   }
@@ -1664,6 +1661,15 @@ pollution_report_text <- function(report) {
     stop(sprintf("is truncated or damaged (the decoder said: %s)", conditionMessage(w)), call. = FALSE)
   })
   do.call(c, chunks)
+}
+
+# The option rmoriebricklayer.max_csv_bytes (1 GiB by default): the most a CSV may decompress to,
+# for the pollution readers and bricklayer_data_load() alike.
+.rmbl_max_csv_bytes <- function() {
+  lim <- getOption("rmoriebricklayer.max_csv_bytes", 2^30)
+  if (!is.numeric(lim) || length(lim) != 1L || is.na(lim) || lim < 0)
+    stop("option rmoriebricklayer.max_csv_bytes must be a single non-negative number", call. = FALSE)
+  as.numeric(lim)
 }
 
 # A bzip2 stream ends with the 48-bit end-of-stream magic 0x177245385090, a 32-bit CRC and zero

@@ -313,6 +313,22 @@ std::string normalize_text(const std::string& s) {
 
 namespace {
 
+// The text with every run of name characters ([A-Za-z.'-]) past its 64th byte blanked out (\x01, which
+// no pattern takes), for the name patterns: no service or person is named with a longer word, and
+// those patterns backtracked over a long run at every position it holds (a 1 MB "<p>AAAA..." took
+// four minutes, 225 microseconds a byte; CRAN stress test of b617a3f). The length and every position
+// stay as they were.
+std::string cap_runs(const std::string& t, size_t cap = 64) {
+    std::string out(t);
+    size_t run = 0;
+    for (char& c : out) {
+        const bool name = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '\'' || c == '-';
+        run = name ? run + 1 : 0;
+        if (run > cap) c = '\x01';
+    }
+    return out;
+}
+
 // _section_text: text from a line reading exactly `header` up to the first
 // end-marker line (or end of text).
 std::string section_text(const std::string& text, const std::string& header,
@@ -431,7 +447,15 @@ std::string team_words(const std::string& text, const std::string& what, bool fr
 
 // ---- individual field extractors ----------------------------------------
 
-std::string detect_police_service(const std::string& text) {
+
+std::string detect_police_service(const std::string& raw) {
+    // every pattern below needs one of these words: without them there is nothing to match
+    bool any = false;
+    for (const char* w : {"Police", "Constabulary", "OPP", "TPS", "RCMP", "NRPS"}) {
+        if (raw.find(w) != std::string::npos) { any = true; break; }
+    }
+    if (!any) return "";
+    const std::string text = cap_runs(raw);
     // The notification sentence names the force that called the SIU in: prefer it over counting.
     {
         static const std::regex notif(
@@ -687,7 +711,9 @@ std::string detect_charges(const std::string& text, bool fr) {
     return "";
 }
 
-std::string detect_directors_name(const std::string& text) {
+std::string detect_directors_name(const std::string& raw) {
+    if (raw.find("Direct") == std::string::npos) return "";   // both patterns need Director or Directeur/rice
+    const std::string text = cap_runs(raw);
     // Signature block: "<Name>\n[\n]Director\n[\n]Special Investigations Unit"
     // (real reports put blank lines between the lines) or "<Name>, Director".
     // "Director" must stand alone on its line (or follow the comma): site
@@ -1031,7 +1057,8 @@ static std::string clean_service(std::string n) {
     return n;
 }
 
-static std::string pick_service(const std::string& sec, const std::string& text, bool fr, const std::string& letter) {
+static std::string pick_service(const std::string& sec0, const std::string& text0, bool fr, const std::string& letter) {
+    const std::string sec = cap_runs(sec0), text = cap_runs(text0);   // positions kept (cap_runs)
     static const std::regex en_name(kEnName), fr_name(kFrName);
     static const std::regex en_abbr(kEnName + "\\s*\\(\\s*([A-Z]{2,6})\\s*\\)"), fr_abbr(kFrName + "\\s*\\(\\s*([A-Z]{2,6})\\s*\\)");
     static const std::regex not_service("\\b(?:Independent|Review|Office|Between|Involving|After|During|Following|Collision|"
@@ -1114,7 +1141,8 @@ static std::string pick_service(const std::string& sec, const std::string& text,
     return best->second;
 }
 
-std::string detect_subject_service(const std::string& text, bool fr) {
+std::string detect_subject_service(const std::string& raw, bool fr) {
+    const std::string text = cap_runs(raw);
     static const std::regex legacy_en("Police service\\s*:\\s*(.+?)\\s+Incident date"),
         legacy_fr("Service de police\\s*:\\s*(.+?)\\s+Date de l");
     static const std::regex en_name(kEnName), fr_name(kFrName);

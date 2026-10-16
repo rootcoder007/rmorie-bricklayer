@@ -551,7 +551,23 @@ lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0,
   }
   # a count R can loop over, whatever max_work allows: 1e300 died in seq_len() (review of 02a38be)
   if (n_steps > .Machine$integer.max) stop("`n_steps` must be at most 2^31 - 1", call. = FALSE)
-  draw <- if (is.null(normals)) .rmbl_normals else match.fun(normals)
+  # a function, or NULL; what it returns is checked every step: a name went to match.fun() and a
+  # wrong length was recycled into the positions silently (CRAN stress test of b617a3f)
+  draw <- if (is.null(normals)) {
+    .rmbl_normals
+  } else if (is.function(normals)) {
+    function(n, seed, stream) {
+      z <- normals(n, seed, stream)
+      if (!is.numeric(z) || length(z) != n || any(!is.finite(z))) {
+        stop(sprintf("`normals` must return %d finite numbers; it returned %s", n,
+                     if (is.numeric(z)) sprintf("%d, %d of them finite", length(z), sum(is.finite(z)))
+                     else paste("a", class(z)[[1L]])), call. = FALSE)
+      }
+      as.numeric(z)
+    }
+  } else {
+    stop("`normals` must be a function (n, seed, stream) or NULL", call. = FALSE)
+  }
   xs <- rep(x0, n)
   ys <- rep(y0, n)
   fx <- sqrt(2 * kx * dt)

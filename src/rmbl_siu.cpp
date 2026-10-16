@@ -56,7 +56,7 @@ extern "C" {
 
 SEXP C_rmbl_siu_html_to_text_impl(SEXP html) {
     const std::string out = siu::html_to_text(as_string(html, "html"));
-    SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
+    SEXP ans = PROTECT(rmbl::alloc_vector(STRSXP, 1));
     SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
     UNPROTECT(1);
     return with_split_attr(ans);
@@ -66,8 +66,8 @@ SEXP C_rmbl_siu_parse_html_impl(SEXP html) {
     const siu::ParsedFields fields =
         siu::parse_report_html(as_string(html, "html"));
     const R_xlen_t n = static_cast<R_xlen_t>(fields.size());
-    SEXP ans = PROTECT(Rf_allocVector(STRSXP, n));
-    SEXP nms = PROTECT(Rf_allocVector(STRSXP, n));
+    SEXP ans = PROTECT(rmbl::alloc_vector(STRSXP, n));
+    SEXP nms = PROTECT(rmbl::alloc_vector(STRSXP, n));
     R_xlen_t i = 0;
     for (const auto &kv : fields) {
         SET_STRING_ELT(nms, i, Rf_mkCharCE(kv.first.c_str(), CE_UTF8));
@@ -85,10 +85,10 @@ SEXP C_rmbl_siu_to_iso_date_impl(SEXP human) {
      * 100,000-character input overflowed the C stack */
     if (in.size() > 4096) {
         /* an error, not "" -- a silent "" at a size boundary looked like "no date" (0.5.7 and 0.5.8 reviews) */
-        Rf_error("`x` is longer than 4096 bytes: not a date");
+        rmbl::fail("`x` is longer than 4096 bytes: not a date");
     }
     const std::string out = siu::to_iso_date(in);
-    SEXP ans = PROTECT(Rf_allocVector(STRSXP, 1));
+    SEXP ans = PROTECT(rmbl::alloc_vector(STRSXP, 1));
     SET_STRING_ELT(ans, 0, Rf_mkCharCE(out.c_str(), CE_UTF8));
     UNPROTECT(1);
     return ans;
@@ -99,13 +99,13 @@ SEXP C_rmbl_siu_resolve_so_impl(SEXP text) {
      * HTML path gets, before any regex sees it */
     const siu::SoResolution res =
         siu::resolve_subject_officials(siu::normalize_text(as_string(text, "text")));
-    SEXP ans = PROTECT(Rf_allocVector(VECSXP, 2));
-    SEXP nms = PROTECT(Rf_allocVector(STRSXP, 2));
+    SEXP ans = PROTECT(rmbl::alloc_vector(VECSXP, 2));
+    SEXP nms = PROTECT(rmbl::alloc_vector(STRSXP, 2));
     SET_STRING_ELT(nms, 0, Rf_mkChar("count"));
     SET_STRING_ELT(nms, 1, Rf_mkChar("reason"));
-    SEXP cnt = PROTECT(Rf_allocVector(INTSXP, 1));
+    SEXP cnt = PROTECT(rmbl::alloc_vector(INTSXP, 1));
     INTEGER(cnt)[0] = res.count.has_value() ? *res.count : NA_INTEGER;
-    SEXP rsn = PROTECT(Rf_allocVector(STRSXP, 1));
+    SEXP rsn = PROTECT(rmbl::alloc_vector(STRSXP, 1));
     SET_STRING_ELT(rsn, 0, Rf_mkCharCE(res.reason.c_str(), CE_UTF8));
     SET_VECTOR_ELT(ans, 0, cnt);
     SET_VECTOR_ELT(ans, 1, rsn);
@@ -118,17 +118,17 @@ SEXP C_rmbl_siu_schema_impl(SEXP unused) {
     (void) unused;
     const auto &fields = siu::schema();
     const R_xlen_t n = static_cast<R_xlen_t>(fields.size());
-    SEXP name = PROTECT(Rf_allocVector(STRSXP, n));
-    SEXP is_count = PROTECT(Rf_allocVector(LGLSXP, n));
-    SEXP desc = PROTECT(Rf_allocVector(STRSXP, n));
+    SEXP name = PROTECT(rmbl::alloc_vector(STRSXP, n));
+    SEXP is_count = PROTECT(rmbl::alloc_vector(LGLSXP, n));
+    SEXP desc = PROTECT(rmbl::alloc_vector(STRSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
         const siu::Field &f = fields[static_cast<size_t>(i)];
         SET_STRING_ELT(name, i, Rf_mkCharCE(f.name.c_str(), CE_UTF8));
         LOGICAL(is_count)[i] = f.is_count ? TRUE : FALSE;
         SET_STRING_ELT(desc, i, Rf_mkCharCE(f.desc.c_str(), CE_UTF8));
     }
-    SEXP ans = PROTECT(Rf_allocVector(VECSXP, 3));
-    SEXP nms = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP ans = PROTECT(rmbl::alloc_vector(VECSXP, 3));
+    SEXP nms = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nms, 0, Rf_mkChar("name"));
     SET_STRING_ELT(nms, 1, Rf_mkChar("is_count"));
     SET_STRING_ELT(nms, 2, Rf_mkChar("description"));

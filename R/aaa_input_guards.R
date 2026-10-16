@@ -171,6 +171,7 @@
 # untouched: a drift report must not move the user's downstream draws.
 #' @noRd
 .rmbl_with_seed <- function(seed, expr) {
+  if (!is.null(seed)) seed <- .rmbl_r_seed(seed)   # before the promise `expr` is forced
   had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   old <- if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE)
   on.exit({
@@ -178,7 +179,7 @@
     else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE))
       rm(".Random.seed", envir = globalenv())
   }, add = TRUE)
-  set.seed(seed)
+  .rmbl_set_seed(seed)
   expr
 }
 
@@ -189,4 +190,14 @@
     stop(sprintf("`%s` must be finite, non-negative counts", what), call. = FALSE)
   }
   invisible(v)
+}
+
+# A plot method called on something its class's function did not make (plot.rmbl_crf(1)): said, not a
+# base R error from deep inside the drawing ("$ operator is invalid for atomic vectors"; 91 such
+# calls in the CRAN stress test of b617a3f)
+.rmbl_plot_check <- function(x, cls) {
+  if (!inherits(x, cls) || !is.list(x)) {
+    stop(sprintf("`x` must be a %s object, as returned by the function that makes one", cls), call. = FALSE)
+  }
+  invisible(x)
 }

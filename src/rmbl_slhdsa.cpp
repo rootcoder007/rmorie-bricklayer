@@ -323,12 +323,12 @@ static const char *slhdsa_set(SEXP set) {
 
 SEXP C_rmbl_slhdsa_sizes_impl(SEXP set) {
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
-        SEXP out = PROTECT(Rf_allocVector(INTSXP, 4));
+        SEXP out = PROTECT(rmbl::alloc_vector(INTSXP, 4));
         INTEGER(out)[0] = S::kPkBytes;
         INTEGER(out)[1] = S::kSkBytes;
         INTEGER(out)[2] = S::kSigBytes;
         INTEGER(out)[3] = 3 * S::kN;
-        SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+        SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
         SET_STRING_ELT(nm, 0, Rf_mkChar("public_key"));
         SET_STRING_ELT(nm, 1, Rf_mkChar("secret_key"));
         SET_STRING_ELT(nm, 2, Rf_mkChar("signature"));
@@ -342,15 +342,15 @@ SEXP C_rmbl_slhdsa_sizes_impl(SEXP set) {
 SEXP C_rmbl_slhdsa_keypair_impl(SEXP set, SEXP seed) {
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         if (TYPEOF(seed) != RAWSXP || XLENGTH(seed) != 3 * S::kN) {
-            Rf_error("`seed` must be a raw vector of %d bytes", 3 * S::kN);
+            rmbl::fail("`seed` must be a raw vector of %d bytes", 3 * S::kN);
         }
-        SEXP pk = PROTECT(Rf_allocVector(RAWSXP, S::kPkBytes));
-        SEXP sk = PROTECT(Rf_allocVector(RAWSXP, S::kSkBytes));
+        SEXP pk = PROTECT(rmbl::alloc_vector(RAWSXP, S::kPkBytes));
+        SEXP sk = PROTECT(rmbl::alloc_vector(RAWSXP, S::kSkBytes));
         S::seed_keypair(RAW(pk), RAW(sk), RAW(seed));
-        SEXP out = PROTECT(Rf_allocVector(VECSXP, 2));
+        SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 2));
         SET_VECTOR_ELT(out, 0, pk);
         SET_VECTOR_ELT(out, 1, sk);
-        SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+        SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 2));
         SET_STRING_ELT(nm, 0, Rf_mkChar("public"));
         SET_STRING_ELT(nm, 1, Rf_mkChar("secret"));
         Rf_setAttrib(out, R_NamesSymbol, nm);
@@ -361,18 +361,18 @@ SEXP C_rmbl_slhdsa_keypair_impl(SEXP set, SEXP seed) {
 
 SEXP C_rmbl_slhdsa_sign_impl(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
                         SEXP opt_rand, SEXP prehash) {
-    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    if (TYPEOF(msg) != RAWSXP) rmbl::fail("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
-        Rf_error("`ctx` must be a raw vector of at most 255 bytes");
+        rmbl::fail("`ctx` must be a raw vector of at most 255 bytes");
     }
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != S::kSkBytes) {
-            Rf_error("`sk` must be a raw vector of %d bytes", S::kSkBytes);
+            rmbl::fail("`sk` must be a raw vector of %d bytes", S::kSkBytes);
         }
         if (TYPEOF(opt_rand) != RAWSXP || XLENGTH(opt_rand) != S::kN) {
-            Rf_error("`opt_rand` must be a raw vector of %d bytes", S::kN);
+            rmbl::fail("`opt_rand` must be a raw vector of %d bytes", S::kN);
         }
-        SEXP sig = PROTECT(Rf_allocVector(RAWSXP, S::kSigBytes));
+        SEXP sig = PROTECT(rmbl::alloc_vector(RAWSXP, S::kSigBytes));
         rmbl_prehash::Result ph;
         rmbl_prehash::apply(rmbl_prehash::name_of(prehash), RAW(msg),
                             static_cast<size_t>(XLENGTH(msg)), &ph);
@@ -395,15 +395,15 @@ SEXP C_rmbl_slhdsa_sign_impl(SEXP set, SEXP sk, SEXP msg, SEXP ctx,
  * public interface always binds a context; these exist so the NIST ACVP
  * "internal" vectors can check the core the public interface wraps. */
 SEXP C_rmbl_slhdsa_sign_internal_impl(SEXP set, SEXP sk, SEXP msg, SEXP opt_rand) {
-    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    if (TYPEOF(msg) != RAWSXP) rmbl::fail("`msg` must be a raw vector");
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         if (TYPEOF(sk) != RAWSXP || XLENGTH(sk) != S::kSkBytes) {
-            Rf_error("`sk` must be a raw vector of %d bytes", S::kSkBytes);
+            rmbl::fail("`sk` must be a raw vector of %d bytes", S::kSkBytes);
         }
         if (TYPEOF(opt_rand) != RAWSXP || XLENGTH(opt_rand) != S::kN) {
-            Rf_error("`opt_rand` must be a raw vector of %d bytes", S::kN);
+            rmbl::fail("`opt_rand` must be a raw vector of %d bytes", S::kN);
         }
-        SEXP sig = PROTECT(Rf_allocVector(RAWSXP, S::kSigBytes));
+        SEXP sig = PROTECT(rmbl::alloc_vector(RAWSXP, S::kSigBytes));
         S::sign(RAW(sig), RAW(msg), static_cast<size_t>(XLENGTH(msg)), NULL, 0,
                 RAW(opt_rand), RAW(sk), NULL, 0, true);
         UNPROTECT(1);
@@ -412,7 +412,7 @@ SEXP C_rmbl_slhdsa_sign_internal_impl(SEXP set, SEXP sk, SEXP msg, SEXP opt_rand
 }
 
 SEXP C_rmbl_slhdsa_verify_internal_impl(SEXP set, SEXP pk, SEXP msg, SEXP sig) {
-    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    if (TYPEOF(msg) != RAWSXP) rmbl::fail("`msg` must be a raw vector");
     RMBL_SLHDSA_DISPATCH(slhdsa_set(set), {
         if (TYPEOF(pk) != RAWSXP || XLENGTH(pk) != S::kPkBytes ||
             TYPEOF(sig) != RAWSXP) {
@@ -427,7 +427,7 @@ SEXP C_rmbl_slhdsa_verify_internal_impl(SEXP set, SEXP pk, SEXP msg, SEXP sig) {
 
 SEXP C_rmbl_slhdsa_verify_impl(SEXP set, SEXP pk, SEXP msg, SEXP ctx, SEXP sig,
                           SEXP prehash) {
-    if (TYPEOF(msg) != RAWSXP) Rf_error("`msg` must be a raw vector");
+    if (TYPEOF(msg) != RAWSXP) rmbl::fail("`msg` must be a raw vector");
     if (TYPEOF(ctx) != RAWSXP || XLENGTH(ctx) > 255) {
         return Rf_ScalarLogical(FALSE);
     }

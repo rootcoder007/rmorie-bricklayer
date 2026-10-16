@@ -52,12 +52,18 @@ wp_check <- function(res) {
 }
 
 test_that("ECDSA P-256 / SHA-256 verification passes the Wycheproof suite", {
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
+  # check took 11 minutes (CRAN stress test of b617a3f)
+  skip_on_cran()
   counts <- wp_check(wp_ecdsa("wycheproof-ecdsa-p256-sha256.txt", "P-256", "sha256", 32L))
   expect_gte(counts[["valid"]], 100L)
   expect_gte(counts[["invalid"]], 300L)
 })
 
 test_that("ECDSA P-384 / SHA-384 verification passes the Wycheproof suite", {
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
+  # check took 11 minutes (CRAN stress test of b617a3f)
+  skip_on_cran()
   counts <- wp_check(wp_ecdsa("wycheproof-ecdsa-p384-sha384.txt", "P-384", "sha384", 48L))
   expect_gte(counts[["valid"]], 100L)
   expect_gte(counts[["invalid"]], 300L)

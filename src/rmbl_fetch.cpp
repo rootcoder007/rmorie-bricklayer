@@ -648,7 +648,9 @@ static int get_xferinfo(void *ud, curl_off_t, curl_off_t, curl_off_t, curl_off_t
 /* GET a URL into a std::string. Returns HTTP status, or -1 on transport
  * failure. Follows redirects; hard total-timeout so nothing can hang. A Ctrl-C ends it and is
  * raised by the entry point's barrier. */
-long http_get_string(const std::string &url, std::string &out, long timeout_s) {
+long http_get_string(const std::string &url, std::string &out, long timeout_s, bool *interrupted = nullptr,
+                     bool allow_loopback = false) {
+    if (interrupted) *interrupted = false;
     CURL *h = curl_easy_init();
     if (!h) return -1;
     out.clear();
@@ -665,8 +667,11 @@ long http_get_string(const std::string &url, std::string &out, long timeout_s) {
     curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
     curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, get_xferinfo);
     curl_easy_setopt(h, CURLOPT_XFERINFODATA, &stopped);
-    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, NULL, nullptr);
-    if (rc == CURLE_ABORTED_BY_CALLBACK && stopped) rmbl_kernel_interrupted = 1;
+    CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, NULL, nullptr, allow_loopback);
+    if (rc == CURLE_ABORTED_BY_CALLBACK && stopped) {
+        rmbl_kernel_interrupted = 1;
+        if (interrupted) *interrupted = true;
+    }
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(h);
@@ -851,18 +856,20 @@ long http_post_bytes(const std::string &url, const unsigned char *body,
     curl_easy_setopt(h, CURLOPT_WRITEDATA, &out);
     char errbuf[CURL_ERROR_SIZE] = {0};   /* libcurl's own sentence ("Operation too slow ...") */
     curl_easy_setopt(h, CURLOPT_ERRORBUFFER, errbuf);
-    /* the spinner of the label R set, turned while the POST waits; wiped or ended when R clears it */
+    /* the poll for a Ctrl-C (or a setTimeLimit() limit) on every POST, as on every GET; it turns the
+     * spinner of the label R set, when there is one. Installed only with a label, a POST without a
+     * terminal or with quiet output ran to its curl timeout through a Ctrl-C and came back as an
+     * ordinary failure (Wayback /save, OCSP, the data-key check; CRAN stress test of b617a3f, #4) */
     Wait wait = {false};
-    if (!g_wait_label.empty()) {
-        curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
-        curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
-        curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
-    }
+    curl_easy_setopt(h, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(h, CURLOPT_XFERINFOFUNCTION, wait_xferinfo);
+    curl_easy_setopt(h, CURLOPT_XFERINFODATA, &wait);
     std::string refused;
     CURLcode rc = secure_perform(h, url, [&out] { out.clear(); }, &refused, &hdrs, allow_loopback, true);
     /* a Ctrl-C that ended the wait is raised by the barrier once this returns: the caller never
      * sees a status to retry on, so the prompt is not sent again (review of 29a55d8, G1) */
     if (interrupted) *interrupted = wait.interrupted;
+    if (wait.interrupted) rmbl_kernel_interrupted = 1;   /* raised by the barrier, whoever called */
     long code = -1;
     if (rc == CURLE_OK) curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &code);
     else {
@@ -1045,13 +1052,24 @@ std::string url_encode(const std::string &s) {
  * `url`. Returns the https snapshot URL, or "" if none is archived. Uses a
  * tiny hand-rolled extract (no JSON dep) -- the response shape is fixed:
  * {"archived_snapshots":{"closest":{..."url":"http://web.archive.org/..."}}} */
-std::string wayback_snapshot(const std::string &url, long timeout_s) {
-    std::string api = "https://archive.org/wayback/available?url=" + url_encode(url);
+/* `base` is the availability API's origin: archive.org, or (the package's tests only, through the
+ * .Call entries) a local server, which is then reachable on the loopback address. */
+std::string wayback_snapshot(const std::string &url, long timeout_s, bool *interrupted = nullptr,
+                             const std::string &base = "") {
+    bool stop = false;
+    if (interrupted) *interrupted = false;
+    const bool local = !base.empty();
+    std::string api = (local ? base : std::string("https://archive.org")) + "/wayback/available?url=" + url_encode(url);
     std::string body;
-    /* the availability API answers 429 / 5xx now and then: one more try before "no snapshot" */
-    if (http_get_string(api, body, timeout_s) != 200) {
+    /* the availability API answers 429 / 5xx now and then: one more try before "no snapshot", but
+     * not after a Ctrl-C (the retry ran to its full timeout; CRAN stress test of b617a3f, #5) */
+    if (http_get_string(api, body, timeout_s, &stop, local) != 200) {
+        if (stop) { if (interrupted) *interrupted = true; return ""; }
         body.clear();
-        if (http_get_string(api, body, timeout_s) != 200) return "";
+        if (http_get_string(api, body, timeout_s, &stop, local) != 200) {
+            if (stop && interrupted) *interrupted = true;
+            return "";
+        }
     }
     size_t c = body.find("\"closest\"");
     if (c == std::string::npos) return "";
@@ -1082,6 +1100,40 @@ std::string wayback_snapshot(const std::string &url, long timeout_s) {
     return snap;
 }
 
+/* A Ctrl-C ends the pipeline where it lands: the Wayback lookup and the snapshot GET after an
+ * interrupted download ran to their timeouts and the call came back as an ordinary error (CRAN
+ * stress test of b617a3f, #5). `*interrupted` says so; the exported wrappers raise it. */
+static int fetch_with_fallback(const char *url, const char *wayback, const char *path, int timeout_s,
+                               bool *interrupted, const std::string &base = "") {
+    const bool local = !base.empty();
+    long code = http_get_file(url, path, timeout_s, nullptr, R_NilValue, nullptr, nullptr, interrupted,
+                              kMaxDownload, local);
+    if (code >= 200 && code < 300) return 0;
+    if (*interrupted) return -1;
+    std::string wb = (wayback && wayback[0]) ? std::string(wayback)
+                                             : wayback_snapshot(url, timeout_s, interrupted, base);
+    if (*interrupted) return -1;
+    if (!wb.empty()) {
+        long c2 = http_get_file(wb, path, timeout_s, nullptr, R_NilValue, nullptr, nullptr, interrupted,
+                                kMaxDownload, local);
+        if (c2 >= 200 && c2 < 300) return 1;
+        if (*interrupted) return -1;
+    }
+    long live = code > 0 ? code : 1;
+    return (int) -(10 * live + (wb.empty() ? 0 : 1));
+}
+
+static int wayback_into(const char *url, char *out, int cap, int timeout_s, bool *interrupted,
+                        const std::string &base = "") {
+    std::string s = wayback_snapshot(url, timeout_s, interrupted, base);
+    if (s.empty() || cap <= 0) { if (cap > 0) out[0] = '\0'; return 0; }
+    int n = (int) s.size();
+    if (n >= cap) n = cap - 1;
+    std::memcpy(out, s.data(), n);
+    out[n] = '\0';
+    return n;
+}
+
 }  // namespace
 
 extern "C" {
@@ -1094,31 +1146,37 @@ extern "C" {
  *      live URL's HTTP status (1 when the server was never reached) and
  *      w is 1 when a snapshot was found but its download failed, 0 when
  *      the Wayback Machine had none (so the caller can say which).
- */
+ * A Ctrl-C raises R's interrupt: by our barrier after the call, or, called through the C API with
+ * none, here, from a frame that holds no C++ object (they were lost before). */
+static int fetch_raise(const char *url, const char *wayback, const char *path, int timeout_s, const char *base) {
+    bool interrupted = false;
+    const int r = fetch_with_fallback(url, wayback, path, timeout_s, &interrupted, base);
+    if (interrupted) {
+        rmbl_kernel_interrupted = 1;
+        rmbl_interrupt_raise_unbarriered();
+    }
+    return r;
+}
+
 int rmbl_fetch_with_fallback(const char *url, const char *wayback,
                              const char *path, int timeout_s) {
-    long code = http_get_file(url, path, timeout_s, nullptr, R_NilValue, nullptr, nullptr, nullptr);
-    if (code >= 200 && code < 300) return 0;
-    std::string wb = (wayback && wayback[0]) ? std::string(wayback)
-                                             : wayback_snapshot(url, timeout_s);
-    if (!wb.empty()) {
-        long c2 = http_get_file(wb, path, timeout_s, nullptr, R_NilValue, nullptr, nullptr, nullptr);
-        if (c2 >= 200 && c2 < 300) return 1;
-    }
-    long live = code > 0 ? code : 1;
-    return (int) -(10 * live + (wb.empty() ? 0 : 1));
+    return fetch_raise(url, wayback, path, timeout_s, "");
 }
 
 /* Resolve a Wayback snapshot URL for `url` into `out` (size `cap`). Returns
- * strlen written (0 if none / truncated-safe). */
-int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
-    std::string s = wayback_snapshot(url, timeout_s);
-    if (s.empty() || cap <= 0) { if (cap > 0) out[0] = '\0'; return 0; }
-    int n = (int) s.size();
-    if (n >= cap) n = cap - 1;
-    std::memcpy(out, s.data(), n);
-    out[n] = '\0';
+ * strlen written (0 if none / truncated-safe). A Ctrl-C is raised as above. */
+static int wayback_raise(const char *url, char *out, int cap, int timeout_s, const char *base) {
+    bool interrupted = false;
+    const int n = wayback_into(url, out, cap, timeout_s, &interrupted, base);
+    if (interrupted) {
+        rmbl_kernel_interrupted = 1;
+        rmbl_interrupt_raise_unbarriered();
+    }
     return n;
+}
+
+int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
+    return wayback_raise(url, out, cap, timeout_s, "");
 }
 
 /* ---- .Call wrappers for bricklayer's own R side ------------------------ */
@@ -1129,7 +1187,7 @@ int rmbl_wayback_snapshot(const char *url, char *out, int cap, int timeout_s) {
  * the call ended well (a check), 0 after an error or an interrupt (a cross); see wait_draw(). */
 SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
     if (TYPEOF(label) != STRSXP || XLENGTH(label) != 1 || STRING_ELT(label, 0) == NA_STRING) {
-        Rf_error("`label` must be a single string");
+        rmbl::fail("`label` must be a single string");
     }
     int colors = 1, status = -1;
     bool dynamic = true, to_stdout = false;
@@ -1138,14 +1196,14 @@ SEXP C_rmbl_wait_label_impl(SEXP label, SEXP unicode, SEXP color) {
     } else if (TYPEOF(color) == REALSXP && (XLENGTH(color) == 3 || XLENGTH(color) == 4)) {
         const double *m = REAL(color);
         for (R_xlen_t i = 0; i < XLENGTH(color); ++i) {
-            if (!R_FINITE(m[i]) || m[i] < 0) Rf_error("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
+            if (!R_FINITE(m[i]) || m[i] < 0) rmbl::fail("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
         }
         colors = m[0] >= 16777216 ? 16777216 : static_cast<int>(m[0]);
         dynamic = m[1] != 0;
         to_stdout = m[2] != 0;
         if (XLENGTH(color) == 4) status = m[3] != 0;
     } else {
-        Rf_error("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
+        rmbl::fail("`color` must be TRUE, FALSE or c(colours, redraws, to stdout)");
     }
     /* the line of the label before ends on the stream and in the mode it was drawn with */
     g_wait_on.store(false, std::memory_order_release);
@@ -1170,11 +1228,11 @@ static std::vector<std::string> header_lines(SEXP headers);
 SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
                       SEXP timeout, SEXP headers, SEXP allow_loopback) {
     if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
-        Rf_error("`url` must be a single string");
+        rmbl::fail("`url` must be a single string");
     }
-    if (TYPEOF(body) != RAWSXP) Rf_error("`body` must be a raw vector");
+    if (TYPEOF(body) != RAWSXP) rmbl::fail("`body` must be a raw vector");
     if (TYPEOF(content_type) != STRSXP || XLENGTH(content_type) != 1) {
-        Rf_error("`content_type` must be a single string");
+        rmbl::fail("`content_type` must be a single string");
     }
     const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
         ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
@@ -1188,8 +1246,8 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
         rmbl_str0(content_type, "content_type"), out, tmo, extra, &err,
         Rf_asLogical(allow_loopback) == TRUE, &ra, &interrupted);
     if (interrupted) rmbl_kernel_interrupted = 1;
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
-    SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 4));
+    SEXP raw_out = PROTECT(rmbl::alloc_vector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
         std::memcpy(RAW(raw_out), out.data(), out.size());
@@ -1198,7 +1256,7 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
     SET_VECTOR_ELT(res, 1, raw_out);
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
     SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
@@ -1212,7 +1270,7 @@ SEXP C_rmbl_http_post_impl(SEXP url, SEXP body, SEXP content_type,
  * tier's model list. */
 SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopback) {
     if (TYPEOF(url) != STRSXP || XLENGTH(url) != 1) {
-        Rf_error("`url` must be a single string");
+        rmbl::fail("`url` must be a single string");
     }
     const long tmo = (TYPEOF(timeout) == INTSXP && XLENGTH(timeout) == 1)
         ? static_cast<long>(INTEGER(timeout)[0]) : 30L;
@@ -1223,8 +1281,8 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     const long code = http_get_string(rmbl_str0(url, "url"), out, tmo, extra, &err,
                                       Rf_asLogical(allow_loopback) == TRUE, &ra, &interrupted);
     if (interrupted) rmbl_kernel_interrupted = 1;
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 4));
-    SEXP raw_out = PROTECT(Rf_allocVector(RAWSXP,
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 4));
+    SEXP raw_out = PROTECT(rmbl::alloc_vector(RAWSXP,
         static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) {
         std::memcpy(RAW(raw_out), out.data(), out.size());
@@ -1233,7 +1291,7 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     SET_VECTOR_ELT(res, 1, raw_out);
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
     SET_VECTOR_ELT(res, 3, Rf_mkString(ra.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("body"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
@@ -1243,7 +1301,8 @@ SEXP C_rmbl_http_get_impl(SEXP url, SEXP timeout, SEXP headers, SEXP allow_loopb
     return res;
 }
 
-SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout) {
+/* `api`: "" for archive.org; the tests give a local server's origin (see wayback_snapshot()) */
+SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout, SEXP api) {
     const char *u = rmbl_str0(url, "url");
     const char *w = (wayback == R_NilValue || Rf_length(wayback) == 0 ||
                      (TYPEOF(wayback) == STRSXP && STRING_ELT(wayback, 0) == NA_STRING))
@@ -1251,24 +1310,28 @@ SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout)
     const char *p = rmbl_str0(path, "path");
     int t = Rf_asInteger(timeout);
     if (t == NA_INTEGER || t < 1) t = 120;
-    return Rf_ScalarInteger(rmbl_fetch_with_fallback(u, w, p, t));
+    return Rf_ScalarInteger(fetch_raise(u, w, p, t, rmbl_str0(api, "api")));
 }
 
 /* The request headers, one "Name: value" each. A line break inside one (a key pasted with a
  * trailing newline, or one carrying "\r\nX-Injected: ...") would reach the wire as a second
  * header: refused here, for every caller (review of 29a55d8, L3). */
 static std::vector<std::string> header_lines(SEXP headers) {
+    /* a missing string is refused before anything is built (rmbl_str_at() raises an R error) */
+    if (TYPEOF(headers) == STRSXP) {
+        for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) (void) rmbl_str_at(headers, i, "headers");
+    }
     std::vector<std::string> extra;
     if (TYPEOF(headers) == STRSXP) {
         for (R_xlen_t i = 0; i < XLENGTH(headers); ++i) {
             const std::string h = rmbl_str_at(headers, i, "headers");
             if (h.find('\r') != std::string::npos || h.find('\n') != std::string::npos) {
-                Rf_error("a request header has a line break in it (check the key or the value it was set from)");
+                rmbl::fail("a request header has a line break in it (check the key or the value it was set from)");
             }
             extra.push_back(h);
         }
     } else if (headers != R_NilValue) {
-        Rf_error("`headers` must be a character vector or NULL");
+        rmbl::fail("`headers` must be a character vector or NULL");
     }
     return extra;
 }
@@ -1278,19 +1341,24 @@ static std::vector<std::string> header_lines(SEXP headers) {
  * list(status, bytes, error); a pending Ctrl-C is raised by the barrier. */
 SEXP C_rmbl_http_download_impl(SEXP url, SEXP path, SEXP timeout, SEXP headers, SEXP progress,
                                SEXP max_bytes, SEXP allow_loopback) {
+    /* both checked before either string is built: an error raised over a live std::string leaked it */
+    (void) rmbl_str0(url, "url");
+    (void) rmbl_str0(path, "path");
     const std::string u = rmbl_str0(url, "url");
     const std::string p = rmbl_str0(path, "path");
-    long tmo = (TYPEOF(timeout) == INTSXP || TYPEOF(timeout) == REALSXP) && XLENGTH(timeout) == 1
-        ? static_cast<long>(Rf_asReal(timeout)) : 3600L;
-    if (tmo < 1) tmo = 3600L;
+    /* NaN or 1e300 cast to long is undefined behaviour (CRAN's UBSan checks flag it): only a finite
+     * number of seconds up to 1e7 is cast, anything else is the default (an hour) */
+    const double td = (TYPEOF(timeout) == INTSXP || TYPEOF(timeout) == REALSXP) && XLENGTH(timeout) == 1
+        ? Rf_asReal(timeout) : NA_REAL;
+    long tmo = R_FINITE(td) && td >= 1 && td <= 1e7 ? static_cast<long>(td) : 3600L;
     if (progress != R_NilValue && !Rf_isFunction(progress)) {
-        Rf_error("`progress` must be a function or NULL");
+        rmbl::fail("`progress` must be a function or NULL");
     }
     const std::vector<std::string> extra = header_lines(headers);
     curl_off_t cap = kMaxDownload;
     if (max_bytes != R_NilValue) {
         const double mb = Rf_asReal(max_bytes);
-        if (!(mb >= 1)) Rf_error("`max_bytes` must be a number of bytes, at least one");
+        if (!(mb >= 1)) rmbl::fail("`max_bytes` must be a number of bytes, at least one");
         if (mb < static_cast<double>(kMaxDownload)) cap = static_cast<curl_off_t>(mb);
     }
     curl_off_t written = 0;
@@ -1299,11 +1367,11 @@ SEXP C_rmbl_http_download_impl(SEXP url, SEXP path, SEXP timeout, SEXP headers, 
     const long code = http_get_file(u, p, tmo, &extra, progress, &written, &err, &interrupted,
                                     cap, Rf_asLogical(allow_loopback) == TRUE);
     if (interrupted) rmbl_kernel_interrupted = 1;
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, Rf_ScalarInteger(static_cast<int>(code)));
     SET_VECTOR_ELT(res, 1, Rf_ScalarReal(static_cast<double>(written)));
     SET_VECTOR_ELT(res, 2, Rf_mkString(err.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("status"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("bytes"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("error"));
@@ -1316,14 +1384,16 @@ SEXP C_rmbl_http_download_impl(SEXP url, SEXP path, SEXP timeout, SEXP headers, 
  * `from` to `to`, without resolving or connecting. */
 SEXP C_rmbl_redirect_check_impl(SEXP from, SEXP to, SEXP allow_http, SEXP allow_loopback) {
     bool drop = false;
+    (void) rmbl_str0(from, "from");   /* checked before the first argument's std::string is built */
+    (void) rmbl_str0(to, "to");
     const std::string why = redirect_policy(rmbl_str0(from, "from"), rmbl_str0(to, "to"),
                                             Rf_asLogical(allow_http) == TRUE, false, &drop, NULL, NULL,
                                             Rf_asLogical(allow_loopback) == TRUE);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, Rf_ScalarLogical(why.empty()));
     SET_VECTOR_ELT(res, 1, Rf_mkString(why.c_str()));
     SET_VECTOR_ELT(res, 2, Rf_ScalarLogical(drop));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("ok"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("why"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("drop_auth"));
@@ -1332,10 +1402,11 @@ SEXP C_rmbl_redirect_check_impl(SEXP from, SEXP to, SEXP allow_http, SEXP allow_
     return res;
 }
 
-SEXP C_rmbl_wayback_impl(SEXP url, SEXP timeout) {
+SEXP C_rmbl_wayback_impl(SEXP url, SEXP timeout, SEXP api) {
     const char *u = rmbl_str0(url, "url");
+    const char *b = rmbl_str0(api, "api");
     char buf[2048];
-    int n = rmbl_wayback_snapshot(u, buf, (int) sizeof(buf), Rf_asInteger(timeout));
+    int n = wayback_raise(u, buf, (int) sizeof(buf), Rf_asInteger(timeout), b);
     return Rf_ScalarString(n > 0 ? Rf_mkChar(buf) : R_BlankString);
 }
 

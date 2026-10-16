@@ -406,9 +406,19 @@
     looked <- looked + length(res$tool_calls)
     .bl_wait$what <- sprintf("thinking (%d help %s read so far)", looked, if (looked == 1L) "page" else "pages")
   }
-  # the rounds are spent, or a turn came back empty: one last turn without tools, so an answer comes back
-  msgs[[length(msgs) + 1L]] <- list(role = "user", content = "Answer now with what you have found.")
-  ans <- .bl_llm_chat(rt, model, msgs, timeout = left())$text
+  # the rounds are spent, or a turn came back empty: one last turn, asked for the answer. The request
+  # goes with the last tool result (or the question), not as a turn of its own: Anthropic and Gemini
+  # carry tool results in a user turn, so it made two user turns in a row; and the tools stay
+  # declared with calls turned off, since a history holding tool calls without them is refused ("must
+  # define tools") by Anthropic (CRAN stress test of b617a3f, #11)
+  # (the last message is the question or a tool result: an assistant turn is kept only with its results)
+  last <- length(msgs)
+  msgs[[last]]$content <- paste0(msgs[[last]]$content, "\n\nAnswer now with what you have found; do not look ",
+                                 "anything else up.")
+  used_tools <- any(vapply(msgs, function(m) identical(m$role, "tool"), NA))
+  # an empty answer is .bl_llm_chat()'s error, which names the finish reason ("length": no room left);
+  # a model that calls a tool again though calls are off returns no text either, said here
+  ans <- .bl_llm_chat(rt, model, msgs, tools = if (used_tools) tools, timeout = left(), no_calls = TRUE)$text
   if (!nzchar(ans)) {
     stop(sprintf("%s returned no text after %d rounds of help-page lookups (try again, or another model)",
                  .bl_route_what(rt), max_rounds), call. = FALSE)

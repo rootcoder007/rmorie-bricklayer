@@ -138,7 +138,7 @@ SEXP C_rmbl_gini_impl(SEXP x) {
     std::vector<double> v;
     bool neg = false;
     if (!collect(x, v, &neg)) {
-        Rf_error("concentration measures need non-negative values");
+        rmbl::fail("concentration measures need non-negative values");
     }
     return Rf_ScalarReal(gini_sorted(v));
 }
@@ -150,14 +150,14 @@ SEXP C_rmbl_lorenz_impl(SEXP x) {
     std::vector<double> v;
     bool neg = false;
     if (!collect(x, v, &neg)) {
-        Rf_error("concentration measures need non-negative values");
+        rmbl::fail("concentration measures need non-negative values");
     }
     const size_t n = v.size();
     std::sort(v.begin(), v.end());
     long double total = 0.0L;
     for (size_t i = 0; i < n; ++i) total += v[i];
-    SEXP pop = PROTECT(Rf_allocVector(REALSXP, static_cast<R_xlen_t>(n) + 1));
-    SEXP val = PROTECT(Rf_allocVector(REALSXP, static_cast<R_xlen_t>(n) + 1));
+    SEXP pop = PROTECT(rmbl::alloc_vector(REALSXP, static_cast<R_xlen_t>(n) + 1));
+    SEXP val = PROTECT(rmbl::alloc_vector(REALSXP, static_cast<R_xlen_t>(n) + 1));
     REAL(pop)[0] = 0.0;
     REAL(val)[0] = 0.0;
     long double run = 0.0L;
@@ -168,10 +168,10 @@ SEXP C_rmbl_lorenz_impl(SEXP x) {
         REAL(val)[i + 1] = total > 0.0L
             ? static_cast<double>(run / total) : NA_REAL;
     }
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 2));
     SET_VECTOR_ELT(res, 0, pop);
     SET_VECTOR_ELT(res, 1, val);
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 2));
     SET_STRING_ELT(nm, 0, Rf_mkChar("population"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("value"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
@@ -186,11 +186,11 @@ SEXP C_rmbl_lorenz_impl(SEXP x) {
  * used is the caller's business; the fraction alone is not enough to
  * reconstruct it. */
 SEXP C_rmbl_top_share_impl(SEXP x, SEXP fracs) {
-    if (TYPEOF(fracs) != REALSXP) Rf_error("`fracs` must be a double vector");
+    if (TYPEOF(fracs) != REALSXP) rmbl::fail("`fracs` must be a double vector");
     std::vector<double> v;
     bool neg = false;
     if (!collect(x, v, &neg)) {
-        Rf_error("concentration measures need non-negative values");
+        rmbl::fail("concentration measures need non-negative values");
     }
     const size_t n = v.size();
     std::sort(v.begin(), v.end(),
@@ -205,8 +205,8 @@ SEXP C_rmbl_top_share_impl(SEXP x, SEXP fracs) {
     const long double total = pre[n];
     const R_xlen_t m = XLENGTH(fracs);
     const double *f = REAL(fracs);
-    SEXP share = PROTECT(Rf_allocVector(REALSXP, m));
-    SEXP took = PROTECT(Rf_allocVector(INTSXP, m));
+    SEXP share = PROTECT(rmbl::alloc_vector(REALSXP, m));
+    SEXP took = PROTECT(rmbl::alloc_vector(INTSXP, m));
     for (R_xlen_t j = 0; j < m; ++j) {
         if ((j & 65535) == 0) rmbl::check_interrupt();
         if (n == 0 || total <= 0.0L || ISNAN(f[j]) || f[j] < 0 || f[j] > 1) {
@@ -220,10 +220,10 @@ SEXP C_rmbl_top_share_impl(SEXP x, SEXP fracs) {
         REAL(share)[j] = static_cast<double>(pre[k] / total);
         INTEGER(took)[j] = static_cast<int>(k);
     }
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 2));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 2));
     SET_VECTOR_ELT(res, 0, share);
     SET_VECTOR_ELT(res, 1, took);
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 2));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 2));
     SET_STRING_ELT(nm, 0, Rf_mkChar("share"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("units"));
     Rf_setAttrib(res, R_NamesSymbol, nm);
@@ -274,11 +274,11 @@ SEXP C_rmbl_mann_kendall_impl(SEXP y) {
     const long double nn = static_cast<long double>(m);
     const double var = m < 2 ? NA_REAL : static_cast<double>(
         (nn * (nn - 1.0L) * (2.0L * nn + 5.0L) - tiesum) / 18.0L);
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, Rf_ScalarReal(m < 2 ? NA_REAL : s));
     SET_VECTOR_ELT(res, 1, Rf_ScalarReal(var));
     SET_VECTOR_ELT(res, 2, Rf_ScalarInteger(static_cast<int>(m)));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("S"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("var"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("n"));
@@ -330,7 +330,7 @@ SEXP C_rmbl_sen_slopes_impl(SEXP x, SEXP y) {
         }
     }
     std::sort(slopes.begin(), slopes.end());
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, static_cast<R_xlen_t>(slopes.size())));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, static_cast<R_xlen_t>(slopes.size())));
     for (size_t k = 0; k < slopes.size(); ++k) REAL(out)[k] = slopes[k];
     UNPROTECT(1);
     return out;
@@ -392,12 +392,12 @@ SEXP C_rmbl_theil_sen_impl(SEXP x, SEXP y) {
             intercept = 0.5 * (lo + hi);
         }
     }
-    SEXP res = PROTECT(Rf_allocVector(VECSXP, 3));
+    SEXP res = PROTECT(rmbl::alloc_vector(VECSXP, 3));
     SET_VECTOR_ELT(res, 0, Rf_ScalarReal(slope));
     SET_VECTOR_ELT(res, 1, Rf_ScalarReal(intercept));
     SET_VECTOR_ELT(res, 2, Rf_ScalarReal(
         static_cast<double>(slopes.size())));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("slope"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("intercept"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("pairs"));
@@ -425,7 +425,7 @@ SEXP C_rmbl_hurwitz_zeta_impl(SEXP s_, SEXP q_) {
     const R_xlen_t n = XLENGTH(s_);
     const double *sv = REAL(s_);
     const double q = Rf_asReal(q_);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
         REAL(out)[i] = hurwitz_zeta_scalar(sv[i], q);
     }
@@ -458,11 +458,11 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
     const double *wts = REAL(wts_);
     const R_xlen_t nperm = static_cast<R_xlen_t>(Rf_asInteger(nperm_));
 
-    if (n < 3) Rf_error("Moran's I needs at least three areas");
+    if (n < 3) rmbl::fail("Moran's I needs at least three areas");
 
     long double total = 0.0L;
     for (R_xlen_t i = 0; i < n; ++i) {
-        if (ISNAN(x[i])) Rf_error("`x` must not contain missing values");
+        if (ISNAN(x[i])) rmbl::fail("`x` must not contain missing values");
         total += x[i];
     }
     const double mean = static_cast<double>(total / n);
@@ -477,12 +477,12 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
         for (int k = 0; k < len[i]; ++k) wsum += wts[start[i] + k];
     }
     if (ss <= 0.0L || wsum <= 0.0L) {
-        SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+        SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 4));
         SET_VECTOR_ELT(out, 0, Rf_ScalarReal(NA_REAL));
         SET_VECTOR_ELT(out, 1, Rf_ScalarReal(NA_REAL));
         SET_VECTOR_ELT(out, 2, Rf_ScalarReal(static_cast<double>(wsum)));
-        SET_VECTOR_ELT(out, 3, Rf_allocVector(REALSXP, 0));
-        SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+        SET_VECTOR_ELT(out, 3, rmbl::alloc_vector(REALSXP, 0));
+        SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
         SET_STRING_ELT(nm, 0, Rf_mkChar("I"));
         SET_STRING_ELT(nm, 1, Rf_mkChar("cross"));
         SET_STRING_ELT(nm, 2, Rf_mkChar("W"));
@@ -508,7 +508,7 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
     const double I = static_cast<double>(
         (static_cast<long double>(n) / wsum) * cross / ss);
 
-    SEXP null = PROTECT(Rf_allocVector(REALSXP, nperm));
+    SEXP null = PROTECT(rmbl::alloc_vector(REALSXP, nperm));
     if (nperm > 0) {
         /* R's own stream, so set.seed() in the caller governs it and the
          * p-value is reproducible */
@@ -529,12 +529,12 @@ SEXP C_rmbl_morans_i_impl(SEXP x_, SEXP idx_, SEXP start_, SEXP len_,
         }
         PutRNGstate();
     }
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 4));
+    SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 4));
     SET_VECTOR_ELT(out, 0, Rf_ScalarReal(I));
     SET_VECTOR_ELT(out, 1, Rf_ScalarReal(static_cast<double>(cross)));
     SET_VECTOR_ELT(out, 2, Rf_ScalarReal(static_cast<double>(wsum)));
     SET_VECTOR_ELT(out, 3, null);
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 4));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 4));
     SET_STRING_ELT(nm, 0, Rf_mkChar("I"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("cross"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("W"));

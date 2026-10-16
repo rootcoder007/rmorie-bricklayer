@@ -372,7 +372,7 @@ SEXP C_rmbl_euclid_impl(SEXP a, SEXP b) {
     b = PROTECT(Rf_coerceVector(b, REALSXP));
     if (XLENGTH(a) != XLENGTH(b)) {
         UNPROTECT(2);
-        Rf_error("a and b must have the same length");
+        rmbl::fail("a and b must have the same length");
     }
     double r = rmbl_euclid_dist(REAL(a), REAL(b), XLENGTH(a));
     UNPROTECT(2);
@@ -383,7 +383,7 @@ SEXP C_rmbl_normal_logpdf_impl(SEXP x, SEXP mu, SEXP sigma) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double m = Rf_asReal(mu), s = Rf_asReal(sigma);
     R_xlen_t n = XLENGTH(x);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     double *px = REAL(x), *po = REAL(out);
     for (R_xlen_t i = 0; i < n; i++) po[i] = rmbl_normal_logpdf(px[i], m, s);
     UNPROTECT(2);
@@ -396,9 +396,9 @@ SEXP C_rmbl_ipw_impl(SEXP treat, SEXP propensity, SEXP trim_lo, SEXP trim_hi) {
     R_xlen_t n = XLENGTH(treat);
     if (XLENGTH(propensity) != n) {
         UNPROTECT(2);
-        Rf_error("`treat` and `propensity` must have the same length");
+        rmbl::fail("`treat` and `propensity` must have the same length");
     }
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     rmbl_ipw_weights(REAL(treat), REAL(propensity), n, Rf_asReal(trim_lo),
                      Rf_asReal(trim_hi), REAL(out));
     UNPROTECT(3);
@@ -410,12 +410,12 @@ SEXP C_rmbl_bootstrap_mean_impl(SEXP x, SEXP B, SEXP seed) {
      * is undefined behaviour (a seed of -1 or NA reached `unsigned long long` that way) */
     const double bd = Rf_asReal(B), sd = Rf_asReal(seed);
     if (!R_FINITE(bd) || bd < 1 || bd != std::floor(bd) || bd > 4503599627370496.0)
-        Rf_error("`B` must be a whole number >= 1");
+        rmbl::fail("`B` must be a whole number >= 1");
     if (!R_FINITE(sd) || sd < 0 || sd != std::floor(sd) || sd >= 9007199254740992.0)
-        Rf_error("`seed` must be a whole number in [0, 2^53)");
+        rmbl::fail("`seed` must be a whole number in [0, 2^53)");
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     R_xlen_t nb = static_cast<R_xlen_t>(bd);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, nb));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, nb));
     rmbl_bootstrap_mean(REAL(x), XLENGTH(x), nb,
                         static_cast<unsigned long long>(sd), REAL(out));
     UNPROTECT(2);
@@ -426,7 +426,7 @@ SEXP C_rmbl_gamma_cdf_impl(SEXP shape, SEXP x) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double a = Rf_asReal(shape);
     R_xlen_t n = XLENGTH(x);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     /* P(a, Inf) = 1, as pgamma(): the shared core's continued fraction gives NaN there */
     for (R_xlen_t i = 0; i < n; i++) {
         const double xi = REAL(x)[i];
@@ -481,11 +481,11 @@ SEXP C_rmbl_hawkes_nll_grad_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, S
     const int nb = morie::core::hawkes_baseline_n(bk), np = rmbl_hk_np(k);
     if (XLENGTH(a) != nb || XLENGTH(psi) != np) {
         UNPROTECT(3);
-        Rf_error("wrong number of baseline or kernel parameters");
+        rmbl::fail("wrong number of baseline or kernel parameters");
     }
     const bool wg = Rf_asLogical(wantGrad) == TRUE;
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 2));
-    SEXP grad = PROTECT(Rf_allocVector(REALSXP, wg ? nb + 1 + np : 0));
+    SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 2));
+    SEXP grad = PROTECT(rmbl::alloc_vector(REALSXP, wg ? nb + 1 + np : 0));
     const double nll = morie::core::hawkes_nll_grad(
         REAL(t), static_cast<std::size_t>(XLENGTH(t)), Rf_asReal(T), bk, REAL(a), Rf_asReal(eta), k, REAL(psi),
         Rf_asInteger(method), Rf_asReal(eps), Rf_asReal(soeR), Rf_asReal(soeDelta), wg ? REAL(grad) : nullptr);
@@ -503,7 +503,7 @@ SEXP C_rmbl_hawkes_rescaled_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, S
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
     rmbl_hk_len(a, "a", morie::core::hawkes_baseline_n(bk));
     rmbl_hk_len(psi, "psi", rmbl_hk_np(k));
-    SEXP U = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
+    SEXP U = PROTECT(rmbl::alloc_vector(REALSXP, XLENGTH(t)));
     morie::core::hawkes_rescaled(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, bk,
                                  REAL(a), etav, k, REAL(psi), REAL(U));
     UNPROTECT(4);
@@ -518,7 +518,7 @@ SEXP C_rmbl_hawkes_intensity_impl(SEXP t, SEXP T, SEXP bkind, SEXP a, SEXP eta, 
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
     rmbl_hk_len(a, "a", morie::core::hawkes_baseline_n(bk));
     rmbl_hk_len(psi, "psi", rmbl_hk_np(k));
-    SEXP lam = PROTECT(Rf_allocVector(REALSXP, XLENGTH(t)));
+    SEXP lam = PROTECT(rmbl::alloc_vector(REALSXP, XLENGTH(t)));
     morie::core::hawkes_intensity(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, bk,
                                   REAL(a), etav, k, REAL(psi), REAL(lam));
     UNPROTECT(4);
@@ -536,7 +536,7 @@ SEXP C_rmbl_hawkes_em_pass_impl(SEXP t, SEXP lamOld, SEXP etaOld, SEXP kind, SEX
     rmbl_hk_len(lamOld, "lamOld", XLENGTH(t));
     rmbl_hk_len(psiOld, "psiOld", np);
     rmbl_hk_len(psiNew, "psiNew", np);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, 2 + np));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, 2 + np));
     double P = 0.0, dQ[2] = {0.0, 0.0};
     const double Q = morie::core::hawkes_em_pass(REAL(t), static_cast<std::size_t>(XLENGTH(t)), REAL(lamOld),
                                                  etav, k, REAL(psiOld), REAL(psiNew), &P, dQ);
@@ -553,7 +553,7 @@ SEXP C_rmbl_hawkes_cdf_sum_impl(SEXP t, SEXP T, SEXP kind, SEXP psi) {
     t = PROTECT(Rf_coerceVector(t, REALSXP));
     psi = PROTECT(Rf_coerceVector(psi, REALSXP));
     rmbl_hk_len(psi, "psi", np);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, 1 + np));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, 1 + np));
     double g[2] = {0.0, 0.0};
     REAL(out)[0] = morie::core::hawkes_cdf_sum(REAL(t), static_cast<std::size_t>(XLENGTH(t)), Tv, k,
                                                REAL(psi), g);
@@ -572,9 +572,9 @@ SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP me
     const R_xlen_t d = morie::core::hawkes_baseline_n(bk) + 1 + rmbl_hk_np(k);
     if (XLENGTH(lo) != d || XLENGTH(hi) != d || XLENGTH(x0) != d) {
         UNPROTECT(4);
-        Rf_error("wrong number of parameters");
+        rmbl::fail("wrong number of parameters");
     }
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, d + 2));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, d + 2));
     for (R_xlen_t i = 0; i < d; ++i) REAL(out)[i] = REAL(x0)[i];
     int it = 0;
     const double f = morie::core::hawkes_fit_pbfgs(
@@ -590,11 +590,11 @@ SEXP C_rmbl_hawkes_fit_pbfgs_impl(SEXP t, SEXP T, SEXP bkind, SEXP kind, SEXP me
 SEXP C_rmbl_uniforms_impl(SEXP n, SEXP seed) {
     const double nd = Rf_asReal(n), sd = Rf_asReal(seed);
     if (!R_FINITE(nd) || nd < 0 || nd != std::floor(nd) || nd > 4503599627370496.0)
-        Rf_error("`n` must be a whole number >= 0");
+        rmbl::fail("`n` must be a whole number >= 0");
     if (!R_FINITE(sd) || sd < 0 || sd != std::floor(sd) || sd >= 9007199254740992.0)
-        Rf_error("`seed` must be a whole number in [0, 2^53)");
+        rmbl::fail("`seed` must be a whole number in [0, 2^53)");
     const R_xlen_t m = static_cast<R_xlen_t>(nd);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, m));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, m));
     morie::core::splitmix64_uniforms(static_cast<std::uint64_t>(sd), static_cast<std::size_t>(m), REAL(out));
     UNPROTECT(1);
     return out;
@@ -626,7 +626,7 @@ SEXP C_rmbl_cor_impl(SEXP x, SEXP y) {
     y = PROTECT(Rf_coerceVector(y, REALSXP));
     if (XLENGTH(x) != XLENGTH(y)) {
         UNPROTECT(2);
-        Rf_error("x and y must have the same length");
+        rmbl::fail("x and y must have the same length");
     }
     double r = rmbl_cor_pearson(REAL(x), REAL(y), XLENGTH(x));
     UNPROTECT(2);
@@ -637,7 +637,7 @@ SEXP C_rmbl_normal_pdf_impl(SEXP x, SEXP mu, SEXP sigma) {
     x = PROTECT(Rf_coerceVector(x, REALSXP));
     double m = Rf_asReal(mu), s = Rf_asReal(sigma);
     R_xlen_t n = XLENGTH(x);
-    SEXP out = PROTECT(Rf_allocVector(REALSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(REALSXP, n));
     double *px = REAL(x), *po = REAL(out);
     for (R_xlen_t i = 0; i < n; i++) po[i] = rmbl_normal_pdf(px[i], m, s);
     UNPROTECT(2);
@@ -657,7 +657,7 @@ SEXP C_rmbl_sha256_impl(SEXP x) {
         data = (const unsigned char *) CHAR(s);
         len  = std::strlen((const char *) data);
     } else {
-        Rf_error("rmbl_sha256 expects a length-1 character vector or a raw vector");
+        rmbl::fail("rmbl_sha256 expects a length-1 character vector or a raw vector");
     }
     rmbl_sha256_hex(data, len, out);
     return Rf_mkString(out);
@@ -673,13 +673,13 @@ SEXP C_rmbl_sha256_chunk_impl(SEXP state, SEXP chunk, SEXP final) {
         sha256_init(&ctx);
     } else {
         if (TYPEOF(state) != RAWSXP || XLENGTH(state) != (R_xlen_t) sizeof ctx) {
-            Rf_error("`state` must be a SHA-256 state returned by an earlier call");
+            rmbl::fail("`state` must be a SHA-256 state returned by an earlier call");
         }
         std::memcpy(&ctx, RAW(state), sizeof ctx);
-        if (ctx.datalen >= 64) Rf_error("`state` must be a SHA-256 state returned by an earlier call");
+        if (ctx.datalen >= 64) rmbl::fail("`state` must be a SHA-256 state returned by an earlier call");
     }
     if (!Rf_isNull(chunk)) {
-        if (TYPEOF(chunk) != RAWSXP) Rf_error("`chunk` must be a raw vector or NULL");
+        if (TYPEOF(chunk) != RAWSXP) rmbl::fail("`chunk` must be a raw vector or NULL");
         sha256_update(&ctx, (const uint8_t *) RAW(chunk), (size_t) XLENGTH(chunk));
     }
     if (Rf_asLogical(final) == TRUE) {
@@ -694,7 +694,7 @@ SEXP C_rmbl_sha256_chunk_impl(SEXP state, SEXP chunk, SEXP final) {
         hex[64] = '\0';
         return Rf_mkString(hex);
     }
-    SEXP out = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t) sizeof ctx));
+    SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP, (R_xlen_t) sizeof ctx));
     std::memcpy(RAW(out), &ctx, sizeof ctx);
     UNPROTECT(1);
     return out;

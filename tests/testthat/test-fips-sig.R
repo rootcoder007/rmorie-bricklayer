@@ -157,6 +157,9 @@ test_that("key material round-trips through fips_key", {
 })
 
 test_that("a fixed seed reproduces the recorded key and signature", {
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
+  # check took 11 minutes (CRAN stress test of b617a3f)
+  skip_on_cran()
   vec <- fips_vectors("fips-self-vectors.txt")
   expect_setequal(names(vec), names(FIPS_SIZES))
   for (s in names(vec)) {
@@ -182,6 +185,9 @@ test_that("a fixed seed reproduces the recorded key and signature", {
 })
 
 test_that("a fresh key round-trips, and the hedged variant varies", {
+  # about 20 s or more each: run in CI and with NOT_CRAN=true, not on CRAN's machines, where the whole
+  # check took 11 minutes (CRAN stress test of b617a3f)
+  skip_on_cran()
   for (s in setdiff(names(FIPS_SIZES), SLOW_TO_SIGN)) {
     key <- fips_keygen(s)
     pub <- fips_public_key(key)

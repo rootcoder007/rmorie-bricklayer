@@ -232,9 +232,10 @@ test_that("survey: stray replicate columns are refused or said, genuine ones pas
                "a copy of the full-sample weight")
   expect_warning(survey_design(d, weights = "w", replicates = cbind(boot, round(w, 2) + 0.001), type = "bootstrap"),
                  "within 1% of the full-sample weight")
-  # a jackknife replicate that leaves nothing out and is no rescaled weight
+  # a constant beside jackknife replicates: one value on every row, which no multiplier of a varying
+  # weight is (a jackknife replicate that leaves no row out is genuine on a subset or post-stratified)
   expect_warning(survey_design(d, weights = "w", replicates = cbind(jk, rep(7, n)), type = "jk1"),
-                 "leaves no row out")
+                 "one value on every row")
   # a jackknife on a subset whose left-out PSU is elsewhere: the weight times one factor, in silence
   expect_silent(survey_design(d, weights = "w", replicates = cbind(jk, w * m / (m - 1)), type = "jk1"))
   # multipliers in place of the weights (the weights here average about 40)

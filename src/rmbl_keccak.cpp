@@ -295,14 +295,14 @@ void rmbl_sha3_512(unsigned char out[64], const unsigned char *in,
 SEXP C_rmbl_shake_impl(SEXP which, SEXP x, SEXP outlen) {
     const int w = Rf_asInteger(which);
     const int nl = Rf_asInteger(outlen);
-    if (nl == NA_INTEGER || nl < 0) Rf_error("`outlen` must be non-negative");
+    if (nl == NA_INTEGER || nl < 0) rmbl::fail("`outlen` must be non-negative");
     /* 16 MiB is far beyond any digest or seed expansion; a 2 GB request
      * was one allocation away from std::terminate() */
-    if (nl > (1 << 24)) Rf_error("`outlen` above 16 MiB is refused");
+    if (nl > (1 << 24)) rmbl::fail("`outlen` above 16 MiB is refused");
     const R_xlen_t n = nl;
-    /* every Rf_error() before the std::vectors below exist */
+    /* every rmbl::fail() before the std::vectors below exist */
     if (w != 128 && w != 256 && w != 3256 && w != 3512) {
-        Rf_error("unknown function selector");
+        rmbl::fail("unknown function selector");
     }
     SEXP sx = PROTECT(TYPEOF(x) == RAWSXP ? x : Rf_coerceVector(x, STRSXP));
     const char *sxs = TYPEOF(sx) == RAWSXP ? NULL : rmbl_str0(sx, "x");
@@ -322,7 +322,7 @@ SEXP C_rmbl_shake_impl(SEXP which, SEXP x, SEXP outlen) {
         out.resize(64);
         rmbl_sha3_512(out.data(), in.data(), in.size());
     }
-    SEXP res = PROTECT(Rf_allocVector(RAWSXP, static_cast<R_xlen_t>(out.size())));
+    SEXP res = PROTECT(rmbl::alloc_vector(RAWSXP, static_cast<R_xlen_t>(out.size())));
     if (!out.empty()) std::memcpy(RAW(res), out.data(), out.size());
     UNPROTECT(1);
     return res;

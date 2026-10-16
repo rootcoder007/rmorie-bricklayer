@@ -644,7 +644,7 @@ SEXP C_rmbl_ec_order_impl(SEXP curve) {
     if (!load_curve(&c, rmbl_str0(curve, "curve"))) {
         Rf_errorcall(R_NilValue, "unsupported curve: %s", rmbl_str0(curve, "curve"));
     }
-    SEXP out = PROTECT(Rf_allocVector(RAWSXP, c.bytes));
+    SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP, c.bytes));
     to_bytes(&c.n, RAW(out), static_cast<size_t>(c.bytes));
     UNPROTECT(1);
     return out;
@@ -669,15 +669,15 @@ SEXP C_rmbl_ec_mul_impl(SEXP curve, SEXP k) {
     Num x, y;
     const bool inf = is_infinity(&q);
     to_affine(&x, &y, &q, &c);
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 3));
-    SEXP sx = PROTECT(Rf_allocVector(RAWSXP, c.bytes));
-    SEXP sy = PROTECT(Rf_allocVector(RAWSXP, c.bytes));
+    SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 3));
+    SEXP sx = PROTECT(rmbl::alloc_vector(RAWSXP, c.bytes));
+    SEXP sy = PROTECT(rmbl::alloc_vector(RAWSXP, c.bytes));
     to_bytes(&x, RAW(sx), static_cast<size_t>(c.bytes));
     to_bytes(&y, RAW(sy), static_cast<size_t>(c.bytes));
     SET_VECTOR_ELT(out, 0, sx);
     SET_VECTOR_ELT(out, 1, sy);
     SET_VECTOR_ELT(out, 2, Rf_ScalarLogical(inf ? TRUE : FALSE));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 3));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, Rf_mkChar("x"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("y"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("infinity"));

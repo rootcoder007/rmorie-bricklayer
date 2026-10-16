@@ -819,6 +819,7 @@ bricklayer_plot_options <- function(...) {
 #' @export
 plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days"),
                                  main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_stock_flow")
   avail <- intersect(c("adp", "alos", "people", "days", "flow_rate", "stock_rate"), names(x))
   what <- .rmbl_arg(what, avail, several = TRUE)
   labs <- c(adp = "Average daily population", alos = "Average length of stay (days)",
@@ -855,6 +856,7 @@ plot.rmbl_stock_flow <- function(x, ..., what = c("adp", "alos", "people", "days
 #' @export
 plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, col = NULL,
                           palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_yoy")
   what <- .rmbl_arg(what)
   d <- as.data.frame(x)
   meta <- attr(x, "yoy")
@@ -922,6 +924,7 @@ plot.rmbl_yoy <- function(x, ..., what = c("pct_change", "value"), main = NULL, 
 #' @rdname plot-methods
 #' @export
 plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_rate")
   d <- as.data.frame(x)
   meta <- attr(x, "rate")
   if (!is.null(period)) return(.bl_rate_over_time(d, meta, period, main, col, palette, ...))
@@ -977,6 +980,7 @@ plot.rmbl_rate <- function(x, ..., period = NULL, main = NULL, col = NULL, palet
 #' @rdname plot-methods
 #' @export
 plot.rmbl_share <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_share")
   d <- as.data.frame(x)
   meta <- attr(x, "share")
   label <- .bl_group_label(d, meta$by)
@@ -991,6 +995,7 @@ plot.rmbl_share <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_rate_change <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_rate_change")
   d <- as.data.frame(x)
   meta <- attr(x, "rate_change")
   label <- paste(.bl_group_label(d, meta$by), as.character(d[[meta$period]]), sep = ": ")
@@ -1010,6 +1015,7 @@ plot.rmbl_rate_change <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @rdname plot-methods
 #' @export
 plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_band_sensitivity")
   d <- as.data.frame(x)
   cols <- .bl_cols(1, col, palette)
   op <- .bl_par(d$value)
@@ -1026,6 +1032,7 @@ plot.rmbl_band_sensitivity <- function(x, ..., main = NULL, col = NULL, palette 
 #' @rdname plot-methods
 #' @export
 plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_drift_calibration")
   d <- x$columns
   # each column's false-alarm rate with its exact (Clopper-Pearson) interval over the splits, and
   # the rate at which any column flagged: bars of height 0 (no false alarm in 3 splits) drew an
@@ -1050,6 +1057,7 @@ plot.rmbl_drift_calibration <- function(x, ..., main = NULL, col = NULL, palette
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_drift <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_drift")
   d <- x$columns
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(!is.na(d$drifted) & d$drifted, pal[3L], pal[1L])
@@ -1070,6 +1078,7 @@ plot.bricklayer_drift <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_benford <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_benford")
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(c(0, max(c(x$proportion, x$expected / x$n), na.rm = TRUE)))
   on.exit(graphics::par(op), add = TRUE)
@@ -1092,6 +1101,7 @@ plot.bricklayer_benford <- function(x, ..., main = NULL, col = NULL, palette = N
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_power")
   d <- x$curve
   cols <- .bl_cols(1, col, palette)
   op <- .bl_par(c(0, 1))
@@ -1137,6 +1147,7 @@ plot.bricklayer_power <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_freq <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_freq")
   if (!nrow(x)) {
     graphics::plot.new()
     graphics::title(main = if (is.null(main)) "Nothing to draw: no values" else main)
@@ -1153,6 +1164,7 @@ plot.bricklayer_freq <- function(x, ..., main = NULL, col = NULL, palette = NULL
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_missingness <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_missingness")
   d <- as.data.frame(x)
   cols <- .bl_cols(nrow(d), col, palette)
   .bl_hbars(d$n_rows, as.character(d$pattern), "Rows",
@@ -1163,6 +1175,7 @@ plot.bricklayer_missingness <- function(x, ..., main = NULL, col = NULL, palette
 #' @rdname plot-methods
 #' @export
 plot.rmbl_region_coverage <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_region_coverage")
   d <- as.data.frame(x)
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(d$has_unit, pal[1L], pal[3L])
@@ -1177,6 +1190,7 @@ plot.rmbl_region_coverage <- function(x, ..., main = NULL, col = NULL, palette =
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_outliers")
   d <- as.data.frame(x)
   pal <- .bl_cols(3, col, if (is.null(palette) && is.null(col)) "diverging" else palette)
   cols <- ifelse(!is.na(d$outlier) & d$outlier, pal[3L], pal[1L])
@@ -1216,6 +1230,7 @@ plot.bricklayer_outliers <- function(x, ..., main = NULL, col = NULL, palette = 
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_correlations <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_correlations")
   d <- as.data.frame(x)
   label <- paste(d$x, d$y, sep = " ~ ")
   .bl_corr_bars(label, d$correlation, if (is.null(main)) "Strongest correlations" else main,
@@ -1226,6 +1241,7 @@ plot.bricklayer_correlations <- function(x, ..., main = NULL, col = NULL, palett
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_cortable <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_cortable")
   d <- as.data.frame(x)
   d <- d[order(-abs(d$correlation), na.last = TRUE), , drop = FALSE]
   label <- paste(d$x, d$y, sep = " ~ ")
@@ -1238,6 +1254,7 @@ plot.bricklayer_cortable <- function(x, ..., main = NULL, col = NULL, palette = 
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_falsification <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "bricklayer_falsification")
   null <- as.numeric(x$permutation)
   null <- null[is.finite(null)]
   cols <- .bl_cols(2, col, palette)
@@ -1264,6 +1281,7 @@ plot.bricklayer_falsification <- function(x, ..., main = NULL, col = NULL, palet
 #' @rdname plot-methods
 #' @export
 plot.rmbl_bounds <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_bounds")
   d <- as.data.frame(x)
   idx <- as.character(seq_len(nrow(d)))
   label <- if (!is.null(rownames(d)) && !identical(rownames(d), idx)) rownames(d) else idx
@@ -1297,6 +1315,7 @@ plot.rmbl_bounds <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_crf <- function(x, ..., exposure = NULL, main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_crf")
   d <- .bl_crf_curve(x, exposure)
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(d$rr)
@@ -1322,6 +1341,7 @@ plot.rmbl_crf <- function(x, ..., exposure = NULL, main = NULL, col = NULL, pale
 #' @rdname plot-methods
 #' @export
 plot.rmbl_burden <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_burden")
   cols <- .bl_cols(2, col, palette)
   op <- .bl_par(c(x$baseline_cases, x$attributable_cases))
   on.exit(graphics::par(op), add = TRUE)
@@ -1340,6 +1360,7 @@ plot.rmbl_burden <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_equity <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_equity")
   cv <- x$extra$curve
   if (is.null(cv)) stop("this equity result carries no concentration curve (older object)", call. = FALSE)
   cols <- .bl_cols(1, col, palette)
@@ -1401,6 +1422,7 @@ plot.rmbl_pollution_report <- function(x, ..., main = NULL, col = NULL, palette 
 #' @rdname plot-methods
 #' @export
 plot.rmbl_footprint <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_footprint")
   # one quantity in one unit: the emission of the CPU, of the memory and in all, in the unit that
   # suits its size (kg, g, mg or micrograms); the everyday equivalents are written under it. The
   # three bars of g, car-metres and tree-hours on one axis mixed three units, and a computation
@@ -1524,6 +1546,7 @@ plume_field <- function(q, u, h, x, y, z = 0, stability = "D", setting = "rural"
 #' @rdname plot-methods
 #' @export
 plot.rmbl_field <- function(x, ..., contours = 8L, main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_field")
   f <- x$field
   xs <- if (!is.null(x$x)) x$x else seq_len(nrow(f)) * (x$dx %||% 1)
   ys <- if (!is.null(x$y)) x$y else seq_len(ncol(f)) * (x$dy %||% 1)
@@ -1544,6 +1567,7 @@ plot.rmbl_field <- function(x, ..., contours = 8L, main = NULL, col = NULL, pale
 #' @rdname plot-methods
 #' @export
 plot.rmbl_particles <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_particles")
   cols <- .bl_cols(1, col, palette)
   op <- .bl_par(x$y)
   on.exit(graphics::par(op), add = TRUE)
@@ -1573,6 +1597,7 @@ plot.rmbl_particles <- function(x, ..., main = NULL, col = NULL, palette = NULL)
 #' @rdname plot-methods
 #' @export
 plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_count_trend")
   d <- x$data
   if (is.null(d)) stop("this trend result carries no data (older object)", call. = FALSE)
   cols <- .bl_cols(2, col, palette)
@@ -1595,6 +1620,7 @@ plot.rmbl_count_trend <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @rdname plot-methods
 #' @export
 plot.bricklayer_analysis <- function(x, ..., which = NULL, main = NULL) {
+  .rmbl_plot_check(x, "bricklayer_analysis")
   panels <- c("change", "rates", "rate_change")
   which <- if (is.null(which)) panels else .rmbl_arg(which, panels, several = TRUE)
   parts <- Filter(Negate(is.null), list(change = x$change, rates = x$rates, rate_change = x$rate_change)[which])

@@ -144,8 +144,9 @@ hotspot_persistence <- function(lon, lat, period, cell = 0.25, top = 0.05, coord
   } else {
     p <- list(x = lon, y = lat)
   }
-  x0 <- min(p$x)
-  y0 <- min(p$y)
+  # the origin of the points near the rest (.jx_origin): one at -1e300 put every other in one cell
+  x0 <- .jx_origin(p$x, cell)
+  y0 <- .jx_origin(p$y, cell)
   ix <- floor((p$x - x0) / cell)
   iy <- floor((p$y - y0) / cell)
   key <- paste(ix, iy)
@@ -238,6 +239,7 @@ print.rmbl_hotspot <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_hotspot <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_hotspot")
   d <- x$periods
   op <- .bl_panels_begin(3L)
   on.exit(graphics::par(op), add = TRUE)

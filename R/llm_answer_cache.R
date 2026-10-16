@@ -42,8 +42,10 @@
 .bl_answer_key <- function(rt, model, prompt, pkgs = NULL, system_prompt = NULL) {
   vers <- vapply(pkgs, function(p) as.character(utils::packageVersion(p)), "")
   q <- .bl_answer_question(prompt)
-  core_sha256(paste(c("v1", rt$name %||% "", rt$base %||% "", model %||% "", paste(pkgs, vers),
-                      system_prompt %||% "", q), collapse = "\x1f"))
+  # the key in use is part of it (only ever as this digest): an answer bought with one account's key
+  # is not handed back under another's (CRAN stress test of b617a3f)
+  core_sha256(paste(c("v1", rt$name %||% "", rt$base %||% "", core_sha256(rt$key %||% ""), model %||% "",
+                      paste(pkgs, vers), system_prompt %||% "", q), collapse = "\x1f"))
 }
 
 .bl_answer_get <- function(key, prompt = NULL) {

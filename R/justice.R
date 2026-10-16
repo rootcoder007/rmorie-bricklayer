@@ -305,6 +305,7 @@ print.rmbl_case_flow <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_case_flow <- function(x, ..., what = c("flow", "clearance"), main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_case_flow")
   what <- .rmbl_arg(what, c("flow", "clearance"), several = TRUE)
   px <- .jx_period_x(x$period)
   cols <- .bl_cols(2, col, palette)
@@ -560,6 +561,7 @@ print.rmbl_life_table <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_life_table <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_life_table")
   cols <- .bl_cols(2, col, palette)
   hi <- x$upper
   open <- !is.finite(hi)
@@ -762,6 +764,7 @@ print.rmbl_disposition_mix <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_disposition_mix <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_disposition_mix")
   s <- x$shares
   nt <- length(x$period)
   k <- length(x$outcome)
@@ -1091,6 +1094,7 @@ print.rmbl_density <- function(x, ...) {
 #'   col = NULL, palette = NULL)
 #' @export
 plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_density")
   ll <- x$coords == "lonlat"
   xs <- if (ll) x$lon else x$x
   ys <- if (ll) x$lat else x$y
@@ -1127,10 +1131,20 @@ plot.rmbl_density <- function(x, ..., points = TRUE, main = NULL, col = NULL, pa
 
 # pairs closer than `r`: points hashed to cells of side r, each cell compared with itself and
 # four of its neighbours, so every close pair is found once
+# The grid's origin: the smallest coordinate of the points within 2^52 cells of the median. The smallest
+# of all let one point at -1e300 shift every other one to 1e300, where they all fell into one cell
+# (the counts were wiped out; the mirror of the +1e300 point, CRAN stress test of b617a3f). With no
+# such outlier it is min(v), as before; an outlier is then a far point, compared directly.
+.jx_origin <- function(v, unit) {
+  med <- stats::median(v)
+  inl <- abs(v - med) / unit <= 2^52
+  if (any(inl)) min(v[inl]) else med
+}
+
 .jx_close_pairs <- function(x, y, r, max_pairs) {
   # distances do not move when the coordinates are shifted, and the cell indices shrink
-  x <- x - min(x)
-  y <- y - min(y)
+  x <- x - .jx_origin(x, r)
+  y <- y - .jx_origin(y, r)
   cx <- floor(x / r)
   cy <- floor(y / r)
   # past 2^52 a cell index is not a whole number with room beside it, so neighbouring cells merge or
@@ -1412,6 +1426,7 @@ print.rmbl_knox <- function(x, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_knox <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_knox")
   t <- x$table
   ks <- length(x$space_bands)
   kt <- length(x$time_bands)
@@ -1690,6 +1705,7 @@ print.rmbl_clearance_decomposition <- function(x, ...) {
 #' @export
 plot.rmbl_clearance_decomposition <- function(x, ..., what = NULL, max_parts = 20L, main = NULL, col = NULL,
                                               palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_clearance_decomposition")
   cols <- .bl_cols(2, col, palette)
   max_parts <- .rmbl_num(max_parts, "max_parts", integer = TRUE)
   if (length(max_parts) != 1L || is.na(max_parts) || max_parts < 2L) {

@@ -915,8 +915,23 @@ bricklayer_llm_providers <- function() {
       ),
       error = function(e) NULL
     )
+    # an event stream (a server that streams though no stream was asked for, or one that reports a
+    # failure as an SSE error event): the event that carries an error is the reply, so its message is
+    # said, not "returned no text" (CRAN stress test of b617a3f)
+    if (is.null(json)) json <- .bl_sse_error(res$body)
   }
   list(status = as.integer(res$status), json = json, error = res$error %||% "")
+}
+
+# The first `data:` line of an event stream whose JSON holds an error, as that JSON; NULL otherwise.
+.bl_sse_error <- function(body) {
+  txt <- tryCatch(if (is.raw(body)) rawToChar(body) else as.character(body), error = function(e) "")
+  if (length(txt) != 1L || !grepl("^(event|data):", txt)) return(NULL)
+  for (d in sub("^data:[[:space:]]*", "", grep("^data:", strsplit(txt, "\r?\n")[[1L]], value = TRUE))) {
+    j <- tryCatch(.rmbl_json_text(d, simplifyVector = FALSE), error = function(e) NULL)
+    if (is.list(j) && !is.null(j$error)) return(j)
+  }
+  NULL
 }
 
 .bl_reply_error <- function(res, what, secret = NULL) {

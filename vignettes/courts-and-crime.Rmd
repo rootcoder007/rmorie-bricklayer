@@ -96,16 +96,25 @@ g <- g[g$year %in% c(2014, 2022), ]
 cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
 cd
 plot(cd)
+# a group's share of the cases received in a year, as a percentage
+share <- function(group, yr) {
+  sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
+}
 ```
 
 Between 2014 and 2022 the province-wide clearance rate moved by
 `r sprintf("%+.4f", cd$overall$change)`. Held at a fixed mix it moved by
-`r sprintf("%+.4f", cd$overall$rate_effect)`; the shift of work -- toward crimes against the
-person, the group with the lowest clearance rate, and away from federal-statute cases, the group
-with the highest -- contributed `r sprintf("%+.4f", cd$overall$mix_effect)`. The crude ratio's interval includes 1;
-within offence groups the ratio is
+`r sprintf("%+.4f", cd$overall$rate_effect)`; the shift of work contributed
+`r sprintf("%+.4f", cd$overall$mix_effect)`. Crimes against the person, the group with the lowest
+clearance rate in both years, grew from `r share("Crimes Against the Person", 2014)` to
+`r share("Crimes Against the Person", 2022)` of the cases received, and federal-statute cases,
+the group with the highest rate in 2022, fell from `r share("Federal Statute", 2014)` to
+`r share("Federal Statute", 2022)`. `r cd$simpson$up` of the `r cd$simpson$parts` groups cleared a
+larger share in 2022 and `r cd$simpson$down` a smaller one. The crude ratio's interval includes 1;
+the Mantel-Haenszel ratio within offence groups is
 `r sprintf("%.4f (%.4f to %.4f)", cd$rate_ratio$ratio[2], cd$rate_ratio$lower[2], cd$rate_ratio$upper[2])`.
-Read alone, the aggregate would say nothing changed; within the groups, clearance improved.
+Read alone, the aggregate would say nothing changed; within the groups, taken together, clearance
+improved, though not in every group.
 
 The grouping matters, and so does the pair of years. By court, with Toronto's courthouses
 taken together (they were consolidated in 2023), comparing 2012 with 2024:

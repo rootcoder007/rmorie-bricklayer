@@ -284,8 +284,11 @@
 }
 
 # Where a route's chat request goes, and the body for it.
-.bl_llm_request <- function(rt, model, messages, tools, max_tokens) {
-  switch(rt$api %||% "openai",
+# `no_calls`: the tools stay declared (a history holding tool calls needs them) but the model may not
+# call one: OpenAI's tool_choice "none", Anthropic's {type: "none"}, Gemini's function-calling mode NONE.
+.bl_llm_request <- function(rt, model, messages, tools, max_tokens, no_calls = FALSE) {
+  api <- rt$api %||% "openai"
+  req <- switch(api,
     anthropic = list(url = paste0(rt$base, "/v1/messages"),
                      body = .bl_anthropic_body(model, messages, tools, max_tokens)),
     gemini = list(url = sprintf("%s/v1beta/models/%s:generateContent", rt$base,
@@ -293,6 +296,16 @@
                   body = .bl_gemini_body(messages, tools, max_tokens)),
     list(url = paste0(.bl_openai_base(rt), "/chat/completions"),
          body = .bl_openai_body(model, messages, tools, max_tokens)))
+  if (isTRUE(no_calls) && length(tools)) {
+    if (identical(api, "anthropic")) {
+      req$body$tool_choice <- list(type = "none")
+    } else if (identical(api, "gemini")) {
+      req$body$toolConfig <- list(functionCallingConfig = list(mode = "NONE"))
+    } else {
+      req$body$tool_choice <- "none"
+    }
+  }
+  req
 }
 
 .bl_llm_parse <- function(rt, json) {
@@ -314,8 +327,9 @@
 }
 
 # One chat turn on a route: list(text, tool_calls, finish). No retry: the prompt goes once.
-.bl_llm_chat <- function(rt, model, messages, tools = NULL, timeout = 120, max_tokens = 4096L, allow_empty = FALSE) {
-  req <- .bl_llm_request(rt, model, messages, tools, max_tokens)
+.bl_llm_chat <- function(rt, model, messages, tools = NULL, timeout = 120, max_tokens = 4096L, allow_empty = FALSE,
+                         no_calls = FALSE) {
+  req <- .bl_llm_request(rt, model, messages, tools, max_tokens, no_calls)
   lbl <- .bl_llm_wait_label(model %||% rt$model)
   if (nzchar(lbl)) {
     # the console's mode, as .bl_busy() passes it: c(colours, redraws, to stdout). The old logical
@@ -331,7 +345,9 @@
   # one send, never two: a POST that timed out may have been read by the provider, and a retry
   # would send the prompt (and its cost) again (review of 46de6a9); the person asks again
   res <- send()
-  if (!identical(res$status, 200L)) {
+  # a 200 that carries an error object (an SSE error event, or a gateway that answers errors with
+  # 200) is an error, said with its message
+  if (!identical(res$status, 200L) || (is.list(res$json) && !is.null(res$json$error) && is.null(res$json$choices))) {
     if (isTRUE(res$status %in% c(400L, 403L, 404L))) {
       # a model the route does not have is often answered 400/403/404: name it, not the key
       have <- tryCatch(.bl_llm_list_models(rt), error = function(e) NULL)
