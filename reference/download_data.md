@@ -86,7 +86,7 @@ read.csv(dest)
 
 # file:// is refused unless asked for, and so is an append mode
 try(download_data(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp4S3sau/file1dca66a5b885.csv'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp6k5Jxv/file1dd2a7ff342.csv'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
 try(download_data("https://example.org/x.csv", tempfile(), mode = "a"))
 #> Error : `mode` must be "wb" (every transfer is binary)
 if (FALSE) { # \dontrun{

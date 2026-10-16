@@ -159,7 +159,7 @@ plot(cd)
 ``` r
 
 # a group's share of the cases received in a year, as a percentage
-share <- function(group, yr) {
+case_share <- function(group, yr) {
   sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
 }
 ```
