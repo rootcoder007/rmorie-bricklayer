@@ -106,7 +106,8 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 URL: https://github.com/rootcoder007/rmorie-bricklayer,
-    https://rootcoder007.github.io/rmorie-bricklayer/
+    https://rootcoder007.github.io/rmorie-bricklayer/,
+    https://rmorie.com
 BugReports: https://github.com/rootcoder007/rmorie-bricklayer/issues
 Config/testthat/edition: 3
 SystemRequirements: C++17, libcurl (deb: libcurl4-openssl-dev, rpm:
