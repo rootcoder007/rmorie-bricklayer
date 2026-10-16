@@ -15,7 +15,7 @@ touched, and only when you call this."><meta property="og:image" content="https:
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -121,18 +121,18 @@ refused).</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># into a scratch folder, so nothing on your PATH changes</span></span></span>
 <span class="r-in"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"bin"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">install_cli</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">d</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpjvNIzl/bin/rmoriebricklayer and /tmp/RtmpjvNIzl/bin/rmbl; add /tmp/RtmpjvNIzl/bin to your PATH</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpysMQHG/bin/rmoriebricklayer and /tmp/RtmpysMQHG/bin/rmbl; add /tmp/RtmpysMQHG/bin to your PATH</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/list.files.html" class="external-link">list.files</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "rmbl"             "rmoriebricklayer"</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "#!/bin/sh"                                                                                         </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [2] "# rmoriebricklayer: the rmoriebricklayer command line (written by rmoriebricklayer::install_cli())"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "# runs the package in /tmp/RtmpjvNIzl/temp_libpath1e757006fef4 (pinned with .libPaths() inside R)" </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [3] "# runs the package in /tmp/RtmpysMQHG/temp_libpath1e8693f39fd (pinned with .libPaths() inside R)"  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [4] "export RMBL_PROG=rmoriebricklayer"                                                                 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># one name only</span></span></span>
 <span class="r-in"><span><span class="fu">install_cli</span><span class="op">(</span>dir <span class="op">=</span> <span class="va">d</span>, name <span class="op">=</span> <span class="st">"rmbl"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpjvNIzl/bin/rmbl; add /tmp/RtmpjvNIzl/bin to your PATH</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Installed /tmp/RtmpysMQHG/bin/rmbl; add /tmp/RtmpysMQHG/bin to your PATH</span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu">install_cli</span><span class="op">(</span><span class="op">)</span>   <span class="co"># ~/.local/bin/rmoriebricklayer and ~/.local/bin/rmbl</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>

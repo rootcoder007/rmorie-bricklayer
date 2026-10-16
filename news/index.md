@@ -1,5 +1,24 @@
 # Changelog
 
+## rmoriebricklayer 0.5.14
+
+- A new data key is issued only after the data access terms are
+  accepted. `rmbl login` and
+  [`bricklayer_llm_login()`](https://rootcoder007.github.io/rmorie-bricklayer/reference/bricklayer_llm_login.md)
+  show the terms summary and their address, ask
+  `Do you accept ...? [y/N]`, and then ask for your name, organisation
+  (optional) and why you need the data; for the restricted tables
+  (Schedule B: ICPSR, NCVS 38604, A2AJ case law) they also ask for a
+  supervisor, department chair, director or coordinator and their email.
+  In a script, give them as arguments (`accept_terms = TRUE`, `name`,
+  `affiliation`, `purpose`, `restricted`, `supervisor_name`,
+  `supervisor_role`, `supervisor_email`) or flags (`--accept-terms`,
+  `--name`, `--affiliation`, `--reason`, `--restricted`,
+  `--supervisor-name`, `--supervisor-role`, `--supervisor-email`).
+  Nothing is sent until every required answer is there; the data service
+  checks the same things. `login --token` with a key you already hold is
+  unchanged.
+
 ## rmoriebricklayer 0.5.13
 
 - The survey-estimation vignette loads the CSUS 2023 public-use file and

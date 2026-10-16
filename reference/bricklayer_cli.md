@@ -156,7 +156,7 @@ to put the command on your PATH.
 
 ``` r
 bricklayer_cli("version")
-#> rmoriebricklayer 0.5.13
+#> rmoriebricklayer 0.5.14
 bricklayer_cli("help")
 #> usage: rmoriebricklayer <verb> [options]   (rmbl is the same command as rmoriebricklayer)
 #> 

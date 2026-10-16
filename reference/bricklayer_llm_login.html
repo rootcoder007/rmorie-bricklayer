@@ -11,7 +11,7 @@ The sign-in addresses come from bricklayer_services. Three ways in:
 token: a key you already have, from the website or an
 email. It is checked with the service first and stored only when
 it is accepted; a refused key, or no answer, stores nothing.
-email: a 6-digit code is sent to the address (valid
+email: a one-time code is sent to the address (valid
 ten minutes, single use); you type it, or pass code.
 neither: the GitHub device flow; a code is shown to enter at
 github.com, and the key arrives once you approve.
@@ -27,7 +27,7 @@ The sign-in addresses come from bricklayer_services. Three ways in:
 token: a key you already have, from the website or an
 email. It is checked with the service first and stored only when
 it is accepted; a refused key, or no answer, stores nothing.
-email: a 6-digit code is sent to the address (valid
+email: a one-time code is sent to the address (valid
 ten minutes, single use); you type it, or pass code.
 neither: the GitHub device flow; a code is shown to enter at
 github.com, and the key arrives once you approve.
@@ -39,7 +39,7 @@ Nothing is written except by this explicit call."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,7 @@ Keys are personal: the GitHub or emailed-code sign-in issues one, or ask at
 The sign-in addresses come from <code><a href="bricklayer_services.html">bricklayer_services</a></code>. Three ways in:</p><ul><li><p><code>token</code>: a key you already have, from the website or an
 email. It is checked with the service first and stored only when
 it is accepted; a refused key, or no answer, stores nothing.</p></li>
-<li><p><code>email</code>: a 6-digit code is sent to the address (valid
+<li><p><code>email</code>: a one-time code is sent to the address (valid
 ten minutes, single use); you type it, or pass <code>code</code>.</p></li>
 <li><p>neither: the GitHub device flow; a code is shown to enter at
 github.com, and the key arrives once you approve.</p></li>
@@ -105,7 +105,15 @@ github.com, and the key arrives once you approve.</p></li>
 <span>  email <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  code <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  open_browser <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  poll_max_seconds <span class="op">=</span> <span class="fl">600</span></span>
+<span>  poll_max_seconds <span class="op">=</span> <span class="fl">600</span>,</span>
+<span>  accept_terms <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  affiliation <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  purpose <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  restricted <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  supervisor_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  supervisor_role <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  supervisor_email <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -121,7 +129,7 @@ Surrounding spaces are removed. Takes precedence over <code>email</code>.</p></d
 
 <dt id="arg-email">email<a class="anchor" aria-label="anchor" href="#arg-email"></a></dt>
 <dd><p>Character scalar or <code>NULL</code> (the default): sign in with
-a 6-digit code sent to this address. Lower-cased before use.</p></dd>
+a one-time code sent to this address. Lower-cased before use.</p></dd>
 
 
 <dt id="arg-code">code<a class="anchor" aria-label="anchor" href="#arg-code"></a></dt>
@@ -139,6 +147,43 @@ public <code>https</code> address is opened).</p></dd>
 <dt id="arg-poll-max-seconds">poll_max_seconds<a class="anchor" aria-label="anchor" href="#arg-poll-max-seconds"></a></dt>
 <dd><p>Numeric scalar, default <code>600</code>: how many
 seconds the device flow waits for you to approve the sign-in.</p></dd>
+
+
+<dt id="arg-accept-terms">accept_terms<a class="anchor" aria-label="anchor" href="#arg-accept-terms"></a></dt>
+<dd><p>Logical scalar, default <code>FALSE</code>: <code>TRUE</code>
+accepts the data access terms (read them at
+<a href="https://data.rmorie.com/terms" class="external-link">https://data.rmorie.com/terms</a>) without the console asking. A new
+key is issued only once they are accepted, here or at the prompt.</p></dd>
+
+
+<dt id="arg-name">name<a class="anchor" aria-label="anchor" href="#arg-name"></a></dt>
+<dd><p>Character scalar or <code>NULL</code>: your name (asked for when
+<code>NULL</code>). Required for a new key.</p></dd>
+
+
+<dt id="arg-affiliation">affiliation<a class="anchor" aria-label="anchor" href="#arg-affiliation"></a></dt>
+<dd><p>Character scalar or <code>NULL</code>: your university,
+employer or organisation (optional; asked for when <code>NULL</code>).</p></dd>
+
+
+<dt id="arg-purpose">purpose<a class="anchor" aria-label="anchor" href="#arg-purpose"></a></dt>
+<dd><p>Character scalar or <code>NULL</code>: why you need the data, a
+sentence or two (asked for when <code>NULL</code>). Required for a new key.</p></dd>
+
+
+<dt id="arg-restricted">restricted<a class="anchor" aria-label="anchor" href="#arg-restricted"></a></dt>
+<dd><p>Logical scalar or <code>NULL</code>: <code>TRUE</code> also accepts
+Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
+38604, A2AJ case law); <code>NULL</code> asks at the console.</p></dd>
+
+
+<dt id="arg-supervisor-name-supervisor-role-supervisor-email">supervisor_name, supervisor_role, supervisor_email<a class="anchor" aria-label="anchor" href="#arg-supervisor-name-supervisor-role-supervisor-email"></a></dt>
+<dd><p>Character scalars
+or <code>NULL</code>: the supervisor, department chair, director or
+coordinator who knows of your use, their role (one of
+<code>"supervisor"</code>, <code>"chair"</code>, <code>"director"</code>,
+<code>"coordinator"</code>, <code>"other"</code>) and their email. Required with
+<code>restricted = TRUE</code>; asked for when <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -191,7 +236,10 @@ returns no key; a credentials file that cannot be edited safely.</p>
 <span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>token <span class="op">=</span> <span class="st">"&lt;key issued at https://www.rmorie.com/access/&gt;"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.com"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>email <span class="op">=</span> <span class="st">"you@example.com"</span>, code <span class="op">=</span> <span class="st">"123456"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span><span class="op">)</span> <span class="co"># GitHub device flow</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span><span class="op">)</span> <span class="co"># GitHub device flow; asks for the terms, name and reason</span></span></span>
+<span class="r-in"><span><span class="co"># everything given up front, for a script</span></span></span>
+<span class="r-in"><span><span class="fu">bricklayer_llm_login</span><span class="op">(</span>accept_terms <span class="op">=</span> <span class="cn">TRUE</span>, name <span class="op">=</span> <span class="st">"Ada Lovelace"</span>,</span></span>
+<span class="r-in"><span>                     purpose <span class="op">=</span> <span class="st">"Course project on court delays in Ontario."</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

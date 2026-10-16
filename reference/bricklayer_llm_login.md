@@ -17,7 +17,7 @@ Three ways in:
   checked with the service first and stored only when it is accepted; a
   refused key, or no answer, stores nothing.
 
-- `email`: a 6-digit code is sent to the address (valid ten minutes,
+- `email`: a one-time code is sent to the address (valid ten minutes,
   single use); you type it, or pass `code`.
 
 - neither: the GitHub device flow; a code is shown to enter at
@@ -33,7 +33,15 @@ bricklayer_llm_login(
   email = NULL,
   code = NULL,
   open_browser = interactive(),
-  poll_max_seconds = 600
+  poll_max_seconds = 600,
+  accept_terms = FALSE,
+  name = NULL,
+  affiliation = NULL,
+  purpose = NULL,
+  restricted = NULL,
+  supervisor_name = NULL,
+  supervisor_role = NULL,
+  supervisor_email = NULL
 )
 ```
 
@@ -47,7 +55,7 @@ bricklayer_llm_login(
 
 - email:
 
-  Character scalar or `NULL` (the default): sign in with a 6-digit code
+  Character scalar or `NULL` (the default): sign in with a one-time code
   sent to this address. Lower-cased before use.
 
 - code:
@@ -67,6 +75,42 @@ bricklayer_llm_login(
 
   Numeric scalar, default `600`: how many seconds the device flow waits
   for you to approve the sign-in.
+
+- accept_terms:
+
+  Logical scalar, default `FALSE`: `TRUE` accepts the data access terms
+  (read them at <https://data.rmorie.com/terms>) without the console
+  asking. A new key is issued only once they are accepted, here or at
+  the prompt.
+
+- name:
+
+  Character scalar or `NULL`: your name (asked for when `NULL`).
+  Required for a new key.
+
+- affiliation:
+
+  Character scalar or `NULL`: your university, employer or organisation
+  (optional; asked for when `NULL`).
+
+- purpose:
+
+  Character scalar or `NULL`: why you need the data, a sentence or two
+  (asked for when `NULL`). Required for a new key.
+
+- restricted:
+
+  Logical scalar or `NULL`: `TRUE` also accepts Schedule B of the terms,
+  which opens the restricted tables (ICPSR, NCVS 38604, A2AJ case law);
+  `NULL` asks at the console.
+
+- supervisor_name, supervisor_role, supervisor_email:
+
+  Character scalars or `NULL`: the supervisor, department chair,
+  director or coordinator who knows of your use, their role (one of
+  `"supervisor"`, `"chair"`, `"director"`, `"coordinator"`, `"other"`)
+  and their email. Required with `restricted = TRUE`; asked for when
+  `NULL`.
 
 ## Value
 
@@ -122,6 +166,9 @@ if (FALSE) { # \dontrun{
 bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login(email = "you@example.com", code = "123456")
-bricklayer_llm_login() # GitHub device flow
+bricklayer_llm_login() # GitHub device flow; asks for the terms, name and reason
+# everything given up front, for a script
+bricklayer_llm_login(accept_terms = TRUE, name = "Ada Lovelace",
+                     purpose = "Course project on court delays in Ontario.")
 } # }
 ```

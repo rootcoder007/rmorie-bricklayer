@@ -57,7 +57,7 @@ readLines(file.path(d, "credentials.json"))
 # a damaged file is refused, not overwritten
 writeLines("not json", file.path(d, "credentials.json"))
 try(bricklayer_llm_logout())
-#> Error : /tmp/RtmpjvNIzl/file1e7512adf80e/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
+#> Error : /tmp/RtmpysMQHG/file1e8656b8ef52/morie/credentials.json is not a JSON object (or not valid JSON, or lists a key twice); fix or remove it (it is shared with morie and rmorie)
 
 if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME = old)
 ```

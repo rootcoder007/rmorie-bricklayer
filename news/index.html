@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rmoriebricklayer</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.13</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.14</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,6 +46,10 @@
       <small>Source: <a href="https://github.com/rootcoder007/rmorie-bricklayer/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.14" id="rmoriebricklayer-0514">rmoriebricklayer 0.5.14<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0514"></a></h2>
+<ul><li>A new data key is issued only after the data access terms are accepted. <code>rmbl login</code> and <code><a href="../reference/bricklayer_llm_login.html">bricklayer_llm_login()</a></code> show the terms summary and their address, ask <code>Do you accept ...? [y/N]</code>, and then ask for your name, organisation (optional) and why you need the data; for the restricted tables (Schedule B: ICPSR, NCVS 38604, A2AJ case law) they also ask for a supervisor, department chair, director or coordinator and their email. In a script, give them as arguments (<code>accept_terms = TRUE</code>, <code>name</code>, <code>affiliation</code>, <code>purpose</code>, <code>restricted</code>, <code>supervisor_name</code>, <code>supervisor_role</code>, <code>supervisor_email</code>) or flags (<code>--accept-terms</code>, <code>--name</code>, <code>--affiliation</code>, <code>--reason</code>, <code>--restricted</code>, <code>--supervisor-name</code>, <code>--supervisor-role</code>, <code>--supervisor-email</code>). Nothing is sent until every required answer is there; the data service checks the same things. <code>login --token</code> with a key you already hold is unchanged.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.13" id="rmoriebricklayer-0513">rmoriebricklayer 0.5.13<a class="anchor" aria-label="anchor" href="#rmoriebricklayer-0513"></a></h2>
 <ul><li>The survey-estimation vignette loads the CSUS 2023 public-use file and its 1,000 mean bootstrap weights with <code>bricklayer_data_load("csus_2023/pumf")</code> and <code>("csus_2023/bootstrap")</code>, now hosted on data.rmorie.com, or downloads them from Health Canada with <code><a href="../reference/bricklayer_download.html">bricklayer_download()</a></code>; it no longer calls rmorie, which this package never depends on.</li>
