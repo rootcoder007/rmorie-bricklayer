@@ -97,7 +97,7 @@ cd <- clearance_decomposition(g$disposed, g$received, g$offence_group, g$year)
 cd
 plot(cd)
 # a group's share of the cases received in a year, as a percentage
-share <- function(group, yr) {
+case_share <- function(group, yr) {
   sprintf("%.0f%%", 100 * sum(g$received[g$offence_group == group & g$year == yr]) / sum(g$received[g$year == yr]))
 }
 ```
@@ -106,10 +106,10 @@ Between 2014 and 2022 the province-wide clearance rate moved by
 `r sprintf("%+.4f", cd$overall$change)`. Held at a fixed mix it moved by
 `r sprintf("%+.4f", cd$overall$rate_effect)`; the shift of work contributed
 `r sprintf("%+.4f", cd$overall$mix_effect)`. Crimes against the person, the group with the lowest
-clearance rate in both years, grew from `r share("Crimes Against the Person", 2014)` to
-`r share("Crimes Against the Person", 2022)` of the cases received, and federal-statute cases,
-the group with the highest rate in 2022, fell from `r share("Federal Statute", 2014)` to
-`r share("Federal Statute", 2022)`. `r cd$simpson$up` of the `r cd$simpson$parts` groups cleared a
+clearance rate in both years, grew from `r case_share("Crimes Against the Person", 2014)` to
+`r case_share("Crimes Against the Person", 2022)` of the cases received, and federal-statute cases,
+the group with the highest rate in 2022, fell from `r case_share("Federal Statute", 2014)` to
+`r case_share("Federal Statute", 2022)`. `r cd$simpson$up` of the `r cd$simpson$parts` groups cleared a
 larger share in 2022 and `r cd$simpson$down` a smaller one. The crude ratio's interval includes 1;
 the Mantel-Haenszel ratio within offence groups is
 `r sprintf("%.4f (%.4f to %.4f)", cd$rate_ratio$ratio[2], cd$rate_ratio$lower[2], cd$rate_ratio$upper[2])`.
