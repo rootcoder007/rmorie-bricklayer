@@ -133,7 +133,7 @@ try(bricklayer_download("http://example.org/table.csv", tempfile()))
 try(bricklayer_download("https://127.0.0.1/table.csv", tempfile()))
 #> Error : url points at a local or private address ('https://127.0.0.1/table.csv'): refused (a local or private address (127.0.0.1))
 try(bricklayer_download(paste0("file://", src), tempfile()))
-#> Error : url must be an https:// URL, not file:// ('file:///tmp/Rtmp88UIXI/file1e04327e40a0.txt'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
+#> Error : url must be an https:// URL, not file:// ('file:///tmp/RtmpjvNIzl/file1e7525a8db70.txt'); options(rmoriebricklayer.allow_http = TRUE) admits a trusted plain-http mirror
 
 # a real download needs the network
 if (FALSE) { # \dontrun{

@@ -171,7 +171,7 @@ b2
 #> ── Capsule bundle ────────────────────────────────────────────────
 #>   files            1
 #>   manifest digest  8995763848bcf59327ed818c561d5428a958cd82f86a60c91e4167960781a579
-#>   bundled          2026-10-16T06:45:17Z
+#>   bundled          2026-10-16T06:53:27Z
 #>   scheme           ML-DSA-44
 #> ──────────────────────────────────────────────────────────────────
 capsule_bundle_verify(b2, dir, key_expected = "00ff")$ok
@@ -189,6 +189,6 @@ capsule_bundle_verify(b2, dir)$checks[, c("check", "ok")]
 
 # a directory that does not exist
 try(capsule_bundle(file.path(tempdir(), "no-such-capsule"), m, key))
-#> Error : `dir` does not exist: /tmp/Rtmp88UIXI/no-such-capsule
+#> Error : `dir` does not exist: /tmp/RtmpjvNIzl/no-such-capsule
 unlink(dir, recursive = TRUE)
 ```

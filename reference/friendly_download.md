@@ -83,8 +83,8 @@ friendly_download(paste0("file://", src), tempfile(fileext = ".csv"),
 friendly_download(paste0("file://", src, "-missing"), tempfile(),
   attempt_wayback = "", allow_file = TRUE)
 #>   ! Download failed.
-#>     URL:   file:///tmp/Rtmp88UIXI/file1e047092507b.csv-missing
-#>     Error: cannot open file '/tmp/Rtmp88UIXI/file1e047092507b.csv-missing': No such file or directory
+#>     URL:   file:///tmp/RtmpjvNIzl/file1e7512ba019a.csv-missing
+#>     Error: cannot open file '/tmp/RtmpjvNIzl/file1e7512ba019a.csv-missing': No such file or directory
 #> 
 #>   Common causes (in rough order of likelihood):
 #>     * The server did not serve the file (see the error above): the URL may have moved or the
