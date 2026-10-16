@@ -1,5 +1,9 @@
 # rmoriebricklayer 0.5.13
 
+* The survey-estimation vignette loads the CSUS 2023 public-use file and its 1,000 mean bootstrap
+  weights with `bricklayer_data_load("csus_2023/pumf")` and `("csus_2023/bootstrap")`, now hosted on
+  data.rmorie.com, or downloads them from Health Canada with `bricklayer_download()`; it no longer
+  calls rmorie, which this package never depends on.
 ## Live progress for long work
 
 * **`bricklayer_progress(label, total)`**, exported: the animated bar of `bricklayer_download()`
