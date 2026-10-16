@@ -278,12 +278,16 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   # an option the verb does not take is refused, not run (`logout --x` logged out; ask sent it as the prompt)
   # --force belongs to `config reset` alone: offered to every config verb it became the value of
   # `config set own.key --force` (review of 02a38be, C6)
-  known <- list(login = c("--email", "--code", "--no-browser", "--token"), ask = c("--model", "--route", "--fresh"),
+  known <- list(login = c("--email", "--code", "--no-browser", "--token", "--accept-terms", "--name", "--affiliation",
+                          "--reason", "--restricted", "--supervisor-name", "--supervisor-role", "--supervisor-email"),
+                ask = c("--model", "--route", "--fresh"),
                 models = "--route",
                 data = "--out", wayback = c("--out", "--jobs", "--within", "--max", "--retry", "--include-gone"),
                 config = if (length(rest) && identical(rest[[1L]], "reset")) "--force")
   opts <- rest[startsWith(rest, "--")]
-  values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within"),
+  values <- unlist(lapply(c("--email", "--code", "--token", "--model", "--route", "--out", "--jobs", "--within",
+                            "--name", "--affiliation", "--reason", "--supervisor-name", "--supervisor-role",
+                            "--supervisor-email"),
                           function(f) {
     i <- match(f, rest)
     if (!is.na(i) && i < length(rest)) rest[[i + 1L]] else NULL
@@ -329,7 +333,12 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
             bricklayer_llm_login(
               email = flag("--email"), code = flag("--code"),
               open_browser = !has("--no-browser") &&
-                interactive()
+                interactive(),
+              accept_terms = has("--accept-terms"), name = flag("--name"),
+              affiliation = flag("--affiliation"), purpose = flag("--reason"),
+              restricted = if (has("--restricted")) TRUE else NULL,
+              supervisor_name = flag("--supervisor-name"), supervisor_role = flag("--supervisor-role"),
+              supervisor_email = flag("--supervisor-email")
             )
           }
           out(sprintf("Logged in: the curated tables at %s are open to you\n",
@@ -546,7 +555,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 
 .bl_verb_usage <- function(verb, prog = "rmoriebricklayer") {
   u <- c(
-    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] | login --token",
+    login = paste("login [--email ADDRESS [--code CODE]] [--no-browser] [--accept-terms] [--name NAME]",
+                  "[--affiliation ORG] [--reason TEXT] [--restricted --supervisor-name NAME",
+                  "--supervisor-role ROLE --supervisor-email ADDRESS] | login --token",
                   "  sign in for the curated tables at data.rmorie.com"),
     logout = "logout   forget the data key",
     doctor = "doctor   report the language-model routes available here",

@@ -153,6 +153,7 @@ test_that("login --token asks the gateway first and stores nothing it refuses", 
 })
 
 test_that("the device flow says it is still waiting instead of hanging silently", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA)
   testthat::local_mocked_bindings(Sys.sleep = function(time) invisible(NULL), .package = "base")
   testthat::local_mocked_bindings(
@@ -209,6 +210,7 @@ test_that("login --token with no value prompts in an interactive session", {
 })
 
 test_that("an email sign-in with no code typed says how to finish instead of posting an empty code", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   withr::local_envvar(XDG_CONFIG_HOME = withr::local_tempdir(), MORIE_HOSTED_KEY = NA)
   calls <- character()
   testthat::local_mocked_bindings(

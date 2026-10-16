@@ -227,6 +227,7 @@ test_that("models lists the route's models and ask --model names one", {
 })
 
 test_that("the email sign-in requests a code and exchanges it for a key", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   .sandbox()
   seen <- list()
   testthat::local_mocked_bindings(
@@ -271,6 +272,7 @@ test_that("the email sign-in requests a code and exchanges it for a key", {
 })
 
 test_that("the device flow polls until GitHub approval and stores the key", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   .sandbox()
   polls <- 0L
   testthat::local_mocked_bindings(
@@ -408,6 +410,7 @@ test_that("a reply without text and a reply with a plain error string are report
 })
 
 test_that("the email flow asks for the code when none is given and reports errors", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   .sandbox()
   calls <- character()
   testthat::local_mocked_bindings(
@@ -423,7 +426,7 @@ test_that("the email flow asks for the code when none is given and reports error
   msgs <- testthat::capture_messages(
     key <- bricklayer_llm_login(email = "vee@example.com")
   )
-  expect_match(paste(msgs, collapse = ""), "6-digit code")
+  expect_match(paste(msgs, collapse = ""), "one-time code")
   expect_equal(key, "sk-typed")
   expect_equal(calls, c("/email/code", "/email/verify"))
   testthat::local_mocked_bindings(.bl_http_post = function(...) {
@@ -447,6 +450,7 @@ test_that("the email flow asks for the code when none is given and reports error
 })
 
 test_that("the device flow opens the browser, rejects a hard error and times out", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   .sandbox()
   opened <- NULL
   testthat::local_mocked_bindings(
@@ -504,6 +508,7 @@ test_that("logout keeps unrelated entries in the shared file", {
 })
 
 test_that("the command line prompts for a token, runs the device flow and checks flags", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   .sandbox()
   cap <- function(...) {
     buf <- character()

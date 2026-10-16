@@ -9,7 +9,15 @@ bricklayer_llm_login(
   email = NULL,
   code = NULL,
   open_browser = interactive(),
-  poll_max_seconds = 600
+  poll_max_seconds = 600,
+  accept_terms = FALSE,
+  name = NULL,
+  affiliation = NULL,
+  purpose = NULL,
+  restricted = NULL,
+  supervisor_name = NULL,
+  supervisor_role = NULL,
+  supervisor_email = NULL
 )
 }
 \arguments{
@@ -18,7 +26,7 @@ already have, issued at \url{https://www.rmorie.com/access/}.
 Surrounding spaces are removed. Takes precedence over \code{email}.}
 
 \item{email}{Character scalar or \code{NULL} (the default): sign in with
-a 6-digit code sent to this address. Lower-cased before use.}
+a one-time code sent to this address. Lower-cased before use.}
 
 \item{code}{Character scalar or \code{NULL} (the default): the emailed
 code when you already have it; \code{NULL} sends a new code and asks
@@ -30,6 +38,31 @@ public \code{https} address is opened).}
 
 \item{poll_max_seconds}{Numeric scalar, default \code{600}: how many
 seconds the device flow waits for you to approve the sign-in.}
+
+\item{accept_terms}{Logical scalar, default \code{FALSE}: \code{TRUE}
+accepts the data access terms (read them at
+\url{https://data.rmorie.com/terms}) without the console asking. A new
+key is issued only once they are accepted, here or at the prompt.}
+
+\item{name}{Character scalar or \code{NULL}: your name (asked for when
+\code{NULL}). Required for a new key.}
+
+\item{affiliation}{Character scalar or \code{NULL}: your university,
+employer or organisation (optional; asked for when \code{NULL}).}
+
+\item{purpose}{Character scalar or \code{NULL}: why you need the data, a
+sentence or two (asked for when \code{NULL}). Required for a new key.}
+
+\item{restricted}{Logical scalar or \code{NULL}: \code{TRUE} also accepts
+Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
+38604, A2AJ case law); \code{NULL} asks at the console.}
+
+\item{supervisor_name, supervisor_role, supervisor_email}{Character scalars
+or \code{NULL}: the supervisor, department chair, director or
+coordinator who knows of your use, their role (one of
+\code{"supervisor"}, \code{"chair"}, \code{"director"},
+\code{"coordinator"}, \code{"other"}) and their email. Required with
+\code{restricted = TRUE}; asked for when \code{NULL}.}
 }
 \value{
 The key (character scalar), invisibly. A message names the file
@@ -49,7 +82,7 @@ The sign-in addresses come from \code{\link{bricklayer_services}}. Three ways in
 \item \code{token}: a key you already have, from the website or an
 email. It is checked with the service first and stored only when
 it is accepted; a refused key, or no answer, stores nothing.
-\item \code{email}: a 6-digit code is sent to the address (valid
+\item \code{email}: a one-time code is sent to the address (valid
 ten minutes, single use); you type it, or pass \code{code}.
 \item neither: the GitHub device flow; a code is shown to enter at
 github.com, and the key arrives once you approve.
@@ -94,7 +127,10 @@ if (is.na(old)) Sys.unsetenv("XDG_CONFIG_HOME") else Sys.setenv(XDG_CONFIG_HOME 
 bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 bricklayer_llm_login(email = "you@example.com")
 bricklayer_llm_login(email = "you@example.com", code = "123456")
-bricklayer_llm_login() # GitHub device flow
+bricklayer_llm_login() # GitHub device flow; asks for the terms, name and reason
+# everything given up front, for a script
+bricklayer_llm_login(accept_terms = TRUE, name = "Ada Lovelace",
+                     purpose = "Course project on court delays in Ontario.")
 }
 }
 \seealso{

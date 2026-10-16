@@ -281,6 +281,7 @@ test_that("F7: a key is redacted by value, and by shape, from a gateway's error 
 })
 
 test_that("F8: the sign-in address is validated, and only a public https page is opened", {
+  local_no_signin_profile()  # the terms and profile step has its own tests (test-signin-profile.R)
   withr::local_envvar(c(MORIE_HOSTED_AUTH_URL = "http://127.0.0.1:18081/auth"))
   expect_error(r4(".bl_hosted_auth")(), "https://")
   withr::local_envvar(c(MORIE_HOSTED_AUTH_URL = "https://169.254.169.254/auth"))
