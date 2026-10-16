@@ -104,6 +104,9 @@ bricklayer_download(paste0(src, "/7d19d47a-5f42-4447-b735-aa4d677ad5ed/download/
                            "csus2023_pumf_bwt.csv"), bwt)
 a <- utils::read.csv(pumf)
 b <- utils::read.csv(bwt)
+# With rmorie installed, the same two files:
+# a <- rmorie::morie_load_dataset("cu23mf")
+# b <- rmorie::morie_load_dataset("cu23bt")
 ```
 
 Either way, the design and the lifetime cannabis question are:
