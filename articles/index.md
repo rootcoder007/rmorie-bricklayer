@@ -58,6 +58,8 @@
 - [Air pollution: dispersion, health burden, equity, and the footprint
   of the
   computation](https://rootcoder007.github.io/rmorie-bricklayer/articles/air-pollution-and-health.md):
+- [Causal effects with cross-fitted double machine
+  learning](https://rootcoder007.github.io/rmorie-bricklayer/articles/causal-effects.md):
 - [Courts and crime: flow, time, outcomes, place and case
   mix](https://rootcoder007.github.io/rmorie-bricklayer/articles/courts-and-crime.md):
 
