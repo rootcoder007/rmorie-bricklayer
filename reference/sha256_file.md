@@ -93,5 +93,5 @@ identical(sha256_file(f), core_sha256(readBin(f, "raw", file.size(f))))
 
 # A directory or a missing file is refused.
 try(sha256_file(tempdir()))
-#> Error : sha256_file: /tmp/RtmpgjAb8K is not a file
+#> Error : sha256_file: /tmp/RtmpmyxrsO is not a file
 ```

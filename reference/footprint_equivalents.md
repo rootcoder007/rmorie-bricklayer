@@ -70,7 +70,7 @@ fp <- compute_footprint(sum(sqrt(seq_len(2e5))), location = "CA-ON",
                         cpu_power_w = 45, memory_gb = 8)
 unlist(footprint_equivalents(fp$co2e_g)[c("car_km", "tree_months")])
 #>       car_km  tree_months 
-#> 3.679231e-09 7.021433e-10 
+#> 5.733998e-09 1.094274e-09 
 
 # a vector is refused: convert one total at a time
 try(footprint_equivalents(c(10, 20)))
