@@ -1151,7 +1151,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #'   \item \code{token}: a key you already have, from the website or an
 #'     email. It is checked with the service first and stored only when
 #'     it is accepted; a refused key, or no answer, stores nothing.
-#'   \item \code{email}: a 6-digit code is sent to the address (valid
+#'   \item \code{email}: a one-time code is sent to the address (valid
 #'     ten minutes, single use); you type it, or pass \code{code}.
 #'   \item neither: the GitHub device flow; a code is shown to enter at
 #'     github.com, and the key arrives once you approve.
@@ -1186,7 +1186,7 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #'   already have, issued at \url{https://www.rmorie.com/access/}.
 #'   Surrounding spaces are removed. Takes precedence over \code{email}.
 #' @param email Character scalar or \code{NULL} (the default): sign in with
-#'   a 6-digit code sent to this address. Lower-cased before use.
+#'   a one-time code sent to this address. Lower-cased before use.
 #' @param code Character scalar or \code{NULL} (the default): the emailed
 #'   code when you already have it; \code{NULL} sends a new code and asks
 #'   for it at the console. Used only with \code{email}.
@@ -1195,6 +1195,25 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #'   public \code{https} address is opened).
 #' @param poll_max_seconds Numeric scalar, default \code{600}: how many
 #'   seconds the device flow waits for you to approve the sign-in.
+#' @param accept_terms Logical scalar, default \code{FALSE}: \code{TRUE}
+#'   accepts the data access terms (read them at
+#'   \url{https://data.rmorie.com/terms}) without the console asking. A new
+#'   key is issued only once they are accepted, here or at the prompt.
+#' @param name Character scalar or \code{NULL}: your name (asked for when
+#'   \code{NULL}). Required for a new key.
+#' @param affiliation Character scalar or \code{NULL}: your university,
+#'   employer or organisation (optional; asked for when \code{NULL}).
+#' @param purpose Character scalar or \code{NULL}: why you need the data, a
+#'   sentence or two (asked for when \code{NULL}). Required for a new key.
+#' @param restricted Logical scalar or \code{NULL}: \code{TRUE} also accepts
+#'   Schedule B of the terms, which opens the restricted tables (ICPSR, NCVS
+#'   38604, A2AJ case law); \code{NULL} asks at the console.
+#' @param supervisor_name,supervisor_role,supervisor_email Character scalars
+#'   or \code{NULL}: the supervisor, department chair, director or
+#'   coordinator who knows of your use, their role (one of
+#'   \code{"supervisor"}, \code{"chair"}, \code{"director"},
+#'   \code{"coordinator"}, \code{"other"}) and their email. Required with
+#'   \code{restricted = TRUE}; asked for when \code{NULL}.
 #' @return The key (character scalar), invisibly. A message names the file
 #'   it was stored in.
 #' @seealso \code{\link{bricklayer_llm_logout}} to remove the key.
@@ -1212,12 +1231,19 @@ bricklayer_llm_ask <- function(prompt, model = NULL, timeout = 120,
 #' bricklayer_llm_login(token = "<key issued at https://www.rmorie.com/access/>")
 #' bricklayer_llm_login(email = "you@example.com")
 #' bricklayer_llm_login(email = "you@example.com", code = "123456")
-#' bricklayer_llm_login() # GitHub device flow
+#' bricklayer_llm_login() # GitHub device flow; asks for the terms, name and reason
+#' # everything given up front, for a script
+#' bricklayer_llm_login(accept_terms = TRUE, name = "Ada Lovelace",
+#'                      purpose = "Course project on court delays in Ontario.")
 #' }
 #' @export
 bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
                                  open_browser = interactive(),
-                                 poll_max_seconds = 600) {
+                                 poll_max_seconds = 600,
+                                 accept_terms = FALSE, name = NULL, affiliation = NULL,
+                                 purpose = NULL, restricted = NULL,
+                                 supervisor_name = NULL, supervisor_role = NULL,
+                                 supervisor_email = NULL) {
   if (!is.null(token)) {
     token <- trimws(as.character(token))
     if (length(token) != 1L || !nzchar(token)) {
@@ -1229,13 +1255,113 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     message(sprintf("Token stored in %s", p))
     return(invisible(token))
   }
+  if (!is.null(email)) .bl_check_email(email)
+  # a new key: the terms are accepted, and who is asking and why is said, before any sign-in starts
+  profile <- .bl_signin_profile(accept_terms = accept_terms, name = name, affiliation = affiliation,
+                                purpose = purpose, restricted = restricted,
+                                supervisor_name = supervisor_name, supervisor_role = supervisor_role,
+                                supervisor_email = supervisor_email)
   if (!is.null(email)) {
-    return(.bl_login_email(email, code))
+    return(.bl_login_email(email, code, profile))
   }
-  .bl_login_device(open_browser, poll_max_seconds)
+  .bl_login_device(open_browser, poll_max_seconds, profile)
 }
 
-.bl_login_email <- function(email, code = NULL) {
+# The email check, before anything is asked or sent.
+.bl_check_email <- function(email) {
+  email <- tolower(trimws(as.character(email)))
+  if (length(email) != 1L || is.na(email) || !nzchar(email)) {
+    stop("an email address is required", call. = FALSE)
+  }
+  if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", email)) {
+    stop(sprintf("'%s' is not an email address", email), call. = FALSE)
+  }
+  invisible(email)
+}
+
+# The current version of the data access terms and where to read them, from the sign-in service.
+.bl_terms_info <- function(auth = .bl_hosted_auth()) {
+  base <- sub("/auth$", "", auth)
+  res <- tryCatch(.bl_http_get(paste0(base, "/terms.json"), 20L, NULL), error = function(e) NULL)
+  j <- if (!is.null(res) && isTRUE(res$status == 200L)) {
+    tryCatch(.rmbl_json_text(res$body, simplifyVector = FALSE), error = function(e) NULL)
+  }
+  v <- j$version
+  if (!is.character(v) || length(v) != 1L || !grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", v)) {
+    stop(sprintf("could not read the data access terms from %s/terms.json; try again, or sign in at %s/",
+                 base, base), call. = FALSE)
+  }
+  list(version = v, url = if (is.character(j$url) && length(j$url) == 1L) j$url else paste0(base, "/terms"))
+}
+
+.bl_SUPERVISOR_ROLES <- c("supervisor", "chair", "director", "coordinator", "other")
+
+# Everything a new key needs said first: the terms accepted (y/N at the console, or accept_terms =
+# TRUE), the person's name and reason, and for Schedule B a supervisor, chair, director or
+# coordinator. Arguments win; what is missing is asked for; a missing required answer stops here,
+# before any request that could issue a key. The data service checks the same things.
+.bl_signin_profile <- function(accept_terms = FALSE, name = NULL, affiliation = NULL, purpose = NULL,
+                               restricted = NULL, supervisor_name = NULL, supervisor_role = NULL,
+                               supervisor_email = NULL) {
+  one <- function(x) if (is.null(x)) NULL else trimws(as.character(x)[1L])
+  ask <- function(prompt, given) {
+    g <- one(given)
+    if (!is.null(g)) g else .bl_readline(prompt)
+  }
+  terms <- .bl_terms_info()
+  if (!isTRUE(accept_terms)) {
+    message(paste0(
+      "Data access terms, version ", terms$version, " (", terms$url, "). In short:\n",
+      "  - the key is for you alone; keep it private;\n",
+      "  - use the tables for research, teaching, journalism, policy work or analysis;\n",
+      "  - do not redistribute the tables themselves; cite each source as its licence asks;\n",
+      "  - no warranty, and you cover claims that come from your misuse;\n",
+      "  - a register of who holds each key is kept, and may be disclosed where the law requires."))
+    a <- tolower(.bl_readline(sprintf("Do you accept the data access terms, version %s? [y/N]: ", terms$version)))
+    if (!a %in% c("y", "yes")) {
+      stop(sprintf(paste("the data access terms were not accepted, so no key was issued; read them at %s",
+                         "and accept with `%s login --accept-terms` (R: accept_terms = TRUE)"),
+                   terms$url, .bl_prog()), call. = FALSE)
+    }
+  }
+  need <- function(what, flag, arg) {
+    stop(sprintf("%s is needed for a key: pass %s (R: %s = ) or answer the prompt", what, flag, arg), call. = FALSE)
+  }
+  nm <- ask("Your name: ", name)
+  if (nchar(nm) < 2L) need("your name", "--name", "name")
+  af <- ask("Your university, employer or organisation (Enter to skip): ", affiliation)
+  pu <- ask("Why you need the data (a sentence or two): ", purpose)
+  if (nchar(pu) < 20L) need("the reason you need the data, a sentence or two,", "--reason", "purpose")
+  rs <- if (is.null(restricted)) {
+    tolower(.bl_readline(paste("Also open the restricted tables (ICPSR, NCVS 38604, A2AJ case law)",
+                               "under Schedule B? [y/N]: "))) %in% c("y", "yes")
+  } else {
+    isTRUE(restricted)
+  }
+  out <- list(accept_terms = terms$version, name = nm, affiliation = if (nzchar(af)) af else NULL,
+              purpose = pu, accept_restricted = rs,
+              client = paste0("rmoriebricklayer/", utils::packageVersion("rmoriebricklayer")))
+  if (rs) {
+    sn <- ask("Your supervisor's, department chair's, director's or coordinator's name: ", supervisor_name)
+    if (!nzchar(sn)) {
+      need("for the restricted tables, a supervisor's, chair's, director's or coordinator's name",
+           "--supervisor-name", "supervisor_name")
+    }
+    sr <- tolower(ask(sprintf("Their role (%s): ", paste(.bl_SUPERVISOR_ROLES, collapse = ", ")), supervisor_role))
+    if (!sr %in% .bl_SUPERVISOR_ROLES) {
+      need(sprintf("their role, one of %s,", paste(.bl_SUPERVISOR_ROLES, collapse = ", ")),
+           "--supervisor-role", "supervisor_role")
+    }
+    se <- tolower(ask("Their email: ", supervisor_email))
+    if (!grepl("^[^@[:space:]]+@[^@[:space:]]+\\.[^@[:space:]]+$", se)) {
+      need("their email address", "--supervisor-email", "supervisor_email")
+    }
+    out <- c(out, list(supervisor_name = sn, supervisor_role = sr, supervisor_email = se))
+  }
+  out
+}
+
+.bl_login_email <- function(email, code = NULL, profile = list()) {
   auth <- .bl_hosted_auth()
   email <- tolower(trimws(as.character(email)))
   if (length(email) != 1L || is.na(email) || !nzchar(email)) {
@@ -1245,10 +1371,10 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
     stop(sprintf("'%s' is not an email address", email), call. = FALSE)
   }
   if (is.null(code)) {
-    res <- .bl_post_json(paste0(auth, "/email/code"), list(email = email))
+    res <- .bl_post_json(paste0(auth, "/email/code"), c(list(email = email), profile))
     if (res$status != 200L) .bl_reply_error(res, "the sign-in service")
     message(sprintf(
-      "A 6-digit code was sent to %s (valid for 10 minutes).",
+      "A one-time code (like ABCDE-FGHJK) was sent to %s; it is valid for 10 minutes.",
       email
     ))
     code <- .bl_readline("Enter the code: ")
@@ -1272,9 +1398,9 @@ bricklayer_llm_login <- function(token = NULL, email = NULL, code = NULL,
 }
 
 .bl_login_device <- function(open_browser = interactive(),
-                             poll_max_seconds = 600) {
+                             poll_max_seconds = 600, profile = list()) {
   auth <- .bl_hosted_auth()
-  start <- .bl_post_json(paste0(auth, "/device/code"), list())
+  start <- .bl_post_json(paste0(auth, "/device/code"), profile)
   if (start$status != 200L) .bl_reply_error(start, "the sign-in service")
   info <- start$json
   message(sprintf(
