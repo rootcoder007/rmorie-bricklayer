@@ -320,9 +320,9 @@ rapl_available()
 fp <- compute_footprint(sum(sqrt(seq_len(3e5))), location = "CA-ON", cpu_power_w = 45,
                         memory_gb = 16)
 print(fp)
-#> Computation footprint (modelled): 0.003 s wall, 0.002 s CPU, utilisation 0.17 (process) on 4 cores
-#>   energy: 1.12e-08 kWh (cpu 6.25e-09, memory 4.97e-09)
-#>   CO2e:   1.02e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
+#> Computation footprint (modelled): 0.004 s wall, 0.004 s CPU, utilisation 0.25 (process) on 4 cores
+#>   energy: 1.91e-08 kWh (cpu 1.25e-08, memory 6.62e-09)
+#>   CO2e:   1.74e-06 g at 90.97 gCO2e/kWh (Canada, Ontario, 2024)
 fp$assumptions
 #> character(0)
 ```
@@ -352,9 +352,9 @@ b <- compute_footprint(busy(), location = "CA-ON", cpu_power_w = 45, memory_gb =
                        usage = "machine", load_curve = "codecarbon")
 rbind(process_linear = c(usage = a$usage, cpu_kwh = a$energy_kwh$cpu),
       machine_codecarbon = c(usage = b$usage, cpu_kwh = b$energy_kwh$cpu))
-#>                    usage   cpu_kwh
-#> process_linear     0.125 3.125e-09
-#> machine_codecarbon 0.000 1.000e-08
+#>                    usage      cpu_kwh
+#> process_linear      0.25 6.250000e-09
+#> machine_codecarbon  0.25 1.710938e-08
 b$usage_mode
 #> [1] "machine"
 ```
@@ -439,10 +439,10 @@ the two the Green Algorithms calculator prints:
 
 footprint_equivalents(fp$co2e_g * 1e4)   # if this ran ten thousand times
 #> $car_km
-#> [1] 5.830744e-05
+#> [1] 9.940277e-05
 #> 
 #> $tree_months
-#> [1] 1.112737e-05
+#> [1] 1.897e-05
 #> 
 #> $sources
 #>                                                                  car 
