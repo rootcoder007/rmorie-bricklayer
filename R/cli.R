@@ -492,9 +492,11 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   q <- gsub("[\u3000\u00a0\u2007\u202f\u200b\u200c\u200d\u2060\ufeff]", " ", q)
   q <- gsub("\uff1f", "?", q, fixed = TRUE)
   words <- strsplit(trimws(q), "[[:space:]]+")[[1L]]
-  if (!any(grepl("[[:alpha:]]{2,}", words))) return(FALSE)
+  # letters in any script (PCRE's \p classes): [[:alpha:]] takes no CJK letter in the C locale, so a
+  # Chinese question was refused there
+  if (!any(grepl("\\p{L}{2,}", words, perl = TRUE))) return(FALSE)
   # a lone "?" or "!" is punctuation, not a word: `doctr ?` is a near miss of `doctor`
-  wordy <- words[grepl("[[:alnum:]]", words)]
+  wordy <- words[grepl("[\\p{L}\\p{N}]", words, perl = TRUE)]
   if (length(wordy) < 2L && !endsWith(q, "?")) return(FALSE)
   if (length(wordy) == 1L) {
     w <- tolower(gsub("[[:punct:]]+", "", wordy[[1L]]))
