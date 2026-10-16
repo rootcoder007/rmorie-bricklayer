@@ -29,19 +29,26 @@
 
 # set.seed() for every seed .rmbl_r_seed() takes. One in the integer range goes to set.seed(), so its
 # stream is the one R gives it. set.seed() takes no larger one, so past 2^31 - 1 the Mersenne-Twister
-# state is built from the seed instead: 624 words from the package's splitmix64 stream
-# (core_uniforms()), one stream for each seed up to 2^53. Only R's default generator has that state.
+# state is built from the seed's two halves: the state set.seed() makes from its low 31 bits, XORed
+# with the state it makes from minus its high bits (a seed set disjoint from the low halves), shifted
+# by one word so that equal halves cannot cancel. One stream for each seed up to 2^53, in R alone
+# (no native code: the files a bundle stages run without the package's library). Only R's default
+# generator has that state.
 .rmbl_set_seed <- function(seed) {
   if (is.integer(seed)) return(set.seed(seed))
   if (!identical(RNGkind()[[1L]], "Mersenne-Twister")) {
     stop(sprintf(paste("a seed past 2147483647 needs R's default generator (Mersenne-Twister);",
                        "this session uses %s"), RNGkind()[[1L]]), call. = FALSE)
   }
-  set.seed(0L)   # the kind code R expects in the first word, for the session's normal and sample kinds
-  code <- get(".Random.seed", envir = globalenv())[[1L]]
-  words <- floor(core_uniforms(624, seed) * 2^32) - 2^31
-  words[words == -2^31] <- -2^31 + 1   # -2^31 is NA_integer_ in R
-  assign(".Random.seed", c(code, 624L, as.integer(words)), envir = globalenv())
+  state <- function(s) {
+    set.seed(s)
+    get(".Random.seed", envir = globalenv())
+  }
+  lo <- state(as.integer(seed %% 2^31))
+  hi <- state(-as.integer(seed %/% 2^31))   # 1 to 2^22 here: seeds -1 to -2^22
+  words <- bitwXor(lo[3:626], hi[c(4:626, 3L)])
+  words[is.na(words)] <- 1L   # a word that was NA_integer_ (-2^31) in either state
+  assign(".Random.seed", c(lo[[1L]], 624L, words), envir = globalenv())
   invisible(NULL)
 }
 
