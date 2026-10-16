@@ -333,8 +333,11 @@ test_that("writer: scalars with extra classes, AsIs, class fall-through, force, 
   df2 <- data.frame(a = 1:2)
   df2$b <- list(list(x = 1), list(y = 2))
   expect_identical(tj(df2), "[{\"a\":1,\"b\":{\"x\":[1]}},{\"a\":2,\"b\":{\"y\":[2]}}]")
-  expect_identical(tj(c(1 + 2i, NA), complex = "list", na = "string"),
-                   "{\"real\":[1,\"NA\"],\"imaginary\":[2,0]}")
+  # R 4.4 coerces NA to NA_real_ + 0i, earlier R to NA + NAi: the imaginary part follows R's own
+  # (failed on R 4.3, which DESCRIPTION allows; CRAN stress test of b617a3f)
+  z <- c(1 + 2i, NA)
+  expect_identical(tj(z, complex = "list", na = "string"),
+                   sprintf("{\"real\":[1,\"NA\"],\"imaginary\":[2,%s]}", if (is.na(Im(z)[[2]])) "\"NA\"" else "0"))
   expect_identical(.rmbl_json_dtoa2(3e9, 2), "3.000000e+09")
   expect_identical(.rmbl_json_dtoa2(1.999, 2), "2")
   expect_identical(.rmbl_json_dtoa2(-1.9999, 1), "-2")

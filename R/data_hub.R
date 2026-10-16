@@ -144,7 +144,9 @@
 #' download is not kept and a cached file is kept but not used. The CSV is
 #' read in compiled code with the same result as
 #' \code{read.csv(gzfile(f), stringsAsFactors = FALSE)}; tables that inflate
-#' past 512 MiB are read by \code{read.csv()} itself, a piece at a time.
+#' past 512 MiB are read by \code{read.csv()} itself, a piece at a time. A
+#' table that decompresses to more than the option
+#' \code{rmoriebricklayer.max_csv_bytes} (1 GiB by default) is refused.
 #'
 #' The key is sent only to the address of the signed services document. With
 #' \code{MORIE_DATA_URL} set to another address the key is not sent and the
@@ -475,9 +477,20 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
 # as read.csv(gzfile()) reads it, a piece at a time: a 2.6 MB file that inflated to 2.5 GiB of blank
 # lines got the process killed for memory (network stress test of 5e1dce5). A file that is not gzip
 # data at all, though its name ends in .gz, is read as the plain CSV it is, as gzfile() did.
+# Either way the table may decompress to at most the option rmoriebricklayer.max_csv_bytes (1 GiB by
+# default), as the pollution readers' tables may: it was not applied here, and a 612 KB gzip asked
+# for 2 GB (CRAN stress test of b617a3f, #6).
 .bl_read_csv_gz <- function(path, in_memory = 512 * 2^20) {
+  lim <- .rmbl_max_csv_bytes()
+  too_big <- function() {
+    stop(sprintf(paste("%s decompresses to more than %s bytes (option rmoriebricklayer.max_csv_bytes);",
+                       "raise the option to read it"),
+                 basename(path), format(lim, big.mark = ",", scientific = FALSE)), call. = FALSE)
+  }
+  in_memory <- min(in_memory, lim)
   head <- readBin(path, "raw", 2L)
   if (length(head) < 2L || head[[1L]] != as.raw(0x1f) || head[[2L]] != as.raw(0x8b)) {
+    if (file.size(path) > lim) too_big()
     if (file.size(path) > in_memory) return(.bl_read_csv_streamed(path))
     return(.bl_csv_from_bytes(readBin(path, "raw", file.size(path))))
   }
@@ -485,8 +498,19 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
                     error = function(e) {
                       if (grepl("more than the size limit", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
                     })
-  if (is.null(bytes)) return(.bl_read_csv_streamed(path))
-  .bl_csv_from_bytes(bytes)
+  if (!is.null(bytes)) return(.bl_csv_from_bytes(bytes))
+  if (in_memory >= lim) too_big()
+  # past what is held in memory: the decompressed size is counted a piece at a time, holding 4 MiB,
+  # before read.csv() reads it
+  con <- gzfile(path, "rb")
+  total <- 0
+  tryCatch(repeat {
+    b <- readBin(con, "raw", 4194304L)
+    if (!length(b)) break
+    total <- total + length(b)
+    if (total > lim) too_big()
+  }, finally = close(con))
+  .bl_read_csv_streamed(path)
 }
 
 # The large-table path: read.csv() itself, on a gzfile() connection (it reads plain files too).
@@ -502,7 +526,9 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
   cols <- lapply(parts$columns, function(v) {
     if (is.character(v)) utils::type.convert(v, as.is = TRUE, na.strings = character()) else v
   })
-  n <- if (length(cols)) length(cols[[1L]]) else 0L
+  # no columns (a header of "" alone): the rows read.csv() counts below it, from the reader
+  n <- if (length(cols)) length(cols[[1L]]) else as.integer(attr(parts, "nrow") %||% 0)
   names(cols) <- make.names(parts$names, unique = TRUE)
-  structure(cols, class = "data.frame", row.names = c(NA_integer_, -n))
+  # with no columns read.csv() names the rows "1", "2", ...
+  structure(cols, class = "data.frame", row.names = if (length(cols)) c(NA_integer_, -n) else as.character(seq_len(n)))
 }

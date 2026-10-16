@@ -75,6 +75,9 @@ static SEXP rmbl_body(void *data) {
         if (rmbl_kernel_interrupted) c->kind = 1;
     } catch (const rmbl::Interrupt &) {
         c->kind = 1;
+    } catch (const rmbl::Fail &e) {
+        c->msg = e.what();   /* an argument error: said as Rf_error() said it, without the entry's name */
+        c->kind = 3;
     } catch (const std::bad_alloc &) {
         c->msg = "out of memory";
         c->kind = 2;
@@ -122,6 +125,7 @@ static SEXP rmbl_guard(const char *name, F f) {
         rmbl_raise_interrupt();
         Rf_error("%s: interrupted", name);
     }
+    if (kind == 3) Rf_error("%s", msg.c_str());
     Rf_error("%s: %s", name, msg.c_str());
     return R_NilValue;
 }
@@ -136,10 +140,10 @@ SEXP C_rmbl_sha256_impl(SEXP);
 SEXP C_rmbl_sha256_chunk_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_sha512_impl(SEXP);
 SEXP C_rmbl_hash_two_part_impl(SEXP, SEXP);
-SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP);
+SEXP C_rmbl_fetch_fallback_impl(SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_http_download_impl(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_redirect_check_impl(SEXP, SEXP, SEXP, SEXP);
-SEXP C_rmbl_wayback_impl(SEXP, SEXP);
+SEXP C_rmbl_wayback_impl(SEXP, SEXP, SEXP);
 SEXP C_rmbl_url_check_impl(SEXP, SEXP, SEXP, SEXP);
 SEXP C_rmbl_siu_html_to_text_impl(SEXP);
 SEXP C_rmbl_siu_parse_html_impl(SEXP);
@@ -277,8 +281,8 @@ SEXP C_rmbl_sha512(SEXP a0) {
 SEXP C_rmbl_hash_two_part(SEXP a0, SEXP a1) {
     return rmbl_guard("C_rmbl_hash_two_part", [&] { return C_rmbl_hash_two_part_impl(a0, a1); });
 }
-SEXP C_rmbl_fetch_fallback(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
-    return rmbl_guard("C_rmbl_fetch_fallback", [&] { return C_rmbl_fetch_fallback_impl(a0, a1, a2, a3); });
+SEXP C_rmbl_fetch_fallback(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4) {
+    return rmbl_guard("C_rmbl_fetch_fallback", [&] { return C_rmbl_fetch_fallback_impl(a0, a1, a2, a3, a4); });
 }
 SEXP C_rmbl_http_download(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6) {
     return rmbl_guard("C_rmbl_http_download", [&] { return C_rmbl_http_download_impl(a0, a1, a2, a3, a4, a5, a6); });
@@ -286,8 +290,8 @@ SEXP C_rmbl_http_download(SEXP a0, SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, 
 SEXP C_rmbl_redirect_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_redirect_check", [&] { return C_rmbl_redirect_check_impl(a0, a1, a2, a3); });
 }
-SEXP C_rmbl_wayback(SEXP a0, SEXP a1) {
-    return rmbl_guard("C_rmbl_wayback", [&] { return C_rmbl_wayback_impl(a0, a1); });
+SEXP C_rmbl_wayback(SEXP a0, SEXP a1, SEXP a2) {
+    return rmbl_guard("C_rmbl_wayback", [&] { return C_rmbl_wayback_impl(a0, a1, a2); });
 }
 SEXP C_rmbl_url_check(SEXP a0, SEXP a1, SEXP a2, SEXP a3) {
     return rmbl_guard("C_rmbl_url_check", [&] { return C_rmbl_url_check_impl(a0, a1, a2, a3); });

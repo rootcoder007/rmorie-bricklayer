@@ -105,7 +105,12 @@ for \eqn{B} replicates:
 \describe{
 \item{\code{"bootstrap"}}{\eqn{1/B}: the Rao-Wu rescaled
 bootstrap Statistics Canada ships with its public-use
-files.}
+files. It is not the survey package's \code{type = "bootstrap"}
+(Canty and Davison's), whose scale is
+\eqn{m/((m - 1)(B - 1))} for \eqn{m} PSUs a stratum: for
+those replicates give that factor over \eqn{1/B} in
+\code{rscales}, \eqn{B m/((m - 1)(B - 1))} for each, with
+\code{mse = FALSE} (survey's default centring).}
 \item{\code{"mean_bootstrap"}}{\eqn{R/B}, where each replicate
 weight is the mean of \eqn{R} bootstrap weights
 (\code{mean_size}). The Canadian Substance Use Survey 2023 ships

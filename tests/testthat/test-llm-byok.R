@@ -332,14 +332,19 @@ test_that("a model without tools gets the matching help pages instead; spent rou
   ans <- bricklayer_llm_ask("anything")
   expect_match(ans, "knox_test")
   expect_length(s3$calls, 7L)
-  expect_null(s3$calls[[7L]]$payload$tools)
+  # the last turn declares the tools (its history holds tool calls) with calls turned off, and the
+  # request rides on the last tool result: no two user turns in a row (CRAN stress test of b617a3f)
+  last <- s3$calls[[7L]]$payload
+  expect_false(is.null(last$tools))
+  expect_identical(last$tool_choice, "none")
+  expect_identical(last$messages[[length(last$messages)]]$role, "tool")
   # another error is not mistaken for a model without tools
   s4 <- fake_post(list(function() list(status = 500L, json = list(error = list(message = "overloaded")), error = "")))
   local_mocked_bindings(.bl_post_json = s4$post)
   expect_error(bricklayer_llm_ask("x"), "answered 500: overloaded")
 })
 
-test_that("an empty turn after the lookups is asked once more, without tools, for the answer", {
+test_that("an empty turn after the lookups is asked once more, with tool calls off, for the answer", {
   byok_clean()
   rt <- list(name = "OpenAI", id = "openai", api = "openai", base = "https://api.openai.com/v1", key = "k")
   call <- list(choices = list(list(finish_reason = "tool_calls", message = list(content = NULL, tool_calls = list(
@@ -351,7 +356,7 @@ test_that("an empty turn after the lookups is asked once more, without tools, fo
   local_mocked_bindings(.bl_post_json = s$post)
   expect_identical(ns(".bl_llm_assist")(rt, "m", "space-time clustering", "rmoriebricklayer"), "use knox_test()")
   expect_length(s$calls, 3L)
-  expect_null(s$calls[[3L]]$payload$tools)
+  expect_identical(s$calls[[3L]]$payload$tool_choice, "none")
   expect_match(s$calls[[3L]]$payload$messages[[length(s$calls[[3L]]$payload$messages)]]$content, "Answer now")
   # and an empty answer then is an error that says so
   s <- fake_post(list(call, empty, empty))

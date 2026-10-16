@@ -30,7 +30,12 @@
 #' \describe{
 #'   \item{`"bootstrap"`}{\eqn{1/B}: the Rao-Wu rescaled
 #'   bootstrap Statistics Canada ships with its public-use
-#'   files.}
+#'   files. It is not the survey package's `type = "bootstrap"`
+#'   (Canty and Davison's), whose scale is
+#'   \eqn{m/((m - 1)(B - 1))} for \eqn{m} PSUs a stratum: for
+#'   those replicates give that factor over \eqn{1/B} in
+#'   `rscales`, \eqn{B m/((m - 1)(B - 1))} for each, with
+#'   `mse = FALSE` (survey's default centring).}
 #'   \item{`"mean_bootstrap"`}{\eqn{R/B}, where each replicate
 #'   weight is the mean of \eqn{R} bootstrap weights
 #'   (`mean_size`). The Canadian Substance Use Survey 2023 ships
@@ -392,18 +397,38 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   }
   ck <- design$check
   if (is.null(ck)) return(invisible())
-  same_rows <- identical(attr(data, "row.names"), ck$rows)
   same_cols <- all(vapply(names(ck$cols), function(k) {
     cn <- ck$cols[[k]]
     cn %in% names(data) && identical(data[[cn]], ck$values[[k]])
   }, logical(1)))
-  if (same_rows && same_cols && !is.null(ck$rowkeys) && all(ck$rowkeys$cols %in% names(data))) {
-    now <- .svy_rowkey_digests(data[ck$rowkeys$cols])
-    # the same rows in another order: a reorder, whatever the row names say. A column changed since
-    # (a permuted y for a permutation test, a recode) changes the rows themselves and passes; it was
-    # refused as a reorder when each column was compared on its own (statistics stress test of 5e1dce5)
-    if (identical(now$sorted, ck$rowkeys$sorted) && !identical(now$ordered, ck$rowkeys$ordered)) same_rows <- FALSE
+  # whether the rows are in the order the design was built on, read from the rows themselves; NA
+  # when they cannot tell, and then the row names decide
+  in_order <- NA
+  rk <- ck$rowkeys
+  if (same_cols && !is.null(rk)) {
+    present <- intersect(rk$cols, names(data))
+    if (length(present) && length(present) == length(rk$cols)) {
+      now <- .svy_rowkey_digests(data[rk$cols])
+      # the same rows in another order: a reorder, whatever the row names say. A column changed since
+      # (a permuted y for a permutation test, a recode) changes the rows themselves and passes; it was
+      # refused as a reorder when each column was compared on its own (statistics stress test of 5e1dce5)
+      if (identical(now$sorted, rk$sorted)) in_order <- identical(now$ordered, rk$ordered)
+    }
+    if (is.na(in_order) && length(present) && !is.null(rk$col_sorted)) {
+      # a column dropped or one cell edited since: the rows as a whole differ, so each column that
+      # still holds the same values is read on its own. One of them in another order is a permuted
+      # column; two or more are the rows reordered (reorder then drop or edit a column gave a wrong
+      # SE silently; CRAN stress test of b617a3f, #3)
+      now <- .svy_rowkey_digests(data[present])
+      cs <- intersect(present, intersect(now$cols, names(rk$col_sorted)))
+      cs <- cs[rk$col_informative[cs] & now$col_sorted[cs] == rk$col_sorted[cs]]
+      moved <- sum(now$col_ordered[cs] != rk$col_ordered[cs])
+      if (moved >= 2L) in_order <- FALSE else if (length(cs) > moved) in_order <- TRUE
+    }
   }
+  # a row-name reset (rownames(d) <- NULL) on rows still in order is the same data (refused as a
+  # reorder; CRAN stress test of b617a3f)
+  same_rows <- if (is.na(in_order)) identical(attr(data, "row.names"), ck$rows) else in_order
   if (!same_rows || !same_cols) {
     stop(paste("`data` is not the data frame the design was built on (its rows are in another order, or",
                "its weight, strata or PSU columns differ): build the design on this data"), call. = FALSE)
@@ -427,6 +452,7 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   # x mod 2^31 - 1 by floor(): R's %% on doubles took most of the time. Deterministic, which is all a
   # key needs, and under 2^53 after the next multiply
   fold <- function(x) x - 2147483647 * floor(x / 2147483647)
+  co <- cs <- ci <- list()
   for (i in which(keep)) {
     v <- as.vector(data[[i]])   # a one-dimensional array (apiclus2 has one) is its values
     code <- if (is.double(v)) {
@@ -443,9 +469,16 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       match(v, sort(unique(v), method = "radix", na.last = TRUE))
     }
     k <- fold(k * 1000003 + code)
+    code <- as.numeric(code)
+    co[[nm[[i]]]] <- core_sha256(writeBin(code, raw()))
+    cs[[nm[[i]]]] <- core_sha256(writeBin(sort(code, method = "radix"), raw()))
+    ci[[nm[[i]]]] <- n > 0L && any(code != code[[1L]])
   }
+  # each column on its own as well, in order and as a set, and whether it holds more than one
+  # value: what .svy_check_data() reads when a column was dropped or edited since
   list(cols = cols, ordered = core_sha256(writeBin(k, raw())),
-       sorted = core_sha256(writeBin(sort(k, method = "radix"), raw())))
+       sorted = core_sha256(writeBin(sort(k, method = "radix"), raw())),
+       col_ordered = unlist(co), col_sorted = unlist(cs), col_informative = unlist(ci))
 }
 
 # The replicates are exactly the columns given, by name or as the object passed: nothing is
@@ -479,7 +512,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     rel <- abs(r - w) / pmax(w, .Machine$double.xmin)
     nm <- names(reps)[[b]] %||% as.character(b)
     if (identical(r, w) || all(rel < 1e-12)) {
-      if (!type %in% c("bootstrap", "mean_bootstrap")) refuse(b, "the full-sample weight")
+      # a JKn replicate deletes a PSU of one stratum and leaves every other stratum's rows at the
+      # weight: on a subset of other strata it is the weight, legitimately (refused on 72% of JKn
+      # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7)
+      if (!type %in% c("bootstrap", "mean_bootstrap", "jkn")) refuse(b, "the full-sample weight")
       equal <- c(equal, b)
       next
     }
@@ -489,45 +525,68 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     if (all(rel < 0.01)) {
       if (type %in% c("jk1", "jkn", "brr")) refuse(b, "a copy of the full-sample weight (within 1% on every row)")
       warned <- c(warned, sprintf("replicate %s is within 1%% of the full-sample weight on every row", nm))
-    } else if (type %in% c("jk1", "jkn", "brr") && !any(r == 0 & w > 0) &&
+    } else if (identical(type, "brr") && !any(r == 0 & w > 0) &&
                  length(unique(signif(r / pmax(w, .Machine$double.xmin), 9))) > 2L) {
-      # a jackknife or BRR replicate leaves PSUs out (their rows are 0) and scales the rest by one
-      # factor (two for JKn: its stratum's and 1 elsewhere). On a subset the PSU it leaves out may
-      # be outside it, so a genuine one can leave no row out, but its rows still share one or two
-      # factors; a rounded weight or a constant does not (rounded weights were kept silently)
+      # a BRR replicate keeps one PSU of every stratum pair (the other's rows are 0) and doubles it.
+      # A jackknife replicate on a subset may leave out a PSU outside it, and post-stratified or
+      # calibrated it scales each row by its own factor: no row out and many factors is genuine
+      # there, and was said falsely (CRAN stress test of b617a3f, #8)
       warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
                                   nm, toupper(type)))
+    } else if (length(unique(r)) == 1L && length(unique(w)) > 1L) {
+      # one value on every row while the weight varies: no multiplier of the weight makes it
+      warned <- c(warned, sprintf("replicate %s is one value on every row, which the full-sample weight is not", nm))
     }
     # a replicate weight is the weight times a multiplier of a few at most on a typical row (a bootstrap
     # PSU drawn k times, 0 or n / (n - 1) for a jackknife, 0 or 2 for BRR); a column ten times the
     # weight there is on another scale: api99 among the replicates raised the SE 21% silently
     # (statistics stress test of 5e1dce5). A genuine bootstrap reaches it only if a PSU holding most
     # rows is drawn ten times (about 1e-7 a replicate)
-    typical <- stats::median(r / pmax(w, .Machine$double.xmin))
-    if (is.finite(typical) && typical > 10) {
+    # A tenth of the weight is another scale too: a normalised weight pw / mean(pw) or one of
+    # survey's multiplier columns passed silently and multiplied the SE of a total by 3.5 (CRAN
+    # stress test of b617a3f, #9). Read on the rows the replicate keeps (BRR zeroes half of them);
+    # Fay's 1 - rho can be small, so the lower bound is not applied there
+    kept <- r > 0 & w > 0
+    typical <- if (any(kept)) stats::median(r[kept] / w[kept]) else NA_real_
+    if (is.finite(typical) && (typical > 10 || (typical < 0.1 && !identical(type, "fay")))) {
       warned <- c(warned, sprintf("replicate %s is %.3g times the full-sample weight on a typical row", nm, typical))
     }
     if (!is.null(idv) && identical(r, idv)) refuse(b, "the id")
     if (identical(r, rown) || (!is.null(rn) && identical(r, rn))) refuse(b, "the row number")
     if (!named) next
     kr <- key(r)
-    for (cn in setdiff(names(numcols), names(reps)[[b]])) {
+    # the other replicates passed are not strays: two genuine replicates can be identical (common
+    # in JK1 and BRR subsets and small bootstraps; 216 of 2,400 designs refused, CRAN stress test of
+    # b617a3f, #1)
+    for (cn in setdiff(names(numcols), names(reps))) {
       if (identical(kr, keys[[cn]]) && identical(r, as.numeric(numcols[[cn]]))) {
         refuse(b, sprintf("column %s of `data`", cn))
       }
     }
   }
-  # a bootstrap draw of every PSU once is the full weight, legitimately: with m PSUs it happens with
-  # chance m!/m^m per replicate (22% at three). More such replicates than chance makes (a Poisson
-  # tail under 1e-4) means the weight itself was passed beside them: said, not refused (kept
-  # silently, SE 0.270 for 0.284; statistics stress test of 5e1dce5). m is read from the replicates:
-  # the rows of one PSU share their multiplier in every replicate
+  # a bootstrap draw of every PSU once is the full weight, legitimately: with m PSUs in one stratum
+  # it happens with chance m!/m^m per replicate (22% at three), and stratified with the product of
+  # each stratum's s!/s^s. The strata are not given, but a PSU drawn k times sits in a stratum of at
+  # least k PSUs (and two at the least), so each PSU's largest multiplier bounds its stratum's size
+  # from below and the chance from above: (s!/s^s)^(1/s) a PSU (m!/m^m for the whole design warned
+  # on 4 strata of 2 PSUs, 9 equal of 12.5 expected; CRAN stress test of b617a3f, #8). More such
+  # replicates than that makes (a Poisson tail under 1e-4) means the weight itself was passed beside
+  # them: said, not refused (kept silently, SE 0.270 for 0.284; statistics stress test of 5e1dce5).
+  # The PSUs are read from the replicates: the rows of one PSU share their multiplier in every one
+  if (identical(type, "jkn") && length(equal) == length(reps)) {
+    stop("every replicate is the full-sample weight: give the replicate weights", call. = FALSE)
+  }
   if (length(equal) && identical(type, "bootstrap")) {
     z <- cos(seq_along(reps))
     sig <- numeric(n)
     for (b in seq_along(reps)) sig <- sig + z[[b]] * reps[[b]] / pmax(w, .Machine$double.xmin)
-    m <- length(unique(signif(sig, 10)))
-    expect <- length(reps) * exp(lfactorial(m) - m * log(m))
+    key <- signif(sig, 10)
+    m <- length(unique(key))
+    top <- numeric(n)
+    pos <- w > 0
+    for (b in seq_along(reps)) top[pos] <- pmax(top[pos], reps[[b]][pos] / w[pos])
+    size <- pmax(2, round(tapply(top, key, max)))
+    expect <- length(reps) * exp(sum((lfactorial(size) - size * log(size)) / size))
     if (stats::ppois(length(equal) - 1L, expect, lower.tail = FALSE) < 1e-4) {
       warned <- c(warned, sprintf(paste("%d replicate(s) equal the full-sample weight (%s), more than a",
                                         "bootstrap of %d PSUs draws"),
@@ -541,8 +600,9 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   # statistics stress test of 5e1dce5)
   ratio <- mean(vapply(reps, sum, 0)) / sum(w)
   if (is.finite(ratio) && (ratio < 0.1 || ratio > 10)) {
-    warned <- c(warned, sprintf(paste("the replicates total %.3g times the full-sample weight: multipliers",
-                                      "(as survey's $repweights) rather than replicate weights?"), ratio))
+    # first: it explains the per-replicate lines that follow, which the five shown would cut off
+    warned <- c(sprintf(paste("the replicates total %.3g times the full-sample weight: multipliers",
+                                      "(as survey's $repweights) rather than replicate weights?"), ratio), warned)
   }
   if (length(warned)) {
     warning(paste0(paste(utils::head(warned, 5L), collapse = "; "),
@@ -1019,6 +1079,7 @@ print.rmbl_svy_compare <- function(x, digits = 4, ...) {
 #' @rdname plot-methods
 #' @export
 plot.rmbl_svy_estimate <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_svy_estimate")
   m <- attributes(x)
   d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   pct <- identical(m$stat, "proportion")
@@ -1041,6 +1102,7 @@ plot.rmbl_svy_estimate <- function(x, ..., main = NULL, col = NULL, palette = NU
 #' @rdname plot-methods
 #' @export
 plot.rmbl_svy_compare <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_svy_compare")
   d <- as.data.frame(unclass(x), stringsAsFactors = FALSE)
   pct <- identical(attr(x, "stat"), "proportion")
   k <- if (pct) 100 else 1

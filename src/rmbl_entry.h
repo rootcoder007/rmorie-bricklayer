@@ -65,10 +65,52 @@ static inline const char *rmbl_str_at(SEXP x, R_xlen_t i, const char *name) {
 }
 
 #ifdef __cplusplus
+#include <cstdarg>
+#include <cstdio>
+#include <new>
+#include <stdexcept>
 namespace rmbl {
 struct Interrupt {};
 inline void check_interrupt() {
     if (rmbl_interrupt_pending()) throw Interrupt();
+}
+
+/* An argument error from inside an entry point's body, said as Rf_error() says it but raised by the
+ * barrier after the body's C++ objects are destroyed: Rf_error() jumped over live std::vectors and
+ * strings and leaked them (a header with a line break, a negative value for gini(); CRAN stress
+ * test of b617a3f, LSan). Only for code that runs under the barrier (the _impl bodies). */
+struct Fail : std::runtime_error {
+    explicit Fail(const char *m) : std::runtime_error(m) {}
+};
+[[noreturn]] inline void fail(const char *fmt, ...) {
+    char buf[8192];
+    va_list ap;
+    va_start(ap, fmt);
+    std::vsnprintf(buf, sizeof buf, fmt, ap);
+    va_end(ap);
+    throw Fail(buf);
+}
+
+/* Rf_allocVector() for a large result, with an allocation failure thrown as std::bad_alloc instead of
+ * R's longjmp, so the C++ buffers that hold the result's contents are freed (sen_slopes() leaked 858 MB
+ * at each failed allocation; CRAN stress test of b617a3f). A small vector is allocated directly: the
+ * catch costs an R call. */
+struct AllocArgs { SEXPTYPE type; R_xlen_t n; };
+inline SEXP alloc_body(void *d) {
+    const AllocArgs *a = static_cast<const AllocArgs *>(d);
+    return Rf_allocVector(a->type, a->n);
+}
+inline SEXP alloc_failed(SEXP, void *flag) {
+    *static_cast<int *>(flag) = 1;
+    return R_NilValue;
+}
+inline SEXP alloc_vector(SEXPTYPE type, R_xlen_t n) {
+    if (n < 65536) return Rf_allocVector(type, n);
+    AllocArgs a = {type, n};
+    int failed = 0;
+    SEXP r = R_tryCatchError(alloc_body, &a, alloc_failed, &failed);
+    if (failed) throw std::bad_alloc();
+    return r;
 }
 }  // namespace rmbl
 #endif

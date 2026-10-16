@@ -201,8 +201,9 @@ test_that("a stratum with one PSU fails, is removed, or is centred on the overal
 test_that("results print, plot and flag small or empty domains", {
   R <- matrix(toy$w, 12, 4) * c(1, 1.2, 0.8, 1.1)
   R[toy$g == "z", 2] <- 0
-  # synthetic replicates that leave no row out and vary row by row: said for a jackknife
-  expect_warning(des <- survey_design(toy, "w", replicates = R, type = "jk1"), "leaves no row out")
+  # replicates that leave no row out and vary row by row: a jackknife on a subset, post-stratified or
+  # calibrated, is that, so kept in silence (said falsely before; CRAN stress test of b617a3f, #8)
+  expect_silent(des <- survey_design(toy, "w", replicates = R, type = "jk1"))
   e <- survey_estimate(des, toy, "y", by = "g", min_n = 5)
   expect_identical(e$flag[e$g != "z"], rep("fewer than 5 respondents", 2))
   e2 <- survey_estimate(des, toy, "y", by = "g", min_n = 1)
@@ -238,8 +239,8 @@ test_that("replicate weights can be named columns, and a replicate design's df i
   # multipliers per PSU, as replicate weights are (one per row is not a replicate; review of 46de6a9)
   i <- toy$p
   d <- cbind(toy, r1 = toy$w * (1 + 0.1 * sin(i)), r2 = toy$w * (1 + 0.1 * cos(i)), r3 = toy$w * (1 + 0.1 * sin(2 * i)))
-  # multipliers that vary row by row and leave no row out: said for a jackknife
-  expect_warning(des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1"), "leaves no row out")
+  # multipliers that vary row by row and leave no row out: a calibrated jackknife subset, in silence
+  expect_silent(des <- survey_design(d, "w", replicates = c("r1", "r2", "r3"), type = "jk1"))
   expect_length(des$reps, 3L)
   expect_equal(des$reps[[2]], toy$w * (1 + 0.1 * cos(i)))
   # copies of one weight scaled have rank 1: no degrees of freedom, said so

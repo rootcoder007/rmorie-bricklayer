@@ -391,7 +391,9 @@
   repeat {
     left <- end - proc.time()[["elapsed"]]
     if (left <= 0) break
-    Sys.sleep(min(left, if (a$tty) 1 / 12 else left))
+    # a second at a time without a terminal too: one sleep of the whole gap ran 217 s past a
+    # setTimeLimit() limit, checked only when R ran again (CRAN stress test of b617a3f)
+    Sys.sleep(min(left, if (a$tty) 1 / 12 else 1))
     .bl_anim_update(a)
   }
   invisible(a)

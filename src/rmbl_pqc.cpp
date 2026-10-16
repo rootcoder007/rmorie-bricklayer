@@ -402,14 +402,14 @@ extern "C" {
 SEXP C_rmbl_xmss_keygen_impl(SEXP sk_seed_hex, SEXP pub_seed_hex, SEXP height) {
     std::vector<unsigned char> sks, pubs;
     if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
-        Rf_error("`sk_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`sk_seed` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
-        Rf_error("`pub_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`pub_seed` must be 64 hex characters (32 bytes)");
     }
     const int h = Rf_asInteger(height);
-    if (h < 1 || h > 16) Rf_error("`height` must be between 1 and 16");
+    if (h < 1 || h > 16) rmbl::fail("`height` must be between 1 and 16");
 
     unsigned char root[32];
     tree_root(sks.data(), pubs.data(), h, 0, root, nullptr);
@@ -422,21 +422,21 @@ SEXP C_rmbl_xmss_sign_impl(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
                       SEXP height, SEXP index, SEXP msg) {
     std::vector<unsigned char> sks, prfs, pubs;
     if (!unhexlify(rmbl_str0(sk_seed_hex, "sk_seed"), rmbl_str0_len(sk_seed_hex, "sk_seed"), sks) || sks.size() != kN) {
-        Rf_error("`sk_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`sk_seed` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(sk_prf_hex, "sk_prf"), rmbl_str0_len(sk_prf_hex, "sk_prf"), prfs) ||
         prfs.size() != kN) {
-        Rf_error("`sk_prf` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`sk_prf` must be 64 hex characters (32 bytes)");
     }
     if (!unhexlify(rmbl_str0(pub_seed_hex, "pub_seed"), rmbl_str0_len(pub_seed_hex, "pub_seed"), pubs) ||
         pubs.size() != kN) {
-        Rf_error("`pub_seed` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`pub_seed` must be 64 hex characters (32 bytes)");
     }
     const int h = Rf_asInteger(height);
-    if (h < 1 || h > 16) Rf_error("`height` must be between 1 and 16");
+    if (h < 1 || h > 16) rmbl::fail("`height` must be between 1 and 16");
     const uint32_t idx = static_cast<uint32_t>(Rf_asInteger(index));
     if (idx >= (static_cast<uint32_t>(1) << h)) {
-        Rf_error("`index` exhausted: a height-%d key signs 2^%d messages", h, h);
+        rmbl::fail("`index` exhausted: a height-%d key signs 2^%d messages", h, h);
     }
 
     std::vector<unsigned char> mb;
@@ -498,14 +498,14 @@ SEXP C_rmbl_xmss_sign_impl(SEXP sk_seed_hex, SEXP sk_prf_hex, SEXP pub_seed_hex,
     wire.insert(wire.end(), auth.begin(), auth.end());
     hexlify(wire.data(), wire.size(), serial);
 
-    SEXP out = PROTECT(Rf_allocVector(VECSXP, 6));
+    SEXP out = PROTECT(rmbl::alloc_vector(VECSXP, 6));
     SET_VECTOR_ELT(out, 0, Rf_mkString(sigh.c_str()));
     SET_VECTOR_ELT(out, 1, Rf_mkString(authh.c_str()));
     SET_VECTOR_ELT(out, 2, Rf_ScalarInteger(static_cast<int>(idx)));
     SET_VECTOR_ELT(out, 3, Rf_mkString(rooth.c_str()));
     SET_VECTOR_ELT(out, 4, Rf_mkString(rh.c_str()));
     SET_VECTOR_ELT(out, 5, Rf_mkString(serial.c_str()));
-    SEXP nm = PROTECT(Rf_allocVector(STRSXP, 6));
+    SEXP nm = PROTECT(rmbl::alloc_vector(STRSXP, 6));
     SET_STRING_ELT(nm, 0, Rf_mkChar("wots"));
     SET_STRING_ELT(nm, 1, Rf_mkChar("auth"));
     SET_STRING_ELT(nm, 2, Rf_mkChar("index"));
@@ -556,7 +556,7 @@ SEXP C_rmbl_xmss_verify_impl(SEXP pub_seed_hex, SEXP root_hex, SEXP height,
     /* The verifier has no SK_PRF, so R travels with the signature. */
     std::vector<unsigned char> rnd;
     if (!unhexlify(rmbl_str0(r_hex, "r"), rmbl_str0_len(r_hex, "r"), rnd) || rnd.size() != kN) {
-        Rf_error("`randomizer` must be 64 hex characters (32 bytes)");
+        rmbl::fail("`randomizer` must be 64 hex characters (32 bytes)");
     }
     unsigned char dig[32];
     fn_Hmsg_bound(rnd.data(), root.data(), idx, mb.data(), mb.size(), dig);
@@ -630,7 +630,7 @@ SEXP C_rmbl_pqc_backends_impl(void) {
         "SLH-DSA-SHAKE-256s", "SLH-DSA-SHAKE-256f"
     };
     const int n = static_cast<int>(sizeof kSchemes / sizeof kSchemes[0]);
-    SEXP out = PROTECT(Rf_allocVector(STRSXP, n));
+    SEXP out = PROTECT(rmbl::alloc_vector(STRSXP, n));
     for (int i = 0; i < n; ++i) {
         SET_STRING_ELT(out, i, Rf_mkChar(kSchemes[i]));
     }

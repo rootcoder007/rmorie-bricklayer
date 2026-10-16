@@ -314,17 +314,17 @@ int rmbl_os_random(unsigned char *out, size_t n) {
 
 SEXP C_rmbl_blake2b_impl(SEXP x, SEXP key, SEXP outlen) {
     const int ol = Rf_asInteger(outlen);
-    if (ol < 1 || ol > 64) Rf_error("`length` must be between 1 and 64 bytes");
-    /* validate before any std::vector exists: Rf_error() longjmps past
+    if (ol < 1 || ol > 64) rmbl::fail("`length` must be between 1 and 64 bytes");
+    /* validate before any std::vector exists: rmbl::fail() longjmps past
      * C++ destructors */
     if (key != R_NilValue && TYPEOF(key) == RAWSXP && XLENGTH(key) > 64) {
-        Rf_error("`key` must be at most 64 bytes");
+        rmbl::fail("`key` must be at most 64 bytes");
     }
     if (key != R_NilValue && TYPEOF(key) != RAWSXP) {
         SEXP k = PROTECT(Rf_coerceVector(key, STRSXP));
         const size_t kl = std::strlen(rmbl_str0(k, "key"));
         UNPROTECT(1);
-        if (kl > 64) Rf_error("`key` must be at most 64 bytes");
+        if (kl > 64) rmbl::fail("`key` must be at most 64 bytes");
     }
     std::vector<unsigned char> kb;
     if (key != R_NilValue) {
@@ -341,17 +341,16 @@ SEXP C_rmbl_blake2b_impl(SEXP x, SEXP key, SEXP outlen) {
     std::string hex;
 
     if (TYPEOF(x) == RAWSXP) {
-        if (rmbl_blake2b(RAW(x), static_cast<size_t>(XLENGTH(x)),
-                         kb.empty() ? NULL : kb.data(), kb.size(), ol,
-                         ob.data()) != 0) {
-            Rf_error("BLAKE2b initialisation failed");
-        }
+        /* outlen 1..64 and a key of at most 64 bytes, checked above, are b2b_init's only failures: its
+         * status is ignored here as in the string branch below (the check could never be reached) */
+        rmbl_blake2b(RAW(x), static_cast<size_t>(XLENGTH(x)), kb.empty() ? NULL : kb.data(), kb.size(), ol,
+                     ob.data());
         hexlify(ob.data(), ob.size(), hex);
         return Rf_mkString(hex.c_str());
     }
     x = PROTECT(Rf_coerceVector(x, STRSXP));
     const R_xlen_t n = XLENGTH(x);
-    SEXP res = PROTECT(Rf_allocVector(STRSXP, n));
+    SEXP res = PROTECT(rmbl::alloc_vector(STRSXP, n));
     for (R_xlen_t i = 0; i < n; ++i) {
         const char *s = rmbl_str_at(x, i, "x");
         rmbl_blake2b(reinterpret_cast<const unsigned char *>(s),
@@ -367,11 +366,11 @@ SEXP C_rmbl_blake2b_impl(SEXP x, SEXP key, SEXP outlen) {
 SEXP C_rmbl_pbkdf2_impl(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
     const int iter = Rf_asInteger(iterations);
     const int dk = Rf_asInteger(dklen);
-    if (iter == NA_INTEGER || iter < 1) Rf_error("`iterations` must be at least 1");
+    if (iter == NA_INTEGER || iter < 1) rmbl::fail("`iterations` must be at least 1");
     /* 2^26 iterations is minutes of work; INT_MAX was days, uninterruptible */
-    if (iter > (1 << 26)) Rf_error("`iterations` above 2^26 is refused");
-    if (dk == NA_INTEGER || dk < 1 || dk > 1024) Rf_error("`length` must be between 1 and 1024");
-    /* every Rf_error() before the std::vectors below exist: a longjmp over a
+    if (iter > (1 << 26)) rmbl::fail("`iterations` above 2^26 is refused");
+    if (dk == NA_INTEGER || dk < 1 || dk > 1024) rmbl::fail("`length` must be between 1 and 1024");
+    /* every rmbl::fail() before the std::vectors below exist: a longjmp over a
      * live vector leaks it */
     SEXP p = PROTECT(TYPEOF(pass) == RAWSXP ? pass : Rf_coerceVector(pass, STRSXP));
     SEXP s2 = PROTECT(TYPEOF(salt) == RAWSXP ? salt : Rf_coerceVector(salt, STRSXP));
@@ -398,13 +397,13 @@ SEXP C_rmbl_pbkdf2_impl(SEXP pass, SEXP salt, SEXP iterations, SEXP dklen) {
 SEXP C_rmbl_os_random_impl(SEXP n) {
     const int nn = Rf_asInteger(n);
     if (nn < 1 || nn > 1048576) {
-        Rf_error("`n` must be between 1 and 1048576 bytes");
+        rmbl::fail("`n` must be between 1 and 1048576 bytes");
     }
     std::vector<unsigned char> buf(static_cast<size_t>(nn));
     if (rmbl_os_random(buf.data(), buf.size()) != 0) {
         return R_NilValue;   /* the R layer decides how to react */
     }
-    SEXP out = PROTECT(Rf_allocVector(RAWSXP, nn));
+    SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP, nn));
     std::memcpy(RAW(out), buf.data(), buf.size());
     UNPROTECT(1);
     return out;

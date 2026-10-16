@@ -354,7 +354,7 @@ SEXP C_rmbl_der_parse_impl(SEXP x) {
     /* Two rules at this boundary. No C++ exception may cross it: a
      * std::bad_alloc that escapes an extern "C" function reaches
      * std::terminate, which no tryCatch() can intercept, and the R process
-     * dies. And Rf_error() must not longjmp over a live Node tree: its
+     * dies. And rmbl::fail() must not longjmp over a live Node tree: its
      * std::vector children would never be destroyed. So the tree lives in
      * its own block, the message is copied into a plain buffer, and the
      * error is raised only after the block has closed. */
@@ -421,10 +421,10 @@ SEXP C_rmbl_rsa_recover_impl(SEXP sig, SEXP modulus, SEXP exponent) {
         Rf_errorcall(R_NilValue, "the public exponent is implausibly large (%d bytes)",
                  static_cast<int>(XLENGTH(exponent)));
     }
-    /* the Big values are std::vectors: no Rf_error() while they live */
+    /* the Big values are std::vectors: no rmbl::fail() while they live */
     const char *err = NULL;
     const size_t outlen = static_cast<size_t>(XLENGTH(modulus));
-    SEXP out = PROTECT(Rf_allocVector(RAWSXP,
+    SEXP out = PROTECT(rmbl::alloc_vector(RAWSXP,
                                       static_cast<R_xlen_t>(outlen)));
     {
         const Big s = from_bytes(RAW(sig), static_cast<size_t>(XLENGTH(sig)));

@@ -282,7 +282,11 @@ test_that("the earlier round's weak tests, sharpened", {
   bytes <- readBin(f, "raw", file.size(f))
   bytes[bytes == as.raw(0L)] <- as.raw(32L)
   expect_identical(length(gregexpr("/Type /Page[^s]", rawToChar(bytes), useBytes = TRUE)[[1L]]), 2L)
-  # plots: the frequency path with an NA level (above) and the margin helper
+  # plots: the frequency path with an NA level (above) and the margin helper, which measures text on
+  # the open device: a null one, or it opened Rplots.pdf in the tests directory (CRAN stress test of
+  # b617a3f)
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
   expect_true(is.finite(rmoriebricklayer:::.bl_left_margin(labels = c(NA, "a"))))
 })
 

@@ -49,6 +49,10 @@ jobs:
         run: roxygen2::roxygenise()
         shell: Rscript {0}
       - name: Compute coverage
+        # the tests as the check jobs run them (r-lib's check action sets NOT_CRAN): the local-server
+        # transport and interrupt tests are skipped on CRAN, and were missing from coverage
+        env:
+          NOT_CRAN: "true"
         run: |
           cov <- covr::package_coverage(quiet = FALSE, clean = FALSE,
                                         install_path = file.path(normalizePath(Sys.getenv("RUNNER_TEMP"), winslash = "/"), "package"))
