@@ -1310,7 +1310,9 @@ SEXP C_rmbl_fetch_fallback_impl(SEXP url, SEXP wayback, SEXP path, SEXP timeout,
     const char *p = rmbl_str0(path, "path");
     int t = Rf_asInteger(timeout);
     if (t == NA_INTEGER || t < 1) t = 120;
-    return Rf_ScalarInteger(fetch_raise(u, w, p, t, rmbl_str0(api, "api")));
+    const char *b = rmbl_str0(api, "api");
+    /* the C API's own entry when no test server is named: the path other packages call */
+    return Rf_ScalarInteger(b[0] ? fetch_raise(u, w, p, t, b) : rmbl_fetch_with_fallback(u, w, p, t));
 }
 
 /* The request headers, one "Name: value" each. A line break inside one (a key pasted with a
@@ -1406,7 +1408,8 @@ SEXP C_rmbl_wayback_impl(SEXP url, SEXP timeout, SEXP api) {
     const char *u = rmbl_str0(url, "url");
     const char *b = rmbl_str0(api, "api");
     char buf[2048];
-    int n = wayback_raise(u, buf, (int) sizeof(buf), Rf_asInteger(timeout), b);
+    int n = b[0] ? wayback_raise(u, buf, (int) sizeof(buf), Rf_asInteger(timeout), b)
+                 : rmbl_wayback_snapshot(u, buf, (int) sizeof(buf), Rf_asInteger(timeout));
     return Rf_ScalarString(n > 0 ? Rf_mkChar(buf) : R_BlankString);
 }
 
