@@ -403,3 +403,13 @@ test_that("#3: a reorder with a column dropped is refused when the named columns
   x$b <- NULL
   expect_error(survey_estimate(des, x, "y"), "not the data frame the design was built on")
 })
+
+test_that("bricklayer_fetch() and wayback_snapshot_url_native() reach the C API's own entries", {
+  skip_on_cran()
+  # names that never resolve (RFC 6761), and a snapshot given so archive.org is not asked: an error
+  expect_error(bricklayer_fetch("https://invalid.invalid/a", tempfile(), wayback = "https://invalid.invalid/b",
+                                timeout = 3))
+  # one short lookup at archive.org: a snapshot address or NULL, offline too
+  snap <- wayback_snapshot_url_native("https://example.org/", timeout = 1)
+  expect_true(is.null(snap) || (is.character(snap) && length(snap) == 1L))
+})
