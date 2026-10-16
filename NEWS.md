@@ -4,6 +4,11 @@
   weights with `bricklayer_data_load("csus_2023/pumf")` and `("csus_2023/bootstrap")`, now hosted on
   data.rmorie.com, or downloads them from Health Canada with `bricklayer_download()`; it no longer
   calls rmorie, which this package never depends on.
+* A new vignette, *Causal effects with cross-fitted double machine learning*: `plr_crossfit()`
+  recovers a known effect on simulated data and, on the NSW job-training experiment (LaLonde 1986;
+  Dehejia and Wahba 1999, hosted as `nsw_dw/*` on data.rmorie.com), moves the observational
+  estimate against the PSID controls from -15,205 to 618 dollars, against the experimental 1,794.
+
 ## Live progress for long work
 
 * **`bricklayer_progress(label, total)`**, exported: the animated bar of `bricklayer_download()`
