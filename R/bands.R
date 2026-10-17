@@ -296,7 +296,7 @@ band_values <- function(bands, rule = c("midpoint", "lower", "upper",
     cap <- if (is.null(open_upper_cap)) {
       lo[bands$open_upper] * open_upper_factor
     } else {
-      rep(as.numeric(open_upper_cap)[1L], sum(bands$open_upper))
+      rep(.rmbl_num(open_upper_cap, "open_upper_cap")[1L], sum(bands$open_upper))
     }
     hi[bands$open_upper] <- cap
     if (any(hi[bands$open_upper] < lo[bands$open_upper], na.rm = TRUE)) {

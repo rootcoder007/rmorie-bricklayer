@@ -138,6 +138,7 @@ json_gzip_encode <- function(x, raw = FALSE, ...) {
 #' @rdname rmbl_json_gzip
 #' @export
 json_gzip_decode <- function(txt, raw = FALSE, ...) {
+  .rmbl_no_fn(txt = txt)
   # The input's own type settles how to read it: raw is already the gzip
   # member, character is base64 around one. Trusting the flag instead
   # meant that handing back what json_gzip_encode(raw = TRUE) returned,

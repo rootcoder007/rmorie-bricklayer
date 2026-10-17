@@ -128,10 +128,13 @@ bricklayer_download <- function(url, dest, headers = NULL,
                                 label = basename(dest), size = NULL,
                                 timeout = 3600, quiet = NULL, tty = NULL,
                                 allow_file = FALSE, max_bytes = 2^31) {
+  .rmbl_no_fn(url = url)
   # the capsule path's transport: https only, never a local or private
   # address, and file:// only when the caller says so (an offline test)
   url <- .rmbl_check_public_url(url, "url", allow_file = allow_file)
   if (is.null(quiet)) quiet <- .bl_dl_quiet()
+  dest <- .rmbl_string1(dest, "dest")
+  quiet <- .rmbl_flag1(quiet, "quiet")
   size <- suppressWarnings(as.numeric(if (is.null(size)) NA else size[[1L]]))
   if (!is.finite(size) || size <= 0) size <- NA_real_
   # a console that redraws a line in place: a terminal, or the RStudio, Positron or R.app console

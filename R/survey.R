@@ -61,7 +61,12 @@
 #' another name, a second column named like the weight or the `id`
 #' that holds other values, and under JK1, JKn and BRR a copy of the
 #' full-sample weight (equal to it, or within 1 percent of it on every
-#' row). Warned about, because a genuine set can produce it but
+#' row; under JKn, a single replicate equal to it). Not a copy: a
+#' jackknife replicate that scales the rows by one factor
+#' \eqn{k/(k - 1)} (its deleted PSU outside a subset), and, in a set
+#' whose replicates are post-stratified or calibrated (factors off
+#' 0, 1, 2 and \eqn{k/(k - 1)}), a replicate equal or close to the
+#' weight. Warned about, because a genuine set can produce it but
 #' rarely does: under the bootstrap, more replicates equal to the
 #' full-sample weight than chance draws; under the bootstrap or
 #' Fay's method, a replicate within 1 percent of the weight on
@@ -223,7 +228,11 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   # the rows as a set and in order: a reordered tibble (row names always 1..n) with a vector weight
   # gave SE 13.8 for 20.2 silently (review of 46de6a9), and rows reordered within their strata or
   # PSUs passed the named columns' check too (statistics stress test of 5e1dce5)
-  check$rowkeys <- .svy_rowkey_digests(data)
+  # the replicate columns named in `replicates` are kept in the design itself, so they need no digest:
+  # twenty of them made a design by name and every estimate on it 2 to 5 times slower than the same
+  # replicates passed as a matrix (re-test of the b617a3f CRAN stress fixes, 1e6 rows)
+  check$rowkeys <- .svy_rowkey_digests(
+    if (is.character(replicates)) data[, !(names(data) %in% replicates), drop = FALSE] else data)
   des <- list(n = n, weights = w, type = NULL, scale = NULL, mse = mse, reps = NULL, strata = NULL,
               psu = NULL, fpc = NULL, lonely_psu = lonely_psu, check = check, degf = degf)
   if (!is.null(replicates)) {
@@ -250,7 +259,7 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       # a matrix with an extra class (a "repweights" object) was dispatched to another as.data.frame
       # method and read wrongly
       # whether the columns came with names (as.data.frame invents V1, V2, ... for a bare matrix)
-      named <- !is.null(colnames(replicates)) && all(nzchar(colnames(replicates)))
+      named <- !is.null(colnames(replicates)) && any(nzchar(colnames(replicates)))
       if (is.matrix(replicates)) replicates <- as.data.frame.matrix(unclass(replicates))
       if (!is.data.frame(replicates)) {
         stop("`replicates` must be a data frame, a matrix or column names", call. = FALSE)
@@ -423,7 +432,10 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
       cs <- intersect(present, intersect(now$cols, names(rk$col_sorted)))
       cs <- cs[rk$col_informative[cs] & now$col_sorted[cs] == rk$col_sorted[cs]]
       moved <- sum(now$col_ordered[cs] != rk$col_ordered[cs])
-      if (moved >= 2L) in_order <- FALSE else if (length(cs) > moved) in_order <- TRUE
+      # a reorder moves every column that still holds its values; two permuted outcomes beside columns
+      # still in place are columns changed since, not a reorder (they were refused as one; re-test of
+      # the b617a3f CRAN stress fixes)
+      if (moved >= 2L && moved == length(cs)) in_order <- FALSE else if (length(cs) > moved) in_order <- TRUE
     }
   }
   # a row-name reset (rownames(d) <- NULL) on rows still in order is the same data (refused as a
@@ -504,6 +516,54 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   keys <- lapply(numcols, function(v) key(as.numeric(v)))
   warned <- character()
   equal <- integer()
+  B <- length(reps)
+  # the factors r / w a replicate applies on the rows it keeps. Unadjusted, a jackknife or BRR
+  # replicate has at most three (0 aside: 1, n / (n - 1), 2) and a bootstrap a handful of counts;
+  # post-stratified or calibrated, each row has its own. Read on the set, by majority, so one stray
+  # column does not make a whole set look adjusted. Adjusted, a replicate equal to the weight or
+  # within 1% of it is genuine on a subset, where the PSU it deletes is outside the rows (post-
+  # stratification brings it back to the weight): 18 post-stratified and 4 JKn calibrated designs were
+  # refused, and 16 bootstrap and BRR subsets warned about (re-test of the b617a3f CRAN stress fixes)
+  # read on the first 4,096 rows each keeps: an adjustment shows there as well as anywhere, and the
+  # whole column took a second a million rows
+  head_kept <- function(r) utils::head(which(r > 0 & w > 0), 4096L)
+  nfac <- function(r) {
+    k <- head_kept(r)
+    if (!length(k)) return(0L)
+    length(unique(signif(r[k] / w[k], 9)))
+  }
+  # jackknife and BRR: a factor off the lattice 1, 2, k / (k - 1) is an adjustment's (three post-strata
+  # give few factors, but not these); a bootstrap's counts are many, so there it is their number
+  off_lattice <- function(r) {
+    k <- head_kept(r)
+    if (!length(k)) return(FALSE)
+    f <- unique(signif(r[k] / w[k], 9))
+    # whole numbers are counts (a bootstrap set called a jackknife), never an adjustment's factors
+    f <- f[abs(f - round(f)) > 1e-9]
+    if (!length(f)) return(FALSE)
+    m <- f / (f - 1)
+    any(f <= 1 | abs(m - round(m)) > 1e-6 * abs(m) | round(m) > B)
+  }
+  adjusted <- if (type %in% c("jk1", "jkn", "brr")) {
+    sum(vapply(reps, off_lattice, NA)) > B / 2
+  } else {
+    sum(vapply(reps, nfac, 0L) > 8L) > B / 2
+  }
+  # a jackknife replicate whose deleted PSU is outside the rows scales every row by one factor
+  # k / (k - 1), and 1 elsewhere: JK1 with k the number of replicates (n PSUs), JKn with k the PSUs of
+  # its stratum, post-stratified JK1 with k those of the post-stratum.
+  # With 101 PSUs or more that is within 1% of the weight, and it was refused as a copy on 15 JK1
+  # domain subsets (re-test of the b617a3f CRAN stress fixes)
+  jk_scale <- function(r) {
+    k <- r > 0 & w > 0
+    if (!all(k == (w > 0)) || !any(k)) return(FALSE)
+    f <- unique(signif(r[k] / w[k], 9))
+    f <- f[f != 1]
+    if (length(f) != 1L || f <= 1) return(FALSE)
+    m <- f / (f - 1)
+    # post-stratified JK1 has its post-stratum's k, not the number of replicates
+    abs(m - round(m)) < 1e-6 * m && round(m) <= B
+  }
   pg <- bricklayer_progress("checking replicate weights", length(reps))
   on.exit(pg$done(), add = TRUE)
   for (b in seq_along(reps)) {
@@ -514,8 +574,9 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     if (identical(r, w) || all(rel < 1e-12)) {
       # a JKn replicate deletes a PSU of one stratum and leaves every other stratum's rows at the
       # weight: on a subset of other strata it is the weight, legitimately (refused on 72% of JKn
-      # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7)
-      if (!type %in% c("bootstrap", "mean_bootstrap", "jkn")) refuse(b, "the full-sample weight")
+      # stratum subsets that survey estimates; CRAN stress test of b617a3f, #7). A stratum has two
+      # PSUs at the least, so those replicates come two or more at a time; one alone is a copy (below)
+      if (!adjusted && !type %in% c("bootstrap", "mean_bootstrap", "jkn")) refuse(b, "the full-sample weight")
       equal <- c(equal, b)
       next
     }
@@ -523,9 +584,14 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     # copy. A jackknife or BRR replicate zeroes the PSUs it leaves out, so there it cannot be one;
     # under a bootstrap or Fay's method it is said
     if (all(rel < 0.01)) {
-      if (type %in% c("jk1", "jkn", "brr")) refuse(b, "a copy of the full-sample weight (within 1% on every row)")
-      warned <- c(warned, sprintf("replicate %s is within 1%% of the full-sample weight on every row", nm))
-    } else if (identical(type, "brr") && !any(r == 0 & w > 0) &&
+      if (adjusted || (type %in% c("jk1", "jkn") && jk_scale(r))) {
+        # genuine: see `adjusted` and jk_scale() above
+      } else if (type %in% c("jk1", "jkn", "brr")) {
+        refuse(b, "a copy of the full-sample weight (within 1% on every row)")
+      } else {
+        warned <- c(warned, sprintf("replicate %s is within 1%% of the full-sample weight on every row", nm))
+      }
+    } else if (!adjusted && identical(type, "brr") && !any(r == 0 & w > 0) &&
                  length(unique(signif(r / pmax(w, .Machine$double.xmin), 9))) > 2L) {
       # a BRR replicate keeps one PSU of every stratum pair (the other's rows are 0) and doubles it.
       # A jackknife replicate on a subset may leave out a PSU outside it, and post-stratified or
@@ -536,6 +602,12 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
     } else if (length(unique(r)) == 1L && length(unique(w)) > 1L) {
       # one value on every row while the weight varies: no multiplier of the weight makes it
       warned <- c(warned, sprintf("replicate %s is one value on every row, which the full-sample weight is not", nm))
+    } else if (!adjusted && type %in% c("jk1", "jkn") && !any(r == 0 & w > 0) && !jk_scale(r)) {
+      # a jackknife replicate deletes a PSU: on rows that keep every PSU it is one factor k / (k - 1)
+      # (and 1 on other strata under JKn), as documented; anything else that leaves no row out is
+      # said (the warning the Rd promises was not given; re-test of the b617a3f CRAN stress fixes)
+      warned <- c(warned, sprintf("replicate %s leaves no row out and is no rescaled weight, as a %s replicate is",
+                                  nm, toupper(type)))
     }
     # a replicate weight is the weight times a multiplier of a few at most on a typical row (a bootstrap
     # PSU drawn k times, 0 or n / (n - 1) for a jackknife, 0 or 2 for BRR); a column ten times the
@@ -576,7 +648,11 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   if (identical(type, "jkn") && length(equal) == length(reps)) {
     stop("every replicate is the full-sample weight: give the replicate weights", call. = FALSE)
   }
-  if (length(equal) && identical(type, "bootstrap")) {
+  # one JKn replicate equal to the weight: a stratum left out of a subset leaves all its (two or
+  # more) replicates at the weight, so a single one is the weight passed beside them (accepted;
+  # re-test of the b617a3f CRAN stress fixes)
+  if (identical(type, "jkn") && !adjusted && length(equal) == 1L) refuse(equal[[1L]], "the full-sample weight")
+  if (length(equal) && identical(type, "bootstrap") && !adjusted) {
     z <- cos(seq_along(reps))
     sig <- numeric(n)
     for (b in seq_along(reps)) sig <- sig + z[[b]] * reps[[b]] / pmax(w, .Machine$double.xmin)
@@ -926,6 +1002,7 @@ print.rmbl_svy_design <- function(x, ...) {
 survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total", "proportion", "ratio"),
                             denominator = NULL, levels = NULL, conf_level = 0.95,
                             ci = c("auto", "wilson", "logit", "wald"), min_n = 30, df = Inf) {
+  .rmbl_no_fn(levels = levels)
   stat <- .rmbl_arg(stat)
   ci <- .rmbl_arg(ci)
   if (!inherits(design, "rmbl_svy_design")) stop("`design` must come from survey_design()", call. = FALSE)
@@ -1019,6 +1096,7 @@ survey_estimate <- function(design, data, y, by = NULL, stat = c("mean", "total"
 #' @export
 survey_compare <- function(design, data, y, by, stat = c("mean", "total", "proportion", "ratio"),
                            denominator = NULL, levels = NULL, ref = NULL, conf_level = 0.95) {
+  .rmbl_no_fn(levels = levels)
   stat <- .rmbl_arg(stat)
   conf_level <- .rmbl_conf_level(conf_level)
   if (missing(by) || !length(by)) stop("`by` must name the domains to compare", call. = FALSE)

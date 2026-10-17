@@ -100,6 +100,8 @@ yoy_html <- function(x, file, title = "Year-over-year change",
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
+  file <- .rmbl_out_file(file)
+  title <- .rmbl_text1(title, "title")
   m <- .yoy_meta(x)
   pal <- .yoy_pal(palette)
   d <- as.data.frame(x)
@@ -291,6 +293,8 @@ yoy_pdf <- function(x, file, title = "Year-over-year change",
   if (!inherits(x, "rmbl_yoy")) {
     stop("`x` must be an rmbl_yoy object from yoy()", call. = FALSE)
   }
+  file <- .rmbl_out_file(file, connection = FALSE)
+  title <- .rmbl_text1(title, "title")
   m <- .yoy_meta(x)
   pal <- .yoy_pal(palette)
   d <- as.data.frame(x)

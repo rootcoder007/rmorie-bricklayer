@@ -386,6 +386,7 @@ hqc_encapsulate <- function(key, m = NULL, salt = NULL) {
 #' try(hqc_decapsulate(key, substring(sent$ciphertext, 1L, 100L)))
 #' @export
 hqc_decapsulate <- function(key, ciphertext) {
+  .rmbl_no_fn(ciphertext = ciphertext)
   level <- .rmbl_hqc_key_level(key)
   version <- .rmbl_hqc_key_version(key)
   if (is.null(key[["secret"]])) {

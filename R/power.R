@@ -130,6 +130,7 @@
 capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
                           treatment = NULL, n = 99L, reps = 10L,
                           alpha = 0.05, seed = NULL) {
+  .rmbl_no_fn(treatment = treatment)
   if (!is.data.frame(data) || nrow(data) < 4L) {
     stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
   }
@@ -145,7 +146,7 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
   if (!treatment %in% names(data)) {
     stop("`treatment` is not a column of `data`", call. = FALSE)
   }
-  sizes <- sort(unique(c(0, as.numeric(sizes))))
+  sizes <- sort(unique(c(0, .rmbl_num(sizes, "sizes"))))
   n <- .rmbl_num(n, "n", integer = TRUE)[1L]
   reps <- .rmbl_num(reps, "reps", integer = TRUE)[1L]
   if (is.na(n) || n < 9L) stop("`n` must be at least 9", call. = FALSE)
@@ -157,7 +158,8 @@ capsule_power <- function(data, statistic, inject, sizes = c(0, 0.2, 0.5),
                         "could ever be detected"),
                  n, 1 / (n + 1), alpha), call. = FALSE)
   }
-  if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
+  if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
+  if (!is.null(seed)) .rmbl_local_seed(seed)
 
   pg <- bricklayer_progress("power curve", length(sizes) * reps)
   on.exit(pg$done(), add = TRUE)

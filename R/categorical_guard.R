@@ -93,6 +93,7 @@
 #' try(decode_codes(race, book, keep_na = FALSE))
 #' @export
 decode_codes <- function(x, value_labels, keep_na = TRUE) {
+  .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
   codes <- as.character(x)
   if (!is.character(value_labels) || is.null(names(value_labels)) ||
@@ -167,6 +168,7 @@ decode_codes <- function(x, value_labels, keep_na = TRUE) {
 #'   \code{\link{recode_manifest}} to record the chain.
 #' @export
 guard_recode <- function(x, mapping, keep = character()) {
+  .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
   if (!is.character(mapping) || is.null(names(mapping)) ||
         !all(nzchar(names(mapping)))) {
@@ -240,6 +242,7 @@ guard_recode <- function(x, mapping, keep = character()) {
 #' try(guard_levels(c("White", "Black"), c("White", "Black"), reference = "Black"))
 #' @export
 guard_levels <- function(x, levels, reference = NULL) {
+  .rmbl_no_fn(x = x, reference = reference)
   if (!is.character(levels) || !length(levels) || any(is.na(levels))) {
     stop("`levels` must be a non-empty character vector", call. = FALSE)
   }
@@ -629,6 +632,7 @@ verify_recode <- function(original, recoded, declared) {
 #' try(verify_marginals(x, c(White = 2, Black = 3, Indigenous = 1)))
 #' @export
 verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
+  .rmbl_no_fn(x = x)
   if (is.factor(x)) x <- as.character(x)
   if (!is.numeric(published) || is.null(names(published)) ||
         !all(nzchar(names(published)))) {
@@ -754,6 +758,9 @@ verify_marginals <- function(x, published, tolerance = 0, strict = TRUE) {
 #' try(odds_ratio_check(tab, "A", c(B = 3.857)))
 #' @export
 odds_ratio_check <- function(counts, reference, reported, tolerance = 0.05) {
+  if (!missing(reference) && (!is.atomic(reference) || length(reference) != 1L || is.na(reference))) {
+    stop("`reference` must be one group label (a row name of `counts`)", call. = FALSE)
+  }
   if (is.null(counts) || !(is.matrix(counts) || is.data.frame(counts) || is.table(counts))) {
     stop("`counts` must be a 2-column matrix or table of counts (rows named)", call. = FALSE)
   }
@@ -968,6 +975,7 @@ guard_binary <- function(x, col) {
 #' @export
 recode_manifest <- function(original, recoded, mapping, published = NULL,
                             key = NULL, context = NULL) {
+  .rmbl_no_fn(context = context)
   verify_recode(original, recoded, mapping)
   marg <- if (!is.null(published)) {
     verify_marginals(recoded, published)
@@ -1062,6 +1070,7 @@ write_recode_manifest <- function(manifest, path) {
       call. = FALSE
     )
   }
+  path <- .rmbl_out_file(path, "path")
   writeLines(bricklayer_json_to_json(unclass(manifest)), path)
   invisible(path)
 }
@@ -1075,6 +1084,7 @@ write_recode_manifest <- function(manifest, path) {
 #'   unsigned) and \code{manifest} (the parsed JSON as a list).
 #' @export
 verify_recode_manifest <- function(path, original, recoded) {
+  .rmbl_no_fn(recoded = recoded)
   path <- .rmbl_file1(path, "path")
   m <- .rmbl_json_text(paste(readLines(path, warn = FALSE, encoding = "UTF-8"), collapse = "\n"))
   reasons <- character(0)
@@ -1186,6 +1196,9 @@ verify_recode_manifest <- function(path, original, recoded) {
 #' try(relabel(f, c("Black", "Other", "White")))
 #' @export
 relabel <- function(x, mapping, keep = character()) {
+  if (is.null(x) || !is.atomic(x) || is.complex(x)) {
+    stop("`x` must be a vector of labels (character, factor or numbers)", call. = FALSE)
+  }
   if (is.null(names(mapping)) || !all(nzchar(names(mapping)))) {
     stop("relabel: `mapping` must be NAMED (old label = new label). ",
       "Assigning labels by POSITION is how four race codes were rotated ",
@@ -1502,6 +1515,7 @@ print.bricklayer_relabel_forensics <- function(x, ...) {
 #' @export
 transfer_verify <- function(imported, source_counts, code_book = NULL,
                             tolerance = 0, strict = TRUE) {
+  .rmbl_no_fn(imported = imported)
   lab <- attr(imported, "labels", exact = TRUE)
   code_book_ok <- NA
   if (!is.null(lab) && !is.null(code_book)) {

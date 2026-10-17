@@ -52,6 +52,7 @@
 #' identical(core_sha512(1), core_sha512("1"))
 #' @export
 core_sha512 <- function(x) {
+  .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_sha512, x))
   x <- as.character(x)
   out <- rep(NA_character_, length(x))
@@ -105,6 +106,7 @@ core_sha512 <- function(x) {
 #' core_crc32(charToRaw("123456789"))
 #' @export
 core_crc32 <- function(x) {
+  .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_crc32, x))
   x <- as.character(x)
   out <- rep(NA_real_, length(x))
@@ -206,6 +208,7 @@ core_hmac_sha256 <- function(key, message) {
 #' @rdname rmbl_keyed_digest
 #' @export
 core_digest_equal <- function(a, b) {
+  .rmbl_no_fn(a = a, b = b)
   a <- as.character(a)
   b <- as.character(b)
   if (length(a) != 1L || length(b) != 1L || is.na(a) || is.na(b)) {
@@ -367,6 +370,7 @@ merkle_proof <- function(chunks, index, scheme = 2L) {
 #' @rdname rmbl_merkle
 #' @export
 merkle_verify <- function(leaf, proof, root, scheme = NULL) {
+  .rmbl_no_fn(root = root)
   leaf <- .rmbl_chunk_bytes(leaf)
   if (length(leaf) != 1L) {
     stop("`leaf` must be a single chunk", call. = FALSE)

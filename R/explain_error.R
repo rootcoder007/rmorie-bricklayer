@@ -123,7 +123,7 @@
       cols$raised_by <- c(cols$raised_by, rep(n, k))
       cols$kind <- c(cols$kind, m[, "kind"])
       cols$template <- c(cols$template, m[, "template"])
-      cols$exported <- c(cols$exported, rep(paste(utils::head(reach(n), 6L), collapse = ", "), k))
+      cols$exported <- c(cols$exported, rep(paste(reach(n), collapse = ", "), k))
     }
   }
   tab <- as.data.frame(cols, stringsAsFactors = FALSE)
@@ -253,7 +253,9 @@ bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL,
   }
   n <- as.integer(n)
   pk <- packages %||% .bl_kn_default_packages()
-  if (!is.character(pk) || !length(pk) || anyNA(pk)) stop("`packages` must name installed packages", call. = FALSE)
+  if (!is.character(pk) || !length(pk) || anyNA(pk) || !all(nzchar(pk))) {
+    stop("`packages` must name installed packages", call. = FALSE)
+  }
   missing <- pk[!vapply(pk, function(x) nzchar(system.file(package = x)), logical(1))]
   if (length(missing)) stop(sprintf("not installed: %s", paste(missing, collapse = ", ")), call. = FALSE)
   msg <- .bl_ee_clean(message)
@@ -280,6 +282,23 @@ bricklayer_explain_error <- function(message = geterrmessage(), packages = NULL,
   if (!length(keep)) return(empty)
   keep <- keep[order(-score[keep])][seq_len(min(n, length(keep)))]
   out <- tab[keep, c("package", "raised_by", "exported", "kind"), drop = FALSE]
+  # a shared check (.rmbl_string1) is reached from dozens of exports: the ones that take the argument
+  # your message names come first, then six at most (the first six by name hid the one that raised it
+  # once more functions checked their arguments)
+  arg <- regmatches(msg, regexpr("`[A-Za-z.][A-Za-z0-9._]*`", msg))
+  arg <- if (length(arg)) gsub("`", "", arg, fixed = TRUE) else ""
+  out$exported <- vapply(seq_len(nrow(out)), function(i) {
+    e <- strsplit(out$exported[[i]], ", ", fixed = TRUE)[[1L]]
+    if (nzchar(arg) && length(e) > 1L) {
+      ns <- asNamespace(out$package[[i]])
+      takes <- vapply(e, function(f) {
+        g <- get0(f, envir = ns, inherits = FALSE)
+        is.function(g) && arg %in% names(formals(g))
+      }, NA)
+      e <- c(e[takes], e[!takes])
+    }
+    paste(utils::head(e, 6L), collapse = ", ")
+  }, "")
   out$message <- gsub("\001", "...", tab$template[keep], fixed = TRUE)
   out$match <- ifelse(exact[keep], "exact", sprintf("%d%% of its words", round(100 * share[keep])))
   rownames(out) <- NULL

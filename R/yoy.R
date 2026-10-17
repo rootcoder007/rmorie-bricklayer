@@ -178,6 +178,9 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
                              "lower_is_better"
                            ),
                            complete = TRUE, ...) {
+  if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
+    stop("`by` must be one or more column names, or NULL", call. = FALSE)
+  }
   units <- .rmbl_arg(units)
   direction <- .rmbl_arg(direction)
   # several rows for one period: counts add up, a rate or a share is averaged
@@ -244,6 +247,10 @@ yoy.data.frame <- function(x, value, period, by = NULL, lag = 1L,
 #' @rdname yoy
 #' @export
 yoy.numeric <- function(x, period = seq_along(x), ...) {
+  if (any(c("value", "data") %in% names(list(...)))) {
+    stop("for a numeric `x`, `x` is the values: give `period` (and options), not `value`", call. = FALSE)
+  }
+  if (length(period) != length(x)) stop("`period` must have one entry per value of `x`", call. = FALSE)
   d <- data.frame(period = period, value = as.numeric(x))
   yoy.data.frame(d, value = "value", period = "period", ...)
 }

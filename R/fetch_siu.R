@@ -69,7 +69,9 @@ bricklayer_fetch_siu <- function(drid, dest, lang = c("en", "fr"),
 
 # One positive whole report number: as.integer() would read 1.5 as 1 and fetch another report.
 .rmbl_drid <- function(drid) {
-  v <- if (length(drid) == 1L && !is.logical(drid)) suppressWarnings(as.numeric(drid)) else NA_real_
+  v <- if (is.atomic(drid) && length(drid) == 1L && !is.logical(drid) && !is.complex(drid)) {
+    suppressWarnings(as.numeric(drid))
+  } else NA_real_
   if (is.na(v) || !is.finite(v) || v != floor(v) || v <= 0 || v > .Machine$integer.max) {
     stop("`drid` must be one positive report number (the drid in the SIU report URL)", call. = FALSE)
   }

@@ -335,6 +335,7 @@ kem_encapsulate <- function(key, m = NULL) {
 #' try(kem_decapsulate(key, "abcd"))
 #' @export
 kem_decapsulate <- function(key, ciphertext, masked = getOption("rmoriebricklayer.masked", TRUE)) {
+  .rmbl_no_fn(ciphertext = ciphertext)
   masked <- .rmbl_masked_flag(masked)
   level <- .rmbl_kem_key_level(key)
   if (is.null(key[["secret"]])) {

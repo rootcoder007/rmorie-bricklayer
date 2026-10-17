@@ -136,7 +136,12 @@ subset). Refused, because no genuine replicate can be it: the
 another name, a second column named like the weight or the \code{id}
 that holds other values, and under JK1, JKn and BRR a copy of the
 full-sample weight (equal to it, or within 1 percent of it on every
-row). Warned about, because a genuine set can produce it but
+row; under JKn, a single replicate equal to it). Not a copy: a
+jackknife replicate that scales the rows by one factor
+\eqn{k/(k - 1)} (its deleted PSU outside a subset), and, in a set
+whose replicates are post-stratified or calibrated (factors off
+0, 1, 2 and \eqn{k/(k - 1)}), a replicate equal or close to the
+weight. Warned about, because a genuine set can produce it but
 rarely does: under the bootstrap, more replicates equal to the
 full-sample weight than chance draws; under the bootstrap or
 Fay's method, a replicate within 1 percent of the weight on

@@ -69,6 +69,7 @@
 #' @export
 rule <- function(name, expr, column = NULL, severity = c("warning", "fatal"),
                  message = NULL) {
+  .rmbl_no_fn(name = name, column = column)
   severity <- .rmbl_arg(severity)
   name <- as.character(name)[1L]
   if (is.na(name) || !nzchar(name)) {

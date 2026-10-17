@@ -132,6 +132,14 @@
 }
 
 .rmbl_num <- function(x, what, integer = FALSE) {
+  # a list, a data frame, a factor, a complex number or a function is no number: as.numeric() refused
+  # them in its own words ("'list' object cannot be coerced to type 'double'") or read a factor's codes
+  # (re-test of the b617a3f CRAN stress fixes, hostile battery)
+  if (!is.null(x) && (!is.atomic(x) || is.factor(x) || is.complex(x) || is.raw(x))) {
+    stop(sprintf("`%s` must be a%s number, not %s", what, if (integer) " whole" else "",
+                 if (is.data.frame(x)) "a data frame" else if (is.factor(x)) "a factor" else
+                   if (is.function(x)) "a function" else class(x)[[1L]]), call. = FALSE)
+  }
   if (is.character(x)) {
     v <- suppressWarnings(as.numeric(x))
     bad <- !is.na(x) & is.na(v) & nzchar(trimws(x)) & x != "NA"
@@ -156,6 +164,41 @@
     stop(sprintf("`%s` is too large: %s (the limit is 2147483647)", what, format(x[big][1L])), call. = FALSE)
   }
   as.integer(x)
+}
+
+# Where a function writes: a connection, or one non-empty path (a number or NA reached file() and
+# writeLines() and failed in their words: "'con' is not a connection", "invalid 'description' argument")
+.rmbl_out_file <- function(file, what = "file", connection = TRUE) {
+  # NULL: the writer returns the text instead
+  if (connection && (is.null(file) || inherits(file, "connection"))) return(file)
+  .rmbl_string1(file, what)
+}
+
+# TRUE or FALSE, said in words when it is neither (`if (quiet)` failed on NA, a vector or a frame)
+.rmbl_flag1 <- function(x, what) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop(sprintf("`%s` must be TRUE or FALSE", what), call. = FALSE)
+  }
+  x
+}
+
+# one string, empty allowed (a title, an NA marker)
+.rmbl_text1 <- function(x, what) {
+  if (!is.character(x) || length(x) != 1L || is.na(x)) {
+    stop(sprintf("`%s` must be a single string", what), call. = FALSE)
+  }
+  x
+}
+
+# A function where data goes: said in words, before as.character(), match() or `[` refuse it in
+# theirs ("cannot coerce type 'closure' to vector of type 'character'"; 64 such arguments in the
+# re-test of the b617a3f CRAN stress fixes). Called with the arguments named: .rmbl_no_fn(x = x)
+.rmbl_no_fn <- function(...) {
+  a <- list(...)
+  for (nm in names(a)) {
+    if (is.function(a[[nm]])) stop(sprintf("`%s` must be data, not a function", nm), call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 # A file the function reads: one path that exists and is a file (not a directory)

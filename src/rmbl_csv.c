@@ -217,17 +217,30 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     if (TYPEOF(bytes) != RAWSXP) error("the CSV text must be a raw vector");
     const int skip_nul = asLogical(skip_nul_) == TRUE;
     const unsigned char *s = RAW(bytes);
-    const size_t n = (size_t) XLENGTH(bytes);
+    size_t n = (size_t) XLENGTH(bytes);
     size_t start = 0;
-    /* a UTF-8 byte-order mark is not a column name */
-    if (n >= 3 && s[0] == 0xEF && s[1] == 0xBB && s[2] == 0xBF) start = 3;
+    /* a UTF-8 byte-order mark is not a column name, after blank lines too (read.csv() drops it from
+     * the first line it reads); a header that is the mark alone is a header of no columns, as a
+     * header of "" is */
+    int quoted_blank_header = 0;
+    {
+        size_t q = 0;
+        while (q < n && (s[q] == '\n' || s[q] == '\r')) q++;
+        if (q + 3 <= n && s[q] == 0xEF && s[q + 1] == 0xBB && s[q + 2] == 0xBF) {
+            start = q + 3;
+            if (start == n || s[start] == '\n' || s[start] == '\r') {
+                if (start < n && s[start] == '\r') start++;
+                if (start < n && s[start] == '\n') start++;
+                quoted_blank_header = 1;
+            }
+        }
+    }
     const char *err = NULL;
     int empty = 1;
     /* the header: the first line with something on it */
     size_t cap = 64, pos = start, nh = 0;
     rmbl_span *spans = (rmbl_span *) R_alloc(cap, sizeof(rmbl_span));
-    int quoted_blank_header = 0;
-    while (pos < n) {
+    while (!quoted_blank_header && pos < n) {
         nh = rmbl_csv_record(s, n, &pos, spans, cap, &empty, &err, skip_nul);
         if (err) error("the CSV cannot be read: %s (in its header)", err);
         /* a header line of "" alone: read.csv() takes it as the header, a table of no columns, and
@@ -235,6 +248,16 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
          * stress test of b617a3f). Its rows are counted below. */
         if (empty == 2) { quoted_blank_header = 1; nh = 0; break; }
         if (!empty) break;
+    }
+    /* a header line of blanks alone is a header of no columns to read.csv(), as "" is (it was one
+     * column named X; re-test of the b617a3f CRAN stress fixes) */
+    if (!quoted_blank_header && nh == 1 && !spans[0].quoted) {
+        int blank = 1;
+        const size_t a[3] = {spans[0].pre_start, spans[0].start, spans[0].post_start};
+        const size_t l[3] = {spans[0].pre_len, spans[0].len, spans[0].post_len};
+        for (int k = 0; k < 3 && blank; k++)
+            for (size_t q = 0; q < l[k]; q++) if (s[a[k] + q] != ' ' && s[a[k] + q] != '\t') { blank = 0; break; }
+        if (blank) { quoted_blank_header = 1; nh = 0; }
     }
     /* each field holds a span of 56 bytes and each column a vector: a 10-million-comma header asked
      * for 1.4 GB before a row was read (CRAN stress test of b617a3f) */
@@ -270,6 +293,23 @@ SEXP C_rmbl_csv_split(SEXP bytes, SEXP skip_nul_) {
     const size_t ncol = nh;
     size_t maxlen = 0;
     for (size_t j = 0; j < ncol; j++) if (rmbl_span_len(&spans[j]) > maxlen) maxlen = rmbl_span_len(&spans[j]);
+    /* read.csv() reads the header apart, and scan() then drops a byte-order mark at the start of
+     * what follows, inside an opening quote too: a mark there is no part of the first row's first
+     * field (`\ufeffT` read as text, a line of the mark alone as a row; re-test of the b617a3f CRAN
+     * stress fixes). The header's spans point before it, so the bytes may be moved. */
+    {
+        size_t q = pos;   /* blank lines first: scan() skips them before it looks */
+        while (q < n && (s[q] == '\n' || s[q] == '\r')) q++;
+        if (q + 3 <= n && s[q] == 0xEF && s[q + 1] == 0xBB && s[q + 2] == 0xBF) {
+            pos = q + 3;
+        } else if (q + 4 <= n && s[q] == '"' && s[q + 1] == 0xEF && s[q + 2] == 0xBB && s[q + 3] == 0xBF) {
+            unsigned char *c = (unsigned char *) R_alloc(n - 3, 1);
+            memcpy(c, s, q + 1);
+            memcpy(c + q + 1, s + q + 4, n - q - 4);
+            s = c;
+            n -= 3;
+        }
+    }
     const size_t body = pos;
     /* first pass: the rows are counted and each column's type decided, with no allocation */
     int *type = (int *) R_alloc(ncol, sizeof(int));

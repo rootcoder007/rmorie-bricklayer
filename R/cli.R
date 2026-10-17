@@ -493,7 +493,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 .bl_bare_question <- function(args) {
   if (!length(args)) return(FALSE)
   q <- args[[1L]]
-  if (!nzchar(q) || startsWith(q, "-") || grepl("[\r\n\v\f]", q) || grepl("[/\\]", q)) return(FALSE)
+  # a tab is a pasted command line, not a question: `$'cnfig\tset\topenai.key'` went to the model
+  # (re-test of the b617a3f CRAN stress fixes, finding 3)
+  if (!nzchar(q) || startsWith(q, "-") || grepl("[\t\r\n\v\f]", q) || grepl("[/\\]", q)) return(FALSE)
   # a key-shaped run anywhere in the line, not only as a whole word: "KEY?", "KEY," or "my key is
   # KEY, thanks" went to a model, and to the wrong provider (CRAN stress test of b617a3f, #2)
   if (.bl_key_shaped(q)) return(FALSE)
@@ -511,6 +513,9 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
     w <- tolower(gsub("[[:punct:]]+", "", wordy[[1L]]))
     if (min(utils::adist(w, .bl_verb_names())) <= 2L) return(FALSE)
   }
+  # a line that opens with a verb or a near miss of one and is not asked as a question is a command
+  # typed as one argument: "cnfig set openai.key" was sent to the first provider
+  if (!endsWith(trimws(q), "?") && .bl_verb_near(words[[1L]])) return(FALSE)
   rest <- args[-1L]
   i <- 1L
   while (i <= length(rest)) {
@@ -529,6 +534,14 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
 # A function name is not one: an export of the package, or snake_case words of up to 15 characters
 # each (survey_design_replicates); a key's random part is one long run, in one case or mixed.
 .bl_key_shaped <- function(x) {
+  # a provider's key prefix and twelve key characters or more, a digit among them, is a key however
+  # short: `sk-` and 20 characters went to a model (re-test of the b617a3f CRAN stress fixes, finding 4)
+  pre <- regmatches(x, gregexpr(paste0("(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|",
+                                       "github_pat_|glpat-|nvapi-)[A-Za-z0-9_-]{12,}"), x))[[1L]]
+  if (any(grepl("[0-9]", sub("^(sk-|sk_|AIza|gsk_|xai-|hf_|r8_|pplx-|fw_|csk-|ghp_|gho_|ghs_|github_pat_|glpat-|nvapi-)",
+                             "", pre)))) {
+    return(TRUE)
+  }
   runs <- regmatches(x, gregexpr("[A-Za-z0-9_+=.:-]{24,}", x))[[1L]]
   runs <- sub("[.:=-]+$", "", runs)
   runs <- runs[nchar(runs) >= 24L & !grepl("^[a-z][a-z0-9]{0,14}([_.][a-z0-9]{1,15})+$", runs) &
@@ -541,11 +554,22 @@ bricklayer_cli <- function(args = commandArgs(trailingOnly = TRUE),
   c(.bl_verb_usage(NULL), "help", "version", "aye", "tellme")
 }
 
+# TRUE when a word is a verb or a near miss of one: one edit for a word of four or five letters, two
+# for a longer one (shorter words, "is", "how", are too close to everything to tell)
+.bl_verb_near <- function(word) {
+  w <- tolower(gsub("[\"'?!.,\uff1f[:punct:]]+", "", word))
+  n <- nchar(w)
+  n >= 4L && min(utils::adist(w, .bl_verb_names())) <= (if (n <= 5L) 1L else 2L)
+}
+
 # The line for an unknown verb: the nearest verb when one is close, and how to ask a model.
 .bl_unknown_verb <- function(verb, prog) {
   v <- .bl_verb_names()
   # quotes and a trailing ? or ! around a typo are not part of it: `"doctr?"` is a near miss too
-  d <- utils::adist(tolower(gsub("[\"'?!.,\uff1f\u3000[:space:]]+", "", verb)), v)
+  # the first word of a command typed as one argument (`"cnfig set openai.key"`, tab-joined) is the verb
+  first <- strsplit(trimws(gsub("[\u3000\u00a0]", " ", verb)), "[[:space:]]+")[[1L]]
+  w <- if (length(first) > 1L && .bl_verb_near(first[[1L]])) first[[1L]] else verb
+  d <- utils::adist(tolower(gsub("[\"'?!.,\uff1f\u3000[:space:]]+", "", w)), v)
   near <- if (min(d) <= 2L) sprintf(" (did you mean `%s %s`?)", prog, v[which.min(d)]) else ""
   # a pasted key is not printed back to the terminal and its scrollback (network stress test of 5e1dce5)
   shown <- if (.bl_key_shaped(verb)) "(an argument like a key, not shown)" else .rmbl_printable(verb)

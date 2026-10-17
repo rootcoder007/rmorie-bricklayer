@@ -140,6 +140,14 @@
 make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
   if (!is.list(spec)) stop("`spec` must be a column spec list (type = ..., ...)", call. = FALSE)
   type <- spec$type %||% "sample"
+  if (is.data.frame(spec) || (length(spec) && is.null(names(spec)))) {
+    stop("`spec` must be a column spec list (type = ..., ...)", call. = FALSE)
+  }
+  n <- .rmbl_num(n, "n", integer = TRUE)
+  if (length(n) != 1L || is.na(n) || n < 0L) stop("`n` must be a single non-negative whole number", call. = FALSE)
+  if (identical(type, "sample") && !length(unlist(spec$values))) {
+    stop("a \"sample\" column spec needs `values` to draw from", call. = FALSE)
+  }
   switch(type,
     sample = {
       vals <- unlist(spec$values)
@@ -290,6 +298,7 @@ make_synthetic_column <- function(spec, n, ctx = list(), base_p = NULL) {
 #' @export
 make_synthetic_csv <- function(schema, out_path,
                                n_rows = NULL, seed = NULL) {
+  out_path <- .rmbl_string1(out_path, "out_path")
   if (!is.list(schema)) stop("`schema` must be a schema list (columns = ..., ...)", call. = FALSE)
   if (is.null(seed)) seed <- schema$seed %||% 91735246L
   if (is.null(n_rows)) n_rows <- schema$n_rows %||% 50000L

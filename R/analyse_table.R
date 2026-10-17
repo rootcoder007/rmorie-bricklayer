@@ -150,6 +150,11 @@ analyse_table <- function(data, value, period, by = NULL, population = NULL,
                           adjust = "BH") {
   if (!is.data.frame(data)) stop("`data` must be a data frame", call. = FALSE)
   .rmbl_df_names(data)
+  value <- .rmbl_string1(value, "value")
+  period <- .rmbl_string1(period, "period")
+  if (!is.null(by) && (!is.character(by) || !length(by) || anyNA(by))) {
+    stop("`by` must be one or more column names, or NULL", call. = FALSE)
+  }
   conf_level <- .rmbl_conf_level(conf_level)
   units <- .rmbl_arg(units)
   direction <- .rmbl_arg(direction)

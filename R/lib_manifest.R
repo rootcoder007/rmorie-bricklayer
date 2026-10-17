@@ -192,6 +192,9 @@ make_manifest <- function(meta, environment = TRUE) {
 record <- function(manifest, name, observed, expected,
                    tol = 0.0001, group = "general",
                    synthetic = FALSE) {
+  .rmbl_no_fn(observed = observed, expected = expected)
+  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
+  name <- .rmbl_string1(name, "name")
   # one value each: a vector made the PASS test `diff <= tol` a vector and
   # failed in R's own words ('length = 2' in coercion to 'logical(1)')
   lens <- c(observed = length(observed), expected = length(expected))
@@ -292,6 +295,7 @@ record <- function(manifest, name, observed, expected,
 #' @export
 write_manifest_json <- function(manifest, path, canonical = FALSE) {
   path <- .rmbl_string1(path, "path")
+  if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
   # never written without the flag (see make_manifest())
   if (isTRUE(manifest$meta$synthetic) || .rmbl_synthetic_flag()) {
     manifest$meta$synthetic <- TRUE
@@ -524,6 +528,8 @@ write_summary_txt <- function(manifest, output_dir, paths,
                               licence = NULL) {
   if (!is.list(manifest)) stop("`manifest` must be a manifest from make_manifest()", call. = FALSE)
   counts <- summarise_counts(manifest)
+  output_dir <- .rmbl_string1(output_dir, "output_dir")
+  if (!dir.exists(output_dir)) stop("`output_dir` is not a directory: ", output_dir, call. = FALSE)
   files <- sort(list.files(output_dir))
   is_synth <- isTRUE(manifest$meta$synthetic)
 

@@ -389,6 +389,7 @@ print.bricklayer_capsule_check <- function(x, ...) {
 #' capture_environment(c("stats", "notapackage123"))$packages
 #' @export
 capture_environment <- function(packages = loadedNamespaces()) {
+  if (!is.character(packages) || anyNA(packages)) stop("`packages` must be package names", call. = FALSE)
   packages <- sort(unique(packages))
   list(
     r_version    = as.character(getRversion()),

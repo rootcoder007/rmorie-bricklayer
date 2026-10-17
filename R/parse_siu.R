@@ -86,6 +86,9 @@ bricklayer_siu_schema <- function() {
 #' try(bricklayer_siu_text(c("<p>a</p>", "<p>b</p>")))
 #' @export
 bricklayer_siu_text <- function(html) {
+  if (!is.character(html) || length(html) != 1L || is.na(html)) {
+    stop("`html` must be a single string (the report page)", call. = FALSE)
+  }
   .bl_siu_split_warn(.Call(C_rmbl_siu_html_to_text, html))
 }
 
@@ -155,6 +158,7 @@ bricklayer_siu_text <- function(html) {
 #' try(bricklayer_parse_siu("no-such-report.html"))
 #' @export
 bricklayer_parse_siu <- function(html) {
+  .rmbl_no_fn(html = html)
   if (!is.character(html) || anyNA(html) || !length(html)) {
     stop("`html` must be report HTML (or the path of a saved report), not ",
          if (!length(html)) "an empty vector" else if (anyNA(html)) "NA" else class(html)[1L], call. = FALSE)

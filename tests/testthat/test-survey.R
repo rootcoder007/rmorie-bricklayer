@@ -213,7 +213,10 @@ test_that("results print, plot and flag small or empty domains", {
   expect_match(out[2], "4 replicate weights, jackknife")
   for (ty in list(list("bootstrap", NULL), list("mean_bootstrap", NULL), list("brr", NULL), list("fay", 0.5))) {
     mk <- function() survey_design(toy, "w", replicates = R, type = ty[[1]], rho = ty[[2]], mean_size = 4)
-    if (identical(ty[[1]], "brr")) expect_warning(d2 <- mk(), "leaves no row out") else d2 <- mk()
+    # a set whose every replicate scales the rows by its own factors is post-stratified or calibrated:
+    # a BRR replicate on a subset of it leaves no row out genuinely, so it is kept in silence too (said
+    # falsely before; re-test of the b617a3f CRAN stress fixes)
+    d2 <- mk()
     expect_length(utils::capture.output(print(d2)), 2L)
   }
   expect_match(utils::capture.output(print(survey_design(toy, "w", strata = "s", fpc = rep(0.5, 12))))[2],

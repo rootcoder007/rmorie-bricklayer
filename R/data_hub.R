@@ -522,6 +522,21 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
 
 .bl_csv_from_bytes <- function(bytes, skip_nul = TRUE) {
   parts <- .Call(C_rmbl_csv_split, bytes, skip_nul)
+  # a header of no columns ("", blanks, a byte-order mark alone): read.csv() takes each row's one
+  # field as its row name, and refuses more; a table of no columns is small, so read.csv() reads it
+  # (it was named "1", "2", ...; re-test of the b617a3f CRAN stress fixes)
+  if (!length(parts$names)) {
+    f <- tempfile(fileext = ".csv")
+    on.exit(unlink(f), add = TRUE)
+    writeBin(bytes, f)
+    # the fast way reads a last line without its line break silently; so does this
+    return(withCallingHandlers(utils::read.csv(f, stringsAsFactors = FALSE, skipNul = skip_nul),
+                               warning = function(w) {
+                                 if (grepl("incomplete final line", conditionMessage(w), fixed = TRUE)) {
+                                   invokeRestart("muffleWarning")
+                                 }
+                               }))
+  }
   # the bytes decided the plain integer, decimal and logical columns; the rest is text for R to judge
   cols <- lapply(parts$columns, function(v) {
     if (is.character(v)) utils::type.convert(v, as.is = TRUE, na.strings = character()) else v

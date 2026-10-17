@@ -410,7 +410,9 @@ test_that("a Ctrl-C while a table is split or inflated is R's interrupt, soon (n
     expect_error(.Call(ns$C_rmbl_http_download, "https://example.org/", tempfile(), 5L, 1L, NULL, 1e6, FALSE),
                  "must be a character vector")
   }
-  # an elapsed time limit is seen where a Ctrl-C is: both reach the reader's poll the same way
+  # an elapsed time limit is seen where a Ctrl-C is: both reach the reader's poll the same way, and the
+  # limit stops it as R's own error, which tryCatch() catches (an interrupt halted Rscript; re-test of
+  # the b617a3f CRAN stress fixes, finding 1)
   bytes <- rep(charToRaw("1,2,3,4,5,6,7,8,9,10\n"), 3e6)
   bytes <- c(charToRaw(paste0(paste0("c", 1:10, collapse = ","), "\n")), bytes)
   t0 <- Sys.time()
@@ -418,7 +420,7 @@ test_that("a Ctrl-C while a table is split or inflated is R's interrupt, soon (n
   r <- tryCatch(.Call(ns$C_rmbl_csv_split, bytes, FALSE), interrupt = function(e) "INTERRUPTED",
                 error = function(e) conditionMessage(e))
   setTimeLimit(elapsed = Inf)
-  expect_identical(r, "INTERRUPTED")
+  expect_match(r, "elapsed time limit")
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
   p <- tempfile(fileext = ".gz")
   on.exit(unlink(p), add = TRUE)
@@ -431,7 +433,7 @@ test_that("a Ctrl-C while a table is split or inflated is R's interrupt, soon (n
   r <- tryCatch(.Call(ns$C_rmbl_gunzip_checked, z, 2^31), interrupt = function(e) "INTERRUPTED",
                 error = function(e) conditionMessage(e))
   setTimeLimit(elapsed = Inf)
-  expect_identical(r, "INTERRUPTED")
+  expect_match(r, "elapsed time limit")
   expect_lt(as.numeric(difftime(Sys.time(), t0, units = "secs")), 5)
 })
 

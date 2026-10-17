@@ -500,8 +500,19 @@ period_days <- function(from, to) {
       call. = FALSE
     )
   }
-  from <- as.Date(from)
-  to <- as.Date(to)
+  # text that is no date, a list, a frame or a flag: said, not as.Date()'s "character string is not in
+  # a standard unambiguous format" (re-test of the b617a3f CRAN stress fixes, hostile battery)
+  as_day <- function(v, what) {
+    if (length(v) != 1L || !(inherits(v, c("Date", "POSIXt")) || is.character(v))) {
+      stop("`from` and `to` must each be a single date", call. = FALSE)
+    }
+    if (is.na(v)) return(as.Date(NA))   # refused below, as a missing date
+    d <- tryCatch(as.Date(v), error = function(e) as.Date(NA))
+    if (is.na(d)) stop(sprintf("`%s` is not a date: %s", what, format(v)), call. = FALSE)
+    d
+  }
+  from <- as_day(from, "from")
+  to <- as_day(to, "to")
   if (length(from) != 1L || length(to) != 1L)
     stop("`from` and `to` must each be a single date", call. = FALSE)
   if (is.na(from) || is.na(to))

@@ -165,6 +165,7 @@ crf_pm25 <- function(exposure, outcome = "all_cause_mortality", reference_conc =
 #' @export
 crf_no2 <- function(exposure, outcome = "all_cause_mortality", reference_conc = 10,
                     beta_per_10 = NULL) {
+  .rmbl_no_fn(outcome = outcome)
   # all-cause RR 1.02 (95% CI 1.01-1.04) and respiratory RR 1.03 (1.00-1.05) per 10 ug/m3,
   # Huangfu and Atkinson (2020), the WHO 2021 review; childhood asthma incidence OR 1.05
   # (1.02-1.07) per 4 ug/m3, Khreis et al. (2017), scaled to per 10 ug/m3
@@ -500,6 +501,7 @@ mortality_displaced <- function(exposure_delta, population, baseline_rate, beta_
 pollution_burden <- function(exposure_mean, exposure_prevalence, baseline_rate, population,
                              pollutant = "NO2", outcome = "all_cause_mortality",
                              reference_conc = NULL, rare_outcome = FALSE, high_rate = FALSE) {
+  .rmbl_no_fn(pollutant = pollutant)
   pol <- .pollution_pollutant(pollutant)
   if (is.na(pol)) {
     stop(sprintf("Unknown pollutant '%s'. Use 'PM2.5' or 'NO2'.", paste(pollutant, collapse = ",")),
@@ -1220,6 +1222,9 @@ verify_pollution <- function(pollutant, outcome = "all_cause_mortality", region 
                              exposure_mean = NULL, exposure_prevalence = NULL, reference = NULL,
                              baseline_rate = 500, baseline_rate_per = 1e5, population = 1e6,
                              rare_outcome = FALSE, high_rate = FALSE) {
+  if (!is.character(pollutant) || length(pollutant) != 1L || is.na(pollutant)) {
+    stop("`pollutant` must be one pollutant name (\"PM2.5\" or \"NO2\")", call. = FALSE)
+  }
   pol <- .pollution_pollutant(pollutant)
   pollutant <- if (is.na(pol)) tolower(as.character(pollutant)) else if (pol == "NO2") "no2" else "pm25"
   equity_df <- NULL

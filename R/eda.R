@@ -159,6 +159,7 @@ inline_hist <- function(x, bins = 10L) {
 #' @export
 frequency_table <- function(data, column = NULL, max_levels = 25L,
                             sort = TRUE) {
+  .rmbl_no_fn(data = data, column = column)
   v <- if (is.data.frame(data)) {
     if (is.null(column)) {
       stop("`column` is required when `data` is a data frame", call. = FALSE)
@@ -525,6 +526,7 @@ clean_column_names <- function(data, case = c("snake", "lower_camel",
                                               "upper_camel",
                                               "screaming_snake", "none"),
                                sep = "_") {
+  .rmbl_no_fn(data = data)
   case <- .rmbl_arg(case)
   nms <- if (is.data.frame(data)) names(data) else as.character(data)
   if (length(nms) == 0L) {

@@ -502,6 +502,7 @@
 #' f()
 #' @export
 bricklayer_progress <- function(label, total, quiet = NULL, color = "blue", delay = NULL) {
+  .rmbl_no_fn(label = label)
   label <- as.character(label)
   if (length(label) != 1L || is.na(label)) stop("`label` must be a single string", call. = FALSE)
   if (!is.numeric(total) || length(total) != 1L || is.na(total) || !is.finite(total) || total < 0) {

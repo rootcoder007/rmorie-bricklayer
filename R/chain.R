@@ -158,6 +158,7 @@ chain_new <- function() {
 #' @rdname rmbl_chain
 #' @export
 chain_append <- function(chain, entry, label = NA_character_) {
+  .rmbl_no_fn(label = label)
   if (!inherits(chain, "bricklayer_chain")) {
     stop("`chain` must come from chain_new()", call. = FALSE)
   }

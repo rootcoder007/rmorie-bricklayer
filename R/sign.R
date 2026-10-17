@@ -253,6 +253,7 @@ fips_public_key <- function(key) {
 #' try(fips_key("ML-DSA-65", key$public, key$secret))
 #' @export
 fips_key <- function(scheme, public, secret = NULL) {
+  .rmbl_no_fn(public = public, secret = secret)
   scheme <- .rmbl_fips_scheme(scheme)
   sz <- fips_sizes(scheme)
   pub <- .rmbl_fips_material(public, sz[["public_key"]], "public", scheme)
@@ -386,6 +387,7 @@ fips_key <- function(scheme, public, secret = NULL) {
 #' try(fips_mu(fips_keygen("SLH-DSA-SHA2-128f"), "m"))
 #' @export
 fips_mu <- function(key, message, context = NULL, prehash = "none") {
+  .rmbl_no_fn(message = message, context = context)
   scheme <- .rmbl_fips_key_scheme(key)
   mode <- .rmbl_fips_mldsa_mode(scheme)
   if (is.na(mode)) {
@@ -1385,6 +1387,7 @@ xmss_advance <- function(key, signature, message = NULL) {
 #' @export
 capsule_verify <- function(message, signature, key, context = NULL,
                            prehash = NULL) {
+  .rmbl_no_fn(message = message)
   if (!inherits(signature, "bricklayer_signature")) {
     stop("`signature` must come from capsule_sign()", call. = FALSE)
   }

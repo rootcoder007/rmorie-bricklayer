@@ -73,7 +73,10 @@ core_var <- function(x) .Call(C_rmbl_var, .rmbl_num_input(x, "x"))
 #' @rdname rmbl_core_stats
 #' @export
 core_cor <- function(x, y) {
-  .Call(C_rmbl_cor, .rmbl_num_input(x, "x"), .rmbl_num_input(y, "y"))
+  x <- .rmbl_num_input(x, "x")
+  y <- .rmbl_num_input(y, "y")
+  if (length(x) != length(y)) stop("`x` and `y` must have the same length", call. = FALSE)
+  .Call(C_rmbl_cor, x, y)
 }
 
 #' Normal density (C backend)
@@ -178,6 +181,7 @@ core_normal_pdf <- function(x, mean = 0, sd = 1) {
 #' core_sha256(serialize(list(a = 1L, b = "x"), NULL))
 #' @export
 core_sha256 <- function(x) {
+  .rmbl_no_fn(x = x)
   if (is.raw(x)) return(.Call(C_rmbl_sha256, x))
   x <- as.character(x)
   vapply(x, function(s) .Call(C_rmbl_sha256, s), character(1), USE.NAMES = FALSE)

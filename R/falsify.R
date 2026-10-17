@@ -116,6 +116,7 @@
 #' @export
 capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
                             subset_frac = 0.8, seed = NULL) {
+  .rmbl_no_fn(treatment = treatment)
   if (!is.data.frame(data) || nrow(data) < 4L) {
     stop("`data` must be a data frame with at least 4 rows", call. = FALSE)
   }
@@ -137,7 +138,8 @@ capsule_falsify <- function(data, statistic, treatment = NULL, n = 199L,
       stop("`treatment` is not a column of `data`", call. = FALSE)
     }
   }
-  if (!is.null(seed)) .rmbl_local_seed(as.integer(seed)[1L])
+  if (!is.null(seed)) seed <- .rmbl_r_seed(seed)
+  if (!is.null(seed)) .rmbl_local_seed(seed)
 
   pg <- bricklayer_progress("falsification", 2 * n + 1L)
   on.exit(pg$done(), add = TRUE)

@@ -223,12 +223,13 @@ print.bricklayer_online <- function(x, ...) {
 reservoir_indices <- function(n, k, seed = 42L) {
   n <- .rmbl_num(n, "n")
   k <- .rmbl_num(k, "k")
-  if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) {
+  if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
     stop("`n` must be a single non-negative whole number", call. = FALSE)
   }
-  if (length(k) != 1L || is.na(k) || k < 0 || k != floor(k)) {
+  if (length(k) != 1L || is.na(k) || !is.finite(k) || k < 0 || k != floor(k)) {
     stop("`k` must be a single non-negative whole number", call. = FALSE)
   }
+  if (k > .Machine$integer.max) stop("`k` must be at most 2147483647", call. = FALSE)
   seed <- .rmbl_seed(seed)
   .Call(C_rmbl_reservoir, n, k, seed)
 }
@@ -236,6 +237,7 @@ reservoir_indices <- function(n, k, seed = 42L) {
 #' @rdname rmbl_reservoir
 #' @export
 reservoir_sample <- function(x, k, seed = 42L) {
+  .rmbl_no_fn(x = x)
   idx <- reservoir_indices(length(x), k, seed)
   x[idx]
 }
@@ -326,6 +328,7 @@ reservoir_sample <- function(x, k, seed = 42L) {
 #' @name rmbl_distinct
 #' @export
 distinct_sketch <- function(x, p = 14L, registers = NULL) {
+  .rmbl_no_fn(x = x)
   p <- .rmbl_num(p, "p", integer = TRUE)
   if (length(p) != 1L || is.na(p) || p < 4L || p > 20L) {
     stop("`p` must be a single integer between 4 and 20", call. = FALSE)

@@ -157,6 +157,7 @@
 #' @export
 rule_in_set <- function(column, set, na_pass = TRUE,
                         severity = c("warning", "fatal")) {
+  .rmbl_no_fn(set = set)
   column <- .rmbl_string1(column, "column")
   severity <- .rmbl_arg(severity)
   set <- as.character(set)
@@ -226,6 +227,7 @@ rule_unique <- function(column, severity = c("warning", "fatal")) {
 #' @export
 rule_regex <- function(column, pattern, na_pass = TRUE,
                        severity = c("warning", "fatal")) {
+  .rmbl_no_fn(pattern = pattern)
   column <- .rmbl_string1(column, "column")
   severity <- .rmbl_arg(severity)
   pattern <- as.character(pattern)[1L]

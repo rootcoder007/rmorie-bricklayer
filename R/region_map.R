@@ -132,6 +132,7 @@
 #' try(region_coverage(c("A", "A"), c(10, 20), c(1, 0)))
 #' @export
 region_coverage <- function(region, population, units) {
+  .rmbl_no_fn(region = region)
   region <- .rmbl_rm_chr(region, "region")
   population <- .rmbl_num(population, "population")
   units <- .rmbl_num(units, "units")
@@ -270,6 +271,7 @@ print.rmbl_region_coverage <- function(x, n = 10L, ...) {
 #' try(region_map_integrity(cw, "institution", "cd"))
 #' @export
 region_map_integrity <- function(map, unit, region, regions = NULL) {
+  .rmbl_no_fn(unit = unit, region = region, regions = regions)
   u <- as.character(.rmbl_rm_col(map, unit, "map"))
   r <- as.character(.rmbl_rm_col(map, region, "map"))
   blank <- function(v) is.na(v) | !nzchar(trimws(ifelse(is.na(v), "", v)))
@@ -364,6 +366,7 @@ region_map_integrity <- function(map, unit, region, regions = NULL) {
 #' try(region_map_compare(pub, obs, "inst", cols = "lat"))
 #' @export
 region_map_compare <- function(published, observed, unit, cols = NULL) {
+  .rmbl_no_fn(unit = unit)
   pu <- trimws(as.character(.rmbl_rm_col(published, unit, "published")))
   ou <- trimws(as.character(.rmbl_rm_col(observed, unit, "observed")))
   if (is.null(cols)) {
@@ -498,6 +501,7 @@ region_map_compare <- function(published, observed, unit, cols = NULL) {
 #' @export
 region_map_second_route <- function(map, unit, region, route,
                                     known = character()) {
+  .rmbl_no_fn(unit = unit, region = region, route = route, known = known)
   u <- trimws(as.character(.rmbl_rm_col(map, unit, "map")))
   r <- trimws(as.character(.rmbl_rm_col(map, region, "map")))
   if (is.data.frame(route)) {
@@ -619,7 +623,10 @@ region_map_from_points <- function(x, y, unit, boundaries, fields,
   if (!requireNamespace("sf", quietly = TRUE)) {
     return(NULL)
   }
-  if (length(boundaries) != 1L || !file.exists(boundaries)) {
+  if (!is.character(boundaries) || length(boundaries) != 1L || is.na(boundaries)) {
+    stop("`boundaries` must be the path of one boundary file", call. = FALSE)
+  }
+  if (!file.exists(boundaries)) {
     return(NULL)
   }
   unit <- .rmbl_rm_chr(unit, "unit")

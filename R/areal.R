@@ -94,6 +94,7 @@
 #' try(expected_counts(c(1, 2), c(10, 0), c("a", "b")))
 #' @export
 expected_counts <- function(counts, population, area, strata = NULL) {
+  .rmbl_no_fn(area = area)
   counts <- .rmbl_finite_input(counts, "counts", nonneg = TRUE)
   population <- .rmbl_finite_input(population, "population", nonneg = TRUE)
   area <- as.character(area)
@@ -205,6 +206,9 @@ sir <- function(observed, expected, area = NULL, conf_level = 0.95) {
   if (any(expected <= 0, na.rm = TRUE)) {
     stop("`expected` must be positive", call. = FALSE)
   }
+  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(observed))) {
+    stop("`area` must be NULL or one label per area (as many as `observed`)", call. = FALSE)
+  }
   conf_level <- .rmbl_conf_level(conf_level)
   a <- 1 - conf_level
   # the exact Poisson interval, via the gamma relation: an observed
@@ -296,6 +300,9 @@ eb_rates <- function(observed, expected, area = NULL) {
   expected <- .rmbl_num(expected, "expected")
   if (length(observed) != length(expected)) {
     stop("`observed` and `expected` must be the same length", call. = FALSE)
+  }
+  if (!is.null(area) && (!is.atomic(area) || is.matrix(area) || length(area) != length(observed))) {
+    stop("`area` must be NULL or one label per area (as many as `observed`)", call. = FALSE)
   }
   # counts: finite and non-negative, as sir() requires of the same inputs
   if (anyNA(observed) || any(!is.finite(observed)) || any(observed < 0)) {
@@ -523,6 +530,10 @@ morans_i <- function(x, neighbours, style = c("W", "B"),
                      n_perm = 9999L) {
   style <- .rmbl_arg(style)
   x <- .rmbl_num(x, "x")
+  n_perm <- .rmbl_num(n_perm, "n_perm", integer = TRUE)
+  if (length(n_perm) != 1L || is.na(n_perm) || n_perm < 0L) {
+    stop("`n_perm` must be a single non-negative whole number", call. = FALSE)
+  }
   n <- length(x)
   if (n < 3L) stop("Moran's I needs at least three areas", call. = FALSE)
   if (anyNA(x)) {

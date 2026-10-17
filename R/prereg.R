@@ -84,6 +84,7 @@
 #' try(prereg_declare(c("an unnamed claim")))
 #' @export
 prereg_declare <- function(hypotheses, note = NULL) {
+  .rmbl_no_fn(note = note)
   if (!is.character(hypotheses) || !length(hypotheses) ||
       is.null(names(hypotheses)) || any(!nzchar(names(hypotheses)))) {
     stop("`hypotheses` must be a named character vector: one claim per ",
@@ -105,6 +106,7 @@ prereg_declare <- function(hypotheses, note = NULL) {
 #' @rdname prereg_declare
 #' @export
 prereg_check <- function(prereg, reported) {
+  .rmbl_no_fn(reported = reported)
   if (!inherits(prereg, "bricklayer_prereg")) {
     stop("`prereg` must come from prereg_declare()", call. = FALSE)
   }
@@ -255,6 +257,7 @@ print.bricklayer_prereg_check <- function(x, ...) {
 falsify_family <- function(x, method = c("holm", "bh", "bonferroni",
                                          "none"),
                            alpha = 0.05) {
+  if (!length(x)) stop("`x` must hold at least one falsification result or p-value", call. = FALSE)
   method <- .rmbl_arg(method)
   at_floor <- character(0)
   if (is.list(x) && length(x) &&

@@ -12,15 +12,28 @@
 #include <exception>
 #include <new>
 #include <string>
+#include <cstdio>
+#include <cstring>
 #include "rmbl_entry.h"
 
 extern "C" { int rmbl_kernel_interrupted = 0; }
+
+/* A setTimeLimit() limit (or another error R raised from its event check) taken by the poll below:
+ * raised as R said it, an ordinary error a tryCatch() catches. Raised as an interrupt it halted
+ * Rscript, no handler able to see it (re-test of the b617a3f CRAN stress fixes, finding 1). */
+static char rmbl_pending_error[512] = "";
 
 /* Raise R's interrupt condition from the API: signal it (so a
  * tryCatch(interrupt = ) handler sees it) and unwind to top level, as
  * R's own handler does. The pending flag was consumed by the test above,
  * so R_CheckUserInterrupt() would not fire again. */
 static void rmbl_raise_interrupt(void) {
+    if (rmbl_pending_error[0]) {
+        char m[sizeof rmbl_pending_error];
+        memcpy(m, rmbl_pending_error, sizeof m);
+        rmbl_pending_error[0] = 0;
+        Rf_errorcall(R_NilValue, "%s", m);
+    }
     R_ParseEvalString(
         "{ signalCondition(structure(list(message = \"interrupt\", call = NULL), "
         "    class = c(\"interrupt\", \"condition\"))); invokeRestart(\"abort\") }",
@@ -32,7 +45,18 @@ static void rmbl_raise_interrupt(void) {
  * the interrupt afterwards. */
 static int rmbl_barrier_depth = 0;
 
-static void rmbl_chk_(void *) { R_CheckUserInterrupt(); }
+static SEXP rmbl_chk_body_(void *) { R_CheckUserInterrupt(); return R_NilValue; }
+/* an error (the time limit) is kept, to be raised as one; an interrupt is not an error, so it
+ * passes this handler and ends R_ToplevelExec as before */
+static SEXP rmbl_chk_error_(SEXP cond, void *) {
+    SEXP call = PROTECT(Rf_lang2(Rf_install("conditionMessage"), cond));
+    SEXP m = PROTECT(Rf_eval(call, R_BaseEnv));
+    const char *t = (TYPEOF(m) == STRSXP && XLENGTH(m) > 0) ? CHAR(STRING_ELT(m, 0)) : "";
+    snprintf(rmbl_pending_error, sizeof rmbl_pending_error, "%s", t[0] ? t : "error");
+    UNPROTECT(2);
+    return R_NilValue;
+}
+static void rmbl_chk_(void *) { R_tryCatchError(rmbl_chk_body_, nullptr, rmbl_chk_error_, nullptr); }
 /* rmbl_fetch.cpp: turns the busy spinner when R has set a label (a no-op otherwise); every kernel's
  * poll for a Ctrl-C comes through here, so every polling kernel animates it */
 extern "C" void rmbl_wait_tick(void);
@@ -44,7 +68,7 @@ extern "C" int rmbl_interrupt_pending(void) {
      * destructors ran. With none active (a direct LinkingTo call) the
      * kernel returns its sentinel and then calls
      * rmbl_interrupt_raise_unbarriered() with no buffer alive. */
-    if (R_ToplevelExec(rmbl_chk_, nullptr)) return 0;
+    if (R_ToplevelExec(rmbl_chk_, nullptr) && !rmbl_pending_error[0]) return 0;
     return 1;
 }
 /* For an exported kernel called with no barrier on the stack (another
@@ -123,10 +147,10 @@ static SEXP rmbl_guard(const char *name, F f) {
     if (kind == 0) return r;
     if (kind == 1) {
         rmbl_raise_interrupt();
-        Rf_error("%s: interrupted", name);
+        Rf_errorcall(R_NilValue, "%s: interrupted", name);
     }
-    if (kind == 3) Rf_error("%s", msg.c_str());
-    Rf_error("%s: %s", name, msg.c_str());
+    if (kind == 3) Rf_errorcall(R_NilValue, "%s", msg.c_str());
+    Rf_errorcall(R_NilValue, "%s: %s", name, msg.c_str());
     return R_NilValue;
 }
 

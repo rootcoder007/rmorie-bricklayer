@@ -67,6 +67,8 @@
 #' @export
 use_capsule_template <- function(path, name = basename(path),
                                  example = FALSE) {
+  path <- .rmbl_string1(path, "path")
+  if (file.exists(path) && !dir.exists(path)) stop("`path` is a file, not a directory: ", path, call. = FALSE)
   if (dir.exists(path) && length(list.files(path))) {
     stop("`path` exists and is not empty", call. = FALSE)
   }

@@ -363,7 +363,7 @@ print.bricklayer_correlations <- function(x, ...) {
 environment_diff <- function(a, b) {
   pull <- function(x, what) {
     if (is.list(x) && !is.null(x$environment)) x <- x$environment
-    if (!is.list(x)) {
+    if (!is.list(x) || is.data.frame(x) || is.null(names(x))) {
       stop("`a` and `b` must be environment records or manifests",
         call. = FALSE
       )

@@ -662,6 +662,7 @@ hurwitz_zeta <- function(s, q = 1) {
 #'   branch; the caller's random number stream is restored afterwards.
 #' @export
 cramers_v <- function(tbl, bias_correct = TRUE, min_expected = 5, seed = 1L) {
+  .rmbl_no_fn(tbl = tbl)
   # "abc" silently meant FALSE, and an NA threshold failed deep inside (review of 52a8883)
   if (!is.logical(bias_correct) || length(bias_correct) != 1L || is.na(bias_correct)) {
     stop("`bias_correct` must be TRUE or FALSE", call. = FALSE)

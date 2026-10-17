@@ -726,9 +726,10 @@ core_cov <- function(x) {
 core_bootstrap_mean <- function(x, B = 1000L, seed = 42L) {
   x <- .rmbl_num_input(x, "x")
   B <- .rmbl_num(B, "B")
-  if (length(B) != 1L || is.na(B) || B < 1 || B != floor(B)) {
+  if (length(B) != 1L || is.na(B) || !is.finite(B) || B < 1 || B != floor(B)) {
     stop("`B` must be a single whole number >= 1", call. = FALSE)
   }
+  if (B > .Machine$integer.max) stop("`B` must be at most 2147483647", call. = FALSE)
   seed <- .rmbl_seed(seed)
   # the kernel polls for a Ctrl-C about every million draws, and each poll turns the busy spinner
   .bl_busy(sprintf("bootstrap: %s replicates of %s values", .bl_n(B), .bl_n(length(x))),
@@ -880,7 +881,7 @@ core_gamma_cdf <- function(shape, x) {
   if (length(shape) != 1L || is.na(shape) || shape <= 0) {
     stop("`shape` must be a single positive number", call. = FALSE)
   }
-  .Call(C_rmbl_gamma_cdf, shape, as.numeric(x))
+  .Call(C_rmbl_gamma_cdf, shape, .rmbl_num(x, "x"))
 }
 
 #' Hawkes-process negative log-likelihood (C backend)

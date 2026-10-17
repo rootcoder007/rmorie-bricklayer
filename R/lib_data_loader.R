@@ -678,6 +678,7 @@ friendly_download <- function(url, target_path, attempt_wayback = NULL,
 #' try(verify_sha256(f, c("a", "b")))
 #' @export
 verify_sha256 <- function(path, expected_sha) {
+  .rmbl_no_fn(expected_sha = expected_sha)
   actual <- sha256_file(path)
   # provenance JSON hands the pinned digest over as a length-1 list;
   # identical() on list-vs-character never matched, so every intact
@@ -825,6 +826,9 @@ verify_sha256 <- function(path, expected_sha) {
 validate_schema <- function(df_raw, provenance) {
   if (!is.data.frame(df_raw)) {
     stop("`df_raw` must be a data frame", call. = FALSE)
+  }
+  if (!is.null(provenance) && !is.list(provenance)) {
+    stop("`provenance` must be a provenance list (from read_provenance()), or NULL", call. = FALSE)
   }
   issues <- list()
   if (is.null(provenance) || is.null(provenance$schema)) {

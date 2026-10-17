@@ -384,6 +384,9 @@ step_change <- function(y, x = NULL, min_segment = 2L, n_perm = 9999L,
                         seed = 1L) {
   y <- .rmbl_num(y, "y")
   if (is.null(x)) x <- seq_along(y)
+  if (!is.atomic(x) || is.matrix(x) || length(x) != length(y)) {
+    stop("`x` must be one time or position per value of `y`", call. = FALSE)
+  }
   if (any(is.infinite(y))) {
     # a missing period is dropped; an infinite value is a data error
     stop("`y` must not contain infinite values", call. = FALSE)

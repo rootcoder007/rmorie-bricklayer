@@ -108,7 +108,7 @@ published_bounds <- function(x, rounding = NULL,
                    paste(unique(s[bad]), collapse = ", ")), call. = FALSE)
     }
   } else {
-    value <- as.numeric(x)
+    value <- .rmbl_num(x, "x")
   }
   status[is.na(value) & status != "suppressed"] <- "missing"
   lower <- value
@@ -200,6 +200,13 @@ published_bounds <- function(x, rounding = NULL,
 #' @export
 change_envelope <- function(now, previous, population = NULL,
                             previous_population = NULL, per = 1000) {
+  for (nm in c("now", "previous")) {
+    v <- get(nm)
+    if (!is.data.frame(v) || !all(c("lower", "upper") %in% names(v))) {
+      stop(sprintf("`%s` must be a data frame from published_bounds() (columns lower and upper)", nm),
+           call. = FALSE)
+    }
+  }
   if (nrow(now) != nrow(previous)) {
     stop("`now` and `previous` must have the same number of rows",
          call. = FALSE)

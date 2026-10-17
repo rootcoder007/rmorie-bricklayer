@@ -11,6 +11,40 @@
   Nothing is sent until every required answer is there; the data service checks the same things.
   `login --token` with a key you already hold is unchanged.
 
+## Fixes from the re-test of the b617a3f CRAN stress fixes
+
+* **`setTimeLimit()` during a POST** (`ask`, Wayback `/save`, the data-key check) is an ordinary
+  error that `tryCatch()` catches, said as R says it ("reached elapsed time limit"); it halted
+  Rscript as an interrupt. A Ctrl-C is still an interrupt.
+* **A command typed as one argument is not a question**: `rmbl "cnfig set openai.key"` and a
+  tab-joined `$'cnfig\tset\topenai.key'` were sent to the first provider; they are a near miss now,
+  named in "did you mean `rmbl config`", with exit status 2 and nothing sent.
+* **`survey_design()`**: a JK1 replicate on a domain subset that scales every row by
+  `k / (k - 1)` (its deleted PSU outside the subset; within 1% of the weight from 101 PSUs) is no
+  longer refused as a copy; in a post-stratified or calibrated set, replicates equal or close to the
+  weight are accepted and not warned about (bootstrap and BRR subsets were). A single JKn replicate
+  equal to the weight is refused as the copy it is, and a JK1 or JKn replicate that leaves no row
+  out without being such a rescale is warned about, as the Rd said.
+* **A provider's key prefix (`sk-`, `gsk_`, `hf_`, `AIza`, `xai-`, ...) with twelve key characters
+  or more is a key however short**: a 23-character `sk-` key in a question went to a model.
+* **`survey_design()`**: a column of `data` passed in a partly named replicate matrix is refused as
+  in a named one (it was taken as a replicate); two outcomes permuted for a permutation test beside
+  columns still in place are no reorder (they were refused as one). Replicates given by name are no
+  longer digested for the row check (the design keeps them): a design by name and each estimate on
+  it were 2 to 5 times slower than the same replicates as a matrix (10.8 s and 7.8 s for 4.7 s and
+  1.5 s at a million rows). The adjustment check reads 4,096 rows of each replicate.
+* **CSV reader parity with `read.csv()`**: a byte-order mark at the start of the first row (after
+  blank lines, or inside its opening quote) is dropped, as `scan()` drops it; a header of blanks or
+  of the mark alone is a header of no columns, its rows read as row names.
+* **Arguments**: 123 functions gave a base R error for a value of the wrong kind (a data frame, a
+  list, `NA`, a vector, a function or a number where a path goes), 696 cases in a battery of every
+  export seeded from its examples; each is now an error that names the argument. Numeric arguments
+  refuse lists, data frames, factors and complex numbers in words; the writers (`yoy_csv()` and the
+  other `yoy_*()` writers, `write_recode_manifest()`, `write_summary_txt()`,
+  `use_capsule_template()`, `make_synthetic_csv()`, `bricklayer_download()`) refuse a path that is
+  not one string (a number was written as a file named `1`); errors raised in the compiled code no
+  longer carry the `.Call()`.
+
 # rmoriebricklayer 0.5.13
 
 * The survey-estimation vignette loads the CSUS 2023 public-use file and its 1,000 mean bootstrap

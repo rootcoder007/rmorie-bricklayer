@@ -803,6 +803,9 @@ bricklayer_llm_chat <- function(messages, model = NULL, route = NULL, timeout = 
 #' }
 #' @export
 bricklayer_llm_models <- function(route = NULL, timeout = 15) {
+  if (!is.null(route) && (!is.character(route) || length(route) != 1L || is.na(route))) {
+    stop("`route` must be a single route name, or NULL", call. = FALSE)
+  }
   timeout <- .rmbl_num(timeout, "timeout")
   rt <- .bl_llm_route(route)
   if (is.null(rt)) return(structure(character(), default = NULL, route = NULL))

@@ -167,6 +167,7 @@ sha256_file <- function(path) {
 #' # Missing values become empty strings; line breaks are removed.
 #' to_ascii(c(NA, "two\nlines"))
 to_ascii <- function(x) {
+  .rmbl_no_fn(x = x)
   x <- as.character(x)
   # Bytes that are not valid UTF-8 at all (a mislabelled file) are dropped
   # first. validUTF8() and an explicit UTF-8 -> UTF-8 iconv() both work on
@@ -295,6 +296,7 @@ to_ascii <- function(x) {
 #' validUTF8(bad)
 #' ascii_fallback(bad)
 ascii_fallback <- function(x, force = FALSE) {
+  .rmbl_no_fn(x = x)
   x <- as.character(x)
   if (isTRUE(force)) return(to_ascii(x))
   out <- x
@@ -349,6 +351,7 @@ ascii_fallback <- function(x, force = FALSE) {
 #' try(write_text_fallback("x", c("a.txt", "b.txt")))
 #' @export
 write_text_fallback <- function(text, path) {
+  .rmbl_no_fn(text = text)
   path <- .rmbl_string1(path, "path")
   ok <- tryCatch({
     # the UTF-8 bytes go to a binary connection: a text connection with

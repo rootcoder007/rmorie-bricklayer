@@ -243,6 +243,7 @@
 #'                       stack_temp = 150 + 5, ambient_temp = 20))
 #' @export
 pg_sigmas <- function(x, stability = "D", setting = "rural") {
+  .rmbl_no_fn(stability = stability)
   cls <- .ad_class(stability)
   setting <- .ad_setting(setting)
   x <- .ad_num(x, "x", min = 0, scalar = FALSE)
@@ -527,6 +528,7 @@ advection_diffusion_2d <- function(c0, u, v, kx, ky, dx, dy, dt, n_steps, source
 #' @export
 lagrangian_particles <- function(n, x0, y0, u, v, kx, ky, dt, n_steps, seed = 0, grid = NULL,
                                  normals = NULL, max_work = 1e8) {
+  seed <- .rmbl_r_seed(seed)
   n <- .ad_num(n, "n", positive = TRUE, whole = TRUE)
   if (n > 1e8) stop("`n` must be at most 100 million particles", call. = FALSE)
   n <- as.integer(n)

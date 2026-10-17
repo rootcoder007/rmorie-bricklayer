@@ -638,9 +638,10 @@ core_hawkes_residuals <- function(times, horizon, kernel = c("exponential", "wei
 #' @export
 core_uniforms <- function(n, seed) {
   n <- .rmbl_num(n, "n")
-  if (length(n) != 1L || is.na(n) || n < 0 || n != floor(n)) {
+  if (length(n) != 1L || is.na(n) || !is.finite(n) || n < 0 || n != floor(n)) {
     stop("`n` must be a non-negative whole number", call. = FALSE)
   }
+  if (n > .Machine$integer.max) stop("`n` must be at most 2147483647", call. = FALSE)
   seed <- .rmbl_seed(seed)
   .Call(C_rmbl_uniforms, n, seed)
 }

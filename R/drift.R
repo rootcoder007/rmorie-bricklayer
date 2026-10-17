@@ -300,7 +300,7 @@ drift_chisq <- function(observed, expected) {
       if (is.null(nm)) {
         stop("a numeric `observed`/`expected` must be named", call. = FALSE)
       }
-      stats::setNames(as.numeric(v), nm)
+      stats::setNames(.rmbl_num(v, "observed / expected"), nm)
     }
   }
   o <- .rmbl_check_counts(tab(observed), "observed")
@@ -447,7 +447,7 @@ drift_homogeneity <- function(x, y, seed = 1L) {
       if (is.null(nm)) {
         stop("a numeric `x`/`y` must be named", call. = FALSE)
       }
-      stats::setNames(as.numeric(v), nm)
+      stats::setNames(.rmbl_num(v, "x / y"), nm)
     }
   }
   cx <- .rmbl_check_counts(tab(x), "x")

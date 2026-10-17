@@ -83,6 +83,8 @@ bricklayer_palette <- function(name = c("okabe", "diverging", "sequential", "gre
     sequential = c("#C6DBEF", "#6BAED6", "#2171B5", "#08306B", "#041E42"),
     grey = c("#252525", "#636363", "#969696", "#BDBDBD", "#D9D9D9"))
   if (is.null(n)) return(base)
+  n <- .rmbl_num(n, "n", integer = TRUE)
+  if (length(n) != 1L || is.na(n) || n < 1L) stop("`n` must be a single positive whole number", call. = FALSE)
   n <- as.integer(n)[1L]
   if (is.na(n) || n < 1L) stop("`n` must be a positive whole number", call. = FALSE)
   if (name %in% c("okabe", "grey")) return(rep_len(base, n))

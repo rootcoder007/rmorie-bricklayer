@@ -353,6 +353,7 @@ share <- function(x, ...) UseMethod("share")
 #' @export
 share.data.frame <- function(x, count, by = NULL, total = NULL,
                              conf_level = 0.95, ...) {
+  if (missing(count)) stop("`count` must name the column of counts", call. = FALSE)
   count <- .yoy_col(substitute(count), count, x, "count")
   if (!is.null(by)) {
     by <- as.character(by)
