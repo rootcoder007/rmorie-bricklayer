@@ -22,6 +22,28 @@ The running example is the shape Ontario's inmate datasets have -- one
 row per placement, keyed on the fiscal year's end year, with banded
 counts and a region.
 
+## A Statistics Canada table, as published
+
+A Statistics Canada full-table download puts each estimate, its confidence limits (or its
+coefficient of variation), and a quality flag on separate rows. `statcan_tidy()` reads the flags
+and never keeps a suppressed value. `statcan_estimates()` puts each estimate beside its limits,
+whatever form the limits take. Here, a table with three measures per cell, and limits that name
+their measure only in part:
+
+```{r statcan}
+pyll <- data.frame(GEO = rep(c("Inuit Nunangat", "Rest of Canada"), each = 5),
+                   Characteristics = rep(c("Number of potential years of life lost",
+                                           "Crude rate of potential years of life lost",
+                                           "Age-standardized rate of potential years of life lost",
+                                           "Low 95% confidence interval, potential years of life lost",
+                                           "High 95% confidence interval, potential years of life lost"), 2),
+                   VALUE = c(5000, 900, 1100, 1000, 1200, 7000, 800, 950, 870, 1030), STATUS = "")
+statcan_estimates(pyll)[, c("GEO", "measure", "estimate", "lower", "upper")]
+```
+
+The limits belong to the age-standardised rate: they are the only pair that contains its estimate
+in every cell. (The values are made up; the layout is that of table 13-10-0402.)
+
 ## Bands
 
 Published categories are intervals. Anything computed from them rests on

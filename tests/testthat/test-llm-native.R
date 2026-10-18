@@ -163,7 +163,8 @@ test_that("the command line dispatches its verbs", {
     st <- bricklayer_cli(c(...), out = function(s) buf <<- c(buf, s))
     list(text = paste(buf, collapse = ""), status = st)
   }
-  expect_match(cap("version")$text, "rmoriebricklayer 0\\.")
+  expect_match(cap("version")$text, paste0("rmoriebricklayer ", utils::packageVersion("rmoriebricklayer")),
+               fixed = TRUE)
   expect_match(cap()$text, "usage: rmoriebricklayer")
   expect_equal(cap("frobnicate")$status, 2L)  # an unknown verb is a usage error
   # `login --token` asks the gateway first: here it accepts the key

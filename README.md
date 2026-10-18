@@ -191,6 +191,30 @@ and a digest anyone can recompute says nothing about who produced the data.
   permutation p-values). Each has a plot. Real Ontario Court of Justice and
   Toronto Police Service excerpts ship in `inst/extdata` (`?justice-data`);
   `vignette("courts-and-crime")`.
+- **First Nations, Metis and Inuit health, mental health and wellness** —
+  distinctions-based methods for Statistics Canada's published tables, with
+  suppressed cells never imputed:
+  - `statcan_tidy()` and `statcan_estimates()` read every layout of limit,
+    coefficient of variation and standard error;
+  - `indigenous_gap()`, `distinctions_test()`, `ordinal_compare()`,
+    `age_standardise()` and `standardise_prevalence()` compare groups;
+  - `exposure_trend()` covers the intergenerational effects of the residential
+    schools;
+  - `trc_progress()` tracks the Calls to Action.
+
+  Estimators built from Indigenous scholarship on mental wellness:
+  - Prof. Suzanne L. Stewart's work: `wellness_profile()`,
+    `holistic_balance()`, `dual_continuum()` and `healing_change()`;
+  - Prof. Angela Mashford-Pringle's: `connection_association()`;
+  - the First Nations Mental Wellness Continuum: `mental_wellness_continuum()`;
+  - community-weighted protective and risk factors: `community_index()`;
+  - ISC's Community Well-Being index: `cwb_score()`;
+  - Walter's 5D critique: `framing_audit()`.
+
+  Each has a plot. Data governance follows OCAP® and CARE. Four published
+  excerpts ship in `inst/extdata` (`?indigenous_example`), and
+  `indigenous_tables()` lists the 233 mirrored tables;
+  `vignette("first-nations-metis-inuit-health")`.
 - **Complex surveys** — `survey_design()` (replicate weights: bootstrap,
   mean bootstrap, JK1, JKn, BRR and Fay's BRR; or strata, PSUs and a finite
   population correction for Taylor linearization), `survey_estimate()`

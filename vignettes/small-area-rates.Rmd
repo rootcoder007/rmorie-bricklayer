@@ -40,6 +40,26 @@ comparison that says something about the unit rather than about who lives there:
 expected_counts(d$n, d$pop, d$region, strata = d$age)
 ```
 
+## Direct standardisation, for populations of different ages
+
+Indirect standardisation asks what each unit would expect at the overall rates. Direct
+standardisation asks what rate each population would have with one standard age structure. It
+is the comparison to use when the populations' ages differ a great deal. First Nations, Metis and
+Inuit populations, for example, are younger than the non-Indigenous population.
+`age_standardise()` gives the rates with the Fay-Feuer gamma interval, which holds for small
+counts. `rate_gap()` compares two of them. The counts below are made up, to show the computation:
+
+```{r direct}
+r <- age_standardise(events = c(4, 9, 11, 6, 3, 40, 70, 90, 80, 60),
+                     population = c(9000, 8000, 6000, 4000, 2000, 300000, 320000, 350000, 340000, 300000),
+                     standard = c(30, 25, 20, 15, 10),
+                     group = rep(c("Inuit", "Non-Indigenous"), each = 5))
+r
+rate_gap(r, "Inuit", "Non-Indigenous")
+```
+
+For survey percentages rather than counts, `standardise_prevalence()` does the same.
+
 ## Standardised ratios with exact intervals
 
 The ratio of observed to expected is the standardised incidence ratio (SIR). `sir()` gives

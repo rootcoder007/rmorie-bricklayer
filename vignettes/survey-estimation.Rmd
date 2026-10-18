@@ -131,6 +131,30 @@ effect is below one so the interval is the plain Wilson one at the 36,024 respon
 interval is slightly wider here: Health Canada computed from its master file, and the public-use
 weights are not identical to it (the percentages differ in the fifth significant digit).
 
+## When you only have the published table
+
+Often there is no microdata, only the published table: an estimate and its 95% limits for each
+group. The limits carry the design. A standard error is the limits' width over \(2z\), and it
+includes the design effect of the survey's weights and clusters. `statcan_estimates()` puts each
+Statistics Canada estimate beside its limits. `indigenous_gap()`, `distinctions_test()` and
+`ordinal_compare()` then compare groups from them.
+
+They treat the groups as independent samples. Disjoint domains of one survey nearly are, but not
+exactly, since they share strata and clusters. The exact comparison needs the bootstrap weights,
+which Statistics Canada holds in its Research Data Centres.
+
+Perceived mental health of First Nations, Metis and Inuit adults living off reserve, 2019/2022
+(table 13-10-0924-01):
+
+```{r published-only}
+h <- indigenous_example("health_indicators")
+mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
+          h$indicator == "Perceived mental health, very good or excellent", ]
+indigenous_gap(mh, "group", "estimate", "lower", "upper", quality = "quality")[
+  , c("group", "difference", "difference_lower", "difference_upper")]
+distinctions_test(mh[mh$group != "Non-Indigenous", ], "group", "estimate", "lower", "upper")
+```
+
 ## Linearization or replicates, the same answer
 
 On the same data the two routes agree closely when the replicates come from the same design:

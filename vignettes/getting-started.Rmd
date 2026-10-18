@@ -131,6 +131,13 @@ A population that rose while stays shortened, or fell while stays
 lengthened, reads differently from one where both moved together;
 `adp()`, `alos()` and `admissions()` give the single measures.
 
+## Other published tables
+
+The same approach works on any table with an estimate and its interval. The package also bundles
+Statistics Canada estimates of First Nations, Metis and Inuit health and mental health
+(`?indigenous_example`). `vignette("first-nations-metis-inuit-health")` analyses them: by
+distinction, with suppressed cells never imputed, and with wellness reported beside distress.
+
 ## Record it
 
 `report_analysis()` writes the whole analysis as Markdown or a single

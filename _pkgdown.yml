@@ -64,6 +64,7 @@ articles:
       - falsification-and-power
       - air-pollution-and-health
       - causal-effects
+      - first-nations-metis-inuit-health
       - courts-and-crime
   - title: Data handling
     contents:
@@ -452,6 +453,45 @@ reference:
       - hotspot_persistence
       - knox_test
       - justice-data
+  - title: First Nations, Metis and Inuit health
+    desc: >
+      Statistics Canada tables read as published (suppressed cells never imputed),
+      distinctions-based comparisons, age-standardised rates, intergenerational
+      exposure, and the Truth and Reconciliation Commission Calls to Action.
+    contents:
+      - statcan_tidy
+      - indigenous_gap
+      - age_standardise
+      - rate_gap
+      - generations_exposed
+      - exposure_trend
+      - trc_completions
+      - trc_progress
+      - indigenous_tables
+      - indigenous_example
+  - title: First Nations, Metis and Inuit mental health and wellness
+    desc: >
+      Survey estimates taken out of a table with their limits, rated scales compared
+      as whole distributions, age-standardised percentages, and wellness reported
+      beside distress; Indigenous frameworks of mental wellness put to work as
+      estimators (holistic balance, the four directions of the First Nations Mental
+      Wellness Continuum, healing as change, connection across places, community-set
+      weights), the Community Well-Being index, a test before pooling, and an audit
+      of deficit framing.
+    contents:
+      - statcan_estimates
+      - ordinal_compare
+      - standardise_prevalence
+      - wellness_profile
+      - dual_continuum
+      - holistic_balance
+      - mental_wellness_continuum
+      - healing_change
+      - connection_association
+      - community_index
+      - distinctions_test
+      - cwb_score
+      - framing_audit
   - title: Complex survey estimation
     desc: >
       Design-based means, totals, proportions and ratios, overall and by domain,

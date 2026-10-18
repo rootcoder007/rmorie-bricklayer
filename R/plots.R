@@ -660,6 +660,31 @@ bricklayer_plot_options <- function(...) {
 #'     the permutation null distribution with the observed statistic.}
 #'   \item{\code{rmbl_bounds}}{(\code{\link{published_bounds}}) each value
 #'     inside its published-rounding envelope.}
+#'   \item{\code{rmbl_indigenous_gap}, \code{rmbl_dsr}, \code{rmbl_prevalence},
+#'     \code{rmbl_exposure_trend}, \code{rmbl_community_index}}{
+#'     (\code{\link{indigenous_gap}}, \code{\link{age_standardise}},
+#'     \code{\link{standardise_prevalence}}, \code{\link{exposure_trend}},
+#'     \code{\link{community_index}}) each group's difference or ratio, rate,
+#'     percentage, odds ratio or index with its interval; \code{what = "ratio"}
+#'     draws the ratio of a gap.}
+#'   \item{\code{rmbl_trc_progress}}{(\code{\link{trc_progress}}) the Calls to
+#'     Action completed, and the pace projected with the band its interval gives.}
+#'   \item{\code{rmbl_ordinal_compare}}{(\code{\link{ordinal_compare}}) each
+#'     group's ratings as one stacked bar, lowest rating on the left.}
+#'   \item{\code{rmbl_wellness_profile}, \code{rmbl_wellness_continuum}}{
+#'     (\code{\link{wellness_profile}}, \code{\link{mental_wellness_continuum}})
+#'     wellness indicators above, distress below, each group's estimate and
+#'     interval.}
+#'   \item{\code{rmbl_dual_continuum}}{(\code{\link{dual_continuum}}) each group
+#'     on the two axes, wellness up and distress across.}
+#'   \item{\code{rmbl_holistic_balance}}{(\code{\link{holistic_balance}}) the
+#'     domains as spokes and each group's levels on them, with its balance.}
+#'   \item{\code{rmbl_distinctions}}{(\code{\link{distinctions_test}}) each
+#'     group's estimate and the pooled figure, with I-squared.}
+#'   \item{\code{rmbl_connection}}{(\code{\link{connection_association}}) the
+#'     places on the two indicators, with their intervals.}
+#'   \item{\code{rmbl_healing_change}}{(\code{\link{healing_change}}) the change
+#'     in each indicator between the periods, wellness first.}
 #'   \item{\code{rmbl_crf}, \code{rmbl_burden}, \code{rmbl_equity},
 #'     \code{rmbl_pollution_report}}{(\code{\link{crf_pm25}},
 #'     \code{\link{pollution_burden}},
@@ -716,7 +741,10 @@ bricklayer_plot_options <- function(...) {
 #' @param col Colours, overriding the palette.
 #' @param palette A \code{\link{bricklayer_palette}} name, overriding the
 #'   session option.
-#' @param what For \code{rmbl_stock_flow}, the measures to draw (one panel
+#' @param xlab,ylab For \code{rmbl_connection}, the axis titles (default: the indicators'
+#'   column names).
+#' @param what For \code{rmbl_indigenous_gap}, \code{"difference"} or \code{"ratio"}.
+#'   For \code{rmbl_stock_flow}, the measures to draw (one panel
 #'   each): any of \code{"adp"}, \code{"alos"}, \code{"people"},
 #'   \code{"days"}, \code{"flow_rate"}, \code{"stock_rate"}. For
 #'   \code{rmbl_yoy}, \code{"pct_change"} or \code{"value"}. For

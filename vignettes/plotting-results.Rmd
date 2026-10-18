@@ -150,6 +150,65 @@ plot(knox_test(b$lon, b$lat, as.Date(b$occ_date), c(100, 200, 400), c(7, 14, 28)
                nsim = 99, seed = 1))
 ```
 
+## First Nations, Metis and Inuit health
+
+Published Statistics Canada estimates bundled with the package (`?indigenous_example`; see
+`vignette("first-nations-metis-inuit-health")` for the methods and the governance behind them).
+Each group is drawn on its own: the plots never pool First Nations, Metis and Inuit.
+
+```{r indigenous-data}
+h <- indigenous_example("health_indicators")
+adults <- h[h$age == "Total, 18 years and over", ]
+mh <- adults[adults$period == "2019/2022" & adults$indicator == "Perceived mental health, very good or excellent", ]
+```
+
+Each group against non-Indigenous adults, with intervals from the published ones:
+
+```{r indigenous-gap}
+plot(indigenous_gap(mh, "group", "estimate", "lower", "upper", quality = "quality"))
+```
+
+Perceived mental health on its whole scale (2022 Indigenous Peoples Survey):
+
+```{r indigenous-ordinal}
+r <- indigenous_example("mental_health")
+r <- r[r$region == "Canada", ]
+plot(ordinal_compare(r, "group", "rating", "estimate", "lower", "upper",
+                     levels = c("Fair or poor", "Good", "Very good", "Excellent"),
+                     reference = "M\u00e9tis", quality = "quality"))
+```
+
+Wellness beside distress, and the two as separate axes (2024 well-being table):
+
+```{r indigenous-wellness, fig.height = 5}
+wb <- indigenous_example("wellbeing")
+w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",
+                      wellness = c("Always or often has a hopeful outlook",
+                                   "Sense of meaning and purpose rating of 8, 9 or 10"),
+                      distress = c("Rarely or never has a hopeful outlook",
+                                   "Life satisfaction rating between 0 and 5"),
+                      quality = "quality")
+plot(w)
+plot(dual_continuum(w, "Always or often has a hopeful outlook", "Life satisfaction rating between 0 and 5"))
+```
+
+Change between the two survey periods, wellness first:
+
+```{r indigenous-change}
+hc <- healing_change(adults[adults$indicator %in% c("Perceived mental health, very good or excellent",
+                                                    "Mood disorder"), ],
+                     "group", "indicator", "period", "estimate", "lower", "upper",
+                     from = "2015/2018", to = "2019/2022", quality = "quality",
+                     wellness = "Perceived mental health, very good or excellent")
+plot(hc)
+```
+
+The Truth and Reconciliation Commission's Calls to Action, completed and projected:
+
+```{r indigenous-trc}
+plot(trc_progress())
+```
+
 ## Customising
 
 Every method takes `main`, `col` (or a `palette` name), `grid`, and `...` for the

@@ -88,6 +88,33 @@ set.seed(2)
 step_change(stats::rnorm(12))$p_value
 ```
 
+## Two survey periods
+
+Survey tables often give only two periods, each with its confidence interval. The change between
+them has an interval of its own. `healing_change()` gives it for every group and indicator at once.
+It lists wellness indicators first, reading change as Indigenous scholars of mental health read
+it, as a process of healing (Stewart 2008). Perceived mental health of adults, 2015/2018 and
+2019/2022, by Statistics Canada (table 13-10-0924-01):
+
+```{r two-periods}
+h <- indigenous_example("health_indicators")
+h <- h[h$age == "Total, 18 years and over" &
+         h$indicator == "Perceived mental health, very good or excellent", ]
+healing_change(h, "group", "indicator", "period", "estimate", "lower", "upper",
+               from = "2015/2018", to = "2019/2022", quality = "quality")
+```
+
+## A pace, projected
+
+Some counts accumulate toward a fixed number: the 94 Calls to Action of the Truth and
+Reconciliation Commission, for instance. `trc_progress()` takes the pace so far as a Poisson rate
+with its exact interval, and gives the year all would be complete at that pace. That is a
+description of the pace, not a forecast.
+
+```{r trc-pace}
+trc_progress()
+```
+
 ## Choosing between them
 
 | Question | Tool | Reports |

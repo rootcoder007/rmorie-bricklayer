@@ -1,49 +1,64 @@
-# rmoriebricklayer 0.5.14
+# rmoriebricklayer 1.0.0
 
-* A new data key is issued only after the data access terms are accepted. `rmbl login` and
-  `bricklayer_llm_login()` show the terms summary and their address, ask `Do you accept ...? [y/N]`,
-  and then ask for your name, organisation (optional) and why you need the data; for the restricted
-  tables (Schedule B: ICPSR, NCVS 38604, A2AJ case law) they also ask for a supervisor, department
-  chair, director or coordinator and their email. In a script, give them as arguments
-  (`accept_terms = TRUE`, `name`, `affiliation`, `purpose`, `restricted`, `supervisor_name`,
-  `supervisor_role`, `supervisor_email`) or flags (`--accept-terms`, `--name`, `--affiliation`,
-  `--reason`, `--restricted`, `--supervisor-name`, `--supervisor-role`, `--supervisor-email`).
-  Nothing is sent until every required answer is there; the data service checks the same things.
-  `login --token` with a key you already hold is unchanged.
+## First Nations, Metis and Inuit health, mental health and wellness
 
-## Fixes from the re-test of the b617a3f CRAN stress fixes
+Methods for the published tables, distinctions-based (First Nations, Metis and Inuit are each
+reported on their own), with suppressed cells never imputed. Data governance follows OCAP® and the
+CARE Principles: only openly licensed aggregate tables are used, and First Nations-held survey data
+are not mirrored. A new vignette, "First Nations, Metis and Inuit health: published tables,
+distinctions and governance", covers them all.
 
-* **`setTimeLimit()` during a POST** (`ask`, Wayback `/save`, the data-key check) is an ordinary
-  error that `tryCatch()` catches, said as R says it ("reached elapsed time limit"); it halted
-  Rscript as an interrupt. A Ctrl-C is still an interrupt.
-* **A command typed as one argument is not a question**: `rmbl "cnfig set openai.key"` and a
-  tab-joined `$'cnfig\tset\topenai.key'` were sent to the first provider; they are a near miss now,
-  named in "did you mean `rmbl config`", with exit status 2 and nothing sent.
-* **`survey_design()`**: a JK1 replicate on a domain subset that scales every row by
-  `k / (k - 1)` (its deleted PSU outside the subset; within 1% of the weight from 101 PSUs) is no
-  longer refused as a copy; in a post-stratified or calibrated set, replicates equal or close to the
-  weight are accepted and not warned about (bootstrap and BRR subsets were). A single JKn replicate
-  equal to the weight is refused as the copy it is, and a JK1 or JKn replicate that leaves no row
-  out without being such a rescale is warned about, as the Rd said.
-* **A provider's key prefix (`sk-`, `gsk_`, `hf_`, `AIza`, `xai-`, ...) with twelve key characters
-  or more is a key however short**: a 23-character `sk-` key in a question went to a model.
-* **`survey_design()`**: a column of `data` passed in a partly named replicate matrix is refused as
-  in a named one (it was taken as a replicate); two outcomes permuted for a permutation test beside
-  columns still in place are no reorder (they were refused as one). Replicates given by name are no
-  longer digested for the row check (the design keeps them): a design by name and each estimate on
-  it were 2 to 5 times slower than the same replicates as a matrix (10.8 s and 7.8 s for 4.7 s and
-  1.5 s at a million rows). The adjustment check reads 4,096 rows of each replicate.
-* **CSV reader parity with `read.csv()`**: a byte-order mark at the start of the first row (after
-  blank lines, or inside its opening quote) is dropped, as `scan()` drops it; a header of blanks or
-  of the mark alone is a header of no columns, its rows read as row names.
-* **Arguments**: 123 functions gave a base R error for a value of the wrong kind (a data frame, a
-  list, `NA`, a vector, a function or a number where a path goes), 696 cases in a battery of every
-  export seeded from its examples; each is now an error that names the argument. Numeric arguments
-  refuse lists, data frames, factors and complex numbers in words; the writers (`yoy_csv()` and the
-  other `yoy_*()` writers, `write_recode_manifest()`, `write_summary_txt()`,
-  `use_capsule_template()`, `make_synthetic_csv()`, `bricklayer_download()`) refuse a path that is
-  not one string (a number was written as a file named `1`); errors raised in the compiled code no
-  longer carry the `.Call()`.
+**Reading the tables**
+
+* `statcan_tidy()` reads a Statistics Canada table as published. `VALUE` becomes a number, and the
+  quality flag is kept beside it. `F`, `x`, `..` and `...` cells are `NA`.
+* `statcan_estimates()` puts each estimate beside its confidence limits and count.
+* `indigenous_tables()` lists the tables the data service mirrors: the 233 Indigenous-titled
+  Statistics Canada tables, and the 2021 Census Indigenous Population Profile.
+* `indigenous_example()` bundles four published excerpts (tables 13-10-0924, 41-10-0067, 41-10-0082
+  and 41-10-0021), so the examples run on real values.
+
+**Comparisons**
+
+* `indigenous_gap()` gives the difference and ratio against a reference group.
+* `distinctions_test()` tests whether the groups differ before they are pooled (Cochran's Q and I²).
+* `ordinal_compare()` compares rated scales, such as perceived mental health or life satisfaction,
+  as whole distributions: the probability of a higher rating, with an interval from the published
+  limits.
+* `age_standardise()` and `rate_gap()` cover counts. `standardise_prevalence()` covers survey
+  percentages.
+* `generations_exposed()` and `exposure_trend()` cover the intergenerational effects of the
+  residential schools.
+* `trc_completions()` and `trc_progress()` track the 94 Calls to Action, as the Yellowhead
+  Institute counts them (Jewell and Mosby).
+
+**Estimators built from Indigenous scholarship on mental wellness**
+
+These translations are ours. They are inspired by the scholars' work, which is largely qualitative,
+and are not taken from it as stated methods. Each help page says so, and says what the estimator
+cannot show.
+
+* Prof. Suzanne L. Stewart:
+  * `wellness_profile()` reports wellness beside distress, strengths first (Stewart 2008, 2020).
+  * `holistic_balance()` measures how evenly wellness is held across a person's domains: the ratio
+    of the geometric to the arithmetic mean, with community-set weights and Monte Carlo intervals
+    (Stewart 2008; Gabriel, Mirza and Stewart 2022).
+  * `dual_continuum()` treats wellness and distress as two axes (with Keyes 2002, 2005).
+  * `healing_change()` reads change between survey periods as healing in process (Stewart 2008).
+* Prof. Angela Mashford-Pringle:
+  * `connection_association()` measures connection to land, community and education across
+    places: Spearman's rho with an exact permutation p-value, and an interval that carries the
+    published sampling error (Mashford-Pringle and Stewart 2019, *Akiikaa*; Mashford-Pringle 2016).
+* Other frameworks:
+  * `mental_wellness_continuum()` covers the First Nations Mental Wellness Continuum's four
+    directions (hope, belonging, meaning, purpose) from published proxies. A direction with no
+    proxy is said to have none.
+  * `community_index()` combines protective and risk factors with weights the community sets, after
+    the National Inuit Suicide Prevention Strategy. The function never chooses the weights.
+  * `cwb_score()` computes Indigenous Services Canada's Community Well-Being index.
+  * `framing_audit()` gives the share of a report that is deficit-framed (Walter's 5D data).
+
+Every result draws itself with `plot()`.
 
 ## Fixes from the CRAN stress test of 0.5.14
 
@@ -115,6 +130,53 @@
 * **A time limit ends a loop over your function**: `capsule_falsify()`, `capsule_power()` and the
   exposure-response bootstrap caught `setTimeLimit()`'s error as one more failed statistic and ran on.
 * The README says 121 C++ entry points behind the barrier (one new, the JSON path) and 13 in plain C.
+
+# rmoriebricklayer 0.5.14
+
+* A new data key is issued only after the data access terms are accepted. `rmbl login` and
+  `bricklayer_llm_login()` show the terms summary and their address, ask `Do you accept ...? [y/N]`,
+  and then ask for your name, organisation (optional) and why you need the data; for the restricted
+  tables (Schedule B: ICPSR, NCVS 38604, A2AJ case law) they also ask for a supervisor, department
+  chair, director or coordinator and their email. In a script, give them as arguments
+  (`accept_terms = TRUE`, `name`, `affiliation`, `purpose`, `restricted`, `supervisor_name`,
+  `supervisor_role`, `supervisor_email`) or flags (`--accept-terms`, `--name`, `--affiliation`,
+  `--reason`, `--restricted`, `--supervisor-name`, `--supervisor-role`, `--supervisor-email`).
+  Nothing is sent until every required answer is there; the data service checks the same things.
+  `login --token` with a key you already hold is unchanged.
+
+## Fixes from the re-test of the b617a3f CRAN stress fixes
+
+* **`setTimeLimit()` during a POST** (`ask`, Wayback `/save`, the data-key check) is an ordinary
+  error that `tryCatch()` catches, said as R says it ("reached elapsed time limit"); it halted
+  Rscript as an interrupt. A Ctrl-C is still an interrupt.
+* **A command typed as one argument is not a question**: `rmbl "cnfig set openai.key"` and a
+  tab-joined `$'cnfig\tset\topenai.key'` were sent to the first provider; they are a near miss now,
+  named in "did you mean `rmbl config`", with exit status 2 and nothing sent.
+* **`survey_design()`**: a JK1 replicate on a domain subset that scales every row by
+  `k / (k - 1)` (its deleted PSU outside the subset; within 1% of the weight from 101 PSUs) is no
+  longer refused as a copy; in a post-stratified or calibrated set, replicates equal or close to the
+  weight are accepted and not warned about (bootstrap and BRR subsets were). A single JKn replicate
+  equal to the weight is refused as the copy it is, and a JK1 or JKn replicate that leaves no row
+  out without being such a rescale is warned about, as the Rd said.
+* **A provider's key prefix (`sk-`, `gsk_`, `hf_`, `AIza`, `xai-`, ...) with twelve key characters
+  or more is a key however short**: a 23-character `sk-` key in a question went to a model.
+* **`survey_design()`**: a column of `data` passed in a partly named replicate matrix is refused as
+  in a named one (it was taken as a replicate); two outcomes permuted for a permutation test beside
+  columns still in place are no reorder (they were refused as one). Replicates given by name are no
+  longer digested for the row check (the design keeps them): a design by name and each estimate on
+  it were 2 to 5 times slower than the same replicates as a matrix (10.8 s and 7.8 s for 4.7 s and
+  1.5 s at a million rows). The adjustment check reads 4,096 rows of each replicate.
+* **CSV reader parity with `read.csv()`**: a byte-order mark at the start of the first row (after
+  blank lines, or inside its opening quote) is dropped, as `scan()` drops it; a header of blanks or
+  of the mark alone is a header of no columns, its rows read as row names.
+* **Arguments**: 123 functions gave a base R error for a value of the wrong kind (a data frame, a
+  list, `NA`, a vector, a function or a number where a path goes), 696 cases in a battery of every
+  export seeded from its examples; each is now an error that names the argument. Numeric arguments
+  refuse lists, data frames, factors and complex numbers in words; the writers (`yoy_csv()` and the
+  other `yoy_*()` writers, `write_recode_manifest()`, `write_summary_txt()`,
+  `use_capsule_template()`, `make_synthetic_csv()`, `bricklayer_download()`) refuse a path that is
+  not one string (a number was written as a file named `1`); errors raised in the compiled code no
+  longer carry the `.Call()`.
 
 # rmoriebricklayer 0.5.13
 
