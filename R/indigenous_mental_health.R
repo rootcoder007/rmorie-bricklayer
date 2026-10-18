@@ -615,8 +615,8 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #'
 #' @param data A data frame, one row per group and indicator (as
 #'   \code{\link{statcan_estimates}} gives).
-#' @param group,indicator,estimate,lower,upper Column names: the group, the
-#'   indicator, the percentage and its published limits.
+#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator, the
+#'   percentage and its published limits.
 #' @param wellness,distress The indicators that measure wellness or strength, and those
 #'   that measure distress; rows for any other indicator (totals, "not specified") are
 #'   left out.
@@ -1155,10 +1155,10 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #' First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
 #' excerpts
 #'
-#' Four small excerpts of Statistics Canada tables, bundled so that the examples and
-#' vignettes run on published values without a network connection or a data service key.
-#' Values are as published, with their 95\% limits and quality flags; nothing is imputed
-#' (suppressed cells are \code{NA}).
+#' Small excerpts of Statistics Canada tables, bundled so that the examples and vignettes
+#' run on published values without a network connection or a data service key. Values are
+#' as published, with their 95\% limits and quality flags; nothing is imputed (suppressed
+#' cells are \code{NA}).
 #'
 #' \describe{
 #'   \item{\code{"health_indicators"}}{Table 13-10-0924-01, Health indicators for First
@@ -1187,6 +1187,15 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'     children, knowledge of Indigenous languages, highest certificate (25 and over),
 #'     labour force status, income and low income, as published (read it with
 #'     \code{\link{census_profile}}).}
+#'   \item{\code{"life_expectancy"}}{Table 17-10-0160-01, Life expectancy at birth of
+#'     Indigenous populations in Canada, 2006/2011 to 2016/2021, both sexes, Canada: First
+#'     Nations (Registered or Treaty Indians, on and off reserve, and without registered
+#'     status), Metis, Inuit and non-Indigenous people. Columns \code{period},
+#'     \code{group}, \code{measure}, \code{estimate}, \code{lower}, \code{upper},
+#'     \code{quality}.}
+#'   \item{\code{"infant_mortality"}}{Table 17-10-0161-01, Infant mortality rates of
+#'     Indigenous populations in Canada (per 1,000 live births), 1994/1996 to 2014/2016,
+#'     the same groups and columns.}
 #'   \item{\code{"census_households"}}{The same profile's households and dwellings
 #'     (98-510-X2021016), Indigenous and non-Indigenous households: persons per room,
 #'     housing suitability, dwelling condition and core housing need.}
@@ -1201,10 +1210,12 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #' @return A data frame.
 #' @source Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}),
 #'   41-10-0067-01 (\doi{10.25318/4110006701-eng}), 41-10-0082-01
-#'   (\doi{10.25318/4110008201-eng}) and 41-10-0021-01 (\doi{10.25318/4110002101-eng});
-#'   Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
-#'   and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
-#'   permission of Statistics Canada, under the Statistics Canada Open Licence
+#'   (\doi{10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
+#'   17-10-0160-01 (\doi{10.25318/1710016001-eng}) and 17-10-0161-01
+#'   (\doi{10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
+#'   Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed
+#'   on an "as is" basis with the permission of Statistics Canada, under the Statistics
+#'   Canada Open Licence
 #'   (\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
 #'   \code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in
 #'   the source package.
@@ -1216,7 +1227,8 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #' plot(indigenous_gap(mh, "group", "estimate", "lower", "upper", quality = "quality"))
 #' @export
 indigenous_example <- function(name = c("health_indicators", "mental_health", "wellbeing", "suicidal_ideation",
-                                        "census_population", "census_households")) {
+                                        "census_population", "census_households", "life_expectancy",
+                                        "infant_mortality")) {
   name <- .rmbl_arg(name)
   f <- system.file("extdata", sprintf("indigenous_%s.csv", name), package = "rmoriebricklayer", mustWork = TRUE)
   utils::read.csv(f, stringsAsFactors = FALSE, encoding = "UTF-8", fileEncoding = "UTF-8", check.names = FALSE)

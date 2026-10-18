@@ -39,3 +39,9 @@ inst/extdata/indigenous_census_population.csv, indigenous_census_households.csv
   data-raw/indigenous_census.R in the source package). Reproduced and distributed on an "as is"
   basis with the permission of Statistics Canada, under the Statistics Canada Open Licence.
   Columns and values unaltered.
+
+inst/extdata/indigenous_life_expectancy.csv, indigenous_infant_mortality.csv
+  Statistics Canada, tables 17-10-0160-01 and 17-10-0161-01, retrieved 2026-10-18 (built by
+  data-raw/indigenous_mental_health.R in the source package). Reproduced and distributed on an
+  "as is" basis with the permission of Statistics Canada, under the Statistics Canada Open
+  Licence. Values unaltered.

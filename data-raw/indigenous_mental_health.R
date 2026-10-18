@@ -47,3 +47,17 @@ h <- h[h$GEO == "Canada" & h$Sex == "Both sexes" & h[["Indigenous Identity"]] %i
 out(data.frame(period = h$REF_DATE, group = unname(ids[h[["Indigenous Identity"]]]), age = h[["Age group"]],
                indicator = h$Indicators, estimate = h$estimate, lower = h$lower, upper = h$upper,
                quality = h$quality), "indigenous_health_indicators.csv")
+# 17-10-0160-01 and 17-10-0161-01: life expectancy at birth and infant mortality by Indigenous identity,
+# Canada, both sexes (the TRC Call to Action 19 indicators these tables measure)
+idn <- c("First Nations, Registered or Treaty Indians" = "First Nations (Registered or Treaty)",
+         "First Nations, Registered or Treaty Indians living on reserve" = "First Nations (Registered or Treaty), on reserve",
+         "First Nations, Registered or Treaty Indians living off reserve" = "First Nations (Registered or Treaty), off reserve",
+         "First Nations, without Registered or Treaty Indian Status" = "First Nations, without registered status",
+         "Métis" = "Métis", "Inuk (Inuit)" = "Inuit", "Non-Indigenous identity" = "Non-Indigenous")
+for (pid in c("17100160", "17100161")) {
+  e <- rd(pid)
+  e <- e[e$GEO == "Canada" & e$Sex == "Both sexes" & e[["Indigenous identity"]] %in% names(idn), ]
+  out(data.frame(period = e$REF_DATE, group = unname(idn[e[["Indigenous identity"]]]), measure = e$measure,
+                 estimate = e$estimate, lower = e$lower, upper = e$upper, quality = e$quality),
+      if (pid == "17100160") "indigenous_life_expectancy.csv" else "indigenous_infant_mortality.csv")
+}

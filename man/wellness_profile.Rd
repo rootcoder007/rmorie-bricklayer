@@ -21,8 +21,8 @@ wellness_profile(
 \item{data}{A data frame, one row per group and indicator (as
 \code{\link{statcan_estimates}} gives).}
 
-\item{group, indicator, estimate, lower, upper}{Column names: the group, the
-indicator, the percentage and its published limits.}
+\item{group, indicator, estimate, lower, upper}{Column names: the group, the indicator, the
+percentage and its published limits.}
 
 \item{wellness, distress}{The indicators that measure wellness or strength, and those
 that measure distress; rows for any other indicator (totals, "not specified") are

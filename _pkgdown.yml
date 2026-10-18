@@ -467,6 +467,8 @@ reference:
       - exposure_trend
       - trc_completions
       - trc_progress
+      - trc_indicators
+      - trc_health_gaps
       - indigenous_tables
       - indigenous_example
   - title: First Nations, Metis and Inuit mental health and wellness
