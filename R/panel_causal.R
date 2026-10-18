@@ -682,7 +682,7 @@ plot.rmbl_synthdid <- function(x, ..., main = NULL, col = NULL, palette = NULL) 
 #' p <- policy_example()
 #' # the reform was assigned to four regions: four clusters
 #' wild_cluster_bootstrap(p, "district", "month", "crime_rate", "reformed",
-#'                        cluster = "region", weights_type = "webb", reps = 999,
+#'                        cluster = "region", weights_type = "webb", reps = 299,
 #'                        seed = 1)
 #' @export
 wild_cluster_bootstrap <- function(data, unit, time, outcome, treated, covariates = NULL, cluster = NULL,

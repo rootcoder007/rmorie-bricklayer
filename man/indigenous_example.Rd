@@ -5,11 +5,17 @@
 \title{First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
 excerpts}
 \source{
-Statistics Canada, tables 13-10-0924-01 (\href{https://doi.org/10/hcn7m5}{doi:10.25318/1310092401-eng}),
+Statistics Canada, tables 13-10-0924-01 (
+\href{https://doi.org/10.25318/1310092401-eng}{
+doi:10.25318/1310092401-eng}),
 41-10-0067-01 (\href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}), 41-10-0082-01
-(\href{https://doi.org/10/hcn7m6}{doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
+(
+\href{https://doi.org/10.25318/4110008201-eng}{
+doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
 17-10-0160-01 (\href{https://doi.org/10.25318/1710016001-eng}{doi:10.25318/1710016001-eng}) and 17-10-0161-01
-(\href{https://doi.org/10/hcn7m7}{doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
+(
+\href{https://doi.org/10.25318/1710016101-eng}{
+doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
 Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed
 on an "as is" basis with the permission of Statistics Canada, under the Statistics
 Canada Open Licence

@@ -282,7 +282,8 @@ statcan_estimates <- function(x) {
 #'
 #' Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
 #' and a small-sample approximation. Biometrical Journal 42(1):17-25.
-#' \href{https://doi.org/10/c485sn}{doi:10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
+#' \href{https://doi.org/10.1002/(SICI)1521-4036(200001)42:1\%3C17::AID-BIMJ17\%3E3.0.CO;2-U}{
+#' doi:10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
 #' @param pooled_groups Optional labels of rows that pool other groups (see
 #'   \code{\link{indigenous_gap}}).
 #' @seealso \code{\link{statcan_estimates}}, \code{\link{indigenous_gap}}.
@@ -857,7 +858,9 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #' Theory 2(3):244-263. \href{https://doi.org/10.1016/0022-0531(70)90039-6}{doi:10.1016/0022-0531(70)90039-6}
 #'
 #' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
-#' Indigenous Data Governance. Data Science Journal 19:43. \href{https://doi.org/10/gh6dvb}{doi:10.5334/dsj-2020-043}
+#' Indigenous Data Governance. Data Science Journal 19:43.
+#' \href{https://doi.org/10.5334/dsj-2020-043}{
+#' doi:10.5334/dsj-2020-043}
 #'
 #' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
 #' through the life stories of Indigenous youth who have experienced homelessness.
@@ -1303,11 +1306,17 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
 #'
 #' @param name Which excerpt.
 #' @return A data frame.
-#' @source Statistics Canada, tables 13-10-0924-01 (\href{https://doi.org/10/hcn7m5}{doi:10.25318/1310092401-eng}),
+#' @source Statistics Canada, tables 13-10-0924-01 (
+#' \href{https://doi.org/10.25318/1310092401-eng}{
+#' doi:10.25318/1310092401-eng}),
 #'   41-10-0067-01 (\href{https://doi.org/10.25318/4110006701-eng}{doi:10.25318/4110006701-eng}), 41-10-0082-01
-#'   (\href{https://doi.org/10/hcn7m6}{doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
+#'   (
+#' \href{https://doi.org/10.25318/4110008201-eng}{
+#' doi:10.25318/4110008201-eng}), 41-10-0021-01 (\doi{10.25318/4110002101-eng}),
 #'   17-10-0160-01 (\href{https://doi.org/10.25318/1710016001-eng}{doi:10.25318/1710016001-eng}) and 17-10-0161-01
-#'   (\href{https://doi.org/10/hcn7m7}{doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
+#'   (
+#' \href{https://doi.org/10.25318/1710016101-eng}{
+#' doi:10.25318/1710016101-eng}); Indigenous Population Profile, 2021 Census of
 #'   Population, catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed
 #'   on an "as is" basis with the permission of Statistics Canada, under the Statistics
 #'   Canada Open Licence

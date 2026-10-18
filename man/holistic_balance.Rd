@@ -116,7 +116,9 @@ Atkinson AB (1970). On the measurement of inequality. Journal of Economic
 Theory 2(3):244-263. \href{https://doi.org/10.1016/0022-0531(70)90039-6}{doi:10.1016/0022-0531(70)90039-6}
 
 Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
-Indigenous Data Governance. Data Science Journal 19:43. \href{https://doi.org/10/gh6dvb}{doi:10.5334/dsj-2020-043}
+Indigenous Data Governance. Data Science Journal 19:43.
+\href{https://doi.org/10.5334/dsj-2020-043}{
+doi:10.5334/dsj-2020-043}
 
 Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
 through the life stories of Indigenous youth who have experienced homelessness.

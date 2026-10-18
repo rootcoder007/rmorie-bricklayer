@@ -63,7 +63,8 @@ age_standardise(events = c(4, 9, 11, 6, 3), population = c(9000, 8000, 6000, 400
 \references{
 Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
 rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.
-\href{https://doi.org/10/c9vfzq}{doi:10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
+\href{https://doi.org/10.1002/(sici)1097-0258(19970415)16:7\\%3C791::aid-sim500\\%3E3.0.co;2-\\%23}{
+doi:10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
 
 Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
 (2011-2016): Findings from the 2011 Canadian Census Health and Environment Cohort
