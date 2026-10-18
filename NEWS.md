@@ -29,6 +29,10 @@ distinctions and governance", covers them all.
   percentages.
 * `generations_exposed()` and `exposure_trend()` cover the intergenerational effects of the
   residential schools.
+* `trc_indicators()` maps each indicator of Call to Action 19 (health gaps) and Call 55 (children
+  in care, education, income) to the tables that measure it. `trc_health_gaps()` measures every
+  gap against non-Indigenous people on one scale, "times worse", with intervals. Life expectancy and
+  infant mortality (tables 17-10-0160 and 17-10-0161) are bundled for it.
 * `trc_completions()` and `trc_progress()` track the 94 Calls to Action, as the Yellowhead
   Institute counts them (Jewell and Mosby).
 

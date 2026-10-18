@@ -371,6 +371,25 @@ are for analyses done under their authority, or on tables they have published.
 
 ## The Calls to Action
 
+Call to Action 19 asks for "measurable goals to identify and close the gaps in health outcomes
+between Aboriginal and non-Aboriginal communities", for indicators that include infant mortality,
+suicide, mental health, addictions, life expectancy and chronic diseases. `trc_indicators()` lists
+which published table measures each of them. `trc_health_gaps()` measures every gap against
+non-Indigenous people on one scale: how many times worse the outcome is, with its interval.
+
+```{r trc-gaps, fig.height = 9}
+g <- trc_health_gaps()
+g[g$measure %in% c("Life expectancy at birth", "Infant mortality rate"),
+  c("measure", "period", "group", "estimate", "reference_estimate", "times_worse", "lower", "upper")]
+plot(g)
+```
+
+Life expectancy at birth in 2016/2021 was 71.4 years for First Nations people living on reserve and
+71.9 for Inuit, against 85.0 for non-Indigenous people. Infant mortality among Inuit was 13.5 per
+1,000 live births in 2014/2016, against 4.2.
+
+How fast the Calls themselves are being completed:
+
 The Truth and Reconciliation Commission made 94 Calls to Action in 2015. `trc_completions()` holds
 the number completed each year, as the Yellowhead Institute counts them (Jewell and Mosby 2021,
 2022). `trc_progress()` takes that pace as a Poisson rate:
@@ -382,6 +401,36 @@ plot(p)
 ```
 
 The projection only extends the pace so far. It is not a forecast.
+
+## Cultural continuity
+
+Chandler and Lalonde (1998) found that British Columbia First Nations communities with more markers
+of cultural continuity had far fewer youth suicides. Hallett, Chandler and Lalonde (2007) found the
+same for knowledge of an Indigenous language. Their unit was the community. Across provinces and
+territories, the published tables allow a coarser question: where more First Nations people know an
+Indigenous language, do more rate their mental health highly?
+
+```{r continuity}
+la <- profile_share(p, "Indigenous languages", know)
+la <- la[la$age == "Total - Age groups" & la$group == "First Nations" & la$geo != "Canada" &
+           la$residence == "Total - Residence on or off reserve", ]
+mh2 <- indigenous_example("mental_health")
+mh2 <- mh2[mh2$rating == "Excellent or very good" & mh2$group == "First Nations", ]
+both <- merge(la[c("geo", "estimate", "lower", "upper")], mh2[c("region", "estimate", "lower", "upper")],
+              by.x = "geo", by.y = "region", suffixes = c("_lang", "_mh"))
+cc <- connection_association(both, "geo", "estimate_lang", "estimate_mh", "lower_lang", "upper_lang",
+                             "lower_mh", "upper_mh")
+cc
+plot(cc, xlab = "First Nations who know an Indigenous language (%)",
+     ylab = "First Nations: mental health excellent or very good (%)")
+```
+
+Across these eight provinces and territories, there is no clear association. The rank correlation
+is weak, and its interval includes zero. That is not evidence against the communities' findings.
+Eight places are far too few, a province mixes many communities, and the two measures come from
+different surveys and years. The community-level design needs the census profile of each First
+Nations community (98-510-X2021002 at the data service), and outcomes measured for the same
+communities.
 
 ## What the package does not compute
 
@@ -404,6 +453,8 @@ one index (`dual_continuum()`, `wellness_profile()`).
 - Bombay A, Matheson K, Anisman H (2014). The intergenerational effects of Indian Residential
   Schools: implications for the concept of historical trauma. *Transcultural Psychiatry*
   51(3):320-338.
+- Chandler MJ, Lalonde C (1998). Cultural continuity as a hedge against suicide in Canada's First
+  Nations. *Transcultural Psychiatry* 35(2):191-219.
 - Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous
   Data Governance. *Data Science Journal* 19:43.
 - Fiedeldey-Van Dijk C, Rowan M, Dell C, et al. (2017). Honoring Indigenous culture-as-intervention:
@@ -415,6 +466,8 @@ one index (`dual_continuum()`, `wellness_profile()`).
 - Hackett C, Feeny D, Tompa E (2016). Canada's residential school system: measuring the
   intergenerational impact of familial attendance on health and mental health outcomes. *Journal of
   Epidemiology and Community Health* 70(11):1096-1105.
+- Hallett D, Chandler MJ, Lalonde CE (2007). Aboriginal language knowledge and youth suicide.
+  *Cognitive Development* 22(3):392-399.
 - Health Canada, Assembly of First Nations (2015). *First Nations Mental Wellness Continuum
   Framework*.
 - Inuit Tapiriit Kanatami (2016). *National Inuit Suicide Prevention Strategy*.
