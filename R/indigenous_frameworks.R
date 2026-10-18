@@ -629,6 +629,8 @@ plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL
   has <- !is.null(d$x_se)
   xr <- range(d$x, if (has) d$x + c(-1, 1) * z * rep(d$x_se, each = 2))
   yr <- range(d$y, if (has) d$y + c(-1, 1) * z * rep(d$y_se, each = 2))
+  # room on both sides for the place names printed beside the points
+  xr <- xr + c(-1, 1) * 0.12 * diff(xr)
   do.call(graphics::plot, c(list(xr, yr, type = "n", xlab = "", ylab = "", main = ""), dots))
   .bl_title(.bl_main(main, sprintf("Across places: rho = %.2f (p = %s)", x$rho, format.pval(x$p_value, digits = 2))))
   .bl_xlab(if (is.null(xlab)) x$labels[["x"]] else .rmbl_string1(xlab, "xlab"))
@@ -641,7 +643,7 @@ plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL
   graphics::points(d$x, d$y, pch = 21, bg = cols, col = "white", cex = 1.6)
   # neighbouring places labelled on alternating sides, so close points do not print over each other
   side <- c(3L, 1L, 4L, 2L)[(rank(d$x, ties.method = "first") - 1L) %% 4L + 1L]
-  graphics::text(d$x, d$y, d$place, pos = side, offset = 0.6, cex = 0.65, col = "#3D4350")
+  graphics::text(d$x, d$y, d$place, pos = side, offset = 0.6, cex = 0.65, col = "#3D4350", xpd = NA)
   invisible(d)
 }
 

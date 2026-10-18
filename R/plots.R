@@ -249,6 +249,20 @@ bricklayer_plot_options <- function(...) {
   op
 }
 
+# A legend centred under the plot, `line` text lines below the plot region: placed in inches, so it
+# sits under the axis title on a short panel and a tall one alike (an inset fraction of the plot's
+# height ran into a two-line axis title on one, off the device on another)
+.bl_legend_below <- function(..., line = 4.8) {
+  usr <- graphics::par("usr")
+  pin <- graphics::par("pin")
+  inch <- graphics::par("csi") * line
+  y <- usr[3L] - inch / pin[2L] * (usr[4L] - usr[3L])
+  x <- mean(usr[1:2])
+  if (graphics::par("ylog")) y <- 10^y
+  if (graphics::par("xlog")) x <- 10^x
+  graphics::legend(x, y, xjust = 0.5, yjust = 1, xpd = NA, ...)
+}
+
 .bl_label <- function(x, digits = 3) format(x, digits = digits, big.mark = ",")
 
 # the title: the caller's, or the method's default
@@ -556,12 +570,17 @@ bricklayer_plot_options <- function(...) {
   txt <- txt[!is.na(txt)]
   w <- max(.bl_strwidth(txt, cex = 0.9), 0)
   lines <- w / graphics::par("csi")
-  min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), 14)
+  # at most half the panel, the room .bl_label_fit() leaves for labels (a fixed 14 lines clipped
+  # labels it had judged to fit on a wide panel)
+  fin <- tryCatch(graphics::par("fin")[1L], error = function(e) 7)
+  min(1.6 + lines + (if (is.null(labels)) 2.2 else 0.6), max(14, 0.5 * fin / graphics::par("csi")))
 }
 
 # dots with an interval per row: the chart most of the tabular results want
 .bl_dot_interval <- function(label, est, lower, upper, main, xlab, cols, ref = NULL, note = NULL, ...) {
   n <- length(est)
+  # labels too long for 45% of the panel are shortened in the middle, not clipped at the edge
+  label <- .bl_label_fit(label)$labels
   op <- .bl_par(labels = label)
   on.exit(graphics::par(op), add = TRUE)
   vals <- c(est, lower, upper, ref)

@@ -610,14 +610,13 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
   o <- .bl_plot_opts()
   op <- graphics::par(las = 1, cex = o$cex, bg = o$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430",
-                      mar = .bl_safe_mar(c(6.2, fit$mar, 3, 1), o$cex))
+                      mar = .bl_safe_mar(c(7, fit$mar, 3, 1), o$cex))
   on.exit(graphics::par(op), add = TRUE)
   graphics::barplot(t(sh[rev(seq_len(nrow(sh))), , drop = FALSE]) * 100, horiz = TRUE, col = cols,
                     border = "white", names.arg = rev(fit$labels), xlab = "", main = "", xlim = c(0, 100), ...)
   .bl_title(.bl_main(main, sprintf("Ratings by group (reference: %s)", x$reference[1L])))
   .bl_xlab("Percent, lowest rating on the left")
-  graphics::legend("bottom", inset = c(0, -0.32), legend = colnames(sh), fill = cols, border = NA,
-                   horiz = TRUE, bty = "n", cex = 0.75, xpd = NA)
+  .bl_legend_below(legend = colnames(sh), fill = cols, border = NA, horiz = TRUE, bty = "n", cex = 0.75)
   invisible(as.data.frame(sh))
 }
 
@@ -761,11 +760,13 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   o <- .bl_plot_opts()
   op <- graphics::par(las = 1, cex = o$cex, bg = o$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430",
-                      mar = .bl_safe_mar(c(6.2, labs$mar, 3, 1), o$cex))
+                      mar = .bl_safe_mar(c(7, labs$mar, 3, 1), o$cex))
   on.exit(graphics::par(op), add = TRUE)
   vals <- c(d$lower, d$upper, d$estimate)
   vals <- vals[is.finite(vals)]
-  xr <- if (length(vals)) range(0, vals) else c(0, 100)
+  # the range of the estimates and their intervals, padded: anchored at 0 the points sat in a
+  # corner of an empty panel
+  xr <- if (length(vals)) range(vals) + c(-1, 1) * 0.06 * max(diff(range(vals)), 1) else c(0, 100)
   graphics::plot(xr, c(0.5, length(inds) + 0.5), type = "n", yaxt = "n", xlab = "", ylab = "", main = "", ...)
   .bl_title(.bl_main(main, "Wellness and distress, each group"))
   .bl_xlab("Estimate, with its published interval")
@@ -783,8 +784,7 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
   if (any(ok)) graphics::segments(d$lower[ok], y[ok], d$upper[ok], y[ok], col = gc[ok], lwd = 2, lend = 1)
   graphics::points(d$estimate, y, pch = ifelse(d$use_with_caution, 1, 19), col = gc, cex = 1.2)
   graphics::axis(2, at = yb, labels = labs$labels, tick = FALSE, cex.axis = 0.85)
-  graphics::legend("bottom", inset = c(0, -0.32), legend = grp, col = cols, pch = 19, horiz = TRUE, bty = "n",
-                   cex = 0.75, xpd = NA)
+  .bl_legend_below(legend = grp, col = cols, pch = 19, horiz = TRUE, bty = "n", cex = 0.75)
   invisible(d)
 }
 
@@ -1183,7 +1183,7 @@ plot.rmbl_holistic_balance <- function(x, ..., main = NULL, col = NULL, palette 
   ng <- nrow(lev)
   cols <- .bl_cols(ng, col, palette)
   o <- .bl_plot_opts()
-  op <- graphics::par(cex = o$cex, bg = o$bg, mar = c(1, 1, 3, 1), xpd = NA)
+  op <- graphics::par(cex = o$cex, bg = o$bg, mar = c(1 + 1.3 * ceiling(nrow(lev) / 2), 1, 3, 1), xpd = NA)
   on.exit(graphics::par(op), add = TRUE)
   # one spoke per domain, from the top clockwise, the circle at 100%
   ang <- pi / 2 - 2 * pi * (seq_len(k) - 1) / k
@@ -1207,8 +1207,8 @@ plot.rmbl_holistic_balance <- function(x, ..., main = NULL, col = NULL, palette 
                       col = grDevices::adjustcolor(cols[i], 0.12))
   }
   b <- x$balance[match(rownames(lev), x$group)]
-  graphics::legend("bottom", inset = c(0, -0.1), ncol = min(2L, ng), bty = "n", cex = 0.75, col = cols, lwd = 2,
-                   text.col = "#3D4350", legend = sprintf("%s (balance %.2f)", rownames(lev), b))
+  .bl_legend_below(ncol = min(2L, ng), bty = "n", cex = 0.75, col = cols, lwd = 2, text.col = "#3D4350",
+                   legend = sprintf("%s (balance %.2f)", rownames(lev), b), line = 0.2)
   invisible(as.data.frame(lev))
 }
 
@@ -1223,8 +1223,11 @@ plot.rmbl_dual_continuum <- function(x, ..., main = NULL, col = NULL, palette = 
   op <- graphics::par(las = 1, cex = o$cex, bg = o$bg, bty = "n", tcl = -0.2, mgp = c(3, 0.55, 0),
                       col.axis = "#3D4350", fg = "#8A909A", col = "#1F2430", mar = .bl_safe_mar(c(4.2, 4.5, 3, 1)))
   on.exit(graphics::par(op), add = TRUE)
-  xr <- range(0, d$distress_lower, d$distress_upper, d$distress, na.rm = TRUE)
-  yr <- range(0, d$wellness_lower, d$wellness_upper, d$wellness, na.rm = TRUE)
+  # the data's own range, padded (anchored at 0, the groups crowded one corner of an empty panel)
+  xr <- range(d$distress_lower, d$distress_upper, d$distress, na.rm = TRUE)
+  yr <- range(d$wellness_lower, d$wellness_upper, d$wellness, na.rm = TRUE)
+  xr <- xr + c(-1, 1) * 0.08 * max(diff(xr), 1)
+  yr <- yr + c(-1, 1) * 0.08 * max(diff(yr), 1)
   graphics::plot(xr, yr, type = "n", xlab = "", ylab = "", main = "", ...)
   .bl_title(.bl_main(main, "Wellness and distress, two continua"))
   .bl_xlab(sprintf("%s (%%)", lab[["distress"]]))
