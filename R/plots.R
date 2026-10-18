@@ -717,6 +717,10 @@ bricklayer_plot_options <- function(...) {
 #'     comparison over time, adoption marked.}
 #'   \item{\code{rmbl_power}}{(\code{\link{panel_power}}) power against effect size, with
 #'     the 0.8 line and the minimum detectable effect.}
+#'   \item{\code{rmbl_prevalence}}{(\code{\link{standardise_prevalence}}) each group's
+#'     age-standardised prevalence with its interval.}
+#'   \item{\code{rmbl_census_cwb}}{(\code{\link{census_cwb}}) the Community Well-Being
+#'     index, or one \code{component}, by place, one colour per group.}
 #'   \item{\code{rmbl_balance}}{(\code{\link{balance_table}}) a love plot: each
 #'     covariate's absolute standardised difference against the \code{threshold} line,
 #'     with a second table (\code{after}, after weighting or matching) beside it.}

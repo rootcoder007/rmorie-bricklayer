@@ -513,6 +513,18 @@ plot.rmbl_indigenous_gap <- function(x, ..., what = c("difference", "ratio"), ma
 
 #' @rdname plot-methods
 #' @export
+plot.rmbl_prevalence <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_prevalence")
+  d <- as.data.frame(x)
+  lab <- paste0(d$group, ifelse(d$use_with_caution, " (E)", ""))
+  .bl_dot_interval(lab, d$estimate, d$lower, d$upper, .bl_main(main, "Age-standardised prevalence"),
+                   "Per cent, standardised", .bl_cols(nrow(d), col, palette),
+                   note = ifelse(is.finite(d$estimate), NA_character_, "suppressed"), ...)
+  invisible(d[c("group", "estimate", "lower", "upper")])
+}
+
+#' @rdname plot-methods
+#' @export
 plot.rmbl_dsr <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_dsr")
   d <- as.data.frame(x)

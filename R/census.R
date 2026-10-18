@@ -438,6 +438,38 @@ census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9t
   out
 }
 
+#' @param component For \code{rmbl_census_cwb}: \code{"cwb"} (the index, default) or one
+#'   of its components \code{"income"}, \code{"education"}, \code{"housing"},
+#'   \code{"labour"}.
+#' @rdname plot-methods
+#' @export
+plot.rmbl_census_cwb <- function(x, ..., component = c("cwb", "income", "education", "housing", "labour"),
+                                 main = NULL, col = NULL, palette = NULL) {
+  .rmbl_plot_check(x, "rmbl_census_cwb")
+  component <- .rmbl_arg(component)
+  d <- as.data.frame(x)
+  d <- d[is.finite(d[[component]]), ]
+  if (!nrow(d)) stop("no place has a value for this component", call. = FALSE)
+  geos <- unique(d$geo)
+  grp <- unique(d$group)
+  cl <- .bl_cols(length(grp), col, palette)
+  m <- tapply(d[[component]], list(factor(d$geo, levels = geos), factor(d$group, levels = grp)), mean)
+  o <- order(apply(m, 1, max, na.rm = TRUE))
+  m <- m[o, , drop = FALSE]
+  op <- graphics::par(mar = c(4.5, max(4, min(14, max(nchar(rownames(m))) * 0.55)), 3, 1))
+  on.exit(graphics::par(op), add = TRUE)
+  k <- nrow(m)
+  graphics::plot(NA, xlim = range(m, na.rm = TRUE) + c(-2, 2), ylim = c(0.5, k + 0.5), yaxt = "n",
+                 xlab = if (component == "cwb") "Community Well-Being score" else paste(component, "score"), ylab = "",
+                 main = .bl_main(main, "Community Well-Being, by place and group"), ...)
+  graphics::axis(2, at = seq_len(k), labels = rownames(m), las = 1, cex.axis = 0.8)
+  graphics::abline(h = seq_len(k), col = "#EEEEEE")
+  for (j in seq_along(grp)) graphics::points(m[, j], seq_len(k), pch = 19, col = cl[j])
+  graphics::legend(.bl_free_corner(as.vector(m), rep(seq_len(k), ncol(m))), grp, pch = 19, col = cl, bty = "n",
+                   cex = 0.8)
+  invisible(d[c("geo", "group", component)])
+}
+
 #' @rdname plot-methods
 #' @export
 plot.rmbl_profile_share <- function(x, ..., main = NULL, col = NULL, palette = NULL) {

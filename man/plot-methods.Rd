@@ -3,15 +3,16 @@
 %   R/indigenous_frameworks.R, R/indigenous_mental_health.R, R/justice.R,
 %   R/panel_causal.R, R/plots.R, R/policy_evaluation.R, R/policy_plots.R,
 %   R/survey.R, R/trc.R
-\name{plot.rmbl_profile_share}
+\name{plot.rmbl_census_cwb}
+\alias{plot.rmbl_census_cwb}
 \alias{plot.rmbl_profile_share}
 \alias{plot.rmbl_hotspot}
 \alias{plot.rmbl_connection}
 \alias{plot.rmbl_healing_change}
 \alias{plot.rmbl_community_index}
 \alias{plot.rmbl_indigenous_gap}
-\alias{plot.rmbl_dsr}
 \alias{plot.rmbl_prevalence}
+\alias{plot.rmbl_dsr}
 \alias{plot.rmbl_exposure_trend}
 \alias{plot.rmbl_trc_progress}
 \alias{plot.rmbl_ordinal_compare}
@@ -69,6 +70,15 @@
 \alias{plot.rmbl_trc_gaps}
 \title{Plot methods for the package's results}
 \usage{
+\method{plot}{rmbl_census_cwb}(
+  x,
+  ...,
+  component = c("cwb", "income", "education", "housing", "labour"),
+  main = NULL,
+  col = NULL,
+  palette = NULL
+)
+
 \method{plot}{rmbl_profile_share}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_hotspot}(x, ..., main = NULL, col = NULL, palette = NULL)
@@ -87,6 +97,8 @@
   col = NULL,
   palette = NULL
 )
+
+\method{plot}{rmbl_prevalence}(x, ..., main = NULL, col = NULL, palette = NULL)
 
 \method{plot}{rmbl_dsr}(x, ..., main = NULL, col = NULL, palette = NULL)
 
@@ -270,6 +282,10 @@
 or \code{image}); for \code{bricklayer_analysis}, passed on to each
 panel's method.}
 
+\item{component}{For \code{rmbl_census_cwb}: \code{"cwb"} (the index, default) or one
+of its components \code{"income"}, \code{"education"}, \code{"housing"},
+\code{"labour"}.}
+
 \item{main}{Title; each method has a default.}
 
 \item{col}{Colours, overriding the palette.}
@@ -440,6 +456,10 @@ period since adoption with its interval, the reference period at zero.}
 comparison over time, adoption marked.}
 \item{\code{rmbl_power}}{(\code{\link{panel_power}}) power against effect size, with
 the 0.8 line and the minimum detectable effect.}
+\item{\code{rmbl_prevalence}}{(\code{\link{standardise_prevalence}}) each group's
+age-standardised prevalence with its interval.}
+\item{\code{rmbl_census_cwb}}{(\code{\link{census_cwb}}) the Community Well-Being
+index, or one \code{component}, by place, one colour per group.}
 \item{\code{rmbl_balance}}{(\code{\link{balance_table}}) a love plot: each
 covariate's absolute standardised difference against the \code{threshold} line,
 with a second table (\code{after}, after weighting or matching) beside it.}

@@ -124,3 +124,24 @@ test_that("a census share draws itself", {
   fc <- fc[fc$geo == "Canada" & fc$age == "0 to 14 years" & fc$residence == "Total - Residence on or off reserve", ]
   expect_identical(nrow(plot(fc)), nrow(fc))
 })
+
+test_that("plots of age-standardised prevalence and of Community Well-Being return what they draw", {
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+  si <- indigenous_example("suicidal_ideation")
+  si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
+              si$age != "Total, 15 years and over", ]
+  si <- si[order(si$group, si$age), ]
+  s <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = c(20, 18, 17, 17, 28), group = si$group,
+                              quality = si$quality)
+  ps <- plot(s)
+  expect_identical(ps$group, s$group)
+  expect_equal(ps$estimate, s$estimate)
+  p <- census_profile(indigenous_example("census_population"))
+  cw <- census_cwb(p, census_profile(indigenous_example("census_households")))
+  pc <- plot(cw)
+  expect_true(all(is.finite(pc$cwb)))
+  expect_setequal(unique(pc$geo), unique(cw$geo[is.finite(cw$cwb)]))
+  expect_identical(names(plot(cw, component = "income")), c("geo", "group", "income"))
+  expect_error(plot(cw, component = "zz"), "component")
+})
