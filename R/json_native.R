@@ -890,6 +890,8 @@ bricklayer_json_unbox <- function(x) {
     s <- .rmbl_strip_bom(s)
   }
   s <- enc2utf8(s)
+  # JSON is UTF-8 (RFC 8259): bytes that are not were read with base R's warnings and garbled
+  if (!validUTF8(s)) stop("the JSON text is not valid UTF-8", call. = FALSE)
   if (startsWith(s, "\x1e")) s <- substring(s, 2L)
   # the package's native path for a well-formed document (85 s for a 15 MiB reply here; CRAN stress
   # test of 0.5.14); it gives up (NULL) on whatever needs this parser's words: an error, a big integer,
@@ -899,7 +901,7 @@ bricklayer_json_unbox <- function(x) {
     fast <- exists("C_rmbl_json_fast", inherits = TRUE)
     .rmbl_native$json <- fast
   }
-  if (fast && validUTF8(s)) {
+  if (fast) {
     r <- .Call(C_rmbl_json_fast, s, duplicate_keys == "keep")
     if (!is.null(r)) return(r[[1L]])
   }
@@ -910,12 +912,6 @@ bricklayer_json_unbox <- function(x) {
   # white space, not a digit, or that ends a run of plain string text): one R call per character
   # took 85 s for a 15 MiB reply (CRAN stress test of 0.5.14).
   cp <- utf8ToInt(s)
-  if (length(cp) != n || anyNA(cp)) {
-    cp <- vapply(ch, function(c) {
-      v <- utf8ToInt(c)
-      if (length(v) == 1L && !is.na(v)) v else 65533L
-    }, 1L, USE.NAMES = FALSE)
-  }
   is_ws <- cp == 32L | cp == 9L | cp == 10L | cp == 13L
   not_ws <- as.double(which(!is_ws))   # double: findInterval() copies an integer vector each call
   is_dig <- cp >= 48L & cp <= 57L

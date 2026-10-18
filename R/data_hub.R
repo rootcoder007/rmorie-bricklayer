@@ -535,14 +535,14 @@ bricklayer_data_load <- function(key, refresh = FALSE) {
   if (!length(parts$names)) {
     f <- tempfile(fileext = ".csv")
     on.exit(unlink(f), add = TRUE)
+    # the fast way reads a last line without its line break silently; given one, so does this
+    n <- length(bytes)
+    if (n && !bytes[[n]] %in% as.raw(c(10, 13))) bytes <- c(bytes, as.raw(10))
     writeBin(bytes, f)
-    # the fast way reads a last line without its line break silently; so does this
-    return(withCallingHandlers(utils::read.csv(f, stringsAsFactors = FALSE, skipNul = skip_nul),
-                               warning = function(w) {
-                                 if (grepl("incomplete final line", conditionMessage(w), fixed = TRUE)) {
-                                   invokeRestart("muffleWarning")
-                                 }
-                               }))
+    # what read.csv() refuses (a header of "" and nothing under it: "first five rows are empty") is
+    # refused in words, as the reader refuses
+    return(tryCatch(utils::read.csv(f, stringsAsFactors = FALSE, skipNul = skip_nul),
+                    error = function(e) stop("the CSV cannot be read: ", conditionMessage(e), call. = FALSE)))
   }
   # the bytes decided the plain integer, decimal and logical columns; the rest is text for R to judge
   cols <- lapply(parts$columns, function(v) {

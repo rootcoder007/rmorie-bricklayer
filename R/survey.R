@@ -598,7 +598,8 @@ survey_design <- function(data, weights, strata = NULL, psu = NULL, fpc = NULL, 
   # domain subsets (re-test of the b617a3f CRAN stress fixes)
   jk_scale <- function(r) {
     k <- r > 0 & w > 0
-    if (!all(k == (w > 0)) || !any(k)) return(FALSE)
+    # (both callers reach it only with no row of the weight left out: k is the weight's rows)
+    if (!any(k)) return(FALSE)
     f <- unique(signif(r[k] / w[k], 9))
     f <- f[f != 1]
     if (length(f) != 1L || f <= 1) return(FALSE)
