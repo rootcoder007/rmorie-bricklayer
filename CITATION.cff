@@ -9,8 +9,13 @@ authors:
     name-particle: "Singh"
 version: "1.0.0"
 date-released: "2026-10-18"
-url: "https://github.com/rootcoder007/rmorie-bricklayer"
+doi: "10.32614/CRAN.package.rmoriebricklayer"
+url: "https://CRAN.R-project.org/package=rmoriebricklayer"
 repository-code: "https://github.com/rootcoder007/rmorie-bricklayer"
+identifiers:
+  - type: doi
+    value: "10.32614/CRAN.package.rmoriebricklayer"
+    description: "The CRAN package DOI (one for every release)"
 license: "AGPL-3.0-or-later"
 preferred-citation:
   type: software
@@ -21,4 +26,5 @@ preferred-citation:
       orcid: "https://orcid.org/0009-0004-1750-3592"
       affiliation: "Centre for Criminology and Sociolegal Studies, University of Toronto"
   year: "2026"
-  url: "https://github.com/rootcoder007/rmorie-bricklayer"
+  doi: "10.32614/CRAN.package.rmoriebricklayer"
+  url: "https://CRAN.R-project.org/package=rmoriebricklayer"
