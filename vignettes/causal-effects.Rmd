@@ -116,6 +116,31 @@ experiment; with `plr_crossfit()`, restrict `obs` to that region before fitting.
 split moves the estimate by about a sixth of a standard error, which is why the seed and the
 number of folds are arguments.
 
+## Overlap and balance
+
+Two checks belong with every weighting estimate: whether the two groups overlap (each person has a
+real chance of either treatment) and whether weighting balances the covariates. On simulated data,
+where the true effect is 3:
+
+```{r overlap-balance, eval = TRUE}
+set.seed(7)
+n <- 1500
+d <- data.frame(age = runif(n, 18, 70), income = rnorm(n))
+d$t <- rbinom(n, 1, plogis(-2 + 0.04 * d$age + 0.5 * d$income))
+d$y <- 10 + 3 * d$t + 0.2 * d$age + d$income + rnorm(n)
+fit <- aipw_crossfit(d, "y", "t", c("age", "income"), learner = "ols")
+fit
+plot(fit)
+pr <- attr(fit, "propensity")
+e <- pmin(pmax(pr$propensity, 0.01), 0.99)
+d$ipw <- ifelse(d$t == 1, 1 / e, 1 / (1 - e))
+plot(balance_table(d, "t", c("age", "income")),
+     after = balance_table(d, "t", c("age", "income"), weights = "ipw"))
+```
+
+The groups overlap where both curves have mass; after weighting, both covariates fall below the
+0.1 line.
+
 ## Indigenous examples
 
 The person-level questions this vignette is about (does a strong sense of belonging go

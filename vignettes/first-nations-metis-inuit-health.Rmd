@@ -353,6 +353,7 @@ Nations, Metis and Inuit people share the Indigenous households' housing compone
 h <- census_profile(indigenous_example("census_households"))
 cw <- census_cwb(p, h)
 cw[cw$geo %in% c("Canada", "Nunavut"), c("geo", "group", "income", "education", "housing", "labour", "cwb")]
+plot(cw)
 ```
 
 ## Intergenerational exposure
