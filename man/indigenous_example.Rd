@@ -2,16 +2,18 @@
 % Please edit documentation in R/indigenous_mental_health.R
 \name{indigenous_example}
 \alias{indigenous_example}
-\title{First Nations, Metis and Inuit health and mental health: bundled Statistics Canada excerpts}
+\title{First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
+excerpts}
 \source{
-Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}), 41-10-0067-01
-(\doi{10.25318/4110006701-eng}), 41-10-0082-01 (\doi{10.25318/4110008201-eng}) and 41-10-0021-01
-(\doi{10.25318/4110002101-eng}); Indigenous Population Profile, 2021 Census of Population,
-catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
+Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}),
+41-10-0067-01 (\doi{10.25318/4110006701-eng}), 41-10-0082-01
+(\doi{10.25318/4110008201-eng}) and 41-10-0021-01 (\doi{10.25318/4110002101-eng});
+Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
+and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
 permission of Statistics Canada, under the Statistics Canada Open Licence
 (\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
-\code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in the source
-package.
+\code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in
+the source package.
 }
 \usage{
 indigenous_example(
@@ -26,43 +28,48 @@ indigenous_example(
 A data frame.
 }
 \description{
-Four small excerpts of Statistics Canada tables, bundled so that the examples and vignettes run on
-published values without a network connection or a data service key. Values are as published,
-with their 95\\% limits and quality flags; nothing is imputed (suppressed cells are \code{NA}).
+Four small excerpts of Statistics Canada tables, bundled so that the examples and
+vignettes run on published values without a network connection or a data service key.
+Values are as published, with their 95\\% limits and quality flags; nothing is imputed
+(suppressed cells are \code{NA}).
 }
 \details{
 \describe{
-\item{\code{"health_indicators"}}{Table 13-10-0924-01, Health indicators for First Nations people
-living off reserve, Metis and Inuit, by age group and sex, four-year period estimates
-(Canadian Community Health Survey), 2015/2018 and 2019/2022; Canada, both sexes, the 27
-indicators by age group, with non-Indigenous people for comparison: the table behind The Daily
-of 2025-02-13. Columns \code{period}, \code{group}, \code{age}, \code{indicator},
+\item{\code{"health_indicators"}}{Table 13-10-0924-01, Health indicators for First
+Nations people living off reserve, Metis and Inuit, by age group and sex, four-year
+period estimates (Canadian Community Health Survey), 2015/2018 and 2019/2022;
+Canada, both sexes, the 27 indicators by age group, with non-Indigenous people for
+comparison: the table behind The Daily of 2025-02-13. Columns \code{period},
+\code{group}, \code{age}, \code{indicator}, \code{estimate}, \code{lower},
+\code{upper}, \code{quality}.}
+\item{\code{"mental_health"}}{Table 41-10-0067-01, Self-perceived mental health of
+First Nations people living off reserve, Metis and Inuit by age group and gender,
+2022 (Indigenous Peoples Survey); 15 years and older, every region. Columns
+\code{region}, \code{group}, \code{rating}, \code{estimate}, \code{lower},
+\code{upper}, \code{quality}.}
+\item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected characteristics of well-being
+and impacts of rising prices by First Nations people living off reserve, Metis and
+Inuit, and gender, 2024; total of genders. Columns \code{group}, \code{indicator},
 \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"mental_health"}}{Table 41-10-0067-01, Self-perceived mental health of First Nations
-people living off reserve, Metis and Inuit by age group and gender, 2022 (Indigenous Peoples
-Survey); 15 years and older, every region. Columns \code{region}, \code{group}, \code{rating},
-\code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected characteristics of well-being and
-impacts of rising prices by First Nations people living off reserve, Metis and Inuit, and
-gender, 2024; total of genders. Columns \code{group}, \code{indicator}, \code{estimate},
-\code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"suicidal_ideation"}}{Table 41-10-0021-01, Self-perceived mental health and suicidal
-thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal Peoples Survey); Canada,
-both sexes, by age. Columns \code{group}, \code{age}, \code{measure}, \code{estimate},
-\code{lower}, \code{upper}, \code{quality}.}
-\item{\code{"census_population"}}{The Indigenous Population Profile, 2021 Census of Population
-(98-510-X2021001), Canada, the provinces and the territories, total of genders, on and off
-reserve: the population by age group, children and foster children, knowledge of Indigenous
-languages, highest certificate (25 and over), labour force status, income and low income, as
-published (read it with \code{\link{census_profile}}).}
-\item{\code{"census_households"}}{The same profile's households and dwellings (98-510-X2021016),
-Indigenous and non-Indigenous households: persons per room, housing suitability, dwelling
-condition and core housing need.}
+\item{\code{"suicidal_ideation"}}{Table 41-10-0021-01, Self-perceived mental health
+and suicidal thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal
+Peoples Survey); Canada, both sexes, by age. Columns \code{group}, \code{age},
+\code{measure}, \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
+\item{\code{"census_population"}}{The Indigenous Population Profile, 2021 Census of
+Population (98-510-X2021001), Canada, the provinces and the territories, total of
+genders, on and off reserve: the population by age group, children and foster
+children, knowledge of Indigenous languages, highest certificate (25 and over),
+labour force status, income and low income, as published (read it with
+\code{\link{census_profile}}).}
+\item{\code{"census_households"}}{The same profile's households and dwellings
+(98-510-X2021016), Indigenous and non-Indigenous households: persons per room,
+housing suitability, dwelling condition and core housing need.}
 }
 
-The First Nations figures of the survey excerpts are for First Nations people living off reserve: the surveys do not
-cover reserves, whose data are governed by First Nations (see the First Nations Information
-Governance Centre). Groups are as the tables name them, with "Inuk (Inuit)" written "Inuit".
+The First Nations figures of the survey excerpts are for First Nations people living
+off reserve: the surveys do not cover reserves, whose data are governed by First
+Nations (see the First Nations Information Governance Centre). Groups are as the tables
+name them, with "Inuk (Inuit)" written "Inuit".
 }
 \examples{
 h <- indigenous_example("health_indicators")

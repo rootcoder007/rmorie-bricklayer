@@ -21,8 +21,8 @@ community_index(
 
 \item{group, indicator, estimate, lower, upper}{Column names.}
 
-\item{weights}{Named weights, one per indicator used: positive for a protective factor, negative
-for a risk factor.}
+\item{weights}{Named weights, one per indicator used: positive for a protective factor,
+negative for a risk factor.}
 
 \item{quality}{Optional column of quality flags.}
 
@@ -34,36 +34,42 @@ A data frame of class \code{rmbl_community_index}: \code{group}, \code{index},
 \code{weights}.
 }
 \description{
-Combines published indicators into one index for each group or place, with weights the community
-sets: protective factors count for, risk factors against. The weights are never estimated.
+Combines published indicators into one index for each group or place, with weights the
+community sets: protective factors count for, risk factors against. The weights are
+never estimated.
 }
 \details{
-Inuit Tapiriit Kanatami's National Inuit Suicide Prevention Strategy (2016) names risk factors
-(among them crowded housing, food insecurity, childhood adversity, mental distress) and protective
-factors (among them cultural continuity, social equity, family strength, healthy child
-development). How much each matters is a judgement for the people the index describes, so the
-function takes the weights as given: positive for protective, negative for risk. The index is
-\eqn{\sum_i w_i p_i / \sum_i |w_i|}, with standard error \eqn{\sqrt{\sum_i w_i^2 s_i^2} /
-\sum_i |w_i|} from the published intervals (independent estimates). It is a summary of the
-indicators under the weights given; with other weights it ranks places otherwise, and it is never
-a ranking of Nations or communities on their culture. For Inuit regions, use Inuit data only.
+Inuit Tapiriit Kanatami's National Inuit Suicide Prevention Strategy (2016)
+names risk factors (among them crowded housing, food insecurity, childhood adversity,
+mental distress) and protective factors (among them cultural continuity, social equity,
+family strength, healthy child development). How much each matters is a judgement for
+the people the index describes, so the function takes the weights as given: positive
+for protective, negative for risk. The index is \eqn{\sum_i w_i p_i / \sum_i |w_i|},
+with standard error \eqn{\sqrt{\sum_i w_i^2 s_i^2} / \sum_i |w_i|} from the published
+intervals (independent estimates). It is a summary of the indicators under the weights
+given; with other weights it ranks places otherwise, and it is never a ranking of
+Nations or communities on their culture. For Inuit regions, use Inuit data only.
 }
 \examples{
-# weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others would differ
+# weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others
+# would differ
 h <- indigenous_example("health_indicators")
 h <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
-ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper", quality = "quality",
-        weights = c("Sense of belonging to local community, somewhat strong or very strong" = 2,
-                    "Has a regular healthcare provider" = 1,
-                    "Perceived life stress, most days quite a bit or extremely stressful" = -2,
-                    "Heavy drinking" = -1))
-# food insecurity is not published for 2019/2022 (".."): an index that needs it is NA, never filled
+w <- c(2, 1, -2, -1)
+names(w) <- c("Sense of belonging to local community, somewhat strong or very strong",
+              "Has a regular healthcare provider",
+              "Perceived life stress, most days quite a bit or extremely stressful",
+              "Heavy drinking")
+ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper",
+                      quality = "quality", weights = w)
+# food insecurity is not published for 2019/2022 (".."): an index that needs it is NA,
+# never filled
 ci
 plot(ci)
 }
 \references{
-Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy. Ottawa.
-\url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
+Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
+Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
 
 Carroll SR, et al. (2020), see \code{\link{holistic_balance}}.
 }

@@ -9,41 +9,44 @@
 
 #' Read a Statistics Canada table as published
 #'
-#' Tidies a Statistics Canada full-table download (the "CSV for database loading" form, as the
-#' data service mirrors it under \code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as a number,
-#' and the quality flags kept beside it in \code{quality}.
+#' Tidies a Statistics Canada full-table download (the "CSV for database loading" form, as
+#' the data service mirrors it under \code{statcan_indigenous/tbl_<pid>}): \code{VALUE} as
+#' a number, and the quality flags kept beside it in \code{quality}.
 #'
-#' @details
-#' Statistics Canada flags every estimate: \code{E} use with caution, \code{F} too unreliable to be
-#' published, \code{x} suppressed to meet the confidentiality requirements of the Statistics Act,
-#' \code{..} not available, \code{...} not applicable. An \code{F}, \code{x}, \code{..} or
-#' \code{...} cell has no value here (\code{NA}), whatever the file holds, and nothing in the package
-#' imputes it or works it back from totals and margins: a suppressed cell is suppressed to protect
-#' people, and small First Nations, Metis and Inuit communities most of all. \code{E} values are kept
-#' and marked.
+#' @details Statistics Canada flags every estimate: \code{E} use with caution, \code{F}
+#' too unreliable to be published, \code{x} suppressed to meet the confidentiality
+#' requirements of the Statistics Act, \code{..} not available, \code{...} not applicable.
+#' An \code{F}, \code{x}, \code{..} or \code{...} cell has no value here (\code{NA}),
+#' whatever the file holds, and nothing in the package imputes it or works it back from
+#' totals and margins: a suppressed cell is suppressed to protect people, and small First
+#' Nations, Metis and Inuit communities most of all. \code{E} values are kept and marked.
 #'
-#' The census data tables (98-10-xxxx) come in a wide layout: one column per member of a dimension
-#' (\code{"Indigenous identity (9):Inuk (Inuit)[6]"}), each followed by its \code{Symbol} column,
-#' and no \code{VALUE}. They are made long first: the dimension becomes a column of member labels
-#' (\code{"Indigenous identity (9)"}), the values \code{VALUE} and the symbols \code{STATUS}, so
-#' every Statistics Canada table reads the same way.
+#' The census data tables (98-10-xxxx) come in a wide layout: one column per member of a
+#' dimension (\code{"Indigenous identity (9):Inuk (Inuit)[6]"}), each followed by its
+#' \code{Symbol} column, and no \code{VALUE}. They are made long first: the dimension
+#' becomes a column of member labels (\code{"Indigenous identity (9)"}), the values
+#' \code{VALUE} and the symbols \code{STATUS}, so every Statistics Canada table reads the
+#' same way.
 #'
-#' A label that names two members of one dimension (the census tables repeat labels under different
-#' parents, and the file drops the hierarchy) gets its member number from the coordinate:
-#' \code{"Without children [3]"} and \code{"Without children [7]"}. Other labels are left as they are.
+#' A label that names two members of one dimension (the census tables repeat labels under
+#' different parents, and the file drops the hierarchy) gets its member number from the
+#' coordinate: \code{"Without children [3]"} and \code{"Without children [7]"}. Other
+#' labels are left as they are.
 #'
 #' @param x A data frame read from a Statistics Canada table, or a key of the data service
-#'   (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id alone, which needs the
-#'   data service key: see \code{\link{bricklayer_data_load}}).
-#' @return The data frame with \code{VALUE} numeric and a factor column \code{quality} with levels
-#'   \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."}, \code{"..."}, of class
-#'   \code{c("rmbl_statcan", "data.frame")}.
-#' @references Statistics Canada. Symbol legend. \url{https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol}
+#'   (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id alone, which
+#'   needs the data service key: see \code{\link{bricklayer_data_load}}).
+#' @return The data frame with \code{VALUE} numeric and a factor column \code{quality}
+#'   with levels \code{"ok"}, \code{"E"}, \code{"F"}, \code{"x"}, \code{".."},
+#'   \code{"..."}, of class \code{c("rmbl_statcan", "data.frame")}.
+#' @references Statistics Canada. Symbol legend.
+#'   \url{https://www.statcan.gc.ca/en/concepts/definitions/guide-symbol}
 #' @seealso \code{\link{indigenous_gap}}, \code{\link{indigenous_tables}}.
 #' @examples
 #' # the layout of a downloaded table, with one cell suppressed
 #' d <- data.frame(REF_DATE = "2019/2022", GEO = "Canada",
-#'                 `Indigenous identity` = c("First Nations", "Inuk (Inuit)", "Non-Indigenous"),
+#'                 `Indigenous identity` = c("First Nations", "Inuk (Inuit)",
+#'                                           "Non-Indigenous"),
 #'                 VALUE = c("45.8", "", "61.5"), STATUS = c("", "x", ""),
 #'                 check.names = FALSE)
 #' statcan_tidy(d)
@@ -135,46 +138,47 @@ statcan_tidy <- function(x) {
 
 #' Compare First Nations, Metis and Inuit estimates with a reference group
 #'
-#' For published percentages or rates with their confidence intervals (a Statistics Canada table,
-#' a report), the ratio and the difference of each group to a reference group, with confidence
-#' intervals worked from the published ones.
+#' For published percentages or rates with their confidence intervals (a Statistics Canada
+#' table, a report), the ratio and the difference of each group to a reference group, with
+#' confidence intervals worked from the published ones.
 #'
-#' @details
-#' Each published interval gives a standard error, \eqn{(u - l) / (2 z)}, on the scale of the
-#' estimate for the difference and on the log scale, \eqn{(\log u - \log l) / (2 z)}, for the ratio.
-#' The groups are treated as independent samples, so the standard error of a difference is the root
-#' of the sum of the squares. Disjoint domains of one survey are nearly so, but not exactly (they
-#' share the design's strata and clusters): the intervals are approximations, and the exact ones need
-#' the survey's bootstrap weights, which Statistics Canada holds in its Research Data Centres.
+#' @details Each published interval gives a standard error, \eqn{(u - l) / (2 z)}, on the
+#' scale of the estimate for the difference and on the log scale,
+#' \eqn{(\log u - \log l) / (2 z)}, for the ratio. The groups are treated as independent
+#' samples, so the standard error of a difference is the root of the sum of the squares.
+#' Disjoint domains of one survey are nearly so, but not exactly (they share the design's
+#' strata and clusters): the intervals are approximations, and the exact ones need the
+#' survey's bootstrap weights, which Statistics Canada holds in its Research Data Centres.
 #'
-#' Distinctions-based: each group is compared on its own. A row that pools every identity (\code{"Total
-#' Indigenous"}, \code{"Indigenous identity"}) is kept but marked \code{pan_indigenous = TRUE}, since
-#' a pooled figure can hide what differs between First Nations, Metis and Inuit. A row whose estimate
-#' is flagged \code{E} is compared and marked; one flagged \code{F} or \code{x}, or with no estimate,
-#' is not compared.
+#' Distinctions-based: each group is compared on its own. A row that pools every identity
+#' (\code{"Total Indigenous"}, \code{"Indigenous identity"}) is kept but marked
+#' \code{pan_indigenous = TRUE}, since a pooled figure can hide what differs between First
+#' Nations, Metis and Inuit. A row whose estimate is flagged \code{E} is compared and
+#' marked; one flagged \code{F} or \code{x}, or with no estimate, is not compared.
 #'
 #' @param data A data frame, one row per group.
-#' @param group,estimate,lower,upper Column names: the group label, the estimate, and the published
-#'   confidence limits.
+#' @param group,estimate,lower,upper Column names: the group label, the estimate, and the
+#'   published confidence limits.
 #' @param reference The label of the reference group (default \code{"Non-Indigenous"}).
 #' @param quality Optional column of quality flags (\code{E}, \code{F}, \code{x}, ...), as
 #'   \code{\link{statcan_tidy}} gives them.
-#' @param conf_level The confidence level of the published intervals and of the ones returned
-#'   (default 0.95).
-#' @return A data frame with \code{group}, \code{estimate}, \code{reference_estimate}, \code{ratio},
-#'   \code{ratio_lower}, \code{ratio_upper}, \code{difference}, \code{difference_lower},
-#'   \code{difference_upper}, \code{use_with_caution} and \code{pan_indigenous}, of class
-#'   \code{rmbl_indigenous_gap} (\code{plot()} draws each group's difference or ratio).
-#' @references
-#' Statistics Canada (2025). Health indicators for First Nations adults living off reserve, Metis and
-#' Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
+#' @param conf_level The confidence level of the published intervals and of the ones
+#'   returned (default 0.95).
+#' @return A data frame with \code{group}, \code{estimate}, \code{reference_estimate},
+#'   \code{ratio}, \code{ratio_lower}, \code{ratio_upper}, \code{difference},
+#'   \code{difference_lower}, \code{difference_upper}, \code{use_with_caution} and
+#'   \code{pan_indigenous}, of class \code{rmbl_indigenous_gap} (\code{plot()} draws each
+#'   group's difference or ratio).
+#' @references Statistics Canada (2025). Health indicators for First Nations adults living
+#' off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
 #' \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 #'
-#' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous Data
-#' Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
+#' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
+#' Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
 #' @seealso \code{\link{statcan_tidy}}, \code{\link{age_standardise}}.
 #' @examples
-#' # Perceived mental health very good or excellent, adults, 2019/2022: The Daily, 2025-02-13
+#' # Perceived mental health very good or excellent, adults, 2019/2022: The Daily,
+#' # 2025-02-13
 #' # (table 13-10-0924-01)
 #' h <- indigenous_example("health_indicators")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
@@ -249,42 +253,46 @@ indigenous_gap <- function(data, group, estimate, lower, upper, reference = "Non
 
 #' Directly age-standardised rates, with exact gamma intervals
 #'
-#' The rate a population would have with the age structure of a standard population, for one or
-#' more groups, with Fay and Feuer's gamma confidence interval.
+#' The rate a population would have with the age structure of a standard population, for
+#' one or more groups, with Fay and Feuer's gamma confidence interval.
 #'
-#' @details
-#' With \eqn{d_i} events and \eqn{n_i} people in age group \eqn{i} and standard weights
-#' \eqn{w_i} (the standard population's shares), the rate is \eqn{y = \sum w_i d_i / n_i}, its
-#' variance \eqn{v = \sum (w_i / n_i)^2 d_i}, and with \eqn{w_M = \max_i w_i / n_i} the limits are
+#' @details With \eqn{d_i} events and \eqn{n_i} people in age group \eqn{i} and standard
+#' weights \eqn{w_i} (the standard population's shares), the rate is
+#' \eqn{y = \sum w_i d_i / n_i}, its variance \eqn{v = \sum (w_i / n_i)^2 d_i}, and with
+#' \eqn{w_M = \max_i w_i / n_i} the limits are
 #' \eqn{\frac{v}{2y} \chi^2_{2y^2/v}(\alpha/2)} and
-#' \eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)}
-#' (Fay and Feuer 1997), exact when there are few events, as there are for small communities. With
-#' no events the lower limit is 0. Rates are per \code{per} people.
+#' \eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)} (Fay
+#' and Feuer 1997), exact when there are few events, as there are for small communities.
+#' With no events the lower limit is 0. Rates are per \code{per} people.
 #'
-#' The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis and Inuit
-#' mortality standardise to the Indigenous population's own age structure (Kumar and Tjepkema 2019),
-#' which is younger than Canada's.
+#' The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis
+#' and Inuit mortality standardise to the Indigenous population's own age structure (Kumar
+#' and Tjepkema 2019), which is younger than Canada's.
 #'
-#' @param events,population Numbers of events and of people, one per age group (and group).
-#' @param standard The standard population, one count per age group (its shares are the weights).
-#' @param group Optional labels: one rate per group, each over the same age groups in the same order.
+#' @param events,population Numbers of events and of people, one per age group (and
+#'   group).
+#' @param standard The standard population, one count per age group (its shares are the
+#'   weights).
+#' @param group Optional labels: one rate per group, each over the same age groups in the
+#'   same order.
 #' @param per Rate per this many people (default 100,000).
 #' @param conf_level Confidence level (default 0.95).
-#' @return A data frame with \code{group}, \code{events}, \code{rate}, \code{lower}, \code{upper},
-#'   and the attributes \code{var} (the variances, on the per-person scale) for
-#'   \code{\link{rate_gap}}.
-#' @references Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized rates: a method
-#' based on the gamma distribution. Statistics in Medicine 16(7):791-801.
+#' @return A data frame with \code{group}, \code{events}, \code{rate}, \code{lower},
+#'   \code{upper}, and the attributes \code{var} (the variances, on the per-person scale)
+#'   for \code{\link{rate_gap}}.
+#' @references Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
+#' rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.
 #' \doi{10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
 #'
-#' Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit (2011-2016):
-#' Findings from the 2011 Canadian Census Health and Environment Cohort (CanCHEC). Statistics Canada
-#' 99-011-X2019001.
+#' Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
+#' (2011-2016): Findings from the 2011 Canadian Census Health and Environment Cohort
+#' (CanCHEC). Statistics Canada 99-011-X2019001.
 #' @seealso \code{\link{rate_gap}}.
 #' @examples
 #' # made-up counts for one small community, by five age groups, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)   # a younger standard population
-#' age_standardise(events = c(4, 9, 11, 6, 3), population = c(9000, 8000, 6000, 4000, 2000),
+#' age_standardise(events = c(4, 9, 11, 6, 3), population = c(9000, 8000, 6000, 4000,
+#'                                                            2000),
 #'                 standard = std)
 #' @export
 age_standardise <- function(events, population, standard, group = NULL, per = 1e5, conf_level = 0.95) {
@@ -335,26 +343,28 @@ age_standardise <- function(events, population, standard, group = NULL, per = 1e
 
 #' The gap between two standardised rates
 #'
-#' The ratio and the difference of two directly standardised rates from \code{\link{age_standardise}},
-#' with confidence intervals: log-normal for the ratio (variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and
-#' normal for the difference, the two rates independent. Both measures are reported, as the relative
-#' gap alone hides how large the absolute one is (Anderson et al. 2016).
+#' The ratio and the difference of two directly standardised rates from
+#' \code{\link{age_standardise}}, with confidence intervals: log-normal for the ratio
+#' (variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and normal for the difference, the two rates
+#' independent. Both measures are reported, as the relative gap alone hides how large the
+#' absolute one is (Anderson et al. 2016).
 #'
 #' @param x Output of \code{\link{age_standardise}} (two or more groups).
 #' @param group,reference The labels of the group and of the reference group.
 #' @return A one-row data frame: \code{group}, \code{reference}, \code{ratio} with
-#'   \code{ratio_lower}/\code{ratio_upper}, and \code{difference} (per \code{per} people) with
-#'   \code{difference_lower}/\code{difference_upper}.
-#' @references Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal peoples' health
-#' (The Lancet-Lowitja Institute Global Collaboration): a population study. The Lancet
-#' 388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
+#'   \code{ratio_lower}/\code{ratio_upper}, and \code{difference} (per \code{per} people)
+#'   with \code{difference_lower}/\code{difference_upper}.
+#' @references Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
+#' peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
+#' study. The Lancet 388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
 #' @examples
 #' # made-up counts, to show the computation
 #' std <- c(30000, 25000, 20000, 15000, 10000)
 #' r <- age_standardise(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
 #'                      population = c(9000, 8000, 6000, 4000, 2000,
 #'                                     20000, 19000, 18000, 15000, 12000),
-#'                      standard = std, group = rep(c("Inuit", "Non-Indigenous"), each = 5))
+#'                      standard = std, group = rep(c("Inuit", "Non-Indigenous"),
+#'                                                  each = 5))
 #' plot(r)
 #' rate_gap(r, "Inuit", "Non-Indigenous")
 #' @export
@@ -381,25 +391,26 @@ rate_gap <- function(x, group, reference) {
 
 #' Generations of residential school attendance in a family
 #'
-#' Codes the intergenerational exposure used in the epidemiology of Indian Residential Schools: how
-#' many generations before the respondent attended, 0 (neither parents nor grandparents), 1 (parents
-#' or grandparents) or 2 (both a parent and a grandparent), as in McQuaid et al. (2017).
+#' Codes the intergenerational exposure used in the epidemiology of Indian Residential
+#' Schools: how many generations before the respondent attended, 0 (neither parents nor
+#' grandparents), 1 (parents or grandparents) or 2 (both a parent and a grandparent), as
+#' in McQuaid et al. (2017).
 #'
-#' @details
-#' Each answer is \code{TRUE} (attended), \code{FALSE} (did not) or \code{NA} (not known). A known
-#' attendance in one generation is at least one generation whatever the other is; otherwise an
-#' unknown answer leaves the count unknown (\code{NA}), since it may hide an attendance.
+#' @details Each answer is \code{TRUE} (attended), \code{FALSE} (did not) or \code{NA}
+#' (not known). A known attendance in one generation is at least one generation whatever
+#' the other is; otherwise an unknown answer leaves the count unknown (\code{NA}), since
+#' it may hide an attendance.
 #'
 #' @param parent,grandparent Logical vectors: did a parent, did a grandparent attend.
 #' @return An integer vector of 0, 1, 2 or \code{NA}.
-#' @references McQuaid RJ, Bombay A, McInnis OA, Humeny C, Matheson K, Anisman H (2017). Suicide
-#' ideation and attempts among First Nations peoples living on-reserve in Canada: the intergenerational
-#' and cumulative effects of Indian Residential Schools. Canadian Journal of Psychiatry 62(6):422-430.
-#' \doi{10.1177/0706743717702075}
+#' @references McQuaid RJ, Bombay A, McInnis OA, Humeny C, Matheson K, Anisman H (2017).
+#' Suicide ideation and attempts among First Nations peoples living on-reserve in Canada:
+#' the intergenerational and cumulative effects of Indian Residential Schools. Canadian
+#' Journal of Psychiatry 62(6):422-430. \doi{10.1177/0706743717702075}
 #'
-#' Bombay A, Matheson K, Anisman H (2014). The intergenerational effects of Indian Residential Schools:
-#' implications for the concept of historical trauma. Transcultural Psychiatry 51(3):320-338.
-#' \doi{10.1177/1363461513503380}
+#' Bombay A, Matheson K, Anisman H (2014). The intergenerational effects of Indian
+#' Residential Schools: implications for the concept of historical trauma. Transcultural
+#' Psychiatry 51(3):320-338. \doi{10.1177/1363461513503380}
 #' @seealso \code{\link{exposure_trend}}.
 #' @examples
 #' generations_exposed(c(TRUE, FALSE, TRUE, NA, FALSE), c(TRUE, FALSE, FALSE, TRUE, NA))
@@ -420,20 +431,22 @@ generations_exposed <- function(parent, grandparent) {
 
 #' A dose-response across generations of exposure
 #'
-#' For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2 generations of
-#' residential school attendance in their family (or any ordered exposure), the odds ratio of each
-#' level against the lowest, with Woolf intervals, and the Cochran-Armitage test for a trend across
-#' the levels.
+#' For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2
+#' generations of residential school attendance in their family (or any ordered exposure),
+#' the odds ratio of each level against the lowest, with Woolf intervals, and the
+#' Cochran-Armitage test for a trend across the levels.
 #'
 #' @param cases Number with the outcome at each exposure level.
 #' @param n Number of people at each level.
-#' @param dose The exposure levels, in order (default \code{0, 1, 2, ...}); the trend test scores them.
+#' @param dose The exposure levels, in order (default \code{0, 1, 2, ...}); the trend test
+#'   scores them.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame with \code{dose}, \code{cases}, \code{n}, \code{proportion},
-#'   \code{odds_ratio}, \code{lower}, \code{upper}; the trend test is the attribute \code{trend}
-#'   (an \code{htest}).
-#' @details Counts must be unweighted. For a complex survey, take the weighted analysis from the survey
-#' itself (\code{\link{survey_design}}): this function is for published or aggregated counts.
+#'   \code{odds_ratio}, \code{lower}, \code{upper}; the trend test is the attribute
+#'   \code{trend} (an \code{htest}).
+#' @details Counts must be unweighted. For a complex survey, take the weighted analysis
+#' from the survey itself (\code{\link{survey_design}}): this function is for published or
+#' aggregated counts.
 #' @references McQuaid RJ, et al. (2017), see \code{\link{generations_exposed}}.
 #' @examples
 #' # made-up counts by 0, 1 and 2 generations of attendance, to show the computation
@@ -478,27 +491,26 @@ exposure_trend <- function(cases, n, dose = seq_along(cases) - 1L, conf_level = 
 
 #' Calls to Action completed, year by year
 #'
-#' The number of the Truth and Reconciliation Commission's 94 Calls to Action that the Yellowhead
-#' Institute's annual accountability reports judged complete, by the year they were completed, to
-#' the end of 2022: the only counts here are those the reports state.
+#' The number of the Truth and Reconciliation Commission's 94 Calls to Action that the
+#' Yellowhead Institute's annual accountability reports judged complete, by the year they
+#' were completed, to the end of 2022: the only counts here are those the reports state.
 #'
-#' @return A data frame with \code{period}, \code{year_end}, \code{completed}, \code{cumulative}
-#'   and \code{source}.
-#' @details
-#' 2015-2019: 8 (13 in all by December 2022, less those of 2020-2022); 2020: none; 2021: 3, all in
-#' June; 2022: 2 (Jewell and Mosby 2021, 2022). Other trackers count otherwise: the federal government
-#' reports by theme rather than call by call; CBC's Beyond 94 and Indigenous Watchdog grade each call
-#' on their own scales and are copyrighted, so their tables are not reproduced. The reports are
-#' licensed CC BY-NC 2.5 Canada; the counts are facts taken from them, with the reports cited.
-#' @references
-#' Jewell E, Mosby I (2021). Calls to Action Accountability: A 2021 Status Update on Reconciliation.
-#' Yellowhead Institute, Toronto Metropolitan University.
+#' @return A data frame with \code{period}, \code{year_end}, \code{completed},
+#'   \code{cumulative} and \code{source}.
+#' @details 2015-2019: 8 (13 in all by December 2022, less those of 2020-2022); 2020:
+#' none; 2021: 3, all in June; 2022: 2 (Jewell and Mosby 2021, 2022). Other trackers count
+#' otherwise: the federal government reports by theme rather than call by call; CBC's
+#' Beyond 94 and Indigenous Watchdog grade each call on their own scales and are
+#' copyrighted, so their tables are not reproduced. The reports are licensed CC BY-NC 2.5
+#' Canada; the counts are facts taken from them, with the reports cited.
+#' @references Jewell E, Mosby I (2021). Calls to Action Accountability: A 2021 Status
+#' Update on Reconciliation. Yellowhead Institute, Toronto Metropolitan University.
 #'
-#' Jewell E, Mosby I (2022). Calls to Action Accountability: A 2022 Status Update on Reconciliation.
-#' Yellowhead Institute, Toronto Metropolitan University.
+#' Jewell E, Mosby I (2022). Calls to Action Accountability: A 2022 Status Update on
+#' Reconciliation. Yellowhead Institute, Toronto Metropolitan University.
 #'
-#' Truth and Reconciliation Commission of Canada (2015). Truth and Reconciliation Commission of
-#' Canada: Calls to Action. Winnipeg.
+#' Truth and Reconciliation Commission of Canada (2015). Truth and Reconciliation
+#' Commission of Canada: Calls to Action. Winnipeg.
 #' @seealso \code{\link{trc_progress}}.
 #' @examples
 #' trc_completions()
@@ -514,27 +526,31 @@ trc_completions <- function() {
 
 #' How fast the Calls to Action are being completed
 #'
-#' From cumulative counts of completed Calls to Action over time, the completion rate (calls a year),
-#' its exact Poisson interval, and the year all 94 would be complete at that rate.
+#' From cumulative counts of completed Calls to Action over time, the completion rate
+#' (calls a year), its exact Poisson interval, and the year all 94 would be complete at
+#' that rate.
 #'
-#' @details
-#' Completions are taken as a Poisson process with a constant rate over the span from the start
-#' (\code{start}, the Commission's final report in December 2015) to the last count: the rate is
-#' \eqn{c / T} with the exact (Garwood) interval for \eqn{c} completed calls, and the projection is
-#' the year \eqn{94 - c} more would take at that rate (at the interval's ends, its range). A constant
-#' rate is the simplest model and the one the Yellowhead Institute's projection uses ("42 years, or
-#' until 2065", 2022); the pace has not been constant, so the projection is a description of the pace
-#' so far, not a forecast.
+#' @details Completions are taken as a Poisson process with a constant rate over the span
+#' from the start (\code{start}, the Commission's final report in December 2015) to the
+#' last count: the rate is \eqn{c / T} with the exact (Garwood) interval for \eqn{c}
+#' completed calls, and the projection is the year \eqn{94 - c} more would take at that
+#' rate (at the interval's ends, its range). A constant rate is the simplest model and the
+#' one the Yellowhead Institute's projection uses ("42 years, or until 2065", 2022); the
+#' pace has not been constant, so the projection is a description of the pace so far, not
+#' a forecast.
 #'
-#' @param completed Cumulative number completed at each date (default: \code{\link{trc_completions}}).
+#' @param completed Cumulative number completed at each date (default:
+#'   \code{\link{trc_completions}}).
 #' @param year_end The year each count was made to (end of year).
 #' @param total Number of Calls to Action (94).
-#' @param start When counting began, as a year with a fraction (2015.96: December 15, 2015).
+#' @param start When counting began, as a year with a fraction (2015.96: December 15,
+#'   2015).
 #' @param conf_level Confidence level (default 0.95).
-#' @return A one-row data frame: \code{completed}, \code{remaining}, \code{years}, \code{rate},
-#'   \code{rate_lower}, \code{rate_upper}, \code{complete_by}, \code{complete_by_early},
-#'   \code{complete_by_late}, of class \code{rmbl_trc_progress}; \code{plot()} draws the
-#'   completions and the projection, with the band the rate's interval gives.
+#' @return A one-row data frame: \code{completed}, \code{remaining}, \code{years},
+#'   \code{rate}, \code{rate_lower}, \code{rate_upper}, \code{complete_by},
+#'   \code{complete_by_early}, \code{complete_by_late}, of class \code{rmbl_trc_progress};
+#'   \code{plot()} draws the completions and the projection, with the band the rate's
+#'   interval gives.
 #' @seealso \code{\link{trc_completions}}.
 #' @examples
 #' p <- trc_progress()
@@ -575,17 +591,20 @@ trc_progress <- function(completed = trc_completions()$cumulative, year_end = tr
 
 #' The Indigenous health and wellbeing tables the data service holds
 #'
-#' Lists the First Nations, Metis and Inuit tables mirrored at the data service: Statistics Canada's
-#' Indigenous-titled tables (\code{statcan_indigenous}) and the 2021 Census Indigenous Population
-#' Profile (\code{census2021_ipp}), with their descriptions, row counts and licences, searchable.
+#' Lists the First Nations, Metis and Inuit tables mirrored at the data service:
+#' Statistics Canada's Indigenous-titled tables (\code{statcan_indigenous}) and the 2021
+#' Census Indigenous Population Profile (\code{census2021_ipp}), with their descriptions,
+#' row counts and licences, searchable.
 #'
-#' @param pattern Optional regular expression matched against the descriptions (case ignored).
+#' @param pattern Optional regular expression matched against the descriptions (case
+#'   ignored).
 #' @param refresh Fetch the manifest again (default \code{FALSE}).
-#' @return A data frame: \code{key}, \code{rows}, \code{description}, \code{license}, \code{source}.
-#' @details Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly licensed
-#' aggregate tables are mirrored. First Nations Information Governance Centre data (the First Nations
-#' Regional Health Survey and its companions) are governed by the OCAP(R) principles and are not; ask
-#' the Centre (\url{https://fnigc.ca}).
+#' @return A data frame: \code{key}, \code{rows}, \code{description}, \code{license},
+#'   \code{source}.
+#' @details Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly
+#' licensed aggregate tables are mirrored. First Nations Information Governance Centre
+#' data (the First Nations Regional Health Survey and its companions) are governed by the
+#' OCAP(R) principles and are not; ask the Centre (\url{https://fnigc.ca}).
 #' @examples
 #' \dontrun{
 #' indigenous_tables("mental health")

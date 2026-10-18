@@ -19,40 +19,41 @@
   q
 }
 
-#' The four directions of the First Nations Mental Wellness Continuum, from published indicators
+#' The four directions of the First Nations Mental Wellness Continuum, from published
+#' indicators
 #'
-#' Lays out a group's published indicators under the four outcomes of the First Nations Mental
-#' Wellness Continuum Framework (hope, belonging, meaning, purpose), each with its interval, and
-#' says which directions the tables have no measure of.
+#' Lays out a group's published indicators under the four outcomes of the First Nations
+#' Mental Wellness Continuum Framework (hope, belonging, meaning, purpose), each with its
+#' interval, and says which directions the tables have no measure of.
 #'
-#' @details
-#' The Framework (Health Canada and Assembly of First Nations 2015) describes mental wellness as hope
-#' for the future, a sense of belonging and connectedness to family, community and culture, a sense
-#' of meaning and of how one's life fits into creation, and purpose in daily life. It has no numeric
-#' scoring, and no survey table measures the four directions as the Framework defines them. This
-#' function takes the indicators a user names as proxies for each (\code{hope = "Always or often has
-#' a hopeful outlook"}, ...), reports each direction's level (the mean of its proxies, their standard
-#' errors combined as independent), marks every row as a proxy, and reports a direction given no
-#' proxy as missing rather than filling it from another. One indicator named for two directions
-#' (Statistics Canada asks about "meaning and purpose" together) is used for both and marked
-#' \code{shared}.
+#' @details The Framework (Health Canada and Assembly of First Nations 2015) describes
+#' mental wellness as hope for the future, a sense of belonging and connectedness to
+#' family, community and culture, a sense of meaning and of how one's life fits into
+#' creation, and purpose in daily life. It has no numeric scoring, and no survey table
+#' measures the four directions as the Framework defines them. This function takes the
+#' indicators a user names as proxies for each
+#' (\code{hope = "Always or often has a hopeful outlook"}, ...), reports each direction's
+#' level (the mean of its proxies, their standard errors combined as independent), marks
+#' every row as a proxy, and reports a direction given no proxy as missing rather than
+#' filling it from another. One indicator named for two directions (Statistics Canada asks
+#' about "meaning and purpose" together) is used for both and marked \code{shared}.
 #'
-#' The result plots as a \code{\link{wellness_profile}}; \code{\link{holistic_balance}} on it gives
-#' the balance across the directions.
+#' The result plots as a \code{\link{wellness_profile}}; \code{\link{holistic_balance}} on
+#' it gives the balance across the directions.
 #'
 #' @param data A data frame, one row per group and indicator.
 #' @param group,indicator,estimate,lower,upper Column names.
-#' @param hope,belonging,meaning,purpose The indicators taken as proxies for each direction, or
-#'   \code{NULL} where the tables have none.
+#' @param hope,belonging,meaning,purpose The indicators taken as proxies for each
+#'   direction, or \code{NULL} where the tables have none.
 #' @param quality Optional column of quality flags.
 #' @param conf_level Confidence level of the published intervals (default 0.95).
-#' @return A data frame of classes \code{rmbl_wellness_continuum} and \code{rmbl_wellness_profile}:
-#'   \code{group}, \code{indicator} (the direction), \code{side} (\code{"wellness"}), \code{domain}
-#'   (the proxies), \code{estimate}, \code{lower}, \code{upper}, \code{use_with_caution},
-#'   \code{shared}, \code{proxy} (always \code{TRUE}).
-#' @references
-#' Health Canada, Assembly of First Nations (2015). First Nations Mental Wellness Continuum Framework.
-#' Ottawa: Health Canada. Summary report:
+#' @return A data frame of classes \code{rmbl_wellness_continuum} and
+#'   \code{rmbl_wellness_profile}: \code{group}, \code{indicator} (the direction),
+#'   \code{side} (\code{"wellness"}), \code{domain} (the proxies), \code{estimate},
+#'   \code{lower}, \code{upper}, \code{use_with_caution}, \code{shared}, \code{proxy}
+#'   (always \code{TRUE}).
+#' @references Health Canada, Assembly of First Nations (2015). First Nations Mental
+#' Wellness Continuum Framework. Ottawa: Health Canada. Summary report:
 #' \url{https://www.sac-isc.gc.ca/eng/1576093687903/1576093725971}
 #' @seealso \code{\link{wellness_profile}}, \code{\link{holistic_balance}}.
 #' @examples
@@ -62,7 +63,8 @@
 #' mw <- mental_wellness_continuum(wb, "group", "indicator", "estimate", "lower", "upper",
 #'         hope = "Always or often has a hopeful outlook",
 #'         meaning = "Sense of meaning and purpose rating of 8, 9 or 10",
-#'         purpose = "Sense of meaning and purpose rating of 8, 9 or 10", quality = "quality")
+#'         purpose = "Sense of meaning and purpose rating of 8, 9 or 10",
+#'         quality = "quality")
 #' mw
 #' plot(mw)
 #' @export
@@ -121,32 +123,34 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
 
 #' The Community Well-Being index of a community
 #'
-#' Indigenous Services Canada's Community Well-Being (CWB) index: income, education, housing and
-#' labour force activity, each scored from 0 to 100, and their mean, from census profile figures.
+#' Indigenous Services Canada's Community Well-Being (CWB) index: income, education,
+#' housing and labour force activity, each scored from 0 to 100, and their mean, from
+#' census profile figures.
 #'
-#' @details
-#' The components, as the index's methodology sets them out (Penney, O'Sullivan and Senecal 2012;
-#' O'Sullivan and McHardy 2013; Indigenous Services Canada's reports on trends, 1981 to 2016 and 2021):
+#' @details The components, as the index's methodology sets them out (Penney, O'Sullivan
+#' and Senecal 2012; O'Sullivan and McHardy 2013; Indigenous Services Canada's reports on
+#' trends, 1981 to 2016 and 2021):
 #' \describe{
-#'   \item{income}{\eqn{100 (\log y - \log a) / (\log b - \log a)} for income per capita \eqn{y}
-#'     (total income over total population) between the bounds \eqn{a} and \eqn{b} (2,650 and
-#'     75,000 dollars in the 2016 and 2021 series; 2,000 and 40,000 in the earlier ones), kept between
-#'     0 and 100 here.}
-#'   \item{education}{two thirds of the percentage aged 20 and over with at least a high school
-#'     certificate, plus one third of the percentage aged 25 and over with a university degree at the
-#'     bachelor's level or above.}
-#'   \item{housing}{half the percentage of people in dwellings with no more than one person per room,
-#'     plus half the percentage in dwellings that need no major repairs.}
-#'   \item{labour}{half the participation rate, plus half the employment rate of those participating
-#'     (ages 20 to 64).}
+#'   \item{income}{\eqn{100 (\log y - \log a) / (\log b - \log a)} for income per capita
+#'     \eqn{y} (total income over total population) between the bounds \eqn{a} and \eqn{b}
+#'     (2,650 and 75,000 dollars in the 2016 and 2021 series; 2,000 and 40,000 in the
+#'     earlier ones), kept between 0 and 100 here.}
+#'   \item{education}{two thirds of the percentage aged 20 and over with at least a high
+#'     school certificate, plus one third of the percentage aged 25 and over with a
+#'     university degree at the bachelor's level or above.}
+#'   \item{housing}{half the percentage of people in dwellings with no more than one
+#'     person per room, plus half the percentage in dwellings that need no major repairs.}
+#'   \item{labour}{half the participation rate, plus half the employment rate of those
+#'     participating (ages 20 to 64).}
 #' }
-#' The index is the mean of the four. Indigenous Services Canada computes it from unrounded census
-#' microdata, scores only communities of 65 people or more and suppresses the components of
-#' communities under 250 people or 40 households: scores from published, rounded profile figures come
-#' close to the published index but need not equal it, and a small community's should be treated as
-#' the Department would. The full current methodology is available from the Department on request.
-#' The index measures socio-economic conditions as the census counts them; it says nothing of
-#' culture, language or relationship to land, and is not a measure of wellness as First Nations and
+#' The index is the mean of the four. Indigenous Services Canada computes it from
+#' unrounded census microdata, scores only communities of 65 people or more and suppresses
+#' the components of communities under 250 people or 40 households: scores from published,
+#' rounded profile figures come close to the published index but need not equal it, and a
+#' small community's should be treated as the Department would. The full current
+#' methodology is available from the Department on request. The index measures
+#' socio-economic conditions as the census counts them; it says nothing of culture,
+#' language or relationship to land, and is not a measure of wellness as First Nations and
 #' Inuit define it.
 #'
 #' @param income_per_capita Income per capita, in the dollars of the series' bounds.
@@ -154,23 +158,25 @@ mental_wellness_continuum <- function(data, group, indicator, estimate, lower, u
 #' @param not_crowded,no_major_repairs Percentages for housing.
 #' @param participation,employment Percentages for labour force activity.
 #' @param bounds The income bounds (default the 2016 and 2021 series: 2650 and 75000).
-#' @return A data frame, one row per community: \code{income}, \code{education}, \code{housing},
-#'   \code{labour}, \code{cwb}.
-#' @references
-#' Penney C, O'Sullivan E, Senecal S (2012). The Community Well-Being Index (CWB): Examining
-#' Well-Being in Inuit Communities, 1981-2006. Aboriginal Affairs and Northern Development Canada.
+#' @return A data frame, one row per community: \code{income}, \code{education},
+#'   \code{housing}, \code{labour}, \code{cwb}.
+#' @references Penney C, O'Sullivan E, Senecal S (2012). The Community Well-Being Index
+#' (CWB): Examining Well-Being in Inuit Communities, 1981-2006. Aboriginal Affairs and
+#' Northern Development Canada.
 #'
-#' O'Sullivan E, McHardy M (2013). The Community Well-Being (CWB) Index: Disparity in Well-Being
-#' Between First Nations and Other Canadian Communities Over Time. In White JP, Peters J, Beavon D,
-#' Spence N (eds), Aboriginal Well-Being: Canada's Continuing Challenge. Thompson Educational.
+#' O'Sullivan E, McHardy M (2013). The Community Well-Being (CWB) Index: Disparity in
+#' Well-Being Between First Nations and Other Canadian Communities Over Time. In White JP,
+#' Peters J, Beavon D, Spence N (eds), Aboriginal Well-Being: Canada's Continuing
+#' Challenge. Thompson Educational.
 #'
-#' Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981 to 2016
-#' (Community Well-Being index).
+#' Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
+#' to 2016 (Community Well-Being index).
 #' \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @examples
 #' # made-up profile figures for two communities, to show the computation
 #' cwb_score(income_per_capita = c(18000, 31000), high_school_20plus = c(58, 81),
-#'           university_25plus = c(6, 19), not_crowded = c(71, 95), no_major_repairs = c(62, 90),
+#'           university_25plus = c(6, 19), not_crowded = c(71, 95),
+#'           no_major_repairs = c(62, 90),
 #'           participation = c(55, 68), employment = c(78, 92))
 #' @export
 cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, not_crowded, no_major_repairs,
@@ -207,54 +213,59 @@ cwb_score <- function(income_per_capita, high_school_20plus, university_25plus, 
 
 #' Connection across places: does one indicator rise where another does?
 #'
-#' For two indicators published for the same places (regions, provinces, Inuit regions), their rank
-#' correlation across places, an exact permutation p-value, and an interval that carries the
-#' sampling error of the published estimates: for connection to land and wellness, community
-#' belonging and mental health, education and health.
+#' For two indicators published for the same places (regions, provinces, Inuit regions),
+#' their rank correlation across places, an exact permutation p-value, and an interval
+#' that carries the sampling error of the published estimates: for connection to land and
+#' wellness, community belonging and mental health, education and health.
 #'
-#' @details
-#' Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part of all aspects of
-#' Indigenous life including health and well-being"; Mashford-Pringle (2016) describes Indigenous
-#' health and education as interconnected. Across places, that connection has a testable shadow: where
-#' more people are on the land (or belong, or finish school), do more report wellness? This function
-#' measures it by Spearman's \eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when
-#' there are at most 8 places and from \code{reps} random orderings otherwise. Each estimate carries
-#' sampling error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
-#' \code{reps} draws of both indicators from normal distributions with their published standard
-#' errors: a correlation that the published intervals cannot pin down shows a wide interval.
+#' @details Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part
+#' of all aspects of Indigenous life including health and well-being"; Mashford-Pringle
+#' (2016) describes Indigenous health and education as interconnected. Across places, that
+#' connection has a testable shadow: where more people are on the land (or belong, or
+#' finish school), do more report wellness? This function measures it by Spearman's
+#' \eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when there are at most 8
+#' places and from \code{reps} random orderings otherwise. Each estimate carries sampling
+#' error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
+#' \code{reps} draws of both indicators from normal distributions with their published
+#' standard errors: a correlation that the published intervals cannot pin down shows a
+#' wide interval.
 #'
-#' This is an association across places (an ecological one). It cannot say that connection to land
-#' makes a person well, which needs data on persons; a handful of places gives little power; and
-#' a correlation is not a measure of the relationship the authors describe. It is a description of
-#' how the published indicators move together.
+#' This is an association across places (an ecological one). It cannot say that connection
+#' to land makes a person well, which needs data on persons; a handful of places gives
+#' little power; and a correlation is not a measure of the relationship the authors
+#' describe. It is a description of how the published indicators move together.
 #'
 #' @param data A data frame, one row per place.
 #' @param place Column of place names.
 #' @param x,y Columns of the two indicators.
-#' @param x_lower,x_upper,y_lower,y_upper Optional columns of their published limits (for the
-#'   interval).
-#' @param reps Draws for the interval and, past 8 places, for the p-value (default 10,000).
+#' @param x_lower,x_upper,y_lower,y_upper Optional columns of their published limits (for
+#'   the interval).
+#' @param reps Draws for the interval and, past 8 places, for the p-value (default
+#'   10,000).
 #' @param seed Seed for the draws (default 1).
 #' @param conf_level Confidence level (default 0.95).
-#' @return A list of class \code{rmbl_connection}: \code{data} (the places used), \code{rho},
-#'   \code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper}, \code{n}.
-#' @references
-#' Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring land-based experiences
-#' with university students in Ontario. Global Health Promotion 26(3_suppl):64-72.
-#' \doi{10.1177/1757975919828722}
+#' @return A list of class \code{rmbl_connection}: \code{data} (the places used),
+#'   \code{rho}, \code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper},
+#'   \code{n}.
+#' @references Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring
+#' land-based experiences with university students in Ontario. Global Health Promotion
+#' 26(3_suppl):64-72. \doi{10.1177/1757975919828722}
 #'
-#' Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are interconnected. Research
-#' in the Sociology of Health Care 34:85-96. \doi{10.1108/s0275-495920160000034005}
+#' Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
+#' interconnected. Research in the Sociology of Health Care 34:85-96.
+#' \doi{10.1108/s0275-495920160000034005}
 #' @seealso \code{\link{dual_continuum}}.
 #' @examples
-#' # across regions, 2022 (table 41-10-0067-01): where First Nations people report excellent or
+#' # across regions, 2022 (table 41-10-0067-01): where First Nations people report
+#' # excellent or
 #' # very good mental health, do Metis people living in the same region too?
 #' mh <- indigenous_example("mental_health")
 #' mh <- mh[mh$rating == "Excellent or very good" & mh$region != "Canada", ]
 #' fn <- mh[mh$group == "First Nations", ]
 #' me <- mh[mh$group == "M\u00e9tis", ]
 #' d <- merge(fn, me, by = "region", suffixes = c("_fn", "_me"))
-#' ca <- connection_association(d, "region", "estimate_fn", "estimate_me", "lower_fn", "upper_fn",
+#' ca <- connection_association(d, "region", "estimate_fn", "estimate_me", "lower_fn",
+#'                              "upper_fn",
 #'                              "lower_me", "upper_me")
 #' ca
 #' plot(ca)
@@ -328,17 +339,16 @@ print.rmbl_connection <- function(x, ...) {
 
 #' Healing as a process: change in published indicators between two periods
 #'
-#' For each group and indicator, the change between two survey periods with its confidence interval,
-#' wellness indicators first: change over time read as Indigenous scholars describe mental health,
-#' as a process of healing, not as a fixed deficit.
+#' For each group and indicator, the change between two survey periods with its confidence
+#' interval, wellness indicators first: change over time read as Indigenous scholars
+#' describe mental health, as a process of healing, not as a fixed deficit.
 #'
-#' @details
-#' Stewart (2008) describes Indigenous mental health as wellness and as a process of healing; a
-#' process is seen in change. The change \eqn{p_2 - p_1} has the interval
-#' \eqn{p_2 - p_1 \pm z\sqrt{s_1^2 + s_2^2}}, with the standard errors from the published intervals
-#' and the two periods' samples independent (separate cycles of a survey are). A change is only as
-#' comparable as the two periods' questions and designs: Statistics Canada flags breaks in a series,
-#' and a change across one is not a change in the people.
+#' @details Stewart (2008) describes Indigenous mental health as wellness and as a process
+#' of healing; a process is seen in change. The change \eqn{p_2 - p_1} has the interval
+#' \eqn{p_2 - p_1 \pm z\sqrt{s_1^2 + s_2^2}}, with the standard errors from the published
+#' intervals and the two periods' samples independent (separate cycles of a survey are). A
+#' change is only as comparable as the two periods' questions and designs: Statistics
+#' Canada flags breaks in a series, and a change across one is not a change in the people.
 #'
 #' @param data A data frame, one row per group, indicator and period.
 #' @param group,indicator,period,estimate,lower,upper Column names.
@@ -346,23 +356,22 @@ print.rmbl_connection <- function(x, ...) {
 #' @param wellness Optional indicators of wellness, listed first and marked.
 #' @param quality Optional column of quality flags.
 #' @param conf_level Confidence level (default 0.95).
-#' @return A data frame of class \code{rmbl_healing_change}: \code{group}, \code{indicator},
-#'   \code{side}, \code{from}, \code{to}, \code{change}, \code{lower}, \code{upper},
-#'   \code{use_with_caution}.
+#' @return A data frame of class \code{rmbl_healing_change}: \code{group},
+#'   \code{indicator}, \code{side}, \code{from}, \code{to}, \code{change}, \code{lower},
+#'   \code{upper}, \code{use_with_caution}.
 #' @references Stewart SL (2008), see \code{\link{holistic_balance}}.
 #' @seealso \code{\link{wellness_profile}}.
 #' @examples
 #' # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 #' h <- indigenous_example("health_indicators")
+#' belong <- "Sense of belonging to local community, somewhat strong or very strong"
 #' h <- h[h$age == "Total, 18 years and over" & h$indicator %in%
-#'          c("Perceived mental health, very good or excellent",
-#'            "Sense of belonging to local community, somewhat strong or very strong",
+#'          c("Perceived mental health, very good or excellent", belong,
 #'            "Mood disorder", "Anxiety disorder"), ]
 #' hc <- healing_change(h, "group", "indicator", "period", "estimate", "lower", "upper",
 #'                      from = "2015/2018", to = "2019/2022", quality = "quality",
-#'                      wellness = c(
-#'                        "Perceived mental health, very good or excellent",
-#'                        "Sense of belonging to local community, somewhat strong or very strong"))
+#'                      wellness = c("Perceived mental health, very good or excellent",
+#'                                   belong))
 #' hc
 #' plot(hc)
 #' @export
@@ -411,44 +420,48 @@ healing_change <- function(data, group, indicator, period, estimate, lower, uppe
 
 #' A community-weighted index of protective and risk factors
 #'
-#' Combines published indicators into one index for each group or place, with weights the community
-#' sets: protective factors count for, risk factors against. The weights are never estimated.
+#' Combines published indicators into one index for each group or place, with weights the
+#' community sets: protective factors count for, risk factors against. The weights are
+#' never estimated.
 #'
-#' @details
-#' Inuit Tapiriit Kanatami's National Inuit Suicide Prevention Strategy (2016) names risk factors
-#' (among them crowded housing, food insecurity, childhood adversity, mental distress) and protective
-#' factors (among them cultural continuity, social equity, family strength, healthy child
-#' development). How much each matters is a judgement for the people the index describes, so the
-#' function takes the weights as given: positive for protective, negative for risk. The index is
-#' \eqn{\sum_i w_i p_i / \sum_i |w_i|}, with standard error \eqn{\sqrt{\sum_i w_i^2 s_i^2} /
-#' \sum_i |w_i|} from the published intervals (independent estimates). It is a summary of the
-#' indicators under the weights given; with other weights it ranks places otherwise, and it is never
-#' a ranking of Nations or communities on their culture. For Inuit regions, use Inuit data only.
+#' @details Inuit Tapiriit Kanatami's National Inuit Suicide Prevention Strategy (2016)
+#' names risk factors (among them crowded housing, food insecurity, childhood adversity,
+#' mental distress) and protective factors (among them cultural continuity, social equity,
+#' family strength, healthy child development). How much each matters is a judgement for
+#' the people the index describes, so the function takes the weights as given: positive
+#' for protective, negative for risk. The index is \eqn{\sum_i w_i p_i / \sum_i |w_i|},
+#' with standard error \eqn{\sqrt{\sum_i w_i^2 s_i^2} / \sum_i |w_i|} from the published
+#' intervals (independent estimates). It is a summary of the indicators under the weights
+#' given; with other weights it ranks places otherwise, and it is never a ranking of
+#' Nations or communities on their culture. For Inuit regions, use Inuit data only.
 #'
 #' @param data A data frame, one row per group (or place) and indicator.
 #' @param group,indicator,estimate,lower,upper Column names.
-#' @param weights Named weights, one per indicator used: positive for a protective factor, negative
-#'   for a risk factor.
+#' @param weights Named weights, one per indicator used: positive for a protective factor,
+#'   negative for a risk factor.
 #' @param quality Optional column of quality flags.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_community_index}: \code{group}, \code{index},
 #'   \code{lower}, \code{upper}, \code{use_with_caution}; the weights as the attribute
 #'   \code{weights}.
-#' @references
-#' Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy. Ottawa.
-#' \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
+#' @references Inuit Tapiriit Kanatami (2016). National Inuit Suicide Prevention Strategy.
+#' Ottawa. \url{https://itk.ca/national-inuit-suicide-prevention-strategy/}
 #'
 #' Carroll SR, et al. (2020), see \code{\link{holistic_balance}}.
 #' @examples
-#' # weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others would differ
+#' # weights a community might set for adults, 2019/2022 (table 13-10-0924-01); others
+#' # would differ
 #' h <- indigenous_example("health_indicators")
 #' h <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over", ]
-#' ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper", quality = "quality",
-#'         weights = c("Sense of belonging to local community, somewhat strong or very strong" = 2,
-#'                     "Has a regular healthcare provider" = 1,
-#'                     "Perceived life stress, most days quite a bit or extremely stressful" = -2,
-#'                     "Heavy drinking" = -1))
-#' # food insecurity is not published for 2019/2022 (".."): an index that needs it is NA, never filled
+#' w <- c(2, 1, -2, -1)
+#' names(w) <- c("Sense of belonging to local community, somewhat strong or very strong",
+#'               "Has a regular healthcare provider",
+#'               "Perceived life stress, most days quite a bit or extremely stressful",
+#'               "Heavy drinking")
+#' ci <- community_index(h, "group", "indicator", "estimate", "lower", "upper",
+#'                       quality = "quality", weights = w)
+#' # food insecurity is not published for 2019/2022 (".."): an index that needs it is NA,
+#' # never filled
 #' ci
 #' plot(ci)
 #' @export
@@ -493,28 +506,29 @@ community_index <- function(data, group, indicator, estimate, lower, upper, weig
 
 #' How deficit-framed is a set of results?
 #'
-#' Counts how many of the indicators in a report measure distress, deficit or disparity and how many
-#' measure wellness or strength, and names any group reported on deficits alone.
+#' Counts how many of the indicators in a report measure distress, deficit or disparity
+#' and how many measure wellness or strength, and names any group reported on deficits
+#' alone.
 #'
-#' @details
-#' Walter (2016) shows that statistics about Indigenous peoples cluster around five Ds: disparity,
-#' deprivation, disadvantage, dysfunction and difference. Results built only of those describe
-#' Indigenous peoples as their problems. This audit does not measure anything about people; it
-#' measures the report: the share of its indicators that are deficit-framed, overall and per group,
-#' so a report can be balanced before it is published. Pair each gap with a strength-framed level
-#' (\code{\link{wellness_profile}}, \code{\link{dual_continuum}}).
+#' @details Walter (2016) shows that statistics about Indigenous peoples cluster around
+#' five Ds: disparity, deprivation, disadvantage, dysfunction and difference. Results
+#' built only of those describe Indigenous peoples as their problems. This audit does not
+#' measure anything about people; it measures the report: the share of its indicators that
+#' are deficit-framed, overall and per group, so a report can be balanced before it is
+#' published. Pair each gap with a strength-framed level (\code{\link{wellness_profile}},
+#' \code{\link{dual_continuum}}).
 #'
 #' @param x A \code{\link{wellness_profile}}.
-#' @return A list of class \code{rmbl_framing}: \code{by_group} (a data frame of \code{group},
-#'   \code{wellness}, \code{distress}, \code{share_deficit}), \code{share_deficit} overall and
-#'   \code{deficit_only} (the groups with no wellness indicator).
-#' @references
-#' Walter M (2016). Data politics and Indigenous representation in Australian statistics. In Kukutai
-#' T, Taylor J (eds), Indigenous Data Sovereignty: Toward an Agenda, 79-97. ANU Press.
-#' \doi{10.22459/caepr38.11.2016.05}
+#' @return A list of class \code{rmbl_framing}: \code{by_group} (a data frame of
+#'   \code{group}, \code{wellness}, \code{distress}, \code{share_deficit}),
+#'   \code{share_deficit} overall and \code{deficit_only} (the groups with no wellness
+#'   indicator).
+#' @references Walter M (2016). Data politics and Indigenous representation in Australian
+#' statistics. In Kukutai T, Taylor J (eds), Indigenous Data Sovereignty: Toward an
+#' Agenda, 79-97. ANU Press. \doi{10.22459/caepr38.11.2016.05}
 #'
-#' Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research Methodology. Left
-#' Coast Press. \doi{10.4324/9781315426570}
+#' Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research
+#' Methodology. Left Coast Press. \doi{10.4324/9781315426570}
 #' @examples
 #' wb <- indigenous_example("wellbeing")
 #' w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",
@@ -553,8 +567,13 @@ print.rmbl_framing <- function(x, ...) {
 
 #' @rdname plot-methods
 #' @export
-plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL, xlab = NULL, ylab = NULL) {
+plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
   .rmbl_plot_check(x, "rmbl_connection")
+  # axis titles given in ... name the axes; the rest of ... goes to plot()
+  dots <- list(...)
+  xlab <- dots$xlab
+  ylab <- dots$ylab
+  dots$xlab <- dots$ylab <- NULL
   d <- x$data
   cols <- .bl_cols(1L, col, palette)
   o <- .bl_plot_opts()
@@ -565,7 +584,7 @@ plot.rmbl_connection <- function(x, ..., main = NULL, col = NULL, palette = NULL
   has <- !is.null(d$x_se)
   xr <- range(d$x, if (has) d$x + c(-1, 1) * z * rep(d$x_se, each = 2))
   yr <- range(d$y, if (has) d$y + c(-1, 1) * z * rep(d$y_se, each = 2))
-  graphics::plot(xr, yr, type = "n", xlab = "", ylab = "", main = "", ...)
+  do.call(graphics::plot, c(list(xr, yr, type = "n", xlab = "", ylab = "", main = ""), dots))
   .bl_title(.bl_main(main, sprintf("Across places: rho = %.2f (p = %s)", x$rho, format.pval(x$p_value, digits = 2))))
   .bl_xlab(if (is.null(xlab)) x$labels[["x"]] else .rmbl_string1(xlab, "xlab"))
   .bl_ylab(if (is.null(ylab)) x$labels[["y"]] else .rmbl_string1(ylab, "ylab"))

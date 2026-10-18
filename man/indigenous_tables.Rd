@@ -7,23 +7,26 @@
 indigenous_tables(pattern = NULL, refresh = FALSE)
 }
 \arguments{
-\item{pattern}{Optional regular expression matched against the descriptions (case ignored).}
+\item{pattern}{Optional regular expression matched against the descriptions (case
+ignored).}
 
 \item{refresh}{Fetch the manifest again (default \code{FALSE}).}
 }
 \value{
-A data frame: \code{key}, \code{rows}, \code{description}, \code{license}, \code{source}.
+A data frame: \code{key}, \code{rows}, \code{description}, \code{license},
+\code{source}.
 }
 \description{
-Lists the First Nations, Metis and Inuit tables mirrored at the data service: Statistics Canada's
-Indigenous-titled tables (\code{statcan_indigenous}) and the 2021 Census Indigenous Population
-Profile (\code{census2021_ipp}), with their descriptions, row counts and licences, searchable.
+Lists the First Nations, Metis and Inuit tables mirrored at the data service:
+Statistics Canada's Indigenous-titled tables (\code{statcan_indigenous}) and the 2021
+Census Indigenous Population Profile (\code{census2021_ipp}), with their descriptions,
+row counts and licences, searchable.
 }
 \details{
-Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly licensed
-aggregate tables are mirrored. First Nations Information Governance Centre data (the First Nations
-Regional Health Survey and its companions) are governed by the OCAP(R) principles and are not; ask
-the Centre (\url{https://fnigc.ca}).
+Needs the data service key (\code{\link{bricklayer_llm_login}}). Only openly
+licensed aggregate tables are mirrored. First Nations Information Governance Centre
+data (the First Nations Regional Health Survey and its companions) are governed by the
+OCAP(R) principles and are not; ask the Centre (\url{https://fnigc.ca}).
 }
 \examples{
 \dontrun{

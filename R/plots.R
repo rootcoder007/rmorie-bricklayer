@@ -682,7 +682,8 @@ bricklayer_plot_options <- function(...) {
 #'   \item{\code{rmbl_distinctions}}{(\code{\link{distinctions_test}}) each
 #'     group's estimate and the pooled figure, with I-squared.}
 #'   \item{\code{rmbl_connection}}{(\code{\link{connection_association}}) the
-#'     places on the two indicators, with their intervals.}
+#'     places on the two indicators, with their intervals; \code{xlab} and
+#'     \code{ylab} name the axes (default: the indicators' column names).}
 #'   \item{\code{rmbl_healing_change}}{(\code{\link{healing_change}}) the change
 #'     in each indicator between the periods, wellness first.}
 #'   \item{\code{rmbl_profile_share}}{(\code{\link{profile_share}}) each group's
@@ -743,8 +744,6 @@ bricklayer_plot_options <- function(...) {
 #' @param col Colours, overriding the palette.
 #' @param palette A \code{\link{bricklayer_palette}} name, overriding the
 #'   session option.
-#' @param xlab,ylab For \code{rmbl_connection}, the axis titles (default: the indicators'
-#'   column names).
 #' @param what For \code{rmbl_indigenous_gap}, \code{"difference"} or \code{"ratio"}.
 #'   For \code{rmbl_stock_flow}, the measures to draw (one panel
 #'   each): any of \code{"adp"}, \code{"alos"}, \code{"people"},

@@ -14,52 +14,57 @@ age_standardise(
 )
 }
 \arguments{
-\item{events, population}{Numbers of events and of people, one per age group (and group).}
+\item{events, population}{Numbers of events and of people, one per age group (and
+group).}
 
-\item{standard}{The standard population, one count per age group (its shares are the weights).}
+\item{standard}{The standard population, one count per age group (its shares are the
+weights).}
 
-\item{group}{Optional labels: one rate per group, each over the same age groups in the same order.}
+\item{group}{Optional labels: one rate per group, each over the same age groups in the
+same order.}
 
 \item{per}{Rate per this many people (default 100,000).}
 
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
-A data frame with \code{group}, \code{events}, \code{rate}, \code{lower}, \code{upper},
-and the attributes \code{var} (the variances, on the per-person scale) for
-\code{\link{rate_gap}}.
+A data frame with \code{group}, \code{events}, \code{rate}, \code{lower},
+\code{upper}, and the attributes \code{var} (the variances, on the per-person scale)
+for \code{\link{rate_gap}}.
 }
 \description{
-The rate a population would have with the age structure of a standard population, for one or
-more groups, with Fay and Feuer's gamma confidence interval.
+The rate a population would have with the age structure of a standard population, for
+one or more groups, with Fay and Feuer's gamma confidence interval.
 }
 \details{
-With \eqn{d_i} events and \eqn{n_i} people in age group \eqn{i} and standard weights
-\eqn{w_i} (the standard population's shares), the rate is \eqn{y = \sum w_i d_i / n_i}, its
-variance \eqn{v = \sum (w_i / n_i)^2 d_i}, and with \eqn{w_M = \max_i w_i / n_i} the limits are
+With \eqn{d_i} events and \eqn{n_i} people in age group \eqn{i} and standard
+weights \eqn{w_i} (the standard population's shares), the rate is
+\eqn{y = \sum w_i d_i / n_i}, its variance \eqn{v = \sum (w_i / n_i)^2 d_i}, and with
+\eqn{w_M = \max_i w_i / n_i} the limits are
 \eqn{\frac{v}{2y} \chi^2_{2y^2/v}(\alpha/2)} and
-\eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)}
-(Fay and Feuer 1997), exact when there are few events, as there are for small communities. With
-no events the lower limit is 0. Rates are per \code{per} people.
+\eqn{\frac{v + w_M^2}{2(y + w_M)} \chi^2_{2(y + w_M)^2/(v + w_M^2)}(1 - \alpha/2)} (Fay
+and Feuer 1997), exact when there are few events, as there are for small communities.
+With no events the lower limit is 0. Rates are per \code{per} people.
 
-The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis and Inuit
-mortality standardise to the Indigenous population's own age structure (Kumar and Tjepkema 2019),
-which is younger than Canada's.
+The choice of standard matters: Statistics Canada's comparisons of First Nations, Metis
+and Inuit mortality standardise to the Indigenous population's own age structure (Kumar
+and Tjepkema 2019), which is younger than Canada's.
 }
 \examples{
 # made-up counts for one small community, by five age groups, to show the computation
 std <- c(30000, 25000, 20000, 15000, 10000)   # a younger standard population
-age_standardise(events = c(4, 9, 11, 6, 3), population = c(9000, 8000, 6000, 4000, 2000),
+age_standardise(events = c(4, 9, 11, 6, 3), population = c(9000, 8000, 6000, 4000,
+                                                           2000),
                 standard = std)
 }
 \references{
-Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized rates: a method
-based on the gamma distribution. Statistics in Medicine 16(7):791-801.
+Fay MP, Feuer EJ (1997). Confidence intervals for directly standardized
+rates: a method based on the gamma distribution. Statistics in Medicine 16(7):791-801.
 \doi{10.1002/(sici)1097-0258(19970415)16:7<791::aid-sim500>3.0.co;2-#}
 
-Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit (2011-2016):
-Findings from the 2011 Canadian Census Health and Environment Cohort (CanCHEC). Statistics Canada
-99-011-X2019001.
+Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
+(2011-2016): Findings from the 2011 Canadian Census Health and Environment Cohort
+(CanCHEC). Statistics Canada 99-011-X2019001.
 }
 \seealso{
 \code{\link{rate_gap}}.

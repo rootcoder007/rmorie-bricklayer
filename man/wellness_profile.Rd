@@ -18,14 +18,15 @@ wellness_profile(
 )
 }
 \arguments{
-\item{data}{A data frame, one row per group and indicator (as \code{\link{statcan_estimates}}
-gives).}
+\item{data}{A data frame, one row per group and indicator (as
+\code{\link{statcan_estimates}} gives).}
 
-\item{group, indicator, estimate, lower, upper}{Column names: the group, the indicator, the
-percentage and its published limits.}
+\item{group, indicator, estimate, lower, upper}{Column names: the group, the
+indicator, the percentage and its published limits.}
 
-\item{wellness, distress}{The indicators that measure wellness or strength, and those that measure
-distress; rows for any other indicator (totals, "not specified") are left out.}
+\item{wellness, distress}{The indicators that measure wellness or strength, and those
+that measure distress; rows for any other indicator (totals, "not specified") are
+left out.}
 
 \item{domain}{Optional named character vector giving each indicator's holistic domain
 (\code{c("Life satisfaction 8 to 10" = "mental", ...)}).}
@@ -33,32 +34,36 @@ distress; rows for any other indicator (totals, "not specified") are left out.}
 \item{quality}{Optional column of quality flags.}
 }
 \value{
-A data frame of class \code{rmbl_wellness_profile}: \code{group}, \code{indicator},
-\code{side} (\code{"wellness"} or \code{"distress"}), \code{domain}, \code{estimate},
-\code{lower}, \code{upper}, \code{use_with_caution}, wellness rows first; \code{plot()} draws it.
+A data frame of class \code{rmbl_wellness_profile}: \code{group},
+\code{indicator}, \code{side} (\code{"wellness"} or \code{"distress"}),
+\code{domain}, \code{estimate}, \code{lower}, \code{upper}, \code{use_with_caution},
+wellness rows first; \code{plot()} draws it.
 }
 \description{
-Puts a group's wellness indicators (life satisfaction, perceived mental health, a hopeful
-outlook, a sense of belonging, a strong cultural identity) first and its distress indicators
-(suicidal thoughts, mood and anxiety disorders, fair or poor mental health) after them, each with
-its published interval, for each First Nations, Metis and Inuit group: so that a table of
-mental health is never read, or plotted, as a list of deficits alone.
+Puts a group's wellness indicators (life satisfaction, perceived mental health, a
+hopeful outlook, a sense of belonging, a strong cultural identity) first and its
+distress indicators (suicidal thoughts, mood and anxiety disorders, fair or poor mental
+health) after them, each with its published interval, for each First Nations, Metis and
+Inuit group: so that a table of mental health is never read, or plotted, as a list of
+deficits alone.
 }
 \details{
-Indigenous scholars of mental health define it as wellness and as a process of healing, grounded in
-community, cultural identity, a holistic view and interdependence (Stewart 2008), and ask that
-strengths be reported together with disparities (Stewart 2020). This function puts that into how
-published estimates are reported; it adds no estimate of its own. The optional \code{domain}
-groups indicators by the holistic domains of the Medicine Wheel teachings that Gabriel, Mirza and
-Stewart (2022) describe (physical, emotional, mental, spiritual). That grouping is a way to lay
-out the table, not a validated scale, and published tables have few indicators of the spiritual
+Indigenous scholars of mental health define it as wellness and as a process of
+healing, grounded in community, cultural identity, a holistic view and interdependence
+(Stewart 2008), and ask that strengths be reported together with disparities (Stewart
+2020). This function puts that into how published estimates are reported; it adds no
+estimate of its own. The optional \code{domain} groups indicators by the holistic
+domains of the Medicine Wheel teachings that Gabriel, Mirza and Stewart (2022) describe
+(physical, emotional, mental, spiritual). That grouping is a way to lay out the table,
+not a validated scale, and published tables have few indicators of the spiritual
 domain: the profile says what is there and does not stand one indicator in for another.
 
-Aggregate tables show how indicators vary together across groups; they cannot show that culture,
-land or belonging protects mental health within a group, which would be an ecological inference.
-The differences these tables show between groups are the effects of colonial policy and of
-structural conditions, not of the people in the groups (Gabriel et al. 2022); their
-interpretation belongs with First Nations, Metis and Inuit communities.
+Aggregate tables show how indicators vary together across groups; they cannot show that
+culture, land or belonging protects mental health within a group, which would be an
+ecological inference. The differences these tables show between groups are the effects
+of colonial policy and of structural conditions, not of the people in the groups
+(Gabriel et al. 2022); their interpretation belongs with First Nations, Metis and Inuit
+communities.
 }
 \examples{
 # well-being, 2024 (table 41-10-0082-01)
@@ -74,17 +79,19 @@ w
 plot(w)
 }
 \references{
-Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing from Native
-counsellors in Canada. International Journal of Health Promotion and Education 46(2):49-56.
-\doi{10.1080/14635240.2008.10708129}
+Stewart SL (2008). Promoting Indigenous mental health: cultural
+perspectives on healing from Native counsellors in Canada. International Journal of
+Health Promotion and Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 
-Stewart S (2020). Addressing strengths and disparities in Indigenous health. International Journal
-of Indigenous Health 15(1):4. \doi{10.32799/ijih.v15i1.34976}
+Stewart S (2020). Addressing strengths and disparities in Indigenous health.
+International Journal of Indigenous Health 15(1):4. \doi{10.32799/ijih.v15i1.34976}
 
-Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing through the
-life stories of Indigenous youth who have experienced homelessness. International Journal of
-Environmental Research and Public Health 19(20):13402. \doi{10.3390/ijerph192013402}
+Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
+through the life stories of Indigenous youth who have experienced homelessness.
+International Journal of Environmental Research and Public Health 19(20):13402.
+\doi{10.3390/ijerph192013402}
 }
 \seealso{
-\code{\link{statcan_estimates}}, \code{\link{indigenous_gap}}, \code{\link{ordinal_compare}}.
+\code{\link{statcan_estimates}}, \code{\link{indigenous_gap}},
+\code{\link{ordinal_compare}}.
 }

@@ -13,34 +13,39 @@ trc_progress(
 )
 }
 \arguments{
-\item{completed}{Cumulative number completed at each date (default: \code{\link{trc_completions}}).}
+\item{completed}{Cumulative number completed at each date (default:
+\code{\link{trc_completions}}).}
 
 \item{year_end}{The year each count was made to (end of year).}
 
 \item{total}{Number of Calls to Action (94).}
 
-\item{start}{When counting began, as a year with a fraction (2015.96: December 15, 2015).}
+\item{start}{When counting began, as a year with a fraction (2015.96: December 15,
+2015).}
 
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
-A one-row data frame: \code{completed}, \code{remaining}, \code{years}, \code{rate},
-\code{rate_lower}, \code{rate_upper}, \code{complete_by}, \code{complete_by_early},
-\code{complete_by_late}, of class \code{rmbl_trc_progress}; \code{plot()} draws the
-completions and the projection, with the band the rate's interval gives.
+A one-row data frame: \code{completed}, \code{remaining}, \code{years},
+\code{rate}, \code{rate_lower}, \code{rate_upper}, \code{complete_by},
+\code{complete_by_early}, \code{complete_by_late}, of class \code{rmbl_trc_progress};
+\code{plot()} draws the completions and the projection, with the band the rate's
+interval gives.
 }
 \description{
-From cumulative counts of completed Calls to Action over time, the completion rate (calls a year),
-its exact Poisson interval, and the year all 94 would be complete at that rate.
+From cumulative counts of completed Calls to Action over time, the completion rate
+(calls a year), its exact Poisson interval, and the year all 94 would be complete at
+that rate.
 }
 \details{
-Completions are taken as a Poisson process with a constant rate over the span from the start
-(\code{start}, the Commission's final report in December 2015) to the last count: the rate is
-\eqn{c / T} with the exact (Garwood) interval for \eqn{c} completed calls, and the projection is
-the year \eqn{94 - c} more would take at that rate (at the interval's ends, its range). A constant
-rate is the simplest model and the one the Yellowhead Institute's projection uses ("42 years, or
-until 2065", 2022); the pace has not been constant, so the projection is a description of the pace
-so far, not a forecast.
+Completions are taken as a Poisson process with a constant rate over the span
+from the start (\code{start}, the Commission's final report in December 2015) to the
+last count: the rate is \eqn{c / T} with the exact (Garwood) interval for \eqn{c}
+completed calls, and the projection is the year \eqn{94 - c} more would take at that
+rate (at the interval's ends, its range). A constant rate is the simplest model and the
+one the Yellowhead Institute's projection uses ("42 years, or until 2065", 2022); the
+pace has not been constant, so the projection is a description of the pace so far, not
+a forecast.
 }
 \examples{
 p <- trc_progress()

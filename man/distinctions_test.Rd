@@ -24,28 +24,30 @@ distinctions_test(
 \item{conf_level}{Confidence level of the published intervals (default 0.95).}
 }
 \value{
-A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used, with their
-standard errors), \code{pooled} (the inverse-variance mean), \code{q}, \code{df},
-\code{p_value}, \code{i2}.
+A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used,
+with their standard errors), \code{pooled} (the inverse-variance mean), \code{q},
+\code{df}, \code{p_value}, \code{i2}.
 }
 \description{
-Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more than their
-published intervals allow, and says how much of their spread is real: the evidence for reporting
-each distinctly rather than as one pan-Indigenous figure.
+Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more
+than their published intervals allow, and says how much of their spread is real: the
+evidence for reporting each distinctly rather than as one pan-Indigenous figure.
 }
 \details{
-With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published intervals and weights
-\eqn{w_g = 1/s_g^2}, Cochran's \eqn{Q = \sum w_g (y_g - \bar y_w)^2} has a chi-squared distribution
-on \eqn{G - 1} degrees of freedom when the groups share one value, and
-\eqn{I^2 = \max(0, (Q - (G-1))/Q)} is the share of the spread that is real rather than sampling
-error (Higgins and Thompson 2002). A pooled figure is a weighted mean of different populations
-whenever \eqn{I^2} is large; the population-weighted total Statistics Canada publishes also
-depends on how many people are in each group, so it is mostly a First Nations figure where First
-Nations people are most of the Indigenous population. Rows that pool identities are left out
-(see \code{\link{indigenous_gap}}).
+With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published
+intervals and weights \eqn{w_g = 1/s_g^2}, Cochran's
+\eqn{Q = \sum w_g (y_g - \bar y_w)^2} has a chi-squared distribution on \eqn{G - 1}
+degrees of freedom when the groups share one value, and
+\eqn{I^2 = \max(0, (Q - (G-1))/Q)} is the share of the spread that is real rather than
+sampling error (Higgins and Thompson 2002). A pooled figure is a weighted mean of
+different populations whenever \eqn{I^2} is large; the population-weighted total
+Statistics Canada publishes also depends on how many people are in each group, so it is
+mostly a First Nations figure where First Nations people are most of the Indigenous
+population. Rows that pool identities are left out (see \code{\link{indigenous_gap}}).
 }
 \examples{
-# perceived mental health very good or excellent, 2019/2022, adults (table 13-10-0924-01)
+# perceived mental health very good or excellent, 2019/2022, adults (table
+# 13-10-0924-01)
 h <- indigenous_example("health_indicators")
 mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
           h$group != "Non-Indigenous" &
@@ -55,8 +57,8 @@ dt
 plot(dt)
 }
 \references{
-Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a meta-analysis.
-Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
+Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a
+meta-analysis. Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
 }
 \seealso{
 \code{\link{indigenous_gap}}.

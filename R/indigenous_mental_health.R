@@ -12,59 +12,69 @@
 
 #' The estimates of a Statistics Canada table, with their confidence limits
 #'
-#' Statistics Canada's tables give each estimate on several rows: the estimate itself (a percent, a
-#' rate, a count, a life expectancy), its low and high confidence limits, or its coefficient of
-#' variation or standard error, all in one statistics column (\code{Statistics},
-#' \code{Characteristics}, \code{Statistics (3)}, ...). This puts them side by side, one row per cell
-#' of the table and measure, ready for \code{\link{indigenous_gap}}, \code{\link{ordinal_compare}},
-#' \code{\link{standardise_prevalence}} and the rest. Every table reads: one without a statistics
-#' column (a census count) gives each value as its own estimate, with no limits.
+#' Statistics Canada's tables give each estimate on several rows: the estimate itself (a
+#' percent, a rate, a count, a life expectancy), its low and high confidence limits, or
+#' its coefficient of variation or standard error, all in one statistics column
+#' (\code{Statistics}, \code{Characteristics}, \code{Statistics (3)}, ...). This puts them
+#' side by side, one row per cell of the table and measure, ready for
+#' \code{\link{indigenous_gap}}, \code{\link{ordinal_compare}},
+#' \code{\link{standardise_prevalence}} and the rest. Every table reads: one without a
+#' statistics column (a census count) gives each value as its own estimate, with no
+#' limits.
 #'
-#' @details
-#' Each label of the statistics column is read as an estimate or as one of its measures of
-#' precision, in every form the tables use: \code{"Low 95\% confidence interval"},
+#' @details Each label of the statistics column is read as an estimate or as one of its
+#' measures of precision, in every form the tables use:
+#' \code{"Low 95\% confidence interval"},
 #' \code{"High 95\% confidence interval, age-standardized rate"},
 #' \code{"Confidence interval lower bound of count"},
-#' \code{"95\% confidence interval (upper limit)"}, \code{"95\% confidence interval lower bound,
-#' 2020"}, \code{"Coefficient of variation for percent"}, \code{"Standard error"}. A limit that
-#' names its measure is matched to it (ignoring case and spacing); one that names none, or a name
-#' that fits several measures (\code{"potential years of life lost"} in a table with a number, a
-#' crude rate and an age-standardised rate of them), is matched to the measure with the same unit
-#' (\code{UOM}) whose estimates it contains in every cell, and left unmatched (said in the attribute
-#' \code{unmatched}) if no single measure fits. A coefficient of variation \eqn{c} (in percent) gives
-#' the limits \eqn{e(1 \mp z c/100)}, a standard error \eqn{s} the limits \eqn{e \mp z s}; the
-#' column \code{ci_source} says which (\code{"published"}, \code{"cv"} or \code{"se"}). Published
-#' limits that do not contain their own estimate (it happens: a 100\% with limits 85.5 to 98.6 in
-#' table 41-10-0012) are kept as published and marked \code{"inconsistent"}; the comparisons warn
-#' and leave such a row out. A limit is matched to a measure when it fits 95\% of the cells.
+#' \code{"95\% confidence interval (upper limit)"},
+#' \code{"95\% confidence interval lower bound, 2020"},
+#' \code{"Coefficient of variation for percent"}, \code{"Standard error"}. A limit that
+#' names its measure is matched to it (ignoring case and spacing); one that names none, or
+#' a name that fits several measures (\code{"potential years of life lost"} in a table
+#' with a number, a crude rate and an age-standardised rate of them), is matched to the
+#' measure with the same unit (\code{UOM}) whose estimates it contains in every cell, and
+#' left unmatched (said in the attribute \code{unmatched}) if no single measure fits. A
+#' coefficient of variation \eqn{c} (in percent) gives the limits \eqn{e(1 \mp z c/100)},
+#' a standard error \eqn{s} the limits \eqn{e \mp z s}; the column \code{ci_source} says
+#' which (\code{"published"}, \code{"cv"} or \code{"se"}). Published limits that do not
+#' contain their own estimate (it happens: a 100\% with limits 85.5 to 98.6 in table
+#' 41-10-0012) are kept as published and marked \code{"inconsistent"}; the comparisons
+#' warn and leave such a row out. A limit is matched to a measure when it fits 95\% of the
+#' cells.
 #'
 #' Every other column but the metadata (\code{VECTOR}, \code{COORDINATE}, \code{UOM}, ...)
-#' identifies the cell, \code{DGUID} among them (one place name can name several geographies),
-#' with the spaces some labels end in trimmed. The quality flag is the
-#' estimate's: an \code{F} or \code{x} estimate is \code{NA} (see \code{\link{statcan_tidy}}), and
-#' so are its limits.
+#' identifies the cell, \code{DGUID} among them (one place name can name several
+#' geographies), with the spaces some labels end in trimmed. The quality flag is the
+#' estimate's: an \code{F} or \code{x} estimate is \code{NA} (see
+#' \code{\link{statcan_tidy}}), and so are its limits.
 #'
-#' @param x A table read by \code{\link{statcan_tidy}}, a data frame as downloaded, or a table key.
-#' @return A data frame, one row per cell and measure: the identifying columns, \code{measure},
-#'   \code{estimate}, \code{lower}, \code{upper}, \code{ci_source} and \code{quality}; the attribute
-#'   \code{conf_level} is the level of the limits, and \code{unmatched} names any limits that could
-#'   not be matched to one measure.
-#' @references Statistics Canada (2023). Self-perceived mental health of First Nations people living
-#'   off reserve, Metis and Inuit by age group and gender. Table 41-10-0067-01.
-#'   \doi{10.25318/4110006701-eng}
-#' @seealso \code{\link{statcan_tidy}}, \code{\link{indigenous_gap}}, \code{\link{ordinal_compare}}.
+#' @param x A table read by \code{\link{statcan_tidy}}, a data frame as downloaded, or a
+#'   table key.
+#' @return A data frame, one row per cell and measure: the identifying columns,
+#'   \code{measure}, \code{estimate}, \code{lower}, \code{upper}, \code{ci_source} and
+#'   \code{quality}; the attribute \code{conf_level} is the level of the limits, and
+#'   \code{unmatched} names any limits that could not be matched to one measure.
+#' @references Statistics Canada (2023). Self-perceived mental health of First Nations
+#'   people living off reserve, Metis and Inuit by age group and gender. Table
+#'   41-10-0067-01. \doi{10.25318/4110006701-eng}
+#' @seealso \code{\link{statcan_tidy}}, \code{\link{indigenous_gap}},
+#'   \code{\link{ordinal_compare}}.
 #' @examples
-#' # the layout of a downloaded table: percent and number of persons, with limits for the percent
+#' # the layout of a downloaded table: percent and number of persons, with limits for the
+#' # percent
 #' d <- data.frame(REF_DATE = "2022", GEO = "Canada",
 #'                 `Indigenous identity` = rep(c("First Nations", "Metis"), each = 4),
-#'                 Statistics = rep(c("Number of persons", "Percent", "Low 95% confidence interval",
+#'                 Statistics = rep(c("Number of persons", "Percent",
+#'                                    "Low 95% confidence interval",
 #'                                    "High 95% confidence interval"), 2),
 #'                 UOM = rep(c("Persons", "Percent", "Percent", "Percent"), 2),
 #'                 VALUE = c(415000, 47.1, 45.2, 49.0, 320000, 50.3, 48.1, 52.5),
 #'                 STATUS = "", check.names = FALSE)
 #' statcan_estimates(d)
 #' # a rate with its coefficient of variation instead of limits
-#' r <- data.frame(GEO = "Canada", Characteristics = c("Rate", "Coefficient of variation for rate"),
+#' r <- data.frame(GEO = "Canada",
+#'                 Characteristics = c("Rate", "Coefficient of variation for rate"),
 #'                 VALUE = c(12.5, 8), STATUS = "")
 #' statcan_estimates(r)
 #' @export
@@ -209,57 +219,62 @@ statcan_estimates <- function(x) {
 
 #' Compare rated scales (perceived mental health, life satisfaction) between groups
 #'
-#' For a rated scale published as the percentage in each category with its confidence limits
-#' (perceived mental health from poor to excellent, life satisfaction from 0 to 10, agreement with a
-#' statement), the probability that a person in each group rates higher than a person in the
-#' reference group, with its confidence interval: a comparison of the whole distribution, not of one
-#' category cut from it.
+#' For a rated scale published as the percentage in each category with its confidence
+#' limits (perceived mental health from poor to excellent, life satisfaction from 0 to 10,
+#' agreement with a statement), the probability that a person in each group rates higher
+#' than a person in the reference group, with its confidence interval: a comparison of the
+#' whole distribution, not of one category cut from it.
 #'
-#' @details
-#' With shares \eqn{p_i} in the group and \eqn{q_j} in the reference over categories ordered from
-#' lowest to highest, the probability of a higher rating, ties counted half, is
-#' \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q} the reference's cumulative shares: the
-#' Mann-Whitney probability (Agresti 1980's \eqn{\alpha} on the probability scale), equal to the mean
-#' ridit of the group with the reference as the standard (Bross 1958). 0.5 is no difference;
-#' \eqn{2A - 1} is Cliff's \eqn{\delta}, the share rating higher less the share rating lower.
+#' @details With shares \eqn{p_i} in the group and \eqn{q_j} in the reference over
+#' categories ordered from lowest to highest, the probability of a higher rating, ties
+#' counted half, is \eqn{A = \sum_i p_i (Q_{i-1} + q_i / 2)} with \eqn{Q} the reference's
+#' cumulative shares: the Mann-Whitney probability (Agresti 1980's \eqn{\alpha} on the
+#' probability scale), equal to the mean ridit of the group with the reference as the
+#' standard (Bross 1958). 0.5 is no difference; \eqn{2A - 1} is Cliff's \eqn{\delta}, the
+#' share rating higher less the share rating lower.
 #'
-#' Its variance is that of the two-sample U statistic, \eqn{\sigma_1^2 / n_1 + \sigma_0^2 / n_0},
-#' with \eqn{\sigma_1^2} the variance over the group of each category's placement in the reference
-#' and \eqn{\sigma_0^2} the converse (Brunner and Munzel 2000). The sample sizes are the effective
-#' ones the published limits imply: for each category, \eqn{n = p(1 - p) / s^2} with \eqn{s} the
-#' standard error from the limits' width, taking the median over the categories. That carries the
-#' design effect of the survey's weights and clusters, which the counts of persons (population
+#' Its variance is that of the two-sample U statistic,
+#' \eqn{\sigma_1^2 / n_1 + \sigma_0^2 / n_0}, with \eqn{\sigma_1^2} the variance over the
+#' group of each category's placement in the reference and \eqn{\sigma_0^2} the converse
+#' (Brunner and Munzel 2000). The sample sizes are the effective ones the published limits
+#' imply: for each category, \eqn{n = p(1 - p) / s^2} with \eqn{s} the standard error from
+#' the limits' width, taking the median over the categories. That carries the design
+#' effect of the survey's weights and clusters, which the counts of persons (population
 #' totals) do not. The interval is built on the logit scale, so it stays inside 0 and 1.
 #'
-#' The categories given in \code{levels} are taken as the whole scale: rows for totals, for
-#' combined categories ("Excellent or very good") and for "not specified" are left out, and the
-#' shares are rescaled to sum to one over the levels. A group with a suppressed or missing category
-#' is not compared, since its distribution is unknown; one with an \code{E} category is compared and
-#' marked.
+#' The categories given in \code{levels} are taken as the whole scale: rows for totals,
+#' for combined categories ("Excellent or very good") and for "not specified" are left
+#' out, and the shares are rescaled to sum to one over the levels. A group with a
+#' suppressed or missing category is not compared, since its distribution is unknown; one
+#' with an \code{E} category is compared and marked.
 #'
-#' A higher rating means better only on a scale that runs that way. Give \code{levels} from the
-#' least to the most favourable so that \code{prob_better} reads as its name says.
+#' A higher rating means better only on a scale that runs that way. Give \code{levels}
+#' from the least to the most favourable so that \code{prob_better} reads as its name
+#' says.
 #'
-#' @param data A data frame, one row per group and category (as \code{\link{statcan_estimates}}
-#'   gives, filtered to one geography, age group and gender).
-#' @param group,category,estimate,lower,upper Column names: the group, the category, the percentage
-#'   and its published limits.
+#' @param data A data frame, one row per group and category (as
+#'   \code{\link{statcan_estimates}} gives, filtered to one geography, age group and
+#'   gender).
+#' @param group,category,estimate,lower,upper Column names: the group, the category, the
+#'   percentage and its published limits.
 #' @param levels The categories, from the lowest (least favourable) to the highest.
 #' @param reference The label of the reference group.
 #' @param quality Optional column of quality flags.
-#' @param conf_level Confidence level of the published limits and of the result (default 0.95).
-#' @return A data frame of class \code{rmbl_ordinal_compare}: \code{group}, \code{reference},
-#'   \code{prob_better}, \code{lower}, \code{upper}, \code{delta}, \code{n_eff},
-#'   \code{n_eff_reference}, \code{use_with_caution}, \code{pan_indigenous}; the attribute
-#'   \code{shares} is the matrix of shares (groups by levels), which \code{plot()} draws.
-#' @references
-#' Agresti A (1980). Generalized odds ratios for ordinal data. Biometrics 36(1):59-67.
-#' \doi{10.2307/2530495}
+#' @param conf_level Confidence level of the published limits and of the result (default
+#'   0.95).
+#' @return A data frame of class \code{rmbl_ordinal_compare}: \code{group},
+#'   \code{reference}, \code{prob_better}, \code{lower}, \code{upper}, \code{delta},
+#'   \code{n_eff}, \code{n_eff_reference}, \code{use_with_caution}, \code{pan_indigenous};
+#'   the attribute \code{shares} is the matrix of shares (groups by levels), which
+#'   \code{plot()} draws.
+#' @references Agresti A (1980). Generalized odds ratios for ordinal data. Biometrics
+#' 36(1):59-67. \doi{10.2307/2530495}
 #'
-#' Bross IDJ (1958). How to use ridit analysis. Biometrics 14(1):18-38. \doi{10.2307/2527727}
+#' Bross IDJ (1958). How to use ridit analysis. Biometrics 14(1):18-38.
+#' \doi{10.2307/2527727}
 #'
-#' Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory and a
-#' small-sample approximation. Biometrical Journal 42(1):17-25.
+#' Brunner E, Munzel U (2000). The nonparametric Behrens-Fisher problem: asymptotic theory
+#' and a small-sample approximation. Biometrical Journal 42(1):17-25.
 #' \doi{10.1002/(SICI)1521-4036(200001)42:1<17::AID-BIMJ17>3.0.CO;2-U}
 
 #' @seealso \code{\link{statcan_estimates}}, \code{\link{indigenous_gap}}.
@@ -355,42 +370,50 @@ ordinal_compare <- function(data, group, category, estimate, lower, upper, level
 
 #' Age-standardise survey percentages
 #'
-#' The percentage a group would have with the age structure of a standard population, from the
-#' percentage and published limits in each age group: for comparing First Nations, Metis and Inuit
-#' prevalences (suicidal thoughts, mood and anxiety disorders, heavy drinking) with each other and
-#' with an older population, when the age pattern of the outcome is steep.
+#' The percentage a group would have with the age structure of a standard population, from
+#' the percentage and published limits in each age group: for comparing First Nations,
+#' Metis and Inuit prevalences (suicidal thoughts, mood and anxiety disorders, heavy
+#' drinking) with each other and with an older population, when the age pattern of the
+#' outcome is steep.
 #'
-#' @details
-#' With percentages \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and standard weights
-#' \eqn{w_i} (the standard's shares), the standardised percentage is \eqn{\sum w_i p_i} with standard
-#' error \eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups being disjoint domains of the survey (treated
-#' as independent: see \code{\link{indigenous_gap}}). The interval is normal, cut at 0 and 100. A
-#' group with a suppressed or missing age group has no standardised value: the age group is not
+#' @details With percentages \eqn{p_i}, standard errors \eqn{s_i = (u_i - l_i) / (2z)} and
+#' standard weights \eqn{w_i} (the standard's shares), the standardised percentage is
+#' \eqn{\sum w_i p_i} with standard error \eqn{\sqrt{\sum w_i^2 s_i^2}}, the age groups
+#' being disjoint domains of the survey (treated as independent: see
+#' \code{\link{indigenous_gap}}). The interval is normal, cut at 0 and 100. A group with a
+#' suppressed or missing age group has no standardised value: the age group is not
 #' imputed.
 #'
-#' @param estimate,lower,upper The percentage in each age group (and group) and its published limits.
-#' @param standard The standard population, one count per age group (its shares are the weights).
-#' @param group Optional labels: one result per group, each over the same age groups in order.
+#' @param estimate,lower,upper The percentage in each age group (and group) and its
+#'   published limits.
+#' @param standard The standard population, one count per age group (its shares are the
+#'   weights).
+#' @param group Optional labels: one result per group, each over the same age groups in
+#'   order.
 #' @param quality Optional quality flags, one per row.
 #' @param conf_level Confidence level (default 0.95).
 #' @return A data frame of class \code{rmbl_prevalence}: \code{group}, \code{estimate},
 #'   \code{lower}, \code{upper}, \code{se}, \code{use_with_caution}.
-#' @references
-#' Klein RJ, Schoenborn CA (2001). Age adjustment using the 2000 projected U.S. population. Healthy
-#' People 2010 Statistical Notes 20. National Center for Health Statistics.
+#' @references Klein RJ, Schoenborn CA (2001). Age adjustment using the 2000 projected
+#' U.S. population. Healthy People 2010 Statistical Notes 20. National Center for Health
+#' Statistics.
 #'
-#' Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit (2011-2016):
-#' findings from the 2011 Canadian Census Health and Environment Cohort (CanCHEC). National Household
-#' Survey: Aboriginal Peoples, Statistics Canada catalogue no. 99-011-X2019001.
-#' @seealso \code{\link{age_standardise}} for counts of events, \code{\link{indigenous_gap}}.
+#' Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
+#' (2011-2016): findings from the 2011 Canadian Census Health and Environment Cohort
+#' (CanCHEC). National Household Survey: Aboriginal Peoples, Statistics Canada catalogue
+#' no. 99-011-X2019001.
+#' @seealso \code{\link{age_standardise}} for counts of events,
+#'   \code{\link{indigenous_gap}}.
 #' @examples
-#' # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01), standardised
+#' # seriously contemplated suicide in the past 12 months, 2017 (table 41-10-0021-01),
+#' # standardised
 #' # to one age structure so the three groups compare
 #' si <- indigenous_example("suicidal_ideation")
 #' si <- si[si$measure == "Seriously contemplated suicide in the past 12 months" &
 #'            si$age != "Total, 15 years and over", ]
 #' si <- si[order(si$group, si$age), ]
-#' sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = c(20, 18, 17, 17, 28),
+#' sp <- standardise_prevalence(si$estimate, si$lower, si$upper, standard = c(20, 18, 17,
+#'                                                                            17, 28),
 #'                              group = si$group, quality = si$quality)
 #' sp
 #' plot(sp)
@@ -566,52 +589,57 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 
 #' Wellness beside distress: a strengths-first profile of published indicators
 #'
-#' Puts a group's wellness indicators (life satisfaction, perceived mental health, a hopeful
-#' outlook, a sense of belonging, a strong cultural identity) first and its distress indicators
-#' (suicidal thoughts, mood and anxiety disorders, fair or poor mental health) after them, each with
-#' its published interval, for each First Nations, Metis and Inuit group: so that a table of
-#' mental health is never read, or plotted, as a list of deficits alone.
+#' Puts a group's wellness indicators (life satisfaction, perceived mental health, a
+#' hopeful outlook, a sense of belonging, a strong cultural identity) first and its
+#' distress indicators (suicidal thoughts, mood and anxiety disorders, fair or poor mental
+#' health) after them, each with its published interval, for each First Nations, Metis and
+#' Inuit group: so that a table of mental health is never read, or plotted, as a list of
+#' deficits alone.
 #'
-#' @details
-#' Indigenous scholars of mental health define it as wellness and as a process of healing, grounded in
-#' community, cultural identity, a holistic view and interdependence (Stewart 2008), and ask that
-#' strengths be reported together with disparities (Stewart 2020). This function puts that into how
-#' published estimates are reported; it adds no estimate of its own. The optional \code{domain}
-#' groups indicators by the holistic domains of the Medicine Wheel teachings that Gabriel, Mirza and
-#' Stewart (2022) describe (physical, emotional, mental, spiritual). That grouping is a way to lay
-#' out the table, not a validated scale, and published tables have few indicators of the spiritual
+#' @details Indigenous scholars of mental health define it as wellness and as a process of
+#' healing, grounded in community, cultural identity, a holistic view and interdependence
+#' (Stewart 2008), and ask that strengths be reported together with disparities (Stewart
+#' 2020). This function puts that into how published estimates are reported; it adds no
+#' estimate of its own. The optional \code{domain} groups indicators by the holistic
+#' domains of the Medicine Wheel teachings that Gabriel, Mirza and Stewart (2022) describe
+#' (physical, emotional, mental, spiritual). That grouping is a way to lay out the table,
+#' not a validated scale, and published tables have few indicators of the spiritual
 #' domain: the profile says what is there and does not stand one indicator in for another.
 #'
-#' Aggregate tables show how indicators vary together across groups; they cannot show that culture,
-#' land or belonging protects mental health within a group, which would be an ecological inference.
-#' The differences these tables show between groups are the effects of colonial policy and of
-#' structural conditions, not of the people in the groups (Gabriel et al. 2022); their
-#' interpretation belongs with First Nations, Metis and Inuit communities.
+#' Aggregate tables show how indicators vary together across groups; they cannot show that
+#' culture, land or belonging protects mental health within a group, which would be an
+#' ecological inference. The differences these tables show between groups are the effects
+#' of colonial policy and of structural conditions, not of the people in the groups
+#' (Gabriel et al. 2022); their interpretation belongs with First Nations, Metis and Inuit
+#' communities.
 #'
-#' @param data A data frame, one row per group and indicator (as \code{\link{statcan_estimates}}
-#'   gives).
-#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator, the
-#'   percentage and its published limits.
-#' @param wellness,distress The indicators that measure wellness or strength, and those that measure
-#'   distress; rows for any other indicator (totals, "not specified") are left out.
+#' @param data A data frame, one row per group and indicator (as
+#'   \code{\link{statcan_estimates}} gives).
+#' @param group,indicator,estimate,lower,upper Column names: the group, the
+#'   indicator, the percentage and its published limits.
+#' @param wellness,distress The indicators that measure wellness or strength, and those
+#'   that measure distress; rows for any other indicator (totals, "not specified") are
+#'   left out.
 #' @param domain Optional named character vector giving each indicator's holistic domain
 #'   (\code{c("Life satisfaction 8 to 10" = "mental", ...)}).
 #' @param quality Optional column of quality flags.
-#' @return A data frame of class \code{rmbl_wellness_profile}: \code{group}, \code{indicator},
-#'   \code{side} (\code{"wellness"} or \code{"distress"}), \code{domain}, \code{estimate},
-#'   \code{lower}, \code{upper}, \code{use_with_caution}, wellness rows first; \code{plot()} draws it.
-#' @references
-#' Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing from Native
-#' counsellors in Canada. International Journal of Health Promotion and Education 46(2):49-56.
-#' \doi{10.1080/14635240.2008.10708129}
+#' @return A data frame of class \code{rmbl_wellness_profile}: \code{group},
+#'   \code{indicator}, \code{side} (\code{"wellness"} or \code{"distress"}),
+#'   \code{domain}, \code{estimate}, \code{lower}, \code{upper}, \code{use_with_caution},
+#'   wellness rows first; \code{plot()} draws it.
+#' @references Stewart SL (2008). Promoting Indigenous mental health: cultural
+#' perspectives on healing from Native counsellors in Canada. International Journal of
+#' Health Promotion and Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 #'
-#' Stewart S (2020). Addressing strengths and disparities in Indigenous health. International Journal
-#' of Indigenous Health 15(1):4. \doi{10.32799/ijih.v15i1.34976}
+#' Stewart S (2020). Addressing strengths and disparities in Indigenous health.
+#' International Journal of Indigenous Health 15(1):4. \doi{10.32799/ijih.v15i1.34976}
 #'
-#' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing through the
-#' life stories of Indigenous youth who have experienced homelessness. International Journal of
-#' Environmental Research and Public Health 19(20):13402. \doi{10.3390/ijerph192013402}
-#' @seealso \code{\link{statcan_estimates}}, \code{\link{indigenous_gap}}, \code{\link{ordinal_compare}}.
+#' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
+#' through the life stories of Indigenous youth who have experienced homelessness.
+#' International Journal of Environmental Research and Public Health 19(20):13402.
+#' \doi{10.3390/ijerph192013402}
+#' @seealso \code{\link{statcan_estimates}}, \code{\link{indigenous_gap}},
+#'   \code{\link{ordinal_compare}}.
 #' @examples
 #' # well-being, 2024 (table 41-10-0082-01)
 #' wb <- indigenous_example("wellbeing")
@@ -727,42 +755,45 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 
 #' Holistic balance: how evenly wellness is held across the domains of a whole person
 #'
-#' For each group, from published percentages of wellness in each holistic domain (physical,
-#' emotional, mental, spiritual, or the domains a community names), the overall level of wellness and
-#' how balanced it is across the domains, with Monte Carlo intervals from the published ones.
+#' For each group, from published percentages of wellness in each holistic domain
+#' (physical, emotional, mental, spiritual, or the domains a community names), the overall
+#' level of wellness and how balanced it is across the domains, with Monte Carlo intervals
+#' from the published ones.
 #'
-#' @details
-#' Indigenous understandings of mental health are holistic: wellness is a balance among the domains
-#' of a person, and illness a loss of that balance (Stewart 2008; Gabriel, Mirza and Stewart 2022).
-#' A single indicator, or an average of indicators, cannot show balance: a group with 80\% in two
-#' domains and 20\% in two others has the same average as one with 50\% in all four. This method,
-#' which is ours and inspired by that work rather than taken from it, measures balance as the ratio
-#' of the weighted geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
+#' @details Indigenous understandings of mental health are holistic: wellness is a balance
+#' among the domains of a person, and illness a loss of that balance (Stewart 2008;
+#' Gabriel, Mirza and Stewart 2022). A single indicator, or an average of indicators,
+#' cannot show balance: a group with 80\% in two domains and 20\% in two others has the
+#' same average as one with 50\% in all four. This method, which is ours and inspired by
+#' that work rather than taken from it, measures balance as the ratio of the weighted
+#' geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
 #' \deqn{B = \exp\left(\sum_k w_k \log p_k\right) / \sum_k w_k p_k,}
-#' one less Atkinson's (1970) index with inequality aversion 1. \eqn{B = 1} when every domain is at
-#' the same level and falls toward 0 as one domain falls behind the others; it does not depend on the
-#' overall level, which is reported beside it (\code{level}, \eqn{\sum_k w_k p_k}) with the weakest
-#' domain.
+#' one less Atkinson's (1970) index with inequality aversion 1. \eqn{B = 1} when every
+#' domain is at the same level and falls toward 0 as one domain falls behind the others;
+#' it does not depend on the overall level, which is reported beside it (\code{level},
+#' \eqn{\sum_k w_k p_k}) with the weakest domain.
 #'
-#' The weights \code{weights} say how much each domain counts. They are equal by default; a community
-#' that holds its own view of the domains sets its own (the CARE principle of authority to control,
-#' Carroll et al. 2020), and the result says which weights it used.
+#' The weights \code{weights} say how much each domain counts. They are equal by default;
+#' a community that holds its own view of the domains sets its own (the CARE principle of
+#' authority to control, Carroll et al. 2020), and the result says which weights it used.
 #'
-#' Several indicators in one domain are averaged, their standard errors combined as independent.
-#' The intervals come from \code{reps} draws of every domain level from a normal distribution on the
-#' logit scale with the standard error of its published interval, the domains independent: \eqn{B}
-#' is bounded by 1 and its sampling distribution is skewed near 1, where the delta method fails. A
-#' group with a suppressed or missing domain has no balance: the domain is not imputed.
+#' Several indicators in one domain are averaged, their standard errors combined as
+#' independent. The intervals come from \code{reps} draws of every domain level from a
+#' normal distribution on the logit scale with the standard error of its published
+#' interval, the domains independent: \eqn{B} is bounded by 1 and its sampling
+#' distribution is skewed near 1, where the delta method fails. A group with a suppressed
+#' or missing domain has no balance: the domain is not imputed.
 #'
-#' What the domains mean, and which indicators stand for each, is for the communities to say; the
-#' published tables have few measures of spiritual wellness, and a domain with no fitting indicator
-#' should be left out rather than filled with another.
+#' What the domains mean, and which indicators stand for each, is for the communities to
+#' say; the published tables have few measures of spiritual wellness, and a domain with no
+#' fitting indicator should be left out rather than filled with another.
 #'
-#' @param data A data frame, one row per group and indicator (as \code{\link{statcan_estimates}}
-#'   gives).
-#' @param group,domain,estimate,lower,upper Column names: the group, the holistic domain of the
-#'   indicator, the percentage of wellness and its published limits.
-#' @param weights Optional named weights, one per domain (they are rescaled to sum to one).
+#' @param data A data frame, one row per group and indicator (as
+#'   \code{\link{statcan_estimates}} gives).
+#' @param group,domain,estimate,lower,upper Column names: the group, the holistic domain
+#'   of the indicator, the percentage of wellness and its published limits.
+#' @param weights Optional named weights, one per domain (they are rescaled to sum to
+#'   one).
 #' @param quality Optional column of quality flags.
 #' @param reps Monte Carlo draws for the intervals (default 10,000).
 #' @param seed Seed for the draws, so the intervals are reproducible (default 1).
@@ -771,37 +802,40 @@ plot.rmbl_wellness_profile <- function(x, ..., main = NULL, col = NULL, palette 
 #'   \code{level_lower}, \code{level_upper}, \code{balance}, \code{balance_lower},
 #'   \code{balance_upper}, \code{weakest_domain}, \code{use_with_caution}; the attributes
 #'   \code{domains} (the matrix of domain levels, groups by domains) and \code{weights}.
-#' @references
-#' Atkinson AB (1970). On the measurement of inequality. Journal of Economic Theory 2(3):244-263.
-#' \doi{10.1016/0022-0531(70)90039-6}
+#' @references Atkinson AB (1970). On the measurement of inequality. Journal of Economic
+#' Theory 2(3):244-263. \doi{10.1016/0022-0531(70)90039-6}
 #'
-#' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous Data
-#' Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
+#' Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
+#' Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
 #'
-#' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing through the
-#' life stories of Indigenous youth who have experienced homelessness. International Journal of
-#' Environmental Research and Public Health 19(20):13402. \doi{10.3390/ijerph192013402}
+#' Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
+#' through the life stories of Indigenous youth who have experienced homelessness.
+#' International Journal of Environmental Research and Public Health 19(20):13402.
+#' \doi{10.3390/ijerph192013402}
 #'
-#' Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing from Native
-#' counsellors in Canada. International Journal of Health Promotion and Education 46(2):49-56.
-#' \doi{10.1080/14635240.2008.10708129}
+#' Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing
+#' from Native counsellors in Canada. International Journal of Health Promotion and
+#' Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 #' @seealso \code{\link{wellness_profile}}, \code{\link{dual_continuum}}.
 #' @examples
-#' # four domains from table 13-10-0924-01, 2019/2022, adults: the indicator standing for each is a
-#' # choice for the people whose data these are to make; this is one reading of it
+#' # four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
+#' # each is a choice for the people whose data these are; this is one reading of it
 #' h <- indigenous_example("health_indicators")
 #' dom <- c("Perceived health, very good or excellent" = "physical",
 #'          "Perceived mental health, very good or excellent" = "mental",
 #'          "Life satisfaction, satisfied or very satisfied" = "emotional",
-#'          "Sense of belonging to local community, somewhat strong or very strong" = "community")
+#'          "Sense of belonging to local community, somewhat strong or very strong" =
+#'            "community")
 #' d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 #'          h$indicator %in% names(dom), ]
 #' d$domain <- dom[d$indicator]
-#' hb <- holistic_balance(d, "group", "domain", "estimate", "lower", "upper", quality = "quality")
+#' hb <- holistic_balance(d, "group", "domain", "estimate", "lower", "upper",
+#'                        quality = "quality")
 #' hb
 #' plot(hb)
 #' # a community that counts belonging twice
-#' holistic_balance(d, "group", "domain", "estimate", "lower", "upper", quality = "quality",
+#' holistic_balance(d, "group", "domain", "estimate", "lower", "upper",
+#'                  quality = "quality",
 #'                  weights = c(physical = 1, mental = 1, emotional = 1, community = 2))
 #' @export
 holistic_balance <- function(data, group, domain, estimate, lower, upper, weights = NULL, quality = NULL,
@@ -884,33 +918,34 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
 
 #' Wellness and distress as two continua
 #'
-#' For each group, one wellness indicator against one distress indicator, each with its published
-#' interval, and the ratio of the two: the dual-continua view of mental health, in which wellness is
-#' not the absence of distress and is measured in its own right.
+#' For each group, one wellness indicator against one distress indicator, each with its
+#' published interval, and the ratio of the two: the dual-continua view of mental health,
+#' in which wellness is not the absence of distress and is measured in its own right.
 #'
-#' @details
-#' Keyes (2002, 2005) showed that flourishing and mental illness are correlated but distinct axes: a
-#' person, or a population, can carry distress and also wellness. That is how Indigenous scholars of
-#' mental health describe it too, as wellness and as a process of healing rather than as illness alone
-#' (Stewart 2008). Plotting the groups on both axes keeps a strength visible beside the burden it
-#' sits next to. The \code{strength_ratio} is wellness over distress with a log-normal interval from
-#' the two published intervals (independent estimates): above 1, more people report the wellness than
-#' the distress.
+#' @details Keyes (2002, 2005) showed that flourishing and mental illness are correlated
+#' but distinct axes: a person, or a population, can carry distress and also wellness.
+#' That is how Indigenous scholars of mental health describe it too, as wellness and as a
+#' process of healing rather than as illness alone (Stewart 2008). Plotting the groups on
+#' both axes keeps a strength visible beside the burden it sits next to. The
+#' \code{strength_ratio} is wellness over distress with a log-normal interval from the two
+#' published intervals (independent estimates): above 1, more people report the wellness
+#' than the distress.
 #'
 #' @param x A \code{\link{wellness_profile}}.
 #' @param wellness,distress One wellness and one distress indicator of \code{x}.
-#' @param conf_level Confidence level of the published intervals and of the ratio (default 0.95).
-#' @return A data frame of class \code{rmbl_dual_continuum}: \code{group}, \code{wellness},
-#'   \code{wellness_lower}, \code{wellness_upper}, \code{distress}, \code{distress_lower},
-#'   \code{distress_upper}, \code{strength_ratio}, \code{ratio_lower}, \code{ratio_upper},
-#'   \code{use_with_caution}.
-#' @references
-#' Keyes CLM (2002). The mental health continuum: from languishing to flourishing in life. Journal of
-#' Health and Social Behavior 43(2):207-222. \doi{10.2307/3090197}
+#' @param conf_level Confidence level of the published intervals and of the ratio (default
+#'   0.95).
+#' @return A data frame of class \code{rmbl_dual_continuum}: \code{group},
+#'   \code{wellness}, \code{wellness_lower}, \code{wellness_upper}, \code{distress},
+#'   \code{distress_lower}, \code{distress_upper}, \code{strength_ratio},
+#'   \code{ratio_lower}, \code{ratio_upper}, \code{use_with_caution}.
+#' @references Keyes CLM (2002). The mental health continuum: from languishing to
+#' flourishing in life. Journal of Health and Social Behavior 43(2):207-222.
+#' \doi{10.2307/3090197}
 #'
-#' Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the complete state
-#' model of health. Journal of Consulting and Clinical Psychology 73(3):539-548.
-#' \doi{10.1037/0022-006X.73.3.539}
+#' Keyes CLM (2005). Mental illness and/or mental health? Investigating axioms of the
+#' complete state model of health. Journal of Consulting and Clinical Psychology
+#' 73(3):539-548. \doi{10.1037/0022-006X.73.3.539}
 #'
 #' Stewart SL (2008), see \code{\link{holistic_balance}}.
 #' @seealso \code{\link{wellness_profile}}.
@@ -918,7 +953,8 @@ holistic_balance <- function(data, group, domain, estimate, lower, upper, weight
 #' wb <- indigenous_example("wellbeing")
 #' w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",
 #'                       wellness = "Always or often has a hopeful outlook",
-#'                       distress = "Life satisfaction rating between 0 and 5", quality = "quality")
+#'                       distress = "Life satisfaction rating between 0 and 5",
+#'                       quality = "quality")
 #' dc <- dual_continuum(w, "Always or often has a hopeful outlook",
 #'                      "Life satisfaction rating between 0 and 5")
 #' dc
@@ -963,33 +999,34 @@ dual_continuum <- function(x, wellness, distress, conf_level = 0.95) {
 
 #' Do First Nations, Metis and Inuit differ? A test before pooling
 #'
-#' Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more than their
-#' published intervals allow, and says how much of their spread is real: the evidence for reporting
-#' each distinctly rather than as one pan-Indigenous figure.
+#' Tests whether the First Nations, Metis and Inuit estimates of one indicator differ more
+#' than their published intervals allow, and says how much of their spread is real: the
+#' evidence for reporting each distinctly rather than as one pan-Indigenous figure.
 #'
-#' @details
-#' With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published intervals and weights
-#' \eqn{w_g = 1/s_g^2}, Cochran's \eqn{Q = \sum w_g (y_g - \bar y_w)^2} has a chi-squared distribution
-#' on \eqn{G - 1} degrees of freedom when the groups share one value, and
-#' \eqn{I^2 = \max(0, (Q - (G-1))/Q)} is the share of the spread that is real rather than sampling
-#' error (Higgins and Thompson 2002). A pooled figure is a weighted mean of different populations
-#' whenever \eqn{I^2} is large; the population-weighted total Statistics Canada publishes also
-#' depends on how many people are in each group, so it is mostly a First Nations figure where First
-#' Nations people are most of the Indigenous population. Rows that pool identities are left out
-#' (see \code{\link{indigenous_gap}}).
+#' @details With estimates \eqn{y_g}, standard errors \eqn{s_g} from the published
+#' intervals and weights \eqn{w_g = 1/s_g^2}, Cochran's
+#' \eqn{Q = \sum w_g (y_g - \bar y_w)^2} has a chi-squared distribution on \eqn{G - 1}
+#' degrees of freedom when the groups share one value, and
+#' \eqn{I^2 = \max(0, (Q - (G-1))/Q)} is the share of the spread that is real rather than
+#' sampling error (Higgins and Thompson 2002). A pooled figure is a weighted mean of
+#' different populations whenever \eqn{I^2} is large; the population-weighted total
+#' Statistics Canada publishes also depends on how many people are in each group, so it is
+#' mostly a First Nations figure where First Nations people are most of the Indigenous
+#' population. Rows that pool identities are left out (see \code{\link{indigenous_gap}}).
 #'
 #' @param data A data frame, one row per group.
 #' @param group,estimate,lower,upper Column names.
 #' @param quality Optional column of quality flags; suppressed rows are left out.
 #' @param conf_level Confidence level of the published intervals (default 0.95).
-#' @return A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used, with their
-#'   standard errors), \code{pooled} (the inverse-variance mean), \code{q}, \code{df},
-#'   \code{p_value}, \code{i2}.
-#' @references Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a meta-analysis.
-#'   Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
+#' @return A list of class \code{rmbl_distinctions}: \code{groups} (the estimates used,
+#'   with their standard errors), \code{pooled} (the inverse-variance mean), \code{q},
+#'   \code{df}, \code{p_value}, \code{i2}.
+#' @references Higgins JPT, Thompson SG (2002). Quantifying heterogeneity in a
+#'   meta-analysis. Statistics in Medicine 21(11):1539-1558. \doi{10.1002/sim.1186}
 #' @seealso \code{\link{indigenous_gap}}.
 #' @examples
-#' # perceived mental health very good or excellent, 2019/2022, adults (table 13-10-0924-01)
+#' # perceived mental health very good or excellent, 2019/2022, adults (table
+#' # 13-10-0924-01)
 #' h <- indigenous_example("health_indicators")
 #' mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
 #'           h$group != "Non-Indigenous" &
@@ -1115,55 +1152,62 @@ plot.rmbl_distinctions <- function(x, ..., main = NULL, col = NULL, palette = NU
   invisible(d)
 }
 
-#' First Nations, Metis and Inuit health and mental health: bundled Statistics Canada excerpts
+#' First Nations, Metis and Inuit health and mental health: bundled Statistics Canada
+#' excerpts
 #'
-#' Four small excerpts of Statistics Canada tables, bundled so that the examples and vignettes run on
-#' published values without a network connection or a data service key. Values are as published,
-#' with their 95\% limits and quality flags; nothing is imputed (suppressed cells are \code{NA}).
+#' Four small excerpts of Statistics Canada tables, bundled so that the examples and
+#' vignettes run on published values without a network connection or a data service key.
+#' Values are as published, with their 95\% limits and quality flags; nothing is imputed
+#' (suppressed cells are \code{NA}).
 #'
 #' \describe{
-#'   \item{\code{"health_indicators"}}{Table 13-10-0924-01, Health indicators for First Nations people
-#'     living off reserve, Metis and Inuit, by age group and sex, four-year period estimates
-#'     (Canadian Community Health Survey), 2015/2018 and 2019/2022; Canada, both sexes, the 27
-#'     indicators by age group, with non-Indigenous people for comparison: the table behind The Daily
-#'     of 2025-02-13. Columns \code{period}, \code{group}, \code{age}, \code{indicator},
+#'   \item{\code{"health_indicators"}}{Table 13-10-0924-01, Health indicators for First
+#'     Nations people living off reserve, Metis and Inuit, by age group and sex, four-year
+#'     period estimates (Canadian Community Health Survey), 2015/2018 and 2019/2022;
+#'     Canada, both sexes, the 27 indicators by age group, with non-Indigenous people for
+#'     comparison: the table behind The Daily of 2025-02-13. Columns \code{period},
+#'     \code{group}, \code{age}, \code{indicator}, \code{estimate}, \code{lower},
+#'     \code{upper}, \code{quality}.}
+#'   \item{\code{"mental_health"}}{Table 41-10-0067-01, Self-perceived mental health of
+#'     First Nations people living off reserve, Metis and Inuit by age group and gender,
+#'     2022 (Indigenous Peoples Survey); 15 years and older, every region. Columns
+#'     \code{region}, \code{group}, \code{rating}, \code{estimate}, \code{lower},
+#'     \code{upper}, \code{quality}.}
+#'   \item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected characteristics of well-being
+#'     and impacts of rising prices by First Nations people living off reserve, Metis and
+#'     Inuit, and gender, 2024; total of genders. Columns \code{group}, \code{indicator},
 #'     \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-#'   \item{\code{"mental_health"}}{Table 41-10-0067-01, Self-perceived mental health of First Nations
-#'     people living off reserve, Metis and Inuit by age group and gender, 2022 (Indigenous Peoples
-#'     Survey); 15 years and older, every region. Columns \code{region}, \code{group}, \code{rating},
-#'     \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
-#'   \item{\code{"wellbeing"}}{Table 41-10-0082-01, Selected characteristics of well-being and
-#'     impacts of rising prices by First Nations people living off reserve, Metis and Inuit, and
-#'     gender, 2024; total of genders. Columns \code{group}, \code{indicator}, \code{estimate},
-#'     \code{lower}, \code{upper}, \code{quality}.}
-#'   \item{\code{"suicidal_ideation"}}{Table 41-10-0021-01, Self-perceived mental health and suicidal
-#'     thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal Peoples Survey); Canada,
-#'     both sexes, by age. Columns \code{group}, \code{age}, \code{measure}, \code{estimate},
-#'     \code{lower}, \code{upper}, \code{quality}.}
-#'   \item{\code{"census_population"}}{The Indigenous Population Profile, 2021 Census of Population
-#'     (98-510-X2021001), Canada, the provinces and the territories, total of genders, on and off
-#'     reserve: the population by age group, children and foster children, knowledge of Indigenous
-#'     languages, highest certificate (25 and over), labour force status, income and low income, as
-#'     published (read it with \code{\link{census_profile}}).}
-#'   \item{\code{"census_households"}}{The same profile's households and dwellings (98-510-X2021016),
-#'     Indigenous and non-Indigenous households: persons per room, housing suitability, dwelling
-#'     condition and core housing need.}
+#'   \item{\code{"suicidal_ideation"}}{Table 41-10-0021-01, Self-perceived mental health
+#'     and suicidal thoughts by Aboriginal identity, age group and sex, 2017 (Aboriginal
+#'     Peoples Survey); Canada, both sexes, by age. Columns \code{group}, \code{age},
+#'     \code{measure}, \code{estimate}, \code{lower}, \code{upper}, \code{quality}.}
+#'   \item{\code{"census_population"}}{The Indigenous Population Profile, 2021 Census of
+#'     Population (98-510-X2021001), Canada, the provinces and the territories, total of
+#'     genders, on and off reserve: the population by age group, children and foster
+#'     children, knowledge of Indigenous languages, highest certificate (25 and over),
+#'     labour force status, income and low income, as published (read it with
+#'     \code{\link{census_profile}}).}
+#'   \item{\code{"census_households"}}{The same profile's households and dwellings
+#'     (98-510-X2021016), Indigenous and non-Indigenous households: persons per room,
+#'     housing suitability, dwelling condition and core housing need.}
 #' }
 #'
-#' The First Nations figures of the survey excerpts are for First Nations people living off reserve: the surveys do not
-#' cover reserves, whose data are governed by First Nations (see the First Nations Information
-#' Governance Centre). Groups are as the tables name them, with "Inuk (Inuit)" written "Inuit".
+#' The First Nations figures of the survey excerpts are for First Nations people living
+#' off reserve: the surveys do not cover reserves, whose data are governed by First
+#' Nations (see the First Nations Information Governance Centre). Groups are as the tables
+#' name them, with "Inuk (Inuit)" written "Inuit".
 #'
 #' @param name Which excerpt.
 #' @return A data frame.
-#' @source Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}), 41-10-0067-01
-#'   (\doi{10.25318/4110006701-eng}), 41-10-0082-01 (\doi{10.25318/4110008201-eng}) and 41-10-0021-01
-#'   (\doi{10.25318/4110002101-eng}); Indigenous Population Profile, 2021 Census of Population,
-#'   catalogue 98-510-X2021001 and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
+#' @source Statistics Canada, tables 13-10-0924-01 (\doi{10.25318/1310092401-eng}),
+#'   41-10-0067-01 (\doi{10.25318/4110006701-eng}), 41-10-0082-01
+#'   (\doi{10.25318/4110008201-eng}) and 41-10-0021-01 (\doi{10.25318/4110002101-eng});
+#'   Indigenous Population Profile, 2021 Census of Population, catalogue 98-510-X2021001
+#'   and 98-510-X2021016. Reproduced and distributed on an "as is" basis with the
 #'   permission of Statistics Canada, under the Statistics Canada Open Licence
 #'   (\url{https://www.statcan.gc.ca/en/terms-conditions/open-licence}). Built by
-#'   \code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in the source
-#'   package.
+#'   \code{data-raw/indigenous_mental_health.R} and \code{data-raw/indigenous_census.R} in
+#'   the source package.
 #' @seealso \code{\link{indigenous_tables}} for the full tables at the data service.
 #' @examples
 #' h <- indigenous_example("health_indicators")

@@ -10,21 +10,24 @@ framing_audit(x)
 \item{x}{A \code{\link{wellness_profile}}.}
 }
 \value{
-A list of class \code{rmbl_framing}: \code{by_group} (a data frame of \code{group},
-\code{wellness}, \code{distress}, \code{share_deficit}), \code{share_deficit} overall and
-\code{deficit_only} (the groups with no wellness indicator).
+A list of class \code{rmbl_framing}: \code{by_group} (a data frame of
+\code{group}, \code{wellness}, \code{distress}, \code{share_deficit}),
+\code{share_deficit} overall and \code{deficit_only} (the groups with no wellness
+indicator).
 }
 \description{
-Counts how many of the indicators in a report measure distress, deficit or disparity and how many
-measure wellness or strength, and names any group reported on deficits alone.
+Counts how many of the indicators in a report measure distress, deficit or disparity
+and how many measure wellness or strength, and names any group reported on deficits
+alone.
 }
 \details{
-Walter (2016) shows that statistics about Indigenous peoples cluster around five Ds: disparity,
-deprivation, disadvantage, dysfunction and difference. Results built only of those describe
-Indigenous peoples as their problems. This audit does not measure anything about people; it
-measures the report: the share of its indicators that are deficit-framed, overall and per group,
-so a report can be balanced before it is published. Pair each gap with a strength-framed level
-(\code{\link{wellness_profile}}, \code{\link{dual_continuum}}).
+Walter (2016) shows that statistics about Indigenous peoples cluster around
+five Ds: disparity, deprivation, disadvantage, dysfunction and difference. Results
+built only of those describe Indigenous peoples as their problems. This audit does not
+measure anything about people; it measures the report: the share of its indicators that
+are deficit-framed, overall and per group, so a report can be balanced before it is
+published. Pair each gap with a strength-framed level (\code{\link{wellness_profile}},
+\code{\link{dual_continuum}}).
 }
 \examples{
 wb <- indigenous_example("wellbeing")
@@ -36,10 +39,10 @@ w <- wellness_profile(wb, "group", "indicator", "estimate", "lower", "upper",
 framing_audit(w)
 }
 \references{
-Walter M (2016). Data politics and Indigenous representation in Australian statistics. In Kukutai
-T, Taylor J (eds), Indigenous Data Sovereignty: Toward an Agenda, 79-97. ANU Press.
-\doi{10.22459/caepr38.11.2016.05}
+Walter M (2016). Data politics and Indigenous representation in Australian
+statistics. In Kukutai T, Taylor J (eds), Indigenous Data Sovereignty: Toward an
+Agenda, 79-97. ANU Press. \doi{10.22459/caepr38.11.2016.05}
 
-Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research Methodology. Left
-Coast Press. \doi{10.4324/9781315426570}
+Walter M, Andersen C (2013). Indigenous Statistics: A Quantitative Research
+Methodology. Left Coast Press. \doi{10.4324/9781315426570}
 }

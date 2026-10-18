@@ -16,63 +16,71 @@ profile_share(
 \arguments{
 \item{x}{A \code{\link{census_profile}}.}
 
-\item{numerator}{The characteristic counted: its \code{characteristic_id}, or its name exactly.}
+\item{numerator}{The characteristic counted: its \code{characteristic_id}, or its name
+exactly.}
 
-\item{denominator}{The characteristic it is a share of (id or name); default its parent.}
+\item{denominator}{The characteristic it is a share of (id or name); default its
+parent.}
 
-\item{sample_fraction}{The long-form sampling fraction (default 0.25); full-count characteristics
-use 1 whatever is given.}
+\item{sample_fraction}{The long-form sampling fraction (default 0.25); full-count
+characteristics use 1 whatever is given.}
 
 \item{deff}{Design effect (default 1).}
 
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid}, \code{residence},
-\code{gender},
-\code{age}, \code{group}, \code{numerator}, \code{denominator}, \code{estimate} (percent),
-\code{lower}, \code{upper}, \code{quality}; ready for \code{\link{indigenous_gap}} and
+A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
+\code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
+\code{denominator}, \code{estimate} (percent), \code{lower}, \code{upper},
+\code{quality}; ready for \code{\link{indigenous_gap}} and
 \code{\link{distinctions_test}}. \code{plot()} draws it.
 }
 \description{
-The share of a group with a characteristic of the 2021 Census Indigenous Population Profile
-(foster children among children, speakers of an Indigenous language, households needing major
-repairs, ...), with an approximate confidence interval that carries the long-form sample and the
-random rounding of the counts.
+The share of a group with a characteristic of the 2021 Census Indigenous Population
+Profile (foster children among children, speakers of an Indigenous language, households
+needing major repairs, ...), with an approximate confidence interval that carries the
+long-form sample and the random rounding of the counts.
 }
 \details{
-The share is the numerator's count over the denominator's (by default the numerator's parent in
-the profile's hierarchy), for each geography, gender, age group and group. Statistics Canada does
-not publish standard errors for the profile, so the interval is an approximation built from what is
-known about how the counts were made:
+The share is the numerator's count over the denominator's (by default the
+numerator's parent in the profile's hierarchy), for each geography, gender, age group
+and group. Statistics Canada does not publish standard errors for the profile, so the
+interval is an approximation built from what is known about how the counts were made:
 \itemize{
-\item a long-form ("25\\% sample") count is estimated from a sample of about one household in four,
-so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for a sampling fraction \eqn{f}
-(\code{sample_fraction}, 0.25) of a population of \eqn{N} (the denominator) and a design effect
-\eqn{d} (\code{deff}, 1 by default: the clustering of people in households raises it, and a
-value of 1.5 to 2 is prudent for characteristics shared within a household);
-\item every count is randomly rounded to a multiple of 5, which adds an error of variance about 4
-to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of a full-count share).
+\item a long-form ("25\\% sample") count is estimated from a sample of about one
+household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for
+a sampling fraction \eqn{f} (\code{sample_fraction}, 0.25) of a population of
+\eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
+the clustering of people in households raises it, and a value of 1.5 to 2 is
+prudent for characteristics shared within a household);
+\item every count is randomly rounded to a multiple of 5, which adds an error of
+variance about 4 to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of
+a full-count share).
 }
-The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance, so it stays
-inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the edit and imputation
-error, so it is narrower than the full error; treat it as a lower bound on the uncertainty.
+The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance,
+so it stays inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the
+edit and imputation error, so it is narrower than the full error; treat it as a lower
+bound on the uncertainty.
 }
 \examples{
 p <- census_profile(indigenous_example("census_population"))
-# children who are foster children, by province, First Nations, Metis, Inuit and non-Indigenous
+# children who are foster children, by province, First Nations, Metis, Inuit and
+# non-Indigenous
 fc <- profile_share(p, "Foster children", "Total - Children in census families")
-fc <- fc[fc$age == "0 to 14 years" & fc$group \%in\% c("First Nations", "Métis", "Inuit",
-                                                     "Non-Indigenous"), ]
+fc <- fc[fc$age == "0 to 14 years" &
+           fc$group \%in\% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
 head(fc)
 plot(fc[fc$geo == "Canada", ])
 }
 \references{
-Statistics Canada (2022). Guide to the Census of Population, 2021, chapter 9 (data quality) and
-chapter 10 (confidentiality and random rounding). Catalogue no. 98-304-X.
+Statistics Canada (2022). Guide to the Census of Population, 2021, chapter
+9 (data quality) and chapter 10 (confidentiality and random rounding). Catalogue no.
+98-304-X.
 
-Wilson EB (1927). Probable inference, the law of succession, and statistical inference. Journal of
-the American Statistical Association 22(158):209-212. \doi{10.1080/01621459.1927.10502953}
+Wilson EB (1927). Probable inference, the law of succession, and statistical inference.
+Journal of the American Statistical Association 22(158):209-212.
+\doi{10.1080/01621459.1927.10502953}
 }
 \seealso{
 \code{\link{census_profile}}.

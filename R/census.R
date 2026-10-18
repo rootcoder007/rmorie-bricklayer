@@ -7,47 +7,48 @@
 # identity columns of the profile, as the files name them, and the labels used here
 .rmbl_ipp_groups <- c(
   TOTAL_IND_IDENT = "Total", IND_IDENT = "Indigenous identity", SINGLE_IND_RESP = "Single Indigenous responses",
-  FIRST_NATIONS = "First Nations", "MÉTIS" = "Métis", INUK = "Inuit",
+  FIRST_NATIONS = "First Nations", "M\u00c9TIS" = "M\u00e9tis", INUK = "Inuit",
   MULTI_IND_RESP = "Multiple Indigenous responses", IND_RESP_NIE = "Indigenous responses not included elsewhere",
   NON_IND = "Non-Indigenous", TOTAL_IND_HHLD = "Total households", IND_HHLD = "Indigenous households",
   NON_IND_HHLD = "Non-Indigenous households")
 
 #' Read the 2021 Census Indigenous Population Profile
 #'
-#' Reads a table of the Indigenous Population Profile, 2021 Census of Population (Statistics Canada
-#' catalogue 98-510-X2021001 to 98-510-X2021016), as the data service mirrors it under
-#' \code{census2021_ipp/}, into one row per geography, gender, age group, characteristic and group:
-#' First Nations, Metis, Inuit, the other identity groups and non-Indigenous people (or, in the
-#' household tables, Indigenous and non-Indigenous households), each in its own rows.
+#' Reads a table of the Indigenous Population Profile, 2021 Census of Population
+#' (Statistics Canada catalogue 98-510-X2021001 to 98-510-X2021016), as the data service
+#' mirrors it under \code{census2021_ipp/}, into one row per geography, gender, age group,
+#' characteristic and group: First Nations, Metis, Inuit, the other identity groups and
+#' non-Indigenous people (or, in the household tables, Indigenous and non-Indigenous
+#' households), each in its own rows.
 #'
-#' @details
-#' The profile gives each characteristic in a hierarchy shown only by indentation ("Total - Highest
-#' certificate, diploma or degree", "High (secondary) school diploma or equivalency certificate",
-#' ...): the level, the parent and the topic's total (\code{root_id}) are worked out from it, so a
-#' share can be taken of its parent. A topic marked "25\% sample data" comes from the long-form
-#' sample (\code{sample = "25\%"}); the others from the full count (\code{"100\%"}). Counts are
-#' randomly rounded to multiples of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed
-#' to protect confidentiality (\code{x}), too unreliable (\code{F}), not available (\code{..}) or not
-#' applicable (\code{...}) has no value here; \code{E} values are kept and marked. The global
-#' non-response rates of the geography (\code{tnr_sf}, \code{tnr_lf}, in percent) are kept: Statistics
-#' Canada suppresses an area whose long-form rate is 50\% or more, and a high rate means a larger error
-#' than the sample alone.
+#' @details The profile gives each characteristic in a hierarchy shown only by indentation
+#' ("Total - Highest certificate, diploma or degree", "High (secondary) school diploma or
+#' equivalency certificate", ...): the level, the parent and the topic's total
+#' (\code{root_id}) are worked out from it, so a share can be taken of its parent. A topic
+#' marked "25\% sample data" comes from the long-form sample (\code{sample = "25\%"}); the
+#' others from the full count (\code{"100\%"}). Counts are randomly rounded to multiples
+#' of 5 (of 10 below 10) by Statistics Canada, and a cell suppressed to protect
+#' confidentiality (\code{x}), too unreliable (\code{F}), not available (\code{..}) or not
+#' applicable (\code{...}) has no value here; \code{E} values are kept and marked. The
+#' global non-response rates of the geography (\code{tnr_sf}, \code{tnr_lf}, in percent)
+#' are kept: Statistics Canada suppresses an area whose long-form rate is 50\% or more,
+#' and a high rate means a larger error than the sample alone.
 #'
-#' @param x A profile table as published (a data frame read from its CSV), or a data service key
-#'   (\code{"census2021_ipp/x2021001_pop"}).
+#' @param x A profile table as published (a data frame read from its CSV), or a data
+#'   service key (\code{"census2021_ipp/x2021001_pop"}).
 #' @return A data frame of class \code{rmbl_census_profile}: \code{geo}, \code{dguid},
-#'   \code{geo_level}, \code{residence} (on or off reserve, in the tables that split it), \code{gender},
-#'   \code{age}, \code{characteristic_id}, \code{characteristic},
-#'   \code{level}, \code{parent_id}, \code{root_id}, \code{sample}, \code{group}, \code{value},
-#'   \code{quality}, \code{tnr_sf}, \code{tnr_lf}.
-#' @references
-#' Statistics Canada (2023). Indigenous Population Profile, 2021 Census of Population. Statistics
-#' Canada Catalogue no. 98-510-X2021001. Released June 21, 2023.
+#'   \code{geo_level}, \code{residence} (on or off reserve, in the tables that split it),
+#'   \code{gender}, \code{age}, \code{characteristic_id}, \code{characteristic},
+#'   \code{level}, \code{parent_id}, \code{root_id}, \code{sample}, \code{group},
+#'   \code{value}, \code{quality}, \code{tnr_sf}, \code{tnr_lf}.
+#' @references Statistics Canada (2023). Indigenous Population Profile, 2021 Census of
+#' Population. Statistics Canada Catalogue no. 98-510-X2021001. Released June 21, 2023.
 #' \url{https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/ipp-ppa/index.cfm?Lang=E}
 #'
-#' Statistics Canada (2022). Guide to the Census of Population, 2021. Catalogue no. 98-304-X.
-#' @seealso \code{\link{profile_share}}, \code{\link{census_standard}}, \code{\link{census_cwb}},
-#'   \code{\link{indigenous_example}}.
+#' Statistics Canada (2022). Guide to the Census of Population, 2021. Catalogue no.
+#' 98-304-X.
+#' @seealso \code{\link{profile_share}}, \code{\link{census_standard}},
+#'   \code{\link{census_cwb}}, \code{\link{indigenous_example}}.
 #' @examples
 #' p <- census_profile(indigenous_example("census_population"))
 #' head(p[p$characteristic == "Foster children" & p$geo == "Canada", ])
@@ -80,7 +81,7 @@ census_profile <- function(x) {
   ch <- data.frame(id = cid[u], name = raw[u])
   ch <- ch[order(ch$id), ]
   ch$level <- (nchar(ch$name) - nchar(sub("^\\s+", "", ch$name))) %/% 2L
-  ch$name <- trimws(gsub(" ", " ", ch$name))
+  ch$name <- trimws(gsub("\u00a0", " ", ch$name))
   ch$parent <- NA_integer_
   ch$root <- NA_integer_
   stack <- integer()
@@ -128,54 +129,60 @@ census_profile <- function(x) {
 
 #' The share of a population with a characteristic, from the census profile
 #'
-#' The share of a group with a characteristic of the 2021 Census Indigenous Population Profile
-#' (foster children among children, speakers of an Indigenous language, households needing major
-#' repairs, ...), with an approximate confidence interval that carries the long-form sample and the
-#' random rounding of the counts.
+#' The share of a group with a characteristic of the 2021 Census Indigenous Population
+#' Profile (foster children among children, speakers of an Indigenous language, households
+#' needing major repairs, ...), with an approximate confidence interval that carries the
+#' long-form sample and the random rounding of the counts.
 #'
-#' @details
-#' The share is the numerator's count over the denominator's (by default the numerator's parent in
-#' the profile's hierarchy), for each geography, gender, age group and group. Statistics Canada does
-#' not publish standard errors for the profile, so the interval is an approximation built from what is
-#' known about how the counts were made:
+#' @details The share is the numerator's count over the denominator's (by default the
+#' numerator's parent in the profile's hierarchy), for each geography, gender, age group
+#' and group. Statistics Canada does not publish standard errors for the profile, so the
+#' interval is an approximation built from what is known about how the counts were made:
 #' \itemize{
-#'   \item a long-form ("25\% sample") count is estimated from a sample of about one household in four,
-#'     so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for a sampling fraction \eqn{f}
-#'     (\code{sample_fraction}, 0.25) of a population of \eqn{N} (the denominator) and a design effect
-#'     \eqn{d} (\code{deff}, 1 by default: the clustering of people in households raises it, and a
-#'     value of 1.5 to 2 is prudent for characteristics shared within a household);
-#'   \item every count is randomly rounded to a multiple of 5, which adds an error of variance about 4
-#'     to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of a full-count share).
+#'   \item a long-form ("25\% sample") count is estimated from a sample of about one
+#'     household in four, so the share has variance \eqn{d (1 - f) p (1 - p) / (f N)} for
+#'     a sampling fraction \eqn{f} (\code{sample_fraction}, 0.25) of a population of
+#'     \eqn{N} (the denominator) and a design effect \eqn{d} (\code{deff}, 1 by default:
+#'     the clustering of people in households raises it, and a value of 1.5 to 2 is
+#'     prudent for characteristics shared within a household);
+#'   \item every count is randomly rounded to a multiple of 5, which adds an error of
+#'     variance about 4 to each count, so \eqn{4 (1 + p^2) / N^2} more (the only error of
+#'     a full-count share).
 #' }
-#' The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance, so it stays
-#' inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the edit and imputation
-#' error, so it is narrower than the full error; treat it as a lower bound on the uncertainty.
+#' The interval is Wilson's at the effective sample size \eqn{p(1-p)} over that variance,
+#' so it stays inside 0 and 100. It does not carry non-response (see \code{tnr_lf}) or the
+#' edit and imputation error, so it is narrower than the full error; treat it as a lower
+#' bound on the uncertainty.
 #'
 #' @param x A \code{\link{census_profile}}.
-#' @param numerator The characteristic counted: its \code{characteristic_id}, or its name exactly.
-#' @param denominator The characteristic it is a share of (id or name); default its parent.
-#' @param sample_fraction The long-form sampling fraction (default 0.25); full-count characteristics
-#'   use 1 whatever is given.
+#' @param numerator The characteristic counted: its \code{characteristic_id}, or its name
+#'   exactly.
+#' @param denominator The characteristic it is a share of (id or name); default its
+#'   parent.
+#' @param sample_fraction The long-form sampling fraction (default 0.25); full-count
+#'   characteristics use 1 whatever is given.
 #' @param deff Design effect (default 1).
 #' @param conf_level Confidence level (default 0.95).
-#' @return A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid}, \code{residence},
-#'   \code{gender},
-#'   \code{age}, \code{group}, \code{numerator}, \code{denominator}, \code{estimate} (percent),
-#'   \code{lower}, \code{upper}, \code{quality}; ready for \code{\link{indigenous_gap}} and
+#' @return A data frame of class \code{rmbl_profile_share}: \code{geo}, \code{dguid},
+#'   \code{residence}, \code{gender}, \code{age}, \code{group}, \code{numerator},
+#'   \code{denominator}, \code{estimate} (percent), \code{lower}, \code{upper},
+#'   \code{quality}; ready for \code{\link{indigenous_gap}} and
 #'   \code{\link{distinctions_test}}. \code{plot()} draws it.
-#' @references
-#' Statistics Canada (2022). Guide to the Census of Population, 2021, chapter 9 (data quality) and
-#' chapter 10 (confidentiality and random rounding). Catalogue no. 98-304-X.
+#' @references Statistics Canada (2022). Guide to the Census of Population, 2021, chapter
+#' 9 (data quality) and chapter 10 (confidentiality and random rounding). Catalogue no.
+#' 98-304-X.
 #'
-#' Wilson EB (1927). Probable inference, the law of succession, and statistical inference. Journal of
-#' the American Statistical Association 22(158):209-212. \doi{10.1080/01621459.1927.10502953}
+#' Wilson EB (1927). Probable inference, the law of succession, and statistical inference.
+#' Journal of the American Statistical Association 22(158):209-212.
+#' \doi{10.1080/01621459.1927.10502953}
 #' @seealso \code{\link{census_profile}}.
 #' @examples
 #' p <- census_profile(indigenous_example("census_population"))
-#' # children who are foster children, by province, First Nations, Metis, Inuit and non-Indigenous
+#' # children who are foster children, by province, First Nations, Metis, Inuit and
+#' # non-Indigenous
 #' fc <- profile_share(p, "Foster children", "Total - Children in census families")
-#' fc <- fc[fc$age == "0 to 14 years" & fc$group %in% c("First Nations", "Métis", "Inuit",
-#'                                                      "Non-Indigenous"), ]
+#' fc <- fc[fc$age == "0 to 14 years" &
+#'            fc$group %in% c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"), ]
 #' head(fc)
 #' plot(fc[fc$geo == "Canada", ])
 #' @export
@@ -227,27 +234,29 @@ profile_share <- function(x, numerator, denominator = NULL, sample_fraction = 0.
 
 #' An Indigenous standard population from the census
 #'
-#' The age structure of a group in a geography of the 2021 Census Indigenous Population Profile, as
-#' the standard of \code{\link{age_standardise}} or \code{\link{standardise_prevalence}}.
+#' The age structure of a group in a geography of the 2021 Census Indigenous Population
+#' Profile, as the standard of \code{\link{age_standardise}} or
+#' \code{\link{standardise_prevalence}}.
 #'
-#' @details
-#' Comparisons of First Nations, Metis and Inuit health are standardised to the Indigenous
-#' population's own, younger, age structure (Kumar and Tjepkema 2019): a standard as old as Canada's
-#' gives weight to ages where few Indigenous people are. This takes the population in private
-#' households of each age group (the profile's first characteristic) for the group and geography
-#' given. Age groups that do not overlap are chosen by default (0 to 4, 5 to 9, 10 to 14, 15 to 19, 20
-#' to 24, 25 to 34, 35 to 44, 45 to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age
-#' groups of the rates being standardised.
+#' @details Comparisons of First Nations, Metis and Inuit health are standardised to the
+#' Indigenous population's own, younger, age structure (Kumar and Tjepkema 2019): a
+#' standard as old as Canada's gives weight to ages where few Indigenous people are. This
+#' takes the population in private households of each age group (the profile's first
+#' characteristic) for the group and geography given. Age groups that do not overlap are
+#' chosen by default (0 to 4, 5 to 9, 10 to 14, 15 to 19, 20 to 24, 25 to 34, 35 to 44, 45
+#' to 54, 55 to 64, 65 to 74, 75 and over); collapse them to the age groups of the rates
+#' being standardised.
 #'
 #' @param x A \code{\link{census_profile}}.
 #' @param group The group (default \code{"Indigenous identity"}).
 #' @param geo The geography (default \code{"Canada"}).
 #' @param ages The age groups, as the profile names them.
 #' @param residence On or off reserve, in the tables that split it (default the total).
-#' @return A data frame: \code{age}, \code{population}, \code{weight} (shares summing to 1).
-#' @references Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and Inuit
-#'   (2011-2016): findings from the 2011 Canadian Census Health and Environment Cohort (CanCHEC).
-#'   Statistics Canada catalogue no. 99-011-X2019001.
+#' @return A data frame: \code{age}, \code{population}, \code{weight} (shares summing to
+#'   1).
+#' @references Kumar MB, Tjepkema M (2019). Suicide among First Nations people, Metis and
+#'   Inuit (2011-2016): findings from the 2011 Canadian Census Health and Environment
+#'   Cohort (CanCHEC). Statistics Canada catalogue no. 99-011-X2019001.
 #' @seealso \code{\link{age_standardise}}, \code{\link{standardise_prevalence}}.
 #' @examples
 #' p <- census_profile(indigenous_example("census_population"))
@@ -277,47 +286,53 @@ census_standard <- function(x, group = "Indigenous identity", geo = "Canada",
 
 #' A Community Well-Being score from the census profile
 #'
-#' Indigenous Services Canada's Community Well-Being (CWB) index (\code{\link{cwb_score}}) computed
-#' from the public 2021 Census Indigenous Population Profile, for each geography and group.
+#' Indigenous Services Canada's Community Well-Being (CWB) index (\code{\link{cwb_score}})
+#' computed from the public 2021 Census Indigenous Population Profile, for each geography
+#' and group.
 #'
-#' @details
-#' The Department computes the CWB from census microdata; the public profile gives close but not the
-#' same inputs, and this function says where it departs:
+#' @details The Department computes the CWB from census microdata; the public profile
+#' gives close but not the same inputs, and this function says where it departs:
 #' \describe{
-#'   \item{income}{per capita: the number of total income recipients aged 15 and over times their
-#'     average total income, over the population in private households (all ages), as the CWB does.}
-#'   \item{education}{the shares with at least a high school diploma (all but those with no
-#'     certificate, diploma or degree) and with a bachelor's degree or higher, both among those aged 25
-#'     and over: the profile has no age group of 20 and over, which
+#'   \item{income}{per capita: the number of total income recipients aged 15 and over
+#'     times their average total income, over the population in private households (all
+#'     ages), as the CWB does.}
+#'   \item{education}{the shares with at least a high school diploma (all but those with
+#'     no certificate, diploma or degree) and with a bachelor's degree or higher, both
+#'     among those aged 25 and over: the profile has no age group of 20 and over, which
 #'     the CWB uses for the first.}
-#'   \item{labour force}{the participation rate and the employment rate of participants (100 less the
-#'     unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
-#'   \item{housing}{the shares of households with one person or fewer per room and needing no major
-#'     repairs, from the household profile (\code{dwelling}), which splits Indigenous from non-Indigenous
-#'     households only: the CWB counts persons, not households. Without \code{dwelling} the housing
-#'     component and the score are \code{NA}.}
+#'   \item{labour force}{the participation rate and the employment rate of participants
+#'     (100 less the unemployment rate) of those aged 25 to 64: the CWB uses 20 to 64.}
+#'   \item{housing}{the shares of households with one person or fewer per room and needing
+#'     no major repairs, from the household profile (\code{dwelling}), which splits
+#'     Indigenous from non-Indigenous households only: the CWB counts persons, not
+#'     households. Without \code{dwelling} the housing component and the score are
+#'     \code{NA}.}
 #' }
-#' A group of fewer than 250 people in a geography gets no score, as the Department suppresses
-#' communities that small. Read the result as a CWB-style description of socio-economic conditions, close to but not the
-#' Department's index, and never as a measure of the wellness of First Nations, Metis or Inuit people
-#' as they define it (see \code{\link{cwb_score}}).
+#' A group of fewer than 250 people in a geography gets no score, as the Department
+#' suppresses communities that small. Read the result as a CWB-style description of
+#' socio-economic conditions, close to but not the Department's index, and never as a
+#' measure of the wellness of First Nations, Metis or Inuit people as they define it (see
+#' \code{\link{cwb_score}}).
 #'
 #' @param x A \code{\link{census_profile}} of a population table.
 #' @param dwelling Optional \code{\link{census_profile}} of the matching household table.
-#' @param groups The groups to score (default First Nations, Metis, Inuit and non-Indigenous people).
+#' @param groups The groups to score (default First Nations, Metis, Inuit and
+#'   non-Indigenous people).
 #' @param bounds Income bounds of \code{\link{cwb_score}}.
 #' @param residence On or off reserve, in the tables that split it (default the total).
-#' @return A data frame: \code{geo}, \code{group}, the four components, \code{cwb}, and the inputs.
-#' @references Indigenous Services Canada (2019). Report on trends in First Nations communities, 1981
-#'   to 2016 (Community Well-Being index).
+#' @return A data frame: \code{geo}, \code{group}, the four components, \code{cwb}, and
+#'   the inputs.
+#' @references Indigenous Services Canada (2019). Report on trends in First Nations
+#'   communities, 1981 to 2016 (Community Well-Being index).
 #'   \url{https://www.sac-isc.gc.ca/eng/1345816651029/1557323327644}
 #' @seealso \code{\link{cwb_score}}.
 #' @examples
 #' p <- census_profile(indigenous_example("census_population"))
 #' h <- census_profile(indigenous_example("census_households"))
-#' census_cwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour", "cwb")]
+#' census_cwb(p, h)[, c("geo", "group", "income", "education", "housing", "labour",
+#'                      "cwb")]
 #' @export
-census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "Métis", "Inuit", "Non-Indigenous"),
+census_cwb <- function(x, dwelling = NULL, groups = c("First Nations", "M\u00e9tis", "Inuit", "Non-Indigenous"),
                        bounds = c(2650, 75000), residence = "Total - Residence on or off reserve") {
   if (!inherits(x, "rmbl_census_profile")) stop("`x` must come from census_profile()", call. = FALSE)
   if (!is.null(dwelling) && !inherits(dwelling, "rmbl_census_profile")) {

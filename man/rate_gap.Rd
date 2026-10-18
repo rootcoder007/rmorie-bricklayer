@@ -13,14 +13,15 @@ rate_gap(x, group, reference)
 }
 \value{
 A one-row data frame: \code{group}, \code{reference}, \code{ratio} with
-\code{ratio_lower}/\code{ratio_upper}, and \code{difference} (per \code{per} people) with
-\code{difference_lower}/\code{difference_upper}.
+\code{ratio_lower}/\code{ratio_upper}, and \code{difference} (per \code{per} people)
+with \code{difference_lower}/\code{difference_upper}.
 }
 \description{
-The ratio and the difference of two directly standardised rates from \code{\link{age_standardise}},
-with confidence intervals: log-normal for the ratio (variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and
-normal for the difference, the two rates independent. Both measures are reported, as the relative
-gap alone hides how large the absolute one is (Anderson et al. 2016).
+The ratio and the difference of two directly standardised rates from
+\code{\link{age_standardise}}, with confidence intervals: log-normal for the ratio
+(variance \eqn{v_1/y_1^2 + v_2/y_2^2}) and normal for the difference, the two rates
+independent. Both measures are reported, as the relative gap alone hides how large the
+absolute one is (Anderson et al. 2016).
 }
 \examples{
 # made-up counts, to show the computation
@@ -28,12 +29,13 @@ std <- c(30000, 25000, 20000, 15000, 10000)
 r <- age_standardise(events = c(4, 9, 11, 6, 3, 2, 4, 6, 5, 4),
                      population = c(9000, 8000, 6000, 4000, 2000,
                                     20000, 19000, 18000, 15000, 12000),
-                     standard = std, group = rep(c("Inuit", "Non-Indigenous"), each = 5))
+                     standard = std, group = rep(c("Inuit", "Non-Indigenous"),
+                                                 each = 5))
 plot(r)
 rate_gap(r, "Inuit", "Non-Indigenous")
 }
 \references{
-Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal peoples' health
-(The Lancet-Lowitja Institute Global Collaboration): a population study. The Lancet
-388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
+Anderson I, Robson B, Connolly M, et al. (2016). Indigenous and tribal
+peoples' health (The Lancet-Lowitja Institute Global Collaboration): a population
+study. The Lancet 388(10040):131-157. \doi{10.1016/S0140-6736(16)00345-7}
 }

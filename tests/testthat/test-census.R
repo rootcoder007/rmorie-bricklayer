@@ -11,7 +11,7 @@ test_that("census_profile() reads every group, the hierarchy, the sample and the
   expect_s3_class(p, "rmbl_census_profile")
   expect_identical(nrow(p), nrow(raw) * 9L)
   expect_setequal(unique(p$group), c("Total", "Indigenous identity", "Single Indigenous responses", "First Nations",
-                                     "Métis", "Inuit", "Multiple Indigenous responses",
+                                     "M\u00e9tis", "Inuit", "Multiple Indigenous responses",
                                      "Indigenous responses not included elsewhere", "Non-Indigenous"))
   fc <- unique(p[p$characteristic == "Foster children", c("level", "parent_id", "root_id", "sample")])
   expect_identical(c(fc$level, fc$parent_id, fc$root_id), c(2L, 37L, 13L))

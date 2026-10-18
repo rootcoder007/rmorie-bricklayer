@@ -19,13 +19,14 @@ holistic_balance(
 )
 }
 \arguments{
-\item{data}{A data frame, one row per group and indicator (as \code{\link{statcan_estimates}}
-gives).}
+\item{data}{A data frame, one row per group and indicator (as
+\code{\link{statcan_estimates}} gives).}
 
-\item{group, domain, estimate, lower, upper}{Column names: the group, the holistic domain of the
-indicator, the percentage of wellness and its published limits.}
+\item{group, domain, estimate, lower, upper}{Column names: the group, the holistic domain
+of the indicator, the percentage of wellness and its published limits.}
 
-\item{weights}{Optional named weights, one per domain (they are rescaled to sum to one).}
+\item{weights}{Optional named weights, one per domain (they are rescaled to sum to
+one).}
 
 \item{quality}{Optional column of quality flags.}
 
@@ -42,69 +43,76 @@ A data frame of class \code{rmbl_holistic_balance}: \code{group}, \code{level},
 \code{domains} (the matrix of domain levels, groups by domains) and \code{weights}.
 }
 \description{
-For each group, from published percentages of wellness in each holistic domain (physical,
-emotional, mental, spiritual, or the domains a community names), the overall level of wellness and
-how balanced it is across the domains, with Monte Carlo intervals from the published ones.
+For each group, from published percentages of wellness in each holistic domain
+(physical, emotional, mental, spiritual, or the domains a community names), the overall
+level of wellness and how balanced it is across the domains, with Monte Carlo intervals
+from the published ones.
 }
 \details{
-Indigenous understandings of mental health are holistic: wellness is a balance among the domains
-of a person, and illness a loss of that balance (Stewart 2008; Gabriel, Mirza and Stewart 2022).
-A single indicator, or an average of indicators, cannot show balance: a group with 80\\% in two
-domains and 20\\% in two others has the same average as one with 50\\% in all four. This method,
-which is ours and inspired by that work rather than taken from it, measures balance as the ratio
-of the weighted geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
+Indigenous understandings of mental health are holistic: wellness is a balance
+among the domains of a person, and illness a loss of that balance (Stewart 2008;
+Gabriel, Mirza and Stewart 2022). A single indicator, or an average of indicators,
+cannot show balance: a group with 80\\% in two domains and 20\\% in two others has the
+same average as one with 50\\% in all four. This method, which is ours and inspired by
+that work rather than taken from it, measures balance as the ratio of the weighted
+geometric to the weighted arithmetic mean of the domain levels \eqn{p_k}:
 \deqn{B = \exp\left(\sum_k w_k \log p_k\right) / \sum_k w_k p_k,}
-one less Atkinson's (1970) index with inequality aversion 1. \eqn{B = 1} when every domain is at
-the same level and falls toward 0 as one domain falls behind the others; it does not depend on the
-overall level, which is reported beside it (\code{level}, \eqn{\sum_k w_k p_k}) with the weakest
-domain.
+one less Atkinson's (1970) index with inequality aversion 1. \eqn{B = 1} when every
+domain is at the same level and falls toward 0 as one domain falls behind the others;
+it does not depend on the overall level, which is reported beside it (\code{level},
+\eqn{\sum_k w_k p_k}) with the weakest domain.
 
-The weights \code{weights} say how much each domain counts. They are equal by default; a community
-that holds its own view of the domains sets its own (the CARE principle of authority to control,
-Carroll et al. 2020), and the result says which weights it used.
+The weights \code{weights} say how much each domain counts. They are equal by default;
+a community that holds its own view of the domains sets its own (the CARE principle of
+authority to control, Carroll et al. 2020), and the result says which weights it used.
 
-Several indicators in one domain are averaged, their standard errors combined as independent.
-The intervals come from \code{reps} draws of every domain level from a normal distribution on the
-logit scale with the standard error of its published interval, the domains independent: \eqn{B}
-is bounded by 1 and its sampling distribution is skewed near 1, where the delta method fails. A
-group with a suppressed or missing domain has no balance: the domain is not imputed.
+Several indicators in one domain are averaged, their standard errors combined as
+independent. The intervals come from \code{reps} draws of every domain level from a
+normal distribution on the logit scale with the standard error of its published
+interval, the domains independent: \eqn{B} is bounded by 1 and its sampling
+distribution is skewed near 1, where the delta method fails. A group with a suppressed
+or missing domain has no balance: the domain is not imputed.
 
-What the domains mean, and which indicators stand for each, is for the communities to say; the
-published tables have few measures of spiritual wellness, and a domain with no fitting indicator
-should be left out rather than filled with another.
+What the domains mean, and which indicators stand for each, is for the communities to
+say; the published tables have few measures of spiritual wellness, and a domain with no
+fitting indicator should be left out rather than filled with another.
 }
 \examples{
-# four domains from table 13-10-0924-01, 2019/2022, adults: the indicator standing for each is a
-# choice for the people whose data these are to make; this is one reading of it
+# four domains from table 13-10-0924-01, 2019/2022, adults: which indicator stands for
+# each is a choice for the people whose data these are; this is one reading of it
 h <- indigenous_example("health_indicators")
 dom <- c("Perceived health, very good or excellent" = "physical",
          "Perceived mental health, very good or excellent" = "mental",
          "Life satisfaction, satisfied or very satisfied" = "emotional",
-         "Sense of belonging to local community, somewhat strong or very strong" = "community")
+         "Sense of belonging to local community, somewhat strong or very strong" =
+           "community")
 d <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
          h$indicator \%in\% names(dom), ]
 d$domain <- dom[d$indicator]
-hb <- holistic_balance(d, "group", "domain", "estimate", "lower", "upper", quality = "quality")
+hb <- holistic_balance(d, "group", "domain", "estimate", "lower", "upper",
+                       quality = "quality")
 hb
 plot(hb)
 # a community that counts belonging twice
-holistic_balance(d, "group", "domain", "estimate", "lower", "upper", quality = "quality",
+holistic_balance(d, "group", "domain", "estimate", "lower", "upper",
+                 quality = "quality",
                  weights = c(physical = 1, mental = 1, emotional = 1, community = 2))
 }
 \references{
-Atkinson AB (1970). On the measurement of inequality. Journal of Economic Theory 2(3):244-263.
-\doi{10.1016/0022-0531(70)90039-6}
+Atkinson AB (1970). On the measurement of inequality. Journal of Economic
+Theory 2(3):244-263. \doi{10.1016/0022-0531(70)90039-6}
 
-Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous Data
-Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
+Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
+Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
 
-Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing through the
-life stories of Indigenous youth who have experienced homelessness. International Journal of
-Environmental Research and Public Health 19(20):13402. \doi{10.3390/ijerph192013402}
+Gabriel MD, Mirza S, Stewart SL (2022). Exploring mental health and holistic healing
+through the life stories of Indigenous youth who have experienced homelessness.
+International Journal of Environmental Research and Public Health 19(20):13402.
+\doi{10.3390/ijerph192013402}
 
-Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing from Native
-counsellors in Canada. International Journal of Health Promotion and Education 46(2):49-56.
-\doi{10.1080/14635240.2008.10708129}
+Stewart SL (2008). Promoting Indigenous mental health: cultural perspectives on healing
+from Native counsellors in Canada. International Journal of Health Promotion and
+Education 46(2):49-56. \doi{10.1080/14635240.2008.10708129}
 }
 \seealso{
 \code{\link{wellness_profile}}, \code{\link{dual_continuum}}.

@@ -11,24 +11,26 @@ exposure_trend(cases, n, dose = seq_along(cases) - 1L, conf_level = 0.95)
 
 \item{n}{Number of people at each level.}
 
-\item{dose}{The exposure levels, in order (default \code{0, 1, 2, ...}); the trend test scores them.}
+\item{dose}{The exposure levels, in order (default \code{0, 1, 2, ...}); the trend test
+scores them.}
 
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
 A data frame with \code{dose}, \code{cases}, \code{n}, \code{proportion},
-\code{odds_ratio}, \code{lower}, \code{upper}; the trend test is the attribute \code{trend}
-(an \code{htest}).
+\code{odds_ratio}, \code{lower}, \code{upper}; the trend test is the attribute
+\code{trend} (an \code{htest}).
 }
 \description{
-For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2 generations of
-residential school attendance in their family (or any ordered exposure), the odds ratio of each
-level against the lowest, with Woolf intervals, and the Cochran-Armitage test for a trend across
-the levels.
+For counts of an outcome (suicidal thoughts, distress) among people with 0, 1 or 2
+generations of residential school attendance in their family (or any ordered exposure),
+the odds ratio of each level against the lowest, with Woolf intervals, and the
+Cochran-Armitage test for a trend across the levels.
 }
 \details{
-Counts must be unweighted. For a complex survey, take the weighted analysis from the survey
-itself (\code{\link{survey_design}}): this function is for published or aggregated counts.
+Counts must be unweighted. For a complex survey, take the weighted analysis
+from the survey itself (\code{\link{survey_design}}): this function is for published or
+aggregated counts.
 }
 \examples{
 # made-up counts by 0, 1 and 2 generations of attendance, to show the computation

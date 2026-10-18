@@ -18,44 +18,47 @@ indigenous_gap(
 \arguments{
 \item{data}{A data frame, one row per group.}
 
-\item{group, estimate, lower, upper}{Column names: the group label, the estimate, and the published
-confidence limits.}
+\item{group, estimate, lower, upper}{Column names: the group label, the estimate, and the
+published confidence limits.}
 
 \item{reference}{The label of the reference group (default \code{"Non-Indigenous"}).}
 
 \item{quality}{Optional column of quality flags (\code{E}, \code{F}, \code{x}, ...), as
 \code{\link{statcan_tidy}} gives them.}
 
-\item{conf_level}{The confidence level of the published intervals and of the ones returned
-(default 0.95).}
+\item{conf_level}{The confidence level of the published intervals and of the ones
+returned (default 0.95).}
 }
 \value{
-A data frame with \code{group}, \code{estimate}, \code{reference_estimate}, \code{ratio},
-\code{ratio_lower}, \code{ratio_upper}, \code{difference}, \code{difference_lower},
-\code{difference_upper}, \code{use_with_caution} and \code{pan_indigenous}, of class
-\code{rmbl_indigenous_gap} (\code{plot()} draws each group's difference or ratio).
+A data frame with \code{group}, \code{estimate}, \code{reference_estimate},
+\code{ratio}, \code{ratio_lower}, \code{ratio_upper}, \code{difference},
+\code{difference_lower}, \code{difference_upper}, \code{use_with_caution} and
+\code{pan_indigenous}, of class \code{rmbl_indigenous_gap} (\code{plot()} draws each
+group's difference or ratio).
 }
 \description{
-For published percentages or rates with their confidence intervals (a Statistics Canada table,
-a report), the ratio and the difference of each group to a reference group, with confidence
-intervals worked from the published ones.
+For published percentages or rates with their confidence intervals (a Statistics Canada
+table, a report), the ratio and the difference of each group to a reference group, with
+confidence intervals worked from the published ones.
 }
 \details{
-Each published interval gives a standard error, \eqn{(u - l) / (2 z)}, on the scale of the
-estimate for the difference and on the log scale, \eqn{(\log u - \log l) / (2 z)}, for the ratio.
-The groups are treated as independent samples, so the standard error of a difference is the root
-of the sum of the squares. Disjoint domains of one survey are nearly so, but not exactly (they
-share the design's strata and clusters): the intervals are approximations, and the exact ones need
-the survey's bootstrap weights, which Statistics Canada holds in its Research Data Centres.
+Each published interval gives a standard error, \eqn{(u - l) / (2 z)}, on the
+scale of the estimate for the difference and on the log scale,
+\eqn{(\log u - \log l) / (2 z)}, for the ratio. The groups are treated as independent
+samples, so the standard error of a difference is the root of the sum of the squares.
+Disjoint domains of one survey are nearly so, but not exactly (they share the design's
+strata and clusters): the intervals are approximations, and the exact ones need the
+survey's bootstrap weights, which Statistics Canada holds in its Research Data Centres.
 
-Distinctions-based: each group is compared on its own. A row that pools every identity (\code{"Total
-Indigenous"}, \code{"Indigenous identity"}) is kept but marked \code{pan_indigenous = TRUE}, since
-a pooled figure can hide what differs between First Nations, Metis and Inuit. A row whose estimate
-is flagged \code{E} is compared and marked; one flagged \code{F} or \code{x}, or with no estimate,
-is not compared.
+Distinctions-based: each group is compared on its own. A row that pools every identity
+(\code{"Total Indigenous"}, \code{"Indigenous identity"}) is kept but marked
+\code{pan_indigenous = TRUE}, since a pooled figure can hide what differs between First
+Nations, Metis and Inuit. A row whose estimate is flagged \code{E} is compared and
+marked; one flagged \code{F} or \code{x}, or with no estimate, is not compared.
 }
 \examples{
-# Perceived mental health very good or excellent, adults, 2019/2022: The Daily, 2025-02-13
+# Perceived mental health very good or excellent, adults, 2019/2022: The Daily,
+# 2025-02-13
 # (table 13-10-0924-01)
 h <- indigenous_example("health_indicators")
 mh <- h[h$period == "2019/2022" & h$age == "Total, 18 years and over" &
@@ -66,12 +69,12 @@ plot(g)
 plot(g, what = "ratio")
 }
 \references{
-Statistics Canada (2025). Health indicators for First Nations adults living off reserve, Metis and
-Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
+Statistics Canada (2025). Health indicators for First Nations adults living
+off reserve, Metis and Inuit adults, 2015 to 2022. The Daily, 2025-02-13.
 \url{https://www150.statcan.gc.ca/n1/daily-quotidien/250213/dq250213f-eng.htm}
 
-Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for Indigenous Data
-Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
+Carroll SR, Garba I, Figueroa-Rodriguez OL, et al. (2020). The CARE Principles for
+Indigenous Data Governance. Data Science Journal 19:43. \doi{10.5334/dsj-2020-043}
 }
 \seealso{
 \code{\link{statcan_tidy}}, \code{\link{age_standardise}}.

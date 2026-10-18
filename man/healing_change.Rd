@@ -33,35 +33,34 @@ healing_change(
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
-A data frame of class \code{rmbl_healing_change}: \code{group}, \code{indicator},
-\code{side}, \code{from}, \code{to}, \code{change}, \code{lower}, \code{upper},
-\code{use_with_caution}.
+A data frame of class \code{rmbl_healing_change}: \code{group},
+\code{indicator}, \code{side}, \code{from}, \code{to}, \code{change}, \code{lower},
+\code{upper}, \code{use_with_caution}.
 }
 \description{
-For each group and indicator, the change between two survey periods with its confidence interval,
-wellness indicators first: change over time read as Indigenous scholars describe mental health,
-as a process of healing, not as a fixed deficit.
+For each group and indicator, the change between two survey periods with its confidence
+interval, wellness indicators first: change over time read as Indigenous scholars
+describe mental health, as a process of healing, not as a fixed deficit.
 }
 \details{
-Stewart (2008) describes Indigenous mental health as wellness and as a process of healing; a
-process is seen in change. The change \eqn{p_2 - p_1} has the interval
-\eqn{p_2 - p_1 \pm z\sqrt{s_1^2 + s_2^2}}, with the standard errors from the published intervals
-and the two periods' samples independent (separate cycles of a survey are). A change is only as
-comparable as the two periods' questions and designs: Statistics Canada flags breaks in a series,
-and a change across one is not a change in the people.
+Stewart (2008) describes Indigenous mental health as wellness and as a process
+of healing; a process is seen in change. The change \eqn{p_2 - p_1} has the interval
+\eqn{p_2 - p_1 \pm z\sqrt{s_1^2 + s_2^2}}, with the standard errors from the published
+intervals and the two periods' samples independent (separate cycles of a survey are). A
+change is only as comparable as the two periods' questions and designs: Statistics
+Canada flags breaks in a series, and a change across one is not a change in the people.
 }
 \examples{
 # 2015/2018 to 2019/2022, adults (table 13-10-0924-01)
 h <- indigenous_example("health_indicators")
+belong <- "Sense of belonging to local community, somewhat strong or very strong"
 h <- h[h$age == "Total, 18 years and over" & h$indicator \%in\%
-         c("Perceived mental health, very good or excellent",
-           "Sense of belonging to local community, somewhat strong or very strong",
+         c("Perceived mental health, very good or excellent", belong,
            "Mood disorder", "Anxiety disorder"), ]
 hc <- healing_change(h, "group", "indicator", "period", "estimate", "lower", "upper",
                      from = "2015/2018", to = "2019/2022", quality = "quality",
-                     wellness = c(
-                       "Perceived mental health, very good or excellent",
-                       "Sense of belonging to local community, somewhat strong or very strong"))
+                     wellness = c("Perceived mental health, very good or excellent",
+                                  belong))
 hc
 plot(hc)
 }

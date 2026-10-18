@@ -25,61 +25,68 @@ connection_association(
 
 \item{x, y}{Columns of the two indicators.}
 
-\item{x_lower, x_upper, y_lower, y_upper}{Optional columns of their published limits (for the
-interval).}
+\item{x_lower, x_upper, y_lower, y_upper}{Optional columns of their published limits (for
+the interval).}
 
-\item{reps}{Draws for the interval and, past 8 places, for the p-value (default 10,000).}
+\item{reps}{Draws for the interval and, past 8 places, for the p-value (default
+10,000).}
 
 \item{seed}{Seed for the draws (default 1).}
 
 \item{conf_level}{Confidence level (default 0.95).}
 }
 \value{
-A list of class \code{rmbl_connection}: \code{data} (the places used), \code{rho},
-\code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper}, \code{n}.
+A list of class \code{rmbl_connection}: \code{data} (the places used),
+\code{rho}, \code{p_value}, \code{exact}, \code{rho_lower}, \code{rho_upper},
+\code{n}.
 }
 \description{
-For two indicators published for the same places (regions, provinces, Inuit regions), their rank
-correlation across places, an exact permutation p-value, and an interval that carries the
-sampling error of the published estimates: for connection to land and wellness, community
-belonging and mental health, education and health.
+For two indicators published for the same places (regions, provinces, Inuit regions),
+their rank correlation across places, an exact permutation p-value, and an interval
+that carries the sampling error of the published estimates: for connection to land and
+wellness, community belonging and mental health, education and health.
 }
 \details{
-Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part of all aspects of
-Indigenous life including health and well-being"; Mashford-Pringle (2016) describes Indigenous
-health and education as interconnected. Across places, that connection has a testable shadow: where
-more people are on the land (or belong, or finish school), do more report wellness? This function
-measures it by Spearman's \eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when
-there are at most 8 places and from \code{reps} random orderings otherwise. Each estimate carries
-sampling error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
-\code{reps} draws of both indicators from normal distributions with their published standard
-errors: a correlation that the published intervals cannot pin down shows a wide interval.
+Mashford-Pringle and Stewart (2019) describe the land as "an instrumental part
+of all aspects of Indigenous life including health and well-being"; Mashford-Pringle
+(2016) describes Indigenous health and education as interconnected. Across places, that
+connection has a testable shadow: where more people are on the land (or belong, or
+finish school), do more report wellness? This function measures it by Spearman's
+\eqn{\rho}. Its p-value is exact, from all \eqn{n!} orderings when there are at most 8
+places and from \code{reps} random orderings otherwise. Each estimate carries sampling
+error, so \code{rho_lower} and \code{rho_upper} are the quantiles of \eqn{\rho} over
+\code{reps} draws of both indicators from normal distributions with their published
+standard errors: a correlation that the published intervals cannot pin down shows a
+wide interval.
 
-This is an association across places (an ecological one). It cannot say that connection to land
-makes a person well, which needs data on persons; a handful of places gives little power; and
-a correlation is not a measure of the relationship the authors describe. It is a description of
-how the published indicators move together.
+This is an association across places (an ecological one). It cannot say that connection
+to land makes a person well, which needs data on persons; a handful of places gives
+little power; and a correlation is not a measure of the relationship the authors
+describe. It is a description of how the published indicators move together.
 }
 \examples{
-# across regions, 2022 (table 41-10-0067-01): where First Nations people report excellent or
+# across regions, 2022 (table 41-10-0067-01): where First Nations people report
+# excellent or
 # very good mental health, do Metis people living in the same region too?
 mh <- indigenous_example("mental_health")
 mh <- mh[mh$rating == "Excellent or very good" & mh$region != "Canada", ]
 fn <- mh[mh$group == "First Nations", ]
 me <- mh[mh$group == "M\u00e9tis", ]
 d <- merge(fn, me, by = "region", suffixes = c("_fn", "_me"))
-ca <- connection_association(d, "region", "estimate_fn", "estimate_me", "lower_fn", "upper_fn",
+ca <- connection_association(d, "region", "estimate_fn", "estimate_me", "lower_fn",
+                             "upper_fn",
                              "lower_me", "upper_me")
 ca
 plot(ca)
 }
 \references{
-Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring land-based experiences
-with university students in Ontario. Global Health Promotion 26(3_suppl):64-72.
-\doi{10.1177/1757975919828722}
+Mashford-Pringle A, Stewart SL (2019). Akiikaa (it is the land): exploring
+land-based experiences with university students in Ontario. Global Health Promotion
+26(3_suppl):64-72. \doi{10.1177/1757975919828722}
 
-Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are interconnected. Research
-in the Sociology of Health Care 34:85-96. \doi{10.1108/s0275-495920160000034005}
+Mashford-Pringle A (2016). Aboriginal health and Aboriginal education are
+interconnected. Research in the Sociology of Health Care 34:85-96.
+\doi{10.1108/s0275-495920160000034005}
 }
 \seealso{
 \code{\link{dual_continuum}}.
