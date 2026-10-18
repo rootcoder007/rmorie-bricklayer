@@ -25,6 +25,14 @@ test_that("statcan_tidy() makes a census table's wide layout long", {
   e <- statcan_estimates(t)
   expect_identical(nrow(e), 4L)
   expect_false("Coordinate" %in% names(e))
+  # one label, two members: told apart by the member number in the coordinate
+  du <- data.frame(REF_DATE = 2021, GEO = "Canada", DGUID = "2021A000011124",
+                   `Household type (16)` = c("Without children", "Without children", "Total"),
+                   Coordinate = c("1.3", "1.7", "1.1"), `Tenure (8):Owner[2]` = c(5, 6, 11), Symbol = "",
+                   check.names = FALSE)
+  tu <- statcan_tidy(du)
+  expect_identical(tu[["Household type (16)"]], c("Without children [3]", "Without children [7]", "Total"))
+  expect_identical(nrow(statcan_estimates(tu)), 3L)
   bad <- data.frame(`A (2):x[1]` = 1, `B (2):y[1]` = 2, check.names = FALSE)
   expect_error(statcan_tidy(bad), "more than one dimension")
 })

@@ -28,6 +28,10 @@
 #' (\code{"Indigenous identity (9)"}), the values \code{VALUE} and the symbols \code{STATUS}, so
 #' every Statistics Canada table reads the same way.
 #'
+#' A label that names two members of one dimension (the census tables repeat labels under different
+#' parents, and the file drops the hierarchy) gets its member number from the coordinate:
+#' \code{"Without children [3]"} and \code{"Without children [7]"}. Other labels are left as they are.
+#'
 #' @param x A data frame read from a Statistics Canada table, or a key of the data service
 #'   (\code{"statcan_indigenous/tbl_13100924"}, or the eight-digit table id alone, which needs the
 #'   data service key: see \code{\link{bricklayer_data_load}}).
@@ -58,6 +62,7 @@ statcan_tidy <- function(x) {
   if (is.null(x)) {
     stop("`x` has no VALUE column, nor census columns: it is not a Statistics Canada table", call. = FALSE)
   }
+  x <- .rmbl_statcan_members(x)
   st <- if ("STATUS" %in% names(x)) as.character(x$STATUS) else rep("", nrow(x))
   st[is.na(st)] <- ""
   st <- trimws(st)
@@ -95,6 +100,31 @@ statcan_tidy <- function(x) {
   }), use.names = FALSE)
   rownames(out) <- NULL
   out
+}
+
+# One label can name two members of a dimension ("Without children" under couple families and under
+# another parent, table 98-10-0254): the CSV drops the hierarchy, and only the member number in the
+# coordinate tells them apart. Such labels get their member number ("Without children [3]"); labels that
+# name one member are left as they are. The coordinate holds one number per dimension, the geography
+# first, in the order of the columns; the geography is told apart by DGUID and is left alone.
+.rmbl_statcan_members <- function(x) {
+  cc <- intersect(c("COORDINATE", "Coordinate"), names(x))[1L]
+  if (is.na(cc) || !"GEO" %in% names(x)) return(x)
+  nm <- names(x)
+  between <- nm[seq(match("GEO", nm), match(cc, nm) - 1L)]
+  dims <- between[!between %in% c("DGUID", "UOM", "UOM_ID", "SCALAR_FACTOR", "SCALAR_ID", "VECTOR")]
+  k <- length(dims)
+  if (k < 2L) return(x)
+  parts <- strsplit(as.character(x[[cc]]), ".", fixed = TRUE)
+  if (any(lengths(parts) < k)) return(x)
+  ids <- matrix(unlist(lapply(parts, `[`, seq_len(k)), use.names = FALSE), ncol = k, byrow = TRUE)
+  for (j in 2:k) {
+    lab <- as.character(x[[dims[j]]])
+    n_id <- tapply(ids[, j], lab, function(v) length(unique(v)))
+    amb <- lab %in% names(n_id)[n_id > 1L]
+    if (any(amb)) x[[dims[j]]][amb] <- paste0(lab[amb], " [", ids[amb, j], "]")
+  }
+  x
 }
 
 # a pan-Indigenous total (every identity together), as against First Nations, Metis or Inuit

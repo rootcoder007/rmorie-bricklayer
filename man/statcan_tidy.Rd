@@ -35,6 +35,10 @@ The census data tables (98-10-xxxx) come in a wide layout: one column per member
 and no \code{VALUE}. They are made long first: the dimension becomes a column of member labels
 (\code{"Indigenous identity (9)"}), the values \code{VALUE} and the symbols \code{STATUS}, so
 every Statistics Canada table reads the same way.
+
+A label that names two members of one dimension (the census tables repeat labels under different
+parents, and the file drops the hierarchy) gets its member number from the coordinate:
+\code{"Without children [3]"} and \code{"Without children [7]"}. Other labels are left as they are.
 }
 \examples{
 # the layout of a downloaded table, with one cell suppressed
