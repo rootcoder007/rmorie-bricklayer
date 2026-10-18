@@ -426,8 +426,9 @@ plot(cc, xlab = "First Nations who know an Indigenous language (%)",
      ylab = "First Nations: mental health excellent or very good (%)")
 ```
 
-Across these eight provinces and territories, there is no clear association. The rank correlation
-is weak, and its interval includes zero. That is not evidence against the communities' findings.
+Across these eight provinces and territories, the rank correlation is positive but far from
+settled: its exact p-value is large and its interval includes zero. That is not evidence for or
+against the communities' findings.
 Eight places are far too few, a province mixes many communities, and the two measures come from
 different surveys and years. The community-level design needs the census profile of each First
 Nations community (98-510-X2021002 at the data service), and outcomes measured for the same
