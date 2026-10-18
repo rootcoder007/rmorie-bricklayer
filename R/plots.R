@@ -712,8 +712,22 @@ bricklayer_plot_options <- function(...) {
 #'   \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{
 #'     (\code{\link{event_study}}, \code{\link{staggered_att}}) the effect at each
 #'     period since adoption with its interval, the reference period at zero.}
-#'   \item{\code{rmbl_synth}}{(\code{\link{synthetic_control}}) the treated unit and
-#'     its synthetic control over time, adoption marked.}
+#'   \item{\code{rmbl_synth}, \code{rmbl_synthdid}}{(\code{\link{synthetic_control}},
+#'     \code{\link{synthetic_did}}) the treated unit (or mean) and its synthetic or weighted
+#'     comparison over time, adoption marked.}
+#'   \item{\code{rmbl_power}}{(\code{\link{panel_power}}) power against effect size, with
+#'     the 0.8 line and the minimum detectable effect.}
+#'   \item{\code{rmbl_event_study}, \code{rmbl_staggered_att}}{also take \code{style =
+#'     "stata"} (hollow points joined by a line, dashed bars) and \code{shade_post};
+#'     \code{\link{plot_event_grid}} puts several in one grid.}
+#'   \item{\code{rmbl_bacon}}{(\code{\link{bacon_decomposition}}) each two-group
+#'     comparison's estimate against its weight, by type, with the two-way estimate.}
+#'   \item{\code{rmbl_permutation}}{(\code{\link{permutation_inference}}) the permuted
+#'     statistics as a density (5th and 95th percentiles dashed) or histogram, the observed
+#'     one in red, one panel per outcome.}
+#'   \item{\code{rmbl_loo}, \code{rmbl_cohort_trends}}{(\code{\link{leave_one_out}},
+#'     \code{\link{cohort_trends}}) the leave-one-out estimates with the full-sample one;
+#'     each cohort's outcome by time since adoption.}
 #'   \item{\code{rmbl_case_flow}}{(\code{\link{case_flow}}) cases received
 #'     and disposed, shaded where the inventory grew or fell, and the
 #'     clearance rate with its interval and rolling value.}

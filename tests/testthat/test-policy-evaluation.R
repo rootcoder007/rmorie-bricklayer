@@ -132,6 +132,28 @@ test_that("staggered_att(): Callaway-Sant'Anna cells by hand, Wooldridge as lm()
   f <- stats::lm(crime_rate ~ cell + factor(district) + factor(month), p)
   cf <- stats::coef(f)[paste0("cell", w$att_gt$cohort, "_", w$att_gt$period)]
   expect_equal(w$att_gt$estimate, unname(cf), tolerance = 1e-8)
+  # covariates: the doubly robust cell by hand (Sant'Anna and Zhao 2020)
+  q <- .pe()
+  q$x1 <- .rmbl_with_seed(7, stats::rnorm(20))[match(q$district, unique(q$district))]
+  q$crime_rate <- q$crime_rate + 2 * q$x1 * q$month / 36
+  sx <- staggered_att(q, "district", "month", "crime_rate", "reform_month", reps = 0, covariates = "x1")
+  u <- unique(q$district)
+  grp <- q$reform_month[match(u, q$district)]
+  k <- grp %in% c(19, 25) | is.na(grp)
+  yy <- function(t) q$crime_rate[q$month == t][match(u, q$district[q$month == t])]
+  dy <- (yy(20) - yy(18))[k]
+  d <- as.numeric(grp[k] %in% 19)
+  x <- cbind(1, q$x1[match(u, q$district)][k])
+  m <- as.vector(x %*% stats::lm.fit(x[d == 0, ], dy[d == 0])$coefficients)
+  ps <- stats::glm.fit(x, d, family = stats::binomial())$fitted.values
+  w <- ps * (1 - d) / (1 - ps)
+  ref <- sum(d * (dy - m)) / sum(d) - sum(w * (dy - m)) / sum(w)
+  expect_equal(sx$att_gt$estimate[sx$att_gt$cohort == 19 & sx$att_gt$period == 20], ref, tolerance = 1e-10)
+  sr <- staggered_att(q, "district", "month", "crime_rate", "reform_month", reps = 0, covariates = "x1",
+                      est_method = "reg")
+  expect_equal(sr$att_gt$estimate[sr$att_gt$cohort == 19 & sr$att_gt$period == 20], mean((dy - m)[d == 1]))
+  expect_error(staggered_att(q, "district", "month", "crime_rate", "reform_month", method = "wooldridge",
+                             covariates = "x1"), "callaway_santanna")
   b <- staggered_att(.pe(), "district", "month", "crime_rate", "reform_month", reps = 30, seed = 2)
   expect_true(all(is.finite(b$att_gt$se)) && is.finite(b$overall$se))
   expect_identical(b$overall, staggered_att(.pe(), "district", "month", "crime_rate", "reform_month", reps = 30,
@@ -197,6 +219,9 @@ test_that("permutation_inference(): every assignment of the stages, and the step
   expect_equal(rr$p_value * 50, round(rr$p_value * 50))
   expect_identical(rr$p_stepdown, rr$p_value)
   expect_identical(nrow(.rmbl_multiset_perms(c(1, 1, 2, 3))), 12L)
+  rs <- permutation_inference(p, "district", "month", "crime_rate", "reform_month", cluster = "region",
+                              ties = "strict")
+  expect_equal(rs$p_value, r$p_value[1] - 1 / 24)
   expect_error(permutation_inference(p, "district", "month", "crime_rate", "reform_month",
                                      cluster = "month"), "same for every unit of a cluster")
 })

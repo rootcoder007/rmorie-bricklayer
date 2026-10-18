@@ -49,9 +49,10 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \value{
 A data frame of class \code{rmbl_event_study}: \code{event_time},
 \code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{t}, \code{p_value},
-with the reference period as a row of zeros; attribute \code{pretrend} (a list:
-\code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{n}, \code{clusters},
-\code{conf_level}. \code{plot()} draws it.
+with the reference period as a row of zeros; attributes \code{pretrend} (a list:
+\code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{vcov} (of the estimated
+event times), \code{n}, \code{clusters}, \code{conf_level}. \code{plot()} draws
+it.
 }
 \description{
 Leads and lags of a policy's adoption, from a two-way fixed-effects regression on

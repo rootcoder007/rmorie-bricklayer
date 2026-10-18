@@ -13,7 +13,8 @@ permutation_inference(
   cluster = NULL,
   statistic = c("t", "estimate"),
   reps = 999L,
-  seed = NULL
+  seed = NULL,
+  ties = c("count", "strict")
 )
 }
 \arguments{
@@ -37,6 +38,10 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \item{reps}{The number of random assignments (default 999).}
 
 \item{seed}{Optional seed.}
+
+\item{ties}{\code{"count"} (default): an assignment whose statistic equals the
+observed one counts (the observed assignment is among those enumerated, so the
+exact p-value is at least \eqn{1/N}); \code{"strict"}: only larger ones count.}
 }
 \value{
 A data frame of class \code{rmbl_permutation}, one row per outcome:

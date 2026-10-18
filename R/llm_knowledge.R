@@ -350,8 +350,13 @@
   if (!length(near)) near <- .bl_kn_search(prompt, pages, 6L)
   ask <- prompt
   if (length(near)) {
-    ask <- paste(c(prompt, "", "Functions nearest this question (name(arguments)  -- title):",
-                   .bl_kn_index_lines(near)), collapse = "\n")
+    # the budget is in lines: a help page that documents several functions gives a line each, so 40
+    # pages could be more than the 40 lines a small model has room for
+    nl <- .bl_kn_index_lines(near)
+    cap <- if (is.finite(tier$index)) tier$index else if (length(big)) 40L else Inf
+    if (is.finite(cap)) nl <- utils::head(nl, cap)
+    ask <- paste(c(prompt, "", "Functions nearest this question (name(arguments)  -- title):", nl),
+                 collapse = "\n")
   }
   msgs <- list(list(role = "system", content = sys), list(role = "user", content = ask))
   tools <- .bl_kn_tools()

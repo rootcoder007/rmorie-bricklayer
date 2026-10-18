@@ -328,9 +328,10 @@ print.rmbl_did <- function(x, ...) {
 #' \code{TRUE}).
 #' @return A data frame of class \code{rmbl_event_study}: \code{event_time},
 #'   \code{estimate}, \code{se}, \code{lower}, \code{upper}, \code{t}, \code{p_value},
-#'   with the reference period as a row of zeros; attribute \code{pretrend} (a list:
-#'   \code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{n}, \code{clusters},
-#'   \code{conf_level}. \code{plot()} draws it.
+#'   with the reference period as a row of zeros; attributes \code{pretrend} (a list:
+#'   \code{F}, \code{df1}, \code{df2}, \code{p_value}), \code{vcov} (of the estimated
+#'   event times), \code{n}, \code{clusters}, \code{conf_level}. \code{plot()} draws
+#'   it.
 #' @references Sun L, Abraham S (2021). Estimating dynamic treatment effects in event
 #'   studies with heterogeneous treatment effects. Journal of Econometrics
 #'   225(2):175-199. \doi{10.1016/j.jeconom.2020.09.006}
@@ -399,6 +400,7 @@ event_study <- function(data, unit, time, outcome, first_treated, leads = 4L, la
     pt <- list(F = NA_real_, df1 = 0L, df2 = fit$clusters - 1L, p_value = NA_real_)
   }
   attr(out, "pretrend") <- pt
+  attr(out, "vcov") <- fit$vcov[paste0("k", ks), paste0("k", ks), drop = FALSE]
   attr(out, "n") <- fit$n
   attr(out, "clusters") <- fit$clusters
   attr(out, "conf_level") <- conf_level
@@ -418,19 +420,41 @@ print.rmbl_event_study <- function(x, ...) {
 }
 
 #' @rdname plot-methods
+#' @param style For an event study: \code{"dot"} (filled points with solid capped
+#'   bars, the default) or \code{"stata"} (hollow points joined by a line, dashed
+#'   capped bars, dashed reference lines).
+#' @param shade_post Shade the periods after adoption (default \code{FALSE}).
+#' @param ref_line Where the vertical reference line goes (default \code{-0.5},
+#'   between the reference period and adoption; \code{0} puts it at adoption).
 #' @export
-plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NULL, style = c("dot", "stata"),
+                                  shade_post = FALSE, ref_line = -0.5) {
   .rmbl_plot_check(x, "rmbl_event_study")
+  style <- .rmbl_arg(style)
   d <- as.data.frame(x)
   cl <- .bl_cols(1L, col, palette)
-  graphics::plot(d$event_time, d$estimate, ylim = range(c(d$lower, d$upper, 0), na.rm = TRUE), pch = 19,
-                 col = cl, xlab = "Periods since adoption", ylab = "Effect, with its interval",
-                 main = .bl_main(main, "Event study"), ...)
-  graphics::abline(h = 0, col = "#9A9A9A")
-  graphics::abline(v = -0.5, lty = 2, col = "#9A9A9A")
+  yl <- range(c(d$lower, d$upper, 0), na.rm = TRUE)
+  graphics::plot(d$event_time, d$estimate, ylim = yl, type = "n", xlab = "Periods since adoption",
+                 ylab = "Effect, with its interval", main = .bl_main(main, "Event study"), ...)
+  if (isTRUE(shade_post)) {
+    u <- graphics::par("usr")
+    graphics::rect(ref_line, u[3L], u[2L], u[4L], col = grDevices::adjustcolor("#9A9A9A", 0.15), border = NA)
+  }
   w <- is.finite(d$lower) & is.finite(d$upper) & d$upper > d$lower
-  graphics::arrows(d$event_time[w], d$lower[w], d$event_time[w], d$upper[w], angle = 90, code = 3, length = 0.03,
-                   col = cl)
+  if (style == "stata") {
+    graphics::abline(h = 0, lty = 2, col = "#9A9A9A")
+    graphics::abline(v = ref_line, lty = 2, col = "#9A9A9A")
+    graphics::arrows(d$event_time[w], d$lower[w], d$event_time[w], d$upper[w], angle = 90, code = 3,
+                     length = 0.03, col = "#7A7A7A", lty = 2)
+    graphics::lines(d$event_time, d$estimate, col = cl)
+    graphics::points(d$event_time, d$estimate, pch = 1, col = cl)
+  } else {
+    graphics::abline(h = 0, col = "#9A9A9A")
+    graphics::abline(v = ref_line, lty = 2, col = "#9A9A9A")
+    graphics::arrows(d$event_time[w], d$lower[w], d$event_time[w], d$upper[w], angle = 90, code = 3,
+                     length = 0.03, col = cl)
+    graphics::points(d$event_time, d$estimate, pch = 19, col = cl)
+  }
   invisible(d)
 }
 
@@ -450,9 +474,25 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' \deqn{ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 #' Y_{C,b}\big),}{ATT(g, t) = (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period
 #' \eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the "varying" base
-#' of the \code{did} package), so a pre-period ATT is a placebo of one period. This is
-#' the estimator without covariates (unconditional parallel trends) and needs a
-#' balanced panel.
+#' of the \code{did} package), so a pre-period ATT is a placebo of one period. It
+#' needs a balanced panel.
+#'
+#' With \code{covariates}, parallel trends need only hold conditionally on them, and
+#' each \eqn{ATT(g, t)} is the two-period estimator of Sant'Anna and Zhao (2020) on
+#' the cohort and its comparison units, with the covariates taken at the base period
+#' \eqn{b} (use covariates fixed before treatment: one the policy moves is a bad
+#' control). With \eqn{\Delta Y = Y_t - Y_b}, \eqn{D} the cohort indicator,
+#' \eqn{\hat m(X)} the least-squares fit of \eqn{\Delta Y} on \eqn{X} among the
+#' comparison units and \eqn{\hat p(X)} the logistic propensity of belonging to the
+#' cohort,
+#' \deqn{\widehat{ATT}_{dr} = \frac{\sum D (\Delta Y - \hat m)}{\sum D} - \frac{\sum
+#' w (\Delta Y - \hat m)}{\sum w}, \quad w = \frac{\hat p (1 - D)}{1 - \hat
+#' p};}{ATT_dr = sum D (dY - m) / sum D - sum w (dY - m) / sum w, w = p (1 - D) / (1 -
+#' p);} \code{est_method = "ipw"} drops \eqn{\hat m} (normalised inverse probability
+#' weighting) and \code{"reg"} drops the weights (outcome regression). The doubly
+#' robust form is consistent when either the propensity or the outcome model is right.
+#' Comparison units with \eqn{\hat p \ge 0.995} are trimmed, as the \code{DRDID}
+#' package does. These agree with \code{did::att_gt()} to rounding error.
 #'
 #' For \code{method = "wooldridge"}, the regression of the outcome on unit and period
 #' effects and an indicator for every treated cohort-period cell, with never-treated
@@ -470,6 +510,10 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @param control \code{"notyet"} (default) or \code{"never"}.
 #' @param method \code{"callaway_santanna"} (default) or \code{"wooldridge"}.
 #' @param reps Bootstrap replications (default 499; 0 for none).
+#' @param covariates Optional column names of covariates for conditional parallel
+#'   trends (\code{method = "callaway_santanna"} only).
+#' @param est_method With covariates: \code{"dr"} (doubly robust, default),
+#'   \code{"ipw"} or \code{"reg"}.
 #' @param seed Optional seed for the bootstrap.
 #' @return A list of class \code{rmbl_staggered_att}: \code{att_gt} (a data frame:
 #'   \code{cohort}, \code{period}, \code{event_time}, \code{estimate}, \code{se},
@@ -480,6 +524,9 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @references Callaway B, Sant'Anna PHC (2021). Difference-in-differences with
 #'   multiple time periods. Journal of Econometrics 225(2):200-230.
 #'   \doi{10.1016/j.jeconom.2020.12.001}
+#'
+#' Sant'Anna PHC, Zhao J (2020). Doubly robust difference-in-differences estimators.
+#' Journal of Econometrics 219(1):101-122. \doi{10.1016/j.jeconom.2020.06.003}
 #'
 #' Wooldridge JM (2021). Two-way fixed effects, the two-way Mundlak regression, and
 #' difference-in-differences estimators. \doi{10.2139/ssrn.3906345}
@@ -497,9 +544,15 @@ plot.rmbl_event_study <- function(x, ..., main = NULL, col = NULL, palette = NUL
 #' @export
 staggered_att <- function(data, unit, time, outcome, first_treated, control = c("notyet", "never"),
                           method = c("callaway_santanna", "wooldridge"), cluster = NULL, reps = 499L,
-                          seed = NULL, conf_level = 0.95) {
+                          seed = NULL, conf_level = 0.95, covariates = NULL,
+                          est_method = c("dr", "ipw", "reg")) {
   control <- .rmbl_arg(control)
   method <- .rmbl_arg(method)
+  est_method <- .rmbl_arg(est_method)
+  if (!is.null(covariates) && method == "wooldridge") {
+    stop("covariates are taken by method = \"callaway_santanna\" (doubly robust, IPW or regression)",
+         call. = FALSE)
+  }
   conf_level <- .rmbl_conf_level(conf_level)
   reps <- .rmbl_scalar(reps, "reps", 0, 1e5, integer = TRUE)
   p <- .rmbl_panel(data, unit, time, outcome)
@@ -516,10 +569,18 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
     stop("no never-treated unit: use control = \"notyet\"", call. = FALSE)
   }
   clu <- if (is.null(cluster)) seq_len(nu) else .rmbl_cluster(data, cluster, p)[o][seq(1L, by = nt, length.out = nu)]
+  xm <- NULL
+  if (!is.null(covariates)) {
+    cv <- .rmbl_covariates(data, covariates)
+    xm <- lapply(colnames(cv), function(v) matrix(cv[o, v], nu, nt, byrow = TRUE))
+    names(xm) <- colnames(cv)
+  }
   est <- function(idx) {
     y <- ym[idx, , drop = FALSE]
     gg <- gu[idx]
-    if (method == "callaway_santanna") .rmbl_cs(y, gg, p$tl, control) else .rmbl_etwfe(y, gg, p$tl, control)
+    if (method == "wooldridge") return(.rmbl_etwfe(y, gg, p$tl, control))
+    .rmbl_cs(y, gg, p$tl, control, if (is.null(xm)) NULL else lapply(xm, function(m) m[idx, , drop = FALSE]),
+             est_method)
   }
   agg <- function(a) {
     post <- a[a$event_time >= 0 & is.finite(a$estimate), ]
@@ -571,7 +632,7 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   out
 }
 
-.rmbl_cs <- function(y, gg, tl, control) {
+.rmbl_cs <- function(y, gg, tl, control, x = NULL, est_method = "dr") {
   cohorts <- sort(unique(gg[is.finite(gg)]))
   rows <- list()
   for (cg in cohorts) {
@@ -584,7 +645,13 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
       ic <- if (control == "never") gg == Inf else (gg > cut & gg != cg)
       ic <- ic & gg != -Inf
       if (!any(ic) || !any(ig)) next
-      att <- (mean(y[ig, j]) - mean(y[ig, b])) - (mean(y[ic, j]) - mean(y[ic, b]))
+      att <- if (is.null(x)) {
+        (mean(y[ig, j]) - mean(y[ig, b])) - (mean(y[ic, j]) - mean(y[ic, b]))
+      } else {
+        k <- which(ig | ic)
+        xb <- cbind(1, vapply(x, function(m) m[k, b], numeric(length(k))))
+        .rmbl_drdid(y[k, j] - y[k, b], as.numeric(ig[k]), xb, est_method)
+      }
       rows[[length(rows) + 1L]] <- c(cg, t, att, sum(ig))
     }
   }
@@ -592,6 +659,20 @@ staggered_att <- function(data, unit, time, outcome, first_treated, control = c(
   m <- do.call(rbind, rows)
   data.frame(cohort = m[, 1L], period = m[, 2L], event_time = match(m[, 2L], tl) - match(m[, 1L], tl),
              estimate = m[, 3L], n_cohort = m[, 4L])
+}
+
+# The two-period panel DiD with covariates of Sant'Anna and Zhao (2020): outcome regression on the
+# comparison units ("reg"), normalised inverse probability weighting ("ipw"), or both, doubly robust
+# ("dr"); comparison units with a propensity above 0.995 are trimmed, as DRDID does.
+.rmbl_drdid <- function(dy, d, x, est_method) {
+  m <- 0
+  if (est_method != "ipw") m <- as.vector(x %*% qr.coef(qr(x[d == 0, , drop = FALSE]), dy[d == 0]))
+  if (anyNA(m)) stop("the covariates are collinear among the comparison units", call. = FALSE)
+  if (est_method == "reg") return(mean((dy - m)[d == 1]))
+  ps <- suppressWarnings(stats::glm.fit(x, d, family = stats::binomial()))$fitted.values
+  wc <- ps * (1 - d) / (1 - ps)
+  wc[d == 0 & ps >= 0.995] <- 0
+  sum(d * (dy - m)) / sum(d) - sum(wc * (dy - m)) / sum(wc)
 }
 
 .rmbl_etwfe <- function(y, gg, tl, control) {
@@ -640,15 +721,24 @@ print.rmbl_staggered_att <- function(x, ...) {
 
 #' @rdname plot-methods
 #' @export
-plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = NULL) {
+plot.rmbl_staggered_att <- function(x, ..., main = NULL, col = NULL, palette = NULL, style = c("dot", "stata"),
+                                    shade_post = FALSE, ref_line = -0.5) {
   .rmbl_plot_check(x, "rmbl_staggered_att")
   d <- x$dynamic
   es <- structure(data.frame(event_time = d$event_time, estimate = d$estimate, se = d$se,
                              lower = ifelse(is.finite(d$lower), d$lower, d$estimate),
                              upper = ifelse(is.finite(d$upper), d$upper, d$estimate)),
                   class = c("rmbl_event_study", "data.frame"))
-  plot.rmbl_event_study(es, ..., main = .bl_main(main, "Effect by time since adoption"), col = col,
-                        palette = palette)
+  # the periods before adoption in one colour and after in another, as the did package draws them
+  cols <- if (is.null(col)) c("#2C6FBB", "#C0392B") else rep_len(col, 2L)
+  plot.rmbl_event_study(es, ..., main = .bl_main(main, "Effect by time since adoption"), col = cols[2L],
+                        palette = palette, style = style, shade_post = shade_post, ref_line = ref_line)
+  pre <- es$event_time < 0
+  w <- pre & es$upper > es$lower
+  graphics::arrows(es$event_time[w], es$lower[w], es$event_time[w], es$upper[w], angle = 90, code = 3,
+                   length = 0.03, col = cols[1L])
+  graphics::points(es$event_time[pre], es$estimate[pre], pch = 19, col = cols[1L])
+  invisible(es)
 }
 
 # ---- Goodman-Bacon ---------------------------------------------------------------------------------
@@ -898,6 +988,9 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
 #' @param statistic \code{"t"} (default) or \code{"estimate"}.
 #' @param reps The number of random assignments (default 999).
 #' @param seed Optional seed.
+#' @param ties \code{"count"} (default): an assignment whose statistic equals the
+#'   observed one counts (the observed assignment is among those enumerated, so the
+#'   exact p-value is at least \eqn{1/N}); \code{"strict"}: only larger ones count.
 #' @return A data frame of class \code{rmbl_permutation}, one row per outcome:
 #'   \code{outcome}, \code{estimate}, \code{statistic}, \code{p_value},
 #'   \code{p_stepdown}, \code{assignments}, \code{exact}; attribute \code{null} (the
@@ -915,8 +1008,10 @@ switching_did <- function(data, unit, time, outcome, treated, cluster = NULL, re
 #'                       cluster = "region", reps = 199, seed = 3)
 #' @export
 permutation_inference <- function(data, unit, time, outcome, first_treated, cluster = NULL,
-                                  statistic = c("t", "estimate"), reps = 999L, seed = NULL) {
+                                  statistic = c("t", "estimate"), reps = 999L, seed = NULL,
+                                  ties = c("count", "strict")) {
   statistic <- .rmbl_arg(statistic)
+  ties <- .rmbl_arg(ties)
   reps <- .rmbl_scalar(reps, "reps", 9, 1e6, integer = TRUE)
   outcome <- .rmbl_colnames(outcome, "outcome", several = TRUE)
   p <- .rmbl_panel(data, unit, time, outcome[1L])
@@ -948,7 +1043,7 @@ permutation_inference <- function(data, unit, time, outcome, first_treated, clus
   for (r in seq_len(nrow(perms))) for (j in seq_along(outcome)) null[r, j] <- stat(perms[r, ], outcome[j])
   pv <- vapply(seq_along(outcome), function(j) {
     nz <- null[, j][is.finite(null[, j])]
-    b <- sum(abs(nz) >= abs(obs[j]) - 1e-12)
+    b <- if (ties == "count") sum(abs(nz) >= abs(obs[j]) - 1e-12) else sum(abs(nz) > abs(obs[j]) + 1e-12)
     if (exact) b / length(nz) else (b + 1) / (length(nz) + 1)
   }, numeric(1L))
   out <- data.frame(outcome = outcome, estimate = unname(est), statistic = unname(obs), p_value = pv,

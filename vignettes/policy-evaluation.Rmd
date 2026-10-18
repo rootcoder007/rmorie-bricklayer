@@ -38,6 +38,15 @@ the reform:
 did_panel(p, "district", "month", "crime_rate", "reformed")
 ```
 
+## Before any model
+
+`cohort_trends()` shows each adoption cohort's outcome around its adoption, scaled to 1 just
+before it:
+
+```{r trends, fig.height = 3.5}
+plot(cohort_trends(p, "district", "month", "crime_rate", "reform_month", window = c(-10, 10)))
+```
+
 ## Leads and lags
 
 `event_study()` estimates the effect period by period around adoption. The leads (periods before
@@ -54,9 +63,10 @@ plot(es)
 When districts adopt at different times, the two-way estimate uses districts already treated as
 controls for later ones. `bacon_decomposition()` shows how much weight those comparisons get:
 
-```{r bacon}
+```{r bacon, fig.height = 3.5}
 b <- bacon_decomposition(p, "district", "month", "crime_rate", "reformed")
 tapply(b$weight, b$type, sum)
+plot(b)
 ```
 
 `staggered_att()` avoids them: each cohort is compared only with districts not yet treated
@@ -83,9 +93,26 @@ With four regions there are only 24 ways to assign the three stages and the neve
 assignment. With two outcomes it also gives Westfall and Young's stepdown p-values, which hold the
 chance of any false positive at the nominal level:
 
-```{r perm}
-permutation_inference(p, "district", "month", c("crime_rate", "arrest_rate"), "reform_month",
-                      cluster = "region")
+```{r perm, fig.height = 3}
+r <- permutation_inference(p, "district", "month", c("crime_rate", "arrest_rate"), "reform_month",
+                           cluster = "region")
+r
+plot(r, type = "histogram")
+```
+
+`leave_one_out()` checks that no single district drives the estimate:
+
+```{r loo, fig.height = 3.5}
+plot(leave_one_out(p, "district", "month", "crime_rate", "reformed"))
+```
+
+Several outcomes at once, in the style of a Stata event-study figure:
+
+```{r grid, fig.height = 3.5}
+plot_event_grid(list(
+  "Crime rate" = es,
+  "Arrest rate" = event_study(p, "district", "month", "arrest_rate", "reform_month", leads = 4,
+                              lags = 6)), style = "stata")
 ```
 
 ## Counts
@@ -129,6 +156,56 @@ d <- data.frame(city = rep(c("A", "B"), each = 3), year = 2024,
 severity_index(d, "city", "year", "offence", "n",
                weights = c(homicide = 25, robbery = 8, burglary = 4), population = "pop")
 cumulative_risk(16:20, c(900, 1400, 1700, 1600, 1400), rep(1e5, 5))
+```
+
+## Doing better than the original designs
+
+Published applications of these designs often share a few weaknesses, and each has a remedy here.
+
+**Few clusters.** A reform assigned to a handful of districts gives cluster-robust tests that
+reject too often. `wild_cluster_bootstrap()` gives an honest p-value and interval; with four
+clusters it says plainly that nothing can be rejected at 5%:
+
+```{r wild}
+wild_cluster_bootstrap(p, "district", "month", "crime_rate", "reformed", cluster = "region")
+```
+
+**Doubts about parallel trends.** `trend_sensitivity()` asks how large a departure from
+parallel trends, relative to the largest seen before adoption, would make the effect vanish:
+
+```{r sens}
+trend_sensitivity(es, seed = 1)
+```
+
+**Covariates that differ between groups.** `staggered_att()` with `covariates` is doubly robust
+(use covariates fixed before treatment: one the reform moves, such as arrests, is a bad
+control). `dml_panel()` lets a machine learner fit the confounding with fixed effects, and
+`matched_did()` matches units on their pre-reform paths before differencing:
+
+```{r covs}
+set.seed(4)
+p$x1 <- rnorm(20)[match(p$district, unique(p$district))]
+staggered_att(p, "district", "month", "crime_rate", "reform_month", covariates = "x1", reps = 49,
+              seed = 1)$overall
+m <- matched_did(p, "district", "month", "crime_rate", "reform_month", ratio = 2)
+m$estimate
+```
+
+**A single treated place, or a few.** `synthetic_did()` weights both comparison units and
+pre-periods:
+
+```{r sdid}
+synthetic_did(p13, "district", "month", "crime_rate", "reform_month", reps = 50, seed = 1)
+```
+
+**Null results without a measure of power.** `panel_power()` simulates the design on the
+untreated data and gives the minimum detectable effect:
+
+```{r power, fig.height = 3.5}
+pw <- panel_power(p[p$month <= 12, ], "district", "month", "crime_rate", n_treated = 10,
+                  adoption = 7:10, effects = c(0, 0.5, 1, 1.5), reps = 40, seed = 1)
+pw
+plot(pw)
 ```
 
 ## Acknowledgements

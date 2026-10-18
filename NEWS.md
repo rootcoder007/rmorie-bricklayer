@@ -146,6 +146,41 @@ New estimators, each checked against the reference implementation (`fixest`, `di
   measures these designs take from justice data.
 * `policy_example()` and the vignette "Evaluating a policy from administrative panels". The
   designs are those of Professor Angela Zorro Medina's empirical work.
+* `staggered_att()` takes `covariates`: doubly robust, IPW or regression difference in
+  differences per cohort and period (Sant'Anna and Zhao 2020), equal to `did::att_gt()`.
+* `permutation_inference()` and the wild bootstrap take `ties` (`"count"` or `"strict"`).
+
+**Causal estimation on panels**
+
+* `dml_panel()`: double machine learning with unit and period fixed effects (Clarke and
+  Polselli 2025), cross-fitted by unit, with base-R lasso, ridge or OLS learners or any
+  learner function, a second-order basis built before demeaning, repeated splits, and
+  cluster-robust errors; equal to DoubleML given the same folds.
+* `aipw_crossfit()`: cross-fitted augmented inverse probability weighting for a binary
+  treatment (average effect, or effect on the treated) with survey weights and propensity
+  clipping; the average effect equals DoubleML's interactive regression model given the same
+  folds. With `design = survey_design(...)` the standard error comes from the design's
+  replicate weights (any replicate type) or strata and PSUs, from one fit: the learners are
+  fitted without the weights, so each replicate estimate is the replicate-weighted mean of the
+  same cross-fitted scores, equal to re-running on every replicate weight.
+* `matched_did()` and `balance_table()`: matching on pre-treatment trajectories (Mahalanobis,
+  pooled within-group or full-sample covariance, exact groups, calipers), then the weighted
+  difference in differences; matches equal MatchIt's.
+* `synthetic_did()`: synthetic difference in differences (Arkhangelsky et al. 2021) with exact
+  weights, placebo or jackknife errors.
+* `wild_cluster_bootstrap()`: the restricted wild cluster bootstrap with Rademacher or Webb
+  weights, full enumeration, and an interval by test inversion that is unbounded when the
+  design cannot reject.
+* `trend_sensitivity()`: Rambachan and Roth's relative-magnitudes bounds with a conservative
+  interval and the breakdown value.
+* `panel_power()`: design-based power and the minimum detectable effect on real data.
+* The figures of policy papers: event studies in a Stata style or with the post-period
+  shaded, `plot_event_grid()` for several outcomes, the Goodman-Bacon scatter, permutation
+  distributions, `leave_one_out()` and `cohort_trends()`.
+* `spread()`: the variance, standard deviation and standard error with the correction the
+  data call for (Bessel's n - 1 for a sample, none for a whole population described as it is,
+  the finite-population correction for a sample drawn without replacement, frequency or
+  reliability weights), chosen automatically from the population size and explained.
 
 ## Fixes from the CRAN stress test of 0.5.14
 

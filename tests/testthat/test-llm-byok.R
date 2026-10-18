@@ -402,7 +402,8 @@ test_that("the help in the prompt follows the model's capacity: all of it for a 
     ns(".bl_llm_assist")(ollama, model, "survey replicate weights", "rmoriebricklayer")
     m <- s$calls[[1L]]$payload$messages
     sys <- paste(m[[1L]]$content, m[[2L]]$content, sep = "\n")  # the instructions and the question
-    list(n = length(grep("  -- ", strsplit(sys, "\n")[[1L]])), sys = sys)
+    # function lines only ("name(arguments)  -- title"), not the header that introduces them
+    list(n = length(grep("^[[:alnum:]._]+\\(.*  -- ", strsplit(sys, "\n")[[1L]])), sys = sys)
   }
   small <- index_size("gemma3:4b")
   expect_lte(small$n, 40L)
@@ -527,7 +528,7 @@ test_that("a package with thousands of help pages is searched, not listed whole"
   sys <- paste(m[[1L]]$content, m[[2L]]$content, sep = "\n")
   # rmoriebricklayer stands in for the big package here: 40 of its pages listed, the rest searched
   expect_match(sys, "rmoriebricklayer has [0-9]+ more functions than are listed below: search_docs")
-  expect_lte(length(grep("  -- ", strsplit(sys, "\n")[[1L]])), 41L)
+  expect_lte(length(grep("^[[:alnum:]._]+\\(.*  -- ", strsplit(sys, "\n")[[1L]])), 40L)
   expect_match(sys, "survey_design")
 })
 

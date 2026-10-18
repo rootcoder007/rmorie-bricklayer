@@ -479,6 +479,24 @@ reference:
       - cumulative_risk
       - buffer_assign
       - policy_example
+      - plot_event_grid
+      - leave_one_out
+      - cohort_trends
+  - title: Causal estimation on panels
+    desc: >
+      Double machine learning with fixed effects (lasso, ridge or any learner,
+      cross-fitted by unit), matching on pre-treatment trajectories, synthetic
+      difference in differences, the wild cluster bootstrap for few clusters,
+      sensitivity to departures from parallel trends, and design-based power.
+    contents:
+      - dml_panel
+      - aipw_crossfit
+      - matched_did
+      - balance_table
+      - synthetic_did
+      - wild_cluster_bootstrap
+      - trend_sensitivity
+      - panel_power
   - title: First Nations, Metis and Inuit health
     desc: >
       Statistics Canada tables read as published (suppressed cells never imputed),
@@ -542,6 +560,7 @@ reference:
       - survey_design
       - survey_estimate
       - survey_compare
+      - spread
   - title: The footprint of the computation
     desc: >
       Electricity and CO2-equivalent of an expression, measured from RAPL energy

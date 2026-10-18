@@ -15,7 +15,9 @@ staggered_att(
   cluster = NULL,
   reps = 499L,
   seed = NULL,
-  conf_level = 0.95
+  conf_level = 0.95,
+  covariates = NULL,
+  est_method = c("dr", "ipw", "reg")
 )
 }
 \arguments{
@@ -42,6 +44,12 @@ cluster (district by month, say) is one column made with \code{interaction()}.}
 \item{seed}{Optional seed for the bootstrap.}
 
 \item{conf_level}{Confidence level (default 0.95).}
+
+\item{covariates}{Optional column names of covariates for conditional parallel
+trends (\code{method = "callaway_santanna"} only).}
+
+\item{est_method}{With covariates: \code{"dr"} (doubly robust, default),
+\code{"ipw"} or \code{"reg"}.}
 }
 \value{
 A list of class \code{rmbl_staggered_att}: \code{att_gt} (a data frame:
@@ -65,9 +73,25 @@ treated by period \eqn{\max(t, g - 1)} (\code{"notyet"}, the default). For
 \deqn{ATT(g, t) = \big(\bar Y_{g,t} - \bar Y_{g,b}\big) - \big(\bar Y_{C,t} - \bar
 Y_{C,b}\big),}{ATT(g, t) = (Y_g,t - Y_g,b) - (Y_C,t - Y_C,b),} with base period
 \eqn{b = g - 1} for \eqn{t \ge g}, and \eqn{b = t - 1} before (the "varying" base
-of the \code{did} package), so a pre-period ATT is a placebo of one period. This is
-the estimator without covariates (unconditional parallel trends) and needs a
-balanced panel.
+of the \code{did} package), so a pre-period ATT is a placebo of one period. It
+needs a balanced panel.
+
+With \code{covariates}, parallel trends need only hold conditionally on them, and
+each \eqn{ATT(g, t)} is the two-period estimator of Sant'Anna and Zhao (2020) on
+the cohort and its comparison units, with the covariates taken at the base period
+\eqn{b} (use covariates fixed before treatment: one the policy moves is a bad
+control). With \eqn{\Delta Y = Y_t - Y_b}, \eqn{D} the cohort indicator,
+\eqn{\hat m(X)} the least-squares fit of \eqn{\Delta Y} on \eqn{X} among the
+comparison units and \eqn{\hat p(X)} the logistic propensity of belonging to the
+cohort,
+\deqn{\widehat{ATT}_{dr} = \frac{\sum D (\Delta Y - \hat m)}{\sum D} - \frac{\sum
+w (\Delta Y - \hat m)}{\sum w}, \quad w = \frac{\hat p (1 - D)}{1 - \hat
+p};}{ATT_dr = sum D (dY - m) / sum D - sum w (dY - m) / sum w, w = p (1 - D) / (1 -
+p);} \code{est_method = "ipw"} drops \eqn{\hat m} (normalised inverse probability
+weighting) and \code{"reg"} drops the weights (outcome regression). The doubly
+robust form is consistent when either the propensity or the outcome model is right.
+Comparison units with \eqn{\hat p \ge 0.995} are trimmed, as the \code{DRDID}
+package does. These agree with \code{did::att_gt()} to rounding error.
 
 For \code{method = "wooldridge"}, the regression of the outcome on unit and period
 effects and an indicator for every treated cohort-period cell, with never-treated
@@ -93,6 +117,9 @@ plot(s)
 Callaway B, Sant'Anna PHC (2021). Difference-in-differences with
 multiple time periods. Journal of Econometrics 225(2):200-230.
 \doi{10.1016/j.jeconom.2020.12.001}
+
+Sant'Anna PHC, Zhao J (2020). Doubly robust difference-in-differences estimators.
+Journal of Econometrics 219(1):101-122. \doi{10.1016/j.jeconom.2020.06.003}
 
 Wooldridge JM (2021). Two-way fixed effects, the two-way Mundlak regression, and
 difference-in-differences estimators. \doi{10.2139/ssrn.3906345}
