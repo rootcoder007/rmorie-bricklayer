@@ -1017,8 +1017,9 @@ plot.rmbl_balance <- function(x, ..., threshold = 0.1, after = NULL, main = NULL
   op <- graphics::par(mar = c(4.5, max(4, min(16, max(nchar(cv)) * 0.55)), 3, 1))
   on.exit(graphics::par(op), add = TRUE)
   graphics::plot(b, seq_len(k), xlim = lim, ylim = c(0.5, k + 0.5), yaxt = "n", pch = 19, col = cl[1L],
-                 xlab = "Absolute standardised difference", ylab = "",
-                 main = .bl_main(main, "Covariate balance"), ...)
+                 xlab = "", ylab = "", main = "", ...)
+  .bl_title(.bl_main(main, "Covariate balance"))
+  .bl_xlab("Absolute standardised difference")
   graphics::axis(2, at = seq_len(k), labels = cv, las = 1, cex.axis = 0.8)
   graphics::abline(h = seq_len(k), col = "#EEEEEE")
   graphics::abline(v = threshold, lty = 2, col = "#9A9A9A")
@@ -1051,7 +1052,9 @@ plot.rmbl_aipw <- function(x, ..., type = c("overlap", "estimate"), main = NULL,
   if (is.null(p)) stop("this result has no propensities to draw; re-run aipw_crossfit()", call. = FALSE)
   dens <- lapply(c(1, 0), function(arm) {
     s <- p[p$treated == arm, ]
-    stats::density(s$propensity, weights = s$weight / sum(s$weight), from = 0, to = 1, n = 256)
+    # the bandwidth from the unweighted values (density() picks it so anyway, with a warning)
+    stats::density(s$propensity, bw = stats::bw.nrd0(s$propensity), weights = s$weight / sum(s$weight),
+                   from = 0, to = 1, n = 256)
   })
   ymax <- max(dens[[1L]]$y, dens[[2L]]$y)
   graphics::plot(dens[[1L]]$x, dens[[1L]]$y, type = "n", xlim = c(0, 1), ylim = c(0, ymax * 1.05),
