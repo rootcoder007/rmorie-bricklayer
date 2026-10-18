@@ -411,7 +411,8 @@ territories, the published tables allow a coarser question: where more First Nat
 Indigenous language, do more rate their mental health highly?
 
 ```{r continuity}
-la <- profile_share(p, "Indigenous languages", know)
+prof <- census_profile(indigenous_example("census_population"))
+la <- profile_share(prof, "Indigenous languages", know)
 la <- la[la$age == "Total - Age groups" & la$group == "First Nations" & la$geo != "Canada" &
            la$residence == "Total - Residence on or off reserve", ]
 mh2 <- indigenous_example("mental_health")
