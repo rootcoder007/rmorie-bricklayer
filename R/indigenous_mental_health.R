@@ -615,8 +615,8 @@ plot.rmbl_ordinal_compare <- function(x, ..., main = NULL, col = NULL, palette =
 #'
 #' @param data A data frame, one row per group and indicator (as
 #'   \code{\link{statcan_estimates}} gives).
-#' @param group,indicator,estimate,lower,upper Column names: the group, the indicator, the
-#'   percentage and its published limits.
+#' @param group,indicator,estimate,lower,upper Column names: the group, the
+#'   indicator, the percentage and its published limits.
 #' @param wellness,distress The indicators that measure wellness or strength, and those
 #'   that measure distress; rows for any other indicator (totals, "not specified") are
 #'   left out.
